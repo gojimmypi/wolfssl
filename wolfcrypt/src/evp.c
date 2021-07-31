@@ -3997,7 +3997,7 @@ int wolfSSL_EVP_MD_type(const WOLFSSL_EVP_MD* type)
      */
     static void md_do_all_func(const WOLFSSL_OBJ_NAME* nm, void* arg)
     {
-        struct do_all_md *md = arg;
+        struct do_all_md *md = (struct do_all_md*)arg;
         
         const char* alias = NULL;
         const struct s_ent *ent;
