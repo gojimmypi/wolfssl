@@ -55008,7 +55008,7 @@ int wolfSSL_CONF_cmd(WOLFSSL_CONF_CTX* cctx, const char* cmd, const char* value)
             port = XSTRSTR(str, ":");
 
             if (port != NULL)
-                bio->port = XATOI(port + 1);
+                bio->port = (word16)XATOI(port + 1);
             else
                 port = str + XSTRLEN(str); /* point to null terminator */
 
@@ -55033,7 +55033,7 @@ int wolfSSL_CONF_cmd(WOLFSSL_CONF_CTX* cctx, const char* cmd, const char* value)
         WOLFSSL_ENTER("wolfSSL_BIO_new_accept");
         bio = wolfSSL_BIO_new(wolfSSL_BIO_s_socket());
         if (bio) {
-            bio->port = XATOI(port);
+            bio->port = (word16)XATOI(port);
             bio->type  = WOLFSSL_BIO_SOCKET;
         }
         return bio;
