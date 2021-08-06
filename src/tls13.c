@@ -8479,6 +8479,7 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
             if (!ssl->options.resuming && ssl->options.sendVerify) {
                 ssl->error = SendTls13Certificate(ssl);
                 if (ssl->error != 0) {
+                    ProcessReplyEx(ssl, 1); /* See if an alert was sent. */
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
                 }
@@ -8497,6 +8498,7 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
             if (!ssl->options.resuming && ssl->options.sendVerify) {
                 ssl->error = SendTls13CertificateVerify(ssl);
                 if (ssl->error != 0) {
+                    ProcessReplyEx(ssl, 1); /* See if an alert was sent. */
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
                 }
@@ -8510,6 +8512,7 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
 
         case FIRST_REPLY_FOURTH:
             if ((ssl->error = SendTls13Finished(ssl)) != 0) {
+                ProcessReplyEx(ssl, 1); /* See if an alert was sent. */
                 WOLFSSL_ERROR(ssl->error);
                 return WOLFSSL_FATAL_ERROR;
             }
