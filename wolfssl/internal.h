@@ -1171,6 +1171,10 @@ enum {
     #define WOLFSSL_MAX_MTU 1400
 #endif /* WOLFSSL_MAX_MTU */
 
+#ifndef WOLFSSL_DTLS_MTU_ADDITIONAL_READ_BUFFER
+    #define WOLFSSL_DTLS_MTU_ADDITIONAL_READ_BUFFER 500
+#endif /* WOLFSSL_DTLS_MTU_ADDITIONAL_READ_BUFFER */
+
 
 /* set minimum DH key size allowed */
 #ifndef WOLFSSL_MIN_DHKEY_BITS
@@ -1363,9 +1367,10 @@ enum Misc {
     DTLS_EXPORT_SPC_SZ       = 16, /* amount of bytes used from CipherSpecs */
     DTLS_EXPORT_LEN          = 2,  /* 2 bytes for length and protocol */
     DTLS_EXPORT_IP           = 46, /* max ip size IPv4 mapped IPv6 */
-    DTLS_MTU_ADDITIONAL_READ_BUFFER = 100, /* Additional bytes to read so that
-                                            * we can work with a peer that has
-                                            * a slightly different MTU than us. */
+    DTLS_MTU_ADDITIONAL_READ_BUFFER = WOLFSSL_DTLS_MTU_ADDITIONAL_READ_BUFFER,
+                                   /* Additional bytes to read so that
+                                    * we can work with a peer that has
+                                    * a slightly different MTU than us. */
     MAX_EXPORT_BUFFER        = 514, /* max size of buffer for exporting */
     MAX_EXPORT_STATE_BUFFER  = (DTLS_EXPORT_MIN_KEY_SZ) + (3 * DTLS_EXPORT_LEN),
                                     /* max size of buffer for exporting state */
@@ -2763,12 +2768,19 @@ typedef struct {
 #ifdef HAVE_ECC
     DerBuffer* ecKey;
 #endif
+#ifdef HAVE_CURVE25519
+    DerBuffer* x25519Key;
+#endif
+
     /* bits */
 #ifndef NO_DH
     byte weOwnDH:1;
 #endif
 #ifdef HAVE_ECC
     byte weOwnEC:1;
+#endif
+#ifdef HAVE_CURVE25519
+    byte weOwnX25519:1;
 #endif
 } StaticKeyExchangeInfo_t;
 #endif
@@ -2847,12 +2859,17 @@ struct WOLFSSL_CTX {
     byte        noTicketTls12:1;  /* TLS 1.2 server won't send ticket */
 #endif
 #ifdef WOLFSSL_TLS13
+    #if defined(HAVE_SESSION_TICKET) && !defined(NO_WOLFSSL_SERVER)
+    unsigned int maxTicketTls13;  /* maximum number of tickets to send */
+    #endif
     byte        noTicketTls13:1;  /* TLS 1.3 Server won't create new Ticket */
     byte        noPskDheKe:1;     /* Don't use (EC)DHE with PSK */
 #endif
     byte        mutualAuth:1;     /* Mutual authentication required */
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_POST_HANDSHAKE_AUTH)
     byte        postHandshakeAuth:1;  /* Post-handshake auth supported. */
+    byte        verifyPostHandshake:1; /* Only send client cert req post
+                                        * handshake, not also during */
 #endif
 #ifndef NO_DH
     #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
@@ -3582,6 +3599,10 @@ typedef struct Options {
 #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || defined(WOLFSSL_WPAS_SMALL)
     unsigned long     mask; /* store SSL_OP_ flags */
 #endif
+#if defined(HAVE_SESSION_TICKET) && defined(WOLFSSL_TLS13)
+    unsigned int      maxTicketTls13;  /* maximum number of tickets to send */
+    unsigned int      ticketsSent;     /* keep track of the total sent */
+#endif
 
     /* on/off or small bit flags, optimize layout */
 #if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
@@ -3661,6 +3682,8 @@ typedef struct Options {
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_POST_HANDSHAKE_AUTH)
     word16            postHandshakeAuth:1;/* Client send post_handshake_auth
                                            * extension */
+    word16            verifyPostHandshake:1; /* Only send client cert req post
+                                              * handshake, not also during */
 #endif
 #if defined(WOLFSSL_TLS13) && !defined(NO_WOLFSSL_SERVER)
     word16            sendCookie:1;       /* Server creates a Cookie in HRR */

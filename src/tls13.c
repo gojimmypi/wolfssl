@@ -6547,7 +6547,7 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
         #ifdef HAVE_ED25519
             if (args->sigAlgo == ed25519_sa_algo &&
                                                   !ssl->peerEd25519KeyPresent) {
-                WOLFSSL_MSG("Peer sent ED22519 sig but not ED22519 cert");
+                WOLFSSL_MSG("Peer sent ED25519 sig but not ED25519 cert");
                 ret = SIG_VERIFY_E;
                 goto exit_dcv;
             }
@@ -9414,7 +9414,11 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
         case TLS13_SERVER_EXTENSIONS_SENT :
 #ifndef NO_CERTS
             if (!ssl->options.resuming) {
-                if (ssl->options.verifyPeer) {
+                if (ssl->options.verifyPeer
+    #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
+                    && !ssl->options.verifyPostHandshake
+    #endif
+                   ) {
                     ssl->error = SendTls13CertificateRequest(ssl, NULL, 0);
                     if (ssl->error != 0) {
                         WOLFSSL_ERROR(ssl->error);
@@ -9479,6 +9483,7 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
                 }
+                ssl->options.ticketsSent = 1;
             }
     #endif
 #endif /* HAVE_SESSION_TICKET */
@@ -9499,15 +9504,19 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
 
         case TLS13_ACCEPT_FINISHED_DONE :
 #ifdef HAVE_SESSION_TICKET
-    #ifdef WOLFSSL_TLS13_TICKET_BEFORE_FINISHED
-            if (!ssl->options.verifyPeer) {
-            }
-            else
-    #endif
-            if (!ssl->options.noTicketTls13 && ssl->ctx->ticketEncCb != NULL) {
-                if ((ssl->error = SendTls13NewSessionTicket(ssl)) != 0) {
-                    WOLFSSL_ERROR(ssl->error);
-                    return WOLFSSL_FATAL_ERROR;
+            while (ssl->options.ticketsSent < ssl->options.maxTicketTls13) {
+                if (!ssl->options.noTicketTls13 && ssl->ctx->ticketEncCb
+                        != NULL) {
+                    if ((ssl->error = SendTls13NewSessionTicket(ssl)) != 0) {
+                        WOLFSSL_ERROR(ssl->error);
+                        return WOLFSSL_FATAL_ERROR;
+                    }
+                }
+                ssl->options.ticketsSent++;
+
+                /* only one session ticket is sent on session resumption */
+                if (ssl->options.resuming) {
+                    break;
                 }
             }
 #endif /* HAVE_SESSION_TICKET */
