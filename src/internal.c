@@ -3808,6 +3808,10 @@ void FreeX509(WOLFSSL_X509* x509)
             XFREE(x509->authInfo, x509->heap, DYNAMIC_TYPE_X509_EXT);
             x509->authInfo = NULL;
         }
+        if (x509->CRLInfo != NULL) {
+            XFREE(x509->CRLInfo, x509->heap, DYNAMIC_TYPE_X509_EXT);
+            x509->CRLInfo = NULL;
+        }
         #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
         if (x509->authInfoCaIssuer != NULL) {
             XFREE(x509->authInfoCaIssuer, x509->heap, DYNAMIC_TYPE_X509_EXT);
@@ -10526,8 +10530,17 @@ int CopyDecodedToX509(WOLFSSL_X509* x509, DecodedCert* dCert)
 
     x509->CRLdistSet = dCert->extCRLdistSet;
     x509->CRLdistCrit = dCert->extCRLdistCrit;
-    x509->CRLInfo = dCert->extCrlInfo;
-    x509->CRLInfoSz = dCert->extCrlInfoSz;
+    if (dCert->extCrlInfo != NULL && dCert->extCrlInfoSz > 0) {
+        x509->CRLInfo = (byte*)XMALLOC(dCert->extCrlInfoSz, x509->heap,
+            DYNAMIC_TYPE_X509_EXT);
+        if (x509->CRLInfo != NULL) {
+            XMEMCPY(x509->CRLInfo, dCert->extCrlInfo, dCert->extCrlInfoSz);
+            x509->CRLInfoSz = dCert->extCrlInfoSz;
+        }
+        else {
+            ret = MEMORY_E;
+        }
+    }
     x509->authInfoSet = dCert->extAuthInfoSet;
     x509->authInfoCrit = dCert->extAuthInfoCrit;
     if (dCert->extAuthInfo != NULL && dCert->extAuthInfoSz > 0) {
@@ -15790,7 +15803,7 @@ int TimingPadVerify(WOLFSSL* ssl, const byte* input, int padLen, int macSz,
 #endif
 
 
-int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx)
+int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx, int sniff)
 {
     word32 msgSz   = ssl->keys.encryptSz;
     word32 idx     = *inOutIdx;
@@ -15818,7 +15831,9 @@ int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx)
         }
         if (!process) {
             WOLFSSL_MSG("Received App data before a handshake completed");
-            SendAlert(ssl, alert_fatal, unexpected_message);
+            if (sniff == NO_SNIFF) {
+                SendAlert(ssl, alert_fatal, unexpected_message);
+            }
             return OUT_OF_ORDER_E;
         }
     }
@@ -15826,7 +15841,9 @@ int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx)
 #endif
     if (ssl->options.handShakeDone == 0) {
         WOLFSSL_MSG("Received App data before a handshake completed");
-        SendAlert(ssl, alert_fatal, unexpected_message);
+        if (sniff == NO_SNIFF) {
+            SendAlert(ssl, alert_fatal, unexpected_message);
+        }
         return OUT_OF_ORDER_E;
     }
 
@@ -15849,13 +15866,17 @@ int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx)
 #endif
     if (dataSz < 0) {
         WOLFSSL_MSG("App data buffer error, malicious input?");
-        SendAlert(ssl, alert_fatal, unexpected_message);
+        if (sniff == NO_SNIFF) {
+            SendAlert(ssl, alert_fatal, unexpected_message);
+        }
         return BUFFER_ERROR;
     }
 #ifdef WOLFSSL_EARLY_DATA
     if (ssl->earlyData > early_data_ext) {
         if (ssl->earlyDataSz + dataSz > ssl->options.maxEarlyDataSz) {
-            SendAlert(ssl, alert_fatal, unexpected_message);
+            if (sniff == NO_SNIFF) {
+                SendAlert(ssl, alert_fatal, unexpected_message);
+            }
             return WOLFSSL_FATAL_ERROR;
         }
         ssl->earlyDataSz += dataSz;
@@ -17155,8 +17176,8 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
                     #endif
                     if ((ret = DoApplicationData(ssl,
                                                 ssl->buffers.inputBuffer.buffer,
-                                                &ssl->buffers.inputBuffer.idx))
-                                                                         != 0) {
+                                                &ssl->buffers.inputBuffer.idx,
+                                                              NO_SNIFF)) != 0) {
                         WOLFSSL_ERROR(ret);
                         return ret;
                     }

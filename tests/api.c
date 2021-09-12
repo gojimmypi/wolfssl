@@ -33008,8 +33008,26 @@ static void test_wolfSSL_set_options(void)
 
     AssertTrue(SSL_set_msg_callback(ssl, msg_cb) == SSL_SUCCESS);
     SSL_set_msg_callback_arg(ssl, arg);
-
+#ifdef WOLFSSL_ERROR_CODE_OPENSSL
+    AssertTrue(SSL_CTX_set_alpn_protos(ctx, protos, len) == 0);   
+#else
     AssertTrue(SSL_CTX_set_alpn_protos(ctx, protos, len) == SSL_SUCCESS);
+#endif
+
+#if defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
+    defined(WOLFSSL_MYSQL_COMPATIBLE) || defined(OPENSSL_ALL) || \
+    defined(HAVE_LIGHTY) || defined(HAVE_STUNNEL)
+
+#if defined(HAVE_ALPN) && !defined(NO_BIO)
+
+#ifdef WOLFSSL_ERROR_CODE_OPENSSL
+    AssertTrue(SSL_set_alpn_protos(ssl, protos, len) == 0);
+#else
+    AssertTrue(SSL_set_alpn_protos(ssl, protos, len) == SSL_SUCCESS);
+#endif
+
+#endif /* HAVE_ALPN && !NO_BIO */
+#endif
 
     SSL_free(ssl);
     SSL_CTX_free(ctx);
@@ -46420,15 +46438,22 @@ static void test_wolfSSL_RSA_print(void)
 static void test_wolfSSL_BIO_get_len(void)
 {
 #if defined(OPENSSL_EXTRA) && !defined(NO_BIO)
-    BIO *bio;
+    BIO *bio = NULL;
     const char txt[] = "Some example text to push to the BIO.";
     printf(testingFmt, "wolfSSL_BIO_get_len");
 
+    AssertIntEQ(wolfSSL_BIO_get_len(bio), BAD_FUNC_ARG);
+
     AssertNotNull(bio = wolfSSL_BIO_new(wolfSSL_BIO_s_mem()));
+
     AssertIntEQ(wolfSSL_BIO_write(bio, txt, sizeof(txt)), sizeof(txt));
     AssertIntEQ(wolfSSL_BIO_get_len(bio), sizeof(txt));
-
     BIO_free(bio);
+
+    AssertNotNull(bio = BIO_new_fd(STDOUT_FILENO, BIO_NOCLOSE));
+    AssertIntEQ(wolfSSL_BIO_get_len(bio), WOLFSSL_BAD_FILE);
+    BIO_free(bio);
+
     printf(resultFmt, passed);
 #endif
 }

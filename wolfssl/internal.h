@@ -1749,7 +1749,8 @@ WOLFSSL_LOCAL int DoFinished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 WOLFSSL_LOCAL int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                            word32 size, word32 totalSz, int sniff);
 #endif
-WOLFSSL_LOCAL int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx);
+WOLFSSL_LOCAL int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx,
+                                    int sniff);
 /* TLS v1.3 needs these */
 WOLFSSL_LOCAL int  HandleTlsResumption(WOLFSSL* ssl, int bogusID,
                                        Suites* clSuites);
@@ -3935,7 +3936,7 @@ struct WOLFSSL_X509 {
 #ifdef OPENSSL_ALL
     byte*            subjAltNameSrc;
 #endif
-    const byte*      CRLInfo;
+    byte*            CRLInfo;
     byte*            authInfo;
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
     byte*            authInfoCaIssuer;
