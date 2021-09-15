@@ -1700,9 +1700,6 @@ void* wolfSSL_BIO_get_data(WOLFSSL_BIO* bio)
  */
 long wolfSSL_BIO_set_nbio(WOLFSSL_BIO* bio, long on)
 {
-    #ifndef WOLFSSL_DTLS
-    (void)on;
-    #endif
     WOLFSSL_ENTER("wolfSSL_BIO_set_nbio");
 
     if (bio) {
@@ -1736,6 +1733,7 @@ long wolfSSL_BIO_set_nbio(WOLFSSL_BIO* bio, long on)
         }
     }
 
+    (void)on;
     return 1;
 }
 
