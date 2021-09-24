@@ -18270,7 +18270,7 @@ static int Set_SSL_min_proto_version(WOLFSSL* ssl, int ver)
 int wolfSSL_set_min_proto_version(WOLFSSL* ssl, int version)
 {
     int i;
-    int ret;
+    int ret = WOLFSSL_FAILURE;;
 
     WOLFSSL_ENTER("wolfSSL_set_min_proto_version");
 
@@ -18338,7 +18338,7 @@ static int Set_SSL_max_proto_version(WOLFSSL* ssl, int ver)
 int wolfSSL_set_max_proto_version(WOLFSSL* ssl, int version)
 {
     int i;
-    int ret;
+    int ret = WOLFSSL_FAILURE;;
 
     WOLFSSL_ENTER("wolfSSL_set_max_proto_version");
 
