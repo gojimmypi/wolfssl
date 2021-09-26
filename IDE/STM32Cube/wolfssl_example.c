@@ -463,12 +463,7 @@ static void ShowPeer(WOLFSSL* ssl)
     printf("%s %s\n", words[0], wolfSSL_get_version(ssl));
 
     cipher = wolfSSL_get_current_cipher(ssl);
-#ifdef HAVE_QSH
-    printf("%s %s%s\n", words[1], (wolfSSL_isQSH(ssl))? "QSH:": "",
-            wolfSSL_CIPHER_get_name(cipher));
-#else
     printf("%s %s\n", words[1], wolfSSL_CIPHER_get_name(cipher));
-#endif
 #if defined(HAVE_ECC) || !defined(NO_DH)
     if ((name = wolfSSL_get_curve_name(ssl)) != NULL)
         printf("%s %s\n", words[2], name);
@@ -595,9 +590,9 @@ static int ClientMemSend(info_t* info, char* buf, int sz)
 
 #ifndef BENCH_USE_NONBLOCK
     /* check for overflow */
-    if (info->to_client.write_idx + sz > MEM_BUFFER_SZ) {
+    if (info->to_server.write_idx + sz > MEM_BUFFER_SZ) {
         printf("ClientMemSend overflow %d %d %d\n",
-            info->to_client.write_idx, sz, MEM_BUFFER_SZ);
+            info->to_server.write_idx, sz, MEM_BUFFER_SZ);
         osSemaphoreRelease(info->server.mutex);
         return -1;
     }

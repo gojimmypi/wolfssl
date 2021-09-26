@@ -632,56 +632,108 @@ static void SetKeyShare(WOLFSSL* ssl, int onlyKeyShare, int useX25519,
         else if (useLibOqs == 1) {
     #ifdef HAVE_LIBOQS
             groups[count] = 0;
-            if (XSTRNCMP(oqsAlg, "KYBER512", XSTRLEN("KYBER512")) == 0) {
-                groups[count] = WOLFSSL_KYBER512;
+            if (XSTRNCMP(oqsAlg, "KYBER_LEVEL1", XSTRLEN("KYBER_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_KYBER_LEVEL1;
             }
-            else if (XSTRNCMP(oqsAlg, "KYBER768",
-                                XSTRLEN("KYBER768")) == 0) {
-                groups[count] = WOLFSSL_KYBER768;
+            else if (XSTRNCMP(oqsAlg, "KYBER_LEVEL3",
+                                XSTRLEN("KYBER_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_KYBER_LEVEL3;
             }
-            else if (XSTRNCMP(oqsAlg, "KYBER1024",
-                                XSTRLEN("KYBER1024")) == 0) {
-                groups[count] = WOLFSSL_KYBER1024;
+            else if (XSTRNCMP(oqsAlg, "KYBER_LEVEL5",
+                                XSTRLEN("KYBER_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_KYBER_LEVEL5;
             }
-            else if (XSTRNCMP(oqsAlg, "NTRU_HPS2048509",
-                                XSTRLEN("NTRU_HPS2048509")) == 0)  {
-                groups[count] = WOLFSSL_NTRU_HPS2048509;
+            else if (XSTRNCMP(oqsAlg, "NTRU_HPS_LEVEL1",
+                                XSTRLEN("NTRU_HPS_LEVEL1")) == 0)  {
+                groups[count] = WOLFSSL_NTRU_HPS_LEVEL1;
             }
-            else if (XSTRNCMP(oqsAlg, "NTRU_HPS2048677",
-                                XSTRLEN("NTRU_HPS2048677")) == 0) {
-                groups[count] = WOLFSSL_NTRU_HPS2048677;
+            else if (XSTRNCMP(oqsAlg, "NTRU_HPS_LEVEL3",
+                                XSTRLEN("NTRU_HPS_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_NTRU_HPS_LEVEL3;
             }
-            else if (XSTRNCMP(oqsAlg, "NTRU_HPS4096821",
-                                XSTRLEN("NTRU_HPS4096821")) == 0) {
-                groups[count] = WOLFSSL_NTRU_HPS4096821;
+            else if (XSTRNCMP(oqsAlg, "NTRU_HPS_LEVEL5",
+                                XSTRLEN("NTRU_HPS_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_NTRU_HPS_LEVEL5;
             }
-            else if (XSTRNCMP(oqsAlg, "NTRU_HRSS701",
-                                XSTRLEN("NTRU_HRSS701")) == 0) {
-                groups[count] = WOLFSSL_NTRU_HRSS701;
+            else if (XSTRNCMP(oqsAlg, "NTRU_HRSS_LEVEL3",
+                                XSTRLEN("NTRU_HRSS_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_NTRU_HRSS_LEVEL3;
             }
-            else if (XSTRNCMP(oqsAlg, "LIGHTSABER",
-                                XSTRLEN("LIGHTSABER")) == 0) {
-                groups[count] = WOLFSSL_LIGHTSABER;
+            else if (XSTRNCMP(oqsAlg, "SABER_LEVEL1",
+                                XSTRLEN("SABER_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_SABER_LEVEL1;
             }
-            else if (XSTRNCMP(oqsAlg, "SABER",
-                                XSTRLEN("SABER")) == 0) {
-                groups[count] = WOLFSSL_SABER;
+            else if (XSTRNCMP(oqsAlg, "SABER_LEVEL3",
+                                XSTRLEN("SABER_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_SABER_LEVEL3;
             }
-            else if (XSTRNCMP(oqsAlg, "FIRESABER",
-                                XSTRLEN("FIRESABER")) == 0) {
-                groups[count] = WOLFSSL_FIRESABER;
+            else if (XSTRNCMP(oqsAlg, "SABER_LEVEL5",
+                                XSTRLEN("SABER_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_SABER_LEVEL5;
             }
-            else if (XSTRNCMP(oqsAlg, "KYBER90S512",
-                                XSTRLEN("KYBER90S512")) == 0) {
-                groups[count] = WOLFSSL_KYBER90S512;
+            else if (XSTRNCMP(oqsAlg, "KYBER_90S_LEVEL1",
+                                XSTRLEN("KYBER_90S_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_KYBER_90S_LEVEL1;
             }
-            else if (XSTRNCMP(oqsAlg, "KYBER90S768",
-                                XSTRLEN("KYBER90S768")) == 0) {
-                groups[count] = WOLFSSL_KYBER90S768;
+            else if (XSTRNCMP(oqsAlg, "KYBER_90S_LEVEL3",
+                                XSTRLEN("KYBER_90S_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_KYBER_90S_LEVEL3;
             }
-            else if (XSTRNCMP(oqsAlg, "KYBER90S1024",
-                                XSTRLEN("KYBER90S1024")) == 0) {
-                groups[count] = WOLFSSL_KYBER90S1024;
+            else if (XSTRNCMP(oqsAlg, "KYBER_90S_LEVEL5",
+                                XSTRLEN("KYBER_90S_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_KYBER_90S_LEVEL5;
+            }
+            else if (XSTRNCMP(oqsAlg, "P256_NTRU_HPS_LEVEL1",
+                                XSTRLEN("P256_NTRU_HPS_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_P256_NTRU_HPS_LEVEL1;
+            }
+            else if (XSTRNCMP(oqsAlg, "P384_NTRU_HPS_LEVEL3",
+                                XSTRLEN("P384_NTRU_HPS_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_P384_NTRU_HPS_LEVEL3;
+            }
+            else if (XSTRNCMP(oqsAlg, "P521_NTRU_HPS_LEVEL5",
+                                XSTRLEN("P521_NTRU_HPS_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_P521_NTRU_HPS_LEVEL5;
+            }
+            else if (XSTRNCMP(oqsAlg, "P384_NTRU_HRSS_LEVEL3",
+                                XSTRLEN("P384_NTRU_HRSS_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_P384_NTRU_HRSS_LEVEL3;
+            }
+            else if (XSTRNCMP(oqsAlg, "P256_SABER_LEVEL1",
+                                XSTRLEN("P256_SABER_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_P256_SABER_LEVEL1;
+            }
+            else if (XSTRNCMP(oqsAlg, "P384_SABER_LEVEL3",
+                                XSTRLEN("P384_SABER_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_P384_SABER_LEVEL3;
+            }
+            else if (XSTRNCMP(oqsAlg, "P521_SABER_LEVEL5",
+                                XSTRLEN("P521_SABER_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_P521_SABER_LEVEL5;
+            }
+            else if (XSTRNCMP(oqsAlg, "P256_KYBER_LEVEL1",
+                                XSTRLEN("P256_KYBER_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_P256_KYBER_LEVEL1;
+            }
+            else if (XSTRNCMP(oqsAlg, "P384_KYBER_LEVEL3",
+                                XSTRLEN("P384_KYBER_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_P384_KYBER_LEVEL3;
+            }
+            else if (XSTRNCMP(oqsAlg, "P521_KYBER_LEVEL5",
+                                XSTRLEN("P521_KYBER_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_P521_KYBER_LEVEL5;
+            }
+            else if (XSTRNCMP(oqsAlg, "P256_KYBER_90S_LEVEL1",
+                                XSTRLEN("P256_KYBER_90S_LEVEL1")) == 0) {
+                groups[count] = WOLFSSL_P256_KYBER_90S_LEVEL1;
+            }
+            else if (XSTRNCMP(oqsAlg, "P384_KYBER_90S_LEVEL3",
+                                XSTRLEN("P384_KYBER_90S_LEVEL3")) == 0) {
+                groups[count] = WOLFSSL_P384_KYBER_90S_LEVEL3;
+            }
+            else if (XSTRNCMP(oqsAlg, "P521_KYBER_90S_LEVEL5",
+                                XSTRLEN("P521_KYBER_90S_LEVEL5")) == 0) {
+                groups[count] = WOLFSSL_P521_KYBER_90S_LEVEL5;
             }
 
             if (groups[count] == 0) {
@@ -807,9 +859,6 @@ static const char* server_usage_msg[][60] = {
         "-x          Print server errors but do not close connection\n",/* 27 */
         "-i          Loop indefinitely (allow repeated connections)\n", /* 28 */
         "-e          Echo data mode (return raw bytes received)\n",     /* 29 */
-#ifdef HAVE_NTRU
-        "-n          Use NTRU key (needed for NTRU suites)\n",          /* 30 */
-#endif
         "-B <num>    Benchmark throughput"
                             " using <num> bytes and print stats\n",     /* 31 */
 #ifdef HAVE_CRL
@@ -898,9 +947,13 @@ static const char* server_usage_msg[][60] = {
 #endif
 #ifdef HAVE_LIBOQS
         "--oqs <alg> Key Share with specified liboqs algorithm only\n",
-        "[KYBER512, KYBER768, KYBER1024, KYBER90S512, KYBER90S768, KYBER90S1024,\n",
-        " NTRU_HPS2048509, NTRU_HPS2048677, NTRU_HPS4096821, NTRU_HRSS701,\n",
-        " LIGHTSABER, SABER, FIRESABER]\n\n",                            /* 60 */
+        "[KYBER_LEVEL1, KYBER_LEVEL3, KYBER_LEVEL5, KYBER_90S_LEVEL1, KYBER_90S_LEVEL3, KYBER_90S_LEVEL5,\n",
+        " NTRU_HPS_LEVEL1, NTRU_HPS_LEVEL3, NTRU_HPS_LEVEL5, NTRU_HRSS_LEVEL3,\n",
+        " SABER_LEVEL1, SABER_LEVEL3, SABER_LEVEL5, P256_NTRU_HPS_LEVEL1,\n"
+        " P384_NTRU_HPS_LEVEL3, P521_NTRU_HPS_LEVEL5, P384_NTRU_HRSS_LEVEL3,\n"
+        " P256_SABER_LEVEL1, P384_SABER_LEVEL3, P521_SABER_LEVEL5, P256_KYBER_LEVEL1,\n"
+        " P384_KYBER_LEVEL3, P521_KYBER_LEVEL5, P256_KYBER_90S_LEVEL1, P384_KYBER_90S_LEVEL3,\n"
+        " P521_KYBER_90S_LEVEL5]\n\n",                          /* 60 */
 #endif
         "For simpler wolfSSL TLS server examples, visit\n"
         "https://github.com/wolfSSL/wolfssl-examples/tree/master/tls\n", /* 61 */
@@ -970,9 +1023,6 @@ static const char* server_usage_msg[][60] = {
         "-i          無期限にループする(繰り返し接続を許可)\n",         /* 28 */
         "-e          エコー・データモード"
                                    "(受け取ったバイトデータを返す)\n",  /* 29 */
-#ifdef HAVE_NTRU
-        "-n          NTRU鍵を使用する(NTRUスイートに必要)\n",           /* 30 */
-#endif
         "-B <num>    <num> バイトを用いてのベンチマーク・スループット"
                                           "測定と結果を出力する\n",     /* 31 */
 #ifdef HAVE_CRL
@@ -1061,9 +1111,13 @@ static const char* server_usage_msg[][60] = {
 #endif
 #ifdef HAVE_LIBOQS
         "--oqs <alg>  liboqs 名前付きグループとの鍵共有のみ\n",
-        "[KYBER512, KYBER768, KYBER1024, KYBER90S512, KYBER90S768, KYBER90S1024,\n",
-        " NTRU_HPS2048509, NTRU_HPS2048677, NTRU_HPS4096821, NTRU_HRSS701,\n",
-        " LIGHTSABER, SABER, FIRESABER]\n\n", /* 60 */
+        "[KYBER_LEVEL1, KYBER_LEVEL3, KYBER_LEVEL5, KYBER_90S_LEVEL1, KYBER_90S_LEVEL3, KYBER_90S_LEVEL5,\n",
+        " NTRU_HPS_LEVEL1, NTRU_HPS_LEVEL3, NTRU_HPS_LEVEL5, NTRU_HRSS_LEVEL3,\n",
+        " SABER_LEVEL1, SABER_LEVEL3, SABER_LEVEL5, P256_NTRU_HPS_LEVEL1,\n"
+        " P384_NTRU_HPS_LEVEL1, P521_NTRU_HPS_LEVEL3, P384_NTRU_HRS_LEVEL5,\n"
+        " P256_SABER_LEVEL1, P384_SABER_LEVEL3, P521_SABER_LEVEL5, P256_KYBER_LEVEL1,\n"
+        " P384_KYBER_LEVEL3, P521_KYBER_LEVEL5, P256_KYBER_90S_LEVEL1, P384_KYBER_90S_LEVEL3,\n"
+        " P521_KYBER_90S_LEVEL5]\n\n",                          /* 60 */
 #endif
         "For simpler wolfSSL TLS server examples, visit\n"
         "https://github.com/wolfSSL/wolfssl-examples/tree/master/tls\n", /* 61 */
@@ -1130,9 +1184,6 @@ static void Usage(void)
     printf("%s", msg[++msgId]);     /* -x */
     printf("%s", msg[++msgId]);     /* -i */
     printf("%s", msg[++msgId]);     /* -e */
-#ifdef HAVE_NTRU
-    printf("%s", msg[++msgId]);     /* -n */
-#endif
     printf("%s", msg[++msgId]);     /* -B */
 #ifdef HAVE_CRL
     printf("%s", msg[++msgId]);     /* -V */
@@ -1275,7 +1326,6 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     WOLFSSL_TEST_DTLS_CTX dtlsCtx;
 #endif
     int    needDH = 0;
-    int    useNtruKey   = 0;
     int    nonBlocking  = 0;
     int    simulateWantWrite = 0;
     int    fewerPackets = 0;
@@ -1432,7 +1482,6 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     (void)ourCert;
     (void)ourDhParam;
     (void)verifyCert;
-    (void)useNtruKey;
     (void)doCliCertCheck;
     (void)minDhKeyBits;
     (void)minRsaKeyBits;
@@ -1465,7 +1514,7 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
 
     /* Not Used: h, z, W, X, 7 */
     while ((ch = mygetopt_long(argc, argv, "?:"
-                "abc:defgijk:l:mnop:q:rstu;v:wxy"
+                "abc:defgijk:l:mop:q:rstu;v:wxy"
                 "A:B:C:D:E:FGH:IJKL:MNO:PQR:S:T;UVYZ:"
                 "01:23:4:5689"
                 "@#", long_options, 0)) != -1) {
@@ -1514,10 +1563,6 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
 
             case 'j' :
                 usePskPlus = 1;
-                break;
-
-            case 'n' :
-                useNtruKey = 1;
                 break;
 
             case 'u' :
@@ -2270,19 +2315,11 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     }
 #endif
 
-#ifdef HAVE_NTRU
-    if (useNtruKey) {
-        if (wolfSSL_CTX_use_NTRUPrivateKey_file(ctx, ourKey)
-                                != WOLFSSL_SUCCESS)
-            err_sys_ex(catastrophic, "can't load ntru key file, "
-                    "Please run from wolfSSL home dir");
-    }
-#endif
 #if !defined(NO_CERTS)
     #ifdef HAVE_PK_CALLBACKS
         pkCbInfo.ourKey = ourKey;
     #endif
-    if (!useNtruKey && (!usePsk || usePskPlus) && !useAnon
+    if ((!usePsk || usePskPlus) && !useAnon
         && !(loadCertKeyIntoSSLObj == 1)
     #if defined(HAVE_PK_CALLBACKS) && defined(TEST_PK_PRIVKEY)
         && !pkCallbacks
@@ -2553,7 +2590,7 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     #endif
     }
 
-    if (!useNtruKey && (!usePsk || usePskPlus) && !useAnon &&
+    if ((!usePsk || usePskPlus) && !useAnon &&
         loadCertKeyIntoSSLObj
     #if defined(HAVE_PK_CALLBACKS) && defined(TEST_PK_PRIVKEY)
         && !pkCallbacks
@@ -3238,7 +3275,6 @@ exit:
     (void) ourKey;
     (void) verifyCert;
     (void) doCliCertCheck;
-    (void) useNtruKey;
     (void) ourDhParam;
     (void) ourCert;
     (void) useX25519;

@@ -106,10 +106,6 @@
     #include <wolfcrypt/src/misc.c>
 #endif
 
-#ifdef HAVE_NTRU
-    #include "libntruencrypt/ntru_crypto.h"
-#endif
-
 #ifdef __sun
     #include <sys/filio.h>
 #endif
@@ -1558,19 +1554,25 @@ end:
         return (word32)(uTaskerSystemTick / (TICK_RESOLUTION / 1000));
     }
 #elif defined(WOLFSSL_LINUXKM)
-    /* The time in milliseconds.
-     * Used for tickets to represent difference between when first seen and when
-     * sending.
-     *
-     * returns the time in milliseconds as a 32-bit value.
-     */
     word32 TimeNowInMilliseconds(void)
     {
-    #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
-        return (word32)(ktime_get_real_ns() / (s64)1000000);
-    #else
-        return (word32)(ktime_get_real_ns() / (ktime_t)1000000);
-    #endif
+        s64 t;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+        struct timespec ts;
+        getnstimeofday(&ts);
+        t = ts.tv_sec * (s64)1000;
+        t += ts.tv_nsec / (s64)1000000;
+#else
+        struct timespec64 ts;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+        ts = current_kernel_time64();
+#else
+        ktime_get_coarse_real_ts64(&ts);
+#endif
+        t = ts.tv_sec * 1000L;
+        t += ts.tv_nsec / 1000000L;
+#endif
+        return (word32)t;
     }
 #elif defined(WOLFSSL_QNX_CAAM)
     word32 TimeNowInMilliseconds(void)
@@ -6868,6 +6870,16 @@ int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
     if (sniff == NO_SNIFF) {
         ret = BuildTls13HandshakeHmac(ssl, secret, mac, &finishedSz);
+    #if defined(OPENSSL_ALL) || defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
+        if (ssl->options.side == WOLFSSL_CLIENT_END) {
+            XMEMCPY(ssl->serverFinished, mac, finishedSz);
+            ssl->serverFinished_len = finishedSz;
+        }
+        else {
+            XMEMCPY(ssl->clientFinished, mac, finishedSz);
+            ssl->clientFinished_len = finishedSz;
+        }
+    #endif
         if (ret != 0)
             return ret;
         if (size != finishedSz)
@@ -6983,7 +6995,16 @@ static int SendTls13Finished(WOLFSSL* ssl)
     ret = BuildTls13HandshakeHmac(ssl, secret, &input[headerSz], NULL);
     if (ret != 0)
         return ret;
-
+    #if defined(OPENSSL_ALL) || defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
+        if (ssl->options.side == WOLFSSL_CLIENT_END) {
+            XMEMCPY(ssl->clientFinished, &input[headerSz], finishedSz);
+            ssl->clientFinished_len = finishedSz;
+        }
+        else {
+            XMEMCPY(ssl->serverFinished, &input[headerSz], finishedSz);
+            ssl->serverFinished_len = finishedSz;
+        }
+    #endif
     /* This message is always encrypted. */
     sendSz = BuildTls13Message(ssl, output, outputSz, input,
                                headerSz + finishedSz, handshake, 1, 0, 0);
@@ -9057,10 +9078,9 @@ void wolfSSL_set_psk_client_cs_callback(WOLFSSL* ssl,
         keySz = ssl->buffers.keySz;
     #endif
     InitSuites(ssl->suites, ssl->version, keySz, haveRSA, TRUE,
-               ssl->options.haveDH, ssl->options.haveNTRU,
-               ssl->options.haveECDSAsig, ssl->options.haveECC,
-               ssl->options.haveStaticECC, ssl->options.haveAnon,
-               ssl->options.side);
+               ssl->options.haveDH, ssl->options.haveECDSAsig,
+               ssl->options.haveECC, ssl->options.haveStaticECC,
+               ssl->options.haveAnon, ssl->options.side);
 }
 
 /* Set the PSK callback that returns the cipher suite for a client to use
@@ -9108,10 +9128,9 @@ void wolfSSL_set_psk_client_tls13_callback(WOLFSSL* ssl,
         keySz = ssl->buffers.keySz;
     #endif
     InitSuites(ssl->suites, ssl->version, keySz, haveRSA, TRUE,
-               ssl->options.haveDH, ssl->options.haveNTRU,
-               ssl->options.haveECDSAsig, ssl->options.haveECC,
-               ssl->options.haveStaticECC, ssl->options.haveAnon,
-               ssl->options.side);
+               ssl->options.haveDH, ssl->options.haveECDSAsig,
+               ssl->options.haveECC, ssl->options.haveStaticECC,
+               ssl->options.haveAnon, ssl->options.side);
 }
 
 /* Set the PSK callback that returns the cipher suite for a server to use
@@ -9156,10 +9175,9 @@ void wolfSSL_set_psk_server_tls13_callback(WOLFSSL* ssl,
         keySz = ssl->buffers.keySz;
     #endif
     InitSuites(ssl->suites, ssl->version, keySz, haveRSA, TRUE,
-               ssl->options.haveDH, ssl->options.haveNTRU,
-               ssl->options.haveECDSAsig, ssl->options.haveECC,
-               ssl->options.haveStaticECC, ssl->options.haveAnon,
-               ssl->options.side);
+               ssl->options.haveDH, ssl->options.haveECDSAsig,
+               ssl->options.haveECC, ssl->options.haveStaticECC,
+               ssl->options.haveAnon, ssl->options.side);
 }
 
 /* Get name of first supported cipher suite that uses the hash indicated.

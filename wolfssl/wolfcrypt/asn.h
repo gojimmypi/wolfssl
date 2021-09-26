@@ -677,6 +677,7 @@ enum
     NID_sha512 = 674,
     NID_sha512_224 = 1094,
     NID_sha512_256 = 1095,
+    NID_pkcs9_unstructuredName = 49,
     NID_pkcs9_challengePassword = 54,
     NID_hw_name_oid = 73,
     NID_id_pkix_OCSP_basic = 74,
@@ -782,6 +783,7 @@ enum Misc_ASN {
     RSA_INTS            =   8,     /* RSA ints in private key */
     DSA_PARAM_INTS      =   3,     /* DSA paramater ints */
     RSA_PUB_INTS        =   2,     /* RSA ints in public key */
+    DSA_PUB_INTS        =   4,     /* DSA ints in public key */
     DSA_INTS            =   5,     /* DSA ints in private key */
     MIN_DATE_SIZE       =  12,
     MAX_DATE_SIZE       =  32,
@@ -802,6 +804,7 @@ enum Misc_ASN {
     MAX_SIG_SZ          = 256,
     MAX_ALGO_SZ         =  20,
     MAX_SHORT_SZ        =   6,     /* asn int + byte len + 4 byte length */
+    MAX_LENGTH_SZ       =   4,     /* Max length size for DER encoding */
     MAX_SEQ_SZ          =   5,     /* enum(seq | con) + length(4) */
     MAX_SET_SZ          =   5,     /* enum(set | con) + length(4) */
     MAX_OCTET_STR_SZ    =   5,     /* enum(set | con) + length(4) */
@@ -812,9 +815,12 @@ enum Misc_ASN {
     MAX_ENCODED_DIG_SZ  =  64 + MAX_ENCODED_DIG_ASN_SZ, /* asn header + sha512 */
     MAX_RSA_INT_SZ      = 517,     /* RSA raw sz 4096 for bits + tag + len(4) */
     MAX_DSA_INT_SZ      = 389,     /* DSA raw sz 3072 for bits + tag + len(4) */
-    MAX_NTRU_KEY_SZ     = 610,     /* NTRU 112 bit public key */
-    MAX_NTRU_ENC_SZ     = 628,     /* NTRU 112 bit DER public encoding */
-    MAX_LENGTH_SZ       =   4,     /* Max length size for DER encoding */
+    MAX_DSA_PUBKEY_SZ   = (DSA_PUB_INTS * MAX_DSA_INT_SZ) + (2 * MAX_SEQ_SZ) +
+                          2 + MAX_LENGTH_SZ, /* Maximum size of a DSA public
+                                      key taken from wc_SetDsaPublicKey. */
+    MAX_DSA_PRIVKEY_SZ  = (DSA_INTS * MAX_DSA_INT_SZ) + MAX_SEQ_SZ +
+                          MAX_VERSION_SZ, /* Maximum size of a DSA Private
+                                      key taken from DsaKeyIntsToDer. */
     MAX_RSA_E_SZ        =  16,     /* Max RSA public e size */
     MAX_CA_SZ           =  32,     /* Max encoded CA basic constraint length */
     MAX_SN_SZ           =  35,     /* Max encoded serial number (INT) length */
@@ -857,8 +863,7 @@ enum Misc_ASN {
     MAX_OCSP_EXT_SZ     = 58,      /* Max OCSP Extension length */
     MAX_OCSP_NONCE_SZ   = 16,      /* OCSP Nonce size           */
     EIGHTK_BUF          = 8192,    /* Tmp buffer size           */
-    MAX_PUBLIC_KEY_SZ   = MAX_NTRU_ENC_SZ + MAX_ALGO_SZ + MAX_SEQ_SZ * 2,
-                                   /* use bigger NTRU size */
+    MAX_PUBLIC_KEY_SZ   = MAX_DSA_PUBKEY_SZ + MAX_ALGO_SZ + MAX_SEQ_SZ * 2,
 #ifdef WOLFSSL_ENCRYPTED_KEYS
     HEADER_ENCRYPTED_KEY_SIZE = 88,/* Extra header size for encrypted key */
 #else
@@ -964,7 +969,6 @@ enum Block_Sum {
 enum Key_Sum {
     DSAk     = 515,
     RSAk     = 645,
-    NTRUk    = 274,
     ECDSAk   = 518,
     ED25519k = 256, /* 1.3.101.112 */
     X25519k  = 254, /* 1.3.101.110 */
@@ -1092,6 +1096,7 @@ enum KeyIdType {
 
 #ifdef WOLFSSL_CERT_REQ
 enum CsrAttrType {
+    UNSTRUCTURED_NAME_OID = 654,
     CHALLENGE_PASSWORD_OID = 659,
     SERIAL_NUMBER_OID = 94,
     EXTENSION_REQUEST_OID = 666,
@@ -1873,7 +1878,6 @@ enum cert_enums {
     EMAIL_JOINT_LEN =  9,
     PILOT_JOINT_LEN =  10,
     RSA_KEY         = 10,
-    NTRU_KEY        = 11,
     ECC_KEY         = 12,
     ED25519_KEY     = 13,
     ED448_KEY       = 14,

@@ -320,6 +320,16 @@ decouple library dependencies with standard string, memory and so on.
         #define FALL_THROUGH
     #endif
 
+    #ifndef WARN_UNUSED_RESULT
+        #if defined(WOLFSSL_LINUXKM) && defined(__must_check)
+            #define WARN_UNUSED_RESULT __must_check
+        #elif defined(__GNUC__) && (__GNUC__ >= 4)
+            #define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+        #else
+            #define WARN_UNUSED_RESULT
+        #endif
+    #endif /* WARN_UNUSED_RESULT */
+
     /* Micrium will use Visual Studio for compilation but not the Win32 API */
     #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) && \
         !defined(FREERTOS_TCP) && !defined(EBSNET) && \
@@ -804,7 +814,6 @@ decouple library dependencies with standard string, memory and so on.
         DYNAMIC_TYPE_SEED         = 83,
         DYNAMIC_TYPE_SYMMETRIC_KEY= 84,
         DYNAMIC_TYPE_ECC_BUFFER   = 85,
-        DYNAMIC_TYPE_QSH          = 86,
         DYNAMIC_TYPE_SALT         = 87,
         DYNAMIC_TYPE_HASH_TMP     = 88,
         DYNAMIC_TYPE_BLOB         = 89,
@@ -1080,7 +1089,7 @@ decouple library dependencies with standard string, memory and so on.
 
 
     #if defined(HAVE_STACK_SIZE)
-        #define EXIT_TEST(ret) return (void*)((size_t)(ret))
+        #define EXIT_TEST(ret) return (THREAD_RETURN)((size_t)(ret))
     #else
         #define EXIT_TEST(ret) return ret
     #endif

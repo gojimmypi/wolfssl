@@ -366,7 +366,7 @@ struct WOLFSSL_EVP_PKEY {
 #endif
 
     union {
-        char* ptr; /* der format of key / or raw for NTRU */
+        char* ptr; /* der format of key */
     } pkey;
 #if (defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL))
     #ifndef NO_RSA
@@ -776,7 +776,7 @@ enum SNICbReturn {
 #define WOLFSSL_MAX_MASTER_KEY_LENGTH 48
 /* Maximum number of groups that can be set */
 #ifdef HAVE_LIBOQS
-#define WOLFSSL_MAX_GROUP_COUNT       23
+#define WOLFSSL_MAX_GROUP_COUNT       36
 #else
 #define WOLFSSL_MAX_GROUP_COUNT       10
 #endif
@@ -968,12 +968,6 @@ WOLFSSL_API int wolfSSL_use_RSAPrivateKey_file(WOLFSSL*, const char*, int);
     WOLFSSL_API int wolfSSL_CTX_der_load_verify_locations(WOLFSSL_CTX*,
                                                     const char*, int);
 #endif
-
-#ifdef HAVE_NTRU
-    WOLFSSL_API int wolfSSL_CTX_use_NTRUPrivateKey_file(WOLFSSL_CTX*, const char*);
-    /* load NTRU private key blob */
-#endif
-
 #endif /* !NO_FILESYSTEM && !NO_CERTS */
 
 WOLFSSL_API WOLFSSL_CTX* wolfSSL_CTX_new_ex(WOLFSSL_METHOD* method, void* heap);
@@ -1509,6 +1503,7 @@ WOLFSSL_API int wolfSSL_BIO_meth_set_destroy(WOLFSSL_BIO_METHOD*, wolfSSL_BIO_me
 WOLFSSL_API WOLFSSL_BIO* wolfSSL_BIO_new_mem_buf(const void* buf, int len);
 
 WOLFSSL_API long wolfSSL_BIO_set_ssl(WOLFSSL_BIO*, WOLFSSL*, int flag);
+WOLFSSL_API long wolfSSL_BIO_get_ssl(WOLFSSL_BIO*, WOLFSSL**);
 #ifndef NO_FILESYSTEM
 WOLFSSL_API long wolfSSL_BIO_set_fd(WOLFSSL_BIO* b, int fd, int flag);
 #endif
@@ -1525,11 +1520,14 @@ WOLFSSL_API WOLFSSL_BIO_METHOD *wolfSSL_BIO_s_socket(void);
 
 WOLFSSL_API WOLFSSL_BIO *wolfSSL_BIO_new_connect(const char *str);
 WOLFSSL_API WOLFSSL_BIO *wolfSSL_BIO_new_accept(const char *port);
+WOLFSSL_API long wolfSSL_BIO_set_conn_hostname(WOLFSSL_BIO*, char*);
 WOLFSSL_API long wolfSSL_BIO_set_conn_port(WOLFSSL_BIO *b, char* port);
 WOLFSSL_API long wolfSSL_BIO_do_connect(WOLFSSL_BIO *b);
 WOLFSSL_API int wolfSSL_BIO_do_accept(WOLFSSL_BIO *b);
+WOLFSSL_API WOLFSSL_BIO* wolfSSL_BIO_new_ssl_connect(WOLFSSL_CTX*);
 
 WOLFSSL_API long wolfSSL_BIO_do_handshake(WOLFSSL_BIO *b);
+WOLFSSL_API void wolfSSL_BIO_ssl_shutdown(WOLFSSL_BIO*);
 
 WOLFSSL_API long wolfSSL_BIO_ctrl(WOLFSSL_BIO *bp, int cmd, long larg, void *parg);
 WOLFSSL_API long wolfSSL_BIO_int_ctrl(WOLFSSL_BIO *bp, int cmd, long larg, int iarg);
@@ -1803,6 +1801,7 @@ WOLFSSL_API int wolfSSL_ASN1_TIME_print(WOLFSSL_BIO*, const WOLFSSL_ASN1_TIME*);
 
 WOLFSSL_API char* wolfSSL_ASN1_TIME_to_string(WOLFSSL_ASN1_TIME* t,
                                                             char* buf, int len);
+WOLFSSL_API int wolfSSL_ASN1_TIME_to_tm(const WOLFSSL_ASN1_TIME*, struct tm*);
 WOLFSSL_API int  wolfSSL_ASN1_INTEGER_cmp(const WOLFSSL_ASN1_INTEGER*,
                                        const WOLFSSL_ASN1_INTEGER*);
 WOLFSSL_API long wolfSSL_ASN1_INTEGER_get(const WOLFSSL_ASN1_INTEGER*);
@@ -2143,6 +2142,15 @@ enum {
     X509_V_ERR_NO_EXPLICIT_POLICY,
     X509_V_ERR_UNNESTED_RESOURCE,
     X509_V_ERR_APPLICATION_VERIFICATION,
+    X509_V_ERR_CRL_PATH_VALIDATION_ERROR,
+    X509_V_ERR_DIFFERENT_CRL_SCOPE,
+    X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE,
+    X509_V_ERR_PERMITTED_VIOLATION,
+    X509_V_ERR_EXCLUDED_VIOLATION,
+    X509_V_ERR_SUBTREE_MINMAX,
+    X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE,
+    X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX,
+    X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
 
     X509_R_CERT_ALREADY_IN_HASH_TABLE,
 
@@ -2192,7 +2200,6 @@ WOLFSSL_API void wolfSSL_ERR_print_errors(WOLFSSL_BIO *bio);
     #define SSL_FILETYPE_ASN1 WOLFSSL_FILETYPE_ASN1
     #define SSL_FILETYPE_PEM WOLFSSL_FILETYPE_PEM
     #define SSL_FILETYPE_DEFAULT WOLFSSL_FILETYPE_DEFAULT
-    #define SSL_FILETYPE_RAW WOLFSSL_FILETYPE_RAW
 
     #define SSL_VERIFY_NONE WOLFSSL_VERIFY_NONE
     #define SSL_VERIFY_PEER WOLFSSL_VERIFY_PEER
@@ -2263,7 +2270,6 @@ enum { /* ssl Constants */
     WOLFSSL_FILETYPE_ASN1    = 2,
     WOLFSSL_FILETYPE_PEM     = 1,
     WOLFSSL_FILETYPE_DEFAULT = 2, /* ASN1 */
-    WOLFSSL_FILETYPE_RAW     = 3, /* NTRU raw key blob */
 
     WOLFSSL_VERIFY_NONE                 = 0,
     WOLFSSL_VERIFY_PEER                 = 1 << 0,
@@ -2437,11 +2443,9 @@ WOLFSSL_API int wolfSSL_want(WOLFSSL*);
 WOLFSSL_API int wolfSSL_want_read(WOLFSSL*);
 WOLFSSL_API int wolfSSL_want_write(WOLFSSL*);
 
-#if !defined(NO_FILESYSTEM) && defined (OPENSSL_EXTRA)
 #include <stdarg.h> /* var_arg */
 WOLFSSL_API int wolfSSL_BIO_vprintf(WOLFSSL_BIO* bio, const char* format,
                                                             va_list args);
-#endif
 WOLFSSL_API int wolfSSL_BIO_printf(WOLFSSL_BIO*, const char*, ...);
 WOLFSSL_API int wolfSSL_BIO_dump(WOLFSSL_BIO *bio, const char*, int);
 WOLFSSL_API int wolfSSL_ASN1_UTCTIME_print(WOLFSSL_BIO*,
@@ -2450,8 +2454,8 @@ WOLFSSL_API int wolfSSL_ASN1_GENERALIZEDTIME_print(WOLFSSL_BIO*,
                                          const WOLFSSL_ASN1_GENERALIZEDTIME*);
 WOLFSSL_API void wolfSSL_ASN1_GENERALIZEDTIME_free(WOLFSSL_ASN1_GENERALIZEDTIME*);
 WOLFSSL_API int wolfSSL_ASN1_TIME_check(const WOLFSSL_ASN1_TIME*);
-WOLFSSL_API int wolfSSL_ASN1_TIME_diff(int *pday, int *psec,
-                   const WOLFSSL_ASN1_TIME *from, const WOLFSSL_ASN1_TIME *to);
+WOLFSSL_API int wolfSSL_ASN1_TIME_diff(int*, int*, const WOLFSSL_ASN1_TIME*,
+    const WOLFSSL_ASN1_TIME*);
 #ifdef OPENSSL_EXTRA
 WOLFSSL_API WOLFSSL_ASN1_TIME *wolfSSL_ASN1_TIME_set(WOLFSSL_ASN1_TIME *s, time_t t);
 WOLFSSL_API int wolfSSL_ASN1_TIME_set_string(WOLFSSL_ASN1_TIME *s, const char *str);
@@ -3510,23 +3514,54 @@ enum {
 
 #ifdef HAVE_LIBOQS
     /* These group numbers were taken from liboqs' openssl fork, see:
-    https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/
-    oqs-template/oqs-kem-info.md */
-    WOLFSSL_OQS_MIN         = 532,
-    WOLFSSL_NTRU_HPS2048509 = 532,
-    WOLFSSL_NTRU_HPS2048677 = 533,
-    WOLFSSL_NTRU_HPS4096821 = 534,
-    WOLFSSL_NTRU_HRSS701    = 535,
-    WOLFSSL_LIGHTSABER      = 536,
-    WOLFSSL_SABER           = 537,
-    WOLFSSL_FIRESABER       = 538,
-    WOLFSSL_KYBER512        = 570,
-    WOLFSSL_KYBER768        = 572,
-    WOLFSSL_KYBER1024       = 573,
-    WOLFSSL_KYBER90S512     = 574,
-    WOLFSSL_KYBER90S768     = 575,
-    WOLFSSL_KYBER90S1024    = 576,
-    WOLFSSL_OQS_MAX         = 576,
+     * https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/
+     * oqs-template/oqs-kem-info.md.
+     *
+     * The levels in the group name refer to the claimed NIST level of each
+     * parameter set. The associated parameter set name is listed as a comment
+     * beside the group number. Please see the NIST PQC Competition's submitted
+     * papers for more details.
+     *
+     * LEVEL1 means that an attack on that parameter set would reqire the same
+     * or more resources as a key search on AES 128. LEVEL3 would reqire the
+     * same or more resources as a key search on AES 192. LEVEL5 would require
+     * the same or more resources as a key search on AES 256. None of the
+     * algorithms have LEVEL2 and LEVEL4 because none of these submissions
+     * included them. */
+
+    WOLFSSL_OQS_MIN               = 532, 
+    WOLFSSL_OQS_SIMPLE_MIN        = 532,
+    WOLFSSL_NTRU_HPS_LEVEL1       = 532, /* NTRU_HPS2048509 */
+    WOLFSSL_NTRU_HPS_LEVEL3       = 533, /* NTRU_HPS2048677 */
+    WOLFSSL_NTRU_HPS_LEVEL5       = 534, /* NTRU_HPS4096821 */
+    WOLFSSL_NTRU_HRSS_LEVEL3      = 535, /* NTRU_HRSS701 */
+    WOLFSSL_SABER_LEVEL1          = 536, /* LIGHTSABER */
+    WOLFSSL_SABER_LEVEL3          = 537, /* SABER */
+    WOLFSSL_SABER_LEVEL5          = 538, /* FIRESABER */
+    WOLFSSL_KYBER_LEVEL1          = 570, /* KYBER_512 */
+    WOLFSSL_KYBER_LEVEL3          = 572, /* KYBER_768 */
+    WOLFSSL_KYBER_LEVEL5          = 573, /* KYBER_1024 */
+    WOLFSSL_KYBER_90S_LEVEL1      = 574, /* KYBER_90S_512 */
+    WOLFSSL_KYBER_90S_LEVEL3      = 575, /* KYBER_90S_768 */
+    WOLFSSL_KYBER_90S_LEVEL5      = 576, /* KYBER_90S_1024 */
+    WOLFSSL_OQS_SIMPLE_MAX        = 576,
+
+    WOLFSSL_OQS_HYBRID_MIN        = 12052,
+    WOLFSSL_P256_NTRU_HPS_LEVEL1  = 12052,
+    WOLFSSL_P384_NTRU_HPS_LEVEL3  = 12053,
+    WOLFSSL_P521_NTRU_HPS_LEVEL5  = 12054,
+    WOLFSSL_P384_NTRU_HRSS_LEVEL3 = 12055,
+    WOLFSSL_P256_SABER_LEVEL1     = 12056,
+    WOLFSSL_P384_SABER_LEVEL3     = 12057,
+    WOLFSSL_P521_SABER_LEVEL5     = 12058,
+    WOLFSSL_P256_KYBER_LEVEL1     = 12090,
+    WOLFSSL_P384_KYBER_LEVEL3     = 12092,
+    WOLFSSL_P521_KYBER_LEVEL5     = 12093,
+    WOLFSSL_P256_KYBER_90S_LEVEL1 = 12094,
+    WOLFSSL_P384_KYBER_90S_LEVEL3 = 12095,
+    WOLFSSL_P521_KYBER_90S_LEVEL5 = 12096,
+    WOLFSSL_OQS_HYBRID_MAX        = 12096,
+    WOLFSSL_OQS_MAX               = 12096,
 #endif
 };
 
@@ -3638,30 +3673,6 @@ WOLFSSL_API int wolfSSL_CTX_set_num_tickets(WOLFSSL_CTX* ctx, size_t mxTickets);
 #endif /* NO_WOLFSSL_SERVER */
 
 #endif /* HAVE_SESSION_TICKET */
-
-#ifdef HAVE_QSH
-/* Quantum-safe Crypto Schemes */
-enum {
-    WOLFSSL_NTRU_EESS439 = 0x0101, /* max plaintext length of 65  */
-    WOLFSSL_NTRU_EESS593 = 0x0102, /* max plaintext length of 86  */
-    WOLFSSL_NTRU_EESS743 = 0x0103, /* max plaintext length of 106 */
-    WOLFSSL_LWE_XXX  = 0x0201,     /* Learning With Error encryption scheme */
-    WOLFSSL_HFE_XXX  = 0x0301,     /* Hidden Field Equation scheme */
-    WOLFSSL_NULL_QSH = 0xFFFF      /* QSHScheme is not used */
-};
-
-
-/* test if the connection is using a QSH secure connection return 1 if so */
-WOLFSSL_API int wolfSSL_isQSH(WOLFSSL* ssl);
-WOLFSSL_API int wolfSSL_UseSupportedQSH(WOLFSSL* ssl, unsigned short name);
-#ifndef NO_WOLFSSL_CLIENT
-    /* user control over sending client public key in hello
-       when flag = 1 will send keys if flag is 0 or function is not called
-       then will not send keys in the hello extension */
-    WOLFSSL_API int wolfSSL_UseClientQSHKeys(WOLFSSL* ssl, unsigned char flag);
-#endif
-
-#endif /* QSH */
 
 /* TLS Extended Master Secret Extension */
 WOLFSSL_API int wolfSSL_DisableExtendedMasterSecret(WOLFSSL* ssl);
@@ -3844,6 +3855,9 @@ WOLFSSL_API void* wolfSSL_X509_get_ext_d2i(const WOLFSSL_X509* x509,
 
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL)
 #ifndef NO_CERTS
+WOLFSSL_API unsigned int wolfSSL_X509_get_extension_flags(WOLFSSL_X509*);
+WOLFSSL_API unsigned int wolfSSL_X509_get_key_usage(WOLFSSL_X509*);
+WOLFSSL_API unsigned int wolfSSL_X509_get_extended_key_usage(WOLFSSL_X509*);
 WOLFSSL_API int wolfSSL_X509_get_ext_count(const WOLFSSL_X509* passedCert);
 WOLFSSL_API int wolfSSL_X509_get_ext_by_NID(const WOLFSSL_X509 *x, int nid, int lastpos);
 WOLFSSL_API int wolfSSL_X509_add_ext(WOLFSSL_X509 *x, WOLFSSL_X509_EXTENSION *ex, int loc);
@@ -3956,10 +3970,17 @@ WOLFSSL_API int wolfSSL_set_min_proto_version(WOLFSSL*, int);
 WOLFSSL_API int wolfSSL_set_max_proto_version(WOLFSSL*, int);
 WOLFSSL_API int wolfSSL_CTX_get_min_proto_version(WOLFSSL_CTX*);
 
-WOLFSSL_API int wolfSSL_CTX_use_PrivateKey(WOLFSSL_CTX *ctx, WOLFSSL_EVP_PKEY *pkey);
-WOLFSSL_API WOLFSSL_X509 *wolfSSL_PEM_read_bio_X509(WOLFSSL_BIO *bp, WOLFSSL_X509 **x, pem_password_cb *cb, void *u);
+WOLFSSL_API int wolfSSL_CTX_use_PrivateKey(WOLFSSL_CTX *ctx,
+    WOLFSSL_EVP_PKEY *pkey);
+WOLFSSL_API WOLFSSL_X509 *wolfSSL_PEM_read_bio_X509(WOLFSSL_BIO *bp,
+    WOLFSSL_X509 **x, pem_password_cb *cb, void *u);
 #ifdef WOLFSSL_CERT_REQ
-WOLFSSL_API WOLFSSL_X509 *wolfSSL_PEM_read_bio_X509_REQ(WOLFSSL_BIO *bp, WOLFSSL_X509 **x, pem_password_cb *cb, void *u);
+WOLFSSL_API WOLFSSL_X509 *wolfSSL_PEM_read_bio_X509_REQ(WOLFSSL_BIO *bp,
+    WOLFSSL_X509 **x, pem_password_cb *cb, void *u);
+#ifndef NO_FILESYSTEM
+WOLFSSL_API WOLFSSL_X509* wolfSSL_PEM_read_X509_REQ(XFILE, WOLFSSL_X509**,
+    pem_password_cb*, void*);
+#endif
 #endif
 WOLFSSL_API WOLFSSL_X509_CRL *wolfSSL_PEM_read_bio_X509_CRL(WOLFSSL_BIO *bp,
         WOLFSSL_X509_CRL **x, pem_password_cb *cb, void *u);
@@ -4137,8 +4158,8 @@ WOLFSSL_API WOLFSSL_DH *wolfSSL_DH_generate_parameters(int prime_len, int genera
 WOLFSSL_API int wolfSSL_DH_generate_parameters_ex(WOLFSSL_DH*, int, int,
                            void (*callback) (int, int, void *));
 
+WOLFSSL_API int wolfSSL_ERR_load_ERR_strings(void);
 WOLFSSL_API void wolfSSL_ERR_load_crypto_strings(void);
-
 WOLFSSL_API unsigned long wolfSSL_ERR_peek_last_error(void);
 
 WOLFSSL_API int wolfSSL_FIPS_mode(void);

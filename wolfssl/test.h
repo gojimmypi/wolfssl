@@ -261,10 +261,18 @@
     #elif defined(WOLFSSL_TIRTOS)
         typedef void          THREAD_RETURN;
         typedef Task_Handle   THREAD_TYPE;
+        #ifdef HAVE_STACK_SIZE
+          #undef EXIT_TEST
+          #define EXIT_TEST(ret)
+        #endif
         #define WOLFSSL_THREAD
     #elif defined(WOLFSSL_ZEPHYR)
         typedef void            THREAD_RETURN;
         typedef struct k_thread THREAD_TYPE;
+        #ifdef HAVE_STACK_SIZE
+          #undef EXIT_TEST
+          #define EXIT_TEST(ret)
+        #endif
         #define WOLFSSL_THREAD
     #else
         typedef unsigned int  THREAD_RETURN;
@@ -335,8 +343,6 @@
 #define cliCertFileExt    "certs/client-cert-ext.pem"
 #define cliCertDerFileExt "certs/client-cert-ext.der"
 #define cliKeyFile        "certs/client-key.pem"
-#define ntruCertFile      "certs/ntru-cert.pem"
-#define ntruKeyFile       "certs/ntru-key.raw"
 #define dhParamFile       "certs/dh2048.pem"
 #define cliEccKeyFile     "certs/ecc-client-key.pem"
 #define cliEccCertFile    "certs/client-ecc-cert.pem"
@@ -369,8 +375,6 @@
 #define cliCertFileExt    "./certs/client-cert-ext.pem"
 #define cliCertDerFileExt "./certs/client-cert-ext.der"
 #define cliKeyFile        "./certs/client-key.pem"
-#define ntruCertFile      "./certs/ntru-cert.pem"
-#define ntruKeyFile       "./certs/ntru-key.raw"
 #define dhParamFile       "./certs/dh2048.pem"
 #define cliEccKeyFile     "./certs/ecc-client-key.pem"
 #define cliEccCertFile    "./certs/client-ecc-cert.pem"
@@ -975,12 +979,7 @@ static WC_INLINE void showPeerEx(WOLFSSL* ssl, int lng_index)
     printf("%s %s\n", words[0], wolfSSL_get_version(ssl));
 
     cipher = wolfSSL_get_current_cipher(ssl);
-#ifdef HAVE_QSH
-    printf("%s %s%s\n", words[1], (wolfSSL_isQSH(ssl))? "QSH:": "",
-            wolfSSL_CIPHER_get_name(cipher));
-#else
     printf("%s %s\n", words[1], wolfSSL_CIPHER_get_name(cipher));
-#endif
 #ifdef OPENSSL_EXTRA
     if (wolfSSL_get_signature_nid(ssl, &nid) == WOLFSSL_SUCCESS) {
         printf("%s %s\n", words[2], OBJ_nid2sn(nid));
@@ -1042,7 +1041,60 @@ static WC_INLINE void build_addr(SOCKADDR_IN_T* addr, const char* peer,
 #ifndef TEST_IPV6
     /* peer could be in human readable form */
     if ( ((size_t)peer != INADDR_ANY) && isalpha((int)peer[0])) {
-    #ifndef WOLFSSL_USE_GETADDRINFO
+    #ifdef WOLFSSL_USE_POPEN_HOST
+        char host_ipaddr[4] = { 127, 0, 0, 1 };
+        int found = 1;
+
+        if ((XSTRNCMP(peer, "localhost", 10) != 0) &&
+            (XSTRNCMP(peer, "127.0.0.1", 10) != 0)) {
+            FILE* fp;
+            char host_out[100];
+            char cmd[100];
+
+            XSTRNCPY(cmd, "host ", 6);
+            XSTRNCAT(cmd, peer, 99 - XSTRLEN(cmd));
+            found = 0;
+            fp = popen(cmd, "r");
+            if (fp != NULL) {
+                while (fgets(host_out, sizeof(host_out), fp) != NULL) {
+                    int i;
+                    int j = 0;
+                    for (j = 0; host_out[j] != '\0'; j++) {
+                        if ((host_out[j] >= '0') && (host_out[j] <= '9')) {
+                            break;
+                        }
+                    }
+                    found = (host_out[j] >= '0') && (host_out[j] <= '9');
+                    if (!found) {
+                        continue;
+                    }
+
+                    for (i = 0; i < 4; i++) {
+                        host_ipaddr[i] = atoi(host_out + j);
+                        while ((host_out[j] >= '0') && (host_out[j] <= '9')) {
+                            j++;
+                        }
+                        if (host_out[j] == '.') {
+                            j++;
+                            found &= (i != 3);
+                        }
+                        else {
+                            found &= (i == 3);
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
+                }
+                pclose(fp);
+            }
+        }
+        if (found) {
+            XMEMCPY(&addr->sin_addr.s_addr, host_ipaddr, sizeof(host_ipaddr));
+            useLookup = 1;
+        }
+    #elif !defined(WOLFSSL_USE_GETADDRINFO)
         #if defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET)
             int err;
             struct hostent* entry = gethostbyname(peer, &err);
@@ -2692,7 +2744,7 @@ static WC_INLINE void CaCb(unsigned char* der, int sz, int type)
             int depth, res;
             XFILE keyFile;
             for(depth = 0; depth <= MAX_WOLF_ROOT_DEPTH; depth++) {
-                keyFile = XFOPEN(ntruKeyFile, "rb");
+                keyFile = XFOPEN(dhParamFile, "rb");
                 if (keyFile != NULL) {
                     fclose(keyFile);
                     return depth;
