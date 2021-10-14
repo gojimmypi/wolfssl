@@ -19048,9 +19048,11 @@ WOLFSSL_TEST_SUBROUTINE int openssl_test(void)
             return -8672;
         if(outlen != 16)
             return -8673;
+#ifndef __clang_analyzer__
         total += outlen;
         if(total != 32)
             return -8674;
+#endif
 
         total = 0;
         EVP_CIPHER_CTX_init(de);
@@ -19110,9 +19112,11 @@ WOLFSSL_TEST_SUBROUTINE int openssl_test(void)
             return -8690;
         if(outlen != 16)
             return -8691;
+#ifndef __clang_analyzer__
         total += outlen;
         if(total != 32)
             return 3438;
+#endif
 
         total = 0;
         EVP_CIPHER_CTX_init(de);
