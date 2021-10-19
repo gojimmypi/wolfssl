@@ -24252,26 +24252,41 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                     }
                 #else
                     {
-                        RsaKey rsa;
+                    #ifdef WOLFSSL_SMALL_STACK
+                        RsaKey *rsa = (RsaKey*)XMALLOC(sizeof(RsaKey), NULL,
+                                DYNAMIC_TYPE_RSA);
+                        if (rsa == NULL) {
+                            WOLFSSL_MSG("RsaKey malloc failure");
+                            return WOLFSSL_FAILURE;
+                        }
+                    #else
+                        RsaKey rsa[1];
+                    #endif
                         word32 idx = 0;
                         int  sz;
                         byte lbit = 0;
                         int  rawLen;
                         unsigned char* rawKey;
 
-                        if (wc_InitRsaKey(&rsa, NULL) != 0) {
+                        if (wc_InitRsaKey(rsa, NULL) != 0) {
                             WOLFSSL_MSG("wc_InitRsaKey failure");
                             return WOLFSSL_FAILURE;
                         }
                         if (wc_RsaPublicKeyDecode(x509->pubKey.buffer,
-                                &idx, &rsa, x509->pubKey.length) != 0) {
+                                &idx, rsa, x509->pubKey.length) != 0) {
                             WOLFSSL_MSG("Error decoding RSA key");
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
-                        if ((sz = wc_RsaEncryptSize(&rsa)) < 0) {
+                        if ((sz = wc_RsaEncryptSize(rsa)) < 0) {
                             WOLFSSL_MSG("Error getting RSA key size");
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
                         XSNPRINTF(tmp, sizeof(tmp) - 1, "%s%s: (%d bit)\n%s\n",
@@ -24280,27 +24295,33 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                         tmp[sizeof(tmp) - 1] = '\0';
                         if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
 
                         /* print out modulus */
                         XSNPRINTF(tmp, sizeof(tmp) - 1,"                    ");
                         tmp[sizeof(tmp) - 1] = '\0';
-                        if (mp_leading_bit(&rsa.n)) {
+                        if (mp_leading_bit(&rsa->n)) {
                             lbit = 1;
                             XSTRNCAT(tmp, "00", 3);
                         }
 
-                        rawLen = mp_unsigned_bin_size(&rsa.n);
+                        rawLen = mp_unsigned_bin_size(&rsa->n);
                         rawKey = (unsigned char*)XMALLOC(rawLen, NULL,
                                 DYNAMIC_TYPE_TMP_BUFFER);
                         if (rawKey == NULL) {
                             WOLFSSL_MSG("Memory error");
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
-                        mp_to_unsigned_bin(&rsa.n, rawKey);
+                        mp_to_unsigned_bin(&rsa->n, rawKey);
                         for (idx = 0; idx < (word32)rawLen; idx++) {
                             char val[5];
                             int valSz = 5;
@@ -24314,7 +24335,10 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                                                       (int)XSTRLEN(tmp)) <= 0) {
                                     XFREE(rawKey, NULL,
                                         DYNAMIC_TYPE_TMP_BUFFER);
-                                    wc_FreeRsaKey(&rsa);
+                                    wc_FreeRsaKey(rsa);
+                                #ifdef WOLFSSL_SMALL_STACK
+                                    XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                                #endif
                                     return WOLFSSL_FAILURE;
                                 }
                                 XSNPRINTF(tmp, sizeof(tmp) - 1,
@@ -24333,15 +24357,22 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                             tmp[sizeof(tmp) - 1] = '\0';
                             if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
+                                wc_FreeRsaKey(rsa);
+                            #ifdef WOLFSSL_SMALL_STACK
+                                XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                            #endif
                                 return WOLFSSL_FAILURE;
                             }
                         }
 
                         /* print out exponent values */
-                        rawLen = mp_unsigned_bin_size(&rsa.e);
+                        rawLen = mp_unsigned_bin_size(&rsa->e);
                         if (rawLen < 0) {
                             WOLFSSL_MSG("Error getting exponent size");
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
 
@@ -24352,11 +24383,14 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                                 DYNAMIC_TYPE_TMP_BUFFER);
                         if (rawKey == NULL) {
                             WOLFSSL_MSG("Memory error");
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
                         XMEMSET(rawKey, 0, rawLen);
-                        mp_to_unsigned_bin(&rsa.e, rawKey);
+                        mp_to_unsigned_bin(&rsa->e, rawKey);
                         if ((word32)rawLen <= sizeof(word32)) {
                             idx = *(word32*)rawKey;
                         #ifdef BIG_ENDIAN_ORDER
@@ -24368,11 +24402,17 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                         if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
                             XFREE(rawKey, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-                            wc_FreeRsaKey(&rsa);
+                            wc_FreeRsaKey(rsa);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
                         XFREE(rawKey, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-                        wc_FreeRsaKey(&rsa);
+                        wc_FreeRsaKey(rsa);
+                    #ifdef WOLFSSL_SMALL_STACK
+                        XFREE(rsa, NULL, DYNAMIC_TYPE_RSA);
+                    #endif
                     }
                 #endif /* HAVE_USER_RSA */
                     break;
@@ -24382,32 +24422,51 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                 case ECDSAk:
                     {
                         word32 i;
-                        ecc_key ecc;
+                    #ifdef WOLFSSL_SMALL_STACK
+                        ecc_key *ecc = (ecc_key*)XMALLOC(sizeof(ecc_key), NULL,
+                                DYNAMIC_TYPE_ECC);
+                        if (ecc == NULL)
+                            return WOLFSSL_FAILURE;
+                    #else
+                        ecc_key ecc[1];
+                    #endif
 
                         if (wolfSSL_BIO_write(bio,
                                 "            Public Key Algorithm: EC\n",
                    (int)XSTRLEN("            Public Key Algorithm: EC\n")) <= 0) {
-                        return WOLFSSL_FAILURE;
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                        #endif
+                            return WOLFSSL_FAILURE;
                         }
-                        if (wc_ecc_init_ex(&ecc, x509->heap, INVALID_DEVID)
+                        if (wc_ecc_init_ex(ecc, x509->heap, INVALID_DEVID)
                                 != 0) {
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
 
                         i = 0;
                         if (wc_EccPublicKeyDecode(x509->pubKey.buffer, &i,
-                                              &ecc, x509->pubKey.length) != 0) {
-                            wc_ecc_free(&ecc);
+                                              ecc, x509->pubKey.length) != 0) {
+                            wc_ecc_free(ecc);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
                         XSNPRINTF(tmp, sizeof(tmp) - 1, "%s%s: (%d bit)\n%s\n",
                                 "                 ", "Public-Key",
-                                8 * wc_ecc_size(&ecc),
+                                8 * wc_ecc_size(ecc),
                                 "                 pub:");
                         tmp[sizeof(tmp) - 1] = '\0';
                         if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
-                            wc_ecc_free(&ecc);
+                            wc_ecc_free(ecc);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
                         XSNPRINTF(tmp, sizeof(tmp) - 1,"                     ");
@@ -24415,16 +24474,22 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                             word32 derSz;
                             byte*  der;
 
-                            derSz = wc_ecc_size(&ecc) * WOLFSSL_BIT_SIZE;
+                            derSz = wc_ecc_size(ecc) * WOLFSSL_BIT_SIZE;
                             der = (byte*)XMALLOC(derSz, x509->heap,
                                     DYNAMIC_TYPE_TMP_BUFFER);
                             if (der == NULL) {
-                                wc_ecc_free(&ecc);
+                                wc_ecc_free(ecc);
+                            #ifdef WOLFSSL_SMALL_STACK
+                                XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                            #endif
                                 return WOLFSSL_FAILURE;
                             }
 
-                            if (wc_ecc_export_x963(&ecc, der, &derSz) != 0) {
-                                wc_ecc_free(&ecc);
+                            if (wc_ecc_export_x963(ecc, der, &derSz) != 0) {
+                                wc_ecc_free(ecc);
+                            #ifdef WOLFSSL_SMALL_STACK
+                                XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                            #endif
                                 XFREE(der, x509->heap, DYNAMIC_TYPE_TMP_BUFFER);
                                 return WOLFSSL_FAILURE;
                             }
@@ -24439,7 +24504,10 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                                     tmp[sizeof(tmp) - 1] = '\0';
                                     if (wolfSSL_BIO_write(bio, tmp,
                                                 (int)XSTRLEN(tmp)) <= 0) {
-                                        wc_ecc_free(&ecc);
+                                        wc_ecc_free(ecc);
+                                    #ifdef WOLFSSL_SMALL_STACK
+                                        XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                                    #endif
                                         XFREE(der, x509->heap,
                                                 DYNAMIC_TYPE_TMP_BUFFER);
                                         return WOLFSSL_FAILURE;
@@ -24459,7 +24527,10 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                                 tmp[sizeof(tmp) - 1] = '\0';
                                 if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
-                                    wc_ecc_free(&ecc);
+                                    wc_ecc_free(ecc);
+                                #ifdef WOLFSSL_SMALL_STACK
+                                    XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                                #endif
                                     XFREE(der, x509->heap,
                                                 DYNAMIC_TYPE_TMP_BUFFER);
                                     return WOLFSSL_FAILURE;
@@ -24470,13 +24541,19 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                         }
                         XSNPRINTF(tmp, sizeof(tmp) - 1, "\n%s%s: %s\n",
                                 "                ", "ASN1 OID",
-                                ecc.dp->name);
+                                ecc->dp->name);
                         if (wolfSSL_BIO_write(bio, tmp,
                                                       (int)XSTRLEN(tmp)) <= 0) {
-                            wc_ecc_free(&ecc);
+                            wc_ecc_free(ecc);
+                        #ifdef WOLFSSL_SMALL_STACK
+                            XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                        #endif
                             return WOLFSSL_FAILURE;
                         }
-                        wc_ecc_free(&ecc);
+                    #ifdef WOLFSSL_SMALL_STACK
+                        XFREE(ecc, NULL, DYNAMIC_TYPE_ECC);
+                    #endif
+                        wc_ecc_free(ecc);
                     }
                     break;
             #endif /* HAVE_ECC */
