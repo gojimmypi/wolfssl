@@ -21125,7 +21125,7 @@ void wolfSSL_sk_X509_CRL_free(WOLF_STACK_OF(WOLFSSL_X509_CRL)* sk)
 /* return 1 on success 0 on fail */
 int wolfSSL_sk_X509_CRL_push(WOLF_STACK_OF(WOLFSSL_X509_CRL)* sk, WOLFSSL_X509_CRL* crl)
 {
-    WOLFSSL_ENTER("wolfSSL_sk_X509_push");
+    WOLFSSL_ENTER("wolfSSL_sk_X509_CRL_push");
 
     if (sk == NULL || crl == NULL) {
         return WOLFSSL_FAILURE;
@@ -30578,7 +30578,7 @@ size_t wolfSSL_CRYPTO_cts128_encrypt(const unsigned char *in,
         unsigned char *out, size_t len, const void *key,
         unsigned char *iv, WOLFSSL_CBC128_CB cbc)
 {
-    byte lastBlk[WOLFSSL_CTS128_BLOCK_SZ] = {0};
+    byte lastBlk[WOLFSSL_CTS128_BLOCK_SZ];
     int lastBlkLen = len % WOLFSSL_CTS128_BLOCK_SZ;
     WOLFSSL_ENTER("wolfSSL_CRYPTO_cts128_encrypt");
 
@@ -30600,6 +30600,7 @@ size_t wolfSSL_CRYPTO_cts128_encrypt(const unsigned char *in,
 
     /* RFC2040: Pad Pn with zeros at the end to create P of length BB. */
     XMEMCPY(lastBlk, in, lastBlkLen);
+    XMEMSET(lastBlk + lastBlkLen, 0, WOLFSSL_CTS128_BLOCK_SZ - lastBlkLen);
     /* RFC2040: Select the first Ln bytes of En-1 to create Cn */
     XMEMCPY(out, out - WOLFSSL_CTS128_BLOCK_SZ, lastBlkLen);
     (*cbc)(lastBlk, out - WOLFSSL_CTS128_BLOCK_SZ, WOLFSSL_CTS128_BLOCK_SZ,
@@ -30612,8 +30613,8 @@ size_t wolfSSL_CRYPTO_cts128_decrypt(const unsigned char *in,
         unsigned char *out, size_t len, const void *key,
         unsigned char *iv, WOLFSSL_CBC128_CB cbc)
 {
-    byte lastBlk[WOLFSSL_CTS128_BLOCK_SZ] = {0};
-    byte prevBlk[WOLFSSL_CTS128_BLOCK_SZ] = {0};
+    byte lastBlk[WOLFSSL_CTS128_BLOCK_SZ];
+    byte prevBlk[WOLFSSL_CTS128_BLOCK_SZ];
     int lastBlkLen = len % WOLFSSL_CTS128_BLOCK_SZ;
     WOLFSSL_ENTER("wolfSSL_CRYPTO_cts128_decrypt");
 
@@ -30636,6 +30637,7 @@ size_t wolfSSL_CRYPTO_cts128_decrypt(const unsigned char *in,
     /* RFC2040: Decrypt Cn-1 to create Dn.
      * Use 0 buffer as IV to do straight decryption.
      * This places the Cn-1 block at lastBlk */
+    XMEMSET(lastBlk, 0, WOLFSSL_CTS128_BLOCK_SZ);
     (*cbc)(in, prevBlk, WOLFSSL_CTS128_BLOCK_SZ, key, lastBlk, 0);
     /* RFC2040: Append the tail (BB minus Ln) bytes of Xn to Cn
      *          to create En. */
@@ -30648,6 +30650,7 @@ size_t wolfSSL_CRYPTO_cts128_decrypt(const unsigned char *in,
 }
 #endif /* HAVE_CTS */
 
+#ifndef NO_ASN_TIME
 #ifndef NO_BIO
 int wolfSSL_ASN1_UTCTIME_print(WOLFSSL_BIO* bio, const WOLFSSL_ASN1_UTCTIME* a)
 {
@@ -44525,17 +44528,17 @@ err:
 #endif /* WOLFSSL_PEM_TO_DER || WOLFSSL_DER_TO_PEM */
     }
 
-    WOLFSSL_API WOLF_STACK_OF(WOLFSSL_X509_INFO)* wolfSSL_PEM_X509_INFO_read(
+    WOLF_STACK_OF(WOLFSSL_X509_INFO)* wolfSSL_PEM_X509_INFO_read(
             XFILE fp, WOLF_STACK_OF(WOLFSSL_X509_INFO)* sk,
             pem_password_cb* cb, void* u)
     {
-        WOLFSSL_BIO* file_bio = wolfSSL_BIO_new_fp(fp, BIO_NOCLOSE);
+        WOLFSSL_BIO* fileBio = wolfSSL_BIO_new_fp(fp, BIO_NOCLOSE);
         WOLF_STACK_OF(WOLFSSL_X509_INFO)* ret = NULL;
 
         WOLFSSL_ENTER("wolfSSL_PEM_X509_INFO_read");
-        if (file_bio != NULL) {
-            ret = wolfSSL_PEM_X509_INFO_read_bio(file_bio, sk, cb, u);
-            wolfSSL_BIO_free(file_bio);
+        if (fileBio != NULL) {
+            ret = wolfSSL_PEM_X509_INFO_read_bio(fileBio, sk, cb, u);
+            wolfSSL_BIO_free(fileBio);
         }
         return ret;
     }
@@ -53003,6 +53006,7 @@ int wolfSSL_BN_rand(WOLFSSL_BIGNUM* bn, int bits, int top, int bottom)
 int wolfSSL_BN_rand_range(WOLFSSL_BIGNUM *r, const WOLFSSL_BIGNUM *range)
 {
     int n;
+    int iter = 0;
     WOLFSSL_MSG("wolfSSL_BN_rand_range");
 
     if (r == NULL || range == NULL) {
@@ -53017,6 +53021,11 @@ int wolfSSL_BN_rand_range(WOLFSSL_BIGNUM *r, const WOLFSSL_BIGNUM *range)
     }
     else {
         do {
+            if (iter >= 100) {
+                WOLFSSL_MSG("wolfSSL_BN_rand_range too many iterations");
+                return WOLFSSL_FAILURE;
+            }
+            iter++;
             if (wolfSSL_BN_rand(r, n, 0, 0) == WOLFSSL_FAILURE) {
                 WOLFSSL_MSG("wolfSSL_BN_rand error");
                 return WOLFSSL_FAILURE;
@@ -61855,7 +61864,7 @@ int wolfSSL_i2d_PKCS7(PKCS7 *p7, unsigned char **out)
     int len;
     WC_RNG rng;
     int ret = WOLFSSL_FAILURE;
-    WOLFSSL_ENTER("wolfSSL_i2d_PKCS7_bio");
+    WOLFSSL_ENTER("wolfSSL_i2d_PKCS7");
 
     if (!out || !p7) {
         WOLFSSL_MSG("Bad parameter");
@@ -61918,7 +61927,7 @@ int wolfSSL_i2d_PKCS7_bio(WOLFSSL_BIO *bio, PKCS7 *p7)
     }
 
     if ((len = wolfSSL_i2d_PKCS7(p7, &output)) == WOLFSSL_FAILURE) {
-        WOLFSSL_MSG("wc_PKCS7_EncodeSignedData error");
+        WOLFSSL_MSG("wolfSSL_i2d_PKCS7 error");
         goto cleanup;
     }
 
