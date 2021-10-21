@@ -1693,6 +1693,7 @@ WOLFSSL_API int wolfSSL_X509_sign_ctx(WOLFSSL_X509 *x509, WOLFSSL_EVP_MD_CTX *ct
 
 
 WOLFSSL_API int wolfSSL_X509_NAME_entry_count(WOLFSSL_X509_NAME*);
+WOLFSSL_API int wolfSSL_X509_NAME_get_sz(WOLFSSL_X509_NAME*);
 WOLFSSL_API int wolfSSL_X509_NAME_get_text_by_NID(
                                             WOLFSSL_X509_NAME*, int, char*, int);
 WOLFSSL_API int wolfSSL_X509_NAME_get_index_by_NID(
@@ -4328,8 +4329,6 @@ WOLFSSL_API int wolfSSL_SESSION_set_ex_data_with_cleanup(
 
 WOLFSSL_API int wolfSSL_SESSION_get_ex_new_index(long,void*,void*,void*,
         CRYPTO_free_func*);
-
-WOLFSSL_API int wolfSSL_X509_NAME_get_sz(WOLFSSL_X509_NAME*);
 
 WOLFSSL_API const unsigned char* wolfSSL_SESSION_get_id(WOLFSSL_SESSION*,
         unsigned int*);
