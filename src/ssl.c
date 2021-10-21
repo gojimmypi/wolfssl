@@ -26766,8 +26766,8 @@ int wolfSSL_X509_VERIFY_PARAM_set1_host(WOLFSSL_X509_VERIFY_PARAM* pParam,
 
     sz = (unsigned int)XSTRLEN(name);
 
-    /* If name is NUL-terminated, namelen can be set to zero. */
-    if(nameSz == 0 || nameSz > sz)
+    /* If name is NULL-terminated, namelen can be set to zero. */
+    if (nameSz == 0 || nameSz > sz)
         nameSz = sz;
 
     if (nameSz > 0 && name[nameSz - 1] == '\0')
@@ -50353,12 +50353,14 @@ int wolfSSL_CTX_set_alpn_protos(WOLFSSL_CTX *ctx, const unsigned char *p,
                             unsigned int p_len)
 {
     WOLFSSL_ENTER("wolfSSL_CTX_set_alpn_protos");
-    if(ctx == NULL)
+    if (ctx == NULL)
         return BAD_FUNC_ARG;
-    if((void *)ctx->alpn_cli_protos != NULL)
-        wolfSSL_OPENSSL_free((void *)ctx->alpn_cli_protos);
-    ctx->alpn_cli_protos =
-        (const unsigned char *)wolfSSL_OPENSSL_memdup(p, p_len, NULL, 0);
+    if (ctx->alpn_cli_protos != NULL) {
+        XFREE((void*)ctx->alpn_cli_protos, ctx->heap, DYNAMIC_TYPE_OPENSSL);
+    }
+
+    ctx->alpn_cli_protos = (const unsigned char*)XMALLOC(p_len,
+        ctx->heap, DYNAMIC_TYPE_OPENSSL);
     if (ctx->alpn_cli_protos == NULL) {
 #if defined(WOLFSSL_ERROR_CODE_OPENSSL)
         /* 0 on success in OpenSSL, non-0 on failure in OpenSSL
@@ -50366,9 +50368,10 @@ int wolfSSL_CTX_set_alpn_protos(WOLFSSL_CTX *ctx, const unsigned char *p,
          */
         return 1;
 #else
-        return SSL_FAILURE;
+        return WOLFSSL_FAILURE;
 #endif
     }
+    XMEMCPY((void*)ctx->alpn_cli_protos, p, p_len);
     ctx->alpn_cli_protos_len = p_len;
 
 #if defined(WOLFSSL_ERROR_CODE_OPENSSL)
@@ -59539,7 +59542,7 @@ int wolfSSL_X509_STORE_CTX_init(WOLFSSL_X509_STORE_CTX* ctx,
         if (ctx->param == NULL) {
             ctx->param = (WOLFSSL_X509_VERIFY_PARAM*)XMALLOC(
                            sizeof(WOLFSSL_X509_VERIFY_PARAM),
-                           NULL,DYNAMIC_TYPE_OPENSSL);
+                           NULL, DYNAMIC_TYPE_OPENSSL);
             if (ctx->param == NULL){
                 WOLFSSL_MSG("wolfSSL_X509_STORE_CTX_init failed");
                 return WOLFSSL_FAILURE;
@@ -59561,8 +59564,8 @@ void wolfSSL_X509_STORE_CTX_free(WOLFSSL_X509_STORE_CTX* ctx)
         wolfSSL_CRYPTO_cleanup_ex_data(&ctx->ex_data);
 #endif
     #ifdef OPENSSL_EXTRA
-        if (ctx->param != NULL){
-            XFREE(ctx->param,NULL,DYNAMIC_TYPE_OPENSSL);
+        if (ctx->param != NULL) {
+            XFREE(ctx->param, NULL, DYNAMIC_TYPE_OPENSSL);
             ctx->param = NULL;
         }
     #endif
@@ -59575,8 +59578,8 @@ void wolfSSL_X509_STORE_CTX_cleanup(WOLFSSL_X509_STORE_CTX* ctx)
 {
     if (ctx != NULL) {
 #ifdef OPENSSL_EXTRA
-        if (ctx->param != NULL){
-            XFREE(ctx->param,NULL,DYNAMIC_TYPE_OPENSSL);
+        if (ctx->param != NULL) {
+            XFREE(ctx->param, NULL, DYNAMIC_TYPE_OPENSSL);
             ctx->param = NULL;
         }
 #endif
