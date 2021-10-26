@@ -35689,6 +35689,7 @@ static int wolfSSL_RSA_To_Der(WOLFSSL_RSA* rsa, byte** outBuf, int publicKey, vo
         }
     }
 
+    (void)heap; /* unused if memory is disabled */
     WOLFSSL_LEAVE("wolfSSL_RSA_To_Der", derSz);
     return derSz;
 }
@@ -46873,10 +46874,18 @@ int wolfSSL_CRYPTO_set_mem_functions(
         wolfSSL_Realloc_cb r,
         wolfSSL_Free_cb    f)
 {
+#ifdef USE_WOLFSSL_MEMORY
     if (wolfSSL_SetAllocators(m, f, r) == 0)
         return WOLFSSL_SUCCESS;
     else
         return WOLFSSL_FAILURE;
+#else
+    (void)m;
+    (void)r;
+    (void)f;
+    WOLFSSL_MSG("wolfSSL allocator callback functions not compiled in");
+    return WOLFSSL_FAILURE;
+#endif
 }
 
 #if defined(WOLFSSL_KEY_GEN) && !defined(HAVE_SELFTEST) && !defined(NO_DH)
