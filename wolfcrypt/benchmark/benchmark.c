@@ -6694,7 +6694,8 @@ static void bench_oqsKemInit(word32 alg, byte **priv_key, byte **pub_key,
 
 }
 
-void bench_oqsKemKeygen(word32 alg) {
+void bench_oqsKemKeygen(word32 alg)
+{
     const char *wolf_name = NULL;
     OQS_KEM* kem = NULL;
     double start;
@@ -6732,7 +6733,8 @@ exit:
 
 }
 
-void bench_oqsKemEncapDecap(word32 alg) {
+void bench_oqsKemEncapDecap(word32 alg)
+{
     const char *wolf_name = NULL;
     OQS_KEM* kem = NULL;
     double start;
