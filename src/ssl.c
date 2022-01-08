@@ -32075,6 +32075,8 @@ int wolfSSL_SESSION_has_ticket(const WOLFSSL_SESSION* sess)
             return WOLFSSL_SUCCESS;
         }
     }
+#else
+    (void)sess;
 #endif
     return WOLFSSL_FAILURE;
 }
