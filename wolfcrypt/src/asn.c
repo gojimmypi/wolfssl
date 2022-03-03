@@ -23276,7 +23276,6 @@ static const ASNItem static_certExtsASN[] = {
 /* SAN_SEQ       */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* SAN_OID       */       { 1, ASN_OBJECT_ID, 0, 0, 0 },
 /* SAN_STR       */       { 1, ASN_OCTET_STRING, 0, 0, 0 },
-#ifdef WOLFSSL_CERT_EXT
             /* Subject Key Identifier - 4.2.1.2 */
 /* SKID_SEQ      */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* SKID_OID      */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
@@ -23311,12 +23310,9 @@ static const ASNItem static_certExtsASN[] = {
 /* CRLINFO_SEQ   */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* CRLINFO_OID   */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
 /* CRLINFO_STR   */        { 1, ASN_OCTET_STRING, 0, 0, 0 },
-#endif /* WOLFSSL_CERT_EXT */
-#ifdef WOLFSSL_CUSTOM_OID
 /* CUSTOM_SEQ    */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* CUSTOM_OID    */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
 /* CUSTOM_STR    */        { 1, ASN_OCTET_STRING, 0, 0, 0 },
-#endif
 };
 enum {
     CERTEXTSASN_IDX_BC_SEQ = 0,
@@ -23360,6 +23356,7 @@ enum {
     CERTEXTSASN_IDX_CUSTOM_OID,
     CERTEXTSASN_IDX_CUSTOM_STR,
     CERTEXTSASN_IDX_START_CUSTOM,
+
 };
 
 /* Number of items in ASN.1 template for certificate extensions. We multiply
@@ -23419,7 +23416,7 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
     /* Clone static_certExtsASN into a certExtsASN and then fill the rest of it
      * with (NUM_CUSTOM_EXT*4) more ASNItems specifying extensions. See comment
      * above definition of certExtsASN_Length. */
-    XMEMCPY(certExtsASN, static_certExtsASN, sizeof(*static_certExtsASN));
+    XMEMCPY(certExtsASN, static_certExtsASN, sizeof(static_certExtsASN));
     for (i = sizeof(static_certExtsASN) / sizeof(ASNItem);
          i < (int)(sizeof(certExtsASN) / sizeof(ASNItem)); i += 4) {
         /* CUSTOM_SEQ */
@@ -23598,8 +23595,9 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
                     CERTEXTSASN_IDX_CUSTOM_STR);
         }
 
+        i = 0;
     #ifdef WOLFSSL_CUSTOM_OID
-        for (i = 0; i < cert->customCertExtCount; i++) {
+        for (; i < cert->customCertExtCount; i++) {
              int idx = CERTEXTSASN_IDX_START_CUSTOM + (i * 4);
              word32 encodedOidSz = MAX_OID_SZ;
              idx ++; /* Skip one for for SEQ. */
@@ -23617,7 +23615,6 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
         }
     #endif
 
-        /* Note: i initialized to 0 at top. */
         while (i < NUM_CUSTOM_EXT) {
             SetASNItem_NoOut(dataASN, CERTEXTSASN_IDX_START_CUSTOM + (i * 4),
                              CERTEXTSASN_IDX_START_CUSTOM + (i * 4) + 3);
