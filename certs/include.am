@@ -11,7 +11,10 @@ EXTRA_DIST += \
 	     certs/client-key.pem \
 	     certs/client-uri-cert.pem \
 	     certs/client-relative-uri.pem \
+	     certs/client-crl-dist.pem \
+	     certs/client-crl-dist.der \
 	     certs/ecc-key.pem \
+		 certs/ecc-keyPub.pem \
 	     certs/ecc-privkey.pem \
 	     certs/ecc-privkeyPkcs8.der \
 	     certs/ecc-privkeyPkcs8.pem \
@@ -32,13 +35,13 @@ EXTRA_DIST += \
 	     certs/server-ecc-rsa.pem \
 	     certs/server-keyEnc.pem \
 	     certs/server-key.pem \
+		 certs/server-keyPub.pem \
 	     certs/server-keyPkcs8.der \
 	     certs/server-keyPkcs8Enc12.pem \
 	     certs/server-keyPkcs8Enc2.pem \
 	     certs/server-keyPkcs8Enc.pem \
 	     certs/server-keyPkcs8Enc.der \
 	     certs/server-keyPkcs8.pem \
-	     certs/server-pub-key.pem \
 	     certs/server-revoked-cert.pem \
 	     certs/server-revoked-key.pem \
 	     certs/wolfssl-website-ca.pem \
@@ -59,7 +62,8 @@ EXTRA_DIST += \
 	     certs/csr.signed.der \
 	     certs/csr.ext.der \
 	     certs/entity-no-ca-bool-cert.pem \
-	     certs/entity-no-ca-bool-key.pem
+	     certs/entity-no-ca-bool-key.pem \
+	     certs/x942dh2048.pem
 
 EXTRA_DIST += \
 	     certs/ca-key.der \
@@ -68,6 +72,7 @@ EXTRA_DIST += \
 	     certs/client-key.der \
 	     certs/client-ecc-cert.der \
 	     certs/client-keyPub.der \
+	     certs/client-keyPub.pem \
 	     certs/dh2048.der \
 	     certs/dh3072.der \
 	     certs/dh4096.der \
@@ -121,4 +126,5 @@ include certs/statickeys/include.am
 include certs/test/include.am
 include certs/test-pathlen/include.am
 include certs/intermediate/include.am
+include certs/falcon/include.am
 

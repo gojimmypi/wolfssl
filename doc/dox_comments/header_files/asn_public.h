@@ -158,7 +158,7 @@ WOLFSSL_API int  wc_MakeCertReq(Cert*, byte* derBuffer, word32 derSz,
     word32 certSz;
     certSz = wc_SignCert(myCert.bodySz, myCert.sigType,derCert,FOURK_BUF,
     &key, NULL,
-&rng);
+    &rng);
     \endcode
 
     \sa wc_InitCert
@@ -1078,10 +1078,10 @@ WOLFSSL_API int wc_PubKeyPemToDer(const unsigned char*, int,
     \code
     char * file = “./certs/client-cert.pem”;
     int derSz;
-    byte * der = (byte*)XMALLOC(EIGHTK_BUF, NULL, DYNAMIC_TYPE_CERT);
+    byte* der = (byte*)XMALLOC((8*1024), NULL, DYNAMIC_TYPE_CERT);
 
-    derSz = wc_PemCertToDer(file, der, EIGHTK_BUF);
-    if(derSz <= 0) {
+    derSz = wc_PemCertToDer(file, der, (8*1024));
+    if (derSz <= 0) {
         //PemCertToDer error
     }
     \endcode
@@ -1248,6 +1248,29 @@ WOLFSSL_API int wc_KeyPemToDer(const unsigned char*, int,
 */
 WOLFSSL_API int wc_CertPemToDer(const unsigned char*, int,
                                      unsigned char*, int, int);
+
+/*!
+    \ingroup CertsKeys
+
+    \brief This function gets the public key in DER format from a populated
+    DecodedCert struct. Users must call wc_InitDecodedCert() and wc_ParseCert()
+    before calling this API. wc_InitDecodedCert() accepts a DER/ASN.1 encoded
+    certificate. To convert a PEM cert to DER, first use wc_CertPemToDer()
+    before calling wc_InitDecodedCert().
+
+    \return 0 on success, negative on error. LENGTH_ONLY_E if derKey is NULL
+    and returning length only.
+
+    \param cert populated DecodedCert struct holding X.509 certificate
+    \param derKey output buffer to place DER encoded public key
+    \param derKeySz [IN/OUT] size of derKey buffer on input, size of public key
+    on return. If derKey is passed in as NULL, derKeySz will be set to required
+    buffer size for public key and LENGTH_ONLY_E will be returned from function.
+
+    \sa wc_GetPubKeyDerFromCert
+*/
+WOLFSSL_API int wc_GetPubKeyDerFromCert(struct DecodedCert* cert,
+                                        byte* derKey, word32* derKeySz);
 
 /*!
     \ingroup ASN
@@ -1767,3 +1790,150 @@ WOLFSSL_API int wc_CreateEncryptedPKCS8Key(byte* key, word32 keySz, byte* out,
         word32* outSz, const char* password, int passwordSz, int vPKCS,
         int pbeOid, int encAlgId, byte* salt, word32 saltSz, int itt,
         WC_RNG* rng, void* heap);
+
+/*!
+    \ingroup ASN
+
+    \brief This function initializes the DecodedCert pointed to by the "cert"
+     parameter. It saves the "source" pointer to a DER-encoded certificate of
+     length "inSz." This certificate can be parsed by a subsequent call to
+     wc_ParseCert.
+
+    \param cert Pointer to an allocated DecodedCert object.
+    \param source Pointer to a DER-encoded certificate.
+    \param inSz Length of the DER-encoded certificate in bytes.
+    \param heap A pointer to the heap used for dynamic allocation. Can be NULL.
+
+    _Example_
+    \code
+    DecodedCert decodedCert; // Decoded certificate object.
+    byte* certBuf;           // DER-encoded certificate buffer.
+    word32 certBufSz;        // Size of certBuf in bytes.
+
+    wc_InitDecodedCert(&decodedCert, certBuf, certBufSz, NULL);
+    \endcode
+
+    \sa wc_ParseCert
+    \sa wc_FreeDecodedCert
+*/
+WOLFSSL_API void wc_InitDecodedCert(struct DecodedCert* cert,
+    const byte* source, word32 inSz, void* heap);
+
+/*!
+    \ingroup ASN
+
+    \brief This function parses the DER-encoded certificate saved in the
+    DecodedCert object and populates the fields of that object. The DecodedCert
+    must have been initialized with a prior call to wc_InitDecodedCert. This
+    function takes an optional pointer to a CertificateManager object, which
+    is used to populate the certificate authority information of the
+    DecodedCert, if the CA is found in the CertificateManager.
+
+    \return 0 on success.
+    \return Other negative values on failure.
+
+    \param cert Pointer to an initialized DecodedCert object.
+    \param type Type of certificate. See the CertType enum in asn_public.h.
+    \param verify Flag that, if set, indicates the user wants to verify the
+    validity of the certificate.
+    \param cm An optional pointer to a CertificateManager. Can be NULL.
+
+    _Example_
+    \code
+    int ret;
+    DecodedCert decodedCert; // Decoded certificate object.
+    byte* certBuf;           // DER-encoded certificate buffer.
+    word32 certBufSz;        // Size of certBuf in bytes.
+
+    wc_InitDecodedCert(&decodedCert, certBuf, certBufSz, NULL);
+    ret = wc_ParseCert(&decodedCert, CERT_TYPE, NO_VERIFY, NULL);
+    if (ret != 0) {
+        fprintf(stderr, "wc_ParseCert failed.\n");
+    }
+    \endcode
+
+    \sa wc_InitDecodedCert
+    \sa wc_FreeDecodedCert
+*/
+WOLFSSL_API int wc_ParseCert(DecodedCert* cert, int type, int verify, void* cm);
+
+/*!
+    \ingroup ASN
+
+    \brief This function frees a DecodedCert that was previously initialized
+    with wc_InitDecodedCert.
+
+    \param cert Pointer to an initialized DecodedCert object.
+
+    _Example_
+    \code
+    int ret;
+    DecodedCert decodedCert; // Decoded certificate object.
+    byte* certBuf;           // DER-encoded certificate buffer.
+    word32 certBufSz;        // Size of certBuf in bytes.
+
+    wc_InitDecodedCert(&decodedCert, certBuf, certBufSz, NULL);
+    ret = wc_ParseCert(&decodedCert, CERT_TYPE, NO_VERIFY, NULL);
+    if (ret != 0) {
+        fprintf(stderr, "wc_ParseCert failed.\n");
+    }
+    wc_FreeDecodedCert(&decodedCert);
+    \endcode
+
+    \sa wc_InitDecodedCert
+    \sa wc_ParseCert
+*/
+WOLFSSL_API void wc_FreeDecodedCert(struct DecodedCert* cert);
+
+/*!
+    \ingroup ASN
+
+    \brief This function registers a time callback that will be used anytime
+    wolfSSL needs to get the current time. The prototype of the callback should
+    be the same as the "time" function from the C standard library.
+
+    \return 0 Returned on success.
+
+    \param f function to register as the time callback.
+
+    _Example_
+    \code
+    int ret = 0;
+    // Time callback prototype
+    time_t my_time_cb(time_t* t);
+    // Register it
+    ret = wc_SetTimeCb(my_time_cb);
+    if (ret != 0) {
+        // failed to set time callback
+    }
+    time_t my_time_cb(time_t* t)
+    {
+        // custom time function
+    }
+    \endcode
+
+    \sa wc_Time
+*/
+WOLFSSL_API int wc_SetTimeCb(wc_time_cb f);
+
+/*!
+    \ingroup ASN
+
+    \brief This function gets the current time. By default, it uses the XTIME
+    macro, which varies between platforms. The user can use a function of their
+    choosing instead via the wc_SetTimeCb function.
+
+    \return Time Current time returned on success.
+
+    \param t Optional time_t pointer to populate with current time.
+
+    _Example_
+    \code
+    time_t currentTime = 0;
+    currentTime = wc_Time(NULL);
+    wc_Time(&currentTime);
+    \endcode
+
+    \sa wc_SetTimeCb
+*/
+WOLFSSL_API time_t wc_Time(time_t* t);

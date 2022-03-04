@@ -45,7 +45,7 @@ enum {
     NID_X9_62_prime192v3 = 411,
     NID_X9_62_prime239v1 = 412,
     NID_X9_62_prime239v2 = 413,
-    NID_X9_62_prime239v3 = 414,
+    NID_X9_62_prime239v3 = 418, /* Previous value conflicted with AES128CBCb */
     NID_X9_62_prime256v1 = 415,
     NID_secp112r1 = 704,
     NID_secp112r2 = 705,
@@ -76,7 +76,8 @@ enum {
     NID_ED25519 = ED25519k,
 #endif
 
-    OPENSSL_EC_NAMED_CURVE  = 0x001
+    OPENSSL_EC_EXPLICIT_CURVE  = 0x000,
+    OPENSSL_EC_NAMED_CURVE  = 0x001,
 };
 
 #ifndef WOLFSSL_EC_TYPE_DEFINED /* guard on redeclaration */
@@ -218,6 +219,10 @@ WOLFSSL_API int wolfSSL_ECDSA_size(const WOLFSSL_EC_KEY *key);
 WOLFSSL_API int wolfSSL_ECDSA_sign(int type, const unsigned char *digest,
                                    int digestSz, unsigned char *sig,
                                    unsigned int *sigSz, WOLFSSL_EC_KEY *key);
+WOLFSSL_API int wolfSSL_ECDSA_verify(int type, const unsigned char *digest,
+                                   int digestSz, const unsigned char *sig,
+                                   int sigSz, WOLFSSL_EC_KEY *key);
+
 WOLFSSL_API
 void wolfSSL_EC_GROUP_set_asn1_flag(WOLFSSL_EC_GROUP *group, int flag);
 WOLFSSL_API
@@ -310,6 +315,7 @@ char* wolfSSL_EC_POINT_point2hex(const WOLFSSL_EC_GROUP* group,
 
 #define ECDSA_size                      wolfSSL_ECDSA_size
 #define ECDSA_sign                      wolfSSL_ECDSA_sign
+#define ECDSA_verify                    wolfSSL_ECDSA_verify
 
 #define EC_GROUP_free                   wolfSSL_EC_GROUP_free
 #define EC_GROUP_set_asn1_flag          wolfSSL_EC_GROUP_set_asn1_flag

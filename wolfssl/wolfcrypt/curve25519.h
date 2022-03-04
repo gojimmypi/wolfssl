@@ -43,6 +43,7 @@
 #endif
 
 #define CURVE25519_KEYSIZE 32
+#define CURVE25519_PUB_KEY_SIZE 32
 
 #ifdef WOLFSSL_NAMES_STATIC
 typedef char curve25519_str[12];
@@ -59,7 +60,7 @@ typedef struct {
 
 /* ECC point, the internal structure is Little endian
  * the mathematical functions used the endianness */
-typedef struct {
+typedef struct ECPoint {
     byte point[CURVE25519_KEYSIZE];
 #ifdef FREESCALE_LTC_ECC
     byte pointY[CURVE25519_KEYSIZE];
@@ -87,6 +88,10 @@ struct curve25519_key {
 #endif
 #if defined(WOLF_CRYPTO_CB)
     int devId;
+#endif
+
+#ifdef WOLFSSL_SE050
+    int keyId;
 #endif
 
     /* bit fields */
@@ -189,4 +194,3 @@ int wc_curve25519_size(curve25519_key* key);
 
 #endif /* HAVE_CURVE25519 */
 #endif /* WOLF_CRYPT_CURVE25519_H */
-
