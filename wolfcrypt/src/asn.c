@@ -31838,6 +31838,9 @@ static int ParseCRL_Extensions(DecodedCRL* dcrl, const byte* buf, word32 idx,
     if (ret < 0) {
         ret = ASN_PARSE_E;
     }
+
+    FREE_ASNGETDATA(dataASN, dcrl->heap);
+
     return ret;
 }
 #endif /* !WOLFSSL_ASN_TEMPLATE */
