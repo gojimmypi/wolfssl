@@ -639,6 +639,7 @@ static int ClientBenchmarkConnections(WOLFSSL_CTX* ctx, char* host, word16 port,
                     err = wolfSSL_get_error(ssl, 0);
                 #ifdef WOLFSSL_ASYNC_CRYPT
                     if (err == WC_PENDING_E) {
+                        /* returns the number of polled items or <0 for error */
                         ret = wolfSSL_AsyncPoll(ssl, WOLF_POLL_FLAG_CHECK_HW);
                         if (ret < 0) break;
                     }
@@ -669,7 +670,9 @@ static int ClientBenchmarkConnections(WOLFSSL_CTX* ctx, char* host, word16 port,
             wolfSSL_shutdown(ssl);
     #ifndef NO_SESSION_CACHE
             if (i == (times-1) && resumeSession) {
-                benchSession = wolfSSL_get_session(ssl);
+                if (benchSession != NULL)
+                    wolfSSL_SESSION_free(benchSession);
+                benchSession = wolfSSL_get1_session(ssl);
             }
     #endif
             wolfSSL_free(ssl); ssl = NULL;
@@ -687,6 +690,11 @@ static int ClientBenchmarkConnections(WOLFSSL_CTX* ctx, char* host, word16 port,
 
         WOLFSSL_TIME(times);
     }
+
+#ifndef NO_SESSION_CACHE
+    if (benchSession != NULL)
+        wolfSSL_SESSION_free(benchSession);
+#endif
 
     return EXIT_SUCCESS;
 }
@@ -1927,6 +1935,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     unsigned char alpn_opt = 0;
     char*  cipherList = NULL;
     int    useDefCipherList = 0;
+    int    customVerifyCert = 0;
     const char* verifyCert;
     const char* ourCert;
     const char* ourKey;
@@ -2060,6 +2069,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     (void)resumeScr;
     (void)ourKey;
     (void)ourCert;
+    (void)customVerifyCert;
     (void)verifyCert;
     (void)useClientCert;
     (void)disableCRL;
@@ -2284,6 +2294,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
                 break;
 
             case 'A' :
+                customVerifyCert = 1;
                 verifyCert = myoptarg;
                 break;
 
@@ -3179,7 +3190,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
             err_sys("can't load ecc ca buffer");
         }
         #elif !defined(TEST_LOAD_BUFFER)
-        if (doPeerCheck != 0 &&
+        if (doPeerCheck != 0 && !customVerifyCert &&
             wolfSSL_CTX_load_verify_locations_ex(ctx, eccCertFile, 0, verify_flags)
                                                            != WOLFSSL_SUCCESS) {
             wolfSSL_CTX_free(ctx); ctx = NULL;

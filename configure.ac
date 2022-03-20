@@ -79,29 +79,28 @@ then
     enable_shared=yes
     enable_static=yes
     enable_all=yes
+    enable_earlydata=no
     REPRODUCIBLE_BUILD_DEFAULT=yes
 else
     REPRODUCIBLE_BUILD_DEFAULT=no
 fi
 
 
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stddef.h time.h sys/ioctl.h sys/socket.h sys/time.h errno.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stddef.h time.h sys/ioctl.h sys/socket.h sys/time.h errno.h sys/un.h])
 AC_CHECK_LIB([network],[socket])
 AC_C_BIGENDIAN
 
 # check if functions of interest are linkable, but also check if
 # they're declared by the expected headers, and if not, supersede the
 # unusable positive from AC_CHECK_FUNCS().
-AC_CHECK_FUNCS([gethostbyname getaddrinfo gettimeofday gmtime_r inet_ntoa memset socket strftime atexit])
-AC_CHECK_DECLS([gethostbyname, getaddrinfo, gettimeofday, gmtime_r, inet_ntoa, memset, socket, strftime], [], [
+AC_CHECK_FUNCS([gethostbyname getaddrinfo gettimeofday gmtime_r gmtime_s inet_ntoa memset socket strftime atexit])
+AC_CHECK_DECLS([gethostbyname, getaddrinfo, gettimeofday, gmtime_r, gmtime_s, inet_ntoa, memset, socket, strftime], [], [
 if test "$(eval echo \$"$(eval 'echo ac_cv_func_${as_decl_name}')")" = "yes"
 then
-    echo "    note: earlier check for $(eval 'echo ${as_decl_name}') superseded."
-    eval "$(eval 'echo ac_cv_func_${as_decl_name}=no')"
+    AC_MSG_NOTICE([    note: earlier check for $(eval 'echo ${as_decl_name}') superseded.])
+    eval "ac_cv_func_${as_decl_name}=no"
     _mask_varname=HAVE_`eval "echo '${as_decl_name}'" | tr 'a-z' 'A-Z'`
-    echo "g/#define $_mask_varname 1/s//\/* #undef $_mask_varname *\//
-wq
-." | ed -s confdefs.h
+    sed --in-place "s~^#define ${_mask_varname} 1$~~" confdefs.h
 fi
 ], [[
 #ifdef HAVE_SYS_SOCKET_H
@@ -267,11 +266,13 @@ AS_CASE([$ENABLED_FIPS],
     [v2|cert3389],[
         FIPS_VERSION="v2"
         HAVE_FIPS_VERSION=2
+        HAVE_FIPS_VERSION_MINOR=0
         ENABLED_FIPS="yes"
     ],
     [rand],[
         FIPS_VERSION="rand"
-        HAVE_FIPS_VERSION=3
+        HAVE_FIPS_VERSION=2
+        HAVE_FIPS_VERSION_MINOR=1
         ENABLED_FIPS="yes"
     ],
     [v5-RC8],[
@@ -584,6 +585,7 @@ then
     test "$enable_truncatedhmac" = "" && enable_truncatedhmac=yes
     test "$enable_trusted_ca" = "" && enable_trusted_ca=yes
     test "$enable_session_ticket" = "" && enable_session_ticket=yes
+    test "$enable_earlydata" = "" && enable_earlydata=yes
 
     if test "$ENABLED_32BIT" != "yes"
     then
@@ -853,7 +855,8 @@ AC_ARG_ENABLE([tls13],
     [ ENABLED_TLS13=$enableval ],
     [ ENABLED_TLS13=yes ]
     )
-if test "x$FIPS_VERSION" = "xv1"
+if test "x$FIPS_VERSION" = "xv1" ||
+        ( test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" = 1 )
 then
     ENABLED_TLS13="no"
 fi
@@ -1690,8 +1693,8 @@ AC_ARG_ENABLE([aesgcm-stream],
     )
 
 # leanpsk and leantls don't need gcm
-if test "$ENABLED_LEANPSK" = "yes" || ( test "$ENABLED_LEANTLS" = "yes" &&
-                                        test "$ENABLED_TLS13" = "no")
+if test "$FIPS_VERSION" = "rand" || test "$ENABLED_LEANPSK" = "yes" ||
+   (test "$ENABLED_LEANTLS" = "yes" && test "$ENABLED_TLS13" = "no")
 then
     ENABLED_AESGCM=no
 fi
@@ -2103,7 +2106,7 @@ fi
 
 if test "$ENABLED_KCAPI_DH" = "yes"
 then
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KCAPI_DH"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KCAPI_DH -DWOLFSSL_DH_EXTRA"
 fi
 
 if test "$ENABLED_KCAPI_ECC" = "yes"
@@ -2258,7 +2261,9 @@ fi
 SHA224_DEFAULT=no
 if test "$host_cpu" = "x86_64" || test "$host_cpu" = "aarch64"
 then
-    if test "x$ENABLED_AFALG" = "xno" && test "x$ENABLED_DEVCRYPTO" = "xno" && ( test "x$ENABLED_FIPS" = "xno" || test "$HAVE_FIPS_VERSION" = 2 )
+    if test "x$ENABLED_AFALG" = "xno" && test "x$ENABLED_DEVCRYPTO" = "xno" &&
+        ( test "x$ENABLED_FIPS" = "xno" ||
+          ( test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" != 1 ) )
     then
         SHA224_DEFAULT=yes
     fi
@@ -4461,7 +4466,7 @@ then
 fi
 if test "$ENABLED_TLS13_EARLY_DATA" = "yes"
 then
-    if test "x$ENABLED_TLS13" = "xno"
+    if test "x$ENABLED_TLS13" = "xno" && test "X$ENABLED_ALL" = "xno"
     then
         AC_MSG_ERROR([cannot enable earlydata without enabling tls13.])
     fi
@@ -4469,7 +4474,10 @@ then
     then
         AC_MSG_ERROR([cannot enable earlydata without enabling session tickets and/or PSK.])
     fi
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_EARLY_DATA"
+    if test "x$ENABLED_TLS13" = "xyes"
+    then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_EARLY_DATA"
+    fi
 fi
 
 if test "$ENABLED_TLSV12" = "no" && test "$ENABLED_TLS13" = "yes" && test "x$ENABLED_SESSION_TICKET" = "xno"
@@ -5478,7 +5486,7 @@ fi
 # PKCS#12
 # set PKCS#12 default
 PKCS12_DEFAULT=yes
-if test "$ENABLED_ASN" = "no"
+if test "$ENABLED_ASN" = "no" || test "$FIPS_VERSION" = "rand"
 then
     PKCS12_DEFAULT=no
 fi
@@ -5955,7 +5963,7 @@ do
     ENABLED_SP_FF_3072=yes
     ENABLED_SP_ECC=yes
     ENABLED_SP_EC_256=yes
-    if test "$host_cpu" = "x86_64"; then
+    if test "$host_cpu" = "x86_64" || test "$host_cpu" = "aarch64"; then
       ENABLED_SP_FF_4096=yes
       ENABLED_SP_EC_384=yes
       ENABLED_SP_EC_521=yes
@@ -5970,7 +5978,7 @@ do
     ENABLED_SP_FF_3072=yes
     ENABLED_SP_ECC=yes
     ENABLED_SP_EC_256=yes
-    if test "$host_cpu" = "x86_64"; then
+    if test "$host_cpu" = "x86_64" || test "$host_cpu" = "aarch64"; then
       ENABLED_SP_FF_4096=yes
       ENABLED_SP_EC_384=yes
       ENABLED_SP_EC_521=yes
@@ -5985,7 +5993,7 @@ do
     ENABLED_SP_FF_3072=yes
     ENABLED_SP_ECC=yes
     ENABLED_SP_EC_256=yes
-    if test "$host_cpu" = "x86_64"; then
+    if test "$host_cpu" = "x86_64" || test "$host_cpu" = "aarch64"; then
       ENABLED_SP_FF_4096=yes
       ENABLED_SP_EC_384=yes
       ENABLED_SP_EC_521=yes
@@ -6197,9 +6205,6 @@ if test "$ENABLED_SP_MATH" = "yes"; then
     fi
     if test "$ENABLED_ECCCUSTCURVES" = "yes"; then
         AC_MSG_ERROR([Cannot use single precision math and custom curves])
-    fi
-    if test "$ENABLED_OPENSSLEXTRA" = "yes"; then
-        AC_MSG_ERROR([Cannot use single precision math and OpenSSL extra])
     fi
     if test "$ENABLED_DSA" = "yes"; then
         AC_MSG_ERROR([Cannot use single precision math and DSA])
@@ -6821,6 +6826,14 @@ AC_ARG_ENABLE([iotsafe-hwrng],
     [ ENABLED_IOTSAFE_HWRNG=no ]
     )
 
+# Make clean
+AC_ARG_ENABLE([makeclean],
+    [AS_HELP_STRING([--enable-makeclean], [Enables forced "make clean" at the
+    end of configure (default: enabled)])],
+    [ ENABLED_MAKECLEAN=$enableval ],
+    [ ENABLED_MAKECLEAN=yes ]
+    )
+
 # User Settings
 AC_ARG_ENABLE([usersettings],
     [AS_HELP_STRING([--enable-usersettings],[Use your own user_settings.h and do not add Makefile CFLAGS (default: disabled)])],
@@ -6871,7 +6884,8 @@ do
 -DHAVE_FFDHE_2048 | -DTFM_TIMING_RESISTANT | -DECC_TIMING_RESISTANT | \
 -DWC_RSA_BLINDING | -DHAVE_AESGCM | -DWOLFSSL_SHA512 | -DWOLFSSL_SHA384 | \
 -DHAVE_ECC | -DTFM_ECC256 | -DECC_SHAMIR | -DHAVE_TLS_EXTENSIONS | \
--DHAVE_SUPPORTED_CURVES | -DHAVE_EXTENDED_MASTER | -DUSE_FAST_MATH)
+-DHAVE_SUPPORTED_CURVES | -DHAVE_EXTENDED_MASTER | -DUSE_FAST_MATH | \
+-DWOLFSSL_SHA3)
     AS_ECHO(["ignoring $v"])
     ;;
   *)
@@ -7568,11 +7582,11 @@ AM_CONDITIONAL([BUILD_MD5],[test "x$ENABLED_MD5" = "xyes" || test "x$ENABLED_USE
 AM_CONDITIONAL([BUILD_SHA],[test "x$ENABLED_SHA" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_FIPS],[test "x$ENABLED_FIPS" = "xyes"])
 AM_CONDITIONAL([BUILD_FIPS_V1],[test "$HAVE_FIPS_VERSION" = 1])
-AM_CONDITIONAL([BUILD_FIPS_V2],[test "$HAVE_FIPS_VERSION" = 2])
-AM_CONDITIONAL([BUILD_FIPS_RAND],[test "x$FIPS_VERSION" = "xrand"])
-AM_CONDITIONAL([BUILD_FIPS_V3],[test "$HAVE_FIPS_VERSION" = 3])
+AM_CONDITIONAL([BUILD_FIPS_V2],[test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" = 0])
+AM_CONDITIONAL([BUILD_FIPS_RAND],[test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" = 1])
 AM_CONDITIONAL([BUILD_FIPS_V5],[test "$HAVE_FIPS_VERSION" = 5])
 AM_CONDITIONAL([BUILD_FIPS_CURRENT],[test "$HAVE_FIPS_VERSION" -ge 2 ])
+    # BUILD_FIPS_CURRENT is for builds after cert 2425.
 AM_CONDITIONAL([BUILD_SIPHASH],[test "x$ENABLED_SIPHASH" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_CMAC],[test "x$ENABLED_CMAC" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SELFTEST],[test "x$ENABLED_SELFTEST" = "xyes"])
@@ -7707,13 +7721,20 @@ AX_OUT_OF_TREE_FILE([wolfssl/wolfcrypt/port/intel/quickassist_mem.h])
 AC_OUTPUT
 
 
-# force make clean
-AC_MSG_NOTICE([---])
-AC_MSG_NOTICE([Running make clean...])
-if test "$verbose" = "yes"; then
-    make clean
-else
-    make clean >/dev/null
+if test "$ENABLED_MAKECLEAN" = "yes"
+then
+    # force make clean
+    AC_MSG_NOTICE([---])
+    AC_MSG_NOTICE([Running make clean...])
+    if test -z "$MAKE"; then
+        MAKE="make"
+    fi
+
+    if test "$verbose" = "yes"; then
+        $MAKE clean
+    else
+        $MAKE clean >/dev/null
+    fi
 fi
 
 if test "$ENABLED_REPRODUCIBLE_BUILD" != "yes"

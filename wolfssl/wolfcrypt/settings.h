@@ -915,9 +915,6 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef WOLFSSL_GAME_BUILD
     #define SIZEOF_LONG_LONG 8
-    #if defined(__PPU) || defined(__XENON)
-        #define BIG_ENDIAN_ORDER
-    #endif
 #endif
 
 #ifdef WOLFSSL_LSR
@@ -2592,16 +2589,36 @@ extern void uITRON4_free(void *p) ;
  * group */
 #ifdef HAVE_LIBOQS
 #define HAVE_PQC
+#define HAVE_FALCON
+#define HAVE_KYBER
 #endif
 
-#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS)
-#error "You must have a post-quantum cryptography implementation to use PQC."
+#ifdef HAVE_PQM4
+#define HAVE_PQC
+#define HAVE_KYBER
 #endif
 
+#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS) && !defined(HAVE_PQM4)
+#error Please do not define HAVE_PQC yourself.
+#endif
+
+#if defined(HAVE_PQC) && defined(HAVE_LIBOQS) && defined(HAVE_PQM4)
+#error Please do not define both HAVE_LIBOQS and HAVE_PQM4.
+#endif
 
 /* SRTP requires DTLS */
 #if defined(WOLFSSL_SRTP) && !defined(WOLFSSL_DTLS)
     #error The SRTP extension requires DTLS
+#endif
+
+/* Are we using an external private key store like:
+ *     PKCS11 / HSM / crypto callback / PK callback */
+#if !defined(WOLF_PRIVATE_KEY_ID) && \
+    (defined(HAVE_PKCS11) || defined(HAVE_PK_CALLBACKS) || \
+     defined(WOLF_CRYPTO_CB) || defined(WOLFSSL_KCAPI))
+     /* Enables support for using wolfSSL_CTX_use_PrivateKey_Id and
+      *   wolfSSL_CTX_use_PrivateKey_Label */
+    #define WOLF_PRIVATE_KEY_ID
 #endif
 
 
