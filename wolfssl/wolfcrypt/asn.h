@@ -1459,6 +1459,11 @@ typedef struct TrustedPeerCert TrustedPeerCert;
 typedef struct SignatureCtx SignatureCtx;
 typedef struct CertSignCtx  CertSignCtx;
 
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+typedef int (*wc_UnknownExtCallback)(const word16* oid, word32 oidSz, int crit,
+                                     const unsigned char* der, word32 derSz);
+#endif
 
 struct DecodedCert {
     const byte* publicKey;
@@ -1580,7 +1585,6 @@ struct DecodedCert {
     char*   subjectUID;
     int     subjectUIDLen;
     char    subjectUIDEnc;
-#if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
     char*   subjectStreet;
     int     subjectStreetLen;
     char    subjectStreetEnc;
@@ -1596,7 +1600,6 @@ struct DecodedCert {
     char*   subjectPC;
     int     subjectPCLen;
     char    subjectPCEnc;
-#endif
     char*   subjectEmail;
     int     subjectEmailLen;
 #endif /* defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT) */
@@ -1689,6 +1692,10 @@ struct DecodedCert {
 #ifdef WOLFSSL_CERT_REQ
     byte isCSR : 1;                /* Do we intend on parsing a CSR? */
 #endif
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+    wc_UnknownExtCallback unknownExtCallback;
+#endif
 };
 
 #ifdef NO_SHA
@@ -1757,7 +1764,7 @@ struct TrustedPeerCert {
 
 /* for testing or custom openssl wrappers */
 #if defined(WOLFSSL_TEST_CERT) || defined(OPENSSL_EXTRA) || \
-    defined(OPENSSL_EXTRA_X509_SMALL)
+    defined(OPENSSL_EXTRA_X509_SMALL) || defined(WOLFSSL_PUBLIC_ASN)
     #define WOLFSSL_ASN_API WOLFSSL_API
 #else
     #define WOLFSSL_ASN_API WOLFSSL_LOCAL
@@ -1815,6 +1822,12 @@ WOLFSSL_ASN_API void InitDecodedCert(DecodedCert* cert, const byte* source,
 WOLFSSL_ASN_API void FreeDecodedCert(DecodedCert* cert);
 WOLFSSL_ASN_API int  ParseCert(DecodedCert* cert, int type, int verify,
                                void* cm);
+
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+WOLFSSL_ASN_API int wc_SetUnknownExtCallback(DecodedCert* cert,
+                                             wc_UnknownExtCallback cb);
+#endif
 
 WOLFSSL_LOCAL int DecodePolicyOID(char *out, word32 outSz, const byte *in,
                                   word32 inSz);
@@ -2263,8 +2276,12 @@ WOLFSSL_LOCAL void FreeDecodedCRL(DecodedCRL* dcrl);
 
 #if !defined(NO_ASN) || !defined(NO_PWDBASED)
 
-#ifndef MAX_KEY_SIZE
-    #define MAX_KEY_SIZE    64  /* MAX PKCS Key length */
+#ifndef PKCS_MAX_KEY_SIZE
+    #define PKCS_MAX_KEY_SIZE    64  /* MAX PKCS Key length */
+#endif
+#if !defined(WOLFSSL_GAME_BUILD) && !defined(MAX_KEY_SIZE)
+    /* for backwards compatibility */
+    #define MAX_KEY_SIZE PKCS_MAX_KEY_SIZE
 #endif
 #ifndef MAX_UNICODE_SZ
     #define MAX_UNICODE_SZ  256

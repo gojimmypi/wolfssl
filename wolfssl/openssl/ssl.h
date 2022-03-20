@@ -71,9 +71,7 @@
     #undef ASN1_INTEGER
 #endif
 
-#ifdef OPENSSL_EXTRA
-WOLFSSL_API int wolfSSL_OPENSSL_init_ssl(word64 opts, const OPENSSL_INIT_SETTINGS *settings);
-#endif
+#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
 
 typedef WOLFSSL          SSL;
 typedef WOLFSSL_SESSION  SSL_SESSION;
@@ -1279,7 +1277,6 @@ typedef WOLFSSL_SRTP_PROTECTION_PROFILE      SRTP_PROTECTION_PROFILE;
 #define OPENSSL_INIT_LOAD_SSL_STRINGS    0x00200000L
 #define OPENSSL_INIT_LOAD_CRYPTO_STRINGS 0x00000002L
 
-#define CRYPTO_EX_INDEX_SSL              0
 #define TLS_ANY_VERSION                  0x10000
 #define DTLS1_2_VERSION                  0xFEFD
 #define DTLS_MAX_VERSION                 DTLS1_2_VERSION
@@ -1488,10 +1485,10 @@ typedef WOLFSSL_SRTP_PROTECTION_PROFILE      SRTP_PROTECTION_PROFILE;
 #define SSL_R_UNSUPPORTED_PROTOCOL                 VERSION_ERROR
 #define SSL_R_CERTIFICATE_VERIFY_FAILED            VERIFY_CERT_ERROR
 #define SSL_R_CERT_CB_ERROR                        CLIENT_CERT_CB_ERROR
+#define SSL_R_NULL_SSL_METHOD_PASSED               BAD_FUNC_ARG
 
 
 #ifdef HAVE_SESSION_TICKET
-#define SSL_OP_NO_TICKET                  SSL_OP_NO_TICKET
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB 72
 #endif
 
@@ -1626,8 +1623,10 @@ typedef WOLFSSL_CONF_CTX SSL_CONF_CTX;
 #define SSL_CONF_cmd                    wolfSSL_CONF_cmd
 #define SSL_CONF_cmd_value_type         wolfSSL_CONF_cmd_value_type
 
+#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
+
 #ifdef __cplusplus
     } /* extern "C" */
 #endif
 
-#endif /* wolfSSL_openssl_h__ */
+#endif /* !WOLFSSL_OPENSSL_H_ */

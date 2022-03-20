@@ -80,6 +80,7 @@
         #include <openssl/ec.h>
         #include <openssl/hmac.h>
         #include <openssl/bn.h>
+        #include <openssl/crypto.h>
     #endif
 
 #elif (defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL))
@@ -1146,23 +1147,23 @@ typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
 typedef void (CallbackInfoState)(const WOLFSSL* ssl, int, int);
 
 /* class index for wolfSSL_CRYPTO_get_ex_new_index */
-#define CRYPTO_EX_INDEX_SSL             0
-#define CRYPTO_EX_INDEX_SSL_CTX         1
-#define CRYPTO_EX_INDEX_SSL_SESSION     2
-#define CRYPTO_EX_INDEX_X509            3
-#define CRYPTO_EX_INDEX_X509_STORE      4
-#define CRYPTO_EX_INDEX_X509_STORE_CTX  5
-#define CRYPTO_EX_INDEX_DH              6
-#define CRYPTO_EX_INDEX_DSA             7
-#define CRYPTO_EX_INDEX_EC_KEY          8
-#define CRYPTO_EX_INDEX_RSA             9
-#define CRYPTO_EX_INDEX_ENGINE          10
-#define CRYPTO_EX_INDEX_UI              11
-#define CRYPTO_EX_INDEX_BIO             12
-#define CRYPTO_EX_INDEX_APP             13
-#define CRYPTO_EX_INDEX_UI_METHOD       14
-#define CRYPTO_EX_INDEX_DRBG            15
-#define CRYPTO_EX_INDEX__COUNT          16
+#define WOLF_CRYPTO_EX_INDEX_SSL             0
+#define WOLF_CRYPTO_EX_INDEX_SSL_CTX         1
+#define WOLF_CRYPTO_EX_INDEX_SSL_SESSION     2
+#define WOLF_CRYPTO_EX_INDEX_X509            3
+#define WOLF_CRYPTO_EX_INDEX_X509_STORE      4
+#define WOLF_CRYPTO_EX_INDEX_X509_STORE_CTX  5
+#define WOLF_CRYPTO_EX_INDEX_DH              6
+#define WOLF_CRYPTO_EX_INDEX_DSA             7
+#define WOLF_CRYPTO_EX_INDEX_EC_KEY          8
+#define WOLF_CRYPTO_EX_INDEX_RSA             9
+#define WOLF_CRYPTO_EX_INDEX_ENGINE          10
+#define WOLF_CRYPTO_EX_INDEX_UI              11
+#define WOLF_CRYPTO_EX_INDEX_BIO             12
+#define WOLF_CRYPTO_EX_INDEX_APP             13
+#define WOLF_CRYPTO_EX_INDEX_UI_METHOD       14
+#define WOLF_CRYPTO_EX_INDEX_DRBG            15
+#define WOLF_CRYPTO_EX_INDEX__COUNT          16
 
 #ifdef HAVE_EX_DATA
 typedef int  (WOLFSSL_CRYPTO_EX_new)(void* p, void* ptr,
@@ -1842,7 +1843,7 @@ WOLFSSL_API WOLFSSL_EVP_PKEY* wolfSSL_d2i_PublicKey(int type, WOLFSSL_EVP_PKEY**
         const unsigned char ** in, long inSz);
 WOLFSSL_API WOLFSSL_EVP_PKEY* wolfSSL_d2i_PrivateKey(int type,
         WOLFSSL_EVP_PKEY** out, const unsigned char **in, long inSz);
-#ifdef WOLF_CRYPTO_CB
+#ifdef WOLF_PRIVATE_KEY_ID
 WOLFSSL_API WOLFSSL_EVP_PKEY* wolfSSL_d2i_PrivateKey_id(int type,
     WOLFSSL_EVP_PKEY** out, void* heap, int devId);
 #endif
@@ -1856,7 +1857,7 @@ WOLFSSL_API int wolfSSL_i2d_PublicKey(const WOLFSSL_EVP_PKEY* key,
 WOLFSSL_API int wolfSSL_EVP_PKEY_print_public(WOLFSSL_BIO* out,
                                     const WOLFSSL_EVP_PKEY* pkey,
                                     int indent, WOLFSSL_ASN1_PCTX* pctx);
-#endif /* OPENSSL_EXTRA */
+#endif /* OPENSSL_EXTRA && !WOLFCRYPT_ONLY */
 WOLFSSL_API int       wolfSSL_X509_cmp_current_time(const WOLFSSL_ASN1_TIME* asnTime);
 #ifdef OPENSSL_EXTRA
 WOLFSSL_API int wolfSSL_X509_cmp_time(const WOLFSSL_ASN1_TIME* asnTime,
@@ -2090,29 +2091,29 @@ enum {
 
 /* Separated out from other enums because of size */
 enum {
-    SSL_OP_MICROSOFT_SESS_ID_BUG                  = 0x00000001,
-    SSL_OP_NETSCAPE_CHALLENGE_BUG                 = 0x00000002,
-    SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG       = 0x00000004,
-    SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG            = 0x00000008,
-    SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER             = 0x00000010,
-    SSL_OP_MSIE_SSLV2_RSA_PADDING                 = 0x00000020,
-    SSL_OP_SSLEAY_080_CLIENT_DH_BUG               = 0x00000040,
-    SSL_OP_TLS_D5_BUG                             = 0x00000080,
-    SSL_OP_TLS_BLOCK_PADDING_BUG                  = 0x00000100,
-    SSL_OP_TLS_ROLLBACK_BUG                       = 0x00000200,
-    SSL_OP_EPHEMERAL_RSA                          = 0x00000800,
+    WOLFSSL_OP_MICROSOFT_SESS_ID_BUG                  = 0x00000001,
+    WOLFSSL_OP_NETSCAPE_CHALLENGE_BUG                 = 0x00000002,
+    WOLFSSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG       = 0x00000004,
+    WOLFSSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG            = 0x00000008,
+    WOLFSSL_OP_MICROSOFT_BIG_SSLV3_BUFFER             = 0x00000010,
+    WOLFSSL_OP_MSIE_SSLV2_RSA_PADDING                 = 0x00000020,
+    WOLFSSL_OP_SSLEAY_080_CLIENT_DH_BUG               = 0x00000040,
+    WOLFSSL_OP_TLS_D5_BUG                             = 0x00000080,
+    WOLFSSL_OP_TLS_BLOCK_PADDING_BUG                  = 0x00000100,
+    WOLFSSL_OP_TLS_ROLLBACK_BUG                       = 0x00000200,
+    WOLFSSL_OP_EPHEMERAL_RSA                          = 0x00000800,
     WOLFSSL_OP_NO_SSLv3                           = 0x00001000,
     WOLFSSL_OP_NO_TLSv1                           = 0x00002000,
-    SSL_OP_PKCS1_CHECK_1                          = 0x00004000,
-    SSL_OP_PKCS1_CHECK_2                          = 0x00008000,
-    SSL_OP_NETSCAPE_CA_DN_BUG                     = 0x00010000,
-    SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG        = 0x00020000,
+    WOLFSSL_OP_PKCS1_CHECK_1                          = 0x00004000,
+    WOLFSSL_OP_PKCS1_CHECK_2                          = 0x00008000,
+    WOLFSSL_OP_NETSCAPE_CA_DN_BUG                     = 0x00010000,
+    WOLFSSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG        = 0x00020000,
     WOLFSSL_OP_SINGLE_DH_USE                      = 0x00040000,
-    SSL_OP_NO_TICKET                              = 0x00080000,
-    SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS            = 0x00100000,
-    SSL_OP_NO_QUERY_MTU                           = 0x00200000,
-    SSL_OP_COOKIE_EXCHANGE                        = 0x00400000,
-    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION = 0x00800000,
+    WOLFSSL_OP_NO_TICKET                              = 0x00080000,
+    WOLFSSL_OP_DONT_INSERT_EMPTY_FRAGMENTS            = 0x00100000,
+    WOLFSSL_OP_NO_QUERY_MTU                           = 0x00200000,
+    WOLFSSL_OP_COOKIE_EXCHANGE                        = 0x00400000,
+    WOLFSSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION = 0x00800000,
     WOLFSSL_OP_SINGLE_ECDH_USE                    = 0x01000000,
     WOLFSSL_OP_CIPHER_SERVER_PREFERENCE           = 0x02000000,
     WOLFSSL_OP_NO_TLSv1_1                         = 0x04000000,
@@ -2120,35 +2121,65 @@ enum {
     WOLFSSL_OP_NO_COMPRESSION                     = 0x10000000,
     WOLFSSL_OP_NO_TLSv1_3                         = 0x20000000,
     WOLFSSL_OP_NO_SSLv2                           = 0x40000000,
-    SSL_OP_ALL   =
-                    (SSL_OP_MICROSOFT_SESS_ID_BUG
-                  | SSL_OP_NETSCAPE_CHALLENGE_BUG
-                  | SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
-                  | SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
-                  | SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
-                  | SSL_OP_MSIE_SSLV2_RSA_PADDING
-                  | SSL_OP_SSLEAY_080_CLIENT_DH_BUG
-                  | SSL_OP_TLS_D5_BUG
-                  | SSL_OP_TLS_BLOCK_PADDING_BUG
-                  | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
-                  | SSL_OP_TLS_ROLLBACK_BUG),
+    WOLFSSL_OP_ALL   =
+                   (WOLFSSL_OP_MICROSOFT_SESS_ID_BUG
+                  | WOLFSSL_OP_NETSCAPE_CHALLENGE_BUG
+                  | WOLFSSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+                  | WOLFSSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
+                  | WOLFSSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
+                  | WOLFSSL_OP_MSIE_SSLV2_RSA_PADDING
+                  | WOLFSSL_OP_SSLEAY_080_CLIENT_DH_BUG
+                  | WOLFSSL_OP_TLS_D5_BUG
+                  | WOLFSSL_OP_TLS_BLOCK_PADDING_BUG
+                  | WOLFSSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+                  | WOLFSSL_OP_TLS_ROLLBACK_BUG),
 };
 
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL) || \
     defined(HAVE_WEBSERVER)
 /* for compatibility these must be macros */
+
+#define SSL_OP_MICROSOFT_SESS_ID_BUG            WOLFSSL_OP_MICROSOFT_SESS_ID_BUG
+#define SSL_OP_NETSCAPE_CHALLENGE_BUG           WOLFSSL_OP_NETSCAPE_CHALLENGE_BUG
+#define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG WOLFSSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG      WOLFSSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
+#define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER       WOLFSSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
+#define SSL_OP_MSIE_SSLV2_RSA_PADDING           WOLFSSL_OP_MSIE_SSLV2_RSA_PADDING
+#define SSL_OP_SSLEAY_080_CLIENT_DH_BUG         WOLFSSL_OP_SSLEAY_080_CLIENT_DH_BUG
+#define SSL_OP_TLS_D5_BUG                       WOLFSSL_OP_TLS_D5_BUG
+#define SSL_OP_TLS_BLOCK_PADDING_BUG            WOLFSSL_OP_TLS_BLOCK_PADDING_BUG
+#define SSL_OP_TLS_ROLLBACK_BUG                 WOLFSSL_OP_TLS_ROLLBACK_BUG
+#define SSL_OP_EPHEMERAL_RSA                    WOLFSSL_OP_EPHEMERAL_RSA
+#define SSL_OP_PKCS1_CHECK_1                    WOLFSSL_OP_PKCS1_CHECK_1
+#define SSL_OP_PKCS1_CHECK_2                    WOLFSSL_OP_PKCS1_CHECK_2
+#define SSL_OP_NETSCAPE_CA_DN_BUG               WOLFSSL_OP_NETSCAPE_CA_DN_BUG
+#define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG  WOLFSSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS      WOLFSSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+#define SSL_OP_NO_QUERY_MTU                     WOLFSSL_OP_NO_QUERY_MTU
+#define SSL_OP_COOKIE_EXCHANGE                  WOLFSSL_OP_COOKIE_EXCHANGE
+#define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION \
+                                                WOLFSSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+#define SSL_OP_ALL                              WOLFSSL_OP_ALL
+
 #define SSL_OP_NO_SSLv2       WOLFSSL_OP_NO_SSLv2
 #define SSL_OP_NO_SSLv3       WOLFSSL_OP_NO_SSLv3
 #define SSL_OP_NO_TLSv1       WOLFSSL_OP_NO_TLSv1
 #define SSL_OP_NO_TLSv1_1     WOLFSSL_OP_NO_TLSv1_1
 #define SSL_OP_NO_TLSv1_2     WOLFSSL_OP_NO_TLSv1_2
 #define SSL_OP_NO_COMPRESSION WOLFSSL_OP_NO_COMPRESSION
-#if !(!defined(WOLFSSL_TLS13) && defined(WOLFSSL_APACHE_HTTPD)) /* apache uses this to determine if TLS 1.3 is enabled */
+
+/* apache uses SSL_OP_NO_TLSv1_3 to determine if TLS 1.3 is enabled */
+#if !(!defined(WOLFSSL_TLS13) && defined(WOLFSSL_APACHE_HTTPD))
 #define SSL_OP_NO_TLSv1_3 WOLFSSL_OP_NO_TLSv1_3
+#endif
+
+#ifdef HAVE_SESSION_TICKET
+#define SSL_OP_NO_TICKET WOLFSSL_OP_NO_TICKET
 #endif
 
 #define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | \
     SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3)
+
 
 #define SSL_NOTHING 1
 #define SSL_WRITING 2
@@ -2209,69 +2240,66 @@ enum {
                               */
     SSL_MODE_RELEASE_BUFFERS = -1, /* For libwebsockets build. No current use. */
 
-    BIO_CLOSE   = 1,
-    BIO_NOCLOSE = 0,
-
     X509_FILETYPE_PEM = 8,
 
-    X509_V_OK                                    = 0,
-    X509_V_ERR_CRL_SIGNATURE_FAILURE             = 8,
-    X509_V_ERR_CERT_HAS_EXPIRED                  = ASN_AFTER_DATE_E,
-    X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD    = 14,
-    X509_V_ERR_CRL_HAS_EXPIRED                   = 15,
-    X509_V_ERR_CERT_CHAIN_TOO_LONG               = 17,
-    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT         = 18,
-    X509_V_ERR_CERT_NOT_YET_VALID                = ASN_BEFORE_DATE_E,
-    X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD    = 20,
-    X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD     = 22,
-    X509_V_ERR_CERT_REVOKED                      = 23,
-    X509_V_ERR_CERT_REJECTED                     = 24,
-    /* Required for Nginx  */
-    X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT       = 25,
-    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN         = 26,
-    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY = 27,
-    X509_V_ERR_CERT_UNTRUSTED                    = 28,
-    X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE   = ASN_NO_SIGNER_E,
-    X509_V_ERR_SUBJECT_ISSUER_MISMATCH           = 30,
-    /* additional X509_V_ERR_* enums not used in wolfSSL */
-    X509_V_ERR_UNABLE_TO_GET_CRL,
-    X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE,
-    X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE,
-    X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY,
-    X509_V_ERR_CERT_SIGNATURE_FAILURE,
-    X509_V_ERR_CRL_NOT_YET_VALID,
-    X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD,
-    X509_V_ERR_OUT_OF_MEM,
-    X509_V_ERR_INVALID_CA,
-    X509_V_ERR_PATH_LENGTH_EXCEEDED,
-    X509_V_ERR_INVALID_PURPOSE,
-    X509_V_ERR_AKID_SKID_MISMATCH,
-    X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH,
-    X509_V_ERR_KEYUSAGE_NO_CERTSIGN,
-    X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER,
-    X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION,
-    X509_V_ERR_KEYUSAGE_NO_CRL_SIGN,
-    X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION,
-    X509_V_ERR_INVALID_NON_CA,
-    X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED,
-    X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE,
-    X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED,
-    X509_V_ERR_INVALID_EXTENSION,
-    X509_V_ERR_INVALID_POLICY_EXTENSION,
-    X509_V_ERR_NO_EXPLICIT_POLICY,
-    X509_V_ERR_UNNESTED_RESOURCE,
-    X509_V_ERR_APPLICATION_VERIFICATION,
-    X509_V_ERR_CRL_PATH_VALIDATION_ERROR,
-    X509_V_ERR_DIFFERENT_CRL_SCOPE,
-    X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE,
-    X509_V_ERR_PERMITTED_VIOLATION,
-    X509_V_ERR_EXCLUDED_VIOLATION,
-    X509_V_ERR_SUBTREE_MINMAX,
-    X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE,
-    X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX,
-    X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
+    /* Not all of these are actually used in wolfSSL. Some are included to
+     * satisfy OpenSSL compatibility consumers to prevent compilation errors. */
+    X509_V_OK                                     = 0,
+    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT          = 2,
+    X509_V_ERR_UNABLE_TO_GET_CRL                  = 3,
+    X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE   = 4,
+    X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE    = 5,
+    X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY = 6,
+    X509_V_ERR_CERT_SIGNATURE_FAILURE             = 7,
+    X509_V_ERR_CRL_SIGNATURE_FAILURE              = 8,
+    X509_V_ERR_CERT_NOT_YET_VALID                 = 9,
+    X509_V_ERR_CERT_HAS_EXPIRED                   = 10,
+    X509_V_ERR_CRL_NOT_YET_VALID                  = 11,
+    X509_V_ERR_CRL_HAS_EXPIRED                    = 12,
+    X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD     = 13,
+    X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD      = 14,
+    X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD     = 15,
+    X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD     = 16,
+    X509_V_ERR_OUT_OF_MEM                         = 17,
+    X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT        = 18,
+    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN          = 19,
+    X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY  = 20,
+    X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE    = 21,
+    X509_V_ERR_CERT_CHAIN_TOO_LONG                = 22,
+    X509_V_ERR_CERT_REVOKED                       = 23,
+    X509_V_ERR_INVALID_CA                         = 24,
+    X509_V_ERR_PATH_LENGTH_EXCEEDED               = 25,
+    X509_V_ERR_INVALID_PURPOSE                    = 26,
+    X509_V_ERR_CERT_UNTRUSTED                     = 27,
+    X509_V_ERR_CERT_REJECTED                      = 28,
+    X509_V_ERR_SUBJECT_ISSUER_MISMATCH            = 29,
+    X509_V_ERR_AKID_SKID_MISMATCH                 = 30,
+    X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH        = 31,
+    X509_V_ERR_KEYUSAGE_NO_CERTSIGN               = 32,
+    X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER           = 33,
+    X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION       = 34,
+    X509_V_ERR_KEYUSAGE_NO_CRL_SIGN               = 35,
+    X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION   = 36,
+    X509_V_ERR_INVALID_NON_CA                     = 37,
+    X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED         = 38,
+    X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE      = 39,
+    X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED     = 40,
+    X509_V_ERR_INVALID_EXTENSION                  = 41,
+    X509_V_ERR_INVALID_POLICY_EXTENSION           = 42,
+    X509_V_ERR_NO_EXPLICIT_POLICY                 = 43,
+    X509_V_ERR_DIFFERENT_CRL_SCOPE                = 44,
+    X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE      = 45,
+    X509_V_ERR_UNNESTED_RESOURCE                  = 46,
+    X509_V_ERR_PERMITTED_VIOLATION                = 47,
+    X509_V_ERR_EXCLUDED_VIOLATION                 = 48,
+    X509_V_ERR_SUBTREE_MINMAX                     = 49,
+    X509_V_ERR_APPLICATION_VERIFICATION           = 50,
+    X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE        = 51,
+    X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX      = 52,
+    X509_V_ERR_UNSUPPORTED_NAME_SYNTAX            = 53,
+    X509_V_ERR_CRL_PATH_VALIDATION_ERROR          = 54,
 
-    X509_R_CERT_ALREADY_IN_HASH_TABLE,
+    X509_R_CERT_ALREADY_IN_HASH_TABLE = 101,
 
     CRYPTO_LOCK = 1,
     CRYPTO_NUM_LOCKS = 10,
@@ -4674,6 +4702,10 @@ WOLFSSL_API int wolfSSL_SSL_CTX_remove_session(WOLFSSL_CTX* ctx,
 WOLFSSL_API WOLFSSL_BIO *wolfSSL_SSL_get_rbio(const WOLFSSL *s);
 WOLFSSL_API WOLFSSL_BIO *wolfSSL_SSL_get_wbio(const WOLFSSL *s);
 WOLFSSL_API int wolfSSL_SSL_do_handshake(WOLFSSL *s);
+#ifdef OPENSSL_EXTRA
+WOLFSSL_API int wolfSSL_OPENSSL_init_ssl(word64 opts,
+    const OPENSSL_INIT_SETTINGS *settings);
+#endif
 #if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
 WOLFSSL_API int wolfSSL_SSL_in_init(const WOLFSSL* ssl);
 #else
