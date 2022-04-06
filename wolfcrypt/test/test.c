@@ -8477,7 +8477,7 @@ static int aes_cbc_test(void)
 }
 #endif
 
-#ifdef HAVE_AES_ECB
+#if defined(HAVE_AES_ECB) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
 static int aesecb_test(void)
 {
 #ifdef WOLFSSL_SMALL_STACK
@@ -9189,7 +9189,7 @@ WOLFSSL_TEST_SUBROUTINE int aes_test(void)
 #endif
 #endif
 
-#if defined(HAVE_AES_ECB)
+#if defined(HAVE_AES_ECB) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
     ret = aesecb_test();
     if (ret != 0)
         goto out;
@@ -39846,7 +39846,7 @@ static int myCryptoDevCb(int devIdArg, wc_CryptoInfo* info, void* ctx)
             }
         }
     #endif /* HAVE_AES_CBC */
-    #ifdef HAVE_AES_ECB
+    #if defined(HAVE_AES_ECB) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
         if (info->cipher.type == WC_CIPHER_AES_ECB) {
             if (info->cipher.enc) {
                 /* set devId to invalid, so software is used */
