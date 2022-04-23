@@ -25915,6 +25915,7 @@ static int test_wc_ecc_verify_hash_ex (void)
     WC_RNG          rng;
     mp_int          r;
     mp_int          s;
+    mp_int          z;
     unsigned char   hash[] = "Everyone gets Friday off.EccSig";
     unsigned char   iHash[] = "Everyone gets Friday off.......";
     unsigned char   shortHash[] = TEST_STRING;
@@ -25927,7 +25928,7 @@ static int test_wc_ecc_verify_hash_ex (void)
     int             verify_ok = 0;
 
     /* Initialize r and s. */
-    ret = mp_init_multi(&r, &s, NULL, NULL, NULL, NULL);
+    ret = mp_init_multi(&r, &s, &z, NULL, NULL, NULL);
     if (ret != MP_OKAY) {
         return MP_INIT_E;
     }
@@ -26003,6 +26004,18 @@ static int test_wc_ecc_verify_hash_ex (void)
         }
         if (ver == 0 && wc_ecc_verify_hash_ex(&r, NULL, shortHash, shortHashLen,
                                                 &verify_ok, &key) != ECC_BAD_ARG_E) {
+            ver = WOLFSSL_FATAL_ERROR;
+        }
+        if (wc_ecc_verify_hash_ex(&z, &s, shortHash, shortHashLen, &verify_ok, &key)
+                                                            != MP_ZERO_E) {
+            ver = WOLFSSL_FATAL_ERROR;
+        }
+        if (wc_ecc_verify_hash_ex(&r, &z, shortHash, shortHashLen, &verify_ok, &key)
+                                                            != MP_ZERO_E) {
+            ver = WOLFSSL_FATAL_ERROR;
+        }
+        if (wc_ecc_verify_hash_ex(&z, &z, shortHash, shortHashLen, &verify_ok, &key)
+                                                            != MP_ZERO_E) {
             ver = WOLFSSL_FATAL_ERROR;
         }
         if (ver == 0 && wc_ecc_verify_hash_ex(&r, &s, NULL, shortHashLen, &verify_ok,
@@ -39681,7 +39694,12 @@ static void test_wolfSSL_SESSION(void)
     unsigned int contextSz = (unsigned int)sizeof(context);
     int sz;
 #endif
+<<<<<<< HEAD
     int ret, err, sockfd;
+=======
+    int ret, err;
+    SOCKET_T sockfd;
+>>>>>>> 70ad19467c4c78e69c74f9969eeba14896dc00bb
     tcp_ready ready;
     func_args server_args;
     THREAD_TYPE serverThread;
@@ -45203,7 +45221,7 @@ static void test_wolfSSL_X509V3_EXT_get(void) {
 
 static void test_wolfSSL_X509V3_EXT_nconf(void)
 {
-#if defined (OPENSSL_ALL)
+#ifdef OPENSSL_ALL
     const char *ext_names[] = {
         "subjectKeyIdentifier",
         "authorityKeyIdentifier",
@@ -45225,22 +45243,30 @@ static void test_wolfSSL_X509V3_EXT_nconf(void)
         "digitalSignature,keyEncipherment,dataEncipherment",
     };
     size_t i;
+    X509_EXTENSION* ext;
+    X509* x509 = X509_new();
 
     printf(testingFmt, "wolfSSL_X509V3_EXT_nconf()");
 
     for (i = 0; i < ext_names_count; i++) {
-        X509_EXTENSION* ext = X509V3_EXT_nconf(NULL, NULL, ext_names[i],
-                ext_values[i]);
+        ext = X509V3_EXT_nconf(NULL, NULL, ext_names[i], ext_values[i]);
         AssertNotNull(ext);
         X509_EXTENSION_free(ext);
     }
 
     for (i = 0; i < ext_nids_count; i++) {
-        X509_EXTENSION* ext = X509V3_EXT_nconf_nid(NULL, NULL, ext_nids[i],
-                ext_values[i]);
+        ext = X509V3_EXT_nconf_nid(NULL, NULL, ext_nids[i], ext_values[i]);
         AssertNotNull(ext);
         X509_EXTENSION_free(ext);
     }
+
+    /* Test adding extension to X509 */
+    for (i = 0; i < ext_nids_count; i++) {
+        ext = X509V3_EXT_nconf(NULL, NULL, ext_names[i], ext_values[i]);
+        AssertIntEQ(X509_add_ext(x509, ext, -1), WOLFSSL_SUCCESS);
+        X509_EXTENSION_free(ext);
+    }
+    X509_free(x509);
 
     printf(resultFmt, "passed");
 #endif

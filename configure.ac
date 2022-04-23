@@ -1623,6 +1623,7 @@ AC_ARG_WITH([se050],
     [AS_HELP_STRING([--with-se050=PATH],[PATH to SE050 install (default /usr/local/lib/)])],
     [
         AC_MSG_CHECKING([for SE050])
+<<<<<<< HEAD
 
         LIBS="$LIBS -lSSS_APIs"
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <fsl_sss_api.h>]], [[ sss_mac_init(0);]])],[ libse050_linked=yes ],[ libse050_linked=no ])
@@ -1678,12 +1679,63 @@ AC_ARG_WITH([se050],
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SE050 -DSSS_USE_FTR_FILE"
     ]
 )
+=======
+>>>>>>> 70ad19467c4c78e69c74f9969eeba14896dc00bb
 
-# sniffer doesn't work in maxstrength mode
-if test "$ENABLED_SNIFFER" = "yes" && test "$ENABLED_MAXSTRENGTH" = "yes"
-then
-    AC_MSG_ERROR([cannot enable maxstrength in sniffer mode.])
-fi
+        LIBS="$LIBS -lSSS_APIs"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <fsl_sss_api.h>]], [[ sss_mac_init(0);]])],[ libse050_linked=yes ],[ libse050_linked=no ])
+
+        if test "x$libse050_linked" = "xno" ; then
+            if test "x$withval" != "xno" ; then
+                trylibse050dir=$withval
+            fi
+            if test "x$withval" = "xyes" ; then
+                trylibse050dir="/usr/local/lib/"
+            fi
+            LDFLAGS="$LDFLAGS -L$trylibse050dir/build/sss"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/build"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/sss/inc"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/sss/ex/inc"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/sss/port/default"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/hostlib/hostLib/inc"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/hostlib/hostLib/libCommon/log/"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/hostlib/hostLib/libCommon/infra"
+
+            if test -e "$trylibse050dir/build/sss/libSSS_APIs.a"; then
+                SE050_STATIC=yes
+            else
+                SE050_STATIC=no
+            fi
+            if test "x$SE050_STATIC" = "xyes"; then
+                LIB_STATIC_ADD="$trylibse050dir/build/sss/ex/src/libex_common.a \
+                                $trylibse050dir/build/sss/libSSS_APIs.a \
+                                $trylibse050dir/build/hostlib/hostLib/se05x/libse05x.a \
+                                $trylibse050dir/build/hostlib/hostLib/liba7x_utils.a \
+                                $trylibse050dir/build/hostlib/hostLib/libCommon/log/libmwlog.a \
+                                $trylibse050dir/build/hostlib/hostLib/libCommon/libsmCom.a $LIB_STATIC_ADD"
+            else
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <fsl_sss_api.h>]], [[ sss_mac_init(0); ]])],[ libse050_linked=yes ],[ libse050_linked=no ])
+                if test "x$libse050_linked" = "xno" ; then
+                    AC_MSG_ERROR([SE050 isn't found.
+                    If it's already installed, specify its path using --with-se050=/dir/])
+                fi
+            fi
+
+            # Requires AES direct
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_AES_DIRECT"
+
+            # Does not support SHA2-512 224/256
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NOSHA512_224 -DWOLFSSL_NOSHA512_256"
+
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([yes])
+        fi
+
+        ENABLED_SE050="yes"
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SE050 -DSSS_USE_FTR_FILE"
+    ]
+)
 
 ENABLED_SNIFFTEST=no
 AS_IF([ test "x$ENABLED_SNIFFER" = "xyes" ],
@@ -4911,7 +4963,8 @@ then
             AM_CFLAGS="$AM_CFLAGS -DECC_SHAMIR"
         fi
     fi
-    if test "x$ENABLED_PKCALLBACKS" = "xno"
+    # Do not enable PK Callbacks in FIPS mode with JNI
+    if test "x$ENABLED_PKCALLBACKS" = "xno" && test "$ENABLED_FIPS" = "no"
     then
         ENABLED_PKCALLBACKS="yes"
         AM_CFLAGS="$AM_CFLAGS -DHAVE_PK_CALLBACKS"
@@ -5244,8 +5297,6 @@ if test "x$ENABLED_TLSX" = "xyes"
 then
     ENABLED_ENCRYPT_THEN_MAC=yes
 fi
-
-AS_IF([test "x$ENABLED_SNIFFER" = "xyes"],[ENABLED_ENCRYPT_THEN_MAC="no"])
 
 if test "x$ENABLED_ENCRYPT_THEN_MAC" = "xyes"
 then
@@ -7099,7 +7150,11 @@ AS_IF([test "x$ENABLED_MCAPI" = "xyes"],
 if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_NGINX" = "yes" || \
    test "$ENABLED_SIGNAL" = "yes" || test "$ENABLED_WPAS" = "yes" || \
    test "$ENABLED_FORTRESS" = "yes" || test "$ENABLED_BUMP" = "yes" || \
+<<<<<<< HEAD
    test "$ENABLED_SNIFFER" = "yes" || test "$ENABLED_OPENSSLALL" = "yes" || \
+=======
+   test "$ENABLED_OPENSSLALL" = "yes" || \
+>>>>>>> 70ad19467c4c78e69c74f9969eeba14896dc00bb
    test "$ENABLED_LIBWEBSOCKETS" = "yes" || \
    test "x$ENABLED_LIGHTY" = "xyes" || test "$ENABLED_LIBSSH2" = "yes" || \
    test "x$ENABLED_NTP" = "xyes" || test "$ENABLED_RSYSLOG" = "yes"
