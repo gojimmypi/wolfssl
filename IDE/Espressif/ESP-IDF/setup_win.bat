@@ -4,7 +4,7 @@ REM Expect the script at /path/to/wolfssl/IDE/Espressif/ESP-IDF/
 ::******************************************************************************************************
 ::******************************************************************************************************
 echo;
-echo wolfSSL Windows Setup. Version 1.0a
+echo wolfSSL Windows Setup. Version 1.0b1
 echo;
 echo This utility will copy a static snapshot of wolfSSL files to the ESP32-IDF component directory.
 echo;
@@ -281,6 +281,16 @@ if EXIST user_settings_h_%FileStamp%.bak (
 ::******************************************************************************************************
 :NO_USER_SETTINGS_RESTORE
 ::******************************************************************************************************
+
+
+if EXIST %WOLFSSLLIB_TRG_DIR%\wolfcrypt\settings.h (
+    echo;
+    echo Found %WOLFSSLLIB_TRG_DIR%\wolfcrypt\settings.h
+) else (
+    echo;
+    echo #pragma once> %WOLFSSLLIB_TRG_DIR%\wolfcrypt\settings.h
+    echo Created a placeholder %WOLFSSLLIB_TRG_DIR%\wolfcrypt\settings.h
+)
 
 
 :: unit test app
