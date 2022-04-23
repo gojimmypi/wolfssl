@@ -24,9 +24,11 @@
 #ifndef WOLFSSL_OPENSSLV_H_
 #define WOLFSSL_OPENSSLV_H_
 
+#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
 
 /* api version compatibility */
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER == 0x0090810fL) ||\
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER == 0x009070dfL) ||\
+    defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER == 0x0090810fL) ||\
     defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER == 0x10100000L) ||\
     defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER == 0x10001040L)
      /* valid version */
@@ -38,7 +40,7 @@
 #elif defined(WOLFSSL_QT) || defined(WOLFSSL_PYTHON)
     /* For Qt and Python 3.8.5 compatibility */
      #define OPENSSL_VERSION_NUMBER 0x10101000L
-#elif defined(WOLFSSL_HAPROXY)
+#elif defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_FFMPEG)
      #define OPENSSL_VERSION_NUMBER 0x1010000fL
 #elif defined(OPENSSL_ALL) || defined(HAVE_LIGHTY) || \
     defined(WOLFSSL_NGINX) || defined(WOLFSSL_OPENSSH) || defined(WOLFSSL_OPENVPN)
@@ -51,5 +53,7 @@
 
 #define OPENSSL_VERSION_TEXT             "wolfSSL " LIBWOLFSSL_VERSION_STRING
 #define OPENSSL_VERSION                  0
+
+#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
 
 #endif /* header */

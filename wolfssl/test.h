@@ -475,7 +475,7 @@ static WC_INLINE void InitTcpReady(tcp_ready* ready)
 }
 
 #ifdef NETOS
-    struct hostent* gethostbyname(vonst char* name);
+    struct hostent* gethostbyname(const char* name);
 #endif
 
 static WC_INLINE void FreeTcpReady(tcp_ready* ready)
@@ -2411,6 +2411,14 @@ static WC_INLINE unsigned int my_psk_client_cs_cb(WOLFSSL* ssl,
     (void)hint;
     (void)key_max_len;
 
+#ifdef WOLFSSL_PSK_MULTI_ID_PER_CS
+    /* Multiple calls for each cipher suite. First identity byte indicates the
+     * number of identites seen so far for cipher suite. */
+    if (identity[0] != 0) {
+        return 0;
+    }
+#endif
+
     /* see internal.h MAX_PSK_ID_LEN for PSK identity limit */
     XSTRNCPY(identity, kIdentityStr, id_max_len);
     XSTRNCAT(identity, ciphersuite + XSTRLEN(ciphersuite) - 6, id_max_len);
@@ -3729,13 +3737,8 @@ typedef struct PkCbInfo {
 #ifdef TEST_PK_PRIVKEY
     union {
     #ifdef HAVE_ECC
+        /* only ECC PK callback with TLS v1.2 needs this */
         ecc_key ecc;
-    #endif
-    #ifdef HAVE_CURVE25519
-        curve25519_key curve;
-    #endif
-    #ifdef HAVE_CURVE448
-        curve448_key curve;
     #endif
     } keyGen;
     int hasKeyGen;
@@ -4032,8 +4035,13 @@ static WC_INLINE int myEd25519Sign(WOLFSSL* ssl, const byte* in, word32 inSz,
     ret = wc_ed25519_init(&myKey);
     if (ret == 0) {
         ret = wc_Ed25519PrivateKeyDecode(keyBuf, &idx, &myKey, keySz);
-        if (ret == 0)
+        if (ret == 0) {
+            ret = wc_ed25519_make_public(&myKey, myKey.p, ED25519_PUB_KEY_SIZE);
+        }
+        if (ret == 0) {
+            myKey.pubKeySet = 1;
             ret = wc_ed25519_sign_msg(in, inSz, out, outSz, &myKey);
+        }
         wc_ed25519_free(&myKey);
     }
 
@@ -4196,8 +4204,13 @@ static WC_INLINE int myEd448Sign(WOLFSSL* ssl, const byte* in, word32 inSz,
     ret = wc_ed448_init(&myKey);
     if (ret == 0) {
         ret = wc_Ed448PrivateKeyDecode(keyBuf, &idx, &myKey, keySz);
-        if (ret == 0)
+        if (ret == 0) {
+            ret = wc_ed448_make_public(&myKey, myKey.p, ED448_PUB_KEY_SIZE);
+        }
+        if (ret == 0) {
+            myKey.pubKeySet = 1;
             ret = wc_ed448_sign_msg(in, inSz, out, outSz, &myKey, NULL, 0);
+        }
         wc_ed448_free(&myKey);
     }
 

@@ -259,6 +259,12 @@ decouple library dependencies with standard string, memory and so on.
             #endif
         #elif defined(__CCRX__)
             #define WC_INLINE inline
+        #elif defined(__DCC__)
+            #ifndef __cplusplus
+                #define WC_INLINE __inline__
+            #else
+                #define WC_INLINE inline
+            #endif
         #else
             #define WC_INLINE
         #endif
@@ -546,7 +552,7 @@ decouple library dependencies with standard string, memory and so on.
 
         #define WC_DECLARE_ARRAY_DYNAMIC_DEC(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             VAR_TYPE* VAR_NAME[VAR_ITEMS]; \
-            int idx##VAR_NAME, inner_idx_##VAR_NAME;
+            int idx##VAR_NAME, inner_idx_##VAR_NAME
         #define WC_DECLARE_ARRAY_DYNAMIC_EXE(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             for (idx##VAR_NAME=0; idx##VAR_NAME<(VAR_ITEMS); idx##VAR_NAME++) { \
                 (VAR_NAME)[idx##VAR_NAME] = (VAR_TYPE*)XMALLOC(VAR_SIZE, (HEAP), DYNAMIC_TYPE_TMP_BUFFER); \
@@ -722,8 +728,8 @@ decouple library dependencies with standard string, memory and so on.
             #endif /* _MSC_VER */
         #endif /* USE_WINDOWS_API */
 
-        #if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA) \
-                    || defined(HAVE_ALPN)
+        #if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA) || \
+            defined(HAVE_ALPN) || defined(WOLFSSL_SNIFFER)
             /* use only Thread Safe version of strtok */
             #if defined(USE_WOLF_STRTOK)
                 #define XSTRTOK(s1,d,ptr) wc_strtok((s1),(d),(ptr))
@@ -898,6 +904,7 @@ decouple library dependencies with standard string, memory and so on.
         DYNAMIC_TYPE_SNIFFER_PB_BUFFER  = 1003,
         DYNAMIC_TYPE_SNIFFER_TICKET_ID  = 1004,
         DYNAMIC_TYPE_SNIFFER_NAMED_KEY  = 1005,
+        DYNAMIC_TYPE_SNIFFER_KEY        = 1006,
     };
 
     /* max error buffer string size */
@@ -1009,6 +1016,7 @@ decouple library dependencies with standard string, memory and so on.
         WC_CIPHER_AES_XTS = 5,
         WC_CIPHER_AES_CFB = 6,
         WC_CIPHER_AES_CCM = 12,
+        WC_CIPHER_AES_ECB = 13,
         WC_CIPHER_DES3 = 7,
         WC_CIPHER_DES = 8,
         WC_CIPHER_CHACHA = 9,
@@ -1072,7 +1080,6 @@ decouple library dependencies with standard string, memory and so on.
 
     /* invalid device id */
     #define INVALID_DEVID    (-2)
-
 
     /* AESNI requires alignment and ARMASM gains some performance from it
      * Xilinx RSA operations require alignment */

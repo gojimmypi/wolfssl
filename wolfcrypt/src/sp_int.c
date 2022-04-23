@@ -4385,31 +4385,49 @@ int sp_init_multi(sp_int* n1, sp_int* n2, sp_int* n3, sp_int* n4, sp_int* n5,
         _sp_zero(n1);
         n1->dp[0] = 0;
         n1->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n1->raw);
+    #endif
     }
     if (n2 != NULL) {
         _sp_zero(n2);
         n2->dp[0] = 0;
         n2->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n2->raw);
+    #endif
     }
     if (n3 != NULL) {
         _sp_zero(n3);
         n3->dp[0] = 0;
         n3->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n3->raw);
+    #endif
     }
     if (n4 != NULL) {
         _sp_zero(n4);
         n4->dp[0] = 0;
         n4->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n4->raw);
+    #endif
     }
     if (n5 != NULL) {
         _sp_zero(n5);
         n5->dp[0] = 0;
         n5->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n5->raw);
+    #endif
     }
     if (n6 != NULL) {
         _sp_zero(n6);
         n6->dp[0] = 0;
         n6->size = SP_INT_DIGITS;
+    #ifdef HAVE_WOLF_BIGINT
+        wc_bigint_init(&n6->raw);
+    #endif
     }
 
     return MP_OKAY;
@@ -6712,8 +6730,13 @@ int sp_div(sp_int* a, sp_int* d, sp_int* r, sp_int* rem)
     if ((err == MP_OKAY) && (r != NULL) && (r->size < a->used - d->used + 2)) {
         err = MP_VAL;
     }
-    if ((err == MP_OKAY) && (rem != NULL) && (rem->size < a->used + 1)) {
-        err = MP_VAL;
+    if ((err == MP_OKAY) && (rem != NULL)) {
+        if ((a->used <= d->used) && (rem->size < a->used + 1)) {
+            err = MP_VAL;
+        }
+        else if ((a->used > d->used) && (rem->size < d->used + 1)) {
+            err = MP_VAL;
+        }
     }
     /* May need to shift number being divided left into a new word. */
     if ((err == MP_OKAY) && (a->used == SP_INT_DIGITS)) {
@@ -11528,6 +11551,9 @@ int sp_mod_2d(sp_int* a, int e, sp_int* r)
         if (a != r) {
             XMEMCPY(r->dp, a->dp, digits * sizeof(sp_int_digit));
             r->used = a->used;
+        #ifdef WOLFSSL_SP_INT_NEGATIVE
+            r->sign = a->sign;
+        #endif
         }
     #ifndef WOLFSSL_SP_INT_NEGATIVE
         if (digits <= a->used)
@@ -15632,6 +15658,12 @@ int sp_prime_is_prime_ex(sp_int* a, int t, int* result, WC_RNG* rng)
         err = MP_VAL;
     }
 
+#ifdef WOLFSSL_SP_INT_NEGATIVE
+    if ((err == MP_OKAY) && (a->sign == MP_NEG)) {
+        err = MP_VAL;
+    }
+#endif
+
     if ((err == MP_OKAY) && sp_isone(a)) {
         ret = MP_NO;
         haveRes = 1;
@@ -15700,6 +15732,7 @@ int sp_prime_is_prime_ex(sp_int* a, int t, int* result, WC_RNG* rng)
                 /* Ensure the top word has no more bits than necessary. */
                 if (bits > 0) {
                     b->dp[b->used - 1] &= ((sp_digit)1 << bits) - 1;
+                    sp_clamp(b);
                 }
 
                 if ((sp_cmp_d(b, 2) != MP_GT) || (_sp_cmp(b, c) != MP_LT)) {

@@ -32,6 +32,7 @@
 #endif
 #include <wolfssl/wolfcrypt/settings.h>
 
+#undef TEST_OPENSSL_COEXIST /* can't use this option with this example */
 #include <wolfssl/ssl.h> /* name change portability layer */
 
 #ifdef HAVE_ECC
@@ -61,9 +62,14 @@ static const char *wolfsentry_config_path = NULL;
     #include <wolfssl/certs_test.h>
 #endif
 
-#include <wolfssl/openssl/ssl.h>
 #include <wolfssl/test.h>
 #include <wolfssl/error-ssl.h>
+
+/* Force enable the compatibility macros for this example */
+#ifndef OPENSSL_EXTRA_X509_SMALL
+#define OPENSSL_EXTRA_X509_SMALL
+#endif
+#include <wolfssl/openssl/ssl.h>
 
 #include "examples/server/server.h"
 
@@ -2829,7 +2835,7 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
                 wolfSSL_CTX_EnableOCSP(ctx, WOLFSSL_OCSP_NO_NONCE);
         }
 #ifndef NO_RSA
-    /* All the OSCP Stapling test certs are RSA. */
+    /* All the OCSP Stapling test certs are RSA. */
 #if defined(HAVE_CERTIFICATE_STATUS_REQUEST) \
     || defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
         { /* scope start */
@@ -3011,13 +3017,15 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
                         err = SSL_get_error(ssl, 0);
                     #ifdef WOLFSSL_ASYNC_CRYPT
                         if (err == WC_PENDING_E) {
+                            /* returns the number of polled items or <0 for
+                             * error */
                             ret = wolfSSL_AsyncPoll(ssl,
                                                     WOLF_POLL_FLAG_CHECK_HW);
                             if (ret < 0) break;
                         }
                     #endif
                     }
-                    if (ret > 0) {
+                    else if (ret > 0) {
                         input[ret] = 0; /* null terminate message */
                         printf("Early Data Client message: %s\n", input);
                     }

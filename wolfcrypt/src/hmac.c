@@ -1010,6 +1010,9 @@ int wc_HmacInit(Hmac* hmac, void* heap, int devId)
     hmac->devId = devId;
     hmac->devCtx = NULL;
 #endif
+#if defined(WOLFSSL_DEVCRYPTO_HMAC)
+    hmac->ctx.cfd = -1;
+#endif
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_HMAC)
     ret = wolfAsync_DevCtxInit(&hmac->asyncDev, WOLFSSL_ASYNC_MARKER_HMAC,
@@ -1021,7 +1024,7 @@ int wc_HmacInit(Hmac* hmac, void* heap, int devId)
     return ret;
 }
 
-#ifdef HAVE_PKCS11
+#ifdef WOLF_PRIVATE_KEY_ID
 int  wc_HmacInit_Id(Hmac* hmac, unsigned char* id, int len, void* heap,
                     int devId)
 {
@@ -1064,7 +1067,7 @@ int wc_HmacInit_Label(Hmac* hmac, const char* label, void* heap, int devId)
 
     return ret;
 }
-#endif
+#endif /* WOLF_PRIVATE_KEY_ID */
 
 /* Free Hmac from use with async device */
 void wc_HmacFree(Hmac* hmac)

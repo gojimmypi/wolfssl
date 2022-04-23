@@ -894,11 +894,13 @@ int fp_div_2_mod_ct(fp_int *a, fp_int *b, fp_int *c)
       c->dp[i]   = (fp_digit)w;
       w        >>= DIGIT_BIT;
   }
-  c->dp[i] = (fp_digit)w;
+  for (i = 0; i < b->used-1; i++) {
+      c->dp[i] = (c->dp[i] >> 1) | (c->dp[i+1] << (DIGIT_BIT - 1));
+  }
+  c->dp[i] = (c->dp[i] >> 1) | ((fp_digit)w << (DIGIT_BIT - 1));
   c->used = i + 1;
   c->sign = FP_ZPOS;
   fp_clamp(c);
-  fp_div_2(c, c);
 
   return FP_OKAY;
 }
@@ -979,8 +981,8 @@ int fp_mod(fp_int *a, fp_int *b, fp_int *c)
 /* c = a mod 2**d */
 void fp_mod_2d(fp_int *a, int b, fp_int *c)
 {
-   int x;
-   int bmax;
+   unsigned int x;
+   unsigned int bmax;
 
    /* zero if count less than or equal to zero */
    if (b <= 0) {
@@ -996,16 +998,16 @@ void fp_mod_2d(fp_int *a, int b, fp_int *c)
       return;
    }
 
-  bmax = (b + DIGIT_BIT - 1) / DIGIT_BIT;
+   bmax = ((unsigned int)b + DIGIT_BIT - 1) / DIGIT_BIT;
   /* zero digits above the last digit of the modulus */
-  for (x = bmax; x < c->used; x++) {
+   for (x = bmax; x < (unsigned int)c->used; x++) {
     c->dp[x] = 0;
   }
 
   if (c->sign == FP_NEG) {
      fp_digit carry = 0;
      /* negate value */
-     for (x = 0; x < c->used; x++) {
+     for (x = 0; x < (unsigned int)c->used; x++) {
          fp_digit next = c->dp[x] > 0;
          c->dp[x] = (fp_digit)0 - c->dp[x] - carry;
          carry |= next;
@@ -1013,7 +1015,7 @@ void fp_mod_2d(fp_int *a, int b, fp_int *c)
      for (; x < bmax; x++) {
          c->dp[x] = (fp_digit)0 - carry;
      }
-     c->used = bmax;
+     c->used = (int)bmax;
      c->sign = FP_ZPOS;
   }
 
@@ -1457,7 +1459,7 @@ int fp_invmod_mont_ct(fp_int *a, fp_int *b, fp_int *c, fp_digit mp)
     err |= fp_montgomery_reduce(&pre[i], b, mp);
   }
 
-  fp_sub_d(b, 2, e);
+  err |= fp_sub_d(b, 2, e);
   /* Highest bit is always set. */
   j = 1;
   for (i = fp_count_bits(e)-2; i >= 0; i--) {
@@ -1805,7 +1807,11 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
     /* reduce G -> R[1] */
     if (fp_cmp_mag(P, G) != FP_GT) {
        /* G > P so we reduce it first */
-       fp_mod(G, P, &nb->R[1]);
+       err = fp_mod(G, P, &nb->R[1]);
+       if (err != FP_OKAY) {
+         nb->state = TFM_EXPTMOD_NB_INIT;
+         return err;
+       }
     } else {
        fp_copy(G, &nb->R[1]);
     }
@@ -2199,11 +2205,23 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   /* now set M[1] to G * R mod m */
   if (fp_cmp_mag(P, G) != FP_GT) {
      /* G > P so we reduce it first */
-     fp_mod(G, P, &M[1]);
+     err = fp_mod(G, P, &M[1]);
+     if (err != FP_OKAY) {
+     #ifndef WOLFSSL_NO_MALLOC
+        XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
+     #endif
+        return err;
+     }
   } else {
      fp_copy(G, &M[1]);
   }
-  fp_mulmod (&M[1], res, P, &M[1]);
+  err = fp_mulmod (&M[1], res, P, &M[1]);
+  if (err != FP_OKAY) {
+  #ifndef WOLFSSL_NO_MALLOC
+     XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
+  #endif
+     return err;
+  }
 
   /* compute the value at M[1<<(winsize-1)] by
    * squaring M[1] (winsize-1) times */
@@ -4101,7 +4119,8 @@ int fp_sub_d(fp_int *a, fp_digit b, fp_int *c)
    if (c->size < FP_SIZE) {
      err = fp_sub(a, tmp, tmp);
      fp_copy(tmp, c);
-   } else
+   }
+   else
 #endif
    {
      err = fp_sub(a, tmp, c);
@@ -5050,6 +5069,8 @@ int mp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng)
 
     if (a == NULL || result == NULL || rng == NULL)
         return FP_VAL;
+    if (a->sign == FP_NEG)
+        return FP_VAL;
 
     if (fp_isone(a)) {
         *result = FP_NO;
@@ -5088,12 +5109,14 @@ int mp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng)
         byte*  base;
     #endif
         word32 baseSz;
+        word32 bitSz;
         int    err;
 
-        baseSz = fp_count_bits(a);
+        bitSz = fp_count_bits(a);
         /* The base size is the number of bits / 8. One is added if the number
          * of bits isn't an even 8. */
-        baseSz = (baseSz / 8) + ((baseSz % 8) ? 1 : 0);
+        baseSz = (bitSz / 8) + ((bitSz % 8) ? 1 : 0);
+        bitSz %= 8;
 
     #ifndef WOLFSSL_SMALL_STACK
         if (baseSz > sizeof(base))
@@ -5133,6 +5156,9 @@ int mp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng)
             #endif
                return err;
             }
+
+            if (bitSz != 0)
+                base[0] &= (1 << bitSz) - 1;
 
             err = fp_read_unsigned_bin(b, base, baseSz);
             if (err != FP_OKAY) {
@@ -5189,7 +5215,7 @@ int mp_cond_swap_ct(mp_int * a, mp_int * b, int c, int m)
 
 static int  fp_gcd(fp_int *a, fp_int *b, fp_int *c);
 static int  fp_lcm(fp_int *a, fp_int *b, fp_int *c);
-static int  fp_randprime(fp_int* N, int len, WC_RNG* rng, void* heap);
+static int  fp_randprime(fp_int* a, int len, WC_RNG* rng, void* heap);
 
 int mp_gcd(fp_int *a, fp_int *b, fp_int *c)
 {
@@ -5202,11 +5228,11 @@ int mp_lcm(fp_int *a, fp_int *b, fp_int *c)
     return fp_lcm(a, b, c);
 }
 
-int mp_rand_prime(mp_int* N, int len, WC_RNG* rng, void* heap)
+int mp_rand_prime(mp_int* a, int len, WC_RNG* rng, void* heap)
 {
     int err;
 
-    err = fp_randprime(N, len, rng, heap);
+    err = fp_randprime(a, len, rng, heap);
     switch(err) {
         case FP_VAL:
             return MP_VAL;
@@ -5226,7 +5252,7 @@ int mp_exch (mp_int * a, mp_int * b)
 
 
 
-int fp_randprime(fp_int* N, int len, WC_RNG* rng, void* heap)
+int fp_randprime(fp_int* a, int len, WC_RNG* rng, void* heap)
 {
     static const int USE_BBS = 1;
     int   err, type;
@@ -5274,7 +5300,7 @@ int fp_randprime(fp_int* N, int len, WC_RNG* rng, void* heap)
         buf[len-1] |= 0x01 | ((type & USE_BBS) ? 0x02 : 0x00);
 
         /* load value */
-        err = fp_read_unsigned_bin(N, buf, len);
+        err = fp_read_unsigned_bin(a, buf, len);
         if (err != 0) {
             XFREE(buf, heap, DYNAMIC_TYPE_TMP_BUFFER);
             return err;
@@ -5285,7 +5311,7 @@ int fp_randprime(fp_int* N, int len, WC_RNG* rng, void* heap)
          * of a 1024-bit candidate being a false positive, when it is our
          * prime candidate. (Note 4.49 of Handbook of Applied Cryptography.)
          * Using 8 because we've always used 8 */
-        mp_prime_is_prime_ex(N, 8, &isPrime, rng);
+        mp_prime_is_prime_ex(a, 8, &isPrime, rng);
     } while (isPrime == FP_NO);
 
     XMEMSET(buf, 0, len);

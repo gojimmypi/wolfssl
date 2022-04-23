@@ -915,9 +915,6 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef WOLFSSL_GAME_BUILD
     #define SIZEOF_LONG_LONG 8
-    #if defined(__PPU) || defined(__XENON)
-        #define BIG_ENDIAN_ORDER
-    #endif
 #endif
 
 #ifdef WOLFSSL_LSR
@@ -1630,9 +1627,12 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_AES_GCM_FIXED_IV_AAD
 #endif
 #ifdef WOLFSSL_KCAPI_ECC
+    #undef  ECC_USER_CURVES
     #define ECC_USER_CURVES
     #undef  NO_ECC256
+    #undef  HAVE_ECC384
     #define HAVE_ECC384
+    #undef  HAVE_ECC521
     #define HAVE_ECC521
 #endif
 
@@ -2235,6 +2235,10 @@ extern void uITRON4_free(void *p) ;
 
 
 #ifdef WOLFSSL_LINUXKM
+    #ifdef HAVE_CONFIG_H
+        #include <config.h>
+        #undef HAVE_CONFIG_H
+    #endif
     #ifndef NO_DEV_RANDOM
         #define NO_DEV_RANDOM
     #endif
@@ -2548,6 +2552,12 @@ extern void uITRON4_free(void *p) ;
     #define NO_SHA2_CRYPTO_CB
 #endif
 
+/* Enable HAVE_ONE_TIME_AUTH by default for use with TLS cipher suites
+ * when poly1305 is enabled
+ */
+#if defined(HAVE_POLY1305) && !defined(HAVE_ONE_TIME_AUTH)
+    #define HAVE_ONE_TIME_AUTH
+#endif
 
 /* Check for insecure build combination:
  * secure renegotiation   [enabled]
@@ -2592,16 +2602,36 @@ extern void uITRON4_free(void *p) ;
  * group */
 #ifdef HAVE_LIBOQS
 #define HAVE_PQC
+#define HAVE_FALCON
+#define HAVE_KYBER
 #endif
 
-#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS)
-#error "You must have a post-quantum cryptography implementation to use PQC."
+#ifdef HAVE_PQM4
+#define HAVE_PQC
+#define HAVE_KYBER
 #endif
 
+#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS) && !defined(HAVE_PQM4)
+#error Please do not define HAVE_PQC yourself.
+#endif
+
+#if defined(HAVE_PQC) && defined(HAVE_LIBOQS) && defined(HAVE_PQM4)
+#error Please do not define both HAVE_LIBOQS and HAVE_PQM4.
+#endif
 
 /* SRTP requires DTLS */
 #if defined(WOLFSSL_SRTP) && !defined(WOLFSSL_DTLS)
     #error The SRTP extension requires DTLS
+#endif
+
+/* Are we using an external private key store like:
+ *     PKCS11 / HSM / crypto callback / PK callback */
+#if !defined(WOLF_PRIVATE_KEY_ID) && \
+    (defined(HAVE_PKCS11) || defined(HAVE_PK_CALLBACKS) || \
+     defined(WOLF_CRYPTO_CB) || defined(WOLFSSL_KCAPI))
+     /* Enables support for using wolfSSL_CTX_use_PrivateKey_Id and
+      *   wolfSSL_CTX_use_PrivateKey_Label */
+    #define WOLF_PRIVATE_KEY_ID
 #endif
 
 

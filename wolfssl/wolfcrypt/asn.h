@@ -1459,6 +1459,11 @@ typedef struct TrustedPeerCert TrustedPeerCert;
 typedef struct SignatureCtx SignatureCtx;
 typedef struct CertSignCtx  CertSignCtx;
 
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+typedef int (*wc_UnknownExtCallback)(const word16* oid, word32 oidSz, int crit,
+                                     const unsigned char* der, word32 derSz);
+#endif
 
 struct DecodedCert {
     const byte* publicKey;
@@ -1580,7 +1585,6 @@ struct DecodedCert {
     char*   subjectUID;
     int     subjectUIDLen;
     char    subjectUIDEnc;
-#if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
     char*   subjectStreet;
     int     subjectStreetLen;
     char    subjectStreetEnc;
@@ -1596,7 +1600,6 @@ struct DecodedCert {
     char*   subjectPC;
     int     subjectPCLen;
     char    subjectPCEnc;
-#endif
     char*   subjectEmail;
     int     subjectEmailLen;
 #endif /* defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT) */
@@ -1689,6 +1692,10 @@ struct DecodedCert {
 #ifdef WOLFSSL_CERT_REQ
     byte isCSR : 1;                /* Do we intend on parsing a CSR? */
 #endif
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+    wc_UnknownExtCallback unknownExtCallback;
+#endif
 };
 
 #ifdef NO_SHA
@@ -1757,7 +1764,7 @@ struct TrustedPeerCert {
 
 /* for testing or custom openssl wrappers */
 #if defined(WOLFSSL_TEST_CERT) || defined(OPENSSL_EXTRA) || \
-    defined(OPENSSL_EXTRA_X509_SMALL)
+    defined(OPENSSL_EXTRA_X509_SMALL) || defined(WOLFSSL_PUBLIC_ASN)
     #define WOLFSSL_ASN_API WOLFSSL_API
 #else
     #define WOLFSSL_ASN_API WOLFSSL_LOCAL
@@ -1816,6 +1823,12 @@ WOLFSSL_ASN_API void FreeDecodedCert(DecodedCert* cert);
 WOLFSSL_ASN_API int  ParseCert(DecodedCert* cert, int type, int verify,
                                void* cm);
 
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+WOLFSSL_ASN_API int wc_SetUnknownExtCallback(DecodedCert* cert,
+                                             wc_UnknownExtCallback cb);
+#endif
+
 WOLFSSL_LOCAL int DecodePolicyOID(char *out, word32 outSz, const byte *in,
                                   word32 inSz);
 WOLFSSL_LOCAL int EncodePolicyOID(byte *out, word32 *outSz,
@@ -1823,11 +1836,17 @@ WOLFSSL_LOCAL int EncodePolicyOID(byte *out, word32 *outSz,
 WOLFSSL_API int CheckCertSignature(const byte*,word32,void*,void* cm);
 WOLFSSL_LOCAL int CheckCertSignaturePubKey(const byte* cert, word32 certSz,
         void* heap, const byte* pubKey, word32 pubKeySz, int pubKeyOID);
+#ifdef OPENSSL_EXTRA
+WOLFSSL_API int wc_CheckCertSigPubKey(const byte* cert, word32 certSz,
+                                      void* heap, const byte* pubKey,
+                                      word32 pubKeySz, int pubKeyOID);
+#endif
+
 #ifdef WOLFSSL_CERT_REQ
 WOLFSSL_LOCAL int CheckCSRSignaturePubKey(const byte* cert, word32 certSz,
         void* heap, const byte* pubKey, word32 pubKeySz, int pubKeyOID);
 #endif /* WOLFSSL_CERT_REQ */
-WOLFSSL_LOCAL int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
+WOLFSSL_ASN_API int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
                         int sigAlgoType);
 WOLFSSL_LOCAL int ParseCertRelative(DecodedCert* cert, int type, int verify,
                                     void* cm);
@@ -2016,11 +2035,9 @@ WOLFSSL_LOCAL void FreeDer(DerBuffer** der);
 #ifdef HAVE_SMIME
 WOLFSSL_LOCAL int wc_MIME_parse_headers(char* in, int inLen, MimeHdr** hdrs);
 WOLFSSL_LOCAL int wc_MIME_header_strip(char* in, char** out, size_t start, size_t end);
-WOLFSSL_LOCAL int wc_MIME_create_header(char* name, char* body, MimeHdr** hdr);
-WOLFSSL_LOCAL int wc_MIME_create_parameter(char* attribute, char* value, MimeParam** param);
 WOLFSSL_LOCAL MimeHdr* wc_MIME_find_header_name(const char* name, MimeHdr* hdr);
 WOLFSSL_LOCAL MimeParam* wc_MIME_find_param_attr(const char* attribute, MimeParam* param);
-WOLFSSL_LOCAL char* wc_MIME_canonicalize(const char* line);
+WOLFSSL_LOCAL char* wc_MIME_single_canonicalize(const char* line, word32* len);
 WOLFSSL_LOCAL int wc_MIME_free_hdrs(MimeHdr* head);
 #endif /* HAVE_SMIME */
 
@@ -2263,8 +2280,12 @@ WOLFSSL_LOCAL void FreeDecodedCRL(DecodedCRL* dcrl);
 
 #if !defined(NO_ASN) || !defined(NO_PWDBASED)
 
-#ifndef MAX_KEY_SIZE
-    #define MAX_KEY_SIZE    64  /* MAX PKCS Key length */
+#ifndef PKCS_MAX_KEY_SIZE
+    #define PKCS_MAX_KEY_SIZE    64  /* MAX PKCS Key length */
+#endif
+#if !defined(WOLFSSL_GAME_BUILD) && !defined(MAX_KEY_SIZE)
+    /* for backwards compatibility */
+    #define MAX_KEY_SIZE PKCS_MAX_KEY_SIZE
 #endif
 #ifndef MAX_UNICODE_SZ
     #define MAX_UNICODE_SZ  256

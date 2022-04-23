@@ -33,6 +33,7 @@ This library defines the interface APIs for X509 certificates.
 
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/wolfcrypt/dsa.h>
+#include <wolfssl/wolfcrypt/random.h>
 
 #ifdef __cplusplus
     extern "C" {
@@ -62,14 +63,6 @@ This library defines the interface APIs for X509 certificates.
 #ifndef WC_RSAKEY_TYPE_DEFINED
     typedef struct RsaKey RsaKey;
     #define WC_RSAKEY_TYPE_DEFINED
-#endif
-#ifndef WC_RNG_TYPE_DEFINED
-    typedef struct OS_Seed OS_Seed;
-    typedef struct WC_RNG WC_RNG;
-    #ifdef WC_RNG_SEED_CB
-    typedef int (*wc_RngSeed_Cb)(OS_Seed* os, byte* seed, word32 sz);
-    #endif
-    #define WC_RNG_TYPE_DEFINED
 #endif
 #ifndef WC_DH_TYPE_DEFINED
     typedef struct DhKey DhKey;
@@ -322,6 +315,13 @@ typedef struct CertOidField {
     int    valSz;
     char   enc;
 } CertOidField;
+
+typedef struct CertExtension {
+    const char* oid;
+    byte        crit;
+    const byte* val;
+    int         valSz;
+} CertExtension;
 #endif
 #endif /* WOLFSSL_CERT_GEN */
 
@@ -368,6 +368,10 @@ typedef struct CertName {
 #endif /* WOLFSSL_CERT_GEN || OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL*/
 
 #ifdef WOLFSSL_CERT_GEN
+
+#ifndef NUM_CUSTOM_EXT
+#define NUM_CUSTOM_EXT 16
+#endif
 
 /* for user to fill for certificate generation */
 typedef struct Cert {
@@ -432,9 +436,13 @@ typedef struct Cert {
     int      challengePwPrintableString; /* encode as PrintableString */
 #endif
 #ifdef WOLFSSL_CUSTOM_OID
-    CertOidField extCustom; /* user oid and value to go in req extensions */
-#endif
+    /* user oid and value to go in req extensions */
+    CertOidField extCustom;
 
+    /* Extensions to go into X.509 certificates */
+    CertExtension customCertExt[NUM_CUSTOM_EXT];
+    int customCertExtCount;
+#endif
     void*   decodedCert;    /* internal DecodedCert allocated from heap */
     byte*   der;            /* Pointer to buffer of current DecodedCert cache */
     void*   heap;           /* heap hint */
@@ -530,6 +538,13 @@ WOLFSSL_API int wc_SetExtKeyUsage(Cert *cert, const char *value);
 WOLFSSL_API int wc_SetExtKeyUsageOID(Cert *cert, const char *oid, word32 sz,
                                      byte idx, void* heap);
 #endif /* WOLFSSL_EKU_OID */
+
+#if defined(WOLFSSL_ASN_TEMPLATE) && defined(WOLFSSL_CUSTOM_OID) && \
+    defined(HAVE_OID_ENCODING)
+WOLFSSL_API int wc_SetCustomExtension(Cert *cert, int critical, const char *oid,
+                                      const byte *der, word32 derSz);
+#endif
+
 #endif /* WOLFSSL_CERT_EXT */
 #endif /* WOLFSSL_CERT_GEN */
 
@@ -647,7 +662,7 @@ WOLFSSL_API int wc_DhPrivKeyToDer(DhKey* key, byte* out, word32* outSz);
      (defined(HAVE_CURVE25519) && defined(HAVE_CURVE25519_KEY_EXPORT)) || \
      (defined(HAVE_ED448)      && defined(HAVE_ED448_KEY_EXPORT)) || \
      (defined(HAVE_CURVE448)   && defined(HAVE_CURVE448_KEY_EXPORT)) || \
-     (defined(HAVE_PQC)))
+     (defined(HAVE_PQC) && defined(HAVE_FALCON)))
     #define WC_ENABLE_ASYM_KEY_EXPORT
 #endif
 

@@ -94,6 +94,10 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
     #include <wolfssl/wolfcrypt/port/kcapi/kcapi_rsa.h>
 #endif
 
+#if defined(WOLFSSL_DEVCRYPTO_RSA)
+    #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
+#endif
+
 #ifdef __cplusplus
     extern "C" {
 #endif
@@ -148,7 +152,7 @@ enum {
     RSA_PSS_SALT_LEN_DISCOVER = -2,
 #endif
 
-#ifdef WOLF_CRYPTO_CB
+#ifdef WOLF_PRIVATE_KEY_ID
     RSA_MAX_ID_LEN      = 32,
     RSA_MAX_LABEL_LEN   = 32,
 #endif
@@ -195,7 +199,7 @@ struct RsaKey {
 #if defined(WOLFSSL_KCAPI_RSA)
     struct kcapi_handle* handle;
 #endif
-#ifdef WOLF_CRYPTO_CB
+#ifdef WOLF_PRIVATE_KEY_ID
     byte id[RSA_MAX_ID_LEN];
     int  idLen;
     char label[RSA_MAX_LABEL_LEN];
@@ -214,6 +218,12 @@ struct RsaKey {
 #if defined(WOLFSSL_CRYPTOCELL)
     rsa_context_t ctx;
 #endif
+#if defined(WOLFSSL_CAAM)
+    word32 blackKey;
+#endif
+#if defined(WOLFSSL_DEVCRYPTO_RSA)
+    WC_CRYPTODEV ctx;
+#endif
 };
 
 #ifndef WC_RSAKEY_TYPE_DEFINED
@@ -226,7 +236,7 @@ struct RsaKey {
 WOLFSSL_API int  wc_InitRsaKey(RsaKey* key, void* heap);
 WOLFSSL_API int  wc_InitRsaKey_ex(RsaKey* key, void* heap, int devId);
 WOLFSSL_API int  wc_FreeRsaKey(RsaKey* key);
-#ifdef WOLF_CRYPTO_CB
+#ifdef WOLF_PRIVATE_KEY_ID
 WOLFSSL_API int wc_InitRsaKey_Id(RsaKey* key, unsigned char* id, int len,
                                  void* heap, int devId);
 WOLFSSL_API int wc_InitRsaKey_Label(RsaKey* key, const char* label, void* heap,
@@ -329,12 +339,14 @@ WOLFSSL_API int  wc_RsaPublicKeyDecodeRaw(const byte* n, word32 nSz,
  */
 
 /* Mask Generation Function Identifiers */
-#define WC_MGF1NONE   0
-#define WC_MGF1SHA1   26
-#define WC_MGF1SHA224 4
-#define WC_MGF1SHA256 1
-#define WC_MGF1SHA384 2
-#define WC_MGF1SHA512 3
+#define WC_MGF1NONE       0
+#define WC_MGF1SHA1       26
+#define WC_MGF1SHA224     4
+#define WC_MGF1SHA256     1
+#define WC_MGF1SHA384     2
+#define WC_MGF1SHA512     3
+#define WC_MGF1SHA512_224 5
+#define WC_MGF1SHA512_256 6
 
 /* Padding types */
 #define WC_RSA_PKCSV15_PAD 0
