@@ -7,7 +7,7 @@
 #
 AC_COPYRIGHT([Copyright (C) 2006-2020 wolfSSL Inc.])
 AC_PREREQ([2.69])
-AC_INIT([wolfssl],[5.2.0],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
+AC_INIT([wolfssl],[5.3.0],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # The following sets CFLAGS to empty if unset on command line.  We do not
@@ -38,7 +38,7 @@ LT_INIT([disable-static win32-dll])
 AC_ARG_VAR(EXTRA_CFLAGS, [Extra CFLAGS to add to autoconf-computed arg list.  Can also supply directly to make.])
 
 #shared library versioning
-WOLFSSL_LIBRARY_VERSION=32:0:0
+WOLFSSL_LIBRARY_VERSION=33:0:0
 #                        | | |
 #                 +------+ | +---+
 #                 |        |     |
@@ -1393,6 +1393,7 @@ then
     AM_CFLAGS="$AM_CFLAGS -DKEEP_OUR_CERT"
     AM_CFLAGS="$AM_CFLAGS -DKEEP_PEER_CERT"
     AM_CFLAGS="$AM_CFLAGS -DHAVE_KEYING_MATERIAL"
+    AM_CFLAGS="$AM_CFLAGS -DNO_SESSION_CACHE_REF"
 fi
 
 if test "$ENABLED_FORTRESS" = "yes"
@@ -2325,7 +2326,7 @@ AC_ARG_ENABLE([ripemd],
     [ ENABLED_RIPEMD=no ]
     )
 
-if test "$ENABLED_OPENSSH" = "yes"
+if test "$ENABLED_OPENSSH" = "yes" && test "x$ENABLED_FIPS" = "xno"
 then
     ENABLED_RIPEMD="yes"
 fi
@@ -2591,12 +2592,12 @@ AC_ARG_ENABLE([dsa],
     [ ENABLED_DSA=no ]
     )
 
-if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_OPENVPN" = "yes" || test "$ENABLED_NGINX" = "yes" || test "$ENABLED_WPAS" = "yes" || test "$ENABLED_QT" = "yes" || test "$ENABLED_BIND" = "yes" || test "$ENABLED_LIBSSH2" = "yes" || test "$ENABLED_NTP" = "yes"
+if (test "$ENABLED_OPENSSH" = "yes" && test "x$ENABLED_FIPS" = "xno") || test "$ENABLED_OPENVPN" = "yes" || test "$ENABLED_NGINX" = "yes" || test "$ENABLED_WPAS" = "yes" || test "$ENABLED_QT" = "yes" || test "$ENABLED_BIND" = "yes" || test "$ENABLED_LIBSSH2" = "yes" || test "$ENABLED_NTP" = "yes"
 then
     ENABLED_DSA="yes"
 fi
 
-if test "$ENABLED_DSA" = "no" && test "$ENABLED_OPENSSH" = "no"
+if test "$ENABLED_DSA" = "no"
 then
     AM_CFLAGS="$AM_CFLAGS -DNO_DSA"
 else
@@ -2719,7 +2720,7 @@ AC_ARG_ENABLE([curve25519],
     )
 
 
-if test "$ENABLED_OPENSSH" = "yes"
+if test "$ENABLED_OPENSSH" = "yes" && test "x$ENABLED_FIPS" = "xno"
 then
     ENABLED_CURVE25519="yes"
 fi
@@ -2757,7 +2758,8 @@ AC_ARG_ENABLE([ed25519-stream],
     )
 
 
-if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_CHRONY" = "yes"
+if (test "$ENABLED_OPENSSH" = "yes" && "x$ENABLED_FIPS" = "xno") || \
+   test "$ENABLED_CHRONY" = "yes"
 then
     ENABLED_ED25519="yes"
 fi
@@ -3557,13 +3559,20 @@ AC_ARG_ENABLE([des3],
     [ ENABLED_DES3=no ]
     )
 
-if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_QT" = "yes" || test "$ENABLED_OPENVPN" = "yes" || test "x$ENABLED_WPAS" != "xno"  || test "$ENABLED_NETSNMP" = "yes" || test "$ENABLED_LIBSSH2" = "yes" || test "$ENABLED_KRB" = "yes" || test "$ENABLED_WOLFENGINE" = "yes"
+# Enable 3DES with OpenSSH and FIPS 140-2 but not 140-3
+if (test "$ENABLED_OPENSSH" = "yes" && \
+        (test "x$ENABLED_FIPS" = "xno" || test "$HAVE_FIPS_VERSION" -le 2)) || \
+   test "$ENABLED_QT" = "yes" || test "$ENABLED_OPENVPN" = "yes" || \
+   test "x$ENABLED_WPAS" != "xno"  || test "$ENABLED_NETSNMP" = "yes" || \
+   test "$ENABLED_LIBSSH2" = "yes" || test "$ENABLED_KRB" = "yes" || \
+   test "$ENABLED_WOLFENGINE" = "yes"
 then
     ENABLED_DES3="yes"
 fi
 
 # ARC4
-if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_WPAS" = "yes" || test "$ENABLED_KRB" = "yes"
+if (test "$ENABLED_OPENSSH" = "yes" && test "x$ENABLED_FIPS" = "xno") || \
+   test "$ENABLED_WPAS" = "yes" || test "$ENABLED_KRB" = "yes"
 then
     # Requires RC4 make sure on (if not forcefully disabled with --disable-arc4)
     test "$enable_arc4" = "" && enable_arc4=yes
@@ -4605,11 +4614,22 @@ AC_ARG_ENABLE([pkcs7],
     )
 
 # wolfSSH Options
-AC_ARG_ENABLE([ssh],
-    [AS_HELP_STRING([--enable-ssh],[Enable wolfSSH options (default: disabled)])],
+AC_ARG_ENABLE([wolfssh],
+    [AS_HELP_STRING([--enable-wolfssh],[Enable wolfSSH options (default: disabled)])],
     [ ENABLED_WOLFSSH=$enableval ],
     [ ENABLED_WOLFSSH=no ]
     )
+
+AC_ARG_ENABLE([ssh],
+    [AS_HELP_STRING([--enable-ssh],[Enable wolfSSH options (default: disabled)])],
+    [ ENABLED_SSH=$enableval ],
+    [ ENABLED_SSH=no ]
+    )
+
+if test "x$ENABLED_SSH" = "xyes"
+then
+    ENABLED_WOLFSSH="yes"
+fi
 
 # wolfTPM Options
 AC_ARG_ENABLE([wolftpm],
@@ -5100,7 +5120,8 @@ then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_CERT_GEN"
 fi
 
-if test "$ENABLED_OPENSSH" = "yes" || test "$ENABLED_WPAS" = "yes" || test "$ENABLED_QT" = "yes"
+if (test "$ENABLED_OPENSSH" = "yes" && test "x$ENABLED_FIPS" = "xno") || \
+   test "$ENABLED_WPAS" = "yes" || test "$ENABLED_QT" = "yes"
 then
     test "$enable_arc4" = "" && enable_arc4=yes
 fi
@@ -5230,7 +5251,7 @@ fi
 
 # Encrypt-Then-Mac
 AC_ARG_ENABLE([enc-then-mac],
-    [AS_HELP_STRING([--enable-enc-then-mac],[Enable Encryptr-Then-Mac extension (default: enabled)])],
+    [AS_HELP_STRING([--enable-enc-then-mac],[Enable Encrypt-Then-Mac extension (default: enabled)])],
     [ ENABLED_ENCRYPT_THEN_MAC=$enableval ],
     [ ENABLED_ENCRYPT_THEN_MAC=yes ]
     )
@@ -6973,6 +6994,7 @@ then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TRUST_PEER_CERT"
     AM_CFLAGS="$AM_CFLAGS -DNO_SESSION_CACHE_REF"
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TLS13_NO_PEEK_HANDSHAKE_DONE"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ALT_CERT_CHAINS"
     ENABLED_TRUSTED_PEER_CERT=yes
 fi
 

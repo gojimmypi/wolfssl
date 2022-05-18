@@ -2829,13 +2829,13 @@ static int SetupPskKey(WOLFSSL* ssl, PreSharedKey* psk, int clientHello)
             /* OpenSSL compatible callback that gets cached session. */
             if (ssl->options.session_psk_cb(ssl, handshake_md, &id, &idlen,
                                                             &psksession) == 0) {
-                wolfSSL_SESSION_free(psksession);
+                wolfSSL_FreeSession(ssl->ctx, psksession);
                 WOLFSSL_MSG("psk session callback failed");
                 return PSK_KEY_ERROR;
             }
             if (psksession != NULL) {
                 if (idlen > MAX_PSK_KEY_LEN) {
-                    wolfSSL_SESSION_free(psksession);
+                    wolfSSL_FreeSession(ssl->ctx, psksession);
                     WOLFSSL_MSG("psk key length is too long");
                     return PSK_KEY_ERROR;
                 }
@@ -2845,7 +2845,7 @@ static int SetupPskKey(WOLFSSL* ssl, PreSharedKey* psk, int clientHello)
                 suite[0] = psksession->cipherSuite0;
                 suite[1] = psksession->cipherSuite;
                 /* Not needed anymore. */
-                wolfSSL_SESSION_free(psksession);
+                wolfSSL_FreeSession(ssl->ctx, psksession);
                 /* Leave pointer not NULL to indicate success with callback. */
             }
         }
@@ -4437,7 +4437,8 @@ static int RestartHandshakeHashWithCookie(WOLFSSL* ssl, Cookie* cookie)
     length = HRR_BODY_SZ - ID_LEN + ssl->session->sessionIDSz +
              HRR_COOKIE_HDR_SZ + cookie->len;
     length += HRR_VERSIONS_SZ;
-    if (cookieDataSz > hashSz + OPAQUE16_LEN) {
+    /* HashSz (1 byte) + Hash (HashSz bytes) + CipherSuite (2 bytes) */
+    if (cookieDataSz > OPAQUE8_LEN + hashSz + OPAQUE16_LEN) {
         keyShareExt = 1;
         length += HRR_KEY_SHARE_SZ;
     }
@@ -8637,9 +8638,15 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
              * fragment, fragOffset is zero again, and the state can be
              * advanced. */
             if (ssl->fragOffset == 0) {
-                ssl->options.connectState++;
-                WOLFSSL_MSG("connect state: "
-                            "Advanced from last buffered fragment send");
+                /* Only increment from states in which we send data */
+                if (ssl->options.connectState == CONNECT_BEGIN ||
+                    ssl->options.connectState == HELLO_AGAIN ||
+                   (ssl->options.connectState >= FIRST_REPLY_DONE &&
+                    ssl->options.connectState <= FIRST_REPLY_FOURTH)) {
+                    ssl->options.connectState++;
+                    WOLFSSL_MSG("connect state: "
+                                "Advanced from last buffered fragment send");
+                }
             }
             else {
                 WOLFSSL_MSG("connect state: "
@@ -9472,10 +9479,10 @@ const char* wolfSSL_get_cipher_name_by_hash(WOLFSSL* ssl, const char* hash)
     byte mac = no_mac;
     int i;
 
-    if (XSTRNCMP(hash, "SHA256", 6) == 0) {
+    if (XSTRCMP(hash, "SHA256") == 0) {
         mac = sha256_mac;
     }
-    else if (XSTRNCMP(hash, "SHA384", 6) == 0) {
+    else if (XSTRCMP(hash, "SHA384") == 0) {
         mac = sha384_mac;
     }
     if (mac != no_mac) {
@@ -9592,9 +9599,22 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
              * fragment, fragOffset is zero again, and the state can be
              * advanced. */
             if (ssl->fragOffset == 0) {
-                ssl->options.acceptState++;
-                WOLFSSL_MSG("accept state: "
-                            "Advanced from last buffered fragment send");
+                /* Only increment from states in which we send data */
+                if (ssl->options.acceptState == TLS13_ACCEPT_CLIENT_HELLO_DONE ||
+                    ssl->options.acceptState == TLS13_ACCEPT_HELLO_RETRY_REQUEST_DONE ||
+                    ssl->options.acceptState == TLS13_ACCEPT_SECOND_REPLY_DONE ||
+                    ssl->options.acceptState == TLS13_SERVER_HELLO_SENT ||
+                    ssl->options.acceptState == TLS13_ACCEPT_THIRD_REPLY_DONE ||
+                    ssl->options.acceptState == TLS13_SERVER_EXTENSIONS_SENT ||
+                    ssl->options.acceptState == TLS13_CERT_REQ_SENT ||
+                    ssl->options.acceptState == TLS13_CERT_SENT ||
+                    ssl->options.acceptState == TLS13_CERT_VERIFY_SENT ||
+                    ssl->options.acceptState == TLS13_ACCEPT_FINISHED_SENT ||
+                    ssl->options.acceptState == TLS13_ACCEPT_FINISHED_DONE) {
+                    ssl->options.acceptState++;
+                    WOLFSSL_MSG("accept state: "
+                                "Advanced from last buffered fragment send");
+                }
             }
             else {
                 WOLFSSL_MSG("accept state: "

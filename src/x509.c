@@ -4645,7 +4645,7 @@ WOLFSSL_ABI
 WOLFSSL_X509_NAME* wolfSSL_X509_get_subject_name(WOLFSSL_X509* cert)
 {
     WOLFSSL_ENTER("wolfSSL_X509_get_subject_name");
-    if (cert && cert->subject.sz > 0)
+    if (cert)
         return &cert->subject;
     return NULL;
 }
@@ -4721,7 +4721,7 @@ WOLFSSL_ABI
 WOLFSSL_X509_NAME* wolfSSL_X509_get_issuer_name(WOLFSSL_X509* cert)
 {
     WOLFSSL_ENTER("X509_get_issuer_name");
-    if (cert && cert->issuer.sz > 0)
+    if (cert)
         return &cert->issuer;
     return NULL;
 }
@@ -5482,6 +5482,11 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                     }
                 #else
                     {
+                        word32 idx = 0;
+                        int  sz;
+                        byte lbit = 0;
+                        int  rawLen;
+                        unsigned char* rawKey;
                     #ifdef WOLFSSL_SMALL_STACK
                         RsaKey *rsa = (RsaKey*)XMALLOC(sizeof(RsaKey), NULL,
                                 DYNAMIC_TYPE_RSA);
@@ -5492,11 +5497,6 @@ int wolfSSL_X509_cmp(const WOLFSSL_X509 *a, const WOLFSSL_X509 *b)
                     #else
                         RsaKey rsa[1];
                     #endif
-                        word32 idx = 0;
-                        int  sz;
-                        byte lbit = 0;
-                        int  rawLen;
-                        unsigned char* rawKey;
 
                         if (wc_InitRsaKey(rsa, NULL) != 0) {
                             WOLFSSL_MSG("wc_InitRsaKey failure");
@@ -8182,7 +8182,7 @@ WOLF_STACK_OF(WOLFSSL_X509)* wolfSSL_X509_chain_up_ref(
             return BUFFER_E;
         }
 
-        out[0] = t->type;
+        out[0] = (byte) t->type;
         sz = SetLength(t->length, out + 1) + 1;  /* gen tag */
         for (i = 0; i < t->length; i++) {
             out[sz + i] = t->data[i];

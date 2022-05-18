@@ -271,7 +271,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in] cnt   Number of elements required.
      */
     #define DECL_ASNGETDATA(name, cnt)                                         \
-        ASNGetData* name = NULL;
+        ASNGetData* name = NULL
 
     /* Allocates the dynamic BER decoding data.
      *
@@ -327,7 +327,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in] cnt   Number of elements required.
      */
     #define DECL_ASNSETDATA(name, cnt)                                         \
-        ASNSetData* name = NULL;
+        ASNSetData* name = NULL
 
     /* Allocates the dynamic DER encoding data.
      *
@@ -383,7 +383,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in] cnt   Number of elements required.
      */
     #define DECL_ASNGETDATA(name, cnt)                  \
-        ASNGetData name[cnt];
+        ASNGetData name[cnt]
 
     /* No implementation as declartion is static.
      *
@@ -402,7 +402,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in]      heap  Dynamic memory allocation hint.
      */
     #define CALLOC_ASNGETDATA(name, cnt, err, heap)     \
-        XMEMSET(name, 0, sizeof(name));
+        XMEMSET(name, 0, sizeof(name))
 
     /* No implementation as declartion is static.
      *
@@ -417,7 +417,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in] cnt   Number of elements required.
      */
     #define DECL_ASNSETDATA(name, cnt)                  \
-        ASNSetData name[cnt];
+        ASNSetData name[cnt]
 
     /* No implementation as declartion is static.
      *
@@ -436,7 +436,7 @@ static word32 SizeASNLength(word32 length)
      * @param [in]      heap  Dynamic memory allocation hint.
      */
     #define CALLOC_ASNSETDATA(name, cnt, err, heap)     \
-        XMEMSET(name, 0, sizeof(name));
+        XMEMSET(name, 0, sizeof(name))
 
     /* No implementation as declartion is static.
      *
@@ -2035,7 +2035,7 @@ static int GetASN_BitString_Int16Bit(ASNGetData* dataASN, word16* val)
  *                            On out, end of parsed length.
  * @param [out]     len       Length value decoded.
  * @param [in]      maxIdx    Maximum index of input data.
- * @return  0 on success.
+ * @return  Length on success.
  * @return  ASN_PARSE_E if the encoding is invalid.
  * @return  BUFFER_E when not enough data to complete decode.
  */
@@ -2060,7 +2060,7 @@ int GetLength(const byte* input, word32* inOutIdx, int* len, word32 maxIdx)
  * @param [in]      maxIdx    Maximum index of input data.
  * @param [in]      check     Whether to check the buffer has at least the
  *                            decoded length of bytes remaining.
- * @return  0 on success.
+ * @return  Length on success.
  * @return  ASN_PARSE_E if the encoding is invalid.
  * @return  BUFFER_E when not enough data to complete decode.
  */
@@ -9858,10 +9858,12 @@ void FreeDecodedCert(DecodedCert* cert)
 {
     if (cert == NULL)
         return;
-    if (cert->subjectCNStored == 1)
+    if (cert->subjectCNStored == 1) {
         XFREE(cert->subjectCN, cert->heap, DYNAMIC_TYPE_SUBJECT_CN);
-    if (cert->pubKeyStored == 1)
+    }
+    if (cert->pubKeyStored == 1) {
         XFREE((void*)cert->publicKey, cert->heap, DYNAMIC_TYPE_PUBLIC_KEY);
+    }
     if (cert->weOwnAltNames && cert->altNames)
         FreeAltNames(cert->altNames, cert->heap);
 #ifndef IGNORE_NAME_CONSTRAINTS
@@ -10506,20 +10508,23 @@ int wc_OBJ_sn2nid(const char *sn)
         {"SHA1", NID_sha1},
         {NULL, -1}};
     int i;
-    #ifdef HAVE_ECC
-    char curveName[16]; /* Same as MAX_CURVE_NAME_SZ but can't include that
-                         * symbol in this file */
+#ifdef HAVE_ECC
+    char curveName[ECC_MAXNAME + 1];
     int eccEnum;
-    #endif
+#endif
     WOLFSSL_ENTER("OBJ_sn2nid");
     for(i=0; sn2nid[i].sn != NULL; i++) {
-        if(XSTRNCMP(sn, sn2nid[i].sn, XSTRLEN(sn2nid[i].sn)) == 0) {
+        if (XSTRCMP(sn, sn2nid[i].sn) == 0) {
             return sn2nid[i].nid;
         }
     }
-    #ifdef HAVE_ECC
+#ifdef HAVE_ECC
+
+    if (XSTRLEN(sn) > ECC_MAXNAME)
+        return NID_undef;
+
     /* Nginx uses this OpenSSL string. */
-    if (XSTRNCMP(sn, "prime256v1", 10) == 0)
+    if (XSTRCMP(sn, "prime256v1") == 0)
         sn = "SECP256R1";
     /* OpenSSL allows lowercase curve names */
     for (i = 0; i < (int)(sizeof(curveName) - 1) && *sn; i++) {
@@ -10534,13 +10539,13 @@ int wc_OBJ_sn2nid(const char *sn)
          ecc_sets[i].size != 0;
 #endif
          i++) {
-        if (XSTRNCMP(curveName, ecc_sets[i].name, ECC_MAXNAME) == 0) {
+        if (XSTRCMP(curveName, ecc_sets[i].name) == 0) {
             eccEnum = ecc_sets[i].id;
             /* Convert enum value in ecc_curve_id to OpenSSL NID */
             return EccEnumToNID(eccEnum);
         }
     }
-    #endif
+#endif /* HAVE_ECC */
 
     return NID_undef;
 }
@@ -12190,19 +12195,68 @@ int GetTimeString(byte* date, int format, char* buf, int len)
 #endif /* OPENSSL_ALL || WOLFSSL_MYSQL_COMPATIBLE || WOLFSSL_NGINX || WOLFSSL_HAPROXY */
 
 
-#if !defined(NO_ASN_TIME) && defined(HAVE_PKCS7)
-
+#if !defined(NO_ASN_TIME) && !defined(USER_TIME) && \
+    !defined(TIME_OVERRIDES) && (defined(OPENSSL_EXTRA) || defined(HAVE_PKCS7))
 /* Set current time string, either UTC or GeneralizedTime.
  * (void*) tm should be a pointer to time_t, output is placed in buf.
  *
  * Return time string length placed in buf on success, negative on error */
 int GetAsnTimeString(void* currTime, byte* buf, word32 len)
 {
+    byte* data_ptr  = buf;
+    byte  uf_time[ASN_GENERALIZED_TIME_SIZE];
+    word32 data_len = 0;
+
+    WOLFSSL_ENTER("GetAsnTimeString");
+
+    if (buf == NULL || len == 0)
+        return BAD_FUNC_ARG;
+
+    XMEMSET(uf_time, 0, sizeof(uf_time));
+    /* GetFormattedTime returns length with null terminator */
+    data_len = GetFormattedTime(currTime, uf_time, len);
+    if (data_len <= 0) {
+        return ASN_TIME_E;
+    }
+    /* ensure room to add 2 bytes (ASN type and length) before proceeding */
+    else if (len < data_len + 2) {
+        return BUFFER_E;
+    }
+
+    if (data_len == ASN_UTC_TIME_SIZE-1) {
+        /* increment data_len for ASN length byte after adding the data_ptr */
+        *data_ptr = (byte)ASN_UTC_TIME; data_ptr++; data_len++;
+        /* -1 below excludes null terminator */
+        *data_ptr = (byte)ASN_UTC_TIME_SIZE - 1; data_ptr++; data_len++;
+        XMEMCPY(data_ptr, (byte *)uf_time, ASN_UTC_TIME_SIZE - 1);
+        *data_ptr += ASN_UTC_TIME_SIZE - 1;
+    }
+    else if (data_len == ASN_GENERALIZED_TIME_SIZE-1) {
+        /* increment data_len for ASN length byte after adding the data_ptr */
+        *data_ptr = (byte)ASN_GENERALIZED_TIME; data_ptr++; data_len++;
+        /* -1 below excludes null terminator */
+        *data_ptr = (byte)ASN_GENERALIZED_TIME_SIZE - 1; data_ptr++; data_len++;
+        XMEMCPY(data_ptr, (byte*)uf_time, ASN_GENERALIZED_TIME_SIZE - 1);
+        *data_ptr += ASN_GENERALIZED_TIME_SIZE - 1;
+    }
+    else {
+        WOLFSSL_MSG("Invalid time size returned");
+        return ASN_TIME_E;
+    }
+    /* append null terminator */
+    *data_ptr = 0;
+
+    /* return length without null terminator */
+    return data_len;
+}
+
+/* return just the time string as either UTC or Generalized Time*/
+int GetFormattedTime(void* currTime, byte* buf, word32 len)
+{
     struct tm* ts      = NULL;
     struct tm* tmpTime = NULL;
-    byte* data_ptr  = buf;
-    word32 data_len = 0;
     int year, mon, day, hour, mini, sec;
+    int ret;
 #if defined(NEED_TMP_TIME)
     struct tm tmpTimeStorage;
     tmpTime = &tmpTimeStorage;
@@ -12210,13 +12264,13 @@ int GetAsnTimeString(void* currTime, byte* buf, word32 len)
     (void)tmpTime;
 #endif
 
-    WOLFSSL_ENTER("SetAsnTimeString");
+    WOLFSSL_ENTER("GetFormattedTime");
 
     if (buf == NULL || len == 0)
         return BAD_FUNC_ARG;
 
     ts = (struct tm *)XGMTIME((time_t*)currTime, tmpTime);
-    if (ts == NULL){
+    if (ts == NULL) {
         WOLFSSL_MSG("failed to get time data.");
         return ASN_TIME_E;
     }
@@ -12226,15 +12280,10 @@ int GetAsnTimeString(void* currTime, byte* buf, word32 len)
 
     if (ts->tm_year >= 50 && ts->tm_year < 150) {
         /* UTC Time */
-        char utc_str[ASN_UTC_TIME_SIZE];
-        data_len = ASN_UTC_TIME_SIZE - 1 + 2;
-
-        if (len < data_len)
-            return BUFFER_E;
-
         if (ts->tm_year >= 50 && ts->tm_year < 100) {
             year = ts->tm_year;
-        } else if (ts->tm_year >= 100 && ts->tm_year < 150) {
+        }
+        else if (ts->tm_year >= 100 && ts->tm_year < 150) {
             year = ts->tm_year - 100;
         }
         else {
@@ -12246,40 +12295,28 @@ int GetAsnTimeString(void* currTime, byte* buf, word32 len)
         hour = ts->tm_hour;
         mini = ts->tm_min;
         sec  = ts->tm_sec;
-        XSNPRINTF((char *)utc_str, ASN_UTC_TIME_SIZE,
-                  "%02d%02d%02d%02d%02d%02dZ", year, mon, day, hour, mini, sec);
-        *data_ptr = (byte) ASN_UTC_TIME; data_ptr++;
-        /* -1 below excludes null terminator */
-        *data_ptr = (byte) ASN_UTC_TIME_SIZE - 1; data_ptr++;
-        XMEMCPY(data_ptr,(byte *)utc_str, ASN_UTC_TIME_SIZE - 1);
-
-    } else {
+        ret = XSNPRINTF((char*)buf, len,
+                        "%02d%02d%02d%02d%02d%02dZ", year, mon, day,
+                        hour, mini, sec);
+    }
+    else {
         /* GeneralizedTime */
-        char gt_str[ASN_GENERALIZED_TIME_SIZE];
-        data_len = ASN_GENERALIZED_TIME_SIZE - 1 + 2;
-
-        if (len < data_len)
-            return BUFFER_E;
-
         year = ts->tm_year + 1900;
         mon  = ts->tm_mon + 1;
         day  = ts->tm_mday;
         hour = ts->tm_hour;
         mini = ts->tm_min;
         sec  = ts->tm_sec;
-        XSNPRINTF((char *)gt_str, ASN_GENERALIZED_TIME_SIZE,
-                  "%4d%02d%02d%02d%02d%02dZ", year, mon, day, hour, mini, sec);
-        *data_ptr = (byte) ASN_GENERALIZED_TIME; data_ptr++;
-        /* -1 below excludes null terminator */
-        *data_ptr = (byte) ASN_GENERALIZED_TIME_SIZE - 1; data_ptr++;
-        XMEMCPY(data_ptr,(byte *)gt_str, ASN_GENERALIZED_TIME_SIZE - 1);
+        ret = XSNPRINTF((char*)buf, len,
+                        "%4d%02d%02d%02d%02d%02dZ", year, mon, day,
+                        hour, mini, sec);
     }
 
-    return data_len;
+    return ret;
 }
 
-#endif /* !NO_ASN_TIME && HAVE_PKCS7 */
-
+#endif /* !NO_ASN_TIME && !USER_TIME && !TIME_OVERRIDES &&
+        * (OPENSSL_EXTRA || HAVE_PKCS7) */
 
 #if defined(USE_WOLF_VALIDDATE)
 
@@ -19486,7 +19523,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
 
     /* determine cipher information */
 #ifndef NO_DES3
-    if (XSTRNCMP(cipherInfo, kEncTypeDes, XSTRLEN(kEncTypeDes)) == 0) {
+    if (XSTRCMP(cipherInfo, kEncTypeDes) == 0) {
         info->cipherType = WC_CIPHER_DES;
         info->keySz = DES_KEY_SIZE;
 /* DES_IV_SIZE is incorrectly 16 in FIPS v2. It should be 8, same as the
@@ -19497,7 +19534,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
         if (info->ivSz == 0) info->ivSz  = DES_IV_SIZE;
 #endif
     }
-    else if (XSTRNCMP(cipherInfo, kEncTypeDes3, XSTRLEN(kEncTypeDes3)) == 0) {
+    else if (XSTRCMP(cipherInfo, kEncTypeDes3) == 0) {
         info->cipherType = WC_CIPHER_DES3;
         info->keySz = DES3_KEY_SIZE;
 #if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION == 2)
@@ -19509,7 +19546,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
     else
 #endif /* !NO_DES3 */
 #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
-    if (XSTRNCMP(cipherInfo, kEncTypeAesCbc128, XSTRLEN(kEncTypeAesCbc128)) == 0) {
+    if (XSTRCMP(cipherInfo, kEncTypeAesCbc128) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_128_KEY_SIZE;
         if (info->ivSz == 0) info->ivSz  = AES_IV_SIZE;
@@ -19517,7 +19554,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
     else
 #endif
 #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_192)
-    if (XSTRNCMP(cipherInfo, kEncTypeAesCbc192, XSTRLEN(kEncTypeAesCbc192)) == 0) {
+    if (XSTRCMP(cipherInfo, kEncTypeAesCbc192) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_192_KEY_SIZE;
         if (info->ivSz == 0) info->ivSz  = AES_IV_SIZE;
@@ -19525,7 +19562,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
     else
 #endif
 #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256)
-    if (XSTRNCMP(cipherInfo, kEncTypeAesCbc256, XSTRLEN(kEncTypeAesCbc256)) == 0) {
+    if (XSTRCMP(cipherInfo, kEncTypeAesCbc256) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_256_KEY_SIZE;
         if (info->ivSz == 0) info->ivSz  = AES_IV_SIZE;
@@ -22538,7 +22575,7 @@ int FlattenAltNames(byte* output, word32 outputSz, const DNS_entry* names)
         idx = i - curName->len - len - 1;
         i = idx;
 #endif
-        output[idx] = ASN_CONTEXT_SPECIFIC | curName->type;
+        output[idx] = (byte) (ASN_CONTEXT_SPECIFIC | curName->type);
         if (curName->type == ASN_DIR_TYPE) {
             output[idx] |= ASN_CONSTRUCTED;
         }
@@ -25452,7 +25489,9 @@ static int MakeCertReq(Cert* cert, byte* derBuffer, word32 derSz,
     return ret;
 #else
     DECL_ASNSETDATA(dataASN, certReqBodyASN_Length);
-    word32 publicKeySz, subjectSz, extSz;
+    word32 publicKeySz;
+    word32 subjectSz = 0;
+    word32 extSz;
     int sz = 0;
     int ret = 0;
 #if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA)
@@ -26138,26 +26177,24 @@ int wc_SetKeyUsage(Cert *cert, const char *value)
     }
     while (token != NULL)
     {
-        len = (word32)XSTRLEN(token);
-
-        if (!XSTRNCASECMP(token, "digitalSignature", len))
+        if (!XSTRCASECMP(token, "digitalSignature"))
             cert->keyUsage |= KEYUSE_DIGITAL_SIG;
-        else if (!XSTRNCASECMP(token, "nonRepudiation", len) ||
-                 !XSTRNCASECMP(token, "contentCommitment", len))
+        else if (!XSTRCASECMP(token, "nonRepudiation") ||
+                 !XSTRCASECMP(token, "contentCommitment"))
             cert->keyUsage |= KEYUSE_CONTENT_COMMIT;
-        else if (!XSTRNCASECMP(token, "keyEncipherment", len))
+        else if (!XSTRCASECMP(token, "keyEncipherment"))
             cert->keyUsage |= KEYUSE_KEY_ENCIPHER;
-        else if (!XSTRNCASECMP(token, "dataEncipherment", len))
+        else if (!XSTRCASECMP(token, "dataEncipherment"))
             cert->keyUsage |= KEYUSE_DATA_ENCIPHER;
-        else if (!XSTRNCASECMP(token, "keyAgreement", len))
+        else if (!XSTRCASECMP(token, "keyAgreement"))
             cert->keyUsage |= KEYUSE_KEY_AGREE;
-        else if (!XSTRNCASECMP(token, "keyCertSign", len))
+        else if (!XSTRCASECMP(token, "keyCertSign"))
             cert->keyUsage |= KEYUSE_KEY_CERT_SIGN;
-        else if (!XSTRNCASECMP(token, "cRLSign", len))
+        else if (!XSTRCASECMP(token, "cRLSign"))
             cert->keyUsage |= KEYUSE_CRL_SIGN;
-        else if (!XSTRNCASECMP(token, "encipherOnly", len))
+        else if (!XSTRCASECMP(token, "encipherOnly"))
             cert->keyUsage |= KEYUSE_ENCIPHER_ONLY;
-        else if (!XSTRNCASECMP(token, "decipherOnly", len))
+        else if (!XSTRCASECMP(token, "decipherOnly"))
             cert->keyUsage |= KEYUSE_DECIPHER_ONLY;
         else {
             ret = KEYUSAGE_E;
@@ -26198,21 +26235,19 @@ int wc_SetExtKeyUsage(Cert *cert, const char *value)
 
     while (token != NULL)
     {
-        len = (word32)XSTRLEN(token);
-
-        if (!XSTRNCASECMP(token, "any", len))
+        if (!XSTRCASECMP(token, "any"))
             cert->extKeyUsage |= EXTKEYUSE_ANY;
-        else if (!XSTRNCASECMP(token, "serverAuth", len))
+        else if (!XSTRCASECMP(token, "serverAuth"))
             cert->extKeyUsage |= EXTKEYUSE_SERVER_AUTH;
-        else if (!XSTRNCASECMP(token, "clientAuth", len))
+        else if (!XSTRCASECMP(token, "clientAuth"))
             cert->extKeyUsage |= EXTKEYUSE_CLIENT_AUTH;
-        else if (!XSTRNCASECMP(token, "codeSigning", len))
+        else if (!XSTRCASECMP(token, "codeSigning"))
             cert->extKeyUsage |= EXTKEYUSE_CODESIGN;
-        else if (!XSTRNCASECMP(token, "emailProtection", len))
+        else if (!XSTRCASECMP(token, "emailProtection"))
             cert->extKeyUsage |= EXTKEYUSE_EMAILPROT;
-        else if (!XSTRNCASECMP(token, "timeStamping", len))
+        else if (!XSTRCASECMP(token, "timeStamping"))
             cert->extKeyUsage |= EXTKEYUSE_TIMESTAMP;
-        else if (!XSTRNCASECMP(token, "OCSPSigning", len))
+        else if (!XSTRCASECMP(token, "OCSPSigning"))
             cert->extKeyUsage |= EXTKEYUSE_OCSP_SIGN;
         else {
             ret = EXTKEYUSAGE_E;
@@ -28630,7 +28665,9 @@ static int DecodeAsymKey(const byte* input, word32* inOutIdx, word32 inSz,
     const byte* priv;
     const byte* pub;
 #else
+    int ret = 0;
     DECL_ASNGETDATA(dataASN, edKeyASN_Length);
+    CALLOC_ASNGETDATA(dataASN, edKeyASN_Length, ret, NULL);
 #endif
 
     if (input == NULL || inOutIdx == NULL || inSz == 0 ||
@@ -28710,10 +28747,6 @@ static int DecodeAsymKey(const byte* input, word32* inOutIdx, word32 inSz,
         return ASN_PARSE_E;
     return 0;
 #else
-    int ret = 0;
-
-    CALLOC_ASNGETDATA(dataASN, edKeyASN_Length, ret, NULL);
-
     if (ret == 0) {
         /* Require OID. */
         word32 oidSz;
@@ -31533,7 +31566,7 @@ static int PaseCRL_CheckSignature(DecodedCRL* dcrl, const byte* buff, void* cm)
 
 #ifndef WOLFSSL_ASN_TEMPLATE
 static int ParseCRL_CertList(DecodedCRL* dcrl, const byte* buf,
-        word32* inOutIdx, int sz)
+        word32* inOutIdx, int sz, int verify)
 {
     word32 oid, dateIdx, idx, checkIdx;
     int version;
@@ -31583,7 +31616,8 @@ static int ParseCRL_CertList(DecodedCRL* dcrl, const byte* buf,
 #endif
     {
 #ifndef NO_ASN_TIME
-        if (!XVALIDATE_DATE(dcrl->nextDate, dcrl->nextDateFormat, AFTER)) {
+        if (verify != NO_VERIFY &&
+                !XVALIDATE_DATE(dcrl->nextDate, dcrl->nextDateFormat, AFTER)) {
             WOLFSSL_MSG("CRL after date is no longer valid");
             return CRL_CERT_DATE_ERR;
         }
@@ -31894,7 +31928,8 @@ enum {
 #endif
 
 /* parse crl buffer into decoded state, 0 on success */
-int ParseCRL(DecodedCRL* dcrl, const byte* buff, word32 sz, void* cm)
+int ParseCRL(DecodedCRL* dcrl, const byte* buff, word32 sz, int verify,
+        void* cm)
 {
 #ifndef WOLFSSL_ASN_TEMPLATE
     Signer*      ca = NULL;
@@ -31923,7 +31958,7 @@ int ParseCRL(DecodedCRL* dcrl, const byte* buff, word32 sz, void* cm)
         return ASN_PARSE_E;
     dcrl->sigIndex = len + idx;
 
-    if (ParseCRL_CertList(dcrl, buff, &idx, dcrl->sigIndex) < 0)
+    if (ParseCRL_CertList(dcrl, buff, &idx, dcrl->sigIndex, verify) < 0)
         return ASN_PARSE_E;
 
     if (ParseCRL_Extensions(dcrl, buff, &idx, dcrl->sigIndex) < 0)
@@ -32046,7 +32081,8 @@ end:
     #ifndef NO_ASN_TIME
         if (dcrl->nextDateFormat != 0) {
             /* Next date was set, so validate it. */
-            if (!XVALIDATE_DATE(dcrl->nextDate, dcrl->nextDateFormat, AFTER)) {
+            if (verify != NO_VERIFY &&
+                 !XVALIDATE_DATE(dcrl->nextDate, dcrl->nextDateFormat, AFTER)) {
                 WOLFSSL_MSG("CRL after date is no longer valid");
                 ret = CRL_CERT_DATE_ERR;
             }
@@ -32506,10 +32542,8 @@ int wc_MIME_header_strip(char* in, char** out, size_t start, size_t end)
 */
 MimeHdr* wc_MIME_find_header_name(const char* name, MimeHdr* header)
 {
-    size_t len = XSTRLEN(name);
-
     while (header) {
-        if (!XSTRNCMP(name, header->name, len)) {
+        if (!XSTRCMP(name, header->name)) {
             return header;
         }
         header = header->next;
@@ -32529,10 +32563,8 @@ MimeHdr* wc_MIME_find_header_name(const char* name, MimeHdr* header)
 MimeParam* wc_MIME_find_param_attr(const char* attribute,
                                     MimeParam* param)
 {
-    size_t len = XSTRLEN(attribute);
-
     while (param) {
-        if (!XSTRNCMP(attribute, param->attribute, len)) {
+        if (!XSTRCMP(attribute, param->attribute)) {
             return param;
         }
         param = param->next;

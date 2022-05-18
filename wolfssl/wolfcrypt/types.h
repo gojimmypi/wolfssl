@@ -434,7 +434,7 @@ decouple library dependencies with standard string, memory and so on.
             #ifdef WOLFSSL_MALLOC_CHECK
                 #include <stdio.h>
                 static inline void* malloc_check(size_t sz) {
-                    printf("wolfSSL_malloc failed");
+                    fprintf(stderr, "wolfSSL_malloc failed");
                     return NULL;
                 };
                 #define XMALLOC(s, h, t)     malloc_check((s))
@@ -515,7 +515,8 @@ decouple library dependencies with standard string, memory and so on.
             VAR_TYPE* VAR_NAME = (VAR_TYPE*)XMALLOC(sizeof(VAR_TYPE) * (VAR_SIZE), (HEAP), DYNAMIC_TYPE_WOLF_BIGINT)
         #define WC_DECLARE_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             VAR_TYPE* VAR_NAME[VAR_ITEMS]; \
-            int idx##VAR_NAME, inner_idx_##VAR_NAME; \
+            int idx##VAR_NAME, inner_idx_##VAR_NAME
+        #define WC_INIT_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             for (idx##VAR_NAME=0; idx##VAR_NAME<(VAR_ITEMS); idx##VAR_NAME++) { \
                 (VAR_NAME)[idx##VAR_NAME] = (VAR_TYPE*)XMALLOC(VAR_SIZE, (HEAP), DYNAMIC_TYPE_WOLF_BIGINT); \
                 if ((VAR_NAME)[idx##VAR_NAME] == NULL) { \
@@ -538,7 +539,8 @@ decouple library dependencies with standard string, memory and so on.
 
         #define WC_DECLARE_ARRAY_DYNAMIC_DEC(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             WC_DECLARE_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP)
-        #define WC_DECLARE_ARRAY_DYNAMIC_EXE(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP)
+        #define WC_DECLARE_ARRAY_DYNAMIC_EXE(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
+            WC_INIT_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP)
         #define WC_FREE_ARRAY_DYNAMIC(VAR_NAME, VAR_ITEMS, HEAP) \
             WC_FREE_ARRAY(VAR_NAME, VAR_ITEMS, HEAP)
     #else
@@ -547,6 +549,7 @@ decouple library dependencies with standard string, memory and so on.
             VAR_TYPE VAR_NAME[VAR_SIZE]
         #define WC_DECLARE_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             VAR_TYPE VAR_NAME[VAR_ITEMS][VAR_SIZE]
+        #define WC_INIT_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) do {} while(0)
         #define WC_FREE_VAR(VAR_NAME, HEAP) /* nothing to free, its stack */
         #define WC_FREE_ARRAY(VAR_NAME, VAR_ITEMS, HEAP)  /* nothing to free, its stack */
 
@@ -627,10 +630,42 @@ decouple library dependencies with standard string, memory and so on.
             #define XSTRSEP(s1,d) strsep((s1),(d))
         #endif
 
-        #ifndef XSTRNCASECMP
-        #if defined(MICROCHIP_PIC32) || defined(WOLFSSL_TIRTOS) || \
+        #ifndef XSTRCASECMP
+        #if defined(MICROCHIP_PIC32) && (__XC32_VERSION >= 1000)
+            /* XC32 supports str[n]casecmp in version >= 1.0. */
+            #define XSTRCASECMP(s1,s2) strcasecmp((s1),(s2))
+        #elif defined(MICROCHIP_PIC32) || defined(WOLFSSL_TIRTOS) || \
                 defined(WOLFSSL_ZEPHYR)
-            /* XC32 does not support strncasecmp, so use case sensitive one */
+            /* XC32 version < 1.0 does not support strcasecmp, so use
+             * case sensitive one.
+             */
+            #define XSTRCASECMP(s1,s2) strcmp((s1),(s2))
+        #elif defined(USE_WINDOWS_API) || defined(FREERTOS_TCP_WINSIM)
+            #define XSTRCASECMP(s1,s2) _stricmp((s1),(s2))
+        #else
+            #if defined(HAVE_STRINGS_H) && defined(WOLF_C99) && \
+                !defined(WOLFSSL_SGX)
+                #include <strings.h>
+            #endif
+            #if defined(WOLFSSL_DEOS)
+                #define XSTRCASECMP(s1,s2) stricmp((s1),(s2))
+            #elif defined(WOLFSSL_CMSIS_RTOSv2)
+                #define XSTRCASECMP(s1,s2) strcmp((s1),(s2))
+            #else
+                #define XSTRCASECMP(s1,s2) strcasecmp((s1),(s2))
+            #endif
+        #endif
+        #endif /* !XSTRCASECMP */
+
+        #ifndef XSTRNCASECMP
+        #if defined(MICROCHIP_PIC32) && (__XC32_VERSION >= 1000)
+            /* XC32 supports str[n]casecmp in version >= 1.0. */
+            #define XSTRNCASECMP(s1,s2,n) strncasecmp((s1),(s2),(n))
+        #elif defined(MICROCHIP_PIC32) || defined(WOLFSSL_TIRTOS) || \
+                defined(WOLFSSL_ZEPHYR)
+            /* XC32 version < 1.0 does not support strncasecmp, so use case
+             * sensitive one.
+             */
             #define XSTRNCASECMP(s1,s2,n) strncmp((s1),(s2),(n))
         #elif defined(USE_WINDOWS_API) || defined(FREERTOS_TCP_WINSIM)
             #define XSTRNCASECMP(s1,s2,n) _strnicmp((s1),(s2),(n))

@@ -1069,6 +1069,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #if defined(WOLFSSL_AES_COUNTER) || defined(HAVE_AESCCM) || \
         defined(WOLFSSL_CMAC) || defined(WOLFSSL_AES_OFB) || \
         defined(WOLFSSL_AES_CFB) || defined(HAVE_AES_ECB) || \
+        defined(WOLFSSL_AES_DIRECT) || \
         (defined(HAVE_AES_CBC) && defined(WOLFSSL_NO_KCAPI_AES_CBC))
 
         #define NEED_AES_TABLES
@@ -4578,14 +4579,14 @@ static WC_INLINE void RIGHTSHIFTX(byte* x)
 {
     int i;
     int carryIn = 0;
-    int borrow = x[15] & 0x01;
+    byte borrow = (0x00 - (x[15] & 0x01)) & 0xE1;
 
     for (i = 0; i < AES_BLOCK_SIZE; i++) {
-        int carryOut = x[i] & 0x01;
-        x[i] = (x[i] >> 1) | (carryIn ? 0x80 : 0);
+        int carryOut = (x[i] & 0x01) << 7;
+        x[i] = (byte) ((x[i] >> 1) | carryIn);
         carryIn = carryOut;
     }
-    if (borrow) x[0] ^= 0xE1;
+    x[0] ^= borrow;
 }
 
 #endif /* defined(GCM_SMALL) || defined(GCM_TABLE) || defined(GCM_TABLE_4BIT) */
@@ -8153,6 +8154,7 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
     ALIGN32 byte scratch[AES_BLOCK_SIZE];
     ALIGN32 byte Tprime[AES_BLOCK_SIZE];
     ALIGN32 byte EKY0[AES_BLOCK_SIZE];
+    sword32 res;
 
     if (ivSz == GCM_NONCE_MID_SZ) {
         /* Counter is IV with bottom 4 bytes set to: 0x00,0x00,0x00,0x01. */
@@ -8187,9 +8189,6 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
         aes->aadLen = authInSz;
     }
 #endif
-    if (ConstantCompare(authTag, Tprime, authTagSz) != 0) {
-        return AES_GCM_AUTH_E;
-    }
 
 #if defined(WOLFSSL_PIC32MZ_CRYPT)
     if (blocks) {
@@ -8247,6 +8246,19 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
         xorbuf(scratch, c, partial);
         XMEMCPY(p, scratch, partial);
     }
+
+    /* ConstantCompare returns the cumulative bitwise or of the bitwise xor of
+     * the pairwise bytes in the strings.
+     */
+    res = ConstantCompare(authTag, Tprime, authTagSz);
+    /* convert positive retval from ConstantCompare() to all-1s word, in
+     * constant time.
+     */
+    res = 0 - (sword32)(((word32)(0 - res)) >> 31U);
+    /* now use res as a mask for constant time return of ret, unless tag
+     * mismatch, whereupon AES_GCM_AUTH_E is returned.
+     */
+    ret = (ret & ~res) | (res & AES_GCM_AUTH_E);
 
     return ret;
 }

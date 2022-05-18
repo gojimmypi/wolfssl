@@ -743,7 +743,7 @@ int wc_CheckRsaKey(RsaKey* key)
         }
     }
 
-#ifdef WC_RSA_NO_FERMAT_CHECK
+#ifndef WC_RSA_NO_FERMAT_CHECK
     /* Fermat's Factorization works when difference between p and q
      * is less than (conservatively):
      *     n^(1/4) + 32
@@ -1515,6 +1515,8 @@ static int RsaUnPad_OAEP(byte *pkcsBlock, unsigned int pkcsBlockLen,
     byte h[WC_MAX_DIGEST_SIZE]; /* max digest size */
     byte* tmp;
     word32 idx;
+    word32 i;
+    word32 inc;
 
     /* no label is allowed, but catch if no label provided and length > 0 */
     if (optLabel == NULL && labelLen > 0) {
@@ -1561,7 +1563,13 @@ static int RsaUnPad_OAEP(byte *pkcsBlock, unsigned int pkcsBlockLen,
 
     /* advance idx to index of PS and msg separator, account for PS size of 0*/
     idx = hLen + 1 + hLen;
-    while (idx < pkcsBlockLen-1 && pkcsBlock[idx] == 0) {idx++;}
+    /* Don't reveal length of message: look at every byte. */
+    inc = 1;
+    for (i = hLen + 1 + hLen; i < pkcsBlockLen - 1; i++) {
+        /* Looking for non-zero byte. */
+        inc &= 1 - (((word32)0 - pkcsBlock[i]) >> 31);
+        idx += inc;
+    }
 
     /* create hash of label for comparison with hash sent */
     if ((ret = wc_Hash(hType, optLabel, labelLen, h, hLen)) != 0) {
@@ -3067,7 +3075,9 @@ static int RsaPublicEncryptEx(const byte* in, word32 inLen, byte* out,
                             byte* label, word32 labelSz, int saltLen,
                             WC_RNG* rng)
 {
-    int ret, sz, state;
+    int ret = 0;
+    int sz;
+    int state;
 
     if (in == NULL || inLen == 0 || out == NULL || key == NULL) {
         return BAD_FUNC_ARG;
@@ -3278,6 +3288,7 @@ static int RsaPrivateDecryptEx(const byte* in, word32 inLen, byte* out,
             XMEMCPY(key->data, in, inLen);
         }
         else {
+            key->dataIsAlloc = 0;
             key->data = out;
         }
 #endif
@@ -3989,8 +4000,6 @@ int wc_RsaPSS_Sign_ex(const byte* in, word32 inLen, byte* out, word32 outLen,
 #endif
 #endif
 
-#if !defined(WOLFSSL_RSA_VERIFY_ONLY) || !defined(WOLFSSL_SP_MATH) || \
-                                                             defined(WC_RSA_PSS)
 int wc_RsaEncryptSize(const RsaKey* key)
 {
     int ret;
@@ -4009,7 +4018,6 @@ int wc_RsaEncryptSize(const RsaKey* key)
 
     return ret;
 }
-#endif
 
 #ifndef WOLFSSL_RSA_VERIFY_ONLY
 /* flatten RsaKey structure into individual elements (e, n) */
@@ -4603,7 +4611,7 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
             if (err == MP_OKAY)
                 err = _CheckProbablePrime(p, q, tmp3, size, &isPrime, rng);
 
-#ifdef WC_RSA_NO_FERMAT_CHECK
+#ifndef WC_RSA_NO_FERMAT_CHECK
             if (err == MP_OKAY && isPrime) {
                 /* Fermat's Factorization works when difference between p and q
                  * is less than (conservatively):

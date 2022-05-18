@@ -3840,19 +3840,16 @@ int wc_ecc_get_curve_size_from_id(int curve_id)
 int wc_ecc_get_curve_idx_from_name(const char* curveName)
 {
     int curve_idx;
-    word32 len;
 
     if (curveName == NULL)
         return BAD_FUNC_ARG;
-
-    len = (word32)XSTRLEN(curveName);
 
     for (curve_idx = 0; ecc_sets[curve_idx].size != 0; curve_idx++) {
         if (
         #ifndef WOLFSSL_ECC_CURVE_STATIC
             ecc_sets[curve_idx].name &&
         #endif
-                XSTRNCASECMP(ecc_sets[curve_idx].name, curveName, len) == 0) {
+                XSTRCASECMP(ecc_sets[curve_idx].name, curveName) == 0) {
             break;
         }
     }
@@ -4199,6 +4196,9 @@ int wc_ecc_shared_secret(ecc_key* private_key, ecc_key* public_key, byte* out,
    !defined(WOLFSSL_ATECC608A)
    CRYS_ECDH_TempData_t tempBuff;
 #endif
+
+   (void)err;
+
    if (private_key == NULL || public_key == NULL || out == NULL ||
                                                             outlen == NULL) {
        return BAD_FUNC_ARG;
@@ -4211,13 +4211,11 @@ int wc_ecc_shared_secret(ecc_key* private_key, ecc_key* public_key, byte* out,
         if (err != CRYPTOCB_UNAVAILABLE)
             return err;
         /* fall-through when unavailable */
-    #else
-        return err;
     #endif
     }
     #ifdef WOLF_CRYPTO_CB_ONLY_ECC
     else {
-        return NO_VALID_DEVID;
+        err = NO_VALID_DEVID;
     }
     #endif
 #endif
@@ -4263,17 +4261,17 @@ int wc_ecc_shared_secret(ecc_key* private_key, ecc_key* public_key, byte* out,
         return err;
     }
 #elif defined(WOLFSSL_SILABS_SE_ACCEL)
-    err = silabs_ecc_shared_secret(private_key, public_key, out, outlen);
+   err = silabs_ecc_shared_secret(private_key, public_key, out, outlen);
 #elif defined(WOLFSSL_KCAPI_ECC)
    err = KcapiEcc_SharedSecret(private_key, public_key, out, outlen);
 #elif defined(WOLFSSL_SE050)
-    err = se050_ecc_shared_secret(private_key, public_key, out, outlen);
+   err = se050_ecc_shared_secret(private_key, public_key, out, outlen);
 #else
    err = wc_ecc_shared_secret_ex(private_key, &public_key->pubkey, out, outlen);
 #endif /* WOLFSSL_ATECC508A */
+#endif /* WOLF_CRYPTO_CB_ONLY_ECC */
 
    return err;
-#endif /* WOLF_CRYPTO_CB_ONLY_ECC */
 }
 
 
@@ -5345,7 +5343,7 @@ static void wc_ecc_dump_oids(void)
 
         /* validate sum */
         if (ecc_sets[x].oidSum != sum) {
-            printf("  Sum %u Not Valid!\n", ecc_sets[x].oidSum);
+            fprintf(stderr, "  Sum %u Not Valid!\n", ecc_sets[x].oidSum);
         }
     }
     mOidDumpDone = 1;
@@ -5799,13 +5797,11 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
         if (err != CRYPTOCB_UNAVAILABLE)
             return err;
         /* fall-through when unavailable */
-    #else
-        return err;
     #endif
     }
     #ifdef WOLF_CRYPTO_CB_ONLY_ECC
     else {
-        return NO_VALID_DEVID;
+        err = NO_VALID_DEVID;
     }
     #endif
 #endif
@@ -5873,15 +5869,15 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
     XFREE(r, key->heap, DYNAMIC_TYPE_ECC);
 #endif
 #endif /* WOLFSSL_ASYNC_CRYPT */
-
-    return err;
 #else
     (void)rng;
     (void)inlen;
     (void)s;
     (void)r;
+    (void)err;
 #endif /* WOLF_CRYPTO_CB_ONLY_ECC */
 
+    return err;
 }
 #endif /* !NO_ASN */
 
@@ -7389,13 +7385,11 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
         if (err != CRYPTOCB_UNAVAILABLE)
             return err;
         /* fall-through when unavailable */
-    #else
-        return err;
     #endif
     }
     #ifdef WOLF_CRYPTO_CB_ONLY_ECC
     else {
-        return NO_VALID_DEVID;
+        err = NO_VALID_DEVID;
     }
     #endif
 #endif
@@ -7501,8 +7495,6 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
 
     /* make sure required variables are reset */
     wc_ecc_reset(key);
-
-    return err;
 #else
     (void)siglen;
     (void)hashlen;
@@ -7512,8 +7504,10 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
     #endif
     (void)s;
     (void)r;
+    (void)err;
 #endif /* WOLF_CRYPTO_CB_ONLY_ECC */
 
+    return err;
 }
 #endif /* !NO_ASN */
 
@@ -7902,7 +7896,7 @@ int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
 
    /* check for async hardware acceleration */
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_ECC)
-   if (key->asyncDev.marker == WOLFSSL_ASYNC_MARKER_ECC) {
+   if (err == MP_OKAY && key->asyncDev.marker == WOLFSSL_ASYNC_MARKER_ECC) {
    #if defined(HAVE_CAVIUM_V) || defined(HAVE_INTEL_QA)
    #ifdef HAVE_CAVIUM_V
       if (NitroxEccIsCurveSupported(key))

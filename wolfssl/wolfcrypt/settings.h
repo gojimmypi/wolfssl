@@ -401,11 +401,13 @@
     #define SINGLE_THREADED
     #define WOLFSSL_USER_IO
     #define NO_FILESYSTEM
-    #define CUSTOM_RAND_TYPE uint16_t
-    #define CUSTOM_RAND_GENERATE random_rand
+    #ifndef CUSTOM_RAND_GENERATE
+        #define CUSTOM_RAND_TYPE uint16_t
+        #define CUSTOM_RAND_GENERATE random_rand
+    #endif
     static inline word32 LowResTimer(void)
     {
-        return clock_seconds();
+       return clock_seconds();
     }
 #endif
 
@@ -530,7 +532,9 @@
     #include "pico_stack.h"
     #include "pico_constants.h"
     #include "pico_protocol.h"
-    #define CUSTOM_RAND_GENERATE pico_rand
+    #ifndef CUSTOM_RAND_GENERATE
+        #define CUSTOM_RAND_GENERATE pico_rand
+    #endif
 #endif
 
 #ifdef WOLFSSL_PICOTCP_DEMO
@@ -849,16 +853,35 @@ extern void uITRON4_free(void *p) ;
     #define NO_MAIN_DRIVER
 #endif
 
+#ifdef WOLFSSL_TI_CRYPT
+    #define NO_GCM_ENCRYPT_EXTRA
+    #define NO_PUBLIC_GCM_SET_IV
+    #define NO_PUBLIC_CCM_SET_NONCE
+#endif
+
 #ifdef WOLFSSL_TIRTOS
     #define SIZEOF_LONG_LONG 8
     #define NO_WRITEV
     #define NO_WOLFSSL_DIR
-    #define USE_FAST_MATH
+
+    /* Use SP_MATH by default, unless
+     * specified in user_settings.
+     */
+    #ifndef USE_FAST_MATH
+        #define USE_SP_MATH
+        #define SP_MATH_ALL
+        #define WOLFSSL_HAVE_SP_ECC
+        #define SP_WORD_SIZE 32
+        #define WOLFSSL_HAVE_SP_RSA
+        #define WOLFSSL_SP_4096
+    #endif
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
     #define NO_DEV_RANDOM
     #define NO_FILESYSTEM
+    #define NO_SIG_WRAPPER
+    #define NO_MAIN_DRIVER
     #define USE_CERT_BUFFERS_2048
     #define NO_ERROR_STRINGS
     /* Uncomment this setting if your toolchain does not offer time.h header */
@@ -868,21 +891,13 @@ extern void uITRON4_free(void *p) ;
     #define USE_WOLF_STRTOK /* use with HAVE_ALPN */
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_AESGCM
-    #ifdef WOLFSSL_TI_CRYPT
-        #define NO_GCM_ENCRYPT_EXTRA
-        #define NO_PUBLIC_GCM_SET_IV
-        #define NO_PUBLIC_CCM_SET_NONCE
-    #endif
     #define HAVE_SUPPORTED_CURVES
-    #define ALT_ECC_SIZE
-
     #ifdef __IAR_SYSTEMS_ICC__
         #pragma diag_suppress=Pa089
     #elif !defined(__GNUC__)
         /* Suppress the sslpro warning */
         #pragma diag_suppress=11
     #endif
-
     #include <ti/sysbios/hal/Seconds.h>
 #endif
 
@@ -2053,7 +2068,9 @@ extern void uITRON4_free(void *p) ;
 
 #if !defined(HAVE_PUBLIC_FFDHE) && !defined(NO_DH) && \
     !defined(WOLFSSL_NO_PUBLIC_FFDHE) && \
-    (defined(HAVE_SELFTEST) || FIPS_VERSION_EQ(2,0))
+    (defined(HAVE_SELFTEST) || FIPS_VERSION_LE(2,0))
+    /* This should only be enabled for FIPS v2 or older. It enables use of the
+     * older wc_Dh_ffdhe####_Get() API's */
     #define HAVE_PUBLIC_FFDHE
 #endif
 
@@ -2660,6 +2677,12 @@ extern void uITRON4_free(void *p) ;
     #define WOLF_PRIVATE_KEY_ID
 #endif
 
+
+/* With titan cache size there is too many sessions to fit with the default
+ * multiplier of 8 */
+#if defined(TITAN_SESSION_CACHE) && !defined(NO_SESSION_CACHE_REF)
+    #define NO_SESSION_CACHE_REF
+#endif
 
 
 /* ---------------------------------------------------------------------------

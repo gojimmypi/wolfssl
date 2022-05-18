@@ -168,7 +168,7 @@ int BuildTlsHandshakeHash(WOLFSSL* ssl, byte* hash, word32* hashLen)
 int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
 {
     int ret;
-    const byte* side;
+    const byte* side = NULL;
     word32 hashSz = HSHASH_SZ;
 #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
     WC_DECLARE_VAR(handshake_hash, byte, HSHASH_SZ, ssl->heap);
@@ -182,9 +182,16 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
     if (ret == 0) {
         if (XSTRNCMP((const char*)sender, (const char*)client, SIZEOF_SENDER) == 0)
             side = tls_client;
-        else
+        else if (XSTRNCMP((const char*)sender, (const char*)server, SIZEOF_SENDER)
+                 == 0)
             side = tls_server;
+        else {
+            ret = BAD_FUNC_ARG;
+            WOLFSSL_MSG("Unexpected sender value");
+        }
+    }
 
+    if (ret == 0) {
 #ifdef WOLFSSL_HAVE_PRF
 #if !defined(NO_CERTS) && defined(HAVE_PK_CALLBACKS)
         if (ssl->ctx->TlsFinishedCb) {
@@ -6699,7 +6706,7 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
     int ret = 0;
 #if defined(HAVE_ECC) && defined(HAVE_ECC_KEY_EXPORT)
     word32 keySize = 0;
-    word16 curveId = ECC_CURVE_INVALID;
+    word16 curveId = (word16) ECC_CURVE_INVALID;
     ecc_key* eccKey = (ecc_key*)kse->key;
 
     /* TODO: [TLS13] The key sizes should come from wolfcrypt. */

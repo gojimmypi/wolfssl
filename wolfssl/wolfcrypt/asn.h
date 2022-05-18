@@ -156,8 +156,13 @@ enum ASN_Tags {
     ASN_ASYMKEY_PUBKEY    = 0x01,
 };
 
-#define ASN_UTC_TIME_SIZE 14
-#define ASN_GENERALIZED_TIME_SIZE 16
+/* NOTE: If ASN_UTC_TIME_SIZE or ASN_GENERALIZED_TIME_SIZE are ever modified
+ *       one needs to update the logic in asn.c function GetAsnTimeString()
+ *       which depends on the size 14 and/or 16 to determine which format to
+ *       place in the "buf" (output)
+ */
+#define ASN_UTC_TIME_SIZE 14 /* Read note above before modifying */
+#define ASN_GENERALIZED_TIME_SIZE 16 /* Read note above before modifying */
 #define ASN_GENERALIZED_TIME_MAX 68
 
 #ifdef WOLFSSL_ASN_TEMPLATE
@@ -1894,7 +1899,9 @@ typedef struct tm wolfssl_tm;
     defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
 WOLFSSL_LOCAL int GetTimeString(byte* date, int format, char* buf, int len);
 #endif
-#if !defined(NO_ASN_TIME) && defined(HAVE_PKCS7)
+#if !defined(NO_ASN_TIME) && !defined(USER_TIME) && \
+    !defined(TIME_OVERRIDES) && (defined(OPENSSL_EXTRA) || defined(HAVE_PKCS7))
+WOLFSSL_LOCAL int GetFormattedTime(void* currTime, byte* buf, word32 len);
 WOLFSSL_LOCAL int GetAsnTimeString(void* currTime, byte* buf, word32 len);
 #endif
 WOLFSSL_LOCAL int ExtractDate(const unsigned char* date, unsigned char format,
@@ -2264,7 +2271,7 @@ WOLFSSL_LOCAL int VerifyCRL_Signature(SignatureCtx* sigCtx,
                                       word32 signatureOID, Signer *ca,
                                       void* heap);
 WOLFSSL_LOCAL int  ParseCRL(DecodedCRL* dcrl, const byte* buff, word32 sz,
-                            void* cm);
+                            int verify, void* cm);
 WOLFSSL_LOCAL void FreeDecodedCRL(DecodedCRL* dcrl);
 
 
