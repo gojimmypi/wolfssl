@@ -168,7 +168,7 @@ int BuildTlsHandshakeHash(WOLFSSL* ssl, byte* hash, word32* hashLen)
 int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
 {
     int ret;
-    const byte* side;
+    const byte* side = NULL;
     word32 hashSz = HSHASH_SZ;
 #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
     WC_DECLARE_VAR(handshake_hash, byte, HSHASH_SZ, ssl->heap);
@@ -182,9 +182,16 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
     if (ret == 0) {
         if (XSTRNCMP((const char*)sender, (const char*)client, SIZEOF_SENDER) == 0)
             side = tls_client;
-        else
+        else if (XSTRNCMP((const char*)sender, (const char*)server, SIZEOF_SENDER)
+                 == 0)
             side = tls_server;
+        else {
+            ret = BAD_FUNC_ARG;
+            WOLFSSL_MSG("Unexpected sender value");
+        }
+    }
 
+    if (ret == 0) {
 #ifdef WOLFSSL_HAVE_PRF
 #if !defined(NO_CERTS) && defined(HAVE_PK_CALLBACKS)
         if (ssl->ctx->TlsFinishedCb) {
@@ -1902,6 +1909,7 @@ static SNI* TLSX_SNI_Find(SNI *list, byte type)
     return sni;
 }
 
+#if (!defined(NO_WOLFSSL_CLIENT) || !defined(NO_WOLFSSL_SERVER))
 /** Sets the status of a SNI object. */
 static void TLSX_SNI_SetStatus(TLSX* extensions, byte type, byte status)
 {
@@ -1911,6 +1919,7 @@ static void TLSX_SNI_SetStatus(TLSX* extensions, byte type, byte status)
     if (sni)
         sni->status = status;
 }
+#endif
 
 /** Gets the status of a SNI object. */
 byte TLSX_SNI_Status(TLSX* extensions, byte type)
@@ -2056,6 +2065,10 @@ static int TLSX_SNI_Parse(WOLFSSL* ssl, const byte* input, word16 length,
     }
 #else
     (void)input;
+#endif
+
+#if defined(NO_WOLFSSL_CLIENT) && defined(NO_WOLFSSL_SERVER)
+    (void)length;
 #endif
 
     return 0;
@@ -3506,10 +3519,13 @@ static int TLSX_CSR2_Parse(WOLFSSL* ssl, const byte* input, word16 length,
                     continue;
             }
 
-            /* if using status_request and already sending it, skip this one */
+            /* if using status_request and already sending it, remove it
+             * and prefer to use the v2 version */
             #ifdef HAVE_CERTIFICATE_STATUS_REQUEST
-            if (ssl->status_request)
-                return 0;
+            if (ssl->status_request) {
+                ssl->status_request = 0;
+                TLSX_Remove(&ssl->extensions, TLSX_STATUS_REQUEST, ssl->heap);
+            }
             #endif
 
             /* TLS 1.3 servers MUST NOT act upon presence or information in
@@ -3844,7 +3860,8 @@ static void TLSX_SupportedCurve_ValidateRequest(WOLFSSL* ssl, byte* semaphore)
         if (ssl->suites->suites[i] == TLS13_BYTE)
             return;
         if ((ssl->suites->suites[i] == ECC_BYTE) ||
-                (ssl->suites->suites[i] == CHACHA_BYTE)) {
+            (ssl->suites->suites[i] == ECDHE_PSK_BYTE) ||
+            (ssl->suites->suites[i] == CHACHA_BYTE)) {
         #if defined(HAVE_ECC) || defined(HAVE_CURVE25519) || \
                                                           defined(HAVE_CURVE448)
             return;
@@ -3872,7 +3889,8 @@ static void TLSX_PointFormat_ValidateRequest(WOLFSSL* ssl, byte* semaphore)
         if (ssl->suites->suites[i] == TLS13_BYTE)
             return;
         if ((ssl->suites->suites[i] == ECC_BYTE) ||
-                (ssl->suites->suites[i] == CHACHA_BYTE)) {
+            (ssl->suites->suites[i] == ECDHE_PSK_BYTE) ||
+            (ssl->suites->suites[i] == CHACHA_BYTE)) {
         #if defined(HAVE_ECC) || defined(HAVE_CURVE25519) || \
                                                           defined(HAVE_CURVE448)
             return;
@@ -3903,6 +3921,7 @@ static void TLSX_PointFormat_ValidateResponse(WOLFSSL* ssl, byte* semaphore)
         return;
 #if defined(HAVE_ECC) || defined(HAVE_CURVE25519) || defined(HAVE_CURVE448)
     if (ssl->options.cipherSuite0 == ECC_BYTE ||
+        ssl->options.cipherSuite0 == ECDHE_PSK_BYTE ||
         ssl->options.cipherSuite0 == CHACHA_BYTE) {
         return;
     }
@@ -4423,7 +4442,7 @@ int TLSX_ValidateSupportedCurves(WOLFSSL* ssl, byte first, byte second) {
                 break;
         }
     }
-    if (first == ECC_BYTE || first == CHACHA_BYTE)
+    if (first == ECC_BYTE || first == ECDHE_PSK_BYTE || first == CHACHA_BYTE)
         extension = TLSX_Find(ssl->extensions, TLSX_SUPPORTED_GROUPS);
     if (!extension)
         return 1; /* no suite restriction */
@@ -4664,6 +4683,7 @@ int TLSX_ValidateSupportedCurves(WOLFSSL* ssl, byte first, byte second) {
                         defOid = 0;
                         defSz = 80;
                     }
+                    key |= ssl->pkCurveOID == oid;
                 break;
     #endif /* HAVE_ECC && WOLFSSL_STATIC_DH */
 #endif
@@ -5181,6 +5201,10 @@ static int TLSX_SessionTicket_Parse(WOLFSSL* ssl, const byte* input,
     }
 #endif /* NO_WOLFSSL_SERVER */
 
+#if defined(NO_WOLFSSL_CLIENT) && defined(NO_WOLFSSL_SERVER)
+    (void)ssl;
+#endif
+
     return ret;
 }
 
@@ -5618,43 +5642,56 @@ static int TLSX_SupportedVersions_GetSize(void* data, byte msgType, word16* pSz)
         /* TLS v1.2 and TLS v1.3  */
         int cnt = 0;
 
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_3_MINOR))
+        if ((ssl->options.minDowngrade <= TLSv1_3_MINOR)
+        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+            defined(WOLFSSL_WPAS_SMALL)
+            && (ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0
         #endif
-                cnt++;
+        ) {
+            cnt++;
+        }
 
         if (ssl->options.downgrade) {
-#ifndef WOLFSSL_NO_TLS12
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_2_MINOR))
-        #endif
+    #ifndef WOLFSSL_NO_TLS12
+            if ((ssl->options.minDowngrade <= TLSv1_2_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0
+            #endif
+            ) {
                 cnt++;
-#endif
-
-#ifndef NO_OLD_TLS
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_1_MINOR))
-        #endif
-                cnt++;
-    #ifdef WOLFSSL_ALLOW_TLSV10
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_MINOR))
-        #endif
-                cnt++;
+            }
     #endif
-#endif
+    #ifndef NO_OLD_TLS
+            if ((ssl->options.minDowngrade <= TLSv1_1_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0
+            #endif
+            ) {
+                cnt++;
+            }
+        #ifdef WOLFSSL_ALLOW_TLSV10
+            if ((ssl->options.minDowngrade <= TLSv1_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1) == 0
+            #endif
+            ) {
+                cnt++;
+            }
+        #endif
+    #endif
         }
 
         *pSz += (word16)(OPAQUE8_LEN + cnt * OPAQUE16_LEN);
     }
-    else if (msgType == server_hello || msgType == hello_retry_request)
+    else if (msgType == server_hello || msgType == hello_retry_request) {
         *pSz += OPAQUE16_LEN;
-    else
+    }
+    else {
         return SANITY_MSG_E;
+    }
 
     return 0;
 }
@@ -5676,60 +5713,65 @@ static int TLSX_SupportedVersions_Write(void* data, byte* output,
     if (msgType == client_hello) {
         major = ssl->ctx->method->version.major;
 
-
         cnt = output++;
         *cnt = 0;
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_3_MINOR))
+
+        if ((ssl->options.minDowngrade <= TLSv1_3_MINOR)
+        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+            defined(WOLFSSL_WPAS_SMALL)
+            && (ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0
         #endif
-            {
-                *cnt += OPAQUE16_LEN;
-#ifdef WOLFSSL_TLS13_DRAFT
-                /* The TLS draft major number. */
-                *(output++) = TLS_DRAFT_MAJOR;
-                /* Version of draft supported. */
-                *(output++) = TLS_DRAFT_MINOR;
-#else
-                *(output++) = major;
-                *(output++) = (byte)TLSv1_3_MINOR;
-#endif
-            }
+        ) {
+            *cnt += OPAQUE16_LEN;
+        #ifdef WOLFSSL_TLS13_DRAFT
+            /* The TLS draft major number. */
+            *(output++) = TLS_DRAFT_MAJOR;
+            /* Version of draft supported. */
+            *(output++) = TLS_DRAFT_MINOR;
+        #else
+            *(output++) = major;
+            *(output++) = (byte)TLSv1_3_MINOR;
+        #endif
+        }
+
         if (ssl->options.downgrade) {
-#ifndef WOLFSSL_NO_TLS12
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_2_MINOR))
-        #endif
-            {
+        #ifndef WOLFSSL_NO_TLS12
+            if ((ssl->options.minDowngrade <= TLSv1_2_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0
+            #endif
+            ) {
                 *cnt += OPAQUE16_LEN;
                 *(output++) = major;
                 *(output++) = (byte)TLSv1_2_MINOR;
             }
-#endif
-
-#ifndef NO_OLD_TLS
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_1_MINOR))
         #endif
-            {
+
+    #ifndef NO_OLD_TLS
+            if ((ssl->options.minDowngrade <= TLSv1_1_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0
+            #endif
+            ) {
                 *cnt += OPAQUE16_LEN;
                 *(output++) = major;
                 *(output++) = (byte)TLSv1_1_MINOR;
             }
-    #ifdef WOLFSSL_ALLOW_TLSV10
-        #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-            if ((ssl->options.mask & SSL_OP_NO_TLSv1) == 0 &&
-                (ssl->options.minDowngrade <= TLSv1_MINOR))
-        #endif
-            {
+        #ifdef WOLFSSL_ALLOW_TLSV10
+            if ((ssl->options.minDowngrade <= TLSv1_MINOR)
+            #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
+                defined(WOLFSSL_WPAS_SMALL)
+                && (ssl->options.mask & SSL_OP_NO_TLSv1) == 0
+            #endif
+            ) {
                 *cnt += OPAQUE16_LEN;
                 *(output++) = major;
                 *(output++) = (byte)TLSv1_MINOR;
             }
+        #endif
     #endif
-#endif
         }
 
         *pSz += (word16)(OPAQUE8_LEN + *cnt);
@@ -6686,7 +6728,7 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
     int ret = 0;
 #if defined(HAVE_ECC) && defined(HAVE_ECC_KEY_EXPORT)
     word32 keySize = 0;
-    word16 curveId = ECC_CURVE_INVALID;
+    word16 curveId = (word16) ECC_CURVE_INVALID;
     ecc_key* eccKey = (ecc_key*)kse->key;
 
     /* TODO: [TLS13] The key sizes should come from wolfcrypt. */
@@ -11086,14 +11128,17 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
         #ifndef WOLFSSL_PSK_ONE_ID
             if (ssl->options.client_psk_cs_cb != NULL) {
                 int i;
-                ssl->arrays->client_identity[MAX_PSK_ID_LEN] = '\0';
                 for (i = 0; i < ssl->suites->suiteSz; i += 2) {
                     byte cipherSuite0 = ssl->suites->suites[i + 0];
                     byte cipherSuite = ssl->suites->suites[i + 1];
                     unsigned int keySz;
+                #ifdef WOLFSSL_PSK_MULTI_ID_PER_CS
+                    int cnt = 0;
+                #endif
 
                 #ifdef HAVE_NULL_CIPHER
-                    if (cipherSuite0 == ECC_BYTE) {
+                    if (cipherSuite0 == ECC_BYTE ||
+                        cipherSuite0 == ECDHE_PSK_BYTE) {
                         if (cipherSuite != TLS_SHA256_SHA256 &&
                                              cipherSuite != TLS_SHA384_SHA384) {
                             continue;
@@ -11104,21 +11149,34 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
                     if (cipherSuite0 != TLS13_BYTE)
                         continue;
 
-                    keySz = ssl->options.client_psk_cs_cb(
-                        ssl, ssl->arrays->server_hint,
-                        ssl->arrays->client_identity, MAX_PSK_ID_LEN,
-                        ssl->arrays->psk_key, MAX_PSK_KEY_LEN,
-                        GetCipherNameInternal(cipherSuite0, cipherSuite));
-                    if (keySz > 0) {
-                        ssl->arrays->psk_keySz = keySz;
-                        ret = TLSX_PreSharedKey_Use(ssl,
-                            (byte*)ssl->arrays->client_identity,
-                            (word16)XSTRLEN(ssl->arrays->client_identity), 0,
-                            SuiteMac(ssl->suites->suites + i),
-                            cipherSuite0, cipherSuite, 0, NULL);
-                        if (ret != 0)
-                            return ret;
+                #ifdef WOLFSSL_PSK_MULTI_ID_PER_CS
+                    do {
+                        ssl->arrays->client_identity[0] = cnt;
+                #endif
+
+                        ssl->arrays->client_identity[MAX_PSK_ID_LEN] = '\0';
+                        keySz = ssl->options.client_psk_cs_cb(
+                            ssl, ssl->arrays->server_hint,
+                            ssl->arrays->client_identity, MAX_PSK_ID_LEN,
+                            ssl->arrays->psk_key, MAX_PSK_KEY_LEN,
+                            GetCipherNameInternal(cipherSuite0, cipherSuite));
+                        if (keySz > 0) {
+                            ssl->arrays->psk_keySz = keySz;
+                            ret = TLSX_PreSharedKey_Use(ssl,
+                                (byte*)ssl->arrays->client_identity,
+                                (word16)XSTRLEN(ssl->arrays->client_identity),
+                                0, SuiteMac(ssl->suites->suites + i),
+                                cipherSuite0, cipherSuite, 0, NULL);
+                            if (ret != 0)
+                                return ret;
+                #ifdef WOLFSSL_PSK_MULTI_ID_PER_CS
+                            cnt++;
+                #endif
+                        }
+                #ifdef WOLFSSL_PSK_MULTI_ID_PER_CS
                     }
+                    while (keySz > 0);
+                #endif
                 }
 
                 usingPSK = 1;

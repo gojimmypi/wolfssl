@@ -19,6 +19,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/*
+ *   ************************************************************************
+ *
+ *   ******************************** NOTICE ********************************
+ *
+ *   ************************************************************************
+ *
+ *   This method of uncommenting a line in settings.h is outdated.
+ *
+ *   Please use user_settings.h / WOLFSSL_USER_SETTINGS
+ *
+ *         or
+ *
+ *   ./configure CFLAGS="-DFLAG"
+ *
+ *   For more information see:
+ *
+ *   https://www.wolfssl.com/how-do-i-manage-the-build-configuration-of-wolfssl/
+ *
+ */
+
 
 /* Place OS specific preprocessor flags, defines, includes here, will be
    included into every file because types.h includes it */
@@ -193,6 +214,11 @@
 
 /* Uncomment next line if building for using Apache mynewt */
 /* #define WOLFSSL_APACHE_MYNEWT */
+
+/* For Espressif chips see example user_settings.h
+ *
+ * https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/user_settings.h
+ */
 
 /* Uncomment next line if building for using ESP-IDF */
 /* #define WOLFSSL_ESPIDF */
@@ -375,11 +401,13 @@
     #define SINGLE_THREADED
     #define WOLFSSL_USER_IO
     #define NO_FILESYSTEM
-    #define CUSTOM_RAND_TYPE uint16_t
-    #define CUSTOM_RAND_GENERATE random_rand
+    #ifndef CUSTOM_RAND_GENERATE
+        #define CUSTOM_RAND_TYPE uint16_t
+        #define CUSTOM_RAND_GENERATE random_rand
+    #endif
     static inline word32 LowResTimer(void)
     {
-        return clock_seconds();
+       return clock_seconds();
     }
 #endif
 
@@ -504,7 +532,9 @@
     #include "pico_stack.h"
     #include "pico_constants.h"
     #include "pico_protocol.h"
-    #define CUSTOM_RAND_GENERATE pico_rand
+    #ifndef CUSTOM_RAND_GENERATE
+        #define CUSTOM_RAND_GENERATE pico_rand
+    #endif
 #endif
 
 #ifdef WOLFSSL_PICOTCP_DEMO
@@ -535,8 +565,6 @@
     /* #define WOLFSSL_PTHREADS */
     #define WOLFSSL_HAVE_MIN
     #define WOLFSSL_HAVE_MAX
-    #define USE_FAST_MATH
-    #define TFM_TIMING_RESISTANT
     #define NO_MAIN_DRIVER
     #define NO_DEV_RANDOM
     #define NO_WRITEV
@@ -823,16 +851,35 @@ extern void uITRON4_free(void *p) ;
     #define NO_MAIN_DRIVER
 #endif
 
+#ifdef WOLFSSL_TI_CRYPT
+    #define NO_GCM_ENCRYPT_EXTRA
+    #define NO_PUBLIC_GCM_SET_IV
+    #define NO_PUBLIC_CCM_SET_NONCE
+#endif
+
 #ifdef WOLFSSL_TIRTOS
     #define SIZEOF_LONG_LONG 8
     #define NO_WRITEV
     #define NO_WOLFSSL_DIR
-    #define USE_FAST_MATH
+
+    /* Use SP_MATH by default, unless
+     * specified in user_settings.
+     */
+    #ifndef USE_FAST_MATH
+        #define USE_SP_MATH
+        #define SP_MATH_ALL
+        #define WOLFSSL_HAVE_SP_ECC
+        #define SP_WORD_SIZE 32
+        #define WOLFSSL_HAVE_SP_RSA
+        #define WOLFSSL_SP_4096
+    #endif
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
     #define NO_DEV_RANDOM
     #define NO_FILESYSTEM
+    #define NO_SIG_WRAPPER
+    #define NO_MAIN_DRIVER
     #define USE_CERT_BUFFERS_2048
     #define NO_ERROR_STRINGS
     /* Uncomment this setting if your toolchain does not offer time.h header */
@@ -842,21 +889,13 @@ extern void uITRON4_free(void *p) ;
     #define USE_WOLF_STRTOK /* use with HAVE_ALPN */
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_AESGCM
-    #ifdef WOLFSSL_TI_CRYPT
-        #define NO_GCM_ENCRYPT_EXTRA
-        #define NO_PUBLIC_GCM_SET_IV
-        #define NO_PUBLIC_CCM_SET_NONCE
-    #endif
     #define HAVE_SUPPORTED_CURVES
-    #define ALT_ECC_SIZE
-
     #ifdef __IAR_SYSTEMS_ICC__
         #pragma diag_suppress=Pa089
     #elif !defined(__GNUC__)
         /* Suppress the sslpro warning */
         #pragma diag_suppress=11
     #endif
-
     #include <ti/sysbios/hal/Seconds.h>
 #endif
 
@@ -1627,9 +1666,12 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_AES_GCM_FIXED_IV_AAD
 #endif
 #ifdef WOLFSSL_KCAPI_ECC
+    #undef  ECC_USER_CURVES
     #define ECC_USER_CURVES
     #undef  NO_ECC256
+    #undef  HAVE_ECC384
     #define HAVE_ECC384
+    #undef  HAVE_ECC521
     #define HAVE_ECC521
 #endif
 
@@ -2024,7 +2066,9 @@ extern void uITRON4_free(void *p) ;
 
 #if !defined(HAVE_PUBLIC_FFDHE) && !defined(NO_DH) && \
     !defined(WOLFSSL_NO_PUBLIC_FFDHE) && \
-    (defined(HAVE_SELFTEST) || FIPS_VERSION_EQ(2,0))
+    (defined(HAVE_SELFTEST) || FIPS_VERSION_LE(2,0))
+    /* This should only be enabled for FIPS v2 or older. It enables use of the
+     * older wc_Dh_ffdhe####_Get() API's */
     #define HAVE_PUBLIC_FFDHE
 #endif
 
@@ -2232,6 +2276,10 @@ extern void uITRON4_free(void *p) ;
 
 
 #ifdef WOLFSSL_LINUXKM
+    #ifdef HAVE_CONFIG_H
+        #include <config.h>
+        #undef HAVE_CONFIG_H
+    #endif
     #ifndef NO_DEV_RANDOM
         #define NO_DEV_RANDOM
     #endif
@@ -2406,6 +2454,16 @@ extern void uITRON4_free(void *p) ;
     #define KEEP_PEER_CERT
 #endif
 
+/*
+ * Keeps the "Finished" messages after a TLS handshake for use as the so-called
+ * "tls-unique" channel binding. See comment in internal.h around clientFinished
+ * and serverFinished for more information.
+ */
+#if defined(OPENSSL_ALL) || defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
+    #undef  WOLFSSL_HAVE_TLS_UNIQUE
+    #define WOLFSSL_HAVE_TLS_UNIQUE
+#endif
+
 /* RAW hash function APIs are not implemented */
 #if defined(WOLFSSL_ARMASM) || defined(WOLFSSL_AFALG_HASH)
     #undef  WOLFSSL_NO_HASH_RAW
@@ -2545,6 +2603,12 @@ extern void uITRON4_free(void *p) ;
     #define NO_SHA2_CRYPTO_CB
 #endif
 
+/* Enable HAVE_ONE_TIME_AUTH by default for use with TLS cipher suites
+ * when poly1305 is enabled
+ */
+#if defined(HAVE_POLY1305) && !defined(HAVE_ONE_TIME_AUTH)
+    #define HAVE_ONE_TIME_AUTH
+#endif
 
 /* Check for insecure build combination:
  * secure renegotiation   [enabled]
@@ -2622,6 +2686,12 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 
+/* With titan cache size there is too many sessions to fit with the default
+ * multiplier of 8 */
+#if defined(TITAN_SESSION_CACHE) && !defined(NO_SESSION_CACHE_REF)
+    #define NO_SESSION_CACHE_REF
+#endif
+
 
 /* ---------------------------------------------------------------------------
  * Depricated Algorithm Handling
@@ -2635,6 +2705,16 @@ extern void uITRON4_free(void *p) ;
     #define NO_RC4
 #endif
 
+#if !defined(WOLFSSL_NO_ASYNC_IO) || defined(WOLFSSL_ASYNC_CRYPT) || \
+     defined(WOLFSSL_NONBLOCK_OCSP)
+    /* Enable asynchronous support in TLS functions to support one or more of
+     * the following:
+     * - re-entry after a network blocking return
+     * - re-entry after OCSP blocking return
+     * - asynchronous cryptography */
+    #undef WOLFSSL_ASYNC_IO
+    #define WOLFSSL_ASYNC_IO
+#endif
 
 #ifdef __cplusplus
     }   /* extern "C" */

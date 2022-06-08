@@ -4,7 +4,12 @@
 # Copyright wolfSSL 2016-2021
 
 # if we can, isolate the network namespace to eliminate port collisions.
-if [ "${AM_BWRAPPED-}" != "yes" ]; then
+if [[ -n "$NETWORK_UNSHARE_HELPER" ]]; then
+     if [[ -z "$NETWORK_UNSHARE_HELPER_CALLED" ]]; then
+         export NETWORK_UNSHARE_HELPER_CALLED=yes
+         exec "$NETWORK_UNSHARE_HELPER" "$0" "$@" || exit $?
+     fi
+elif [ "${AM_BWRAPPED-}" != "yes" ]; then
     bwrap_path="$(command -v bwrap)"
     if [ -n "$bwrap_path" ]; then
         export AM_BWRAPPED=yes
@@ -33,7 +38,7 @@ server_out_file="$(pwd)/wolfssl_tls13_server_out$$"
 # Client output
 client_out_file="$(pwd)/wolfssl_tls13_client_out$$"
 
-echo "ready file "$ready_file""
+echo "ready file \"$ready_file\""
 
 create_port() {
     while [ ! -s "$ready_file" ]; do
@@ -257,7 +262,7 @@ if [ "$early_data" = "yes" ]; then
              tee "$server_out_file") &
         server_pid=$!
         create_port
-        ./examples/client/client -v 4 -r -0 -p $port 2>&1 >"$client_out_file"
+        ./examples/client/client -v 4 -r -0 -p $port >"$client_out_file" 2>&1
         RESULT=$?
         cat "$client_out_file"
         remove_ready_file

@@ -293,7 +293,7 @@ typedef struct ecc_set_type {
 } ecc_set_type;
 #else
 #define MAX_ECC_NAME 16
-#define MAX_ECC_STRING ((MAX_ECC_BYTES * 2) + 1)
+#define MAX_ECC_STRING ((MAX_ECC_BYTES * 2) + 2)
     /* The values are stored as text strings. */
 
 typedef struct ecc_set_type {
@@ -440,7 +440,7 @@ struct ecc_key {
     ecc_point pubkey;   /* public key */
     mp_int    k;        /* private key */
 
-#ifdef WOLFSSL_QNX_CAAM
+#ifdef WOLFSSL_CAAM
     word32 blackKey;     /* address of key encrypted and in secure memory */
     word32 securePubKey; /* address of public key in secure memory */
     int    partNum; /* partition number*/
@@ -466,7 +466,7 @@ struct ecc_key {
 #endif
 #ifdef WOLFSSL_KCAPI_ECC
     struct kcapi_handle* handle;
-    byte pubkey_raw[KCAPI_PARAM_SZ + MAX_ECC_BYTES * 2];
+    byte pubkey_raw[MAX_ECC_BYTES * 2];
 #endif
 
 #ifdef WOLFSSL_ASYNC_CRYPT
@@ -778,13 +778,13 @@ int wc_ecc_export_private_raw(ecc_key* key, byte* qx, word32* qxLen,
 
 #ifdef HAVE_ECC_KEY_EXPORT
 WOLFSSL_API
-int wc_ecc_export_point_der_ex(int curve_idx, ecc_point* point, byte* out,
+int wc_ecc_export_point_der_ex(const int curve_idx, ecc_point* point, byte* out,
                                word32* outLen, int compressed);
 WOLFSSL_API
-int wc_ecc_export_point_der(int curve_idx, ecc_point* point,
+int wc_ecc_export_point_der(const int curve_idx, ecc_point* point,
                             byte* out, word32* outLen);
 WOLFSSL_LOCAL
-int wc_ecc_export_point_der_compressed(int curve_idx, ecc_point* point,
+int wc_ecc_export_point_der_compressed(const int curve_idx, ecc_point* point,
                                        byte* out, word32* outLen);
 #endif /* HAVE_ECC_KEY_EXPORT */
 
@@ -792,10 +792,10 @@ int wc_ecc_export_point_der_compressed(int curve_idx, ecc_point* point,
 #ifdef HAVE_ECC_KEY_IMPORT
 WOLFSSL_API
 int wc_ecc_import_point_der_ex(const byte* in, word32 inLen,
-                               int curve_idx, ecc_point* point,
+                               const int curve_idx, ecc_point* point,
                                int shortKeySize);
 WOLFSSL_API
-int wc_ecc_import_point_der(const byte* in, word32 inLen, int curve_idx,
+int wc_ecc_import_point_der(const byte* in, word32 inLen, const int curve_idx,
                             ecc_point* point);
 #endif /* HAVE_ECC_KEY_IMPORT */
 

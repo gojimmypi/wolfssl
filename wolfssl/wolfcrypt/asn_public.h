@@ -33,6 +33,7 @@ This library defines the interface APIs for X509 certificates.
 
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/wolfcrypt/dsa.h>
+#include <wolfssl/wolfcrypt/random.h>
 
 #ifdef __cplusplus
     extern "C" {
@@ -62,14 +63,6 @@ This library defines the interface APIs for X509 certificates.
 #ifndef WC_RSAKEY_TYPE_DEFINED
     typedef struct RsaKey RsaKey;
     #define WC_RSAKEY_TYPE_DEFINED
-#endif
-#ifndef WC_RNG_TYPE_DEFINED
-    typedef struct OS_Seed OS_Seed;
-    typedef struct WC_RNG WC_RNG;
-    #ifdef WC_RNG_SEED_CB
-    typedef int (*wc_RngSeed_Cb)(OS_Seed* os, byte* seed, word32 sz);
-    #endif
-    #define WC_RNG_TYPE_DEFINED
 #endif
 #ifndef WC_DH_TYPE_DEFINED
     typedef struct DhKey DhKey;
@@ -397,11 +390,11 @@ typedef struct Cert {
 #ifdef WOLFSSL_ALT_NAMES
     byte     altNames[CTC_MAX_ALT_SIZE]; /* altNames copy */
     int      altNamesSz;                 /* altNames size in bytes */
+#endif
     byte     beforeDate[CTC_DATE_SIZE];  /* before date copy */
     int      beforeDateSz;               /* size of copy */
     byte     afterDate[CTC_DATE_SIZE];   /* after date copy */
     int      afterDateSz;                /* size of copy */
-#endif
 #ifdef WOLFSSL_CERT_EXT
     byte    skid[CTC_MAX_SKID_SIZE];     /* Subject Key Identifier */
     int     skidSz;                      /* SKID size in bytes */

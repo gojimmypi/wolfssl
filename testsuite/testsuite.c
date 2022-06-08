@@ -97,11 +97,16 @@ static void *echoclient_test_wrapper(void* args) {
 
 int testsuite_test(int argc, char** argv)
 {
-#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT)
+#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT) && \
+    (!defined(WOLF_CRYPTO_CB_ONLY_RSA) && !defined(WOLF_CRYPTO_CB_ONLY_ECC))
     func_args server_args;
 
     tcp_ready ready;
+#if !defined(NETOS)
     THREAD_TYPE serverThread;
+
+    int ret;
+#endif
 
 #ifndef USE_WINDOWS_API
     const char *tempDir = NULL;
@@ -116,7 +121,6 @@ int testsuite_test(int argc, char** argv)
 #ifdef HAVE_STACK_SIZE
     void *serverThreadStackContext = NULL;
 #endif
-    int ret;
 
 #ifndef USE_WINDOWS_API
 #ifdef XGETENV
@@ -242,7 +246,8 @@ int testsuite_test(int argc, char** argv)
     return EXIT_SUCCESS;
 }
 
-#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT)
+#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT) && \
+   (!defined(WOLF_CRYPTO_CB_ONLY_RSA) && !defined(WOLF_CRYPTO_CB_ONLY_ECC))
 /* Perform a basic TLS handshake.
  *
  * First connection to echo a file.
@@ -625,8 +630,7 @@ int main(int argc, char** argv)
 
     wolfSSL_Cleanup();
     printf("\nAll tests passed!\n");
-
-    EXIT_TEST(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
 
 

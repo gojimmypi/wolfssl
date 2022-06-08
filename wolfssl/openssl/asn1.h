@@ -69,6 +69,7 @@
 #define ASN1_UTCTIME_print              wolfSSL_ASN1_UTCTIME_print
 #define ASN1_TIME_check                 wolfSSL_ASN1_TIME_check
 #define ASN1_TIME_diff                  wolfSSL_ASN1_TIME_diff
+#define ASN1_TIME_compare               wolfSSL_ASN1_TIME_compare
 #define ASN1_TIME_set                   wolfSSL_ASN1_TIME_set
 
 #define V_ASN1_EOC                      0
@@ -163,7 +164,7 @@ WOLFSSL_API int wolfSSL_ASN1_item_i2d(const void *src, byte **dest,
                                       const WOLFSSL_ASN1_ITEM *tpl);
 
 /* Need function declaration otherwise compiler complains */
-// NOLINTBEGIN(readability-named-parameter)
+/* // NOLINTBEGIN(readability-named-parameter) */
 #define IMPLEMENT_ASN1_FUNCTIONS(type) \
     type *type##_new(void); \
     type *type##_new(void){ \
@@ -178,7 +179,7 @@ WOLFSSL_API int wolfSSL_ASN1_item_i2d(const void *src, byte **dest,
     { \
         return wolfSSL_ASN1_item_i2d(src, dest, &type##_template_data);\
     }
-// NOLINTEND(readability-named-parameter)
+/* // NOLINTEND(readability-named-parameter) */
 
 #endif /* OPENSSL_ALL */
 

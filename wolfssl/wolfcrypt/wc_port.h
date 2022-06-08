@@ -100,6 +100,11 @@
     #include "fsl_os_abstraction.h"
 #elif defined(WOLFSSL_VXWORKS)
     #include <semLib.h>
+    #ifdef WOLFSSL_VXWORKS_6_x
+        #ifndef SEM_ID_NULL
+            #define SEM_ID_NULL ((SEM_ID)NULL)
+        #endif
+    #endif
 #elif defined(WOLFSSL_uITRON4)
     #include "stddef.h"
     #include "kernel.h"
@@ -417,7 +422,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XFGETS(b,s,f) -2 /* Not ported yet */
 
 #elif defined(WOLFSSL_ZEPHYR)
-    #include <fs.h>
+    #include <fs/fs.h>
 
     #define XFILE      struct fs_file_t*
     #define STAT       struct fs_dirent

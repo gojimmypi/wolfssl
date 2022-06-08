@@ -156,8 +156,13 @@ enum ASN_Tags {
     ASN_ASYMKEY_PUBKEY    = 0x01,
 };
 
-#define ASN_UTC_TIME_SIZE 14
-#define ASN_GENERALIZED_TIME_SIZE 16
+/* NOTE: If ASN_UTC_TIME_SIZE or ASN_GENERALIZED_TIME_SIZE are ever modified
+ *       one needs to update the logic in asn.c function GetAsnTimeString()
+ *       which depends on the size 14 and/or 16 to determine which format to
+ *       place in the "buf" (output)
+ */
+#define ASN_UTC_TIME_SIZE 14 /* Read note above before modifying */
+#define ASN_GENERALIZED_TIME_SIZE 16 /* Read note above before modifying */
 #define ASN_GENERALIZED_TIME_MAX 68
 
 #ifdef WOLFSSL_ASN_TEMPLATE
@@ -783,6 +788,7 @@ enum
     NID_buildingName = 1494,
 
 
+    NID_dnQualifier = 174,
     NID_commonName = 14,               /* CN Changed to not conflict
                                         * with PBE_SHA1_DES3 */
     NID_surname = 0x04,                /* SN */
@@ -1190,6 +1196,10 @@ enum CsrAttrType {
     SERIAL_NUMBER_OID = 94,
     EXTENSION_REQUEST_OID = 666,
     USER_ID_OID = 865,
+    DNQUALIFIER_OID = 135,
+    INITIALS_OID = 132,
+    SURNAME_OID = 93,
+    GIVEN_NAME_OID = 131,
 };
 #endif
 
@@ -1602,6 +1612,34 @@ struct DecodedCert {
     char    subjectPCEnc;
     char*   subjectEmail;
     int     subjectEmailLen;
+#if defined(WOLFSSL_HAVE_ISSUER_NAMES)
+    char*   issuerCN;
+    int     issuerCNLen;
+    char    issuerCNEnc;
+    char*   issuerSN;
+    int     issuerSNLen;
+    char    issuerSNEnc;
+    char*   issuerC;
+    int     issuerCLen;
+    char    issuerCEnc;
+    char*   issuerL;
+    int     issuerLLen;
+    char    issuerLEnc;
+    char*   issuerST;
+    int     issuerSTLen;
+    char    issuerSTEnc;
+    char*   issuerO;
+    int     issuerOLen;
+    char    issuerOEnc;
+    char*   issuerOU;
+    int     issuerOULen;
+    char    issuerOUEnc;
+    char*   issuerSND;
+    int     issuerSNDLen;
+    char    issuerSNDEnc;
+    char*   issuerEmail;
+    int     issuerEmailLen;
+#endif /* WOLFSSL_HAVE_ISSUER_NAMES */
 #endif /* defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT) */
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
     /* WOLFSSL_X509_NAME structures (used void* to avoid including ssl.h) */
@@ -1632,6 +1670,16 @@ struct DecodedCert {
     int     cPwdLen;
     char*   sNum; /* Serial Number */
     int     sNumLen;
+    char*   dnQualifier;
+    int     dnQualifierLen;
+    char*   initials;
+    int     initialsLen;
+    char*   surname;
+    int     surnameLen;
+    char*   givenName;
+    int     givenNameLen;
+    char*   unstructuredName;
+    int     unstructuredNameLen;
 #endif /* WOLFSSL_CERT_REQ */
 
     Signer* ca;
@@ -1672,20 +1720,18 @@ struct DecodedCert {
 #if defined(WOLFSSL_SEP) || defined(WOLFSSL_QT)
     byte extCertPolicySet : 1;
 #endif
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
     byte extCRLdistCrit : 1;
     byte extAuthInfoCrit : 1;
     byte extBasicConstCrit : 1;
     byte extPolicyConstCrit : 1;
     byte extSubjAltNameCrit : 1;
     byte extAuthKeyIdCrit : 1;
-    #ifndef IGNORE_NAME_CONSTRAINTS
-        byte extNameConstraintCrit : 1;
-    #endif
+#ifndef IGNORE_NAME_CONSTRAINTS
+    byte extNameConstraintCrit : 1;
+#endif
     byte extSubjKeyIdCrit : 1;
     byte extKeyUsageCrit : 1;
     byte extExtKeyUsageCrit : 1;
-#endif /* OPENSSL_EXTRA */
 #if defined(WOLFSSL_SEP) || defined(WOLFSSL_QT)
     byte extCertPolicyCrit : 1;
 #endif
@@ -1836,11 +1882,17 @@ WOLFSSL_LOCAL int EncodePolicyOID(byte *out, word32 *outSz,
 WOLFSSL_API int CheckCertSignature(const byte*,word32,void*,void* cm);
 WOLFSSL_LOCAL int CheckCertSignaturePubKey(const byte* cert, word32 certSz,
         void* heap, const byte* pubKey, word32 pubKeySz, int pubKeyOID);
+#ifdef OPENSSL_EXTRA
+WOLFSSL_API int wc_CheckCertSigPubKey(const byte* cert, word32 certSz,
+                                      void* heap, const byte* pubKey,
+                                      word32 pubKeySz, int pubKeyOID);
+#endif
+
 #ifdef WOLFSSL_CERT_REQ
 WOLFSSL_LOCAL int CheckCSRSignaturePubKey(const byte* cert, word32 certSz,
         void* heap, const byte* pubKey, word32 pubKeySz, int pubKeyOID);
 #endif /* WOLFSSL_CERT_REQ */
-WOLFSSL_LOCAL int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
+WOLFSSL_ASN_API int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
                         int sigAlgoType);
 WOLFSSL_LOCAL int ParseCertRelative(DecodedCert* cert, int type, int verify,
                                     void* cm);
@@ -1888,7 +1940,9 @@ typedef struct tm wolfssl_tm;
     defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
 WOLFSSL_LOCAL int GetTimeString(byte* date, int format, char* buf, int len);
 #endif
-#if !defined(NO_ASN_TIME) && defined(HAVE_PKCS7)
+#if !defined(NO_ASN_TIME) && !defined(USER_TIME) && \
+    !defined(TIME_OVERRIDES) && (defined(OPENSSL_EXTRA) || defined(HAVE_PKCS7))
+WOLFSSL_LOCAL int GetFormattedTime(void* currTime, byte* buf, word32 len);
 WOLFSSL_LOCAL int GetAsnTimeString(void* currTime, byte* buf, word32 len);
 #endif
 WOLFSSL_LOCAL int ExtractDate(const unsigned char* date, unsigned char format,
@@ -2029,11 +2083,9 @@ WOLFSSL_LOCAL void FreeDer(DerBuffer** der);
 #ifdef HAVE_SMIME
 WOLFSSL_LOCAL int wc_MIME_parse_headers(char* in, int inLen, MimeHdr** hdrs);
 WOLFSSL_LOCAL int wc_MIME_header_strip(char* in, char** out, size_t start, size_t end);
-WOLFSSL_LOCAL int wc_MIME_create_header(char* name, char* body, MimeHdr** hdr);
-WOLFSSL_LOCAL int wc_MIME_create_parameter(char* attribute, char* value, MimeParam** param);
 WOLFSSL_LOCAL MimeHdr* wc_MIME_find_header_name(const char* name, MimeHdr* hdr);
 WOLFSSL_LOCAL MimeParam* wc_MIME_find_param_attr(const char* attribute, MimeParam* param);
-WOLFSSL_LOCAL char* wc_MIME_canonicalize(const char* line);
+WOLFSSL_LOCAL char* wc_MIME_single_canonicalize(const char* line, word32* len);
 WOLFSSL_LOCAL int wc_MIME_free_hdrs(MimeHdr* head);
 #endif /* HAVE_SMIME */
 
@@ -2260,7 +2312,7 @@ WOLFSSL_LOCAL int VerifyCRL_Signature(SignatureCtx* sigCtx,
                                       word32 signatureOID, Signer *ca,
                                       void* heap);
 WOLFSSL_LOCAL int  ParseCRL(DecodedCRL* dcrl, const byte* buff, word32 sz,
-                            void* cm);
+                            int verify, void* cm);
 WOLFSSL_LOCAL void FreeDecodedCRL(DecodedCRL* dcrl);
 
 

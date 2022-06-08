@@ -1176,10 +1176,7 @@ if(NOT WOLFSSL_INLINE)
     list(APPEND WOLFSSL_DEFINITIONS "-DNO_INLINE")
 endif()
 
-# TODO: - OCSP
-#       - OCSP stapling
-#       - OCSP stapling v2
-#       - CRL
+# TODO:
 #       - CRL monitor
 #       - User crypto
 #       - Whitewood netRandom client library
@@ -1192,30 +1189,18 @@ endif()
 #       - Secure renegotiation
 #       - Fallback SCSV
 
+add_option(WOLFSSL_OCSP "Enable OCSP (default: disabled)" "no" "yes;no")
+add_option(WOLFSSL_OCSPSTAPLING "Enable OCSP Stapling (default: disabled)" "no" "yes;no")
+add_option(WOLFSSL_OCSPSTAPLING_V2 "Enable OCSP Stapling v2 (default: disabled)" "no" "yes;no")
+add_option(WOLFSSL_CRL
+    "Enable CRL (Use =io for inline CRL HTTP GET) (default: disabled)"
+    "no" "yes;no;io")
+
 set(WOLFSSL_SNI_HELP_STRING "Enable SNI (default: disabled)")
 add_option(WOLFSSL_SNI ${WOLFSSL_SNI_HELP_STRING} "no" "yes;no")
 
-if (WOLFSSL_SNI)
-   list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_TLS_EXTENSIONS" "-DHAVE_SNI")
-endif()
-
-
 set(WOLFSSL_TLSX_HELP_STRING "Enable all TLS Extensions (default: disabled)")
 add_option(WOLFSSL_TLSX ${WOLFSSL_TLSX_HELP_STRING} "no" "yes;no")
-
-if (WOLFSSL_TLSX)
-  list(APPEND WOLFSSL_DEFINITIONS
-    "-DHAVE_TLS_EXTENSIONS"
-    "-DHAVE_SNI"
-    "-DHAVE_MAX_FRAGMENT"
-    "-DHAVE_TRUNCATED_HMAC"
-    "-DHAVE_ALPN"
-    "-DHAVE_TRUSTED_CA")
-    if (WOLFSSL_ECC OR WOLFSSL_CURVE25519 OR WOLFSSL_CURVE448 OR WOLFSSL_TLS13)
-       list(APPEND WOLFSSL_DEFINITIONS  "-DHAVE_SUPPORTED_CURVES")
-    endif()
-endif()
-
 
 # Supported elliptic curves extensions
 add_option("WOLFSSL_SUPPORTED_CURVES"
@@ -1646,6 +1631,44 @@ if(WOLFSSL_CRYPTOCB)
     list(APPEND WOLFSSL_DEFINITIONS "-DWOLF_CRYPTO_CB")
 endif()
 
+if(WOLFSSL_OCSPSTAPLING)
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_CERTIFICATE_STATUS_REQUEST" "-DHAVE_TLS_EXTENSIONS")
+    override_cache(WOLFSSL_OCSP "yes")
+endif()
+
+if(WOLFSSL_OCSPSTAPLING_V2)
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_CERTIFICATE_STATUS_REQUEST_V2" "-DHAVE_TLS_EXTENSIONS")
+    override_cache(WOLFSSL_OCSP "yes")
+endif()
+
+# must be below OCSP stapling options to allow override
+if (WOLFSSL_OCSP)
+   list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_OCSP")
+endif()
+
+if (WOLFSSL_CRL STREQUAL "yes")
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_CRL")
+elseif(WOLFSSL_CRL STREQUAL "io")
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_CRL" "-DHAVE_CRL_IO")
+endif()
+
+if (WOLFSSL_SNI)
+   list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_TLS_EXTENSIONS" "-DHAVE_SNI")
+endif()
+
+if (WOLFSSL_TLSX)
+  list(APPEND WOLFSSL_DEFINITIONS
+    "-DHAVE_TLS_EXTENSIONS"
+    "-DHAVE_SNI"
+    "-DHAVE_MAX_FRAGMENT"
+    "-DHAVE_TRUNCATED_HMAC"
+    "-DHAVE_ALPN"
+    "-DHAVE_TRUSTED_CA")
+    if (WOLFSSL_ECC OR WOLFSSL_CURVE25519 OR WOLFSSL_CURVE448 OR WOLFSSL_TLS13)
+       list(APPEND WOLFSSL_DEFINITIONS  "-DHAVE_SUPPORTED_CURVES")
+    endif()
+endif()
+
 
 # Generates the BUILD_* flags. These control what source files are included in
 # the library. A series of AM_CONDITIONALs handle this in configure.ac.
@@ -1683,7 +1706,22 @@ add_definitions("-DWOLFSSL_IGNORE_FILE_WARN")
 
 # Generate user options header
 message("Generating user options header...")
-set(OPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/wolfssl/options.h")
+if (${CMAKE_DISABLE_SOURCE_CHANGES})
+    set(WOLFSSL_BUILD_OUT_OF_TREE_DEFAULT "${CMAKE_DISABLE_SOURCE_CHANGES}")
+else()
+    set(WOLFSSL_BUILD_OUT_OF_TREE_DEFAULT "no")
+endif()
+add_option("WOLFSSL_BUILD_OUT_OF_TREE"
+    "Don't generate files in the source tree (default: ${WOLFSSL_BUILD_OUT_OF_TREE_DEFAULT})"
+    "${WOLFSSL_BUILD_OUT_OF_TREE_DEFAULT}" "yes;no")
+if (${WOLFSSL_BUILD_OUT_OF_TREE})
+   set(WOLFSSL_OUTPUT_BASE ${CMAKE_CURRENT_BINARY_DIR})
+else()
+   set(WOLFSSL_OUTPUT_BASE ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+set(OPTION_FILE "${WOLFSSL_OUTPUT_BASE}/wolfssl/options.h")
+set(CYASSL_OPTION_FILE "${WOLFSSL_OUTPUT_BASE}/cyassl/options.h")
+
 file(REMOVE ${OPTION_FILE})
 
 file(APPEND ${OPTION_FILE} "/* wolfssl options.h\n")
@@ -1713,7 +1751,6 @@ file(APPEND ${OPTION_FILE} "#endif\n\n\n")
 file(APPEND ${OPTION_FILE} "#endif /* WOLFSSL_OPTIONS_H */\n\n")
 
 # backwards compatibility for those who have included options or version
-set(CYASSL_OPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cyassl/options.h")
 file(REMOVE ${CYASSL_OPTION_FILE})
 file(APPEND ${CYASSL_OPTION_FILE} "/* cyassl options.h\n")
 file(APPEND ${CYASSL_OPTION_FILE} " * generated from wolfssl/options.h\n")
@@ -1753,7 +1790,7 @@ endif()
 
 target_include_directories(wolfssl
     PUBLIC
-        $<INSTALL_INTERFACE:wolfssl>
+        $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
@@ -1786,7 +1823,7 @@ if(WOLFSSL_EXAMPLES)
     target_link_libraries(client wolfssl)
     set_property(TARGET client
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/examples/client)
+                 ${WOLFSSL_OUTPUT_BASE}/examples/client)
 
     # Build wolfSSL server example
     add_executable(server
@@ -1794,7 +1831,7 @@ if(WOLFSSL_EXAMPLES)
     target_link_libraries(server wolfssl)
     set_property(TARGET server
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/examples/server)
+                 ${WOLFSSL_OUTPUT_BASE}/examples/server)
 
     # Build echo client example
     add_executable(echoclient
@@ -1804,7 +1841,7 @@ if(WOLFSSL_EXAMPLES)
     target_link_libraries(echoclient wolfssl)
     set_property(TARGET echoclient
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/examples/echoclient)
+                 ${WOLFSSL_OUTPUT_BASE}/examples/echoclient)
 
     # Build echo server example
     add_executable(echoserver
@@ -1814,7 +1851,7 @@ if(WOLFSSL_EXAMPLES)
     target_link_libraries(echoserver wolfssl)
     set_property(TARGET echoserver
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/examples/echoserver)
+                 ${WOLFSSL_OUTPUT_BASE}/examples/echoserver)
 
     if(NOT WIN32)
         # Build TLS benchmark example
@@ -1824,7 +1861,7 @@ if(WOLFSSL_EXAMPLES)
         target_link_libraries(tls_bench Threads::Threads)
         set_property(TARGET tls_bench
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/examples/benchmark)
+                 ${WOLFSSL_OUTPUT_BASE}/examples/benchmark)
     endif()
 
     # Build unit tests
@@ -1843,7 +1880,7 @@ if(WOLFSSL_EXAMPLES)
     target_link_libraries(unit_test Threads::Threads)
     set_property(TARGET unit_test
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/)
+                 ${WOLFSSL_OUTPUT_BASE}/tests/)
     set_property(TARGET unit_test
                  PROPERTY RUNTIME_OUTPUT_NAME
                  unit.test)
@@ -1876,7 +1913,7 @@ if(WOLFSSL_CRYPT_TESTS)
     target_link_libraries(wolfcrypttest wolfssl)
     set_property(TARGET wolfcrypttest
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wolfcrypt/test)
+                 ${WOLFSSL_OUTPUT_BASE}/wolfcrypt/test)
     set_property(TARGET wolfcrypttest
                  PROPERTY RUNTIME_OUTPUT_NAME
                  testwolfcrypt)
@@ -1889,7 +1926,7 @@ if(WOLFSSL_CRYPT_TESTS)
     target_link_libraries(wolfcryptbench wolfssl)
     set_property(TARGET wolfcryptbench
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wolfcrypt/benchmark)
+                 ${WOLFSSL_OUTPUT_BASE}/wolfcrypt/benchmark)
     set_property(TARGET wolfcryptbench
                  PROPERTY RUNTIME_OUTPUT_NAME
                  benchmark)
@@ -2034,10 +2071,20 @@ set(INSTALLED_EXAMPLES
 
 # Install the library
 install(TARGETS wolfssl
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
         EXPORT wolfssl-targets
-        LIBRARY)
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        )
 # Install the headers
+install(DIRECTORY ${WOLFSSL_OUTPUT_BASE}/wolfssl/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/wolfssl
+        FILES_MATCHING PATTERN "*.h"
+        REGEX ${EXCLUDED_HEADERS_REGEX} EXCLUDE)
+install(DIRECTORY ${WOLFSSL_OUTPUT_BASE}/cyassl/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cyassl
+        FILES_MATCHING PATTERN "*.h"
+        REGEX ${EXCLUDED_HEADERS_REGEX} EXCLUDE)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/wolfssl/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/wolfssl
         FILES_MATCHING PATTERN "*.h"
