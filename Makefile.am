@@ -3,6 +3,7 @@ SUFFIXES =
 TESTS =
 CLEANFILES =
 DISTCLEANFILES =
+MAINTAINERCLEANFILES =
 bin_PROGRAMS =
 noinst_HEADERS =
 lib_LTLIBRARIES =
@@ -23,9 +24,13 @@ noinst_DATA =
 SUBDIRS_OPT =
 DIST_SUBDIRS_OPT =
 
+# allow supplementary or override flags to be passed at make time:
+AM_CFLAGS += $(EXTRA_CFLAGS)
+
 #includes additional rules from aminclude.am
 @INC_AMINCLUDE@
-DISTCLEANFILES+= aminclude.am
+DISTCLEANFILES+= aminclude.am \
+             .build_params
 
 CLEANFILES+= ecc-key.der \
              ecc-public-key.der \
@@ -37,10 +42,7 @@ CLEANFILES+= ecc-key.der \
              certreq.pem \
              key.der \
              key.pem \
-             ntru-cert.der \
              ecc-key-pkcs8.der \
-             ntru-cert.pem \
-             ntru-key.raw \
              othercert.der \
              othercert.pem \
              pkcs7cert.der \
@@ -124,7 +126,8 @@ CLEANFILES+= ecc-key.der \
              pkcs7signedEncryptedCompressedFirmwarePkgData_ECDSA_SHA256_noattr.der \
              pkcs7signedEncryptedCompressedFirmwarePkgData_RSA_SHA256.der \
              pkcs7signedEncryptedCompressedFirmwarePkgData_RSA_SHA256_noattr.der \
-             tests/test-log-dump-to-file.txt
+             tests/test-log-dump-to-file.txt \
+             MyKeyLog.txt
 
 exampledir = $(docdir)/example
 dist_example_DATA=
@@ -133,11 +136,8 @@ ACLOCAL_AMFLAGS= -I m4
 
 EXTRA_DIST+= lib/dummy
 
-EXTRA_DIST+= wolfssl-ntru.vcproj
 EXTRA_DIST+= wolfssl.vcproj
 EXTRA_DIST+= wolfssl.vcxproj
-EXTRA_DIST+= wolfssl-ntru.sln
-EXTRA_DIST+= wolfssl.sln
 EXTRA_DIST+= wolfssl64.sln
 EXTRA_DIST+= valgrind-error.sh
 EXTRA_DIST+= valgrind-bash.supp
@@ -160,7 +160,6 @@ include cyassl/include.am
 include wolfssl/include.am
 include certs/include.am
 include doc/include.am
-include swig/include.am
 
 include src/include.am
 include support/include.am
@@ -174,6 +173,7 @@ include tests/include.am
 include sslSniffer/sslSnifferTest/include.am
 include rpm/include.am
 include linuxkm/include.am
+include zephyr/include.am
 
 # Exclude references to non-DFSG sources from build files
 if !BUILD_DISTRO
@@ -203,21 +203,22 @@ if BUILD_LINUXKM
     SUBDIRS_OPT += linuxkm
     DIST_SUBDIRS_OPT += linuxkm
 
-    export KERNEL_ROOT KERNEL_ARCH KERNEL_EXTRA_CFLAGS AM_CFLAGS CFLAGS AM_CCASFLAGS CCASFLAGS \
-        src_libwolfssl_la_OBJECTS ENABLED_CRYPT_TESTS ENABLED_ASM CFLAGS_FPU_DISABLE \
-        CFLAGS_FPU_ENABLE CFLAGS_SIMD_DISABLE CFLAGS_SIMD_ENABLE \
+    export KERNEL_ROOT KERNEL_ARCH KERNEL_EXTRA_CFLAGS AM_CPPFLAGS CPPFLAGS \
+        AM_CFLAGS CFLAGS AM_CCASFLAGS CCASFLAGS \
+        src_libwolfssl_la_OBJECTS ENABLED_CRYPT_TESTS ENABLED_LINUXKM_PIE ENABLED_ASM \
+        CFLAGS_FPU_DISABLE CFLAGS_FPU_ENABLE CFLAGS_SIMD_DISABLE CFLAGS_SIMD_ENABLE \
         CFLAGS_AUTO_VECTORIZE_DISABLE CFLAGS_AUTO_VECTORIZE_ENABLE \
         ASFLAGS_FPU_DISABLE_SIMD_ENABLE ASFLAGS_FPU_ENABLE_SIMD_DISABLE \
         ASFLAGS_FPUSIMD_DISABLE ASFLAGS_FPUSIMD_ENABLE
 
 module:
-	+make -C linuxkm libwolfssl.ko
+	+$(MAKE) -C linuxkm libwolfssl.ko
 
 clean_module:
-	+make -C linuxkm clean
+	+$(MAKE) -C linuxkm clean
 
 install_module modules_install:
-	+make -C linuxkm modules_install
+	+$(MAKE) -C linuxkm modules_install
 
 endif
 
@@ -237,6 +238,12 @@ scripts/unit.log: testsuite/testsuite.log
 
 DISTCLEANFILES+= cyassl-config
 DISTCLEANFILES+= wolfssl-config
+
+MAINTAINERCLEANFILES+= wolfssl/wolfcrypt/async.h
+MAINTAINERCLEANFILES+= wolfssl/wolfcrypt/fips.h
+MAINTAINERCLEANFILES+= wolfssl/wolfcrypt/port/cavium/cavium_nitrox.h
+MAINTAINERCLEANFILES+= wolfssl/wolfcrypt/port/intel/quickassist.h
+MAINTAINERCLEANFILES+= wolfssl/wolfcrypt/port/intel/quickassist_mem.h
 
 SUBDIRS=$(SUBDIRS_OPT)
 DIST_SUBDIRS=$(DIST_SUBDIRS_OPT)

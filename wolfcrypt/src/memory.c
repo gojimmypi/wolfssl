@@ -137,6 +137,13 @@ void* wolfSSL_Malloc(size_t size)
     }
     else {
     #ifndef WOLFSSL_NO_MALLOC
+        #ifdef WOLFSSL_TRAP_MALLOC_SZ
+        if (size > WOLFSSL_TRAP_MALLOC_SZ) {
+            WOLFSSL_MSG("Malloc too big!");
+            return NULL;
+        }
+        #endif
+
         res = malloc(size);
     #else
         WOLFSSL_MSG("No malloc available");
@@ -145,7 +152,7 @@ void* wolfSSL_Malloc(size_t size)
 
 #ifdef WOLFSSL_DEBUG_MEMORY
 #if defined(WOLFSSL_DEBUG_MEMORY_PRINT) && !defined(WOLFSSL_TRACK_MEMORY)
-    printf("Alloc: %p -> %u at %s:%d\n", res, (word32)size, func, line);
+    fprintf(stderr, "Alloc: %p -> %u at %s:%u\n", res, (word32)size, func, line);
 #else
     (void)func;
     (void)line;
@@ -159,7 +166,7 @@ void* wolfSSL_Malloc(size_t size)
 
 #ifdef WOLFSSL_FORCE_MALLOC_FAIL_TEST
     if (res && --gMemFailCount == 0) {
-        printf("\n---FORCED MEM FAIL TEST---\n");
+        fprintf(stderr, "\n---FORCED MEM FAIL TEST---\n");
         if (free_function) {
         #ifdef WOLFSSL_DEBUG_MEMORY
             free_function(res, func, line);
@@ -186,7 +193,7 @@ void wolfSSL_Free(void *ptr)
 {
 #ifdef WOLFSSL_DEBUG_MEMORY
 #if defined(WOLFSSL_DEBUG_MEMORY_PRINT) && !defined(WOLFSSL_TRACK_MEMORY)
-    printf("Free: %p at %s:%d\n", ptr, func, line);
+    fprintf(stderr, "Free: %p at %s:%u\n", ptr, func, line);
 #else
     (void)func;
     (void)line;
@@ -392,14 +399,14 @@ int wolfSSL_load_static_memory(byte* buffer, word32 sz, int flag,
     }
 
     /* align pt */
-    while ((wolfssl_word)pt % WOLFSSL_STATIC_ALIGN && pt < (buffer + sz)) {
+    while ((wc_ptr_t)pt % WOLFSSL_STATIC_ALIGN && pt < (buffer + sz)) {
         *pt = 0x00;
         pt++;
         ava--;
     }
 
 #ifdef WOLFSSL_DEBUG_MEMORY
-    printf("Allocated %d bytes for static memory @ %p\n", ava, pt);
+    fprintf(stderr, "Allocated %d bytes for static memory @ %p\n", ava, pt);
 #endif
 
     /* divide into chunks of memory and add them to available list */
@@ -475,7 +482,7 @@ int wolfSSL_StaticBufferSz(byte* buffer, word32 sz, int flag)
     }
 
     /* align pt */
-    while ((wolfssl_word)pt % WOLFSSL_STATIC_ALIGN && pt < (buffer + sz)) {
+    while ((wc_ptr_t)pt % WOLFSSL_STATIC_ALIGN && pt < (buffer + sz)) {
         pt++;
         ava--;
     }
@@ -607,11 +614,11 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
             /* allow using malloc for creating ctx and method */
             if (type == DYNAMIC_TYPE_CTX || type == DYNAMIC_TYPE_METHOD ||
                                             type == DYNAMIC_TYPE_CERT_MANAGER) {
-                WOLFSSL_MSG("ERROR allowing null heap hint for ctx/method\n");
+                WOLFSSL_MSG("ERROR allowing null heap hint for ctx/method");
                 res = malloc(size);
             }
             else {
-                WOLFSSL_MSG("ERROR null heap hint passed into XMALLOC\n");
+                WOLFSSL_MSG("ERROR null heap hint passed into XMALLOC");
                 res = NULL;
             }
         #else
@@ -621,10 +628,14 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
             #else
                 res = malloc(size);
             #endif
+
+            #ifdef WOLFSSL_DEBUG_MEMORY
+                fprintf(stderr, "Alloc: %p -> %u at %s:%d\n", res, (word32)size, func, line);
+            #endif
         #else
             WOLFSSL_MSG("No heap hint found to use and no malloc");
             #ifdef WOLFSSL_DEBUG_MEMORY
-            printf("ERROR: at %s:%d\n", func, line);
+            fprintf(stderr, "ERROR: at %s:%d\n", func, line);
             #endif
         #endif /* WOLFSSL_NO_MALLOC */
         #endif /* WOLFSSL_HEAP_TEST */
@@ -663,7 +674,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
             /* general static memory */
             if (pt == NULL) {
                 for (i = 0; i < WOLFMEM_MAX_BUCKETS; i++) {
-                    if ((word32)size < mem->sizeList[i]) {
+                    if ((word32)size <= mem->sizeList[i]) {
                         if (mem->ava[i] != NULL) {
                             pt = mem->ava[i];
                             mem->ava[i] = pt->next;
@@ -671,7 +682,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
                         }
                     #ifdef WOLFSSL_DEBUG_STATIC_MEMORY
                         else {
-                            printf("Size: %ld, Empty: %d\n", size,
+                            fprintf(stderr, "Size: %ld, Empty: %d\n", size,
                                                               mem->sizeList[i]);
                         }
                     #endif
@@ -686,7 +697,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
             res = pt->buffer;
 
         #ifdef WOLFSSL_DEBUG_MEMORY
-            printf("Alloc: %p -> %u at %s:%d\n", pt->buffer, pt->sz, func, line);
+            fprintf(stderr, "Alloc: %p -> %u at %s:%d\n", pt->buffer, pt->sz, func, line);
         #endif
 
             /* keep track of connection statistics if flag is set */
@@ -708,7 +719,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
         else {
             WOLFSSL_MSG("ERROR ran out of static memory");
             #ifdef WOLFSSL_DEBUG_MEMORY
-            printf("Looking for %lu bytes at %s:%d\n", size, func, line);
+            fprintf(stderr, "Looking for %lu bytes at %s:%d\n", size, func, line);
             #endif
         }
 
@@ -716,7 +727,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
     }
 
     #ifdef WOLFSSL_MALLOC_CHECK
-        if ((wolfssl_word)res % WOLFSSL_STATIC_ALIGN) {
+        if ((wc_ptr_t)res % WOLFSSL_STATIC_ALIGN) {
             WOLFSSL_MSG("ERROR memory is not aligned");
             res = NULL;
         }
@@ -744,6 +755,9 @@ void wolfSSL_Free(void *ptr, void* heap, int type)
         /* check for testing heap hint was set */
     #ifdef WOLFSSL_HEAP_TEST
         if (heap == (void*)WOLFSSL_HEAP_TEST) {
+        #ifdef WOLFSSL_DEBUG_MEMORY
+            fprintf(stderr, "Free: %p at %s:%d\n", pt, func, line);
+        #endif
             return free(ptr);
         }
     #endif
@@ -753,10 +767,10 @@ void wolfSSL_Free(void *ptr, void* heap, int type)
             /* allow using malloc for creating ctx and method */
             if (type == DYNAMIC_TYPE_CTX || type == DYNAMIC_TYPE_METHOD ||
                                             type == DYNAMIC_TYPE_CERT_MANAGER) {
-                WOLFSSL_MSG("ERROR allowing null heap hint for ctx/method\n");
+                WOLFSSL_MSG("ERROR allowing null heap hint for ctx/method");
             }
             else {
-                WOLFSSL_MSG("ERROR null heap hint passed into XFREE\n");
+                WOLFSSL_MSG("ERROR null heap hint passed into XFREE");
             }
         #endif
         #ifndef WOLFSSL_NO_MALLOC
@@ -807,7 +821,7 @@ void wolfSSL_Free(void *ptr, void* heap, int type)
             mem->frAlc += 1;
 
         #ifdef WOLFSSL_DEBUG_MEMORY
-            printf("Free: %p -> %u at %s:%d\n", pt->buffer, pt->sz, func, line);
+            fprintf(stderr, "Free: %p -> %u at %s:%d\n", pt->buffer, pt->sz, func, line);
         #endif
 
             /* keep track of connection statistics if flag is set */
@@ -857,7 +871,7 @@ void* wolfSSL_Realloc(void *ptr, size_t size, void* heap, int type)
 
     if (heap == NULL) {
         #ifdef WOLFSSL_HEAP_TEST
-            WOLFSSL_MSG("ERROR null heap hint passed in to XREALLOC\n");
+            WOLFSSL_MSG("ERROR null heap hint passed in to XREALLOC");
         #endif
         #ifndef WOLFSSL_NO_MALLOC
             res = realloc(ptr, size);
@@ -898,7 +912,7 @@ void* wolfSSL_Realloc(void *ptr, size_t size, void* heap, int type)
         else {
         /* general memory */
             for (i = 0; i < WOLFMEM_MAX_BUCKETS; i++) {
-                if ((word32)size < mem->sizeList[i]) {
+                if ((word32)size <= mem->sizeList[i]) {
                     if (mem->ava[i] != NULL) {
                         pt = mem->ava[i];
                         mem->ava[i] = pt->next;
@@ -935,7 +949,7 @@ void* wolfSSL_Realloc(void *ptr, size_t size, void* heap, int type)
     }
 
     #ifdef WOLFSSL_MALLOC_CHECK
-        if ((wolfssl_word)res % WOLFSSL_STATIC_ALIGN) {
+        if ((wc_ptr_t)res % WOLFSSL_STATIC_ALIGN) {
             WOLFSSL_MSG("ERROR memory is not aligned");
             res = NULL;
         }
@@ -1113,7 +1127,7 @@ void __attribute__((no_instrument_function))
      __cyg_profile_func_enter(void *func,  void *caller)
 {
     register void* sp asm("sp");
-    fprintf(stderr, "ENTER: %016lx %p\n", (unsigned long)(size_t)func, sp);
+    fprintf(stderr, "ENTER: %016lx %p\n", (unsigned long)(wc_ptr_t)func, sp);
     (void)caller;
 }
 
@@ -1121,8 +1135,11 @@ void __attribute__((no_instrument_function))
      __cyg_profile_func_exit(void *func, void *caller)
 {
     register void* sp asm("sp");
-    fprintf(stderr, "EXIT: %016lx %p\n", (unsigned long)(size_t)func, sp);
+    fprintf(stderr, "EXIT: %016lx %p\n", (unsigned long)(wc_ptr_t)func, sp);
     (void)caller;
 }
 #endif
 
+#ifdef WOLFSSL_LINUXKM
+    #include "../../linuxkm/linuxkm_memory.c"
+#endif

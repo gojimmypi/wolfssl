@@ -391,7 +391,7 @@ static int sakke_mulmod_base_add(SakkeKey* key, const mp_int* n, ecc_point* a,
     mp_digit mp = 0;
     SakkeKeyParams* params = &key->params;
 
-    /* Scalar multiply base by n - leaves ordinates in Montogmert form. */
+    /* Scalar multiply base by n - leaves ordinates in Montgomery form. */
     err = wc_ecc_mulmod(n, params->base, res, &params->a, &params->prime, 0);
     if (err == 0) {
         err = mp_montgomery_setup(&params->prime, &mp);
@@ -791,7 +791,7 @@ static int sakke_z_from_mont(SakkeKey* key)
  * Encode a point into a buffer.
  *
  * X and y ordinate of point concatenated. Each number is zero padded tosize.
- * Descriptor byte (0x04) is prepeneded when not raw.
+ * Descriptor byte (0x04) is prepended when not raw.
  *
  * @param  [in]      point    ECC point to encode.
  * @param  [in]      size     Size of prime in bytes - maximum ordinate length.
@@ -862,7 +862,7 @@ static int sakke_decode_point(ecc_point* point, word32 size, const byte* data,
 {
     int err = 0;
 
-    if ((err == 0) && (sz != size * 2) && (sz != size * 2 + 1)) {
+    if ((sz != size * 2) && (sz != size * 2 + 1)) {
         err = BUFFER_E;
     }
 
@@ -897,7 +897,7 @@ static int sakke_decode_point(ecc_point* point, word32 size, const byte* data,
  *
  * X and y ordinate of public key concatenated. Each number is zero padded to
  * key size.
- * Descriptor byte (0x04) is prepeneded when not raw.
+ * Descriptor byte (0x04) is prepended when not raw.
  *
  * @param  [in]      key      SAKKE key.
  * @param  [out]     data     Buffer to hold encoded data.
@@ -994,7 +994,7 @@ int wc_MakeSakkeRsk(SakkeKey* key, const byte* id, word16 idSz, ecc_point* rsk)
  *
  * X and y ordinate of RSK point concatenated. Each number is zero padded to
  * key size.
- * Descriptor byte (0x04) is prepeneded when not raw.
+ * Descriptor byte (0x04) is prepended when not raw.
  *
  * @param  [in]      key   SAKKE key.
  * @param  [in]      rsk   ECC point that is the Receiver Secret Key (RSK).
@@ -1208,7 +1208,7 @@ static int sakke_point_to_mont(ecc_point* p, mp_int* prime, mp_int* mu, int set)
     int err = 0;
 
     if (!set) {
-        /* Calculate multiplier that converts to Montgmery form. */
+        /* Calculate multiplier that converts to Montgomery form. */
         err = mp_montgomery_calc_normalization(mu, prime);
     }
     if (err == 0) {
@@ -1301,11 +1301,13 @@ int wc_GenerateSakkeRskTable(const SakkeKey* key, const ecc_point* rsk,
         err = BAD_FUNC_ARG;
     }
     if (err == 0) {
+        SAVE_VECTOR_REGISTERS(return _svr_ret;);
 #ifdef WOLFSSL_SP_1024
         err = sp_Pairing_gen_precomp_1024(rsk, table, len);
 #else
         err = NOT_COMPILED_IN;
 #endif
+        RESTORE_VECTOR_REGISTERS();
     }
 
     return err;
@@ -2250,7 +2252,7 @@ static int sakke_pairing(SakkeKey* key, ecc_point* p, ecc_point* q, mp_int* r,
  * @param  [in]  key    SAKKE key.
  * @param  [in]  rsk    Receiver Secret Key (RSK) as an ECC point.
  * @param  [in]  table  Pre-computation table. May be NULL.
- * @param  [in]  len    Size of pre-compuration table in bytes.
+ * @param  [in]  len    Size of pre-computation table in bytes.
  * @return  0 on success.
  * @return BAD_FUNC_ARG when key or rsk is NULL.
  * @return  MEMORY_E when dynamic memory allocation fails.
@@ -2343,6 +2345,8 @@ int wc_ValidateSakkeRsk(SakkeKey* key, const byte* id, word16 idSz,
         err = BAD_FUNC_ARG;
     }
 
+    SAVE_VECTOR_REGISTERS(return _svr_ret;);
+
     /* Load elliptic curve parameters */
     if (err == 0) {
         err = sakke_load_params(key);
@@ -2377,6 +2381,8 @@ int wc_ValidateSakkeRsk(SakkeKey* key, const byte* id, word16 idSz,
     if (valid != NULL) {
         *valid = ((err == 0) && (mp_cmp(a, &key->params.g) == MP_EQ));
     }
+
+    RESTORE_VECTOR_REGISTERS();
 
     return err;
 }
@@ -2522,9 +2528,8 @@ static int sakke_modexp_loop(SakkeKey* key, mp_int* b, mp_int* e, mp_proj* r,
     /* Set c[0] to [mont_one, zero] */
     if (err == 0) {
         mp_zero(c[0]->y);
-    }
-    /* Set by is montgomery form of b - base */
-    if (err == 0) {
+
+        /* Set 'by' to montgomery form of 'b' - base */
         err = mp_mulmod(b, c[0]->x, prime, by);
     }
     for (i = mp_count_bits(&key->params.q) - 1; (err == 0) && (i >= 0); i--) {
@@ -2536,11 +2541,11 @@ static int sakke_modexp_loop(SakkeKey* key, mp_int* b, mp_int* e, mp_proj* r,
 #else
             err = sakke_proj_mul_qx1(c[0], by, prime, mp, c[2], t1, t2);
             mp_copy(c[2]->x,
-            (mp_int*) ( ((wolfssl_word)c[0]->x & wc_off_on_addr[j]) +
-                        ((wolfssl_word)c[1]->x & wc_off_on_addr[j^1]) ) );
+            (mp_int*) ( ((wc_ptr_t)c[0]->x & wc_off_on_addr[j]) +
+                        ((wc_ptr_t)c[1]->x & wc_off_on_addr[j^1]) ) );
             mp_copy(c[2]->y,
-            (mp_int*) ( ((wolfssl_word)c[0]->y & wc_off_on_addr[j]) +
-                        ((wolfssl_word)c[1]->y & wc_off_on_addr[j^1]) ) );
+            (mp_int*) ( ((wc_ptr_t)c[0]->y & wc_off_on_addr[j]) +
+                        ((wc_ptr_t)c[1]->y & wc_off_on_addr[j^1]) ) );
 #endif
         }
     }
@@ -6083,10 +6088,12 @@ static int sakke_calc_a(SakkeKey* key, enum wc_HashType hashType,
         const byte* data, word32 sz, const byte* extra, word32 extraSz, byte* a)
 {
     int err;
+    int hash_inited = 0;
 
     /* Step 1: A = hashfn( s ), where s = data | extra */
     err = wc_HashInit_ex(&key->hash, hashType, key->heap, INVALID_DEVID);
     if (err == 0) {
+        hash_inited = 1;
         err = wc_HashUpdate(&key->hash, hashType, data, sz);
     }
     if ((err == 0) && (extra != NULL)) {
@@ -6094,6 +6101,10 @@ static int sakke_calc_a(SakkeKey* key, enum wc_HashType hashType,
     }
     if (err == 0) {
         err = wc_HashFinal(&key->hash, hashType, a);
+    }
+
+    if (hash_inited) {
+        (void)wc_HashFree(&key->hash, hashType);
     }
 
     return err;
@@ -6120,15 +6131,21 @@ static int sakke_hash_to_range(SakkeKey* key, enum wc_HashType hashType,
     int err = 0;
     byte h[WC_MAX_DIGEST_SIZE];
     byte v[WC_MAX_DIGEST_SIZE];
-    word32 hashSz = 0;
+    word32 hashSz = 1;
     word32 i;
+    int hash_inited = 0;
+
+    err = wc_HashInit_ex(&key->hash, hashType, key->heap, INVALID_DEVID);
+    if (err == 0)
+        hash_inited = 1;
 
     /* Step 1: A = hashfn( s ), where s = data | extra
      * See sakke_calc_a (need function parameters to be 7 or less)
      */
 
     /* Step 2: h_0 = 00...00, a string of null bits of length hashlen bits */
-    err = wc_HashGetDigestSize(hashType);
+    if (err == 0)
+        err = wc_HashGetDigestSize(hashType);
     if (err > 0) {
         hashSz = (word32)err;
         XMEMSET(h, 0, hashSz);
@@ -6149,6 +6166,10 @@ static int sakke_hash_to_range(SakkeKey* key, enum wc_HashType hashType,
         if (err == 0) {
             sakke_xor_in_v(v, hashSz, out, i, n);
         }
+    }
+
+    if (hash_inited) {
+        (void)wc_HashFree(&key->hash, hashType);
     }
 
     return err;
@@ -6240,6 +6261,8 @@ int wc_MakeSakkePointI(SakkeKey* key, const byte* id, word16 idSz)
         err = BAD_FUNC_ARG;
     }
 
+    SAVE_VECTOR_REGISTERS(return _svr_ret;);
+
     if (err == 0) {
         err = sakke_load_params(key);
     }
@@ -6251,6 +6274,8 @@ int wc_MakeSakkePointI(SakkeKey* key, const byte* id, word16 idSz)
         XMEMCPY(key->i.id, id, idSz);
         key->i.idSz = idSz;
     }
+
+    RESTORE_VECTOR_REGISTERS();
 
     return err;
 }
@@ -6305,7 +6330,7 @@ int wc_GetSakkePointI(SakkeKey* key, byte* data, word32* sz)
 }
 
 /**
- * Set the elliptic curve point I - a partial calucation for point R - and the
+ * Set the elliptic curve point I - a partial calculation for point R - and the
  * identity that it belongs to.
  *
  * RFC 6508, Section 6.2.1, Step 3.\n
@@ -6379,7 +6404,9 @@ int wc_GenerateSakkePointITable(SakkeKey* key, byte* table, word32* len)
 
 #ifdef WOLFSSL_HAVE_SP_ECC
     if (err == 0) {
+        SAVE_VECTOR_REGISTERS(return _svr_ret;);
         err = sp_ecc_gen_table_1024(key->i.i, table, len, key->heap);
+        RESTORE_VECTOR_REGISTERS();
     }
     if (err == 0) {
         key->i.table = table;
@@ -6567,6 +6594,8 @@ int wc_MakeSakkeEncapsulatedSSV(SakkeKey* key, enum wc_HashType hashType,
         err = BAD_STATE_E;
     }
 
+    SAVE_VECTOR_REGISTERS(return _svr_ret;);
+
     /* Load parameters */
     if (err == 0) {
         err = sakke_load_params(key);
@@ -6634,6 +6663,8 @@ int wc_MakeSakkeEncapsulatedSSV(SakkeKey* key, enum wc_HashType hashType,
      */
 
     /* Step 6: Output SSV - already encoded in buffer */
+
+    RESTORE_VECTOR_REGISTERS();
 
     return err;
 }
@@ -6740,6 +6771,8 @@ int wc_DeriveSakkeSSV(SakkeKey* key, enum wc_HashType hashType, byte* ssv,
         err = BAD_STATE_E;
     }
 
+    SAVE_VECTOR_REGISTERS(return _svr_ret;);
+
     /* Load parameters */
     if (err == 0) {
         err = sakke_load_params(key);
@@ -6803,6 +6836,8 @@ int wc_DeriveSakkeSSV(SakkeKey* key, enum wc_HashType hashType, byte* ssv,
     if ((err == 0) && (XMEMCMP(auth, test, 2 * n + 1) != 0)) {
         err = SAKKE_VERIFY_FAIL_E;
     }
+
+    RESTORE_VECTOR_REGISTERS();
 
     return err;
 }

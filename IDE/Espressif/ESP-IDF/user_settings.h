@@ -18,6 +18,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#undef WOLFSSL_ESPIDF
+#define WOLFSSL_ESPIDF
+
+/*
+ * choose ONE of these Espressif chips to define:
+ * 
+ * WOLFSSL_ESPWROOM32
+ * WOLFSSL_ESPWROOM32SE
+ * WOLFSSL_ESP8266
+ * 
+ * comment out the others:
+ */
+
+#define WOLFSSL_ESPWROOM32
+/* #define WOLFSSL_ESPWROOM32SE */
+/* #define WOLFSSL_ESP8266 */
+
 
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
@@ -93,3 +110,6 @@
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH*/
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES */
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+
+/* adjust wait-timeout count if you see timeout in rsa hw acceleration */
+#define ESP_RSA_TIMEOUT_CNT    0x249F00

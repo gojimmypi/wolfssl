@@ -345,6 +345,13 @@ int CheckCertCRL(WOLFSSL_CRL* crl, DecodedCert* cert)
 
     WOLFSSL_ENTER("CheckCertCRL");
 
+#ifdef WOLFSSL_CRL_ALLOW_MISSING_CDP
+    /* Skip CRL verification in case no CDP in peer cert */
+    if (!cert->extCrlInfo) {
+        return ret;
+    }
+#endif
+
     ret = CheckCertCRLList(crl, cert, &foundEntry);
 
 #ifdef HAVE_CRL_IO
@@ -354,7 +361,7 @@ int CheckCertCRL(WOLFSSL_CRL* crl, DecodedCert* cert)
             ret = crl->crlIOCb(crl, (const char*)cert->extCrlInfo,
                                                         cert->extCrlInfoSz);
             if (ret == WOLFSSL_CBIO_ERR_WANT_READ) {
-                ret = WANT_READ;
+                ret = OCSP_WANT_READ;
             }
             else if (ret >= 0) {
                 /* try again */
@@ -372,9 +379,9 @@ int CheckCertCRL(WOLFSSL_CRL* crl, DecodedCert* cert)
     /* Loading <issuer-hash>.rN form CRL file if find at the folder,        */
     /* and try again checking Cert in the CRL list.                         */
     /* When not set the folder or not use hash_dir, do nothing.             */
-    if (foundEntry == 0) {
+    if ((foundEntry == 0) && (ret != OCSP_WANT_READ)) {
         if (crl->cm->x509_store_p != NULL) {
-            ret = LoadCertByIssuer(crl->cm->x509_store_p, 
+            ret = LoadCertByIssuer(crl->cm->x509_store_p,
                           (WOLFSSL_X509_NAME*)cert->issuerName, X509_LU_CRL);
             if (ret == WOLFSSL_SUCCESS) {
                 /* try again */
@@ -385,7 +392,9 @@ int CheckCertCRL(WOLFSSL_CRL* crl, DecodedCert* cert)
 #endif
     if (foundEntry == 0) {
         WOLFSSL_MSG("Couldn't find CRL for status check");
-        ret = CRL_MISSING;
+        if (ret != CRL_CERT_DATE_ERR) {
+            ret = CRL_MISSING;
+        }
 
         if (crl->cm->cbMissingCRL) {
             char url[256];
@@ -488,7 +497,7 @@ int BufferLoadCRL(WOLFSSL_CRL* crl, const byte* buff, long sz, int type,
 #endif
 
     InitDecodedCRL(dcrl, crl->heap);
-    ret = ParseCRL(dcrl, myBuffer, (word32)sz, crl->cm);
+    ret = ParseCRL(dcrl, myBuffer, (word32)sz, verify, crl->cm);
     if (ret != 0 && !(ret == ASN_CRL_NO_SIGNER_E && verify == NO_VERIFY)) {
         WOLFSSL_MSG("ParseCRL error");
     }
@@ -1341,10 +1350,10 @@ int LoadCRL(WOLFSSL_CRL* crl, const char* path, int type, int monitor)
 #else
 int LoadCRL(WOLFSSL_CRL* crl, const char* path, int type, int monitor)
 {
-	(void)crl;
-	(void)path;
-	(void)type;
-	(void)monitor;
+    (void)crl;
+    (void)path;
+    (void)type;
+    (void)monitor;
 
     /* stub for scenario where file system is not supported */
     return NOT_COMPILED_IN;
