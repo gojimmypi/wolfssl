@@ -388,8 +388,9 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
     #else
         ret = wc_InitSha256(sha);
     #endif
-        if (ret != 0)
+        if (ret != 0) {
             break;
+        }
 #endif
         ret = wc_Sha256Update(sha, &ctr, sizeof(ctr));
         if (ret == 0) {
@@ -500,6 +501,9 @@ static WC_INLINE void array_add_one(byte* data, word32 dataSz)
 static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
 {
     int ret = DRBG_FAILURE;
+
+    /* note we don't need to check length of data vs V
+     * as we'll break into chunks */
     byte data[DRBG_SEED_LEN];
     int i;
     int len;
@@ -517,26 +521,42 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
     byte digest[WC_SHA256_DIGEST_SIZE];
 #endif
 
-    /* Special case: outSz is 0 and out is NULL. wc_Generate a block to save for
-     * the continuous test. */
+    /* Special case: outSz is 0 and out is NULL.
+     * wc_Generate a block to save for the continuous test.
+     */
+    if (outSz == 0) {
+        outSz = 1;
+    }
 
-    if (outSz == 0) outSz = 1;
-
+    /* determine how many block of data we'll hash */
     len = (outSz / OUTPUT_BLOCK_LEN) + ((outSz % OUTPUT_BLOCK_LEN) ? 1 : 0);
 
+    /* NOTE: ensure we zeroize data before exiting onve V has been copied */
     XMEMCPY(data, V, sizeof(data));
+
+    /* hash all the blocks */
     for (i = 0; i < len; i++) {
+
+        /* WOLFSSL_SMALL_STACK_CACHE is used mainly for SHA256 with the RNG to
+         * keep the SHA256 struct off the stack and put into the WC_RNG struct.
+         * Prevents the init/free from having to be called over and over.
+         * Re-use the SHA256.
+         */
 #ifndef WOLFSSL_SMALL_STACK_CACHE
     #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
         ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
     #else
         ret = wc_InitSha256(sha);
     #endif
-        if (ret == 0)
+        if (ret != 0) {
+            break;
+        }
 #endif
-            ret = wc_Sha256Update(sha, data, sizeof(data));
-        if (ret == 0)
+        ret = wc_Sha256Update(sha, data, sizeof(data));
+        if (ret == 0) {
             ret = wc_Sha256Final(sha, digest);
+        }
+
 #ifndef WOLFSSL_SMALL_STACK_CACHE
         wc_Sha256Free(sha);
 #endif
@@ -627,7 +647,8 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
 
     if (drbg->reseedCtr == RESEED_INTERVAL) {
         return DRBG_NEED_RESEED;
-    } else {
+    }
+    else {
     #ifdef WC_ASYNC_ENABLE_SHA256
         WC_DECLARE_VAR(digest, byte, WC_SHA256_DIGEST_SIZE, drbg->heap);
         if (digest == NULL)
@@ -641,6 +662,8 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
         ret = Hash_gen(drbg, out, outSz, drbg->V);
         if (ret == DRBG_SUCCESS) {
 #ifndef WOLFSSL_SMALL_STACK_CACHE
+            /* TODO: do we really only want to
+             * call wc_InitSha256 when WOLFSSL_SMALL_STACK_CACHE ?*/
         #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
             ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
         #else
@@ -720,6 +743,7 @@ static int Hash_DRBG_Instantiate(DRBG_internal* drbg, const byte* seed, word32 s
 }
 
 /* Returns: DRBG_SUCCESS or DRBG_FAILURE */
+/* this must be safe to call even if Hash_DRBG_Instantiate fails*/
 static int Hash_DRBG_Uninstantiate(DRBG_internal* drbg)
 {
     word32 i;
@@ -775,10 +799,12 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
     (void)nonce;
     (void)nonceSz;
 
-    if (rng == NULL)
+    if (rng == NULL) {
         return BAD_FUNC_ARG;
-    if (nonce == NULL && nonceSz != 0)
+    }
+    if (nonce == NULL && nonceSz != 0) {
         return BAD_FUNC_ARG;
+    }
 
 #ifdef WOLFSSL_HEAP_TEST
     rng->heap = (void*)WOLFSSL_HEAP_TEST;
@@ -796,7 +822,7 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
 #endif
 
 #ifdef HAVE_HASHDRBG
-    /* init the DBRG to known values */
+    /* init the DRBG to known values */
     rng->drbg = NULL;
     rng->status = DRBG_NOT_INIT;
 #endif
@@ -825,8 +851,9 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
     ret = 0; /* success */
 #else
 #ifdef HAVE_HASHDRBG
-    if (nonceSz == 0)
+    if (nonceSz == 0) {
         seedSz = MAX_SEED_SZ;
+    }
 
     if (wc_RNG_HealthTestLocal(0) == 0) {
     #ifdef WC_ASYNC_ENABLE_SHA256
