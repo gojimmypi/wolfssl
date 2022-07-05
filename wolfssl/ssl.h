@@ -865,6 +865,13 @@ WOLFSSL_API WOLFSSL_METHOD *wolfSSLv23_client_method_ex(void* heap);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_method_ex(void* heap);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_client_method_ex(void* heap);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_server_method_ex(void* heap);
+
+#ifdef WOLFSSL_DTLS13
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_client_method_ex(void* heap);
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_server_method_ex(void* heap);
+    WOLFSSL_API int wolfSSL_dtls13_has_pending_msg(WOLFSSL *ssl);
+#endif
+
 #endif
 
 /* CTX Method Constructor Functions */
@@ -899,6 +906,12 @@ WOLFSSL_ABI WOLFSSL_API WOLFSSL_METHOD *wolfTLSv1_2_client_method(void);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_method(void);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_client_method(void);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_2_server_method(void);
+
+#ifdef WOLFSSL_DTLS13
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_client_method(void);
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_server_method(void);
+#endif
+
 #endif
 
 #ifdef HAVE_POLY1305
@@ -1032,6 +1045,9 @@ WOLFSSL_API int wolfSSL_CTX_set1_param(WOLFSSL_CTX* ctx, WOLFSSL_X509_VERIFY_PAR
 WOLFSSL_API int  wolfSSL_is_server(WOLFSSL* ssl);
 WOLFSSL_API WOLFSSL* wolfSSL_write_dup(WOLFSSL* ssl);
 WOLFSSL_ABI WOLFSSL_API int  wolfSSL_set_fd(WOLFSSL* ssl, int fd);
+#ifdef WOLFSSL_DTLS
+WOLFSSL_API int wolfSSL_set_dtls_fd_connected(WOLFSSL* ssl, int fd);
+#endif
 WOLFSSL_API int  wolfSSL_set_write_fd (WOLFSSL* ssl, int fd);
 WOLFSSL_API int  wolfSSL_set_read_fd (WOLFSSL* ssl, int fd);
 WOLFSSL_API char* wolfSSL_get_cipher_list(int priority);
@@ -1298,6 +1314,8 @@ WOLFSSL_API int  wolfSSL_dtls_get_using_nonblock(WOLFSSL* ssl);
 #define wolfSSL_get_using_nonblock wolfSSL_dtls_get_using_nonblock
     /* The old names are deprecated. */
 WOLFSSL_API int  wolfSSL_dtls_get_current_timeout(WOLFSSL* ssl);
+WOLFSSL_API int wolfSSL_dtls13_use_quick_timeout(WOLFSSL* ssl);
+WOLFSSL_API void wolfSSL_dtls13_set_send_more_acks(WOLFSSL* ssl, int value);
 WOLFSSL_API int  wolfSSL_DTLSv1_get_timeout(WOLFSSL* ssl,
         WOLFSSL_TIMEVAL* timeleft);
 WOLFSSL_API void wolfSSL_DTLSv1_set_initial_timeout_duration(WOLFSSL* ssl,
@@ -2995,6 +3013,7 @@ enum {
     WOLFSSL_TLSV1_3  = 4,
     WOLFSSL_DTLSV1   = 5,
     WOLFSSL_DTLSV1_2 = 6,
+    WOLFSSL_DTLSV1_3 = 7,
 
     WOLFSSL_USER_CA  = 1,          /* user added as trusted */
     WOLFSSL_CHAIN_CA = 2           /* added to cache from trusted chain */
@@ -3923,6 +3942,13 @@ WOLFSSL_API int wolfSSL_CTX_DisableExtendedMasterSecret(WOLFSSL_CTX* ctx);
 #define WOLFSSL_CRL_MONITOR   0x01   /* monitor this dir flag */
 #define WOLFSSL_CRL_START_MON 0x02   /* start monitoring flag */
 
+
+#if defined(WOLFSSL_DTLS) && !defined(NO_WOLFSSL_SERVER)
+/* notify user we parsed a verified ClientHello is done. This only has an effect
+ * on the server end. */
+typedef int (*ClientHelloGoodCb)(WOLFSSL* ssl, void*);
+WOLFSSL_API int wolfDTLS_SetChGoodCb(WOLFSSL* ssl, ClientHelloGoodCb cb, void* user_ctx);
+#endif
 
 /* notify user the handshake is done */
 typedef int (*HandShakeDoneCb)(WOLFSSL* ssl, void*);

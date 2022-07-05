@@ -381,23 +381,73 @@ int EmbedReceiveFrom(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     int recvd;
     int sd = dtlsCtx->rfd;
     int dtls_timeout = wolfSSL_dtls_get_current_timeout(ssl);
-    SOCKADDR_S peer;
-    XSOCKLENT peerSz = sizeof(peer);
+    byte doDtlsTimeout;
+    SOCKADDR_S lclPeer;
+    SOCKADDR_S* peer;
+    XSOCKLENT peerSz;
 
     WOLFSSL_ENTER("EmbedReceiveFrom()");
 
+    if (dtlsCtx->connected) {
+        peer = NULL;
+    }
+    else if (dtlsCtx->userSet) {
+        peer = &lclPeer;
+        XMEMSET(&lclPeer, 0, sizeof(lclPeer));
+        peerSz = sizeof(lclPeer);
+    }
+    else {
+        /* Store the peer address. It is used to calculate the DTLS cookie. */
+        if (dtlsCtx->peer.sa == NULL) {
+            dtlsCtx->peer.sa = (void*)XMALLOC(sizeof(SOCKADDR_S),
+                    ssl->heap, DYNAMIC_TYPE_SOCKADDR);
+            dtlsCtx->peer.sz = 0;
+            if (dtlsCtx->peer.sa != NULL)
+                dtlsCtx->peer.bufSz = sizeof(SOCKADDR_S);
+            else
+                dtlsCtx->peer.bufSz = 0;
+        }
+        peer = (SOCKADDR_S*)dtlsCtx->peer.sa;
+        peerSz = dtlsCtx->peer.bufSz;
+    }
+
     /* Don't use ssl->options.handShakeDone since it is true even if
      * we are in the process of renegotiation */
-    if (ssl->options.handShakeState == HANDSHAKE_DONE)
+    doDtlsTimeout = ssl->options.handShakeState != HANDSHAKE_DONE;
+
+#ifdef WOLFSSL_DTLS13
+    if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)) {
+        doDtlsTimeout =
+            doDtlsTimeout || ssl->dtls13Rtx.rtxRecords != NULL ||
+            (ssl->dtls13FastTimeout && ssl->dtls13Rtx.seenRecords != NULL);
+    }
+#endif /* WOLFSSL_DTLS13 */
+
+    if (!doDtlsTimeout)
         dtls_timeout = 0;
 
     if (!wolfSSL_get_using_nonblock(ssl)) {
         #ifdef USE_WINDOWS_API
             DWORD timeout = dtls_timeout * 1000;
+            #ifdef WOLFSSL_DTLS13
+            if (wolfSSL_dtls13_use_quick_timeout(ssl) &&
+                IsAtLeastTLSv1_3(ssl->version))
+                timeout /= 4;
+            #endif /* WOLFSSL_DTLS13 */
         #else
             struct timeval timeout;
             XMEMSET(&timeout, 0, sizeof(timeout));
-            timeout.tv_sec = dtls_timeout;
+            #ifdef WOLFSSL_DTLS13
+            if (wolfSSL_dtls13_use_quick_timeout(ssl) &&
+                IsAtLeastTLSv1_3(ssl->version)) {
+                if (dtls_timeout >= 4)
+                    timeout.tv_sec = dtls_timeout / 4;
+                else
+                    timeout.tv_usec = dtls_timeout * 1000000 / 4;
+            }
+            else
+            #endif /* WOLFSSL_DTLS13 */
+                timeout.tv_sec = dtls_timeout;
         #endif
         if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,
                        sizeof(timeout)) != 0) {
@@ -417,10 +467,8 @@ int EmbedReceiveFrom(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     }
 #endif /* !NO_ASN_TIME */
 
-    XMEMSET(&peer, 0, sizeof(peer));
-
     recvd = (int)DTLS_RECVFROM_FUNCTION(sd, buf, sz, ssl->rflags,
-                                  (SOCKADDR*)&peer, &peerSz);
+                      (SOCKADDR*)peer, peer != NULL ? &peerSz : NULL);
 
     recvd = TranslateReturnCode(recvd, sd);
 
@@ -433,14 +481,22 @@ int EmbedReceiveFrom(WOLFSSL *ssl, char *buf, int sz, void *ctx)
         }
         return recvd;
     }
-    else {
+    else if (dtlsCtx->connected) {
+        /* Nothing to do */
+    }
+    else if (dtlsCtx->userSet) {
+        /* Check we received the packet from the correct peer */
         if (dtlsCtx->peer.sz > 0 &&
             (peerSz != (XSOCKLENT)dtlsCtx->peer.sz ||
-                !sockAddrEqual(&peer, peerSz, (SOCKADDR_S*)dtlsCtx->peer.sa,
+                !sockAddrEqual(peer, peerSz, (SOCKADDR_S*)dtlsCtx->peer.sa,
                     dtlsCtx->peer.sz))) {
             WOLFSSL_MSG("    Ignored packet from invalid peer");
             return WOLFSSL_CBIO_ERR_WANT_READ;
         }
+    }
+    else {
+        /* Store size of saved address */
+        dtlsCtx->peer.sz = peerSz;
     }
 #ifndef NO_ASN_TIME
     ssl->dtls_start_timeout = 0;
@@ -462,8 +518,8 @@ int EmbedSendTo(WOLFSSL* ssl, char *buf, int sz, void *ctx)
     WOLFSSL_ENTER("EmbedSendTo()");
 
     sent = (int)DTLS_SENDTO_FUNCTION(sd, buf, sz, ssl->wflags,
-                                (const SOCKADDR*)dtlsCtx->peer.sa,
-                                dtlsCtx->peer.sz);
+                !dtlsCtx->connected ? (const SOCKADDR*)dtlsCtx->peer.sa : NULL,
+                !dtlsCtx->connected ? dtlsCtx->peer.sz                  : 0);
 
     sent = TranslateReturnCode(sent, sd);
 
@@ -2102,20 +2158,39 @@ int MicriumReceive(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     NET_SOCK_RTN_CODE ret;
     NET_ERR err;
 
-#ifdef WOLFSSL_DTLS
+    #ifdef WOLFSSL_DTLS
     {
         int dtls_timeout = wolfSSL_dtls_get_current_timeout(ssl);
-        if (wolfSSL_dtls(ssl)
-                     && !wolfSSL_dtls_get_using_nonblock(ssl)
-                     && dtls_timeout != 0) {
+        /* Don't use ssl->options.handShakeDone since it is true even if
+         * we are in the process of renegotiation */
+        byte doDtlsTimeout = ssl->options.handShakeState != HANDSHAKE_DONE;
+        #ifdef WOLFSSL_DTLS13
+        if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)) {
+            doDtlsTimeout =
+                doDtlsTimeout || ssl->dtls13Rtx.rtxRecords != NULL ||
+                (ssl->dtls13FastTimeout && ssl->dtls13Rtx.seenRecords != NULL);
+        }
+        #endif /* WOLFSSL_DTLS13 */
+
+        if (!doDtlsTimeout)
+            dtls_timeout = 0;
+
+        if (!wolfSSL_dtls_get_using_nonblock(ssl)) {
             /* needs timeout in milliseconds */
-            NetSock_CfgTimeoutRxQ_Set(sd, dtls_timeout * 1000, &err);
+            #ifdef WOLFSSL_DTLS13
+            if (wolfSSL_dtls13_use_quick_timeout(ssl) &&
+                IsAtLeastTLSv1_3(ssl->version)) {
+                dtls_timeout = (1000 * dtls_timeout) / 4;
+            } else
+            #endif /* WOLFSSL_DTLS13 */
+                dtls_timeout = 1000 * dtls_timeout;
+            NetSock_CfgTimeoutRxQ_Set(sd, dtls_timeout, &err);
             if (err != NET_SOCK_ERR_NONE) {
                 WOLFSSL_MSG("NetSock_CfgTimeoutRxQ_Set failed");
             }
         }
     }
-#endif
+    #endif
 
     ret = NetSock_RxData(sd, buf, sz, ssl->rflags, &err);
     if (ret < 0) {
@@ -2156,20 +2231,43 @@ int MicriumReceiveFrom(WOLFSSL *ssl, char *buf, int sz, void *ctx)
     NET_SOCK_ADDR_LEN peerSz = sizeof(peer);
     NET_SOCK_RTN_CODE ret;
     NET_ERR err;
-    int dtls_timeout = wolfSSL_dtls_get_current_timeout(ssl);
 
     WOLFSSL_ENTER("MicriumReceiveFrom()");
 
-    if (ssl->options.handShakeDone)
-        dtls_timeout = 0;
+#ifdef WOLFSSL_DTLS
+    {
+        int dtls_timeout = wolfSSL_dtls_get_current_timeout(ssl);
+        /* Don't use ssl->options.handShakeDone since it is true even if
+         * we are in the process of renegotiation */
+        byte doDtlsTimeout = ssl->options.handShakeState != HANDSHAKE_DONE;
 
-    if (!wolfSSL_dtls_get_using_nonblock(ssl)) {
-        /* needs timeout in milliseconds */
-        NetSock_CfgTimeoutRxQ_Set(sd, dtls_timeout * 1000, &err);
-        if (err != NET_SOCK_ERR_NONE) {
-            WOLFSSL_MSG("NetSock_CfgTimeoutRxQ_Set failed");
+        #ifdef WOLFSSL_DTLS13
+        if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)) {
+            doDtlsTimeout =
+                doDtlsTimeout || ssl->dtls13Rtx.rtxRecords != NULL ||
+                (ssl->dtls13FastTimeout && ssl->dtls13Rtx.seenRecords != NULL);
+        }
+        #endif /* WOLFSSL_DTLS13 */
+
+        if (!doDtlsTimeout)
+            dtls_timeout = 0;
+
+        if (!wolfSSL_dtls_get_using_nonblock(ssl)) {
+            /* needs timeout in milliseconds */
+            #ifdef WOLFSSL_DTLS13
+            if (wolfSSL_dtls13_use_quick_timeout(ssl) &&
+                IsAtLeastTLSv1_3(ssl->version)) {
+                dtls_timeout = (1000 * dtls_timeout) / 4;
+            } else
+            #endif /* WOLFSSL_DTLS13 */
+                dtls_timeout = 1000 * dtls_timeout;
+            NetSock_CfgTimeoutRxQ_Set(sd, dtls_timeout, &err);
+            if (err != NET_SOCK_ERR_NONE) {
+                WOLFSSL_MSG("NetSock_CfgTimeoutRxQ_Set failed");
+            }
         }
     }
+#endif /* WOLFSSL_DTLS */
 
     ret = NetSock_RxDataFrom(sd, buf, sz, ssl->rflags, &peer, &peerSz,
                              0, 0, 0, &err);

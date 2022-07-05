@@ -1595,7 +1595,87 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX*);
     \sa wolfSSL_SetIOReadCtx
     \sa wolfSSL_SetIOWriteCtx
 */
-int  wolfSSL_set_fd (WOLFSSL* ssl, int fd);
+int  wolfSSL_set_fd(WOLFSSL* ssl, int fd);
+
+/*!
+    \ingroup Setup
+
+    \brief This function assigns a file descriptor (fd) as the
+    input/output facility for the SSL connection. Typically this will be
+    a socket file descriptor. This is a DTLS specific API because it marks that
+    the socket is connected. recvfrom and sendto calls on this fd will have the
+    addr and addr_len parameters set to NULL.
+
+    \return SSL_SUCCESS upon success.
+    \return Bad_FUNC_ARG upon failure.
+
+    \param ssl pointer to the SSL session, created with wolfSSL_new().
+    \param fd file descriptor to use with SSL/TLS connection.
+
+    _Example_
+    \code
+    int sockfd;
+    WOLFSSL* ssl = 0;
+    ...
+    if (connect(sockfd, peer_addr, peer_addr_len) != 0) {
+        // handle connect error
+    }
+    ...
+    ret = wolfSSL_set_dtls_fd_connected(ssl, sockfd);
+    if (ret != SSL_SUCCESS) {
+        // failed to set SSL file descriptor
+    }
+    \endcode
+
+    \sa wolfSSL_CTX_SetIOSend
+    \sa wolfSSL_CTX_SetIORecv
+    \sa wolfSSL_SetIOReadCtx
+    \sa wolfSSL_SetIOWriteCtx
+    \sa wolfDTLS_SetChGoodCb
+*/
+int wolfSSL_set_dtls_fd_connected(WOLFSSL* ssl, int fd)
+
+/*!
+    \ingroup Setup
+
+    \brief Allows setting a callback for a correctly processed and verified DTLS
+           client hello. When using a cookie exchange mechanism (either the
+           HelloVerifyRequest in DTLS 1.2 or the HelloRetryRequest with a cookie
+           extension in DTLS 1.3) this callback is called after the cookie
+           exchange has succeeded. This is useful to use one WOLFSSL object as
+           the listener for new connections and being able to isolate the
+           WOLFSSL object once the ClientHello is verified (either through a
+           cookie exchange or just checking if the ClientHello had the correct
+           format).
+           DTLS 1.2:
+           https://datatracker.ietf.org/doc/html/rfc6347#section-4.2.1
+           DTLS 1.3:
+           https://www.rfc-editor.org/rfc/rfc8446#section-4.2.2
+
+    \return SSL_SUCCESS upon success.
+    \return BAD_FUNC_ARG upon failure.
+
+    \param ssl pointer to the SSL session, created with wolfSSL_new().
+    \param fd file descriptor to use with SSL/TLS connection.
+
+    _Example_
+    \code
+
+    // Called when we have verified a connection
+    static int chGoodCb(WOLFSSL* ssl, void* arg)
+    {
+        // setup peer and file descriptors
+
+    }
+
+    if (wolfDTLS_SetChGoodCb(ssl, chGoodCb, NULL) != WOLFSSL_SUCCESS) {
+         // error setting callback
+    }
+    \endcode
+
+    \sa wolfSSL_set_dtls_fd_connected
+*/
+int wolfDTLS_SetChGoodCb(WOLFSSL* ssl, ClientHelloGoodCb cb, void* user_ctx);
 
 /*!
     \ingroup IO
@@ -3326,6 +3406,47 @@ int  wolfSSL_dtls_get_using_nonblock(WOLFSSL*);
     \sa wolfSSL_dtls_set_peer
 */
 int  wolfSSL_dtls_get_current_timeout(WOLFSSL* ssl);
+/*!
+    \brief This function returns true if the application should setup a quicker
+    timeout. When using non-blocking sockets, something in the user code needs
+    to decide when to check for available data and how long it needs to wait. If
+    this function returns true, it means that the library already detected some
+    disruption in the communication, but it wants to wait for a little longer in
+    case some messages from the other peers are still in flight. Is up to the
+    application to fine tune the value of this timer, a good one may be
+    dtls_get_current_timeout() / 4.
+
+    \return true if the application code should setup a quicker timeout
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    \sa wolfSSL_dtls
+    \sa wolfSSL_dtls_get_peer
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls_set_peer
+    \sa wolfSSL_dtls13_set_send_more_acks
+*/
+int  wolfSSL_dtls13_use_quick_timeout(WOLFSSL *ssl);
+/*!
+  \ingroup Setup
+
+    \brief This function sets whether the library should send ACKs to the other
+    peer immediately when detecting disruption or not. Sending ACKs immediately
+    assures minimum latency but it may consume more bandwidth than necessary. If
+    the application manages the timer by itself and this option is set to 0 then
+    application code can use wolfSSL_dtls13_use_quick_timeout() to determine if
+    it should setup a quicker timeout to send those delayed ACKs.
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+    \param value 1 to set the option, 0 to disable the option
+
+    \sa wolfSSL_dtls
+    \sa wolfSSL_dtls_get_peer
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls_set_peer
+    \sa wolfSSL_dtls13_use_quick_timeout
+*/
+void  wolfSSL_dtls13_set_send_more_acks(WOLFSSL *ssl, int value);
 
 /*!
     \ingroup Setup
@@ -3418,6 +3539,32 @@ int  wolfSSL_dtls_set_timeout_max(WOLFSSL* ssl, int);
 int  wolfSSL_dtls_got_timeout(WOLFSSL* ssl);
 
 /*!
+    \brief When using non-blocking sockets with DTLS, this function retransmits
+    the last handshake flight ignoring the expected timeout value and
+    retransmit count. It is useful for applications that are using DTLS and
+    need to manage even the timeout and retry count.
+
+    \return SSL_SUCCESS will be returned upon success
+    \return SSL_FATAL_ERROR will be returned if there have been too many
+    retransmissions/timeouts without getting a response from the peer.
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    _Example_
+    \code
+    int ret = 0;
+    WOLFSSL* ssl;
+    ...
+    ret = wolfSSL_dtls_retransmit(ssl);
+    \endcode
+
+    \sa wolfSSL_dtls_get_current_timeout
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls
+*/
+int wolfSSL_dtls_retransmit(WOLFSSL* ssl);
+
+/*!
     \brief This function is used to determine if the SSL session has been
     configured to use DTLS.
 
@@ -3454,9 +3601,11 @@ int  wolfSSL_dtls(WOLFSSL* ssl);
     \return SSL_NOT_IMPLEMENTED will be returned if wolfSSL was not compiled
     with DTLS support.
 
-    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
-    \param peer pointer to peer’s sockaddr_in structure.
-    \param peerSz size of the sockaddr_in structure pointed to by peer.
+    \param ssl    a pointer to a WOLFSSL structure, created using wolfSSL_new().
+    \param peer   pointer to peer’s sockaddr_in structure. If NULL then the peer
+                  information in ssl is cleared.
+    \param peerSz size of the sockaddr_in structure pointed to by peer. If 0
+                  then the peer information in ssl is cleared.
 
     _Example_
     \code
@@ -14018,3 +14167,12 @@ int wolfSSL_RSA_sign_generic_padding(int type, const unsigned char* m,
                                unsigned int mLen, unsigned char* sigRet,
                                unsigned int* sigLen, WOLFSSL_RSA* rsa,
                                int flag, int padding);
+/*!
+
+\brief checks if DTLSv1.3 stack has some messages sent but not yet acknowledged
+ by the other peer
+
+ \return 1 if there are pending messages, 0 otherwise
+ \param ssl A WOLFSSL object pointer
+*/
+int wolfSSL_dtls13_has_pending_msg(WOLFSSL *ssl);

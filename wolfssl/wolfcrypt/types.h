@@ -44,8 +44,8 @@ decouple library dependencies with standard string, memory and so on.
 
     /*
      * This struct is used multiple time by other structs and
-     * needs to be defined somwhere that all structs can import
-     * (with minimal depencencies).
+     * needs to be defined somewhere that all structs can import
+     * (with minimal dependencies).
      */
     #ifdef HAVE_EX_DATA
         #ifdef HAVE_EX_DATA_CLEANUP_HOOKS
@@ -208,15 +208,23 @@ decouple library dependencies with standard string, memory and so on.
 #elif defined(WC_16BIT_CPU)
         #undef WORD64_AVAILABLE
         typedef word16 wolfssl_word;
-        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as
-                             mp_digit, no 64 bit type so make mp_digit 16 bit */
+        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as \
+                           * mp_digit, no 64 bit type so make mp_digit 16 bit */
 
 #else
         #undef WORD64_AVAILABLE
         typedef word32 wolfssl_word;
-        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as
-                             mp_digit, no 64 bit type so make mp_digit 16 bit */
+        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as \
+                           * mp_digit, no 64 bit type so make mp_digit 16 bit */
 #endif
+
+typedef struct w64wrapper {
+#if defined(WORD64_AVAILABLE) && !defined(WOLFSSL_W64_WRAPPER_TEST)
+    word64 n;
+#else
+    word32 n[2];
+#endif /* WORD64_AVAILABLE && WOLFSSL_W64_WRAPPER_TEST */
+} w64wrapper;
 
 #ifdef WC_PTR_TYPE /* Allow user suppied type */
     typedef WC_PTR_TYPE wc_ptr_t;
@@ -487,7 +495,7 @@ decouple library dependencies with standard string, memory and so on.
                 #endif
                 #define XREALLOC(p, n, h, t) wolfSSL_Realloc((p), (n), (h), (t))
             #endif /* WOLFSSL_DEBUG_MEMORY */
-        #elif !defined(FREERTOS) && !defined(FREERTOS_TCP)
+        #elif (!defined(FREERTOS) && !defined(FREERTOS_TCP)) || defined(WOLFSSL_TRACK_MEMORY)
             #ifdef WOLFSSL_DEBUG_MEMORY
                 #define XMALLOC(s, h, t)     ((void)(h), (void)(t), wolfSSL_Malloc((s), __func__, __LINE__))
                 #ifdef WOLFSSL_XFREE_NO_NULLNESS_CHECK
@@ -815,13 +823,13 @@ decouple library dependencies with standard string, memory and so on.
         #endif
     #endif /* !NO_FILESYSTEM && !NO_STDIO_FILESYSTEM */
 
-        #ifndef CTYPE_USER
-            #ifndef WOLFSSL_LINUXKM
-                #include <ctype.h>
-            #endif
-            #if defined(HAVE_ECC) || defined(HAVE_OCSP) || \
-            defined(WOLFSSL_KEY_GEN) || !defined(NO_DSA) || \
-            defined(OPENSSL_EXTRA)
+    #ifndef CTYPE_USER
+        #ifndef WOLFSSL_LINUXKM
+            #include <ctype.h>
+        #endif
+        #if defined(HAVE_ECC) || defined(HAVE_OCSP) || \
+        defined(WOLFSSL_KEY_GEN) || !defined(NO_DSA) || \
+        defined(OPENSSL_EXTRA)
             #define XTOUPPER(c)     toupper((c))
         #endif
         #if defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
@@ -1133,7 +1141,8 @@ decouple library dependencies with standard string, memory and so on.
 
     #ifdef WOLFSSL_USE_ALIGN
         #if !defined(ALIGN16)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN16 __attribute__ ( (aligned (16)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1145,7 +1154,8 @@ decouple library dependencies with standard string, memory and so on.
         #endif /* !ALIGN16 */
 
         #if !defined (ALIGN32)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN32 __attribute__ ( (aligned (32)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1157,7 +1167,8 @@ decouple library dependencies with standard string, memory and so on.
         #endif /* !ALIGN32 */
 
         #if !defined(ALIGN64)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN64 __attribute__ ( (aligned (64)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1168,7 +1179,8 @@ decouple library dependencies with standard string, memory and so on.
             #endif
         #endif /* !ALIGN64 */
 
-        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+            defined(__llvm__)
             #define ALIGN128 __attribute__ ( (aligned (128)))
         #elif defined(_MSC_VER)
             /* disable align warning, we want alignment ! */
@@ -1178,7 +1190,8 @@ decouple library dependencies with standard string, memory and so on.
             #define ALIGN128
         #endif
 
-        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)  || \
+            defined(__llvm__)
             #define ALIGN256 __attribute__ ( (aligned (256)))
         #elif defined(_MSC_VER)
             /* disable align warning, we want alignment ! */

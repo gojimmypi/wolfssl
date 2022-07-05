@@ -142,6 +142,10 @@ static int lng_index = 0;
 #endif
 
 #ifdef HAVE_SESSION_TICKET
+
+#ifndef SESSION_TICKET_LEN
+#define SESSION_TICKET_LEN 256
+#endif
     static int sessionTicketCB(WOLFSSL* ssl,
                         const unsigned char* ticket, int ticketSz,
                         void* ctx)
@@ -803,7 +807,8 @@ static int ClientBenchmarkThroughput(WOLFSSL_CTX* ctx, char* host, word16 port,
                                 }
                                 else
                             #endif
-                                if (err != WOLFSSL_ERROR_WANT_READ) {
+                                if (err != WOLFSSL_ERROR_WANT_READ &&
+                                        err != WOLFSSL_ERROR_WANT_WRITE) {
                                     fprintf(stderr, "SSL_read bench error %d\n", err);
                                     err_sys("SSL_read failed");
                                 }
@@ -1068,7 +1073,9 @@ static int ClientRead(WOLFSSL* ssl, char* reply, int replyLen, int mustRead,
             }
         }
 
-        if (mustRead && err == WOLFSSL_ERROR_WANT_READ) {
+        if (mustRead &&
+            (err == WOLFSSL_ERROR_WANT_READ
+             || err == WOLFSSL_ERROR_WANT_WRITE)) {
             elapsed = current_time(0) - start;
             if (elapsed > MAX_NON_BLOCK_SEC) {
                 fprintf(stderr, "Nonblocking read timeout\n");
@@ -1158,8 +1165,13 @@ static const char* client_usage_msg[][70] = {
         "-D          Override Date Errors example\n",                   /* 18 */
         "-e          List Every cipher suite available, \n",            /* 19 */
         "-g          Send server HTTP GET\n",                           /* 20 */
-        "-u          Use UDP DTLS,"
-                 " add -v 2 for DTLSv1, -v 3 for DTLSv1.2 (default)\n", /* 21 */
+#ifndef WOLFSSL_DTLS13
+        "-u          Use UDP DTLS, add -v 2 for DTLSv1, -v 3 for DTLSv1.2"
+            " (default)\n",                                             /* 21 */
+#else
+        "-u          Use UDP DTLS, add -v 2 for DTLSv1, -v 3 for DTLSv1.2"
+            " (default), -v 4 for DTLSv1.3\n",                          /* 21 */
+#endif /* !WOLFSSL_DTLS13 */
 #ifdef WOLFSSL_SCTP
         "-G          Use SCTP DTLS,"
                 " add -v 2 for DTLSv1, -v 3 for DTLSv1.2 (default)\n",  /* 22 */
@@ -1333,7 +1345,7 @@ static const char* client_usage_msg[][70] = {
 #endif
         "-? <num>    ヘルプ, 使い方を表示\n"
         "            0: 英語、 1: 日本語\n"
-        "--ヘルプ     使い方を表示, 日本語で\n",                          /* 3 */
+        "--ヘルプ    日本語で使い方を表示\n",                            /* 3 */
         "-h <host>   接続先ホスト, 既定値",                              /* 4 */
         "-p <num>    接続先ポート, 0は無効, 既定値",                     /* 5 */
 
@@ -1371,8 +1383,15 @@ static const char* client_usage_msg[][70] = {
         "-D          日付エラー用コールバック例の上書きを行う\n",       /* 18 */
         "-e          利用可能な全ての暗号スイートをリスト, \n",         /* 19 */
         "-g          サーバーへ HTTP GET を送信\n",                     /* 20 */
-        "-u          UDP DTLSを使用する。-v 2 を追加指定すると"
-               " DTLSv1, -v 3 を追加指定すると DTLSv1.2 (既定値)\n",    /* 21 */
+        "-u          UDP DTLSを使用する。\n"
+#ifndef WOLFSSL_DTLS13
+        "           -v 2 を追加指定するとDTLSv1, "
+                    "-v 3 を追加指定すると DTLSv1.2 (既定値)\n",        /* 21 */
+#else
+        "           -v 2 を追加指定するとDTLSv1, "
+                    "-v 3 を追加指定すると DTLSv1.2 (既定値),\n"
+        "           -v 4 を追加指定すると DTLSv1.3\n",                    /* 21 */
+#endif /* !WOLFSSL_DTLS13 */
 #ifdef WOLFSSL_SCTP
         "-G          SCTP DTLSを使用する。-v 2 を追加指定すると"
                 " DTLSv1, -v 3 を追加指定すると DTLSv1.2 (既定値)\n",   /* 22 */
@@ -1421,7 +1440,7 @@ static const char* client_usage_msg[][70] = {
  || defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
         "-W <num>    OCSP Staplingを使用する"
                                          " (1 v1, 2 v2, 3 v2 multi)\n", /* 41 */
-        "            With 'm' at end indicates MUST staple\n",          /* 42 */
+        "            'm' を最後に指定すると必ず staple を使用する\n"    /* 42 */
 #endif
 #if defined(ATOMIC_USER) && !defined(WOLFSSL_AEAD_ONLY)
         "-U          アトミック・ユーザー記録の"
@@ -1443,7 +1462,7 @@ static const char* client_usage_msg[][70] = {
         "-q <file>   Whitewood コンフィグファイル,      既定値\n",      /* 48 */
 #endif
         "-H <arg>    内部テスト"
-            " [defCipherList, exitWithRet, verifyFail, useSupCurve,\n", /* 49 */
+        " [defCipherList, exitWithRet, verifyFail, useSupCurve,\n", /* 49 */
         "                            loadSSL, disallowETM]\n",          /* 50 */
 #ifdef WOLFSSL_TLS13
         "-J          HelloRetryRequestをKEのグループ選択に使用する\n",  /* 51 */
@@ -1483,7 +1502,7 @@ static const char* client_usage_msg[][70] = {
 #endif
         "-6          WANT_WRITE エラーを全てのIO 送信でシュミレートします\n",
 #ifdef HAVE_CURVE448
-        "-8          Use X448 for key exchange\n",                      /* 66 */
+        "-8          鍵交換に X448 を使用する\n",                      /* 66 */
 #endif
 #if defined(OPENSSL_ALL) && defined(WOLFSSL_CERT_GEN) && \
     (defined(WOLFSSL_CERT_REQ) || defined(WOLFSSL_CERT_EXT)) && \
@@ -1518,10 +1537,11 @@ static const char* client_usage_msg[][70] = {
         "            P521_KYBER_90S_LEVEL5]\n",                  /* 70 */
 #endif
 #ifdef WOLFSSL_SRTP
-        "--srtp <profile> (default is SRTP_AES128_CM_SHA1_80)\n", /* 71 */
+        "--srtp <profile> (デフォルトは SRTP_AES128_CM_SHA1_80)\n", /* 71 */
 #endif
         "\n"
-        "For simpler wolfSSL TLS client examples, visit\n"
+        "より簡単なwolfSSL TSL クライアントの例については"
+                                         "下記にアクセスしてください\n"
         "https://github.com/wolfSSL/wolfssl-examples/tree/master/tls\n", /* 72 */
         NULL,
     },
@@ -1868,6 +1888,12 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #ifdef WOLFSSL_SRTP
         { "srtp", 2, 260 }, /* optional argument */
 #endif
+#ifdef WOLFSSL_DTLS13
+        /* allow waitTicket option even when HAVE_SESSION_TICKET is 0. Otherwise
+         *  tests that use this option will ignore the options following
+         *  --waitTicket in the command line and fail */
+        {"waitTicket", 0, 261},
+#endif /* WOLFSSL_DTLS13 */
         { 0, 0, 0 }
     };
 #endif
@@ -1993,6 +2019,10 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #ifdef WOLFSSL_SRTP
     const char* dtlsSrtpProfiles = NULL;
 #endif
+
+#ifdef HAVE_SESSION_TICKET
+    int waitTicket = 0;
+#endif /* HAVE_SESSION_TICKET */
 
     char buffer[WOLFSSL_MAX_ERROR_SZ];
 
@@ -2140,6 +2170,14 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
                 printf("Using SRTP Profile(s): %s\n", dtlsSrtpProfiles);
                 break;
         #endif
+
+#ifdef WOLFSSL_DTLS13
+        case 261:
+#ifdef HAVE_SESSION_TICKET
+            waitTicket = 1;
+#endif /* HAVE_SESSION_TICKET */
+            break;
+#endif /* WOLFSSL_DTLS13 */
 
             case 'G' :
             #ifdef WOLFSSL_SCTP
@@ -2749,12 +2787,21 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     }
     else {
         if (doDTLS) {
-            if (version == 3)
+            if (version == 3) {
                 version = -2;
+            }
         #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EITHER_SIDE)
-            else if (version == EITHER_DOWNGRADE_VERSION)
+            else if (version == EITHER_DOWNGRADE_VERSION) {
                 version = -3;
+            }
         #endif
+            else if (version == 4) {
+#ifdef WOLFSSL_DTLS13
+                version = -4;
+#else
+                err_sys("Bad DTLS version");
+#endif /* WOLFSSL_DTLS13 */
+            }
             else
                 version = -1;
         }
@@ -2833,6 +2880,11 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
             method = wolfDTLSv1_2_client_method_ex;
             break;
     #endif
+#ifdef WOLFSSL_DTLS13
+        case -4:
+            method = wolfDTLSv1_3_client_method_ex;
+            break;
+#endif /* WOLFSSL_DTLS13 */
     #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EITHER_SIDE)
         case -3:
             method = wolfDTLSv1_2_method_ex;
@@ -3450,7 +3502,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #endif
 
 #if defined(WOLFSSL_TLS13) && defined(HAVE_SUPPORTED_CURVES)
-    if (!helloRetry && version >= 4) {
+    if (!helloRetry && (version >= 4 || version <= -4)) {
         SetKeyShare(ssl, onlyKeyShare, useX25519, useX448, usePqc,
                     pqcAlg, 0);
     }
@@ -4027,6 +4079,29 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #if defined(WOLFSSL_TLS13)
     if (updateKeysIVs || postHandAuth)
         (void)ClientWrite(ssl, msg, msgSz, "", 0);
+#endif
+
+#if defined(HAVE_SESSION_TICKET)
+    while (waitTicket == 1) {
+        unsigned char ticketBuf[SESSION_TICKET_LEN];
+        int zeroReturn = 0;
+        word32 size;
+
+        (void)zeroReturn;
+        size = sizeof(ticketBuf);
+        err = wolfSSL_get_SessionTicket(ssl, ticketBuf, &size);
+        if (err < 0)
+            err_sys("wolfSSL_get_SessionTicket failed");
+
+        if (size == 0) {
+            err = process_handshake_messages(ssl, !nonBlocking, &zeroReturn);
+            if (err < 0)
+                err_sys("error waiting for session ticket ");
+        }
+        else {
+            waitTicket = 0;
+        }
+    }
 #endif
 
 #ifndef NO_SESSION_CACHE

@@ -1526,6 +1526,7 @@ WOLFSSL_EVP_PKEY_CTX *wolfSSL_EVP_PKEY_CTX_new(WOLFSSL_EVP_PKEY *pkey, WOLFSSL_E
     ctx->pkey = pkey;
 #if !defined(NO_RSA) && !defined(HAVE_USER_RSA)
     ctx->padding = RSA_PKCS1_PADDING;
+    ctx->md = NULL;
 #endif
 #ifdef HAVE_ECC
     if (pkey->ecc && pkey->ecc->group) {
@@ -1558,6 +1559,26 @@ int wolfSSL_EVP_PKEY_CTX_set_rsa_padding(WOLFSSL_EVP_PKEY_CTX *ctx, int padding)
     return WOLFSSL_SUCCESS;
 }
 
+/* Sets the message digest type for RSA padding to use.
+ *
+ * ctx  structure to set padding in.
+ * md   Message digest
+ *
+ * returns WOLFSSL_SUCCESS on success.
+ */
+int wolfSSL_EVP_PKEY_CTX_set_signature_md(WOLFSSL_EVP_PKEY_CTX *ctx,
+    const EVP_MD* md)
+{
+    if (ctx == NULL) return 0;
+    WOLFSSL_ENTER("EVP_PKEY_CTX_set_signature_md");
+#ifndef NO_RSA
+    ctx->md = md;
+#else
+    (void)md;
+#endif
+    return WOLFSSL_SUCCESS;
+}
+
 /* create a PKEY context and return it */
 WOLFSSL_EVP_PKEY_CTX *wolfSSL_EVP_PKEY_CTX_new_id(int id, WOLFSSL_ENGINE *e)
 {
@@ -1572,7 +1593,7 @@ WOLFSSL_EVP_PKEY_CTX *wolfSSL_EVP_PKEY_CTX_new_id(int id, WOLFSSL_ENGINE *e)
         ctx = wolfSSL_EVP_PKEY_CTX_new(pkey, e);
         /* wolfSSL_EVP_PKEY_CTX_new calls wolfSSL_EVP_PKEY_up_ref so we need
          * to always call wolfSSL_EVP_PKEY_free (either to free it if an
-         * error occured in the previous function or to decrease the reference
+         * error occurred in the previous function or to decrease the reference
          * count so that pkey is actually free'd when wolfSSL_EVP_PKEY_CTX_free
          * is called) */
         wolfSSL_EVP_PKEY_free(pkey);
@@ -2247,10 +2268,11 @@ int wolfSSL_EVP_PKEY_sign(WOLFSSL_EVP_PKEY_CTX *ctx, unsigned char *sig,
         }
         /* wolfSSL_RSA_sign_generic_padding performs a check that the output
          * sig buffer is large enough */
-        if (wolfSSL_RSA_sign_generic_padding(WC_HASH_TYPE_NONE, tbs,
-            (unsigned int)tbslen, sig, &usiglen, ctx->pkey->rsa, 1, ctx->padding)
-            != WOLFSSL_SUCCESS)
+        if (wolfSSL_RSA_sign_generic_padding(wolfSSL_EVP_MD_type(ctx->md), tbs,
+                (unsigned int)tbslen, sig, &usiglen, ctx->pkey->rsa, 1,
+                ctx->padding) != WOLFSSL_SUCCESS) {
             return WOLFSSL_FAILURE;
+        }
         *siglen = (size_t)usiglen;
         return WOLFSSL_SUCCESS;
     }
@@ -4475,7 +4497,7 @@ int wolfSSL_EVP_MD_type(const WOLFSSL_EVP_MD* type)
      * @param none
      * @return "blake2b512"
      */
-    const WOLFSSL_EVP_MD* wolfSSL_EVP_blake2b512()
+    const WOLFSSL_EVP_MD* wolfSSL_EVP_blake2b512(void)
     {
         WOLFSSL_ENTER("EVP_blake2b512");
         return EVP_get_digestbyname("BLAKE2b512");
@@ -4488,7 +4510,7 @@ int wolfSSL_EVP_MD_type(const WOLFSSL_EVP_MD* type)
      * @param none
      * @return "blake2s256"
      */
-    const WOLFSSL_EVP_MD* wolfSSL_EVP_blake2s256()
+    const WOLFSSL_EVP_MD* wolfSSL_EVP_blake2s256(void)
     {
         WOLFSSL_ENTER("EVP_blake2s256");
         return EVP_get_digestbyname("BLAKE2s256");
@@ -5664,7 +5686,7 @@ int wolfSSL_EVP_MD_type(const WOLFSSL_EVP_MD* type)
 
 #if defined(HAVE_AES_CBC) || defined(WOLFSSL_AES_COUNTER) || \
     defined(HAVE_AES_ECB) || defined(WOLFSSL_AES_CFB) || \
-    defined(WOLFSSSL_AES_OFB)
+    defined(WOLFSSL_AES_OFB)
     #define AES_SET_KEY
 #endif
 
@@ -7952,6 +7974,12 @@ static int ECC_populate_EVP_PKEY(EVP_PKEY* pkey, WOLFSSL_EC_KEY *key)
         else
 #endif /* HAVE_PKCS8 */
         {
+            if (ecc->type == ECC_PRIVATEKEY_ONLY) {
+                if (wc_ecc_make_pub(ecc, NULL) != MP_OKAY) {
+                    return WOLFSSL_FAILURE;
+                }
+            }
+
             /* if not, the pkey will be traditional ecc key */
             if ((derSz = wc_EccKeyDerSize(ecc, 1)) > 0) {
                 derBuf = (byte*)XMALLOC(derSz, pkey->heap, DYNAMIC_TYPE_OPENSSL);
@@ -8036,15 +8064,21 @@ void* wolfSSL_EVP_X_STATE(const WOLFSSL_EVP_CIPHER_CTX* ctx)
 }
 int wolfSSL_EVP_PKEY_assign_EC_KEY(EVP_PKEY* pkey, WOLFSSL_EC_KEY* key)
 {
+    int ret;
+
     if (pkey == NULL || key == NULL)
         return WOLFSSL_FAILURE;
 
-    pkey->type = EVP_PKEY_EC;
-    pkey->ecc = key;
-    pkey->ownEcc = 1;
-
     /* try and populate public pkey_sz and pkey.ptr */
-    return ECC_populate_EVP_PKEY(pkey, key);
+    ret = ECC_populate_EVP_PKEY(pkey, key);
+    if (ret == WOLFSSL_SUCCESS) { /* take ownership of key if can be used */
+        clearEVPPkeyKeys(pkey); /* clear out any previous keys */
+
+        pkey->type = EVP_PKEY_EC;
+        pkey->ecc = key;
+        pkey->ownEcc = 1;
+    }
+    return ret;
 }
 #endif /* HAVE_ECC */
 
@@ -8543,6 +8577,7 @@ int wolfSSL_EVP_PKEY_assign_RSA(EVP_PKEY* pkey, WOLFSSL_RSA* key)
     if (pkey == NULL || key == NULL)
         return WOLFSSL_FAILURE;
 
+    clearEVPPkeyKeys(pkey);
     pkey->type = EVP_PKEY_RSA;
     pkey->rsa = key;
     pkey->ownRsa = 1;
@@ -8578,6 +8613,7 @@ int wolfSSL_EVP_PKEY_assign_DSA(EVP_PKEY* pkey, WOLFSSL_DSA* key)
     if (pkey == NULL || key == NULL)
         return WOLFSSL_FAILURE;
 
+    clearEVPPkeyKeys(pkey);
     pkey->type = EVP_PKEY_DSA;
     pkey->dsa = key;
     pkey->ownDsa = 1;
@@ -8592,6 +8628,7 @@ int wolfSSL_EVP_PKEY_assign_DH(EVP_PKEY* pkey, WOLFSSL_DH* key)
     if (pkey == NULL || key == NULL)
         return WOLFSSL_FAILURE;
 
+    clearEVPPkeyKeys(pkey);
     pkey->type = EVP_PKEY_DH;
     pkey->dh = key;
     pkey->ownDh = 1;
@@ -8780,7 +8817,7 @@ static int Indent(WOLFSSL_BIO* out, int indents)
  * four spaces, then hex coded 15 byte data with separator ":" follow.
  * Each line looks like:
  * "    00:e6:ab: --- 9f:ef:"
- * Parmeters:
+ * Parameters:
  * out     bio to output dump data
  * input   buffer holding data to dump
  * inlen   input data size
@@ -9886,7 +9923,7 @@ struct WOLFSSL_EVP_ENCODE_CTX* wolfSSL_EVP_ENCODE_CTX_new(void)
     }
     return NULL;
 }
-/*  wolfSSL_EVP_ENCODE_CTX_free frees specified WOLFSSL_EVP_ENCODE_CTX struc.
+/*  wolfSSL_EVP_ENCODE_CTX_free frees specified WOLFSSL_EVP_ENCODE_CTX struct.
  */
 void wolfSSL_EVP_ENCODE_CTX_free(WOLFSSL_EVP_ENCODE_CTX* ctx)
 {

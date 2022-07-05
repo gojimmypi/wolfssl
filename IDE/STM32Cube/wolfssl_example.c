@@ -548,7 +548,7 @@ static int ServerMemRecv(info_t* info, char* buf, int sz)
         }
         osSemaphoreAcquire(info->server.mutex, osWaitForever);
 #else
-        if (osSignalWait(1, RECV_WAIT_TIMEOUT) == osEventTimeout) {
+        if (osSignalWait(1, RECV_WAIT_TIMEOUT).status == osEventTimeout) {
         	printf("Server Recv: Timeout!\n");
             return WOLFSSL_CBIO_ERR_TIMEOUT;
         }
@@ -644,7 +644,7 @@ static int ClientMemRecv(info_t* info, char* buf, int sz)
         }
         osSemaphoreAcquire(info->client.mutex, osWaitForever);
 #else
-        if (osSignalWait(1, RECV_WAIT_TIMEOUT) == osEventTimeout) {
+        if (osSignalWait(1, RECV_WAIT_TIMEOUT).status == osEventTimeout) {
         	printf("Client Recv: Timeout!\n");
         	return WOLFSSL_CBIO_ERR_TIMEOUT;
         }
@@ -977,7 +977,7 @@ static void client_thread(const void* args)
         osThreadSuspend(info->client.threadId);
 
         if (info->doShutdown)
-            info->client.done = 1;
+            info->server.done = 1;
     } while (!info->doShutdown);
 
     osThreadTerminate(info->client.threadId);
@@ -1252,7 +1252,7 @@ static void server_thread(const void* args)
         osThreadSuspend(info->server.threadId);
 
         if (info->doShutdown)
-            info->server.done = 1;
+            info->client.done = 1;
     } while (!info->doShutdown);
 
     osThreadTerminate(info->server.threadId);

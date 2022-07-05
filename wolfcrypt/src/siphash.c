@@ -352,7 +352,7 @@ int wc_SipHashFinal(SipHash* sipHash, unsigned char* out, unsigned char outSz)
     return ret;
 }
 
-#if defined(__GNUC__) && defined(__x86_64__) && \
+#if !defined(WOLFSSL_NO_ASM) && defined(__GNUC__) && defined(__x86_64__) && \
     (WOLFSSL_SIPHASH_CROUNDS == 1 || WOLFSSL_SIPHASH_CROUNDS == 2) && \
     (WOLFSSL_SIPHASH_DROUNDS == 2 || WOLFSSL_SIPHASH_DROUNDS == 4)
 
@@ -566,7 +566,7 @@ int wc_SipHash(const unsigned char* key, const unsigned char* in, word32 inSz,
     return 0;
 }
 
-#elif defined(__GNUC__) && defined(__aarch64__) && \
+#elif !defined(WOLFSSL_NO_ASM) && defined(__GNUC__) && defined(__aarch64__) && \
     (WOLFSSL_SIPHASH_CROUNDS == 1 || WOLFSSL_SIPHASH_CROUNDS == 2) && \
     (WOLFSSL_SIPHASH_DROUNDS == 2 || WOLFSSL_SIPHASH_DROUNDS == 4)
 
@@ -886,19 +886,19 @@ int wc_SipHash(const unsigned char* key, const unsigned char* in, word32 inSz,
         switch (inSz) {
             case 7:
                 b |= (word64)in[6] << 48;
-                /* fall-through */
+                FALL_THROUGH;
             case 6:
                 b |= (word64)in[5] << 40;
-                /* fall-through */
+                FALL_THROUGH;
             case 5:
                 b |= (word64)in[4] << 32;
-                /* fall-through */
+                FALL_THROUGH;
             case 4:
                 b |= (word64)GET_U32(in);
                 break;
             case 3:
                 b |= (word64)in[2] << 16;
-                /* fall-through */
+                FALL_THROUGH;
             case 2:
                 b |= (word64)GET_U16(in);
                 break;
