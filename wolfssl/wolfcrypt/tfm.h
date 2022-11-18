@@ -1,6 +1,6 @@
 /* tfm.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -678,7 +678,6 @@ int fp_to_unsigned_bin_at_pos(int x, fp_int *t, unsigned char *b);
 /* VARIOUS LOW LEVEL STUFFS */
 int  s_fp_add(fp_int *a, fp_int *b, fp_int *c);
 void s_fp_sub(fp_int *a, fp_int *b, fp_int *c);
-void fp_reverse(unsigned char *s, int len);
 
 int  fp_mul_comba(fp_int *a, fp_int *b, fp_int *c);
 
@@ -855,6 +854,11 @@ MP_API int  mp_lshd (mp_int * a, int b);
 MP_API int  mp_abs(mp_int* a, mp_int* b);
 
 WOLFSSL_API word32 CheckRunTimeFastMath(void);
+
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+void mp_memzero_add(const char* name, mp_int* a);
+void mp_memzero_check(mp_int* a);
+#endif
 
 /* If user uses RSA, DH, DSA, or ECC math lib directly then fast math FP_SIZE
    must match, return 1 if a match otherwise 0 */

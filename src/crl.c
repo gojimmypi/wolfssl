@@ -1,6 +1,6 @@
 /* crl.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -20,8 +20,15 @@
  */
 
 
-  /* Name change compatibility layer no longer needs included here */
-
+/*
+CRL Options:
+ * CRL_STATIC_REVOKED_LIST:                                        default: off
+ *                         Enables fixed static list of RevokedCerts to allow
+ *                         for a binary search.
+ * CRL_MAX_REVOKED_CERTS:                                          default: 4
+ *                         Specifies the number of buffers to hold RevokedCerts.
+ *                         The default value is set to 4.
+*/
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
@@ -56,7 +63,8 @@ int InitCRL(WOLFSSL_CRL* crl, WOLFSSL_CERT_MANAGER* cm)
     else
         crl->heap = NULL;
     crl->cm = cm;
-    crl->crlList = NULL;
+    crl->crlList  = NULL;
+    crl->currentEntry = NULL;
     crl->monitors[0].path = NULL;
     crl->monitors[1].path = NULL;
 #ifdef HAVE_CRL_MONITOR
@@ -67,6 +75,9 @@ int InitCRL(WOLFSSL_CRL* crl, WOLFSSL_CERT_MANAGER* cm)
         WOLFSSL_MSG("Pthread condition init failed");
         return BAD_COND_E;
     }
+#endif
+#ifdef HAVE_CRL_IO
+    crl->crlIOCb = NULL;
 #endif
     if (wc_InitMutex(&crl->crlLock) != 0) {
         WOLFSSL_MSG("Init Mutex failed");
@@ -90,10 +101,34 @@ static int InitCRL_Entry(CRL_Entry* crle, DecodedCRL* dcrl, const byte* buff,
     XMEMCPY(crle->nextDate, dcrl->nextDate, MAX_DATE_SIZE);
     crle->lastDateFormat = dcrl->lastDateFormat;
     crle->nextDateFormat = dcrl->nextDateFormat;
+    crle->version = dcrl->version;
 
-    crle->certs = dcrl->certs;   /* take ownsership */
+#if defined(OPENSSL_EXTRA)
+    crle->lastDateAsn1.length = MAX_DATE_SIZE;
+    XMEMCPY (crle->lastDateAsn1.data, crle->lastDate,
+             crle->lastDateAsn1.length);
+    crle->lastDateAsn1.type = crle->lastDateFormat;
+    crle->nextDateAsn1.length = MAX_DATE_SIZE;
+    XMEMCPY (crle->nextDateAsn1.data, crle->nextDate,
+             crle->nextDateAsn1.length);
+    crle->nextDateAsn1.type = crle->nextDateFormat;
+
+    crle->issuer = NULL;
+    wolfSSL_d2i_X509_NAME(&crle->issuer, (unsigned char**)&dcrl->issuer,
+                          dcrl->issuerSz);
+    if (crle->issuer == NULL) {
+        return WOLFSSL_FAILURE;
+    }
+#endif
+#ifdef CRL_STATIC_REVOKED_LIST
+    /* ParseCRL_CertList() has already cached the Revoked certs into
+       the crle->certs array */
+#else
+    crle->certs = dcrl->certs;   /* take ownership */
+#endif
     dcrl->certs = NULL;
     crle->totalCerts = dcrl->totalCerts;
+    crle->crlNumber = dcrl->crlNumber;
     crle->verified = verified;
     if (!verified) {
         crle->tbsSz = dcrl->sigIndex - dcrl->certBegin;
@@ -132,6 +167,11 @@ static int InitCRL_Entry(CRL_Entry* crle, DecodedCRL* dcrl, const byte* buff,
 /* Free all CRL Entry resources */
 static void FreeCRL_Entry(CRL_Entry* crle, void* heap)
 {
+#ifdef CRL_STATIC_REVOKED_LIST
+    if (crle != NULL) {
+        XMEMSET(crle->certs, 0, CRL_MAX_REVOKED_CERTS*sizeof(RevokedCert));
+    }
+#else
     RevokedCert* tmp = crle->certs;
     RevokedCert* next;
 
@@ -142,11 +182,17 @@ static void FreeCRL_Entry(CRL_Entry* crle, void* heap)
         XFREE(tmp, heap, DYNAMIC_TYPE_REVOKED);
         tmp = next;
     }
+#endif
     if (crle->signature != NULL)
-        XFREE(crle->signature, heap, DYNAMIC_TYPE_REVOKED);
+        XFREE(crle->signature, heap, DYNAMIC_TYPE_CRL_ENTRY);
     if (crle->toBeSigned != NULL)
-        XFREE(crle->toBeSigned, heap, DYNAMIC_TYPE_REVOKED);
-
+        XFREE(crle->toBeSigned, heap, DYNAMIC_TYPE_CRL_ENTRY);
+#if defined(OPENSSL_EXTRA)
+    if (crle->issuer != NULL) {
+        FreeX509Name(crle->issuer);
+        XFREE(crle->issuer, heap, DYNAMIC_TYPE_X509);
+    }
+#endif
     (void)heap;
 }
 
@@ -164,6 +210,8 @@ void FreeCRL(WOLFSSL_CRL* crl, int dynamic)
     if (crl->monitors[1].path)
         XFREE(crl->monitors[1].path, crl->heap, DYNAMIC_TYPE_CRL_MONITOR);
 
+    XFREE(crl->currentEntry, crl->heap, DYNAMIC_TYPE_CRL_ENTRY);
+    crl->currentEntry = NULL;
     while(tmp) {
         CRL_Entry* next = tmp->next;
         FreeCRL_Entry(tmp, crl->heap);
@@ -174,20 +222,68 @@ void FreeCRL(WOLFSSL_CRL* crl, int dynamic)
 #ifdef HAVE_CRL_MONITOR
     if (crl->tid != 0) {
         WOLFSSL_MSG("stopping monitor thread");
-        if (StopMonitor(crl->mfd) == 0)
-            pthread_join(crl->tid, NULL);
+        if (StopMonitor(crl->mfd) == 0) {
+            int _pthread_ret = pthread_join(crl->tid, NULL);
+            if (_pthread_ret != 0)
+                WOLFSSL_MSG("stop monitor failed in pthread_join");
+        }
         else {
             WOLFSSL_MSG("stop monitor failed");
         }
     }
-    pthread_cond_destroy(&crl->cond);
+    {
+        int _pthread_ret = pthread_cond_destroy(&crl->cond);
+        if (_pthread_ret != 0)
+            WOLFSSL_MSG("pthread_cond_destroy failed in FreeCRL()");
+    }
 #endif
     wc_FreeMutex(&crl->crlLock);
     if (dynamic)   /* free self */
         XFREE(crl, crl->heap, DYNAMIC_TYPE_CRL);
 }
 
+static int FindRevokedSerial(DecodedCert* cert, RevokedCert* rc, int totalCerts)
+{
+    int ret = 0;
+#ifdef CRL_STATIC_REVOKED_LIST
+    /* do binary search */
+    int low, high, mid;
 
+    low = 0;
+    high = totalCerts - 1;
+
+    while (low <= high) {
+        mid = (low + high) / 2;
+
+        if (XMEMCMP(rc[mid].serialNumber, cert->serial, rc->serialSz) < 0) {
+            low = mid + 1;
+        }
+        else if (XMEMCMP(rc[mid].serialNumber, cert->serial,
+                                                        rc->serialSz) > 0) {
+            high = mid - 1;
+        }
+        else {
+            WOLFSSL_MSG("Cert revoked");
+            ret = CRL_CERT_REVOKED;
+            break;
+        }
+    }
+#else
+    (void)totalCerts;
+    /* search in the linked list*/
+
+    while (rc) {
+        if (rc->serialSz == cert->serialSz &&
+               XMEMCMP(rc->serialNumber, cert->serial, rc->serialSz) == 0) {
+            WOLFSSL_MSG("Cert revoked");
+            ret = CRL_CERT_REVOKED;
+            break;
+        }
+        rc = rc->next;
+    }
+#endif
+    return ret;
+}
 static int CheckCertCRLList(WOLFSSL_CRL* crl, DecodedCert* cert, int *pFoundEntry)
 {
     CRL_Entry* crle;
@@ -317,17 +413,7 @@ static int CheckCertCRLList(WOLFSSL_CRL* crl, DecodedCert* cert, int *pFoundEntr
     }
 
     if (foundEntry) {
-        RevokedCert* rc = crle->certs;
-
-        while (rc) {
-            if (rc->serialSz == cert->serialSz &&
-                   XMEMCMP(rc->serialNumber, cert->serial, rc->serialSz) == 0) {
-                WOLFSSL_MSG("Cert revoked");
-                ret = CRL_CERT_REVOKED;
-                break;
-            }
-            rc = rc->next;
-        }
+        ret = FindRevokedSerial(cert, crle->certs, crle->totalCerts);
     }
 
     wc_UnLockMutex(&crl->crlLock);
@@ -423,14 +509,22 @@ int CheckCertCRL(WOLFSSL_CRL* crl, DecodedCert* cert)
 static int AddCRL(WOLFSSL_CRL* crl, DecodedCRL* dcrl, const byte* buff,
                   int verified)
 {
-    CRL_Entry* crle;
+    CRL_Entry* crle = NULL;
 
     WOLFSSL_ENTER("AddCRL");
 
-    crle = (CRL_Entry*)XMALLOC(sizeof(CRL_Entry), crl->heap, DYNAMIC_TYPE_CRL_ENTRY);
-    if (crle == NULL) {
-        WOLFSSL_MSG("alloc CRL Entry failed");
+    if (crl == NULL)
         return -1;
+
+    crle = crl->currentEntry;
+
+    if (crle == NULL) {
+        crle = (CRL_Entry*)XMALLOC(sizeof(CRL_Entry), crl->heap,
+                                   DYNAMIC_TYPE_CRL_ENTRY);
+        if (crle == NULL) {
+            WOLFSSL_MSG("alloc CRL Entry failed");
+            return MEMORY_E;
+        }
     }
 
     if (InitCRL_Entry(crle, dcrl, buff, verified, crl->heap) < 0) {
@@ -445,9 +539,12 @@ static int AddCRL(WOLFSSL_CRL* crl, DecodedCRL* dcrl, const byte* buff,
         XFREE(crle, crl->heap, DYNAMIC_TYPE_CRL_ENTRY);
         return BAD_MUTEX_E;
     }
+
     crle->next = crl->crlList;
     crl->crlList = crle;
     wc_UnLockMutex(&crl->crlLock);
+    /* Avoid heap-use-after-free after crl->crlList is released */
+    crl->currentEntry = NULL;
 
     return 0;
 }
@@ -496,10 +593,21 @@ int BufferLoadCRL(WOLFSSL_CRL* crl, const byte* buff, long sz, int type,
     }
 #endif
 
+    crl->currentEntry = (CRL_Entry*)XMALLOC(sizeof(CRL_Entry), crl->heap,
+                                        DYNAMIC_TYPE_CRL_ENTRY);
+    if (crl->currentEntry == NULL) {
+        WOLFSSL_MSG("alloc CRL Entry failed");
+        return MEMORY_E;
+    }
+    XMEMSET(crl->currentEntry, 0, sizeof(CRL_Entry));
+
     InitDecodedCRL(dcrl, crl->heap);
-    ret = ParseCRL(dcrl, myBuffer, (word32)sz, verify, crl->cm);
+    ret = ParseCRL(crl->currentEntry->certs, dcrl, myBuffer, (word32)sz,
+                   verify, crl->cm);
     if (ret != 0 && !(ret == ASN_CRL_NO_SIGNER_E && verify == NO_VERIFY)) {
         WOLFSSL_MSG("ParseCRL error");
+        XFREE(crl->currentEntry, crl->heap, DYNAMIC_TYPE_CRL_ENTRY);
+        crl->currentEntry = NULL;
     }
     else {
         ret = AddCRL(crl, dcrl, myBuffer, ret != ASN_CRL_NO_SIGNER_E);
@@ -537,7 +645,7 @@ static WOLFSSL_X509_CRL* wolfSSL_X509_crl_new(WOLFSSL_CERT_MANAGER* cm)
     return ret;
 }
 
-
+#ifndef CRL_STATIC_REVOKED_LIST
 /* returns head of copied list that was alloc'd */
 static RevokedCert *DupRevokedCertList(RevokedCert* in, void* heap)
 {
@@ -551,6 +659,9 @@ static RevokedCert *DupRevokedCertList(RevokedCert* in, void* heap)
             XMEMCPY(tmp->serialNumber, current->serialNumber,
                     EXTERNAL_SERIAL_SIZE);
             tmp->serialSz = current->serialSz;
+            XMEMCPY(tmp->revDate, current->revDate,
+                    MAX_DATE_SIZE);
+            tmp->revDateFormat = current->revDateFormat;
             tmp->next = NULL;
             if (prev != NULL)
                 prev->next = tmp;
@@ -575,12 +686,16 @@ static RevokedCert *DupRevokedCertList(RevokedCert* in, void* heap)
     return head;
 }
 
-
+#endif /* CRL_STATIC_REVOKED_LIST */
 /* returns a deep copy of ent on success and null on fail */
 static CRL_Entry* DupCRL_Entry(const CRL_Entry* ent, void* heap)
 {
     CRL_Entry *dupl;
-
+#ifdef CRL_STATIC_REVOKED_LIST
+    if (ent->totalCerts > CRL_MAX_REVOKED_CERTS) {
+        return NULL;
+    }
+#endif
     dupl = (CRL_Entry*)XMALLOC(sizeof(CRL_Entry), heap, DYNAMIC_TYPE_CRL_ENTRY);
     if (dupl == NULL) {
         WOLFSSL_MSG("alloc CRL Entry failed");
@@ -593,8 +708,23 @@ static CRL_Entry* DupCRL_Entry(const CRL_Entry* ent, void* heap)
     XMEMCPY(dupl->nextDate, ent->nextDate, MAX_DATE_SIZE);
     dupl->lastDateFormat = ent->lastDateFormat;
     dupl->nextDateFormat = ent->nextDateFormat;
-    dupl->certs = DupRevokedCertList(ent->certs, heap);
 
+#if defined(OPENSSL_EXTRA)
+    dupl->lastDateAsn1.length = MAX_DATE_SIZE;
+    XMEMCPY (dupl->lastDateAsn1.data, dupl->lastDate,
+             dupl->lastDateAsn1.length);
+    dupl->lastDateAsn1.type = dupl->lastDateFormat;
+    dupl->nextDateAsn1.length = MAX_DATE_SIZE;
+    XMEMCPY (dupl->nextDateAsn1.data, dupl->nextDate,
+             dupl->nextDateAsn1.length);
+    dupl->nextDateAsn1.type = dupl->nextDateFormat;
+#endif
+
+#ifdef CRL_STATIC_REVOKED_LIST
+    XMEMCPY(dupl->certs, ent->certs, ent->totalCerts*sizeof(RevokedCert));
+#else
+    dupl->certs = DupRevokedCertList(ent->certs, heap);
+#endif
     dupl->totalCerts = ent->totalCerts;
     dupl->verified = ent->verified;
 
@@ -1116,8 +1246,10 @@ static void* DoMonitor(void* arg)
             XFREE(buff, NULL, DYNAMIC_TYPE_TMP_BUFFER);
         #endif
 
-        if (wd > 0)
-            inotify_rm_watch(notifyFd, wd);
+        if (wd > 0) {
+            if (inotify_rm_watch(notifyFd, wd) < 0)
+                WOLFSSL_MSG("inotify_rm_watch #1 failed in DoMonitor");
+        }
         (void)close(crl->mfd);
         (void)close(notifyFd);
         return NULL;
@@ -1171,8 +1303,10 @@ static void* DoMonitor(void* arg)
     XFREE(buff, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
-    if (wd > 0)
-        inotify_rm_watch(notifyFd, wd);
+    if (wd > 0) {
+        if (inotify_rm_watch(notifyFd, wd) < 0)
+            WOLFSSL_MSG("inotify_rm_watch #2 failed in DoMonitor");
+    }
     (void)close(crl->mfd);
     (void)close(notifyFd);
 

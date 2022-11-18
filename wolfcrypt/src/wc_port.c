@@ -1,6 +1,6 @@
 /* port.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -126,11 +126,18 @@ static volatile int initRefCount = 0;
 /* Used to initialize state for wolfcrypt
    return 0 on success
  */
+WOLFSSL_ABI
 int wolfCrypt_Init(void)
 {
     int ret = 0;
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Init");
+
+    #ifdef WOLFSSL_CHECK_MEM_ZERO
+        /* Initialize the mutex for access to the list of memory locations that
+         * must be freed. */
+        wc_MemZero_Init();
+    #endif
 
     #ifdef WOLFSSL_FORCE_MALLOC_FAIL_TEST
         {
@@ -257,6 +264,10 @@ int wolfCrypt_Init(void)
 
     #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_INIT)
         ret = wc_se050_init(NULL);
+        if (ret != 0) {
+            WOLFSSL_MSG("SE050 init failed");
+            return ret;
+        }
     #endif
 
     #ifdef WOLFSSL_ARMASM
@@ -355,6 +366,7 @@ long wolfCrypt_heap_peakBytes_checkpoint(void) {
 #endif
 
 /* return success value is the same as wolfCrypt_Init */
+WOLFSSL_ABI
 int wolfCrypt_Cleanup(void)
 {
     int ret = 0;
@@ -422,6 +434,12 @@ int wolfCrypt_Cleanup(void)
     #endif
     #if defined(WOLFSSL_LINUXKM_SIMD_X86)
         free_wolfcrypt_linuxkm_fpu_states();
+    #endif
+
+    #ifdef WOLFSSL_CHECK_MEM_ZERO
+        /* Free the mutex for access to the list of memory locations that
+         * must be freed. */
+        wc_MemZero_Free();
     #endif
     }
 
@@ -842,7 +860,8 @@ void wc_ReadDirClose(ReadDirCtx* ctx)
     }
 #else
     if (ctx->dir) {
-        closedir(ctx->dir);
+        if (closedir(ctx->dir) < 0)
+            WOLFSSL_MSG("closedir() failed");
         ctx->dir = NULL;
     }
 #endif
@@ -1017,6 +1036,54 @@ size_t wc_strlcat(char *dst, const char *src, size_t dstSize)
     return dstLen + wc_strlcpy(dst + dstLen, src, dstSize - dstLen);
 }
 #endif /* USE_WOLF_STRLCAT */
+
+#ifndef SINGLE_THREADED
+/* TODO: use atomic operations instead of mutex */
+void wolfSSL_RefInit(wolfSSL_Ref* ref, int* err)
+{
+    int ret = wc_InitMutex(&ref->mutex);
+    if (ret != 0) {
+        WOLFSSL_MSG("Failed to create mutex for reference counting!");
+    }
+    ref->count = 1;
+
+    *err = ret;
+}
+
+void wolfSSL_RefFree(wolfSSL_Ref* ref)
+{
+    if (wc_FreeMutex(&ref->mutex) != 0) {
+        WOLFSSL_MSG("Failed to free mutex of reference counting!");
+    }
+}
+
+void wolfSSL_RefInc(wolfSSL_Ref* ref, int* err)
+{
+    int ret = wc_LockMutex(&ref->mutex);
+    if (ret != 0) {
+        WOLFSSL_MSG("Failed to lock mutex for reference increment!");
+    }
+    else {
+        ref->count++;
+        wc_UnLockMutex(&ref->mutex);
+    }
+    *err = ret;
+}
+
+void wolfSSL_RefDec(wolfSSL_Ref* ref, int* isZero, int* err)
+{
+    int ret = wc_LockMutex(&ref->mutex);
+    if (ret != 0) {
+        WOLFSSL_MSG("Failed to lock mutex for reference decrement!");
+    }
+    else {
+        ref->count--;
+        *isZero = (ref->count == 0);
+        wc_UnLockMutex(&ref->mutex);
+    }
+    *err = ret;
+}
+#endif
 
 #if WOLFSSL_CRYPT_HW_MUTEX
 /* Mutex for protection of cryptography hardware */
@@ -1284,7 +1351,7 @@ int wolfSSL_CryptHwMutexUnLock(void)
             return BAD_MUTEX_E;
     }
 
-#elif defined(WOLFSSL_KTHREADS)
+#elif defined(WOLFSSL_LINUXKM)
 
     /* Linux kernel mutex routines are voids, alas. */
 
@@ -2187,6 +2254,39 @@ int wolfSSL_CryptHwMutexUnLock(void)
         return 0;
     }
 
+#elif defined(WOLFSSL_EMBOS)
+
+    int wc_InitMutex(wolfSSL_Mutex* m)
+    {
+        int ret;
+
+        OS_MUTEX_Create((OS_MUTEX*) m);
+        if (m != NULL)
+            ret = 0;
+        else
+            ret = BAD_MUTEX_E;
+
+        return ret;
+    }
+
+    int wc_FreeMutex(wolfSSL_Mutex* m)
+    {
+        OS_MUTEX_Delete((OS_MUTEX*) m);
+        return 0;
+    }
+
+    int wc_LockMutex(wolfSSL_Mutex* m)
+    {
+        OS_MUTEX_LockBlocked((OS_MUTEX*) m);
+        return 0;
+    }
+
+    int wc_UnLockMutex(wolfSSL_Mutex* m)
+    {
+        OS_MUTEX_Unlock((OS_MUTEX*) m);
+        return 0;
+    }
+
 #elif defined(WOLFSSL_USER_MUTEX)
 
     /* Use user own mutex */
@@ -2349,7 +2449,7 @@ time_t pic32_time(time_t* timer)
 
 #endif /* MICROCHIP_TCPIP || MICROCHIP_TCPIP_V5 */
 
-#if defined(WOLFSSL_DEOS)
+#if defined(WOLFSSL_DEOS) || defined(WOLFSSL_DEOS_RTEMS)
 
 time_t deos_time(time_t* timer)
 {
@@ -2366,7 +2466,16 @@ time_t deos_time(time_t* timer)
         return (time_t) *systemTickPtr/systemTickTimeInHz;
     #endif
 }
-#endif /* WOLFSSL_DEOS */
+#endif /* WOLFSSL_DEOS || WOLFSSL_DEOS_RTEMS */
+
+#if defined(FREESCALE_RTC)
+#include "fsl_rtc.h"
+time_t fsl_time(time_t* t)
+{
+    *t = RTC_GetSecondsTimerCount(RTC);
+    return *t;
+}
+#endif
 
 #if defined(MICRIUM)
 
@@ -2562,6 +2671,8 @@ time_t stm32_hal_time(time_t *t1)
     time_t ret;
     RTC_TimeTypeDef time;
     RTC_DateTypeDef date;
+
+    XMEMSET(tm_time, 0, sizeof(struct tm));
 
     /* order of GetTime followed by GetDate required here due to STM32 HW
      * requirement */

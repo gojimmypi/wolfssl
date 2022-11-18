@@ -1,6 +1,6 @@
 /* curve25519.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -665,6 +665,10 @@ int wc_curve25519_init_ex(curve25519_key* key, void* heap, int devId)
     fe_init();
 #endif
 
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    wc_MemZero_Add("wc_curve25519_init_ex key->k", key->k, CURVE25519_KEYSIZE);
+#endif
+
     return 0;
 }
 
@@ -688,6 +692,9 @@ void wc_curve25519_free(curve25519_key* key)
     XMEMSET(&key->p, 0, sizeof(key->p));
     key->pubSet = 0;
     key->privSet = 0;
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    wc_MemZero_Check(key, sizeof(curve25519_key));
+#endif
 }
 
 /* get key size */

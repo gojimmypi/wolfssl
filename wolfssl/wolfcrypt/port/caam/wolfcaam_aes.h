@@ -1,6 +1,6 @@
 /* wolfcaam_aes.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -44,6 +44,9 @@ WOLFSSL_LOCAL int wc_CAAM_AesGcmEncrypt(Aes* aes, const byte* in, byte* out,
 WOLFSSL_LOCAL int wc_CAAM_AesGcmDecrypt(Aes* aes, const byte* in, byte* out,
         word32 sz, const byte* nonce, word32 nonceSz, const byte* authTag,
         word32 authTagSz, const byte* authIn, word32 authInSz);
+
+WOLFSSL_LOCAL int wc_CAAM_AesCtrEncrypt(Aes* aes, byte* out, const byte* in,
+        word32 sz);
 
 WOLFSSL_LOCAL int wc_CAAM_AesCbcEncrypt(Aes* aes, byte* out, const byte* in,
         word32 sz);

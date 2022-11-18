@@ -29,8 +29,8 @@
 [/#list]
 [/#if]
 
-[#-- SWIPdatas is a list of SWIPconfigModel --]  
-[#list SWIPdatas as SWIP]  
+[#-- SWIPdatas is a list of SWIPconfigModel --]
+[#list SWIPdatas as SWIP]
 [#-- Global variables --]
 [#if SWIP.variables??]
 	[#list SWIP.variables as variable]
@@ -40,9 +40,9 @@ extern ${variable.value} ${variable.name};
 
 [#-- Global variables --]
 
-[#assign instName = SWIP.ipName]   
-[#assign fileName = SWIP.fileName]   
-[#assign version = SWIP.version]   
+[#assign instName = SWIP.ipName]
+[#assign fileName = SWIP.fileName]
+[#assign version = SWIP.version]
 
 /**
 	MiddleWare name : ${instName}
@@ -50,9 +50,9 @@ extern ${variable.value} ${variable.name};
 	MiddleWare version : ${version}
 */
 [#if SWIP.defines??]
-	[#list SWIP.defines as definition]	
+	[#list SWIP.defines as definition]
 /*---------- [#if definition.comments??]${definition.comments}[/#if] -----------*/
-#define ${definition.name} #t#t ${definition.value} 
+#define ${definition.name} #t#t ${definition.value}
 [#if definition.description??]${definition.description} [/#if]
 	[/#list]
 [/#if]
@@ -87,7 +87,12 @@ extern ${variable.value} ${variable.name};
     #undef  NO_STM32_CRYPTO
     #define STM32_HAL_V2
     #define HAL_CONSOLE_UART huart2
-    #define STM32_AESGCM_PARTIAL /* allow partial blocks and add auth info (header) */
+#elif defined(STM32F756xx)
+    #define WOLFSSL_STM32F7
+    #undef  NO_STM32_HASH
+    #undef  NO_STM32_CRYPTO
+    #define STM32_HAL_V2
+    #define HAL_CONSOLE_UART huart3
 #elif defined(STM32H753xx)
     #define WOLFSSL_STM32H7
     #undef  NO_STM32_HASH
@@ -135,12 +140,18 @@ extern ${variable.value} ${variable.name};
     #define HAL_CONSOLE_UART huart1
     #define WOLFSSL_STM32U5
     #define STM32_HAL_V2
+    #ifdef STM32U585xx
+        #undef  NO_STM32_HASH
+        #undef  NO_STM32_CRYPTO
+        #define WOLFSSL_STM32_PKA
+    #endif
 #else
     #warning Please define a hardware platform!
     /* This means there is not a pre-defined platform for your board/CPU */
     /* You need to define a CPU type, HW crypto and debug UART */
-    /* CPU Type: WOLFSSL_STM32F1, WOLFSSL_STM32F2, WOLFSSL_STM32F4, 
-        WOLFSSL_STM32F7, WOLFSSL_STM32H7, WOLFSSL_STM32L4 and WOLFSSL_STM32L5 */
+    /* CPU Type: WOLFSSL_STM32F1, WOLFSSL_STM32F2, WOLFSSL_STM32F4,
+        WOLFSSL_STM32F7, WOLFSSL_STM32H7, WOLFSSL_STM32L4, WOLFSSL_STM32L5,
+        WOLFSSL_STM32G0, WOLFSSL_STM32WB and WOLFSSL_STM32U5 */
     #define WOLFSSL_STM32F4
 
     /* Debug UART used for printf */
@@ -191,16 +202,18 @@ extern ${variable.value} ${variable.name};
  * 6=Single Precision C all small
  * 7=Single Precision C all big
  */
-#if defined(WOLF_CONF_MATH) && WOLF_CONF_MATH != 2
-    /* fast (stack) math */
+#if defined(WOLF_CONF_MATH) && WOLF_CONF_MATH == 1
+    /* fast (stack) math - tfm.c */
     #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
 
     /* Optimizations (TFM_ARM, TFM_ASM or none) */
     //#define TFM_NO_ASM
     //#define TFM_ASM
-#endif
-#if defined(WOLF_CONF_MATH) && (WOLF_CONF_MATH >= 3)
+#elif defined(WOLF_CONF_MATH) && WOLF_CONF_MATH == 2
+    /* heap math - integer.c */
+    #define USE_INTEGER_HEAP_MATH
+#elif defined(WOLF_CONF_MATH) && (WOLF_CONF_MATH >= 3)
     /* single precision only */
     #define WOLFSSL_SP
     #if WOLF_CONF_MATH != 7
@@ -388,8 +401,8 @@ extern ${variable.value} ${variable.name};
 /* AES */
 #if defined(WOLF_CONF_AESGCM) && WOLF_CONF_AESGCM == 1
     #define HAVE_AESGCM
-    /* GCM Method: GCM_SMALL, GCM_WORD32 or GCM_TABLE */
-    /* GCM_TABLE is about 4K larger and 3x faster */
+    /* GCM Method: GCM_SMALL, GCM_WORD32, GCM_TABLE or GCM_TABLE_4BIT */
+    /* GCM_TABLE is about 4K larger and 3x faster for GHASH */
     #define GCM_SMALL
     #define HAVE_AES_DECRYPT
 #endif
@@ -399,7 +412,7 @@ extern ${variable.value} ${variable.name};
     #define HAVE_AES_DECRYPT
 #endif
 
-/* Other possible AES modes */    
+/* Other possible AES modes */
 //#define WOLFSSL_AES_COUNTER
 //#define HAVE_AESCCM
 //#define WOLFSSL_AES_XTS

@@ -59,10 +59,6 @@
           (int)_xatoi_res;                              \
         })
 
-    #define WOLFSSL_KTHREADS
-
-    typedef struct mutex wolfSSL_Mutex;
-
     #ifdef BUILDING_WOLFSSL
 
     #if defined(CONFIG_MIPS) && defined(HAVE_LINUXKM_PIE_SUPPORT)
@@ -109,6 +105,13 @@
          */
         #undef USE_SPLIT_PMD_PTLOCKS
         #define USE_SPLIT_PMD_PTLOCKS 0
+
+        #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+            /* without this, static show_free_areas() mm.h brings in direct
+             * reference to unexported __show_free_areas().
+             */
+            #define __show_free_areas my__show_free_areas
+        #endif
     #endif
     #include <linux/mm.h>
     #ifndef SINGLE_THREADED
@@ -271,8 +274,13 @@
         typeof(kvfree) *kvfree;
         #endif
         typeof(is_vmalloc_addr) *is_vmalloc_addr;
-        typeof(kmem_cache_alloc_trace) *kmem_cache_alloc_trace;
-        typeof(kmalloc_order_trace) *kmalloc_order_trace;
+
+        #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+            typeof(kmalloc_trace) *kmalloc_trace;
+        #else
+            typeof(kmem_cache_alloc_trace) *kmem_cache_alloc_trace;
+            typeof(kmalloc_order_trace) *kmalloc_order_trace;
+        #endif
 
         typeof(get_random_bytes) *get_random_bytes;
         #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
@@ -406,8 +414,12 @@
         #define kvfree (wolfssl_linuxkm_get_pie_redirect_table()->kvfree)
     #endif
     #define is_vmalloc_addr (wolfssl_linuxkm_get_pie_redirect_table()->is_vmalloc_addr)
-    #define kmem_cache_alloc_trace (wolfssl_linuxkm_get_pie_redirect_table()->kmem_cache_alloc_trace)
-    #define kmalloc_order_trace (wolfssl_linuxkm_get_pie_redirect_table()->kmalloc_order_trace)
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+        #define kmalloc_trace (wolfssl_linuxkm_get_pie_redirect_table()->kmalloc_trace)
+    #else
+        #define kmem_cache_alloc_trace (wolfssl_linuxkm_get_pie_redirect_table()->kmem_cache_alloc_trace)
+        #define kmalloc_order_trace (wolfssl_linuxkm_get_pie_redirect_table()->kmalloc_order_trace)
+    #endif
 
     #define get_random_bytes (wolfssl_linuxkm_get_pie_redirect_table()->get_random_bytes)
     #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
@@ -577,6 +589,13 @@
     #define NO_TIMEVAL 1
 
     #endif /* BUILDING_WOLFSSL */
+
+    /* if BUILDING_WOLFSSL, mutex.h will have already been included recursively
+     * above, with the bevy of warnings suppressed, and the below include will
+     * be a redundant no-op.
+     */
+    #include <linux/mutex.h>
+    typedef struct mutex wolfSSL_Mutex;
 
     #define XMALLOC(s, h, t)     ({(void)(h); (void)(t); kmalloc(s, GFP_KERNEL);})
     #define XFREE(p, h, t)       ({void* _xp; (void)(h); _xp = (p); if(_xp) kfree(_xp);})

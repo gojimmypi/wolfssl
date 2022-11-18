@@ -1,6 +1,6 @@
 /* falcon.h
  *
- * Copyright (C) 2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -124,6 +124,17 @@ WOLFSSL_API
 int wc_falcon_pub_size(falcon_key* key);
 WOLFSSL_API
 int wc_falcon_sig_size(falcon_key* key);
+
+WOLFSSL_API int wc_Falcon_PrivateKeyDecode(const byte* input, word32* inOutIdx,
+                                           falcon_key* key, word32 inSz);
+WOLFSSL_API int wc_Falcon_PublicKeyDecode(const byte* input, word32* inOutIdx,
+                                          falcon_key* key, word32 inSz);
+WOLFSSL_API int wc_Falcon_KeyToDer(falcon_key* key, byte* output,
+                                   word32 inLen);
+WOLFSSL_API int wc_Falcon_PrivateKeyToDer(falcon_key* key, byte* output,
+                                          word32 inLen);
+WOLFSSL_API int wc_Falcon_PublicKeyToDer(falcon_key* key, byte* output,
+                                         word32 inLen, int withAlg);
 
 #ifdef __cplusplus
     }    /* extern "C" */

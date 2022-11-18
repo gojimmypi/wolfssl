@@ -1,6 +1,6 @@
 /* logging.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -318,6 +318,10 @@ void WOLFSSL_TIME(int count)
     int dc_log_printf(char*, ...);
 #endif
 
+#ifdef HAVE_STACK_SIZE_VERBOSE
+#include <wolfssl/wolfcrypt/mem_track.h>
+#endif
+
 static void wolfssl_log(const int logLevel, const char *const logMessage)
 {
     if (log_function)
@@ -359,6 +363,9 @@ static void wolfssl_log(const int logLevel, const char *const logMessage)
         printk("%s\n", logMessage);
 #elif defined(WOLFSSL_RENESAS_RA6M4)
         myprintf("%s\n", logMessage);
+#elif defined(STACK_SIZE_CHECKPOINT_MSG) && \
+      defined(HAVE_STACK_SIZE_VERBOSE) && defined(HAVE_STACK_SIZE_VERBOSE_LOG)
+        STACK_SIZE_CHECKPOINT_MSG(logMessage);
 #else
         fprintf(stderr, "%s\n", logMessage);
 #endif
@@ -502,7 +509,7 @@ void WOLFSSL_ERROR(int error)
 
         if (wc_LockMutex(&debug_mutex) != 0) {
             WOLFSSL_MSG("Lock debug mutex failed");
-            XSNPRINTF(buffer, sizeof(buffer),
+            (void)XSNPRINTF(buffer, sizeof(buffer),
                     "wolfSSL error occurred, error = %d", error);
         }
         else {
@@ -513,7 +520,7 @@ void WOLFSSL_ERROR(int error)
             #endif
             if (error < 0)
                 error = error - (2 * error); /* get absolute value */
-            XSNPRINTF(buffer, sizeof(buffer),
+            (void)XSNPRINTF(buffer, sizeof(buffer),
                     "wolfSSL error occurred, error = %d line:%u file:%s",
                     error, line, file);
 
@@ -525,7 +532,7 @@ void WOLFSSL_ERROR(int error)
             #if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
             }
             else {
-                XSNPRINTF(buffer, sizeof(buffer),
+                (void)XSNPRINTF(buffer, sizeof(buffer),
                     "wolfSSL error occurred, error = %d", error);
             }
             #endif
@@ -533,7 +540,7 @@ void WOLFSSL_ERROR(int error)
             wc_UnLockMutex(&debug_mutex);
         }
     #else
-        XSNPRINTF(buffer, sizeof(buffer),
+        (void)XSNPRINTF(buffer, sizeof(buffer),
                 "wolfSSL error occurred, error = %d", error);
     #endif
 
@@ -929,7 +936,8 @@ int wc_ERR_remove_state(void)
 static int wc_ERR_dump_to_file (const char *str, size_t len, void *u)
 {
     XFILE fp = (XFILE ) u;
-    fprintf(fp, "%-*.*s\n", (int)len, (int)len, str);
+    if (fprintf(fp, "%-*.*s\n", (int)len, (int)len, str) < 0)
+        return IO_FAILED_E;
     return 0;
 }
 

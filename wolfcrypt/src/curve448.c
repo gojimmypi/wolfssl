@@ -1,6 +1,6 @@
 /* curve448.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -684,6 +684,10 @@ int wc_curve448_init(curve448_key* key)
         XMEMSET(key, 0, sizeof(*key));
 
         fe448_init();
+
+    #ifdef WOLFSSL_CHECK_MEM_ZERO
+        wc_MemZero_Add("wc_curve448_init key->k", &key->k, CURVE448_KEY_SIZE);
+    #endif
     }
 
     return ret;
@@ -701,6 +705,9 @@ void wc_curve448_free(curve448_key* key)
         XMEMSET(key->p, 0, sizeof(key->p));
         key->pubSet = 0;
         key->privSet = 0;
+    #ifdef WOLFSSL_CHECK_MEM_ZERO
+        wc_MemZero_Check(key, sizeof(curve448_key));
+    #endif
     }
 }
 

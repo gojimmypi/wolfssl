@@ -22,6 +22,8 @@ nobase_include_HEADERS+= \
                          wolfssl/wolfcrypt/curve448.h \
                          wolfssl/wolfcrypt/ed448.h \
                          wolfssl/wolfcrypt/falcon.h \
+                         wolfssl/wolfcrypt/dilithium.h \
+                         wolfssl/wolfcrypt/sphincs.h \
                          wolfssl/wolfcrypt/fe_448.h \
                          wolfssl/wolfcrypt/ge_448.h \
                          wolfssl/wolfcrypt/eccsi.h \
@@ -69,7 +71,10 @@ nobase_include_HEADERS+= \
                          wolfssl/wolfcrypt/sha3.h \
                          wolfssl/wolfcrypt/siphash.h \
                          wolfssl/wolfcrypt/cpuid.h \
-                         wolfssl/wolfcrypt/cryptocb.h
+                         wolfssl/wolfcrypt/cryptocb.h \
+                         wolfssl/wolfcrypt/kyber.h \
+                         wolfssl/wolfcrypt/wc_kyber.h \
+                         wolfssl/wolfcrypt/ext_kyber.h
 
 noinst_HEADERS+= \
                          wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h \
@@ -78,8 +83,9 @@ noinst_HEADERS+= \
                          wolfssl/wolfcrypt/port/nrf51.h \
                          wolfssl/wolfcrypt/port/nxp/ksdk_port.h \
                          wolfssl/wolfcrypt/port/nxp/dcp_port.h \
-                         wolfssl/wolfcrypt/port/nxp/se050_port.h \
                          wolfssl/wolfcrypt/port/xilinx/xil-sha3.h \
+                         wolfssl/wolfcrypt/port/xilinx/xil-versal-glue.h \
+                         wolfssl/wolfcrypt/port/xilinx/xil-versal-trng.h \
                          wolfssl/wolfcrypt/port/caam/caam_driver.h \
                          wolfssl/wolfcrypt/port/caam/caam_error.h \
                          wolfssl/wolfcrypt/port/caam/caam_qnx.h \
@@ -95,6 +101,7 @@ noinst_HEADERS+= \
                          wolfssl/wolfcrypt/port/Renesas/renesas-sce-crypt.h \
                          wolfssl/wolfcrypt/port/Renesas/renesas_sync.h \
                          wolfssl/wolfcrypt/port/Renesas/renesas_cmn.h \
+                         wolfssl/wolfcrypt/port/Renesas/renesas_tsip_types.h \
                          wolfssl/wolfcrypt/port/cypress/psoc6_crypto.h
 
 if BUILD_CRYPTOAUTHLIB
@@ -148,6 +155,10 @@ endif
 if BUILD_SP
 nobase_include_HEADERS+= wolfssl/wolfcrypt/sp.h
 nobase_include_HEADERS+= wolfssl/wolfcrypt/sp_int.h
+else
+if BUILD_SP_INT
+nobase_include_HEADERS+= wolfssl/wolfcrypt/sp_int.h
+endif
 endif
 
 if BUILD_SELFTEST
@@ -179,4 +190,8 @@ endif
 
 if BUILD_PSA
 nobase_include_HEADERS+= wolfssl/wolfcrypt/port/psa/psa.h
+endif
+
+if BUILD_SE050
+nobase_include_HEADERS+= wolfssl/wolfcrypt/port/nxp/se050_port.h
 endif

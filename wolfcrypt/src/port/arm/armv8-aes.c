@@ -1,6 +1,6 @@
 /* armv8-aes.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -34,9 +34,11 @@
 
 #if !defined(NO_AES) && defined(WOLFSSL_ARMASM)
 
-#ifdef HAVE_FIPS
-#undef HAVE_FIPS
+#if defined(HAVE_FIPS) && !defined(FIPS_NO_WRAPPERS)
+#define FIPS_NO_WRAPPERS
 #endif
+
+#ifndef WOLFSSL_ARMASM_NO_HW_CRYPTO
 
 #include <wolfssl/wolfcrypt/aes.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
@@ -888,536 +890,568 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
 /* AES-CTR */
 #ifdef WOLFSSL_AES_COUNTER
-
-        /* Increment AES counter */
-        static WC_INLINE void IncrementAesCounter(byte* inOutCtr)
-        {
-            int i;
-
-            /* in network byte order so start at end and work back */
-            for (i = AES_BLOCK_SIZE - 1; i >= 0; i--) {
-                if (++inOutCtr[i])  /* we're done unless we overflow */
-                    return;
-            }
-        }
-
-        int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
-        {
-            byte* tmp;
-            word32 numBlocks;
-
-            if (aes == NULL || out == NULL || in == NULL) {
-                return BAD_FUNC_ARG;
-            }
-
-            tmp = (byte*)aes->tmp + AES_BLOCK_SIZE - aes->left;
-
-            /* consume any unused bytes left in aes->tmp */
-            while (aes->left && sz) {
-               *(out++) = *(in++) ^ *(tmp++);
-               aes->left--;
-               sz--;
-            }
-
-            /* do as many block size ops as possible */
-            numBlocks = sz/AES_BLOCK_SIZE;
-            if (numBlocks > 0) {
-                /* pointer needed because it is incremented when read, causing
-                 * an issue with call to encrypt/decrypt leftovers */
-                byte*  keyPt  = (byte*)aes->key;
-                sz           -= numBlocks * AES_BLOCK_SIZE;
-                switch(aes->rounds) {
+static void wc_aes_ctr_encrypt_asm(Aes* aes, byte* out, const byte* in,
+                                   byte* keyPt, word32 numBlocks)
+{
+    switch(aes->rounds) {
 #ifdef WOLFSSL_AES_128
-                case 10: /* AES 128 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV w11, %w[blocks] \n"
-                    "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
+    case 10: /* AES 128 BLOCK */
+        __asm__ __volatile__ (
+        "MOV w11, %w[blocks] \n"
+        "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
 
-                    "#Create vector with the value 1  \n"
-                    "MOVI v15.16b, #1                 \n"
-                    "USHR v15.2d, v15.2d, #56         \n"
-                    "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
-                    "EOR v14.16b, v14.16b, v14.16b    \n"
-                    "EXT v14.16b, v15.16b, v14.16b, #8\n"
+        "#Create vector with the value 1  \n"
+        "MOVI v15.16b, #1                 \n"
+        "USHR v15.2d, v15.2d, #56         \n"
+        "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
+        "EOR v14.16b, v14.16b, v14.16b    \n"
+        "EXT v14.16b, v15.16b, v14.16b, #8\n"
 
-                    "LD1 {v9.2d-v11.2d}, [%[Key]], #48\n"
-                    "LD1 {v13.2d}, %[reg]             \n"
+        "LD1 {v9.2d-v11.2d}, [%[Key]], #48\n"
+        "LD1 {v13.2d}, %[reg]             \n"
 
-                    /* double block */
-                    "1:      \n"
-                    "CMP w11, #1 \n"
-                    "BEQ 2f    \n"
-                    "CMP w11, #0 \n"
-                    "BEQ 3f    \n"
+        /* double block */
+        "1:      \n"
+        "CMP w11, #1 \n"
+        "BEQ 2f    \n"
+        "CMP w11, #0 \n"
+        "BEQ 3f    \n"
 
-                    "MOV v0.16b, v13.16b  \n"
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v13.16b, v13.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v13.16b, v13.16b, v13.16b, #8 \n"
-                    "SUB w11, w11, #2     \n"
-                    "ADD v15.2d, v13.2d, v14.2d \n" /* add 1 to counter */
-                    "ADD v13.2d, v15.2d, v14.2d \n" /* add 1 to counter */
+        "MOV v0.16b, v13.16b  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v13.16b, v13.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v13.16b, v13.16b, v13.16b, #8 \n"
+        "SUB w11, w11, #2     \n"
+        "ADD v15.2d, v13.2d, v14.2d \n" /* add 1 to counter */
+        "CMEQ v12.2d, v15.2d, #0 \n"
+        "EXT v12.16b, v14.16b, v12.16b, #8 \n"
+        "SUB v15.2d, v15.2d, v12.2d \n"
+        "ADD v13.2d, v15.2d, v14.2d \n" /* add 1 to counter */
+        "CMEQ v12.2d, v13.2d, #0 \n"
+        "EXT v12.16b, v14.16b, v12.16b, #8 \n"
+        "SUB v13.2d, v13.2d, v12.2d \n"
 
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v15.16b, v15.16b, v15.16b, #8 \n"
-                    "EXT v13.16b, v13.16b, v13.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v15.16b, v15.16b, v15.16b, #8 \n"
+        "EXT v13.16b, v13.16b, v13.16b, #8 \n"
 
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v15.16b, v15.16b \n" /* revert from network order */
-                    "REV64 v13.16b, v13.16b \n" /* revert from network order */
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v15.16b, v15.16b \n" /* revert from network order */
+        "REV64 v13.16b, v13.16b \n" /* revert from network order */
 
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v15.16b, v1.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v15.16b, v1.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v15.16b, v2.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v15.16b, v2.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v15.16b, v3.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v15.16b, v3.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v15.16b, v4.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v15.16b, v4.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v15.16b, v5.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v15.16b, v5.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "AESE v0.16b, v10.16b  \n"
-                    "AESE v15.16b, v6.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "AESE v0.16b, v10.16b  \n"
+        "AESE v15.16b, v6.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "EOR v0.16b, v0.16b, v11.16b \n"
-                    "AESE v15.16b, v7.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "EOR v0.16b, v0.16b, v11.16b \n"
+        "AESE v15.16b, v7.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "LD1 {v12.2d}, [%[input]], #16  \n"
-                    "AESE v15.16b, v8.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "LD1 {v12.2d}, [%[input]], #16  \n"
+        "AESE v15.16b, v8.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "EOR v0.16b, v0.16b, v12.16b \n"
-                    "AESE v15.16b, v9.16b  \n"
-                    "AESMC v15.16b, v15.16b \n"
+        "EOR v0.16b, v0.16b, v12.16b \n"
+        "AESE v15.16b, v9.16b  \n"
+        "AESMC v15.16b, v15.16b \n"
 
-                    "LD1 {v12.2d}, [%[input]], #16  \n"
-                    "AESE v15.16b, v10.16b  \n"
-                    "ST1 {v0.2d}, [%[out]], #16  \n"
-                    "EOR v15.16b, v15.16b, v11.16b \n"
-                    "EOR v15.16b, v15.16b, v12.16b \n"
-                    "ST1 {v15.2d}, [%[out]], #16  \n"
+        "LD1 {v12.2d}, [%[input]], #16  \n"
+        "AESE v15.16b, v10.16b  \n"
+        "ST1 {v0.2d}, [%[out]], #16  \n"
+        "EOR v15.16b, v15.16b, v11.16b \n"
+        "EOR v15.16b, v15.16b, v12.16b \n"
+        "ST1 {v15.2d}, [%[out]], #16  \n"
 
-                    "B 1b \n"
+        "B 1b \n"
 
-                    /* single block */
-                    "2: \n"
-                    "MOV v0.16b, v13.16b  \n"
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v13.16b, v13.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v13.16b, v13.16b, v13.16b, #8 \n"
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "ADD v13.2d, v13.2d, v14.2d \n" /* add 1 to counter */
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "SUB w11, w11, #1     \n"
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v13.16b, v13.16b, v13.16b, #8 \n"
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v13.16b, v13.16b \n" /* revert from network order */
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v10.16b \n"
-                    "EOR v0.16b, v0.16b, v11.16b \n"
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "LD1 {v12.2d}, [%[input]], #16  \n"
-                    "EOR v0.16b, v0.16b, v12.16b \n"
-                    "ST1 {v0.2d}, [%[out]], #16  \n"
+        /* single block */
+        "2: \n"
+        "MOV v0.16b, v13.16b  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v13.16b, v13.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v13.16b, v13.16b, v13.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "ADD v13.2d, v13.2d, v14.2d \n" /* add 1 to counter */
+        "CMEQ v15.2d, v13.2d, #0 \n"
+        "EXT v15.16b, v14.16b, v15.16b, #8 \n"
+        "SUB v13.2d, v13.2d, v15.2d \n"
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "SUB w11, w11, #1     \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v13.16b, v13.16b, v13.16b, #8 \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v13.16b, v13.16b \n" /* revert from network order */
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v10.16b \n"
+        "EOR v0.16b, v0.16b, v11.16b \n"
+        "#CTR operations, increment counter and xorbuf \n"
+        "LD1 {v12.2d}, [%[input]], #16  \n"
+        "EOR v0.16b, v0.16b, v12.16b \n"
+        "ST1 {v0.2d}, [%[out]], #16  \n"
 
-                    "3: \n"
-                    "#store current counter value at the end \n"
-                    "ST1 {v13.2d}, %[regOut]   \n"
+        "3: \n"
+        "#store current counter value at the end \n"
+        "ST1 {v13.2d}, %[regOut]   \n"
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
-                    : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
-                    "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15"
-                    );
-                    break;
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
+        : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
+        "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15"
+        );
+        break;
 #endif /* WOLFSSL_AES_128 */
 #ifdef WOLFSSL_AES_192
-                case 12: /* AES 192 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV w11, %w[blocks]              \n"
-                    "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
+    case 12: /* AES 192 BLOCK */
+        __asm__ __volatile__ (
+        "MOV w11, %w[blocks]              \n"
+        "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
 
-                    "#Create vector with the value 1  \n"
-                    "MOVI v16.16b, #1                 \n"
-                    "USHR v16.2d, v16.2d, #56         \n"
-                    "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
-                    "EOR v14.16b, v14.16b, v14.16b    \n"
-                    "EXT v16.16b, v16.16b, v14.16b, #8\n"
+        "#Create vector with the value 1  \n"
+        "MOVI v16.16b, #1                 \n"
+        "USHR v16.2d, v16.2d, #56         \n"
+        "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
+        "EOR v14.16b, v14.16b, v14.16b    \n"
+        "EXT v16.16b, v16.16b, v14.16b, #8\n"
 
-                    "LD1 {v9.2d-v12.2d}, [%[Key]], #64\n"
-                    "LD1 {v15.2d}, %[reg]             \n"
-                    "LD1 {v13.16b}, [%[Key]], #16     \n"
+        "LD1 {v9.2d-v12.2d}, [%[Key]], #64\n"
+        "LD1 {v15.2d}, %[reg]             \n"
+        "LD1 {v13.16b}, [%[Key]], #16     \n"
 
-                    /* double block */
-                    "1:      \n"
-                    "CMP w11, #1 \n"
-                    "BEQ 2f    \n"
-                    "CMP w11, #0 \n"
-                    "BEQ 3f    \n"
+        /* double block */
+        "1:      \n"
+        "CMP w11, #1 \n"
+        "BEQ 2f    \n"
+        "CMP w11, #0 \n"
+        "BEQ 3f    \n"
 
-                    "MOV v0.16b, v15.16b  \n"
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v15.16b, v15.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v15.16b, v15.16b, v15.16b, #8 \n"
-                    "SUB w11, w11, #2     \n"
-                    "ADD v17.2d, v15.2d, v16.2d \n" /* add 1 to counter */
-                    "ADD v15.2d, v17.2d, v16.2d \n" /* add 1 to counter */
+        "MOV v0.16b, v15.16b  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v15.16b, v15.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v15.16b, v15.16b, v15.16b, #8 \n"
+        "SUB w11, w11, #2     \n"
+        "ADD v17.2d, v15.2d, v16.2d \n" /* add 1 to counter */
+        "CMEQ v14.2d, v17.2d, #0 \n"
+        "EXT v14.16b, v16.16b, v14.16b, #8 \n"
+        "SUB v17.2d, v17.2d, v14.2d \n"
+        "ADD v15.2d, v17.2d, v16.2d \n" /* add 1 to counter */
+        "CMEQ v14.2d, v15.2d, #0 \n"
+        "EXT v14.16b, v16.16b, v14.16b, #8 \n"
+        "SUB v15.2d, v15.2d, v14.2d \n"
 
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v17.16b, v17.16b, v17.16b, #8 \n"
-                    "EXT v15.16b, v15.16b, v15.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v17.16b, v17.16b, v17.16b, #8 \n"
+        "EXT v15.16b, v15.16b, v15.16b, #8 \n"
 
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v17.16b, v17.16b \n" /* revert from network order */
-                    "REV64 v15.16b, v15.16b \n" /* revert from network order */
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v17.16b, v17.16b \n" /* revert from network order */
+        "REV64 v15.16b, v15.16b \n" /* revert from network order */
 
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v1.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v1.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v2.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v2.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v3.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v3.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v4.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v4.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v5.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v5.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v10.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v6.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v10.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v6.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v11.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v17.16b, v7.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v11.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v17.16b, v7.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "AESE v0.16b, v12.16b  \n"
-                    "AESE v17.16b, v8.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "AESE v0.16b, v12.16b  \n"
+        "AESE v17.16b, v8.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "EOR v0.16b, v0.16b, v13.16b \n"
-                    "AESE v17.16b, v9.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "EOR v0.16b, v0.16b, v13.16b \n"
+        "AESE v17.16b, v9.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "LD1 {v14.2d}, [%[input]], #16  \n"
-                    "AESE v17.16b, v10.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "LD1 {v14.2d}, [%[input]], #16  \n"
+        "AESE v17.16b, v10.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "EOR v0.16b, v0.16b, v14.16b \n"
-                    "AESE v17.16b, v11.16b  \n"
-                    "AESMC v17.16b, v17.16b \n"
+        "EOR v0.16b, v0.16b, v14.16b \n"
+        "AESE v17.16b, v11.16b  \n"
+        "AESMC v17.16b, v17.16b \n"
 
-                    "LD1 {v14.2d}, [%[input]], #16  \n"
-                    "AESE v17.16b, v12.16b  \n"
-                    "ST1 {v0.2d}, [%[out]], #16  \n"
-                    "EOR v17.16b, v17.16b, v13.16b \n"
-                    "EOR v17.16b, v17.16b, v14.16b \n"
-                    "ST1 {v17.2d}, [%[out]], #16  \n"
+        "LD1 {v14.2d}, [%[input]], #16  \n"
+        "AESE v17.16b, v12.16b  \n"
+        "ST1 {v0.2d}, [%[out]], #16  \n"
+        "EOR v17.16b, v17.16b, v13.16b \n"
+        "EOR v17.16b, v17.16b, v14.16b \n"
+        "ST1 {v17.2d}, [%[out]], #16  \n"
 
-                    "B 1b \n"
+        "B 1b \n"
 
-                    "2:      \n"
-                    "LD1 {v14.2d}, [%[input]], #16    \n"
-                    "MOV v0.16b, v15.16b  \n"
+        "2:      \n"
+        "LD1 {v14.2d}, [%[input]], #16    \n"
+        "MOV v0.16b, v15.16b  \n"
 
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v15.16b, v15.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v15.16b, v15.16b, v15.16b, #8 \n"
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "ADD v15.2d, v15.2d, v16.2d \n" /* add 1 to counter */
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "SUB w11, w11, #1     \n"
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v15.16b, v15.16b, v15.16b, #8 \n"
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v15.16b, v15.16b \n" /* revert from network order */
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v10.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v11.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v12.16b \n"
-                    "EOR v0.16b, v0.16b, v13.16b \n"
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "EOR v0.16b, v0.16b, v14.16b \n"
-                    "ST1 {v0.2d}, [%[out]], #16  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v15.16b, v15.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v15.16b, v15.16b, v15.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "ADD v15.2d, v15.2d, v16.2d \n" /* add 1 to counter */
+        "CMEQ v17.2d, v15.2d, #0 \n"
+        "EXT v17.16b, v16.16b, v17.16b, #8 \n"
+        "SUB v15.2d, v15.2d, v17.2d \n"
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "SUB w11, w11, #1     \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v15.16b, v15.16b, v15.16b, #8 \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v15.16b, v15.16b \n" /* revert from network order */
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v10.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v11.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v12.16b \n"
+        "EOR v0.16b, v0.16b, v13.16b \n"
+        "#CTR operations, increment counter and xorbuf \n"
+        "EOR v0.16b, v0.16b, v14.16b \n"
+        "ST1 {v0.2d}, [%[out]], #16  \n"
 
-                    "3: \n"
-                    "#store current counter value at the end \n"
-                    "ST1 {v15.2d}, %[regOut] \n"
+        "3: \n"
+        "#store current counter value at the end \n"
+        "ST1 {v15.2d}, %[regOut] \n"
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
-                    : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
-                    "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15",
-                    "v16", "v17"
-                    );
-                    break;
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
+        : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
+        "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15",
+        "v16", "v17"
+        );
+        break;
 #endif /* WOLFSSL_AES_192 */
 #ifdef WOLFSSL_AES_256
-                case 14: /* AES 256 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV w11, %w[blocks] \n"
-                    "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
+    case 14: /* AES 256 BLOCK */
+        __asm__ __volatile__ (
+        "MOV w11, %w[blocks] \n"
+        "LD1 {v1.2d-v4.2d}, [%[Key]], #64 \n"
 
-                    "#Create vector with the value 1  \n"
-                    "MOVI v18.16b, #1                 \n"
-                    "USHR v18.2d, v18.2d, #56         \n"
-                    "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
-                    "EOR v19.16b, v19.16b, v19.16b    \n"
-                    "EXT v18.16b, v18.16b, v19.16b, #8\n"
+        "#Create vector with the value 1  \n"
+        "MOVI v18.16b, #1                 \n"
+        "USHR v18.2d, v18.2d, #56         \n"
+        "LD1 {v5.2d-v8.2d}, [%[Key]], #64 \n"
+        "EOR v19.16b, v19.16b, v19.16b    \n"
+        "EXT v18.16b, v18.16b, v19.16b, #8\n"
 
-                    "LD1 {v9.2d-v12.2d}, [%[Key]], #64  \n"
-                    "LD1 {v13.2d-v15.2d}, [%[Key]], #48 \n"
-                    "LD1 {v17.2d}, %[reg]               \n"
+        "LD1 {v9.2d-v12.2d}, [%[Key]], #64  \n"
+        "LD1 {v13.2d-v15.2d}, [%[Key]], #48 \n"
+        "LD1 {v17.2d}, %[reg]               \n"
 
-                    /* double block */
-                    "1:      \n"
-                    "CMP w11, #1 \n"
-                    "BEQ 2f    \n"
-                    "CMP w11, #0 \n"
-                    "BEQ 3f    \n"
+        /* double block */
+        "1:      \n"
+        "CMP w11, #1 \n"
+        "BEQ 2f    \n"
+        "CMP w11, #0 \n"
+        "BEQ 3f    \n"
 
-                    "MOV v0.16b, v17.16b  \n"
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v17.16b, v17.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v17.16b, v17.16b, v17.16b, #8 \n"
-                    "SUB w11, w11, #2     \n"
-                    "ADD v19.2d, v17.2d, v18.2d \n" /* add 1 to counter */
-                    "ADD v17.2d, v19.2d, v18.2d \n" /* add 1 to counter */
+        "MOV v0.16b, v17.16b  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v17.16b, v17.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v17.16b, v17.16b, v17.16b, #8 \n"
+        "SUB w11, w11, #2     \n"
+        "ADD v19.2d, v17.2d, v18.2d \n" /* add 1 to counter */
+        "CMEQ v16.2d, v19.2d, #0 \n"
+        "EXT v16.16b, v18.16b, v16.16b, #8 \n"
+        "SUB v19.2d, v19.2d, v16.2d \n"
+        "ADD v17.2d, v19.2d, v18.2d \n" /* add 1 to counter */
+        "CMEQ v16.2d, v17.2d, #0 \n"
+        "EXT v16.16b, v18.16b, v16.16b, #8 \n"
+        "SUB v17.2d, v17.2d, v16.2d \n"
 
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v19.16b, v19.16b, v19.16b, #8 \n"
-                    "EXT v17.16b, v17.16b, v17.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v19.16b, v19.16b, v19.16b, #8 \n"
+        "EXT v17.16b, v17.16b, v17.16b, #8 \n"
 
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v19.16b, v19.16b \n" /* revert from network order */
-                    "REV64 v17.16b, v17.16b \n" /* revert from network order */
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v19.16b, v19.16b \n" /* revert from network order */
+        "REV64 v17.16b, v17.16b \n" /* revert from network order */
 
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v1.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v1.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v2.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v2.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v3.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v3.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v4.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v4.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v5.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v5.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v10.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v6.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v10.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v6.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v11.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v7.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v11.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v7.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v12.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v8.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v12.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v8.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v13.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v19.16b, v9.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v13.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v19.16b, v9.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "AESE v0.16b, v14.16b  \n"
-                    "AESE v19.16b, v10.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "AESE v0.16b, v14.16b  \n"
+        "AESE v19.16b, v10.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "EOR v0.16b, v0.16b, v15.16b \n"
-                    "AESE v19.16b, v11.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "EOR v0.16b, v0.16b, v15.16b \n"
+        "AESE v19.16b, v11.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "LD1 {v16.2d}, [%[input]], #16 \n"
-                    "AESE v19.16b, v12.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "LD1 {v16.2d}, [%[input]], #16 \n"
+        "AESE v19.16b, v12.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "EOR v0.16b, v0.16b, v16.16b \n"
-                    "AESE v19.16b, v13.16b  \n"
-                    "AESMC v19.16b, v19.16b \n"
+        "EOR v0.16b, v0.16b, v16.16b \n"
+        "AESE v19.16b, v13.16b  \n"
+        "AESMC v19.16b, v19.16b \n"
 
-                    "LD1 {v16.2d}, [%[input]], #16 \n"
-                    "AESE v19.16b, v14.16b  \n"
-                    "ST1 {v0.2d}, [%[out]], #16  \n"
-                    "EOR v19.16b, v19.16b, v15.16b \n"
-                    "EOR v19.16b, v19.16b, v16.16b \n"
-                    "ST1 {v19.2d}, [%[out]], #16  \n"
+        "LD1 {v16.2d}, [%[input]], #16 \n"
+        "AESE v19.16b, v14.16b  \n"
+        "ST1 {v0.2d}, [%[out]], #16  \n"
+        "EOR v19.16b, v19.16b, v15.16b \n"
+        "EOR v19.16b, v19.16b, v16.16b \n"
+        "ST1 {v19.2d}, [%[out]], #16  \n"
 
-                    "B 1b \n"
+        "B 1b \n"
 
-                    "2:      \n"
-                    "LD1 {v16.2d}, [%[input]], #16 \n"
-                    "MOV v0.16b, v17.16b  \n"
-                    "AESE v0.16b, v1.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v17.16b, v17.16b \n" /* network order */
-                    "AESE v0.16b, v2.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v17.16b, v17.16b, v17.16b, #8 \n"
-                    "AESE v0.16b, v3.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "ADD v17.2d, v17.2d, v18.2d \n" /* add 1 to counter */
-                    "AESE v0.16b, v4.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v5.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "EXT v17.16b, v17.16b, v17.16b, #8 \n"
-                    "AESE v0.16b, v6.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "REV64 v17.16b, v17.16b \n" /* revert from network order */
-                    "AESE v0.16b, v7.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v8.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v9.16b  \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v10.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v11.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v12.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v13.16b \n"
-                    "AESMC v0.16b, v0.16b \n"
-                    "AESE v0.16b, v14.16b \n"
-                    "EOR v0.16b, v0.16b, v15.16b \n"
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "EOR v0.16b, v0.16b, v16.16b \n"
-                    "ST1 {v0.2d}, [%[out]], #16 \n"
+        "2:      \n"
+        "LD1 {v16.2d}, [%[input]], #16 \n"
+        "MOV v0.16b, v17.16b  \n"
+        "AESE v0.16b, v1.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v17.16b, v17.16b \n" /* network order */
+        "AESE v0.16b, v2.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v17.16b, v17.16b, v17.16b, #8 \n"
+        "AESE v0.16b, v3.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "ADD v17.2d, v17.2d, v18.2d \n" /* add 1 to counter */
+        "CMEQ v19.2d, v17.2d, #0 \n"
+        "EXT v19.16b, v18.16b, v19.16b, #8 \n"
+        "SUB v17.2d, v17.2d, v19.2d \n"
+        "AESE v0.16b, v4.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v5.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "EXT v17.16b, v17.16b, v17.16b, #8 \n"
+        "AESE v0.16b, v6.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "REV64 v17.16b, v17.16b \n" /* revert from network order */
+        "AESE v0.16b, v7.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v8.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v9.16b  \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v10.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v11.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v12.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v13.16b \n"
+        "AESMC v0.16b, v0.16b \n"
+        "AESE v0.16b, v14.16b \n"
+        "EOR v0.16b, v0.16b, v15.16b \n"
+        "#CTR operations, increment counter and xorbuf \n"
+        "EOR v0.16b, v0.16b, v16.16b \n"
+        "ST1 {v0.2d}, [%[out]], #16 \n"
 
-                    "3: \n"
-                    "#store current counter value at the end \n"
-                    "ST1 {v17.2d}, %[regOut] \n"
+        "3: \n"
+        "#store current counter value at the end \n"
+        "ST1 {v17.2d}, %[regOut] \n"
 
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
-                    : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
-                    "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15",
-                    "v16", "v17", "v18", "v19"
-                    );
-                    break;
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=m" (aes->reg),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "m" (aes->reg)
+        : "cc", "memory", "w11", "v0", "v1", "v2", "v3", "v4", "v5",
+        "v6", "v7", "v8", "v9", "v10","v11","v12","v13","v14","v15",
+        "v16", "v17", "v18", "v19"
+        );
+        break;
 #endif /* WOLFSSL_AES_256 */
-                default:
-                    WOLFSSL_MSG("Bad AES-CTR round value");
-                    return BAD_FUNC_ARG;
-                }
+    }
+}
 
-                aes->left = 0;
-            }
+int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+{
+    byte* tmp;
+    word32 numBlocks;
 
-            /* handle non block size remaining */
-            if (sz) {
-                wc_AesEncrypt(aes, (byte*)aes->reg, (byte*)aes->tmp);
-                IncrementAesCounter((byte*)aes->reg);
+    if (aes == NULL || out == NULL || in == NULL) {
+        return BAD_FUNC_ARG;
+    }
+    switch(aes->rounds) {
+    #ifdef WOLFSSL_AES_128
+        case 10: /* AES 128 BLOCK */
+    #endif /* WOLFSSL_AES_128 */
+    #ifdef WOLFSSL_AES_192
+        case 12: /* AES 192 BLOCK */
+    #endif /* WOLFSSL_AES_192 */
+    #ifdef WOLFSSL_AES_256
+        case 14: /* AES 256 BLOCK */
+    #endif /* WOLFSSL_AES_256 */
+            break;
+        default:
+            WOLFSSL_MSG("Bad AES-CTR round value");
+            return BAD_FUNC_ARG;
+    }
 
-                aes->left = AES_BLOCK_SIZE;
-                tmp = (byte*)aes->tmp;
 
-                while (sz--) {
-                    *(out++) = *(in++) ^ *(tmp++);
-                    aes->left--;
-                }
-            }
-            return 0;
+    tmp = (byte*)aes->tmp + AES_BLOCK_SIZE - aes->left;
+
+    /* consume any unused bytes left in aes->tmp */
+    while ((aes->left != 0) && (sz != 0)) {
+       *(out++) = *(in++) ^ *(tmp++);
+       aes->left--;
+       sz--;
+    }
+
+    /* do as many block size ops as possible */
+    numBlocks = sz / AES_BLOCK_SIZE;
+    if (numBlocks > 0) {
+        wc_aes_ctr_encrypt_asm(aes, out, in, (byte*)aes->key, numBlocks);
+
+        sz  -= numBlocks * AES_BLOCK_SIZE;
+        out += numBlocks * AES_BLOCK_SIZE;
+        in  += numBlocks * AES_BLOCK_SIZE;
+    }
+
+    /* handle non block size remaining */
+    if (sz) {
+        byte zeros[AES_BLOCK_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 0, 0 };
+        wc_aes_ctr_encrypt_asm(aes, (byte*)aes->tmp, zeros, (byte*)aes->key, 1);
+
+        aes->left = AES_BLOCK_SIZE;
+        tmp = (byte*)aes->tmp;
+
+        while (sz--) {
+            *(out++) = *(in++) ^ *(tmp++);
+            aes->left--;
         }
+    }
+    return 0;
+}
 
 #endif /* WOLFSSL_AES_COUNTER */
 
@@ -3550,544 +3584,629 @@ int  wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
 
 /* AES-CTR */
 #ifdef WOLFSSL_AES_COUNTER
+static void wc_aes_ctr_encrypt_asm(Aes* aes, byte* out, const byte* in,
+                                   word32 numBlocks)
+{
+    word32*  keyPt  = aes->key;
+    word32*  regPt  = aes->reg;
 
-        /* Increment AES counter */
-        static WC_INLINE void IncrementAesCounter(byte* inOutCtr)
-        {
-            int i;
-
-            /* in network byte order so start at end and work back */
-            for (i = AES_BLOCK_SIZE - 1; i >= 0; i--) {
-                if (++inOutCtr[i])  /* we're done unless we overflow */
-                    return;
-            }
-        }
-
-        int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
-        {
-            byte* tmp;
-            word32 numBlocks;
-
-            if (aes == NULL || out == NULL || in == NULL) {
-                return BAD_FUNC_ARG;
-            }
-
-            tmp = (byte*)aes->tmp + AES_BLOCK_SIZE - aes->left;
-
-            /* consume any unused bytes left in aes->tmp */
-            while (aes->left && sz) {
-               *(out++) = *(in++) ^ *(tmp++);
-               aes->left--;
-               sz--;
-            }
-
-            /* do as many block size ops as possible */
-            numBlocks = sz/AES_BLOCK_SIZE;
-            if (numBlocks > 0) {
-                /* pointer needed because it is incremented when read, causing
-                 * an issue with call to encrypt/decrypt leftovers */
-                word32*  keyPt  = aes->key;
-                word32*  regPt  = aes->reg;
-                sz           -= numBlocks * AES_BLOCK_SIZE;
-                switch(aes->rounds) {
+    switch(aes->rounds) {
 #ifdef WOLFSSL_AES_128
-                case 10: /* AES 128 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV r11, %[blocks] \n"
-                    "VLDM %[Key]!, {q1-q4} \n"
+    case 10: /* AES 128 BLOCK */
+        __asm__ __volatile__ (
+        "MOV r11, %[blocks] \n"
+        "VLDM %[Key]!, {q1-q4} \n"
 
-                    "#Create vector with the value 1  \n"
-                    "VMOV.u32 q15, #1                 \n"
-                    "VSHR.u64 q15, q15, #32  \n"
-                    "VLDM %[Key]!, {q5-q8} \n"
-                    "VEOR.32 q14, q14, q14    \n"
-                    "VLDM %[Key]!, {q9-q11} \n"
-                    "VEXT.8 q14, q15, q14, #8\n"
+        "#Create vector with the value 1  \n"
+        "VMOV.u32 q15, #1                 \n"
+        "VSHR.u64 q15, q15, #32  \n"
+        "VLDM %[Key]!, {q5-q8} \n"
+        "VEOR.32 q14, q14, q14    \n"
+        "VLDM %[Key]!, {q9-q11} \n"
+        "VEXT.8 q14, q15, q14, #8\n"
 
-                    "VLD1.32 {q13}, [%[reg]]\n"
+        "VLD1.32 {q13}, [%[reg]]\n"
 
-                    /* double block */
-                    "1:      \n"
-                    "CMP r11, #1 \n"
-                    "BEQ 2f    \n"
-                    "CMP r11, #0 \n"
-                    "BEQ 3f    \n"
+        /* double block */
+        "1:      \n"
+        "CMP r11, #1 \n"
+        "BEQ 2f    \n"
+        "CMP r11, #0 \n"
+        "BEQ 3f    \n"
 
-                    "VMOV.32 q0, q13  \n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "SUB r11, r11, #2     \n"
-                    "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
-                    "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q15, q15, q15, #8 \n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q15, q15\n" /* revert from network order */
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q1\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.32 q0, q13  \n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "SUB r11, r11, #2     \n"
 
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q2\n"
-                    "AESMC.8 q15, q15\n"
+        /* Comparison value to check whether carry is going to happen */
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q13, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q13, q14, q12, #12 \n"
+        "VAND.32 d27, d27, d24 \n"
+        "VSUB.i32 q15, q15, q13 \n"
 
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q3\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q15, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d25, d24, d25, #4 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d24, d29, d24, #4 \n"
+        "VSUB.i32 q13, q13, q12 \n"
 
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q4\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q15, q15, q15, #8 \n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q15, q15\n" /* revert from network order */
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q1\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q5\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q2\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q10\n"
-                    "AESE.8 q15, q6\n"
-                    "AESMC.8 q15, q15\n"
-                    "VEOR.32 q0, q0, q11\n"
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q3\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q7\n"
-                    "AESMC.8 q15, q15\n"
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "AESE.8 q15, q8\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q4\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VEOR.32 q0, q0, q12\n"
-                    "AESE.8 q15, q9\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q5\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "AESE.8 q15, q10\n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
-                    "VEOR.32 q15, q15, q11\n"
-                    "VEOR.32 q15, q15, q12\n"
-                    "VST1.32 {q15}, [%[out]]!  \n"
+        "AESE.8 q0, q10\n"
+        "AESE.8 q15, q6\n"
+        "AESMC.8 q15, q15\n"
+        "VEOR.32 q0, q0, q11\n"
 
-                    "B 1b \n"
+        "AESE.8 q15, q7\n"
+        "AESMC.8 q15, q15\n"
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "AESE.8 q15, q8\n"
+        "AESMC.8 q15, q15\n"
 
-                    /* single block */
-                    "2:      \n"
-                    "VMOV.32 q0, q13  \n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "SUB r11, r11, #1     \n"
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q10\n"
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "VEOR.32 q0, q0, q11\n"
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "VEOR.32 q0, q0, q12\n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
+        "VEOR.32 q0, q0, q12\n"
+        "AESE.8 q15, q9\n"
+        "AESMC.8 q15, q15\n"
 
-                    "3: \n"
-                    "#store current counter qalue at the end \n"
-                    "VST1.32 {q13}, [%[regOut]]   \n"
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "AESE.8 q15, q10\n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+        "VEOR.32 q15, q15, q11\n"
+        "VEOR.32 q15, q15, q12\n"
+        "VST1.32 {q15}, [%[out]]!  \n"
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "2" (regPt)
-                    : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
-                    "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14", "q15"
-                    );
-                    break;
+        "B 1b \n"
+
+        /* single block */
+        "2:      \n"
+        "VMOV.32 q0, q13  \n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
+
+        "VMOV.u32 q15, #0xffffffff  \n"
+        "VCEQ.i32 q12, q13, q15 \n"
+        "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q15, q14, q12, #12 \n"
+        "VAND.32 d31, d31, d24 \n"
+        "VSUB.i32 q13, q13, q15 \n"
+
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "SUB r11, r11, #1     \n"
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q10\n"
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "VEOR.32 q0, q0, q11\n"
+        "#CTR operations, increment counter and xorbuf \n"
+        "VEOR.32 q0, q0, q12\n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+
+        "3: \n"
+        "#store current counter qalue at the end \n"
+        "VST1.32 {q13}, [%[regOut]]   \n"
+
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "2" (regPt)
+        : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
+        "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14", "q15"
+        );
+        break;
 #endif /* WOLFSSL_AES_128 */
 #ifdef WOLFSSL_AES_192
-                case 12: /* AES 192 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV r11, %[blocks] \n"
-                    "VLDM %[Key]!, {q1-q4} \n"
+    case 12: /* AES 192 BLOCK */
+        __asm__ __volatile__ (
+        "MOV r11, %[blocks] \n"
+        "VLDM %[Key]!, {q1-q4} \n"
 
-                    "#Create vector with the value 1  \n"
-                    "VMOV.u32 q15, #1                 \n"
-                    "VSHR.u64 q15, q15, #32  \n"
-                    "VLDM %[Key]!, {q5-q8} \n"
-                    "VEOR.32 q14, q14, q14    \n"
-                    "VEXT.8 q14, q15, q14, #8\n"
+        "#Create vector with the value 1  \n"
+        "VMOV.u32 q15, #1                 \n"
+        "VSHR.u64 q15, q15, #32  \n"
+        "VLDM %[Key]!, {q5-q8} \n"
+        "VEOR.32 q14, q14, q14    \n"
+        "VEXT.8 q14, q15, q14, #8\n"
 
-                    "VLDM %[Key]!, {q9-q10} \n"
-                    "VLD1.32 {q13}, [%[reg]]\n"
+        "VLDM %[Key]!, {q9-q10} \n"
+        "VLD1.32 {q13}, [%[reg]]\n"
 
-                    /* double block */
-                    "1:   \n"
-                    "CMP r11, #1 \n"
-                    "BEQ 2f \n"
-                    "CMP r11, #0 \n"
-                    "BEQ 3f   \n"
+        /* double block */
+        "1:   \n"
+        "CMP r11, #1 \n"
+        "BEQ 2f \n"
+        "CMP r11, #0 \n"
+        "BEQ 3f   \n"
 
-                    "VMOV.32 q0, q13\n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "SUB r11, r11, #2     \n"
-                    "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
-                    "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q15, q15, q15, #8 \n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q15, q15\n" /* revert from network order */
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q1\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.32 q0, q13\n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "SUB r11, r11, #2     \n"
 
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q2\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q13, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q13, q14, q12, #12 \n"
+        "VAND.32 d27, d27, d24 \n"
+        "VSUB.i32 q15, q15, q13 \n"
 
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q3\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q15, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d25, d24, d25, #4 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d24, d29, d24, #4 \n"
+        "VSUB.i32 q13, q13, q12 \n"
 
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q4\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q15, q15, q15, #8 \n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q15, q15\n" /* revert from network order */
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q1\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q5\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q2\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q10\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "AESE.8 q15, q6\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q3\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q11\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q7\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q4\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q8\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q5\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[Key]]! \n"
-                    "AESE.8 q15, q9\n"
-                    "AESMC.8 q15, q15\n"
-                    "AESE.8 q15, q10\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q10\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "AESE.8 q15, q6\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q11\n"
-                    "AESMC.8 q15, q15\n"
-                    "VLD1.32 {q11}, [%[Key]] \n"
-                    "AESE.8 q0, q12\n"
-                    "AESE.8 q15, q12\n"
+        "AESE.8 q0, q11\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q7\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "VEOR.32 q0, q0, q11\n"
-                    "VEOR.32 q15, q15, q11\n"
-                    "VEOR.32 q0, q0, q12\n"
+        "AESE.8 q15, q8\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
-                    "VEOR.32 q15, q15, q12\n"
-                    "VST1.32 {q15}, [%[out]]!  \n"
-                    "SUB %[Key], %[Key], #32 \n"
+        "VLD1.32 {q12}, [%[Key]]! \n"
+        "AESE.8 q15, q9\n"
+        "AESMC.8 q15, q15\n"
+        "AESE.8 q15, q10\n"
+        "AESMC.8 q15, q15\n"
 
-                    "B 1b \n"
+        "AESE.8 q15, q11\n"
+        "AESMC.8 q15, q15\n"
+        "VLD1.32 {q11}, [%[Key]] \n"
+        "AESE.8 q0, q12\n"
+        "AESE.8 q15, q12\n"
+
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "VEOR.32 q0, q0, q11\n"
+        "VEOR.32 q15, q15, q11\n"
+        "VEOR.32 q0, q0, q12\n"
+
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+        "VEOR.32 q15, q15, q12\n"
+        "VST1.32 {q15}, [%[out]]!  \n"
+        "SUB %[Key], %[Key], #32 \n"
+
+        "B 1b \n"
 
 
-                    /* single block */
-                    "2:      \n"
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "VMOV.32 q0, q13  \n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "SUB r11, r11, #1     \n"
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q10\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q12}, [%[Key]]! \n"
-                    "AESE.8 q0, q11\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q11}, [%[Key]] \n"
-                    "AESE.8 q0, q12\n"
-                    "VLD1.32 {q12}, [%[input]]! \n"
-                    "VEOR.32 q0, q0, q11\n"
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "VEOR.32 q0, q0, q12\n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
+        /* single block */
+        "2:      \n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "VMOV.32 q0, q13  \n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
 
-                    "3: \n"
-                    "#store current counter qalue at the end \n"
-                    "VST1.32 {q13}, [%[regOut]]   \n"
+        "VMOV.u32 q15, #0xffffffff  \n"
+        "VCEQ.i32 q12, q13, q15 \n"
+        "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q15, q14, q12, #12 \n"
+        "VAND.32 d31, d31, d24 \n"
+        "VSUB.i32 q13, q13, q15 \n"
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "2" (regPt)
-                    : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
-                    "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14"
-                    );
-                    break;
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "SUB r11, r11, #1     \n"
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q10\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q12}, [%[Key]]! \n"
+        "AESE.8 q0, q11\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q11}, [%[Key]] \n"
+        "AESE.8 q0, q12\n"
+        "VLD1.32 {q12}, [%[input]]! \n"
+        "VEOR.32 q0, q0, q11\n"
+        "#CTR operations, increment counter and xorbuf \n"
+        "VEOR.32 q0, q0, q12\n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+
+        "3: \n"
+        "#store current counter qalue at the end \n"
+        "VST1.32 {q13}, [%[regOut]]   \n"
+
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "2" (regPt)
+        : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
+        "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14"
+        );
+        break;
 #endif /* WOLFSSL_AES_192 */
 #ifdef WOLFSSL_AES_256
-                case 14: /* AES 256 BLOCK */
-                    __asm__ __volatile__ (
-                    "MOV r11, %[blocks] \n"
-                    "VLDM %[Key]!, {q1-q4} \n"
+    case 14: /* AES 256 BLOCK */
+        __asm__ __volatile__ (
+        "MOV r11, %[blocks] \n"
+        "VLDM %[Key]!, {q1-q4} \n"
 
-                    "#Create vector with the value 1  \n"
-                    "VMOV.u32 q15, #1                 \n"
-                    "VSHR.u64 q15, q15, #32  \n"
-                    "VLDM %[Key]!, {q5-q8} \n"
-                    "VEOR.32 q14, q14, q14    \n"
-                    "VEXT.8 q14, q15, q14, #8\n"
+        "#Create vector with the value 1  \n"
+        "VMOV.u32 q15, #1                 \n"
+        "VSHR.u64 q15, q15, #32  \n"
+        "VLDM %[Key]!, {q5-q8} \n"
+        "VEOR.32 q14, q14, q14    \n"
+        "VEXT.8 q14, q15, q14, #8\n"
 
-                    "VLDM %[Key]!, {q9-q10} \n"
-                    "VLD1.32 {q13}, [%[reg]]\n"
+        "VLDM %[Key]!, {q9-q10} \n"
+        "VLD1.32 {q13}, [%[reg]]\n"
 
-                    /* double block */
-                    "1:      \n"
-                    "CMP r11, #1 \n"
-                    "BEQ 2f    \n"
-                    "CMP r11, #0 \n"
-                    "BEQ 3f    \n"
+        /* double block */
+        "1:      \n"
+        "CMP r11, #1 \n"
+        "BEQ 2f    \n"
+        "CMP r11, #0 \n"
+        "BEQ 3f    \n"
 
-                    "VMOV.32 q0, q13  \n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "SUB r11, r11, #2     \n"
-                    "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
-                    "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q15, q15, q15, #8 \n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q15, q15\n" /* revert from network order */
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q15, q1\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.32 q0, q13  \n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "SUB r11, r11, #2     \n"
 
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q2\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q15, q13, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q13, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q13, q14, q12, #12 \n"
+        "VAND.32 d27, d27, d24 \n"
+        "VSUB.i32 q15, q15, q13 \n"
 
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q3\n"
-                    "AESMC.8 q15, q15\n"
+        "VMOV.u32 q12, #0xffffffff  \n"
+        "VADD.i32 q13, q15, q14 \n" /* add 1 to counter */
+        /* Carry across 32-bit lanes */
+        "VCEQ.i32 q12, q15, q12 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d25, d24, d25, #4 \n"
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 d24, d29, d24, #4 \n"
+        "VSUB.i32 q13, q13, q12 \n"
 
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q4\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q15, q15, q15, #8 \n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q15, q15\n" /* revert from network order */
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q15, q1\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q5\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q2\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q10\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "AESE.8 q15, q6\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q3\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q0, q11\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q7\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q4\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q8\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q5\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q9\n"
-                    "AESMC.8 q15, q15\n"
-                    "VLD1.32 {q12}, [%[Key]]!  \n"
-                    "AESE.8 q15, q10\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q10\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "AESE.8 q15, q6\n"
+        "AESMC.8 q15, q15\n"
 
-                    "AESE.8 q15, q11\n"
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q0, q11\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q7\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "AESE.8 q0, q12\n" /* rnd 12*/
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q12\n" /* rnd 12 */
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q15, q8\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[Key]]!  \n"
-                    "AESE.8 q0, q11\n" /* rnd 13 */
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q15, q11\n" /* rnd 13 */
-                    "AESMC.8 q15, q15\n"
+        "AESE.8 q15, q9\n"
+        "AESMC.8 q15, q15\n"
+        "VLD1.32 {q12}, [%[Key]]!  \n"
+        "AESE.8 q15, q10\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q11}, [%[Key]] \n"
-                    "AESE.8 q0, q12\n" /* rnd 14 */
-                    "AESE.8 q15, q12\n" /* rnd 14 */
+        "AESE.8 q15, q11\n"
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "VEOR.32 q0, q0, q11\n" /* rnd 15 */
-                    "VEOR.32 q15, q15, q11\n" /* rnd 15 */
-                    "VEOR.32 q0, q0, q12\n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "AESE.8 q0, q12\n" /* rnd 12*/
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q12\n" /* rnd 12 */
+        "AESMC.8 q15, q15\n"
 
-                    "VLD1.32 {q12}, [%[input]]!  \n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
-                    "VEOR.32 q15, q15, q12\n"
-                    "VST1.32 {q15}, [%[out]]!  \n"
-                    "SUB %[Key], %[Key], #64 \n"
+        "VLD1.32 {q12}, [%[Key]]!  \n"
+        "AESE.8 q0, q11\n" /* rnd 13 */
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q15, q11\n" /* rnd 13 */
+        "AESMC.8 q15, q15\n"
 
-                    /* single block */
-                    "B 1b \n"
+        "VLD1.32 {q11}, [%[Key]] \n"
+        "AESE.8 q0, q12\n" /* rnd 14 */
+        "AESE.8 q15, q12\n" /* rnd 14 */
 
-                    "2:      \n"
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "VMOV.32 q0, q13  \n"
-                    "AESE.8 q0, q1\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13 \n" /* network order */
-                    "AESE.8 q0, q2\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q3\n"
-                    "AESMC.8 q0, q0\n"
-                    "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
-                    "AESE.8 q0, q4\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q5\n"
-                    "AESMC.8 q0, q0\n"
-                    "VEXT.8 q13, q13, q13, #8 \n"
-                    "AESE.8 q0, q6\n"
-                    "AESMC.8 q0, q0\n"
-                    "VREV64.8 q13, q13\n" /* revert from network order */
-                    "AESE.8 q0, q7\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q8\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q9\n"
-                    "AESMC.8 q0, q0\n"
-                    "AESE.8 q0, q10\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q12}, [%[Key]]! \n"
-                    "AESE.8 q0, q11\n"
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q11}, [%[Key]]! \n"
-                    "AESE.8 q0, q12\n" /* rnd 12 */
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q12}, [%[Key]]! \n"
-                    "AESE.8 q0, q11\n" /* rnd 13 */
-                    "AESMC.8 q0, q0\n"
-                    "VLD1.32 {q11}, [%[Key]] \n"
-                    "AESE.8 q0, q12\n" /* rnd 14 */
-                    "VLD1.32 {q12}, [%[input]]! \n"
-                    "VEOR.32 q0, q0, q11\n" /* rnd 15 */
-                    "#CTR operations, increment counter and xorbuf \n"
-                    "VEOR.32 q0, q0, q12\n"
-                    "VST1.32 {q0}, [%[out]]!  \n"
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "VEOR.32 q0, q0, q11\n" /* rnd 15 */
+        "VEOR.32 q15, q15, q11\n" /* rnd 15 */
+        "VEOR.32 q0, q0, q12\n"
 
-                    "3: \n"
-                    "#store current counter qalue at the end \n"
-                    "VST1.32 {q13}, [%[regOut]]   \n"
+        "VLD1.32 {q12}, [%[input]]!  \n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+        "VEOR.32 q15, q15, q12\n"
+        "VST1.32 {q15}, [%[out]]!  \n"
+        "SUB %[Key], %[Key], #64 \n"
 
-                    :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
-                     "=r" (in)
-                    :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
-                     [blocks] "r" (numBlocks), [reg] "2" (regPt)
-                    : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
-                    "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14"
-                    );
-                    break;
+        /* single block */
+        "B 1b \n"
+
+        "2:      \n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "VMOV.32 q0, q13  \n"
+        "AESE.8 q0, q1\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13 \n" /* network order */
+        "AESE.8 q0, q2\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q3\n"
+        "AESMC.8 q0, q0\n"
+
+        "VMOV.u32 q15, #0xffffffff  \n"
+        "VCEQ.i32 q12, q13, q15 \n"
+        "VADD.i32 q13, q13, q14 \n" /* add 1 to counter */
+        "VAND.32 d25, d25, d24 \n"
+        "VEXT.8 q15, q14, q12, #12 \n"
+        "VAND.32 d31, d31, d24 \n"
+        "VSUB.i32 q13, q13, q15 \n"
+
+        "AESE.8 q0, q4\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q5\n"
+        "AESMC.8 q0, q0\n"
+        "VEXT.8 q13, q13, q13, #8 \n"
+        "AESE.8 q0, q6\n"
+        "AESMC.8 q0, q0\n"
+        "VREV64.8 q13, q13\n" /* revert from network order */
+        "AESE.8 q0, q7\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q8\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q9\n"
+        "AESMC.8 q0, q0\n"
+        "AESE.8 q0, q10\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q12}, [%[Key]]! \n"
+        "AESE.8 q0, q11\n"
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q11}, [%[Key]]! \n"
+        "AESE.8 q0, q12\n" /* rnd 12 */
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q12}, [%[Key]]! \n"
+        "AESE.8 q0, q11\n" /* rnd 13 */
+        "AESMC.8 q0, q0\n"
+        "VLD1.32 {q11}, [%[Key]] \n"
+        "AESE.8 q0, q12\n" /* rnd 14 */
+        "VLD1.32 {q12}, [%[input]]! \n"
+        "VEOR.32 q0, q0, q11\n" /* rnd 15 */
+        "#CTR operations, increment counter and xorbuf \n"
+        "VEOR.32 q0, q0, q12\n"
+        "VST1.32 {q0}, [%[out]]!  \n"
+
+        "3: \n"
+        "#store current counter qalue at the end \n"
+        "VST1.32 {q13}, [%[regOut]]   \n"
+
+        :[out] "=r" (out), "=r" (keyPt), [regOut] "=r" (regPt),
+         "=r" (in)
+        :"0" (out), [Key] "1" (keyPt), [input] "3" (in),
+         [blocks] "r" (numBlocks), [reg] "2" (regPt)
+        : "cc", "memory", "r11", "q0", "q1", "q2", "q3", "q4", "q5",
+        "q6", "q7", "q8", "q9", "q10","q11","q12","q13","q14"
+        );
+        break;
 #endif /* WOLFSSL_AES_256 */
-                default:
-                    WOLFSSL_MSG("Bad AES-CTR round qalue");
-                    return BAD_FUNC_ARG;
-                }
+    }
+}
 
-                aes->left = 0;
-            }
+int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+{
+    byte* tmp;
+    word32 numBlocks;
 
-            /* handle non block size remaining */
-            if (sz) {
-                wc_AesEncrypt(aes, (byte*)aes->reg, (byte*)aes->tmp);
-                IncrementAesCounter((byte*)aes->reg);
+    if (aes == NULL || out == NULL || in == NULL) {
+        return BAD_FUNC_ARG;
+    }
+    switch(aes->rounds) {
+    #ifdef WOLFSSL_AES_128
+        case 10: /* AES 128 BLOCK */
+    #endif /* WOLFSSL_AES_128 */
+    #ifdef WOLFSSL_AES_192
+        case 12: /* AES 192 BLOCK */
+    #endif /* WOLFSSL_AES_192 */
+    #ifdef WOLFSSL_AES_256
+        case 14: /* AES 256 BLOCK */
+    #endif /* WOLFSSL_AES_256 */
+            break;
+        default:
+            WOLFSSL_MSG("Bad AES-CTR round value");
+            return BAD_FUNC_ARG;
+    }
 
-                aes->left = AES_BLOCK_SIZE;
-                tmp = (byte*)aes->tmp;
 
-                while (sz--) {
-                    *(out++) = *(in++) ^ *(tmp++);
-                    aes->left--;
-                }
-            }
+    tmp = (byte*)aes->tmp + AES_BLOCK_SIZE - aes->left;
 
-            return 0;
+    /* consume any unused bytes left in aes->tmp */
+    while ((aes->left != 0) && (sz != 0)) {
+       *(out++) = *(in++) ^ *(tmp++);
+       aes->left--;
+       sz--;
+    }
+
+    /* do as many block size ops as possible */
+    numBlocks = sz / AES_BLOCK_SIZE;
+    if (numBlocks > 0) {
+        wc_aes_ctr_encrypt_asm(aes, out, in, numBlocks);
+
+        sz  -= numBlocks * AES_BLOCK_SIZE;
+        out += numBlocks * AES_BLOCK_SIZE;
+        in  += numBlocks * AES_BLOCK_SIZE;
+    }
+
+    /* handle non block size remaining */
+    if (sz) {
+        byte zeros[AES_BLOCK_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 0, 0 };
+        wc_aes_ctr_encrypt_asm(aes, (byte*)aes->tmp, zeros, 1);
+
+        aes->left = AES_BLOCK_SIZE;
+        tmp = (byte*)aes->tmp;
+
+        while (sz--) {
+            *(out++) = *(in++) ^ *(tmp++);
+            aes->left--;
         }
+    }
+    return 0;
+}
 
 #endif /* WOLFSSL_AES_COUNTER */
 
@@ -5340,4 +5459,850 @@ int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
         }
     #endif /* HAVE_AES_DECRYPT */
 #endif /* WOLFSSL_AES_DIRECT */
+
+#else /* !WOLFSSL_ARMASM_NO_HW_CRYPTO */
+
+#include <wolfssl/wolfcrypt/logging.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/aes.h>
+#ifdef NO_INLINE
+    #include <wolfssl/wolfcrypt/misc.h>
+#else
+    #define WOLFSSL_MISC_INCLUDED
+    #include <wolfcrypt/src/misc.c>
+#endif
+
+extern void AES_set_encrypt_key(const unsigned char* key, word32 len,
+    unsigned char* ks);
+extern void AES_invert_key(unsigned char* ks, word32 rounds);
+extern void AES_ECB_encrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr);
+extern void AES_ECB_decrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr);
+extern void AES_CBC_encrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr, unsigned char* iv);
+extern void AES_CBC_decrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr, unsigned char* iv);
+extern void AES_CTR_encrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr, unsigned char* ctr);
+/* in pre-C2x C, constness conflicts for dimensioned arrays can't be resolved. */
+extern void GCM_gmult_len(byte* x, /* const */ byte m[32][AES_BLOCK_SIZE],
+    const unsigned char* data, unsigned long len);
+extern void AES_GCM_encrypt(const unsigned char* in, unsigned char* out,
+    unsigned long len, const unsigned char* ks, int nr, unsigned char* ctr);
+
+int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
+            const byte* iv, int dir)
+{
+#if defined(AES_MAX_KEY_SIZE)
+    const word32 max_key_len = (AES_MAX_KEY_SIZE / 8);
+#endif
+
+    if (((keylen != 16) && (keylen != 24) && (keylen != 32)) ||
+           (aes == NULL) || (userKey == NULL)) {
+        return BAD_FUNC_ARG;
+    }
+
+#if defined(AES_MAX_KEY_SIZE)
+    /* Check key length */
+    if (keylen > max_key_len) {
+        return BAD_FUNC_ARG;
+    }
+#endif
+
+#ifdef WOLFSSL_AES_COUNTER
+    aes->left = 0;
+#endif /* WOLFSSL_AES_COUNTER */
+
+    aes->keylen = keylen;
+    aes->rounds = keylen/4 + 6;
+
+    AES_set_encrypt_key(userKey, keylen * 8, (byte*)aes->key);
+#ifdef HAVE_AES_DECRYPT
+    if (dir == AES_DECRYPTION) {
+        AES_invert_key((byte*)aes->key, aes->rounds);
+    }
+#else
+    (void)dir;
+#endif
+
+    return wc_AesSetIV(aes, iv);
+}
+
+#if defined(WOLFSSL_AES_DIRECT) || defined(WOLFSSL_AES_COUNTER)
+int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
+    const byte* iv, int dir)
+{
+    return wc_AesSetKey(aes, userKey, keylen, iv, dir);
+}
+#endif /* WOLFSSL_AES_DIRECT || WOLFSSL_AES_COUNTER */
+
+/* wc_AesSetIV is shared between software and hardware */
+int wc_AesSetIV(Aes* aes, const byte* iv)
+{
+    if (aes == NULL)
+        return BAD_FUNC_ARG;
+
+    if (iv)
+        XMEMCPY(aes->reg, iv, AES_BLOCK_SIZE);
+    else
+        XMEMSET(aes->reg,  0, AES_BLOCK_SIZE);
+
+    return 0;
+}
+
+#if defined(HAVE_AESCCM) || defined(WOLFSSL_AES_DIRECT)
+static int wc_AesEncrypt(Aes* aes, const byte* inBlock, byte* outBlock)
+{
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    AES_ECB_encrypt(inBlock, outBlock, AES_BLOCK_SIZE,
+        (const unsigned char*)aes->key, aes->rounds);
+    return 0;
+}
+#endif /* HAVE_AESCCM && WOLFSSL_AES_DIRECT */
+
+#if defined(HAVE_AES_DECRYPT) && defined(WOLFSSL_AES_DIRECT)
+static int wc_AesDecrypt(Aes* aes, const byte* inBlock, byte* outBlock)
+{
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    AES_ECB_decrypt(inBlock, outBlock, AES_BLOCK_SIZE,
+        (const unsigned char*)aes->key, aes->rounds);
+    return 0;
+}
+#endif /* HAVE_AES_DECRYPT && WOLFSSL_AES_DIRECT */
+
+/* AES-DIRECT */
+#if defined(WOLFSSL_AES_DIRECT)
+/* Allow direct access to one block encrypt */
+int wc_AesEncryptDirect(Aes* aes, byte* out, const byte* in)
+{
+    if (aes == NULL || out == NULL || in == NULL) {
+        WOLFSSL_MSG("Invalid input to wc_AesEncryptDirect");
+        return BAD_FUNC_ARG;
+    }
+    return wc_AesEncrypt(aes, in, out);
+}
+
+#ifdef HAVE_AES_DECRYPT
+/* Allow direct access to one block decrypt */
+int wc_AesDecryptDirect(Aes* aes, byte* out, const byte* in)
+{
+    if (aes == NULL || out == NULL || in == NULL) {
+        WOLFSSL_MSG("Invalid input to wc_AesDecryptDirect");
+        return BAD_FUNC_ARG;
+    }
+    return wc_AesDecrypt(aes, in, out);
+}
+#endif /* HAVE_AES_DECRYPT */
+#endif /* WOLFSSL_AES_DIRECT */
+
+#ifdef HAVE_AES_CBC
+int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+{
+    if (aes == NULL || out == NULL || in == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    if (sz == 0) {
+        return 0;
+    }
+
+    AES_CBC_encrypt(in, out, sz, (const unsigned char*)aes->key, aes->rounds,
+        (unsigned char*)aes->reg);
+
+    return 0;
+}
+
+#ifdef HAVE_AES_DECRYPT
+int wc_AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+{
+    if (aes == NULL || out == NULL || in == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    if (sz == 0) {
+        return 0;
+    }
+
+    AES_CBC_decrypt(in, out, sz, (const unsigned char*)aes->key, aes->rounds,
+        (unsigned char*)aes->reg);
+
+    return 0;
+}
+#endif /* HAVE_AES_DECRYPT */
+#endif /* HAVE_AES_CBC */
+
+#ifdef WOLFSSL_AES_COUNTER
+int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+{
+    byte* tmp;
+    word32 numBlocks;
+
+    if (aes == NULL || out == NULL || in == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    tmp = (byte*)aes->tmp + AES_BLOCK_SIZE - aes->left;
+    /* consume any unused bytes left in aes->tmp */
+    while ((aes->left != 0) && (sz != 0)) {
+       *(out++) = *(in++) ^ *(tmp++);
+       aes->left--;
+       sz--;
+    }
+
+    /* do as many block size ops as possible */
+    numBlocks = sz / AES_BLOCK_SIZE;
+    if (numBlocks > 0) {
+        AES_CTR_encrypt(in, out, numBlocks * AES_BLOCK_SIZE, (byte*)aes->key,
+            aes->rounds, (byte*)aes->reg);
+
+        sz  -= numBlocks * AES_BLOCK_SIZE;
+        out += numBlocks * AES_BLOCK_SIZE;
+        in  += numBlocks * AES_BLOCK_SIZE;
+    }
+
+    /* handle non block size remaining */
+    if (sz) {
+        byte zeros[AES_BLOCK_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 0, 0 };
+
+        AES_CTR_encrypt(zeros, (byte*)aes->tmp, AES_BLOCK_SIZE, (byte*)aes->key,
+            aes->rounds, (byte*)aes->reg);
+
+        aes->left = AES_BLOCK_SIZE;
+        tmp = (byte*)aes->tmp;
+
+        while (sz--) {
+            *(out++) = *(in++) ^ *(tmp++);
+            aes->left--;
+        }
+    }
+    return 0;
+}
+#endif /* WOLFSSL_AES_COUNTER */
+
+#ifdef HAVE_AESCCM
+/* Software version of AES-CCM from wolfcrypt/src/aes.c
+ * Gets some speed up from hardware acceleration of wc_AesEncrypt */
+
+static void roll_x(Aes* aes, const byte* in, word32 inSz, byte* out)
+{
+    /* process the bulk of the data */
+    while (inSz >= AES_BLOCK_SIZE) {
+        xorbuf(out, in, AES_BLOCK_SIZE);
+        in += AES_BLOCK_SIZE;
+        inSz -= AES_BLOCK_SIZE;
+
+        wc_AesEncrypt(aes, out, out);
+    }
+
+    /* process remainder of the data */
+    if (inSz > 0) {
+        xorbuf(out, in, inSz);
+        wc_AesEncrypt(aes, out, out);
+    }
+}
+
+
+static void roll_auth(Aes* aes, const byte* in, word32 inSz, byte* out)
+{
+    word32 authLenSz;
+    word32 remainder;
+
+    /* encode the length in */
+    if (inSz <= 0xFEFF) {
+        authLenSz = 2;
+        out[0] ^= ((inSz & 0xFF00) >> 8);
+        out[1] ^=  (inSz & 0x00FF);
+    }
+    else if (inSz <= 0xFFFFFFFF) {
+        authLenSz = 6;
+        out[0] ^= 0xFF; out[1] ^= 0xFE;
+        out[2] ^= ((inSz & 0xFF000000) >> 24);
+        out[3] ^= ((inSz & 0x00FF0000) >> 16);
+        out[4] ^= ((inSz & 0x0000FF00) >>  8);
+        out[5] ^=  (inSz & 0x000000FF);
+    }
+    /* Note, the protocol handles auth data up to 2^64, but we are
+     * using 32-bit sizes right now, so the bigger data isn't handled
+     * else if (inSz <= 0xFFFFFFFFFFFFFFFF) {} */
+    else
+        return;
+
+    /* start fill out the rest of the first block */
+    remainder = AES_BLOCK_SIZE - authLenSz;
+    if (inSz >= remainder) {
+        /* plenty of bulk data to fill the remainder of this block */
+        xorbuf(out + authLenSz, in, remainder);
+        inSz -= remainder;
+        in += remainder;
+    }
+    else {
+        /* not enough bulk data, copy what is available, and pad zero */
+        xorbuf(out + authLenSz, in, inSz);
+        inSz = 0;
+    }
+    wc_AesEncrypt(aes, out, out);
+
+    if (inSz > 0)
+        roll_x(aes, in, inSz, out);
+}
+
+
+static WC_INLINE void AesCcmCtrInc(byte* B, word32 lenSz)
+{
+    word32 i;
+
+    for (i = 0; i < lenSz; i++) {
+        if (++B[AES_BLOCK_SIZE - 1 - i] != 0) return;
+    }
+}
+
+
+/* return 0 on success */
+int wc_AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
+                   const byte* nonce, word32 nonceSz,
+                   byte* authTag, word32 authTagSz,
+                   const byte* authIn, word32 authInSz)
+{
+    byte A[AES_BLOCK_SIZE];
+    byte B[AES_BLOCK_SIZE];
+    byte lenSz;
+    word32 i;
+    byte mask     = 0xFF;
+    word32 wordSz = (word32)sizeof(word32);
+
+    /* sanity check on arguments */
+    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
+            || authTag == NULL || nonceSz < 7 || nonceSz > 13)
+        return BAD_FUNC_ARG;
+
+    if (wc_AesCcmCheckTagSize(authTagSz) != 0) {
+        return BAD_FUNC_ARG;
+    }
+
+    XMEMCPY(B+1, nonce, nonceSz);
+    lenSz = AES_BLOCK_SIZE - 1 - (byte)nonceSz;
+    B[0] = (authInSz > 0 ? 64 : 0)
+         + (8 * (((byte)authTagSz - 2) / 2))
+         + (lenSz - 1);
+    for (i = 0; i < lenSz; i++) {
+        if (mask && i >= wordSz)
+            mask = 0x00;
+        B[AES_BLOCK_SIZE - 1 - i] = (inSz >> ((8 * i) & mask)) & mask;
+    }
+
+    wc_AesEncrypt(aes, B, A);
+
+    if (authInSz > 0)
+        roll_auth(aes, authIn, authInSz, A);
+    if (inSz > 0)
+        roll_x(aes, in, inSz, A);
+    XMEMCPY(authTag, A, authTagSz);
+
+    B[0] = lenSz - 1;
+    for (i = 0; i < lenSz; i++)
+        B[AES_BLOCK_SIZE - 1 - i] = 0;
+    wc_AesEncrypt(aes, B, A);
+    xorbuf(authTag, A, authTagSz);
+
+    B[15] = 1;
+    while (inSz >= AES_BLOCK_SIZE) {
+        wc_AesEncrypt(aes, B, A);
+        xorbuf(A, in, AES_BLOCK_SIZE);
+        XMEMCPY(out, A, AES_BLOCK_SIZE);
+
+        AesCcmCtrInc(B, lenSz);
+        inSz -= AES_BLOCK_SIZE;
+        in += AES_BLOCK_SIZE;
+        out += AES_BLOCK_SIZE;
+    }
+    if (inSz > 0) {
+        wc_AesEncrypt(aes, B, A);
+        xorbuf(A, in, inSz);
+        XMEMCPY(out, A, inSz);
+    }
+
+    ForceZero(A, AES_BLOCK_SIZE);
+    ForceZero(B, AES_BLOCK_SIZE);
+
+    return 0;
+}
+
+#ifdef HAVE_AES_DECRYPT
+int  wc_AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
+                   const byte* nonce, word32 nonceSz,
+                   const byte* authTag, word32 authTagSz,
+                   const byte* authIn, word32 authInSz)
+{
+    byte A[AES_BLOCK_SIZE];
+    byte B[AES_BLOCK_SIZE];
+    byte* o;
+    byte lenSz;
+    word32 i, oSz;
+    int result = 0;
+    byte mask     = 0xFF;
+    word32 wordSz = (word32)sizeof(word32);
+
+    /* sanity check on arguments */
+    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
+            || authTag == NULL || nonceSz < 7 || nonceSz > 13)
+        return BAD_FUNC_ARG;
+
+    if (wc_AesCcmCheckTagSize(authTagSz) != 0) {
+        return BAD_FUNC_ARG;
+    }
+
+    o = out;
+    oSz = inSz;
+    XMEMCPY(B+1, nonce, nonceSz);
+    lenSz = AES_BLOCK_SIZE - 1 - (byte)nonceSz;
+
+    B[0] = lenSz - 1;
+    for (i = 0; i < lenSz; i++)
+        B[AES_BLOCK_SIZE - 1 - i] = 0;
+    B[15] = 1;
+
+    while (oSz >= AES_BLOCK_SIZE) {
+        wc_AesEncrypt(aes, B, A);
+        xorbuf(A, in, AES_BLOCK_SIZE);
+        XMEMCPY(o, A, AES_BLOCK_SIZE);
+
+        AesCcmCtrInc(B, lenSz);
+        oSz -= AES_BLOCK_SIZE;
+        in += AES_BLOCK_SIZE;
+        o += AES_BLOCK_SIZE;
+    }
+    if (inSz > 0) {
+        wc_AesEncrypt(aes, B, A);
+        xorbuf(A, in, oSz);
+        XMEMCPY(o, A, oSz);
+    }
+
+    for (i = 0; i < lenSz; i++)
+        B[AES_BLOCK_SIZE - 1 - i] = 0;
+    wc_AesEncrypt(aes, B, A);
+
+    o = out;
+    oSz = inSz;
+
+    B[0] = (authInSz > 0 ? 64 : 0)
+         + (8 * (((byte)authTagSz - 2) / 2))
+         + (lenSz - 1);
+    for (i = 0; i < lenSz; i++) {
+        if (mask && i >= wordSz)
+            mask = 0x00;
+        B[AES_BLOCK_SIZE - 1 - i] = (inSz >> ((8 * i) & mask)) & mask;
+    }
+
+    wc_AesEncrypt(aes, B, A);
+
+    if (authInSz > 0)
+        roll_auth(aes, authIn, authInSz, A);
+    if (inSz > 0)
+        roll_x(aes, o, oSz, A);
+
+    B[0] = lenSz - 1;
+    for (i = 0; i < lenSz; i++)
+        B[AES_BLOCK_SIZE - 1 - i] = 0;
+    wc_AesEncrypt(aes, B, B);
+    xorbuf(A, B, authTagSz);
+
+    if (ConstantCompare(A, authTag, authTagSz) != 0) {
+        /* If the authTag check fails, don't keep the decrypted data.
+         * Unfortunately, you need the decrypted data to calculate the
+         * check value. */
+        XMEMSET(out, 0, inSz);
+        result = AES_CCM_AUTH_E;
+    }
+
+    ForceZero(A, AES_BLOCK_SIZE);
+    ForceZero(B, AES_BLOCK_SIZE);
+    o = NULL;
+
+    return result;
+}
+#endif /* HAVE_AES_DECRYPT */
+#endif /* HAVE_AESCCM */
+
+#ifdef HAVE_AESGCM
+static WC_INLINE void RIGHTSHIFTX(byte* x)
+{
+    int i;
+    int carryIn = 0;
+    byte borrow = (0x00 - (x[15] & 0x01)) & 0xE1;
+
+    for (i = 0; i < AES_BLOCK_SIZE; i++) {
+        int carryOut = (x[i] & 0x01) << 7;
+        x[i] = (byte) ((x[i] >> 1) | carryIn);
+        carryIn = carryOut;
+    }
+    x[0] ^= borrow;
+}
+
+static void GenerateM0(Aes* aes)
+{
+    int i;
+    byte (*m)[AES_BLOCK_SIZE] = aes->M0;
+
+    /* 0 times -> 0x0 */
+    XMEMSET(m[0x0], 0, AES_BLOCK_SIZE);
+    /* 1 times -> 0x8 */
+    XMEMCPY(m[0x8], aes->H, AES_BLOCK_SIZE);
+    /* 2 times -> 0x4 */
+    XMEMCPY(m[0x4], m[0x8], AES_BLOCK_SIZE);
+    RIGHTSHIFTX(m[0x4]);
+    /* 4 times -> 0x2 */
+    XMEMCPY(m[0x2], m[0x4], AES_BLOCK_SIZE);
+    RIGHTSHIFTX(m[0x2]);
+    /* 8 times -> 0x1 */
+    XMEMCPY(m[0x1], m[0x2], AES_BLOCK_SIZE);
+    RIGHTSHIFTX(m[0x1]);
+
+    /* 0x3 */
+    XMEMCPY(m[0x3], m[0x2], AES_BLOCK_SIZE);
+    xorbuf (m[0x3], m[0x1], AES_BLOCK_SIZE);
+
+    /* 0x5 -> 0x7 */
+    XMEMCPY(m[0x5], m[0x4], AES_BLOCK_SIZE);
+    xorbuf (m[0x5], m[0x1], AES_BLOCK_SIZE);
+    XMEMCPY(m[0x6], m[0x4], AES_BLOCK_SIZE);
+    xorbuf (m[0x6], m[0x2], AES_BLOCK_SIZE);
+    XMEMCPY(m[0x7], m[0x4], AES_BLOCK_SIZE);
+    xorbuf (m[0x7], m[0x3], AES_BLOCK_SIZE);
+
+    /* 0x9 -> 0xf */
+    XMEMCPY(m[0x9], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0x9], m[0x1], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xa], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xa], m[0x2], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xb], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xb], m[0x3], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xc], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xc], m[0x4], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xd], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xd], m[0x5], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xe], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xe], m[0x6], AES_BLOCK_SIZE);
+    XMEMCPY(m[0xf], m[0x8], AES_BLOCK_SIZE);
+    xorbuf (m[0xf], m[0x7], AES_BLOCK_SIZE);
+
+    for (i = 0; i < 16; i++) {
+        word32* m32 = (word32*)aes->M0[i];
+        m32[0] = ByteReverseWord32(m32[0]);
+        m32[1] = ByteReverseWord32(m32[1]);
+        m32[2] = ByteReverseWord32(m32[2]);
+        m32[3] = ByteReverseWord32(m32[3]);
+    }
+}
+
+int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
+{
+    int  ret;
+    byte iv[AES_BLOCK_SIZE];
+
+    if (aes == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    if ((len != 16) && (len != 24) && (len != 32)) {
+        return BAD_FUNC_ARG;
+    }
+
+    XMEMSET(iv, 0, AES_BLOCK_SIZE);
+    ret = wc_AesSetKey(aes, key, len, iv, AES_ENCRYPTION);
+    
+    if (ret == 0) {
+        AES_ECB_encrypt(iv, aes->H, AES_BLOCK_SIZE,
+            (const unsigned char*)aes->key, aes->rounds);
+        GenerateM0(aes);
+    }
+
+    return ret;
+}
+
+static WC_INLINE void IncrementGcmCounter(byte* inOutCtr)
+{
+    int i;
+
+    /* in network byte order so start at end and work back */
+    for (i = AES_BLOCK_SIZE - 1; i >= AES_BLOCK_SIZE - CTR_SZ; i--) {
+        if (++inOutCtr[i])  /* we're done unless we overflow */
+            return;
+    }
+}
+
+static WC_INLINE void FlattenSzInBits(byte* buf, word32 sz)
+{
+    /* Multiply the sz by 8 */
+    word32 szHi = (sz >> (8*sizeof(sz) - 3));
+    sz <<= 3;
+
+    /* copy over the words of the sz into the destination buffer */
+    buf[0] = (szHi >> 24) & 0xff;
+    buf[1] = (szHi >> 16) & 0xff;
+    buf[2] = (szHi >>  8) & 0xff;
+    buf[3] = szHi & 0xff;
+    buf[4] = (sz >> 24) & 0xff;
+    buf[5] = (sz >> 16) & 0xff;
+    buf[6] = (sz >>  8) & 0xff;
+    buf[7] = sz & 0xff;
+}
+
+static void gcm_ghash_arm32(Aes* aes, const byte* a, word32 aSz, const byte* c,
+    word32 cSz, byte* s, word32 sSz)
+{
+    byte x[AES_BLOCK_SIZE];
+    byte scratch[AES_BLOCK_SIZE];
+    word32 blocks, partial;
+
+    if (aes == NULL) {
+        return;
+    }
+
+    XMEMSET(x, 0, AES_BLOCK_SIZE);
+
+    /* Hash in A, the Additional Authentication Data */
+    if (aSz != 0 && a != NULL) {
+        blocks = aSz / AES_BLOCK_SIZE;
+        partial = aSz % AES_BLOCK_SIZE;
+        if (blocks > 0) {
+            GCM_gmult_len(x, aes->M0, a, blocks * AES_BLOCK_SIZE);
+            a += blocks * AES_BLOCK_SIZE;
+        }
+        if (partial != 0) {
+            XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+            XMEMCPY(scratch, a, partial);
+            GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+        }
+    }
+
+    /* Hash in C, the Ciphertext */
+    if (cSz != 0 && c != NULL) {
+        blocks = cSz / AES_BLOCK_SIZE;
+        partial = cSz % AES_BLOCK_SIZE;
+        if (blocks > 0) {
+            GCM_gmult_len(x, aes->M0, c, blocks * AES_BLOCK_SIZE);
+            c += blocks * AES_BLOCK_SIZE;
+        }
+        if (partial != 0) {
+            XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+            XMEMCPY(scratch, c, partial);
+            GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+        }
+    }
+
+    /* Hash in the lengths of A and C in bits */
+    FlattenSzInBits(&scratch[0], aSz);
+    FlattenSzInBits(&scratch[8], cSz);
+    GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+
+    /* Copy the result into s. */
+    XMEMCPY(s, x, sSz);
+}
+
+int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
+                   const byte* iv, word32 ivSz,
+                   byte* authTag, word32 authTagSz,
+                   const byte* authIn, word32 authInSz)
+{
+    word32 blocks;
+    word32 partial;
+    byte counter[AES_BLOCK_SIZE];
+    byte initialCounter[AES_BLOCK_SIZE];
+    byte x[AES_BLOCK_SIZE];
+    byte scratch[AES_BLOCK_SIZE];
+
+    /* sanity checks */
+    if (aes == NULL || (iv == NULL && ivSz > 0) || (authTag == NULL) ||
+            (authIn == NULL && authInSz > 0) || (ivSz == 0)) {
+        WOLFSSL_MSG("a NULL parameter passed in when size is larger than 0");
+        return BAD_FUNC_ARG;
+    }
+
+    if (authTagSz < WOLFSSL_MIN_AUTH_TAG_SZ || authTagSz > AES_BLOCK_SIZE) {
+        WOLFSSL_MSG("GcmEncrypt authTagSz error");
+        return BAD_FUNC_ARG;
+    }
+
+    if (aes->rounds != 10 && aes->rounds != 12 && aes->rounds != 14) {
+        WOLFSSL_ERROR_VERBOSE(KEYUSAGE_E);
+        return KEYUSAGE_E;
+    }
+
+    XMEMSET(initialCounter, 0, AES_BLOCK_SIZE);
+    if (ivSz == GCM_NONCE_MID_SZ) {
+        XMEMCPY(initialCounter, iv, ivSz);
+        initialCounter[AES_BLOCK_SIZE - 1] = 1;
+    }
+    else {
+        gcm_ghash_arm32(aes, NULL, 0, iv, ivSz, initialCounter, AES_BLOCK_SIZE);
+    }
+    XMEMCPY(counter, initialCounter, AES_BLOCK_SIZE);
+
+    /* Hash in the Additional Authentication Data */
+    XMEMSET(x, 0, AES_BLOCK_SIZE);
+    if (authInSz != 0 && authIn != NULL) {
+        blocks = authInSz / AES_BLOCK_SIZE;
+        partial = authInSz % AES_BLOCK_SIZE;
+        if (blocks > 0) {
+            GCM_gmult_len(x, aes->M0, authIn, blocks * AES_BLOCK_SIZE);
+            authIn += blocks * AES_BLOCK_SIZE;
+        }
+        if (partial != 0) {
+            XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+            XMEMCPY(scratch, authIn, partial);
+            GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+        }
+    }
+
+    /* do as many blocks as possible */
+    blocks = sz / AES_BLOCK_SIZE;
+    partial = sz % AES_BLOCK_SIZE;
+    if (blocks > 0) {
+        AES_GCM_encrypt(in, out, blocks * AES_BLOCK_SIZE,
+            (const unsigned char*)aes->key, aes->rounds, counter);
+        GCM_gmult_len(x, aes->M0, out, blocks * AES_BLOCK_SIZE);
+        in += blocks * AES_BLOCK_SIZE;
+        out += blocks * AES_BLOCK_SIZE;
+    }
+
+    /* take care of partial block sizes leftover */
+    if (partial != 0) {
+        AES_GCM_encrypt(in, scratch, AES_BLOCK_SIZE,
+            (const unsigned char*)aes->key, aes->rounds, counter);
+        XMEMCPY(out, scratch, partial);
+
+        XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+        XMEMCPY(scratch, out, partial);
+        GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+    }
+
+    /* Hash in the lengths of A and C in bits */
+    XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+    FlattenSzInBits(&scratch[0], authInSz);
+    FlattenSzInBits(&scratch[8], sz);
+    GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+    if (authTagSz > AES_BLOCK_SIZE) {
+        XMEMCPY(authTag, x, AES_BLOCK_SIZE);
+    }
+    else {
+        /* authTagSz can be smaller than AES_BLOCK_SIZE */
+        XMEMCPY(authTag, x, authTagSz);
+    }
+
+    /* Auth tag calculation. */
+    AES_ECB_encrypt(initialCounter, scratch, AES_BLOCK_SIZE,
+        (const unsigned char*)aes->key, aes->rounds);
+    xorbuf(authTag, scratch, authTagSz);
+
+    return 0;
+}
+
+int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
+    const byte* iv, word32 ivSz, const byte* authTag, word32 authTagSz,
+    const byte* authIn, word32 authInSz)
+{
+    word32 blocks;
+    word32 partial;
+    byte counter[AES_BLOCK_SIZE];
+    byte initialCounter[AES_BLOCK_SIZE];
+    byte scratch[AES_BLOCK_SIZE];
+    byte x[AES_BLOCK_SIZE];
+
+    /* sanity checks */
+    if (aes == NULL || iv == NULL || (sz != 0 && (in == NULL || out == NULL)) ||
+        authTag == NULL || authTagSz > AES_BLOCK_SIZE || authTagSz == 0 ||
+        ivSz == 0) {
+        WOLFSSL_MSG("a NULL parameter passed in when size is larger than 0");
+        return BAD_FUNC_ARG;
+    }
+
+    XMEMSET(initialCounter, 0, AES_BLOCK_SIZE);
+    if (ivSz == GCM_NONCE_MID_SZ) {
+        XMEMCPY(initialCounter, iv, ivSz);
+        initialCounter[AES_BLOCK_SIZE - 1] = 1;
+    }
+    else {
+        gcm_ghash_arm32(aes, NULL, 0, iv, ivSz, initialCounter, AES_BLOCK_SIZE);
+    }
+    XMEMCPY(counter, initialCounter, AES_BLOCK_SIZE);
+
+    XMEMSET(x, 0, AES_BLOCK_SIZE);
+    /* Hash in the Additional Authentication Data */
+    if (authInSz != 0 && authIn != NULL) {
+        blocks = authInSz / AES_BLOCK_SIZE;
+        partial = authInSz % AES_BLOCK_SIZE;
+        if (blocks > 0) {
+            GCM_gmult_len(x, aes->M0, authIn, blocks * AES_BLOCK_SIZE);
+            authIn += blocks * AES_BLOCK_SIZE;
+        }
+        if (partial != 0) {
+            XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+            XMEMCPY(scratch, authIn, partial);
+            GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+        }
+    }
+
+    blocks = sz / AES_BLOCK_SIZE;
+    partial = sz % AES_BLOCK_SIZE;
+    /* do as many blocks as possible */
+    if (blocks > 0) {
+        GCM_gmult_len(x, aes->M0, in, blocks * AES_BLOCK_SIZE);
+
+        AES_GCM_encrypt(in, out, blocks * AES_BLOCK_SIZE,
+            (const unsigned char*)aes->key, aes->rounds, counter);
+        in += blocks * AES_BLOCK_SIZE;
+        out += blocks * AES_BLOCK_SIZE;
+    }
+    if (partial != 0) {
+        XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+        XMEMCPY(scratch, in, partial);
+        GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+
+        AES_GCM_encrypt(in, scratch, AES_BLOCK_SIZE,
+            (const unsigned char*)aes->key, aes->rounds, counter);
+        XMEMCPY(out, scratch, partial);
+    }
+
+    XMEMSET(scratch, 0, AES_BLOCK_SIZE);
+    FlattenSzInBits(&scratch[0], authInSz);
+    FlattenSzInBits(&scratch[8], sz);
+    GCM_gmult_len(x, aes->M0, scratch, AES_BLOCK_SIZE);
+    AES_ECB_encrypt(initialCounter, scratch, AES_BLOCK_SIZE,
+        (const unsigned char*)aes->key, aes->rounds);
+    xorbuf(x, scratch, authTagSz);
+    if (authTag != NULL) {
+        if (ConstantCompare(authTag, x, authTagSz) != 0) {
+            return AES_GCM_AUTH_E;
+        }
+    }
+
+    return 0;
+}
+#endif /* HAVE_AESGCM */
+#endif /* !WOLFSSL_ARMASM_NO_HW_CRYPTO */
 #endif /* !NO_AES && WOLFSSL_ARMASM */

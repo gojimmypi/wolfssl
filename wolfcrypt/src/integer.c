@@ -1,6 +1,6 @@
 /* integer.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -34,18 +34,18 @@
 /* in case user set USE_FAST_MATH there */
 #include <wolfssl/wolfcrypt/settings.h>
 
+#ifndef NO_BIG_INT
+
+#if !defined(USE_FAST_MATH) && defined(USE_INTEGER_HEAP_MATH)
+
+#ifndef WOLFSSL_SP_MATH
+
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
 #endif
-
-#ifndef NO_BIG_INT
-
-#ifndef USE_FAST_MATH
-
-#ifndef WOLFSSL_SP_MATH
 
 #include <wolfssl/wolfcrypt/integer.h>
 
@@ -889,7 +889,7 @@ int mp_lshd (mp_int * a, int b)
 #if defined(FREESCALE_LTC_TFM)
 int wolfcrypt_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
 #else
-    int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y) // NOLINT(misc-no-recursion)
+    int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y) /* //NOLINT(misc-no-recursion) */
 #endif
 {
   int dr;
@@ -1996,7 +1996,7 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y,
    * one of many reduction algorithms without modding the guts of
    * the code with if statements everywhere.
    */
-  int     (*redux)(mp_int*,mp_int*,mp_digit) = NULL; // cppcheck-suppress nullPointerRedundantCheck // cppcheck 2.6.3 false positive
+  int     (*redux)(mp_int*,mp_int*,mp_digit) = NULL;
 
 #ifdef WOLFSSL_SMALL_STACK
   M = (mp_int*) XMALLOC(sizeof(mp_int) * TAB_SIZE, NULL,
@@ -2306,11 +2306,7 @@ int mp_exptmod_base_2(mp_int * X, mp_int * P, mp_int * Y)
 {
   mp_digit buf, mp;
   int      err = MP_OKAY, bitbuf, bitcpy, bitcnt, digidx, x, y;
-#ifdef WOLFSSL_SMALL_STACK
-  mp_int  *res = NULL;
-#else
   mp_int   res[1];
-#endif
   int     (*redux)(mp_int*,mp_int*,mp_digit) = NULL;
 
   /* automatically pick the comba one if available (saves quite a few
@@ -2331,13 +2327,6 @@ int mp_exptmod_base_2(mp_int * X, mp_int * P, mp_int * Y)
   if (redux == NULL) {
       return MP_VAL;
   }
-
-#ifdef WOLFSSL_SMALL_STACK
-  res = (mp_int*)XMALLOC(sizeof(mp_int), NULL, DYNAMIC_TYPE_TMP_BUFFER);
-  if (res == NULL) {
-     return MP_MEM;
-  }
-#endif
 
   /* now setup montgomery  */
   if ((err = mp_montgomery_setup(P, &mp)) != MP_OKAY) {
@@ -2449,9 +2438,6 @@ int mp_exptmod_base_2(mp_int * X, mp_int * P, mp_int * Y)
 
 LBL_RES:mp_clear (res);
 LBL_M:
-#ifdef WOLFSSL_SMALL_STACK
-  XFREE(res, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
   return err;
 }
 
@@ -2526,12 +2512,13 @@ int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
   }
 
 #ifdef WOLFSSL_SMALL_STACK
-  W = (mp_word*)XMALLOC(sizeof(mp_word) * MP_WARRAY, NULL, DYNAMIC_TYPE_BIGINT);
+  W = (mp_word*)XMALLOC(sizeof(mp_word) * (n->used * 2 + 1), NULL,
+    DYNAMIC_TYPE_BIGINT);
   if (W == NULL)
     return MP_MEM;
 #endif
 
-  XMEMSET(W, 0, (n->used * 2 + 1) * sizeof(mp_word));
+  XMEMSET(W, 0, sizeof(mp_word) * (n->used * 2 + 1));
 
   /* first we have to get the digits of the input into
    * an array of double precision words W[...]
@@ -3349,7 +3336,7 @@ int fast_s_mp_sqr (mp_int * a, mp_int * b)
     return MP_RANGE;  /* TAO range check */
 
 #ifdef WOLFSSL_SMALL_STACK
-  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * MP_WARRAY, NULL, DYNAMIC_TYPE_BIGINT);
+  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * pa, NULL, DYNAMIC_TYPE_BIGINT);
   if (W == NULL)
     return MP_MEM;
 #endif
@@ -3468,7 +3455,7 @@ int fast_s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
     return MP_RANGE;  /* TAO range check */
 
 #ifdef WOLFSSL_SMALL_STACK
-  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * MP_WARRAY, NULL, DYNAMIC_TYPE_BIGINT);
+  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * pa, NULL, DYNAMIC_TYPE_BIGINT);
   if (W == NULL)
     return MP_MEM;
 #endif
@@ -4203,13 +4190,12 @@ int fast_s_mp_mul_high_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
     return MP_RANGE;  /* TAO range check */
 
 #ifdef WOLFSSL_SMALL_STACK
-  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * MP_WARRAY, NULL, DYNAMIC_TYPE_BIGINT);
+  W = (mp_digit*)XMALLOC(sizeof(mp_digit) * pa, NULL, DYNAMIC_TYPE_BIGINT);
   if (W == NULL)
     return MP_MEM;
 #endif
 
   /* number of output digits to produce */
-  pa = a->used + b->used;
   _W = 0;
   for (ix = digs; ix < pa; ix++) { /* JRB, have a->dp check at top of function*/
       int      tx, ty, iy;
@@ -4335,7 +4321,7 @@ int mp_sqrmod (mp_int * a, mp_int * b, mp_int * c)
     (!defined(NO_RSA) && !defined(NO_RSA_BOUNDS_CHECK))
 
 /* single digit addition */
-int mp_add_d (mp_int* a, mp_digit b, mp_int* c) // NOLINT(misc-no-recursion)
+int mp_add_d (mp_int* a, mp_digit b, mp_int* c) /* //NOLINT(misc-no-recursion) */
 {
   int     res, ix, oldused;
   mp_digit *tmpa, *tmpc, mu;
@@ -4433,7 +4419,7 @@ int mp_add_d (mp_int* a, mp_digit b, mp_int* c) // NOLINT(misc-no-recursion)
 
 
 /* single digit subtraction */
-int mp_sub_d (mp_int * a, mp_digit b, mp_int * c) // NOLINT(misc-no-recursion)
+int mp_sub_d (mp_int * a, mp_digit b, mp_int * c) /* //NOLINT(misc-no-recursion) */
 {
   mp_digit *tmpa, *tmpc, mu;
   int       res, ix, oldused;
@@ -4667,7 +4653,7 @@ int mp_mod_d (mp_int * a, mp_digit b, mp_digit * c)
 
 #endif /* WOLFSSL_KEY_GEN || HAVE_COMP_KEY || HAVE_ECC || DEBUG_WOLFSSL */
 
-#if defined(WOLFSSL_KEY_GEN) || !defined(NO_DH) || !defined(NO_DSA) || !defined(NO_RSA)
+#if (defined(WOLFSSL_KEY_GEN) && !defined(NO_RSA)) || !defined(NO_DH) || !defined(NO_DSA)
 
 const FLASH_QUALIFIER mp_digit ltm_prime_tab[PRIME_SIZE] = {
   0x0002, 0x0003, 0x0005, 0x0007, 0x000B, 0x000D, 0x0011, 0x0013,
@@ -5018,7 +5004,7 @@ LBL_B:mp_clear (&b);
   return err;
 }
 
-#endif /* WOLFSSL_KEY_GEN NO_DH NO_DSA NO_RSA */
+#endif /* (WOLFSSL_KEY_GEN && !NO_RSA) || !NO_DH || !NO_DSA */
 
 #ifdef WOLFSSL_KEY_GEN
 
@@ -5483,6 +5469,6 @@ void mp_dump(const char* desc, mp_int* a, byte verbose)
 
 #endif /* WOLFSSL_SP_MATH */
 
-#endif /* USE_FAST_MATH */
+#endif /* !USE_FAST_MATH && USE_INTEGER_HEAP_MATH */
 
 #endif /* NO_BIG_INT */

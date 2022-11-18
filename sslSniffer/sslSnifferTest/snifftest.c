@@ -1,6 +1,6 @@
 /* snifftest.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -330,7 +330,7 @@ static int myStoreDataCb(const unsigned char* decryptBuf,
 
 /* try and load as both static ephemeral and private key */
 /* only fail if no key is loaded */
-/* Allow comma seperated list of files */
+/* Allow comma separated list of files */
 static int load_key(const char* name, const char* server, int port,
     const char* keyFiles, const char* passwd, char* err)
 {
@@ -522,6 +522,7 @@ static int SnifferAsyncQueueAdd(int lastRet, void* chain, int chainSz,
         asyncQueue[ret].lastRet = lastRet;
         asyncQueue[ret].packetNumber = packetNumber;
     }
+    (void)isChain;
 
     return ret;
 }
@@ -544,7 +545,7 @@ static int SnifferAsyncPollQueue(byte** data, char* err, SSLInfo* sslInfo,
             if (ret == 0) {
                 /* attempt to reprocess pending packet */
             #ifdef DEBUG_SNIFFER
-                printf("Retrying packet %d\n", asyncQueue[i].packetNumber);
+                printf("Packet Number: %d (retry)\n", asyncQueue[i].packetNumber);
             #endif
                 ret = ssl_DecodePacketAsync(asyncQueue[i].packet,
                     asyncQueue[i].length, 0, data, err, sslInfo, NULL);
@@ -827,7 +828,7 @@ int main(int argc, char** argv)
             /* grab next pcap packet */
             packetNumber++;
             packet = pcap_next(pcap, &header);
-        #ifdef QAT_DEBUG
+        #ifdef DEBUG_SNIFFER
             printf("Packet Number: %d\n", packetNumber);
         #endif
         }
@@ -867,9 +868,9 @@ int main(int argc, char** argv)
             ret = ssl_DecodePacketAsync(chain, chainSz, isChain, &data, err,
                 &sslInfo, NULL);
 
-            /* WC_PENDING_E: Hardware is processing */
-            /* WC_HW_WAIT_E: Hardware is already processing stream */
-            if (ret == WC_PENDING_E || ret == WC_HW_WAIT_E) {
+            /* WC_PENDING_E: Hardware is processing or stream is blocked
+             *               (waiting on WC_PENDING_E) */
+            if (ret == WC_PENDING_E) {
                 /* add to queue, for later processing */
             #ifdef DEBUG_SNIFFER
                 printf("Steam is pending, queue packet %d\n", packetNumber);
@@ -903,6 +904,11 @@ int main(int argc, char** argv)
 
         /* check if we are done reading file */
         if (packet == NULL && data == NULL && saveFile) {
+        #ifdef WOLFSSL_ASYNC_CRYPT
+            /* if items pending still then keep processing */
+            if (queueSz > 0)
+                continue;
+        #endif
             break;
         }
 

@@ -1,6 +1,6 @@
 /* tfm.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -2423,12 +2423,16 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #ifdef TFM_TIMING_RESISTANT
 #if DIGIT_BIT <= 16
     #define WINSIZE    2
+    #define WINMASK    0x3
 #elif DIGIT_BIT <= 32
     #define WINSIZE    3
+    #define WINMASK    0x7
 #elif DIGIT_BIT <= 64
     #define WINSIZE    4
+    #define WINMASK    0xf
 #elif DIGIT_BIT <= 128
     #define WINSIZE    5
+    #define WINMASK    0x1f
 #endif
 
 /* y = 2**x (mod b)
@@ -2544,7 +2548,12 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
     y       = (int)(buf >> (DIGIT_BIT - 1)) & 1;
     buf   <<= (fp_digit)1;
     /* add bit to the window */
+  #ifndef WC_PROTECT_ENCRYPTED_MEM
     bitbuf |= (y << (WINSIZE - ++bitcpy));
+  #else
+    /* Ensure value changes even when y is zero. */
+    bitbuf += (WINMASK + 1) + (y << (WINSIZE - ++bitcpy));
+  #endif
 
     if (bitcpy == WINSIZE) {
       /* ok window is filled so square as required and multiply  */
@@ -2567,7 +2576,12 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
       }
 
       /* then multiply by 2^bitbuf */
+    #ifndef WC_PROTECT_ENCRYPTED_MEM
       err = fp_mul_2d(res, bitbuf, res);
+    #else
+      /* Get the window bits. */
+      err = fp_mul_2d(res, bitbuf & WINMASK, res);
+    #endif
       if (err != FP_OKAY) {
       #ifdef WOLFSSL_SMALL_STACK
         XFREE(res, NULL, DYNAMIC_TYPE_TMP_BUFFER);
@@ -2592,7 +2606,12 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 
       /* empty window and reset */
       bitcpy = 0;
+    #ifndef WC_PROTECT_ENCRYPTED_MEM
       bitbuf = 0;
+    #else
+      /* Ensure value is new even when bottom bits are 0. */
+      bitbuf = (WINMASK + 1) + (bitbuf & ~WINMASK);
+    #endif
     }
   }
 
@@ -2876,14 +2895,21 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
    int x = fp_count_bits (X);
 #endif
 
-   if (fp_iszero(G)) {
+   /* handle modulus of zero and prevent overflows */
+   if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
+      return FP_VAL;
+   }
+   if (fp_isone(P)) {
       fp_set(Y, 0);
       return FP_OKAY;
    }
-
-   /* prevent overflows */
-   if (P->used > (FP_SIZE/2)) {
-      return FP_VAL;
+   if (fp_iszero(X)) {
+      fp_set(Y, 1);
+      return FP_OKAY;
+   }
+   if (fp_iszero(G)) {
+      fp_set(Y, 0);
+      return FP_OKAY;
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
@@ -3586,7 +3612,7 @@ int fp_montgomery_reduce_ex(fp_int *a, fp_int *m, fp_digit mp, int ct)
           ++_c;
        }
        LOOP_END;
-       while (cy) { // NOLINT(bugprone-infinite-loop) /* PROPCARRY is an asm macro */
+       while (cy) { /* //NOLINT(bugprone-infinite-loop) */ /* PROPCARRY is an asm macro */
            PROPCARRY;
            ++_c;
        }
@@ -3784,7 +3810,7 @@ int fp_to_unsigned_bin(fp_int *a, unsigned char *b)
   fp_init_copy(t, a);
 
   x = fp_to_unsigned_bin_at_pos(0, t, b);
-  fp_reverse (b, x);
+  mp_reverse (b, x);
 
 #ifdef WOLFSSL_SMALL_STACK
   XFREE(t, NULL, DYNAMIC_TYPE_BIGINT);
@@ -3830,7 +3856,7 @@ int fp_to_unsigned_bin_len(fp_int *a, unsigned char *b, int c)
       b[x] = (unsigned char) (t->dp[0] & 255);
       fp_div_2d (t, 8, t, NULL);
   }
-  fp_reverse (b, x);
+  mp_reverse (b, x);
 
 #ifdef WOLFSSL_SMALL_STACK
   XFREE(t, NULL, DYNAMIC_TYPE_BIGINT);
@@ -3858,14 +3884,12 @@ void fp_set(fp_int *a, fp_digit b)
 #endif
 int fp_set_int(fp_int *a, unsigned long b)
 {
-  int x;
-
   /* use direct fp_set if b is less than fp_digit max
    * If input max value of b down shift by 1 less than full range
    * fp_digit, then condition is always true. */
 #if ((ULONG_MAX >> (DIGIT_BIT-1)) > 0)
+  int x;
   if (b < FP_DIGIT_MAX)
-#endif
   {
     fp_set (a, (fp_digit)b);
     return FP_OKAY;
@@ -3892,6 +3916,9 @@ int fp_set_int(fp_int *a, unsigned long b)
 
   /* clamp digits */
   fp_clamp(a);
+#else
+  fp_set (a, (fp_digit)b);
+#endif
 
   return FP_OKAY;
 }
@@ -4077,23 +4104,6 @@ void fp_rshd(fp_int *a, int x)
    /* decrement count */
    a->used -= x;
    fp_clamp(a);
-}
-
-/* reverse an array, used for radix code */
-void fp_reverse (unsigned char *s, int len)
-{
-  int     ix, iy;
-  unsigned char t;
-
-  ix = 0;
-  iy = len - 1;
-  while (ix < iy) {
-    t     = s[ix];
-    s[ix] = s[iy];
-    s[iy] = t;
-    ++ix;
-    --iy;
-  }
 }
 
 
@@ -5821,7 +5831,7 @@ int mp_toradix (mp_int *a, char *str, int radix)
     /* reverse the digits of the string.  In this case _s points
      * to the first digit [excluding the sign] of the number]
      */
-    fp_reverse ((unsigned char *)_s, digs);
+    mp_reverse ((unsigned char *)_s, digs);
 
     /* append a NULL so the string is properly terminated */
     *str = '\0';
@@ -5875,5 +5885,17 @@ int mp_lshd (mp_int * a, int b)
 {
   return fp_lshd(a, b);
 }
+
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+void mp_memzero_add(const char* name, mp_int* a)
+{
+    wc_MemZero_Add(name, a->dp, sizeof(a->dp));
+}
+
+void mp_memzero_check(mp_int* a)
+{
+    wc_MemZero_Check(a->dp, sizeof(a->dp));
+}
+#endif /* WOLFSSL_CHECK_MEM_ZERO */
 
 #endif /* USE_FAST_MATH */

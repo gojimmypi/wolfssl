@@ -1,6 +1,6 @@
 /* echoclient.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -138,7 +138,11 @@ void echoclient_test(void* args)
 #endif
 
 #if defined(CYASSL_DTLS)
+    #ifdef WOLFSSL_DTLS13
+    method = wolfDTLSv1_3_client_method();
+    #elif !defined(WOLFSSL_NO_TLS12)
     method  = DTLSv1_2_client_method();
+    #endif
 #elif !defined(NO_TLS)
     #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_SNIFFER)
     method = CyaTLSv1_2_client_method();
@@ -176,7 +180,7 @@ void echoclient_test(void* args)
 
 #if defined(CYASSL_SNIFFER)
     /* Only set if not running testsuite */
-    if (XSTRSTR(argv[0], "testsuite") != 0) {
+    if (XSTRSTR(argv[0], "testsuite") == NULL) {
         /* don't use EDH, can't sniff tmp keys */
         SSL_CTX_set_cipher_list(ctx, "AES256-SHA");
     }
@@ -281,12 +285,14 @@ void echoclient_test(void* args)
         }
 
         if (strncmp(msg, "quit", 4) == 0) {
-            fputs("sending server shutdown command: quit!\n", fout);
+            LIBCALL_CHECK_RET(fputs("sending server shutdown command: quit!\n",
+                                    fout));
             break;
         }
 
         if (strncmp(msg, "break", 5) == 0) {
-            fputs("sending server session close: break!\n", fout);
+            LIBCALL_CHECK_RET(fputs("sending server session close: break!\n",
+                                    fout));
             break;
         }
 
@@ -309,8 +315,8 @@ void echoclient_test(void* args)
             } while (err == WC_PENDING_E);
             if (ret > 0) {
                 reply[ret] = 0;
-                fputs(reply, fout);
-                fflush(fout) ;
+                LIBCALL_CHECK_RET(fputs(reply, fout));
+                LIBCALL_CHECK_RET(fflush(fout));
                 sendSz -= ret;
             }
 #ifdef CYASSL_DTLS
@@ -358,7 +364,7 @@ void echoclient_test(void* args)
     wolfAsync_DevClose(&devId);
 #endif
 
-    fflush(fout);
+    LIBCALL_CHECK_RET(fflush(fout));
 #ifndef WOLFSSL_MDK_SHELL
     if (inCreated)  fclose(fin);
     if (outCreated) fclose(fout);

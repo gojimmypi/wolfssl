@@ -1,6 +1,6 @@
 /* des3.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -61,6 +61,11 @@ enum {
     #include <wolfssl/wolfcrypt/async.h>
 #endif
 
+#ifdef WOLFSSL_SE050
+    /* SE050 SDK also defines DES_BLOCK_SIZE */
+    #undef DES_BLOCK_SIZE
+#endif
+
 enum {
     DES_ENC_TYPE    = WC_CIPHER_DES,     /* cipher unique type */
     DES3_ENC_TYPE   = WC_CIPHER_DES3,    /* cipher unique type */
@@ -79,6 +84,9 @@ enum {
 
 
 #if defined(STM32_CRYPTO)
+
+#include <wolfssl/wolfcrypt/port/st/stm32.h>
+
 enum {
     DES_CBC = 0,
     DES_ECB = 1

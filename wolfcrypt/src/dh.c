@@ -1,6 +1,6 @@
 /* dh.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -1076,13 +1076,14 @@ static int CheckDhLN(int modLen, int divLen)
 static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
                                 word32* privSz)
 {
-    byte* cBuf;
     int qSz, pSz, cSz, err;
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* tmpQ = NULL;
     mp_int* tmpX = NULL;
+    byte* cBuf = NULL;
 #else
     mp_int tmpQ[1], tmpX[1];
+    byte cBuf[DH_MAX_SIZE + 64 / WOLFSSL_BIT_SIZE];
 #endif
 
     /* Parameters validated in calling functions. */
@@ -1105,11 +1106,11 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
 
     /* generate extra 64 bits so that bias from mod function is negligible */
     cSz = *privSz + (64 / WOLFSSL_BIT_SIZE);
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     cBuf = (byte*)XMALLOC(cSz, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
     if (cBuf == NULL) {
         return MEMORY_E;
     }
-#ifdef WOLFSSL_SMALL_STACK
     tmpQ = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (tmpQ == NULL) {
         XFREE(cBuf, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -1126,14 +1127,18 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
 
     if ((err = mp_init_multi(tmpX, tmpQ, NULL, NULL, NULL, NULL))
                    != MP_OKAY) {
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(cBuf, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
-#ifdef WOLFSSL_SMALL_STACK
         XFREE(tmpQ, key->heap, DYNAMIC_TYPE_DH);
         XFREE(tmpX, key->heap, DYNAMIC_TYPE_DH);
 #endif
         return err;
     }
 
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    wc_MemZero_Add("GeneratePrivateDh186 cBuf", cBuf, cSz);
+    mp_memzero_add("GeneratePrivateDh186 tmpX", tmpX);
+#endif
     do {
         /* generate N+64 bits (c) from RBG into tmpX, making sure positive.
          * Hash_DRBG uses SHA-256 which matches maximum
@@ -1144,8 +1149,8 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
         if (err != MP_OKAY) {
             mp_clear(tmpX);
             mp_clear(tmpQ);
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
             XFREE(cBuf, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
-#ifdef WOLFSSL_SMALL_STACK
             XFREE(tmpQ, key->heap, DYNAMIC_TYPE_DH);
             XFREE(tmpX, key->heap, DYNAMIC_TYPE_DH);
 #endif
@@ -1154,7 +1159,11 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
     } while (mp_cmp_d(tmpX, 1) != MP_GT);
 
     ForceZero(cBuf, cSz);
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(cBuf, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
+#elif defined(WOLFSSL_CHECK_MEM_ZERO)
+    wc_MemZero_Check(cBuf, cSz);
+#endif
 
     /* tmpQ: M = min(2^N,q) - 1 */
     if (err == MP_OKAY)
@@ -1191,9 +1200,11 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
 
     mp_forcezero(tmpX);
     mp_clear(tmpQ);
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(tmpQ, key->heap, DYNAMIC_TYPE_DH);
     XFREE(tmpX, key->heap, DYNAMIC_TYPE_DH);
+#elif defined(WOLFSSL_CHECK_MEM_ZERO)
+    mp_memzero_check(tmpX);
 #endif
 
     return err;
@@ -1281,7 +1292,7 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
     int ret = 0;
 #ifndef WOLFSSL_SP_MATH
     word32 binSz = 0;
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* x;
     mp_int* y;
 #else
@@ -1306,7 +1317,7 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
 #endif
 
 #if !defined(WOLFSSL_SP_MATH)
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     x = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (x == NULL)
         return MEMORY_E;
@@ -1317,7 +1328,7 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
     }
 #endif
     if (mp_init_multi(x, y, 0, 0, 0, 0) != MP_OKAY) {
-    #ifdef WOLFSSL_SMALL_STACK
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(y, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
     #endif
@@ -1345,7 +1356,7 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
 
     mp_clear(y);
     mp_clear(x);
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(y, key->heap, DYNAMIC_TYPE_DH);
     XFREE(x, key->heap, DYNAMIC_TYPE_DH);
 #endif
@@ -1425,15 +1436,15 @@ static int wc_DhGenerateKeyPair_Async(DhKey* key, WC_RNG* rng,
 #elif defined(HAVE_CAVIUM)
     /* TODO: Not implemented - use software for now */
 
-#else /* WOLFSSL_ASYNC_CRYPT_TEST */
-    if (wc_AsyncTestInit(&key->asyncDev, ASYNC_TEST_DH_GEN)) {
-        WC_ASYNC_TEST* testDev = &key->asyncDev.test;
-        testDev->dhGen.key = key;
-        testDev->dhGen.rng = rng;
-        testDev->dhGen.priv = priv;
-        testDev->dhGen.privSz = privSz;
-        testDev->dhGen.pub = pub;
-        testDev->dhGen.pubSz = pubSz;
+#else /* WOLFSSL_ASYNC_CRYPT_SW */
+    if (wc_AsyncSwInit(&key->asyncDev, ASYNC_SW_DH_GEN)) {
+        WC_ASYNC_SW* sw = &key->asyncDev.sw;
+        sw->dhGen.key = key;
+        sw->dhGen.rng = rng;
+        sw->dhGen.priv = priv;
+        sw->dhGen.privSz = privSz;
+        sw->dhGen.pub = pub;
+        sw->dhGen.pubSz = pubSz;
         return WC_PENDING_E;
     }
 #endif
@@ -1464,7 +1475,7 @@ static int _ffc_validate_public_key(DhKey* key, const byte* pub, word32 pubSz,
        const byte* prime, word32 primeSz, int partial)
 {
     int ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* y = NULL;
     mp_int* p = NULL;
     mp_int* q = NULL;
@@ -1478,7 +1489,7 @@ static int _ffc_validate_public_key(DhKey* key, const byte* pub, word32 pubSz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     y = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (y == NULL)
         return MEMORY_E;
@@ -1496,7 +1507,7 @@ static int _ffc_validate_public_key(DhKey* key, const byte* pub, word32 pubSz,
 #endif
 
     if (mp_init_multi(y, p, q, NULL, NULL, NULL) != MP_OKAY) {
-    #ifdef WOLFSSL_SMALL_STACK
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(q, key->heap, DYNAMIC_TYPE_DH);
         XFREE(p, key->heap, DYNAMIC_TYPE_DH);
         XFREE(y, key->heap, DYNAMIC_TYPE_DH);
@@ -1596,7 +1607,7 @@ static int _ffc_validate_public_key(DhKey* key, const byte* pub, word32 pubSz,
 
     RESTORE_VECTOR_REGISTERS();
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(q, key->heap, DYNAMIC_TYPE_DH);
     XFREE(p, key->heap, DYNAMIC_TYPE_DH);
     XFREE(y, key->heap, DYNAMIC_TYPE_DH);
@@ -1685,7 +1696,7 @@ int wc_DhCheckPrivKey_ex(DhKey* key, const byte* priv, word32 privSz,
                          const byte* prime, word32 primeSz)
 {
     int ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* x = NULL;
     mp_int* q = NULL;
 #else
@@ -1697,7 +1708,7 @@ int wc_DhCheckPrivKey_ex(DhKey* key, const byte* priv, word32 privSz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     x = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (x == NULL)
         return MEMORY_E;
@@ -1709,7 +1720,7 @@ int wc_DhCheckPrivKey_ex(DhKey* key, const byte* priv, word32 privSz,
 #endif
 
     if (mp_init_multi(x, q, NULL, NULL, NULL, NULL) != MP_OKAY) {
-    #ifdef WOLFSSL_SMALL_STACK
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(q, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
     #endif
@@ -1721,6 +1732,9 @@ int wc_DhCheckPrivKey_ex(DhKey* key, const byte* priv, word32 privSz,
     }
 
     if (ret == 0) {
+    #ifdef WOLFSSL_CHECK_MEM_ZERO
+        mp_memzero_add("wc_DhCheckPrivKey_ex x", x);
+    #endif
         if (prime != NULL) {
             if (mp_read_unsigned_bin(q, prime, primeSz) != MP_OKAY)
                 ret = MP_READ_E;
@@ -1754,11 +1768,13 @@ int wc_DhCheckPrivKey_ex(DhKey* key, const byte* priv, word32 privSz,
         }
     }
 
-    mp_clear(x);
+    mp_forcezero(x);
     mp_clear(q);
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(q, key->heap, DYNAMIC_TYPE_DH);
     XFREE(x, key->heap, DYNAMIC_TYPE_DH);
+#elif defined(WOLFSSL_CHECK_MEM_ZERO)
+    mp_memzero_check(x);
 #endif
 
     return ret;
@@ -1785,7 +1801,7 @@ int wc_DhCheckPrivKey(DhKey* key, const byte* priv, word32 privSz)
 static int _ffc_pairwise_consistency_test(DhKey* key,
         const byte* pub, word32 pubSz, const byte* priv, word32 privSz)
 {
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* publicKey = NULL;
     mp_int* privateKey = NULL;
     mp_int* checkKey = NULL;
@@ -1801,7 +1817,7 @@ static int _ffc_pairwise_consistency_test(DhKey* key,
     if (mp_iseven(&key->p) == MP_YES)
         return MP_VAL;
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     publicKey = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (publicKey == NULL)
         return MEMORY_E;
@@ -1821,7 +1837,7 @@ static int _ffc_pairwise_consistency_test(DhKey* key,
     if (mp_init_multi(publicKey, privateKey, checkKey,
                       NULL, NULL, NULL) != MP_OKAY) {
 
-    #ifdef WOLFSSL_SMALL_STACK
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(privateKey, key->heap, DYNAMIC_TYPE_DH);
         XFREE(publicKey, key->heap, DYNAMIC_TYPE_DH);
         XFREE(checkKey, key->heap, DYNAMIC_TYPE_DH);
@@ -1837,6 +1853,9 @@ static int _ffc_pairwise_consistency_test(DhKey* key,
 
         ret = MP_READ_E;
     }
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    mp_memzero_add("_ffc_pairwise_consistency_test privateKey", privateKey);
+#endif
 
     /* Calculate checkKey = g^privateKey mod p */
     if (ret == 0) {
@@ -1888,10 +1907,12 @@ static int _ffc_pairwise_consistency_test(DhKey* key,
 
     RESTORE_VECTOR_REGISTERS();
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     XFREE(checkKey, key->heap, DYNAMIC_TYPE_DH);
     XFREE(privateKey, key->heap, DYNAMIC_TYPE_DH);
     XFREE(publicKey, key->heap, DYNAMIC_TYPE_DH);
+#elif defined(WOLFSSL_CHECK_MEM_ZERO)
+    mp_memzero_check(privateKey);
 #endif
 
     return ret;
@@ -1950,7 +1971,7 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
     const byte* priv, word32 privSz, const byte* otherPub, word32 pubSz)
 {
     int ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int* y = NULL;
 #if !defined(WOLFSSL_SP_MATH)
     mp_int* x = NULL;
@@ -1979,7 +2000,7 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
     }
 #endif
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     y = (mp_int*)XMALLOC(sizeof(mp_int), key->heap, DYNAMIC_TYPE_DH);
     if (y == NULL)
         return MEMORY_E;
@@ -2016,7 +2037,14 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
         RESTORE_VECTOR_REGISTERS();
 
-    #ifdef WOLFSSL_SMALL_STACK
+        /* make sure agree is > 1 (SP800-56A, 5.7.1.1) */
+        if ((ret == 0) &&
+            ((*agreeSz == 0) || ((*agreeSz == 1) && (agree[0] == 1))))
+        {
+            ret = MP_VAL;
+        }
+
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     #if !defined(WOLFSSL_SP_MATH)
         XFREE(z, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
@@ -2043,7 +2071,14 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
         RESTORE_VECTOR_REGISTERS();
 
-    #ifdef WOLFSSL_SMALL_STACK
+        /* make sure agree is > 1 (SP800-56A, 5.7.1.1) */
+        if ((ret == 0) &&
+            ((*agreeSz == 0) || ((*agreeSz == 1) && (agree[0] == 1))))
+        {
+            ret = MP_VAL;
+        }
+
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     #if !defined(WOLFSSL_SP_MATH)
         XFREE(z, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
@@ -2070,7 +2105,14 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
         RESTORE_VECTOR_REGISTERS();
 
-    #ifdef WOLFSSL_SMALL_STACK
+        /* make sure agree is > 1 (SP800-56A, 5.7.1.1) */
+        if ((ret == 0) &&
+            ((*agreeSz == 0) || ((*agreeSz == 1) && (agree[0] == 1))))
+        {
+            ret = MP_VAL;
+        }
+
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     #if !defined(WOLFSSL_SP_MATH)
         XFREE(z, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
@@ -2084,7 +2126,7 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
 #if !defined(WOLFSSL_SP_MATH)
     if (mp_init_multi(x, y, z, 0, 0, 0) != MP_OKAY) {
-    #ifdef WOLFSSL_SMALL_STACK
+    #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         XFREE(z, key->heap, DYNAMIC_TYPE_DH);
         XFREE(x, key->heap, DYNAMIC_TYPE_DH);
         XFREE(y, key->heap, DYNAMIC_TYPE_DH);
@@ -2096,12 +2138,20 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
     if (mp_read_unsigned_bin(x, priv, privSz) != MP_OKAY)
         ret = MP_READ_E;
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    if (ret == 0)
+        mp_memzero_add("wc_DhAgree_Sync x", x);
+#endif
 
     if (ret == 0 && mp_read_unsigned_bin(y, otherPub, pubSz) != MP_OKAY)
         ret = MP_READ_E;
 
     if (ret == 0 && mp_exptmod(y, x, &key->p, z) != MP_OKAY)
         ret = MP_EXPTMOD_E;
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    if (ret == 0)
+        mp_memzero_add("wc_DhAgree_Sync z", z);
+#endif
 
     /* make sure z is not one (SP800-56A, 5.7.1.1) */
     if (ret == 0 && (mp_cmp_d(z, 1) == MP_EQ))
@@ -2113,7 +2163,7 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
     if (ret == 0)
         *agreeSz = mp_unsigned_bin_size(z);
 
-    mp_clear(z);
+    mp_forcezero(z);
     mp_clear(y);
     mp_forcezero(x);
 
@@ -2123,12 +2173,15 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
     ret = WC_KEY_SIZE_E;
 #endif
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
 #if !defined(WOLFSSL_SP_MATH)
     XFREE(z, key->heap, DYNAMIC_TYPE_DH);
     XFREE(x, key->heap, DYNAMIC_TYPE_DH);
 #endif
     XFREE(y, key->heap, DYNAMIC_TYPE_DH);
+#elif defined(WOLFSSL_CHECK_MEM_ZERO)
+    mp_memzero_check(x);
+    mp_memzero_check(z);
 #endif
 
     return ret;
@@ -2157,16 +2210,16 @@ static int wc_DhAgree_Async(DhKey* key, byte* agree, word32* agreeSz,
 #elif defined(HAVE_CAVIUM)
     /* TODO: Not implemented - use software for now */
 
-#else /* WOLFSSL_ASYNC_CRYPT_TEST */
-    if (wc_AsyncTestInit(&key->asyncDev, ASYNC_TEST_DH_AGREE)) {
-        WC_ASYNC_TEST* testDev = &key->asyncDev.test;
-        testDev->dhAgree.key = key;
-        testDev->dhAgree.agree = agree;
-        testDev->dhAgree.agreeSz = agreeSz;
-        testDev->dhAgree.priv = priv;
-        testDev->dhAgree.privSz = privSz;
-        testDev->dhAgree.otherPub = otherPub;
-        testDev->dhAgree.pubSz = pubSz;
+#else /* WOLFSSL_ASYNC_CRYPT_SW */
+    if (wc_AsyncSwInit(&key->asyncDev, ASYNC_SW_DH_AGREE)) {
+        WC_ASYNC_SW* sw = &key->asyncDev.sw;
+        sw->dhAgree.key = key;
+        sw->dhAgree.agree = agree;
+        sw->dhAgree.agreeSz = agreeSz;
+        sw->dhAgree.priv = priv;
+        sw->dhAgree.privSz = privSz;
+        sw->dhAgree.otherPub = otherPub;
+        sw->dhAgree.pubSz = pubSz;
         return WC_PENDING_E;
     }
 #endif
@@ -2242,6 +2295,9 @@ WOLFSSL_LOCAL int wc_DhKeyCopy(DhKey* src, DhKey* dst)
         WOLFSSL_MSG("mp_copy error");
         return ret;
     }
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    mp_memzero_add("wc_DhKeyCopy dst->priv", &dst->priv);
+#endif
 
     dst->heap = src->heap;
 
@@ -2282,6 +2338,9 @@ int wc_DhImportKeyPair(DhKey* key, const byte* priv, word32 privSz,
             havePriv = 0;
         } else {
             WOLFSSL_MSG("DH Private Key Set");
+        #ifdef WOLFSSL_CHECK_MEM_ZERO
+            mp_memzero_add("wc_DhImportKeyPair key->priv", &key->priv);
+        #endif
         }
     }
 
@@ -2299,7 +2358,7 @@ int wc_DhImportKeyPair(DhKey* key, const byte* priv, word32 privSz,
             mp_clear(&key->pub);
             havePub = 0;
             if (havePriv) {
-                mp_clear(&key->priv);
+                mp_forcezero(&key->priv);
                 havePriv = 0; /* set to 0 to error out with failed read pub */
             }
         } else {
@@ -2818,7 +2877,7 @@ int wc_DhCopyNamedKey(int name,
 /* modulus_size in bits */
 int wc_DhGenerateParams(WC_RNG *rng, int modSz, DhKey *dh)
 {
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     mp_int *tmp = NULL, *tmp2 = NULL;
 #else
     mp_int tmp[1], tmp2[2];
@@ -2875,7 +2934,7 @@ int wc_DhGenerateParams(WC_RNG *rng, int modSz, DhKey *dh)
     if (ret == 0)
         ret = wc_RNG_GenerateBlock(rng, buf, bufSz);
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     if (ret == 0) {
         if (((tmp = (mp_int *)XMALLOC(sizeof(*tmp), NULL, DYNAMIC_TYPE_WOLF_BIGINT)) == NULL) ||
             ((tmp2 = (mp_int *)XMALLOC(sizeof(*tmp2), NULL, DYNAMIC_TYPE_WOLF_BIGINT)) == NULL))
@@ -2989,7 +3048,7 @@ int wc_DhGenerateParams(WC_RNG *rng, int modSz, DhKey *dh)
         }
     }
 
-#ifdef WOLFSSL_SMALL_STACK
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     if (tmp != NULL) {
         mp_clear(tmp);
         XFREE(tmp, NULL, DYNAMIC_TYPE_WOLF_BIGINT);

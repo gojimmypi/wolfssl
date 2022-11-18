@@ -475,7 +475,163 @@ WOLFSSL_METHOD *wolfDTLSv1_client_method(void);
     \sa wolfSSL_CTX_new
 */
 WOLFSSL_METHOD *wolfDTLSv1_server_method(void);
+/*!
+    \ingroup Setup
 
+    \brief The wolfDTLSv1_3_server_method() function is used to indicate that
+    the application is a server and will only support the DTLS 1.3
+    protocol. This function allocates memory for and initializes a new
+    wolfSSL_METHOD structure to be used when creating the SSL/TLS context with
+    wolfSSL_CTX_new(). This function is only available when wolfSSL has been
+    compiled with DTLSv1.3 support (--enable-dtls13, or by defining
+    wolfSSL_DTLS13).
+
+    \return * If successful, the call will return a pointer to the newly
+    created WOLFSSL_METHOD structure.
+    \return FAIL If memory allocation fails when calling XMALLOC, the failure
+    value of the underlying malloc() implementation will be returned
+    (typically NULL with errno will be set to ENOMEM).
+
+    \param none No parameters.
+
+    _Example_
+    \code
+    WOLFSSL_METHOD* method;
+    WOLFSSL_CTX* ctx;
+
+    method = wolfDTLSv1_3_server_method();
+    if (method == NULL) {
+	    // unable to get method
+    }
+
+    ctx = wolfSSL_CTX_new(method);
+    ...
+    \endcode
+
+
+    \sa wolfDTLSv1_3_client_method
+*/
+
+WOLFSSL_METHOD *wolfDTLSv1_3_server_method(void);
+/*!
+    \ingroup Setup
+
+    \brief The wolfDTLSv1_3_client_method() function is used to indicate that
+    the application is a client and will only support the DTLS 1.3
+    protocol. This function allocates memory for and initializes a new
+    wolfSSL_METHOD structure to be used when creating the SSL/TLS context with
+    wolfSSL_CTX_new(). This function is only available when wolfSSL has been
+    compiled with DTLSv1.3 support (--enable-dtls13, or by defining
+    wolfSSL_DTLS13).
+
+    \return * If successful, the call will return a pointer to the newly
+    created WOLFSSL_METHOD structure.
+    \return FAIL If memory allocation fails when calling XMALLOC, the failure
+    value of the underlying malloc() implementation will be returned
+    (typically NULL with errno will be set to ENOMEM).
+
+    \param none No parameters.
+
+    _Example_
+    \code
+    WOLFSSL_METHOD* method;
+    WOLFSSL_CTX* ctx;
+
+    method = wolfDTLSv1_3_client_method();
+    if (method == NULL) {
+	    // unable to get method
+    }
+
+    ctx = wolfSSL_CTX_new(method);
+    ...
+    \endcode
+
+
+    \sa wolfDTLSv1_3_server_method
+*/
+WOLFSSL_METHOD* wolfDTLSv1_3_client_method(void);
+/*!
+    \ingroup Setup
+
+    \brief The wolfDTLS_server_method() function is used to indicate that the
+    application is a server and will support the highest version of DTLS
+    available and all the version up to the minimum version allowed.  The
+    default minimum version allowed is based on the define
+    WOLFSSL_MIN_DTLS_DOWNGRADE and can be changed at runtime using
+    wolfSSL_SetMinVersion(). This function allocates memory for and initializes
+    a new wolfSSL_METHOD structure to be used when creating the SSL/TLS context
+    with wolfSSL_CTX_new(). This function is only available when wolfSSL has
+    been compiled with DTLS support (--enable-dtls, or by defining
+    wolfSSL_DTLS).
+
+    \return * If successful, the call will return a pointer to the newly
+    created WOLFSSL_METHOD structure.
+    \return FAIL If memory allocation fails when calling XMALLOC, the failure
+    value of the underlying malloc() implementation will be returned
+    (typically NULL with errno will be set to ENOMEM).
+
+    \param none No parameters.
+
+    _Example_
+    \code
+    WOLFSSL_METHOD* method;
+    WOLFSSL_CTX* ctx;
+
+    method = wolfDTLS_server_method();
+    if (method == NULL) {
+	    // unable to get method
+    }
+
+    ctx = wolfSSL_CTX_new(method);
+    ...
+    \endcode
+
+
+    \sa wolfDTLS_client_method
+    \sa wolfSSL_SetMinVersion
+*/
+WOLFSSL_METHOD *wolfDTLS_server_method(void);
+/*!
+    \ingroup Setup
+
+    \brief The wolfDTLS_client_method() function is used to indicate that the
+    application is a client and will support the highest version of DTLS
+    available and all the version up to the minimum version allowed.  The
+    default minimum version allowed is based on the define
+    WOLFSSL_MIN_DTLS_DOWNGRADE and can be changed at runtime using
+    wolfSSL_SetMinVersion(). This function allocates memory for and initializes
+    a new wolfSSL_METHOD structure to be used when creating the SSL/TLS context
+    with wolfSSL_CTX_new(). This function is only available when wolfSSL has
+    been compiled with DTLS support (--enable-dtls, or by defining
+    wolfSSL_DTLS).
+
+    \return * If successful, the call will return a pointer to the newly
+    created WOLFSSL_METHOD structure.
+    \return FAIL If memory allocation fails when calling XMALLOC, the failure
+    value of the underlying malloc() implementation will be returned
+    (typically NULL with errno will be set to ENOMEM).
+
+    \param none No parameters.
+
+    _Example_
+    \code
+    WOLFSSL_METHOD* method;
+    WOLFSSL_CTX* ctx;
+
+    method = wolfDTLS_client_method();
+    if (method == NULL) {
+	    // unable to get method
+    }
+
+    ctx = wolfSSL_CTX_new(method);
+    ...
+    \endcode
+
+
+    \sa wolfDTLS_server_method
+    \sa wolfSSL_SetMinVersion
+*/
+WOLFSSL_METHOD *wolfDTLS_client_method(void);
 /*!
     \brief This function creates and initializes a WOLFSSL_METHOD for the
     server side.
@@ -1055,7 +1211,7 @@ int wolfSSL_CTX_load_verify_locations(WOLFSSL_CTX* ctx, const char* file,
     int ret = 0;
     WOLFSSL_CTX* ctx;
     ...
-    ret = wolfSSL_CTX_load_verify_locations_ex(ctx, NUULL, “./certs/external",
+    ret = wolfSSL_CTX_load_verify_locations_ex(ctx, NULL, “./certs/external",
         WOLFSSL_LOAD_FLAG_PEM_CA_ONLY);
     if (ret != WOLFSSL_SUCCESS) {
         // error loading CA certs
@@ -1074,6 +1230,70 @@ int wolfSSL_CTX_load_verify_locations(WOLFSSL_CTX* ctx, const char* file,
 */
 int wolfSSL_CTX_load_verify_locations_ex(WOLFSSL_CTX* ctx, const char* file,
                                          const char* path, unsigned int flags);
+
+/*!
+    \ingroup CertsKeys
+
+    \brief This function returns a pointer to an array of strings representing
+    directories wolfSSL will search for system CA certs when
+    wolfSSL_CTX_load_system_CA_certs is called.
+
+    \return Valid pointer on success.
+    \return NULL pointer on failure.
+
+    \param num pointer to a word32 that will be populated with the length of the
+    array of strings.
+
+    _Example_
+    \code
+    WOLFSSL_CTX* ctx;
+    const char** dirs;
+    word32 numDirs;
+
+    dirs = wolfSSL_get_system_CA_dirs(&numDirs);
+    for (int i = 0; i < numDirs; ++i) {
+        printf("Potential system CA dir: %s\n", dirs[i]);
+    }
+    ...
+    \endcode
+
+    \sa wolfSSL_CTX_load_system_CA_certs
+    \sa wolfSSL_CTX_load_verify_locations
+    \sa wolfSSL_CTX_load_verify_locations_ex
+*/
+const char** wolfSSL_get_system_CA_dirs(word32* num);
+
+/*!
+    \ingroup CertsKeys
+
+    \brief This function attempts to load CA certificates into a WOLFSSL_CTX
+    from an OS-dependent CA certificate store. Loaded certificates will be
+    trusted.
+
+    \return WOLFSSL_SUCCESS on success.
+    \return WOLFSSL_BAD_PATH if no system CA certs were loaded.
+    \return WOLFSSL_FAILURE for other failure types (e.g. Windows cert store
+    wasn't properly closed).
+
+    \param ctx pointer to the SSL context, created with wolfSSL_CTX_new().
+
+    _Example_
+    \code
+    int ret = 0;
+    WOLFSSL_CTX* ctx;
+    ...
+    ret = wolfSSL_CTX_load_system_CA_certs(ctx,);
+    if (ret != WOLFSSL_SUCCESS) {
+        // error loading system CA certs
+    }
+    ...
+    \endcode
+
+    \sa wolfSSL_get_system_CA_dirs
+    \sa wolfSSL_CTX_load_verify_locations
+    \sa wolfSSL_CTX_load_verify_locations_ex
+*/
+int wolfSSL_CTX_load_system_CA_certs(WOLFSSL_CTX* ctx);
 
 /*!
     \ingroup Setup
@@ -1595,7 +1815,87 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX*);
     \sa wolfSSL_SetIOReadCtx
     \sa wolfSSL_SetIOWriteCtx
 */
-int  wolfSSL_set_fd (WOLFSSL* ssl, int fd);
+int  wolfSSL_set_fd(WOLFSSL* ssl, int fd);
+
+/*!
+    \ingroup Setup
+
+    \brief This function assigns a file descriptor (fd) as the
+    input/output facility for the SSL connection. Typically this will be
+    a socket file descriptor. This is a DTLS specific API because it marks that
+    the socket is connected. recvfrom and sendto calls on this fd will have the
+    addr and addr_len parameters set to NULL.
+
+    \return SSL_SUCCESS upon success.
+    \return Bad_FUNC_ARG upon failure.
+
+    \param ssl pointer to the SSL session, created with wolfSSL_new().
+    \param fd file descriptor to use with SSL/TLS connection.
+
+    _Example_
+    \code
+    int sockfd;
+    WOLFSSL* ssl = 0;
+    ...
+    if (connect(sockfd, peer_addr, peer_addr_len) != 0) {
+        // handle connect error
+    }
+    ...
+    ret = wolfSSL_set_dtls_fd_connected(ssl, sockfd);
+    if (ret != SSL_SUCCESS) {
+        // failed to set SSL file descriptor
+    }
+    \endcode
+
+    \sa wolfSSL_CTX_SetIOSend
+    \sa wolfSSL_CTX_SetIORecv
+    \sa wolfSSL_SetIOReadCtx
+    \sa wolfSSL_SetIOWriteCtx
+    \sa wolfDTLS_SetChGoodCb
+*/
+int wolfSSL_set_dtls_fd_connected(WOLFSSL* ssl, int fd)
+
+/*!
+    \ingroup Setup
+
+    \brief Allows setting a callback for a correctly processed and verified DTLS
+           client hello. When using a cookie exchange mechanism (either the
+           HelloVerifyRequest in DTLS 1.2 or the HelloRetryRequest with a cookie
+           extension in DTLS 1.3) this callback is called after the cookie
+           exchange has succeeded. This is useful to use one WOLFSSL object as
+           the listener for new connections and being able to isolate the
+           WOLFSSL object once the ClientHello is verified (either through a
+           cookie exchange or just checking if the ClientHello had the correct
+           format).
+           DTLS 1.2:
+           https://datatracker.ietf.org/doc/html/rfc6347#section-4.2.1
+           DTLS 1.3:
+           https://www.rfc-editor.org/rfc/rfc8446#section-4.2.2
+
+    \return SSL_SUCCESS upon success.
+    \return BAD_FUNC_ARG upon failure.
+
+    \param ssl pointer to the SSL session, created with wolfSSL_new().
+    \param fd file descriptor to use with SSL/TLS connection.
+
+    _Example_
+    \code
+
+    // Called when we have verified a connection
+    static int chGoodCb(WOLFSSL* ssl, void* arg)
+    {
+        // setup peer and file descriptors
+
+    }
+
+    if (wolfDTLS_SetChGoodCb(ssl, chGoodCb, NULL) != WOLFSSL_SUCCESS) {
+         // error setting callback
+    }
+    \endcode
+
+    \sa wolfSSL_set_dtls_fd_connected
+*/
+int wolfDTLS_SetChGoodCb(WOLFSSL* ssl, ClientHelloGoodCb cb, void* user_ctx);
 
 /*!
     \ingroup IO
@@ -3326,6 +3626,47 @@ int  wolfSSL_dtls_get_using_nonblock(WOLFSSL*);
     \sa wolfSSL_dtls_set_peer
 */
 int  wolfSSL_dtls_get_current_timeout(WOLFSSL* ssl);
+/*!
+    \brief This function returns true if the application should setup a quicker
+    timeout. When using non-blocking sockets, something in the user code needs
+    to decide when to check for available data and how long it needs to wait. If
+    this function returns true, it means that the library already detected some
+    disruption in the communication, but it wants to wait for a little longer in
+    case some messages from the other peers are still in flight. Is up to the
+    application to fine tune the value of this timer, a good one may be
+    dtls_get_current_timeout() / 4.
+
+    \return true if the application code should setup a quicker timeout
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    \sa wolfSSL_dtls
+    \sa wolfSSL_dtls_get_peer
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls_set_peer
+    \sa wolfSSL_dtls13_set_send_more_acks
+*/
+int  wolfSSL_dtls13_use_quick_timeout(WOLFSSL *ssl);
+/*!
+  \ingroup Setup
+
+    \brief This function sets whether the library should send ACKs to the other
+    peer immediately when detecting disruption or not. Sending ACKs immediately
+    assures minimum latency but it may consume more bandwidth than necessary. If
+    the application manages the timer by itself and this option is set to 0 then
+    application code can use wolfSSL_dtls13_use_quick_timeout() to determine if
+    it should setup a quicker timeout to send those delayed ACKs.
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+    \param value 1 to set the option, 0 to disable the option
+
+    \sa wolfSSL_dtls
+    \sa wolfSSL_dtls_get_peer
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls_set_peer
+    \sa wolfSSL_dtls13_use_quick_timeout
+*/
+void  wolfSSL_dtls13_set_send_more_acks(WOLFSSL *ssl, int value);
 
 /*!
     \ingroup Setup
@@ -3418,6 +3759,32 @@ int  wolfSSL_dtls_set_timeout_max(WOLFSSL* ssl, int);
 int  wolfSSL_dtls_got_timeout(WOLFSSL* ssl);
 
 /*!
+    \brief When using non-blocking sockets with DTLS, this function retransmits
+    the last handshake flight ignoring the expected timeout value and
+    retransmit count. It is useful for applications that are using DTLS and
+    need to manage even the timeout and retry count.
+
+    \return SSL_SUCCESS will be returned upon success
+    \return SSL_FATAL_ERROR will be returned if there have been too many
+    retransmissions/timeouts without getting a response from the peer.
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    _Example_
+    \code
+    int ret = 0;
+    WOLFSSL* ssl;
+    ...
+    ret = wolfSSL_dtls_retransmit(ssl);
+    \endcode
+
+    \sa wolfSSL_dtls_get_current_timeout
+    \sa wolfSSL_dtls_got_timeout
+    \sa wolfSSL_dtls
+*/
+int wolfSSL_dtls_retransmit(WOLFSSL* ssl);
+
+/*!
     \brief This function is used to determine if the SSL session has been
     configured to use DTLS.
 
@@ -3454,9 +3821,11 @@ int  wolfSSL_dtls(WOLFSSL* ssl);
     \return SSL_NOT_IMPLEMENTED will be returned if wolfSSL was not compiled
     with DTLS support.
 
-    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
-    \param peer pointer to peer’s sockaddr_in structure.
-    \param peerSz size of the sockaddr_in structure pointed to by peer.
+    \param ssl    a pointer to a WOLFSSL structure, created using wolfSSL_new().
+    \param peer   pointer to peer’s sockaddr_in structure. If NULL then the peer
+                  information in ssl is cleared.
+    \param peerSz size of the sockaddr_in structure pointed to by peer. If 0
+                  then the peer information in ssl is cleared.
 
     _Example_
     \code
@@ -11337,12 +11706,43 @@ int wolfSSL_set_SessionTicket(WOLFSSL* ssl, const unsigned char* buf,
     wolfSSL_set_SessionTicket_cb(ssl, sessionTicketCB, (void*)”initial session”);
     \endcode
 
-    \sa wolfSSL_set_SessionTicket
+    \sa wolfSSL_get_SessionTicket
     \sa CallbackSessionTicket
     \sa sessionTicketCB
 */
 int wolfSSL_set_SessionTicket_cb(WOLFSSL* ssl,
                                  CallbackSessionTicket cb, void* ctx);
+
+/*!
+    \brief This function sends a session ticket to the client after a TLS v1.3
+    handhsake has been established.
+
+    \return WOLFSSL_SUCCESS returned if a new session ticket was sent.
+    \return BAD_FUNC_ARG returned if WOLFSSL structure is NULL, or not using
+    TLS v1.3.
+    \return SIDE_ERROR returned if not a server.
+    \return NOT_READY_ERROR returned if the handshake has not completed.
+    \return WOLFSSL_FATAL_ERROR returned if creating or sending message fails.
+
+    \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    _Example_
+    \code
+    int ret;
+    WOLFSSL_CTX* ctx = wolfSSL_CTX_new( method );
+    WOLFSSL* ssl = wolfSSL_new(ctx);
+    …
+    ret = wolfSSL_send_SessionTicket(ssl);
+    if (ret != WOLFSSL_SUCCESS) {
+        // New session ticket not sent.
+    }
+    \endcode
+
+    \sa wolfSSL_get_SessionTicket
+    \sa CallbackSessionTicket
+    \sa sessionTicketCB
+ */
+int wolfSSL_send_SessionTicket(WOLFSSL* ssl);
 
 /*!
     \brief This function sets the session ticket key encrypt callback function
@@ -12716,10 +13116,13 @@ int  wolfSSL_connect(WOLFSSL* ssl);
     \ingroup Setup
 
     \brief This function is called on the server side to indicate that a
-    HelloRetryRequest message must contain a Cookie.
-    The Cookie holds a hash of the current transcript so that another server
-    process can handle the ClientHello in reply.
-    The secret is used when generting the integrity check on the Cookie data.
+    HelloRetryRequest message must contain a Cookie and, in case of using
+    protocol DTLS v1.3, that the handshake will always include a cookie
+    exchange. Please note that when using protocol DTLS v1.3, the cookie
+    exchange is enabled by default. The Cookie holds a hash of the current
+    transcript so that another server process can handle the ClientHello in
+    reply.  The secret is used when generting the integrity check on the Cookie
+    data.
 
     \param [in,out] ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
     \param [in] secret a pointer to a buffer holding the secret.
@@ -12746,9 +13149,30 @@ int  wolfSSL_connect(WOLFSSL* ssl);
     \endcode
 
     \sa wolfSSL_new
+    \sa wolfSSL_disable_hrr_cookie
 */
 int  wolfSSL_send_hrr_cookie(WOLFSSL* ssl,
     const unsigned char* secret, unsigned int secretSz);
+
+/*!
+
+    \ingroup Setup
+
+    \brief This function is called on the server side to indicate that a
+    HelloRetryRequest message must NOT contain a Cookie and that, if using
+    protocol DTLS v1.3, a cookie exchange will not be included in the
+    handshake. Please note that not doing a cookie exchange when using protocol
+    DTLS v1.3 can make the server susceptible to DoS/Amplification attacks.
+
+    \param [in,out] ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
+
+    \return WOLFSSL_SUCCESS if successful
+    \return BAD_FUNC_ARG if ssl is NULL or not using TLS v1.3
+    \return SIDE_ERROR if invoked on client
+
+    \sa wolfSSL_send_hrr_cookie
+*/
+int wolfSSL_disable_hrr_cookie(WOLFSSL* ssl);
 
 /*!
     \ingroup Setup
@@ -13330,15 +13754,16 @@ wolfSSL_accept_TLSv13(WOLFSSL* ssl);
 /*!
     \ingroup Setup
 
-    \brief This function sets the maximum amount of early data that will be
-    accepted by a TLS v1.3 server using the wolfSSL context.
+    \brief This function sets the maximum amount of early data that a
+    TLS v1.3 client or server is willing to exchange using the wolfSSL context.
     Call this function to limit the amount of early data to process to mitigate
     replay attacks. Early data is protected by keys derived from those of the
     connection that the session ticket was sent and therefore will be the same
     every time a session ticket is used in resumption.
     The value is included in the session ticket for resumption.
-    A value of zero indicates no early data is to be sent by client using
-    session tickets.
+    A server value of zero indicates no early data is to be sent by client using
+    session tickets. A client value of zero indicates that the client will
+    not send any early data.
     It is recommended that the number of early data bytes be kept as low as
     practically possible in the application.
 
@@ -13347,7 +13772,6 @@ wolfSSL_accept_TLSv13(WOLFSSL* ssl);
     \param [in] sz the amount of early data to accept in bytes.
 
     \return BAD_FUNC_ARG if ctx is NULL or not using TLS v1.3.
-    \return SIDE_ERROR if called with a client.
     \return 0 if successful.
 
     _Example_
@@ -13371,15 +13795,16 @@ int  wolfSSL_CTX_set_max_early_data(WOLFSSL_CTX* ctx,
 /*!
     \ingroup Setup
 
-    \brief This function sets the maximum amount of early data that will be
-    accepted by a TLS v1.3 server using the wolfSSL context.
+    \brief This function sets the maximum amount of early data that a
+    TLS v1.3 client or server is willing to exchange.
     Call this function to limit the amount of early data to process to mitigate
     replay attacks. Early data is protected by keys derived from those of the
     connection that the session ticket was sent and therefore will be the same
     every time a session ticket is used in resumption.
     The value is included in the session ticket for resumption.
-    A value of zero indicates no early data is to be sent by client using
-    session tickets.
+    A server value of zero indicates no early data is to be sent by client using
+    session tickets. A client value of zero indicates that the client will
+    not send any early data.
     It is recommended that the number of early data bytes be kept as low as
     practically possible in the application.
 
@@ -13387,7 +13812,6 @@ int  wolfSSL_CTX_set_max_early_data(WOLFSSL_CTX* ctx,
     \param [in] sz the amount of early data to accept from client in bytes.
 
     \return BAD_FUNC_ARG if ssl is NULL or not using TLS v1.3.
-    \return SIDE_ERROR if called with a client.
     \return 0 if successful.
 
     _Example_
@@ -13987,3 +14411,191 @@ int wolfSSL_RSA_sign_generic_padding(int type, const unsigned char* m,
                                unsigned int mLen, unsigned char* sigRet,
                                unsigned int* sigLen, WOLFSSL_RSA* rsa,
                                int flag, int padding);
+/*!
+
+\brief checks if DTLSv1.3 stack has some messages sent but not yet acknowledged
+ by the other peer
+
+ \return 1 if there are pending messages, 0 otherwise
+ \param ssl A WOLFSSL object pointer
+*/
+int wolfSSL_dtls13_has_pending_msg(WOLFSSL *ssl);
+
+/*!
+    \ingroup SSL
+    \brief Get the maximum size of Early Data from a session.
+
+    \param [in] s  the WOLFSSL_SESSION instance.
+
+    \return the value of max_early_data that was configured in the WOLFSSL* the session
+    was derived from.
+
+    \sa wolfSSL_set_max_early_data
+    \sa wolfSSL_write_early_data
+    \sa wolfSSL_read_early_data
+ */
+unsigned int wolfSSL_SESSION_get_max_early_data(const WOLFSSL_SESSION *s);
+
+/*!
+    \ingroup SSL
+    \brief Get a new index for external data. This entry applies also for the
+           following API:
+           - wolfSSL_CTX_get_ex_new_index
+           - wolfSSL_get_ex_new_index
+           - wolfSSL_SESSION_get_ex_new_index
+           - wolfSSL_X509_get_ex_new_index
+
+    \param [in] All input parameters are ignored. The callback functions are not
+                supported with wolfSSL.
+
+    \return The new index value to be used with the external data API for this
+            object class.
+ */
+int wolfSSL_CRYPTO_get_ex_new_index(int, void*, void*, void*, void*);
+
+/*!
+
+\brief Enable use of ConnectionID extensions for the SSL object. See RFC 9146
+and RFC 9147
+
+ \return WOLFSSL_SUCCESS on success, error code otherwise
+
+ \param ssl A WOLFSSL object pointer
+
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx_size
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_use(WOLFSSL* ssl);
+
+/*!
+
+\brief If invoked after the handshake is complete it checks if ConnectionID was
+successfully negotiated for the SSL object. See RFC 9146 and RFC 9147
+
+ \return 1 if ConnectionID was correctly negotiated, 0 otherwise
+
+ \param ssl A WOLFSSL object pointer
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx_size
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_is_enabled(WOLFSSL* ssl);
+
+/*!
+
+\brief Set the ConnectionID used by the other peer to send records in this
+connection. See RFC 9146 and RFC 9147. The ConnectionID must be at maximum
+DTLS_CID_MAX_SIZE, that is an tunable compile time define, and it can't
+never be bigger than 255 bytes.
+
+ \return WOLFSSL_SUCCESS if ConnectionID was correctly set, error code otherwise
+
+ \param ssl A WOLFSSL object pointern
+ \param cid the ConnectionID to be used
+ \param size of the ConnectionID provided
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx_size
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_set(WOLFSSL* ssl, unsigned char* cid,
+    unsigned int size);
+
+/*!
+
+\brief Get the size of the ConnectionID used by the other peer to send records
+in this connection. See RFC 9146 and RFC 9147. The size is stored in the
+parameter size.
+
+ \return WOLFSSL_SUCCESS if ConnectionID was correctly negotiated, error code
+ otherwise
+
+ \param ssl A WOLFSSL object pointern
+ \param size a pointer to an unsigned int where the size will be stored
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx_size
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_get_rx_size(WOLFSSL* ssl,
+    unsigned int* size);
+
+/*!
+
+\brief Copy the ConnectionID used by the other peer to send records in this
+connection into the buffer pointed by the parameter buffer. See RFC 9146 and RFC
+9147. The available space in the buffer need to be provided in bufferSz.
+
+ \return WOLFSSL_SUCCESS if ConnectionID was correctly copied, error code
+ otherwise
+
+ \param ssl A WOLFSSL object pointern
+ \param buffer A buffer where the ConnectionID will be copied
+ \param bufferSz available space in buffer
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_tx_size
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_get_rx(WOLFSSL* ssl, unsigned char* buffer,
+    unsigned int bufferSz);
+
+/*!
+
+\brief Get the size of the ConnectionID used to send records in this
+connection. See RFC 9146 and RFC 9147. The size is stored in the parameter size.
+
+ \return WOLFSSL_SUCCESS if ConnectionID size was correctly stored, error
+ code otherwise
+
+ \param ssl A WOLFSSL object pointern
+ \param size a pointer to an unsigned int where the size will be stored
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx
+*/
+int wolfSSL_dtls_cid_get_tx_size(WOLFSSL* ssl, unsigned int* size);
+
+/*!
+
+\brief Copy the ConnectionID used when sending records in this connection into
+the buffer pointer by the parameter buffer. See RFC 9146 and RFC 9147. The
+available size need to be provided in bufferSz.
+
+ \return WOLFSSL_SUCCESS if ConnectionID was correctly copied, error code
+ otherwise
+
+ \param ssl A WOLFSSL object pointern
+ \param buffer A buffer where the ConnectionID will be copied
+ \param bufferSz available space in buffer
+
+ \sa wolfSSL_dtls_cid_use
+ \sa wolfSSL_dtls_cid_is_enabled
+ \sa wolfSSL_dtls_cid_set
+ \sa wolfSSL_dtls_cid_get_rx_size
+ \sa wolfSSL_dtls_cid_get_rx
+ \sa wolfSSL_dtls_cid_get_tx_size
+*/
+int wolfSSL_dtls_cid_get_tx(WOLFSSL* ssl, unsigned char* buffer,
+    unsigned int bufferSz);

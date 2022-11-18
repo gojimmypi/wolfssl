@@ -1,6 +1,6 @@
 /* wc_port.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -100,6 +100,11 @@
     #include "fsl_os_abstraction.h"
 #elif defined(WOLFSSL_VXWORKS)
     #include <semLib.h>
+    #ifdef WOLFSSL_VXWORKS_6_x
+        #ifndef SEM_ID_NULL
+            #define SEM_ID_NULL ((SEM_ID)NULL)
+        #endif
+    #endif
 #elif defined(WOLFSSL_uITRON4)
     #include "stddef.h"
     #include "kernel.h"
@@ -161,7 +166,8 @@
     #ifdef __cplusplus
         extern "C" {
     #endif
-
+#elif defined(WOLFSSL_EMBOS)
+    /* do nothing */
 #else
     #ifndef SINGLE_THREADED
         #ifndef WOLFSSL_USER_MUTEX
@@ -213,8 +219,6 @@
         typedef CRITICAL_SECTION wolfSSL_Mutex;
     #elif defined(WOLFSSL_PTHREADS)
         typedef pthread_mutex_t wolfSSL_Mutex;
-    #elif defined(WOLFSSL_KTHREADS)
-        typedef struct mutex wolfSSL_Mutex;
     #elif defined(THREADX)
         typedef TX_MUTEX wolfSSL_Mutex;
     #elif defined(WOLFSSL_DEOS)
@@ -261,6 +265,8 @@
         typedef struct k_mutex wolfSSL_Mutex;
     #elif defined(WOLFSSL_TELIT_M2MB)
         typedef M2MB_OS_MTX_HANDLE wolfSSL_Mutex;
+    #elif defined(WOLFSSL_EMBOS)
+        typedef OS_MUTEX wolfSSL_Mutex;
     #elif defined(WOLFSSL_USER_MUTEX)
         /* typedef User_Mutex wolfSSL_Mutex; */
     #elif defined(WOLFSSL_LINUXKM)
@@ -269,6 +275,47 @@
         #error Need a mutex type in multithreaded mode
     #endif /* USE_WINDOWS_API */
 #endif /* SINGLE_THREADED */
+
+/* Reference counting. */
+typedef struct wolfSSL_Ref {
+/* TODO: use atomic operations instead of mutex. */
+#ifndef SINGLE_THREADED
+    wolfSSL_Mutex mutex;
+#endif
+    int count;
+} wolfSSL_Ref;
+
+#ifdef SINGLE_THREADED
+#define wolfSSL_RefInit(ref, err)           \
+    do {                                    \
+        (ref)->count = 1;                   \
+        *(err) = 0;                         \
+    }                                       \
+    while (0)
+
+#define wolfSSL_RefFree(ref)
+
+#define wolfSSL_RefInc(ref, err)            \
+    do {                                    \
+        (ref)->count++;                     \
+        *(err) = 0;                         \
+    }                                       \
+    while (0)
+
+#define wolfSSL_RefDec(ref, isZero, err)    \
+    do {                                    \
+        (ref)->count--;                     \
+        *(isZero) = ((ref)->count == 0);    \
+        *(err) = 0;                         \
+    }                                       \
+    while (0)
+#else
+WOLFSSL_LOCAL void wolfSSL_RefInit(wolfSSL_Ref* ref, int* err);
+WOLFSSL_LOCAL void wolfSSL_RefFree(wolfSSL_Ref* ref);
+WOLFSSL_LOCAL void wolfSSL_RefInc(wolfSSL_Ref* ref, int* err);
+WOLFSSL_LOCAL void wolfSSL_RefDec(wolfSSL_Ref* ref, int* isZero, int* err);
+#endif
+
 
 /* Enable crypt HW mutex for Freescale MMCAU, PIC32MZ or STM32 */
 #if defined(FREESCALE_MMCAU) || defined(WOLFSSL_MICROCHIP_PIC32MZ) || \
@@ -312,8 +359,8 @@ WOLFSSL_API int wc_SetMutexCb(mutex_cb* cb);
 #endif
 
 /* main crypto initialization function */
-WOLFSSL_API int wolfCrypt_Init(void);
-WOLFSSL_API int wolfCrypt_Cleanup(void);
+WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Init(void);
+WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
 
 #ifdef WOLFSSL_TRACK_MEMORY_VERBOSE
     WOLFSSL_API long wolfCrypt_heap_peakAllocs_checkpoint(void);
@@ -417,7 +464,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XFGETS(b,s,f) -2 /* Not ported yet */
 
 #elif defined(WOLFSSL_ZEPHYR)
-    #include <fs.h>
+    #include <fs/fs.h>
 
     #define XFILE      struct fs_file_t*
     #define STAT       struct fs_dirent
@@ -708,6 +755,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
         #define XTIME(t1)       xilinx_time((t1))
     #endif
     #include <time.h>
+    time_t xilinx_time(time_t * timer);
 
 #elif defined(HAVE_RTP_SYS)
     #include "os.h"           /* dc_rtc_api needs    */
@@ -717,9 +765,12 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XTIME(tl)       (0)
     #define XGMTIME(c, t)   rtpsys_gmtime((c))
 
-#elif defined(WOLFSSL_DEOS)
+#elif defined(WOLFSSL_DEOS) || defined(WOLFSSL_DEOS_RTEMS)
     #include <time.h>
-
+        #ifndef XTIME
+            extern time_t deos_time(time_t* timer);
+            #define XTIME(t1) deos_time((t1))
+        #endif
 #elif defined(MICRIUM)
     #include <clk.h>
     #include <time.h>
@@ -731,6 +782,13 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     extern time_t pic32_time(time_t* timer);
     #define XTIME(t1)       pic32_time((t1))
     #define XGMTIME(c, t)   gmtime((c))
+
+#elif defined(FREESCALE_RTC)
+    #include <time.h>
+        #include "fsl_rtc.h"
+        #ifndef XTIME
+        #define XTIME(t1) fsl_time((t1))
+    #endif
 
 #elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
     #ifdef FREESCALE_MQX_4_0

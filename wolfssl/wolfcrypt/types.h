@@ -1,6 +1,6 @@
 /* types.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -39,13 +39,10 @@ decouple library dependencies with standard string, memory and so on.
     #endif
 
 
-    #define WOLFSSL_ABI
-            /* Tag for all the APIs that are a part of the fixed ABI. */
-
     /*
      * This struct is used multiple time by other structs and
-     * needs to be defined somwhere that all structs can import
-     * (with minimal depencencies).
+     * needs to be defined somewhere that all structs can import
+     * (with minimal dependencies).
      */
     #ifdef HAVE_EX_DATA
         #ifdef HAVE_EX_DATA_CLEANUP_HOOKS
@@ -208,17 +205,25 @@ decouple library dependencies with standard string, memory and so on.
 #elif defined(WC_16BIT_CPU)
         #undef WORD64_AVAILABLE
         typedef word16 wolfssl_word;
-        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as
-                             mp_digit, no 64 bit type so make mp_digit 16 bit */
+        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as \
+                           * mp_digit, no 64 bit type so make mp_digit 16 bit */
 
 #else
         #undef WORD64_AVAILABLE
         typedef word32 wolfssl_word;
-        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as
-                             mp_digit, no 64 bit type so make mp_digit 16 bit */
+        #define MP_16BIT  /* for mp_int, mp_word needs to be twice as big as \
+                           * mp_digit, no 64 bit type so make mp_digit 16 bit */
 #endif
 
-#ifdef WC_PTR_TYPE /* Allow user suppied type */
+typedef struct w64wrapper {
+#if defined(WORD64_AVAILABLE) && !defined(WOLFSSL_W64_WRAPPER_TEST)
+    word64 n;
+#else
+    word32 n[2];
+#endif /* WORD64_AVAILABLE && WOLFSSL_W64_WRAPPER_TEST */
+} w64wrapper;
+
+#ifdef WC_PTR_TYPE /* Allow user supplied type */
     typedef WC_PTR_TYPE wc_ptr_t;
 #elif defined(HAVE_UINTPTR_T)
     #include <stdint.h>
@@ -487,7 +492,7 @@ decouple library dependencies with standard string, memory and so on.
                 #endif
                 #define XREALLOC(p, n, h, t) wolfSSL_Realloc((p), (n), (h), (t))
             #endif /* WOLFSSL_DEBUG_MEMORY */
-        #elif !defined(FREERTOS) && !defined(FREERTOS_TCP)
+        #elif (!defined(FREERTOS) && !defined(FREERTOS_TCP)) || defined(WOLFSSL_TRACK_MEMORY)
             #ifdef WOLFSSL_DEBUG_MEMORY
                 #define XMALLOC(s, h, t)     ((void)(h), (void)(t), wolfSSL_Malloc((s), __func__, __LINE__))
                 #ifdef WOLFSSL_XFREE_NO_NULLNESS_CHECK
@@ -649,7 +654,9 @@ decouple library dependencies with standard string, memory and so on.
             #endif
             #if defined(WOLFSSL_DEOS)
                 #define XSTRCASECMP(s1,s2) stricmp((s1),(s2))
-            #elif defined(WOLFSSL_CMSIS_RTOSv2)
+            #elif defined(WOLFSSL_CMSIS_RTOSv2) || defined(WOLFSSL_AZSPHERE)
+                #define XSTRCASECMP(s1,s2) strcmp((s1),(s2))
+            #elif defined(WOLF_C89)
                 #define XSTRCASECMP(s1,s2) strcmp((s1),(s2))
             #else
                 #define XSTRCASECMP(s1,s2) strcasecmp((s1),(s2))
@@ -676,7 +683,9 @@ decouple library dependencies with standard string, memory and so on.
             #endif
             #if defined(WOLFSSL_DEOS)
                 #define XSTRNCASECMP(s1,s2,n) strnicmp((s1),(s2),(n))
-            #elif defined(WOLFSSL_CMSIS_RTOSv2)
+            #elif defined(WOLFSSL_CMSIS_RTOSv2) || defined(WOLFSSL_AZSPHERE)
+                #define XSTRNCASECMP(s1,s2,n) strncmp((s1),(s2),(n))
+            #elif defined(WOLF_C89)
                 #define XSTRNCASECMP(s1,s2,n) strncmp((s1),(s2),(n))
             #else
                 #define XSTRNCASECMP(s1,s2,n) strncasecmp((s1),(s2),(n))
@@ -702,7 +711,7 @@ decouple library dependencies with standard string, memory and so on.
                     /* In cases when truncation is expected the caller needs*/
                     /* to check the return value from the function so that  */
                     /* compiler doesn't complain.                           */
-                    /* xtensa-esp32-elf v8.2.0 warns trancation at          */
+                    /* xtensa-esp32-elf v8.2.0 warns truncation at          */
                     /* GetAsnTimeString()                                   */
                     static WC_INLINE
                     int _xsnprintf_(char *s, size_t n, const char *format, ...)
@@ -723,6 +732,8 @@ decouple library dependencies with standard string, memory and so on.
                         return ret;
                     }
                 #define XSNPRINTF _xsnprintf_
+            #elif defined(WOLF_C89)
+                #define XSPRINTF sprintf
             #else
                 #define XSNPRINTF snprintf
             #endif
@@ -777,7 +788,7 @@ decouple library dependencies with standard string, memory and so on.
 
         #if defined(WOLFSSL_CERT_EXT) || defined(HAVE_OCSP) || \
             defined(HAVE_CRL_IO) || defined(HAVE_HTTP_CLIENT) || \
-            !defined(NO_CRYPT_BENCHMARK)
+            !defined(NO_CRYPT_BENCHMARK) || defined(OPENSSL_EXTRA)
 
             #ifndef XATOI /* if custom XATOI is not already defined */
                 #include <stdlib.h>
@@ -809,13 +820,13 @@ decouple library dependencies with standard string, memory and so on.
         #endif
     #endif /* !NO_FILESYSTEM && !NO_STDIO_FILESYSTEM */
 
-        #ifndef CTYPE_USER
-            #ifndef WOLFSSL_LINUXKM
-                #include <ctype.h>
-            #endif
-            #if defined(HAVE_ECC) || defined(HAVE_OCSP) || \
-            defined(WOLFSSL_KEY_GEN) || !defined(NO_DSA) || \
-            defined(OPENSSL_EXTRA)
+    #ifndef CTYPE_USER
+        #ifndef WOLFSSL_LINUXKM
+            #include <ctype.h>
+        #endif
+        #if defined(HAVE_ECC) || defined(HAVE_OCSP) || \
+        defined(WOLFSSL_KEY_GEN) || !defined(NO_DSA) || \
+        defined(OPENSSL_EXTRA)
             #define XTOUPPER(c)     toupper((c))
         #endif
         #if defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
@@ -828,7 +839,7 @@ decouple library dependencies with standard string, memory and so on.
     #endif
 
     #ifndef OFFSETOF
-        #if defined(__clang__) || defined(__GNUC__)
+        #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ >= 4))
             #define OFFSETOF(type, field) __builtin_offsetof(type, field)
         #else
             #define OFFSETOF(type, field) ((size_t)&(((type *)0)->field))
@@ -933,6 +944,8 @@ decouple library dependencies with standard string, memory and so on.
         DYNAMIC_TYPE_CMAC         = 94,
         DYNAMIC_TYPE_FALCON       = 95,
         DYNAMIC_TYPE_SESSION      = 96,
+        DYNAMIC_TYPE_DILITHIUM    = 97,
+        DYNAMIC_TYPE_SPHINCS      = 98,
         DYNAMIC_TYPE_SNIFFER_SERVER     = 1000,
         DYNAMIC_TYPE_SNIFFER_SESSION    = 1001,
         DYNAMIC_TYPE_SNIFFER_PB         = 1002,
@@ -998,9 +1011,6 @@ decouple library dependencies with standard string, memory and so on.
         #ifndef WOLFSSL_NOSHA512_256
             #define WOLFSSL_NOSHA512_256
         #endif
-        #ifndef WOLFSSL_NO_SHAKE256
-            #define WOLFSSL_NO_SHAKE256
-        #endif
     #else
         WC_HASH_TYPE_NONE = 0,
         WC_HASH_TYPE_MD2 = 1,
@@ -1018,25 +1028,27 @@ decouple library dependencies with standard string, memory and so on.
         WC_HASH_TYPE_SHA3_512 = 13,
         WC_HASH_TYPE_BLAKE2B = 14,
         WC_HASH_TYPE_BLAKE2S = 15,
-#define _WC_HASH_TYPE_MAX WC_HASH_TYPE_BLAKE2S
+        #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_BLAKE2S
         #ifndef WOLFSSL_NOSHA512_224
             WC_HASH_TYPE_SHA512_224 = 16,
-#undef _WC_HASH_TYPE_MAX
-#define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHA512_224
+            #undef _WC_HASH_TYPE_MAX
+            #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHA512_224
         #endif
         #ifndef WOLFSSL_NOSHA512_256
             WC_HASH_TYPE_SHA512_256 = 17,
-#undef _WC_HASH_TYPE_MAX
-#define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHA512_256
+            #undef _WC_HASH_TYPE_MAX
+            #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHA512_256
         #endif
-        #ifndef WOLFSSL_NO_SHAKE256
+        #ifdef WOLFSSL_SHAKE128
             WC_HASH_TYPE_SHAKE128 = 18,
+        #endif
+        #ifdef WOLFSSL_SHAKE256
             WC_HASH_TYPE_SHAKE256 = 19,
-#undef _WC_HASH_TYPE_MAX
-#define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHAKE256
+            #undef _WC_HASH_TYPE_MAX
+            #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHAKE256
         #endif
         WC_HASH_TYPE_MAX = _WC_HASH_TYPE_MAX
-#undef _WC_HASH_TYPE_MAX
+        #undef _WC_HASH_TYPE_MAX
 
     #endif /* HAVE_SELFTEST */
     };
@@ -1119,7 +1131,8 @@ decouple library dependencies with standard string, memory and so on.
     /* AESNI requires alignment and ARMASM gains some performance from it
      * Xilinx RSA operations require alignment */
     #if defined(WOLFSSL_AESNI) || defined(WOLFSSL_ARMASM) || \
-        defined(USE_INTEL_SPEEDUP) || defined(WOLFSSL_AFALG_XILINX)
+        defined(USE_INTEL_SPEEDUP) || defined(WOLFSSL_AFALG_XILINX) || \
+        defined(WOLFSSL_XILINX)
           #ifndef WOLFSSL_USE_ALIGN
               #define WOLFSSL_USE_ALIGN
           #endif
@@ -1127,7 +1140,8 @@ decouple library dependencies with standard string, memory and so on.
 
     #ifdef WOLFSSL_USE_ALIGN
         #if !defined(ALIGN16)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN16 __attribute__ ( (aligned (16)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1139,7 +1153,8 @@ decouple library dependencies with standard string, memory and so on.
         #endif /* !ALIGN16 */
 
         #if !defined (ALIGN32)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN32 __attribute__ ( (aligned (32)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1151,7 +1166,8 @@ decouple library dependencies with standard string, memory and so on.
         #endif /* !ALIGN32 */
 
         #if !defined(ALIGN64)
-            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+            #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+                defined(__llvm__)
                 #define ALIGN64 __attribute__ ( (aligned (64)))
             #elif defined(_MSC_VER)
                 /* disable align warning, we want alignment ! */
@@ -1162,7 +1178,8 @@ decouple library dependencies with standard string, memory and so on.
             #endif
         #endif /* !ALIGN64 */
 
-        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__) || \
+            defined(__llvm__)
             #define ALIGN128 __attribute__ ( (aligned (128)))
         #elif defined(_MSC_VER)
             /* disable align warning, we want alignment ! */
@@ -1172,7 +1189,8 @@ decouple library dependencies with standard string, memory and so on.
             #define ALIGN128
         #endif
 
-        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)
+        #if defined(__IAR_SYSTEMS_ICC__) || defined(__GNUC__)  || \
+            defined(__llvm__)
             #define ALIGN256 __attribute__ ( (aligned (256)))
         #elif defined(_MSC_VER)
             /* disable align warning, we want alignment ! */
@@ -1216,6 +1234,53 @@ decouple library dependencies with standard string, memory and so on.
         #define FALSE 0
     #endif
 
+    #ifdef SINGLE_THREADED
+        #if defined(WC_32BIT_CPU)
+            typedef void*        THREAD_RETURN;
+        #else
+            typedef unsigned int THREAD_RETURN;
+        #endif
+        typedef void*            THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET) || \
+          defined(FREESCALE_MQX)
+        typedef unsigned int  THREAD_RETURN;
+        typedef int           THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif defined(WOLFSSL_NUCLEUS)
+        typedef unsigned int  THREAD_RETURN;
+        typedef intptr_t      THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif defined(WOLFSSL_TIRTOS)
+        typedef void          THREAD_RETURN;
+        typedef Task_Handle   THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif defined(WOLFSSL_ZEPHYR)
+        typedef void            THREAD_RETURN;
+        typedef struct k_thread THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif defined(NETOS)
+        typedef UINT        THREAD_RETURN;
+        typedef TX_THREAD   THREAD_TYPE;
+        #define WOLFSSL_THREAD
+        #define INFINITE TX_WAIT_FOREVER
+        #define WAIT_OBJECT_0 TX_NO_WAIT
+    #elif defined(WOLFSSL_LINUXKM)
+        typedef unsigned int  THREAD_RETURN;
+        typedef size_t        THREAD_TYPE;
+        #define WOLFSSL_THREAD
+    #elif (defined(_POSIX_THREADS) || defined(HAVE_PTHREAD)) && \
+        !defined(__MINGW32__)
+        typedef void*         THREAD_RETURN;
+        typedef pthread_t     THREAD_TYPE;
+        #define WOLFSSL_THREAD
+        #define INFINITE      (-1)
+        #define WAIT_OBJECT_0 0L
+    #else
+        typedef unsigned int  THREAD_RETURN;
+        typedef size_t        THREAD_TYPE;
+        #define WOLFSSL_THREAD __stdcall
+    #endif
 
     #if defined(HAVE_STACK_SIZE)
         #define EXIT_TEST(ret) return (THREAD_RETURN)((size_t)(ret))

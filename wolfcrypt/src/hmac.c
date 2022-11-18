@@ -1,6 +1,6 @@
 /* hmac.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -26,6 +26,7 @@
 
 #include <wolfssl/wolfcrypt/wc_port.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/logging.h>
 
 #ifndef NO_HMAC
 
@@ -57,6 +58,7 @@
 #ifdef WOLFSSL_KCAPI_HMAC
     #include <wolfssl/wolfcrypt/port/kcapi/kcapi_hmac.h>
 
+    /* map the _Software calls used by kcapi_hmac.c */
     #define wc_HmacSetKey  wc_HmacSetKey_Software
     #define wc_HmacUpdate  wc_HmacUpdate_Software
     #define wc_HmacFinal   wc_HmacFinal_Software
@@ -328,8 +330,10 @@ int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 length)
         return ret;
 
 #ifdef HAVE_FIPS
-    if (length < HMAC_FIPS_MIN_KEY)
+    if (length < HMAC_FIPS_MIN_KEY) {
+        WOLFSSL_ERROR_VERBOSE(HMAC_MIN_KEYLEN_E);
         return HMAC_MIN_KEYLEN_E;
+    }
 #endif
 
 #ifdef WOLF_CRYPTO_CB
@@ -994,6 +998,11 @@ int wc_HmacFinal(Hmac* hmac, byte* hash)
 #ifdef WOLFSSL_KCAPI_HMAC
     /* implemented in wolfcrypt/src/port/kcapi/kcapi_hmac.c */
 
+    /* unmap the _Software calls used by kcapi_hmac.c */
+    #undef wc_HmacSetKey
+    #undef wc_HmacUpdate
+    #undef wc_HmacFinal
+
 #else
 /* Initialize Hmac for use with async device */
 int wc_HmacInit(Hmac* hmac, void* heap, int devId)
@@ -1175,14 +1184,26 @@ int wolfSSL_GetHmacMaxSize(void)
                         const byte* inKey, word32 inKeySz, byte* out)
     {
         byte   tmp[WC_MAX_DIGEST_SIZE]; /* localSalt helper */
-        Hmac   myHmac;
+    #ifdef WOLFSSL_SMALL_STACK
+        Hmac*  myHmac;
+    #else
+        Hmac   myHmac[1];
+    #endif
         int    ret;
         const  byte* localSalt;  /* either points to user input or tmp */
         int    hashSz;
 
         ret = wc_HmacSizeByType(type);
-        if (ret < 0)
+        if (ret < 0) {
             return ret;
+        }
+
+    #ifdef WOLFSSL_SMALL_STACK
+        myHmac = (Hmac*)XMALLOC(sizeof(Hmac), NULL, DYNAMIC_TYPE_HMAC);
+        if (myHmac == NULL) {
+            return MEMORY_E;
+        }
+    #endif
 
         hashSz = ret;
         localSalt = salt;
@@ -1192,15 +1213,18 @@ int wolfSSL_GetHmacMaxSize(void)
             saltSz    = hashSz;
         }
 
-        ret = wc_HmacInit(&myHmac, NULL, INVALID_DEVID);
+        ret = wc_HmacInit(myHmac, NULL, INVALID_DEVID);
         if (ret == 0) {
-            ret = wc_HmacSetKey(&myHmac, type, localSalt, saltSz);
+            ret = wc_HmacSetKey(myHmac, type, localSalt, saltSz);
             if (ret == 0)
-                ret = wc_HmacUpdate(&myHmac, inKey, inKeySz);
+                ret = wc_HmacUpdate(myHmac, inKey, inKeySz);
             if (ret == 0)
-                ret = wc_HmacFinal(&myHmac,  out);
-            wc_HmacFree(&myHmac);
+                ret = wc_HmacFinal(myHmac,  out);
+            wc_HmacFree(myHmac);
         }
+    #ifdef WOLFSSL_SMALL_STACK
+        XFREE(myHmac, NULL, DYNAMIC_TYPE_HMAC);
+    #endif
 
         return ret;
     }
@@ -1220,40 +1244,55 @@ int wolfSSL_GetHmacMaxSize(void)
                        const byte* info, word32 infoSz, byte* out, word32 outSz)
     {
         byte   tmp[WC_MAX_DIGEST_SIZE];
-        Hmac   myHmac;
+    #ifdef WOLFSSL_SMALL_STACK
+        Hmac*  myHmac;
+    #else
+        Hmac   myHmac[1];
+    #endif
         int    ret = 0;
         word32 outIdx = 0;
         word32 hashSz = wc_HmacSizeByType(type);
         byte   n = 0x1;
 
         /* RFC 5869 states that the length of output keying material in
-           octets must be L <= 255*HashLen or N = ceil(L/HashLen) */
+         * octets must be L <= 255*HashLen or N = ceil(L/HashLen) */
 
-        if (out == NULL || ((outSz/hashSz) + ((outSz % hashSz) != 0)) > 255)
+        if (out == NULL || ((outSz/hashSz) + ((outSz % hashSz) != 0)) > 255) {
             return BAD_FUNC_ARG;
+        }
 
-        ret = wc_HmacInit(&myHmac, NULL, INVALID_DEVID);
-        if (ret != 0)
+    #ifdef WOLFSSL_SMALL_STACK
+        myHmac = (Hmac*)XMALLOC(sizeof(Hmac), NULL, DYNAMIC_TYPE_HMAC);
+        if (myHmac == NULL) {
+            return MEMORY_E;
+        }
+    #endif
+
+        ret = wc_HmacInit(myHmac, NULL, INVALID_DEVID);
+        if (ret != 0) {
+    #ifdef WOLFSSL_SMALL_STACK
+        XFREE(myHmac, NULL, DYNAMIC_TYPE_HMAC);
+    #endif
             return ret;
-
+        }
 
         while (outIdx < outSz) {
             int    tmpSz = (n == 1) ? 0 : hashSz;
             word32 left = outSz - outIdx;
 
-            ret = wc_HmacSetKey(&myHmac, type, inKey, inKeySz);
+            ret = wc_HmacSetKey(myHmac, type, inKey, inKeySz);
             if (ret != 0)
                 break;
-            ret = wc_HmacUpdate(&myHmac, tmp, tmpSz);
+            ret = wc_HmacUpdate(myHmac, tmp, tmpSz);
             if (ret != 0)
                 break;
-            ret = wc_HmacUpdate(&myHmac, info, infoSz);
+            ret = wc_HmacUpdate(myHmac, info, infoSz);
             if (ret != 0)
                 break;
-            ret = wc_HmacUpdate(&myHmac, &n, 1);
+            ret = wc_HmacUpdate(myHmac, &n, 1);
             if (ret != 0)
                 break;
-            ret = wc_HmacFinal(&myHmac, tmp);
+            ret = wc_HmacFinal(myHmac, tmp);
             if (ret != 0)
                 break;
 
@@ -1264,7 +1303,10 @@ int wolfSSL_GetHmacMaxSize(void)
             n++;
         }
 
-        wc_HmacFree(&myHmac);
+        wc_HmacFree(myHmac);
+    #ifdef WOLFSSL_SMALL_STACK
+        XFREE(myHmac, NULL, DYNAMIC_TYPE_HMAC);
+    #endif
 
         return ret;
     }

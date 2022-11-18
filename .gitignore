@@ -379,6 +379,9 @@ IDE/XCODE/Index
 /IDE/QNX/example-cmac/cmac-test
 /IDE/QNX/CAAM-DRIVER/wolfCrypt
 
+# Xilinx
+/IDE/XilinxSDK/data
+
 # Emacs
 *~
 
@@ -390,3 +393,14 @@ cmake_install.cmake
 # GDB Settings
 \.gdbinit
 
+# Pycharm and other IDEs
+\.idea
+
+# FIPS
+XXX-fips-test
+
+# ASYNC
+async
+
+# Generated user_settings_asm.h.
+user_settings_asm.h

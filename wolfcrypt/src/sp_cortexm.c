@@ -1,6 +1,6 @@
 /* sp.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -121,12 +121,15 @@ static void sp_2048_from_bin(sp_digit* r, int size, const byte* a, int n)
 static void sp_2048_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -2366,11 +2369,11 @@ SP_NOINLINE static sp_digit sp_2048_add_64(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -2408,11 +2411,11 @@ SP_NOINLINE static sp_digit sp_2048_sub_in_place_64(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -2470,19 +2473,19 @@ SP_NOINLINE static void sp_2048_mul_64(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -2495,11 +2498,11 @@ SP_NOINLINE static void sp_2048_mul_64(sp_digit* r, const sp_digit* a,
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -2544,11 +2547,11 @@ SP_NOINLINE static void sp_2048_sqr_64(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -2560,11 +2563,11 @@ SP_NOINLINE static void sp_2048_sqr_64(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -2580,25 +2583,25 @@ SP_NOINLINE static void sp_2048_sqr_64(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -2612,11 +2615,11 @@ SP_NOINLINE static void sp_2048_sqr_64(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -2628,11 +2631,11 @@ SP_NOINLINE static void sp_2048_sqr_64(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #2\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	sp, sp, r6\n\t"
@@ -2690,11 +2693,11 @@ SP_NOINLINE static sp_digit sp_2048_add_32(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -2732,11 +2735,11 @@ SP_NOINLINE static sp_digit sp_2048_sub_in_place_32(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -2793,19 +2796,19 @@ SP_NOINLINE static void sp_2048_mul_32(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -2816,11 +2819,11 @@ SP_NOINLINE static void sp_2048_mul_32(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -2865,11 +2868,11 @@ SP_NOINLINE static void sp_2048_sqr_32(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -2881,11 +2884,11 @@ SP_NOINLINE static void sp_2048_sqr_32(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -2900,25 +2903,25 @@ SP_NOINLINE static void sp_2048_sqr_32(sp_digit* r, const sp_digit* a)
         "mov	r6, #128\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -2930,11 +2933,11 @@ SP_NOINLINE static void sp_2048_sqr_32(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -2944,11 +2947,11 @@ SP_NOINLINE static void sp_2048_sqr_32(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #1\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	sp, sp, r6\n\t"
@@ -3011,11 +3014,11 @@ SP_NOINLINE static void sp_2048_mul_d_64(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -3066,11 +3069,11 @@ SP_NOINLINE static sp_digit sp_2048_cond_sub_32(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -3129,11 +3132,11 @@ SP_NOINLINE static void sp_2048_mont_reduce_32(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+30] += m[30] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -3166,11 +3169,11 @@ SP_NOINLINE static void sp_2048_mont_reduce_32(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #120\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -3241,11 +3244,11 @@ SP_NOINLINE static void sp_2048_mul_d_32(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -3339,11 +3342,11 @@ SP_NOINLINE static sp_int32 sp_2048_cmp_32(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -3372,9 +3375,13 @@ static WC_INLINE int sp_2048_div_32(const sp_digit* a, const sp_digit* d, sp_dig
 
     div = d[31];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 32);
+    r1 = sp_2048_cmp_32(&t1[32], d) >= 0;
+    sp_2048_cond_sub_32(&t1[32], &t1[32], d, (sp_digit)0 - r1);
     for (i = 31; i >= 0; i--) {
-        sp_digit hi = t1[32 + i] - (t1[32 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[32 + i] == div);
+        sp_digit hi = t1[32 + i] + mask;
         r1 = div_2048_word_32(hi, t1[32 + i - 1], div);
+        r1 |= mask;
 
         sp_2048_mul_d_32(t2, d, r1);
         t1[32 + i] += sp_2048_sub_in_place_32(&t1[i], t2);
@@ -3773,11 +3780,11 @@ SP_NOINLINE static sp_digit sp_2048_cond_sub_64(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -3836,11 +3843,11 @@ SP_NOINLINE static void sp_2048_mont_reduce_64(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+62] += m[62] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -3873,11 +3880,11 @@ SP_NOINLINE static void sp_2048_mont_reduce_64(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #248\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -3947,11 +3954,11 @@ SP_NOINLINE static sp_digit sp_2048_sub_64(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -4215,6 +4222,13 @@ static WC_INLINE int sp_2048_div_64_cond(const sp_digit* a, const sp_digit* d, s
 
     div = d[63];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 64);
+    for (i = 63; i > 0; i--) {
+        if (t1[i + 64] != d[i])
+            break;
+    }
+    if (t1[i + 64] >= d[i]) {
+        sp_2048_sub_in_place_64(&t1[64], d);
+    }
     for (i = 63; i >= 0; i--) {
         if (t1[64 + i] == div) {
             r1 = SP_DIGIT_MAX;
@@ -4324,11 +4338,11 @@ SP_NOINLINE static sp_int32 sp_2048_cmp_64(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -4357,9 +4371,13 @@ static WC_INLINE int sp_2048_div_64(const sp_digit* a, const sp_digit* d, sp_dig
 
     div = d[63];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 64);
+    r1 = sp_2048_cmp_64(&t1[64], d) >= 0;
+    sp_2048_cond_sub_64(&t1[64], &t1[64], d, (sp_digit)0 - r1);
     for (i = 63; i >= 0; i--) {
-        sp_digit hi = t1[64 + i] - (t1[64 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[64 + i] == div);
+        sp_digit hi = t1[64 + i] + mask;
         r1 = div_2048_word_64(hi, t1[64 + i - 1], div);
+        r1 |= mask;
 
         sp_2048_mul_d_64(t2, d, r1);
         t1[64 + i] += sp_2048_sub_in_place_64(&t1[i], t2);
@@ -4879,11 +4897,11 @@ SP_NOINLINE static sp_digit sp_2048_cond_add_32(sp_digit* r, const sp_digit* a, 
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -5906,12 +5924,15 @@ static void sp_3072_from_bin(sp_digit* r, int size, const byte* a, int n)
 static void sp_3072_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -6062,19 +6083,19 @@ SP_NOINLINE static void sp_3072_mul_12(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -6085,11 +6106,11 @@ SP_NOINLINE static void sp_3072_mul_12(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #88\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -7361,11 +7382,11 @@ SP_NOINLINE static void sp_3072_sqr_12(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -7377,11 +7398,11 @@ SP_NOINLINE static void sp_3072_sqr_12(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -7396,25 +7417,25 @@ SP_NOINLINE static void sp_3072_sqr_12(sp_digit* r, const sp_digit* a)
         "mov	r6, #48\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -7426,11 +7447,11 @@ SP_NOINLINE static void sp_3072_sqr_12(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #88\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -7440,11 +7461,11 @@ SP_NOINLINE static void sp_3072_sqr_12(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #96\n\t"
         "add	sp, sp, r6\n\t"
         :
@@ -7864,11 +7885,11 @@ SP_NOINLINE static sp_digit sp_3072_add_96(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -7906,11 +7927,11 @@ SP_NOINLINE static sp_digit sp_3072_sub_in_place_96(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -7971,19 +7992,19 @@ SP_NOINLINE static void sp_3072_mul_96(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -7996,11 +8017,11 @@ SP_NOINLINE static void sp_3072_mul_96(sp_digit* r, const sp_digit* a,
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -8047,11 +8068,11 @@ SP_NOINLINE static void sp_3072_sqr_96(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -8063,11 +8084,11 @@ SP_NOINLINE static void sp_3072_sqr_96(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -8084,25 +8105,25 @@ SP_NOINLINE static void sp_3072_sqr_96(sp_digit* r, const sp_digit* a)
         "add	r6, r6, #128\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -8116,11 +8137,11 @@ SP_NOINLINE static void sp_3072_sqr_96(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -8132,11 +8153,11 @@ SP_NOINLINE static void sp_3072_sqr_96(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #3\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	sp, sp, r6\n\t"
@@ -8194,11 +8215,11 @@ SP_NOINLINE static sp_digit sp_3072_add_48(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -8236,11 +8257,11 @@ SP_NOINLINE static sp_digit sp_3072_sub_in_place_48(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -8297,19 +8318,19 @@ SP_NOINLINE static void sp_3072_mul_48(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -8322,11 +8343,11 @@ SP_NOINLINE static void sp_3072_mul_48(sp_digit* r, const sp_digit* a,
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #120\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -8372,11 +8393,11 @@ SP_NOINLINE static void sp_3072_sqr_48(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -8388,11 +8409,11 @@ SP_NOINLINE static void sp_3072_sqr_48(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -8407,25 +8428,25 @@ SP_NOINLINE static void sp_3072_sqr_48(sp_digit* r, const sp_digit* a)
         "mov	r6, #192\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -8439,11 +8460,11 @@ SP_NOINLINE static void sp_3072_sqr_48(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #120\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -8455,11 +8476,11 @@ SP_NOINLINE static void sp_3072_sqr_48(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #1\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #128\n\t"
@@ -8523,11 +8544,11 @@ SP_NOINLINE static void sp_3072_mul_d_96(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -8578,11 +8599,11 @@ SP_NOINLINE static sp_digit sp_3072_cond_sub_48(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -8641,11 +8662,11 @@ SP_NOINLINE static void sp_3072_mont_reduce_48(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+46] += m[46] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -8678,11 +8699,11 @@ SP_NOINLINE static void sp_3072_mont_reduce_48(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #184\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -8753,11 +8774,11 @@ SP_NOINLINE static void sp_3072_mul_d_48(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -8851,11 +8872,11 @@ SP_NOINLINE static sp_int32 sp_3072_cmp_48(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -8884,9 +8905,13 @@ static WC_INLINE int sp_3072_div_48(const sp_digit* a, const sp_digit* d, sp_dig
 
     div = d[47];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 48);
+    r1 = sp_3072_cmp_48(&t1[48], d) >= 0;
+    sp_3072_cond_sub_48(&t1[48], &t1[48], d, (sp_digit)0 - r1);
     for (i = 47; i >= 0; i--) {
-        sp_digit hi = t1[48 + i] - (t1[48 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[48 + i] == div);
+        sp_digit hi = t1[48 + i] + mask;
         r1 = div_3072_word_48(hi, t1[48 + i - 1], div);
+        r1 |= mask;
 
         sp_3072_mul_d_48(t2, d, r1);
         t1[48 + i] += sp_3072_sub_in_place_48(&t1[i], t2);
@@ -9286,11 +9311,11 @@ SP_NOINLINE static sp_digit sp_3072_cond_sub_96(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -9349,11 +9374,11 @@ SP_NOINLINE static void sp_3072_mont_reduce_96(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+94] += m[94] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -9386,11 +9411,11 @@ SP_NOINLINE static void sp_3072_mont_reduce_96(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #376\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -9461,11 +9486,11 @@ SP_NOINLINE static sp_digit sp_3072_sub_96(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -9809,6 +9834,13 @@ static WC_INLINE int sp_3072_div_96_cond(const sp_digit* a, const sp_digit* d, s
 
     div = d[95];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 96);
+    for (i = 95; i > 0; i--) {
+        if (t1[i + 96] != d[i])
+            break;
+    }
+    if (t1[i + 96] >= d[i]) {
+        sp_3072_sub_in_place_96(&t1[96], d);
+    }
     for (i = 95; i >= 0; i--) {
         if (t1[96 + i] == div) {
             r1 = SP_DIGIT_MAX;
@@ -9920,11 +9952,11 @@ SP_NOINLINE static sp_int32 sp_3072_cmp_96(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -9953,9 +9985,13 @@ static WC_INLINE int sp_3072_div_96(const sp_digit* a, const sp_digit* d, sp_dig
 
     div = d[95];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 96);
+    r1 = sp_3072_cmp_96(&t1[96], d) >= 0;
+    sp_3072_cond_sub_96(&t1[96], &t1[96], d, (sp_digit)0 - r1);
     for (i = 95; i >= 0; i--) {
-        sp_digit hi = t1[96 + i] - (t1[96 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[96 + i] == div);
+        sp_digit hi = t1[96 + i] + mask;
         r1 = div_3072_word_96(hi, t1[96 + i - 1], div);
+        r1 |= mask;
 
         sp_3072_mul_d_96(t2, d, r1);
         t1[96 + i] += sp_3072_sub_in_place_96(&t1[i], t2);
@@ -10475,11 +10511,11 @@ SP_NOINLINE static sp_digit sp_3072_cond_add_48(sp_digit* r, const sp_digit* a, 
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -11698,12 +11734,15 @@ static void sp_4096_from_bin(sp_digit* r, int size, const byte* a, int n)
 static void sp_4096_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -12596,11 +12635,11 @@ SP_NOINLINE static sp_digit sp_4096_add_128(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -12638,11 +12677,11 @@ SP_NOINLINE static sp_digit sp_4096_sub_in_place_128(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -12702,19 +12741,19 @@ SP_NOINLINE static void sp_4096_mul_128(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -12727,11 +12766,11 @@ SP_NOINLINE static void sp_4096_mul_128(sp_digit* r, const sp_digit* a,
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -12778,11 +12817,11 @@ SP_NOINLINE static void sp_4096_sqr_128(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -12794,11 +12833,11 @@ SP_NOINLINE static void sp_4096_sqr_128(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -12814,25 +12853,25 @@ SP_NOINLINE static void sp_4096_sqr_128(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -12846,11 +12885,11 @@ SP_NOINLINE static void sp_4096_sqr_128(sp_digit* r, const sp_digit* a)
         "lsl	r6, r6, #8\n\t"
         "add	r6, r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -12862,11 +12901,11 @@ SP_NOINLINE static void sp_4096_sqr_128(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #4\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	sp, sp, r6\n\t"
@@ -12927,11 +12966,11 @@ SP_NOINLINE static void sp_4096_mul_d_128(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -12984,11 +13023,11 @@ SP_NOINLINE static sp_digit sp_4096_cond_sub_128(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -13047,11 +13086,11 @@ SP_NOINLINE static void sp_4096_mont_reduce_128(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+126] += m[126] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -13084,11 +13123,11 @@ SP_NOINLINE static void sp_4096_mont_reduce_128(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #504\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -13158,11 +13197,11 @@ SP_NOINLINE static sp_digit sp_4096_sub_128(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -13586,6 +13625,13 @@ static WC_INLINE int sp_4096_div_128_cond(const sp_digit* a, const sp_digit* d, 
 
     div = d[127];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 128);
+    for (i = 127; i > 0; i--) {
+        if (t1[i + 128] != d[i])
+            break;
+    }
+    if (t1[i + 128] >= d[i]) {
+        sp_4096_sub_in_place_128(&t1[128], d);
+    }
     for (i = 127; i >= 0; i--) {
         if (t1[128 + i] == div) {
             r1 = SP_DIGIT_MAX;
@@ -13697,11 +13743,11 @@ SP_NOINLINE static sp_int32 sp_4096_cmp_128(const sp_digit* a, const sp_digit* b
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -13730,9 +13776,13 @@ static WC_INLINE int sp_4096_div_128(const sp_digit* a, const sp_digit* d, sp_di
 
     div = d[127];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 128);
+    r1 = sp_4096_cmp_128(&t1[128], d) >= 0;
+    sp_4096_cond_sub_128(&t1[128], &t1[128], d, (sp_digit)0 - r1);
     for (i = 127; i >= 0; i--) {
-        sp_digit hi = t1[128 + i] - (t1[128 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[128 + i] == div);
+        sp_digit hi = t1[128 + i] + mask;
         r1 = div_4096_word_128(hi, t1[128 + i - 1], div);
+        r1 |= mask;
 
         sp_4096_mul_d_128(t2, d, r1);
         t1[128 + i] += sp_4096_sub_in_place_128(&t1[i], t2);
@@ -14253,11 +14303,11 @@ SP_NOINLINE static sp_digit sp_4096_cond_add_64(sp_digit* r, const sp_digit* a, 
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -16546,11 +16596,11 @@ SP_NOINLINE static sp_digit sp_256_add_8(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -16630,11 +16680,11 @@ SP_NOINLINE static sp_digit sp_256_sub_8(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -16930,12 +16980,15 @@ static int sp_256_mod_mul_norm_8(sp_digit* r, const sp_digit* a, const sp_digit*
 static void sp_256_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -18306,7 +18359,7 @@ static void sp_256_mont_sqr_n_8(sp_digit* r, const sp_digit* a, int n,
     }
 }
 
-#endif /* !WOLFSSL_SP_SMALL | HAVE_COMP_KEY */
+#endif /* !WOLFSSL_SP_SMALL || HAVE_COMP_KEY */
 #ifdef WOLFSSL_SP_SMALL
 /* Mod-2 for the P256 curve. */
 static const uint32_t p256_mod_minus_2[8] = {
@@ -18418,11 +18471,11 @@ SP_NOINLINE static sp_int32 sp_256_cmp_8(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -18465,11 +18518,11 @@ SP_NOINLINE static sp_digit sp_256_cond_sub_8(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -18559,11 +18612,11 @@ SP_NOINLINE static void sp_256_mont_reduce_8(sp_digit* a, const sp_digit* m,
         "add	%[a], %[a], #4\n\t"
         "mov	r6, #8\n\t"
         "cmp	r9, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "sub	%[a], %[a], #32\n\t"
         "mov	r3, r1\n\t"
         "sub	r1, r1, #1\n\t"
@@ -18652,11 +18705,11 @@ SP_NOINLINE static void sp_256_mont_reduce_order_8(sp_digit* a, const sp_digit* 
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+6] += m[6] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -18689,11 +18742,11 @@ SP_NOINLINE static void sp_256_mont_reduce_order_8(sp_digit* a, const sp_digit* 
         /* Next word in a */
         "sub	r10, r10, #24\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -22781,6 +22834,84 @@ int sp_ecc_make_key_256(WC_RNG* rng, mp_int* priv, ecc_point* pub, void* heap)
     return err;
 }
 
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_key_gen_256_ctx {
+    int state;
+    sp_256_ecc_mulmod_8_ctx mulmod_ctx;
+    sp_digit k[8];
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_256  point[2];
+#else
+    sp_point_256 point[1];
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+} sp_ecc_key_gen_256_ctx;
+
+int sp_ecc_make_key_256_nb(sp_ecc_ctx_t* sp_ctx, WC_RNG* rng, mp_int* priv,
+    ecc_point* pub, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_key_gen_256_ctx* ctx = (sp_ecc_key_gen_256_ctx*)sp_ctx->data;
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_256* infinity = ctx->point + 1;
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+
+    typedef char ctx_size_test[sizeof(sp_ecc_key_gen_256_ctx)
+                               >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+        case 0:
+            err = sp_256_ecc_gen_k_8(rng, ctx->k);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+                ctx->state = 1;
+            }
+            break;
+        case 1:
+            err = sp_256_ecc_mulmod_base_8_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+            #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+                XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+                ctx->state = 2;
+            #else
+                ctx->state = 3;
+            #endif
+            }
+            break;
+    #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+        case 2:
+            err = sp_256_ecc_mulmod_8_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      infinity, ctx->point, p256_order, 1, 1);
+            if (err == MP_OKAY) {
+                if (sp_256_iszero_8(ctx->point->x) ||
+                    sp_256_iszero_8(ctx->point->y)) {
+                    err = ECC_INF_E;
+                }
+                else {
+                    err = FP_WOULDBLOCK;
+                    ctx->state = 3;
+                }
+            }
+            break;
+    #endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+        case 3:
+            err = sp_256_to_mp(ctx->k, priv);
+            if (err == MP_OKAY) {
+                err = sp_256_point_to_ecc_point_8(ctx->point, pub);
+            }
+            break;
+    }
+
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_key_gen_256_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
+
 #ifdef HAVE_ECC_DHE
 /* Write r as big endian to byte array.
  * Fixed length number of bytes written: 32
@@ -22863,6 +22994,56 @@ int sp_ecc_secret_gen_256(const mp_int* priv, const ecc_point* pub, byte* out,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sec_gen_256_ctx {
+    int state;
+    union {
+        sp_256_ecc_mulmod_8_ctx mulmod_ctx;
+    };
+    sp_digit k[8];
+    sp_point_256 point;
+} sp_ecc_sec_gen_256_ctx;
+
+int sp_ecc_secret_gen_256_nb(sp_ecc_ctx_t* sp_ctx, const mp_int* priv,
+    const ecc_point* pub, byte* out, word32* outLen, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sec_gen_256_ctx* ctx = (sp_ecc_sec_gen_256_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sec_gen_256_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    if (*outLen < 32U) {
+        err = BUFFER_E;
+    }
+
+    switch (ctx->state) {
+        case 0:
+            sp_256_from_mp(ctx->k, 8, priv);
+            sp_256_point_from_ecc_point_8(&ctx->point, pub);
+            ctx->state = 1;
+            break;
+        case 1:
+            err = sp_256_ecc_mulmod_8_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      &ctx->point, &ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                sp_256_to_bin_8(ctx->point.x, out);
+                *outLen = 32;
+            }
+            break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 1) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_sec_gen_256_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_DHE */
 
 #if defined(HAVE_ECC_SIGN) || defined(HAVE_ECC_VERIFY)
@@ -22898,11 +23079,11 @@ SP_NOINLINE static sp_digit sp_256_sub_in_place_8(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -22984,11 +23165,11 @@ SP_NOINLINE static void sp_256_mul_d_8(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -23094,9 +23275,13 @@ static WC_INLINE int sp_256_div_8(const sp_digit* a, const sp_digit* d, sp_digit
 
     div = d[7];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 8);
+    r1 = sp_256_cmp_8(&t1[8], d) >= 0;
+    sp_256_cond_sub_8(&t1[8], &t1[8], d, (sp_digit)0 - r1);
     for (i = 7; i >= 0; i--) {
-        sp_digit hi = t1[8 + i] - (t1[8 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[8 + i] == div);
+        sp_digit hi = t1[8 + i] + mask;
         r1 = div_256_word_8(hi, t1[8 + i - 1], div);
+        r1 |= mask;
 
         sp_256_mul_d_8(t2, d, r1);
         t1[8 + i] += sp_256_sub_in_place_8(&t1[i], t2);
@@ -23398,171 +23583,6 @@ static int sp_256_calc_s_8(sp_digit* s, const sp_digit* r, sp_digit* k,
  * returns RNG failures, MEMORY_E when memory allocation fails and
  * MP_OKAY on success.
  */
-#ifdef WOLFSSL_SP_NONBLOCK
-typedef struct sp_ecc_sign_256_ctx {
-    int state;
-    union {
-        sp_256_ecc_mulmod_8_ctx mulmod_ctx;
-        sp_256_mont_inv_order_8_ctx mont_inv_order_ctx;
-    };
-    sp_digit e[2*8];
-    sp_digit x[2*8];
-    sp_digit k[2*8];
-    sp_digit r[2*8];
-    sp_digit tmp[3 * 2*8];
-    sp_point_256 point;
-    sp_digit* s;
-    sp_digit* kInv;
-    int i;
-} sp_ecc_sign_256_ctx;
-
-int sp_ecc_sign_256_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
-    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
-{
-    int err = FP_WOULDBLOCK;
-    sp_ecc_sign_256_ctx* ctx = (sp_ecc_sign_256_ctx*)sp_ctx->data;
-
-    typedef char ctx_size_test[sizeof(sp_ecc_sign_256_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
-    (void)sizeof(ctx_size_test);
-
-    (void)heap;
-
-    switch (ctx->state) {
-    case 0: /* INIT */
-        ctx->s = ctx->e;
-        ctx->kInv = ctx->k;
-        if (hashLen > 32U) {
-            hashLen = 32U;
-        }
-
-        ctx->i = SP_ECC_MAX_SIG_GEN;
-        ctx->state = 1;
-        break;
-    case 1: /* GEN */
-        /* New random point. */
-        if (km == NULL || mp_iszero(km)) {
-            err = sp_256_ecc_gen_k_8(rng, ctx->k);
-        }
-        else {
-            sp_256_from_mp(ctx->k, 8, km);
-            mp_zero(km);
-        }
-        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
-        ctx->state = 2;
-        break;
-    case 2: /* MULMOD */
-        err = sp_256_ecc_mulmod_8_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
-            &ctx->point, &p256_base, ctx->k, 1, 1, heap);
-        if (err == MP_OKAY) {
-            ctx->state = 3;
-        }
-        break;
-    case 3: /* MODORDER */
-    {
-        sp_int32 c;
-        /* r = point->x mod order */
-        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 8U);
-        sp_256_norm_8(ctx->r);
-        c = sp_256_cmp_8(ctx->r, p256_order);
-        sp_256_cond_sub_8(ctx->r, ctx->r, p256_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_256_norm_8(ctx->r);
-
-        sp_256_from_mp(ctx->x, 8, priv);
-        sp_256_from_bin(ctx->e, 8, hash, (int)hashLen);
-        ctx->state = 4;
-        break;
-    }
-    case 4: /* KMODORDER */
-        /* Conv k to Montgomery form (mod order) */
-        sp_256_mul_8(ctx->k, ctx->k, p256_norm_order);
-        err = sp_256_mod_8(ctx->k, ctx->k, p256_order);
-        if (err == MP_OKAY) {
-            sp_256_norm_8(ctx->k);
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 5;
-        }
-        break;
-    case 5: /* KINV */
-        /* kInv = 1/k mod order */
-        err = sp_256_mont_inv_order_8_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
-        if (err == MP_OKAY) {
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 6;
-        }
-        break;
-    case 6: /* KINVNORM */
-        sp_256_norm_8(ctx->kInv);
-        ctx->state = 7;
-        break;
-    case 7: /* R */
-        /* s = r * x + e */
-        sp_256_mul_8(ctx->x, ctx->x, ctx->r);
-        ctx->state = 8;
-        break;
-    case 8: /* S1 */
-        err = sp_256_mod_8(ctx->x, ctx->x, p256_order);
-        if (err == MP_OKAY)
-            ctx->state = 9;
-        break;
-    case 9: /* S2 */
-    {
-        sp_digit carry;
-        sp_int32 c;
-        sp_256_norm_8(ctx->x);
-        carry = sp_256_add_8(ctx->s, ctx->e, ctx->x);
-        sp_256_cond_sub_8(ctx->s, ctx->s,
-            p256_order, 0 - carry);
-        sp_256_norm_8(ctx->s);
-        c = sp_256_cmp_8(ctx->s, p256_order);
-        sp_256_cond_sub_8(ctx->s, ctx->s, p256_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_256_norm_8(ctx->s);
-
-        /* s = s * k^-1 mod order */
-        sp_256_mont_mul_order_8(ctx->s, ctx->s, ctx->kInv);
-        sp_256_norm_8(ctx->s);
-
-        /* Check that signature is usable. */
-        if (sp_256_iszero_8(ctx->s) == 0) {
-            ctx->state = 10;
-            break;
-        }
-    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
-        ctx->i = 1;
-    #endif
-
-        /* not usable gen, try again */
-        ctx->i--;
-        if (ctx->i == 0) {
-            err = RNG_FAILURE_E;
-        }
-        ctx->state = 1;
-        break;
-    }
-    case 10: /* RES */
-        err = sp_256_to_mp(ctx->r, rm);
-        if (err == MP_OKAY) {
-            err = sp_256_to_mp(ctx->s, sm);
-        }
-        break;
-    }
-
-    if (err == MP_OKAY && ctx->state != 10) {
-        err = FP_WOULDBLOCK;
-    }
-    if (err != FP_WOULDBLOCK) {
-        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 8U);
-        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 8U);
-        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 8U);
-        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 8U);
-        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 8U);
-    }
-
-    return err;
-}
-#endif /* WOLFSSL_SP_NONBLOCK */
-
 int sp_ecc_sign_256(const byte* hash, word32 hashLen, WC_RNG* rng,
     const mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
 {
@@ -23680,6 +23700,169 @@ int sp_ecc_sign_256(const byte* hash, word32 hashLen, WC_RNG* rng,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sign_256_ctx {
+    int state;
+    union {
+        sp_256_ecc_mulmod_8_ctx mulmod_ctx;
+        sp_256_mont_inv_order_8_ctx mont_inv_order_ctx;
+    };
+    sp_digit e[2*8];
+    sp_digit x[2*8];
+    sp_digit k[2*8];
+    sp_digit r[2*8];
+    sp_digit tmp[3 * 2*8];
+    sp_point_256 point;
+    sp_digit* s;
+    sp_digit* kInv;
+    int i;
+} sp_ecc_sign_256_ctx;
+
+int sp_ecc_sign_256_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
+    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sign_256_ctx* ctx = (sp_ecc_sign_256_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sign_256_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+    case 0: /* INIT */
+        ctx->s = ctx->e;
+        ctx->kInv = ctx->k;
+
+        ctx->i = SP_ECC_MAX_SIG_GEN;
+        ctx->state = 1;
+        break;
+    case 1: /* GEN */
+        /* New random point. */
+        if (km == NULL || mp_iszero(km)) {
+            err = sp_256_ecc_gen_k_8(rng, ctx->k);
+        }
+        else {
+            sp_256_from_mp(ctx->k, 8, km);
+            mp_zero(km);
+        }
+        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+        ctx->state = 2;
+        break;
+    case 2: /* MULMOD */
+        err = sp_256_ecc_mulmod_8_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+            &ctx->point, &p256_base, ctx->k, 1, 1, heap);
+        if (err == MP_OKAY) {
+            ctx->state = 3;
+        }
+        break;
+    case 3: /* MODORDER */
+    {
+        sp_int32 c;
+        /* r = point->x mod order */
+        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 8U);
+        sp_256_norm_8(ctx->r);
+        c = sp_256_cmp_8(ctx->r, p256_order);
+        sp_256_cond_sub_8(ctx->r, ctx->r, p256_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_256_norm_8(ctx->r);
+
+        if (hashLen > 32U) {
+            hashLen = 32U;
+        }
+        sp_256_from_mp(ctx->x, 8, priv);
+        sp_256_from_bin(ctx->e, 8, hash, (int)hashLen);
+        ctx->state = 4;
+        break;
+    }
+    case 4: /* KMODORDER */
+        /* Conv k to Montgomery form (mod order) */
+        sp_256_mul_8(ctx->k, ctx->k, p256_norm_order);
+        err = sp_256_mod_8(ctx->k, ctx->k, p256_order);
+        if (err == MP_OKAY) {
+            sp_256_norm_8(ctx->k);
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 5;
+        }
+        break;
+    case 5: /* KINV */
+        /* kInv = 1/k mod order */
+        err = sp_256_mont_inv_order_8_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
+        if (err == MP_OKAY) {
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 6;
+        }
+        break;
+    case 6: /* KINVNORM */
+        sp_256_norm_8(ctx->kInv);
+        ctx->state = 7;
+        break;
+    case 7: /* R */
+        /* s = r * x + e */
+        sp_256_mul_8(ctx->x, ctx->x, ctx->r);
+        ctx->state = 8;
+        break;
+    case 8: /* S1 */
+        err = sp_256_mod_8(ctx->x, ctx->x, p256_order);
+        if (err == MP_OKAY)
+            ctx->state = 9;
+        break;
+    case 9: /* S2 */
+    {
+        sp_digit carry;
+        sp_int32 c;
+        sp_256_norm_8(ctx->x);
+        carry = sp_256_add_8(ctx->s, ctx->e, ctx->x);
+        sp_256_cond_sub_8(ctx->s, ctx->s,
+            p256_order, 0 - carry);
+        sp_256_norm_8(ctx->s);
+        c = sp_256_cmp_8(ctx->s, p256_order);
+        sp_256_cond_sub_8(ctx->s, ctx->s, p256_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_256_norm_8(ctx->s);
+
+        /* s = s * k^-1 mod order */
+        sp_256_mont_mul_order_8(ctx->s, ctx->s, ctx->kInv);
+        sp_256_norm_8(ctx->s);
+
+        /* Check that signature is usable. */
+        if (sp_256_iszero_8(ctx->s) == 0) {
+            ctx->state = 10;
+            break;
+        }
+    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
+        ctx->i = 1;
+    #endif
+
+        /* not usable gen, try again */
+        ctx->i--;
+        if (ctx->i == 0) {
+            err = RNG_FAILURE_E;
+        }
+        ctx->state = 1;
+        break;
+    }
+    case 10: /* RES */
+        err = sp_256_to_mp(ctx->r, rm);
+        if (err == MP_OKAY) {
+            err = sp_256_to_mp(ctx->s, sm);
+        }
+        break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 10) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 8U);
+        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 8U);
+        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 8U);
+        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 8U);
+        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 8U);
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_SIGN */
 
 #ifndef WOLFSSL_SP_SMALL
@@ -24078,6 +24261,106 @@ static int sp_256_calc_vfy_point_8(sp_point_256* p1, sp_point_256* p2,
  * heap     Heap to use for allocation.
  * returns MEMORY_E when memory allocation fails and MP_OKAY on success.
  */
+int sp_ecc_verify_256(const byte* hash, word32 hashLen, const mp_int* pX,
+    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
+    int* res, void* heap)
+{
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    sp_digit* u1 = NULL;
+    sp_point_256* p1 = NULL;
+#else
+    sp_digit  u1[18 * 8];
+    sp_point_256 p1[2];
+#endif
+    sp_digit* u2 = NULL;
+    sp_digit* s = NULL;
+    sp_digit* tmp = NULL;
+    sp_point_256* p2 = NULL;
+    sp_digit carry;
+    sp_int32 c = 0;
+    int err = MP_OKAY;
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (err == MP_OKAY) {
+        p1 = (sp_point_256*)XMALLOC(sizeof(sp_point_256) * 2, heap,
+                                             DYNAMIC_TYPE_ECC);
+        if (p1 == NULL)
+            err = MEMORY_E;
+    }
+    if (err == MP_OKAY) {
+        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 8, heap,
+                                                              DYNAMIC_TYPE_ECC);
+        if (u1 == NULL)
+            err = MEMORY_E;
+    }
+#endif
+
+    if (err == MP_OKAY) {
+        u2  = u1 + 2 * 8;
+        s   = u1 + 4 * 8;
+        tmp = u1 + 6 * 8;
+        p2 = p1 + 1;
+
+        if (hashLen > 32U) {
+            hashLen = 32U;
+        }
+
+        sp_256_from_bin(u1, 8, hash, (int)hashLen);
+        sp_256_from_mp(u2, 8, rm);
+        sp_256_from_mp(s, 8, sm);
+        sp_256_from_mp(p2->x, 8, pX);
+        sp_256_from_mp(p2->y, 8, pY);
+        sp_256_from_mp(p2->z, 8, pZ);
+
+        err = sp_256_calc_vfy_point_8(p1, p2, s, u1, u2, tmp, heap);
+    }
+    if (err == MP_OKAY) {
+        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
+        /* Reload r and convert to Montgomery form. */
+        sp_256_from_mp(u2, 8, rm);
+        err = sp_256_mod_mul_norm_8(u2, u2, p256_mod);
+    }
+
+    if (err == MP_OKAY) {
+        /* u1 = r.z'.z' mod prime */
+            sp_256_mont_sqr_8(p1->z, p1->z, p256_mod, p256_mp_mod);
+            sp_256_mont_mul_8(u1, u2, p1->z, p256_mod, p256_mp_mod);
+        *res = (int)(sp_256_cmp_8(p1->x, u1) == 0);
+        if (*res == 0) {
+            /* Reload r and add order. */
+            sp_256_from_mp(u2, 8, rm);
+            carry = sp_256_add_8(u2, u2, p256_order);
+            /* Carry means result is greater than mod and is not valid. */
+            if (carry == 0) {
+                sp_256_norm_8(u2);
+
+                /* Compare with mod and if greater or equal then not valid. */
+                c = sp_256_cmp_8(u2, p256_mod);
+            }
+        }
+        if ((*res == 0) && (c < 0)) {
+            /* Convert to Montogomery form */
+            err = sp_256_mod_mul_norm_8(u2, u2, p256_mod);
+            if (err == MP_OKAY) {
+                /* u1 = (r + 1*order).z'.z' mod prime */
+                {
+                    sp_256_mont_mul_8(u1, u2, p1->z, p256_mod, p256_mp_mod);
+                }
+                *res = (sp_256_cmp_8(p1->x, u1) == 0);
+            }
+        }
+    }
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (u1 != NULL)
+        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
+    if (p1 != NULL)
+        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
+#endif
+
+    return err;
+}
+
 #ifdef WOLFSSL_SP_NONBLOCK
 typedef struct sp_ecc_verify_256_ctx {
     int state;
@@ -24227,106 +24510,6 @@ int sp_ecc_verify_256_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash,
     return err;
 }
 #endif /* WOLFSSL_SP_NONBLOCK */
-
-int sp_ecc_verify_256(const byte* hash, word32 hashLen, const mp_int* pX,
-    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
-    int* res, void* heap)
-{
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    sp_digit* u1 = NULL;
-    sp_point_256* p1 = NULL;
-#else
-    sp_digit  u1[18 * 8];
-    sp_point_256 p1[2];
-#endif
-    sp_digit* u2 = NULL;
-    sp_digit* s = NULL;
-    sp_digit* tmp = NULL;
-    sp_point_256* p2 = NULL;
-    sp_digit carry;
-    sp_int32 c = 0;
-    int err = MP_OKAY;
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (err == MP_OKAY) {
-        p1 = (sp_point_256*)XMALLOC(sizeof(sp_point_256) * 2, heap,
-                                             DYNAMIC_TYPE_ECC);
-        if (p1 == NULL)
-            err = MEMORY_E;
-    }
-    if (err == MP_OKAY) {
-        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 8, heap,
-                                                              DYNAMIC_TYPE_ECC);
-        if (u1 == NULL)
-            err = MEMORY_E;
-    }
-#endif
-
-    if (err == MP_OKAY) {
-        u2  = u1 + 2 * 8;
-        s   = u1 + 4 * 8;
-        tmp = u1 + 6 * 8;
-        p2 = p1 + 1;
-
-        if (hashLen > 32U) {
-            hashLen = 32U;
-        }
-
-        sp_256_from_bin(u1, 8, hash, (int)hashLen);
-        sp_256_from_mp(u2, 8, rm);
-        sp_256_from_mp(s, 8, sm);
-        sp_256_from_mp(p2->x, 8, pX);
-        sp_256_from_mp(p2->y, 8, pY);
-        sp_256_from_mp(p2->z, 8, pZ);
-
-        err = sp_256_calc_vfy_point_8(p1, p2, s, u1, u2, tmp, heap);
-    }
-    if (err == MP_OKAY) {
-        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
-        /* Reload r and convert to Montgomery form. */
-        sp_256_from_mp(u2, 8, rm);
-        err = sp_256_mod_mul_norm_8(u2, u2, p256_mod);
-    }
-
-    if (err == MP_OKAY) {
-        /* u1 = r.z'.z' mod prime */
-            sp_256_mont_sqr_8(p1->z, p1->z, p256_mod, p256_mp_mod);
-            sp_256_mont_mul_8(u1, u2, p1->z, p256_mod, p256_mp_mod);
-        *res = (int)(sp_256_cmp_8(p1->x, u1) == 0);
-        if (*res == 0) {
-            /* Reload r and add order. */
-            sp_256_from_mp(u2, 8, rm);
-            carry = sp_256_add_8(u2, u2, p256_order);
-            /* Carry means result is greater than mod and is not valid. */
-            if (carry == 0) {
-                sp_256_norm_8(u2);
-
-                /* Compare with mod and if greater or equal then not valid. */
-                c = sp_256_cmp_8(u2, p256_mod);
-            }
-        }
-        if ((*res == 0) && (c < 0)) {
-            /* Convert to Montogomery form */
-            err = sp_256_mod_mul_norm_8(u2, u2, p256_mod);
-            if (err == MP_OKAY) {
-                /* u1 = (r + 1*order).z'.z' mod prime */
-                {
-                    sp_256_mont_mul_8(u1, u2, p1->z, p256_mod, p256_mp_mod);
-                }
-                *res = (sp_256_cmp_8(p1->x, u1) == 0);
-            }
-        }
-    }
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (u1 != NULL)
-        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
-    if (p1 != NULL)
-        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
-#endif
-
-    return err;
-}
 #endif /* HAVE_ECC_VERIFY */
 
 #ifdef HAVE_ECC_CHECK_KEY
@@ -25015,19 +25198,19 @@ SP_NOINLINE static void sp_384_mul_12(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -25038,11 +25221,11 @@ SP_NOINLINE static void sp_384_mul_12(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #88\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -25086,11 +25269,11 @@ SP_NOINLINE static void sp_384_sqr_12(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -25102,11 +25285,11 @@ SP_NOINLINE static void sp_384_sqr_12(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -25121,25 +25304,25 @@ SP_NOINLINE static void sp_384_sqr_12(sp_digit* r, const sp_digit* a)
         "mov	r6, #48\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -25151,11 +25334,11 @@ SP_NOINLINE static void sp_384_sqr_12(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #88\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -25165,11 +25348,11 @@ SP_NOINLINE static void sp_384_sqr_12(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #96\n\t"
         "add	sp, sp, r6\n\t"
         :
@@ -25207,11 +25390,11 @@ SP_NOINLINE static sp_digit sp_384_add_12(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -25301,11 +25484,11 @@ SP_NOINLINE static sp_digit sp_384_sub_12(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -25478,12 +25661,15 @@ static int sp_384_mod_mul_norm_12(sp_digit* r, const sp_digit* a, const sp_digit
 static void sp_384_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -25689,11 +25875,11 @@ SP_NOINLINE static sp_digit sp_384_cond_sub_12(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -25754,11 +25940,11 @@ SP_NOINLINE static void sp_384_mont_reduce_12(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+10] += m[10] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -25791,11 +25977,11 @@ SP_NOINLINE static void sp_384_mont_reduce_12(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #40\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "mov	%[m], r12\n\t"
         : [ca] "+r" (ca), [a] "+r" (a)
@@ -25854,7 +26040,7 @@ static void sp_384_mont_sqr_n_12(sp_digit* r, const sp_digit* a, int n,
     }
 }
 
-#endif /* !WOLFSSL_SP_SMALL | HAVE_COMP_KEY */
+#endif /* !WOLFSSL_SP_SMALL || HAVE_COMP_KEY */
 #ifdef WOLFSSL_SP_SMALL
 /* Mod-2 for the P384 curve. */
 static const uint32_t p384_mod_minus_2[12] = {
@@ -25982,11 +26168,11 @@ SP_NOINLINE static sp_int32 sp_384_cmp_12(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -26116,11 +26302,11 @@ SP_NOINLINE static sp_digit sp_384_cond_add_12(sp_digit* r, const sp_digit* a, c
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -29956,6 +30142,84 @@ int sp_ecc_make_key_384(WC_RNG* rng, mp_int* priv, ecc_point* pub, void* heap)
     return err;
 }
 
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_key_gen_384_ctx {
+    int state;
+    sp_384_ecc_mulmod_12_ctx mulmod_ctx;
+    sp_digit k[12];
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_384  point[2];
+#else
+    sp_point_384 point[1];
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+} sp_ecc_key_gen_384_ctx;
+
+int sp_ecc_make_key_384_nb(sp_ecc_ctx_t* sp_ctx, WC_RNG* rng, mp_int* priv,
+    ecc_point* pub, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_key_gen_384_ctx* ctx = (sp_ecc_key_gen_384_ctx*)sp_ctx->data;
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_384* infinity = ctx->point + 1;
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+
+    typedef char ctx_size_test[sizeof(sp_ecc_key_gen_384_ctx)
+                               >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+        case 0:
+            err = sp_384_ecc_gen_k_12(rng, ctx->k);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+                ctx->state = 1;
+            }
+            break;
+        case 1:
+            err = sp_384_ecc_mulmod_base_12_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+            #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+                XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+                ctx->state = 2;
+            #else
+                ctx->state = 3;
+            #endif
+            }
+            break;
+    #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+        case 2:
+            err = sp_384_ecc_mulmod_12_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      infinity, ctx->point, p384_order, 1, 1);
+            if (err == MP_OKAY) {
+                if (sp_384_iszero_12(ctx->point->x) ||
+                    sp_384_iszero_12(ctx->point->y)) {
+                    err = ECC_INF_E;
+                }
+                else {
+                    err = FP_WOULDBLOCK;
+                    ctx->state = 3;
+                }
+            }
+            break;
+    #endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+        case 3:
+            err = sp_384_to_mp(ctx->k, priv);
+            if (err == MP_OKAY) {
+                err = sp_384_point_to_ecc_point_12(ctx->point, pub);
+            }
+            break;
+    }
+
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_key_gen_384_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
+
 #ifdef HAVE_ECC_DHE
 /* Write r as big endian to byte array.
  * Fixed length number of bytes written: 48
@@ -30038,6 +30302,56 @@ int sp_ecc_secret_gen_384(const mp_int* priv, const ecc_point* pub, byte* out,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sec_gen_384_ctx {
+    int state;
+    union {
+        sp_384_ecc_mulmod_12_ctx mulmod_ctx;
+    };
+    sp_digit k[12];
+    sp_point_384 point;
+} sp_ecc_sec_gen_384_ctx;
+
+int sp_ecc_secret_gen_384_nb(sp_ecc_ctx_t* sp_ctx, const mp_int* priv,
+    const ecc_point* pub, byte* out, word32* outLen, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sec_gen_384_ctx* ctx = (sp_ecc_sec_gen_384_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sec_gen_384_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    if (*outLen < 32U) {
+        err = BUFFER_E;
+    }
+
+    switch (ctx->state) {
+        case 0:
+            sp_384_from_mp(ctx->k, 12, priv);
+            sp_384_point_from_ecc_point_12(&ctx->point, pub);
+            ctx->state = 1;
+            break;
+        case 1:
+            err = sp_384_ecc_mulmod_12_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      &ctx->point, &ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                sp_384_to_bin_12(ctx->point.x, out);
+                *outLen = 48;
+            }
+            break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 1) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_sec_gen_384_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_DHE */
 
 #if defined(HAVE_ECC_SIGN) || defined(HAVE_ECC_VERIFY)
@@ -30073,11 +30387,11 @@ SP_NOINLINE static sp_digit sp_384_sub_in_place_12(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -30169,11 +30483,11 @@ SP_NOINLINE static void sp_384_mul_d_12(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -30283,9 +30597,13 @@ static WC_INLINE int sp_384_div_12(const sp_digit* a, const sp_digit* d, sp_digi
 
     div = d[11];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 12);
+    r1 = sp_384_cmp_12(&t1[12], d) >= 0;
+    sp_384_cond_sub_12(&t1[12], &t1[12], d, (sp_digit)0 - r1);
     for (i = 11; i >= 0; i--) {
-        sp_digit hi = t1[12 + i] - (t1[12 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[12 + i] == div);
+        sp_digit hi = t1[12 + i] + mask;
         r1 = div_384_word_12(hi, t1[12 + i - 1], div);
+        r1 |= mask;
 
         sp_384_mul_d_12(t2, d, r1);
         t1[12 + i] += sp_384_sub_in_place_12(&t1[i], t2);
@@ -30558,171 +30876,6 @@ static int sp_384_calc_s_12(sp_digit* s, const sp_digit* r, sp_digit* k,
  * returns RNG failures, MEMORY_E when memory allocation fails and
  * MP_OKAY on success.
  */
-#ifdef WOLFSSL_SP_NONBLOCK
-typedef struct sp_ecc_sign_384_ctx {
-    int state;
-    union {
-        sp_384_ecc_mulmod_12_ctx mulmod_ctx;
-        sp_384_mont_inv_order_12_ctx mont_inv_order_ctx;
-    };
-    sp_digit e[2*12];
-    sp_digit x[2*12];
-    sp_digit k[2*12];
-    sp_digit r[2*12];
-    sp_digit tmp[3 * 2*12];
-    sp_point_384 point;
-    sp_digit* s;
-    sp_digit* kInv;
-    int i;
-} sp_ecc_sign_384_ctx;
-
-int sp_ecc_sign_384_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
-    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
-{
-    int err = FP_WOULDBLOCK;
-    sp_ecc_sign_384_ctx* ctx = (sp_ecc_sign_384_ctx*)sp_ctx->data;
-
-    typedef char ctx_size_test[sizeof(sp_ecc_sign_384_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
-    (void)sizeof(ctx_size_test);
-
-    (void)heap;
-
-    switch (ctx->state) {
-    case 0: /* INIT */
-        ctx->s = ctx->e;
-        ctx->kInv = ctx->k;
-        if (hashLen > 48U) {
-            hashLen = 48U;
-        }
-
-        ctx->i = SP_ECC_MAX_SIG_GEN;
-        ctx->state = 1;
-        break;
-    case 1: /* GEN */
-        /* New random point. */
-        if (km == NULL || mp_iszero(km)) {
-            err = sp_384_ecc_gen_k_12(rng, ctx->k);
-        }
-        else {
-            sp_384_from_mp(ctx->k, 12, km);
-            mp_zero(km);
-        }
-        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
-        ctx->state = 2;
-        break;
-    case 2: /* MULMOD */
-        err = sp_384_ecc_mulmod_12_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
-            &ctx->point, &p384_base, ctx->k, 1, 1, heap);
-        if (err == MP_OKAY) {
-            ctx->state = 3;
-        }
-        break;
-    case 3: /* MODORDER */
-    {
-        sp_int32 c;
-        /* r = point->x mod order */
-        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 12U);
-        sp_384_norm_12(ctx->r);
-        c = sp_384_cmp_12(ctx->r, p384_order);
-        sp_384_cond_sub_12(ctx->r, ctx->r, p384_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_384_norm_12(ctx->r);
-
-        sp_384_from_mp(ctx->x, 12, priv);
-        sp_384_from_bin(ctx->e, 12, hash, (int)hashLen);
-        ctx->state = 4;
-        break;
-    }
-    case 4: /* KMODORDER */
-        /* Conv k to Montgomery form (mod order) */
-        sp_384_mul_12(ctx->k, ctx->k, p384_norm_order);
-        err = sp_384_mod_12(ctx->k, ctx->k, p384_order);
-        if (err == MP_OKAY) {
-            sp_384_norm_12(ctx->k);
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 5;
-        }
-        break;
-    case 5: /* KINV */
-        /* kInv = 1/k mod order */
-        err = sp_384_mont_inv_order_12_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
-        if (err == MP_OKAY) {
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 6;
-        }
-        break;
-    case 6: /* KINVNORM */
-        sp_384_norm_12(ctx->kInv);
-        ctx->state = 7;
-        break;
-    case 7: /* R */
-        /* s = r * x + e */
-        sp_384_mul_12(ctx->x, ctx->x, ctx->r);
-        ctx->state = 8;
-        break;
-    case 8: /* S1 */
-        err = sp_384_mod_12(ctx->x, ctx->x, p384_order);
-        if (err == MP_OKAY)
-            ctx->state = 9;
-        break;
-    case 9: /* S2 */
-    {
-        sp_digit carry;
-        sp_int32 c;
-        sp_384_norm_12(ctx->x);
-        carry = sp_384_add_12(ctx->s, ctx->e, ctx->x);
-        sp_384_cond_sub_12(ctx->s, ctx->s,
-            p384_order, 0 - carry);
-        sp_384_norm_12(ctx->s);
-        c = sp_384_cmp_12(ctx->s, p384_order);
-        sp_384_cond_sub_12(ctx->s, ctx->s, p384_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_384_norm_12(ctx->s);
-
-        /* s = s * k^-1 mod order */
-        sp_384_mont_mul_order_12(ctx->s, ctx->s, ctx->kInv);
-        sp_384_norm_12(ctx->s);
-
-        /* Check that signature is usable. */
-        if (sp_384_iszero_12(ctx->s) == 0) {
-            ctx->state = 10;
-            break;
-        }
-    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
-        ctx->i = 1;
-    #endif
-
-        /* not usable gen, try again */
-        ctx->i--;
-        if (ctx->i == 0) {
-            err = RNG_FAILURE_E;
-        }
-        ctx->state = 1;
-        break;
-    }
-    case 10: /* RES */
-        err = sp_384_to_mp(ctx->r, rm);
-        if (err == MP_OKAY) {
-            err = sp_384_to_mp(ctx->s, sm);
-        }
-        break;
-    }
-
-    if (err == MP_OKAY && ctx->state != 10) {
-        err = FP_WOULDBLOCK;
-    }
-    if (err != FP_WOULDBLOCK) {
-        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 12U);
-        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 12U);
-        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 12U);
-        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 12U);
-        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 12U);
-    }
-
-    return err;
-}
-#endif /* WOLFSSL_SP_NONBLOCK */
-
 int sp_ecc_sign_384(const byte* hash, word32 hashLen, WC_RNG* rng,
     const mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
 {
@@ -30840,6 +30993,169 @@ int sp_ecc_sign_384(const byte* hash, word32 hashLen, WC_RNG* rng,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sign_384_ctx {
+    int state;
+    union {
+        sp_384_ecc_mulmod_12_ctx mulmod_ctx;
+        sp_384_mont_inv_order_12_ctx mont_inv_order_ctx;
+    };
+    sp_digit e[2*12];
+    sp_digit x[2*12];
+    sp_digit k[2*12];
+    sp_digit r[2*12];
+    sp_digit tmp[3 * 2*12];
+    sp_point_384 point;
+    sp_digit* s;
+    sp_digit* kInv;
+    int i;
+} sp_ecc_sign_384_ctx;
+
+int sp_ecc_sign_384_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
+    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sign_384_ctx* ctx = (sp_ecc_sign_384_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sign_384_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+    case 0: /* INIT */
+        ctx->s = ctx->e;
+        ctx->kInv = ctx->k;
+
+        ctx->i = SP_ECC_MAX_SIG_GEN;
+        ctx->state = 1;
+        break;
+    case 1: /* GEN */
+        /* New random point. */
+        if (km == NULL || mp_iszero(km)) {
+            err = sp_384_ecc_gen_k_12(rng, ctx->k);
+        }
+        else {
+            sp_384_from_mp(ctx->k, 12, km);
+            mp_zero(km);
+        }
+        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+        ctx->state = 2;
+        break;
+    case 2: /* MULMOD */
+        err = sp_384_ecc_mulmod_12_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+            &ctx->point, &p384_base, ctx->k, 1, 1, heap);
+        if (err == MP_OKAY) {
+            ctx->state = 3;
+        }
+        break;
+    case 3: /* MODORDER */
+    {
+        sp_int32 c;
+        /* r = point->x mod order */
+        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 12U);
+        sp_384_norm_12(ctx->r);
+        c = sp_384_cmp_12(ctx->r, p384_order);
+        sp_384_cond_sub_12(ctx->r, ctx->r, p384_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_384_norm_12(ctx->r);
+
+        if (hashLen > 48U) {
+            hashLen = 48U;
+        }
+        sp_384_from_mp(ctx->x, 12, priv);
+        sp_384_from_bin(ctx->e, 12, hash, (int)hashLen);
+        ctx->state = 4;
+        break;
+    }
+    case 4: /* KMODORDER */
+        /* Conv k to Montgomery form (mod order) */
+        sp_384_mul_12(ctx->k, ctx->k, p384_norm_order);
+        err = sp_384_mod_12(ctx->k, ctx->k, p384_order);
+        if (err == MP_OKAY) {
+            sp_384_norm_12(ctx->k);
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 5;
+        }
+        break;
+    case 5: /* KINV */
+        /* kInv = 1/k mod order */
+        err = sp_384_mont_inv_order_12_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
+        if (err == MP_OKAY) {
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 6;
+        }
+        break;
+    case 6: /* KINVNORM */
+        sp_384_norm_12(ctx->kInv);
+        ctx->state = 7;
+        break;
+    case 7: /* R */
+        /* s = r * x + e */
+        sp_384_mul_12(ctx->x, ctx->x, ctx->r);
+        ctx->state = 8;
+        break;
+    case 8: /* S1 */
+        err = sp_384_mod_12(ctx->x, ctx->x, p384_order);
+        if (err == MP_OKAY)
+            ctx->state = 9;
+        break;
+    case 9: /* S2 */
+    {
+        sp_digit carry;
+        sp_int32 c;
+        sp_384_norm_12(ctx->x);
+        carry = sp_384_add_12(ctx->s, ctx->e, ctx->x);
+        sp_384_cond_sub_12(ctx->s, ctx->s,
+            p384_order, 0 - carry);
+        sp_384_norm_12(ctx->s);
+        c = sp_384_cmp_12(ctx->s, p384_order);
+        sp_384_cond_sub_12(ctx->s, ctx->s, p384_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_384_norm_12(ctx->s);
+
+        /* s = s * k^-1 mod order */
+        sp_384_mont_mul_order_12(ctx->s, ctx->s, ctx->kInv);
+        sp_384_norm_12(ctx->s);
+
+        /* Check that signature is usable. */
+        if (sp_384_iszero_12(ctx->s) == 0) {
+            ctx->state = 10;
+            break;
+        }
+    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
+        ctx->i = 1;
+    #endif
+
+        /* not usable gen, try again */
+        ctx->i--;
+        if (ctx->i == 0) {
+            err = RNG_FAILURE_E;
+        }
+        ctx->state = 1;
+        break;
+    }
+    case 10: /* RES */
+        err = sp_384_to_mp(ctx->r, rm);
+        if (err == MP_OKAY) {
+            err = sp_384_to_mp(ctx->s, sm);
+        }
+        break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 10) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 12U);
+        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 12U);
+        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 12U);
+        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 12U);
+        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 12U);
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_SIGN */
 
 #ifndef WOLFSSL_SP_SMALL
@@ -31286,6 +31602,106 @@ static int sp_384_calc_vfy_point_12(sp_point_384* p1, sp_point_384* p2,
  * heap     Heap to use for allocation.
  * returns MEMORY_E when memory allocation fails and MP_OKAY on success.
  */
+int sp_ecc_verify_384(const byte* hash, word32 hashLen, const mp_int* pX,
+    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
+    int* res, void* heap)
+{
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    sp_digit* u1 = NULL;
+    sp_point_384* p1 = NULL;
+#else
+    sp_digit  u1[18 * 12];
+    sp_point_384 p1[2];
+#endif
+    sp_digit* u2 = NULL;
+    sp_digit* s = NULL;
+    sp_digit* tmp = NULL;
+    sp_point_384* p2 = NULL;
+    sp_digit carry;
+    sp_int32 c = 0;
+    int err = MP_OKAY;
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (err == MP_OKAY) {
+        p1 = (sp_point_384*)XMALLOC(sizeof(sp_point_384) * 2, heap,
+                                             DYNAMIC_TYPE_ECC);
+        if (p1 == NULL)
+            err = MEMORY_E;
+    }
+    if (err == MP_OKAY) {
+        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 12, heap,
+                                                              DYNAMIC_TYPE_ECC);
+        if (u1 == NULL)
+            err = MEMORY_E;
+    }
+#endif
+
+    if (err == MP_OKAY) {
+        u2  = u1 + 2 * 12;
+        s   = u1 + 4 * 12;
+        tmp = u1 + 6 * 12;
+        p2 = p1 + 1;
+
+        if (hashLen > 48U) {
+            hashLen = 48U;
+        }
+
+        sp_384_from_bin(u1, 12, hash, (int)hashLen);
+        sp_384_from_mp(u2, 12, rm);
+        sp_384_from_mp(s, 12, sm);
+        sp_384_from_mp(p2->x, 12, pX);
+        sp_384_from_mp(p2->y, 12, pY);
+        sp_384_from_mp(p2->z, 12, pZ);
+
+        err = sp_384_calc_vfy_point_12(p1, p2, s, u1, u2, tmp, heap);
+    }
+    if (err == MP_OKAY) {
+        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
+        /* Reload r and convert to Montgomery form. */
+        sp_384_from_mp(u2, 12, rm);
+        err = sp_384_mod_mul_norm_12(u2, u2, p384_mod);
+    }
+
+    if (err == MP_OKAY) {
+        /* u1 = r.z'.z' mod prime */
+            sp_384_mont_sqr_12(p1->z, p1->z, p384_mod, p384_mp_mod);
+            sp_384_mont_mul_12(u1, u2, p1->z, p384_mod, p384_mp_mod);
+        *res = (int)(sp_384_cmp_12(p1->x, u1) == 0);
+        if (*res == 0) {
+            /* Reload r and add order. */
+            sp_384_from_mp(u2, 12, rm);
+            carry = sp_384_add_12(u2, u2, p384_order);
+            /* Carry means result is greater than mod and is not valid. */
+            if (carry == 0) {
+                sp_384_norm_12(u2);
+
+                /* Compare with mod and if greater or equal then not valid. */
+                c = sp_384_cmp_12(u2, p384_mod);
+            }
+        }
+        if ((*res == 0) && (c < 0)) {
+            /* Convert to Montogomery form */
+            err = sp_384_mod_mul_norm_12(u2, u2, p384_mod);
+            if (err == MP_OKAY) {
+                /* u1 = (r + 1*order).z'.z' mod prime */
+                {
+                    sp_384_mont_mul_12(u1, u2, p1->z, p384_mod, p384_mp_mod);
+                }
+                *res = (sp_384_cmp_12(p1->x, u1) == 0);
+            }
+        }
+    }
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (u1 != NULL)
+        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
+    if (p1 != NULL)
+        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
+#endif
+
+    return err;
+}
+
 #ifdef WOLFSSL_SP_NONBLOCK
 typedef struct sp_ecc_verify_384_ctx {
     int state;
@@ -31435,106 +31851,6 @@ int sp_ecc_verify_384_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash,
     return err;
 }
 #endif /* WOLFSSL_SP_NONBLOCK */
-
-int sp_ecc_verify_384(const byte* hash, word32 hashLen, const mp_int* pX,
-    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
-    int* res, void* heap)
-{
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    sp_digit* u1 = NULL;
-    sp_point_384* p1 = NULL;
-#else
-    sp_digit  u1[18 * 12];
-    sp_point_384 p1[2];
-#endif
-    sp_digit* u2 = NULL;
-    sp_digit* s = NULL;
-    sp_digit* tmp = NULL;
-    sp_point_384* p2 = NULL;
-    sp_digit carry;
-    sp_int32 c = 0;
-    int err = MP_OKAY;
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (err == MP_OKAY) {
-        p1 = (sp_point_384*)XMALLOC(sizeof(sp_point_384) * 2, heap,
-                                             DYNAMIC_TYPE_ECC);
-        if (p1 == NULL)
-            err = MEMORY_E;
-    }
-    if (err == MP_OKAY) {
-        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 12, heap,
-                                                              DYNAMIC_TYPE_ECC);
-        if (u1 == NULL)
-            err = MEMORY_E;
-    }
-#endif
-
-    if (err == MP_OKAY) {
-        u2  = u1 + 2 * 12;
-        s   = u1 + 4 * 12;
-        tmp = u1 + 6 * 12;
-        p2 = p1 + 1;
-
-        if (hashLen > 48U) {
-            hashLen = 48U;
-        }
-
-        sp_384_from_bin(u1, 12, hash, (int)hashLen);
-        sp_384_from_mp(u2, 12, rm);
-        sp_384_from_mp(s, 12, sm);
-        sp_384_from_mp(p2->x, 12, pX);
-        sp_384_from_mp(p2->y, 12, pY);
-        sp_384_from_mp(p2->z, 12, pZ);
-
-        err = sp_384_calc_vfy_point_12(p1, p2, s, u1, u2, tmp, heap);
-    }
-    if (err == MP_OKAY) {
-        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
-        /* Reload r and convert to Montgomery form. */
-        sp_384_from_mp(u2, 12, rm);
-        err = sp_384_mod_mul_norm_12(u2, u2, p384_mod);
-    }
-
-    if (err == MP_OKAY) {
-        /* u1 = r.z'.z' mod prime */
-            sp_384_mont_sqr_12(p1->z, p1->z, p384_mod, p384_mp_mod);
-            sp_384_mont_mul_12(u1, u2, p1->z, p384_mod, p384_mp_mod);
-        *res = (int)(sp_384_cmp_12(p1->x, u1) == 0);
-        if (*res == 0) {
-            /* Reload r and add order. */
-            sp_384_from_mp(u2, 12, rm);
-            carry = sp_384_add_12(u2, u2, p384_order);
-            /* Carry means result is greater than mod and is not valid. */
-            if (carry == 0) {
-                sp_384_norm_12(u2);
-
-                /* Compare with mod and if greater or equal then not valid. */
-                c = sp_384_cmp_12(u2, p384_mod);
-            }
-        }
-        if ((*res == 0) && (c < 0)) {
-            /* Convert to Montogomery form */
-            err = sp_384_mod_mul_norm_12(u2, u2, p384_mod);
-            if (err == MP_OKAY) {
-                /* u1 = (r + 1*order).z'.z' mod prime */
-                {
-                    sp_384_mont_mul_12(u1, u2, p1->z, p384_mod, p384_mp_mod);
-                }
-                *res = (sp_384_cmp_12(p1->x, u1) == 0);
-            }
-        }
-    }
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (u1 != NULL)
-        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
-    if (p1 != NULL)
-        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
-#endif
-
-    return err;
-}
 #endif /* HAVE_ECC_VERIFY */
 
 #ifdef HAVE_ECC_CHECK_KEY
@@ -32265,19 +32581,19 @@ SP_NOINLINE static void sp_521_mul_17(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -32288,11 +32604,11 @@ SP_NOINLINE static void sp_521_mul_17(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #128\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -32336,11 +32652,11 @@ SP_NOINLINE static void sp_521_sqr_17(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -32352,11 +32668,11 @@ SP_NOINLINE static void sp_521_sqr_17(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -32371,25 +32687,25 @@ SP_NOINLINE static void sp_521_sqr_17(sp_digit* r, const sp_digit* a)
         "mov	r6, #68\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -32401,11 +32717,11 @@ SP_NOINLINE static void sp_521_sqr_17(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #128\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -32415,11 +32731,11 @@ SP_NOINLINE static void sp_521_sqr_17(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #136\n\t"
         "add	sp, sp, r6\n\t"
         :
@@ -32457,11 +32773,11 @@ SP_NOINLINE static sp_digit sp_521_add_17(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -32565,11 +32881,11 @@ SP_NOINLINE static sp_digit sp_521_sub_17(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -32672,12 +32988,15 @@ static int sp_521_mod_mul_norm_17(sp_digit* r, const sp_digit* a, const sp_digit
 static void sp_521_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -32883,11 +33202,11 @@ SP_NOINLINE static sp_digit sp_521_cond_sub_17(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -33069,11 +33388,11 @@ SP_NOINLINE static void sp_521_mont_reduce_order_17(sp_digit* a, const sp_digit*
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+16] += m[16] * mu */
         "mov	r5, %[ca]\n\t"
         "mov	%[ca], #0\n\t"
@@ -33095,11 +33414,11 @@ SP_NOINLINE static void sp_521_mont_reduce_order_17(sp_digit* a, const sp_digit*
         /* Next word in a */
         "sub	r10, r10, #60\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "sub       r10, r10, #4\n\t"
         "ldr       r4, [r10], #4\n\t"
         "ldr     r5, [r10]\n\t"
@@ -33209,7 +33528,7 @@ SP_NOINLINE static void sp_521_mont_sqr_17(sp_digit* r, const sp_digit* a,
     sp_521_mont_reduce_17(r, m, mp);
 }
 
-#if !defined(WOLFSSL_SP_SMALL) || defined(HAVE_COMP_KEY)
+#ifndef WOLFSSL_SP_SMALL
 /* Square the Montgomery form number a number of times. (r = a ^ n mod m)
  *
  * r   Result of squaring.
@@ -33227,7 +33546,7 @@ static void sp_521_mont_sqr_n_17(sp_digit* r, const sp_digit* a, int n,
     }
 }
 
-#endif /* !WOLFSSL_SP_SMALL | HAVE_COMP_KEY */
+#endif /* !WOLFSSL_SP_SMALL */
 #ifdef WOLFSSL_SP_SMALL
 /* Mod-2 for the P521 curve. */
 static const uint32_t p521_mod_minus_2[17] = {
@@ -33352,11 +33671,11 @@ SP_NOINLINE static sp_int32 sp_521_cmp_17(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -33805,11 +34124,11 @@ SP_NOINLINE static sp_digit sp_521_cond_add_17(sp_digit* r, const sp_digit* a, c
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -38285,6 +38604,84 @@ int sp_ecc_make_key_521(WC_RNG* rng, mp_int* priv, ecc_point* pub, void* heap)
     return err;
 }
 
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_key_gen_521_ctx {
+    int state;
+    sp_521_ecc_mulmod_17_ctx mulmod_ctx;
+    sp_digit k[17];
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_521  point[2];
+#else
+    sp_point_521 point[1];
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+} sp_ecc_key_gen_521_ctx;
+
+int sp_ecc_make_key_521_nb(sp_ecc_ctx_t* sp_ctx, WC_RNG* rng, mp_int* priv,
+    ecc_point* pub, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_key_gen_521_ctx* ctx = (sp_ecc_key_gen_521_ctx*)sp_ctx->data;
+#ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+    sp_point_521* infinity = ctx->point + 1;
+#endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+
+    typedef char ctx_size_test[sizeof(sp_ecc_key_gen_521_ctx)
+                               >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+        case 0:
+            err = sp_521_ecc_gen_k_17(rng, ctx->k);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+                ctx->state = 1;
+            }
+            break;
+        case 1:
+            err = sp_521_ecc_mulmod_base_17_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                err = FP_WOULDBLOCK;
+            #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+                XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+                ctx->state = 2;
+            #else
+                ctx->state = 3;
+            #endif
+            }
+            break;
+    #ifdef WOLFSSL_VALIDATE_ECC_KEYGEN
+        case 2:
+            err = sp_521_ecc_mulmod_17_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      infinity, ctx->point, p521_order, 1, 1);
+            if (err == MP_OKAY) {
+                if (sp_521_iszero_17(ctx->point->x) ||
+                    sp_521_iszero_17(ctx->point->y)) {
+                    err = ECC_INF_E;
+                }
+                else {
+                    err = FP_WOULDBLOCK;
+                    ctx->state = 3;
+                }
+            }
+            break;
+    #endif /* WOLFSSL_VALIDATE_ECC_KEYGEN */
+        case 3:
+            err = sp_521_to_mp(ctx->k, priv);
+            if (err == MP_OKAY) {
+                err = sp_521_point_to_ecc_point_17(ctx->point, pub);
+            }
+            break;
+    }
+
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_key_gen_521_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
+
 #ifdef HAVE_ECC_DHE
 /* Write r as big endian to byte array.
  * Fixed length number of bytes written: 66
@@ -38369,6 +38766,56 @@ int sp_ecc_secret_gen_521(const mp_int* priv, const ecc_point* pub, byte* out,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sec_gen_521_ctx {
+    int state;
+    union {
+        sp_521_ecc_mulmod_17_ctx mulmod_ctx;
+    };
+    sp_digit k[17];
+    sp_point_521 point;
+} sp_ecc_sec_gen_521_ctx;
+
+int sp_ecc_secret_gen_521_nb(sp_ecc_ctx_t* sp_ctx, const mp_int* priv,
+    const ecc_point* pub, byte* out, word32* outLen, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sec_gen_521_ctx* ctx = (sp_ecc_sec_gen_521_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sec_gen_521_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    if (*outLen < 32U) {
+        err = BUFFER_E;
+    }
+
+    switch (ctx->state) {
+        case 0:
+            sp_521_from_mp(ctx->k, 17, priv);
+            sp_521_point_from_ecc_point_17(&ctx->point, pub);
+            ctx->state = 1;
+            break;
+        case 1:
+            err = sp_521_ecc_mulmod_17_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+                      &ctx->point, &ctx->point, ctx->k, 1, 1, heap);
+            if (err == MP_OKAY) {
+                sp_521_to_bin_17(ctx->point.x, out);
+                *outLen = 66;
+            }
+            break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 1) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx, 0, sizeof(sp_ecc_sec_gen_521_ctx));
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_DHE */
 
 #if defined(HAVE_ECC_SIGN) || defined(HAVE_ECC_VERIFY)
@@ -38824,11 +39271,11 @@ SP_NOINLINE static sp_digit sp_521_sub_in_place_17(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -38934,11 +39381,11 @@ SP_NOINLINE static void sp_521_mul_d_17(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -39349,174 +39796,6 @@ static int sp_521_calc_s_17(sp_digit* s, const sp_digit* r, sp_digit* k,
  * returns RNG failures, MEMORY_E when memory allocation fails and
  * MP_OKAY on success.
  */
-#ifdef WOLFSSL_SP_NONBLOCK
-typedef struct sp_ecc_sign_521_ctx {
-    int state;
-    union {
-        sp_521_ecc_mulmod_17_ctx mulmod_ctx;
-        sp_521_mont_inv_order_17_ctx mont_inv_order_ctx;
-    };
-    sp_digit e[2*17];
-    sp_digit x[2*17];
-    sp_digit k[2*17];
-    sp_digit r[2*17];
-    sp_digit tmp[3 * 2*17];
-    sp_point_521 point;
-    sp_digit* s;
-    sp_digit* kInv;
-    int i;
-} sp_ecc_sign_521_ctx;
-
-int sp_ecc_sign_521_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
-    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
-{
-    int err = FP_WOULDBLOCK;
-    sp_ecc_sign_521_ctx* ctx = (sp_ecc_sign_521_ctx*)sp_ctx->data;
-
-    typedef char ctx_size_test[sizeof(sp_ecc_sign_521_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
-    (void)sizeof(ctx_size_test);
-
-    (void)heap;
-
-    switch (ctx->state) {
-    case 0: /* INIT */
-        ctx->s = ctx->e;
-        ctx->kInv = ctx->k;
-        if (hashLen > 66U) {
-            hashLen = 66U;
-        }
-
-        ctx->i = SP_ECC_MAX_SIG_GEN;
-        ctx->state = 1;
-        break;
-    case 1: /* GEN */
-        /* New random point. */
-        if (km == NULL || mp_iszero(km)) {
-            err = sp_521_ecc_gen_k_17(rng, ctx->k);
-        }
-        else {
-            sp_521_from_mp(ctx->k, 17, km);
-            mp_zero(km);
-        }
-        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
-        ctx->state = 2;
-        break;
-    case 2: /* MULMOD */
-        err = sp_521_ecc_mulmod_17_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
-            &ctx->point, &p521_base, ctx->k, 1, 1, heap);
-        if (err == MP_OKAY) {
-            ctx->state = 3;
-        }
-        break;
-    case 3: /* MODORDER */
-    {
-        sp_int32 c;
-        /* r = point->x mod order */
-        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 17U);
-        sp_521_norm_17(ctx->r);
-        c = sp_521_cmp_17(ctx->r, p521_order);
-        sp_521_cond_sub_17(ctx->r, ctx->r, p521_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_521_norm_17(ctx->r);
-
-        sp_521_from_mp(ctx->x, 17, priv);
-        sp_521_from_bin(ctx->e, 17, hash, (int)hashLen);
-        if (hashLen == 66U) {
-            sp_521_rshift_17(ctx->e, ctx->e, 7);
-        }
-        ctx->state = 4;
-        break;
-    }
-    case 4: /* KMODORDER */
-        /* Conv k to Montgomery form (mod order) */
-        sp_521_mul_17(ctx->k, ctx->k, p521_norm_order);
-        err = sp_521_mod_17(ctx->k, ctx->k, p521_order);
-        if (err == MP_OKAY) {
-            sp_521_norm_17(ctx->k);
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 5;
-        }
-        break;
-    case 5: /* KINV */
-        /* kInv = 1/k mod order */
-        err = sp_521_mont_inv_order_17_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
-        if (err == MP_OKAY) {
-            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
-            ctx->state = 6;
-        }
-        break;
-    case 6: /* KINVNORM */
-        sp_521_norm_17(ctx->kInv);
-        ctx->state = 7;
-        break;
-    case 7: /* R */
-        /* s = r * x + e */
-        sp_521_mul_17(ctx->x, ctx->x, ctx->r);
-        ctx->state = 8;
-        break;
-    case 8: /* S1 */
-        err = sp_521_mod_17(ctx->x, ctx->x, p521_order);
-        if (err == MP_OKAY)
-            ctx->state = 9;
-        break;
-    case 9: /* S2 */
-    {
-        sp_digit carry;
-        sp_int32 c;
-        sp_521_norm_17(ctx->x);
-        carry = sp_521_add_17(ctx->s, ctx->e, ctx->x);
-        sp_521_cond_sub_17(ctx->s, ctx->s,
-            p521_order, 0 - carry);
-        sp_521_norm_17(ctx->s);
-        c = sp_521_cmp_17(ctx->s, p521_order);
-        sp_521_cond_sub_17(ctx->s, ctx->s, p521_order,
-            (sp_digit)0 - (sp_digit)(c >= 0));
-        sp_521_norm_17(ctx->s);
-
-        /* s = s * k^-1 mod order */
-        sp_521_mont_mul_order_17(ctx->s, ctx->s, ctx->kInv);
-        sp_521_norm_17(ctx->s);
-
-        /* Check that signature is usable. */
-        if (sp_521_iszero_17(ctx->s) == 0) {
-            ctx->state = 10;
-            break;
-        }
-    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
-        ctx->i = 1;
-    #endif
-
-        /* not usable gen, try again */
-        ctx->i--;
-        if (ctx->i == 0) {
-            err = RNG_FAILURE_E;
-        }
-        ctx->state = 1;
-        break;
-    }
-    case 10: /* RES */
-        err = sp_521_to_mp(ctx->r, rm);
-        if (err == MP_OKAY) {
-            err = sp_521_to_mp(ctx->s, sm);
-        }
-        break;
-    }
-
-    if (err == MP_OKAY && ctx->state != 10) {
-        err = FP_WOULDBLOCK;
-    }
-    if (err != FP_WOULDBLOCK) {
-        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 17U);
-        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 17U);
-        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 17U);
-        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 17U);
-        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 17U);
-    }
-
-    return err;
-}
-#endif /* WOLFSSL_SP_NONBLOCK */
-
 int sp_ecc_sign_521(const byte* hash, word32 hashLen, WC_RNG* rng,
     const mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
 {
@@ -39638,6 +39917,172 @@ int sp_ecc_sign_521(const byte* hash, word32 hashLen, WC_RNG* rng,
 
     return err;
 }
+
+#ifdef WOLFSSL_SP_NONBLOCK
+typedef struct sp_ecc_sign_521_ctx {
+    int state;
+    union {
+        sp_521_ecc_mulmod_17_ctx mulmod_ctx;
+        sp_521_mont_inv_order_17_ctx mont_inv_order_ctx;
+    };
+    sp_digit e[2*17];
+    sp_digit x[2*17];
+    sp_digit k[2*17];
+    sp_digit r[2*17];
+    sp_digit tmp[3 * 2*17];
+    sp_point_521 point;
+    sp_digit* s;
+    sp_digit* kInv;
+    int i;
+} sp_ecc_sign_521_ctx;
+
+int sp_ecc_sign_521_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash, word32 hashLen, WC_RNG* rng,
+    mp_int* priv, mp_int* rm, mp_int* sm, mp_int* km, void* heap)
+{
+    int err = FP_WOULDBLOCK;
+    sp_ecc_sign_521_ctx* ctx = (sp_ecc_sign_521_ctx*)sp_ctx->data;
+
+    typedef char ctx_size_test[sizeof(sp_ecc_sign_521_ctx) >= sizeof(*sp_ctx) ? -1 : 1];
+    (void)sizeof(ctx_size_test);
+
+    switch (ctx->state) {
+    case 0: /* INIT */
+        ctx->s = ctx->e;
+        ctx->kInv = ctx->k;
+
+        ctx->i = SP_ECC_MAX_SIG_GEN;
+        ctx->state = 1;
+        break;
+    case 1: /* GEN */
+        /* New random point. */
+        if (km == NULL || mp_iszero(km)) {
+            err = sp_521_ecc_gen_k_17(rng, ctx->k);
+        }
+        else {
+            sp_521_from_mp(ctx->k, 17, km);
+            mp_zero(km);
+        }
+        XMEMSET(&ctx->mulmod_ctx, 0, sizeof(ctx->mulmod_ctx));
+        ctx->state = 2;
+        break;
+    case 2: /* MULMOD */
+        err = sp_521_ecc_mulmod_17_nb((sp_ecc_ctx_t*)&ctx->mulmod_ctx,
+            &ctx->point, &p521_base, ctx->k, 1, 1, heap);
+        if (err == MP_OKAY) {
+            ctx->state = 3;
+        }
+        break;
+    case 3: /* MODORDER */
+    {
+        sp_int32 c;
+        /* r = point->x mod order */
+        XMEMCPY(ctx->r, ctx->point.x, sizeof(sp_digit) * 17U);
+        sp_521_norm_17(ctx->r);
+        c = sp_521_cmp_17(ctx->r, p521_order);
+        sp_521_cond_sub_17(ctx->r, ctx->r, p521_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_521_norm_17(ctx->r);
+
+        if (hashLen > 66U) {
+            hashLen = 66U;
+        }
+        sp_521_from_mp(ctx->x, 17, priv);
+        sp_521_from_bin(ctx->e, 17, hash, (int)hashLen);
+        if (hashLen == 66U) {
+            sp_521_rshift_17(ctx->e, ctx->e, 7);
+        }
+        ctx->state = 4;
+        break;
+    }
+    case 4: /* KMODORDER */
+        /* Conv k to Montgomery form (mod order) */
+        sp_521_mul_17(ctx->k, ctx->k, p521_norm_order);
+        err = sp_521_mod_17(ctx->k, ctx->k, p521_order);
+        if (err == MP_OKAY) {
+            sp_521_norm_17(ctx->k);
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 5;
+        }
+        break;
+    case 5: /* KINV */
+        /* kInv = 1/k mod order */
+        err = sp_521_mont_inv_order_17_nb((sp_ecc_ctx_t*)&ctx->mont_inv_order_ctx, ctx->kInv, ctx->k, ctx->tmp);
+        if (err == MP_OKAY) {
+            XMEMSET(&ctx->mont_inv_order_ctx, 0, sizeof(ctx->mont_inv_order_ctx));
+            ctx->state = 6;
+        }
+        break;
+    case 6: /* KINVNORM */
+        sp_521_norm_17(ctx->kInv);
+        ctx->state = 7;
+        break;
+    case 7: /* R */
+        /* s = r * x + e */
+        sp_521_mul_17(ctx->x, ctx->x, ctx->r);
+        ctx->state = 8;
+        break;
+    case 8: /* S1 */
+        err = sp_521_mod_17(ctx->x, ctx->x, p521_order);
+        if (err == MP_OKAY)
+            ctx->state = 9;
+        break;
+    case 9: /* S2 */
+    {
+        sp_digit carry;
+        sp_int32 c;
+        sp_521_norm_17(ctx->x);
+        carry = sp_521_add_17(ctx->s, ctx->e, ctx->x);
+        sp_521_cond_sub_17(ctx->s, ctx->s,
+            p521_order, 0 - carry);
+        sp_521_norm_17(ctx->s);
+        c = sp_521_cmp_17(ctx->s, p521_order);
+        sp_521_cond_sub_17(ctx->s, ctx->s, p521_order,
+            (sp_digit)0 - (sp_digit)(c >= 0));
+        sp_521_norm_17(ctx->s);
+
+        /* s = s * k^-1 mod order */
+        sp_521_mont_mul_order_17(ctx->s, ctx->s, ctx->kInv);
+        sp_521_norm_17(ctx->s);
+
+        /* Check that signature is usable. */
+        if (sp_521_iszero_17(ctx->s) == 0) {
+            ctx->state = 10;
+            break;
+        }
+    #ifdef WOLFSSL_ECDSA_SET_K_ONE_LOOP
+        ctx->i = 1;
+    #endif
+
+        /* not usable gen, try again */
+        ctx->i--;
+        if (ctx->i == 0) {
+            err = RNG_FAILURE_E;
+        }
+        ctx->state = 1;
+        break;
+    }
+    case 10: /* RES */
+        err = sp_521_to_mp(ctx->r, rm);
+        if (err == MP_OKAY) {
+            err = sp_521_to_mp(ctx->s, sm);
+        }
+        break;
+    }
+
+    if (err == MP_OKAY && ctx->state != 10) {
+        err = FP_WOULDBLOCK;
+    }
+    if (err != FP_WOULDBLOCK) {
+        XMEMSET(ctx->e, 0, sizeof(sp_digit) * 2U * 17U);
+        XMEMSET(ctx->x, 0, sizeof(sp_digit) * 2U * 17U);
+        XMEMSET(ctx->k, 0, sizeof(sp_digit) * 2U * 17U);
+        XMEMSET(ctx->r, 0, sizeof(sp_digit) * 2U * 17U);
+        XMEMSET(ctx->tmp, 0, sizeof(sp_digit) * 3U * 2U * 17U);
+    }
+
+    return err;
+}
+#endif /* WOLFSSL_SP_NONBLOCK */
 #endif /* HAVE_ECC_SIGN */
 
 #ifndef WOLFSSL_SP_SMALL
@@ -40177,6 +40622,110 @@ static int sp_521_calc_vfy_point_17(sp_point_521* p1, sp_point_521* p2,
  * heap     Heap to use for allocation.
  * returns MEMORY_E when memory allocation fails and MP_OKAY on success.
  */
+int sp_ecc_verify_521(const byte* hash, word32 hashLen, const mp_int* pX,
+    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
+    int* res, void* heap)
+{
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    sp_digit* u1 = NULL;
+    sp_point_521* p1 = NULL;
+#else
+    sp_digit  u1[18 * 17];
+    sp_point_521 p1[2];
+#endif
+    sp_digit* u2 = NULL;
+    sp_digit* s = NULL;
+    sp_digit* tmp = NULL;
+    sp_point_521* p2 = NULL;
+    sp_digit carry;
+    sp_int32 c = 0;
+    int err = MP_OKAY;
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (err == MP_OKAY) {
+        p1 = (sp_point_521*)XMALLOC(sizeof(sp_point_521) * 2, heap,
+                                             DYNAMIC_TYPE_ECC);
+        if (p1 == NULL)
+            err = MEMORY_E;
+    }
+    if (err == MP_OKAY) {
+        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 17, heap,
+                                                              DYNAMIC_TYPE_ECC);
+        if (u1 == NULL)
+            err = MEMORY_E;
+    }
+#endif
+
+    if (err == MP_OKAY) {
+        u2  = u1 + 2 * 17;
+        s   = u1 + 4 * 17;
+        tmp = u1 + 6 * 17;
+        p2 = p1 + 1;
+
+        if (hashLen > 66U) {
+            hashLen = 66U;
+        }
+
+        sp_521_from_bin(u1, 17, hash, (int)hashLen);
+        sp_521_from_mp(u2, 17, rm);
+        sp_521_from_mp(s, 17, sm);
+        sp_521_from_mp(p2->x, 17, pX);
+        sp_521_from_mp(p2->y, 17, pY);
+        sp_521_from_mp(p2->z, 17, pZ);
+
+        if (hashLen == 66U) {
+            sp_521_rshift_17(u1, u1, 7);
+        }
+
+        err = sp_521_calc_vfy_point_17(p1, p2, s, u1, u2, tmp, heap);
+    }
+    if (err == MP_OKAY) {
+        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
+        /* Reload r and convert to Montgomery form. */
+        sp_521_from_mp(u2, 17, rm);
+        err = sp_521_mod_mul_norm_17(u2, u2, p521_mod);
+    }
+
+    if (err == MP_OKAY) {
+        /* u1 = r.z'.z' mod prime */
+            sp_521_mont_sqr_17(p1->z, p1->z, p521_mod, p521_mp_mod);
+            sp_521_mont_mul_17(u1, u2, p1->z, p521_mod, p521_mp_mod);
+        *res = (int)(sp_521_cmp_17(p1->x, u1) == 0);
+        if (*res == 0) {
+            /* Reload r and add order. */
+            sp_521_from_mp(u2, 17, rm);
+            carry = sp_521_add_17(u2, u2, p521_order);
+            /* Carry means result is greater than mod and is not valid. */
+            if (carry == 0) {
+                sp_521_norm_17(u2);
+
+                /* Compare with mod and if greater or equal then not valid. */
+                c = sp_521_cmp_17(u2, p521_mod);
+            }
+        }
+        if ((*res == 0) && (c < 0)) {
+            /* Convert to Montogomery form */
+            err = sp_521_mod_mul_norm_17(u2, u2, p521_mod);
+            if (err == MP_OKAY) {
+                /* u1 = (r + 1*order).z'.z' mod prime */
+                {
+                    sp_521_mont_mul_17(u1, u2, p1->z, p521_mod, p521_mp_mod);
+                }
+                *res = (sp_521_cmp_17(p1->x, u1) == 0);
+            }
+        }
+    }
+
+#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
+    if (u1 != NULL)
+        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
+    if (p1 != NULL)
+        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
+#endif
+
+    return err;
+}
+
 #ifdef WOLFSSL_SP_NONBLOCK
 typedef struct sp_ecc_verify_521_ctx {
     int state;
@@ -40329,110 +40878,6 @@ int sp_ecc_verify_521_nb(sp_ecc_ctx_t* sp_ctx, const byte* hash,
     return err;
 }
 #endif /* WOLFSSL_SP_NONBLOCK */
-
-int sp_ecc_verify_521(const byte* hash, word32 hashLen, const mp_int* pX,
-    const mp_int* pY, const mp_int* pZ, const mp_int* rm, const mp_int* sm,
-    int* res, void* heap)
-{
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    sp_digit* u1 = NULL;
-    sp_point_521* p1 = NULL;
-#else
-    sp_digit  u1[18 * 17];
-    sp_point_521 p1[2];
-#endif
-    sp_digit* u2 = NULL;
-    sp_digit* s = NULL;
-    sp_digit* tmp = NULL;
-    sp_point_521* p2 = NULL;
-    sp_digit carry;
-    sp_int32 c = 0;
-    int err = MP_OKAY;
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (err == MP_OKAY) {
-        p1 = (sp_point_521*)XMALLOC(sizeof(sp_point_521) * 2, heap,
-                                             DYNAMIC_TYPE_ECC);
-        if (p1 == NULL)
-            err = MEMORY_E;
-    }
-    if (err == MP_OKAY) {
-        u1 = (sp_digit*)XMALLOC(sizeof(sp_digit) * 18 * 17, heap,
-                                                              DYNAMIC_TYPE_ECC);
-        if (u1 == NULL)
-            err = MEMORY_E;
-    }
-#endif
-
-    if (err == MP_OKAY) {
-        u2  = u1 + 2 * 17;
-        s   = u1 + 4 * 17;
-        tmp = u1 + 6 * 17;
-        p2 = p1 + 1;
-
-        if (hashLen > 66U) {
-            hashLen = 66U;
-        }
-
-        sp_521_from_bin(u1, 17, hash, (int)hashLen);
-        sp_521_from_mp(u2, 17, rm);
-        sp_521_from_mp(s, 17, sm);
-        sp_521_from_mp(p2->x, 17, pX);
-        sp_521_from_mp(p2->y, 17, pY);
-        sp_521_from_mp(p2->z, 17, pZ);
-
-        if (hashLen == 66U) {
-            sp_521_rshift_17(u1, u1, 7);
-        }
-
-        err = sp_521_calc_vfy_point_17(p1, p2, s, u1, u2, tmp, heap);
-    }
-    if (err == MP_OKAY) {
-        /* (r + n*order).z'.z' mod prime == (u1.G + u2.Q)->x' */
-        /* Reload r and convert to Montgomery form. */
-        sp_521_from_mp(u2, 17, rm);
-        err = sp_521_mod_mul_norm_17(u2, u2, p521_mod);
-    }
-
-    if (err == MP_OKAY) {
-        /* u1 = r.z'.z' mod prime */
-            sp_521_mont_sqr_17(p1->z, p1->z, p521_mod, p521_mp_mod);
-            sp_521_mont_mul_17(u1, u2, p1->z, p521_mod, p521_mp_mod);
-        *res = (int)(sp_521_cmp_17(p1->x, u1) == 0);
-        if (*res == 0) {
-            /* Reload r and add order. */
-            sp_521_from_mp(u2, 17, rm);
-            carry = sp_521_add_17(u2, u2, p521_order);
-            /* Carry means result is greater than mod and is not valid. */
-            if (carry == 0) {
-                sp_521_norm_17(u2);
-
-                /* Compare with mod and if greater or equal then not valid. */
-                c = sp_521_cmp_17(u2, p521_mod);
-            }
-        }
-        if ((*res == 0) && (c < 0)) {
-            /* Convert to Montogomery form */
-            err = sp_521_mod_mul_norm_17(u2, u2, p521_mod);
-            if (err == MP_OKAY) {
-                /* u1 = (r + 1*order).z'.z' mod prime */
-                {
-                    sp_521_mont_mul_17(u1, u2, p1->z, p521_mod, p521_mp_mod);
-                }
-                *res = (sp_521_cmp_17(p1->x, u1) == 0);
-            }
-        }
-    }
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
-    if (u1 != NULL)
-        XFREE(u1, heap, DYNAMIC_TYPE_ECC);
-    if (p1 != NULL)
-        XFREE(p1, heap, DYNAMIC_TYPE_ECC);
-#endif
-
-    return err;
-}
 #endif /* HAVE_ECC_VERIFY */
 
 #ifdef HAVE_ECC_CHECK_KEY
@@ -40973,6 +41418,7 @@ int sp_ecc_uncompress_521(mp_int* xm, int odd, mp_int* ym)
 }
 #endif
 #endif /* WOLFSSL_SP_521 */
+#ifdef WOLFCRYPT_HAVE_SAKKE
 #ifdef WOLFSSL_SP_1024
 
 /* Point structure to use. */
@@ -41034,19 +41480,19 @@ SP_NOINLINE static void sp_1024_mul_16(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -41057,11 +41503,11 @@ SP_NOINLINE static void sp_1024_mul_16(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #120\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -41105,11 +41551,11 @@ SP_NOINLINE static void sp_1024_sqr_16(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -41121,11 +41567,11 @@ SP_NOINLINE static void sp_1024_sqr_16(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -41140,25 +41586,25 @@ SP_NOINLINE static void sp_1024_sqr_16(sp_digit* r, const sp_digit* a)
         "mov	r6, #64\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -41170,11 +41616,11 @@ SP_NOINLINE static void sp_1024_sqr_16(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #120\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -41184,11 +41630,11 @@ SP_NOINLINE static void sp_1024_sqr_16(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #128\n\t"
         "add	sp, sp, r6\n\t"
         :
@@ -41675,19 +42121,19 @@ SP_NOINLINE static void sp_1024_mul_32(sp_digit* r, const sp_digit* a,
         "add	%[a], %[a], #4\n\t"
         "sub	%[b], %[b], #4\n\t"
         "cmp	%[a], r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, r9\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r12\n\t"
         "mov	r8, r9\n\t"
@@ -41698,11 +42144,11 @@ SP_NOINLINE static void sp_1024_mul_32(sp_digit* r, const sp_digit* a,
         "mov	r9, r8\n\t"
         "mov	r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r], r8]\n\t"
         "mov	%[a], r10\n\t"
         "mov	%[b], r11\n\t"
@@ -41747,11 +42193,11 @@ SP_NOINLINE static void sp_1024_sqr_32(sp_digit* r, const sp_digit* a)
         "add	r2, r2, r10\n\t"
         "\n2:\n\t"
         "cmp	r2, %[a]\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	4f\n\t"
 #else
         "beq.n	4f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* Multiply * 2: Start */
         "ldr	r6, [%[a]]\n\t"
         "ldr	r8, [r2]\n\t"
@@ -41763,11 +42209,11 @@ SP_NOINLINE static void sp_1024_sqr_32(sp_digit* r, const sp_digit* a)
         "adcs 	r4, r4, r8\n\t"
         "adc	r5, r5, %[r]\n\t"
         /* Multiply * 2: Done */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bal	5f\n\t"
 #else
         "bal.n	5f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n4:\n\t"
         /* Square: Start */
         "ldr	r6, [%[a]]\n\t"
@@ -41782,25 +42228,25 @@ SP_NOINLINE static void sp_1024_sqr_32(sp_digit* r, const sp_digit* a)
         "mov	r6, #128\n\t"
         "add	r6, r6, r10\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "beq	3f\n\t"
 #else
         "beq.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "cmp	%[a], r2\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bgt	3f\n\t"
 #else
         "bgt.n	3f\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r8, r9\n\t"
         "add	r8, r8, r10\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	2b\n\t"
 #else
         "ble.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "\n3:\n\t"
         "mov	%[r], r11\n\t"
         "mov	r8, r9\n\t"
@@ -41812,11 +42258,11 @@ SP_NOINLINE static void sp_1024_sqr_32(sp_digit* r, const sp_digit* a)
         "mov	r9, r8\n\t"
         "mov	r6, #248\n\t"
         "cmp	r8, r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "ble	1b\n\t"
 #else
         "ble.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	%[a], r10\n\t"
         "str	r3, [%[r], r8]\n\t"
         "mov	%[r], r12\n\t"
@@ -41826,11 +42272,11 @@ SP_NOINLINE static void sp_1024_sqr_32(sp_digit* r, const sp_digit* a)
         "ldr	r6, [%[a], r3]\n\t"
         "str	r6, [%[r], r3]\n\t"
         "subs	r3, r3, #4\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	4b\n\t"
 #else
         "bge.n	4b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "mov	r6, #1\n\t"
         "lsl	r6, r6, #8\n\t"
         "add	sp, sp, r6\n\t"
@@ -41954,11 +42400,11 @@ SP_NOINLINE static sp_digit sp_1024_sub_in_place_32(sp_digit* a,
         "add	%[a], %[a], #8\n\t"
         "add	%[b], %[b], #8\n\t"
         "cmp	%[a], r8\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r3", "r4", "r5", "r6", "r8"
@@ -41996,11 +42442,11 @@ SP_NOINLINE static sp_digit sp_1024_cond_sub_32(sp_digit* r, const sp_digit* a,
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -42038,11 +42484,11 @@ SP_NOINLINE static sp_digit sp_1024_add_32(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6", "r8"
@@ -42082,11 +42528,11 @@ SP_NOINLINE static void sp_1024_mul_d_32(sp_digit* r, const sp_digit* a,
         "mov	r3, r4\n\t"
         "mov	r4, r5\n\t"
         "cmp	%[a], r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "str	r3, [%[r]]\n\t"
         : [r] "+r" (r), [a] "+r" (a)
         : [b] "r" (b)
@@ -42210,11 +42656,11 @@ SP_NOINLINE static sp_int32 sp_1024_cmp_32(const sp_digit* a, const sp_digit* b)
         "and	r3, r3, r8\n\t"
         "sub	r6, r6, #4\n\t"
         "cmp	r6, #0\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bge	1b\n\t"
 #else
         "bge.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [r] "+r" (r)
         : [a] "r" (a), [b] "r" (b)
         : "r3", "r4", "r5", "r6", "r8"
@@ -42243,9 +42689,13 @@ static WC_INLINE int sp_1024_div_32(const sp_digit* a, const sp_digit* d, sp_dig
 
     div = d[31];
     XMEMCPY(t1, a, sizeof(*t1) * 2 * 32);
+    r1 = sp_1024_cmp_32(&t1[32], d) >= 0;
+    sp_1024_cond_sub_32(&t1[32], &t1[32], d, (sp_digit)0 - r1);
     for (i = 31; i >= 0; i--) {
-        sp_digit hi = t1[32 + i] - (t1[32 + i] == div);
+        volatile sp_digit mask = (sp_digit)0 - (t1[32 + i] == div);
+        sp_digit hi = t1[32 + i] + mask;
         r1 = div_1024_word_32(hi, t1[32 + i - 1], div);
+        r1 |= mask;
 
         sp_1024_mul_d_32(t2, d, r1);
         t1[32 + i] += sp_1024_sub_in_place_32(&t1[i], t2);
@@ -42358,12 +42808,15 @@ static void sp_1024_point_free_32(sp_point_1024* p, int clear, void* heap)
 static void sp_1024_from_mp(sp_digit* r, int size, const mp_int* a)
 {
 #if DIGIT_BIT == 32
-    int j;
+    int i;
+    int j = 0;
 
-    XMEMCPY(r, a->dp, sizeof(sp_digit) * a->used);
-
-    for (j = a->used; j < size; j++) {
-        r[j] = 0;
+    for (i = 0; i < size; i++) {
+        sp_digit mask =
+            (((sp_digit)(a->used - i - 1)) >> (SP_WORD_SIZE - 1)) - 1;
+        r[i] = a->dp[j] & mask;
+        j += (int)(((sp_digit)1) -
+                   (((sp_digit)(a->used - i - 2)) >> (SP_WORD_SIZE - 1)));
     }
 #elif DIGIT_BIT > 32
     int i;
@@ -42591,11 +43044,11 @@ SP_NOINLINE static void sp_1024_mont_reduce_32(sp_digit* a, const sp_digit* m,
         "adc	r4, r4, #0\n\t"
         "str	r5, [r10], #4\n\t"
         "cmp	r10, r14\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	2b\n\t"
 #else
         "blt.n	2b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         /* a[i+30] += m[30] * mu */
         "ldr	%[a], [r10]\n\t"
         "mov	r5, #0\n\t"
@@ -42628,11 +43081,11 @@ SP_NOINLINE static void sp_1024_mont_reduce_32(sp_digit* a, const sp_digit* m,
         /* Next word in a */
         "sub	r10, r10, #120\n\t"
         "cmp	r10, r11\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         "ldr	r6, [%[m]]\n\t"
         "subs	r6, r6, r8\n\t"
         "neg	%[ca], %[ca]\n\t"
@@ -43606,11 +44059,11 @@ SP_NOINLINE static sp_digit sp_1024_cond_add_32(sp_digit* r, const sp_digit* a, 
         "str	r5, [%[r], r8]\n\t"
         "add	r8, r8, #4\n\t"
         "cmp	r8, r9\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "blt	1b\n\t"
 #else
         "blt.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c)
         : [r] "r" (r), [a] "r" (a), [b] "r" (b), [m] "r" (m)
         : "memory", "r5", "r6", "r8", "r9"
@@ -43993,11 +44446,11 @@ SP_NOINLINE static sp_digit sp_1024_sub_32(sp_digit* r, const sp_digit* a,
         "add	%[b], %[b], #4\n\t"
         "add	%[r], %[r], #4\n\t"
         "cmp	%[a], r6\n\t"
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__ICCARM__) || defined(__IAR_SYSTEMS_ICC__)
         "bne	1b\n\t"
 #else
         "bne.n	1b\n\t"
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __ICCARM__ || __IAR_SYSTEMS_ICC__ */
         : [c] "+r" (c), [r] "+r" (r), [a] "+r" (a), [b] "+r" (b)
         :
         : "memory", "r4", "r5", "r6"
@@ -53068,6 +53521,7 @@ int sp_ecc_check_key_1024(const mp_int* pX, const mp_int* pY,
 }
 #endif
 #endif /* WOLFSSL_SP_1024 */
+#endif /* WOLFCRYPT_HAVE_SAKKE */
 #endif /* WOLFSSL_HAVE_SP_ECC */
 #endif /* WOLFSSL_SP_ARM_CORTEX_M_ASM */
 #endif /* WOLFSSL_HAVE_SP_RSA | WOLFSSL_HAVE_SP_DH | WOLFSSL_HAVE_SP_ECC */

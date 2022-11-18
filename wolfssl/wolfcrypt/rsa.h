@@ -1,6 +1,6 @@
 /* rsa.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -83,7 +83,11 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #include <wolfssl/wolfcrypt/hash.h>
 
 #ifdef WOLFSSL_XILINX_CRYPT
-#include "xsecure_rsa.h"
+#ifdef WOLFSSL_XILINX_CRYPT_VERSAL
+#include <wolfssl/wolfcrypt/port/xilinx/xil-versal-glue.h>
+#else
+#include <xsecure_rsa.h>
+#endif
 #endif
 
 #if defined(WOLFSSL_CRYPTOCELL)
@@ -107,7 +111,27 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #endif
 
 #ifndef RSA_MAX_SIZE
-#define RSA_MAX_SIZE 4096
+    #ifdef USE_FAST_MATH
+        /* FP implementation support numbers up to FP_MAX_BITS / 2 bits. */
+        #define RSA_MAX_SIZE    (FP_MAX_BITS / 2)
+        #if defined(WOLFSSL_MYSQL_COMPATIBLE) && RSA_MAX_SIZE < 8192
+            #error "MySQL needs FP_MAX_BITS at least at 16384"
+        #endif
+    #elif defined(WOLFSSL_SP_MATH_ALL) || defined(WOLFSSL_SP_MATH)
+        /* SP implementation supports numbers of SP_INT_BITS bits. */
+        #define RSA_MAX_SIZE    (((SP_INT_BITS + 7) / 8) * 8)
+        #if defined(WOLFSSL_MYSQL_COMPATIBLE) && RSA_MAX_SIZE < 8192
+            #error "MySQL needs SP_INT_BITS at least at 8192"
+        #endif
+    #else
+        #ifdef WOLFSSL_MYSQL_COMPATIBLE
+            /* Integer maths is dynamic but we only go up to 8192 bits. */
+            #define RSA_MAX_SIZE 8192
+        #else
+            /* Integer maths is dynamic but we only go up to 4096 bits. */
+            #define RSA_MAX_SIZE 4096
+        #endif
+    #endif
 #endif
 
 /* avoid redefinition of structs */
@@ -182,6 +206,10 @@ struct RsaKey {
 #ifdef WC_RSA_BLINDING
     WC_RNG* rng;                              /* for PrivateDecrypt blinding */
 #endif
+#ifdef WOLFSSL_SE050
+    word32 keyId;
+    byte   keyIdSet;
+#endif
 #ifdef WOLF_CRYPTO_CB
     int   devId;
 #endif
@@ -194,7 +222,12 @@ struct RsaKey {
 #ifdef WOLFSSL_XILINX_CRYPT
     word32 pubExp; /* to keep values in scope they are here in struct */
     byte*  mod;
+#if defined(WOLFSSL_XILINX_CRYPT_VERSAL)
+    int mSz;
+    wc_Xsecure xSec;
+#else
     XSecure_Rsa xRsa;
+#endif
 #endif
 #if defined(WOLFSSL_KCAPI_RSA)
     struct kcapi_handle* handle;
@@ -205,7 +238,8 @@ struct RsaKey {
     char label[RSA_MAX_LABEL_LEN];
     int  labelLen;
 #endif
-#if defined(WOLFSSL_ASYNC_CRYPT) || !defined(WOLFSSL_RSA_VERIFY_INLINE)
+#if defined(WOLFSSL_ASYNC_CRYPT) || !defined(WOLFSSL_RSA_VERIFY_INLINE) && \
+    !defined(WOLFSSL_NO_MALLOC)
     byte   dataIsAlloc;
 #endif
 #ifdef WC_RSA_NONBLOCK
@@ -246,6 +280,10 @@ WOLFSSL_API int  wc_CheckRsaKey(RsaKey* key);
 #ifdef WOLFSSL_XILINX_CRYPT
 WOLFSSL_LOCAL int wc_InitRsaHw(RsaKey* key);
 #endif /* WOLFSSL_XILINX_CRYPT */
+#ifdef WOLFSSL_SE050
+WOLFSSL_API int wc_RsaUseKeyId(RsaKey* key, word32 keyId, word32 flags);
+WOLFSSL_API int wc_RsaGetKeyId(RsaKey* key, word32* keyId);
+#endif /* WOLFSSL_SE050 */
 
 WOLFSSL_API int  wc_RsaFunction(const byte* in, word32 inLen, byte* out,
                            word32* outLen, int type, RsaKey* key, WC_RNG* rng);
@@ -319,7 +357,7 @@ WOLFSSL_API int  wc_RsaPublicKeyDecode(const byte* input, word32* inOutIdx,
 WOLFSSL_API int  wc_RsaPublicKeyDecodeRaw(const byte* n, word32 nSz,
                                         const byte* e, word32 eSz, RsaKey* key);
 #if defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || \
-        defined(WOLFSSL_KCAPI_RSA)
+        defined(WOLFSSL_KCAPI_RSA) || defined(WOLFSSL_SE050)
     WOLFSSL_API int wc_RsaKeyToDer(RsaKey* key, byte* output, word32 inLen);
 #endif
 

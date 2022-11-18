@@ -1,6 +1,6 @@
 /* dh.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -50,17 +50,14 @@ struct WOLFSSL_DH {
      * lighttpd src code.
      */
     int length;
-#ifndef SINGLE_THREADED
-    wolfSSL_Mutex refMutex;      /* ref count mutex */
-#endif
-    int refCount;                /* reference count */
+    wolfSSL_Ref ref;             /* Reference count information. */
 };
 
 WOLFSSL_API WOLFSSL_DH *wolfSSL_d2i_DHparams(WOLFSSL_DH **dh,
                                          const unsigned char **pp, long length);
 WOLFSSL_API int wolfSSL_i2d_DHparams(const WOLFSSL_DH *dh, unsigned char **out);
 WOLFSSL_API WOLFSSL_DH* wolfSSL_DH_new(void);
-WOLFSSL_API WOLFSSL_DH* wolSSL_DH_new_by_nid(int nid);
+WOLFSSL_API WOLFSSL_DH* wolfSSL_DH_new_by_nid(int nid);
 WOLFSSL_API void        wolfSSL_DH_free(WOLFSSL_DH* dh);
 WOLFSSL_API WOLFSSL_DH* wolfSSL_DH_dup(WOLFSSL_DH* dh);
 WOLFSSL_API int         wolfSSL_DH_up_ref(WOLFSSL_DH* dh);
@@ -85,7 +82,7 @@ typedef WOLFSSL_DH                   DH;
 #define DH_new        wolfSSL_DH_new
 #define DH_free       wolfSSL_DH_free
 #define DH_up_ref     wolfSSL_DH_up_ref
-#define DH_new_by_nid wolSSL_DH_new_by_nid
+#define DH_new_by_nid wolfSSL_DH_new_by_nid
 
 #define d2i_DHparams    wolfSSL_d2i_DHparams
 #define i2d_DHparams    wolfSSL_i2d_DHparams

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -193,20 +193,22 @@ static int wc_CAAM_router(int devId, wc_CryptoInfo* info, void* ctx)
                               info->hash.digest);
                     break;
 
+                #ifdef WOLFSSL_SHA384
                 case WC_HASH_TYPE_SHA384:
                     ret = wc_CAAM_Sha384Hash(info->hash.sha384,
                               info->hash.in,
                               info->hash.inSz,
                               info->hash.digest);
                     break;
-
+                #endif
+                #ifdef WOLFSSL_SHA512
                 case WC_HASH_TYPE_SHA512:
                     ret = wc_CAAM_Sha512Hash(info->hash.sha512,
                               info->hash.in,
                               info->hash.inSz,
                               info->hash.digest);
                     break;
-
+                #endif
                 default:
                     WOLFSSL_MSG("Unknown or unsupported hash type");
                     ret = CRYPTOCB_UNAVAILABLE;
@@ -307,21 +309,30 @@ static int wc_CAAM_router(int devId, wc_CryptoInfo* info, void* ctx)
                     }
                     break;
 
-        #if defined(HAVE_AES_ECB)
-            case WC_CIPHER_AES_ECB:
-                if (info->cipher.enc == 1) {
-                    ret = wc_CAAM_AesEcbEncrypt(info->cipher.aesecb.aes,
-                                info->cipher.aesecb.out,
-                                info->cipher.aesecb.in,
-                                info->cipher.aesecb.sz);
-                }
-                else {
-                    ret = wc_CAAM_AesEcbDecrypt(info->cipher.aesecb.aes,
-                                info->cipher.aesecb.out,
-                                info->cipher.aesecb.in,
-                                info->cipher.aesecb.sz);
+            #ifdef WOLFSSL_AES_COUNTER
+                case WC_CIPHER_AES_CTR:
+                    ret = wc_CAAM_AesCtrEncrypt(info->cipher.aesctr.aes,
+                                info->cipher.aesctr.out,
+                                info->cipher.aesctr.in,
+                                info->cipher.aesctr.sz);
+                    break;
+            #endif /* WOLFSSL_AES_COUNTER */
+
+            #if defined(HAVE_AES_ECB)
+                case WC_CIPHER_AES_ECB:
+                    if (info->cipher.enc == 1) {
+                        ret = wc_CAAM_AesEcbEncrypt(info->cipher.aesecb.aes,
+                                    info->cipher.aesecb.out,
+                                    info->cipher.aesecb.in,
+                                    info->cipher.aesecb.sz);
                     }
-        #endif /* HAVE_AES_ECB */
+                    else {
+                        ret = wc_CAAM_AesEcbDecrypt(info->cipher.aesecb.aes,
+                                    info->cipher.aesecb.out,
+                                    info->cipher.aesecb.in,
+                                    info->cipher.aesecb.sz);
+                        }
+            #endif /* HAVE_AES_ECB */
             }
         #endif /* WOLFSSL_CAAM_CIPHER */
             break;

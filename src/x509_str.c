@@ -1,6 +1,6 @@
 /* x509_str.c
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -161,7 +161,7 @@ void wolfSSL_X509_STORE_CTX_trusted_stack(WOLFSSL_X509_STORE_CTX *ctx, WOLF_STAC
 
 
 /* Returns corresponding X509 error from internal ASN error <e> */
-static int GetX509Error(int e)
+int GetX509Error(int e)
 {
     switch (e) {
         case ASN_BEFORE_DATE_E:
@@ -181,7 +181,11 @@ static int GetX509Error(int e)
         case ASN_SIG_KEY_E:
             return X509_V_ERR_CERT_SIGNATURE_FAILURE;
         default:
+#ifdef HAVE_WOLFSSL_MSG_EX
+            WOLFSSL_MSG_EX("Error not configured or implemented yet: %d", e);
+#else
             WOLFSSL_MSG("Error not configured or implemented yet");
+#endif
             return e;
     }
 }
@@ -617,7 +621,7 @@ WOLF_STACK_OF(WOLFSSL_X509)* wolfSSL_X509_STORE_get1_certs(
     }
 
     if (err == 0) {
-        filteredCerts = wolfSSL_sk_X509_new();
+        filteredCerts = wolfSSL_sk_X509_new_null();
         if (filteredCerts == NULL) {
             err = 1;
         }
@@ -732,6 +736,10 @@ WOLFSSL_X509_STORE* wolfSSL_X509_STORE_new(void)
 #endif
 
 #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_WPAS_SMALL)
+
+    /* Link store's new Certificate Manager to self by default */
+    store->cm->x509_store_p = store;
+
     if ((store->param = (WOLFSSL_X509_VERIFY_PARAM*)XMALLOC(
                            sizeof(WOLFSSL_X509_VERIFY_PARAM),
                            NULL, DYNAMIC_TYPE_OPENSSL)) == NULL) {
@@ -1071,7 +1079,7 @@ WOLFSSL_API int wolfSSL_X509_STORE_load_locations(WOLFSSL_X509_STORE *str,
         }
 
         #ifdef WOLFSSL_SMALL_STACK
-            XFREE(readCtx, ctx->heap, DYNAMIC_TYPE_DIRCTX);
+            XFREE(readCtx, ctx->heap, DYNAMIC_TYPE_TMP_BUFFER);
         #endif
     }
 
@@ -1134,7 +1142,7 @@ WOLFSSL_STACK* wolfSSL_X509_STORE_GetCerts(WOLFSSL_X509_STORE_CTX* s)
         return NULL;
     }
 
-    sk = wolfSSL_sk_X509_new();
+    sk = wolfSSL_sk_X509_new_null();
 
     if (sk == NULL) {
         return NULL;

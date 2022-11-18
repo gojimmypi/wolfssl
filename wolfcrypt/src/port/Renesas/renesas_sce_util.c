@@ -267,7 +267,6 @@ WOLFSSL_LOCAL int wc_SCE_EccVerify(WOLFSSL* ssl, const uint8_t* sig,
 {
     int ret = WOLFSSL_FAILURE;
     uint8_t *sigforSCE;
-    uint8_t *pSig;
     const byte rs_size = HW_SCE_ECDSA_DATA_BYTE_SIZE/2;
     byte offset = 0x3;
     (void) sigSz;
@@ -277,7 +276,6 @@ WOLFSSL_LOCAL int wc_SCE_EccVerify(WOLFSSL* ssl, const uint8_t* sig,
     (void) keySz;
 
     sigforSCE = NULL;
-    pSig = NULL;
 
     WOLFSSL_PKMSG("SCE ECC Verify: ssl->options.serverState = %d sigSz %d, hashSz %d, keySz %d\n",
                     ssl->options.serverState, sigSz, hashSz, keySz);
@@ -321,9 +319,10 @@ WOLFSSL_LOCAL int wc_SCE_EccVerify(WOLFSSL* ssl, const uint8_t* sig,
         }
     }
 
-    pSig = sigforSCE;
+    ret = SCE_ServerKeyExVerify(2, ssl, sigforSCE, 64, ctx);
 
-    ret = SCE_ServerKeyExVerify(2, ssl, pSig, 64, ctx);
+    if (sigforSCE)
+        XFREE(sigforSCE, NULL, DYNAMIC_TYPE_TEMP);
 
     if (ret == WOLFSSL_SUCCESS) {
         *result = 1;
@@ -471,7 +470,7 @@ static uint32_t GetSceCipherSuite(
 /* ssl     : a pointer to WOLFSSL object                       */
 /* session_key_generated : if session key has been generated   */
 /* return  1 for usable, 0 for unusable                        */
-WOLFSSL_LOCAL int wc_sce_usable(const struct WOLFSSL *ssl,
+WOLFSSL_LOCAL int wc_sce_usable(const WOLFSSL *ssl,
                                                 uint8_t session_key_generated)
 {
     WOLFSSL_ENTER("sce_usable");
@@ -523,7 +522,7 @@ WOLFSSL_LOCAL int wc_sce_usable(const struct WOLFSSL *ssl,
 }
 
 /* Generate Hmac by sha256*/
-WOLFSSL_LOCAL int wc_sce_Sha256GenerateHmac(const struct WOLFSSL *ssl,const uint8_t* myInner,
+WOLFSSL_LOCAL int wc_sce_Sha256GenerateHmac(const WOLFSSL *ssl,const uint8_t* myInner,
         uint32_t innerSz,const uint8_t* in, uint32_t sz, byte* digest)
 {
     WOLFSSL_ENTER("sce_Sha256HmacGenerate");
@@ -574,7 +573,7 @@ WOLFSSL_LOCAL int wc_sce_Sha256GenerateHmac(const struct WOLFSSL *ssl,const uint
 }
 
 /* Verify hmac */
-WOLFSSL_LOCAL int wc_sce_Sha256VerifyHmac(const struct WOLFSSL *ssl,
+WOLFSSL_LOCAL int wc_sce_Sha256VerifyHmac(const WOLFSSL *ssl,
         const uint8_t* message, uint32_t messageSz,
         uint32_t macSz, uint32_t content)
 {
@@ -595,7 +594,7 @@ WOLFSSL_LOCAL int wc_sce_Sha256VerifyHmac(const struct WOLFSSL *ssl,
         return ret;
     }
 
-    wolfSSL_SetTlsHmacInner((struct WOLFSSL*)ssl, myInner,
+    wolfSSL_SetTlsHmacInner((WOLFSSL*)ssl, myInner,
                                                         (word32)messageSz, (int)content, 1);
 
     ret = R_SCE_SHA256HMAC_VerifyInit(
@@ -643,8 +642,8 @@ WOLFSSL_LOCAL int wc_sce_generateVerifyData(const uint8_t *ms, /* master secret 
         (hashes == NULL))
       return BAD_FUNC_ARG;
 
-    if (XSTRNCMP((const char*)side, (const char*)tls_server, FINISHED_LABEL_SZ)
-                                                                           == 0)
+    if (XSTRNCMP((const char*)side, (const char*)kTlsServerFinStr,
+                                                FINISHED_LABEL_SZ) == 0)
     {
         l_side = SCE_TLS_GENERATE_SERVER_VERIFY;
     }
@@ -663,7 +662,7 @@ WOLFSSL_LOCAL int wc_sce_generateVerifyData(const uint8_t *ms, /* master secret 
 }
 
 /* generate keys for TLS communication */
-WOLFSSL_LOCAL int wc_sce_generateSessionKey(struct WOLFSSL *ssl,
+WOLFSSL_LOCAL int wc_sce_generateSessionKey(WOLFSSL *ssl,
                 User_SCEPKCbInfo* cbInfo, int devId)
 {
     WOLFSSL_MSG("sce_generateSessionKey()");
@@ -1056,7 +1055,7 @@ WOLFSSL_LOCAL int wc_sce_tls_RootCertVerify(
 /*  store elements for session key generation into ssl->keys.
  *  return 0 on success, negative value on failure
  */
-WOLFSSL_LOCAL int wc_sce_storeKeyCtx(struct WOLFSSL* ssl, User_SCEPKCbInfo* info)
+WOLFSSL_LOCAL int wc_sce_storeKeyCtx(WOLFSSL* ssl, User_SCEPKCbInfo* info)
 {
     int ret = 0;
 

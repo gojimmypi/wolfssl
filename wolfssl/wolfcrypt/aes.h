@@ -1,6 +1,6 @@
 /* aes.h
  *
- * Copyright (C) 2006-2021 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -67,8 +67,21 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #endif
 
 #ifdef WOLFSSL_XILINX_CRYPT
-#include "xsecure_aes.h"
-#endif
+#ifdef WOLFSSL_XILINX_CRYPT_VERSAL
+#include <wolfssl/wolfcrypt/port/xilinx/xil-versal-glue.h>
+#include <xsecure_aesclient.h>
+#define WOLFSSL_XILINX_AES_KEY_SRC XSECURE_AES_USER_KEY_0
+#else /* versal */
+#include <xsecure_aes.h>
+#define WOLFSSL_XILINX_AES_KEY_SRC XSECURE_CSU_AES_KEY_SRC_KUP
+#endif /* !versal */
+#endif /* WOLFSSL_XILINX_CRYPT */
+
+#if defined(WOLFSSL_XILINX_CRYPT) || defined(WOLFSSL_AFALG_XILINX_AES)
+#if !defined(WOLFSSL_XILINX_AES_KEY_SRC)
+#define WOLFSSL_XILINX_AES_KEY_SRC 0
+#endif /* !defined(WOLFSSL_XILINX_AES_KEY_SRC) */
+#endif /* all Xilinx crypto */
 
 #ifdef WOLFSSL_SE050
     #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
@@ -106,7 +119,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) && \
     defined(WOLFSSL_RENESAS_TSIP_TLS_AES_CRYPT)
-    #include <wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h>
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas_tsip_types.h>
 #endif
 
 #ifdef __cplusplus
@@ -189,12 +202,10 @@ struct Aes {
 #ifdef WOLFSSL_SE050
     sss_symmetric_t aes_ctx; /* used as the function context */
     int ctxInitDone;
-    int keyId;
+    word32 keyId;
+    byte   keyIdSet;
+    byte   useSWCrypt; /* Use SW crypt instead of SE050, before SCP03 auth */
 #endif
-#ifdef WOLFSSL_CAAM
-    int blackKey; /* black key / hsm key id */
-#endif
-
 #ifdef GCM_TABLE
     /* key-based fast multiplication table. */
     ALIGN16 byte M0[256][AES_BLOCK_SIZE];
@@ -209,6 +220,9 @@ struct Aes {
     word32 y0;
 #endif
 #endif /* HAVE_AESGCM */
+#ifdef WOLFSSL_CAAM
+    int blackKey; /* black key / hsm key id */
+#endif
 #ifdef WOLFSSL_AESNI
     byte use_aesni;
 #endif /* WOLFSSL_AESNI */
@@ -230,9 +244,16 @@ struct Aes {
     word32  left;            /* unused bytes left from last call */
 #endif
 #ifdef WOLFSSL_XILINX_CRYPT
+#ifdef WOLFSSL_XILINX_CRYPT_VERSAL
+    wc_Xsecure          xSec;
+    XSecure_AesKeySize  xKeySize;
+    int                 aadStyle;
+    byte                keyInit[WOLFSSL_XSECURE_AES_KEY_SIZE] ALIGN64;
+#else
     XSecure_Aes xilAes;
     XCsuDma     dma;
-    word32      key_init[8];
+    word32      keyInit[8];
+#endif
     word32      kup;
 #endif
 #if defined(WOLFSSL_AFALG) || defined(WOLFSSL_AFALG_XILINX_AES)
