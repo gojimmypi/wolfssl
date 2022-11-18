@@ -215,13 +215,15 @@ extern int wc_InitRsaHw(RsaKey* key);
 
 /* Calculates the minimum number of bytes required to encode the value.
  *
+ * Only support up to 2^24-1.
+ *
  * @param [in] value  Value to be encoded.
  * @return  Number of bytes to encode value.
  */
 static word32 BytePrecision(word32 value)
 {
     word32 i;
-    for (i = (word32)sizeof(value); i; --i)
+    for (i = (word32)sizeof(value) - 1; i; --i)
         if (value >> ((i - 1) * WOLFSSL_BIT_SIZE))
             break;
 
@@ -6305,7 +6307,7 @@ static int DecodeRsaPssParams(const byte* params, word32 sz,
 #ifndef HAVE_USER_RSA
 #if defined(WOLFSSL_ASN_TEMPLATE) || (!defined(NO_CERTS) && \
     (defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || \
-     defined(WOLFSSL_KCAPI_RSA)))
+     defined(WOLFSSL_KCAPI_RSA) || defined(WOLFSSL_SE050)))
 /* Byte offset of numbers in RSA key. */
 size_t rsaIntOffset[] = {
     OFFSETOF(RsaKey, n),
@@ -10114,7 +10116,7 @@ int wc_DhParamsToDer(DhKey* key, byte* output, word32* outSz)
         ret = LENGTH_ONLY_E;
     }
     /* Check buffer is big enough for encoding. */
-    if ((ret == 0) && ((int)*outSz < sz)) {
+    if ((ret == 0) && (*outSz < (word32)sz)) {
         ret = BUFFER_E;
     }
     if (ret == 0) {
@@ -19300,18 +19302,14 @@ exit:
  * X.509: RFC 5280, 4.2.1.8 - Subject Directory Attributes.
  */
 static const ASNItem subjDirAttrASN[] = {
-/* SEQ  */ { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* SEQ  */     { 1, ASN_SEQUENCE, 1, 1, 0 },
 /* OID  */          { 2, ASN_OBJECT_ID, 0, 0, 0 },
-/* PLEN */          { 2, ASN_SET, 1, 1, 0 },
-/* BIT_STR */       { 2, ASN_PRINTABLE_STRING, 0, 0, 0 }
+/* PLEN */          { 2, ASN_SET, 1, 0, 0 },
 };
 enum {
     SUBJDIRATTRASN_IDX_SEQ = 0,
-    SUBJDIRATTRASN_IDX_SEQ2,
     SUBJDIRATTRASN_IDX_OID,
     SUBJDIRATTRASN_IDX_SET,
-    SUBJDIRATTRASN_IDX_STRING,
 };
 
 /* Number of items in ASN.1 template for BasicContraints. */
@@ -19392,28 +19390,43 @@ static int DecodeSubjDirAttr(const byte* input, int sz, DecodedCert* cert)
     DECL_ASNGETDATA(dataASN, subjDirAttrASN_Length);
     int ret = 0;
     word32 idx = 0;
+    int length;
 
     WOLFSSL_ENTER("DecodeSubjDirAttr");
 
     CALLOC_ASNGETDATA(dataASN, subjDirAttrASN_Length, ret, cert->heap);
 
-    if (ret == 0) {
+    /* Strip outer SEQUENCE. */
+    if ((ret == 0) && (GetSequence(input, &idx, &length, sz) < 0)) {
+        ret = ASN_PARSE_E;
+    }
+    /* Handle each inner SEQUENCE. */
+    while ((ret == 0) && (idx < (word32)sz)) {
         ret = GetASN_Items(subjDirAttrASN, dataASN, subjDirAttrASN_Length, 1,
             input, &idx, sz);
-    }
 
-    /* There may be more than one countryOfCitizenship, but save the
-     * first one for now. */
-    if (dataASN[SUBJDIRATTRASN_IDX_OID].data.oid.sum == SDA_COC_OID) {
-        word32 cuLen;
+        /* There may be more than one countryOfCitizenship, but save the
+         * first one for now. */
+        if ((ret == 0) &&
+                (dataASN[SUBJDIRATTRASN_IDX_OID].data.oid.sum == SDA_COC_OID)) {
+            int cuLen;
+            word32 setIdx = 0;
+            byte* setData;
+            word32 setLen;
 
-        cuLen = dataASN[SUBJDIRATTRASN_IDX_STRING].data.ref.length;
-        if (cuLen != COUNTRY_CODE_LEN)
-            return ASN_PARSE_E;
-
-        XMEMCPY(cert->countryOfCitizenship,
-            dataASN[SUBJDIRATTRASN_IDX_STRING].data.ref.data, cuLen);
-        cert->countryOfCitizenship[COUNTRY_CODE_LEN] = 0;
+            GetASN_GetRef(&dataASN[SUBJDIRATTRASN_IDX_SET], &setData, &setLen);
+            if (GetASNHeader(setData, ASN_PRINTABLE_STRING, &setIdx, &cuLen,
+                    setLen) < 0) {
+                ret = ASN_PARSE_E;
+            }
+            if ((ret == 0) && (cuLen != COUNTRY_CODE_LEN)) {
+                ret = ASN_PARSE_E;
+            }
+            if (ret == 0) {
+                XMEMCPY(cert->countryOfCitizenship, setData + setIdx, cuLen);
+                cert->countryOfCitizenship[COUNTRY_CODE_LEN] = 0;
+            }
+        }
     }
     FREE_ASNGETDATA(dataASN, cert->heap);
     return ret;
@@ -20804,7 +20817,8 @@ static int DecodeCertReq(DecodedCert* cert, int* criticalExt)
 int ParseCert(DecodedCert* cert, int type, int verify, void* cm)
 {
     int   ret;
-#if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_DYN_CERT)
+#if (!defined(WOLFSSL_NO_MALLOC) && !defined(NO_WOLFSSL_CM_VERIFY)) || \
+    defined(WOLFSSL_DYN_CERT)
     char* ptr;
 #endif
 
@@ -20812,7 +20826,8 @@ int ParseCert(DecodedCert* cert, int type, int verify, void* cm)
     if (ret < 0)
         return ret;
 
-#if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_DYN_CERT)
+#if (!defined(WOLFSSL_NO_MALLOC) && !defined(NO_WOLFSSL_CM_VERIFY)) || \
+    defined(WOLFSSL_DYN_CERT)
     /* cert->subjectCN not stored as copy of WOLFSSL_NO_MALLOC defind */
     if (cert->subjectCNLen > 0) {
         ptr = (char*) XMALLOC(cert->subjectCNLen + 1, cert->heap,
@@ -20826,7 +20841,8 @@ int ParseCert(DecodedCert* cert, int type, int verify, void* cm)
     }
 #endif
 
-#if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_DYN_CERT)
+#if (!defined(WOLFSSL_NO_MALLOC) && !defined(NO_WOLFSSL_CM_VERIFY)) || \
+    defined(WOLFSSL_DYN_CERT)
     /* cert->publicKey not stored as copy if WOLFSSL_NO_MALLOC defined */
     if ((cert->keyOID == RSAk
     #ifdef WC_RSA_PSS
@@ -22728,6 +22744,11 @@ int wc_PemGetHeaderFooter(int type, const char** header, const char** footer)
             if (footer) *footer = END_PUB_KEY;
             ret = 0;
             break;
+        case RSA_PUBLICKEY_TYPE:
+            if (header) *header = BEGIN_RSA_PUB;
+            if (footer) *footer = END_RSA_PUB;
+            ret = 0;
+            break;
     #ifndef NO_DH
         case DH_PRIVATEKEY_TYPE:
     #endif
@@ -24202,7 +24223,8 @@ int wc_RsaKeyToPublicDer_ex(RsaKey* key, byte* output, word32 inLen,
             ((OPENSSL_EXTRA || WOLFSSL_KEY_GEN) && !HAVE_USER_RSA))) */
 
 #if (defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || \
-     defined(WOLFSSL_KCAPI_RSA)) && !defined(NO_RSA) && !defined(HAVE_USER_RSA)
+     defined(WOLFSSL_KCAPI_RSA) || defined(WOLFSSL_SE050)) && \
+     !defined(NO_RSA) && !defined(HAVE_USER_RSA)
 
 /* Encode private RSA key in DER format.
  *
@@ -34226,7 +34248,7 @@ static int DecodeResponseData(byte* source, word32* ioIndex,
                     XMEMSET(single->next->status, 0, sizeof(CertStatus));
 
                     /* Entry to be freed. */
-                    single->isDynamic = 1;
+                    single->next->isDynamic = 1;
                     /* used will be 0 (false) */
 
                     single = single->next;
@@ -34675,11 +34697,14 @@ void InitOcspResponse(OcspResponse* resp, OcspEntry* single, CertStatus* status,
 void FreeOcspResponse(OcspResponse* resp)
 {
     OcspEntry *single, *next;
-    for (single = resp->single; single; single = next) {
-        next = single->next;
-        if (single->isDynamic) {
-            XFREE(single->status, resp->heap, DYNAMIC_TYPE_OCSP_STATUS);
-            XFREE(single, resp->heap, DYNAMIC_TYPE_OCSP_ENTRY);
+
+    if (resp != NULL) {
+        for (single = resp->single; single; single = next) {
+            next = single->next;
+            if (single->isDynamic) {
+                XFREE(single->status, resp->heap, DYNAMIC_TYPE_OCSP_STATUS);
+                XFREE(single, resp->heap, DYNAMIC_TYPE_OCSP_ENTRY);
+            }
         }
     }
 }
@@ -35513,6 +35538,7 @@ static int GetRevoked(RevokedCert* rcert, const byte* buff, word32* idx,
     ret = wc_GetSerialNumber(buff, idx, rc->serialNumber, &rc->serialSz,maxIdx);
     if (ret < 0) {
         WOLFSSL_MSG("wc_GetSerialNumber error");
+        XFREE(rc, dcrl->heap, DYNAMIC_TYPE_REVOKED);
         return ret;
     }
     /* add to list */
@@ -36335,7 +36361,7 @@ end:
     }
     if (ret == 0) {
     #endif
-#if defined(OPENSSL_EXTRA)
+    #ifdef OPENSSL_EXTRA
         /* Parse and store the issuer name. */
         dcrl->issuerSz = GetASNItem_Length(dataASN[CRLASN_IDX_TBS_ISSUER],
                             buff);
@@ -36348,7 +36374,7 @@ end:
         if (ret < 0) {
             ret = ASN_PARSE_E;
         }
-#endif
+    #endif
     }
 
     if ((ret == 0) && (dataASN[CRLASN_IDX_TBS_REVOKEDCERTS].tag != 0)) {

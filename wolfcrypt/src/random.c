@@ -1169,7 +1169,7 @@ int wc_FreeRng(WC_RNG* rng)
     rng->status = DRBG_NOT_INIT;
 #endif /* HAVE_HASHDRBG */
 
-#ifdef WOLFSSL_XILINX_CRYPT_VERSAL\
+#ifdef WOLFSSL_XILINX_CRYPT_VERSAL
     /* don't overwrite previously set error */
     if (wc_VersalTrngReset() && !ret)
         ret = WC_HW_E;
@@ -2806,7 +2806,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             }
             return 0;
         }
-#elif defined(WOLFSSL_SE050)
+#elif defined(WOLFSSL_SE050) && !defined(WOLFSSL_SE050_NO_TRNG)
      #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
 
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz){

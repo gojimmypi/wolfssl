@@ -6829,7 +6829,8 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->max_fragment = MAX_RECORD_SIZE;
 #endif
 #ifdef HAVE_ALPN
-    ssl->alpn_client_list = NULL;
+    ssl->alpn_peer_requested = NULL;
+    ssl->alpn_peer_requested_length = 0;
     #if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
         ssl->alpnSelect    = ctx->alpnSelect;
         ssl->alpnSelectArg = ctx->alpnSelectArg;
@@ -7659,9 +7660,10 @@ void SSL_ResourceFree(WOLFSSL* ssl)
     TLSX_FreeAll(ssl->extensions, ssl->heap);
 #endif /* !NO_TLS */
 #ifdef HAVE_ALPN
-    if (ssl->alpn_client_list != NULL) {
-        XFREE(ssl->alpn_client_list, ssl->heap, DYNAMIC_TYPE_ALPN);
-        ssl->alpn_client_list = NULL;
+    if (ssl->alpn_peer_requested != NULL) {
+        XFREE(ssl->alpn_peer_requested, ssl->heap, DYNAMIC_TYPE_ALPN);
+        ssl->alpn_peer_requested = NULL;
+        ssl->alpn_peer_requested_length = 0;
     }
 #endif
 #endif /* HAVE_TLS_EXTENSIONS */
@@ -9782,11 +9784,6 @@ retry:
 void ShrinkOutputBuffer(WOLFSSL* ssl)
 {
     WOLFSSL_MSG("Shrinking output buffer");
-    if (IsEncryptionOn(ssl, 0)) {
-        ForceZero(ssl->buffers.outputBuffer.buffer -
-            ssl->buffers.outputBuffer.offset,
-            ssl->buffers.outputBuffer.bufferSize);
-    }
     XFREE(ssl->buffers.outputBuffer.buffer - ssl->buffers.outputBuffer.offset,
           ssl->heap, DYNAMIC_TYPE_OUT_BUFFER);
     ssl->buffers.outputBuffer.buffer = ssl->buffers.outputBuffer.staticBuffer;
@@ -9817,11 +9814,9 @@ void ShrinkInputBuffer(WOLFSSL* ssl, int forcedFree)
                usedLength);
     }
 
-    if (IsEncryptionOn(ssl, 1) || forcedFree) {
-        ForceZero(ssl->buffers.inputBuffer.buffer -
-            ssl->buffers.inputBuffer.offset,
-            ssl->buffers.inputBuffer.bufferSize);
-    }
+    ForceZero(ssl->buffers.inputBuffer.buffer -
+        ssl->buffers.inputBuffer.offset,
+        ssl->buffers.inputBuffer.bufferSize);
     XFREE(ssl->buffers.inputBuffer.buffer - ssl->buffers.inputBuffer.offset,
           ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
     ssl->buffers.inputBuffer.buffer = ssl->buffers.inputBuffer.staticBuffer;
@@ -9966,11 +9961,6 @@ static WC_INLINE int GrowOutputBuffer(WOLFSSL* ssl, int size)
                ssl->buffers.outputBuffer.length);
 
     if (ssl->buffers.outputBuffer.dynamicFlag) {
-        if (IsEncryptionOn(ssl, 0)) {
-            ForceZero(ssl->buffers.outputBuffer.buffer -
-                ssl->buffers.outputBuffer.offset,
-                ssl->buffers.outputBuffer.bufferSize);
-        }
         XFREE(ssl->buffers.outputBuffer.buffer -
               ssl->buffers.outputBuffer.offset, ssl->heap,
               DYNAMIC_TYPE_OUT_BUFFER);
@@ -12722,7 +12712,7 @@ int LoadCertByIssuer(WOLFSSL_X509_STORE* store, X509_NAME* issuer, int type)
                 else if (type == X509_LU_CRL) {
 #if defined(HAVE_CRL)
                     ret = wolfSSL_X509_load_crl_file(&store->lookup, filename,
-                                                    WOLFSSL_FILETYPE_PEM);
+                                                     entry->dir_type);
                     if (ret != WOLFSSL_SUCCESS) {
                         WOLFSSL_MSG("failed to load CRL");
                         break;
@@ -13619,6 +13609,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
     (defined(WOLFSSL_CERT_REQ) || defined(WOLFSSL_CERT_EXT)) && \
     !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR)
                     if (ret == ASN_NO_SIGNER_E || ret == ASN_SELF_SIGNED_E) {
+                        int lastErr = ret; /* save error from last time */
                         WOLFSSL_MSG("try to load certificate if hash dir is set");
                         ret = LoadCertByIssuer(SSL_STORE(ssl),
                            (WOLFSSL_X509_NAME*)args->dCert->issuerName,
@@ -13632,7 +13623,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                                 &subjectHash, &alreadySigner);
                         }
                         else {
-                            ret = ASN_NO_SIGNER_E;
+                            ret = lastErr; /* restore error */
                             WOLFSSL_ERROR_VERBOSE(ret);
                         }
                     }
@@ -20817,8 +20808,25 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
     #endif
             }
 
-            if (ret != 0)
+            if (ret != 0) {
+            #ifdef WOLFSSL_ASYNC_CRYPT
+                if (ret != WC_PENDING_E)
+            #endif
+                {
+                    /* Zeroize plaintext. */
+            #if defined(HAVE_ENCRYPT_THEN_MAC) && !defined(WOLFSSL_AEAD_ONLY)
+                    if (ssl->options.startedETMWrite) {
+                        ForceZero(output + args->headerSz,
+                            (word16)(args->size - args->digestSz));
+                    }
+                    else
+            #endif
+                    {
+                        ForceZero(output + args->headerSz, (word16)args->size);
+                    }
+                }
                 goto exit_buildmsg;
+            }
             ssl->options.buildMsgState = BUILD_MSG_ENCRYPTED_VERIFY_MAC;
         }
         FALL_THROUGH;
@@ -23933,6 +23941,8 @@ const char* GetCipherKeaStr(char n[][MAX_SEGMENT_SZ]) {
              (XSTRCMP(n[2],"RSA") == 0) || (XSTRCMP(n[0],"AES128") == 0) ||
              (XSTRCMP(n[0],"AES256") == 0) || (XSTRCMP(n[1],"MD5") == 0))
         keaStr = "RSA";
+    else if (XSTRCMP(n[0],"NULL") == 0)
+        keaStr = "None";
     else
         keaStr = "unknown";
 
@@ -23960,7 +23970,7 @@ const char* GetCipherAuthStr(char n[][MAX_SEGMENT_SZ]) {
         authStr = "SRP";
     else if (XSTRCMP(n[1],"ECDSA") == 0)
         authStr = "ECDSA";
-    else if (XSTRCMP(n[0],"ADH") == 0)
+    else if (XSTRCMP(n[0],"ADH") == 0 || XSTRCMP(n[0],"NULL") == 0)
         authStr = "None";
     else
         authStr = "unknown";
@@ -32181,7 +32191,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         /* Final cleanup */
         if (
         #ifdef WOLFSSL_ASYNC_IO
-        args != NULL &&
+            args != NULL &&
         #endif
             args->input != NULL) {
             XFREE(args->input, ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
@@ -32329,6 +32339,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             int doHelloRetry = 0;
             /* Try to establish a key share. */
             int ret = TLSX_KeyShare_Establish(ssl, &doHelloRetry);
+
+            if (ret != 0) {
+                return ret;
+            }
             if (doHelloRetry) {
                 ssl->options.serverState = SERVER_HELLO_RETRY_REQUEST_COMPLETE;
             }
@@ -32359,10 +32373,9 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             ssl->suites->suites[i+1] == peerSuites->suites[j+1] ) {
 
             int ret = VerifyServerSuite(ssl, i);
-            #ifdef WOLFSSL_ASYNC_CRYPT
-            if (ret == WC_PENDING_E)
+            if (ret < 0) {
                 return ret;
-            #endif
+            }
             if (ret) {
                 WOLFSSL_MSG("Verified suite validity");
                 ssl->options.cipherSuite0 = ssl->suites->suites[i];
@@ -33303,6 +33316,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     #endif
     #ifdef HAVE_SNI
                 if((ret=SNI_Callback(ssl)))
+                    goto out;
+    #endif
+    #ifdef HAVE_ALPN
+                if((ret=ALPN_Select(ssl)))
                     goto out;
     #endif
 

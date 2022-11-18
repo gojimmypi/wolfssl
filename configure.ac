@@ -7,7 +7,7 @@
 #
 AC_COPYRIGHT([Copyright (C) 2006-2020 wolfSSL Inc.])
 AC_PREREQ([2.69])
-AC_INIT([wolfssl],[5.5.1],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
+AC_INIT([wolfssl],[5.5.3],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # The following sets CFLAGS to empty if unset on command line.  We do not
@@ -37,8 +37,16 @@ LT_INIT([disable-static win32-dll])
 
 AC_ARG_VAR(EXTRA_CFLAGS, [Extra CFLAGS to add to autoconf-computed arg list.  Can also supply directly to make.])
 
-#shared library versioning
-WOLFSSL_LIBRARY_VERSION=36:0:1
+WOLFSSL_CONFIG_ARGS=$ac_configure_args
+AC_SUBST([WOLFSSL_CONFIG_ARGS])
+
+# shared library versioning
+# The three numbers in the libwolfssl.so.*.*.* file name. Unfortunately
+# these numbers don't always line up nicely with the library version.
+WOLFSSL_LIBRARY_VERSION_FIRST=35
+WOLFSSL_LIBRARY_VERSION_SECOND=2
+WOLFSSL_LIBRARY_VERSION_THIRD=1
+WOLFSSL_LIBRARY_VERSION=37:1:2
 #                        | | |
 #                 +------+ | +---+
 #                 |        |     |
@@ -50,6 +58,9 @@ WOLFSSL_LIBRARY_VERSION=36:0:1
 #                 |        +- increment if source code has changed
 #                 |           set to zero if current is incremented
 #                 +- increment if interfaces have been added, removed or changed
+AC_SUBST([WOLFSSL_LIBRARY_VERSION_FIRST])
+AC_SUBST([WOLFSSL_LIBRARY_VERSION_SECOND])
+AC_SUBST([WOLFSSL_LIBRARY_VERSION_THIRD])
 AC_SUBST([WOLFSSL_LIBRARY_VERSION])
 
 gl_VISIBILITY
@@ -252,6 +263,10 @@ AS_CASE([$ENABLED_WOLFENGINE],
     [yes|fips-v2|cert3389],[
         ENABLED_WOLFENGINE="yes"
         ENABLED_FIPS="v2"
+    ],
+    [fips-v5],[
+        ENABLED_WOLFENGINE="yes"
+        ENABLED_FIPS="v5"
     ],
     [fips-ready],[
         ENABLED_WOLFENGINE="yes"
@@ -1916,7 +1931,7 @@ AC_ARG_WITH([cryptoauthlib],
 ENABLED_SE050="no"
 trylibse050dir=""
 AC_ARG_WITH([se050],
-    [AS_HELP_STRING([--with-se050=PATH],[PATH to SE050 install (default /usr/local/lib/)])],
+    [AS_HELP_STRING([--with-se050=PATH],[PATH to SE050 install (default /usr/local)])],
     [
         AC_MSG_CHECKING([for SE050])
 
@@ -1928,9 +1943,11 @@ AC_ARG_WITH([se050],
                 trylibse050dir=$withval
             fi
             if test "x$withval" = "xyes" ; then
-                trylibse050dir="/usr/local/lib/"
+                trylibse050dir="/usr/local"
             fi
+            LDFLAGS="$LDFLAGS -L$trylibse050dir/lib"
             LDFLAGS="$LDFLAGS -L$trylibse050dir/build/sss"
+            CPPFLAGS="$CPPFLAGS -I$trylibse050dir/include/se05x"
             CPPFLAGS="$CPPFLAGS -I$trylibse050dir/build"
             CPPFLAGS="$CPPFLAGS -I$trylibse050dir/sss/inc"
             CPPFLAGS="$CPPFLAGS -I$trylibse050dir/sss/ex/inc"
@@ -1960,7 +1977,7 @@ AC_ARG_WITH([se050],
             fi
 
             # Requires AES direct
-            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_AES_DIRECT"
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_AES_DIRECT -DHAVE_AES_ECB"
 
             # Does not support SHA2-512 224/256
             AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NOSHA512_224 -DWOLFSSL_NOSHA512_256"
@@ -2191,7 +2208,7 @@ then
             # Include options.h
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
             ENABLED_ARMASM_CRYPTO=no
-	    ENABLED_AESGCM_STREAM=no # not yet implemented
+            ENABLED_AESGCM_STREAM=no # not yet implemented
             AC_MSG_NOTICE([32bit ARMv7-a found, setting mfpu to neon])
             ;;
         *)
@@ -7423,13 +7440,6 @@ esac
 # Update ENABLE_* variables                                                    #
 ################################################################################
 
-if test "x$ENABLED_LEANPSK" = "xyes" || test "x$ENABLED_CERTS" = "xno" || \
-   test "x$ENABLED_ASN" = "xno"
-then
-   ENABLED_CERTS=no
-   ENABLED_ASN=no
-fi
-
 if test "x$ENABLED_SYS_CA_CERTS" = "xyes"
 then
     if test "x$ENABLED_FILESYSTEM" = "xno"
@@ -7439,6 +7449,21 @@ then
     then
         ENABLED_SYS_CA_CERTS="no"
     fi
+
+    case $host_os in
+        *darwin*)
+            AC_CHECK_HEADERS([Security/SecTrustSettings.h],
+                [
+                    # For Mac we need these frameworks to load system CA certs
+                    LDFLAGS="$LDFLAGS -framework CoreFoundation -framework Security"
+                ],
+                [
+                    AC_MSG_NOTICE([Can't enable system CA certs without Security/SecTrustSettings.h])
+                    ENABLED_SYS_CA_CERTS="no"
+                ]
+            )
+            ;;
+    esac
 fi
 
 if test "x$ENABLED_WOLFCLU" = "xyes"
@@ -7544,6 +7569,11 @@ then
     ENABLED_CERTS=yes
 fi
 
+if test "$ENABLED_ED25519" != "no" || test "$ENABLED_ED448" != "no"
+then
+    ENABLED_CERTS=yes
+fi
+
 if test "$ENABLED_MD5" = "yes"
 then
     # turn off MD5 if leanpsk or leantls on
@@ -7551,6 +7581,13 @@ then
     then
         ENABLED_MD5=no
     fi
+fi
+
+if test "x$ENABLED_LEANPSK" = "xyes" || test "x$ENABLED_CERTS" = "xno" || \
+   test "x$ENABLED_ASN" = "xno"
+then
+   ENABLED_CERTS=no
+   ENABLED_ASN=no
 fi
 
 ################################################################################
@@ -7692,7 +7729,7 @@ AS_IF([test "x$ENABLED_STRONGSWAN" = "xyes"],
 
 AS_IF([test "x$ENABLED_OPENLDAP" = "xyes"], [AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SIGNER_DER_CERT"])
 
-if test "$ENABLED_ED25519_STREAM" != "no"
+if test "$ENABLED_ED25519_STREAM" != "no" && test "$ENABLED_SE050" != "yes"
 then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ED25519_STREAMING_VERIFY"
     AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_ED25519_STREAMING_VERIFY"
@@ -7867,7 +7904,7 @@ then
     AM_CFLAGS="$AM_CFLAGS -DNO_OLD_MD5_NAME"
 fi
 
-if test "$ENABLED_WOLFENGINE" = "yes" && test "$ENABLED_FIPS" = "no"
+if test "$ENABLED_WOLFENGINE" = "yes" && test "$ENABLED_FIPS" != "v2"
 then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PSS_LONG_SALT"
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PSS_SALT_LEN_DISCOVER"
@@ -8043,10 +8080,6 @@ case $host_os in
                 MINGW_LIB_WARNING="yes"
             fi
         fi ;;
-    *darwin*)
-        # For Mac we need these frameworks to load system CA certs
-        LDFLAGS="$LDFLAGS -framework CoreFoundation -framework Security"
-        ;;
 esac
 
 if test "$enable_shared" = "no"; then
@@ -8190,6 +8223,7 @@ AM_CONDITIONAL([BUILD_RC4],[test "x$ENABLED_ARC4" = "xyes" || test "x$ENABLED_US
 AM_CONDITIONAL([BUILD_MD5],[test "x$ENABLED_MD5" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SHA],[test "x$ENABLED_SHA" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_FIPS],[test "x$ENABLED_FIPS" = "xyes"])
+AC_SUBST([ENABLED_FIPS])
 AM_CONDITIONAL([BUILD_FIPS_V1],[test "$HAVE_FIPS_VERSION" = 1])
 AM_CONDITIONAL([BUILD_FIPS_V2],[test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" = 0])
 AM_CONDITIONAL([BUILD_FIPS_RAND],[test "$HAVE_FIPS_VERSION" = 2 && test "$HAVE_FIPS_VERSION_MINOR" = 1])
@@ -8237,6 +8271,7 @@ AM_CONDITIONAL([BUILD_CAVIUM_V],[test "x$ENABLED_CAVIUM_V" = "xyes"])
 AM_CONDITIONAL([BUILD_OCTEON_SYNC],[test "x$ENABLED_OCTEON_SYNC" = "xyes"])
 AM_CONDITIONAL([BUILD_INTEL_QA],[test "x$ENABLED_INTEL_QA" = "xyes"])
 AM_CONDITIONAL([BUILD_INTEL_QA_SYNC],[test "x$ENABLED_INTEL_QA_SYNC" = "xyes"])
+INCLUDE_SP_INT="no"
 AM_CONDITIONAL([BUILD_SP],[test "x$ENABLED_SP" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SP_C32],[ ( ( (test "$ENABLED_SP_RSA" = "yes" || test "$ENABLED_SP_DH" = "yes" \
                                || test "$ENABLED_SP_ECC" = "yes") && test "x$ENABLED_SP_ASM" = "xno") \
@@ -8250,6 +8285,9 @@ AM_CONDITIONAL([BUILD_SP_ARM_THUMB],[test "x$ENABLED_SP_ARM_THUMB_ASM" = "xyes" 
 AM_CONDITIONAL([BUILD_SP_ARM_CORTEX],[test "x$ENABLED_SP_ARM_CORTEX_ASM" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SP_X86_64],[test "x$ENABLED_SP_X86_64_ASM" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SP_INT],[test "x$ENABLED_SP_MATH" = "xyes" || test "x$ENABLED_SP_MATH_ALL" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
+AM_COND_IF([BUILD_SP], [INCLUDE_SP_INT="yes"])
+AM_COND_IF([BUILD_SP_INT], [INCLUDE_SP_INT="yes"])
+AC_SUBST([INCLUDE_SP_INT])
 AM_CONDITIONAL([BUILD_FAST_RSA],[test "x$ENABLED_FAST_RSA" = "xyes"])
 AM_CONDITIONAL([BUILD_MCAPI],[test "x$ENABLED_MCAPI" = "xyes"])
 AM_CONDITIONAL([BUILD_ASYNCCRYPT],[test "x$ENABLED_ASYNCCRYPT" = "xyes"])

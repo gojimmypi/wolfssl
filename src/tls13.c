@@ -3008,6 +3008,15 @@ int BuildTls13Message(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
                 output += args->headerSz;
                 ret = EncryptTls13(ssl, output, output, args->size, aad,
                                    (word16)args->headerSz, asyncOkay);
+                if (ret != 0) {
+                #ifdef WOLFSSL_ASYNC_CRYPT
+                    if (ret != WC_PENDING_E)
+                #endif
+                    {
+                        /* Zeroize plaintext. */
+                        ForceZero(output, args->size);
+                    }
+                }
 #ifdef WOLFSSL_DTLS13
                 if (ret == 0 && ssl->options.dtls) {
                     /* AAD points to the header. Reuse the variable  */
@@ -5863,7 +5872,7 @@ int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
 #ifdef HAVE_SNI
         if ((ret = SNI_Callback(ssl)) != 0)
-            return ret;
+            goto exit_dch;
         ssl->options.side = WOLFSSL_SERVER_END;
 #endif
 
@@ -5950,6 +5959,12 @@ int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 #endif
     }
 
+#ifdef HAVE_ALPN
+    /* With PSK and all other things validated, it's time to
+     * select the ALPN protocol, if so requested */
+    if ((ret = ALPN_Select(ssl)) != 0)
+        goto exit_dch;
+#endif
     /* Advance state and proceed */
     ssl->options.asyncState = TLS_ASYNC_BUILD;
     } /* case TLS_ASYNC_BEGIN */

@@ -122,7 +122,7 @@ This library provides single precision (SP) integer math functions.
     #endif
 #endif
 
-/* ALLOC_SP_INT: Allocate an 'sp_int' of reqired size. */
+/* ALLOC_SP_INT: Allocate an 'sp_int' of required size. */
 #if (defined(WOLFSSL_SMALL_STACK) || defined(SP_ALLOC)) && \
     !defined(WOLFSSL_SP_NO_MALLOC)
     /* Dynamically allocate just enough data to support size. */
@@ -193,7 +193,7 @@ This library provides single precision (SP) integer math functions.
     #endif
 #endif
 
-/* ALLOC_SP_INT_ARRAY: Allocate an array of 'sp_int's of reqired size. */
+/* ALLOC_SP_INT_ARRAY: Allocate an array of 'sp_int's of required size. */
 #if (defined(WOLFSSL_SMALL_STACK) || defined(SP_ALLOC)) && \
     !defined(WOLFSSL_SP_NO_MALLOC)
     /* Dynamically allocate just enough data to support multiple sp_ints of the
@@ -288,7 +288,7 @@ This library provides single precision (SP) integer math functions.
  * CPU: x86_64
  */
 
-#ifndef _WIN64
+#ifndef _MSC_VER
 /* Multiply va by vb and store double size result in: vh | vl */
 #define SP_ASM_MUL(vl, vh, va, vb)                       \
     __asm__ __volatile__ (                               \
@@ -576,7 +576,8 @@ This library provides single precision (SP) integer math functions.
     while (0)
 #endif
 
-#if !defined(WOLFSSL_SP_DIV_WORD_HALF) && (!defined(_WIN64) || _MSC_VER >= 1920)
+#if !defined(WOLFSSL_SP_DIV_WORD_HALF) && (!defined(_MSC_VER) || \
+    _MSC_VER >= 1920)
 /* Divide a two digit number by a digit number and return. (hi | lo) / d
  *
  * Using divq instruction on Intel x64.
@@ -589,7 +590,7 @@ This library provides single precision (SP) integer math functions.
 static WC_INLINE sp_int_digit sp_div_word(sp_int_digit hi, sp_int_digit lo,
                                           sp_int_digit d)
 {
-#ifndef _WIN64
+#ifndef _MSC_VER
     __asm__ __volatile__ (
         "divq %2"
         : "+a" (lo)
@@ -597,7 +598,7 @@ static WC_INLINE sp_int_digit sp_div_word(sp_int_digit hi, sp_int_digit lo,
         : "cc"
     );
     return lo;
-#elif _MSC_VER >= 1920
+#elif defined(_MSC_VER) && _MSC_VER >= 1920
     return _udiv128(hi, lo, d, NULL);
 #endif
 }
@@ -4687,7 +4688,7 @@ void sp_forcezero(sp_int* a)
 {
     if (a != NULL) {
         /* Ensure all data zeroized - data not zeroed when used decreases. */
-        ForceZero(a->dp, a->used * sizeof(sp_int_digit));
+        ForceZero(a->dp, a->size * sizeof(sp_int_digit));
         _sp_zero(a);
     #ifdef HAVE_WOLF_BIGINT
         wc_bigint_zero(&a->raw);

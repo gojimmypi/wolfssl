@@ -31,13 +31,13 @@ if NOT EXIST "user_settings.h" (
 :: see if there was a parameter passed for a specific EDP-IDF directory
 :: this may be different than the standard ESP-IDF environment (e.g. VisualGDB)
 if not "%1" == "" (
-	if not exist "%1" (
-		echo "ERROR: optional directory was specified, but not found: %1"
-		goto :ERR
-	)
+    if not exist "%1" (
+        echo "ERROR: optional directory was specified, but not found: %1"
+        goto :ERR
+    )
 
-	SET IDF_PATH=%1
-	echo Using specified IDF_PATH: %IDF_PATH%
+    SET IDF_PATH=%1
+    echo Using specified IDF_PATH: %IDF_PATH%
 )
 
 :: if no IDF_PATH is found, we don't know what to do. Go exit with error.
@@ -151,10 +151,10 @@ if exist %WOLFSSLLIB_TRG_DIR% (
     if exist %WOLFSSLLIB_TRG_DIR% (
         SET COPYERROR=true
         echo;
-	    echo WARNING: Failed to remove %WOLFSSLLIB_TRG_DIR%
-	    echo;
-	    echo Check permissions, open files, read-only attributes, etc.
-	    echo;
+        echo WARNING: Failed to remove %WOLFSSLLIB_TRG_DIR%
+        echo;
+        echo Check permissions, open files, read-only attributes, etc.
+        echo;
     )
     echo;
 ) else (
@@ -392,7 +392,7 @@ echo REMINDER: Ensure any wolfSSL #include definitions occur BEFORE include file
 echo;
 if "%COPYERROR%" == "true" (
     echo;
-	echo WARNING: Copy completed with errors! Check for files in use, permissions, symbolic links, etc.
+    echo WARNING: Copy completed with errors! Check for files in use, permissions, symbolic links, etc.
     echo;
 )
 echo setup_win.bat for ESP-IDF completed.
