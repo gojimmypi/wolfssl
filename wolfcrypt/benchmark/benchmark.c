@@ -1029,8 +1029,8 @@ static const char* bench_desc_words[][15] = {
     #define INIT_CYCLE_COUNTER
     #define BEGIN_INTEL_CYCLES
     #define END_INTEL_CYCLES
-    #define SHOW_INTEL_CYCLES(b, n, s)     b[XSTRLEN(b)] = '\n'
-    #define SHOW_INTEL_CYCLES_CSV(b, n, s)     b[XSTRLEN(b)] = '\n'
+    #define SHOW_INTEL_CYCLES(b, n, s)     (b)[XSTRLEN(b)] = '\n'
+    #define SHOW_INTEL_CYCLES_CSV(b, n, s)     (b)[XSTRLEN(b)] = '\n'
 */
 
     /* for all other platforms, total_cycles is not implemented.
@@ -1042,8 +1042,8 @@ static const char* bench_desc_words[][15] = {
     #define INIT_CYCLE_COUNTER
     #define BEGIN_INTEL_CYCLES
     #define END_INTEL_CYCLES
-    #define SHOW_INTEL_CYCLES(b, n, s)     b[XSTRLEN(b)] = '\n'
-    #define SHOW_INTEL_CYCLES_CSV(b, n, s)     b[XSTRLEN(b)] = '\n'
+    #define SHOW_INTEL_CYCLES(b, n, s)     (b)[XSTRLEN(b)] = '\n'
+    #define SHOW_INTEL_CYCLES_CSV(b, n, s)     (b)[XSTRLEN(b)] = '\n'
 
     /* for all other platforms, total_cycles is not implemented.
     ** GENERATE_MACHINE_PARSEABLE_REPORT will return 0 in this case.
