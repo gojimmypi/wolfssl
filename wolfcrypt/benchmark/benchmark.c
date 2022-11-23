@@ -959,7 +959,7 @@ static const char* bench_desc_words[][15] = {
 
 #endif
 
-#if defined(__GNUC__) && defined(__x86_64__) && !defined(NO_ASM) && !defined(WOLFSSL_SGX)
+#if defined(__GNUC__) && defined(__x86_64__) && !defined(NO_ASM) && !defined(WOLFSSL_SGX) && !defined(WOLFSSL_ESPIDF)
     #define HAVE_GET_CYCLES
     static WC_INLINE word64 get_intel_cycles(void);
     static THREAD_LS_T word64 total_cycles;
@@ -1023,12 +1023,34 @@ static const char* bench_desc_words[][15] = {
         (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
             (float)total_cycles / (count*s))
 
+#elif defined(WOLFSSL_ESPIDF)
+/*
+* TODO implement for Espressif
+    #define INIT_CYCLE_COUNTER
+    #define BEGIN_INTEL_CYCLES
+    #define END_INTEL_CYCLES
+    #define SHOW_INTEL_CYCLES(b, n, s)     b[XSTRLEN(b)] = '\n'
+    #define SHOW_INTEL_CYCLES_CSV(b, n, s)     b[XSTRLEN(b)] = '\n'
+*/
+
+    /* for all other platforms, total_cycles is not implemented.
+    ** GENERATE_MACHINE_PARSEABLE_REPORT will return 0 in this case.
+    */
+    static THREAD_LS_T long unsigned int total_cycles = 0;
+
 #else
     #define INIT_CYCLE_COUNTER
     #define BEGIN_INTEL_CYCLES
     #define END_INTEL_CYCLES
     #define SHOW_INTEL_CYCLES(b, n, s)     b[XSTRLEN(b)] = '\n'
     #define SHOW_INTEL_CYCLES_CSV(b, n, s)     b[XSTRLEN(b)] = '\n'
+
+    /* for all other platforms, total_cycles is not implemented.
+    ** GENERATE_MACHINE_PARSEABLE_REPORT will return 0 in this case.
+    */
+
+    /* TODO include compiler warning here? */
+    static THREAD_LS_T long unsigned int total_cycles = 0;
 #endif
 
 /* determine benchmark buffer to use (if NO_FILESYSTEM) */
@@ -1608,14 +1630,24 @@ static WC_INLINE void bench_stats_init(void)
     bench_stats_head = NULL;
     bench_stats_tail = NULL;
 #endif
+
+#if defined(WOLFSSL_ESPIDF)
+/* TODO */
+#else
     INIT_CYCLE_COUNTER
+#endif
 }
 
 static WC_INLINE void bench_stats_start(int* count, double* start)
 {
     *count = 0;
     *start = current_time(1);
+
+#if defined(WOLFSSL_ESPIDF)
+/* TODO */
+#else
     BEGIN_INTEL_CYCLES
+#endif
 }
 
 static WC_INLINE int bench_stats_check(double start)
@@ -1635,7 +1667,12 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     const char** word = bench_result_words1[lng_index];
     static int sym_header_printed = 0;
 
+#if defined(WOLFSSL_ESPIDF)
+/* TODO */
+#else
     END_INTEL_CYCLES
+#endif
+
     total = current_time(0) - start;
 
 #ifdef LINUX_RUSAGE_UTIME
@@ -1696,7 +1733,11 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     /* format and print to terminal */
     if (csv_format == 1) {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef WOLFSSL_ESPIDF
+        long unsigned int bytes_processed;
+    #else
         word64 bytes_processed;
+    #endif
         if (blockType[0] == 'K')
             bytes_processed = (word64)(blocks * (base2 ? 1024. : 1000.));
         else if (blockType[0] == 'M')
@@ -1711,27 +1752,41 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
             persec /= base2 ? (1024. * 1024.) : (1000. * 1000.);
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         /* note this codepath brings in all the fields from the non-CSV case. */
-        (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
-                        BENCH_ASYNC_GET_NAME(useDeviceID),
+        (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,",
+                        desc, BENCH_ASYNC_GET_NAME(useDeviceID),
                         bytes_processed, total, persec, total_cycles);
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%f,", desc, persec);
 #endif
+
+#if defined(WOLFSSL_ESPIDF)
+/* TODO */
+#else
         SHOW_INTEL_CYCLES_CSV(msg, sizeof(msg), countSz);
-    } else {
+#endif
+
+    }
+    else {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         (void)XSNPRINTF(msg, sizeof(msg),
-                 "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
-                 ", %lu cycles,",
-                 desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
-                 word[0], total, word[1], persec, blockType, total_cycles);
+                        "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
+                        ", %lu cycles,",
+                        desc, BENCH_ASYNC_GET_NAME(useDeviceID),
+                        blocks, blockType,
+                        word[0], total, word[1], persec, blockType, total_cycles);
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s",
                  desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
                  word[0], total, word[1], persec, blockType);
 #endif
+
+#if defined(WOLFSSL_ESPIDF)
+/* TODO */
+#else
         SHOW_INTEL_CYCLES(msg, sizeof(msg), countSz);
+#endif
+
     }
     printf("%s", msg);
 
@@ -1774,7 +1829,11 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
-    END_INTEL_CYCLES
+    #if defined(WOLFSSL_ESPIDF)
+    /* TODO */
+    #else
+        END_INTEL_CYCLES
+    #endif
 #endif
 
     if (count > 0)
