@@ -32,8 +32,10 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfcrypt/benchmark/benchmark.h>
 
+/* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
 #ifdef CONFIG_BENCH_ARGV
 #define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
+#define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22
 #endif
 
 /*
@@ -76,7 +78,7 @@ void my_atmel_slotInit()
 /* allocate slot depending on slotType */
 int my_atmel_alloc(int slotType)
 {
-    int i, slot = -1;
+    int i, slot = ATECC_INVALID_SLOT;
 
     switch(slotType){
         case ATMEL_SLOT_ENCKEY:
@@ -116,7 +118,7 @@ void my_atmel_free(int slotId)
 
 /* the following are needed by benchmark.c with args */
 #ifdef WOLFSSL_BENCH_ARGV
-char* __argv[22];
+char* __argv[WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS];
 
 int construct_argv()
 {
@@ -144,6 +146,13 @@ int construct_argv()
     cnt = 1;
 
     while (*ch != '\0') {
+        /* check that we don't overflow manual arg assembly */
+        if (cnt >= (WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS))
+        {
+            ESP_LOGE(TAG, "Abort construct_argv; Reached maximum defined arguments = %d", WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
+            break;
+        }
+
         /* skip white-space */
         while (*ch == ' ') { ++ch; }
 
@@ -172,28 +181,39 @@ int construct_argv()
 /* entry point */
 void app_main(void)
 {
-    (void) TAG;
+    int rc = 0;
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
 
 /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
-    #if defined(CUSTOM_SLOT_ALLOCATION)
+#if defined(CUSTOM_SLOT_ALLOCATION)
     my_atmel_slotInit();
     /* to register the callback, it needs to be initialized. */
     if ((wolfCrypt_Init()) != 0) {
-       ESP_LOGE(TAG, "wolfCrypt_Init failed");
-       return;
+        ESP_LOGE(TAG, "wolfCrypt_Init failed");
+        return;
     }
     atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
-    #endif
-#endif
+#endif /* CUSTOM_SLOT_ALLOCATION */
+#endif /* WOLFSSL_ESPWROOM32SE, etc */
 
 #ifdef NO_CRYPT_BENCHMARK
     ESP_LOGI(TAG, "NO_CRYPT_BENCHMARK defined, skipping wolf_benchmark_task")
 #else
 
-    wolf_benchmark_task();
+
+    /* although wolfCrypt_Init() may be explicitly called above,
+    ** not it is still always called in wolf_benchmark_task.
+    */
+    rc = wolf_benchmark_task(NULL);
+    if (rc == 0) {
+        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
+    }
+    else {
+        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
+        /* see wolfssl/wolfcrypt/error-crypt.h */
+    }
 
     /* after the test, we'll just wait */
     while (1) {
