@@ -334,7 +334,10 @@
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
 
-#if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
+#if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE) || \
+    defined(WOLFSSL_ESP32S2)    || defined(WOLFSSL_ESP32S3)
+/*  defined(WOLFSSL_ESP32C3) TODO RISC-V HW not yet implemented */
+
    #ifndef NO_ESP32WROOM32_CRYPT
         #define WOLFSSL_ESP32WROOM32_CRYPT
         #if defined(ESP32_USE_RSA_PRIMITIVE) && \

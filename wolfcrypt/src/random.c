@@ -2584,7 +2584,9 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 #elif defined(WOLFSSL_ESPIDF)
 
     /* Espressif */
-    #if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
+    #if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE) || \
+        defined(WOLFSSL_ESP32S2)    || defined(WOLFSSL_ESP32S3)      || \
+        defined(WOLFSSL_ESP32C3)
 
         /* Espressif ESP32 */
         #include <esp_system.h>
@@ -2627,7 +2629,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
             return 0;
         }
-    #endif /* end WOLFSSL_ESPWROOM32 */
+    #endif /* end WOLFSSL_ESP32[x] */
 
 #elif defined(WOLFSSL_LINUXKM)
     #include <linux/random.h>
