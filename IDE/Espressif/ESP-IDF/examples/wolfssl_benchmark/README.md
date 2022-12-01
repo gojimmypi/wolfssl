@@ -33,6 +33,8 @@ cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 
 
 idf.py build flash -p /dev/ttyS20 -b 921600 monitor
+
+idf.py set-target esp32 fullclean flash -p /dev/ttyS8 -b 921600 monitor
 ```
 
 ## Example Output
