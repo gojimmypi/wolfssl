@@ -1,3 +1,5 @@
+/* version 4 */
+
 /* benchmark.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -35,6 +37,11 @@
 #include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
 #include <wolfssl/wolfcrypt/ecc.h>
+
+#ifdef WOLFSSL_ESPIDF
+    #include <xtensa/hal.h>
+    #include <esp_log.h>
+#endif
 
 #ifdef HAVE_PTHREAD
     #include <pthread.h>
@@ -1022,7 +1029,23 @@ static const char* bench_desc_words[][15] = {
     #define SHOW_INTEL_CYCLES_CSV(b, n, s) \
         (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
             (float)total_cycles / (count*s))
+#elif defined(WOLFSSL_ESPIDF)
+    static THREAD_LS_T unsigned long long begin_cycles;
+    static THREAD_LS_T unsigned long long total_cycles;
+    #define INIT_CYCLE_COUNTER
+    static char * TAG = "wolfssl_benchmark";
+    #define INIT_CYCLE_COUNTER
+    #define BEGIN_ESP_CYCLES begin_cycles = (xthal_get_ccount());
+    #define END_ESP_CYCLES total_cycles = xthal_get_ccount() - begin_cycles;
 
+    #define SHOW_ESP_CYCLES(b, n, s) \
+        (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), " %s = %6.2f\n", \
+        bench_result_words1[lng_index][2], \
+            (float)total_cycles / (count*s))
+
+    #define SHOW_ESP_CYCLES_CSV(b, n, s) \
+              (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
+            (float)total_cycles / (count*s))
 #else
     #define INIT_CYCLE_COUNTER
     #define BEGIN_INTEL_CYCLES
@@ -1615,7 +1638,12 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
 {
     *count = 0;
     *start = current_time(1);
+
+#ifdef WOLFSSL_ESPIDF
+    BEGIN_ESP_CYCLES
+#else
     BEGIN_INTEL_CYCLES
+#endif
 }
 
 static WC_INLINE int bench_stats_check(double start)
@@ -1635,7 +1663,12 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     const char** word = bench_result_words1[lng_index];
     static int sym_header_printed = 0;
 
+#ifdef WOLFSSL_ESPIDF
+    BEGIN_ESP_CYCLES
+#else
     END_INTEL_CYCLES
+#endif
+
     total = current_time(0) - start;
 
 #ifdef LINUX_RUSAGE_UTIME
@@ -1696,7 +1729,11 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     /* format and print to terminal */
     if (csv_format == 1) {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef WOLFSSL_ESPIDF
+        unsigned long bytes_processed;
+    #else
         word64 bytes_processed;
+    #endif
         if (blockType[0] == 'K')
             bytes_processed = (word64)(blocks * (base2 ? 1024. : 1000.));
         else if (blockType[0] == 'M')
@@ -1709,29 +1746,46 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
             persec /= base2 ? 1024. : 1000.;
         else if (blockType[0] == 'b')
             persec /= base2 ? (1024. * 1024.) : (1000. * 1000.);
+
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         /* note this codepath brings in all the fields from the non-CSV case. */
+    #ifdef WOLFSSL_ESPIDF
+        ESP_LOGI(TAG,   "sym,%s,%s,%lu,%f,%f,%lu,", desc,
+                        BENCH_ASYNC_GET_NAME(useDeviceID),
+                        bytes_processed, total, persec, (unsigned long) total_cycles);
+    #else
         (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
                         BENCH_ASYNC_GET_NAME(useDeviceID),
                         bytes_processed, total, persec, total_cycles);
+    #endif
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%f,", desc, persec);
 #endif
+
+    #ifdef WOLFSSL_ESPIDF
+        SHOW_ESP_CYCLES_CSV(msg, sizeof(msg), countSz);
+    #else
         SHOW_INTEL_CYCLES_CSV(msg, sizeof(msg), countSz);
+    #endif
     } else {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
                  ", %lu cycles,",
                  desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
-                 word[0], total, word[1], persec, blockType, total_cycles);
+                 word[0], total, word[1], persec, blockType, (unsigned long) total_cycles);
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s",
                  desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
                  word[0], total, word[1], persec, blockType);
 #endif
+
+#ifdef WOLFSSL_ESPIDF
+        SHOW_ESP_CYCLES(msg, sizeof(msg), countSz);
+#else
         SHOW_INTEL_CYCLES(msg, sizeof(msg), countSz);
+#endif
     }
     printf("%s", msg);
 
@@ -1774,7 +1828,11 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
-    END_INTEL_CYCLES
+    #ifdef WOLFSSL_ESPIDF
+        END_ESP_CYCLES
+    #else
+        END_INTEL_CYCLES
+    #endif
 #endif
 
     if (count > 0)
@@ -1801,7 +1859,7 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
         (void)XSNPRINTF(msg, sizeof(msg),
                         "asym,%s,%d,%s%s,%.3f,%.3f,%d,%f,%lu,%.6f\n",
                         algo, strength, desc, desc_extra, milliEach, opsSec,
-                        count, total, total_cycles,
+                        count, total, (unsigned long) total_cycles,
                         (double)total_cycles / (double)count);
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%d,%s%s,%.3f,%.3f,\n", algo,
@@ -1814,7 +1872,7 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
                         " %.3f %s, %lu cycles\n", algo, strength, desc,
                         desc_extra, BENCH_ASYNC_GET_NAME(useDeviceID),
                         count, word[0], total, word[1], word[2], milliEach,
-                        opsSec, word[3], total_cycles);
+                        opsSec, word[3], (unsigned long) total_cycles);
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
                         "%-6s %5d %8s%-2s %s %6d %s %5.3f %s, %s %5.3f ms,"
@@ -8640,18 +8698,19 @@ static int string_matches(const char* arg, const char* str)
 #endif /* MAIN_NO_ARGS */
 
 #if !defined(NO_MAIN_DRIVER) && !defined(NO_MAIN_FUNCTION)
-#if defined(WOLFSSL_ESPIDF) || defined(_WIN32_WCE)
-int wolf_benchmark_task(void)
-#elif defined(MAIN_NO_ARGS)
-int main()
-#else
-int main(int argc, char** argv)
-#endif
+    #if defined(WOLFSSL_ESPIDF) || defined(_WIN32_WCE)
+        int wolf_benchmark_task(void)
+    #elif defined(MAIN_NO_ARGS)
+        int main()
+    #else
+        int main(int argc, char** argv)
+    #endif
 {
-#ifdef WOLFSSL_ESPIDF
-    int argc = construct_argv();
-    char** argv = (char**)__argv;
-#endif
+    #ifdef WOLFSSL_ESPIDF
+        int argc = construct_argv();
+        char** argv = (char**)__argv;
+    #endif
+
     return wolfcrypt_benchmark_main(argc, argv);
 }
 #endif /* NO_MAIN_DRIVER && NO_MAIN_FUNCTION */
@@ -8659,11 +8718,12 @@ int main(int argc, char** argv)
 int wolfcrypt_benchmark_main(int argc, char** argv)
 {
     int ret = 0;
+
 #ifndef MAIN_NO_ARGS
     int optMatched;
-#ifndef WOLFSSL_BENCHMARK_ALL
-    int i;
-#endif
+    #ifndef WOLFSSL_BENCHMARK_ALL
+        int i;
+    #endif
 #endif
 
     benchmark_static_init(1);

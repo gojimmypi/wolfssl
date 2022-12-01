@@ -7,11 +7,17 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "VisualGDB_wolfssl_benchmark
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CF8A8B6E-ECCF-481A-92AC-1E2F432816E8}"
 	ProjectSection(SolutionItems) = preProject
-		components\wolfssl\wolfcrypt\benchmark\benchmark.c = components\wolfssl\wolfcrypt\benchmark\benchmark.c
-		components\wolfssl\wolfcrypt\benchmark\benchmark.h = components\wolfssl\wolfcrypt\benchmark\benchmark.h
+		..\..\..\..\..\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.c
+		..\..\..\..\..\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.h
 		..\..\README.md = ..\..\README.md
 		..\..\UPDATE.md = ..\..\UPDATE.md
 		libs\user_settings_esp32.h = libs\user_settings_esp32.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP-IDF", "ESP-IDF", "{EA02E343-2D9A-49CC-8B7C-540180C4C49A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.h
 	EndProjectSection
 EndProject
 Global
@@ -33,6 +39,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EA02E343-2D9A-49CC-8B7C-540180C4C49A} = {CF8A8B6E-ECCF-481A-92AC-1E2F432816E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {969EF1DC-F8DA-46B8-A2AC-A7FDC3234245}

@@ -88,7 +88,19 @@
   </Build>
   <CustomBuild>
     <PreSyncActions />
-    <PreBuildActions />
+    <PreBuildActions>
+      <CustomActionBase xsi:type="CommandLineAction">
+        <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+        <RemoteHost>
+          <HostName>BuildMachine</HostName>
+          <Transport>BuiltinShortcut</Transport>
+        </RemoteHost>
+        <Command>xcopy.exe</Command>
+        <Arguments>C:\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c C:\workspace\wolfssl-gojimmypi\wolfcrypt\benchmark\ /y</Arguments>
+        <WorkingDirectory>$(BuildDir)</WorkingDirectory>
+        <BackgroundMode>false</BackgroundMode>
+      </CustomActionBase>
+    </PreBuildActions>
     <PostBuildActions />
     <PreCleanActions />
     <PostCleanActions />
@@ -98,6 +110,14 @@
     <PostDebugActions />
     <DebugStopActions />
     <BreakMode>Default</BreakMode>
+    <CustomBreakCommand>
+      <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>BuildMachine</HostName>
+        <Transport>BuiltinShortcut</Transport>
+      </RemoteHost>
+      <BackgroundMode xsi:nil="true" />
+    </CustomBreakCommand>
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
