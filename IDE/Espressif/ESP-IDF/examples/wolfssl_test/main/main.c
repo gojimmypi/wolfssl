@@ -1,3 +1,4 @@
+#include <freertos/FreeRTOS.h>
 /* main.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -19,11 +20,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <FreeRTOSConfig.h>
+#include <FreeRTOS.h>
+#include <task.h>
+
 /* ESP-IDF */
 #include <esp_log.h>
 #include "sdkconfig.h"
 
 /* wolfSSL */
+#include <wolfssl/version.h>
 #include <user_settings.h>
 #ifndef WOLFSSL_ESPIDF
 #warning "problem with wolfSSL user settings. Check components/wolfssl/include"
@@ -53,6 +59,8 @@
 #if defined(WOLFSSL_USE_TIME_HELPER)
     #include "time_helper.h" */
 #endif
+
+
 
 /* see wolfssl/wolfcrypt/test/test.h */
 extern void wolf_crypt_task();
@@ -121,12 +129,45 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
+int main_test_task(void *arg)
+{
+    int rc = 0;
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    wolf_test_task();
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+   if (rc == 0) {
+        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
+    }
+    else {
+        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
+        /* see wolfssl/wolfcrypt/error-crypt.h */
+    }
+    return rc;
+}
+
 
 /* entry point */
 void app_main(void)
 {
     (void) TAG;
-    int rc = 0;
+
+#if defined(CONFIG_HEAP_TRACING)
+    heap_caps_print_heap_info(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
+#endif
+
+#if defined(CONFIG_IDF_TARGET)
+    ESP_LOGI(TAG, "CONFIG_IDF_TARGET=%s", CONFIG_IDF_TARGET);
+
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+#endif
+
+
+
+#else
+    #warning "CONFIG_IDF_TARGET expected but not defined. Check EDP-IDF sdkconfig"
+#endif
 
 #if defined (WOLFSSL_USE_TIME_HELPER)
     set_time();
@@ -149,14 +190,12 @@ void app_main(void)
 #ifdef NO_CRYPT_TEST
     ESP_LOGI(TAG, "NO_CRYPT_TEST defined, skipping wolf_test_task");
 #else
-    rc = wolf_test_task();
-    if (rc == 0) {
-        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
-    }
-    else {
-        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
-        /* see wolfssl/wolfcrypt/error-crypt.h */
-    }
+
+    ESP_LOGI(TAG, "MqttClient_NetConnect Task %s, Stack HWM: %d\n",
+                  pcTaskGetTaskName(NULL),
+                  uxTaskGetStackHighWaterMark(NULL));
+
+    main_test_task(NULL);
 
     /* after the test, we'll just wait */
     while (1) {
