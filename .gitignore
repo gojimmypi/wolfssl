@@ -404,3 +404,10 @@ async
 
 # Generated user_settings_asm.h.
 user_settings_asm.h
+
+**/.visualgdb
+
+**/CMakeLists.txt.old
+**/sdkconfig
+**/sdkconfig.old
+
