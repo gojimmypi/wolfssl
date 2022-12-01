@@ -8,10 +8,19 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{35EEC1E7-13AB-4C74-BFCE-22142A10E1C1}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		..\README_all_cmake_variables.txt = ..\README_all_cmake_variables.txt
 		sdkconfig = sdkconfig
 		sdkconfig.defaults = sdkconfig.defaults
-		build\config\sdkconfig.h = build\config\sdkconfig.h
-		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h
+		build\VisualGDB\Debug\config\sdkconfig.h = build\VisualGDB\Debug\config\sdkconfig.h
+		..\..\setup.sh = ..\..\setup.sh
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{8A3F75F0-AF7C-4711-8F29-B4181FEAA5E4}"
+	ProjectSection(SolutionItems) = preProject
+		libs\README.md = libs\README.md
+		libs\user_settings.h = libs\user_settings.h
+		libs\user_settings_esp32c3.h = libs\user_settings_esp32c3.h
 	EndProjectSection
 EndProject
 Global
@@ -33,6 +42,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8A3F75F0-AF7C-4711-8F29-B4181FEAA5E4} = {35EEC1E7-13AB-4C74-BFCE-22142A10E1C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A0AC9105-F2CF-44E7-8032-3CD9E77EC9F6}
