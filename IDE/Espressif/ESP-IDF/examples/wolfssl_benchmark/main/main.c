@@ -23,6 +23,7 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
+#include <wolfssl/version.h>
 #include <user_settings.h>
 #ifndef WOLFSSL_ESPIDF
 #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
@@ -148,9 +149,10 @@ int construct_argv()
     while (*ch != '\0') {
         /* check that we don't overflow manual arg assembly */
         if (cnt >= (WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS)) {
-            ESP_LOGE(TAG, "Abort construct_argv;"
-                          "Reached maximum defined arguments = %d",
-                          WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
+            ESP_LOGE(TAG,
+                     "Abort construct_argv;"
+                     "Reached maximum defined arguments = %d",
+                     WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
             break;
         }
 
@@ -179,10 +181,28 @@ int construct_argv()
 }
 #endif
 
+#define WOLFSSL_SHOW_ESPIDF_SETTING (a) { ESP_LOGI("TAG",a); };
+
 /* entry point */
 void app_main(void)
 {
     int rc = 0;
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+
+
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+#if defined(NO_ESP32WROOM32_CRYPT)
+    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration disabled.");
+#else
+    ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
+#endif
+
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
 
 /* when using atecc608a on esp32-wroom-32se */
@@ -203,7 +223,6 @@ void app_main(void)
     ESP_LOGI(TAG, "NO_CRYPT_BENCHMARK defined, skipping wolf_benchmark_task")
 #else
 
-
     /* although wolfCrypt_Init() may be explicitly called above,
     ** not it is still always called in wolf_benchmark_task.
     */
@@ -215,6 +234,7 @@ void app_main(void)
         ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
         /* see wolfssl/wolfcrypt/error-crypt.h */
     }
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     /* after the test, we'll just wait */
     while (1) {
