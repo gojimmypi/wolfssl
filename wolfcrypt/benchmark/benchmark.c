@@ -1064,7 +1064,7 @@ static const char* bench_desc_words[][15] = {
               (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
               (float)total_cycles / (count*s))
 
-    /* xthal_get_ccount_ex is a single-overflow tolerant extension to
+    /* xthal_get_ccount_ex is a single-overflow-tolerant extension to
     ** the Espressif `unsigned xthal_get_ccount()` which is known to overflow
     ** at least once during benchmark tests.
     */
@@ -1085,11 +1085,11 @@ static const char* bench_desc_words[][15] = {
             **
             ** NOTE for long duration between calls with multiple overflows:
             **
-            **   WILL NOT BE DETECTED - the return value will be INCORRECT
+            **   WILL NOT BE DETECTED - the return value will be INCORRECT.
             */
             ESP_LOGV(TAG, "Alert: Detected xthal_get_ccount overflow, "
                           "adding %ull", UINT_MAX);
-            thisVal =+ UINT_MAX;
+            thisVal += (unsigned long long)UINT_MAX;
         }
 
         /* adjust out actual returned value that takes into account overflow */
