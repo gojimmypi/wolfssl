@@ -195,12 +195,22 @@ void app_main(void)
 
 
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
+    ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
+    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz", CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
 #if defined(NO_ESP32WROOM32_CRYPT)
-    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration disabled.");
+    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.");
 #else
     ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
+#endif
+
+#if defined(GENERATE_MACHINE_PARSEABLE_REPORT)
+    ESP_LOGI(TAG, "Report format enabled: GENERATE_MACHINE_PARSEABLE_REPORT");
+#else
+    ESP_LOGV(TAG, "Standard report format.");
 #endif
 
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
