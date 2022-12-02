@@ -460,6 +460,18 @@ static const char err_prefix[] = "";
 #define BENCH_KYBER90S_LEVEL3_ENCAP     0x00000800
 #define BENCH_KYBER90S_LEVEL5_KEYGEN    0x00001000
 #define BENCH_KYBER90S_LEVEL5_ENCAP     0x00002000
+#define BENCH_SABER_LEVEL1_KEYGEN       0x00004000
+#define BENCH_SABER_LEVEL1_ENCAP        0x00008000
+#define BENCH_SABER_LEVEL3_KEYGEN       0x00010000
+#define BENCH_SABER_LEVEL3_ENCAP        0x00020000
+#define BENCH_SABER_LEVEL5_KEYGEN       0x00040000
+#define BENCH_SABER_LEVEL5_ENCAP        0x00080000
+#define BENCH_NTRUHPS_LEVEL1_KEYGEN     0x00100000
+#define BENCH_NTRUHPS_LEVEL1_ENCAP      0x00200000
+#define BENCH_NTRUHPS_LEVEL3_KEYGEN     0x00400000
+#define BENCH_NTRUHPS_LEVEL3_ENCAP      0x00800000
+#define BENCH_NTRUHPS_LEVEL5_KEYGEN     0x01000000
+#define BENCH_NTRUHPS_LEVEL5_ENCAP      0x02000000
 #define BENCH_DILITHIUM_LEVEL2_SIGN     0x04000000
 #define BENCH_DILITHIUM_LEVEL3_SIGN     0x08000000
 #define BENCH_DILITHIUM_LEVEL5_SIGN     0x10000000
@@ -808,6 +820,30 @@ static const bench_pq_alg bench_pq_asym_opt[] = {
       OQS_KEM_alg_kyber_1024_90s},
     { "-kyber90s_level5-ed",    BENCH_KYBER90S_LEVEL5_ENCAP,
       OQS_KEM_alg_kyber_1024_90s },
+    { "-saber_level1-kg",    BENCH_SABER_LEVEL1_KEYGEN,
+      OQS_KEM_alg_saber_lightsaber },
+    { "-saber_level1-ed",       BENCH_SABER_LEVEL1_ENCAP,
+      OQS_KEM_alg_saber_lightsaber },
+    { "-saber_level3-kg",    BENCH_SABER_LEVEL3_KEYGEN,
+      OQS_KEM_alg_saber_saber },
+    { "-saber_level3-ed",       BENCH_SABER_LEVEL3_ENCAP,
+      OQS_KEM_alg_saber_saber },
+    { "-saber_level5-kg",    BENCH_SABER_LEVEL5_KEYGEN,
+      OQS_KEM_alg_saber_firesaber },
+    { "-saber_level5-ed",       BENCH_SABER_LEVEL5_ENCAP,
+      OQS_KEM_alg_saber_firesaber },
+    { "-ntruHPS_level1-kg",  BENCH_NTRUHPS_LEVEL1_KEYGEN,
+      OQS_KEM_alg_ntru_hps2048509 },
+    { "-ntruHPS_level1-ed",     BENCH_NTRUHPS_LEVEL1_ENCAP,
+      OQS_KEM_alg_ntru_hps2048509 },
+    { "-ntruHPS_level3-kg",  BENCH_NTRUHPS_LEVEL3_KEYGEN,
+      OQS_KEM_alg_ntru_hps2048677 },
+    { "-ntruHPS_level3-ed",     BENCH_NTRUHPS_LEVEL3_ENCAP,
+      OQS_KEM_alg_ntru_hps2048677 },
+    { "-ntruHPS_level5-kg",  BENCH_NTRUHPS_LEVEL5_KEYGEN,
+      OQS_KEM_alg_ntru_hps4096821 },
+    { "-ntruHPS_level5-ed",     BENCH_NTRUHPS_LEVEL5_ENCAP,
+      OQS_KEM_alg_ntru_hps4096821 },
 #endif /* HAVE_LIBOQS */
     { NULL, 0, NULL }
 };
@@ -994,13 +1030,13 @@ static const char* bench_desc_words[][15] = {
         (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
             (float)total_cycles / (count*s))
 #elif defined(WOLFSSL_ESPIDF)
+    #define HAVE_GET_CYCLES
+    #define INIT_CYCLE_COUNTER
     static THREAD_LS_T unsigned long long begin_cycles;
     static THREAD_LS_T unsigned long long total_cycles;
-    #define INIT_CYCLE_COUNTER
     static char * TAG = "wolfssl_benchmark";
-    #define INIT_CYCLE_COUNTER
     #define BEGIN_ESP_CYCLES begin_cycles = (xthal_get_ccount());
-    #define END_ESP_CYCLES total_cycles = xthal_get_ccount() - begin_cycles;
+    #define END_ESP_CYCLES total_cycles = (xthal_get_ccount() - begin_cycles);
 
     #define SHOW_ESP_CYCLES(b, n, s) \
         (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), " %s = %6.2f\n", \
@@ -1063,12 +1099,11 @@ static const char* bench_desc_words[][15] = {
 #endif
 #endif
 
-#if !defined(WC_NO_RNG) && \
-        ((!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) \
+#if (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WC_NO_RNG)) \
         || !defined(NO_DH) || defined(WOLFSSL_KEY_GEN) || defined(HAVE_ECC) \
         || defined(HAVE_CURVE25519) || defined(HAVE_ED25519) \
         || defined(HAVE_CURVE448) || defined(HAVE_ED448) \
-        || defined(WOLFSSL_HAVE_KYBER))
+        || defined(WOLFSSL_HAVE_KYBER)
     #define HAVE_LOCAL_RNG
     static THREAD_LS_T WC_RNG gRng;
     #define GLOBAL_RNG &gRng
@@ -1629,13 +1664,13 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     static int sym_header_printed = 0;
 
 #ifdef WOLFSSL_ESPIDF
-    BEGIN_ESP_CYCLES
+    END_ESP_CYCLES
 #else
     END_INTEL_CYCLES
 #endif
 
     total = current_time(0) - start;
-
+    ESP_LOGI(TAG, "%s total_cycles = %llu", desc, total_cycles);
 #ifdef LINUX_RUSAGE_UTIME
     check_for_excessive_stime(desc, "");
 #endif
@@ -1647,7 +1682,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         if (sym_header_printed == 0) {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
             printf("%s", "\"sym\",Algorithm,HW/SW,bytes_total,seconds_total,"
-                   "MB/s,cycles_total,Cycles per byte,\n");
+                   "MB/s,cycles_total,Cycles per byte!,\n");
 #else
             printf("\n\nSymmetric Ciphers:\n\n");
             printf("Algorithm,MB/s,Cycles per byte,\n");
@@ -1715,9 +1750,9 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         /* note this codepath brings in all the fields from the non-CSV case. */
     #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI(TAG,   "sym,%s,%s,%lu,%f,%f,%lu,", desc,
+        ESP_LOGI(TAG,   "sym,%s,%s,%lu,%f,%f,%llu,", desc,
                         BENCH_ASYNC_GET_NAME(useDeviceID),
-                        bytes_processed, total, persec, (unsigned long) total_cycles);
+                        bytes_processed, total, persec,  total_cycles);
     #else
         (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
                         BENCH_ASYNC_GET_NAME(useDeviceID),
@@ -1729,6 +1764,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 
     #ifdef WOLFSSL_ESPIDF
         SHOW_ESP_CYCLES_CSV(msg, sizeof(msg), countSz);
+        ESP_LOGI(TAG, "total_cycles = %llu", total_cycles);
     #else
         SHOW_INTEL_CYCLES_CSV(msg, sizeof(msg), countSz);
     #endif
@@ -1891,7 +1927,11 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID, int co
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
-    END_INTEL_CYCLES
+    #ifdef WOLFSSL_ESPIDF
+        END_ESP_CYCLES
+    #else
+        END_INTEL_CYCLES
+    #endif
 #endif
 
     if (count > 0)
@@ -2653,6 +2693,30 @@ static void* benchmarks_do(void* args)
         bench_pqcKemKeygen(BENCH_KYBER90S_LEVEL5_KEYGEN);
     if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL5_ENCAP))
         bench_pqcKemEncapDecap(BENCH_KYBER90S_LEVEL5_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL1_KEYGEN))
+        bench_pqcKemKeygen(BENCH_SABER_LEVEL1_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL1_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL1_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL3_KEYGEN))
+        bench_pqcKemKeygen(BENCH_SABER_LEVEL3_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL3_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL3_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL5_KEYGEN))
+        bench_pqcKemKeygen(BENCH_SABER_LEVEL5_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL5_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL5_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL1_KEYGEN))
+        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL1_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL1_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL1_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL3_KEYGEN))
+        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL3_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL3_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL3_ENCAP);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL5_KEYGEN))
+        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL5_KEYGEN);
+    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL5_ENCAP))
+        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL5_ENCAP);
 #ifdef HAVE_FALCON
     if (bench_all || (bench_pq_asym_algs & BENCH_FALCON_LEVEL1_SIGN))
         bench_falconKeySign(1);
@@ -3360,7 +3424,7 @@ static void bench_aesecb_internal(int useDeviceID, const byte* key, word32 keySz
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = ((bench_size / AES_BLOCK_SIZE) * 10) + 1;
+        int outer_loop_limit = (bench_size / AES_BLOCK_SIZE) + 1;
         for (times = 0;
              times < outer_loop_limit /* numBlocks */ || pending > 0;
             ) {
@@ -3402,7 +3466,7 @@ exit_aes_enc:
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = (10 * (bench_size / AES_BLOCK_SIZE)) + 1;
+        int outer_loop_limit = (bench_size / AES_BLOCK_SIZE) + 1;
         for (times = 0; times < outer_loop_limit || pending > 0; ) {
             bench_async_poll(&pending);
 
