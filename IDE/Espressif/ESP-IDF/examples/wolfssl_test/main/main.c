@@ -1,4 +1,3 @@
-#include <freertos/FreeRTOS.h>
 /* main.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -20,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <freertos/FreeRTOS.h>
 #include <FreeRTOSConfig.h>
 #include <FreeRTOS.h>
 #include <task.h>
@@ -151,7 +151,7 @@ int main_test_task(void *arg)
 /* entry point */
 void app_main(void)
 {
-    (void) TAG;
+    int rc = 0;
 
 #if defined(CONFIG_HEAP_TRACING)
     heap_caps_print_heap_info(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
