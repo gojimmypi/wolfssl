@@ -118,6 +118,7 @@
 #elif defined(WOLFSSL_ESPIDF)
     #include <time.h>
     #include <sys/time.h>
+    #include <esp_log.h>
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
 
@@ -1642,17 +1643,17 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #ifdef WOLFSSL_ESPIDF
+        /* ESP_LOGI to print takes up a lot less memory than printf */
         ESP_LOGI("wolfcrypt_test", "Exiting main with return code: % d\n", args.return_code);
-        return args.return_code;
 #endif
 
-/* everything else */
+/* everything else will use printf */
 #if !defined(WOLFSSL_ESPIDF)
 /* gate this for target platforms wishing to avoid printf reference */
         printf("Exiting main with return code: %d\n", args.return_code);
-        return args.return_code;
 #endif
 
+        return args.return_code;
     } /* wolfcrypt_test_main or wolf_test_task */
 
 #endif /* NO_MAIN_DRIVER */
@@ -42680,7 +42681,7 @@ static int mp_test_shbd(mp_int* a, mp_int* b, WC_RNG* rng)
 }
 #endif
 
-#if !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)
+#if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
 static int mp_test_div(mp_int* a, mp_int* d, mp_int* r, mp_int* rem,
                        WC_RNG* rng)
 {
@@ -42796,6 +42797,24 @@ static int mp_test_div(mp_int* a, mp_int* d, mp_int* r, mp_int* rem,
     if (ret != MP_OKAY)
         return -13053;
 
+    /* Make sure [d | d] / d is handled. */
+    mp_zero(a);
+    mp_set_bit(a, DIGIT_BIT * 2 - 1);
+    mp_set_bit(a, DIGIT_BIT * 1 - 1);
+    mp_zero(d);
+    mp_set_bit(d, DIGIT_BIT - 1);
+    ret = mp_div(a, d, r, rem);
+    if (ret != MP_OKAY)
+        return -13054;
+    mp_zero(a);
+    mp_set_bit(a, DIGIT_BIT);
+    mp_set_bit(a, 0);
+    mp_zero(d);
+    if (mp_cmp(r, a) != MP_EQ)
+        return -13055;
+    if (mp_cmp(rem, d) != MP_EQ)
+        return -13056;
+
     return 0;
 }
 #endif
@@ -42817,7 +42836,7 @@ static int mp_test_prime(mp_int* a, WC_RNG* rng)
 #endif
 #ifndef WOLFSSL_SP_MATH
     ret = mp_rand_prime(a, -5, rng, NULL);
-    if (ret != 0)
+    if (ret != 0 || (a->dp[0] & 3) != 3)
         return -13061;
 #endif
     ret = mp_prime_is_prime(a, 1, &res);
@@ -43197,6 +43216,16 @@ static int mp_test_invmod(mp_int* a, mp_int* m, mp_int* r)
     ret = mp_invmod(a, m, r);
     if (ret != MP_VAL)
         return -13172;
+    mp_set(a, 3);
+    mp_set(m, 6);
+    ret = mp_invmod(a, m, r);
+    if (ret != MP_VAL)
+        return -13181;
+    mp_set(a, 5*9);
+    mp_set(m, 6*9);
+    ret = mp_invmod(a, m, r);
+    if (ret != MP_VAL)
+        return -13182;
     mp_set(a, 1);
     mp_set(m, 4);
     ret = mp_invmod(a, m, r);
@@ -43651,6 +43680,21 @@ WOLFSSL_TEST_SUBROUTINE int mp_test(void)
         }
     }
 
+    /* Test adding and subtracting zero from zero. */
+    mp_zero(&a);
+    ret = mp_add_d(&a, 0, &r1);
+    if (ret != 0)
+        return -13329;
+    if (!mp_iszero(&r1)) {
+        return -13330;
+    }
+    ret = mp_sub_d(&a, 0, &r2);
+    if (ret != 0)
+        return -13331;
+    if (!mp_iszero(&r2)) {
+        return -13332;
+    }
+
 #if DIGIT_BIT >= 32
     /* Check that setting a 32-bit digit works. */
     d &= 0xffffffffU;
@@ -43677,6 +43721,17 @@ WOLFSSL_TEST_SUBROUTINE int mp_test(void)
     i = mp_cnt_lsb(&a);
     if (i != 0)
         return -13327;
+
+    mp_set(&a, 32);
+    i = mp_cnt_lsb(&a);
+    if (i != 5)
+        return -13328;
+
+    mp_zero(&a);
+    mp_set_bit(&a, 129);
+    i = mp_cnt_lsb(&a);
+    if (i != 129)
+        return -13328;
 #endif
 
 #if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
@@ -43721,7 +43776,7 @@ WOLFSSL_TEST_SUBROUTINE int mp_test(void)
     if ((ret = mp_test_set_is_bit(&a)) != 0)
         return ret;
 #endif
-#if !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)
+#if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
     if ((ret = mp_test_div(&a, &b, &r1, &r2, &rng)) != 0)
         return ret;
 #endif

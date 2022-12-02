@@ -35,7 +35,7 @@
 /* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
 #ifdef CONFIG_BENCH_ARGV
 #define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
-#define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22
+#define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
 #endif
 
 /*
@@ -147,9 +147,10 @@ int construct_argv()
 
     while (*ch != '\0') {
         /* check that we don't overflow manual arg assembly */
-        if (cnt >= (WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS))
-        {
-            ESP_LOGE(TAG, "Abort construct_argv; Reached maximum defined arguments = %d", WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
+        if (cnt >= (WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS)) {
+            ESP_LOGE(TAG, "Abort construct_argv;"
+                          "Reached maximum defined arguments = %d",
+                          WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
             break;
         }
 

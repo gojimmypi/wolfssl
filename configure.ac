@@ -683,6 +683,7 @@ then
     test "$enable_eccencrypt" = "" && enable_eccencrypt=yes
     test "$enable_psk" = "" && enable_psk=yes
     test "$enable_cmac" = "" && enable_cmac=yes
+    test "$enable_siphash" = "" && enable_siphash=yes
     test "$enable_xts" = "" && enable_xts=yes
     test "$enable_ocsp" = "" && enable_ocsp=yes
     test "$enable_ocspstapling" = "" && enable_ocspstapling=yes
@@ -744,6 +745,7 @@ then
     then
         test "$enable_dsa" = "" && enable_dsa=yes
         test "$enable_ecccustcurves" = "" && enable_ecccustcurves=yes
+        test "$enable_brainpool" = "" && enable_brainpool=yes
         test "$enable_srp" = "" && enable_srp=yes
         # linuxkm is incompatible with opensslextra and its dependents.
         if test "$ENABLED_LINUXKM_DEFAULTS" != "yes"
@@ -908,6 +910,7 @@ then
     then
         test "$enable_dsa" = "" && enable_dsa=yes
         test "$enable_ecccustcurves" = "" && enable_ecccustcurves=yes
+        test "$enable_brainpool" = "" && enable_brainpool=yes
         test "$enable_srp" = "" && enable_srp=yes
     fi
 
@@ -1883,6 +1886,35 @@ then
     AM_CFLAGS="$AM_CFLAGS -DHAVE_PK_CALLBACKS"
 fi
 
+
+# Maxim Integrated MAXQ10XX
+ENABLED_MAXQ10XX="no"
+maxqpartnumber=""
+AC_ARG_WITH([maxq10xx],
+    [AS_HELP_STRING([--with-maxq10xx=PART],[MAXQ10XX PART Number])],
+    [
+        AC_MSG_CHECKING([for maxq10xx])
+
+        # Read the part number
+        maxqpartnumber=$withval
+
+        if test "$maxqpartnumber" = "MAXQ1065"; then
+            LIB_STATIC_ADD="$LIB_STATIC_ADD lib/libmaxq1065_api.a"
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_MAXQ1065"
+            ENABLED_MAXQ10XX="yes"
+            AC_CHECK_LIB([rt], [clock_gettime])
+        elif test "$maxqpartnumber" = "MAXQ108x"; then
+            LIB_STATIC_ADD="$LIB_STATIC_ADD lib/libmaxq108x_api.a"
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_MAXQ108X"
+            ENABLED_MAXQ10XX="yes"
+            AC_CHECK_LIB([rt], [clock_gettime])
+        else
+            AC_MSG_ERROR([need a valid MAXQ part number])
+        fi
+
+        AC_MSG_RESULT([yes])
+    ]
+)
 
 # Microchip/Atmel CryptoAuthLib
 ENABLED_CRYPTOAUTHLIB="no"
@@ -3043,7 +3075,6 @@ then
     fi
 fi
 
-
 # ECC Minimum Key Size
 ENABLED_ECCMINSZ=224
 AC_ARG_WITH([eccminsz],
@@ -3064,6 +3095,30 @@ AC_ARG_ENABLE([compkey],
 if test "$ENABLED_WPAS" = "yes"
 then
     ENABLED_COMPKEY=yes
+fi
+
+
+# Brainpool (depends on _ECCCUSTCURVES)
+if test "$ENABLED_ECCCUSTCURVES" != "no"
+then
+    BRAINPOOL_DEFAULT=yes
+else
+    BRAINPOOL_DEFAULT=no
+fi
+
+AC_ARG_ENABLE([brainpool],
+    [AS_HELP_STRING([--enable-brainpool],[Enable Brainpool ECC curves (default: ${BRAINPOOL_DEFAULT})])],
+    [ ENABLED_BRAINPOOL=$enableval ],
+    [ ENABLED_BRAINPOOL="$BRAINPOOL_DEFAULT" ]
+    )
+
+if test "$ENABLED_BRAINPOOL" != "no"
+then
+    if test "$ENABLED_ECCCUSTCURVES" = "no"
+    then
+        AC_MSG_ERROR([cannot enable Brainpool without enabling ecccustcurves.])
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_ECC_BRAINPOOL"
 fi
 
 
@@ -5475,6 +5530,12 @@ then
         AM_CFLAGS="$AM_CFLAGS -DSESSION_CERTS"
     fi
 
+    # Requires key gen make sure on
+    if test "x$ENABLED_KEYGEN" = "xno"
+    then
+        ENABLED_KEYGEN="yes"
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KEY_GEN"
+    fi
 fi
 
 if test "$ENABLED_NETSNMP" = "yes"
@@ -6688,14 +6749,6 @@ fi
 if test "$ENABLED_SP_NONBLOCK" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SP_NONBLOCK"
     AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SP_NONBLOCK"
-fi
-
-# Check that we enable SP with RSA, DH or ECC.
-if test "$ENABLED_SP" = "no"; then
-    # Didn't need SP, don't need SP_MATH.
-    if test "$ENABLED_SP_MATH" = "yes"; then
-        ENABLED_SP_MATH=no
-    fi
 fi
 
 if test "$ENABLED_SP_MATH" = "yes"; then
@@ -8318,6 +8371,7 @@ AM_CONDITIONAL([BUILD_DTLS13],[test "x$ENABLED_DTLS13" = "xyes"])
 AM_CONDITIONAL([BUILD_QUIC],[test "x$ENABLED_QUIC" = "xyes"])
 AM_CONDITIONAL([BUILD_DTLS_CID],[test "x$ENABLED_DTLS_CID" = "xyes"])
 AM_CONDITIONAL([BUILD_DTLS],[test "x$ENABLED_DTLS" = "xyes"])
+AM_CONDITIONAL([BUILD_MAXQ10XX],[test "x$ENABLED_MAXQ10XX" = "xyes"])
 
 if test "$ENABLED_REPRODUCIBLE_BUILD" != "yes" &&
    (test "$ax_enable_debug" = "yes" ||
@@ -8620,6 +8674,7 @@ echo "   * ECC Custom Curves:          $ENABLED_ECCCUSTCURVES"
 echo "   * ECC Minimum Bits:           $ENABLED_ECCMINSZ"
 echo "   * FPECC:                      $ENABLED_FPECC"
 echo "   * ECC_ENCRYPT:                $ENABLED_ECC_ENCRYPT"
+echo "   * Brainpool:                  $ENABLED_BRAINPOOL"
 echo "   * CURVE25519:                 $ENABLED_CURVE25519"
 echo "   * ED25519:                    $ENABLED_ED25519"
 echo "   * ED25519 streaming:          $ENABLED_ED25519_STREAM"
@@ -8739,6 +8794,7 @@ echo "   * i.MX CAAM:                  $ENABLED_CAAM"
 echo "   * IoT-Safe:                   $ENABLED_IOTSAFE"
 echo "   * IoT-Safe HWRNG:             $ENABLED_IOTSAFE_HWRNG"
 echo "   * NXP SE050:                  $ENABLED_SE050"
+echo "   * Maxim Integrated MAXQ10XX:  $ENABLED_MAXQ10XX"
 echo "   * PSA:                        $ENABLED_PSA"
 echo "   * System CA certs:            $ENABLED_SYS_CA_CERTS"
 echo ""
