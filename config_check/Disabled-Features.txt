@@ -56,6 +56,7 @@
    * Poly1305:                   no
    * LEANPSK:                    no
    * LEANTLS:                    no
+   * RSA:                        no
    * RSA-PSS:                    no
    * DSA:                        no
    * DH:                         no
@@ -145,7 +146,6 @@
    * LIBZ:                       no
    * Examples:                   no
    * Crypt tests:                no
-   * Stack sizes in tests:       no
    * Heap stats in tests:        no
    * User Crypto:                no
    * Fast RSA:                   no

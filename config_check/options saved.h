@@ -54,9 +54,6 @@ extern "C" {
 #undef  NO_OLD_TLS
 #define NO_OLD_TLS
 
-#undef  HAVE_STACK_SIZE
-#define HAVE_STACK_SIZE
-
 #undef  NO_RSA
 #define NO_RSA
 
