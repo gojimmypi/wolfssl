@@ -1,5 +1,3 @@
-/* version 4 */
-
 /* benchmark.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -32,7 +30,7 @@
 #ifndef WOLFSSL_USER_SETTINGS
     #include <wolfssl/options.h>
 #endif
-#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/settings.h> /* also picks up user_settings.h */
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
@@ -1045,8 +1043,10 @@ static const char* bench_desc_words[][15] = {
     #define HAVE_GET_CYCLES
     #define INIT_CYCLE_COUNTER
 
+    /* WARNING the hal UINT xthal_get_ccount() quietly rolls over. */
     #define BEGIN_ESP_CYCLES begin_cycles = (xthal_get_ccount_ex());
 
+    /* since it rolls over, we have something that will tolerate one */
     #define END_ESP_CYCLES                                          \
         ESP_LOGV(TAG,"%llu - %llu",                                 \
                      xthal_get_ccount_ex(),                         \
@@ -1748,7 +1748,12 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         }
     }
 
+    /* determine if we have fixed units, or auto-scale bits or bytes for units */
     if (base2) {
+
+#if defined(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE)
+        blockType = WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE;
+#else
         /* determine if we should show as KiB or MiB */
         if (blocks > (1024UL * 1024UL)) {
             blocks /= (1024UL * 1024UL);
@@ -1761,8 +1766,14 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         else {
             blockType = "bytes";
         }
-    }
+#endif /* WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE */
+    } /* is base2 bit counter */
+
     else {
+
+#if defined(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE)
+        blockType = WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE;
+#else
         /* determine if we should show as KB or MB */
         if (blocks > (1000UL * 1000UL)) {
             blocks /= (1000UL * 1000UL);
@@ -1775,7 +1786,8 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         else {
             blockType = "bytes";
         }
-    }
+#endif /* WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE */
+    } /* not base2, is byte counter */
 
     /* calculate blocks per second */
     if (total > 0) {
