@@ -1035,8 +1035,37 @@ static const char* bench_desc_words[][15] = {
     static THREAD_LS_T unsigned long long begin_cycles;
     static THREAD_LS_T unsigned long long total_cycles;
     static char * TAG = "wolfssl_benchmark";
-    #define BEGIN_ESP_CYCLES begin_cycles = (xthal_get_ccount());
-    #define END_ESP_CYCLES total_cycles = (xthal_get_ccount() - begin_cycles);
+
+unsigned long long _xthal_get_ccount_ex = 0; /* 18,446,744,073,709,551,615 max */
+unsigned long long _xthal_get_ccount_last = 0;
+
+unsigned long long xthal_get_ccount_ex()
+{
+    unsigned long long thisVal = xthal_get_ccount();
+    if (thisVal < _xthal_get_ccount_last)
+    {
+        /* Warning: we assume the return type of xthal_get_ccount()
+        ** will always be unsigned int to add UINT_MAX.
+        **
+        ** NOTE for long duration between calls with multiple overflows:
+        **
+        **   WILL NOT BE DETECTED - the return value will be INCORRECT
+        */
+        ESP_LOGV(TAG, "Alert: Detected xthal_get_ccount overflow, "
+                      "adding %ull", UINT_MAX);
+        thisVal =+ UINT_MAX;
+    }
+    _xthal_get_ccount_ex += (thisVal - _xthal_get_ccount_last);
+    _xthal_get_ccount_last = xthal_get_ccount();
+    return _xthal_get_ccount_ex;
+}
+    #define BEGIN_ESP_CYCLES begin_cycles = (xthal_get_ccount_ex());
+    #define END_ESP_CYCLES                                          \
+        ESP_LOGV(TAG,"%llu - %llu",                                 \
+                     xthal_get_ccount_ex(),                         \
+                     begin_cycles                                   \
+                );                                                  \
+                total_cycles = (xthal_get_ccount_ex() - begin_cycles);
 
     #define SHOW_ESP_CYCLES(b, n, s) \
         (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), " %s = %6.2f\n", \
@@ -1639,6 +1668,8 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
     *count = 0;
     *start = current_time(1);
 
+    ESP_LOGV(TAG, "finish total_cycles = %llu, start=%f", total_cycles, *start );
+
 #ifdef WOLFSSL_ESPIDF
     BEGIN_ESP_CYCLES
 #else
@@ -1670,7 +1701,8 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 #endif
 
     total = current_time(0) - start;
-    ESP_LOGI(TAG, "%s total_cycles = %llu", desc, total_cycles);
+    ESP_LOGV(TAG, "%s total_cycles = %llu", desc, total_cycles);
+
 #ifdef LINUX_RUSAGE_UTIME
     check_for_excessive_stime(desc, "");
 #endif
@@ -1764,7 +1796,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 
     #ifdef WOLFSSL_ESPIDF
         SHOW_ESP_CYCLES_CSV(msg, sizeof(msg), countSz);
-        ESP_LOGI(TAG, "total_cycles = %llu", total_cycles);
+        ESP_LOGV(TAG, "finish total_cycles = %llu", total_cycles);
     #else
         SHOW_INTEL_CYCLES_CSV(msg, sizeof(msg), countSz);
     #endif
