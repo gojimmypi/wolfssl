@@ -33,7 +33,18 @@
  * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
  */
-#define GENERATE_MACHINE_PARSEABLE_REPORT
+
+/* Benchmark settings */
+/* #define GENERATE_MACHINE_PARSEABLE_REPORT */
+
+/* valid values: "MB", "KB", or "bytes" */
+#define WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE "KB"
+
+/* valid values: "MiB", "KiB", or "bytes" */
+#define WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE "KB"
+
+/* end of Bennchmark settings */
+
 
 #define WOLFSSL_ESPWROOM32
 
@@ -113,6 +124,8 @@
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH*/
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES */
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+
+
 #define NO_ESP32WROOM32_CRYPT
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -124,12 +137,20 @@
    /* other */
 #else
   /* default is ESP32-WROOM */
-  #warning "HW off!"
+/*
+    #warning "HW off!"
     #define NO_ESP32WROOM32_CRYPT
     #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
     #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+*/
 #endif
 
 /* adjust wait-timeout count if you see timeout in rsa hw acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
+
+/*
+#define WOLFSSL_HAVE_KYBER
+#define WOLFSSL_WC_KYBER
+*/
+
