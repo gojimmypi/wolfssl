@@ -152,6 +152,24 @@ int main_test_task(void *arg)
 void app_main(void)
 {
     int rc = 0;
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+
+
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
+    ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
+    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz", CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+#if defined(NO_ESP32WROOM32_CRYPT)
+    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.");
+#else
+    ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
+#endif
 
 #if defined(CONFIG_HEAP_TRACING)
     heap_caps_print_heap_info(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
