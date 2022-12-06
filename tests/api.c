@@ -39512,21 +39512,32 @@ static int test_wolfSSL_i2t_ASN1_OBJECT(void)
 static int test_wolfSSL_PEM_write_bio_X509(void)
 {
     int res = TEST_SKIPPED;
-#if defined(OPENSSL_EXTRA) && defined(WOLFSSL_AKID_NAME) && \
-    defined(WOLFSSL_CERT_EXT) && defined(WOLFSSL_CERT_GEN) && \
-    !defined(NO_BIO) && !defined(NO_RSA)
+#if defined(OPENSSL_EXTRA) && defined(OPENSSL_ALL) && \
+    defined(WOLFSSL_AKID_NAME) && defined(WOLFSSL_CERT_EXT) && \
+    defined(WOLFSSL_CERT_GEN) && !defined(NO_BIO) && !defined(NO_RSA) && \
+    !defined(NO_FILESYSTEM)
     /* This test contains the hard coded expected
      * lengths. Update if necessary */
+    FILE* fp = NULL;
+    WOLFSSL_EVP_PKEY *priv = NULL;
 
-    BIO* input;
-    BIO* output;
+    BIO* input = NULL;
+    BIO* output = NULL;
     X509* x509a = NULL;
     X509* x509b = NULL;
+
     ASN1_TIME* notBeforeA = NULL;
     ASN1_TIME* notAfterA  = NULL;
     ASN1_TIME* notBeforeB = NULL;
     ASN1_TIME* notAfterB  = NULL;
     int expectedLen;
+
+    fp = XFOPEN("certs/server-key.pem", "rb");
+    AssertNotNull(fp);
+    priv = wolfSSL_PEM_read_PrivateKey(fp, NULL, NULL, NULL);
+    XFCLOSE(fp);
+    fp = NULL;
+    AssertNotNull(priv);
 
     AssertNotNull(input = BIO_new_file(
             "certs/test/cert-ext-multiple.pem", "rb"));
@@ -39537,7 +39548,7 @@ static int test_wolfSSL_PEM_write_bio_X509(void)
     AssertNotNull(notBeforeA = X509_get_notBefore(x509a));
     AssertNotNull(notAfterA = X509_get_notAfter(x509a));
 
-    /* write X509 back to PEM BIO */
+    /* write X509 back to PEM BIO; no need to sign as nothing changed. */
     AssertNotNull(output = BIO_new(wolfSSL_BIO_s_mem()));
     AssertIntEQ(PEM_write_bio_X509(output, x509a), WOLFSSL_SUCCESS);
     /* compare length against expected */
@@ -39545,12 +39556,13 @@ static int test_wolfSSL_PEM_write_bio_X509(void)
     AssertIntEQ(wolfSSL_BIO_get_len(output), expectedLen);
 
     /* read exported X509 PEM back into struct, sanity check on export,
-     * make sure notBefore/notAfter are the same. */
+     * make sure notBefore/notAfter are the same and certs are identical. */
     AssertNotNull(PEM_read_bio_X509(output, &x509b, NULL, NULL));
     AssertNotNull(notBeforeB = X509_get_notBefore(x509b));
     AssertNotNull(notAfterB = X509_get_notAfter(x509b));
     AssertIntEQ(ASN1_TIME_compare(notBeforeA, notBeforeB), 0);
     AssertIntEQ(ASN1_TIME_compare(notAfterA, notAfterB), 0);
+    AssertIntEQ(0, wolfSSL_X509_cmp(x509a, x509b));
     X509_free(x509b);
 
     /* Reset output buffer */
@@ -39564,6 +39576,9 @@ static int test_wolfSSL_PEM_write_bio_X509(void)
         x509a->authKeyIdSrc = NULL;
         x509a->authKeyIdSrcSz = 0;
     }
+
+    /* Resign to re-generate the der */
+    AssertIntGT(wolfSSL_X509_sign(x509a, priv, EVP_sha256()), 0);
 
     AssertIntEQ(PEM_write_bio_X509(output, x509a), WOLFSSL_SUCCESS);
 
@@ -39588,15 +39603,16 @@ static int test_wolfSSL_PEM_write_bio_X509(void)
     /* read PEM into X509 struct */
     AssertNotNull(PEM_read_bio_X509(input, &x509a, NULL, NULL));
 
-    /* write X509 back to PEM BIO */
+    /* write X509 back to PEM BIO; no need to sign as nothing changed */
     AssertNotNull(output = BIO_new(wolfSSL_BIO_s_mem()));
     AssertIntEQ(PEM_write_bio_X509(output, x509a), WOLFSSL_SUCCESS);
 
-    /* read exported X509 PEM back into struct, ensure isCa and
-     * basicConstSet values are maintained */
+    /* read exported X509 PEM back into struct, ensure isCa and basicConstSet
+     * values are maintained and certs are identical.*/
     AssertNotNull(PEM_read_bio_X509(output, &x509b, NULL, NULL));
     AssertIntEQ(x509b->isCa, 1);
     AssertIntEQ(x509b->basicConstSet, 1);
+    AssertIntEQ(0, wolfSSL_X509_cmp(x509a, x509b));
 
     X509_free(x509a);
     X509_free(x509b);
@@ -39611,16 +39627,18 @@ static int test_wolfSSL_PEM_write_bio_X509(void)
     /* read PEM into X509 struct */
     AssertNotNull(PEM_read_bio_X509(input, &x509a, NULL, NULL));
 
-    /* write X509 back to PEM BIO */
+    /* write X509 back to PEM BIO; no need to sign as nothing changed */
     AssertNotNull(output = BIO_new(wolfSSL_BIO_s_mem()));
     AssertIntEQ(PEM_write_bio_X509(output, x509a), WOLFSSL_SUCCESS);
 
     /* read exported X509 PEM back into struct, ensure isCa and
-     * basicConstSet values are maintained */
+     * basicConstSet values are maintained and certs are identical */
     AssertNotNull(PEM_read_bio_X509(output, &x509b, NULL, NULL));
     AssertIntEQ(x509b->isCa, 0);
     AssertIntEQ(x509b->basicConstSet, 1);
+    AssertIntEQ(0, wolfSSL_X509_cmp(x509a, x509b));
 
+    wolfSSL_EVP_PKEY_free(priv);
     X509_free(x509a);
     X509_free(x509b);
     BIO_free(input);
@@ -58699,6 +58717,263 @@ static int test_wolfSSL_DTLS_fragment_buckets(void)
 }
 
 #endif
+#if defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) &&                     \
+    !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER)
+
+static int test_wolfSSL_dtls_stateless2(void)
+{
+    WOLFSSL *ssl_c, *ssl_c2, *ssl_s;
+    struct test_memio_ctx test_ctx;
+    WOLFSSL_CTX *ctx_c, *ctx_s;
+    int ret;
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+    ret = test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+        wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method);
+    if (ret != 0)
+        return -1;
+    ssl_c2 = wolfSSL_new(ctx_c);
+    if (ssl_c2 == NULL)
+        return -2;
+    wolfSSL_SetIOWriteCtx(ssl_c2, &test_ctx);
+    wolfSSL_SetIOReadCtx(ssl_c2, &test_ctx);
+    /* send CH */
+    ret = wolfSSL_connect(ssl_c2);
+    if (ret == 0 || ssl_c2->error != WANT_READ)
+        return -3;
+    ret = wolfSSL_accept(ssl_s);
+    if (ret == 0 || ssl_s->error != WANT_READ)
+        return -4;
+    if (test_ctx.c_len == 0)
+        return -5;
+    /* consume HRR */
+    test_ctx.c_len = 0;
+    ret = test_memio_do_handshake(ssl_c, ssl_s, 10, NULL);
+    if (ret != 0)
+        return -6;
+    wolfSSL_free(ssl_c2);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_s);
+    return TEST_SUCCESS;
+}
+
+#ifdef HAVE_MAX_FRAGMENT
+static int test_wolfSSL_dtls_stateless_maxfrag(void)
+{
+    WOLFSSL *ssl_c, *ssl_c2, *ssl_s;
+    struct test_memio_ctx test_ctx;
+    WOLFSSL_CTX *ctx_c, *ctx_s;
+    word16 max_fragment;
+    int ret;
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+    ret = test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+        wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method);
+    if (ret != 0)
+        return -1;
+    ssl_c2 = wolfSSL_new(ctx_c);
+    if (ssl_c2 == NULL)
+        return -2;
+    ret = wolfSSL_UseMaxFragment(ssl_c2, WOLFSSL_MFL_2_8);
+    if (ret != WOLFSSL_SUCCESS)
+        return -3;
+    wolfSSL_SetIOWriteCtx(ssl_c2, &test_ctx);
+    wolfSSL_SetIOReadCtx(ssl_c2, &test_ctx);
+    max_fragment = ssl_s->max_fragment;
+   /* send CH */
+    ret = wolfSSL_connect(ssl_c2);
+    if (ret == 0 || ssl_c2->error != WANT_READ)
+        return -4;
+    ret = wolfSSL_accept(ssl_s);
+    if (ret == 0 || ssl_s->error != WANT_READ)
+        return -5;
+    /* CH without cookie shouldn't change state */
+    if (ssl_s->max_fragment != max_fragment)
+        return -6;
+    if (test_ctx.c_len == 0)
+        return -7;
+    /* consume HRR from buffer */
+    test_ctx.c_len = 0;
+    ret = test_memio_do_handshake(ssl_c, ssl_s, 10, NULL);
+    if (ret != 0)
+        return -8;
+    wolfSSL_free(ssl_c2);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_s);
+    return TEST_SUCCESS;
+}
+#endif /* HAVE_MAX_FRAGMENT */
+
+#if defined(WOLFSSL_DTLS_NO_HVR_ON_RESUME)
+#define ROUNDS_WITH_HVR 4
+#define ROUNDS_WITHOUT_HVR 2
+#define HANDSHAKE_TYPE_OFFSET DTLS_RECORD_HEADER_SZ
+static int buf_is_hvr(const byte *data, int len)
+{
+    if (len < DTLS_RECORD_HEADER_SZ + DTLS_HANDSHAKE_HEADER_SZ)
+        return 0;
+    return data[HANDSHAKE_TYPE_OFFSET] == hello_verify_request;
+}
+
+static int _test_wolfSSL_dtls_stateless_resume(byte useticket, byte bad)
+{
+    struct test_memio_ctx test_ctx;
+    WOLFSSL_CTX *ctx_c, *ctx_s;
+    WOLFSSL *ssl_c, *ssl_s;
+    WOLFSSL_SESSION *sess;
+    int ret, round_trips;
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+    ret = test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+        wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method);
+    if (ret != 0)
+        return -1;
+#ifdef HAVE_SESSION_TICKET
+    if (useticket) {
+        ret = wolfSSL_UseSessionTicket(ssl_c);
+        if (ret != WOLFSSL_SUCCESS)
+            return -2;
+    }
+#endif
+    round_trips = ROUNDS_WITH_HVR;
+    ret = test_memio_do_handshake(ssl_c, ssl_s, round_trips, &round_trips);
+    if (ret != 0)
+        return -3;
+    if (round_trips != ROUNDS_WITH_HVR)
+        return -4;
+    sess = wolfSSL_get1_session(ssl_c);
+    if (sess == NULL)
+        return -5;
+    wolfSSL_shutdown(ssl_c);
+    wolfSSL_shutdown(ssl_s);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    test_ctx.c_len = test_ctx.s_len = 0;
+    /* make resumption invalid */
+    if (bad) {
+        if (useticket) {
+#ifdef HAVE_SESSION_TICKET
+            sess->ticket[0] = !sess->ticket[0];
+#endif /* HAVE_SESSION_TICKET */
+        }
+        else {
+            sess->sessionID[0] = !sess->sessionID[0];
+        }
+    }
+    ssl_c = wolfSSL_new(ctx_c);
+    ssl_s = wolfSSL_new(ctx_s);
+    wolfSSL_SetIOWriteCtx(ssl_c, &test_ctx);
+    wolfSSL_SetIOReadCtx(ssl_c, &test_ctx);
+    wolfSSL_SetIOWriteCtx(ssl_s, &test_ctx);
+    wolfSSL_SetIOReadCtx(ssl_s, &test_ctx);
+    ret = wolfSSL_set_session(ssl_c, sess);
+    if (ret != WOLFSSL_SUCCESS)
+        return -6;
+    ret = wolfSSL_connect(ssl_c);
+    if (ret == WOLFSSL_SUCCESS || ssl_c->error != WANT_READ)
+        return -7;
+    ret = wolfSSL_accept(ssl_s);
+    if (ret == WOLFSSL_SUCCESS || ssl_s->error != WANT_READ)
+        return -8;
+    if (bad && !buf_is_hvr(test_ctx.c_buff, test_ctx.c_len))
+        return -9;
+    if (!bad && buf_is_hvr(test_ctx.c_buff, test_ctx.c_len))
+        return -10;
+    if (!useticket) {
+        ret = test_memio_do_handshake(ssl_c, ssl_s, 10, &round_trips);
+        if (ret != 0)
+            return -11;
+        if (bad && round_trips != ROUNDS_WITH_HVR - 1)
+            return -12;
+        if (!bad && round_trips != ROUNDS_WITHOUT_HVR - 1)
+            return -13;
+    }
+    wolfSSL_SESSION_free(sess);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_s);
+    return TEST_SUCCESS;
+}
+
+static int test_wolfSSL_dtls_stateless_resume(void)
+{
+    int ret;
+#ifdef HAVE_SESSION_TICKET
+    ret = _test_wolfSSL_dtls_stateless_resume(1, 0);
+    if (ret != 0)
+        return ret;
+    ret = _test_wolfSSL_dtls_stateless_resume(1, 1);
+    if (ret != 0)
+        return ret - 100;
+#endif /* HAVE_SESION_TICKET */
+    ret = _test_wolfSSL_dtls_stateless_resume(0, 0);
+    if (ret != 0)
+        return ret - 200;
+    ret = _test_wolfSSL_dtls_stateless_resume(0, 1);
+    if (ret != 0)
+        return ret - 300;
+    return TEST_SUCCESS;
+}
+#endif /* WOLFSSL_DTLS_NO_HVR_ON_RESUME */
+
+#if !defined(NO_OLD_TLS)
+static int test_wolfSSL_dtls_stateless_downgrade(void)
+{
+    WOLFSSL_CTX *ctx_c, *ctx_c2, *ctx_s;
+    WOLFSSL *ssl_c, *ssl_c2, *ssl_s;
+    struct test_memio_ctx test_ctx;
+    int ret;
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+    ret = test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+        wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method);
+    if (ret != 0)
+        return -1;
+    ret = wolfSSL_CTX_SetMinVersion(ctx_s, WOLFSSL_DTLSV1);
+    if (ret != WOLFSSL_SUCCESS)
+        return -2;
+    ctx_c2 = wolfSSL_CTX_new(wolfDTLSv1_client_method());
+    if (ctx_c2 == NULL)
+        return -3;
+    wolfSSL_SetIORecv(ctx_c2, test_memio_read_cb);
+    wolfSSL_SetIOSend(ctx_c2, test_memio_write_cb);
+    ssl_c2 = wolfSSL_new(ctx_c2);
+    if (ssl_c2 == NULL)
+        return -4;
+    wolfSSL_SetIOWriteCtx(ssl_c2, &test_ctx);
+    wolfSSL_SetIOReadCtx(ssl_c2, &test_ctx);
+   /* send CH */
+    ret = wolfSSL_connect(ssl_c2);
+    if (ret == 0 || ssl_c2->error != WANT_READ)
+        return -5;
+    ret = wolfSSL_accept(ssl_s);
+    if (ret == 0 || ssl_s->error != WANT_READ)
+        return -6;
+    if (test_ctx.c_len == 0)
+        return -7;
+    /* consume HRR */
+    test_ctx.c_len = 0;
+    ret = test_memio_do_handshake(ssl_c, ssl_s, 10, NULL);
+    if (ret != 0)
+        return -8;
+    wolfSSL_free(ssl_c2);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_c2);
+    wolfSSL_CTX_free(ctx_s);
+
+    return TEST_SUCCESS;
+}
+#endif /* !defined(NO_OLD_TLS) */
+
+#endif /* defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) && \
+    !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER)*/
 
 #if defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) &&                     \
     !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER) &&              \
@@ -59882,6 +60157,20 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_DtlsUpdateWindow),
     TEST_DECL(test_wolfSSL_DTLS_fragment_buckets),
 #endif
+#if defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) &&                     \
+    !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER)
+#ifdef WOLFSSL_DTLS_NO_HVR_ON_RESUME
+    TEST_DECL(test_wolfSSL_dtls_stateless_resume),
+#endif /* WOLFSSL_DTLS_NO_HVR_ON_RESUME */
+#ifdef HAVE_MAX_FRAGMENT
+    TEST_DECL(test_wolfSSL_dtls_stateless_maxfrag),
+#endif /* HAVE_MAX_FRAGMENT */
+    TEST_DECL(test_wolfSSL_dtls_stateless2),
+#if !defined(NO_OLD_TLS)
+    TEST_DECL(test_wolfSSL_dtls_stateless_downgrade),
+#endif /* !defined(NO_OLD_TLS) */
+#endif /* defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) &&     \
+        *  !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER) */
     TEST_DECL(test_WOLFSSL_dtls_version_alert),
     TEST_DECL(test_ForceZero),
 
