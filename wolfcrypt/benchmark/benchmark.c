@@ -27,8 +27,11 @@
     #include <config.h>
 #endif
 
-/* some helpers to get values of benchmark units */
+/* some internal helpers to get values of benchmark units     */
+/* this first one gets the text name of the #define parameter */
 #define __BENCHMARK_UNIT_VALUE_TO_STRING(x) #x
+
+/* this next one gets the text value of the assigned value of #define param */
 #define __BENCHMARK_UNIT_VALUE(x) __BENCHMARK_UNIT_VALUE_TO_STRING(x)
 
 
@@ -1664,6 +1667,120 @@ static WC_INLINE int bench_stats_check(double start)
     return ((current_time(0) - start) < BENCH_MIN_RUNTIME_SEC);
 }
 
+/* return text for units and scale the value of blocks as needed for base2 */
+static WC_INLINE const char* specified_base2_blockType(double * blocks)
+{
+    const char* rt;
+
+#if defined(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE)
+
+    /* get the text used for units and scale the value of blocks as needed */
+    rt = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
+
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGV(TAG, "%s = %s",
+          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE),
+                 rt);
+    #endif
+
+        /* ensure we are using one of the supported values, otherwise default to KiB */
+        if (   XSTRCMP(rt, "Byte") == 0 || XSTRCMP(rt, "Bytes") == 0
+            || XSTRCMP(rt, "byte") == 0 || XSTRCMP(rt, "bytes") == 0
+            || XSTRCMP(rt, "b")    == 0 || XSTRCMP(rt, "B")     == 0
+           ) {
+            rt = "bytes";
+        }
+        else if (   XSTRCMP(rt, "MiB") == 0 || XSTRCMP(rt, "M") == 0
+                 || XSTRCMP(rt, "mib") == 0 || XSTRCMP(rt, "m") == 0
+                 || XSTRCMP(rt, "mb")  == 0 || XSTRCMP(rt, "M") == 0
+                ) {
+            *blocks /= (1024UL * 1024UL);
+            rt = "MiB";
+        }
+        else {
+            *blocks /= 1024;
+            rt = "KiB";
+        } /* blockType value check  */
+#else
+        /* if not user-specfied, auto-scale each metric (results vary)
+        **
+        ** determine if we should show as KB or MB
+        */
+        if (*blocks > (1024UL * 1024UL)) {
+            *blocks /= (1024UL * 1024UL);
+            rt = "MiB";
+        }
+        else if (*blocks > 1024) {
+            *blocks /= 1024;
+            rt = "KiB";
+        }
+        else {
+            rt = "bytes";
+        }
+
+#endif /* WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE */
+
+    return rt;
+}
+
+/* return text for units and scale the value of blocks as needed */
+static WC_INLINE const char* specified_blockType(double * blocks)
+{
+    const char* rt;
+
+#if defined(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE)
+        /* we'll get the value of the user specified units
+        **
+        ** e.g. MB from:
+        **
+        **  ./configure CFLAGS="-DWOLFSSL_BENCHMARK_FIXED_BLOCKTYPE=MB"
+        */
+        rt = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE);
+
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGV(TAG, "Found %s = %s",
+          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE),
+                 rt);
+    #endif
+
+        /* ensure we are using one of the supported values, otherwise default to KiB */
+        if (   XSTRCMP(rt, "Byte") == 0 || XSTRCMP(rt, "Bytes") == 0
+            || XSTRCMP(rt, "byte") == 0 || XSTRCMP(rt, "bytes") == 0
+            || XSTRCMP(rt, "b")    == 0 || XSTRCMP(rt, "B")     == 0
+           ) {
+            *blocks /= (1000UL * 1000UL);
+            rt = "bytes";
+        } /* is KB? */
+        else if (    XSTRCMP(rt, "MB") == 0 || XSTRCMP(rt, "mb") == 0
+                 ||  XSTRCMP(rt, "M")  == 0 || XSTRCMP(rt, "m")  == 0
+                ) {
+            *blocks /= (1000UL);
+            rt = "MB";
+        } /* else was MB? */
+        else {
+            rt = "KB";
+        } /* rt value check  */
+
+#else
+        /* if not user-specfied, auto-scale each metric (results vary)
+        **
+        ** determine if we should show as KB or MB
+        */
+        if (*blocks > (1000UL * 1000UL)) {
+            *blocks /= (1000UL * 1000UL);
+            rt = "MB";
+        }
+        else if (*blocks > 1000) {
+            *blocks /= 1000; /* make KB */
+            rt = "KB";
+        }
+        else {
+            rt = "bytes";
+        } /* rt auto-assigned */
+#endif /* WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE */
+
+    return rt;
+}
 
 /* countSz is number of bytes that 1 count represents. Normally bench_size,
  * except for AES direct that operates on AES_BLOCK_SIZE blocks */
@@ -1731,100 +1848,10 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 
     /* determine if we have fixed units, or auto-scale bits or bytes for units */
     if (base2) {
-
-#if defined(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE)
-
-        blockType = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
-
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGV(TAG, "%s = %s",
-          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE),
-                 blockType);
-    #endif
-
-        /* ensure we are using one of the supported values, otherwise default to KiB */
-        if (XSTRCMP(blockType, "Byte") == 0 || XSTRCMP(blockType, "Bytes") == 0
-         || XSTRCMP(blockType, "byte") == 0 || XSTRCMP(blockType, "bytes") == 0
-         || XSTRCMP(blockType, "b")    == 0 || XSTRCMP(blockType, "B")     == 0
-           ) {
-            blockType = "bytes";
-        }
-        else if (XSTRCMP(blockType, "MiB") == 0 || XSTRCMP(blockType, "M") == 0
-              || XSTRCMP(blockType, "mib") == 0 || XSTRCMP(blockType, "m") == 0
-              || XSTRCMP(blockType, "mb")  == 0
-              || XSTRCMP(blockType, "M")   == 0
-                ) {
-            blocks /= (1024UL * 1024UL);
-            blockType = "MiB";
-        }
-        else {
-            blocks /= 1024;
-            blockType = "KiB";
-        } /* blockType value check  */
-
-#else
-        /* determine if we should show as KiB or MiB */
-        if (blocks > (1024UL * 1024UL)) {
-            blocks /= (1024UL * 1024UL);
-            blockType = "MiB";
-        }
-        else if (blocks > 1024) {
-            blocks /= 1024;
-            blockType = "KiB";
-        }
-        else {
-            blockType = "bytes";
-        }
-
-#endif /* WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE */
+        blockType = specified_base2_blockType(&blocks);
     } /* is base2 bit counter */
-
     else {
-
-#if defined(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE)
-
-        blockType = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE);
-
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGV(TAG, "Found %s = %s",
-          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE),
-                 blockType);
-    #endif
-
-        /* ensure we are using one of the supported values, otherwise default to KiB */
-        if (XSTRCMP(blockType, "Byte") == 0 || XSTRCMP(blockType, "Bytes") == 0
-         || XSTRCMP(blockType, "byte") == 0 || XSTRCMP(blockType, "bytes") == 0
-         || XSTRCMP(blockType, "b")    == 0 || XSTRCMP(blockType, "B")     == 0
-           ) {
-            blocks /= (1000UL * 1000UL);
-            blockType = "bytes";
-        } /* is KB? */
-        else if (XSTRCMP(blockType, "MB") == 0 || XSTRCMP(blockType, "mb") == 0
-             ||  XSTRCMP(blockType, "M")  == 0 || XSTRCMP(blockType, "m")  == 0
-                ) {
-            blocks /= (1000UL * 1000UL);
-            blockType = "MB";
-        } /* else was MB? */
-        else {
-            blockType = "KB";
-        } /* blockType value check  */
-
-
-#else
-        /* determine if we should show as KB or MB */
-        if (blocks > (1000UL * 1000UL)) {
-            blocks /= (1000UL * 1000UL);
-            blockType = "MB";
-        }
-        else if (blocks > 1000) {
-            blocks /= 1000; /* make KB */
-            blockType = "KB";
-        }
-        else {
-            blockType = "bytes";
-        }
-#endif /* WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE */
-
+        blockType = specified_blockType(&blocks);
     } /* not base2, is byte counter */
 
     /* calculate blocks per second */
