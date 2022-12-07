@@ -27,6 +27,11 @@
     #include <config.h>
 #endif
 
+/* some helpers to get values of benchmark units */
+#define __BENCHMARK_UNIT_VALUE_TO_STRING(x) #x
+#define __BENCHMARK_UNIT_VALUE(x) __BENCHMARK_UNIT_VALUE_TO_STRING(x)
+
+
 #ifndef WOLFSSL_USER_SETTINGS
     #include <wolfssl/options.h>
 #endif
@@ -37,7 +42,7 @@
 #include <wolfssl/wolfcrypt/ecc.h>
 
 #ifdef WOLFSSL_ESPIDF
-    #include <xtensa/hal.h>
+    #include <xtensa/hal.h> /* reminder Espressif RISC-V not yet implemented */
     #include <esp_log.h>
 #endif
 
@@ -452,24 +457,6 @@ static const char err_prefix[] = "";
 #define BENCH_KYBER_LEVEL3_ENCAP        0x00000020
 #define BENCH_KYBER_LEVEL5_KEYGEN       0x00000040
 #define BENCH_KYBER_LEVEL5_ENCAP        0x00000080
-#define BENCH_KYBER90S_LEVEL1_KEYGEN    0x00000100
-#define BENCH_KYBER90S_LEVEL1_ENCAP     0x00000200
-#define BENCH_KYBER90S_LEVEL3_KEYGEN    0x00000400
-#define BENCH_KYBER90S_LEVEL3_ENCAP     0x00000800
-#define BENCH_KYBER90S_LEVEL5_KEYGEN    0x00001000
-#define BENCH_KYBER90S_LEVEL5_ENCAP     0x00002000
-#define BENCH_SABER_LEVEL1_KEYGEN       0x00004000
-#define BENCH_SABER_LEVEL1_ENCAP        0x00008000
-#define BENCH_SABER_LEVEL3_KEYGEN       0x00010000
-#define BENCH_SABER_LEVEL3_ENCAP        0x00020000
-#define BENCH_SABER_LEVEL5_KEYGEN       0x00040000
-#define BENCH_SABER_LEVEL5_ENCAP        0x00080000
-#define BENCH_NTRUHPS_LEVEL1_KEYGEN     0x00100000
-#define BENCH_NTRUHPS_LEVEL1_ENCAP      0x00200000
-#define BENCH_NTRUHPS_LEVEL3_KEYGEN     0x00400000
-#define BENCH_NTRUHPS_LEVEL3_ENCAP      0x00800000
-#define BENCH_NTRUHPS_LEVEL5_KEYGEN     0x01000000
-#define BENCH_NTRUHPS_LEVEL5_ENCAP      0x02000000
 #define BENCH_DILITHIUM_LEVEL2_SIGN     0x04000000
 #define BENCH_DILITHIUM_LEVEL3_SIGN     0x08000000
 #define BENCH_DILITHIUM_LEVEL5_SIGN     0x10000000
@@ -806,42 +793,6 @@ static const bench_pq_alg bench_pq_asym_opt[] = {
       OQS_KEM_alg_kyber_1024 },
     { "-kyber_level5-ed",       BENCH_KYBER_LEVEL5_ENCAP,
       OQS_KEM_alg_kyber_1024 },
-    { "-kyber90s_level1-kg", BENCH_KYBER90S_LEVEL1_KEYGEN,
-      OQS_KEM_alg_kyber_512_90s },
-    { "-kyber90s_level1-ed",    BENCH_KYBER90S_LEVEL1_ENCAP,
-      OQS_KEM_alg_kyber_512_90s },
-    { "-kyber90s_level3-kg", BENCH_KYBER90S_LEVEL3_KEYGEN,
-      OQS_KEM_alg_kyber_768_90s },
-    { "-kyber90s_level3-ed",    BENCH_KYBER90S_LEVEL3_ENCAP,
-      OQS_KEM_alg_kyber_768_90s },
-    { "-kyber90s_level5-kg", BENCH_KYBER90S_LEVEL5_KEYGEN,
-      OQS_KEM_alg_kyber_1024_90s},
-    { "-kyber90s_level5-ed",    BENCH_KYBER90S_LEVEL5_ENCAP,
-      OQS_KEM_alg_kyber_1024_90s },
-    { "-saber_level1-kg",    BENCH_SABER_LEVEL1_KEYGEN,
-      OQS_KEM_alg_saber_lightsaber },
-    { "-saber_level1-ed",       BENCH_SABER_LEVEL1_ENCAP,
-      OQS_KEM_alg_saber_lightsaber },
-    { "-saber_level3-kg",    BENCH_SABER_LEVEL3_KEYGEN,
-      OQS_KEM_alg_saber_saber },
-    { "-saber_level3-ed",       BENCH_SABER_LEVEL3_ENCAP,
-      OQS_KEM_alg_saber_saber },
-    { "-saber_level5-kg",    BENCH_SABER_LEVEL5_KEYGEN,
-      OQS_KEM_alg_saber_firesaber },
-    { "-saber_level5-ed",       BENCH_SABER_LEVEL5_ENCAP,
-      OQS_KEM_alg_saber_firesaber },
-    { "-ntruHPS_level1-kg",  BENCH_NTRUHPS_LEVEL1_KEYGEN,
-      OQS_KEM_alg_ntru_hps2048509 },
-    { "-ntruHPS_level1-ed",     BENCH_NTRUHPS_LEVEL1_ENCAP,
-      OQS_KEM_alg_ntru_hps2048509 },
-    { "-ntruHPS_level3-kg",  BENCH_NTRUHPS_LEVEL3_KEYGEN,
-      OQS_KEM_alg_ntru_hps2048677 },
-    { "-ntruHPS_level3-ed",     BENCH_NTRUHPS_LEVEL3_ENCAP,
-      OQS_KEM_alg_ntru_hps2048677 },
-    { "-ntruHPS_level5-kg",  BENCH_NTRUHPS_LEVEL5_KEYGEN,
-      OQS_KEM_alg_ntru_hps4096821 },
-    { "-ntruHPS_level5-ed",     BENCH_NTRUHPS_LEVEL5_ENCAP,
-      OQS_KEM_alg_ntru_hps4096821 },
 #endif /* HAVE_LIBOQS */
     { NULL, 0, NULL }
 };
@@ -1064,9 +1015,9 @@ static const char* bench_desc_words[][15] = {
               (void)XSNPRINTF(b + XSTRLEN(b), n - XSTRLEN(b), "%.6f,\n", \
               (float)total_cycles / (count*s))
 
-    /* xthal_get_ccount_ex is a single-overflow-tolerant extension to
+    /* xthal_get_ccount_ex() is a single-overflow-tolerant extension to
     ** the Espressif `unsigned xthal_get_ccount()` which is known to overflow
-    ** at least once during benchmark tests.
+    ** at least once during full benchmark tests.
     */
     unsigned long long xthal_get_ccount_ex()
     {
@@ -1086,13 +1037,18 @@ static const char* bench_desc_words[][15] = {
             ** NOTE for long duration between calls with multiple overflows:
             **
             **   WILL NOT BE DETECTED - the return value will be INCORRECT.
+            **
+            ** At this time no single test overflows. This is currently only a
+            ** concern for cumulative counts over multiple tests. As long
+            ** as well call xthal_get_ccount_ex() with no more than one
+            ** overflow CPU tick count, all will be well.
             */
             ESP_LOGV(TAG, "Alert: Detected xthal_get_ccount overflow, "
                           "adding %ull", UINT_MAX);
             thisVal += (unsigned long long)UINT_MAX;
         }
 
-        /* adjust out actual returned value that takes into account overflow */
+        /* adjust our actual returned value that takes into account overflow */
         _xthal_get_ccount_ex += (thisVal - _xthal_get_ccount_last);
 
         /* all of this took some time, so reset the "last seen" value */
@@ -1153,11 +1109,12 @@ static const char* bench_desc_words[][15] = {
 #endif
 #endif
 
-#if (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WC_NO_RNG)) \
+#if !defined(WC_NO_RNG) && \
+        ((!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) \
         || !defined(NO_DH) || defined(WOLFSSL_KEY_GEN) || defined(HAVE_ECC) \
         || defined(HAVE_CURVE25519) || defined(HAVE_ED25519) \
         || defined(HAVE_CURVE448) || defined(HAVE_ED448) \
-        || defined(WOLFSSL_HAVE_KYBER)
+        || defined(WOLFSSL_HAVE_KYBER))
     #define HAVE_LOCAL_RNG
     static THREAD_LS_T WC_RNG gRng;
     #define GLOBAL_RNG &gRng
@@ -1693,9 +1650,9 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
     *count = 0;
     *start = current_time(1);
 
+#ifdef WOLFSSL_ESPIDF
     ESP_LOGV(TAG, "finish total_cycles = %llu, start=%f", total_cycles, *start );
 
-#ifdef WOLFSSL_ESPIDF
     BEGIN_ESP_CYCLES
 #else
     BEGIN_INTEL_CYCLES
@@ -1726,7 +1683,10 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 #endif
 
     total = current_time(0) - start;
+
+#ifdef WOLFSSL_ESPIDF
     ESP_LOGV(TAG, "%s total_cycles = %llu", desc, total_cycles);
+#endif
 
 #ifdef LINUX_RUSAGE_UTIME
     check_for_excessive_stime(desc, "");
@@ -1739,7 +1699,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         if (sym_header_printed == 0) {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
             printf("%s", "\"sym\",Algorithm,HW/SW,bytes_total,seconds_total,"
-                   "MB/s,cycles_total,Cycles per byte!,\n");
+                   "MB/s,cycles_total,Cycles per byte,\n");
 #else
             printf("\n\nSymmetric Ciphers:\n\n");
             printf("Algorithm,MB/s,Cycles per byte,\n");
@@ -1748,11 +1708,60 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         }
     }
 
+//    #define  __BENCHMARK_FIXED_BASE2
+//    #define stringer( x )  __BENCHMARK_FIXED_BASE2(#x)
+//    #define XSTR(x) STR(x)
+//
+//    #define STR(x) #x
+//    #define stringer2( x )  WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE(char a* = "##x");
+//
+//    #define VALUE_TO_STRING(x) #x
+//    #define VALUE(x) VALUE_TO_STRING(x)
+//    #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+//
+//    ESP_LOGI(TAG, ">>>> %s", stringer(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE) ); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE"
+//    ESP_LOGI(TAG, ">>>> %s", STR(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE) ); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE"
+//
+//
+//    blockType = VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
+//
+//    ESP_LOGI(TAG, "blockType >>>> %s", blockType); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE=KB"
+
+
+
     /* determine if we have fixed units, or auto-scale bits or bytes for units */
     if (base2) {
 
 #if defined(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE)
-        blockType = WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE;
+
+        blockType = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
+
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGI(TAG, "%s = %s",
+          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE),
+                 blockType);
+    #endif
+
+        /* ensure we are using one of the supported values, otherwise default to KiB */
+        if (XSTRCMP(blockType, "Byte") == 0 || XSTRCMP(blockType, "Bytes") == 0
+         || XSTRCMP(blockType, "byte") == 0 || XSTRCMP(blockType, "bytes") == 0
+         || XSTRCMP(blockType, "b")    == 0 || XSTRCMP(blockType, "B")     == 0
+           ) {
+            blockType = "bytes";
+        }
+        else if (XSTRCMP(blockType, "MiB") == 0 || XSTRCMP(blockType, "M") == 0
+              || XSTRCMP(blockType, "mib") == 0 || XSTRCMP(blockType, "m") == 0
+              || XSTRCMP(blockType, "mb")  == 0
+              || XSTRCMP(blockType, "M")   == 0
+                ) {
+            blocks /= (1024UL * 1024UL);
+            blockType = "MiB";
+        }
+        else {
+            blocks /= 1024;
+            blockType = "KiB";
+        } /* blockType value check  */
+
 #else
         /* determine if we should show as KiB or MiB */
         if (blocks > (1024UL * 1024UL)) {
@@ -1766,13 +1775,41 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         else {
             blockType = "bytes";
         }
+
 #endif /* WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE */
     } /* is base2 bit counter */
 
     else {
 
 #if defined(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE)
-        blockType = WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE;
+
+        blockType = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE);
+
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGV(TAG, "Found %s = %s",
+          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE),
+                 blockType);
+    #endif
+
+        /* ensure we are using one of the supported values, otherwise default to KiB */
+        if (XSTRCMP(blockType, "Byte") == 0 || XSTRCMP(blockType, "Bytes") == 0
+         || XSTRCMP(blockType, "byte") == 0 || XSTRCMP(blockType, "bytes") == 0
+         || XSTRCMP(blockType, "b")    == 0 || XSTRCMP(blockType, "B")     == 0
+           ) {
+            blocks /= (1000UL * 1000UL);
+            blockType = "bytes";
+        } /* is KB? */
+        else if (XSTRCMP(blockType, "MB") == 0 || XSTRCMP(blockType, "mb") == 0
+             ||  XSTRCMP(blockType, "M")  == 0 || XSTRCMP(blockType, "m")  == 0
+                ) {
+            blocks /= (1000UL * 1000UL);
+            blockType = "MB";
+        } /* else was MB? */
+        else {
+            blockType = "KB";
+        } /* blockType value check  */
+
+
 #else
         /* determine if we should show as KB or MB */
         if (blocks > (1000UL * 1000UL)) {
@@ -1787,6 +1824,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
             blockType = "bytes";
         }
 #endif /* WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE */
+
     } /* not base2, is byte counter */
 
     /* calculate blocks per second */
@@ -1837,7 +1875,9 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     #else
         SHOW_INTEL_CYCLES_CSV(msg, sizeof(msg), countSz);
     #endif
-    } else {
+    } /* if (csv_format == 1) */
+
+    else {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
@@ -1856,7 +1896,8 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 #else
         SHOW_INTEL_CYCLES(msg, sizeof(msg), countSz);
 #endif
-    }
+    } /* not CSV format */
+
     printf("%s", msg);
 
     /* show errors */
@@ -2750,42 +2791,6 @@ static void* benchmarks_do(void* args)
         bench_pqcKemKeygen(BENCH_KYBER_LEVEL5_KEYGEN);
     if (bench_all || (bench_pq_asym_algs & BENCH_KYBER_LEVEL5_ENCAP))
         bench_pqcKemEncapDecap(BENCH_KYBER_LEVEL5_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL1_KEYGEN))
-        bench_pqcKemKeygen(BENCH_KYBER90S_LEVEL1_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL1_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_KYBER90S_LEVEL1_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL3_KEYGEN))
-        bench_pqcKemKeygen(BENCH_KYBER90S_LEVEL3_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL3_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_KYBER90S_LEVEL3_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL5_KEYGEN))
-        bench_pqcKemKeygen(BENCH_KYBER90S_LEVEL5_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER90S_LEVEL5_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_KYBER90S_LEVEL5_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL1_KEYGEN))
-        bench_pqcKemKeygen(BENCH_SABER_LEVEL1_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL1_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL1_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL3_KEYGEN))
-        bench_pqcKemKeygen(BENCH_SABER_LEVEL3_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL3_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL3_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL5_KEYGEN))
-        bench_pqcKemKeygen(BENCH_SABER_LEVEL5_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_SABER_LEVEL5_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_SABER_LEVEL5_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL1_KEYGEN))
-        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL1_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL1_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL1_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL3_KEYGEN))
-        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL3_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL3_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL3_ENCAP);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL5_KEYGEN))
-        bench_pqcKemKeygen(BENCH_NTRUHPS_LEVEL5_KEYGEN);
-    if (bench_all || (bench_pq_asym_algs & BENCH_NTRUHPS_LEVEL5_ENCAP))
-        bench_pqcKemEncapDecap(BENCH_NTRUHPS_LEVEL5_ENCAP);
 #ifdef HAVE_FALCON
     if (bench_all || (bench_pq_asym_algs & BENCH_FALCON_LEVEL1_SIGN))
         bench_falconKeySign(1);
@@ -3493,7 +3498,7 @@ static void bench_aesecb_internal(int useDeviceID, const byte* key, word32 keySz
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = (bench_size / AES_BLOCK_SIZE) + 1;
+        int outer_loop_limit = ((bench_size / AES_BLOCK_SIZE) * 10) + 1;
         for (times = 0;
              times < outer_loop_limit /* numBlocks */ || pending > 0;
             ) {
@@ -3535,7 +3540,7 @@ exit_aes_enc:
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = (bench_size / AES_BLOCK_SIZE) + 1;
+        int outer_loop_limit = (10 * (bench_size / AES_BLOCK_SIZE)) + 1;
         for (times = 0; times < outer_loop_limit || pending > 0; ) {
             bench_async_poll(&pending);
 
@@ -8771,13 +8776,27 @@ static int string_matches(const char* arg, const char* str)
 }
 #endif /* MAIN_NO_ARGS */
 
+/*
+** ----------------------------------------------------------------------------
+** determine how the benchmarks are called, the function name varies:
+** ----------------------------------------------------------------------------
+*/
 #if !defined(NO_MAIN_DRIVER) && !defined(NO_MAIN_FUNCTION)
     #if defined(WOLFSSL_ESPIDF) || defined(_WIN32_WCE)
+
+        /* for some environments, we'll call a function wolf_benchmark_task: */
         int wolf_benchmark_task(void)
+
     #elif defined(MAIN_NO_ARGS)
+
+        /* otherwise we'll use main() with no arguments as desired: */
         int main()
+
     #else
+
+        /* else we'll be calling main with default arg parameters */
         int main(int argc, char** argv)
+
     #endif
 {
     #ifdef WOLFSSL_ESPIDF
