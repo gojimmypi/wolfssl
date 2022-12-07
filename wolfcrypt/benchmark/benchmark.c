@@ -1737,7 +1737,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         blockType = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
 
     #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGI(TAG, "%s = %s",
+        ESP_LOGV(TAG, "%s = %s",
           __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE),
                  blockType);
     #endif
