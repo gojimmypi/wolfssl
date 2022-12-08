@@ -8711,14 +8711,10 @@ static void print_alg(const char* str, int* line)
 
     optLen = (int)XSTRLEN(str) + 1;
     if (optLen + *line > 80) {
-        printf(">80\n          ");
+        printf("\n             ");
         *line = 13;
     }
-    else {
-        printf("aha! \n");
-    }
     *line += optLen;
-    printf(" %s !!", str);
 }
 #endif /* WOLFSSL_BENCHMARK_ALL */
 
