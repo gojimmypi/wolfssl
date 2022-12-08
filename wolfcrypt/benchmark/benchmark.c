@@ -27,12 +27,15 @@
     #include <config.h>
 #endif
 
-/* some internal helpers to get values of benchmark units     */
+/* define the max length for each string of metric reported */
+#define __BENCHMARK_MAXIMUM_LINE_LENGTH 150
+
+/* some internal helpers to get values of settings   */
 /* this first one gets the text name of the #define parameter */
-#define __BENCHMARK_UNIT_VALUE_TO_STRING(x) #x
+#define __BENCHMARK_VALUE_TO_STRING(x) #x
 
 /* this next one gets the text value of the assigned value of #define param */
-#define __BENCHMARK_UNIT_VALUE(x) __BENCHMARK_UNIT_VALUE_TO_STRING(x)
+#define __BENCHMARK_VALUE(x) __BENCHMARK_VALUE_TO_STRING(x)
 
 
 #ifndef WOLFSSL_USER_SETTINGS
@@ -45,7 +48,6 @@
 #include <wolfssl/wolfcrypt/ecc.h>
 
 #ifdef WOLFSSL_ESPIDF
-//    #undef WOLFSSL_ESPIDF
     #include <xtensa/hal.h> /* reminder Espressif RISC-V not yet implemented */
     #include <esp_log.h>
 #endif
@@ -123,7 +125,7 @@
     static int printfk(const char *fmt, ...)
     {
         int ret;
-        char line[150];
+        char line[__BENCHMARK_MAXIMUM_LINE_LENGTH];
         va_list ap;
 
         va_start(ap, fmt);
@@ -1768,7 +1770,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 {
     double total, persec = 0, blocks = (double)count;
     const char* blockType;
-    char msg[128] = {0};
+    char msg[__BENCHMARK_MAXIMUM_LINE_LENGTH] = {0};
     const char** word = bench_result_words1[lng_index];
     static int sym_header_printed = 0;
 
@@ -1829,18 +1831,39 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     #else
         word64 bytes_processed;
     #endif
-        if (blockType[0] == 'K')
-            bytes_processed = (word64)(blocks * (base2 ? 1024. : 1000.));
-        else if (blockType[0] == 'M')
+        if (blockType[0] == 'K') {
+            bytes_processed =
+                (word64)(blocks * (base2 ? 1024. : 1000.));
+        }
+        else if (blockType[0] == 'M') {
             bytes_processed =
                 (word64)(blocks * (base2 ? (1024. * 1024.) : (1000. * 1000.)));
-        else
-            bytes_processed = (word64)blocks;
+        }
+        else if (blockType[0] == 'G') {
+            bytes_processed =
+                (word64)(blocks * (base2 ? (1024. * 1024. * 1024.)
+                                         : (1000. * 1000. * 1000.)
+                                   )
+                        );
+        }
+        else {
+            bytes_processed =
+                (word64)blocks;
+        }
 #endif
-        if (blockType[0] == 'K')
+        if (blockType[0] == 'K') {
             persec /= base2 ? 1024. : 1000.;
-        else if (blockType[0] == 'b')
+        }
+        else if (blockType[0] == 'M') {
             persec /= base2 ? (1024. * 1024.) : (1000. * 1000.);
+        }
+        else if (blockType[0] == 'G') {
+            persec /= base2 ? (1024. * 1024. * 1024.)
+                            : (1000. * 1000. * 1000.);
+        }
+        else {
+            /* no scale needed for bytes */
+        }
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
     /* note this codepath brings in all the fields from the non-CSV case. */
@@ -2050,7 +2073,7 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID, int co
     double total, each = 0, opsSec, milliEach;
     const char **word = bench_result_words2[lng_index];
     const char* kOpsSec = "Ops/Sec";
-    char msg[128] = {0};
+    char msg[__BENCHMARK_MAXIMUM_LINE_LENGTH] = {0};
     static int pqasym_header_printed = 0;
 
     total = current_time(0) - start;
@@ -8688,13 +8711,16 @@ static void print_alg(const char* str, int* line)
 
     optLen = (int)XSTRLEN(str) + 1;
     if (optLen + *line > 80) {
-        printf("\n             ");
+        printf(">80\n          ");
         *line = 13;
     }
+    else {
+        printf("aha! \n");
+    }
     *line += optLen;
-    printf(" %s", str);
+    printf(" %s !!", str);
 }
-#endif
+#endif /* WOLFSSL_BENCHMARK_ALL */
 
 /* Display the usage options of the benchmark program. */
 static void Usage(void)
