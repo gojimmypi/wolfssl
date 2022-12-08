@@ -45,6 +45,7 @@
 #include <wolfssl/wolfcrypt/ecc.h>
 
 #ifdef WOLFSSL_ESPIDF
+//    #undef WOLFSSL_ESPIDF
     #include <xtensa/hal.h> /* reminder Espressif RISC-V not yet implemented */
     #include <esp_log.h>
 #endif
@@ -85,11 +86,11 @@
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
-static const char info_prefix[] = "###, ";
-static const char err_prefix[] = "!!!, ";
+    static const char info_prefix[] = "###, ";
+    static const char err_prefix[] = "!!!, ";
 #else
-static const char info_prefix[] = "";
-static const char err_prefix[] = "";
+    static const char info_prefix[] = "";
+    static const char err_prefix[] = "";
 #endif
 
 
@@ -1024,7 +1025,7 @@ static const char* bench_desc_words[][15] = {
     */
     unsigned long long xthal_get_ccount_ex()
     {
-        /* unsigned long long max = 18,446,744,073,709,551,615 */
+        /* reminder: unsigned long long max = 18,446,744,073,709,551,615 */
 
         /* the currently observed clock counter value */
         unsigned long long thisVal = xthal_get_ccount();
@@ -1060,6 +1061,9 @@ static const char* bench_desc_words[][15] = {
         return _xthal_get_ccount_ex;
     }
 #else
+    /* if we don't know the platform, it is unlikely we can count CPU cycles */
+    #undef HAVE_GET_CYCLES
+
     #define INIT_CYCLE_COUNTER
     #define BEGIN_INTEL_CYCLES
     #define END_INTEL_CYCLES
@@ -1169,6 +1173,7 @@ static const char* bench_result_words2[][5] = {
     static volatile int g_threadCount;
 #endif
 
+/* WOLFSSL_ASYNC_CRYPT */
 #ifdef WOLFSSL_ASYNC_CRYPT
     static WOLF_EVENT_QUEUE eventQueue;
 
@@ -1344,6 +1349,7 @@ static const char* bench_result_words2[][5] = {
         }
     }
 #endif
+
 #ifndef BENCH_CIPHER_ADD
     #define BENCH_CIPHER_ADD 0
 #endif
@@ -1371,30 +1377,33 @@ static const char* bench_result_words2[][5] = {
     #define NUM_BLOCKS 5
     #define BENCH_SIZE (1024*1024uL)
 #endif
+
 static int    numBlocks  = NUM_BLOCKS;
 static word32 bench_size = BENCH_SIZE;
 static int base2 = 1;
 static int digest_stream = 1;
+
 #ifndef NO_RSA
-/* Don't measure RSA sign/verify by default */
-static int rsa_sign_verify = 0;
+    /* Don't measure RSA sign/verify by default */
+    static int rsa_sign_verify = 0;
 #endif
+
 #ifndef NO_DH
-/* Use the FFDHE parameters */
-static int use_ffdhe = 0;
+    /* Use the FFDHE parameters */
+    static int use_ffdhe = 0;
 #endif
 
 /* Don't print out in CSV format by default */
 static int csv_format = 0;
 
 #ifdef WOLFSSL_XILINX_CRYPT_VERSAL
-/* Versal PLM maybe prints an error message to the same console.
- * In order to not mix those outputs up, sleep a little while
- * before erroring out.
- */
-#define SLEEP_ON_ERROR(ret) do{ if (ret != 0) { sleep(1); } }while(0)
+    /* Versal PLM maybe prints an error message to the same console.
+     * In order to not mix those outputs up, sleep a little while
+     * before erroring out.
+     */
+    #define SLEEP_ON_ERROR(ret) do{ if (ret != 0) { sleep(1); } }while(0)
 #else
-#define SLEEP_ON_ERROR(ret) do{ /* noop */ }while(0)
+    #define SLEEP_ON_ERROR(ret) do{ /* noop */ }while(0)
 #endif
 
 /* globals for cipher tests */
@@ -1672,53 +1681,40 @@ static WC_INLINE const char* specified_base2_blockType(double * blocks)
 {
     const char* rt;
 
-#if defined(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE)
+#if defined(WOLFSSL_BENCHMARK_FIXED_UNITS_G) || defined(WOLFSSL_BENCHMARK_FIXED_UNITS_GB)
+    *blocks /= (1000UL * 1000UL * 1000UL);
+    rt = "GiB";
 
-    /* get the text used for units and scale the value of blocks as needed */
-    rt = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
+#elif defined(WOLFSSL_BENCHMARK_FIXED_UNITS_M) || defined(WOLFSSL_BENCHMARK_FIXED_UNITS_MB)
+    *blocks /= (1024UL * 1024UL);
+    rt = "MiB";
 
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGV(TAG, "%s = %s",
-          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE),
-                 rt);
-    #endif
+#elif defined (WOLFSSL_BENCHMARK_FIXED_UNITS_K) || defined (WOLFSSL_BENCHMARK_FIXED_UNITS_KB)
+    *blocks /= 1024;
+    rt = "KiB";
 
-        /* ensure we are using one of the supported values, otherwise default to KiB */
-        if (   XSTRCMP(rt, "Byte") == 0 || XSTRCMP(rt, "Bytes") == 0
-            || XSTRCMP(rt, "byte") == 0 || XSTRCMP(rt, "bytes") == 0
-            || XSTRCMP(rt, "b")    == 0 || XSTRCMP(rt, "B")     == 0
-           ) {
-            rt = "bytes";
-        }
-        else if (   XSTRCMP(rt, "MiB") == 0 || XSTRCMP(rt, "M") == 0
-                 || XSTRCMP(rt, "mib") == 0 || XSTRCMP(rt, "m") == 0
-                 || XSTRCMP(rt, "mb")  == 0 || XSTRCMP(rt, "M") == 0
-                ) {
-            *blocks /= (1024UL * 1024UL);
-            rt = "MiB";
-        }
-        else {
-            *blocks /= 1024;
-            rt = "KiB";
-        } /* blockType value check  */
+#elif defined (WOLFSSL_BENCHMARK_FIXED_UNITS_B) || defined (WOLFSSL_BENCHMARK_FIXED_UNITS_BB)
+    (void)(*blocks); /* no adjustment, just appease compiler for not used */
+    rt = "bytes";
+
 #else
-        /* if not user-specfied, auto-scale each metric (results vary)
-        **
-        ** determine if we should show as KB or MB
-        */
-        if (*blocks > (1024UL * 1024UL)) {
-            *blocks /= (1024UL * 1024UL);
-            rt = "MiB";
-        }
-        else if (*blocks > 1024) {
-            *blocks /= 1024;
-            rt = "KiB";
-        }
-        else {
-            rt = "bytes";
-        }
+    /* if not user-specified, auto-scale each metric (results vary)
+    **
+    ** determine if we should show as KB or MB or bytes
+    */
+    if (*blocks > (1024UL * 1024UL)) {
+        *blocks /= (1024UL * 1024UL);
+        rt = "MiB";
+    }
+    else if (*blocks > 1024) {
+        *blocks /= 1024;
+        rt = "KiB";
+    }
+    else {
+        rt = "bytes";
+    }
 
-#endif /* WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE */
+#endif
 
     return rt;
 }
@@ -1728,43 +1724,26 @@ static WC_INLINE const char* specified_blockType(double * blocks)
 {
     const char* rt;
 
-#if defined(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE)
-        /* we'll get the value of the user specified units
-        **
-        ** e.g. MB from:
-        **
-        **  ./configure CFLAGS="-DWOLFSSL_BENCHMARK_FIXED_BLOCKTYPE=MB"
-        */
-        rt = __BENCHMARK_UNIT_VALUE(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE);
+#if defined(WOLFSSL_BENCHMARK_FIXED_UNITS_G) || defined(WOLFSSL_BENCHMARK_FIXED_UNITS_GB)
+    *blocks /= (1000UL * 1000UL * 1000UL);
+    rt = "GB";
 
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGV(TAG, "Found %s = %s",
-          __BENCHMARK_UNIT_VALUE_TO_STRING(WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE),
-                 rt);
-    #endif
+#elif defined(WOLFSSL_BENCHMARK_FIXED_UNITS_M) || defined(WOLFSSL_BENCHMARK_FIXED_UNITS_MB)
+    *blocks /= (1000UL * 1000UL);
+    rt = "MB";
 
-        /* ensure we are using one of the supported values, otherwise default to KiB */
-        if (   XSTRCMP(rt, "Byte") == 0 || XSTRCMP(rt, "Bytes") == 0
-            || XSTRCMP(rt, "byte") == 0 || XSTRCMP(rt, "bytes") == 0
-            || XSTRCMP(rt, "b")    == 0 || XSTRCMP(rt, "B")     == 0
-           ) {
-            *blocks /= (1000UL * 1000UL);
-            rt = "bytes";
-        } /* is KB? */
-        else if (    XSTRCMP(rt, "MB") == 0 || XSTRCMP(rt, "mb") == 0
-                 ||  XSTRCMP(rt, "M")  == 0 || XSTRCMP(rt, "m")  == 0
-                ) {
-            *blocks /= (1000UL);
-            rt = "MB";
-        } /* else was MB? */
-        else {
-            rt = "KB";
-        } /* rt value check  */
+#elif defined (WOLFSSL_BENCHMARK_FIXED_UNITS_K) || defined (WOLFSSL_BENCHMARK_FIXED_UNITS_KB)
+    *blocks /= (1000UL);
+    rt = "KB";
+
+#elif defined (WOLFSSL_BENCHMARK_FIXED_UNITS_B) || defined (WOLFSSL_BENCHMARK_FIXED_UNITS_BB)
+    (void)(*blocks); /* no adjustment, just appease compiler */
+    rt = "bytes";
 
 #else
-        /* if not user-specfied, auto-scale each metric (results vary)
+        /* if not user-specified, auto-scale each metric (results vary)
         **
-        ** determine if we should show as KB or MB
+        ** determine if we should show as KB or MB or bytes
         */
         if (*blocks > (1000UL * 1000UL)) {
             *blocks /= (1000UL * 1000UL);
@@ -1777,7 +1756,7 @@ static WC_INLINE const char* specified_blockType(double * blocks)
         else {
             rt = "bytes";
         } /* rt auto-assigned */
-#endif /* WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE */
+#endif /* WOLFSSL_BENCHMARK UNITS */
 
     return rt;
 }
@@ -1825,28 +1804,9 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         }
     }
 
-//    #define  __BENCHMARK_FIXED_BASE2
-//    #define stringer( x )  __BENCHMARK_FIXED_BASE2(#x)
-//    #define XSTR(x) STR(x)
-//
-//    #define STR(x) #x
-//    #define stringer2( x )  WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE(char a* = "##x");
-//
-//    #define VALUE_TO_STRING(x) #x
-//    #define VALUE(x) VALUE_TO_STRING(x)
-//    #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
-//
-//    ESP_LOGI(TAG, ">>>> %s", stringer(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE) ); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE"
-//    ESP_LOGI(TAG, ">>>> %s", STR(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE) ); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE"
-//
-//
-//    blockType = VALUE(WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE);
-//
-//    ESP_LOGI(TAG, "blockType >>>> %s", blockType); // prints "WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE=KB"
-
-
-
-    /* determine if we have fixed units, or auto-scale bits or bytes for units */
+    /* determine if we have fixed units, or auto-scale bits or bytes for units.
+    ** note that the blockType text is assigned AND the blocks param is scaled.
+    */
     if (base2) {
         blockType = specified_base2_blockType(&blocks);
     } /* is base2 bit counter */
@@ -1862,6 +1822,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
     SLEEP_ON_ERROR(ret);
     /* format and print to terminal */
     if (csv_format == 1) {
+
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
     #ifdef WOLFSSL_ESPIDF
         unsigned long bytes_processed;
@@ -1882,15 +1843,24 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
             persec /= base2 ? (1024. * 1024.) : (1000. * 1000.);
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
-        /* note this codepath brings in all the fields from the non-CSV case. */
+    /* note this codepath brings in all the fields from the non-CSV case. */
     #ifdef WOLFSSL_ESPIDF
+        #ifndef HAVE_GET_CYCLES
+            #warning "HAVE_GET_CYCLES should be defined for WOLFSSL_ESPIDF"
+        #endif
         ESP_LOGI(TAG,   "sym,%s,%s,%lu,%f,%f,%llu,", desc,
                         BENCH_ASYNC_GET_NAME(useDeviceID),
                         bytes_processed, total, persec,  total_cycles);
     #else
-        (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
-                        BENCH_ASYNC_GET_NAME(useDeviceID),
-                        bytes_processed, total, persec, total_cycles);
+        #ifdef HAVE_GET_CYCLES
+            (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
+                            BENCH_ASYNC_GET_NAME(useDeviceID),
+                            bytes_processed, total, persec, total_cycles);
+        #else
+            (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,", desc,
+                            BENCH_ASYNC_GET_NAME(useDeviceID),
+                            bytes_processed, total, persec);
+        #endif
     #endif
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%f,", desc, persec);
@@ -1906,11 +1876,19 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
 
     else {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
                  ", %lu cycles,",
                  desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
                  word[0], total, word[1], persec, blockType, (unsigned long) total_cycles);
+    #else
+        (void)XSNPRINTF(msg, sizeof(msg),
+                 "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
+                 ",",
+                 desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
+                 word[0], total, word[1], persec, blockType);
+    #endif /* HAVE_GET_CYCLES */
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
                  "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s",
@@ -1994,23 +1972,41 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
             asym_header_printed = 1;
         }
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
                         "asym,%s,%d,%s%s,%.3f,%.3f,%d,%f,%lu,%.6f\n",
                         algo, strength, desc, desc_extra, milliEach, opsSec,
                         count, total, (unsigned long) total_cycles,
                         (double)total_cycles / (double)count);
+    #else
+        (void)XSNPRINTF(msg, sizeof(msg),
+                        "asym,%s,%d,%s%s,%.3f,%.3f,%d,%f\n",
+                        algo, strength, desc, desc_extra, milliEach, opsSec,
+                        count, total);
+    #endif
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%d,%s%s,%.3f,%.3f,\n", algo,
                         strength, desc, desc_extra, milliEach, opsSec);
 #endif
-    } else {
+    } /* if (csv_format == 1) */
+
+    else {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
                         "%-6s %5d %8s%-2s %s %6d %s %5.3f %s, %s %5.3f ms,"
                         " %.3f %s, %lu cycles\n", algo, strength, desc,
                         desc_extra, BENCH_ASYNC_GET_NAME(useDeviceID),
                         count, word[0], total, word[1], word[2], milliEach,
                         opsSec, word[3], (unsigned long) total_cycles);
+    #else
+        (void)XSNPRINTF(msg, sizeof(msg),
+                        "%-6s %5d %8s%-2s %s %6d %s %5.3f %s, %s %5.3f ms,"
+                        " %.3f %s\n", algo, strength, desc,
+                        desc_extra, BENCH_ASYNC_GET_NAME(useDeviceID),
+                        count, word[0], total, word[1], word[2], milliEach,
+                        opsSec, word[3]);
+    #endif /* HAVE_GET_CYCLES */
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
                         "%-6s %5d %8s%-2s %s %6d %s %5.3f %s, %s %5.3f ms,"
@@ -3051,6 +3047,15 @@ int benchmark_test(void *args)
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_NO_ASYNC_THREADING)
 {
+    /* See the documentation when turning on WOLFSSL_ASYNC_CRYPT
+    **
+    ** Chapter Two, Build Options:
+    **
+    ** https://www.wolfssl.com/documentation/manuals/wolfssl/wolfSSL-Manual.pdf
+    **
+    ** asynchronous cryptography using hardware based adapters such as
+    ** the Intel QuickAssist or Marvell (Cavium) Nitrox V.
+    */
     int i;
 
     if (g_threadCount == 0) {

@@ -37,13 +37,8 @@
 /* Benchmark settings */
 #define GENERATE_MACHINE_PARSEABLE_REPORT
 
-/* valid values: "MB", "KB", or "bytes" */
-#define WOLFSSL_BENCHMARK_FIXED_BLOCKTYPE "KB"
-
-/* valid values: "MiB", "KiB", or "bytes" */
-#define WOLFSSL_BENCHMARK_FIXED_BASE2_BLOCKTYPE "KB"
-
-/* end of Bennchmark settings */
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_K
+/* end of Benchmark settings */
 
 
 #define WOLFSSL_ESPWROOM32

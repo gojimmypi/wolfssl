@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.c
 		..\..\..\..\..\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.h
+		..\..\..\..\..\PR_message.md = ..\..\..\..\..\PR_message.md
 		..\..\README.md = ..\..\README.md
 		..\..\UPDATE.md = ..\..\UPDATE.md
 		libs\user_settings_esp32.h = libs\user_settings_esp32.h
@@ -18,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP-IDF", "ESP-IDF", "{EA02
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.h
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfssl\options.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfssl\options.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
