@@ -2,17 +2,28 @@
 Building on the updates in [#5800](https://github.com/wolfSSL/wolfssl/pull/5800), this PR improves the 
 [wolfSSL wolfcrypt benchmark utility](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
 
+This PR mostly addresses features related to the `GENERATE_MACHINE_PARSEABLE_REPORT` option, and adds
+some fixed units (GB, MB, KB, or bytes) rather than auto-scaled units.
 
 ## Changes
 
-- Fixes [#5814](https://github.com/wolfSSL/wolfssl/issues/5814) Compile-time error when defining `GENERATE_MACHINE_PARSEABLE_REPORT`.
+This PR Fixes [#5814](https://github.com/wolfSSL/wolfssl/issues/5814) Compile-time error when defining `GENERATE_MACHINE_PARSEABLE_REPORT`.
+
+The [incremental changes to the `benchmark.c` file](https://github.com/gojimmypi/wolfssl/commits/Espressif_Multichip/wolfcrypt/benchmark/benchmark.c) are mixed in with my other [Espressif muilt-chip branch](https://github.com/wolfSSL/wolfssl/compare/master...gojimmypi:wolfssl:Espressif_Multichip).
+
+Specific changes:
+
 - Add benchmark cycle counts for Espressif Xtensa architecture on ESP32 chips.
 - Adds internal `__BENCHMARK_VALUE_TO_STRING(x)` and `__BENCHMARK_VALUE(x)` macros
 - Extends the Espressif [xthal_get_ccount()](https://github.com/espressif/esp-idf/blob/f90c12fc3cc5abb47a7f1088ada43a21b31d0357/components/xtensa/include/xtensa/hal.h#L726) to be _single_-rollover tolerant. See `xthal_get_ccount_ex()`
 - Allows for fixed-unit specification via the new `#define` options (in this order, if several supplied):
+
     `WOLFSSL_BENCHMARK_FIXED_UNITS_G` or `WOLFSSL_BENCHMARK_FIXED_UNITS_GB` for GB/GiB units
+
     `WOLFSSL_BENCHMARK_FIXED_UNITS_M` or `WOLFSSL_BENCHMARK_FIXED_UNITS_MB` for MB/MiB units 
+
     `WOLFSSL_BENCHMARK_FIXED_UNITS_K` or `WOLFSSL_BENCHMARK_FIXED_UNITS_KB` for KB/KiB units
+
     `WOLFSSL_BENCHMARK_FIXED_UNITS_B` or `WOLFSSL_BENCHMARK_FIXED_UNITS_BB` for Byte units
 
 - Add support for Expressif Xtensa architecture for `GENERATE_MACHINE_PARSEABLE_REPORT` 
@@ -20,13 +31,24 @@ Building on the updates in [#5800](https://github.com/wolfSSL/wolfssl/pull/5800)
 - Change 'GENERATE_MACHINE_PARSEABLE_REPORT` no longer limits to 80 char lines.
 - Define a new internal `__BENCHMARK_MAXIMUM_LINE_LENGTH` to define the maximum allowed line length of each metric. 
 - The new maximum line length has been increased from 128 to 150. Also fixes missing LF on some large byte metrics when using `GENERATE_MACHINE_PARSEABLE_REPORT`.
+- Properly honor the definition (or lack thereof) the `HAVE_GET_CYCLES`.
+- [Code formatting cleanup](https://github.com/gojimmypi/wolfssl/commit/5eec12458e1c0e6ed9160bc4788e9def2f7cd9a3) for wolfSSL coding standards.
+
+## Example usage
+
+This example will set all the resultant units to KB/KiB and generate a machine-parseable report:
+```
+./configure --enable-all CFLAGS="-DWOLFSSL_BENCHMARK_FIXED_UNITS_KB -DGENERATE_MACHINE_PARSEABLE_REPORT"
+```
 
 ## Review and testing of changes
+
+Some source code formatting-only changes were untestable and will depend on Jenkins.
 
 Visual inspection: the "cycles" count should be approximately equal to the CPU clock frequency, given that most measurements are
 for about 1 second duration.
 
-This script may be helpful in testing various parameters of the `benchmark` utility.
+This script may be helpful in testing various changes and parameters of the `benchmark` utility:
 
 ```
 #!/bin/bash
@@ -83,7 +105,7 @@ test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_BB -DGENERATE_MACHINE_PARSEABLE_
 
 ## Not addressed
 
-- There are Intel and Xtensa counts, other platforms may be missing? See `END_INTEL_CYCLES` and `END_ESP_CYCLES` macros.
+- There are Intel and Xtensa counts, other platforms may be missing? See `BEGIN/END_INTEL_CYCLES` and `BEGIN/END_ESP_CYCLES` macros.
 
 - The `printf` statements should eventually all be changed to lower-memory-utilization outputs for embedded devices, such as the Espressif `ESP_LOGI().`
 
@@ -94,16 +116,19 @@ test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_BB -DGENERATE_MACHINE_PARSEABLE_
  (on) RNG                        100 MiB took 1.017 seconds,   98.286 MiB/s, 3052336385 cycles, Cycles per byte =  29.11
 ```
 
+- It might be useful to include other details on the `GENERATE_MACHINE_PARSEABLE_REPORT` lines such as CPU/Platform type, 
+date of test, and more... with the intention of putting all this information in a common database.
+
 ## Known issues
 
 The units of GB are supported, but any resulting fractional numbers less than 1 are shown as zero.
 
-New platforms may have a zero displayed for CPU cycle counts. See 
+New platforms may have a zero displayed for CPU cycle counts.
 
 ## Developers Tools:
 
 
-Developers of ESP32 testing for other platforms may find this helpful.
+Developers of ESP32 testing for other platforms may find this helpful:
 
 As the application version of the `benchmark.c` file is in the `components` directory of the ESP-IDF,
 it needs to be copied back to the local repo when testing host-based benchmark. In this case on WSL/Ubuntu on Windows 10
@@ -123,3 +148,4 @@ if [ $retVal -ne 0 ]; then
     exit $retVal
 fi
 ```
+
