@@ -26,6 +26,13 @@ mkdir -p "$WOLFSSL_FILE_ROOT"
 # set a variable for the input command
 WOLFSSL_CMD_FILE="$WOLFSSL_FILE_ROOT/cmd.txt"
 
+# make sure we actually have a cmd.txt file
+if [ ! -f "$WOLFSSL_CMD_FILE" ]; then
+    echo "Looking for $WOLFSSL_CMD_FILE"
+    echo "The needed cmd.txt file was not found. Please see README.md file."
+    exit 1
+fi
+
 # setup some variables for output files
 WOLFSSL_OUTPUT="$WOLFSSL_FILE_ROOT/output.txt"
 WOLFSSL_OPTIONS="$WOLFSSL_FILE_ROOT/options.h"
@@ -43,13 +50,33 @@ if [ $retVal -ne 0 ]; then
     exit $retVal
 fi
 
-
 # show the command text found
 echo "CMD File= $WOLFSSL_CMD_FILE"
 echo ""
 
+# test drive the cat & cut
+cat $WOLFSSL_CMD_FILE | cut -d'#' -f1 > /dev/null
+
+# the first digit will be cat exit code; the second will be cut exit code.
+# success is expected to be "00".
+retVal="${PIPESTATUS[0]}${PIPESTATUS[1]}"
+
+# both the command and tee output must return a success (zero) to proceed.
+# echo "cat & cut = $retVal"
+if [ "$retVal" != "00" ]; then
+    echo "Error parsing the command in $WOLFSSL_CMD_FILE"
+    exit 1
+fi
+
 # get the contents of the command file, trimming all text after the # character
 WOLFSSL_CMD="$(cat $WOLFSSL_CMD_FILE | cut -d'#' -f1)"
+retVal=$?
+
+if [ $retVal -ne 0 ]; then
+    echo "Error assigning command value."
+    exit $retVal
+fi
+
 
 echo "Running command: "         > $WOLFSSL_OUTPUT
 echo ""                         >> $WOLFSSL_OUTPUT
@@ -67,16 +94,33 @@ echo ""                         >> $WOLFSSL_OUTPUT
 # Execute the command:
 # bash -c $WOLFSSL_CMD
 $(echo $WOLFSSL_CMD)             | tee --append "$WOLFSSL_OUTPUT"
-retVal=$?
-if [ $retVal -ne 0 ]; then
-    echo "Error"
-    exit $retVal
+
+# the first digit will be CMD exit code; the second will be tee exit code.
+# success is expected to be "00"
+retVal="${PIPESTATUS[0]}${PIPESTATUS[1]}"
+
+# check if the command failed, but tee success
+if [ "$retVal" == "10" ]; then
+    echo "The command in $WOLFSSL_CMD_FILE failed."
+    exit 1
+fi
+
+# check if the command was successful, but tee failes
+if [ "$retVal" == "01" ]; then
+    echo "Error running command to tee in $WOLFSSL_CMD_FILE"
+    exit 1
+fi
+
+# both the command and tee output must return a success (zero) to proceed.
+if [ "$retVal" != "00" ]; then
+    echo "Error running command $WOLFSSL_CMD_FILE"
+    exit 1
 fi
 
 # save the generated options.h
 echo ""
-echo moving $PWD/wolfssl/options.h to "$WOLFSSL_OPTIONS"
-mv wolfssl/options.h "$WOLFSSL_OPTIONS"
+echo Copying $PWD/wolfssl/options.h to "$WOLFSSL_OPTIONS"
+cp wolfssl/options.h "$WOLFSSL_OPTIONS"
 
 # pull out the enabled and disabled features into separate files
 echo ""
