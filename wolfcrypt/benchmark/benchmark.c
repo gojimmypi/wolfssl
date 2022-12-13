@@ -2130,9 +2130,15 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID,
         /* only print out header once */
         if (pqasym_header_printed == 0) {
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef HAVE_GET_CYCLES
             printf("%s",
                    "\"pq_asym\",Algorithm,avg ms,ops/sec,ops,secs,cycles,"
                    "cycles/op\n");
+    #else
+            printf("%s",
+                   "\"pq_asym\",Algorithm,avg ms,ops/sec,ops,secs\n");
+    #endif
+
 #else
             printf("\nPost Quantum Asymmetric Ciphers:\n\n");
             printf("Algorithm,avg ms,ops/sec,\n");
@@ -2140,10 +2146,16 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID,
             pqasym_header_printed = 1;
         }
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
+    #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
                         "pq_asym,%s,%.3f,%.3f,%d,%f,%lu,%.6f,\n",
                         algo, milliEach, opsSec, count, total, total_cycles,
                         (double)total_cycles / (double)count);
+    #else
+        (void)XSNPRINTF(msg, sizeof(msg),
+                        "pq_asym,%s,%.3f,%.3f,%d,%f,%lu,%.6f,\n",
+                        algo, milliEach, opsSec, count, total);
+    #endif
 #else
         (void)XSNPRINTF(msg, sizeof(msg), "%s %.3f,%.3f,\n", algo, milliEach,
                         opsSec);
