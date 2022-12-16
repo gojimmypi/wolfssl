@@ -1900,16 +1900,19 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     #ifdef WOLFSSL_ESPIDF
         #ifdef HAVE_GET_CYCLES
             (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
-                            BENCH_ASYNC_GET_NAME(useDeviceID),
+                            BENCH_DEVID_GET_NAME(useDeviceID),
                             bytes_processed, total, persec,
                             (long unsigned int) total_cycles);
         #else
             #warning "HAVE_GET_CYCLES should be defined for WOLFSSL_ESPIDF"
         #endif
+
+    /* implement other architectures here */
+
     #else
         #ifdef HAVE_GET_CYCLES
             (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,%lu,", desc,
-                            BENCH_ASYNC_GET_NAME(useDeviceID),
+                            BENCH_DEVID_GET_NAME(useDeviceID),
                             bytes_processed, total, persec, total_cycles);
         #else
             (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu,%f,%f,", desc,
@@ -1936,7 +1939,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
         (void)XSNPRINTF(msg, sizeof(msg),
                 "%-24s%s %5.0f %s %s %5.3f %s, %8.3f %s/s"
                 ", %lu cycles,",
-                desc, BENCH_ASYNC_GET_NAME(useDeviceID), blocks, blockType,
+                desc, BENCH_DEVID_GET_NAME(useDeviceID), blocks, blockType,
                 word[0], total, word[1], persec, blockType,
                 (unsigned long) total_cycles);
     #else
@@ -8982,7 +8985,6 @@ static void print_alg(const char* str, int* line)
         *line = 13;
     }
     *line += optLen;
-    printf(" %s", str);
 }
 #endif /* WOLFSSL_BENCHMARK_ALL */
 
