@@ -165,9 +165,14 @@
 #ifdef WOLFSSL_SYS_CA_CERTS
 
 #ifdef _WIN32
-#include <windows.h>
-#include <Wincrypt.h>
-#pragma comment(lib, "crypt32")
+    #include <windows.h>
+    #include <Wincrypt.h>
+
+    /* mingw gcc does not support pragma comment, and the
+     * linking with crypt32 is handled in configure.ac */
+    #if !defined(__MINGW32__) && !defined(__MINGW64__)
+        #pragma comment(lib, "crypt32")
+    #endif
 #endif
 
 #if defined(__APPLE__) && defined(HAVE_SECURITY_SECTRUSTSETTINGS_H)
@@ -249,9 +254,6 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
     {XSTR_SIZEOF("P256_KYBER_LEVEL1"), "P256_KYBER_LEVEL1", WOLFSSL_P256_KYBER_LEVEL1},
     {XSTR_SIZEOF("P384_KYBER_LEVEL3"), "P384_KYBER_LEVEL3", WOLFSSL_P384_KYBER_LEVEL3},
     {XSTR_SIZEOF("P521_KYBER_LEVEL5"), "P521_KYBER_LEVEL5", WOLFSSL_P521_KYBER_LEVEL5},
-    {XSTR_SIZEOF("P256_KYBER_90S_LEVEL1"), "P256_KYBER_90S_LEVEL1", WOLFSSL_P256_KYBER_90S_LEVEL1},
-    {XSTR_SIZEOF("P384_KYBER_90S_LEVEL3"), "P384_KYBER_90S_LEVEL3", WOLFSSL_P384_KYBER_90S_LEVEL3},
-    {XSTR_SIZEOF("P521_KYBER_90S_LEVEL5"), "P521_KYBER_90S_LEVEL5", WOLFSSL_P521_KYBER_90S_LEVEL5},
 #endif
 #endif
     {0, NULL, 0},
@@ -2928,15 +2930,9 @@ static int isValidCurveGroup(word16 name)
         case WOLFSSL_KYBER_LEVEL3:
         case WOLFSSL_KYBER_LEVEL5:
     #ifdef HAVE_LIBOQS
-        case WOLFSSL_KYBER_90S_LEVEL1:
-        case WOLFSSL_KYBER_90S_LEVEL3:
-        case WOLFSSL_KYBER_90S_LEVEL5:
         case WOLFSSL_P256_KYBER_LEVEL1:
         case WOLFSSL_P384_KYBER_LEVEL3:
         case WOLFSSL_P521_KYBER_LEVEL5:
-        case WOLFSSL_P256_KYBER_90S_LEVEL1:
-        case WOLFSSL_P384_KYBER_90S_LEVEL3:
-        case WOLFSSL_P521_KYBER_90S_LEVEL5:
     #endif
 #endif
             return 1;
@@ -8211,11 +8207,15 @@ static int LoadSystemCaCertsMac(WOLFSSL_CTX* ctx, byte* loaded)
 
 #else
 
-/* Potential system CA certs directories on Linux distros. */
+/* Potential system CA certs directories on Linux/Unix distros. */
 static const char* systemCaDirs[] = {
+#if defined(__ANDROID__) || defined(ANDROID)
+    "/system/etc/security/cacerts"      /* Android */
+#else
     "/etc/ssl/certs",                   /* Debian, Ubuntu, Gentoo, others */
     "/etc/pki/ca-trust/source/anchors", /* Fedora, RHEL */
     "/etc/pki/tls/certs"                /* Older RHEL */
+#endif
 };
 
 const char** wolfSSL_get_system_CA_dirs(word32* num)
@@ -17049,51 +17049,12 @@ cleanup:
 
     unsigned long wolfSSL_ERR_get_error(void)
     {
-        int ret;
-
         WOLFSSL_ENTER("wolfSSL_ERR_get_error");
-
 #ifdef WOLFSSL_HAVE_ERROR_QUEUE
-        ret = wc_PullErrorNode(NULL, NULL, NULL);
-        if (ret < 0) {
-            if (ret == BAD_STATE_E) {
-                ret = 0; /* no errors in queue */
-            }
-            else {
-                WOLFSSL_MSG("Error with pulling error node!");
-                WOLFSSL_LEAVE("wolfSSL_ERR_get_error", ret);
-                ret = 0 - ret; /* return absolute value of error */
-                /* panic and try to clear out nodes */
-                wc_ClearErrorNodes();
-            }
-        }
-        else {
-            int idx = wc_GetCurrentIdx();
-            if (idx < 0) {
-                WOLFSSL_MSG("Error with getting current index!");
-                ret = BAD_STATE_E;
-                WOLFSSL_LEAVE("wolfSSL_ERR_get_error", ret);
-
-                /* panic and try to clear out nodes and reset queue state */
-                wc_ClearErrorNodes();
-            }
-            else if (idx > 0) {
-                idx -= 1;
-                wc_RemoveErrorNode(idx);
-            }
-            else {
-                /* if current idx is 0 then the queue only had one node */
-                wc_RemoveErrorNode(idx);
-            }
-        }
-
-        return ret;
+        return wc_GetErrorNodeErr();
 #else
-
-        (void)ret;
-
         return (unsigned long)(0 - NOT_COMPILED_IN);
-#endif /* WOLFSSL_HAVE_ERROR_QUEUE */
+#endif
     }
 
 #ifdef WOLFSSL_HAVE_ERROR_QUEUE
@@ -21334,24 +21295,12 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
             return "KYBER_LEVEL3";
         case WOLFSSL_KYBER_LEVEL5:
             return "KYBER_LEVEL5";
-        case WOLFSSL_KYBER_90S_LEVEL1:
-            return "KYBER_90S_LEVEL1";
-        case WOLFSSL_KYBER_90S_LEVEL3:
-            return "KYBER_90S_LEVEL3";
-        case WOLFSSL_KYBER_90S_LEVEL5:
-            return "KYBER_90S_LEVEL5";
         case WOLFSSL_P256_KYBER_LEVEL1:
             return "P256_KYBER_LEVEL1";
         case WOLFSSL_P384_KYBER_LEVEL3:
             return "P384_KYBER_LEVEL3";
         case WOLFSSL_P521_KYBER_LEVEL5:
             return "P521_KYBER_LEVEL5";
-        case WOLFSSL_P256_KYBER_90S_LEVEL1:
-            return "P256_KYBER_90S_LEVEL1";
-        case WOLFSSL_P384_KYBER_90S_LEVEL3:
-            return "P384_KYBER_90S_LEVEL3";
-        case WOLFSSL_P521_KYBER_90S_LEVEL5:
-            return "P521_KYBER_90S_LEVEL5";
 #elif defined(HAVE_PQM4)
         case WOLFSSL_KYBER_LEVEL1:
             return "KYBER_LEVEL1";
@@ -32042,9 +31991,68 @@ const char * wolfSSL_get_servername(WOLFSSL* ssl, byte type)
 
 WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
 {
-    if (ssl && ctx && SetSSL_CTX(ssl, ctx, 0) == WOLFSSL_SUCCESS)
+    /* This method requires some explanation. Its sibling is
+     *   int SetSSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
+     * which re-inits the WOLFSSL* with all settings in the new CTX.
+     * That one is the right one to use *before* a handshake is started.
+     *
+     * This method was added by OpenSSL to be used *during* the handshake, e.g.
+     * when a server inspects the SNI in a ClientHello callback and
+     * decides which set of certificates to use.
+     *
+     * Since, at the time the SNI callback is run, some decisions on
+     * Extensions or the ServerHello might already have been taken, this
+     * method is very restricted in what it does:
+     * - changing the server certificate(s)
+     * - changing the server id for session handling
+     * and everything else in WOLFSSL* needs to remain untouched.
+     */
+    WOLFSSL_ENTER("wolfSSL_set_SSL_CTX");
+    if (ssl == NULL || ctx == NULL)
+        return NULL;
+    if (ssl->ctx == ctx)
         return ssl->ctx;
-    return NULL;
+
+    if (SSL_CTX_RefCount(ctx, 1) < 0) {
+        /* can only fail on serious stuff, like mutex not working
+         * or ctx refcount out of whack. */
+        return NULL;
+    }
+    if (ssl->ctx) {
+        wolfSSL_CTX_free(ssl->ctx);
+    }
+    ssl->ctx = ctx;
+
+#ifndef NO_CERTS
+    /* ctx owns certificate, certChain and key */
+    ssl->buffers.certificate = ctx->certificate;
+    ssl->buffers.certChain = ctx->certChain;
+#ifdef WOLFSSL_TLS13
+    ssl->buffers.certChainCnt = ctx->certChainCnt;
+#endif
+    ssl->buffers.key      = ctx->privateKey;
+    ssl->buffers.keyType  = ctx->privateKeyType;
+    ssl->buffers.keyId    = ctx->privateKeyId;
+    ssl->buffers.keyLabel = ctx->privateKeyLabel;
+    ssl->buffers.keySz    = ctx->privateKeySz;
+    ssl->buffers.keyDevId = ctx->privateKeyDevId;
+    /* flags indicating what certs/keys are available */
+    ssl->options.haveRSA          = ctx->haveRSA;
+    ssl->options.haveDH           = ctx->haveDH;
+    ssl->options.haveECDSAsig     = ctx->haveECDSAsig;
+    ssl->options.haveECC          = ctx->haveECC;
+    ssl->options.haveStaticECC    = ctx->haveStaticECC;
+    ssl->options.haveFalconSig    = ctx->haveFalconSig;
+    ssl->options.haveDilithiumSig = ctx->haveDilithiumSig;
+#endif
+
+#ifdef OPENSSL_EXTRA
+    /* copy over application session context ID */
+    ssl->sessionCtxSz = ctx->sessionCtxSz;
+    XMEMCPY(ssl->sessionCtx, ctx->sessionCtx, ctx->sessionCtxSz);
+#endif
+
+    return ssl->ctx;
 }
 
 
@@ -33236,63 +33244,42 @@ int wolfSSL_AsyncPoll(WOLFSSL* ssl, WOLF_EVENT_FLAG flags)
 #endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef OPENSSL_EXTRA
+
+static int peek_ignore_err(int err)
+{
+  switch(err) {
+    case -WANT_READ:
+    case -WANT_WRITE:
+    case -ZERO_RETURN:
+    case -WOLFSSL_ERROR_ZERO_RETURN:
+    case -SOCKET_PEER_CLOSED_E:
+    case -SOCKET_ERROR_E:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 unsigned long wolfSSL_ERR_peek_error_line_data(const char **file, int *line,
                                                const char **data, int *flags)
 {
+  unsigned long err;
+
     WOLFSSL_ENTER("wolfSSL_ERR_peek_error_line_data");
+    err = wc_PeekErrorNodeLineData(file, line, data, flags, peek_ignore_err);
 
-    (void)line;
-    (void)file;
-
-    /* No data or flags stored - error display only in Nginx. */
-    if (data != NULL) {
-        *data = "";
-    }
-    if (flags != NULL) {
-        *flags = 0;
-    }
-
-#ifdef WOLFSSL_HAVE_ERROR_QUEUE
-    {
-        int ret = 0;
-        int idx = wc_GetCurrentIdx();
-
-        while (1) {
-            ret = wc_PeekErrorNode(idx, file, NULL, line);
-            if (ret == BAD_MUTEX_E || ret == BAD_FUNC_ARG || ret == BAD_STATE_E) {
-                WOLFSSL_MSG("Issue peeking at error node in queue");
-                return 0;
-            }
-            /* OpenSSL uses positive error codes */
-            if (ret < 0) {
-                ret = -ret;
-            }
-
-            if (ret == -ASN_NO_PEM_HEADER)
-                return (ERR_LIB_PEM << 24) | PEM_R_NO_START_LINE;
-        #ifdef OPENSSL_ALL
-            /* PARSE_ERROR is returned if an HTTP request is detected. */
-            if (ret == -SSL_R_HTTP_REQUEST)
-                return (ERR_LIB_SSL << 24) | -SSL_R_HTTP_REQUEST;
-        #endif
-        #if defined(OPENSSL_ALL) && defined(WOLFSSL_PYTHON)
-            if (ret == ASN1_R_HEADER_TOO_LONG) {
-                return (ERR_LIB_ASN1 << 24) | ASN1_R_HEADER_TOO_LONG;
-            }
-        #endif
-            if (ret != -WANT_READ && ret != -WANT_WRITE &&
-                    ret != -ZERO_RETURN && ret != -WOLFSSL_ERROR_ZERO_RETURN &&
-                    ret != -SOCKET_PEER_CLOSED_E && ret != -SOCKET_ERROR_E)
-                break;
-
-            wc_RemoveErrorNode(idx);
-        }
-
-        return (unsigned long)ret;
-    }
-#else
-    return (unsigned long)(0 - NOT_COMPILED_IN);
+    if (err == -ASN_NO_PEM_HEADER)
+        return (ERR_LIB_PEM << 24) | PEM_R_NO_START_LINE;
+#ifdef OPENSSL_ALL
+    /* PARSE_ERROR is returned if an HTTP request is detected. */
+    else if (err == -SSL_R_HTTP_REQUEST)
+        return (ERR_LIB_SSL << 24) | -SSL_R_HTTP_REQUEST;
 #endif
+#if defined(OPENSSL_ALL) && defined(WOLFSSL_PYTHON)
+    else if (err == ASN1_R_HEADER_TOO_LONG)
+        return (ERR_LIB_ASN1 << 24) | ASN1_R_HEADER_TOO_LONG;
+#endif
+  return err;
 }
 #endif
 

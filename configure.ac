@@ -100,12 +100,13 @@ fi
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stddef.h time.h sys/ioctl.h sys/socket.h sys/time.h errno.h sys/un.h])
 AC_CHECK_LIB([network],[socket])
 AC_C_BIGENDIAN
+AC_C___ATOMIC
 
 # check if functions of interest are linkable, but also check if
 # they're declared by the expected headers, and if not, supersede the
 # unusable positive from AC_CHECK_FUNCS().
 AC_CHECK_FUNCS([gethostbyname getaddrinfo gettimeofday gmtime_r gmtime_s inet_ntoa memset socket strftime atexit])
-AC_CHECK_DECLS([gethostbyname, getaddrinfo, gettimeofday, gmtime_r, gmtime_s, inet_ntoa, memset, socket, strftime], [], [
+AC_CHECK_DECLS([gethostbyname, getaddrinfo, gettimeofday, gmtime_r, gmtime_s, inet_ntoa, memset, socket, strftime, atexit], [], [
 if test "$(eval echo \$"$(eval 'echo ac_cv_func_${as_decl_name}')")" = "yes"
 then
     AC_MSG_NOTICE([    note: earlier check for $(eval 'echo ${as_decl_name}') superseded.])
@@ -131,6 +132,9 @@ fi
 #endif
 #ifdef HAVE_TIME_H
     #include <time.h>
+#endif
+#ifdef HAVE_STDLIB_H
+    #include <stdlib.h>
 #endif
 ]])
 
@@ -566,6 +570,17 @@ AC_ARG_ENABLE([sp-asm],
     [ ENABLED_SP_ASM=$SP_ASM_DEFAULT ],
     )
 
+if test "$ENABLED_SP_ASM" != "no"
+then
+    if test "$ENABLED_SP" = "no"
+    then
+        AC_MSG_ERROR([--enable-sp-asm requries SP to be enabled.])
+    fi
+    if test "$ENABLED_SP" = ""
+    then
+        ENABLED_SP=yes
+    fi
+fi
 
 # fastmath
 AC_ARG_ENABLE([fastmath],
@@ -1030,10 +1045,6 @@ do
     ENABLED_WC_KYBER=yes
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_WC_KYBER"
     ;;
-  90s)
-    ENABLED_KYBER_90S=yes
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_90S"
-    ;;
   small)
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_SMALL"
     ;;
@@ -1067,15 +1078,9 @@ then
             AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
         fi
 
-        if test "$ENABLED_KYBER_90S" != "yes"; then
-            test "$enable_sha3" = "" && enable_sha3=yes
-            test "$enable_shake128" = "" && enable_shake128=yes
-            test "$enable_shake256" = "" && enable_shake256=yes
-        else
-            test "$enable_sha256" = "" && enable_sha256=yes
-            test "$enable_sha512" = "" && enable_sha512=yes
-            test "$enable_aesctr" = "" && enable_aesctr=yes
-        fi
+        test "$enable_sha3" = "" && enable_sha3=yes
+        test "$enable_shake128" = "" && enable_shake128=yes
+        test "$enable_shake256" = "" && enable_shake256=yes
     else
         # Default is to use liboqs. Make sure its enabled.
         if test "$ENABLED_LIBOQS" = "no"; then
@@ -1628,12 +1633,23 @@ fi
 AC_ARG_ENABLE([error-queue-per-thread],
 [AS_HELP_STRING([--enable-error-queue-per-thread],[Enable one error queue per thread. Requires thread local storage. (default: disabled)])],
 [ ENABLED_ERRORQUEUEPERTHREAD=$enableval ],
-[ ENABLED_ERRORQUEUEPERTHREAD=no ]
+[ ENABLED_ERRORQUEUEPERTHREAD=check ]
 )
+
+if test "$ENABLED_ERRORQUEUEPERTHREAD" = "check"
+then
+    AS_IF([test "$thread_ls_on" = "no"],
+        [ENABLED_ERRORQUEUEPERTHREAD=no],
+        [ENABLED_ERRORQUEUEPERTHREAD=yes])
+fi
 
 if test "$ENABLED_ERRORQUEUEPERTHREAD" = "yes"
 then
-  AM_CFLAGS="$AM_CFLAGS -DERROR_QUEUE_PER_THREAD"
+    if test "$thread_ls_on" != "yes"
+    then
+        AC_MSG_ERROR(error-queue-per-thread needs thread-local storage.)
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DERROR_QUEUE_PER_THREAD"
 fi
 
 # High Strength Build
@@ -3895,7 +3911,7 @@ then
 fi
 
 # No Big Int (ASN, DSA, RSA, DH and ECC need bigint)
-if test "$ENABLED_ASN" = "no" && test "$ENABLED_DSA" = no && \
+if test "$ENABLED_ASN" = "no" && test "$ENABLED_DSA" = "no" && \
    test "$ENABLED_DH" = "no" && test "$ENABLED_ECC" = "no" && \
    test "$ENABLED_RSA" = "no"
 then
@@ -4512,6 +4528,37 @@ else
     else
         AM_CFLAGS="$AM_CFLAGS -DWC_NO_HASHDRBG"
     fi
+fi
+
+
+# MemUse Entropy
+AC_ARG_ENABLE([entropy-memuse],
+    [AS_HELP_STRING([--enable-entropy-memuse],[Enable memuse entropy support (default: disabled)])],
+    [ ENABLED_ENTROPY_MEMUSE=$enableval ],
+    [ ENABLED_ENTROPY_MEMUSE=no ]
+    )
+
+if test "x$ENABLED_ENTROPY_MEMUSE" != "xno"
+then
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_ENTROPY_MEMUSE"
+    enable_sha3=yes
+
+    for v in `echo $ENABLED_ENTROPY_MEMUSE | tr "," " "`
+    do
+      case $v in
+      yes)
+        ;;
+      thread)
+        AM_CFLAGS="$AM_CFLAGS -DENTROPY_MEMUSE_THREAD"
+        ;;
+      nofallback)
+        AM_CFLAGS="$AM_CFLAGS -DENTROPY_MEMUSE_FORCE_FAILURE"
+        ;;
+      *)
+        AC_MSG_ERROR([Invalid MemUse Entropy option. Valid are: thread, nofallback. Seen: $ENABLED_ENTROPY_MEMUSE.])
+        break;;
+      esac
+    done
 fi
 
 
@@ -6684,6 +6731,7 @@ do
   esac
 done
 
+ENABLED_SP_LINE="$ENABLE_SP"
 ENABLED_SP=no
 if test "$ENABLED_RSA" = "yes" && test "$ENABLED_SP_RSA" = "yes"; then
     ENABLED_SP=yes
@@ -6753,7 +6801,15 @@ fi
 
 if test "$ENABLED_SP_MATH" = "yes"; then
     if test "$ENABLED_SP" = "no"; then
-        AC_MSG_ERROR([Must have SP enabled with SP math: --enable-sp])
+        if test "$ENABLED_RSA" != "no"; then
+            AC_MSG_ERROR([Must have SP enabled with SP math for RSA: --enable-sp])
+        fi
+        if test "$ENABLED_DH" != "no"; then
+            AC_MSG_ERROR([Must have SP enabled with SP math for DH: --enable-sp])
+        fi
+        if test "$ENABLED_ECC" != "no"; then
+            AC_MSG_ERROR([Must have SP enabled with SP math for ECC: --enable-sp])
+        fi
     fi
     if test "$ENABLED_ECCCUSTCURVES" != "no"; then
         AC_MSG_ERROR([Cannot use single precision math and custom curves])
@@ -8123,8 +8179,9 @@ AX_HARDEN_CC_COMPILER_FLAGS
 
 case $host_os in
     mingw*)
-        # if mingw then link to ws2_32 for sockets
+        # if mingw then link to ws2_32 for sockets, and crypt32
         LDFLAGS="$LDFLAGS -lws2_32"
+        LIB_ADD="$LIB_ADD -lcrypt32"
         if test "$enable_shared" = "yes"
         then
             AC_DEFINE([WOLFSSL_DLL], [1], [Use __declspec(dllexport) when building library])
@@ -8654,6 +8711,7 @@ echo "   * certgencache:               $ENABLED_certgencache"
 echo "   * CHACHA:                     $ENABLED_CHACHA"
 echo "   * XCHACHA:                    $ENABLED_XCHACHA"
 echo "   * Hash DRBG:                  $ENABLED_HASHDRBG"
+echo "   * MmemUse Entropy:            $ENABLED_ENTROPY_MEMUSE"
 echo "   * PWDBASED:                   $ENABLED_PWDBASED"
 echo "   * scrypt:                     $ENABLED_SCRYPT"
 echo "   * wolfCrypt Only:             $ENABLED_CRYPTONLY"
@@ -8797,6 +8855,7 @@ echo "   * NXP SE050:                  $ENABLED_SE050"
 echo "   * Maxim Integrated MAXQ10XX:  $ENABLED_MAXQ10XX"
 echo "   * PSA:                        $ENABLED_PSA"
 echo "   * System CA certs:            $ENABLED_SYS_CA_CERTS"
+echo "   * ERR Queues per Thread:      $ENABLED_ERRORQUEUEPERTHREAD"
 echo ""
 echo "---"
 

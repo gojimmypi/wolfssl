@@ -8695,7 +8695,11 @@ int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         }
         else
 #endif
-        if (!ssl->options.havePeerCert || !ssl->options.havePeerVerify) {
+        if (
+        #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
+            !ssl->options.verifyPostHandshake &&
+        #endif
+            (!ssl->options.havePeerCert || !ssl->options.havePeerVerify)) {
             ret = NO_PEER_CERT; /* NO_PEER_VERIFY */
             WOLFSSL_MSG("TLS v1.3 client did not present peer cert");
             DoCertFatalAlert(ssl, ret);
@@ -10220,6 +10224,9 @@ static int SanityCheckTls13MsgReceived(WOLFSSL* ssl, byte type)
                  * no certificate available.
                  */
                 if (ssl->options.verifyPeer &&
+                #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
+                    !ssl->options.verifyPostHandshake &&
+                #endif
                                            !ssl->msgsReceived.got_certificate) {
                     WOLFSSL_MSG("Finished received out of order - "
                                 "missing Certificate message");
@@ -10479,7 +10486,8 @@ int DoTls13HandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
         ret = DoTls13KeyUpdate(ssl, input, inOutIdx, size);
         break;
 
-#if defined(WOLFSSL_DTLS13) && !defined(WOLFSSL_NO_TLS12)
+#if defined(WOLFSSL_DTLS13) && !defined(WOLFSSL_NO_TLS12) && \
+    !defined(NO_WOLFSSL_CLIENT)
     case hello_verify_request:
         WOLFSSL_MSG("processing hello verify request");
         ret = DoHelloVerifyRequest(ssl, input, inOutIdx, size);
@@ -11229,7 +11237,7 @@ int wolfSSL_disable_hrr_cookie(WOLFSSL* ssl)
         return BAD_FUNC_ARG;
 
 #ifdef NO_WOLFSSL_SERVER
-    return SIDE_ERROR
+    return SIDE_ERROR;
 #else
     if (ssl->options.side == WOLFSSL_CLIENT_END)
         return SIDE_ERROR;
