@@ -55,21 +55,21 @@ echo "CMD File= $WOLFSSL_CMD_FILE"
 echo ""
 
 # test drive the cat & cut
-cat $WOLFSSL_CMD_FILE | cut -d'#' -f1 > /dev/null
+cat $WOLFSSL_CMD_FILE | cut -d'#' -f1 | awk NF | sed 's/\\//g'> /dev/null
 
 # the first digit will be cat exit code; the second will be cut exit code.
 # success is expected to be "00".
-retVal="${PIPESTATUS[0]}${PIPESTATUS[1]}"
+retVal="${PIPESTATUS[0]}${PIPESTATUS[1]}${PIPESTATUS[2]}"
 
 # both the command and tee output must return a success (zero) to proceed.
 # echo "cat & cut = $retVal"
-if [ "$retVal" != "00" ]; then
+if [ "$retVal" != "000" ]; then
     echo "Error parsing the command in $WOLFSSL_CMD_FILE"
     exit 1
 fi
 
 # get the contents of the command file, trimming all text after the # character
-WOLFSSL_CMD="$(cat $WOLFSSL_CMD_FILE | cut -d'#' -f1)"
+WOLFSSL_CMD="$(cat $WOLFSSL_CMD_FILE | cut -d'#' -f1 | awk NF | sed 's/\\//g')"
 retVal=$?
 
 if [ $retVal -ne 0 ]; then
