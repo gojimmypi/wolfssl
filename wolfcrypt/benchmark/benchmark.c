@@ -2168,7 +2168,7 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID,
     #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
                         "pq_asym,%s,%.3f,%.3f,%d,%f,%lu,%.6f,\n",
-                        algo, milliEach, opsSec, count, total,(long unsigned int) total_cycles,
+                        algo, milliEach, opsSec, count, total, total_cycles,
                         (double)total_cycles / (double)count);
     #else
         (void)XSNPRINTF(msg, sizeof(msg),
@@ -2190,7 +2190,7 @@ static void bench_stats_pq_asym_finish(const char* algo, int useDeviceID,
                          " %.3f %s, %lu cycles\n",
                          algo, BENCH_ASYNC_GET_NAME(useDeviceID),
                          count, word[0], total, word[1], word[2], milliEach,
-                         opsSec, word[3], (long unsigned int)total_cycles);
+                         opsSec, word[3], total_cycles);
 #else
          (void)XSNPRINTF(msg, sizeof(msg),
                  "%-18s %s %6d %s %5.3f %s, %s %5.3f ms,"
