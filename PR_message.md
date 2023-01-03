@@ -1,9 +1,12 @@
+## Description
 
 Building on the updates in [#5800](https://github.com/wolfSSL/wolfssl/pull/5800), this PR improves the 
 [wolfSSL wolfcrypt benchmark utility](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
 
 This PR mostly addresses features related to the `GENERATE_MACHINE_PARSEABLE_REPORT` option, and adds
 some fixed units (GB, MB, KB, or bytes) rather than auto-scaled units.
+
+Fixes zd# (n/a)
 
 ## Changes
 
@@ -34,14 +37,14 @@ Specific changes:
 - Properly honor the definition (or lack thereof) the `HAVE_GET_CYCLES`.
 - [Code formatting cleanup](https://github.com/gojimmypi/wolfssl/commit/5eec12458e1c0e6ed9160bc4788e9def2f7cd9a3) for wolfSSL coding standards.
 
-## Example usage
+## Example Usage
 
 This example will set all the resultant units to KB/KiB and generate a machine-parseable report:
 ```
 ./configure --enable-all CFLAGS="-DWOLFSSL_BENCHMARK_FIXED_UNITS_KB -DGENERATE_MACHINE_PARSEABLE_REPORT"
 ```
 
-## Review and testing of changes
+## Testing and Review of Changes
 
 Some source code formatting-only changes were untestable and will depend on Jenkins.
 
@@ -83,6 +86,14 @@ function test_benchmark # param #1 is CFLAGS value, parameter #2 is output file
 }
 
 
+test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_GB -DGENERATE_MACHINE_PARSEABLE_REPORT -DWOLFSSL_BENCHMARK_FIXED_CSV" "benchmark_parse_csv_gb_test.log"
+
+test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_MB -DGENERATE_MACHINE_PARSEABLE_REPORT -DWOLFSSL_BENCHMARK_FIXED_CSV" "benchmark_parse_csv_mb_test.log"
+
+test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_KB -DGENERATE_MACHINE_PARSEABLE_REPORT -DWOLFSSL_BENCHMARK_FIXED_CSV" "benchmark_parse_csv_kb_test.log"
+
+test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_BB -DGENERATE_MACHINE_PARSEABLE_REPORT -DWOLFSSL_BENCHMARK_FIXED_CSV" "benchmark_parse_csv_bb_test.log"
+
 
 test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_GB" "benchmark_gb_test.log"
 
@@ -100,6 +111,9 @@ test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_MB -DGENERATE_MACHINE_PARSEABLE_
 test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_KB -DGENERATE_MACHINE_PARSEABLE_REPORT" "benchmark_parse_kb_test.log"
 
 test_benchmark "-DWOLFSSL_BENCHMARK_FIXED_UNITS_BB -DGENERATE_MACHINE_PARSEABLE_REPORT" "benchmark_parse_bb_test.log"
+
+
+
 
 ```
 
@@ -149,3 +163,9 @@ if [ $retVal -ne 0 ]; then
 fi
 ```
 
+# Checklist
+
+ - [ ] added tests
+ - [ ] updated/added doxygen
+ - [ ] updated appropriate READMEs
+ - [ ] Updated manual and documentation

@@ -1,24 +1,124 @@
    * Warnings as failure:        yes
    * VCS checkout:               yes
-   * Old Names:                  yes
+   * Filesystem:                 yes
+   * OpenSSH Build:              yes
+   * OpenSSL Extra API:          yes
    * Side-channel Hardening:     yes
-   * Single Precision Math:      yes
    * Assembly Allowed:           yes
+   * ARC4:                       yes
    * AES:                        yes
+   * AES-NI:                     yes
+   * AES-CBC:                    yes
+   * AES-CBC length checks:      yes
    * AES-GCM:                    yes
+   * AES-GCM streaming:          yes
+   * AES-CCM:                    yes
+   * AES-CTR:                    yes
+   * AES-CFB:                    yes
+   * AES-OFB:                    yes
+   * AES-SIV:                    yes
+   * DES3:                       yes
+   * Camellia:                   yes
+   * NULL Cipher:                yes
+   * MD2:                        yes
+   * MD4:                        yes
    * MD5:                        yes
+   * RIPEMD:                     yes
    * SHA:                        yes
+   * SHA-224:                    yes
+   * SHA-384:                    yes
+   * SHA-512:                    yes
+   * SHA3:                       yes
+   * SHAKE256:                   yes
+   * BLAKE2:                     yes
+   * BLAKE2S:                    yes
+   * SipHash:                    yes
+   * CMAC:                       yes
+   * keygen:                     yes
+   * certgen:                    yes
+   * certreq:                    yes
+   * certext:                    yes
+   * CHACHA:                     yes
+   * XCHACHA:                    yes
    * Hash DRBG:                  yes
    * PWDBASED:                   yes
+   * scrypt:                     yes
+   * HKDF:                       yes
+   * X9.63 KDF:                  yes
+   * MD4:                        yes
+   * PSK:                        yes
+   * Poly1305:                   yes
+   * RSA:                        yes
+   * RSA-PSS:                    yes
+   * DSA:                        yes
+   * DH:                         yes
    * DH Default Parameters:      yes
    * ECC:                        yes
+   * ECC Custom Curves:          yes
+   * FPECC:                      yes
+   * ECC_ENCRYPT:                yes
+   * Brainpool:                  yes
+   * CURVE25519:                 yes
+   * ED25519:                    yes
+   * ED25519 streaming:          yes
+   * CURVE448:                   yes
+   * ED448:                      yes
+   * ED448 streaming:            yes
+   * KYBER:                      yes
+   * ECCSI                       yes
+   * SAKKE                       yes
    * ASN:                        yes
+   * Anonymous cipher:           yes
    * CODING:                     yes
    * MEMORY:                     yes
+   * LIGHTY:                     yes
+   * STUNNEL:                    yes
+   * tcpdump:                    yes
+   * NGINX:                      yes
+   * ASIO:                       yes
+   * LIBWEBSOCKETS:              yes
+   * Qt:                         yes
    * ERROR_STRINGS:              yes
+   * DTLS:                       yes
+   * Indefinite Length:          yes
+   * Multicast:                  yes
+   * TLS v1.1 (Old):             yes
    * TLS v1.2:                   yes
+   * TLS v1.3:                   yes
+   * Post-handshake Auth:        yes
+   * Early Data:                 yes
+   * Send State in HRR Cookie:   yes
+   * OCSP:                       yes
+   * OCSP Stapling:              yes
+   * OCSP Stapling v2:           yes
+   * CRL:                        yes
+   * CRL-MONITOR:                yes
+   * Persistent session cache:   yes
+   * Persistent cert    cache:   yes
+   * Atomic User Record Layer:   yes
+   * Public Key Callbacks:       yes
+   * liboqs:                     yes
+   * Server Name Indication:     yes
+   * ALPN:                       yes
+   * Maximum Fragment Length:    yes
+   * Trusted CA Indication:      yes
+   * Truncated HMAC:             yes
    * Supported Elliptic Curves:  yes
+   * Session Ticket:             yes
    * Extended Master Secret:     yes
+   * Fallback SCSV:              yes
+   * All TLS Extensions:         yes
+   * PKCS#7:                     yes
+   * S/MIME:                     yes
+   * wolfSSH:                    yes
+   * wolfSCEP:                   yes
+   * Secure Remote Password:     yes
+   * Examples:                   yes
+   * Crypt tests:                yes
    * Stack sizes in tests:       yes
    * PKCS#8:                     yes
    * PKCS#12:                    yes
+   * AES Key Wrap:               yes
+   * Inline Code:                yes
+   * Crypto callbacks:           yes
+   * System CA certs:            yes

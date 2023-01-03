@@ -21,7 +21,9 @@
 /* ESP-IDF */
 #include <esp_log.h>
 #include "sdkconfig.h"
-
+#ifdef HAVE_LIBOQS
+#include <oqs/oqs.h>
+#endif
 /* wolfSSL */
 #include <wolfssl/version.h>
 #include <user_settings.h>
@@ -196,9 +198,13 @@ void app_main(void)
 
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
     ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz", CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* not available for C3 at this time */
+#else
+   // ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz", CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#endif
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
 #if defined(NO_ESP32WROOM32_CRYPT)

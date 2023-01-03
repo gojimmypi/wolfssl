@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{8A3F75F0-A
 		libs\README.md = libs\README.md
 		libs\user_settings.h = libs\user_settings.h
 		libs\user_settings_esp32c3.h = libs\user_settings_esp32c3.h
+		libs\user_settings_esp32s3.h = libs\user_settings_esp32s3.h
 	EndProjectSection
 EndProject
 Global

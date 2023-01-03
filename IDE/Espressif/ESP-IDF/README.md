@@ -18,6 +18,25 @@ Including the following examples:
 
 ## Requirements
  1. [ESP-IDF development framework](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/)
+ 
+ 2. Run the Espressif `export`:
+
+For Windows:
+
+```
+SET WORKSPACE=c:\workspace
+C:\SysGCC\esp32\esp-idf\v4.4.2\export.bat
+```
+
+For Linux or WSL:
+```
+WORKSPACE=/mnt/c/workspace
+cd $WORKSPACE/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
+. /mnt/c/SysGCC/esp32/esp-idf/v4.4.2/export.sh
+
+```
+
+
 
 ## Setup for Linux
  1. Run `setup.sh` at _/path/to_`/wolfssl/IDE/Espressif/ESP-IDF/` to deploy files into ESP-IDF tree  

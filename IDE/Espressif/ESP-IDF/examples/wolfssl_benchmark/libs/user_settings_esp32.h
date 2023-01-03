@@ -37,6 +37,8 @@
 /* Benchmark settings */
 #define GENERATE_MACHINE_PARSEABLE_REPORT
 
+#define WOLFSSL_BENCHMARK_FIXED_CSV
+
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_K
 /* end of Benchmark settings */
 
@@ -142,8 +144,4 @@
 /* adjust wait-timeout count if you see timeout in rsa hw acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
-/*
-#define WOLFSSL_HAVE_KYBER
-#define WOLFSSL_WC_KYBER
-*/
 

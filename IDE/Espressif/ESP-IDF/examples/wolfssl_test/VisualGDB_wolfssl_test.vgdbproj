@@ -71,10 +71,10 @@
           <Subdirectory>esp-idf/v4.4.2</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM20</COMPort>
+        <COMPort>COM23</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
-        <DeviceID>ESP32</DeviceID>
+        <DeviceID>ESP32S3</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
   </Build>
@@ -93,7 +93,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM20</ComPortName>
+      <ComPortName>COM23</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -235,7 +235,7 @@
           <string>mon reset halt</string>
           <string>load</string>
         </StartupCommands>
-        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
+        <ProgramFLASHUsingExternalTool>true</ProgramFLASHUsingExternalTool>
         <PreferredGDBPort>0</PreferredGDBPort>
         <PreferredTelnetPort>0</PreferredTelnetPort>
         <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>

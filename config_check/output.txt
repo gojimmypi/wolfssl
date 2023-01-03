@@ -1,71 +1,19 @@
 Running command: 
 
-CMD = 
-
-
-
-./configure
-  
-  
-  
-  --disable-rsa
-  --enable-sha                  
-  --enable-sp                   
-  --enable-sp-math              
-  --enable-supportedcurves      
-  --enable-aesgcm               
-  --enable-eccshamir            
-
-  
+CMD = ./configure
+  --enable-kyber
+  --with-liboqs
+  --enable-all
   --enable-stacksize=verbose
   --enable-trackmemory=verbose
   --enable-stacksize
-
-  
-  
-  
-  --disable-inline              
-
-  --disable-crypttests          
-  --disable-crypttests-libs     
-  --disable-dh
-  --disable-filesystem
-  --disable-dependency-tracking 
-  --disable-tls13
-  --disable-dtls
-  --disable-oldtls
-  --disable-chacha
-  --disable-rsapub
-  --disable-aescbc              
-  --disable-aesgcm-stream       
-  --disable-md4                 
-  --disable-poly1305
-  --disable-pwdbased
-  --disable-sp-math-all         
-  --disable-crl
-  --disable-sha3
-  --disable-sha512
-  --disable-sha224
-  --disable-sha512
-  --disable-sha384
-  --disable-oldtls              
-  --disable-tlsv10              
-  --disable-sslv3
-
-  
-
-  
-  
-  
-  --disable-wpas
-  --disable-wpas-dpp
-
-  
-  
-  
-  --disable-trackmemory         
-  --disable-memtest             
-  --enable-errorstrings         
+  --enable-benchmark
+            --disable-psk
+            --disable-shared
+            --enable-intelasm  
+            --enable-aesni 
+            --enable-sp-math-all
+            --enable-sp-asm
 Running configure from /mnt/c/workspace/wolfssl-gojimmypi
 
 ------------------------
@@ -95,7 +43,7 @@ checking whether make supports nested variables... yes
 checking whether UID '1000' is supported by ustar format... yes
 checking whether GID '1000' is supported by ustar format... yes
 checking how to create a ustar tar archive... gnutar
-checking dependency style of gcc... none
+checking dependency style of gcc... gcc3
 checking whether make supports nested variables... (cached) yes
 checking how to print strings... printf
 checking for a sed that does not truncate output... /usr/bin/sed
@@ -145,13 +93,12 @@ checking if gcc static flag -static works... yes
 checking if gcc supports -c -o file.o... yes
 checking if gcc supports -c -o file.o... (cached) yes
 checking whether the gcc linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
-checking whether -lc should be explicitly linked in... no
 checking dynamic linker characteristics... GNU/Linux ld.so
 checking how to hardcode library paths into programs... immediate
 checking whether stripping libraries is possible... yes
 checking if libtool supports shared libraries... yes
-checking whether to build shared libraries... yes
-checking whether to build static libraries... no
+checking whether to build shared libraries... no
+checking whether to build static libraries... yes
 checking whether the -Werror option is usable... yes
 checking for simple visibility declarations... yes
 checking size of long long... 8
@@ -218,9 +165,10 @@ checking whether strftime is declared... yes
 checking for size_t... yes
 checking for uint8_t... yes
 checking for uintptr_t... yes
-checking dependency style of gcc... none
+checking dependency style of gcc... gcc3
 checking for thread local storage (TLS) class... _Thread_local
 checking for debug... no
+checking for liboqs... yes
 checking whether gcc is Clang... no
 checking whether pthreads work with "-pthread" and "-lpthread"... yes
 checking for joinable pthread attribute... PTHREAD_CREATE_JOINABLE
@@ -230,7 +178,9 @@ checking for posix_memalign... yes
 checking whether posix_memalign is declared... yes
 checking for pthread_attr_setstack... yes
 checking whether pthread_attr_setstack is declared... yes
+checking for openssl... yes
 checking for fast RSA... no
+checking for cos in -lm... yes
 checking for library containing gethostbyname... none required
 checking for library containing socket... none required
 checking for vcs system... git
@@ -274,7 +224,7 @@ checking whether C compiler accepts -Wunused-result... yes
 checking whether C compiler accepts -Wunused-variable... yes
 checking whether C compiler accepts -Wwrite-strings... yes
 checking whether C compiler accepts -fwrapv... yes
-creating wolfssl-config - generic 5.5.3 for -lwolfssl -lpthread
+creating wolfssl-config - generic 5.5.3 for -lwolfssl -loqs -lpthread
 checking the number of available CPUs... 8
 configure: adding automake macro support
 configure: creating aminclude.am
@@ -313,7 +263,7 @@ Configuration summary for wolfssl version 5.5.3
    * C Flags:                       -Werror -Wno-pragmas -Wall -Wextra -Wunknown-pragmas --param=ssp-buffer-size=1 -Waddress -Warray-bounds -Wbad-function-cast -Wchar-subscripts -Wcomment -Wfloat-equal -Wformat-security -Wformat=2 -Wmaybe-uninitialized -Wmissing-field-initializers -Wmissing-noreturn -Wmissing-prototypes -Wnested-externs -Wnormalized=id -Woverride-init -Wpointer-arith -Wpointer-sign -Wshadow -Wsign-compare -Wstrict-overflow=1 -Wswitch-enum -Wundef -Wunused -Wunused-result -Wunused-variable -Wwrite-strings -fwrapv
    * C++ Compiler:               
    * C++ Flags:                  
-   * CPP Flags:                  
+   * CPP Flags:                   -DHAVE_LIBOQS -DHAVE_TLS_EXTENSIONS
    * CCAS Flags:                   
    * LIB Flags:                   -pie -z relro -z now -Werror 
    * Debug enabled:              no
@@ -325,173 +275,173 @@ Configuration summary for wolfssl version 5.5.3
    Features 
    * FIPS:                       no
    * Single threaded:            no
-   * Filesystem:                 no
-   * OpenSSH Build:              no
-   * OpenSSL Extra API:          no
+   * Filesystem:                 yes
+   * OpenSSH Build:              yes
+   * OpenSSL Extra API:          yes
    * OpenSSL Coexist:            no
-   * Old Names:                  yes
+   * Old Names:                  no
    * Max Strength Build:         no
    * Distro Build:               no
    * Reproducible Build:         no
    * Side-channel Hardening:     yes
-   * Single Precision Math:      yes
-   * SP implementation:          restricted
+   * Single Precision Math:      no
+   * SP implementation:          all
    * Fast Math:                  no
    * Heap Math:                  no
    * Assembly Allowed:           yes
    * sniffer:                    no
    * snifftest:                  no
-   * ARC4:                       no
+   * ARC4:                       yes
    * AES:                        yes
-   * AES-NI:                     no
-   * AES-CBC:                    no
-   * AES-CBC length checks:      no
+   * AES-NI:                     yes
+   * AES-CBC:                    yes
+   * AES-CBC length checks:      yes
    * AES-GCM:                    yes
-   * AES-GCM streaming:          no
-   * AES-CCM:                    no
-   * AES-CTR:                    no
-   * AES-CFB:                    no
-   * AES-OFB:                    no
-   * AES-SIV:                    no
-   * DES3:                       no
-   * Camellia:                   no
-   * NULL Cipher:                no
-   * MD2:                        no
-   * MD4:                        no
+   * AES-GCM streaming:          yes
+   * AES-CCM:                    yes
+   * AES-CTR:                    yes
+   * AES-CFB:                    yes
+   * AES-OFB:                    yes
+   * AES-SIV:                    yes
+   * DES3:                       yes
+   * Camellia:                   yes
+   * NULL Cipher:                yes
+   * MD2:                        yes
+   * MD4:                        yes
    * MD5:                        yes
-   * RIPEMD:                     no
+   * RIPEMD:                     yes
    * SHA:                        yes
-   * SHA-224:                    no
-   * SHA-384:                    no
-   * SHA-512:                    no
-   * SHA3:                       no
+   * SHA-224:                    yes
+   * SHA-384:                    yes
+   * SHA-512:                    yes
+   * SHA3:                       yes
    * SHAKE128:                   no
-   * SHAKE256:                   no
-   * BLAKE2:                     no
-   * BLAKE2S:                    no
-   * SipHash:                    no
-   * CMAC:                       no
-   * keygen:                     no
-   * certgen:                    no
-   * certreq:                    no
-   * certext:                    no
+   * SHAKE256:                   yes
+   * BLAKE2:                     yes
+   * BLAKE2S:                    yes
+   * SipHash:                    yes
+   * CMAC:                       yes
+   * keygen:                     yes
+   * certgen:                    yes
+   * certreq:                    yes
+   * certext:                    yes
    * certgencache:               no
-   * CHACHA:                     no
-   * XCHACHA:                    no
+   * CHACHA:                     yes
+   * XCHACHA:                    yes
    * Hash DRBG:                  yes
    * PWDBASED:                   yes
-   * scrypt:                     no
+   * scrypt:                     yes
    * wolfCrypt Only:             no
-   * HKDF:                       no
-   * X9.63 KDF:                  no
-   * MD4:                        no
-   * PSK:                        no
-   * Poly1305:                   no
+   * HKDF:                       yes
+   * X9.63 KDF:                  yes
+   * MD4:                        yes
+   * PSK:                        yes
+   * Poly1305:                   yes
    * LEANPSK:                    no
    * LEANTLS:                    no
-   * RSA:                        no
-   * RSA-PSS:                    no
-   * DSA:                        no
-   * DH:                         no
+   * RSA:                        yes
+   * RSA-PSS:                    yes
+   * DSA:                        yes
+   * DH:                         yes
    * DH Default Parameters:      yes
    * ECC:                        yes
-   * ECC Custom Curves:          no
+   * ECC Custom Curves:          yes
    * ECC Minimum Bits:           224
-   * FPECC:                      no
-   * ECC_ENCRYPT:                no
-   * Brainpool:                  no
-   * CURVE25519:                 no
-   * ED25519:                    no
-   * ED25519 streaming:          no
-   * CURVE448:                   no
-   * ED448:                      no
-   * ED448 streaming:            no
-   * KYBER:                      no
+   * FPECC:                      yes
+   * ECC_ENCRYPT:                yes
+   * Brainpool:                  yes
+   * CURVE25519:                 yes
+   * ED25519:                    yes
+   * ED25519 streaming:          yes
+   * CURVE448:                   yes
+   * ED448:                      yes
+   * ED448 streaming:            yes
+   * KYBER:                      yes
    * KYBER wolfSSL impl:         no
-   * ECCSI                       no
-   * SAKKE                       no
+   * ECCSI                       yes
+   * SAKKE                       yes
    * ASN:                        yes
-   * Anonymous cipher:           no
+   * Anonymous cipher:           yes
    * CODING:                     yes
    * MEMORY:                     yes
    * I/O POOL:                   no
    * wolfSentry:                 no
-   * LIGHTY:                     no
+   * LIGHTY:                     yes
    * WPA Supplicant:             no
    * HAPROXY:                    no
-   * STUNNEL:                    no
-   * tcpdump:                    no
+   * STUNNEL:                    yes
+   * tcpdump:                    yes
    * libssh2:                    no
    * ntp:                        no
    * rsyslog:                    no
    * Apache httpd:               no
-   * NGINX:                      no
+   * NGINX:                      yes
    * OpenResty:                  no
-   * ASIO:                       no
-   * LIBWEBSOCKETS:              no
-   * Qt:                         no
+   * ASIO:                       yes
+   * LIBWEBSOCKETS:              yes
+   * Qt:                         yes
    * Qt Unit Testing:            no
    * SIGNAL:                     no
    * chrony:                     no
    * strongSwan:                 no
    * OpenLDAP:                   no
    * ERROR_STRINGS:              yes
-   * DTLS:                       no
+   * DTLS:                       yes
    * DTLS v1.3:                  no
    * SCTP:                       no
    * SRTP:                       no
-   * Indefinite Length:          no
-   * Multicast:                  no
+   * Indefinite Length:          yes
+   * Multicast:                  yes
    * SSL v3.0 (Old):             no
    * TLS v1.0 (Old):             no
-   * TLS v1.1 (Old):             no
+   * TLS v1.1 (Old):             yes
    * TLS v1.2:                   yes
-   * TLS v1.3:                   no
-   * Post-handshake Auth:        no
-   * Early Data:                 no
+   * TLS v1.3:                   yes
+   * Post-handshake Auth:        yes
+   * Early Data:                 yes
    * QUIC:                       no
-   * Send State in HRR Cookie:   undefined
-   * OCSP:                       no
-   * OCSP Stapling:              no
-   * OCSP Stapling v2:           no
-   * CRL:                        no
-   * CRL-MONITOR:                no
-   * Persistent session cache:   no
-   * Persistent cert    cache:   no
-   * Atomic User Record Layer:   no
-   * Public Key Callbacks:       no
-   * liboqs:                     no
+   * Send State in HRR Cookie:   yes
+   * OCSP:                       yes
+   * OCSP Stapling:              yes
+   * OCSP Stapling v2:           yes
+   * CRL:                        yes
+   * CRL-MONITOR:                yes
+   * Persistent session cache:   yes
+   * Persistent cert    cache:   yes
+   * Atomic User Record Layer:   yes
+   * Public Key Callbacks:       yes
+   * liboqs:                     yes
    * Whitewood netRandom:        no
-   * Server Name Indication:     no
-   * ALPN:                       no
-   * Maximum Fragment Length:    no
-   * Trusted CA Indication:      no
-   * Truncated HMAC:             no
+   * Server Name Indication:     yes
+   * ALPN:                       yes
+   * Maximum Fragment Length:    yes
+   * Trusted CA Indication:      yes
+   * Truncated HMAC:             yes
    * Supported Elliptic Curves:  yes
    * FFDHE only in client:       no
-   * Session Ticket:             no
+   * Session Ticket:             yes
    * Extended Master Secret:     yes
    * Renegotiation Indication:   no
    * Secure Renegotiation:       no
-   * Fallback SCSV:              no
+   * Fallback SCSV:              yes
    * Keying Material Exporter:   no
-   * All TLS Extensions:         no
-   * PKCS#7:                     no
-   * S/MIME:                     no
-   * wolfSSH:                    no
+   * All TLS Extensions:         yes
+   * PKCS#7:                     yes
+   * S/MIME:                     yes
+   * wolfSSH:                    yes
    * wolfEngine:                 no
    * wolfTPM:                    no
    * wolfCLU:                    no
-   * wolfSCEP:                   no
-   * Secure Remote Password:     no
+   * wolfSCEP:                   yes
+   * Secure Remote Password:     yes
    * Small Stack:                no
    * Linux Kernel Module:        no
    * valgrind unit tests:        no
    * LIBZ:                       no
-   * Examples:                   no
-   * Crypt tests:                no
+   * Examples:                   yes
+   * Crypt tests:                yes
    * Stack sizes in tests:       yes
-   * Heap stats in tests:        no
+   * Heap stats in tests:        verbose
    * User Crypto:                no
    * Fast RSA:                   no
    * Async Crypto:               no
@@ -503,20 +453,20 @@ Configuration summary for wolfssl version 5.5.3
    * Intel Quick Assist:         no
    * ARM ASM:                    no
    * ARM ASM SHA512/SHA3 Crypto  no
-   * AES Key Wrap:               no
+   * AES Key Wrap:               yes
    * Write duplicate:            no
    * Xilinx Hardware Acc.:       no
-   * Inline Code:                no
+   * Inline Code:                yes
    * Linux AF_ALG:               no
    * Linux KCAPI:                no
    * Linux devcrypto:            no
-   * Crypto callbacks:           no
+   * Crypto callbacks:           yes
    * i.MX CAAM:                  no
    * IoT-Safe:                   no
    * IoT-Safe HWRNG:             no
    * NXP SE050:                  no
    * Maxim Integrated MAXQ10XX:  no
    * PSA:                        no
-   * System CA certs:            no
+   * System CA certs:            yes
 
 ---

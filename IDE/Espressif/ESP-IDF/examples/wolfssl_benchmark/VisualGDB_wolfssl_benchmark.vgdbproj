@@ -75,14 +75,14 @@
       <EnableFastUpToDateCheck>true</EnableFastUpToDateCheck>
       <ESPIDFExtension>
         <IDFCheckout>
-          <Version>v4.4.2</Version>
-          <Subdirectory>esp-idf/v4.4.2</Subdirectory>
+          <Version>v4.4.1</Version>
+          <Subdirectory>esp-idf/v4.4.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM20</COMPort>
+        <COMPort>COM23</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
-        <DeviceID>ESP32</DeviceID>
+        <DeviceID>ESP32C3</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
   </Build>
@@ -96,7 +96,29 @@
           <Transport>BuiltinShortcut</Transport>
         </RemoteHost>
         <Command>xcopy.exe</Command>
-        <Arguments>C:\SysGCC\esp32\esp-idf\v4.4.2\components\wolfssl\wolfcrypt\benchmark\benchmark.c C:\workspace\wolfssl-gojimmypi\wolfcrypt\benchmark\ /y</Arguments>
+        <Arguments>C:\SysGCC\esp32\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\benchmark\benchmark.c C:\workspace\wolfssl-gojimmypi\wolfcrypt\benchmark\ /y</Arguments>
+        <WorkingDirectory>$(BuildDir)</WorkingDirectory>
+        <BackgroundMode>false</BackgroundMode>
+      </CustomActionBase>
+      <CustomActionBase xsi:type="CommandLineAction">
+        <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+        <RemoteHost>
+          <HostName>BuildMachine</HostName>
+          <Transport>BuiltinShortcut</Transport>
+        </RemoteHost>
+        <Command>xcopy.exe</Command>
+        <Arguments>C:\SysGCC\esp32\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\*.* C:\workspace\wolfssl-gojimmypi\wolfcrypt\src\port\Espressif\ /y</Arguments>
+        <WorkingDirectory>$(BuildDir)</WorkingDirectory>
+        <BackgroundMode>false</BackgroundMode>
+      </CustomActionBase>
+      <CustomActionBase xsi:type="CommandLineAction">
+        <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+        <RemoteHost>
+          <HostName>BuildMachine</HostName>
+          <Transport>BuiltinShortcut</Transport>
+        </RemoteHost>
+        <Command>xcopy.exe</Command>
+        <Arguments>C:\SysGCC\esp32\esp-idf\v4.4.1\components\wolfssl\wolfssl\wolfcrypt\port\Espressif\*.* C:\workspace\wolfssl-gojimmypi\wolfcrypt\port\Espressif\ /y</Arguments>
         <WorkingDirectory>$(BuildDir)</WorkingDirectory>
         <BackgroundMode>false</BackgroundMode>
       </CustomActionBase>
@@ -121,7 +143,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM20</ComPortName>
+      <ComPortName>COM23</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -263,7 +285,7 @@
           <string>mon reset halt</string>
           <string>load</string>
         </StartupCommands>
-        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
+        <ProgramFLASHUsingExternalTool>true</ProgramFLASHUsingExternalTool>
         <PreferredGDBPort>0</PreferredGDBPort>
         <PreferredTelnetPort>0</PreferredTelnetPort>
         <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
