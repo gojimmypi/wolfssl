@@ -162,6 +162,18 @@ void app_main(void)
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
     ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
 
+#if defined(LIBWOLFSSL_VERSION_GIT_HASH)
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH = %s", LIBWOLFSSL_VERSION_GIT_HASH);
+#endif
+
+#if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s", LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
+#endif
+
+#if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+#endif
+
 //    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz", CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
 
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
@@ -217,9 +229,13 @@ void app_main(void)
     ** This is called at the end of wolf_test_task();
     */
 
-    ESP_LOGI(TAG, "MqttClient_NetConnect Task %s, Stack HWM: %d\n",
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* TODO find S3 HWM */
+#else
+    ESP_LOGI(TAG, "Task %s, Stack HWM: %d\n",
                   pcTaskGetTaskName(NULL),
                   uxTaskGetStackHighWaterMark(NULL));
+#endif
 
     if (rc == 0) {
         ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
