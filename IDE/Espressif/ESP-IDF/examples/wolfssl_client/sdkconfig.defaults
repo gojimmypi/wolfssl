@@ -1,20 +1,15 @@
+CONFIG_FREERTOS_HZ=1000
+CONFIG_ESP32_DEFAULT_CPU_FREQ_240=y
+
 #
 # Default main stack size
 #
 # This is typically way bigger than needed for stack size. See user_settings.h
 #
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=55000
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
 
 # Legacy stack size for older ESP-IDF versions
-CONFIG_MAIN_TASK_STACK_SIZE=55000
-
-#
-# Watchdog Timers
-#
-# We don't want to have the watchdog timeout during tests
-#
-CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
-CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+CONFIG_MAIN_TASK_STACK_SIZE=55500
 
 #
 # Compiler options

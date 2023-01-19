@@ -1246,7 +1246,7 @@ static const char* bench_result_words2[][5] = {
 
 /* maximum runtime for each benchmark */
 #ifndef BENCH_MIN_RUNTIME_SEC
-    #define BENCH_MIN_RUNTIME_SEC   1.0f
+    #define BENCH_MIN_RUNTIME_SEC   1.0F
 #endif
 
 #if defined(HAVE_AESGCM) || defined(HAVE_AESCCM)
@@ -1604,6 +1604,119 @@ static WC_INLINE int bench_stats_check(double start)
     return ((current_time(0) - start) < BENCH_MIN_RUNTIME_SEC);
 }
 
+/* return text for units and scale the value of blocks as needed for base2 */
+static const char* get_blocktype_base10(double* blocks)
+{
+    const char* rt;
+
+#if (  defined(WOLFSSL_BENCHMARK_FIXED_UNITS_G) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_GB))
+    #undef  WOLFSSL_FIXED_UNITS_PER_SEC
+    #define WOLFSSL_FIXED_UNITS_PER_SEC "GB/s"
+    *blocks /= (1000UL * 1000UL * 1000UL);
+    rt = "GiB";
+#elif (defined(WOLFSSL_BENCHMARK_FIXED_UNITS_M) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_MB))
+    #undef  WOLFSSL_FIXED_UNITS_PER_SEC
+    #define WOLFSSL_FIXED_UNITS_PER_SEC "MB/s"
+    *blocks /= (1024UL * 1024UL);
+    rt = "MiB";
+#elif (defined(WOLFSSL_BENCHMARK_FIXED_UNITS_K) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_KB))
+    #undef  WOLFSSL_FIXED_UNITS_PER_SEC
+    #define WOLFSSL_FIXED_UNITS_PER_SEC "KB/s"
+    *blocks /= 1024;
+    rt = "KiB";
+#elif  defined (WOLFSSL_BENCHMARK_FIXED_UNITS_B)
+    #undef  WOLFSSL_FIXED_UNITS_PER_SEC
+    #define WOLFSSL_FIXED_UNITS_PER_SEC "bytes/s"
+    (void)(*blocks); /* no adjustment, just appease compiler for not used */
+    rt = "bytes";
+#else
+    /* If no user-specified, auto-scale each metric (results vary).
+     * Determine if we should show as KB or MB or bytes. No GiB here. */
+    if (*blocks > (1024UL * 1024UL)) {
+        *blocks /= (1024UL * 1024UL);
+        rt = "MiB";
+    }
+    else if (*blocks > 1024) {
+        *blocks /= 1024;
+        rt = "KiB";
+    }
+    else {
+        rt = "bytes";
+    }
+#endif
+
+    return rt;
+}
+
+/* return text for units and scale the value of blocks as needed */
+static const char* get_blocktype(double* blocks)
+{
+    const char* rt;
+
+#if (  defined(WOLFSSL_BENCHMARK_FIXED_UNITS_G) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_GB))
+    *blocks /= (1000UL * 1000UL * 1000UL);
+    rt = "GB";
+#elif (defined(WOLFSSL_BENCHMARK_FIXED_UNITS_M) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_MB))
+    *blocks /= (1000UL * 1000UL);
+    rt = "MB";
+#elif (defined(WOLFSSL_BENCHMARK_FIXED_UNITS_K) || \
+       defined(WOLFSSL_BENCHMARK_FIXED_UNITS_KB))
+    *blocks /= (1000UL);
+    rt = "KB";
+#elif     defined (WOLFSSL_BENCHMARK_FIXED_UNITS_B)
+    (void)(*blocks); /* no adjustment, just appease compiler */
+    rt = "bytes";
+#else
+    /* If not user-specified, auto-scale each metric (results vary).
+     * Determine if we should show as KB or MB or bytes */
+    if (*blocks > (1000UL * 1000UL)) {
+        *blocks /= (1000UL * 1000UL);
+        rt = "MB";
+    }
+    else if (*blocks > 1000) {
+        *blocks /= 1000; /* make KB */
+        rt = "KB";
+    }
+    else {
+        rt = "bytes";
+    }
+#endif
+
+    return rt;
+}
+
+            rt = "MB";
+        }
+        else if (*blocks > 1000) {
+            *blocks /= 1000; /* make KB */
+            rt = "KB";
+        }
+        else {
+            rt = "bytes";
+        } /* rt auto-assigned */
+#endif /* WOLFSSL_BENCHMARK UNITS */
+
+    return rt;
+} /* specified_blockType */
+
+            rt = "MB";
+        }
+        else if (*blocks > 1000) {
+            *blocks /= 1000; /* make KB */
+            rt = "KB";
+        }
+        else {
+            rt = "bytes";
+        } /* rt auto-assigned */
+#endif /* WOLFSSL_BENCHMARK UNITS */
+
+    return rt;
+} /* specified_blockType */
 
 /* countSz is number of bytes that 1 count represents. Normally bench_size,
  * except for AES direct that operates on AES_BLOCK_SIZE blocks */
@@ -1611,15 +1724,15 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
                                    int countSz, double start, int ret)
 {
     double total, persec = 0, blocks = (double)count;
-    const char* blockType;
-    char msg[128] = {0};
-    const char** word = bench_result_words1[lng_index];
+    /* determine if we have fixed units, or auto-scale bits or bytes for units.
+     * note that the blockType text is assigned AND the blocks param is scaled.
+     */
     static int sym_header_printed = 0;
-
-    END_INTEL_CYCLES
-    total = current_time(0) - start;
-
-#ifdef LINUX_RUSAGE_UTIME
+        blockType = get_blocktype(&blocks);
+    }
+    else {
+        blockType = get_blocktype_base10(&blocks);
+    }
     check_for_excessive_stime(desc, "");
 #endif
 
@@ -1639,34 +1752,15 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID, int count,
         }
     }
 
+    /* determine if we have fixed units, or auto-scale bits or bytes for units.
+    ** note that the blockType text is assigned AND the blocks param is scaled.
+    */
     if (base2) {
-        /* determine if we should show as KiB or MiB */
-        if (blocks > (1024UL * 1024UL)) {
-            blocks /= (1024UL * 1024UL);
-            blockType = "MiB";
-        }
-        else if (blocks > 1024) {
-            blocks /= 1024;
-            blockType = "KiB";
-        }
-        else {
-            blockType = "bytes";
-        }
-    }
+        blockType = specified_base2_blockType(&blocks);
+    } /* is base2 bit counter */
     else {
-        /* determine if we should show as KB or MB */
-        if (blocks > (1000UL * 1000UL)) {
-            blocks /= (1000UL * 1000UL);
-            blockType = "MB";
-        }
-        else if (blocks > 1000) {
-            blocks /= 1000; /* make KB */
-            blockType = "KB";
-        }
-        else {
-            blockType = "bytes";
-        }
-    }
+        blockType = specified_blockType(&blocks);
+    } /* not base2, is byte counter */
 
     /* calculate blocks per second */
     if (total > 0) {
@@ -8238,7 +8332,6 @@ void benchmark_configure(int block_size)
         numBlocks = numBlocks * bench_size / block_size;
         bench_size = (word32)block_size;
     }
-}
 
 #ifndef NO_MAIN_DRIVER
 
@@ -8250,17 +8343,23 @@ void benchmark_configure(int block_size)
  * str   Algorithm string to print.
  * line  Length of line used so far.
  */
+#ifndef BENCH_MAX_LINE
+#define BENCH_MAX_LINE 80
+#endif
 static void print_alg(const char* str, int* line)
 {
-    int optLen;
-
-    optLen = (int)XSTRLEN(str) + 1;
-    if (optLen + *line > 80) {
-        printf("\n             ");
-        *line = 13;
+    const char* const ident = "             ";
+    if (*line == 0) {
+        fputs(ident, stdout);
+        *line = (int)XSTRLEN(ident);
+    }
+    printf(" %s", str);
+    *line += (int)XSTRLEN(str) + 1;
+    if (*line > BENCH_MAX_LINE) {
+        printf("\n");
+        *line = 0;
     }
     *line += optLen;
-    printf(" %s", str);
 }
 #endif
 
@@ -8320,37 +8419,26 @@ static void Usage(void)
     e++;
 #ifndef WOLFSSL_BENCHMARK_ALL
     printf("%s", bench_Usage_msg1[lng_index][e]);   /* option -<alg> */
-    printf("             ");
-    line = 13;
+    line = 0;
     for (i=0; bench_cipher_opt[i].str != NULL; i++)
-        print_alg(bench_cipher_opt[i].str + 1, &line);
-    printf("\n             ");
-    line = 13;
+        print_alg(bench_cipher_opt[i].str, &line);
     for (i=0; bench_digest_opt[i].str != NULL; i++)
-        print_alg(bench_digest_opt[i].str + 1, &line);
-    printf("\n             ");
-    line = 13;
+        print_alg(bench_digest_opt[i].str, &line);
     for (i=0; bench_mac_opt[i].str != NULL; i++)
-        print_alg(bench_mac_opt[i].str + 1, &line);
-    printf("\n             ");
-    line = 13;
+        print_alg(bench_mac_opt[i].str, &line);
     for (i=0; bench_asym_opt[i].str != NULL; i++)
-        print_alg(bench_asym_opt[i].str + 1, &line);
-    printf("\n             ");
-    line = 13;
+        print_alg(bench_asym_opt[i].str, &line);
     for (i=0; bench_other_opt[i].str != NULL; i++)
-        print_alg(bench_other_opt[i].str + 1, &line);
-    printf("\n             ");
+        print_alg(bench_other_opt[i].str, &line);
 #if defined(HAVE_PQC) && defined(HAVE_LIBOQS)
-    line = 13;
     for (i=0; bench_pq_asym_opt[i].str != NULL; i++)
-        print_alg(bench_pq_asym_opt[i].str + 1, &line);
+        print_alg(bench_pq_asym_opt[i].str, &line);
 #if defined(HAVE_LIBOQS)
     for (i=0; bench_pq_asym_opt2[i].str != NULL; i++)
-        print_alg(bench_pq_asym_opt2[i].str + 1, &line);
-    printf("\n");
+        print_alg(bench_pq_asym_opt2[i].str, &line);
 #endif /* HAVE_LIBOQS */
 #endif /* HAVE_PQC */
+    printf("\n");
 #endif /* !WOLFSSL_BENCHMARK_ALL */
     e++;
     printf("%s", bench_Usage_msg1[lng_index][e++]);   /* option -lng */

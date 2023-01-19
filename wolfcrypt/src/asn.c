@@ -13195,7 +13195,8 @@ static int GetCertName(DecodedCert* cert, char* full, byte* hash, int nameType,
                         cert->subjectEmail = (char*)&input[srcIdx];
                         cert->subjectEmailLen = strLen;
                     }
-                #if defined(WOLFSSL_HAVE_ISSUER_NAMES)
+                #if defined(WOLFSSL_HAVE_ISSUER_NAMES) && \
+                    (defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT))
                     else if (nameType == ISSUER) {
                         cert->issuerEmail = (char*)&input[srcIdx];
                         cert->issuerEmailLen = strLen;
@@ -13829,11 +13830,13 @@ int GetFormattedTime(void* currTime, byte* buf, word32 len)
                 return BUFFER_E;
             }
             ret = XSPRINTF((char*)buf,
-        #else
-            ret = XSNPRINTF((char*)buf, len,
-        #endif
                         "%02d%02d%02d%02d%02d%02dZ", year, mon, day,
                         hour, mini, sec);
+        #else
+            ret = XSNPRINTF((char*)buf, len,
+                        "%02d%02d%02d%02d%02d%02dZ", year, mon, day,
+                        hour, mini, sec);
+        #endif
     }
     else {
         /* GeneralizedTime */
@@ -13849,11 +13852,13 @@ int GetFormattedTime(void* currTime, byte* buf, word32 len)
                 return BUFFER_E;
             }
             ret = XSPRINTF((char*)buf,
-        #else
-            ret = XSNPRINTF((char*)buf, len,
-        #endif
                         "%4d%02d%02d%02d%02d%02dZ", year, mon, day,
                         hour, mini, sec);
+        #else
+            ret = XSNPRINTF((char*)buf, len,
+                        "%4d%02d%02d%02d%02d%02dZ", year, mon, day,
+                        hour, mini, sec);
+        #endif
     }
 
     return ret;
@@ -15059,7 +15064,7 @@ void FreeSignatureCtx(SignatureCtx* sigCtx)
     sigCtx->state = SIG_STATE_BEGIN;
 }
 
-#ifndef NO_ASN_CRYPT
+#if !defined(NO_ASN_CRYPT) && !defined(NO_HASH_WRAPPER)
 static int HashForSignature(const byte* buf, word32 bufSz, word32 sigOID,
                             byte* digest, int* typeH, int* digestSz, int verify)
 {
@@ -15226,7 +15231,7 @@ static int HashForSignature(const byte* buf, word32 bufSz, word32 sigOID,
 
     return ret;
 }
-#endif /* !NO_ASN_CRYPT */
+#endif /* !NO_ASN_CRYPT && !NO_HASH_WRAPPER */
 
 /* Return codes: 0=Success, Negative (see error-crypt.h), ASN_SIG_CONFIRM_E */
 static int ConfirmSignature(SignatureCtx* sigCtx,
@@ -15926,7 +15931,7 @@ static int ConfirmSignature(SignatureCtx* sigCtx,
                     break;
                 }
             #endif /* !NO_DSA && !HAVE_SELFTEST */
-            #if defined(HAVE_ECC)
+            #if defined(HAVE_ECC) && defined(HAVE_ECC_VERIFY)
                 case ECDSAk:
                 {
                 #if defined(HAVE_PK_CALLBACKS)
@@ -22343,6 +22348,7 @@ wcchar END_PUB_KEY          = "-----END PUBLIC KEY-----";
 const int pem_struct_min_sz = XSTR_SIZEOF("-----BEGIN X509 CRL-----"
                                              "-----END X509 CRL-----");
 
+#ifdef WOLFSSL_PEM_TO_DER
 static WC_INLINE const char* SkipEndOfLineChars(const char* line,
                                                 const char* endOfLine)
 {
@@ -22353,6 +22359,7 @@ static WC_INLINE const char* SkipEndOfLineChars(const char* line,
     }
     return line;
 }
+#endif
 
 int wc_PemGetHeaderFooter(int type, const char** header, const char** footer)
 {
@@ -27735,7 +27742,7 @@ static int MakeSignature(CertSignCtx* certSignCtx, const byte* buf, int sz,
         }
     #endif /* !NO_RSA */
 
-    #ifdef HAVE_ECC
+    #if defined(HAVE_ECC) && defined(HAVE_ECC_SIGN)
         if (!rsaKey && eccKey) {
             word32 outSz = sigSz;
 
@@ -27744,7 +27751,7 @@ static int MakeSignature(CertSignCtx* certSignCtx, const byte* buf, int sz,
             if (ret == 0)
                 ret = outSz;
         }
-    #endif /* HAVE_ECC */
+    #endif /* HAVE_ECC && HAVE_ECC_SIGN */
 
     #if defined(HAVE_ED25519) && defined(HAVE_ED25519_SIGN)
         if (!rsaKey && !eccKey && ed25519Key) {
@@ -35166,9 +35173,7 @@ static int GetRevoked(RevokedCert* rcert, const byte* buff, word32* idx,
                       DecodedCRL* dcrl, int maxIdx)
 {
 #ifndef WOLFSSL_ASN_TEMPLATE
-#ifndef NO_ASN_TIME
     int ret;
-#endif
     int len;
     word32 end;
     RevokedCert* rc;

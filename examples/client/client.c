@@ -799,20 +799,19 @@ doExit:
     if (exitWithRet)
         return err;
 
-    printf(
-#if !defined(__MINGW32__)
-        "wolfSSL Client Benchmark %zu bytes\n"
+#ifdef __MINGW32__
+#define SIZE_FMT "%d"
+#define SIZE_TYPE int
 #else
-        "wolfSSL Client Benchmark %d bytes\n"
+#define SIZE_FMT "%zu"
+#define SIZE_TYPE size_t
 #endif
+    printf(
+        "wolfSSL Client Benchmark " SIZE_FMT " bytes\n"
         "\tConnect %8.3f ms\n"
         "\tTX      %8.3f ms (%8.3f MBps)\n"
         "\tRX      %8.3f ms (%8.3f MBps)\n",
-#if !defined(__MINGW32__)
-        throughput,
-#else
-        (int)throughput,
-#endif
+        (SIZE_TYPE)throughput,
         conn_time * 1000,
         tx_time * 1000, throughput / tx_time / 1024 / 1024,
         rx_time * 1000, throughput / rx_time / 1024 / 1024
@@ -3662,7 +3661,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
         }
     }
 
-#ifdef HAVE_CRL
+#if defined(HAVE_CRL) && !defined(NO_FILESYSTEM)
     if (disableCRL == 0 && !useVerifyCb) {
     #if defined(HAVE_IO_TIMEOUT) && defined(HAVE_HTTP_CLIENT)
         wolfIO_SetTimeout(DEFAULT_TIMEOUT_SEC);
@@ -4273,7 +4272,8 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
         }
 #endif
 
-#if defined(OPENSSL_EXTRA) && defined(HAVE_EXT_CACHE)
+#if !defined(NO_SESSION_CACHE) && (defined(OPENSSL_EXTRA) || \
+        defined(HAVE_EXT_CACHE))
         if (flatSession) {
             const byte* constFlatSession = flatSession;
             session = wolfSSL_d2i_SSL_SESSION(NULL,
@@ -4283,7 +4283,8 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 
         wolfSSL_set_session(sslResume, session);
 
-#if defined(OPENSSL_EXTRA) && defined(HAVE_EXT_CACHE)
+#if !defined(NO_SESSION_CACHE) && (defined(OPENSSL_EXTRA) || \
+        defined(HAVE_EXT_CACHE))
         if (flatSession) {
             XFREE(flatSession, NULL, DYNAMIC_TYPE_TMP_BUFFER);
         }
@@ -4454,7 +4455,8 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 exit:
 
 #ifdef WOLFSSL_WOLFSENTRY_HOOKS
-    wolfsentry_ret = wolfsentry_shutdown(&wolfsentry);
+    wolfsentry_ret =
+        wolfsentry_shutdown(WOLFSENTRY_CONTEXT_ARGS_OUT_EX4(&wolfsentry, NULL));
     if (wolfsentry_ret < 0) {
         fprintf(stderr,
                 "wolfsentry_shutdown() returned " WOLFSENTRY_ERROR_FMT "\n",
