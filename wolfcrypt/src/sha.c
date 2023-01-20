@@ -1,6 +1,7 @@
+/* working */
 /* sha.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -311,15 +312,15 @@
         sha->ctx.isfirstblock = 1;
         sha->ctx.sha_type = SHA1;
         if(sha->ctx.mode == ESP32_SHA_HW){
-            sha->ctx.lockDepth = 0;
+            // sha->ctx.lockDepth = 0;
             /* release hw engine */
-            esp_sha_hw_unlock(&(sha->ctx));
+            esp_sha_hw_unlock();
         }
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
         sha->ctx.mode = ESP32_SHA_INIT;
-        sha->ctx.lockDepth = 0;
+        //sha->ctx.lockDepth = 0;
         return ret;
     }
 
@@ -359,6 +360,7 @@
         int ret = 0;
         ret = se050_hash_final(&sha->se050Ctx, hash, WC_SHA_DIGEST_SIZE,
                                kAlgorithm_SSS_SHA1);
+        (void)wc_InitSha(sha);
         return ret;
     }
     int wc_ShaFinalRaw(wc_Sha* sha, byte* hash)
@@ -366,6 +368,7 @@
         int ret = 0;
         ret = se050_hash_final(&sha->se050Ctx, hash, WC_SHA_DIGEST_SIZE,
                                kAlgorithm_SSS_SHA1);
+        (void)wc_InitSha(sha);
         return ret;
     }
 
@@ -537,7 +540,7 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     sha->ctx.mode = ESP32_SHA_INIT;
     sha->ctx.isfirstblock = 1;
-    sha->ctx.lockDepth = 0; /* keep track of how many times lock is called */
+    // sha->ctx.lockDepth = 0; /* keep track of how many times lock is called */
 #endif
     ret = InitSha(sha);
     if (ret != 0)
@@ -853,7 +856,7 @@ void wc_ShaFree(wc_Sha* sha)
     wc_ShaPic32Free(sha);
 #endif
 #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    se050_hash_free(&sha->se050Ctx);
+   se050_hash_free(&sha->se050Ctx);
 #endif
 #if (defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
     !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH))
@@ -929,9 +932,6 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 #endif
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
-#endif
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    ret = se050_hash_copy(&src->se050Ctx, &dst->se050Ctx);
 #endif
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
