@@ -121,7 +121,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     typedef struct {
         byte isfirstblock;
 
-        ESP32_MODE mode; /* typically 0 init, 1 HW, 2 SW */
+        byte mode; /* typically 0 init, 1 HW, 2 SW */
 
         /* we'll keep track of our own locks.
          * actual enable/disable only occurs for ref_counts[periph] == 0 */
