@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\refresh_sha_from_idf.bat = ..\..\refresh_sha_from_idf.bat
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha.c
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha256.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha256.c
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha512.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha512.c
