@@ -1,4 +1,3 @@
-/* working */
 /* sha.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -312,15 +311,15 @@
         sha->ctx.isfirstblock = 1;
         sha->ctx.sha_type = SHA1;
         if(sha->ctx.mode == ESP32_SHA_HW){
-            // sha->ctx.lockDepth = 0;
+            sha->ctx.lockDepth = 0;
             /* release hw engine */
-            esp_sha_hw_unlock(NULL);
+            esp_sha_hw_unlock(&(sha->ctx));
         }
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
         sha->ctx.mode = ESP32_SHA_INIT;
-        //sha->ctx.lockDepth = 0;
+        sha->ctx.lockDepth = 0;
         return ret;
     }
 
@@ -540,7 +539,7 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     sha->ctx.mode = ESP32_SHA_INIT;
     sha->ctx.isfirstblock = 1;
-    // sha->ctx.lockDepth = 0; /* keep track of how many times lock is called */
+    sha->ctx.lockDepth = 0; /* keep track of how many times lock is called */
 #endif
     ret = InitSha(sha);
     if (ret != 0)

@@ -414,3 +414,20 @@ user_settings_asm.h
 
 # auto-created CMake backups
 **/CMakeLists.txt.old
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/oqs
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig.old
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32s3.h.save
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.save
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.default
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/dependencies.lock
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/.editorconfig
+/wolfcrypt/benchmark/benchmark.c.upstream_dec16.save
+/wolfcrypt/benchmark/benchmark.c.merged_desdc16.save
+/wolfcrypt/benchmark/benchmark - Copy.c.not used
+/douzer_04b31518ba92e763577b058c0827612cbf4a790a.patch.txt
+/wolfcrypt/src/sha512.c.as_found
+/wolfcrypt/src/sha256.c.as_found
+/wolfcrypt/src/sha.c.as_found
+/wolfcrypt/src/port/Espressif/esp32_sha.c.WIP
+/wolfcrypt/src/port/Espressif/esp32_sha.c.bad
+/wolfcrypt/port/Espressif/esp32-crypt.h.not used here

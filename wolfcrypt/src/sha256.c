@@ -1,4 +1,3 @@
-/* working */
 /* sha256.c
  *
  * Copyright (C) 2006-2022 wolfSSL Inc.
@@ -751,7 +750,7 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->ctx.sha_type = SHA2_256;
         if(sha256->ctx.mode == ESP32_SHA_HW) {
             /* release hw */
-            esp_sha_hw_unlock(NULL);
+            esp_sha_hw_unlock(&(sha256->ctx));
         }
 
         /* always set mode as INIT
@@ -775,7 +774,7 @@ static int InitSha256(wc_Sha256* sha256)
         XMEMSET(sha256, 0, sizeof(wc_Sha256));
         sha256->ctx.mode = ESP32_SHA_INIT;
         sha256->ctx.isfirstblock = 1;
-        //sha256->ctx.lockDepth = 0; /* we'll keep track of our own lock depth */
+        sha256->ctx.lockDepth = 0; /* we'll keep track of our own lock depth */
         (void)devId;
 
         ret = InitSha256(sha256);
@@ -1085,7 +1084,7 @@ static int InitSha256(wc_Sha256* sha256)
 
             #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
                 if (sha256->ctx.mode == ESP32_SHA_INIT ||
-                    sha256->ctx.mode == ESP32_SHA_INIT) {
+                    sha256->ctx.mode == ESP32_SHA_FAIL_NEED_UNROLL) {
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
 
@@ -1943,7 +1942,7 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
     dst->ctx.mode         = src->ctx.mode;
     dst->ctx.isfirstblock = src->ctx.isfirstblock;
     dst->ctx.sha_type     = src->ctx.sha_type;
-   //  dst->ctx.lockDepth    = src->ctx.lockDepth;
+    dst->ctx.lockDepth    = src->ctx.lockDepth;
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS

@@ -1,0 +1,2 @@
+setup.sh - installing over existing:  MKDCMD='/bin/mkdir -p'
+
