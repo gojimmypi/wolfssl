@@ -314,7 +314,7 @@
         if(sha->ctx.mode == ESP32_SHA_HW){
             // sha->ctx.lockDepth = 0;
             /* release hw engine */
-            esp_sha_hw_unlock();
+            esp_sha_hw_unlock(NULL);
         }
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()

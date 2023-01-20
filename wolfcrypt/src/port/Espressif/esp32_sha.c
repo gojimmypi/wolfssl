@@ -1,6 +1,6 @@
 /* esp32_sha.c
  *
- * Copyright (C) 2006-2022 wolfSSL Inc.
+ * Copyright (C) 2006-2021 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -170,7 +170,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 /*
 * release hw engine
 */
-void esp_sha_hw_unlock( void )
+int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
 
@@ -183,6 +183,8 @@ void esp_sha_hw_unlock( void )
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
     ESP_LOGV(TAG, "leave esp_sha_hw_unlock");
+
+    return 0;
 }
 /*
 * start sha process by using hw engine
