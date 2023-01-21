@@ -125,9 +125,9 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         byte g2;
         byte g3;
         byte g4;
-        byte lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
         ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
         enum SHA_TYPE sha_type;
+        byte lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
         /* DANGER
         ** There's a known problem when assigning a ESP32_MODE type
         ** to the mode instance here.
