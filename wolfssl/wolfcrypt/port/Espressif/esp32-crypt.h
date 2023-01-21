@@ -115,19 +115,36 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         ESP32_SHA_INIT = 0,
         ESP32_SHA_HW = 1,
         ESP32_SHA_SW = 2,
-        ESP32_SHA_FAIL_NEED_UNROLL = -1
+        ESP32_SHA_FAIL_NEED_UNROLL = 3
     } ESP32_MODE;
 
     typedef struct {
-        byte isfirstblock;
-
-        byte mode; /* typically 0 init, 1 HW, 2 SW */
-
         /* we'll keep track of our own locks.
          * actual enable/disable only occurs for ref_counts[periph] == 0 */
-        int lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
-
+        byte g1;
+        byte g2;
+        byte g3;
+        byte g4;
+        byte lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
+        ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
         enum SHA_TYPE sha_type;
+        /* DANGER
+        ** There's a known problem when assigning a ESP32_MODE type
+        ** to the mode instance here.
+        **
+        ** ESP32_MODE mode;  will cause an ED25519 error = -229.
+        **
+        ** This seems to be a compile-time implicit type conversion problem
+        ** between sizeof(ESP32_MODE) (4 bytes) and the value assigned at
+        ** runtime. See PR #
+        */
+        // byte g1a;
+
+        byte g5;
+        byte g6;
+        byte g7;
+        byte g8;
+        byte isfirstblock;
     } WC_ESP32SHA;
 
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);

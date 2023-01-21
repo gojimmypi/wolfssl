@@ -27,6 +27,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
 #include <wolfssl/version.h>
+
 #ifndef WOLFSSL_ESPIDF
 #warning "problem with wolfSSL user settings. Check components/wolfssl/include"
 #endif
@@ -123,6 +124,13 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
+#include <wolfssl/wolfcrypt/types.h>
+    typedef enum {
+        ESP32_SHA_INIT = 0,
+        ESP32_SHA_HW = 1,
+        ESP32_SHA_SW = 2,
+        ESP32_SHA_FAIL_NEED_UNROLL = -1
+    } ESP32_MODE;
 
 /* entry point */
 void app_main(void)
@@ -134,6 +142,16 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
+    ESP32_MODE a;
+    byte b;
+
+    ESP_LOGI(TAG, "sizeof(ESP32_MODE) = %d", (int)sizeof(ESP32_MODE));
+    ESP_LOGI(TAG, "sizeof(ESP32_MODE) = %d", (int)sizeof(ESP32_SHA_INIT));
+    ESP_LOGI(TAG, "sizeof(ESP32_MODE) = %d", (int)sizeof(ESP32_SHA_HW));
+    ESP_LOGI(TAG, "sizeof(ESP32_MODE) = %d", (int)sizeof(ESP32_SHA_SW));
+//    ESP_LOGI(TAG, "sizeof(byte) = %lli", sizeof(byte));
+//    ESP_LOGI(TAG, "sizeof(a) = %lli", sizeof(a));
+//    ESP_LOGI(TAG, "sizeof(b) = %lli", sizeof(b));
 
     ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);

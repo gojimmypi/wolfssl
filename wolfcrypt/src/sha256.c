@@ -757,10 +757,39 @@ static int InitSha256(wc_Sha256* sha256)
             esp_sha_hw_unlock(&(sha256->ctx));
         }
 
+        sha256->ctx.g1 = 0x72;
+        sha256->ctx.g2 = 0x72;
+        sha256->ctx.g3 = 0x72;
+        sha256->ctx.g4 = 0x72;
+        sha256->ctx.g5 = 0x72;
+        sha256->ctx.g6 = 0x72;
+        sha256->ctx.g7 = 0x72;
+        sha256->ctx.g8 = 0x72;
+
+        sha256->ctx.mode = -1;
+
+
+//    sha256->ctx.g1 = 0xbb;
+//    sha256->ctx.lockDepth = -1;
+//    sha256->ctx.g4 = 72;
+//    sha256->ctx.sha_type = -1;
+//    sha256->ctx.g8 = 72;
+//    sha256->ctx.isfirstblock = 0x99;
+//    ESP_LOGI("peek", "Size of ctx = %d", (int)sizeof(sha256->ctx));
+//    ESP_LOGI("peek", "Addr size = %d", (int)&(sha256->ctx.isfirstblock) - (int)&(sha256->ctx.g1) );
+
+
+
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
+        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
+        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
         sha256->ctx.mode = ESP32_SHA_INIT;
+        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
+        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
 
         return ret;
     }
@@ -776,7 +805,19 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
 
         XMEMSET(sha256, 0, sizeof(wc_Sha256));
+        sha256->ctx.g1 = 0x72;
+        sha256->ctx.g2 = 0x72;
+        sha256->ctx.g3 = 0x72;
+        sha256->ctx.g4 = 0x72;
+        sha256->ctx.g5 = 0x72;
+        sha256->ctx.g6 = 0x72;
+        sha256->ctx.g7 = 0x72;
+        sha256->ctx.g8 = 0x72;
+
         sha256->ctx.mode = ESP32_SHA_INIT;
+        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
+        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
         sha256->ctx.isfirstblock = 1;
         sha256->ctx.lockDepth = 0; /* we'll keep track of our own lock depth */
         (void)devId;
@@ -1964,6 +2005,9 @@ int wc_Sha256GetHash(wc_Sha256* sha256, byte* hash)
 
     #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
         sha256->ctx.mode = ESP32_SHA_SW;
+        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
+        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
     #endif
 
         wc_Sha256Free(tmpSha256);

@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha.c
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha256.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha256.c
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha512.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\sha512.c
+		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\test\test.c = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\test\test.c
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject

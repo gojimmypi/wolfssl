@@ -146,6 +146,11 @@ static void wc_esp_wait_until_idle()
  */
 int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 {
+    if (ctx == NULL)
+    {
+        ESP_LOGE(TAG, "esp_unroll_sha_module_enable called with null ctx.");
+        return -1;
+    }
     /* if we end up here, there was a prior unexpected fail and
      * we need to unroll enables */
     int ret = 0; /* assume success unless proven otherwise */
@@ -182,7 +187,15 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ESP_LOGV(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
-        ctx->mode = ESP32_SHA_INIT;
+    ctx->g1 = 0x72;
+    ctx->g2 = 0x72;
+    ctx->g3 = 0x72;
+    ctx->g4 = 0x72;
+    ctx->g5 = 0x72;
+    ctx->g6 = 0x72;
+    ctx->g7 = 0x72;
+    ctx->g8 = 0x72;
+    ctx->mode = ESP32_SHA_INIT;
     }
     else {
         ESP_LOGE(TAG, "Failed to unroll after %d attempts.",
