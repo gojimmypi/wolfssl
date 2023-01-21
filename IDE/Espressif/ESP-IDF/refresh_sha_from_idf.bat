@@ -7,3 +7,5 @@ copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Es
 copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\esp32_mp.c        C:\workspace\wolfssl-gojimmypi\wolfcrypt\src\port\Espressif\esp32_mp.c
 copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\esp32_aes.c       C:\workspace\wolfssl-gojimmypi\wolfcrypt\src\port\Espressif\esp32_aes.c
 copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h C:\workspace\wolfssl-gojimmypi\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\src\port\Espressif\esp32_aes.c       C:\workspace\wolfssl-gojimmypi\wolfcrypt\src\port\Espressif\esp32_aes.c
+copy C:\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\wolfcrypt\test\test.c                          C:\workspace\wolfssl-gojimmypi\wolfcrypt\test\test.c
