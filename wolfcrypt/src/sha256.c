@@ -766,9 +766,6 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->ctx.g7 = 0x72;
         sha256->ctx.g8 = 0x72;
 
-        sha256->ctx.mode = -1;
-
-
 //    sha256->ctx.g1 = 0xbb;
 //    sha256->ctx.lockDepth = -1;
 //    sha256->ctx.g4 = 72;
@@ -1284,6 +1281,13 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
         }
 
+#ifndef WC_NO_HARDEN
+        /* we'll add a 0x80 byte at the end,
+        ** so make sure we have appropriate buffer length. */
+        if (sha256->buffLen > WC_SHA256_BLOCK_SIZE - 1) {
+            return BAD_FUNC_ARG;
+        }
+#endif
         local = (byte*)sha256->buffer;
         local[sha256->buffLen++] = 0x80; /* add 1 */
 
