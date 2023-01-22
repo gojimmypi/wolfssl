@@ -318,7 +318,19 @@
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
+        sha->ctx.g1 = 0x72;
+        sha->ctx.g2 = 0x72;
+        sha->ctx.g3 = 0x72;
+        sha->ctx.g4 = 0x72;
+        sha->ctx.g5 = 0x72;
+        sha->ctx.g6 = 0x72;
+        sha->ctx.g7 = 0x72;
+        sha->ctx.g8 = 0x72;
+
         sha->ctx.mode = ESP32_SHA_INIT;
+        if (sha->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha->ctx.mode);
+        if (sha->ctx.g5 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g5);
         sha->ctx.lockDepth = 0;
         return ret;
     }
@@ -535,7 +547,19 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    sha->ctx.mode = ESP32_SHA_INIT;
+
+        sha->ctx.g1 = 0x72;
+        sha->ctx.g2 = 0x72;
+        sha->ctx.g3 = 0x72;
+        sha->ctx.g4 = 0x72;
+        sha->ctx.g5 = 0x72;
+        sha->ctx.g6 = 0x72;
+        sha->ctx.g7 = 0x72;
+        sha->ctx.g8 = 0x72;
+        sha->ctx.mode = ESP32_SHA_INIT;
+        if (sha->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha->ctx.mode);
+        if (sha->ctx.g5 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g5);
     sha->ctx.isfirstblock = 1;
     sha->ctx.lockDepth = 0; /* keep track of how many times lock is called */
 #endif
@@ -903,6 +927,9 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
         sha->ctx.mode = ESP32_SHA_SW;
+        if (sha->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha->ctx.mode);
+        if (sha->ctx.g5 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g5);
 #endif
 
 
@@ -936,6 +963,9 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
      dst->ctx.mode = src->ctx.mode;
+        if (dst->ctx.g4 != 114) ESP_LOGI("peek", "g5 = %d", dst->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", dst->ctx.mode);
+        if (dst->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", dst->ctx.g5);
      dst->ctx.isfirstblock = src->ctx.isfirstblock;
      dst->ctx.sha_type = src->ctx.sha_type;
 #endif
