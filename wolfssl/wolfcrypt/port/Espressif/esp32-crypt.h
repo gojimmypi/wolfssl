@@ -1,6 +1,6 @@
 /* esp32-crypt.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2022 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -27,7 +27,6 @@
 #include "esp_idf_version.h"
 #include "esp_types.h"
 #include "esp_log.h"
-#include "esp_random.h"
 
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
     #undef LOG_LOCAL_LEVEL
@@ -115,36 +114,28 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         ESP32_SHA_INIT = 0,
         ESP32_SHA_HW = 1,
         ESP32_SHA_SW = 2,
-        ESP32_SHA_FAIL_NEED_UNROLL = 3
+        ESP32_SHA_FAIL_NEED_UNROLL = -1
     } ESP32_MODE;
 
     typedef struct {
+        byte isfirstblock;
+
+        ESP32_MODE mode; /* typically 0 init, 1 HW, 2 SW */
+
         /* we'll keep track of our own locks.
          * actual enable/disable only occurs for ref_counts[periph] == 0 */
-        byte g1;
-        byte g2;
-        byte g3;
-        byte g4;
-        ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
-        enum SHA_TYPE sha_type;
-        byte lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
-        /* DANGER
-        ** There's a known problem when assigning a ESP32_MODE type
-        ** to the mode instance here.
-        **
-        ** ESP32_MODE mode;  will cause an ED25519 error = -229.
-        **
-        ** This seems to be a compile-time implicit type conversion problem
-        ** between sizeof(ESP32_MODE) (4 bytes) and the value assigned at
-        ** runtime. See PR #
-        */
-        // byte g1a;
+        int lockDepth; /* see ref_counts[periph] in periph_ctrl.c */
 
+        enum SHA_TYPE sha_type;
+
+        int g1;
+        int g2;
+        int g3;
+        int g4;
         byte g5;
         byte g6;
         byte g7;
         byte g8;
-        byte isfirstblock;
     } WC_ESP32SHA;
 
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
