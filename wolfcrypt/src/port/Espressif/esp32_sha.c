@@ -187,6 +187,8 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ESP_LOGV(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
+
+    // TODO remove these:
     ctx->g1 = 0x72;
     ctx->g2 = 0x72;
     ctx->g3 = 0x72;
