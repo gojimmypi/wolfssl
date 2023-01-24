@@ -2029,7 +2029,7 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 
     if (src == NULL || dst == NULL)
         return BAD_FUNC_ARG;
-
+    ESP_LOGI("peek", "sizeof(wc_Sha256) = %d ", sizeof(wc_Sha256));
     XMEMCPY(dst, src, sizeof(wc_Sha256));
 
 #ifdef WOLFSSL_MAXQ10XX_CRYPTO

@@ -85,6 +85,7 @@ enum {
 
 /* An ED25519 Key */
 struct ed25519_key {
+    // word16 g1;
     byte    p[ED25519_PUB_KEY_SIZE]; /* compressed public key */
     byte    k[ED25519_PRV_KEY_SIZE]; /* private key : 32 secret -- 32 public */
 #ifdef FREESCALE_LTC_ECC

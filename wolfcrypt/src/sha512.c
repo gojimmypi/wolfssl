@@ -621,6 +621,7 @@ static int InitSha512_Family(wc_Sha512* sha512, void* heap, int devId,
     sha512->devCtx = NULL;
 #endif
 
+    /* call the initialization function pointed to by initfp */
     ret = initfp(sha512);
     if (ret != 0)
         return ret;
