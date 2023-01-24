@@ -154,7 +154,11 @@ static int ed25519_hash(ed25519_key* key, const byte* in, word32 inLen,
     sha = &key->sha;
     ret = ed25519_hash_reset(key);
 #else
-    XMEMSET((ed25519_key*)key, 0, sizeof(*key));
+    /* suggested:
+    **   XMEMSET(key, 0, sizeof(*key));
+    **   we probably don't want to wipe out the entire key here,
+    **   but init sha: */
+    XMEMSET(sha, 0, sizeof(sha[1]));
     ret = ed25519_hash_init(key, sha);
 #endif
     if (ret < 0)
@@ -334,8 +338,13 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
-        // XMEMSET(key, 0, sizeof(key));
-        XMEMSET((ed25519_key*)key, 0, sizeof(*key));
+
+        /* suggested:
+        **   XMEMSET(key, 0, sizeof(*key));
+        **   we probably don't want to wipe out the entire key here,
+        **   but init sha: */
+        XMEMSET(sha, 0, sizeof(sha[1]));
+
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)
             return ret;
@@ -389,8 +398,12 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
-       //  XMEMSET(key, 0, sizeof(key));
-        XMEMSET((ed25519_key*)key, 0, sizeof(*key));
+
+        /* suggested:
+        **   XMEMSET(key, 0, sizeof(*key));
+        **   we probably don't want to wipe out the entire key here,
+        **   but init sha: */
+        XMEMSET(sha, 0, sizeof(sha[1]));
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)
             return ret;
@@ -769,8 +782,13 @@ int wc_ed25519_verify_msg_ex(const byte* sig, word32 sigLen, const byte* msg,
 #ifdef WOLFSSL_ED25519_PERSISTENT_SHA
     sha = &key->sha;
 #else
-   //  XMEMSET(key, 0, sizeof(key));
-    XMEMSET((ed25519_key*)key, 0, sizeof(*key));
+
+    /* suggested:
+    **   XMEMSET(key, 0, sizeof(*key));
+    **   we probably don't want to wipe out the entire key here,
+    **   but init sha: */
+    XMEMSET(sha, 0, sizeof(sha[1]));
+
     ret = ed25519_hash_init(key, sha);
     if (ret < 0)
         return ret;
@@ -878,7 +896,9 @@ int wc_ed25519_init_ex(ed25519_key* key, void* heap, int devId)
     if (key == NULL)
         return BAD_FUNC_ARG;
 
+    /* for init, ensure the key is zeroed*/
     XMEMSET(key, 0, sizeof(ed25519_key));
+
 #ifdef WOLF_CRYPTO_CB
     key->devId = devId;
 #else
