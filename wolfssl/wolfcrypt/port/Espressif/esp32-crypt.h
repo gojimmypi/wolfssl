@@ -119,6 +119,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
         typedef struct
         {
+            int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
             /* NOTE:
             **
             ** There's a known Espressif byte alignment issue. See:
@@ -137,7 +138,6 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
             /* we'll keep track of our own locks.
             ** actual enable/disable only occurs for ref_counts[periph] == 0 */
-            int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
             byte isfirstblock; /* 0 is not first block; 1 = is first block   */
 
             byte g5;
