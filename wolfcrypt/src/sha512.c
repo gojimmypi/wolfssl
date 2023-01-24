@@ -288,12 +288,45 @@ static int InitSha512(wc_Sha512* sha512)
     sha512->ctx.g8 = 0x72;
 
     sha512->ctx.sha_type = SHA2_512;
-     /* always start firstblock = 1 when using hw engine */
-    sha512->ctx.isfirstblock = 1;
-    if (sha512->ctx.mode == ESP32_SHA_HW) {
-        /* release hw */
-        esp_sha_hw_unlock(&(sha512->ctx));
+
+    /* WARNING: The logic below is not a substitute
+    ** for missing proper initialization. */
+    switch (sha512->ctx.mode) {
+        case ESP32_SHA_INIT:
+            /* likely a fresh, new SHA */
+            ESP_LOGI("peek", ">> Init");
+            break;
+
+        case ESP32_SHA_HW:
+            /* release hw */
+            ESP_LOGI("peek", ">> HW");
+            esp_sha_hw_unlock(&(sha512->ctx));
+            break;
+
+        case ESP32_SHA_SW:
+            /* likely a call when another SHA HW in progress */
+            ESP_LOGI("peek", ">> SW");
+            break;
+
+        case ESP32_SHA_FAIL_NEED_UNROLL:
+            /* oh, how did we get here ? */
+            ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
+            break;
+
+        default:
+            ESP_LOGI("peek", "ALERT: \nunexpected mode value\n");
+            sha512->ctx.mode = ESP32_SHA_INIT;
+            break;
     }
+
+    /* reminder: always start firstblock = 1 when using hw engine */
+    /* we're always on the first block at init time (not zero-based!) */
+    sha512->ctx.isfirstblock = 1;
+
+    /* TODO not used ? */
+    if (sha512->ctx.mode == ESP32_SHA_HW) {
+    }
+
     /* always set mode as INIT
     *  whether using HW or SW is determined at first call of update()
     */
