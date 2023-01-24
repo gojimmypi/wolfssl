@@ -53,10 +53,15 @@
 #endif
 
 #if defined(HAVE_ED25519_SIGN) || defined(HAVE_ED25519_VERIFY)
-#define ED25519CTX_SIZE    32
+    /* set a static message string for Sig No Collisions Message SNC */
+    #define ED25519CTX_SNC_MESSAGE "SigEd25519 no Ed25519 collisions"
 
-static const byte ed25519Ctx[ED25519CTX_SIZE+1] =
-                                             "SigEd25519 no Ed25519 collisions";
+    /* reminder the sizeof includes n+1 terminator; we don't want for size: */
+    #define ED25519CTX_SIZE (int)(sizeof(ED25519CTX_SNC_MESSAGE) / \
+                                  sizeof(ED25519CTX_SNC_MESSAGE[0]) - 1)
+
+    /* ED25519CTX_SIZE is typically 32 for the above message */
+    static const byte ed25519Ctx[ED25519CTX_SIZE + 1] = ED25519CTX_SNC_MESSAGE;
 #endif
 
 static int ed25519_hash_init(ed25519_key* key, wc_Sha512 *sha)
@@ -349,6 +354,7 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         if (ret < 0)
             return ret;
 #endif
+        ESP_LOGI("peek", "ED25519CTX_SIZE = %d", (int)ED25519CTX_SIZE);
 
         if (type == Ed25519ctx || type == Ed25519ph) {
             ret = ed25519_hash_update(key, sha, ed25519Ctx, ED25519CTX_SIZE);
