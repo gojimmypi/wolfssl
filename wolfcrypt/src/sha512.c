@@ -290,7 +290,7 @@ static int InitSha512(wc_Sha512* sha512)
     sha512->ctx.sha_type = SHA2_512;
      /* always start firstblock = 1 when using hw engine */
     sha512->ctx.isfirstblock = 1;
-    if(sha512->ctx.mode == ESP32_SHA_HW) {
+    if (sha512->ctx.mode == ESP32_SHA_HW) {
         /* release hw */
         esp_sha_hw_unlock(&(sha512->ctx));
     }

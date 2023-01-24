@@ -154,6 +154,7 @@ static int ed25519_hash(ed25519_key* key, const byte* in, word32 inLen,
     sha = &key->sha;
     ret = ed25519_hash_reset(key);
 #else
+    XMEMSET((ed25519_key*)key, 0, sizeof(*key));
     ret = ed25519_hash_init(key, sha);
 #endif
     if (ret < 0)
@@ -333,6 +334,8 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
+        // XMEMSET(key, 0, sizeof(key));
+        XMEMSET((ed25519_key*)key, 0, sizeof(*key));
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)
             return ret;
@@ -386,6 +389,8 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
+       //  XMEMSET(key, 0, sizeof(key));
+        XMEMSET((ed25519_key*)key, 0, sizeof(*key));
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)
             return ret;
@@ -764,6 +769,8 @@ int wc_ed25519_verify_msg_ex(const byte* sig, word32 sigLen, const byte* msg,
 #ifdef WOLFSSL_ED25519_PERSISTENT_SHA
     sha = &key->sha;
 #else
+   //  XMEMSET(key, 0, sizeof(key));
+    XMEMSET((ed25519_key*)key, 0, sizeof(*key));
     ret = ed25519_hash_init(key, sha);
     if (ret < 0)
         return ret;

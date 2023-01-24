@@ -90,30 +90,26 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 {
     ESP_LOGV(TAG, "  esp_sha_digest_size");
 
-    switch(type){
-        #ifndef NO_SHA
-            case SHA1: /* typically 20 bytes */
-                return WC_SHA_DIGEST_SIZE;
-        #endif
-
-        #ifndef NO_SHA256
-            case SHA2_256: /* typically 32 bytes */
-                return WC_SHA256_DIGEST_SIZE;
-        #endif
-
-        #ifdef WOLFSSL_SHA384
-            case SHA2_384:
-                return WC_SHA384_DIGEST_SIZE;
-        #endif
-
-        #ifdef WOLFSSL_SHA512
-            case SHA2_512: /* typically 64 bytes */
-                return WC_SHA512_DIGEST_SIZE;
-        #endif
-
+    switch (type) {
+    #ifndef NO_SHA
+        case SHA1: /* typically 20 bytes */
+            return WC_SHA_DIGEST_SIZE;
+    #endif
+    #ifndef NO_SHA256
+        case SHA2_256: /* typically 32 bytes */
+            return WC_SHA256_DIGEST_SIZE;
+    #endif
+    #ifdef WOLFSSL_SHA384
+        case SHA2_384:
+            return WC_SHA384_DIGEST_SIZE;
+    #endif
+    #ifdef WOLFSSL_SHA512
+        case SHA2_512: /* typically 64 bytes */
+            return WC_SHA512_DIGEST_SIZE;
+    #endif
         default:
             ESP_LOGE(TAG, "Bad sha type");
-            return WC_SHA_DIGEST_SIZE;
+            return 0;
     }
     /* we never get here, as all the above switches should have a return */
 }
@@ -123,10 +119,10 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 */
 static void wc_esp_wait_until_idle()
 {
-    while((DPORT_REG_READ(SHA_1_BUSY_REG)   != 0) ||
-          (DPORT_REG_READ(SHA_256_BUSY_REG) != 0) ||
-          (DPORT_REG_READ(SHA_384_BUSY_REG) != 0) ||
-          (DPORT_REG_READ(SHA_512_BUSY_REG) != 0)) {
+    while ((DPORT_REG_READ(SHA_1_BUSY_REG)   != 0) ||
+           (DPORT_REG_READ(SHA_256_BUSY_REG) != 0) ||
+           (DPORT_REG_READ(SHA_384_BUSY_REG) != 0) ||
+           (DPORT_REG_READ(SHA_512_BUSY_REG) != 0)) {
         /* do nothing while waiting. */
     }
 }
@@ -182,7 +178,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     if (ret == 0) {
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
-             * we were successful, but not expected depth count*/
+             * we were successful, but not expected depth count */
 
             ESP_LOGV(TAG, "warning lockDepth mismatch.");
         }
@@ -229,8 +225,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
      * engine being busy or not.
      **/
 #if defined(SINGLE_THREADED)
-    if(ctx->mode == ESP32_SHA_INIT) {
-        if(!InUse) {
+    if (ctx->mode == ESP32_SHA_INIT) {
+        if (!InUse) {
             ctx->mode = ESP32_SHA_HW;
             InUse = 1;
         }
@@ -325,13 +321,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* Disable AES hardware */
     periph_module_disable(PERIPH_SHA_MODULE);
 
-    #if defined(SINGLE_THREADED)
-        InUse = 0;
-    #else
-        /* unlock hw engine for next use */
-        esp_CryptHwMutexUnLock(&sha_mutex);
-    #endif
-
     /* we'll keep track of our lock depth.
      * in case of unexpected results, all the periph_module_disable() calls
      * and periph_module_disable() need to be unwound.
@@ -343,6 +332,13 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     else {
         ctx->lockDepth = 0;
     }
+
+#if defined(SINGLE_THREADED)
+    InUse = 0;
+#else
+    /* unlock hw engine for next use */
+    esp_CryptHwMutexUnLock(&sha_mutex);
+#endif
 
     ESP_LOGV(TAG, "leave esp_sha_hw_unlock");
     return 0;
@@ -361,7 +357,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
-    if(sha->isfirstblock){
+    if (sha->isfirstblock) {
         /* start registers for first message block
          * we don't make any relational memory position assumptions.
          */
@@ -466,7 +462,7 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     /* load [len] words of message data into hw */
     for (i = 0; i < word32_to_save; i++) {
         /* by using DPORT_REG_WRITE, we avoid the need
-         * to call __builtin_bswap32 to address endiness
+         * to call __builtin_bswap32 to address endianess
          *
          * a useful watch array cast to watch at runtime:
          *   ((uint32_t[32])  (*(volatile uint32_t *)(SHA_TEXT_BASE)))
@@ -490,20 +486,19 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
  */
 int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 {
+    word32 digestSz;
+
     ESP_LOGV(TAG, "enter esp_digest_state");
 
-    if (ctx == NULL)    {
+    if (ctx == NULL) {
         return -1;
     }
 
     /* sanity check */
-    if (ctx->sha_type == SHA_INVALID) {
+    digestSz = wc_esp_sha_digest_size(ctx->sha_type);
+    if (digestSz == 0) {
         ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
         ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
-        return -1;
-    }
-
-    if (ctx == NULL) {
         return -1;
     }
 
@@ -536,11 +531,10 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         default:
             ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
             return -1;
-            break;
     }
 
 
-    if(ctx->isfirstblock == 1){
+    if (ctx->isfirstblock == 1) {
         /* no hardware use yet. Nothing to do yet */
         return 0;
     }
@@ -565,14 +559,15 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
      *  example:
      *    DPORT_SEQUENCE_REG_READ(address + i * 4);
      */
+
     esp_dport_access_read_buffer(
 #if ESP_IDF_VERSION_MAJOR >= 4
-        (uint32_t*)(hash), /* the result will be found in hash upon exit     */
+        (uint32_t*)(hash), /* the result will be found in hash upon exit */
 #else
-        (word32*)(hash), /* the result will be found in hash upon exit     */
+        (word32*)(hash), /* the result will be found in hash upon exit */
 #endif
-        SHA_TEXT_BASE,   /* there's a fixed reg addy for all SHA           */
-        wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32) /* # 4-byte */
+        SHA_TEXT_BASE,   /* there's a fixed reg addr for all SHA */
+        digestSz / sizeof(word32) /* # 4-byte */
     );
 
 #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
@@ -671,8 +666,7 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 
     ESP_LOGV(TAG, "enter esp_sha256_digest_process");
 
-    if(blockprocess) {
-
+    if (blockprocess) {
         wc_esp_process_block(&sha->ctx, sha->buffer, WC_SHA256_BLOCK_SIZE);
     }
 
@@ -694,10 +688,10 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     ESP_LOGV(TAG, "enter esp_sha512_block");
     /* start register offset */
 
-    if(sha->ctx.mode == ESP32_SHA_SW){
+    if (sha->ctx.mode == ESP32_SHA_SW) {
         ByteReverseWords64(sha->buffer, sha->buffer,
                                WC_SHA512_BLOCK_SIZE);
-        if(isfinal) {
+        if (isfinal) {
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] =
                                         sha->hiLen;
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 1] =
@@ -708,7 +702,7 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     else {
         ByteReverseWords((word32*)sha->buffer, (word32*)sha->buffer,
                                                         WC_SHA512_BLOCK_SIZE);
-        if(isfinal){
+        if (isfinal) {
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] =
                                         rotlFixed64(sha->hiLen, 32U);
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 1] =
@@ -740,12 +734,12 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 {
     ESP_LOGV(TAG, "enter esp_sha512_digest_process");
 
-    if(blockproc) {
+    if (blockproc) {
         word32* data = (word32*)sha->buffer;
 
         esp_sha512_block(sha, data, 1);
     }
-    if(sha->ctx.mode != ESP32_SHA_SW)
+    if (sha->ctx.mode != ESP32_SHA_SW)
         wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
 
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");
