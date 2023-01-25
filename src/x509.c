@@ -2946,18 +2946,11 @@ static void ExternalFreeX509(WOLFSSL_X509* x509)
 #endif
         if (x509->dynamicMemory) {
         #if defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA)
-        #ifndef SINGLE_THREADED
-            if (wc_LockMutex(&x509->refMutex) != 0) {
+            int ret;
+            wolfSSL_RefDec(&x509->ref, &doFree, &ret);
+            if (ret != 0) {
                 WOLFSSL_MSG("Couldn't lock x509 mutex");
             }
-        #endif
-            /* only free if all references to it are done */
-            x509->refCount--;
-            if (x509->refCount == 0)
-                doFree = 1;
-        #ifndef SINGLE_THREADED
-            wc_UnLockMutex(&x509->refMutex);
-        #endif
         #endif /* OPENSSL_EXTRA_X509_SMALL || OPENSSL_EXTRA */
 
         #if defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA)
@@ -9038,21 +9031,16 @@ char*  wolfSSL_X509_get_subjectCN(WOLFSSL_X509* x509)
 #endif /* KEEP_PEER_CERT */
 
 #if defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA)
-
 /* increments ref count of WOLFSSL_X509. Return 1 on success, 0 on error */
 int wolfSSL_X509_up_ref(WOLFSSL_X509* x509)
 {
     if (x509) {
-#ifndef SINGLE_THREADED
-        if (wc_LockMutex(&x509->refMutex) != 0) {
+        int ret;
+        wolfSSL_RefInc(&x509->ref, &ret);
+        if (ret != 0) {
             WOLFSSL_MSG("Failed to lock x509 mutex");
             return WOLFSSL_FAILURE;
         }
-#endif
-        x509->refCount++;
-#ifndef SINGLE_THREADED
-        wc_UnLockMutex(&x509->refMutex);
-#endif
 
         return WOLFSSL_SUCCESS;
     }
@@ -12757,23 +12745,23 @@ int wolfSSL_X509_check_issued(WOLFSSL_X509 *issuer, WOLFSSL_X509 *subject)
     WOLFSSL_X509_NAME *subjectName = wolfSSL_X509_get_subject_name(issuer);
 
     if (issuerName == NULL || subjectName == NULL)
-        return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+        return WOLFSSL_X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     /* Literal matching of encoded names and key ids. */
     if (issuerName->sz != subjectName->sz ||
            XMEMCMP(issuerName->name, subjectName->name, subjectName->sz) != 0) {
-        return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+        return WOLFSSL_X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
     }
 
     if (subject->authKeyId != NULL && issuer->subjKeyId != NULL) {
         if (subject->authKeyIdSz != issuer->subjKeyIdSz ||
                 XMEMCMP(subject->authKeyId, issuer->subjKeyId,
                         issuer->subjKeyIdSz) != 0) {
-            return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+            return WOLFSSL_X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
         }
     }
 
-    return X509_V_OK;
+    return WOLFSSL_X509_V_OK;
 }
 
 #endif /* WOLFSSL_NGINX || WOLFSSL_HAPROXY || OPENSSL_EXTRA || OPENSSL_ALL */

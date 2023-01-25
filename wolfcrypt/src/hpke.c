@@ -501,8 +501,10 @@ static int wc_HpkeLabeledExtract(Hpke* hpke, byte* suite_id,
     }
 
     /* call extract */
+    PRIVATE_KEY_UNLOCK();
     ret = wc_HKDF_Extract(hpke->kdf_digest, salt, salt_len, labeled_ikm,
         (word32)(size_t)(labeled_ikm_p - labeled_ikm), out);
+    PRIVATE_KEY_LOCK();
 
 #ifdef WOLFSSL_SMALL_STACK
     XFREE(labeled_ikm, hpke->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -559,10 +561,12 @@ static int wc_HpkeLabeledExpand(Hpke* hpke, byte* suite_id, word32 suite_id_len,
         labeled_info_p += infoSz;
 
         /* call expand */
+        PRIVATE_KEY_UNLOCK();
         ret = wc_HKDF_Expand(hpke->kdf_digest,
             prk, prk_len,
             labeled_info, (word32)(size_t)(labeled_info_p - labeled_info),
             out, L);
+        PRIVATE_KEY_LOCK();
     }
 
 #ifdef WOLFSSL_SMALL_STACK
@@ -732,9 +736,12 @@ static int wc_HpkeEncap(Hpke* hpke, void* ephemeralKey, void* receiverKey,
     byte* sharedSecret)
 {
     int ret;
+#ifdef ECC_TIMING_RESISTANT
+    WC_RNG* rng;
+#endif
     word32 dh_len;
-    word16 receiverPubKeySz = hpke->Npk;
-    word16 ephemeralPubKeySz = hpke->Npk;
+    word16 receiverPubKeySz;
+    word16 ephemeralPubKeySz;
 #ifndef WOLFSSL_SMALL_STACK
     byte dh[HPKE_Ndh_MAX];
     byte kemContext[HPKE_Npk_MAX * 2];
@@ -747,6 +754,9 @@ static int wc_HpkeEncap(Hpke* hpke, void* ephemeralKey, void* receiverKey,
         sharedSecret == NULL) {
         return BAD_FUNC_ARG;
     }
+
+    receiverPubKeySz = hpke->Npk;
+    ephemeralPubKeySz = hpke->Npk;
 
 #ifdef WOLFSSL_SMALL_STACK
     dh = (byte*)XMALLOC(hpke->Ndh, hpke->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -768,12 +778,21 @@ static int wc_HpkeEncap(Hpke* hpke, void* ephemeralKey, void* receiverKey,
         case DHKEM_P256_HKDF_SHA256:
         case DHKEM_P384_HKDF_SHA384:
         case DHKEM_P521_HKDF_SHA512:
-            ((ecc_key*)ephemeralKey)->rng = wc_rng_new(NULL, 0, hpke->heap);
+#ifdef ECC_TIMING_RESISTANT
+            rng = wc_rng_new(NULL, 0, hpke->heap);
+
+            if (rng == NULL)
+                return RNG_FAILURE_E;
+
+            wc_ecc_set_rng((ecc_key*)ephemeralKey, rng);
+#endif
 
             ret = wc_ecc_shared_secret((ecc_key*)ephemeralKey,
                 (ecc_key*)receiverKey, dh, &dh_len);
 
-            wc_rng_free(((ecc_key*)ephemeralKey)->rng);
+#ifdef ECC_TIMING_RESISTANT
+            wc_rng_free(rng);
+#endif
             break;
 #endif
 #if defined(HAVE_CURVE25519)
@@ -944,8 +963,11 @@ static int wc_HpkeDecap(Hpke* hpke, void* receiverKey, const byte* pubKey,
     word16 pubKeySz, byte* sharedSecret)
 {
     int ret;
+#ifdef ECC_TIMING_RESISTANT
+    WC_RNG* rng;
+#endif
     word32 dh_len;
-    word16 receiverPubKeySz = hpke->Npk;
+    word16 receiverPubKeySz;
     void* ephemeralKey = NULL;
 #ifndef WOLFSSL_SMALL_STACK
     byte dh[HPKE_Ndh_MAX];
@@ -958,6 +980,8 @@ static int wc_HpkeDecap(Hpke* hpke, void* receiverKey, const byte* pubKey,
     if (hpke == NULL || receiverKey == NULL) {
         return BAD_FUNC_ARG;
     }
+
+    receiverPubKeySz = hpke->Npk;
 
 #ifdef WOLFSSL_SMALL_STACK
     dh = (byte*)XMALLOC(hpke->Ndh, hpke->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -983,12 +1007,21 @@ static int wc_HpkeDecap(Hpke* hpke, void* receiverKey, const byte* pubKey,
             case DHKEM_P256_HKDF_SHA256:
             case DHKEM_P384_HKDF_SHA384:
             case DHKEM_P521_HKDF_SHA512:
-                ((ecc_key*)receiverKey)->rng = wc_rng_new(NULL, 0, hpke->heap);
+#ifdef ECC_TIMING_RESISTANT
+                rng = wc_rng_new(NULL, 0, hpke->heap);
+
+                if (rng == NULL)
+                    return RNG_FAILURE_E;
+
+                wc_ecc_set_rng((ecc_key*)receiverKey, rng);
+#endif
 
                 ret = wc_ecc_shared_secret((ecc_key*)receiverKey,
                     (ecc_key*)ephemeralKey, dh, &dh_len);
 
-                wc_rng_free(((ecc_key*)receiverKey)->rng);
+#ifdef ECC_TIMING_RESISTANT
+                wc_rng_free(rng);
+#endif
                 break;
 #endif
 #if defined(HAVE_CURVE25519)
@@ -1094,9 +1127,7 @@ static int wc_HpkeContextOpenBase(Hpke* hpke, HpkeBaseContext* context,
     if (ret == 0)
         ret = wc_AesInit(aes_key, hpke->heap, INVALID_DEVID);
     if (ret == 0) {
-        if (ret == 0) {
-            ret = wc_AesGcmSetKey(aes_key, context->key, hpke->Nk);
-        }
+        ret = wc_AesGcmSetKey(aes_key, context->key, hpke->Nk);
         if (ret == 0) {
             ret = wc_AesGcmDecrypt(aes_key, out, ciphertext, ctSz, nonce,
                 hpke->Nn, ciphertext + ctSz, hpke->Nt, aad, aadSz);
