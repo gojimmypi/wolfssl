@@ -17,6 +17,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\SysGCC\esp32-8.4\esp-idf\v4.4.1\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "component", "component", "{7BFA2940-D704-4E45-A9DA-0E7E1051242B}"
+	ProjectSection(SolutionItems) = preProject
+		components\wolfssl\CMakeLists.txt = components\wolfssl\CMakeLists.txt
+		components\wolfssl\component.mk = components\wolfssl\component.mk
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -36,6 +42,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7BFA2940-D704-4E45-A9DA-0E7E1051242B} = {3A3AD607-CC28-4495-BFA4-580036D2DCF5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DF2F28AC-0E6F-4E83-BEB8-C963837F29BB}
