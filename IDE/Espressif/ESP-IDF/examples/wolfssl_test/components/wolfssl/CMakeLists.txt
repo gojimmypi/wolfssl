@@ -22,7 +22,6 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
-register_component()
 
 # We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
 # The root of wolfSSL is 7 directories up from here:
@@ -171,6 +170,7 @@ set(COMPONENT_SRCEXCLUDE
     "${EXCLUDE_ASM}"
     )
 
+register_component()
 
 # some optional diagnostics
 if (0)
