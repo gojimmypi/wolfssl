@@ -80,18 +80,7 @@
   </Build>
   <CustomBuild>
     <PreSyncActions />
-    <PreBuildActions>
-      <CustomActionBase xsi:type="CommandLineAction">
-        <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
-        <RemoteHost>
-          <HostName>BuildMachine</HostName>
-          <Transport>BuiltinShortcut</Transport>
-        </RemoteHost>
-        <Command>refresh_sha_from_idf.bat</Command>
-        <WorkingDirectory>$(BuildDir)\..\..\</WorkingDirectory>
-        <BackgroundMode>false</BackgroundMode>
-      </CustomActionBase>
-    </PreBuildActions>
+    <PreBuildActions />
     <PostBuildActions />
     <PreCleanActions />
     <PostCleanActions />
