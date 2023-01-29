@@ -26,6 +26,14 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
+#ifdef DEBUG_WOLFSSL_VERBOSE
+    #if defined(WOLFSSL_ESPIDF)
+        #include <esp_log.h>
+    #else
+        #include <wolfssl/wolfcrypt/logging.h>
+    #endif
+#endif
+
 #if !defined(NO_SHA)
 
 #if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
@@ -318,6 +326,9 @@
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
+        sha->ctx.mode = ESP32_SHA_INIT;
+
+        // TODO remove these
         sha->ctx.g1 = 0x72;
         sha->ctx.g2 = 0x72;
         sha->ctx.g3 = 0x72;
@@ -327,10 +338,9 @@
         sha->ctx.g7 = 0x72;
         sha->ctx.g8 = 0x72;
 
-        sha->ctx.mode = ESP32_SHA_INIT;
-        if (sha->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g4);
+        // if (sha->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g4);
         // ESP_LOGI("peek", "mode = %d", sha->ctx.mode);
-        if (sha->ctx.g5 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g5);
+        // if (sha->ctx.g5 != 114) ESP_LOGI("peek", "g4 = %d", sha->ctx.g5);
         sha->ctx.lockDepth = 0;
         return ret;
     }
@@ -743,14 +753,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         return BAD_FUNC_ARG;
     }
 
-#ifndef WC_NO_HARDEN
-    /* we'll add a 0x80 byte at the end,
-    ** so make sure we have appropriate buffer length. */
-    if (sha->buffLen > WC_SHA_BLOCK_SIZE - 1) {
-        return BAD_FUNC_ARG;
-    }
-#endif
-
     local = (byte*)sha->buffer;
 
 #ifdef WOLF_CRYPTO_CB
@@ -768,6 +770,21 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     #endif
     }
 #endif /* WOLFSSL_ASYNC_CRYPT */
+
+    /* we'll add a 0x80 byte at the end,
+    ** so make sure we have appropriate buffer length. */
+    if (sha->buffLen > WC_SHA_BLOCK_SIZE - 1) {
+
+#if defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGE("cmac", "Error bad cmac->bufferSz in wc_CmacFinal");
+    #else
+        WOLFSSL_MSG("Error bad cmac->bufferSz in wc_CmacFinal");
+    #endif
+#endif
+        /* exit with error code if there's a bad buffer size in buffLen */
+        return BAD_STATE_E;
+    } /* buffLen check */
 
     local[sha->buffLen++] = 0x80;  /* add 1 */
 

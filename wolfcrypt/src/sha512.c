@@ -294,23 +294,23 @@ static int InitSha512(wc_Sha512* sha512)
     switch (sha512->ctx.mode) {
         case ESP32_SHA_INIT:
             /* likely a fresh, new SHA */
-            ESP_LOGI("peek", ">> Init");
+//            ESP_LOGI("peek", ">> Init");
             break;
 
         case ESP32_SHA_HW:
             /* release hw */
-            ESP_LOGI("peek", ">> HW");
+            ESP_LOGI("peek", ">> HW unlock");
             esp_sha_hw_unlock(&(sha512->ctx));
             break;
 
         case ESP32_SHA_SW:
             /* likely a call when another SHA HW in progress */
-            ESP_LOGI("peek", ">> SW");
+//             ESP_LOGI("peek", ">> SW");
             break;
 
         case ESP32_SHA_FAIL_NEED_UNROLL:
             /* oh, how did we get here ? */
-            ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
+           ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
             break;
 
         default:
@@ -674,10 +674,10 @@ static int InitSha512_Family(wc_Sha512* sha512, void* heap, int devId,
                         WOLFSSL_ASYNC_MARKER_SHA512, sha512->heap, devId);
 #else
     (void)devId;
-#endif /* WOLFSSL_ASYNC_CRYPT */
+#endif /* WOLFSSL_ASYNC_CRYPT && WC_ASYNC_ENABLE_SHA512 */
 
     return ret;
-}
+} /* InitSha512_Family */
 
 int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 {
@@ -1034,15 +1034,13 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         return BAD_FUNC_ARG;
     }
 
-#ifndef WC_NO_HARDEN
+    local = (byte*)sha512->buffer;
+
     /* we'll add a 0x80 byte at the end,
     ** so make sure we have appropriate buffer length. */
     if (sha512->buffLen > WC_SHA512_BLOCK_SIZE - 1) {
-        return BAD_FUNC_ARG;
-    }
-#endif
-
-    local = (byte*)sha512->buffer;
+        return BAD_STATE_E;
+    } /* buffLen check */
 
     local[sha512->buffLen++] = 0x80;  /* add 1 */
 
@@ -1068,11 +1066,12 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
      defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
         ret = Transform_Sha512(sha512);
 #else
-       if(sha512->ctx.mode == ESP32_SHA_INIT) {
+        if (sha512->ctx.mode == ESP32_SHA_INIT) {
+            /* TODO - do we really want to lock on final ? perhaps tiny block? */
             esp_sha_try_hw_lock(&sha512->ctx);
-       }
+        }
         ret = esp_sha512_process(sha512);
-        if(ret == 0 && sha512->ctx.mode == ESP32_SHA_SW){
+        if (ret == 0 && sha512->ctx.mode == ESP32_SHA_SW) {
             ret = Transform_Sha512(sha512);
         }
 #endif
@@ -1080,7 +1079,8 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
             return ret;
 
         sha512->buffLen = 0;
-    }
+    } /* pad with zeros */
+
     XMEMSET(&local[sha512->buffLen], 0, WC_SHA512_PAD_SIZE - sha512->buffLen);
 
     /* put lengths in bits */
@@ -1114,11 +1114,13 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
                            &(sha512->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2]),
                            WC_SHA512_BLOCK_SIZE - WC_SHA512_PAD_SIZE);
 #endif
+
 #if !defined(WOLFSSL_ESP32WROOM32_CRYPT) || \
     defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     ret = Transform_Sha512(sha512);
 #else
     if(sha512->ctx.mode == ESP32_SHA_INIT) {
+        /* tiny block; first = last */
         esp_sha_try_hw_lock(&sha512->ctx);
     }
     ret = esp_sha512_digest_process(sha512, 1);
@@ -1126,6 +1128,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         ret = Transform_Sha512(sha512);
     }
 #endif
+
     if (ret != 0)
         return ret;
 
@@ -1133,6 +1136,14 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         ByteReverseWords64(sha512->digest, sha512->digest, WC_SHA512_DIGEST_SIZE);
     #endif
 
+#if !defined(WOLFSSL_ESP32WROOM32_CRYPT) || \
+    defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+    /* */
+#else
+//    if (sha512->ctx.mode == ESP32_SHA_HW) {
+//        sha512->ctx.mode = ESP32_SHA_INIT;
+//    }
+#endif
     return 0;
 }
 

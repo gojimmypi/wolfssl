@@ -777,16 +777,18 @@ static int InitSha256(wc_Sha256* sha256)
 
 
 
+        // if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
+        // if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
+
         /* always set mode as INIT
         *  whether using HW or SW is determined at first call of update()
         */
-        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
-        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
         sha256->ctx.mode = ESP32_SHA_INIT;
-        if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
+
+        // if ( sha256->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha256->ctx.g4);
         // ESP_LOGI("peek", "mode = %d", sha256->ctx.mode);
-        if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
+        // if ( sha256->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha256->ctx.g5);
 
         return ret;
     }
@@ -1281,13 +1283,21 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
         }
 
-#ifndef WC_NO_HARDEN
         /* we'll add a 0x80 byte at the end,
         ** so make sure we have appropriate buffer length. */
         if (sha256->buffLen > WC_SHA256_BLOCK_SIZE - 1) {
-            return BAD_FUNC_ARG;
-        }
+
+#if defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(WOLFSSL_ESPIDF)
+            ESP_LOGE("cmac", "Error bad cmac->bufferSz in wc_CmacFinal");
+    #else
+            WOLFSSL_MSG("Error bad cmac->bufferSz in wc_CmacFinal");
+    #endif
 #endif
+            /* exit with error code if there's a bad buffer size in buffLen */
+            return BAD_STATE_E;
+        } /* buffLen check */
+
         local = (byte*)sha256->buffer;
         local[sha256->buffLen++] = 0x80; /* add 1 */
 
@@ -2029,7 +2039,8 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 
     if (src == NULL || dst == NULL)
         return BAD_FUNC_ARG;
-    ESP_LOGI("peek", "sizeof(wc_Sha256) = %d ", sizeof(wc_Sha256));
+
+    // ESP_LOGI("peek", "sizeof(wc_Sha256) = %d ", sizeof(wc_Sha256));
     XMEMCPY(dst, src, sizeof(wc_Sha256));
 
 #ifdef WOLFSSL_MAXQ10XX_CRYPTO
@@ -2053,6 +2064,7 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 #endif
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+    /* TODO should the dst copy always use SW ? init ? */
     dst->ctx.mode         = src->ctx.mode;
     dst->ctx.isfirstblock = src->ctx.isfirstblock;
     dst->ctx.sha_type     = src->ctx.sha_type;

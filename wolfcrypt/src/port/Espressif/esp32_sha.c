@@ -147,6 +147,14 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         ESP_LOGE(TAG, "esp_unroll_sha_module_enable called with null ctx.");
         return -1;
     }
+
+    if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
+        // ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex indicates busy");
+    }
+    else {
+        ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex is free ");
+    }
+
     /* if we end up here, there was a prior unexpected fail and
      * we need to unroll enables */
     int ret = 0; /* assume success unless proven otherwise */
@@ -161,8 +169,11 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 
     /* once the value we read is a 0 in the DPORT_PERI_CLK_EN_REG bit
      * then we have fully unrolled the enables via ref_counts[periph]==0 */
+    /* TODO MEMW ? */
+    asm volatile("memw");
     while ((this_sha_mask & *(uint32_t*)DPORT_PERI_CLK_EN_REG) != 0) {
         periph_module_disable(PERIPH_SHA_MODULE);
+        asm volatile("memw");
         actual_unroll_count++;
         ESP_LOGI(TAG, "unroll not yet successful. try #%d",
                  actual_unroll_count);
@@ -180,7 +191,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             /* this could be a warning of wonkiness in RTOS environment.
              * we were successful, but not expected depth count */
 
-            ESP_LOGV(TAG, "warning lockDepth mismatch.");
+            ESP_LOGI(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
 
@@ -276,16 +287,30 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /* try to lock the hw engine */
         ESP_LOGV(TAG, "ESP32_SHA_INIT\n");
 
-        /* we don't wait:
+        if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
+            ESP_LOGI(TAG, ">>>> mutex indicates busy");
+        }
+        else {
+            // expected ESP_LOGI(TAG, ">>>> mutex is free ");
+        }
+                /* we don't wait:
          * either the engine is free, or we fall back to SW
          */
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
             ESP_LOGV(TAG, "Hardware Mode, lock depth = %d", ctx->lockDepth);
+
+            if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
+                // expected ESP_LOGI(TAG, ">>>> enabled mutex indicates busy");
+            }
+            else {
+                ESP_LOGI(TAG, ">>>> enabled mutex is free ");
+            }
+
         }
         else {
-            ESP_LOGV(TAG, ">>>> Hardware in use; Mode REVERT to ESP32_SHA_SW");
+            ESP_LOGI(TAG, ">>>> Hardware in use; Mode REVERT to ESP32_SHA_SW");
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }

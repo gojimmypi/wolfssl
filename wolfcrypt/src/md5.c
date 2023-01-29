@@ -450,7 +450,21 @@ int wc_Md5Final(wc_Md5* md5, byte* hash)
     }
 #endif /* WOLFSSL_ASYNC_CRYPT */
 
-    local = (byte*)md5->buffer;
+    local = (byte*)md5->buffer; /* buffer allocated in word32 size */
+
+    /* ensure we have a valid buffer length; (-1 to append a byte to length) */
+    if (md5->buffLen > WC_MD5_BLOCK_SIZE - 1) {
+
+#if defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(WOLFSSL_ESPIDF)
+        ESP_LOGE("cmac", "Error bad md5->buffLen in wc_Md5Final");
+    #else
+        WOLFSSL_MSG("Error bad md5->buffLen in wc_Md5Final");
+    #endif
+#endif
+
+        return BUFFER_E;
+    } /* buffLen check */
 
     local[md5->buffLen++] = 0x80;  /* add 1 */
 
