@@ -168,6 +168,10 @@ void app_main(void)
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
 #endif
 
+#if defined(LIBWOLFSSL_VERSION_GIT_ORIGIN_URL)
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_ORIGIN_URL = %s", LIBWOLFSSL_VERSION_GIT_ORIGIN_URL);
+#endif
+
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
