@@ -110,44 +110,47 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
     #undef SHA_CTX
 
-    typedef enum {
-        ESP32_SHA_INIT = 0,
-        ESP32_SHA_HW = 1,
-        ESP32_SHA_SW = 2,
+    typedef enum
+    {
+        ESP32_SHA_INIT             = 0,
+        ESP32_SHA_HW               = 1,
+        ESP32_SHA_SW               = 2,
         ESP32_SHA_FAIL_NEED_UNROLL = 3
     } ESP32_MODE;
 
-        typedef struct
-        {
-            int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
-            /* NOTE:
-            **
-            ** There's a known Espressif byte alignment issue. See:
-            ** https://github.com/wolfSSL/wolfssl/issues/5948
-            **
-            ** To avoid problems, list the largest types first.
-            */
-            ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
+    typedef struct
+    {
+        byte g1;
+        byte g2;
+        /* NOTE:
+        **
+        ** There's a known Espressif byte alignment issue. See:
+        ** https://github.com/wolfSSL/wolfssl/issues/5948
+        **
+        ** To avoid problems, list the largest types first.
+        */
+        ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
 
-            /* see esp_rom/include/esp32/rom/sha.h */
-            enum SHA_TYPE sha_type; /* the Espressif type: SHA1, SHA256, etc.*/
-            byte g1;
-            byte g2;
-            byte g3;
-            byte g4;
+        /* see esp_rom/include/esp32/rom/sha.h */
+        enum SHA_TYPE sha_type; /* the Espressif type: SHA1, SHA256, etc.*/
+        void* intializer; /* pointer to object the initialized HW; to track copies */
+        int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
+        byte g3;
+        byte g4;
 
-            /* we'll keep track of our own locks.
-            ** actual enable/disable only occurs for ref_counts[periph] == 0 */
-            byte isfirstblock; /* 0 is not first block; 1 = is first block   */
+        /* we'll keep track of our own locks.
+        ** actual enable/disable only occurs for ref_counts[periph] == 0 */
+        byte isfirstblock; /* 0 is not first block; 1 = is first block   */
 
-            byte g5;
-            byte g6;
-            byte g7;
-            byte g8;
-        } WC_ESP32SHA;
+        byte g5;
+        byte g6;
+        byte g7;
+        byte g8;
+    } WC_ESP32SHA;
 
     // __attribute__ ((aligned (4))); /* TODO include this directive? */
 
+    int esp_sha_init(WC_ESP32SHA* ctx);
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
 
@@ -160,8 +163,6 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess);
         int esp_sha256_process(struct wc_Sha256* sha, const byte* data);
         int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256, const byte* data);
-
-
     #endif
 
     /* TODO do we really call esp_sha512_process for WOLFSSL_SHA384 ? */

@@ -72,6 +72,35 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
+/* we'll call a separate init as there's only 1 HW acceleration
+
+TODO
+*/
+int esp_sha_init(WC_ESP32SHA* ctx)
+{
+    if (ctx->intializer == NULL) {
+        ESP_LOGV("sha512", "regular init of blank ctx");
+    }
+    else {
+        /* things may be more interesting when previously initialized */
+        if (ctx->intializer == ctx) {
+            /* We're likely re-using an existing object previously initialized.
+            ** There's of course a non-zero probability that garbage data is the
+            ** same pointer value, but that's highly unlikely. */
+            ESP_LOGV("sha512", "re-using existing SHA ctx");
+            /* we don't need to do anything here */
+        }
+        else {
+            ESP_LOGI("sha512", "ALERT: not re-using SHA ctx. Coped?");
+            ctx->intializer = ctx;
+            ctx->mode = ESP32_SHA_INIT; /* any copy gets demoted to SW */
+        }
+    }
+
+
+    return 0;
+}
+
 /*
  * determine the digest size, depending on SHA type.
  *
@@ -148,7 +177,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         return -1;
     }
 
-    if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
+    if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
         // ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex indicates busy");
     }
     else {
@@ -287,8 +316,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /* try to lock the hw engine */
         ESP_LOGV(TAG, "ESP32_SHA_INIT\n");
 
-        if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
-            ESP_LOGI(TAG, ">>>> mutex indicates busy");
+        if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
+            ESP_LOGV(TAG, ">>>> mutex indicates busy while ctx->mode == ESP32_SHA_INIT");
         }
         else {
             // expected ESP_LOGI(TAG, ">>>> mutex is free ");
@@ -301,7 +330,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             ret = esp_unroll_sha_module_enable(ctx);
             ESP_LOGV(TAG, "Hardware Mode, lock depth = %d", ctx->lockDepth);
 
-            if (xQueuePeek(sha_mutex, (void *)NULL, (portTickType)NULL) != pdTRUE) {
+            if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
                 // expected ESP_LOGI(TAG, ">>>> enabled mutex indicates busy");
             }
             else {
@@ -310,7 +339,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
         }
         else {
-            ESP_LOGI(TAG, ">>>> Hardware in use; Mode REVERT to ESP32_SHA_SW");
+            ESP_LOGV(TAG, ">>>> Hardware in use; Mode REVERT to ESP32_SHA_SW");
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
@@ -328,7 +357,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ctx->mode = ESP32_SHA_HW;
     }
     else {
-        ESP_LOGI(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
+        ESP_LOGV(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
         ctx->mode = ESP32_SHA_SW;
     }
 

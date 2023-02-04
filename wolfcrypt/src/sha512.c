@@ -289,12 +289,15 @@ static int InitSha512(wc_Sha512* sha512)
 
     sha512->ctx.sha_type = SHA2_512;
 
+    /* HW needs to be carefully initialized, taking into account soft copy */
+ //   esp_sha_init(&(sha512->ctx));
+
     /* WARNING: The logic below is not a substitute
     ** for missing proper initialization. */
     switch (sha512->ctx.mode) {
         case ESP32_SHA_INIT:
             /* likely a fresh, new SHA */
-//            ESP_LOGI("peek", ">> Init");
+            ESP_LOGV("peek", ">> Init");
             break;
 
         case ESP32_SHA_HW:
@@ -323,17 +326,15 @@ static int InitSha512(wc_Sha512* sha512)
     /* we're always on the first block at init time (not zero-based!) */
     sha512->ctx.isfirstblock = 1;
 
-    /* TODO not used ? */
+    /* TODO no longer used ? */
     if (sha512->ctx.mode == ESP32_SHA_HW) {
+//        esp_sha_hw_unlock(&(sha512->ctx));
     }
 
     /* always set mode as INIT
     *  whether using HW or SW is determined at first call of update()
     */
     sha512->ctx.mode = ESP32_SHA_INIT;
-        if  (sha512->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha512->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", sha512->ctx.mode);
-        if  (sha512->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha512->ctx.g5);
 #endif
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
