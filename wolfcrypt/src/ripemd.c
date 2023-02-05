@@ -324,18 +324,8 @@ int wc_RipeMdFinal(RipeMd* ripemd, byte* hash)
 
     AddLength(ripemd, ripemd->buffLen);               /* before adding pads */
 
-    /* ensure we have a valid buffer length; (-1 to append a byte to length) */
-    /* TODO need buff len check here */
-    if (1 == 2)
-    {
-
-#if defined(DEBUG_WOLFSSL_VERBOSE)
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGE("cmac", "Error bad cmac->bufferSz in wc_CmacFinal");
-    #else
-        WOLFSSL_MSG("Error bad cmac->bufferSz in wc_CmacFinal");
-    #endif
-#endif
+    /* ensure we have a valid buffer length; */
+    if (ripemd->buffLen > RIPEMD_BLOCK_SIZE) {
         /* exit with error code if there's a bad buffer size in buffLen */
         return BAD_STATE_E;
     } /* buffLen check */
