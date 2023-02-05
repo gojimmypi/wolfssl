@@ -69,19 +69,6 @@ static int ed25519_hash_init(ed25519_key* key, wc_Sha512 *sha)
     int ret;
 
 #ifndef WOLFSSL_ED25519_PERSISTENT_SHA
-//    ESP_LOGI("PEEK", "isfirstblock = %d", sha->ctx.isfirstblock);
-//    ESP_LOGI("PEEK", "lockDepth = %d", sha->ctx.lockDepth);
-//    ESP_LOGI("PEEK", "mode = %d", sha->ctx.mode);
-//    ESP_LOGI("PEEK", "sha_type = %d", sha->ctx.sha_type);
-//    ESP_LOGI("PEEK", "g1 = %d", sha->ctx.g1);
-//    ESP_LOGI("PEEK", "g2 = %d", sha->ctx.g2);
-//    ESP_LOGI("PEEK", "g3 = %d", sha->ctx.g3);
-//    ESP_LOGI("PEEK", "g4 = %d", sha->ctx.g4);
-//    ESP_LOGI("PEEK", "g5 = %d", sha->ctx.g5);
-//    ESP_LOGI("PEEK", "g6 = %d", sha->ctx.g6);
-//    ESP_LOGI("PEEK", "g7 = %d", sha->ctx.g7);
-//    ESP_LOGI("PEEK", "g8 = %d", sha->ctx.g8);
-
     /* when not using persistent SHA, we'll zero the sha param */
     XMEMSET(sha, 0, sizeof(wc_Sha512));
 #endif
@@ -423,23 +410,12 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
-//    ESP_LOGI("PEEK", "init isfirstblock = %d", sha->ctx.isfirstblock);
-//    ESP_LOGI("PEEK", "init lockDepth = %d", sha->ctx.lockDepth);
-//    ESP_LOGI("PEEK", "init mode = %d", sha->ctx.mode);
-//    ESP_LOGI("PEEK", "init sha_type = %d", sha->ctx.sha_type);
-//    ESP_LOGI("PEEK", "init g1 = %d", sha->ctx.g1);
-//    ESP_LOGI("PEEK", "init g2 = %d", sha->ctx.g2);
-//    ESP_LOGI("PEEK", "init g3 = %d", sha->ctx.g3);
-//    ESP_LOGI("PEEK", "init g4 = %d", sha->ctx.g4);
-//    ESP_LOGI("PEEK", "init g5 = %d", sha->ctx.g5);
-//    ESP_LOGI("PEEK", "init g6 = %d", sha->ctx.g6);
-//    ESP_LOGI("PEEK", "init g7 = %d", sha->ctx.g7);
-//    ESP_LOGI("PEEK", "init g8 = %d", sha->ctx.g8);
+
         /* suggested:
         **   XMEMSET(key, 0, sizeof(*key));
         **   we probably don't want to wipe out the entire key here,
         **   but init sha: */
-
+/* TODO review*/
         /* moved to ed25519_hash_init: XMEMSET(sha, 0, sizeof(sha[1])); */
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)

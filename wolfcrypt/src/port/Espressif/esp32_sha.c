@@ -94,11 +94,42 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             ** May need to unlock HW, below */
         }
         else {
-            ESP_LOGI("sha512", "ALERT: not re-using SHA ctx. Coped?");
+            ESP_LOGI("sha512", "ALERT: not re-using SHA ctx. Copied?");
             ctx->intializer = ctx; /* set a new address */
             ctx->mode = ESP32_SHA_INIT; /* any copy gets demoted to SW */
         }
     }
+
+    /*
+    ** After possibly changing the mode (above) handle current mode
+    */
+    switch (ctx->mode) {
+        case ESP32_SHA_INIT:
+            /* likely a fresh, new SHA */
+            ESP_LOGV("peek", ">> Init");
+            break;
+
+        case ESP32_SHA_HW:
+            /* release hw */
+            ESP_LOGV("peek", ">> HW unlock");
+            esp_sha_hw_unlock(ctx);
+            break;
+
+        case ESP32_SHA_SW:
+            /* likely a call when another SHA HW in progress */
+            ESP_LOGV("peek", ">> SW");
+            break;
+
+        case ESP32_SHA_FAIL_NEED_UNROLL:
+            /* oh, how did we get here ? */
+           ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
+           break;
+
+        default:
+            ESP_LOGI("peek", "ALERT: \nunexpected mode value\n");
+            ctx->mode = ESP32_SHA_INIT;
+            break;
+    } /* switch (ctx->mode)  */
 
     /* reminder: always start firstblock = 1 when using hw engine */
     /* we're always on the first block at init time (not zero-based!) */
@@ -108,6 +139,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
     *  whether using HW or SW is determined at first call of update()
     */
     ctx->mode = ESP32_SHA_INIT;
+    ctx->lockDepth = 0;
 
     return 0;
 }
@@ -234,17 +266,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ESP_LOGI(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
-
-    // TODO remove these:
-    ctx->g1 = 0x72;
-    ctx->g2 = 0x72;
-    ctx->g3 = 0x72;
-    ctx->g4 = 0x72;
-    ctx->g5 = 0x72;
-    ctx->g6 = 0x72;
-    ctx->g7 = 0x72;
-    ctx->g8 = 0x72;
-    ctx->mode = ESP32_SHA_INIT;
+        ctx->mode = ESP32_SHA_INIT;
     }
     else {
         ESP_LOGE(TAG, "Failed to unroll after %d attempts.",

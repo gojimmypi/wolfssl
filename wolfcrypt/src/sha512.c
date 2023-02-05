@@ -278,49 +278,10 @@ static int InitSha512(wc_Sha512* sha512)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
-    sha512->ctx.g1 = 0x72;
-    sha512->ctx.g2 = 0x72;
-    sha512->ctx.g3 = 0x72;
-    sha512->ctx.g4 = 0x72;
-    sha512->ctx.g5 = 0x72;
-    sha512->ctx.g6 = 0x72;
-    sha512->ctx.g7 = 0x72;
-    sha512->ctx.g8 = 0x72;
-
     sha512->ctx.sha_type = SHA2_512; /* assign Espressif SHA type */
 
     /* HW needs to be carefully initialized, taking into account soft copy */
     esp_sha_init(&(sha512->ctx));
-
-    /* WARNING: The logic below is not a substitute
-    ** for missing proper initialization. */
-    switch (sha512->ctx.mode) {
-        case ESP32_SHA_INIT:
-            /* likely a fresh, new SHA */
-            ESP_LOGV("peek", ">> Init");
-            break;
-
-        case ESP32_SHA_HW:
-            /* release hw */
-            ESP_LOGV("peek", ">> HW unlock");
-            esp_sha_hw_unlock(&(sha512->ctx));
-            break;
-
-        case ESP32_SHA_SW:
-            /* likely a call when another SHA HW in progress */
-//             ESP_LOGI("peek", ">> SW");
-            break;
-
-        case ESP32_SHA_FAIL_NEED_UNROLL:
-            /* oh, how did we get here ? */
-           ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
-            break;
-
-        default:
-            ESP_LOGI("peek", "ALERT: \nunexpected mode value\n");
-            sha512->ctx.mode = ESP32_SHA_INIT;
-            break;
-    }
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -359,28 +320,9 @@ static int InitSha512_224(wc_Sha512* sha512)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     sha512->ctx.sha_type = SHA2_512;
-     /* always start firstblock = 1 when using hw engine */
-    sha512->ctx.isfirstblock = 1;
-    if(sha512->ctx.mode == ESP32_SHA_HW) {
-        /* release hw */
-        esp_sha_hw_unlock(&(sha512->ctx));
-    }
-    /* always set mode as INIT
-    *  whether using HW or SW is determined at first call of update()
-    */
-    sha512->ctx.g1 = 0x72;
-    sha512->ctx.g2 = 0x72;
-    sha512->ctx.g3 = 0x72;
-    sha512->ctx.g4 = 0x72;
-    sha512->ctx.g5 = 0x72;
-    sha512->ctx.g6 = 0x72;
-    sha512->ctx.g7 = 0x72;
-    sha512->ctx.g8 = 0x72;
-    sha512->ctx.mode = ESP32_SHA_INIT;
-        if  (sha512->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha512->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", sha512->ctx.mode);
-        if  (sha512->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha512->ctx.g5);
+    esp_sha_init(&(sha512->ctx));
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
@@ -419,28 +361,9 @@ static int InitSha512_256(wc_Sha512* sha512)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     sha512->ctx.sha_type = SHA2_512;
-     /* always start firstblock = 1 when using hw engine */
-    sha512->ctx.isfirstblock = 1;
-    if(sha512->ctx.mode == ESP32_SHA_HW) {
-        /* release hw */
-        esp_sha_hw_unlock(&(sha512->ctx));
-    }
-    /* always set mode as INIT
-    *  whether using HW or SW is determined at first call of update()
-    */
-    sha512->ctx.g1 = 0x72;
-    sha512->ctx.g2 = 0x72;
-    sha512->ctx.g3 = 0x72;
-    sha512->ctx.g4 = 0x72;
-    sha512->ctx.g5 = 0x72;
-    sha512->ctx.g6 = 0x72;
-    sha512->ctx.g7 = 0x72;
-    sha512->ctx.g8 = 0x72;
-    sha512->ctx.mode = ESP32_SHA_INIT;
-        if  (sha512->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha512->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", sha512->ctx.mode);
-        if  (sha512->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha512->ctx.g5);
+    esp_sha_init(&(sha512->ctx));
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
@@ -1376,22 +1299,15 @@ static int InitSha384(wc_Sha384* sha384)
 
 #if  defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    sha384->ctx.sha_type = SHA2_384;
-     /* always start firstblock = 1 when using hw engine */
-    sha384->ctx.isfirstblock = 1;
-    if(sha384->ctx.mode == ESP32_SHA_HW) {
-        /* release hw */
-        esp_sha_hw_unlock(&(sha384->ctx));
-    }
-    /* always set mode as INIT
-    *  whether using HW or SW is determined at first call of update()
-    */
-    sha384->ctx.mode = ESP32_SHA_INIT;
 
+    sha384->ctx.sha_type = SHA2_384;
+    esp_sha_init(&(sha384->ctx));
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
     sha384->flags = 0;
 #endif
+
 #ifdef WOLFSSL_HASH_KEEP
     sha384->msg  = NULL;
     sha384->len  = 0;
@@ -1611,10 +1527,8 @@ static int Sha512_Family_GetHash(wc_Sha512* sha512, byte* hash,
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+    /* TODO review */
         sha512->ctx.mode = ESP32_SHA_SW;
-        if  (sha512->ctx.g4 != 114) ESP_LOGI("peek", "g4 = %d", sha512->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", sha512->ctx.mode);
-        if  (sha512->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", sha512->ctx.g5);
 #endif
         wc_Sha512Free(tmpSha512);
     }
@@ -1651,19 +1565,17 @@ int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst)
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA512)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
+
 #if  defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    dst->ctx.mode = src->ctx.mode;
-        if (dst->ctx.g4 != 114) if (dst->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", dst->ctx.g4);
-        // ESP_LOGI("peek", "mode = %d", dst->ctx.mode);
-        if (dst->ctx.g5 != 114) ESP_LOGI("peek", "g5 = %d", dst->ctx.g5);
-    dst->ctx.isfirstblock = src->ctx.isfirstblock;
-    dst->ctx.sha_type = src->ctx.sha_type;
-    dst->ctx.lockDepth = 1;
+
+    esp_sha_init(&(dst->ctx));
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
      dst->flags |= WC_HASH_FLAG_ISCOPY;
 #endif
+
 #if defined(WOLFSSL_HASH_KEEP)
     if (src->msg != NULL) {
         dst->msg = (byte*)XMALLOC(src->len, dst->heap, DYNAMIC_TYPE_TMP_BUFFER);
