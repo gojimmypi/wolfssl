@@ -978,7 +978,6 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         ret = Transform_Sha512(sha512);
 #else
         if (sha512->ctx.mode == ESP32_SHA_INIT) {
-            /* TODO - do we really want to lock on final ? perhaps tiny block? */
             esp_sha_try_hw_lock(&sha512->ctx);
         }
         ret = esp_sha512_process(sha512);
@@ -1047,14 +1046,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         ByteReverseWords64(sha512->digest, sha512->digest, WC_SHA512_DIGEST_SIZE);
     #endif
 
-#if !defined(WOLFSSL_ESP32WROOM32_CRYPT) || \
-    defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    /* */
-#else
-//    if (sha512->ctx.mode == ESP32_SHA_HW) {
-//        sha512->ctx.mode = ESP32_SHA_INIT;
-//    }
-#endif
+
     return 0;
 }
 
@@ -1817,9 +1809,22 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
 #endif
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    dst->ctx.mode = src->ctx.mode;
+
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        /* This should be highly unusual, as the copy would have occurred
+        ** mid-calculation, and of so, why? */
+        ESP_LOGW("sha512",
+                " Warning: copying ESP32_SHA_HW, setting to ESP32_SHA_SW");
+        dst->ctx.mode = ESP32_SHA_SW;
+    }
+    else {
+        dst->ctx.mode = src->ctx.mode;
+    }
+    /* note other properties would have been copied via memcopy:
     dst->ctx.isfirstblock = src->ctx.isfirstblock;
     dst->ctx.sha_type = src->ctx.sha_type;
+    dst->ctx.lockDepth    = src->ctx.lockDepth;
+    */
 #endif
 #ifdef WOLFSSL_HASH_FLAGS
      dst->flags |= WC_HASH_FLAG_ISCOPY;
