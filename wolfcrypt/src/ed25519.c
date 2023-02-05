@@ -360,7 +360,6 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         if (ret < 0)
             return ret;
 #endif
-        // ESP_LOGI("peek", "ED25519CTX_SIZE = %d", (int)ED25519CTX_SIZE);
 
         if (type == Ed25519ctx || type == Ed25519ph) {
             ret = ed25519_hash_update(key, sha, ed25519Ctx, ED25519CTX_SIZE);
