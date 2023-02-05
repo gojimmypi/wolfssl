@@ -36,6 +36,11 @@ This library contains implementation for the random number generator.
    http://h20293.www2.hp.com/portal/swdepot/displayProductInfo.do?productNumber=KRNG11I
 
 */
+#if ESP_IDF_VERSION_MAJOR >= 5
+    #include <esp_random.h>
+#endif
+
+
 
 #if defined(HAVE_FIPS) && \
     defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
