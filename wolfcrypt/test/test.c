@@ -1551,6 +1551,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
     /* so overall tests can pull in test function */
 #if defined(WOLFSSL_ESPIDF) || defined(_WIN32_WCE)
+    char* TAG = "wolfcrypt_test";
     int wolf_test_task(void)
 #else
 #ifndef NO_MAIN_FUNCTION
@@ -1662,7 +1663,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 #ifdef WOLFSSL_ESPIDF
         /* ESP_LOGI to print takes up a lot less memory than printf */
-        ESP_LOGI("wolfcrypt_test", "Exiting main with return code: % d\n", args.return_code);
+        ESP_LOGI(TAG, "Exiting main with return code: % d\n", args.return_code);
 #endif
 
 /* everything else will use printf */
