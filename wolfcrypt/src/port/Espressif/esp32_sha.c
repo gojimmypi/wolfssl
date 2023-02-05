@@ -79,7 +79,7 @@ TODO
 int esp_sha_init(WC_ESP32SHA* ctx)
 {
     if (ctx->intializer == NULL) {
-        ESP_LOGV("sha512", "regular init of blank ctx");
+        ESP_LOGV(TAG, "regular init of blank ctx");
         /* we'll keep track of who initialized this */
         ctx->intializer = ctx; /* save our address in the initializer */
     }
@@ -89,12 +89,12 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             /* We're likely re-using an existing object previously initialized.
             ** There's of course a non-zero probability that garbage data is the
             ** same pointer value, but that's highly unlikely. */
-            ESP_LOGV("sha512", "re-using existing SHA ctx");
+            ESP_LOGV(TAG, "re-using existing SHA ctx");
             /* We don't need to do anything here,
             ** May need to unlock HW, below */
         }
         else {
-            ESP_LOGI("sha512", "ALERT: not re-using SHA ctx. Copied?");
+            ESP_LOGV(TAG, "ALERT: not re-using SHA ctx. Copied?");
             ctx->intializer = ctx; /* set a new address */
             ctx->mode = ESP32_SHA_INIT; /* any copy gets demoted to SW */
         }
@@ -106,27 +106,27 @@ int esp_sha_init(WC_ESP32SHA* ctx)
     switch (ctx->mode) {
         case ESP32_SHA_INIT:
             /* likely a fresh, new SHA */
-            ESP_LOGV("peek", ">> Init");
+            ESP_LOGV(TAG, ">> Init");
             break;
 
         case ESP32_SHA_HW:
             /* release hw */
-            ESP_LOGV("peek", ">> HW unlock");
+            ESP_LOGV(TAG, ">> HW unlock");
             esp_sha_hw_unlock(ctx);
             break;
 
         case ESP32_SHA_SW:
             /* likely a call when another SHA HW in progress */
-            ESP_LOGV("peek", ">> SW");
+            ESP_LOGV(TAG, ">> SW");
             break;
 
         case ESP32_SHA_FAIL_NEED_UNROLL:
-            /* oh, how did we get here ? */
-           ESP_LOGI("peek", "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
+            /* oh, how did we get here ? likely uninitialized SHA memory. */
+           ESP_LOGW(TAG, "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
            break;
 
         default:
-            ESP_LOGI("peek", "ALERT: \nunexpected mode value\n");
+            ESP_LOGW(TAG, "ALERT: \nunexpected mode value\n");
             ctx->mode = ESP32_SHA_INIT;
             break;
     } /* switch (ctx->mode)  */
