@@ -80,6 +80,8 @@ int esp_sha_init(WC_ESP32SHA* ctx)
 {
     if (ctx->intializer == NULL) {
         ESP_LOGV("sha512", "regular init of blank ctx");
+        /* we'll keep track of who initialized this */
+        ctx->intializer = ctx; /* save our address in the initializer */
     }
     else {
         /* things may be more interesting when previously initialized */
@@ -88,15 +90,24 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             ** There's of course a non-zero probability that garbage data is the
             ** same pointer value, but that's highly unlikely. */
             ESP_LOGV("sha512", "re-using existing SHA ctx");
-            /* we don't need to do anything here */
+            /* We don't need to do anything here,
+            ** May need to unlock HW, below */
         }
         else {
             ESP_LOGI("sha512", "ALERT: not re-using SHA ctx. Coped?");
-            ctx->intializer = ctx;
+            ctx->intializer = ctx; /* set a new address */
             ctx->mode = ESP32_SHA_INIT; /* any copy gets demoted to SW */
         }
     }
 
+    /* reminder: always start firstblock = 1 when using hw engine */
+    /* we're always on the first block at init time (not zero-based!) */
+    ctx->isfirstblock = 1;
+
+    /* always set mode as INIT
+    *  whether using HW or SW is determined at first call of update()
+    */
+    ctx->mode = ESP32_SHA_INIT;
 
     return 0;
 }

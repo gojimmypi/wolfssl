@@ -287,10 +287,10 @@ static int InitSha512(wc_Sha512* sha512)
     sha512->ctx.g7 = 0x72;
     sha512->ctx.g8 = 0x72;
 
-    sha512->ctx.sha_type = SHA2_512;
+    sha512->ctx.sha_type = SHA2_512; /* assign Espressif SHA type */
 
     /* HW needs to be carefully initialized, taking into account soft copy */
- //   esp_sha_init(&(sha512->ctx));
+    esp_sha_init(&(sha512->ctx));
 
     /* WARNING: The logic below is not a substitute
     ** for missing proper initialization. */
@@ -302,7 +302,7 @@ static int InitSha512(wc_Sha512* sha512)
 
         case ESP32_SHA_HW:
             /* release hw */
-            ESP_LOGI("peek", ">> HW unlock");
+            ESP_LOGV("peek", ">> HW unlock");
             esp_sha_hw_unlock(&(sha512->ctx));
             break;
 
@@ -321,21 +321,8 @@ static int InitSha512(wc_Sha512* sha512)
             sha512->ctx.mode = ESP32_SHA_INIT;
             break;
     }
-
-    /* reminder: always start firstblock = 1 when using hw engine */
-    /* we're always on the first block at init time (not zero-based!) */
-    sha512->ctx.isfirstblock = 1;
-
-    /* TODO no longer used ? */
-    if (sha512->ctx.mode == ESP32_SHA_HW) {
-//        esp_sha_hw_unlock(&(sha512->ctx));
-    }
-
-    /* always set mode as INIT
-    *  whether using HW or SW is determined at first call of update()
-    */
-    sha512->ctx.mode = ESP32_SHA_INIT;
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
