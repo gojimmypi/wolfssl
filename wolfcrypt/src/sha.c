@@ -732,14 +732,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     /* we'll add a 0x80 byte at the end,
     ** so make sure we have appropriate buffer length. */
     if (sha->buffLen > WC_SHA_BLOCK_SIZE - 1) {
-
-#if defined(DEBUG_WOLFSSL_VERBOSE)
-    #if defined(WOLFSSL_ESPIDF)
-        ESP_LOGE("cmac", "Error bad cmac->bufferSz in wc_CmacFinal");
-    #else
-        WOLFSSL_MSG("Error bad cmac->bufferSz in wc_CmacFinal");
-    #endif
-#endif
         /* exit with error code if there's a bad buffer size in buffLen */
         return BAD_STATE_E;
     } /* buffLen check */
@@ -876,7 +868,7 @@ void wc_ShaFree(wc_Sha* sha)
 
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
 #endif /* !WOLFSSL_TI_HASH */
-#endif /* HAVE_FIPS */
+#endif /* !HAVE_FIPS ... */
 
 #if !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP)
 
@@ -898,7 +890,6 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
         esp_sha_try_hw_lock(&sha->ctx);
     }
     if (sha->ctx.mode != ESP32_SHA_SW) {
-        /* TODO check SW/HW logic */
         esp_sha_digest_process(sha, 0);
     }
 #endif
@@ -910,11 +901,7 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
         sha->ctx.mode = ESP32_SHA_SW;
-
-        /* TODO: review, init? */
 #endif
-
-
     }
     return ret;
 }
@@ -936,15 +923,17 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
+
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
 #endif
+
 #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
     ret = se050_hash_copy(&src->se050Ctx, &dst->se050Ctx);
 #endif
+
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-     /* TODO review */
      esp_sha_init(&(dst->ctx));
 #endif
 
@@ -953,9 +942,10 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 #endif
     return ret;
 }
-#endif /* defined(WOLFSSL_RENESAS_TSIP_CRYPT) ... */
-#endif /* !WOLFSSL_TI_HASH && !WOLFSSL_IMXRT_DCP */
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
+#endif /* !defined(WOLFSSL_RENESAS_TSIP_CRYPT) ||
+          defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH) */
+#endif /* !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP) */
 
 #ifdef WOLFSSL_HASH_FLAGS
 int wc_ShaSetFlags(wc_Sha* sha, word32 flags)

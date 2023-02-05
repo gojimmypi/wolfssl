@@ -1238,14 +1238,6 @@ static int InitSha256(wc_Sha256* sha256)
         /* we'll add a 0x80 byte at the end,
         ** so make sure we have appropriate buffer length. */
         if (sha256->buffLen > WC_SHA256_BLOCK_SIZE - 1) {
-
-#if defined(DEBUG_WOLFSSL_VERBOSE)
-    #if defined(WOLFSSL_ESPIDF)
-            ESP_LOGE("cmac", "Error bad cmac->bufferSz in wc_CmacFinal");
-    #else
-            WOLFSSL_MSG("Error bad cmac->bufferSz in wc_CmacFinal");
-    #endif
-#endif
             /* exit with error code if there's a bad buffer size in buffLen */
             return BAD_STATE_E;
         } /* buffLen check */
@@ -1970,7 +1962,6 @@ int wc_Sha256GetHash(wc_Sha256* sha256, byte* hash)
         ret = wc_Sha256Final(tmpSha256, hash);
 
     #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-        /* TODO review */
         sha256->ctx.mode = ESP32_SHA_SW;
     #endif
 
@@ -2013,7 +2004,6 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 #endif
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-    /* TODO should the dst copy always use SW ? init ? */
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* This should be highly unusual, as the copy would have occurred
         ** mid-calculation, and of so, why? */
