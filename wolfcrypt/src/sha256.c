@@ -84,6 +84,11 @@ on the specific device platform.
     #include <wolfssl/wolfcrypt/cryptocb.h>
 #endif
 
+#ifdef WOLFSSL_ESPIDF
+    /* Define the ESP_LOGx(TAG, "" value for output messages here. */
+    // char* TAG = "wc_sha256";
+#endif
+
 /* determine if we are using Espressif SHA hardware acceleration */
 #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
@@ -1985,7 +1990,6 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
     if (src == NULL || dst == NULL)
         return BAD_FUNC_ARG;
 
-    // ESP_LOGI("peek", "sizeof(wc_Sha256) = %d ", sizeof(wc_Sha256));
     XMEMCPY(dst, src, sizeof(wc_Sha256));
 
 #ifdef WOLFSSL_MAXQ10XX_CRYPTO
@@ -2010,11 +2014,20 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
     /* TODO should the dst copy always use SW ? init ? */
-    /* TODO review */
-    dst->ctx.mode         = src->ctx.mode;
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        /* This should be highly unusual, as the copy would have occurred
+        ** mid-calculation, and of so, why? */
+        ESP_LOGI("sha256", " Warning: copying ESP32_SHA_HW, setting to ESP32_SHA_SW");
+        dst->ctx.mode = ESP32_SHA_SW;
+    }
+    else {
+        dst->ctx.mode = src->ctx.mode;
+    }
+    /* note other properties would have been copied via memcopy:
     dst->ctx.isfirstblock = src->ctx.isfirstblock;
-    dst->ctx.sha_type     = src->ctx.sha_type;
+    dst->ctx.sha_type = src->ctx.sha_type;
     dst->ctx.lockDepth    = src->ctx.lockDepth;
+    */
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
