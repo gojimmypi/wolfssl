@@ -23,7 +23,7 @@
         <Revision>9</Revision>
       </Version>
     </ToolchainID>
-    <RelativeSourceDirectory />
+    <RelativeSourceDirectory>..</RelativeSourceDirectory>
     <ConfigurationType>DEBUG</ConfigurationType>
     <BinaryDirectory>build/$(PlatformName)/$(ConfigurationName)</BinaryDirectory>
     <MakeCommandTemplate>
