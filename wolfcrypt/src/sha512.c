@@ -1293,6 +1293,7 @@ static int InitSha384(wc_Sha384* sha384)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     sha384->ctx.sha_type = SHA2_384;
+    sha384->ctx.mode = ESP32_SHA_SW; /* no SHA384 HW */
     esp_sha_init(&(sha384->ctx));
 #endif
 
