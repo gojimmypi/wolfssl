@@ -86,7 +86,11 @@ on the specific device platform.
 
 #ifdef WOLFSSL_ESPIDF
     /* Define the ESP_LOGx(TAG, "" value for output messages here. */
-    // char* TAG = "wc_sha256";
+    /*
+    ** TODO Is this file included twice? Enable this next line ends up
+    ** having the compiler complain about duplicate
+    */
+    /* char* TAG = "wc_sha256"; */
 #endif
 
 /* determine if we are using Espressif SHA hardware acceleration */

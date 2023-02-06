@@ -1519,7 +1519,6 @@ static int Sha512_Family_GetHash(wc_Sha512* sha512, byte* hash,
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    /* TODO review */
         sha512->ctx.mode = ESP32_SHA_SW;
 #endif
         wc_Sha512Free(tmpSha512);
