@@ -72,10 +72,7 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
-/* we'll call a separate init as there's only 1 HW acceleration
-
-TODO
-*/
+/* we'll call a separate init as there's only 1 HW acceleration */
 int esp_sha_init(WC_ESP32SHA* ctx)
 {
     if (ctx->intializer == NULL) {
@@ -210,7 +207,8 @@ static void wc_esp_wait_until_idle()
  *
  * Note that enable / disable only occurs when ref_counts[periph] == 0
  *
- * TODO: check if this works with other ESP32 platforms ESP32-C3, ESP32-S3, etc
+ * TODO: check if this works with other ESP32 platforms ESP32-C3,
+ * ESP32-S3, etc.  (A: generally, no. RISC-V has different HW accel.)
  */
 int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 {
@@ -221,7 +219,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     }
 
     if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
-        // ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex indicates busy");
+        ESP_LOGV(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex indicates busy");
     }
     else {
         ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex is free ");
@@ -241,7 +239,6 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 
     /* once the value we read is a 0 in the DPORT_PERI_CLK_EN_REG bit
      * then we have fully unrolled the enables via ref_counts[periph]==0 */
-    /* TODO MEMW ? */
     asm volatile("memw");
     while ((this_sha_mask & *(uint32_t*)DPORT_PERI_CLK_EN_REG) != 0) {
         periph_module_disable(PERIPH_SHA_MODULE);
@@ -263,7 +260,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             /* this could be a warning of wonkiness in RTOS environment.
              * we were successful, but not expected depth count */
 
-            ESP_LOGI(TAG, "warning lockDepth mismatch.");
+            ESP_LOGW(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
@@ -353,7 +350,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             ESP_LOGV(TAG, ">>>> mutex indicates busy while ctx->mode == ESP32_SHA_INIT");
         }
         else {
-            // expected ESP_LOGI(TAG, ">>>> mutex is free ");
+            ESP_LOGV(TAG, ">>>> mutex is free ");
         }
                 /* we don't wait:
          * either the engine is free, or we fall back to SW
@@ -364,7 +361,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             ESP_LOGV(TAG, "Hardware Mode, lock depth = %d", ctx->lockDepth);
 
             if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
-                // expected ESP_LOGI(TAG, ">>>> enabled mutex indicates busy");
+                ESP_LOGV(TAG, ">>>> enabled mutex indicates busy");
             }
             else {
                 ESP_LOGI(TAG, ">>>> enabled mutex is free ");
