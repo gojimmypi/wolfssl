@@ -25,15 +25,6 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
-
-#ifdef DEBUG_WOLFSSL_VERBOSE
-    #if defined(WOLFSSL_ESPIDF)
-        #include <esp_log.h>
-    #else
-        #include <wolfssl/wolfcrypt/logging.h>
-    #endif
-#endif
-
 #ifdef WOLFSSL_QNX_CAAM
 #include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
 #endif
