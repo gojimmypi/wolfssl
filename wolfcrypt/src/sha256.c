@@ -1175,7 +1175,7 @@ static int InitSha256(wc_Sha256* sha256)
                 else {
                     esp_sha256_process(sha256, (const byte*)local32);
                 }
-#else
+            #else
                 ret = XTRANSFORM(sha256, (const byte*)local32);
             #endif
 
@@ -1558,7 +1558,11 @@ static int InitSha256(wc_Sha256* sha256)
         sha224->len  = 0;
         sha224->used = 0;
     #endif
+    #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
+        !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
+        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW */
+    #endif
 
         return ret;
     }

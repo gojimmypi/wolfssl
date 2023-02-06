@@ -164,6 +164,14 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
         case SHA1: /* typically 20 bytes */
             return WC_SHA_DIGEST_SIZE;
     #endif
+    #ifdef WOLFSSL_SHA224
+    /*
+        no SHA224 HW at this time.
+        case SHA2_224:
+            return WC_SHA224_DIGEST_SIZE;
+            break;
+    */
+    #endif
     #ifndef NO_SHA256
         case SHA2_256: /* typically 32 bytes */
             return WC_SHA256_DIGEST_SIZE;
@@ -177,8 +185,8 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
             return WC_SHA512_DIGEST_SIZE;
     #endif
         default:
-            ESP_LOGE(TAG, "Bad sha type");
-            return 0;
+            ESP_LOGE(TAG, "Bad sha type in wc_esp_sha_digest_size");
+            return BAD_FUNC_ARG;
     }
     /* we never get here, as all the above switches should have a return */
 }
@@ -285,7 +293,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
-        return -1;
+        return BAD_FUNC_ARG;
     }
 
     /* Init mutex
