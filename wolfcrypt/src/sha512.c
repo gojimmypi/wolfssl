@@ -25,6 +25,8 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+    #define USE_SHA_SOFTWARE_IMPL
+
 
 #if (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)) && !defined(WOLFSSL_ARMASM) && !defined(WOLFSSL_PSOC6_CRYPTO)
 
@@ -553,8 +555,10 @@ static int InitSha512_Family(wc_Sha512* sha512, void* heap, int devId,
 {
    int ret = 0;
 
-    if (sha512 == NULL)
+    if (sha512 == NULL) {
         return BAD_FUNC_ARG;
+    }
+
 
     sha512->heap = heap;
 #ifdef WOLFSSL_SMALL_STACK_CACHE
@@ -938,8 +942,8 @@ int wc_Sha512Update(wc_Sha512* sha512, const byte* data, word32 len)
 
 static WC_INLINE int Sha512Final(wc_Sha512* sha512)
 {
-    byte* local;
     int ret;
+    byte* local;
 
     if (sha512 == NULL) {
         return BAD_FUNC_ARG;
@@ -973,18 +977,20 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
        #endif
         }
 #endif /* LITTLE_ENDIAN_ORDER */
-#if !defined(WOLFSSL_ESP32WROOM32_CRYPT) || \
-     defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-        ret = Transform_Sha512(sha512);
-#else
+    #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
+        !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
         if (sha512->ctx.mode == ESP32_SHA_INIT) {
             esp_sha_try_hw_lock(&sha512->ctx);
         }
-        ret = esp_sha512_process(sha512);
-        if (ret == 0 && sha512->ctx.mode == ESP32_SHA_SW) {
+        if (sha512->ctx.mode == ESP32_SHA_SW) {
             ret = Transform_Sha512(sha512);
         }
-#endif
+        else {
+            ret = esp_sha512_process(sha512);
+        }
+    #else
+        ret = Transform_Sha512(sha512);
+    #endif
         if (ret != 0)
             return ret;
 
@@ -1166,6 +1172,10 @@ void wc_Sha512Free(wc_Sha512* sha512)
     wolfAsync_DevCtxFree(&sha512->asyncDev, WOLFSSL_ASYNC_MARKER_SHA512);
 #endif /* WOLFSSL_ASYNC_CRYPT */
 }
+
+
+
+
 #if defined(OPENSSL_EXTRA) && !defined(WOLFSSL_KCAPI_HASH)
 /* Apply SHA512 transformation to the data                */
 /* @param sha  a pointer to wc_Sha512 structure           */
@@ -1291,9 +1301,7 @@ static int InitSha384(wc_Sha384* sha384)
 
 #if  defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-
     sha384->ctx.sha_type = SHA2_384;
-    sha384->ctx.mode = ESP32_SHA_SW; /* no SHA384 HW */
     esp_sha_init(&(sha384->ctx));
 #endif
 
@@ -1398,6 +1406,8 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
     if (sha384 == NULL) {
         return BAD_FUNC_ARG;
     }
+
+    XMEMSET(sha384, 0, sizeof(wc_Sha384));
 
     sha384->heap = heap;
 #ifdef WOLFSSL_SMALL_STACK_CACHE
@@ -1504,24 +1514,10 @@ static int Sha512_Family_GetHash(wc_Sha512* sha512, byte* hash,
     }
 #endif
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    if (sha512->ctx.mode == ESP32_SHA_INIT) {
-        esp_sha_try_hw_lock(&sha512->ctx);
-    }
-    if (sha512->ctx.mode != ESP32_SHA_SW) {
-       esp_sha512_digest_process(sha512, 0);
-    }
-#endif
-
+    /* copy this sha512 into tmpSha */
     ret = wc_Sha512Copy(sha512, tmpSha512);
     if (ret == 0) {
         ret = finalfp(tmpSha512, hash);
-
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-        sha512->ctx.mode = ESP32_SHA_SW;
-#endif
         wc_Sha512Free(tmpSha512);
     }
 
@@ -1759,23 +1755,10 @@ int wc_Sha384GetHash(wc_Sha384* sha384, byte* hash)
     }
 #endif
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    if (sha384->ctx.mode == ESP32_SHA_INIT) {
-        esp_sha_try_hw_lock(&sha384->ctx);
-    }
-    if (sha384->ctx.mode != ESP32_SHA_SW) {
-        esp_sha512_digest_process(sha384, 0);
-    }
-#endif
+    /* copy this sha384 into tmpSha */
     ret = wc_Sha384Copy(sha384, tmpSha384);
     if (ret == 0) {
         ret = wc_Sha384Final(tmpSha384, hash);
-
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-        sha384->ctx.mode = ESP32_SHA_SW;
-#endif
         wc_Sha384Free(tmpSha384);
     }
 
@@ -1795,6 +1778,7 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
     }
 
     XMEMCPY(dst, src, sizeof(wc_Sha384));
+
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     dst->W = NULL;
 #endif
@@ -1807,28 +1791,27 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA384)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
+
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     if (src->ctx.mode == ESP32_SHA_HW) {
-        /* This should be highly unusual, as the copy would have occurred
-        ** mid-calculation, and of so, why? */
-        ESP_LOGW("sha512",
-                " Warning: copying ESP32_SHA_HW, setting to ESP32_SHA_SW");
-        dst->ctx.mode = ESP32_SHA_SW;
+        ESP_LOGI("sha384", "Sha384 Copy set to SW");
+        ret = esp_sha512_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
+        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
+        esp_sha_init(&(dst->ctx));
+        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
     }
     else {
-        dst->ctx.mode = src->ctx.mode;
+        dst->ctx = src->ctx; /* copy the ctx */
+        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
     }
-    /* note other properties would have been copied via memcopy:
-    dst->ctx.isfirstblock = src->ctx.isfirstblock;
-    dst->ctx.sha_type = src->ctx.sha_type;
-    dst->ctx.lockDepth    = src->ctx.lockDepth;
-    */
 #endif
+
 #ifdef WOLFSSL_HASH_FLAGS
      dst->flags |= WC_HASH_FLAG_ISCOPY;
 #endif
+
 #if defined(WOLFSSL_HASH_KEEP)
     if (src->msg != NULL) {
         dst->msg = (byte*)XMALLOC(src->len, dst->heap, DYNAMIC_TYPE_TMP_BUFFER);
