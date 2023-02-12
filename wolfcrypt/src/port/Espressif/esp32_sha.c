@@ -91,9 +91,9 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             ** May need to unlock HW, below */
         }
         else {
-            ESP_LOGV(TAG, "ALERT: not re-using SHA ctx. Copied?");
+            ESP_LOGI(TAG, "ALERT: unexpected SHA ctx intializer. Copied?");
+            ctx->mode = ESP32_SHA_INIT;
             ctx->intializer = ctx; /* set a new address */
-            ctx->mode = ESP32_SHA_INIT; /* any copy gets demoted to SW */
         }
     }
 
@@ -109,7 +109,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
         case ESP32_SHA_HW:
             /* release hw */
             ESP_LOGV(TAG, ">> HW unlock");
-            esp_sha_hw_unlock(ctx);
+            esp_sha_hw_unlock(ctx); /* current only unlock during init when prior state is HW */
             break;
 
         case ESP32_SHA_SW:
@@ -138,7 +138,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
     ctx->mode = ESP32_SHA_INIT;
     ctx->lockDepth = 0;
 
-    return 0;
+    return 0; /* TODO return fail when alert encountered? */
 }
 
 /*
@@ -226,13 +226,6 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         return -1;
     }
 
-    if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
-        ESP_LOGV(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex indicates busy");
-    }
-    else {
-        ESP_LOGI(TAG, ">>>> esp_unroll_sha_module_enable enabled mutex is free ");
-    }
-
     /* if we end up here, there was a prior unexpected fail and
      * we need to unroll enables */
     int ret = 0; /* assume success unless proven otherwise */
@@ -267,8 +260,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
              * we were successful, but not expected depth count */
-
-            ESP_LOGW(TAG, "warning lockDepth mismatch.");
+            ESP_LOGI(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
@@ -289,7 +281,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
 
-    ESP_LOGV(TAG, "enter esp_sha_hw_lock");
+    ESP_LOGI(TAG, "enter esp_sha_hw_lock %x", (int)ctx->intializer);
 
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
@@ -335,9 +327,25 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
     */
 
+    if (sha_mutex == NULL) {
+        ESP_LOGI(TAG, ">>>> mutex not yet initialized");
+
+    }
+    else {
+//        if (xSemaphoreTake(sha_mutex, (TickType_t)0) ==pdTRUE) {
+//            ESP_LOGI(TAG, ">>>> xSemaphoreTake success ");
+//        }
+//        else {
+//            ESP_LOGI(TAG, ">>>> xSemaphoreTake unavailable");
+//            ctx->mode = ESP32_SHA_SW;
+//            return 0;
+//        }
+    }
+
+
     if (espsha_CryptHwMutexInit == 0) {
-        ESP_LOGV(TAG, "set esp_CryptHwMutexInit");
-        ret = esp_CryptHwMutexInit(&sha_mutex);
+        ESP_LOGI(TAG, "set esp_CryptHwMutexInit");
+        ret = esp_CryptHwMutexInit(&sha_mutex); /* created, but not yet locked */
         if (ret == 0) {
             espsha_CryptHwMutexInit = 1;
         }
@@ -354,30 +362,16 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /* try to lock the hw engine */
         ESP_LOGV(TAG, "ESP32_SHA_INIT\n");
 
-        if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
-            ESP_LOGV(TAG, ">>>> mutex indicates busy while ctx->mode == ESP32_SHA_INIT");
-        }
-        else {
-            ESP_LOGV(TAG, ">>>> mutex is free ");
-        }
-                /* we don't wait:
+        /* we don't wait:
          * either the engine is free, or we fall back to SW
          */
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
-            ESP_LOGV(TAG, "Hardware Mode, lock depth = %d", ctx->lockDepth);
-
-            if (xQueuePeek(sha_mutex, (void *)NULL, (TickType_t)NULL) != pdTRUE) {
-                ESP_LOGV(TAG, ">>>> enabled mutex indicates busy");
-            }
-            else {
-                ESP_LOGI(TAG, ">>>> enabled mutex is free ");
-            }
-
+            ESP_LOGI(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->intializer);
         }
         else {
-            ESP_LOGV(TAG, ">>>> Hardware in use; Mode REVERT to ESP32_SHA_SW");
+            ESP_LOGI(TAG, "\n>>>> Hardware in use; Mode REVERT to ESP32_SHA_SW\n");
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
@@ -431,8 +425,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* unlock hw engine for next use */
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
-
-    ESP_LOGV(TAG, "leave esp_sha_hw_unlock");
+    espsha_CryptHwMutexInit = 0; /* TODO ?? */
+    ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->intializer);
     return 0;
 } /* esp_sha_hw_unlock */
 
