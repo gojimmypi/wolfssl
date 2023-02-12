@@ -816,7 +816,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     }
     else {
         ret = esp_sha_digest_process(sha, 1);
-      //  esp_sha_hw_unlock(&sha->ctx); performed in init
     }
 #else
     ret = XTRANSFORM(sha, (const byte*)local);
@@ -902,13 +901,12 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
 #ifdef WOLFSSL_SMALL_STACK
     wc_Sha* tmpSha;
 #else
-    wc_Sha tmpSha[1];
+    wc_Sha  tmpSha[1];
 #endif
 
     if (sha == NULL || hash == NULL) {
         return BAD_FUNC_ARG;
     }
-
 
 #ifdef WOLFSSL_SMALL_STACK
     tmpSha = (wc_Sha*)XMALLOC(sizeof(wc_Sha), NULL,
@@ -918,31 +916,11 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
     }
 #endif
 
-
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-    /* ESP32 hardware can only handle only 1 active hardware hashing
-     * at a time. If the mutex lock is acquired the first time then
-     * that Sha256 instance has exclusive access to hardware. The
-     * final or free needs to release the mutex. Operations that
-     * do not get the lock fall back to software based Sha256 */
-
-//    if (sha->ctx.mode == ESP32_SHA_INIT) {
-//        esp_sha_try_hw_lock(&sha->ctx);
-//    }
-//    if (sha->ctx.mode == ESP32_SHA_HW) {
-//        esp_sha_digest_process(sha, 0);
-//    }
-#endif
-
     /* copy this sha into tmpSha */
     ret = wc_ShaCopy(sha, tmpSha);
     if (ret == 0) {
         ret = wc_ShaFinal(tmpSha, hash);
-
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-//        sha->ctx.mode = ESP32_SHA_SW;
-#endif
-        wc_ShaFree(tmpSha);
+        wc_ShaFree(tmpSha); /* TODO move outside brackets? */
     }
 
 #ifdef WOLFSSL_SMALL_STACK
@@ -981,11 +959,6 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-
-    // esp32_hash_copy
-    //dst->ctx.isfirstblock = src->ctx.isfirstblock;
-    //dst->ctx.lockDepth = src->ctx.lockDepth;
-    //dst->ctx.mode = src->ctx.mode;
 
     if (src->ctx.mode == ESP32_SHA_HW) {
         ESP_LOGI("sha", "Sha Copy set to SW");
