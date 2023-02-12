@@ -1868,7 +1868,7 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
 
     if (src->ctx.mode == ESP32_SHA_HW) {
         ESP_LOGI("sha224", "Sha224 Copy set to SW");
-        ret = esp_sha_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
+        ret = esp_sha256_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
         XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
         esp_sha_init(&(dst->ctx));
         dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
@@ -2012,7 +2012,7 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
     if (src->ctx.mode == ESP32_SHA_HW) {
         ESP_LOGI("sha256", "Sha256 Copy set to SW");
-        ret = esp_sha_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
+        ret = esp_sha256_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
         XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
         esp_sha_init(&(dst->ctx));
         dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
