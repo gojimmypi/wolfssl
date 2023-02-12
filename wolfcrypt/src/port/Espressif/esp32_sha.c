@@ -281,7 +281,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
 
-    ESP_LOGI(TAG, "enter esp_sha_hw_lock %x", (int)ctx->intializer);
+    ESP_LOGV(TAG, "enter esp_sha_hw_lock %x", (int)ctx->intializer);
 
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
@@ -368,7 +368,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
-            ESP_LOGI(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->intializer);
+            ESP_LOGV(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->intializer);
         }
         else {
             ESP_LOGI(TAG, "\n>>>> Hardware in use; Mode REVERT to ESP32_SHA_SW\n");
@@ -425,8 +425,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* unlock hw engine for next use */
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
-    espsha_CryptHwMutexInit = 0; /* TODO ?? */
-    ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->intializer);
+    // espsha_CryptHwMutexInit = 0; /* TODO ?? */
+    ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->intializer);
     return 0;
 } /* esp_sha_hw_unlock */
 
