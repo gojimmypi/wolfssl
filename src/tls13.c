@@ -103,9 +103,9 @@
     #include <errno.h>
 #endif
 
-#if defined(__MACH__) || defined(__FreeBSD__)
+#if defined(__MACH__) || defined(__FreeBSD__) || defined(__INCLUDE_NUTTX_CONFIG_H)
 #include <sys/time.h>
-#endif /* __MACH__ || __FreeBSD__ */
+#endif /* __MACH__ || __FreeBSD__ || __INCLUDE_NUTTX_CONFIG_H */
 
 
 #include <wolfssl/internal.h>
@@ -5507,6 +5507,7 @@ static int FindPsk(WOLFSSL* ssl, PreSharedKey* psk, const byte* suite, int* err)
             /* Check whether PSK ciphersuite is in SSL. */
             found = (suite[0] == cipherSuite0) && (suite[1] == cipherSuite);
         #else
+            (void)suite;
             /* Check whether PSK ciphersuite is in SSL. */
             {
                 byte s[2] = {
@@ -10272,7 +10273,10 @@ static int SendTls13NewSessionTicket(WOLFSSL* ssl)
 
     ssl->options.haveSessionId = 1;
 
-#ifndef NO_SESSION_CACHE
+    /* Only add to cache when suppport built in and when the ticket contains
+     * an ID. Otherwise we have no way to actually retrieve the ticket from the
+     * cache. */
+#if !defined(NO_SESSION_CACHE) && defined(WOLFSSL_TICKET_HAVE_ID)
     AddSession(ssl);
 #endif
 

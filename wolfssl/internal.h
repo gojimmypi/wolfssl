@@ -3999,7 +3999,7 @@ WOLFSSL_LOCAL
 WOLFSSL_SESSION* ClientSessionToSession(const WOLFSSL_SESSION* session);
 WOLFSSL_LOCAL void TlsSessionCacheUnlockRow(word32 row);
 WOLFSSL_LOCAL int TlsSessionCacheGetAndLock(const byte *id,
-    WOLFSSL_SESSION **sess, word32 *lockedRow);
+    WOLFSSL_SESSION **sess, word32 *lockedRow, byte readOnly);
 /* WOLFSSL_API to test it in tests/api.c */
 WOLFSSL_API int wolfSSL_GetSessionFromCache(WOLFSSL* ssl, WOLFSSL_SESSION* output);
 WOLFSSL_LOCAL int wolfSSL_SetSession(WOLFSSL* ssl, WOLFSSL_SESSION* session);
@@ -6094,7 +6094,7 @@ WOLFSSL_LOCAL int EncryptDerKey(byte *der, int *derSz, const EVP_CIPHER* cipher,
 #endif
 #endif
 
-#if defined(WOLFSSL_KEY_GEN) && !defined(NO_RSA) && !defined(HAVE_USER_RSA)
+#if !defined(NO_RSA) && !defined(HAVE_USER_RSA)
 WOLFSSL_LOCAL int wolfSSL_RSA_To_Der(WOLFSSL_RSA* rsa, byte** outBuf,
     int publicKey, void* heap);
 #endif

@@ -1200,7 +1200,7 @@ WOLFSSL_RSA* wolfSSL_RSAPublicKey_dup(WOLFSSL_RSA *rsa)
 
 #endif /* WOLFSSL_KEY_GEN && !HAVE_USER_RSA */
 
-#if defined(WOLFSSL_KEY_GEN) && !defined(HAVE_USER_RSA)
+#ifndef HAVE_USER_RSA
 static int wolfSSL_RSA_To_Der_ex(WOLFSSL_RSA* rsa, byte** outBuf, int publicKey,
     void* heap);
 #endif
@@ -1307,7 +1307,7 @@ WOLFSSL_RSA *wolfSSL_d2i_RSAPrivateKey(WOLFSSL_RSA **out,
     return rsa;
 }
 
-#if defined(WOLFSSL_KEY_GEN) && !defined(HAVE_USER_RSA) && \
+#if defined(OPENSSL_EXTRA) && !defined(HAVE_USER_RSA) && \
     !defined(HAVE_FAST_RSA)
 /* Converts an internal RSA structure to DER format for the private key.
  *
@@ -1382,7 +1382,7 @@ int wolfSSL_i2d_RSAPublicKey(WOLFSSL_RSA *rsa, unsigned char **pp)
 
     return ret;
 }
-#endif /* defined(WOLFSSL_KEY_GEN) && !defined(HAVE_USER_RSA) &&
+#endif /* defined(OPENSSL_EXTRA) && !defined(HAVE_USER_RSA) &&
         * !defined(HAVE_FAST_RSA) */
 
 #endif /* OPENSSL_EXTRA */
@@ -1512,7 +1512,7 @@ WOLFSSL_RSA* wolfSSL_d2i_RSAPrivateKey_bio(WOLFSSL_BIO *bio, WOLFSSL_RSA **out)
 
 #ifdef OPENSSL_EXTRA
 
-#if defined(WOLFSSL_KEY_GEN) && !defined(HAVE_USER_RSA)
+#ifndef HAVE_USER_RSA
 /* Create a DER encoding of key.
  *
  * Not OpenSSL API.
@@ -1645,7 +1645,7 @@ static int wolfSSL_RSA_To_Der_ex(WOLFSSL_RSA* rsa, byte** outBuf, int publicKey,
     WOLFSSL_LEAVE("wolfSSL_RSA_To_Der", ret);
     return ret;
 }
-#endif /* WOLFSSL_KEY_GEN && !HAVE_USER_RSA */
+#endif /* !HAVE_USER_RSA */
 
 #endif /* OPENSSL_EXTRA */
 
@@ -1824,18 +1824,16 @@ int wolfSSL_PEM_write_bio_RSA_PUBKEY(WOLFSSL_BIO* bio, WOLFSSL_RSA* rsa)
     /* Validate parameters. */
     if ((bio == NULL) || (rsa == NULL)) {
         WOLFSSL_ERROR_MSG("Bad Function Arguments");
-        ret = 0;
+        return 0;
     }
 
-    if (ret == 1) {
-        if ((derSz = wolfSSL_RSA_To_Der(rsa, &derBuf, 1, bio->heap)) < 0) {
-            WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed");
-            ret = 0;
-        }
-        if (derBuf == NULL) {
-            WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed to get buffer");
-            ret = 0;
-        }
+    if ((derSz = wolfSSL_RSA_To_Der(rsa, &derBuf, 1, bio->heap)) < 0) {
+        WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed");
+        ret = 0;
+    }
+    if (derBuf == NULL) {
+        WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed to get buffer");
+        ret = 0;
     }
     if ((ret == 1) && (der_write_to_bio_as_pem(derBuf, derSz, bio,
             PUBLICKEY_TYPE) != WOLFSSL_SUCCESS)) {
@@ -1871,18 +1869,16 @@ static int wolfssl_pem_write_rsa_public_key(XFILE fp, WOLFSSL_RSA* rsa,
     /* Validate parameters. */
     if ((fp == XBADFILE) || (rsa == NULL)) {
         WOLFSSL_ERROR_MSG("Bad Function Arguments");
-        ret = 0;
+        return 0;
     }
 
-    if (ret == 1) {
-        if ((derSz = wolfSSL_RSA_To_Der(rsa, &derBuf, 1, rsa->heap)) < 0) {
-            WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed");
-            ret = 0;
-        }
-        if (derBuf == NULL) {
-            WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed to get buffer");
-            ret = 0;
-        }
+    if ((derSz = wolfSSL_RSA_To_Der(rsa, &derBuf, 1, rsa->heap)) < 0) {
+        WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed");
+        ret = 0;
+    }
+    if (derBuf == NULL) {
+        WOLFSSL_ERROR_MSG("wolfSSL_RSA_To_Der failed to get buffer");
+        ret = 0;
     }
     if ((ret == 1) && (der_write_to_file_as_pem(derBuf, derSz, fp, type,
             rsa->heap) != WOLFSSL_SUCCESS)) {
@@ -9176,6 +9172,7 @@ int wolfSSL_EC_GROUP_cmp(const WOLFSSL_EC_GROUP *a, const WOLFSSL_EC_GROUP *b,
 {
     int ret;
 
+    /* No BN operations performed. */
     (void)ctx;
 
     WOLFSSL_ENTER("wolfSSL_EC_GROUP_cmp");
@@ -10149,7 +10146,8 @@ WOLFSSL_BIGNUM *wolfSSL_EC_POINT_point2bn(const WOLFSSL_EC_GROUP* group,
     return ret;
 }
 
-#if defined(USE_ECC_B_PARAM) && (!defined(HAVE_FIPS) || FIPS_VERSION_GT(2,0))
+#if defined(USE_ECC_B_PARAM) && !defined(HAVE_SELFTEST) && \
+    (!defined(HAVE_FIPS) || FIPS_VERSION_GT(2,0))
 /* Check if EC point is on the the curve defined by the EC group.
  *
  * @param [in] group  EC group defining curve.
@@ -10190,7 +10188,7 @@ int wolfSSL_EC_POINT_is_on_curve(const WOLFSSL_EC_GROUP *group,
     /* Return boolean of on curve. No error means on curve. */
     return !err;
 }
-#endif /* USE_ECC_B_PARAM && !(FIPS_VERSION <= 2) */
+#endif /* USE_ECC_B_PARAM && !HAVE_SELFTEST && !(FIPS_VERSION <= 2) */
 
 #if !defined(WOLFSSL_SP_MATH) && !defined(WOLF_CRYPTO_CB_ONLY_ECC)
 /* Convert Jacobian ordinates to affine.
@@ -10335,9 +10333,9 @@ int wolfSSL_EC_POINT_get_affine_coordinates_GFp(const WOLFSSL_EC_GROUP* group,
  * @return  1 on success.
  * @return  0 on error.
  */
-int wolfSSL_EC_POINT_set_affine_coordinates_GFp(const WOLFSSL_EC_GROUP *group,
-    WOLFSSL_EC_POINT *point, const WOLFSSL_BIGNUM *x, const WOLFSSL_BIGNUM *y,
-    WOLFSSL_BN_CTX *ctx)
+int wolfSSL_EC_POINT_set_affine_coordinates_GFp(const WOLFSSL_EC_GROUP* group,
+    WOLFSSL_EC_POINT* point, const WOLFSSL_BIGNUM* x, const WOLFSSL_BIGNUM* y,
+    WOLFSSL_BN_CTX* ctx)
 {
     int ret = 1;
 
@@ -10393,6 +10391,16 @@ int wolfSSL_EC_POINT_set_affine_coordinates_GFp(const WOLFSSL_EC_GROUP *group,
         WOLFSSL_MSG("ec_point_internal_set failed");
         ret = 0;
     }
+
+#if defined(USE_ECC_B_PARAM) && !defined(HAVE_SELFTEST) && \
+    (!defined(HAVE_FIPS) || FIPS_VERSION_GT(2,0))
+    /* Check that the point is valid. */
+    if ((ret == 1) && (wolfSSL_EC_POINT_is_on_curve(group,
+            (WOLFSSL_EC_POINT *)point, ctx) != 1)) {
+        WOLFSSL_MSG("EC_POINT_is_on_curve failed");
+        ret = 0;
+    }
+#endif
 
     return ret;
 }
@@ -10956,15 +10964,131 @@ int wolfSSL_EC_POINT_invert(const WOLFSSL_EC_GROUP *group,
     return ret;
 }
 
+#ifdef WOLFSSL_EC_POINT_CMP_JACOBIAN
+/* Compare two points on a the same curve.
+ *
+ * (Ax, Ay, Az) => (Ax / (Az ^ 2), Ay / (Az ^ 3))
+ * (Bx, By, Bz) => (Bx / (Bz ^ 2), By / (Bz ^ 3))
+ * When equal:
+ *      (Ax / (Az ^ 2), Ay / (Az ^ 3)) = (Bx / (Bz ^ 2), By / (Bz ^ 3))
+ *   => (Ax * (Bz ^ 2), Ay * (Bz ^ 3)) = (Bx * (Az ^ 2), By * (Az ^ 3))
+ *
+ * @param [in] group  EC group.
+ * @param [in] a      EC point to compare.
+ * @param [in] b      EC point to compare.
+ * @return  0 when equal.
+ * @return  1 when different.
+ * @return  -1 on error.
+ */
+static int ec_point_cmp_jacobian(const WOLFSSL_EC_GROUP* group,
+    const WOLFSSL_EC_POINT *a, const WOLFSSL_EC_POINT *b, WOLFSSL_BN_CTX *ctx)
+{
+    int ret = 0;
+    BIGNUM* at = BN_new();
+    BIGNUM* bt = BN_new();
+    BIGNUM* az = BN_new();
+    BIGNUM* bz = BN_new();
+    BIGNUM* mod = BN_new();
+
+    /* Check that the big numbers were allocated. */
+    if ((at == NULL) || (bt == NULL) || (az == NULL) || (bz == NULL) ||
+            (mod == NULL)) {
+        ret = -1;
+    }
+    /* Get the modulus for the curve. */
+    if ((ret == 0) &&
+            (BN_hex2bn(&mod, ecc_sets[group->curve_idx].prime) != 1)) {
+        ret = -1;
+    }
+    if (ret == 0) {
+        /* bt = Bx * (Az ^ 2). When Az is one then just copy. */
+        if (BN_is_one(a->Z)) {
+            if (BN_copy(bt, b->X) == NULL) {
+                ret = -1;
+            }
+        }
+        /* az = Az ^ 2 */
+        else if ((BN_mod_mul(az, a->Z, a->Z, mod, ctx) != 1)) {
+            ret = -1;
+        }
+        /* bt = Bx * az = Bx * (Az ^ 2) */
+        else if (BN_mod_mul(bt, b->X, az, mod, ctx) != 1) {
+            ret = -1;
+        }
+    }
+    if (ret == 0) {
+        /* at = Ax * (Bz ^ 2). When Bz is one then just copy. */
+        if (BN_is_one(b->Z)) {
+            if (BN_copy(at, a->X) == NULL) {
+                ret = -1;
+            }
+        }
+        /* bz = Bz ^ 2 */
+        else if (BN_mod_mul(bz, b->Z, b->Z, mod, ctx) != 1) {
+            ret = -1;
+        }
+        /* at = Ax * bz = Ax * (Bz ^ 2) */
+        else if (BN_mod_mul(at, a->X, bz, mod, ctx) != 1) {
+            ret = -1;
+        }
+    }
+    /* Compare x-ordinates. */
+    if ((ret == 0) && (BN_cmp(at, bt) != 0)) {
+        ret = 1;
+    }
+    if (ret == 0) {
+        /* bt = By * (Az ^ 3). When Az is one then just copy. */
+        if (BN_is_one(a->Z)) {
+            if (BN_copy(bt, b->Y) == NULL) {
+                ret = -1;
+            }
+        }
+        /* az = az * Az = Az ^ 3 */
+        else if ((BN_mod_mul(az, az, a->Z, mod, ctx) != 1)) {
+            ret = -1;
+        }
+        /* bt = By * az = By * (Az ^ 3) */
+        else if (BN_mod_mul(bt, b->Y, az, mod, ctx) != 1) {
+            ret = -1;
+        }
+    }
+    if (ret == 0) {
+        /* at = Ay * (Bz ^ 3). When Bz is one then just copy. */
+        if (BN_is_one(b->Z)) {
+            if (BN_copy(at, a->Y) == NULL) {
+                ret = -1;
+            }
+        }
+        /* bz = bz * Bz = Bz ^ 3 */
+        else if (BN_mod_mul(bz, bz, b->Z, mod, ctx) != 1) {
+            ret = -1;
+        }
+        /* at = Ay * bz = Ay * (Bz ^ 3) */
+        else if (BN_mod_mul(at, a->Y, bz, mod, ctx) != 1) {
+            ret = -1;
+        }
+    }
+    /* Compare y-ordinates. */
+    if ((ret == 0) && (BN_cmp(at, bt) != 0)) {
+        ret = 1;
+    }
+
+    BN_free(mod);
+    BN_free(bz);
+    BN_free(az);
+    BN_free(bt);
+    BN_free(at);
+    return ret;
+}
+#endif
+
 /* Compare two points on a the same curve.
  *
  * Return code compliant with OpenSSL.
  *
- * TODO: Compare affine co-ordinate like OpenSSL?
- *
  * @param [in] group  EC group.
- * @param [in] a      EC point to invert.
- * @param [in] b      EC point to invert.
+ * @param [in] a      EC point to compare.
+ * @param [in] b      EC point to compare.
  * @param [in] ctx    Context to use for BN operations. Unused.
  * @return  0 when equal.
  * @return  1 when different.
@@ -10973,10 +11097,7 @@ int wolfSSL_EC_POINT_invert(const WOLFSSL_EC_GROUP *group,
 int wolfSSL_EC_POINT_cmp(const WOLFSSL_EC_GROUP *group,
     const WOLFSSL_EC_POINT *a, const WOLFSSL_EC_POINT *b, WOLFSSL_BN_CTX *ctx)
 {
-    int ret;
-
-    /* No BN operations performed. */
-    (void)ctx;
+    int ret = 0;
 
     WOLFSSL_ENTER("wolfSSL_EC_POINT_cmp");
 
@@ -10986,9 +11107,23 @@ int wolfSSL_EC_POINT_cmp(const WOLFSSL_EC_GROUP *group,
         WOLFSSL_MSG("wolfSSL_EC_POINT_cmp Bad arguments");
         ret = -1;
     }
-    else  {
+    if (ret != -1) {
+    #ifdef WOLFSSL_EC_POINT_CMP_JACOBIAN
+        /* If same Z ordinate then no need to convert to affine. */
+        if (BN_cmp(a->Z, b->Z) == 0) {
+            /* Compare */
+            ret = ((BN_cmp(a->X, b->X) != 0) || (BN_cmp(a->Y, b->Y) != 0));
+        }
+        else {
+            ret = ec_point_cmp_jacobian(group, a, b, ctx);
+        }
+    #else
+        /* No BN operations performed. */
+        (void)ctx;
+
         ret = (wc_ecc_cmp_point((ecc_point*)a->internal,
             (ecc_point*)b->internal) != MP_EQ);
+    #endif
     }
 
     return ret;
@@ -11018,8 +11153,8 @@ int wolfSSL_EC_POINT_copy(WOLFSSL_EC_POINT *dest, const WOLFSSL_EC_POINT *src)
     }
 
     /* Copy internal EC points. */
-    if ((ret == 1) && (wc_ecc_copy_point((ecc_point*) dest->internal,
-            (ecc_point*) src->internal) != MP_OKAY)) {
+    if ((ret == 1) && (wc_ecc_copy_point((ecc_point*)src->internal,
+            (ecc_point*)dest->internal) != MP_OKAY)) {
         ret = 0;
     }
 
@@ -11885,15 +12020,13 @@ int wolfSSL_PEM_write_EC_PUBKEY(XFILE fp, WOLFSSL_EC_KEY* key)
     /* Validate parameters. */
     if ((fp == XBADFILE) || (key == NULL)) {
         WOLFSSL_MSG("Bad argument.");
-        ret = 0;
+        return 0;
     }
 
-    if (ret == 1) {
-        /* Encode public key in EC key as DER. */
-        derSz = wolfssl_ec_key_to_pubkey_der(key, &derBuf, key->heap);
-        if (derSz == 0) {
-            ret = 0;
-        }
+    /* Encode public key in EC key as DER. */
+    derSz = wolfssl_ec_key_to_pubkey_der(key, &derBuf, key->heap);
+    if (derSz == 0) {
+        ret = 0;
     }
 
     /* Write out to file the PEM encoding of the DER. */
@@ -11988,7 +12121,7 @@ WOLFSSL_EC_KEY* wolfSSL_PEM_read_bio_ECPrivateKey(WOLFSSL_BIO* bio,
     DerBuffer*      der = NULL;
     int             keyFormat = 0;
 
-    WOLFSSL_ENTER("wolfSSL_PEM_read_bio_EC_PUBKEY");
+    WOLFSSL_ENTER("wolfSSL_PEM_read_bio_ECPrivateKey");
 
     /* Validate parameters. */
     if (bio == NULL) {
@@ -12002,9 +12135,16 @@ WOLFSSL_EC_KEY* wolfSSL_PEM_read_bio_ECPrivateKey(WOLFSSL_BIO* bio,
             err = 1;
         }
     }
-    /* Read a PEM key in to a new DER buffer. */
-    if ((!err) && (pem_read_bio_key(bio, cb, pass, ECC_PRIVATEKEY_TYPE,
+    /* Read a PEM key in to a new DER buffer.
+     * To check ENC EC PRIVATE KEY, it uses PRIVATEKEY_TYPE to call
+     * pem_read_bio_key(), and then check key format if it is EC.
+     */
+    if ((!err) && (pem_read_bio_key(bio, cb, pass, PRIVATEKEY_TYPE,
             &keyFormat, &der) <= 0)) {
+        err = 1;
+    }
+    if (keyFormat != ECDSAk) {
+        WOLFSSL_ERROR_MSG("Error not EC key format");
         err = 1;
     }
     /* Load the EC key with the private key from the DER encoding. */
@@ -12049,15 +12189,13 @@ int wolfSSL_PEM_write_bio_EC_PUBKEY(WOLFSSL_BIO* bio, WOLFSSL_EC_KEY* ec)
     /* Validate parameters. */
     if ((bio == NULL) || (ec == NULL)) {
         WOLFSSL_MSG("Bad Function Arguments");
-        ret = 0;
+        return 0;
     }
 
-    if (ret == 1) {
-        /* Encode public key in EC key as DER. */
-        derSz = wolfssl_ec_key_to_pubkey_der(ec, &derBuf, ec->heap);
-        if (derSz == 0) {
-            ret = 0;
-        }
+    /* Encode public key in EC key as DER. */
+    derSz = wolfssl_ec_key_to_pubkey_der(ec, &derBuf, ec->heap);
+    if (derSz == 0) {
+        ret = 0;
     }
 
     /* Write out to BIO the PEM encoding of the EC private key. */
@@ -12520,7 +12658,7 @@ point_conversion_form_t wolfSSL_EC_KEY_get_conv_form(const WOLFSSL_EC_KEY* key)
     int ret = -1;
 
     if (key != NULL) {
-        ret = (int)(unsigned char)key->form;
+        ret = key->form;
     }
 
     return ret;

@@ -26331,7 +26331,8 @@ static int test_wc_ecc_pointFns(void)
         }
     }
 
-#if !defined(HAVE_FIPS) || (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION>2))
+#if !defined(HAVE_SELFTEST) && (!defined(HAVE_FIPS) || \
+    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION>2)))
 #ifdef USE_ECC_B_PARAM
     /* On curve if ret == 0 */
     if (ret == 0) {
@@ -26351,7 +26352,7 @@ static int test_wc_ecc_pointFns(void)
         }
     }
 #endif /* USE_ECC_B_PARAM */
-#endif /* !HAVE_FIPS || HAVE_FIPS_VERSION > 2 */
+#endif /* !HAVE_SELFTEST && (!HAVE_FIPS || HAVE_FIPS_VERSION > 2) */
 
     /* Free */
     wc_ecc_del_point(point);
@@ -36312,10 +36313,28 @@ static int test_wolfSSL_BN(void)
     AssertIntEQ(BN_sub(c, a, b), SSL_SUCCESS);
 #if defined(WOLFSSL_KEY_GEN) || defined(HAVE_COMP_KEY)
     {
-    char* ret;
-    AssertNotNull(ret = BN_bn2dec(c));
-    AssertIntEQ(XMEMCMP(ret, "-4", sizeof("-4")), 0);
-    XFREE(ret, NULL, DYNAMIC_TYPE_OPENSSL);
+        /* Do additional tests on negative BN conversions. */
+        char *         ret;
+        ASN1_INTEGER * asn1;
+        BIGNUM *       tmp;
+
+        /* Sanity check we have a negative BN. */
+        AssertIntEQ(BN_is_negative(c), 1);
+        AssertNotNull(ret = BN_bn2dec(c));
+        AssertIntEQ(XMEMCMP(ret, "-4", sizeof("-4")), 0);
+        XFREE(ret, NULL, DYNAMIC_TYPE_OPENSSL);
+
+        /* Convert to ASN1_INTEGER and back to BN. */
+        AssertNotNull(asn1 = BN_to_ASN1_INTEGER(c, NULL));
+        AssertNotNull(tmp = ASN1_INTEGER_to_BN(asn1, NULL));
+
+        /* After converting back BN should be negative and correct. */
+        AssertIntEQ(BN_is_negative(tmp), 1);
+        AssertNotNull(ret = BN_bn2dec(tmp));
+        AssertIntEQ(XMEMCMP(ret, "-4", sizeof("-4")), 0);
+        XFREE(ret, NULL, DYNAMIC_TYPE_OPENSSL);
+        ASN1_INTEGER_free(asn1);
+        BN_free(tmp);
     }
 #endif
     AssertIntEQ(BN_get_word(c), 4);
@@ -47215,7 +47234,7 @@ static int test_wolfSSL_d2i_and_i2d_PublicKey(void)
 #if defined(OPENSSL_EXTRA) && !defined(NO_RSA)
     EVP_PKEY* pkey;
     const unsigned char* p;
-    unsigned char* der = NULL;
+    unsigned char *der = NULL, *tmp = NULL;
     int derLen;
 
     p = client_keypub_der_2048;
@@ -47227,6 +47246,14 @@ static int test_wolfSSL_d2i_and_i2d_PublicKey(void)
     /* Ensure that the encoded version matches the original. */
     AssertIntEQ(derLen, sizeof_client_keypub_der_2048);
     AssertIntEQ(XMEMCMP(der, client_keypub_der_2048, derLen), 0);
+
+    /* Do same test except with pre-allocated buffer to ensure the der pointer
+     * is advanced. */
+    tmp = der;
+    AssertIntGE((derLen = wolfSSL_i2d_PublicKey(pkey, &tmp)), 0);
+    AssertIntEQ(derLen, sizeof_client_keypub_der_2048);
+    AssertIntEQ(XMEMCMP(der, client_keypub_der_2048, derLen), 0);
+    AssertTrue(der + derLen == tmp);
 
     XFREE(der, HEAP_HINT, DYNAMIC_TYPE_OPENSSL);
     EVP_PKEY_free(pkey);
@@ -56225,14 +56252,10 @@ static int test_wolfSSL_EC_POINT(void)
     /* check if point X coordinate is zero */
     AssertIntEQ(BN_is_zero(new_point->X), 0);
 
-#ifdef USE_ECC_B_PARAM
+#if defined(USE_ECC_B_PARAM) && !defined(HAVE_SELFTEST) && \
+    (!defined(HAVE_FIPS) || FIPS_VERSION_GT(2,0))
     AssertIntEQ(EC_POINT_is_on_curve(group, new_point, ctx), 1);
-#endif /* USE_ECC_B_PARAM */
-
-    /* Force non-affine coordinates */
-    AssertIntEQ(BN_add(new_point->Z, (WOLFSSL_BIGNUM*)BN_value_one(),
-        (WOLFSSL_BIGNUM*)BN_value_one()), 1);
-    new_point->inSet = 0;
+#endif
 
     /* extract the coordinates from point */
     AssertIntEQ(EC_POINT_get_affine_coordinates_GFp(group, new_point, X, Y,
@@ -56266,6 +56289,19 @@ static int test_wolfSSL_EC_POINT(void)
     AssertIntEQ(EC_POINT_invert(NULL, new_point, ctx), 0);
     AssertIntEQ(EC_POINT_invert(group, NULL, ctx), 0);
     AssertIntEQ(EC_POINT_invert(group, new_point, ctx), 1);
+
+    /* Test getting affine converts from projective. */
+    AssertIntEQ(EC_POINT_copy(set_point, new_point), 1);
+    /* Force non-affine coordinates */
+    AssertIntEQ(BN_add(new_point->Z, (WOLFSSL_BIGNUM*)BN_value_one(),
+        (WOLFSSL_BIGNUM*)BN_value_one()), 1);
+    new_point->inSet = 0;
+    /* extract the coordinates from point */
+    AssertIntEQ(EC_POINT_get_affine_coordinates_GFp(group, new_point, X, Y,
+        ctx), WOLFSSL_SUCCESS);
+    /* check if point ordinates have changed. */
+    AssertIntNE(BN_cmp(X, set_point->X), 0);
+    AssertIntNE(BN_cmp(Y, set_point->Y), 0);
 
     /* Test check for infinity */
 #ifndef WOLF_CRYPTO_CB_ONLY_ECC

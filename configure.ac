@@ -577,7 +577,7 @@ if test "$ENABLED_SP_ASM" != "no"
 then
     if test "$ENABLED_SP" = "no"
     then
-        AC_MSG_ERROR([--enable-sp-asm requries SP to be enabled.])
+        AC_MSG_ERROR([--enable-sp-asm requires SP to be enabled.])
     fi
     if test "$ENABLED_SP" = ""
     then
@@ -1109,6 +1109,7 @@ AS_IF([ test "x$ENABLED_SINGLETHREADED" = "xno" ],[
                    AS_CASE([$PTHREAD_CFLAGS],[-Qunused-arguments*],[PTHREAD_CFLAGS="-Xcompiler $PTHREAD_CFLAGS"])
                    AM_CFLAGS="$AM_CFLAGS $PTHREAD_CFLAGS"
                    LIBS="$LIBS $PTHREAD_LIBS"
+                   AC_CHECK_TYPES([pthread_rwlock_t])
                    ],[
                       ENABLED_SINGLETHREADED=yes
                       ])
@@ -3915,12 +3916,6 @@ AC_ARG_ENABLE([asn],
     [ ENABLED_ASN=yes ]
     )
 
-if test "$ENABLED_ASN" = "template"
-then
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ASN_TEMPLATE"
-    ENABLED_ASN=yes
-fi
-
 if test "$ENABLED_ASN" = "no"
 then
     AM_CFLAGS="$AM_CFLAGS -DNO_ASN -DNO_ASN_CRYPT"
@@ -3931,6 +3926,17 @@ then
         AM_CFLAGS="$AM_CFLAGS -DNO_BIG_INT"
     fi
 else
+    if test "$ENABLED_ASN" = "template"; then
+        ENABLED_ASN="yes"
+    fi
+    if test "$ENABLED_ASN" = "yes"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ASN_TEMPLATE"
+    else
+        if test "$ENABLED_ASN" != "original"; then
+            AC_MSG_ERROR([Invalid asn option. Valid are: template or original. Seen: $ENABLED_ASN.])
+        fi
+    fi
+
     # turn off ASN if leanpsk on
     if test "$ENABLED_LEANPSK" = "yes"
     then
@@ -4839,7 +4845,7 @@ AC_ARG_WITH([user-crypto],
 
 if test "$ENABLED_USER_CRYPTO" = "yes" && test "$ENABLED_FIPS" = "yes"
 then
-    AC_MSG_ERROR([cannot enable user crypto and fips, user crypto posibility of using code in fips boundary.])
+    AC_MSG_ERROR([cannot enable user crypto and fips, user crypto possibility of using code in fips boundary.])
 fi
 
 # Whitewood netRandom client library
@@ -5320,7 +5326,7 @@ then
     AM_CFLAGS="$AM_CFLAGS -DASN_BER_TO_DER"
 fi
 
-# Alternate certification chains, as oppossed to requiring full chain validataion.
+# Alternate certification chains, as opposed to requiring full chain validation.
 # Certificate validation behavior is relaxed, similar to openssl and
 # browsers. Only the peer certificate must validate to a trusted
 # certificate. Without this, all certificates sent by a peer must be
@@ -6028,6 +6034,12 @@ then
     then
         ENABLED_ALT_CERT_CHAINS="yes"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ALT_CERT_CHAINS"
+    fi
+
+    if test "xENABLE_IP_ALT_NAME" = "xno"
+    then
+        ENABLE_IP_ALT_NAME="yes"
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_IP_ALT_NAME"
     fi
 
     if test "x$ENABLED_SESSION_TICKET" = "xno"
@@ -7137,7 +7149,7 @@ if test "$ENABLED_FAST_RSA" = "yes"; then
         esac
 
         if test "$fastRSA_found" = "yes"; then
-            # was succesfull so add tested LDFLAGS to AM_ flags
+            # was successful so add tested LDFLAGS to AM_ flags
             AM_LDFLAGS="${AM_LDFLAGS} ${LDFLAGS}"
             AM_CPPFLAGS="${AM_CPPFLAGS} ${CPPFLAGS}"
             IPPHEADERS="${srcdir}/IPP/include/*.h"
@@ -7569,7 +7581,7 @@ then
     ENABLED_TRUSTED_PEER_CERT=yes
 fi
 
-# dertermine if we have key validation mechanism
+# determine if we have key validation mechanism
 if test "x$ENABLED_ECC" != "xno" || test "x$ENABLED_RSA" = "xyes"
 then
     if test "x$ENABLED_ASN" = "xyes"
