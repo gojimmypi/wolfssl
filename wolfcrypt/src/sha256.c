@@ -741,10 +741,10 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret = 0; /* zero = success */
 
-        if (sha256 == NULL)
+        if (sha256 == NULL) {
             return BAD_FUNC_ARG;
+        }
 
-        XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
         sha256->digest[0] = 0x6A09E667L;
         sha256->digest[1] = 0xBB67AE85L;
         sha256->digest[2] = 0x3C6EF372L;
@@ -770,16 +770,13 @@ static int InitSha256(wc_Sha256* sha256)
     int wc_InitSha256_ex(wc_Sha256* sha256, void* heap, int devId)
     {
         (void)devId;
-        int ret = 0; /* zero = success */
-
-        if (sha256 == NULL)
+        if (sha256 == NULL) {
             return BAD_FUNC_ARG;
+        }
 
         XMEMSET(sha256, 0, sizeof(wc_Sha256));
 
-        ret = InitSha256(sha256);
-
-        return ret;
+        return InitSha256(sha256);
     }
 
 #elif defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
@@ -1767,7 +1764,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
          * the unexpected. by the time free is called, the hardware
          * should have already been released (lockDepth = 0)
          */
-        InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
+        (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
         ESP_LOGV("sha256", "Alert: hardware unlock needed in wc_Sha256Free.");
     }
     else {
@@ -1852,6 +1849,7 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
             return BAD_FUNC_ARG;
 
         XMEMCPY(dst, src, sizeof(wc_Sha224));
+
     #ifdef WOLFSSL_SMALL_STACK_CACHE
         dst->W = NULL;
     #endif
@@ -1864,6 +1862,25 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
     #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA224)
         ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
     #endif
+
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        ESP_LOGI("sha224", "Sha224 Copy set to SW");
+        ret = esp_sha_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
+        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
+        esp_sha_init(&(dst->ctx));
+        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
+    }
+    else {
+        dst->ctx = src->ctx; /* copy the ctx */
+        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
+    }
+
+#endif
+
+
     #ifdef WOLFSSL_HASH_FLAGS
         dst->flags |= WC_HASH_FLAG_ISCOPY;
     #endif
@@ -1950,31 +1967,12 @@ int wc_Sha256GetHash(wc_Sha256* sha256, byte* hash)
     }
 #endif
 
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-    /* ESP32 hardware can only handle only 1 active hardware hashing
-     * at a time. If the mutex lock is acquired the first time then
-     * that Sha256 instance has exclusive access to hardware. The
-     * final or free needs to release the mutex. Operations that
-     * do not get the lock fallback to software based Sha256 */
-
-    if (sha256->ctx.mode == ESP32_SHA_INIT) {
-        esp_sha_try_hw_lock(&sha256->ctx);
-    }
-    if (sha256->ctx.mode == ESP32_SHA_HW) {
-        esp_sha256_digest_process(sha256, 0);
-    }
-#endif
-
     ret = wc_Sha256Copy(sha256, tmpSha256);
     if (ret == 0) {
         ret = wc_Sha256Final(tmpSha256, hash);
-
-    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-        sha256->ctx.mode = ESP32_SHA_SW;
-    #endif
-
-        wc_Sha256Free(tmpSha256);
+        wc_Sha256Free(tmpSha256); /* TODO move outside brackets? */
     }
+
 
 #ifdef WOLFSSL_SMALL_STACK
     XFREE(tmpSha256, NULL, DYNAMIC_TYPE_TMP_BUFFER);
@@ -2013,19 +2011,16 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
     if (src->ctx.mode == ESP32_SHA_HW) {
-        /* This should be highly unusual, as the copy would have occurred
-        ** mid-calculation, and of so, why? */
-        ESP_LOGI("sha256", " Warning: copying ESP32_SHA_HW, setting to ESP32_SHA_SW");
-        dst->ctx.mode = ESP32_SHA_SW;
+        ESP_LOGI("sha256", "Sha256 Copy set to SW");
+        ret = esp_sha_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
+        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
+        esp_sha_init(&(dst->ctx));
+        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
     }
     else {
-        dst->ctx.mode = src->ctx.mode;
+        dst->ctx = src->ctx; /* copy the ctx */
+        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
     }
-    /* note other properties would have been copied via memcopy:
-    dst->ctx.isfirstblock = src->ctx.isfirstblock;
-    dst->ctx.sha_type = src->ctx.sha_type;
-    dst->ctx.lockDepth    = src->ctx.lockDepth;
-    */
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
