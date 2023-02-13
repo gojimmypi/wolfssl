@@ -79,6 +79,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
         ESP_LOGV(TAG, "regular init of blank ctx");
         /* we'll keep track of who initialized this */
         ctx->intializer = ctx; /* save our address in the initializer */
+        ctx->mode = ESP32_SHA_INIT;
     }
     else {
         /* things may be more interesting when previously initialized */
@@ -91,9 +92,11 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             ** May need to unlock HW, below */
         }
         else {
-            ESP_LOGI(TAG, "ALERT: unexpected SHA ctx intializer. Copied?");
+            /* We may end up here with either dirty memory
+            ** or copied sha ctx. In either case, initialize: */
             ctx->mode = ESP32_SHA_INIT;
             ctx->intializer = ctx; /* set a new address */
+            ESP_LOGV(TAG, "ALERT: unexpected SHA ctx intializer. Copied?");
         }
     }
 
@@ -118,7 +121,8 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             break;
 
         case ESP32_SHA_FAIL_NEED_UNROLL:
-            /* oh, how did we get here ? likely uninitialized SHA memory. */
+           /* oh, how did we get here? likely uninitialized SHA memory.
+           ** user code logic may n */
            ESP_LOGW(TAG, "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
            break;
 
