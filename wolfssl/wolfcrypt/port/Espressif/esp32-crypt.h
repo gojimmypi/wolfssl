@@ -23,7 +23,6 @@
 #define __ESP32_CRYPT_H__
 
 #include "wolfssl/wolfcrypt/settings.h"
-
 #include "esp_idf_version.h"
 #include "esp_types.h"
 #include "esp_log.h"
@@ -156,11 +155,14 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
 
     struct wc_Sha;
+    int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
     int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess);
     int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
     #ifndef NO_SHA256
         struct wc_Sha256;
+        int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
+        int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
         int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess);
         int esp_sha256_process(struct wc_Sha256* sha, const byte* data);
         int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256, const byte* data);
@@ -169,6 +171,8 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     /* TODO do we really call esp_sha512_process for WOLFSSL_SHA384 ? */
     #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
         struct wc_Sha512;
+        int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
+        int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
         int esp_sha512_process(struct wc_Sha512* sha);
         int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc);
     #endif

@@ -207,6 +207,138 @@ int esp_sha_init(WC_ESP32SHA* ctx)
     return 0; /* TODO return fail when alert encountered? */
 }
 
+
+/* internal sha ctx copy for ESP HW  */
+int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
+{
+    int ret;
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        ESP_LOGI(TAG, "esp_sha_ctx_copy esp_sha_digest_process");
+
+        /* Get a copy of the HW digest, but don't process it. */
+        ret = esp_sha_digest_process(dst, 0);
+
+        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        if (dst->ctx.mode == ESP32_SHA_SW) {
+            ESP_LOGV(TAG, "Confirmed Sha Copy set to SW");
+        }
+        else {
+            ESP_LOGW(TAG, "Sha Copy NOT set to SW");
+        }
+    }
+    else {
+        ret = 0;
+        /*
+        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** No special HW init needed in SW mode.
+        ** but we need to set our initializer: */
+        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+    }
+    return ret;
+}
+
+/* internal sha224 ctx copy (no ESP HW)  */
+int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
+{
+    /* There's no 224 hardware TODO confirm */
+    dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+    dst->ctx.mode = ESP32_SHA_SW;
+    return 0;
+}
+
+
+/* internal sha256 ctx copy for ESP HW  */
+int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
+{
+    int ret;
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        /* Get a copy of the HW digest, but don't process it. */
+        ESP_LOGI(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
+        ret = esp_sha256_digest_process(dst, 0);
+
+        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        if (dst->ctx.mode == ESP32_SHA_SW) {
+            ESP_LOGV(TAG, "Confirmed wc_Sha256 Copy set to SW");
+        }
+        else {
+            ESP_LOGW(TAG, "wc_Sha256 Copy NOT set to SW");
+        }
+    }
+    else {
+        ret = 0;
+        /*
+        ** reminder this happened in XMEMCOPY: dst->ctx = src->ctx;
+        ** No special HW init needed in SW mode.
+        ** but we need to set our initializer: */
+        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+    }
+    return ret;
+}
+
+int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
+{
+    int ret;
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        /* Get a copy of the HW digest, but don't process it. */
+        ESP_LOGI(TAG, "esp_sha384_ctx_copy esp_sha512_digest_process");
+        ret = esp_sha512_digest_process(dst, 0);
+
+        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        if (dst->ctx.mode == ESP32_SHA_SW) {
+            ESP_LOGV(TAG, "Confirmed wc_Sha512 Copy set to SW");
+        }
+        else {
+            ESP_LOGW(TAG, "wc_Sha512 Copy NOT set to SW");
+        }
+    }
+    else {
+        ret = 0;
+        /*
+        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** No special HW init needed in SW mode.
+        ** but we need to set our initializer: */
+        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+    }
+    return ret;
+}
+
+/* internal sha512 ctx copy for ESP HW  */
+int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
+{
+    int ret;
+    if (src->ctx.mode == ESP32_SHA_HW) {
+        /* Get a copy of the HW digest, but don't process it. */
+        ESP_LOGI(TAG, "esp_sha512_ctx_copy esp_sha512_digest_process");
+        ret = esp_sha512_digest_process(dst, 0);
+
+        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        if (dst->ctx.mode == ESP32_SHA_SW) {
+            ESP_LOGV(TAG, "Confirmed wc_Sha512 Copy set to SW");
+        }
+        else {
+            ESP_LOGW(TAG, "wc_Sha512 Copy NOT set to SW");
+        }
+    }
+    else {
+        ret = 0;
+        /*
+        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** No special HW init needed in SW mode.
+        ** but we need to set our initializer: */
+        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+    }
+    return ret;
+}
+
+
 /*
  * determine the digest size, depending on SHA type.
  *
@@ -831,8 +963,9 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     /* start register offset */
 
     if (sha->ctx.mode == ESP32_SHA_SW) {
-        ByteReverseWords64(sha->buffer, sha->buffer,
-                               WC_SHA512_BLOCK_SIZE);
+        ByteReverseWords64(sha->buffer,
+                           sha->buffer,
+                           WC_SHA512_BLOCK_SIZE);
         if (isfinal) {
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] =
                                         sha->hiLen;
@@ -842,8 +975,9 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
 
     }
     else {
-        ByteReverseWords((word32*)sha->buffer, (word32*)sha->buffer,
-                                                        WC_SHA512_BLOCK_SIZE);
+        ByteReverseWords((word32*)sha->buffer,
+                         (word32*)sha->buffer,
+                         WC_SHA512_BLOCK_SIZE);
         if (isfinal) {
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] =
                                         rotlFixed64(sha->hiLen, 32U);
@@ -881,8 +1015,10 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 
         esp_sha512_block(sha, data, 1);
     }
-    if (sha->ctx.mode != ESP32_SHA_SW)
+    if (sha->ctx.mode != ESP32_SHA_SW) {
+        /* TODO == HW ?*/
         wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
+    }
 
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");
     return 0;
