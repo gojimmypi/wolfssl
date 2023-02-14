@@ -115,7 +115,8 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         ESP32_SHA_INIT             = 0,
         ESP32_SHA_HW               = 1,
         ESP32_SHA_SW               = 2,
-        ESP32_SHA_FAIL_NEED_UNROLL = 3
+        ESP32_SHA_HW_COPY          = 3,
+        ESP32_SHA_FAIL_NEED_UNROLL = -1
     } ESP32_MODE;
 
     typedef struct

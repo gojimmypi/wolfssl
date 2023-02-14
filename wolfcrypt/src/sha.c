@@ -986,15 +986,25 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
 
     if (src->ctx.mode == ESP32_SHA_HW) {
-        ESP_LOGI("sha", "Sha Copy set to SW");
-        ret = esp_sha_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
-        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
-        esp_sha_init(&(dst->ctx));
-        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
+        /* Get a copy of the HW digest, but don't process it. */
+        ret = esp_sha_digest_process(dst, 0);
+
+        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        if (dst->ctx.mode == ESP32_SHA_SW) {
+            ESP_LOGV("sha", "Confirmed Sha Copy set to SW");
+        }
+        else {
+            ESP_LOGW("sha", "Sha Copy NOT set to SW");
+        }
     }
     else {
-        dst->ctx = src->ctx; /* copy the ctx */
-        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
+        /*
+        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** No special HW init needed in SW mode.
+        ** but we need to set our intializer: */
+        dst->ctx.intializer = &dst->ctx; /* assign the initializer to dest */
     }
 
 #endif

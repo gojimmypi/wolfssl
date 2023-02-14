@@ -64,8 +64,7 @@ static const char* TAG = "wolf_hw_sha";
 #if defined(SINGLE_THREADED)
     static int InUse = 0;
 #else
-    static wolfSSL_Mutex sha_mutex;
-    static int espsha_CryptHwMutexInit = 0;
+    static wolfSSL_Mutex sha_mutex = NULL;
 
     #if defined(DEBUG_WOLFSSL)
         static int this_block_num = 0;
@@ -76,7 +75,8 @@ static const char* TAG = "wolf_hw_sha";
 int esp_sha_init(WC_ESP32SHA* ctx)
 {
     if (ctx->intializer == NULL) {
-        ESP_LOGV(TAG, "regular init of blank ctx");
+        ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx");
+
         /* we'll keep track of who initialized this */
         ctx->intializer = ctx; /* save our address in the initializer */
         ctx->mode = ESP32_SHA_INIT;
@@ -86,22 +86,74 @@ int esp_sha_init(WC_ESP32SHA* ctx)
         if (ctx->intializer == ctx) {
             /* We're likely re-using an existing object previously initialized.
             ** There's of course a non-zero probability that garbage data is the
-            ** same pointer value, but that's highly unlikely. */
-            ESP_LOGV(TAG, "re-using existing SHA ctx");
+            ** same pointer value, but that's highly unlikely; We'd need to
+            ** discard, then re-init to same memory location for a matching
+            ** intializer. */
+            ESP_LOGV(TAG, "re-using existing WC_ESP32SHA ctx");
+
+            /* we should never have an unexpected mode in a known ctx */
+            switch (ctx->mode) {
+                case ESP32_SHA_INIT:
+                case ESP32_SHA_SW:
+                case ESP32_SHA_HW:
+                    break;
+
+                case ESP32_SHA_HW_COPY:
+                    ESP_LOGI(TAG, "ALERT: ESP32_SHA_HW_COPY?");
+                    break;
+
+                default:
+                    /* this should never occur */
+                    ESP_LOGI(TAG, "ALERT: unexpected WC_ESP32SHA ctx mode. ");
+                    break;
+            }
             /* We don't need to do anything here,
             ** May need to unlock HW, below */
         }
         else {
             /* We may end up here with either dirty memory
-            ** or copied sha ctx. In either case, initialize: */
-            ctx->mode = ESP32_SHA_INIT;
+            ** or copied sha ctx.
+            **
+            ** Any copy function should have already set mode = ESP32_SHA_INIT.
+            **
+            ** In either case, initialize: */
             ctx->intializer = ctx; /* set a new address */
-            ESP_LOGV(TAG, "ALERT: unexpected SHA ctx intializer. Copied?");
+
+            /* Always set to ESP32_SHA_INIT, but give debug info as to why: */
+            switch (ctx->mode) {
+                case ESP32_SHA_INIT:
+                    break;
+
+                case ESP32_SHA_SW:
+                    /* this should rarely, if ever occur */
+                    ESP_LOGI(TAG, "ALERT: unexpected SW WC_ESP32SHA ctx mode. "
+                                  "Copied?");
+                    ctx->mode = ESP32_SHA_INIT;
+                    break;
+
+                case ESP32_SHA_HW:
+                    /* this should rarely, if ever occur.  */
+                    ESP_LOGI(TAG, "ALERT: unexpected HW WC_ESP32SHA ctx mode. "
+                                  "Copied?");
+                    ctx->mode = ESP32_SHA_INIT;
+                    break;
+
+                case ESP32_SHA_HW_COPY:
+                    ESP_LOGI(TAG, "HW WC_ESP32SHA ctx mode = ESP32_SHA_HW_COPY.");
+                    break;
+
+                default:
+                    /* this will frequently occur during new init */
+                    ESP_LOGV(TAG, "ALERT: unexpected WC_ESP32SHA ctx mode. "
+                                  "Uninitialized?");
+                    ctx->mode = ESP32_SHA_INIT;
+                    break;
+            }
         }
     }
 
     /*
-    ** After possibly changing the mode (above) handle current mode
+    ** After possibly changing the mode (above) handle current mode:
     */
     switch (ctx->mode) {
         case ESP32_SHA_INIT:
@@ -112,19 +164,30 @@ int esp_sha_init(WC_ESP32SHA* ctx)
         case ESP32_SHA_HW:
             /* release hw */
             ESP_LOGV(TAG, ">> HW unlock");
+
+            /* during init is the only time we call unlock */
             esp_sha_hw_unlock(ctx); /* current only unlock during init when prior state is HW */
+            ctx->mode = ESP32_SHA_INIT;
+            break;
+
+        case ESP32_SHA_HW_COPY:
+            /* when we init during an active HW copy, revert to SW */
+            ESP_LOGV(TAG, "Planned revert to SW during copy.");
+            ctx->mode = ESP32_SHA_SW;
             break;
 
         case ESP32_SHA_SW:
             /* likely a call when another SHA HW in progress */
-            ESP_LOGV(TAG, ">> SW");
+            ESP_LOGI(TAG, ">> SW Set to init.");
+            ctx->mode = ESP32_SHA_INIT;
             break;
 
         case ESP32_SHA_FAIL_NEED_UNROLL:
-           /* oh, how did we get here? likely uninitialized SHA memory.
-           ** user code logic may n */
-           ESP_LOGW(TAG, "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
-           break;
+            /* oh, how did we get here? likely uninitialized SHA memory.
+            ** user code logic may need attention */
+            ESP_LOGW(TAG, "ALERT: \nESP32_SHA_FAIL_NEED_UNROLL\n");
+            ctx->mode = ESP32_SHA_INIT;
+            break;
 
         default:
             ESP_LOGW(TAG, "ALERT: \nunexpected mode value\n");
@@ -132,14 +195,13 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             break;
     } /* switch (ctx->mode)  */
 
-    /* reminder: always start firstblock = 1 when using hw engine */
+    /* reminder: always start isfirstblock = 1 (true) when using hw engine */
     /* we're always on the first block at init time (not zero-based!) */
     ctx->isfirstblock = 1;
 
     /* always set mode as INIT
     *  whether using HW or SW is determined at first call of update()
     */
-    ctx->mode = ESP32_SHA_INIT;
     ctx->lockDepth = 0;
 
     return 0; /* TODO return fail when alert encountered? */
@@ -190,7 +252,7 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
     #endif
         default:
             ESP_LOGE(TAG, "Bad sha type in wc_esp_sha_digest_size");
-            return BAD_FUNC_ARG;
+            return 0;
     }
     /* we never get here, as all the above switches should have a return */
 }
@@ -263,15 +325,23 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     if (ret == 0) {
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
-             * we were successful, but not expected depth count */
-            ESP_LOGI(TAG, "warning lockDepth mismatch.");
+            ** we were successful, but not expected depth count.
+            **
+            ** This should never happen unless someone else called
+            ** periph_module_disable() or threading not working properly.
+            **/
+            ESP_LOGW(TAG, "warning lockDepth mismatch.");
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
     }
     else {
+        /* This should never occur. Something must have gone seriously
+        ** wrong. Check for non-wolfSSL outsioe calls that may have enabled HW.
+        */
         ESP_LOGE(TAG, "Failed to unroll after %d attempts.",
                  actual_unroll_count);
+        ESP_LOGI(TAG, "Setting ctx->mode = ESP32_SHA_SW");
         ctx->mode = ESP32_SHA_SW;
     }
     return ret;
@@ -315,48 +385,32 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     }
 #else /* not defined(SINGLE_THREADED) */
     /*
-     * there's only one SHA engine for all the hash types
-     * so when any hash is in use, no others can use it.
-     * fall back to SW.
-     **/
-
-    /*
-     * here is some sample code to test the unrolling of sha enables:
-     *
+    ** there's only one SHA engine for all the hash types
+    ** so when any hash is in use, no others can use it.
+    ** fall back to SW.
+    **
+    ** here is some sample code to test the unrolling of sha enables:
+    **
     periph_module_enable(PERIPH_SHA_MODULE);
     ctx->lockDepth++;
     periph_module_enable(PERIPH_SHA_MODULE);
     ctx->lockDepth++;
     ctx->mode = ESP32_FAIL_NEED_INIT;
-
+    **
     */
 
     if (sha_mutex == NULL) {
-        ESP_LOGI(TAG, ">>>> mutex not yet initialized");
-
-    }
-    else {
-//        if (xSemaphoreTake(sha_mutex, (TickType_t)0) ==pdTRUE) {
-//            ESP_LOGI(TAG, ">>>> xSemaphoreTake success ");
-//        }
-//        else {
-//            ESP_LOGI(TAG, ">>>> xSemaphoreTake unavailable");
-//            ctx->mode = ESP32_SHA_SW;
-//            return 0;
-//        }
-    }
-
-
-    if (espsha_CryptHwMutexInit == 0) {
-        ESP_LOGI(TAG, "set esp_CryptHwMutexInit");
+        ESP_LOGI(TAG, "Initializing sha_mutex");
         ret = esp_CryptHwMutexInit(&sha_mutex); /* created, but not yet locked */
         if (ret == 0) {
-            espsha_CryptHwMutexInit = 1;
+            ESP_LOGI(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
         }
         else {
-            ESP_LOGE(TAG, " mutex initialization failed. revert to software");
+            ESP_LOGE(TAG, "esp_CryptHwMutexInit sha_mutex failed.");
+            sha_mutex = 0;
+
+            ESP_LOGI(TAG, "Revert to ctx->mode = ESP32_SHA_SW.");
             ctx->mode = ESP32_SHA_SW;
-            /* espsha_CryptHwMutexInit is still zero */
             return 0; /* success, just not using HW */
         }
     }
@@ -429,7 +483,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* unlock hw engine for next use */
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
-    // espsha_CryptHwMutexInit = 0; /* TODO ?? */
     ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->intializer);
     return 0;
 } /* esp_sha_hw_unlock */
