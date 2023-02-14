@@ -1,4 +1,4 @@
-/* benchmark main.c
+/* main.c
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
 /* ESP-IDF */
 #include <esp_log.h>
 #include "sdkconfig.h"
@@ -27,17 +28,10 @@
 #include <user_settings.h>
 #include <wolfssl/version.h>
 #ifndef WOLFSSL_ESPIDF
-    #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
+#warning "problem with wolfSSL user settings. Check components/wolfssl/include"
 #endif
 
-#include <wolfssl/wolfcrypt/types.h>
-#include <wolfcrypt/benchmark/benchmark.h>
-
-/* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
-#ifdef CONFIG_BENCH_ARGV
-#define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
-#define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
-#endif
+#include <wolfcrypt/test/test.h>
 
 /*
 ** the wolfssl component can be installed in either:
@@ -52,9 +46,21 @@
 **
 */
 
-#include "main.h"
+/*
+** although the wolfcrypt/test includes a default time setting,
+** see the enclosed optional time helper for adding NNTP.
+** be sure to add "time_helper.c" in main/CMakeLists.txt
+*/
+#undef WOLFSSL_USE_TIME_HELPER
+#if defined(WOLFSSL_USE_TIME_HELPER)
+    #include "time_helper.h" */
+#endif
 
-static const char* const TAG = "wolfssl_benchmark";
+/* see wolfssl/wolfcrypt/test/test.h */
+extern void wolf_crypt_task();
+
+
+static const char* const TAG = "wolfssl_test";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -71,7 +77,7 @@ static byte mSlotList[ATECC_MAX_SLOT];
 void my_atmel_slotInit()
 {
     int i;
-    for(i = 0;i < ATECC_MAX_SLOT;i++) {
+    for (i = 0; i < ATECC_MAX_SLOT; i++) {
         mSlotList[i] = ATECC_INVALID_SLOT;
     }
 }
@@ -79,9 +85,9 @@ void my_atmel_slotInit()
 /* allocate slot depending on slotType */
 int my_atmel_alloc(int slotType)
 {
-    int i, slot = -1;
+    int i, slot = ATECC_INVALID_SLOT;
 
-    switch(slotType){
+    switch (slotType) {
         case ATMEL_SLOT_ENCKEY:
             slot = 4;
             break;
@@ -95,13 +101,13 @@ int my_atmel_alloc(int slotType)
             slot = 4;
             break;
         case ATMEL_SLOT_ANY:
-            for(i = 0;i < ATECC_MAX_SLOT;i++){
-                if(mSlotList[i] == ATECC_INVALID_SLOT){
+            for (i = 0; i < ATECC_MAX_SLOT; i++) {
+                if (mSlotList[i] == ATECC_INVALID_SLOT) {
                     slot = i;
                     break;
-                }
-            }
-    }
+                } /* if */
+            } /* for */
+    } /* switch */
 
     return slot;
 }
@@ -109,94 +115,28 @@ int my_atmel_alloc(int slotType)
 /* free slot array       */
 void my_atmel_free(int slotId)
 {
-    if(slotId >= 0 && slotId < ATECC_MAX_SLOT){
+    if (slotId >= 0 && slotId < ATECC_MAX_SLOT) {
         mSlotList[slotId] = ATECC_INVALID_SLOT;
     }
 }
 
-#endif /* CUSTOM_SLOT_ALLOCATION                                       */
+#endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
-/* the following are needed by benchmark.c with args */
-#ifdef WOLFSSL_BENCH_ARGV
-char* __argv[WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS];
-
-int construct_argv()
-{
-    int cnt = 0;
-    int i = 0;
-    int len = 0;
-    char *_argv; /* buffer for copying the string    */
-    char *ch; /* char pointer to trace the string */
-    char buff[16] = { 0 }; /* buffer for a argument copy       */
-
-    ESP_LOGI(TAG, "construct_argv arg:%s\n", CONFIG_BENCH_ARGV);
-    len = strlen(CONFIG_BENCH_ARGV);
-    _argv = (char*)malloc(len + 1);
-    if (!_argv) {
-        return -1;
-    }
-    memset(_argv, 0, len + 1);
-    memcpy(_argv, CONFIG_BENCH_ARGV, len);
-    _argv[len] = '\0';
-    ch = _argv;
-
-    __argv[cnt] = malloc(10);
-    sprintf(__argv[cnt], "benchmark");
-    __argv[cnt][9] = '\0';
-    cnt = 1;
-
-    while (*ch != '\0') {
-        /* check that we don't overflow manual arg assembly */
-        if (cnt >= (WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS)) {
-            ESP_LOGE(TAG, "Abort construct_argv;"
-                          "Reached maximum defined arguments = %d",
-                          WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS);
-            break;
-        }
-
-        /* skip white-space */
-        while (*ch == ' ') { ++ch; }
-
-        memset(buff, 0, sizeof(buff));
-        /* copy each args into buffer */
-        i = 0;
-        while ((*ch != ' ') && (*ch != '\0') && (i < 16)) {
-            buff[i] = *ch;
-            ++i;
-            ++ch;
-        }
-        /* copy the string into argv */
-        __argv[cnt] = (char*)malloc(i + 1);
-        memset(__argv[cnt], 0, i + 1);
-        memcpy(__argv[cnt], buff, i + 1);
-        /* next args */
-        ++cnt;
-    }
-
-    free(_argv);
-
-    return (cnt);
-}
-#endif
 
 /* entry point */
 void app_main(void)
 {
+    int rc = 0;
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+
+
     ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
-
-#if defined(WOLFSSL_MULTI_INSTALL_WARNING)
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "WARNING: Multiple wolfSSL installs found.");
-    ESP_LOGI(TAG, "Check ESP-IDF and local project [components] directory.");
-    ESP_LOGI(TAG, "");
-#endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_HASH)
     ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH = %s", LIBWOLFSSL_VERSION_GIT_HASH);
@@ -228,7 +168,27 @@ void app_main(void)
 
     /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-    ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
+
+    /* check to see if we are using hardware encryption */
+#if defined(NO_ESP32WROOM32_CRYPT)
+    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.");
+#else
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-C3"
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S2"
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S3"
+    #else
+        ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
+    #endif
+#endif
+
+
+
+#if defined (WOLFSSL_USE_TIME_HELPER)
+    set_time();
+#endif
 
 /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
@@ -237,30 +197,35 @@ void app_main(void)
     my_atmel_slotInit();
     /* to register the callback, it needs to be initialized. */
     if ((wolfCrypt_Init()) != 0) {
-       ESP_LOGE(TAG, "wolfCrypt_Init failed");
-       return;
+        ESP_LOGE(TAG, "wolfCrypt_Init failed");
+        return;
     }
     atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
     #endif
 #endif
 
-#ifdef NO_CRYPT_BENCHMARK
-    ESP_LOGI(TAG, "NO_CRYPT_BENCHMARK defined, skipping wolf_benchmark_task")
+#ifdef NO_CRYPT_TEST
+    ESP_LOGI(TAG, "NO_CRYPT_TEST defined, skipping wolf_test_task");
 #else
+    /* Although wolfCrypt_Init() may be explicitly called above,
+    ** Note it is still always called in wolf_test_task.
+    */
+    rc = wolf_test_task();
+    /* note wolfCrypt_Cleanup() should always be called when finished.
+    ** This is called at the end of wolf_test_task();
+    */
 
-    /* although wolfCrypt_Init() may be explicitly called above,
-    ** note it is still always called in wolf_benchmark_task.
-    */
-    wolf_benchmark_task();
-    /* wolfCrypt_Cleanup should always be called at completion,
-    ** and is called in wolf_benchmark_task().
-    */
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    if (rc == 0) {
+        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
+    }
+    else {
+        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
+        /* see wolfssl/wolfcrypt/error-crypt.h */
+    }
 
     /* after the test, we'll just wait */
     while (1) {
         /* nothing */
     }
-
-#endif /* NO_CRYPT_BENCHMARK */
-} /* main */
+#endif
+}

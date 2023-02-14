@@ -9360,7 +9360,6 @@ int wc_RsaPublicKeyDecode_ex(const byte* input, word32* inOutIdx, word32 inSz,
 int wc_RsaPublicKeyDecode(const byte* input, word32* inOutIdx, RsaKey* key,
                        word32 inSz)
 {
-#ifndef WOLFSSL_ASN_TEMPLATE
     int ret;
     const byte *n = NULL, *e = NULL;
     word32 nSz = 0, eSz = 0;
@@ -9374,44 +9373,6 @@ int wc_RsaPublicKeyDecode(const byte* input, word32* inOutIdx, RsaKey* key,
     }
 
     return ret;
-#else
-    DECL_ASNGETDATA(dataASN, rsaPublicKeyASN_Length);
-    int ret = 0;
-
-    /* Check validity of parameters. */
-    if ((input == NULL) || (inOutIdx == NULL) || (key == NULL)) {
-        ret = BAD_FUNC_ARG;
-    }
-
-    CALLOC_ASNGETDATA(dataASN, rsaPublicKeyASN_Length, ret, NULL);
-
-    if (ret == 0) {
-        /* Set mp_ints to fill with modulus and exponent data. */
-        GetASN_MP(&dataASN[RSAPUBLICKEYASN_IDX_PUBKEY_RSA_N], &key->n);
-        GetASN_MP(&dataASN[RSAPUBLICKEYASN_IDX_PUBKEY_RSA_E], &key->e);
-        /* Try decoding PKCS #1 public key by ignoring rest of ASN.1. */
-        ret = GetASN_Items(&rsaPublicKeyASN[RSAPUBLICKEYASN_IDX_PUBKEY_RSA_SEQ],
-               &dataASN[RSAPUBLICKEYASN_IDX_PUBKEY_RSA_SEQ],
-               (int)(rsaPublicKeyASN_Length - RSAPUBLICKEYASN_IDX_PUBKEY_RSA_SEQ),
-               0, input, inOutIdx, inSz);
-        if (ret != 0) {
-            mp_free(&key->n);
-            mp_free(&key->e);
-
-            /* Didn't work - try whole SubjectKeyInfo instead. */
-            /* Set the OID to expect. */
-            GetASN_ExpBuffer(&dataASN[RSAPUBLICKEYASN_IDX_ALGOID_OID],
-                    keyRsaOid, sizeof(keyRsaOid));
-            /* Decode SubjectKeyInfo. */
-            ret = GetASN_Items(rsaPublicKeyASN, dataASN,
-                               rsaPublicKeyASN_Length, 1, input, inOutIdx,
-                               inSz);
-        }
-    }
-
-    FREE_ASNGETDATA(dataASN, NULL);
-    return ret;
-#endif
 }
 
 /* import RSA public key elements (n, e) into RsaKey structure (key) */
@@ -10496,7 +10457,9 @@ int wc_DsaPrivateKeyDecode(const byte* input, word32* inOutIdx, DsaKey* key,
             XMEMSET(dataASN, 0, sizeof(*dataASN) * dsaKeyASN_Length);
             GetASN_Int8Bit(&dataASN[DSAKEYASN_IDX_VER], &version);
             for (i = 0; i < DSA_INTS; i++) {
-                GetASN_MP(&dataASN[(int)DSAKEYASN_IDX_P + i], GetDsaInt(key, i));
+                mp_int* n = GetDsaInt(key, i);
+                mp_clear(n);
+                GetASN_MP(&dataASN[(int)DSAKEYASN_IDX_P + i], n);
             }
 
             /* Try simple OCTET_STRING form. */
