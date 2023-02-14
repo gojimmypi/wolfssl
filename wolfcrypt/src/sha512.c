@@ -25,10 +25,26 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
-    #define USE_SHA_SOFTWARE_IMPL
+
+/* TODO where best to put this? */
+#define USE_SHA_SOFTWARE_IMPL
 
 
 #if (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)) && !defined(WOLFSSL_ARMASM) && !defined(WOLFSSL_PSOC6_CRYPTO)
+
+/* determine if we are using Espressif SHA hardware acceleration */
+#undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+    /* define a single keyword for simplicity & readability
+     *
+     * by default the HW acceleration is on for ESP32-WROOM32
+     * but individual components can be turned off.
+     */
+    #define WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+#else
+    #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+#endif
 
 #if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
     /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
@@ -1554,10 +1570,8 @@ int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
 
-#if  defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-
-    esp_sha_init(&(dst->ctx));
+#if  defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+    esp_sha512_ctx_copy(src, dst);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -1792,20 +1806,8 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-
-    if (src->ctx.mode == ESP32_SHA_HW) {
-        ESP_LOGI("sha384", "Sha384 Copy set to SW");
-        ret = esp_sha512_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
-        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
-        esp_sha_init(&(dst->ctx));
-        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
-    }
-    else {
-        dst->ctx = src->ctx; /* copy the ctx */
-        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
-    }
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+    esp_sha384_ctx_copy(src, dst);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
