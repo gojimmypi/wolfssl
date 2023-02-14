@@ -1804,7 +1804,7 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
     }
     else {
         dst->ctx = src->ctx; /* copy the ctx */
-        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
+        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
     }
 #endif
 

@@ -74,21 +74,21 @@ static const char* TAG = "wolf_hw_sha";
 /* we'll call a separate init as there's only 1 HW acceleration */
 int esp_sha_init(WC_ESP32SHA* ctx)
 {
-    if (ctx->intializer == NULL) {
+    if (ctx->initializer == NULL) {
         ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx");
 
         /* we'll keep track of who initialized this */
-        ctx->intializer = ctx; /* save our address in the initializer */
+        ctx->initializer = ctx; /* save our address in the initializer */
         ctx->mode = ESP32_SHA_INIT;
     }
     else {
         /* things may be more interesting when previously initialized */
-        if (ctx->intializer == ctx) {
+        if (ctx->initializer == ctx) {
             /* We're likely re-using an existing object previously initialized.
             ** There's of course a non-zero probability that garbage data is the
             ** same pointer value, but that's highly unlikely; We'd need to
             ** discard, then re-init to same memory location for a matching
-            ** intializer. */
+            ** initializer. */
             ESP_LOGV(TAG, "re-using existing WC_ESP32SHA ctx");
 
             /* we should never have an unexpected mode in a known ctx */
@@ -117,7 +117,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             ** Any copy function should have already set mode = ESP32_SHA_INIT.
             **
             ** In either case, initialize: */
-            ctx->intializer = ctx; /* set a new address */
+            ctx->initializer = ctx; /* set a new address */
 
             /* Always set to ESP32_SHA_INIT, but give debug info as to why: */
             switch (ctx->mode) {
@@ -355,7 +355,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
 
-    ESP_LOGV(TAG, "enter esp_sha_hw_lock %x", (int)ctx->intializer);
+    ESP_LOGV(TAG, "enter esp_sha_hw_lock %x", (int)ctx->initializer);
 
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
@@ -426,7 +426,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
-            ESP_LOGV(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->intializer);
+            ESP_LOGV(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->initializer);
         }
         else {
             ESP_LOGI(TAG, "\n>>>> Hardware in use; Mode REVERT to ESP32_SHA_SW\n");
@@ -483,7 +483,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* unlock hw engine for next use */
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
-    ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->intializer);
+    ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
     return 0;
 } /* esp_sha_hw_unlock */
 

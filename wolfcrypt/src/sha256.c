@@ -1875,7 +1875,7 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
     }
     else {
         dst->ctx = src->ctx; /* copy the ctx */
-        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
+        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
     }
 
 #endif
@@ -2019,7 +2019,7 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
     }
     else {
         dst->ctx = src->ctx; /* copy the ctx */
-        dst->ctx.intializer = &dst->ctx; /* but assign the intializer to dest */
+        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
     }
 #endif
 

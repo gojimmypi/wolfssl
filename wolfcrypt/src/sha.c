@@ -1003,8 +1003,8 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
         /*
         ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed in SW mode.
-        ** but we need to set our intializer: */
-        dst->ctx.intializer = &dst->ctx; /* assign the initializer to dest */
+        ** but we need to set our initializer: */
+        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
     }
 
 #endif

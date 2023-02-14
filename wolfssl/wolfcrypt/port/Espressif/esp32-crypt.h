@@ -134,7 +134,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
         /* see esp_rom/include/esp32/rom/sha.h */
         enum SHA_TYPE sha_type; /* the Espressif type: SHA1, SHA256, etc.*/
-        void* intializer; /* pointer to object the initialized HW; to track copies */
+        void* initializer; /* pointer to object the initialized HW; to track copies */
         int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
         byte g3;
         byte g4;
