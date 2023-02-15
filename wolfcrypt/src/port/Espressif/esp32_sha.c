@@ -243,6 +243,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware TODO confirm */
+    /* not to be confused with sha512_224 */
     dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
     dst->ctx.mode = ESP32_SHA_SW;
     return 0;
@@ -977,7 +978,7 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     ESP_LOGV(TAG, "enter esp_sha512_block");
     /* start register offset */
 
-    if (sha->ctx.mode == ESP32_SHA_SW) {
+    if (sha->ctx.mode == ESP32_SHA_SW) { /* TODO add comment */
         ByteReverseWords64(sha->buffer,
                            sha->buffer,
                            WC_SHA512_BLOCK_SIZE);
@@ -990,7 +991,7 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
 
     }
     else {
-        ByteReverseWords((word32*)sha->buffer,
+        ByteReverseWords((word32*)sha->buffer, /* TODO add comment */
                          (word32*)sha->buffer,
                          WC_SHA512_BLOCK_SIZE);
         if (isfinal) {
