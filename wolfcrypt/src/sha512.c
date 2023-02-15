@@ -338,9 +338,8 @@ static int InitSha512_224(wc_Sha512* sha512)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
-//    sha512->ctx.sha_type = SHA2_512;
-//    esp_sha_init(&(sha512->ctx));
-    sha512->ctx.mode = ESP32_SHA_SW;
+    sha512->ctx.sha_type = SHA2_512;
+    esp_sha_init(&(sha512->ctx));
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -634,8 +633,7 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
             ESP_LOGI("SHA512_224", "Set ctx mode SW %d", sha512->ctx.mode);
         }
     /* We know this is a fresh, uninitialized item, so set to SW */
-    /* TODO this is only testing for OpenSSL */
-    sha512->ctx.mode = ESP32_SHA_SW;
+    sha512->ctx.mode = ESP32_SHA_INIT;
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_224);
 }
@@ -1020,13 +1018,6 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
        #endif
         }
 
-    /* TODO reverse words? */
-        if (sha512->ctx.mode == ESP32_SHA_SW) {
-            ByteReverseWords64(sha512->buffer,
-                               sha512->buffer,
-                               WC_SHA512_BLOCK_SIZE);
-        }
-
 #endif /* LITTLE_ENDIAN_ORDER */
     #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
         !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
@@ -1065,12 +1056,6 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
          defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
             ByteReverseWords64(sha512->buffer, sha512->buffer, WC_SHA512_PAD_SIZE);
     #endif
-    /* TODO reverse words? */
-        if (sha512->ctx.mode == ESP32_SHA_SW) {
-            ByteReverseWords64(sha512->buffer,
-                               sha512->buffer,
-                               WC_SHA512_BLOCK_SIZE);
-        }
 #endif
     /* ! length ordering dependent on digest endian type ! */
 
@@ -1108,6 +1093,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         return ret;
 
     #ifdef LITTLE_ENDIAN_ORDER
+        /* TODO always word64?  for HW and SW? see esp_sha512_block() in esp32_sha.c */
         ByteReverseWords64(sha512->digest, sha512->digest, WC_SHA512_DIGEST_SIZE);
     #endif
 
