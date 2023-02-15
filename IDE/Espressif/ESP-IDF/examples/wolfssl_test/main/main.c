@@ -235,7 +235,8 @@ void app_main(void)
 
     /* after the test, we'll just wait */
     while (1) {
-        /* nothing */
+        /* do something other than nothing to help next program/debug session*/
+        vTaskDelay(1000);
     }
 #endif
 }

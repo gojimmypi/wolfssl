@@ -64,6 +64,11 @@
      */
     #define WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+
+    /* Although we have hardware acceleration,
+    ** we may need to fall back to software */
+    #define USE_SHA_SOFTWARE_IMPL
+
 #elif defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
     /* The ESP32C3 is different; HW crypto here. Not yet implemented.
     ** We'll be using software for RISC-V at this time */
@@ -313,15 +318,12 @@
 
 #elif defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW) || \
       defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
-    /* Although we have hardware acceleration,
-    ** we may need to fall back to software */
-    #define USE_SHA_SOFTWARE_IMPL
 
     /* This function initializes SHA.
     ** This is automatically called by wc_ShaHash */
     static int InitSha(wc_Sha* sha)
     {
-        int ret = 0;
+        int ret = 0; /* TODO can this stack use be removed */
 
         sha->digest[0] = 0x67452301L;
         sha->digest[1] = 0xEFCDAB89L;
@@ -334,7 +336,7 @@
         sha->hiLen   = 0;
 
         sha->ctx.sha_type = SHA1;
-        esp_sha_init(&(sha->ctx));
+        ret = esp_sha_init(&(sha->ctx));
 
         return ret;
     }
@@ -536,10 +538,15 @@ static WC_INLINE void AddLength(wc_Sha* sha, word32 len)
 #endif /* XTRANSFORM when USE_SHA_SOFTWARE_IMPL is enabled */
 
 
+/*
+** wolfCrypt InitSha256 external wrapper.
+**
+** we'll assume this is ALWAYS for a new, uninitialized sha256
+*/
 int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
 {
     int ret = 0;
-
+    (void)devId;
     if (sha == NULL) {
         return BAD_FUNC_ARG;
     }
@@ -550,9 +557,18 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
     sha->devCtx = NULL;
 #endif
 
+#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    /* We know this is a fresh, uninitialized item, so set to INIT */
+        if (sha->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA", "Set ctx mode from %d", sha->ctx.mode);
+        }
+    sha->ctx.mode = ESP32_SHA_INIT;
+#endif
+
     ret = InitSha(sha);
-    if (ret != 0)
+    if (ret != 0) {
         return ret;
+    }
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
     ret = wolfAsync_DevCtxInit(&sha->asyncDev, WOLFSSL_ASYNC_MARKER_SHA,
@@ -850,7 +866,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 
     XMEMCPY(hash, (byte *)&sha->digest[0], WC_SHA_DIGEST_SIZE);
 
-    (void)InitSha(sha); /* reset state */
+    ret = InitSha(sha); /* reset state */
 
     return ret;
 }

@@ -30,6 +30,7 @@
 #define USE_SHA_SOFTWARE_IMPL
 
 
+
 #if (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)) && !defined(WOLFSSL_ARMASM) && !defined(WOLFSSL_PSOC6_CRYPTO)
 
 /* determine if we are using Espressif SHA hardware acceleration */
@@ -337,8 +338,9 @@ static int InitSha512_224(wc_Sha512* sha512)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
-    sha512->ctx.sha_type = SHA2_512;
-    esp_sha_init(&(sha512->ctx));
+//    sha512->ctx.sha_type = SHA2_512;
+//    esp_sha_init(&(sha512->ctx));
+    sha512->ctx.mode = ESP32_SHA_SW;
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -612,6 +614,14 @@ static int InitSha512_Family(wc_Sha512* sha512, void* heap, int devId,
 
 int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 {
+#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        if (sha512->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA512", "Set ctx mode %d", sha512->ctx.mode);
+        }
+    /* We know this is a fresh, uninitialized item, so set to INIT */
+    sha512->ctx.mode = ESP32_SHA_INIT;
+#endif
+
     return InitSha512_Family(sha512, heap, devId, InitSha512);
 }
 
@@ -619,6 +629,14 @@ int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 #if !defined(WOLFSSL_NOSHA512_224)
 int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 {
+#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        if (sha512->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA512_224", "Set ctx mode SW %d", sha512->ctx.mode);
+        }
+    /* We know this is a fresh, uninitialized item, so set to SW */
+    /* TODO this is only testing for OpenSSL */
+    sha512->ctx.mode = ESP32_SHA_SW;
+#endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_224);
 }
 #endif /* !WOLFSSL_NOSHA512_224 */
@@ -628,6 +646,13 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 #if !defined(WOLFSSL_NOSHA512_256)
 int wc_InitSha512_256_ex(wc_Sha512* sha512, void* heap, int devId)
 {
+#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        if (sha512->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA512_256", "Set ctx mode %d", sha512->ctx.mode);
+        }
+    /* We know this is a fresh, uninitialized item, so set to INIT */
+    sha512->ctx.mode = ESP32_SHA_INIT;
+#endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_256);
 }
 #endif /* !WOLFSSL_NOSHA512_256 */
@@ -899,11 +924,13 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
             if(sha512->ctx.mode == ESP32_SHA_INIT) {
                 esp_sha_try_hw_lock(&sha512->ctx);
             }
-            ret = esp_sha512_process(sha512);
-            if(ret == 0 && sha512->ctx.mode == ESP32_SHA_SW){
+            if (sha512->ctx.mode == ESP32_SHA_SW) {
                 ret = Transform_Sha512(sha512);
             }
-    #endif
+            else {
+                ret = esp_sha512_process(sha512);
+            }
+#endif
             if (ret != 0)
                 break;
         }
@@ -992,6 +1019,14 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
                                                          WC_SHA512_BLOCK_SIZE);
        #endif
         }
+
+    /* TODO reverse words? */
+        if (sha512->ctx.mode == ESP32_SHA_SW) {
+            ByteReverseWords64(sha512->buffer,
+                               sha512->buffer,
+                               WC_SHA512_BLOCK_SIZE);
+        }
+
 #endif /* LITTLE_ENDIAN_ORDER */
     #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
         !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
@@ -1030,6 +1065,12 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
          defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
             ByteReverseWords64(sha512->buffer, sha512->buffer, WC_SHA512_PAD_SIZE);
     #endif
+    /* TODO reverse words? */
+        if (sha512->ctx.mode == ESP32_SHA_SW) {
+            ByteReverseWords64(sha512->buffer,
+                               sha512->buffer,
+                               WC_SHA512_BLOCK_SIZE);
+        }
 #endif
     /* ! length ordering dependent on digest endian type ! */
 
@@ -1055,9 +1096,11 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         /* tiny block; first = last */
         esp_sha_try_hw_lock(&sha512->ctx);
     }
-    ret = esp_sha512_digest_process(sha512, 1);
-    if(ret == 0 && sha512->ctx.mode == ESP32_SHA_SW) {
+    if (sha512->ctx.mode == ESP32_SHA_SW) {
         ret = Transform_Sha512(sha512);
+    }
+    else {
+        ret = esp_sha512_digest_process(sha512, 1);
     }
 #endif
 
@@ -1423,8 +1466,6 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
         return BAD_FUNC_ARG;
     }
 
-    XMEMSET(sha384, 0, sizeof(wc_Sha384));
-
     sha384->heap = heap;
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     sha384->W = NULL;
@@ -1432,6 +1473,13 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
 #ifdef WOLF_CRYPTO_CB
     sha384->devId = devId;
     sha384->devCtx = NULL;
+#endif
+#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        if (sha384->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA384", "Set ctx mode %d", sha384->ctx.mode);
+        }
+    /* We know this is a fresh, uninitialized item, so set to INIT */
+    sha384->ctx.mode = ESP32_SHA_INIT;
 #endif
 
     ret = InitSha384(sha384);

@@ -9694,23 +9694,23 @@ void wolfSSL_EC_POINT_dump(const char *msg, const WOLFSSL_EC_POINT *point)
     if (WOLFSSL_IS_DEBUG_ON() && (wolfSSL_GetLoggingCb() == NULL)) {
         if (point == NULL) {
             /* No point passed in so just put out "NULL". */
-            XFPRINTF(stderr, "%s = NULL\n", msg);
+            //XFPRINTF(stderr, "%s = NULL\n", msg);
         }
         else {
             /* Put out message and status of internal/external data set. */
-            XFPRINTF(stderr, "%s:\n\tinSet=%d, exSet=%d\n", msg, point->inSet,
-                point->exSet);
+//            XFPRINTF(stderr, "%s:\n\tinSet=%d, exSet=%d\n", msg, point->inSet,
+//                point->exSet);
             /* Get x-ordinate as a hex string and print. */
             num = wolfSSL_BN_bn2hex(point->X);
-            XFPRINTF(stderr, "\tX = %s\n", num);
+//            XFPRINTF(stderr, "\tX = %s\n", num);
             XFREE(num, NULL, DYNAMIC_TYPE_OPENSSL);
             /* Get x-ordinate as a hex string and print. */
             num = wolfSSL_BN_bn2hex(point->Y);
-            XFPRINTF(stderr, "\tY = %s\n", num);
+//            XFPRINTF(stderr, "\tY = %s\n", num);
             XFREE(num, NULL, DYNAMIC_TYPE_OPENSSL);
             /* Get z-ordinate as a hex string and print. */
             num = wolfSSL_BN_bn2hex(point->Z);
-            XFPRINTF(stderr, "\tZ = %s\n", num);
+//            XFPRINTF(stderr, "\tZ = %s\n", num);
             XFREE(num, NULL, DYNAMIC_TYPE_OPENSSL);
         }
     }

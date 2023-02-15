@@ -204,7 +204,7 @@ int esp_sha_init(WC_ESP32SHA* ctx)
     */
     ctx->lockDepth = 0;
 
-    return 0; /* TODO return fail when alert encountered? */
+    return 0; /* Always return success. We assume issues handled, above. */
 }
 
 
@@ -556,14 +556,23 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ESP_LOGV(TAG, "ESP32_SHA_INIT\n");
 
         /* we don't wait:
-         * either the engine is free, or we fall back to SW
-         */
+        ** either the engine is free, or we fall back to SW
+        **/
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
             ESP_LOGV(TAG, "Hardware Mode, lock depth = %d,  %x", ctx->lockDepth, (int)ctx->initializer);
+            if (ctx->lockDepth > 0) {
+                /* it is unlikely that this would ever occur,
+                ** as the mutex should be gate keeping */
+                ESP_LOGW(TAG, "WARNING: Hardware Mode "
+                              "interesting lock depth = %d,  %x",
+                              ctx->lockDepth, (int)ctx->initializer);
+            }
         }
         else {
+            /* We should have otherwise anticipated this; how did we get here?
+            ** This code should rarely, ideally never be reached. */
             ESP_LOGI(TAG, "\n>>>> Hardware in use; Mode REVERT to ESP32_SHA_SW\n");
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
@@ -582,7 +591,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ctx->mode = ESP32_SHA_HW;
     }
     else {
-        ESP_LOGV(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
+        ESP_LOGW(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
         ctx->mode = ESP32_SHA_SW;
     }
 
@@ -912,6 +921,7 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
 {
     int ret = 0;
 
+    /* TODO enable metrics */
     ESP_LOGV(TAG, "  enter esp_sha256_process");
 
     if ((&sha->ctx)->sha_type == SHA2_256) {
@@ -940,6 +950,8 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
 int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 {
     int ret = 0;
+
+    /* TODO enable metrics */
 
     ESP_LOGV(TAG, "enter esp_sha256_digest_process");
 
@@ -1018,9 +1030,12 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 
         esp_sha512_block(sha, data, 1);
     }
-    if (sha->ctx.mode != ESP32_SHA_SW) {
+    if (sha->ctx.mode == ESP32_SHA_HW) {
         /* TODO == HW ?*/
         wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
+    }
+    else {
+        ESP_LOGW(TAG, "Call esp_sha512_digest_process in non-HW mode?");
     }
 
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");

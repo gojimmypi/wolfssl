@@ -759,14 +759,16 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->hiLen   = 0;
 
         sha256->ctx.sha_type = SHA2_256;
-        esp_sha_init(&(sha256->ctx));
+        ret = esp_sha_init(&(sha256->ctx));
 
         return ret;
     }
 
     /*
-     * wolfCrypt InitSha256 external wrapper
-     */
+    ** wolfCrypt InitSha256 external wrapper.
+    **
+    ** we'll assume this is ALWAYS for a new, uninitialized sha256
+    */
     int wc_InitSha256_ex(wc_Sha256* sha256, void* heap, int devId)
     {
         (void)devId;
@@ -774,7 +776,13 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
         }
 
-        XMEMSET(sha256, 0, sizeof(wc_Sha256));
+    #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        /* We know this is a fresh, uninitialized item, so set to INIT */
+        if (sha256->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA256", "Set ctx mode %d", sha256->ctx.mode);
+        }
+        sha256->ctx.mode = ESP32_SHA_INIT;
+    #endif
 
         return InitSha256(sha256);
     }
@@ -1393,8 +1401,9 @@ static int InitSha256(wc_Sha256* sha256)
     #endif /* WOLFSSL_ASYNC_CRYPT */
 
         ret = Sha256Final(sha256);
-        if (ret != 0)
+        if (ret != 0) {
             return ret;
+        }
 
     #if defined(LITTLE_ENDIAN_ORDER)
         ByteReverseWords(sha256->digest, sha256->digest, WC_SHA256_DIGEST_SIZE);
@@ -1583,9 +1592,19 @@ static int InitSha256(wc_Sha256* sha256)
         sha224->W = NULL;
     #endif
 
+    #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        /* We know this is a fresh, uninitialized item, so set to INIT */
+        if (sha224->ctx.mode != ESP32_SHA_SW) {
+            ESP_LOGI("SHA256", "Set sha224 ctx mode ESP32_SHA_SW %d", sha224->ctx.mode);
+        }
+        /* no sha224 HW support is available, set to SW */
+        sha224->ctx.mode = ESP32_SHA_SW;
+    #endif
+
         ret = InitSha224(sha224);
-        if (ret != 0)
+        if (ret != 0) {
             return ret;
+        }
 
     #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA224)
         ret = wolfAsync_DevCtxInit(&sha224->asyncDev,
@@ -1593,6 +1612,14 @@ static int InitSha256(wc_Sha256* sha256)
     #else
         (void)devId;
     #endif /* WOLFSSL_ASYNC_CRYPT */
+
+    #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+        if (sha224->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGI("SHA224", "Set ctx mode %d", sha224->ctx.mode);
+        }
+        /* We know this is a fresh, uninitialized item, so set to INIT */
+        sha224->ctx.mode = ESP32_SHA_INIT;
+    #endif
 
         return ret;
     }
@@ -1612,6 +1639,10 @@ static int InitSha256(wc_Sha256* sha256)
         #endif
         }
     #endif /* WOLFSSL_ASYNC_CRYPT */
+
+    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+    #endif
 
         ret = Sha256Update((wc_Sha256*)sha224, data, len);
 
@@ -1634,6 +1665,10 @@ static int InitSha256(wc_Sha256* sha256)
         #endif
         }
     #endif /* WOLFSSL_ASYNC_CRYPT */
+
+    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+    #endif
 
         ret = Sha256Final((wc_Sha256*)sha224);
         if (ret != 0)

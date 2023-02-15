@@ -83,7 +83,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
-#include "esp_timer.h"
+// #include "esp_timer.h"
 #include "esp_log.h"
 
 static uint64_t startTime = 0;
@@ -91,13 +91,13 @@ static uint64_t startTime = 0;
 
 void wc_esp32TimerStart()
 {
-    startTime = esp_timer_get_time();
+    startTime = 0; //sp_timer_get_time();
 }
 
 uint64_t  wc_esp32elapsedTime()
 {
     /* return elapsed time since wc_esp32AesTimeStart() is called in us */
-    return esp_timer_get_time() - startTime;
+    return 1; // esp_timer_get_time() - startTime;
 }
 
 #endif /*WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */

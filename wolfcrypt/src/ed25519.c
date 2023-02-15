@@ -410,12 +410,6 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
 #else
         wc_Sha512 sha[1];
 
-        /* suggested:
-        **   XMEMSET(key, 0, sizeof(*key));
-        **   we probably don't want to wipe out the entire key here,
-        **   but init sha: */
-/* TODO review*/
-        /* moved to ed25519_hash_init: XMEMSET(sha, 0, sizeof(sha[1])); */
         ret = ed25519_hash_init(key, sha);
         if (ret < 0)
             return ret;

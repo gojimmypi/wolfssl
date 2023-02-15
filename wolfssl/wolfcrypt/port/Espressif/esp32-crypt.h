@@ -148,8 +148,6 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         byte g8;
     } WC_ESP32SHA;
 
-    // __attribute__ ((aligned (4))); /* TODO include this directive? */
-
     int esp_sha_init(WC_ESP32SHA* ctx);
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
