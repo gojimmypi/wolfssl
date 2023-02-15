@@ -1571,6 +1571,7 @@ static int InitSha256(wc_Sha256* sha256)
     #endif
 
     #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+        /* not to be confused with HAS512_224 */
         sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
