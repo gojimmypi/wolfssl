@@ -416,6 +416,7 @@ WOLFSSL_TEST_SUBROUTINE int  sha_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_test(void);
+WOLFSSL_TEST_SUBROUTINE int  sha512_224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha384_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha3_test(void);
 WOLFSSL_TEST_SUBROUTINE int  shake128_test(void);
@@ -941,6 +942,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         return err_sys("SHA-512  test failed!\n", ret);
     else
         TEST_PASS("SHA-512  test passed!\n");
+
+    if ( (ret = sha512_224_test()) != 0)
+        return err_sys("SHA-512_224  test failed!\n", ret);
+    else
+        TEST_PASS("SHA-512_224  test passed!\n");
 #endif
 
 #ifdef WOLFSSL_SHA3
@@ -1033,6 +1039,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
             return err_sys("HMAC-SHA512 test failed!\n", ret);
         else
             TEST_PASS("HMAC-SHA512 test passed!\n");
+
+//        if ( (ret = hmac_sha512_224_test()) != 0)
+//            return err_sys("HMAC-SHA512 test failed!\n", ret);
+//        else
+//            TEST_PASS("HMAC-SHA512 test passed!\n");
     #endif
 
     #if !defined(NO_HMAC) && defined(WOLFSSL_SHA3) && \
@@ -3011,6 +3022,127 @@ exit:
 
     return ret;
 }
+
+WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
+{
+    wc_Sha512 sha, shaCopy;
+    byte      hash[WC_SHA512_224_DIGEST_SIZE];
+    byte      hashcopy[WC_SHA512_224_DIGEST_SIZE];
+    int       ret = 0;
+
+    testVector a, b, c;
+    testVector test_sha[3];
+    int times = sizeof(test_sha) / sizeof(struct testVector), i;
+
+    a.input  = "";
+    a.output = "\x6e\xd0\xdd\x02\x80\x6f\xa8\x9e\x25\xde\x06\x0c\x19\xd3\xac"
+               "\x86\xca\xbb\x87\xd6\xa0\xdd\xd0\x5c\x33\x3b\x84\xf4";
+    a.inLen  = XSTRLEN(a.input);
+    a.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    b.input  = "abc";
+    b.output = "\x46\x34\x27\x0f\x70\x7b\x6a\x54\xda\xae\x75\x30\x46\x08\x42"
+               "\xe2\x0e\x37\xed\x26\x5c\xee\xe9\xa4\x3e\x89\x24\xaa";
+    b.inLen  = XSTRLEN(b.input);
+    b.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    c.input  = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhi"
+               "jklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+    c.output = "\x23\xfe\xc5\xbb\x94\xd6\x0b\x23\x30\x81\x92\x64\x0b\x0c\x45"
+               "\x33\x35\xd6\x64\x73\x4f\xe4\x0e\x72\x68\x67\x4a\xf9";
+    c.inLen  = XSTRLEN(c.input);
+    c.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    test_sha[0] = a;
+    test_sha[1] = b;
+    test_sha[2] = c;
+
+    ret = wc_InitSha512_224_ex(&sha, HEAP_HINT, devId);
+    if (ret != 0)
+        return -12400;
+    ret = wc_InitSha512_224_ex(&shaCopy, HEAP_HINT, devId);
+    if (ret != 0) {
+        wc_Sha512_224Free(&sha);
+        return -12401;
+    }
+
+    for (i = 0; i < times; ++i) {
+        ret = wc_Sha512_224Update(&sha, (byte*)test_sha[i].input,
+            (word32)test_sha[i].inLen);
+        if (ret != 0)
+            ERROR_OUT(-12402 - i, exit);
+        ret = wc_Sha512_224GetHash(&sha, hashcopy);
+        if (ret != 0)
+            ERROR_OUT(-12403 - i, exit);
+        ret = wc_Sha512_224Copy(&sha, &shaCopy);
+        if (ret != 0)
+            ERROR_OUT(-12404 - i, exit);
+        ret = wc_Sha512_224Final(&sha, hash);
+        if (ret != 0)
+            ERROR_OUT(-12405 - i, exit);
+        wc_Sha512_224Free(&shaCopy);
+
+        if (XMEMCMP(hash, test_sha[i].output, WC_SHA512_224_DIGEST_SIZE) != 0)
+            ERROR_OUT(-12406 - i, exit);
+        if (XMEMCMP(hash, hashcopy, WC_SHA512_224_DIGEST_SIZE) != 0)
+            ERROR_OUT(-12407 - i, exit);
+    }
+
+#ifndef NO_LARGE_HASH_TEST
+    /* BEGIN LARGE HASH TEST */ {
+    byte large_input[1024];
+#ifdef HASH_SIZE_LIMIT
+    const char* large_digest =
+        "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
+        "\xC8\xA5\xF9\x13\x5A\xD6\x6D\x9E\x46\x31\x31\x67\x8D\xE2\xC0\x0B"
+        "\x2A\x1A\x03\xE1\xF3\x48\xA7\x33\xBD\x49\xF8\xFF\xF1\xC2\xC2\x95"
+        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D";
+#else
+    const char* large_digest =
+        "\x26\x5f\x98\xd1\x76\x49\x71\x4e\x82\xb7\x9d\x52\x32\x67\x9d"
+        "\x56\x91\xf5\x88\xc3\x05\xbb\x3f\x90\xe2\x4e\x85\x05";
+#endif
+
+    for (i = 0; i < (int)sizeof(large_input); i++) {
+        large_input[i] = (byte)(i & 0xFF);
+    }
+#ifdef HASH_SIZE_LIMIT
+    times = 20;
+#else
+    times = 100;
+#endif
+    for (i = 0; i < times; ++i) {
+        ret = wc_Sha512_224Update(&sha, (byte*)large_input,
+            (word32)sizeof(large_input));
+        if (ret != 0)
+            ERROR_OUT(-12408, exit);
+    }
+    ret = wc_Sha512_224Final(&sha, hash);
+    if (ret != 0)
+        ERROR_OUT(-12409, exit);
+    if (XMEMCMP(hash, large_digest, WC_SHA512_224_DIGEST_SIZE) != 0)
+        ERROR_OUT(-12410, exit);
+
+#ifndef NO_UNALIGNED_MEMORY_TEST
+    /* Unaligned memory access test */
+    for (i = 1; i < 16; i++) {
+        ret = wc_Sha512_224Update(&sha, (byte*)large_input + i,
+            (word32)sizeof(large_input) - i);
+        if (ret != 0)
+            ERROR_OUT(-12411, exit);
+        ret = wc_Sha512_224Final(&sha, hash);
+    }
+#endif
+    } /* END LARGE HASH TEST */
+#endif /* NO_LARGE_HASH_TEST */
+
+exit:
+    wc_Sha512_224Free(&sha);
+    wc_Sha512_224Free(&shaCopy);
+
+    return ret;
+} /* sha512_224_test */
+
 #endif
 
 
@@ -5137,7 +5269,117 @@ WOLFSSL_TEST_SUBROUTINE int hmac_sha512_test(void)
 #endif
 
     return 0;
-}
+} /* hmac_sha512_test */
+
+WOLFSSL_TEST_SUBROUTINE int hmac_sha512_224_test(void)
+{
+    Hmac hmac;
+    byte hash[WC_SHA512_224_DIGEST_SIZE];
+
+    const char* keys[]=
+    {
+        "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
+                                                                "\x0b\x0b\x0b",
+        "Jefe",
+        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+                                                                "\xAA\xAA\xAA",
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
+    };
+
+    testVector a, b, c, d;
+    testVector test_hmac[4];
+
+    int ret;
+    int times = sizeof(test_hmac) / sizeof(testVector), i;
+
+    a.input  = "Hi There";
+    a.output = "\x87\xaa\x7c\xde\xa5\xef\x61\x9d\x4f\xf0\xb4\x24\x1a\x1d\x6c"
+               "\xb0\x23\x79\xf4\xe2\xce\x4e\xc2\x78\x7a\xd0\xb3\x05\x45\xe1"
+               "\x7c\xde\xda\xa8\x33\xb7\xd6\xb8\xa7\x02\x03\x8b\x27\x4e\xae"
+               "\xa3\xf4\xe4\xbe\x9d\x91\x4e\xeb\x61\xf1\x70\x2e\x69\x6c\x20"
+               "\x3a\x12\x68\x54";
+    a.inLen  = XSTRLEN(a.input);
+    a.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    b.input  = "what do ya want for nothing?";
+    b.output = "\x16\x4b\x7a\x7b\xfc\xf8\x19\xe2\xe3\x95\xfb\xe7\x3b\x56\xe0"
+               "\xa3\x87\xbd\x64\x22\x2e\x83\x1f\xd6\x10\x27\x0c\xd7\xea\x25"
+               "\x05\x54\x97\x58\xbf\x75\xc0\x5a\x99\x4a\x6d\x03\x4f\x65\xf8"
+               "\xf0\xe6\xfd\xca\xea\xb1\xa3\x4d\x4a\x6b\x4b\x63\x6e\x07\x0a"
+               "\x38\xbc\xe7\x37";
+    b.inLen  = XSTRLEN(b.input);
+    b.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    c.input  = "\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD"
+               "\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD"
+               "\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD\xDD"
+               "\xDD\xDD\xDD\xDD\xDD\xDD";
+    c.output = "\xfa\x73\xb0\x08\x9d\x56\xa2\x84\xef\xb0\xf0\x75\x6c\x89\x0b"
+               "\xe9\xb1\xb5\xdb\xdd\x8e\xe8\x1a\x36\x55\xf8\x3e\x33\xb2\x27"
+               "\x9d\x39\xbf\x3e\x84\x82\x79\xa7\x22\xc8\x06\xb4\x85\xa4\x7e"
+               "\x67\xc8\x07\xb9\x46\xa3\x37\xbe\xe8\x94\x26\x74\x27\x88\x59"
+               "\xe1\x32\x92\xfb";
+    c.inLen  = XSTRLEN(c.input);
+    c.outLen = WC_SHA512_224_DIGEST_SIZE;
+
+    d.input  = "Big Key Input";
+    d.output = "\x3f\xa9\xc9\xe1\xbd\xbb\x04\x55\x1f\xef\xcc\x92\x33\x08\xeb"
+               "\xcf\xc1\x9a\x5b\x5b\xc0\x7c\x86\x84\xae\x8c\x40\xaf\xb1\x27"
+               "\x87\x38\x92\x04\xa8\xed\xd7\xd7\x07\xa9\x85\xa0\xc2\xcd\x30"
+               "\xc0\x56\x14\x49\xbc\x2f\x69\x15\x6a\x97\xd8\x79\x2f\xb3\x3b"
+               "\x1e\x18\xfe\xfa";
+    d.inLen  = XSTRLEN(d.input);
+    d.outLen = WC_SHA512_DIGEST_SIZE;
+
+    test_hmac[0] = a;
+    test_hmac[1] = b;
+    test_hmac[2] = c;
+    test_hmac[3] = d;
+
+    for (i = 0; i < times; ++i) {
+#if defined(HAVE_FIPS)
+        if (i == 1)
+            continue; /* fips not allowed */
+#endif
+
+        if (wc_HmacInit(&hmac, HEAP_HINT, devId) != 0)
+            return -13900;
+
+        ret = wc_HmacSetKey(&hmac, WC_SHA512_224, (byte*)keys[i],
+            (word32)XSTRLEN(keys[i]));
+        if (ret != 0)
+            return -13901;
+        ret = wc_HmacUpdate(&hmac, (byte*)test_hmac[i].input,
+                   (word32)test_hmac[i].inLen);
+        if (ret != 0)
+            return -13902;
+        ret = wc_HmacFinal(&hmac, hash);
+        if (ret != 0)
+            return -13903;
+
+        if (XMEMCMP(hash, test_hmac[i].output, WC_SHA512_224_DIGEST_SIZE) != 0)
+            return -13904 - i;
+
+        wc_HmacFree(&hmac);
+    }
+
+#ifndef HAVE_FIPS
+    if (wc_HmacSizeByType(WC_SHA512_224) != WC_SHA512_224_DIGEST_SIZE)
+        return -13914;
+#endif
+
+    return 0;
+} /* hmac_sha512_224_test */
+
+
 #endif
 
 
