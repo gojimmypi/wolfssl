@@ -630,9 +630,9 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         if (sha512->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA512_224", "Set ctx mode SW %d", sha512->ctx.mode);
+            ESP_LOGI("SHA512_224", "Set ctx mode INIT, prior value = %d", sha512->ctx.mode);
         }
-    /* We know this is a fresh, uninitialized item, so set to SW */
+    /* We know this is a fresh, uninitialized item, so set to INIT */
     sha512->ctx.mode = ESP32_SHA_INIT;
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_224);
@@ -931,7 +931,7 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
 #endif
             if (ret != 0)
                 break;
-        }
+        } /* while (len >= WC_SHA512_BLOCK_SIZE) */
     }
 #endif
 
@@ -1037,7 +1037,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
             return ret;
 
         sha512->buffLen = 0;
-    } /* pad with zeros */
+    } /* (sha512->buffLen > WC_SHA512_PAD_SIZE) pad with zeros */
 
     XMEMSET(&local[sha512->buffLen], 0, WC_SHA512_PAD_SIZE - sha512->buffLen);
 
@@ -1078,7 +1078,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
     ret = Transform_Sha512(sha512);
 #else
     if(sha512->ctx.mode == ESP32_SHA_INIT) {
-        /* tiny block; first = last */
+        /* typically for tiny block: first = last */
         esp_sha_try_hw_lock(&sha512->ctx);
     }
     if (sha512->ctx.mode == ESP32_SHA_SW) {
