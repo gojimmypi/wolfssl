@@ -417,6 +417,7 @@ WOLFSSL_TEST_SUBROUTINE int  sha224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_224_test(void);
+WOLFSSL_TEST_SUBROUTINE int  sha512_256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha384_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha3_test(void);
 WOLFSSL_TEST_SUBROUTINE int  shake128_test(void);
@@ -938,15 +939,24 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #ifdef WOLFSSL_SHA512
-    if ( (ret = sha512_test()) != 0)
+    if ((ret = sha512_test()) != 0) {
         return err_sys("SHA-512  test failed!\n", ret);
-    else
+    }
+    else {
         TEST_PASS("SHA-512  test passed!\n");
+    }
 
-    if ( (ret = sha512_224_test()) != 0)
+    if ((ret = sha512_224_test()) != 0) {
         return err_sys("SHA-512_224  test failed!\n", ret);
+    }
     else
         TEST_PASS("SHA-512_224  test passed!\n");
+
+    if ((ret = sha512_256_test()) != 0) {
+        return err_sys("SHA-512_256  test failed!\n", ret);
+    }
+    else
+        TEST_PASS("SHA-512_256  test passed!\n");
 #endif
 
 #ifdef WOLFSSL_SHA3
@@ -3059,33 +3069,35 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
 
     ret = wc_InitSha512_224_ex(&sha, HEAP_HINT, devId);
     if (ret != 0)
-        return -12400;
+        return -22400;
     ret = wc_InitSha512_224_ex(&shaCopy, HEAP_HINT, devId);
     if (ret != 0) {
         wc_Sha512_224Free(&sha);
-        return -12401;
+        return -22401;
     }
 
     for (i = 0; i < times; ++i) {
         ret = wc_Sha512_224Update(&sha, (byte*)test_sha[i].input,
             (word32)test_sha[i].inLen);
         if (ret != 0)
-            ERROR_OUT(-12402 - i, exit);
+            ERROR_OUT(-22402 - i, exit);
         ret = wc_Sha512_224GetHash(&sha, hashcopy);
         if (ret != 0)
-            ERROR_OUT(-12403 - i, exit);
+            ERROR_OUT(-22403 - i, exit);
         ret = wc_Sha512_224Copy(&sha, &shaCopy);
         if (ret != 0)
-            ERROR_OUT(-12404 - i, exit);
+            ERROR_OUT(-22404 - i, exit);
         ret = wc_Sha512_224Final(&sha, hash);
         if (ret != 0)
-            ERROR_OUT(-12405 - i, exit);
+            ERROR_OUT(-22405 - i, exit);
         wc_Sha512_224Free(&shaCopy);
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA512_224_DIGEST_SIZE) != 0)
-            ERROR_OUT(-12406 - i, exit);
+            ERROR_OUT(-22406 - i, exit);
+
+
         if (XMEMCMP(hash, hashcopy, WC_SHA512_224_DIGEST_SIZE) != 0)
-            ERROR_OUT(-12407 - i, exit);
+            ERROR_OUT(-22407 - i, exit);
     }
 
 #ifndef NO_LARGE_HASH_TEST
@@ -3096,7 +3108,7 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
         "\xC8\xA5\xF9\x13\x5A\xD6\x6D\x9E\x46\x31\x31\x67\x8D\xE2\xC0\x0B"
         "\x2A\x1A\x03\xE1\xF3\x48\xA7\x33\xBD\x49\xF8\xFF\xF1\xC2\xC2\x95"
-        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D";
+        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D"; /* TODO get value */
 #else
     const char* large_digest =
         "\x26\x5f\x98\xd1\x76\x49\x71\x4e\x82\xb7\x9d\x52\x32\x67\x9d"
@@ -3115,13 +3127,13 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         ret = wc_Sha512_224Update(&sha, (byte*)large_input,
             (word32)sizeof(large_input));
         if (ret != 0)
-            ERROR_OUT(-12408, exit);
+            ERROR_OUT(-22408, exit);
     }
     ret = wc_Sha512_224Final(&sha, hash);
     if (ret != 0)
-        ERROR_OUT(-12409, exit);
+        ERROR_OUT(-22409, exit);
     if (XMEMCMP(hash, large_digest, WC_SHA512_224_DIGEST_SIZE) != 0)
-        ERROR_OUT(-12410, exit);
+        ERROR_OUT(-22410, exit);
 
 #ifndef NO_UNALIGNED_MEMORY_TEST
     /* Unaligned memory access test */
@@ -3129,7 +3141,7 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         ret = wc_Sha512_224Update(&sha, (byte*)large_input + i,
             (word32)sizeof(large_input) - i);
         if (ret != 0)
-            ERROR_OUT(-12411, exit);
+            ERROR_OUT(-22411, exit);
         ret = wc_Sha512_224Final(&sha, hash);
     }
 #endif
@@ -3142,6 +3154,136 @@ exit:
 
     return ret;
 } /* sha512_224_test */
+
+WOLFSSL_TEST_SUBROUTINE int sha512_256_test(void)
+{
+    wc_Sha512 sha, shaCopy;
+    byte      hash[WC_SHA512_256_DIGEST_SIZE];
+    byte      hashcopy[WC_SHA512_256_DIGEST_SIZE];
+    int       ret = 0;
+
+    testVector a, b, c;
+    testVector test_sha[3];
+    int times = sizeof(test_sha) / sizeof(struct testVector), i;
+
+    a.input  = "";
+    a.output = "\xc6\x72\xb8\xd1\xef\x56\xed\x28"
+               "\xab\x87\xc3\x62\x2c\x51\x14\x06"
+               "\x9b\xdd\x3a\xd7\xb8\xf9\x73\x74"
+               "\x98\xd0\xc0\x1e\xce\xf0\x96\x7a";
+    a.inLen  = XSTRLEN(a.input);
+    a.outLen = WC_SHA512_256_DIGEST_SIZE;
+
+    b.input  = "abc";
+    b.output = "\x53\x04\x8e\x26\x81\x94\x1e\xf9"
+               "\x9b\x2e\x29\xb7\x6b\x4c\x7d\xab"
+               "\xe4\xc2\xd0\xc6\x34\xfc\x6d\x46"
+               "\xe0\xe2\xf1\x31\x07\xe7\xaf\x23";
+    b.inLen  = XSTRLEN(b.input);
+    b.outLen = WC_SHA512_256_DIGEST_SIZE;
+
+    c.input  = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhi"
+               "jklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+    c.output = "\x39\x28\xe1\x84\xfb\x86\x90\xf8"
+               "\x40\xda\x39\x88\x12\x1d\x31\xbe"
+               "\x65\xcb\x9d\x3e\xf8\x3e\xe6\x14"
+               "\x6f\xea\xc8\x61\xe1\x9b\x56\x3a";
+    c.inLen  = XSTRLEN(c.input);
+    c.outLen = WC_SHA512_256_DIGEST_SIZE;
+
+    test_sha[0] = a;
+    test_sha[1] = b;
+    test_sha[2] = c;
+
+    ret = wc_InitSha512_256_ex(&sha, HEAP_HINT, devId);
+    if (ret != 0)
+        return -25600;
+    ret = wc_InitSha512_256_ex(&shaCopy, HEAP_HINT, devId);
+    if (ret != 0) {
+        wc_Sha512_256Free(&sha);
+        return -25601;
+    }
+
+    for (i = 0; i < times; ++i) {
+        ret = wc_Sha512_256Update(&sha, (byte*)test_sha[i].input,
+            (word32)test_sha[i].inLen);
+        if (ret != 0)
+            ERROR_OUT(-25602 - i, exit);
+        ret = wc_Sha512_256GetHash(&sha, hashcopy);
+        if (ret != 0)
+            ERROR_OUT(-25603 - i, exit);
+        ret = wc_Sha512_256Copy(&sha, &shaCopy);
+        if (ret != 0)
+            ERROR_OUT(-25604 - i, exit);
+        ret = wc_Sha512_256Final(&sha, hash);
+        if (ret != 0)
+            ERROR_OUT(-25605 - i, exit);
+        wc_Sha512_256Free(&shaCopy);
+
+        if (XMEMCMP(hash, test_sha[i].output, WC_SHA512_256_DIGEST_SIZE) != 0)
+            ERROR_OUT(-25606 - i, exit);
+
+
+        if (XMEMCMP(hash, hashcopy, WC_SHA512_256_DIGEST_SIZE) != 0)
+            ERROR_OUT(-25607 - i, exit);
+    }
+
+#ifndef NO_LARGE_HASH_TEST
+    /* BEGIN LARGE HASH TEST */ {
+    byte large_input[1024];
+#ifdef HASH_SIZE_LIMIT
+    const char* large_digest =
+        "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
+        "\xC8\xA5\xF9\x13\x5A\xD6\x6D\x9E\x46\x31\x31\x67\x8D\xE2\xC0\x0B"
+        "\x2A\x1A\x03\xE1\xF3\x48\xA7\x33\xBD\x49\xF8\xFF\xF1\xC2\xC2\x95"
+        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D"; /* TODO get value */
+#else
+    const char* large_digest =
+        "\x7a\xe3\x84\x05\xcb\x06\x22\x08"
+        "\x7e\x2c\x65\x89\x1f\x26\x45\xfd"
+        "\xad\xbc\x2e\x29\x83\x12\x84\x4b"
+        "\xf2\xa0\xde\xbe\x06\x11\xd7\x44";
+#endif
+
+    for (i = 0; i < (int)sizeof(large_input); i++) {
+        large_input[i] = (byte)(i & 0xFF);
+    }
+#ifdef HASH_SIZE_LIMIT
+    times = 20;
+#else
+    times = 100;
+#endif
+    for (i = 0; i < times; ++i) {
+        ret = wc_Sha512_256Update(&sha, (byte*)large_input,
+            (word32)sizeof(large_input));
+        if (ret != 0)
+            ERROR_OUT(-25608, exit);
+    }
+    ret = wc_Sha512_256Final(&sha, hash);
+    if (ret != 0)
+        ERROR_OUT(-25609, exit);
+    if (XMEMCMP(hash, large_digest, WC_SHA512_256_DIGEST_SIZE) != 0)
+        ERROR_OUT(-25610, exit);
+
+#ifndef NO_UNALIGNED_MEMORY_TEST
+    /* Unaligned memory access test */
+    for (i = 1; i < 16; i++) {
+        ret = wc_Sha512_256Update(&sha, (byte*)large_input + i,
+            (word32)sizeof(large_input) - i);
+        if (ret != 0)
+            ERROR_OUT(-25611, exit);
+        ret = wc_Sha512_256Final(&sha, hash);
+    }
+#endif
+    } /* END LARGE HASH TEST */
+#endif /* NO_LARGE_HASH_TEST */
+
+exit:
+    wc_Sha512_256Free(&sha);
+    wc_Sha512_256Free(&shaCopy);
+
+    return ret;
+} /* sha512_256_test */
 
 #endif
 
