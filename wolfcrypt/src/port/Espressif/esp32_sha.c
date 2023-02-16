@@ -95,6 +95,8 @@ int esp_sha_init(WC_ESP32SHA* ctx)
             switch (ctx->mode) {
                 case ESP32_SHA_INIT:
                 case ESP32_SHA_SW:
+                    break;
+
                 case ESP32_SHA_HW:
                     break;
 
@@ -217,24 +219,25 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
-
+        /* note we arrived here only because the src is already in HW mode */
         dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        /*  */
         esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
-            ESP_LOGV(TAG, "Confirmed Sha Copy set to SW");
+            ESP_LOGI(TAG, "Confirmed Sha Copy set to SW");
         }
         else {
             ESP_LOGW(TAG, "Sha Copy NOT set to SW");
         }
     }
-    else {
+    else { /* src now in HW mode, ok to copy. */
         ret = 0;
         /*
-        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** reminder XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed in SW mode.
-        ** but we need to set our initializer: */
-        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+        ** but we need to set our initializer breadcrumb: */
+        dst->ctx.initializer = &(dst->ctx); /* assign new breadcrumb to dst */
     }
     return ret;
 }
@@ -243,7 +246,6 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware TODO confirm */
-    /* not to be confused with sha512_224 */
     dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
     dst->ctx.mode = ESP32_SHA_SW;
     return 0;
@@ -319,6 +321,7 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ESP_LOGI(TAG, "esp_sha512_ctx_copy esp_sha512_digest_process");
         ret = esp_sha512_digest_process(dst, 0);
 
+        /* TODO init if HW not active? */
         dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
         esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
 
@@ -978,7 +981,7 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     ESP_LOGV(TAG, "enter esp_sha512_block");
     /* start register offset */
 
-    if (sha->ctx.mode == ESP32_SHA_SW) { /* TODO add comment */
+    if (sha->ctx.mode == ESP32_SHA_SW) { /* TODO add comment on word64 */
         ByteReverseWords64(sha->buffer,
                            sha->buffer,
                            WC_SHA512_BLOCK_SIZE);
@@ -991,7 +994,7 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
 
     }
     else {
-        ByteReverseWords((word32*)sha->buffer, /* TODO add comment */
+        ByteReverseWords((word32*)sha->buffer, /* TODO add comment HW 32 bit words */
                          (word32*)sha->buffer,
                          WC_SHA512_BLOCK_SIZE);
         if (isfinal) {
@@ -1020,7 +1023,7 @@ int esp_sha512_process(struct wc_Sha512* sha)
     return 0;
 }
 /*
-* retrieve sha512 digest. this is used for sha384 too.
+* retrieve sha512 digest. this is used for sha384, sha512-224, sha512-256 too.
 */
 int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 {
