@@ -10,7 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\..\..\..\include\config.h = ..\..\..\..\..\..\include\config.h
 		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
-		..\..\..\refresh_sha_from_idf.bat = ..\..\..\refresh_sha_from_idf.bat
 		..\..\..\..\..\..\wolfcrypt\src\sha.c = ..\..\..\..\..\..\wolfcrypt\src\sha.c
 		..\..\..\..\..\..\wolfssl\openssl\sha.h = ..\..\..\..\..\..\wolfssl\openssl\sha.h
 		..\..\..\..\..\..\wolfcrypt\src\sha256.c = ..\..\..\..\..\..\wolfcrypt\src\sha256.c
