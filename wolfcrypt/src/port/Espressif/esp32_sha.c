@@ -231,7 +231,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
             ESP_LOGW(TAG, "Sha Copy NOT set to SW");
         }
     }
-    else { /* src now in HW mode, ok to copy. */
+    else { /* src not in HW mode, ok to copy. */
         ret = 0;
         /*
         ** reminder XMEMCOPY, above: dst->ctx = src->ctx;
