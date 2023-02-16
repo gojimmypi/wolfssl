@@ -1109,13 +1109,23 @@ AS_IF([ test "x$ENABLED_SINGLETHREADED" = "xno" ],[
                    AS_CASE([$PTHREAD_CFLAGS],[-Qunused-arguments*],[PTHREAD_CFLAGS="-Xcompiler $PTHREAD_CFLAGS"])
                    AM_CFLAGS="$AM_CFLAGS $PTHREAD_CFLAGS"
                    LIBS="$LIBS $PTHREAD_LIBS"
-                   AC_CHECK_TYPES([pthread_rwlock_t])
                    ],[
                       ENABLED_SINGLETHREADED=yes
                       ])
       ])
 
 AS_IF([ test "x$ENABLED_SINGLETHREADED" = "xyes" ],[ AM_CFLAGS="$AM_CFLAGS -DSINGLE_THREADED" ])
+
+# Enable rwlock
+AC_ARG_ENABLE([rwlock],
+    [AS_HELP_STRING([--enable-rwlock],[Enable use of rwlock (default: disabled)])],
+    [ENABLED_RWLOCK=$enableval],
+    [ENABLED_RWLOCK=no])
+
+if test "$ENABLED_RWLOCK" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_USE_RWLOCK"
+fi
 
 # wolfCrypt Only Build
 AC_ARG_ENABLE([cryptonly],
@@ -7578,6 +7588,8 @@ then
     AM_CFLAGS="$AM_CFLAGS -DNO_SESSION_CACHE_REF"
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TLS13_NO_PEEK_HANDSHAKE_DONE"
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ALT_CERT_CHAINS"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PRIORITIZE_PSK"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_CHECK_ALERT_ON_ERR"
     ENABLED_TRUSTED_PEER_CERT=yes
 fi
 
@@ -8952,6 +8964,7 @@ echo "   * Maxim Integrated MAXQ10XX:  $ENABLED_MAXQ10XX"
 echo "   * PSA:                        $ENABLED_PSA"
 echo "   * System CA certs:            $ENABLED_SYS_CA_CERTS"
 echo "   * ERR Queues per Thread:      $ENABLED_ERRORQUEUEPERTHREAD"
+echo "   * rwlock:                     $ENABLED_RWLOCK"
 echo ""
 echo "---"
 

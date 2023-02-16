@@ -544,6 +544,7 @@ struct WOLFSSL_BIO {
     char*        infoArg;       /* BIO callback argument */
     wolf_bio_info_cb infoCb;    /* BIO callback */
     int          wrSz;          /* write buffer size (mem) */
+    int          wrSzReset;     /* First buffer size (mem) - read ONLY data */
     int          wrIdx;         /* current index for write buffer */
     int          rdIdx;         /* current read index */
     int          readRq;        /* read request */
@@ -1172,6 +1173,8 @@ WOLFSSL_API int  wolfSSL_CTX_no_ticket_TLSv13(WOLFSSL_CTX* ctx);
 WOLFSSL_API int  wolfSSL_no_ticket_TLSv13(WOLFSSL* ssl);
 WOLFSSL_API int  wolfSSL_CTX_no_dhe_psk(WOLFSSL_CTX* ctx);
 WOLFSSL_API int  wolfSSL_no_dhe_psk(WOLFSSL* ssl);
+WOLFSSL_API int  wolfSSL_CTX_only_dhe_psk(WOLFSSL_CTX* ctx);
+WOLFSSL_API int  wolfSSL_only_dhe_psk(WOLFSSL* ssl);
 WOLFSSL_API int  wolfSSL_update_keys(WOLFSSL* ssl);
 WOLFSSL_API int  wolfSSL_key_update_response(WOLFSSL* ssl, int* required);
 WOLFSSL_API int  wolfSSL_CTX_allow_post_handshake_auth(WOLFSSL_CTX* ctx);
@@ -1288,6 +1291,7 @@ typedef void (CallbackInfoState)(const WOLFSSL* ssl, int, int);
 #define WOLF_CRYPTO_EX_INDEX__COUNT          16
 
 #ifdef HAVE_EX_DATA
+
 /* Helper macro to log that input arguments should not be used */
 #define WOLFSSL_CRYPTO_EX_DATA_IGNORE_PARAMS(a1, a2, a3, a4, a5) \
     (void)(a1);                                                  \
@@ -1301,13 +1305,6 @@ typedef void (CallbackInfoState)(const WOLFSSL* ssl, int, int);
                         "new, dup, or free callbacks");          \
         }                                                        \
     } while(0)
-
-typedef int  (WOLFSSL_CRYPTO_EX_new)(void* p, void* ptr,
-        WOLFSSL_CRYPTO_EX_DATA* a, int idx, long argValue, void* arg);
-typedef int  (WOLFSSL_CRYPTO_EX_dup)(WOLFSSL_CRYPTO_EX_DATA* out,
-        WOLFSSL_CRYPTO_EX_DATA* in, void* inPtr, int idx, long argV, void* arg);
-typedef void (WOLFSSL_CRYPTO_EX_free)(void* p, void* ptr,
-        WOLFSSL_CRYPTO_EX_DATA* a, int idx, long argValue, void* arg);
 
 WOLFSSL_API int  wolfSSL_get_ex_new_index(long argValue, void* arg,
         WOLFSSL_CRYPTO_EX_new* a, WOLFSSL_CRYPTO_EX_dup* b,
@@ -2757,7 +2754,12 @@ WOLFSSL_API unsigned long wolfSSL_SESSION_get_ticket_lifetime_hint(
                               const WOLFSSL_SESSION* sess);
 WOLFSSL_API long wolfSSL_SESSION_get_timeout(const WOLFSSL_SESSION* session);
 WOLFSSL_API long wolfSSL_SESSION_get_time(const WOLFSSL_SESSION* session);
-WOLFSSL_API int  wolfSSL_CTX_get_ex_new_index(long idx, void* arg, void* a, void* b, void* c);
+#ifdef HAVE_EX_DATA
+WOLFSSL_API int wolfSSL_CTX_get_ex_new_index(long idx, void* arg,
+    WOLFSSL_CRYPTO_EX_new* new_func,
+    WOLFSSL_CRYPTO_EX_dup* dup_func,
+    WOLFSSL_CRYPTO_EX_free* free_func);
+#endif
 
 
 /* extra ends */
@@ -4674,8 +4676,11 @@ WOLFSSL_API int wolfSSL_SESSION_set_ex_data_with_cleanup(
 #if defined(OPENSSL_ALL) || defined(HAVE_STUNNEL) || defined(WOLFSSL_NGINX) \
     || defined(WOLFSSL_HAPROXY) || defined(OPENSSL_EXTRA) || defined(HAVE_LIGHTY)
 
-WOLFSSL_API int wolfSSL_SESSION_get_ex_new_index(long idx,void* data,void* cb1,void* cb2,
-        CRYPTO_free_func* cb3);
+#ifdef HAVE_EX_DATA
+WOLFSSL_API int wolfSSL_SESSION_get_ex_new_index(long ctx_l,void* ctx_ptr,
+        WOLFSSL_CRYPTO_EX_new* new_func, WOLFSSL_CRYPTO_EX_dup* dup_func,
+        WOLFSSL_CRYPTO_EX_free* free_func);
+#endif
 
 WOLFSSL_API const unsigned char* wolfSSL_SESSION_get_id(
         const WOLFSSL_SESSION* sess, unsigned int* idLen);
@@ -4851,8 +4856,12 @@ WOLFSSL_API int wolfSSL_X509_set_ex_data_with_cleanup(
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) \
     || defined(OPENSSL_EXTRA) || defined(HAVE_LIGHTY) || defined(HAVE_SECRET_CALLBACK)
 WOLFSSL_API WOLF_STACK_OF(WOLFSSL_CIPHER) *wolfSSL_get_ciphers_compat(const WOLFSSL *ssl);
-WOLFSSL_API int wolfSSL_X509_get_ex_new_index(int idx, void *arg, void *a,
-    void *b, void *c);
+#ifdef HAVE_EX_DATA
+WOLFSSL_API int wolfSSL_X509_get_ex_new_index(int idx, void *arg,
+    WOLFSSL_CRYPTO_EX_new* new_func,
+    WOLFSSL_CRYPTO_EX_dup* dup_func,
+    WOLFSSL_CRYPTO_EX_free* free_func);
+#endif
 WOLFSSL_API int wolfSSL_X509_NAME_digest(const WOLFSSL_X509_NAME *data,
     const WOLFSSL_EVP_MD *type, unsigned char *md, unsigned int *len);
 
