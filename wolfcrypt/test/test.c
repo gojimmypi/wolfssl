@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/*
+** refer to https://csrc.nist.gov/projects/hash-functions
+*/
+
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
@@ -947,16 +951,16 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     }
 
     if ((ret = sha512_224_test()) != 0) {
-        return err_sys("SHA-512_224  test failed!\n", ret);
+        return err_sys("SHA-512/224  test failed!\n", ret);
     }
     else
-        TEST_PASS("SHA-512_224  test passed!\n");
+        TEST_PASS("SHA-512/224  test passed!\n");
 
     if ((ret = sha512_256_test()) != 0) {
-        return err_sys("SHA-512_256  test failed!\n", ret);
+        return err_sys("SHA-512/256  test failed!\n", ret);
     }
     else
-        TEST_PASS("SHA-512_256  test passed!\n");
+        TEST_PASS("SHA-512/256  test passed!\n");
 #endif
 
 #ifdef WOLFSSL_SHA3
@@ -3105,14 +3109,16 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
     byte large_input[1024];
 #ifdef HASH_SIZE_LIMIT
     const char* large_digest =
-        "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
-        "\xC8\xA5\xF9\x13\x5A\xD6\x6D\x9E\x46\x31\x31\x67\x8D\xE2\xC0\x0B"
-        "\x2A\x1A\x03\xE1\xF3\x48\xA7\x33\xBD\x49\xF8\xFF\xF1\xC2\xC2\x95"
-        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D"; /* TODO get value */
+        "\x98\x68\xc3\xd9\xb9\xef\x17\x53"
+        "\x43\x66\x0e\x60\xdf\x29\xf8\xef"
+        "\x96\xe3\x93\x34\x8c\x6f\xc0\xeb"
+        "\x14\x6c\xcf\x6a";
 #else
     const char* large_digest =
-        "\x26\x5f\x98\xd1\x76\x49\x71\x4e\x82\xb7\x9d\x52\x32\x67\x9d"
-        "\x56\x91\xf5\x88\xc3\x05\xbb\x3f\x90\xe2\x4e\x85\x05";
+        "\x26\x5f\x98\xd1\x76\x49\x71\x4e"
+        "\x82\xb7\x9d\x52\x32\x67\x9d\x56"
+        "\x91\xf5\x88\xc3\x05\xbb\x3f\x90"
+        "\xe2\x4e\x85\x05";
 #endif
 
     for (i = 0; i < (int)sizeof(large_input); i++) {
@@ -3233,10 +3239,10 @@ WOLFSSL_TEST_SUBROUTINE int sha512_256_test(void)
     byte large_input[1024];
 #ifdef HASH_SIZE_LIMIT
     const char* large_digest =
-        "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
-        "\xC8\xA5\xF9\x13\x5A\xD6\x6D\x9E\x46\x31\x31\x67\x8D\xE2\xC0\x0B"
-        "\x2A\x1A\x03\xE1\xF3\x48\xA7\x33\xBD\x49\xF8\xFF\xF1\xC2\xC2\x95"
-        "\xCB\xF0\xAF\x87\x61\x85\x58\x63\x6A\xCA\x70\x9C\x8B\x83\x3F\x5D"; /* TODO get value */
+        "\x49\xcc\xbc\x7a\x93\x0b\x02\xb8"
+        "\xad\x9a\x46\x51\x00\x1f\x13\x80"
+        "\x35\x84\x36\xf1\xf2\x3c\xeb\xd8"
+        "\x41\xd4\x06\x8b\x1d\x19\xad\x72";
 #else
     const char* large_digest =
         "\x7a\xe3\x84\x05\xcb\x06\x22\x08"
