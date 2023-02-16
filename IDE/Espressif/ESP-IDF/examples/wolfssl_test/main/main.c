@@ -192,6 +192,18 @@ void app_main(void)
     #else
         ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
     #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH is defined! (disabled HW SHA).");
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
+        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32WROOM32_CRYPT_AES is defined! (disabled HW AES).");
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI defined! (disabled HW RSA)");
+    #endif
 #endif
 
 
