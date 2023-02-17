@@ -335,12 +335,11 @@ static int InitSha512_224(wc_Sha512* sha512)
     sha512->loLen   = 0;
     sha512->hiLen   = 0;
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
 
-    sha512->ctx.sha_type = SHA2_512;
-    // esp_sha_init(&(sha512->ctx));
+    /* No SHA512/224 HW support is available, set to SW. */
     sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+    sha512->ctx.sha_type = SHA2_512;
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -377,8 +376,7 @@ static int InitSha512_256(wc_Sha512* sha512)
     sha512->loLen   = 0;
     sha512->hiLen   = 0;
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
 
     sha512->ctx.sha_type = SHA2_512;
     // esp_sha_init(&(sha512->ctx));
@@ -615,10 +613,7 @@ static int InitSha512_Family(wc_Sha512* sha512, void* heap, int devId,
 
 int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 {
-#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-        if (sha512->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA512", "Set ctx mode %d", sha512->ctx.mode);
-        }
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
     /* We know this is a fresh, uninitialized item, so set to INIT */
     sha512->ctx.mode = ESP32_SHA_INIT;
 #endif
@@ -631,12 +626,7 @@ int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-        if (sha512->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA512_224", "Set ctx 512_224 mode SW, prior value = %d", sha512->ctx.mode);
-        }
-
-    /* no sha224 HW support is available, set to SW */
-    /* TODO there *is* support on ESP32-S2 and ESP32-C3 */
+    /* No SHA512/224 HW support is available, set to SW. */
     sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_224);
@@ -649,12 +639,7 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 int wc_InitSha512_256_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-        if (sha512->ctx.mode != ESP32_SHA_SW) {
-            ESP_LOGI("SHA512_256", "Set ctx SW mode from %d", sha512->ctx.mode);
-        }
-
-    /* no sha224 HW support is available, set to SW */
-    /* TODO there *is* support on ESP32-S2 and ESP32-C3 */
+    /* No SHA512/256 HW support is available, set to SW. */
     sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_256);
@@ -1029,8 +1014,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         }
 
 #endif /* LITTLE_ENDIAN_ORDER */
-    #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-        !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
         if (sha512->ctx.mode == ESP32_SHA_INIT) {
             esp_sha_try_hw_lock(&sha512->ctx);
         }
@@ -1110,7 +1094,6 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         return ret;
 
     #ifdef LITTLE_ENDIAN_ORDER
-        /* TODO always word64?  for HW and SW? see wc_esp_digest_state swap and esp_sha512_block() in esp32_sha.c */
         ByteReverseWords64(sha512->digest, sha512->digest, WC_SHA512_DIGEST_SIZE);
     #endif
 
@@ -1361,8 +1344,7 @@ static int InitSha384(wc_Sha384* sha384)
     sha384->loLen   = 0;
     sha384->hiLen   = 0;
 
-#if  defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#if  defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
     sha384->ctx.sha_type = SHA2_384;
     esp_sha_init(&(sha384->ctx));
 #endif
@@ -1477,7 +1459,7 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
     sha384->devId = devId;
     sha384->devCtx = NULL;
 #endif
-#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
         if (sha384->ctx.mode != ESP32_SHA_INIT) {
             ESP_LOGI("SHA384", "Set ctx mode %d", sha384->ctx.mode);
         }
@@ -1486,8 +1468,9 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
 #endif
 
     ret = InitSha384(sha384);
-    if (ret != 0)
+    if (ret != 0) {
         return ret;
+    }
 
 #if defined(USE_INTEL_SPEEDUP) && \
     (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
@@ -1667,6 +1650,7 @@ int wc_InitSha512_224(wc_Sha512* sha)
 {
     return wc_InitSha512_224_ex(sha, NULL, INVALID_DEVID);
 }
+
 int wc_Sha512_224Update(wc_Sha512* sha, const byte* data, word32 len)
 {
     return wc_Sha512Update(sha, data, len);
@@ -1681,16 +1665,19 @@ int wc_Sha512_224FinalRaw(wc_Sha512* sha, byte* hash)
 {
     return Sha512FinalRaw(sha, hash, WC_SHA512_224_DIGEST_SIZE);
 }
+
 int wc_Sha512_224Final(wc_Sha512* sha512, byte* hash)
 {
     return Sha512_Family_Final(sha512, hash, WC_SHA512_224_DIGEST_SIZE,
                                InitSha512_224);
 }
-#endif
+#endif /* else none of the above: WOLFSSL_KCAPI_HASH, WOLFSSL_SE050 */
+
 void wc_Sha512_224Free(wc_Sha512* sha)
 {
     wc_Sha512Free(sha);
 }
+
 #if defined(WOLFSSL_KCAPI_HASH)
     /* functions defined in wolfcrypt/src/port/kcapi/kcapi_hash.c */
 #elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
@@ -1701,11 +1688,12 @@ int wc_Sha512_224GetHash(wc_Sha512* sha512, byte* hash)
 {
     return Sha512_Family_GetHash(sha512, hash, wc_Sha512_224Final);
 }
+
 int wc_Sha512_224Copy(wc_Sha512* src, wc_Sha512* dst)
 {
     return wc_Sha512Copy(src, dst);
 }
-#endif
+#endif /* else none of the above: WOLFSSL_KCAPI_HASH, WOLFSSL_SE050 */
 
 #ifdef WOLFSSL_HASH_FLAGS
 int wc_Sha512_224SetFlags(wc_Sha512* sha, word32 flags)
@@ -1732,6 +1720,7 @@ int wc_InitSha512_256(wc_Sha512* sha)
 {
     return wc_InitSha512_256_ex(sha, NULL, INVALID_DEVID);
 }
+
 int wc_Sha512_256Update(wc_Sha512* sha, const byte* data, word32 len)
 {
     return wc_Sha512Update(sha, data, len);
@@ -1745,16 +1734,19 @@ int wc_Sha512_256FinalRaw(wc_Sha512* sha, byte* hash)
 {
     return Sha512FinalRaw(sha, hash, WC_SHA512_256_DIGEST_SIZE);
 }
+
 int wc_Sha512_256Final(wc_Sha512* sha512, byte* hash)
 {
     return Sha512_Family_Final(sha512, hash, WC_SHA512_256_DIGEST_SIZE,
                                InitSha512_256);
 }
 #endif
+
 void wc_Sha512_256Free(wc_Sha512* sha)
 {
     wc_Sha512Free(sha);
 }
+
 #if defined(WOLFSSL_KCAPI_HASH)
     /* functions defined in wolfcrypt/src/port/kcapi/kcapi_hash.c */
 
