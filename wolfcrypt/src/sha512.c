@@ -339,7 +339,8 @@ static int InitSha512_224(wc_Sha512* sha512)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     sha512->ctx.sha_type = SHA2_512;
-    esp_sha_init(&(sha512->ctx));
+    // esp_sha_init(&(sha512->ctx));
+    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -380,7 +381,8 @@ static int InitSha512_256(wc_Sha512* sha512)
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 
     sha512->ctx.sha_type = SHA2_512;
-    esp_sha_init(&(sha512->ctx));
+    // esp_sha_init(&(sha512->ctx));
+    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -630,10 +632,12 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         if (sha512->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA512_224", "Set ctx mode INIT, prior value = %d", sha512->ctx.mode);
+            ESP_LOGI("SHA512_224", "Set ctx 512_224 mode SW, prior value = %d", sha512->ctx.mode);
         }
-    /* We know this is a fresh, uninitialized item, so set to INIT */
-    sha512->ctx.mode = ESP32_SHA_INIT;
+
+    /* no sha224 HW support is available, set to SW */
+    /* TODO there *is* support on ESP32-S2 and ESP32-C3 */
+    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_224);
 }
@@ -645,11 +649,13 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 int wc_InitSha512_256_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-        if (sha512->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA512_256", "Set ctx mode %d", sha512->ctx.mode);
+        if (sha512->ctx.mode != ESP32_SHA_SW) {
+            ESP_LOGI("SHA512_256", "Set ctx SW mode from %d", sha512->ctx.mode);
         }
-    /* We know this is a fresh, uninitialized item, so set to INIT */
-    sha512->ctx.mode = ESP32_SHA_INIT;
+
+    /* no sha224 HW support is available, set to SW */
+    /* TODO there *is* support on ESP32-S2 and ESP32-C3 */
+    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_256);
 }
@@ -855,6 +861,8 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
             }
             ret = esp_sha512_process(sha512);
             if(ret == 0 && sha512->ctx.mode == ESP32_SHA_SW){
+                ByteReverseWords64(sha512->buffer, sha512->buffer,
+                                                         WC_SHA512_BLOCK_SIZE);
                 ret = Transform_Sha512(sha512);
             }
     #endif
@@ -923,6 +931,8 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
                 esp_sha_try_hw_lock(&sha512->ctx);
             }
             if (sha512->ctx.mode == ESP32_SHA_SW) {
+                ByteReverseWords64(sha512->buffer, sha512->buffer,
+                                                          WC_SHA512_BLOCK_SIZE);
                 ret = Transform_Sha512(sha512);
             }
             else {
@@ -1025,6 +1035,8 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
             esp_sha_try_hw_lock(&sha512->ctx);
         }
         if (sha512->ctx.mode == ESP32_SHA_SW) {
+            ByteReverseWords64(sha512->buffer,sha512->buffer,
+                                                         WC_SHA512_BLOCK_SIZE);
             ret = Transform_Sha512(sha512);
         }
         else {
@@ -1082,6 +1094,11 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         esp_sha_try_hw_lock(&sha512->ctx);
     }
     if (sha512->ctx.mode == ESP32_SHA_SW) {
+        ByteReverseWords64(sha512->buffer,
+                           sha512->buffer,
+                           WC_SHA512_BLOCK_SIZE);
+        sha512->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] = sha512->hiLen;
+        sha512->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 1] = sha512->loLen;
         ret = Transform_Sha512(sha512);
     }
     else {
@@ -1093,7 +1110,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
         return ret;
 
     #ifdef LITTLE_ENDIAN_ORDER
-        /* TODO always word64?  for HW and SW? see esp_sha512_block() in esp32_sha.c */
+        /* TODO always word64?  for HW and SW? see wc_esp_digest_state swap and esp_sha512_block() in esp32_sha.c */
         ByteReverseWords64(sha512->digest, sha512->digest, WC_SHA512_DIGEST_SIZE);
     #endif
 
