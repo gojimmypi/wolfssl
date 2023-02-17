@@ -420,10 +420,10 @@ WOLFSSL_TEST_SUBROUTINE int  sha_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_test(void);
-#if !defined(WOLFSSL_NOSHA512_224)
+#if !defined(WOLFSSL_NOSHA512_224) && !defined(HAVE_FIPS)
 WOLFSSL_TEST_SUBROUTINE int  sha512_224_test(void);
 #endif
-#if !defined(WOLFSSL_NOSHA512_256)
+#if !defined(WOLFSSL_NOSHA512_256) a&& !defined(HAVE_FIPS)
 WOLFSSL_TEST_SUBROUTINE int  sha512_256_test(void);
 #endif
 WOLFSSL_TEST_SUBROUTINE int  sha384_test(void);
