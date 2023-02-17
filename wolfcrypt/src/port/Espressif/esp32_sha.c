@@ -245,12 +245,15 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 /* internal sha224 ctx copy (no ESP HW)  */
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
-    /* There's no 224 hardware TODO confirm */
+    /* There's no 224 hardware on ESP32 */
     dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+
+    /* always set to SW, as there's no ESP32 HW
+    ** TODO: add support for ESP32-S2. ESP32-S3, ESP32-C3.
+    */
     dst->ctx.mode = ESP32_SHA_SW;
     return 0;
 }
-
 
 /* internal sha256 ctx copy for ESP HW  */
 int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
@@ -864,7 +867,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     if (ctx->sha_type == SHA2_384 || ctx->sha_type == SHA2_512) {
         word32  i;
         word32* pwrd1 = (word32*)(hash);
-        /* swap value */
+        /* swap 32 bit words in 64 bit values */
         for (i = 0; i < WC_SHA512_DIGEST_SIZE / 4; i += 2) {
             pwrd1[i]     ^= pwrd1[i + 1];
             pwrd1[i + 1] ^= pwrd1[i];
