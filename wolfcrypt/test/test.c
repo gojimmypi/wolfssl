@@ -420,8 +420,12 @@ WOLFSSL_TEST_SUBROUTINE int  sha_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_test(void);
+#if !defined(WOLFSSL_NOSHA512_224)
 WOLFSSL_TEST_SUBROUTINE int  sha512_224_test(void);
+#endif
+#if !defined(WOLFSSL_NOSHA512_256)
 WOLFSSL_TEST_SUBROUTINE int  sha512_256_test(void);
+#endif
 WOLFSSL_TEST_SUBROUTINE int  sha384_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha3_test(void);
 WOLFSSL_TEST_SUBROUTINE int  shake128_test(void);
@@ -738,6 +742,7 @@ int wolfcrypt_test(void* args)
     printf(" wolfSSL version %s\n", LIBWOLFSSL_VERSION_STRING);
     printf("------------------------------------------------------------------------------\n");
 
+
 #ifdef HAVE_ED25519
     if ( (ret = ed25519_test()) != 0)
         return err_sys("ED25519  test failed!\n", ret);
@@ -950,18 +955,23 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("SHA-512  test passed!\n");
     }
 
+#if !defined(WOLFSSL_NOSHA512_224)
     if ((ret = sha512_224_test()) != 0) {
         return err_sys("SHA-512/224  test failed!\n", ret);
     }
     else
         TEST_PASS("SHA-512/224  test passed!\n");
+#endif /* !defined(WOLFSSL_NOSHA512_224) */
 
+#if !defined(WOLFSSL_NOSHA512_224)
     if ((ret = sha512_256_test()) != 0) {
         return err_sys("SHA-512/256  test failed!\n", ret);
     }
     else
         TEST_PASS("SHA-512/256  test passed!\n");
-#endif
+#endif /* !defined(WOLFSSL_NOSHA512_224) */
+
+#endif /* WOLFSSL_SHA512 */
 
 #ifdef WOLFSSL_SHA3
     if ( (ret = sha3_test()) != 0)
@@ -1054,10 +1064,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         else
             TEST_PASS("HMAC-SHA512 test passed!\n");
 
+// TODO
 //        if ( (ret = hmac_sha512_224_test()) != 0)
 //            return err_sys("HMAC-SHA512 test failed!\n", ret);
 //        else
 //            TEST_PASS("HMAC-SHA512 test passed!\n");
+
     #endif
 
     #if !defined(NO_HMAC) && defined(WOLFSSL_SHA3) && \
@@ -1584,7 +1596,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
     /* so overall tests can pull in test function */
 #if defined(WOLFSSL_ESPIDF) || defined(_WIN32_WCE)
-    char* TAG = "wolfcrypt_test";
+	char* TAG = "wolfcrypt_test"; /*(TODO not for win32! */
     int wolf_test_task(void)
 #else
 #ifndef NO_MAIN_FUNCTION
@@ -3037,6 +3049,7 @@ exit:
     return ret;
 }
 
+#if !defined(WOLFSSL_NOSHA512_224)
 WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
 {
     wc_Sha512 sha, shaCopy;
@@ -3049,21 +3062,27 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
     int times = sizeof(test_sha) / sizeof(struct testVector), i;
 
     a.input  = "";
-    a.output = "\x6e\xd0\xdd\x02\x80\x6f\xa8\x9e\x25\xde\x06\x0c\x19\xd3\xac"
-               "\x86\xca\xbb\x87\xd6\xa0\xdd\xd0\x5c\x33\x3b\x84\xf4";
+    a.output = "\x6e\xd0\xdd\x02\x80\x6f\xa8\x9e"
+               "\x25\xde\x06\x0c\x19\xd3\xac\x86"
+               "\xca\xbb\x87\xd6\xa0\xdd\xd0\x5c"
+               "\x33\x3b\x84\xf4";
     a.inLen  = XSTRLEN(a.input);
     a.outLen = WC_SHA512_224_DIGEST_SIZE;
 
     b.input  = "abc";
-    b.output = "\x46\x34\x27\x0f\x70\x7b\x6a\x54\xda\xae\x75\x30\x46\x08\x42"
-               "\xe2\x0e\x37\xed\x26\x5c\xee\xe9\xa4\x3e\x89\x24\xaa";
+    b.output = "\x46\x34\x27\x0f\x70\x7b\x6a\x54"
+               "\xda\xae\x75\x30\x46\x08\x42\xe2"
+               "\x0e\x37\xed\x26\x5c\xee\xe9\xa4"
+               "\x3e\x89\x24\xaa";
     b.inLen  = XSTRLEN(b.input);
     b.outLen = WC_SHA512_224_DIGEST_SIZE;
 
     c.input  = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhi"
                "jklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
-    c.output = "\x23\xfe\xc5\xbb\x94\xd6\x0b\x23\x30\x81\x92\x64\x0b\x0c\x45"
-               "\x33\x35\xd6\x64\x73\x4f\xe4\x0e\x72\x68\x67\x4a\xf9";
+    c.output = "\x23\xfe\xc5\xbb\x94\xd6\x0b\x23"
+               "\x30\x81\x92\x64\x0b\x0c\x45\x33"
+               "\x35\xd6\x64\x73\x4f\xe4\x0e\x72"
+               "\x68\x67\x4a\xf9";
     c.inLen  = XSTRLEN(c.input);
     c.outLen = WC_SHA512_224_DIGEST_SIZE;
 
@@ -3160,7 +3179,9 @@ exit:
 
     return ret;
 } /* sha512_224_test */
+#endif /* !defined(WOLFSSL_NOSHA512_224) */
 
+#if !defined(WOLFSSL_NOSHA512_256)
 WOLFSSL_TEST_SUBROUTINE int sha512_256_test(void)
 {
     wc_Sha512 sha, shaCopy;
@@ -3290,8 +3311,9 @@ exit:
 
     return ret;
 } /* sha512_256_test */
+#endif /* !defined(WOLFSSL_NOSHA512_256) */
 
-#endif
+#endif /* WOLFSSL_SHA512 */
 
 
 #ifdef WOLFSSL_SHA384
@@ -40445,6 +40467,11 @@ static int mp_test_read_to_bin(mp_int* a)
             }
         }
     }
+
+    /* Length too small. */
+    ret = mp_to_unsigned_bin_len(a, out, 1);
+    if (ret != MP_VAL)
+        return -12716;
 
     ret = mp_read_unsigned_bin(a, NULL, 0);
     if (ret != 0)
