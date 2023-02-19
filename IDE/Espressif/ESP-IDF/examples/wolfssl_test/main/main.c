@@ -177,7 +177,9 @@ void app_main(void)
 #endif
 
     /* all platforms: stack high water mark check */
+#ifndef SINGLE_THREADED
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+#endif
 
     /* check to see if we are using hardware encryption */
 #if defined(NO_ESP32WROOM32_CRYPT)
@@ -248,7 +250,9 @@ void app_main(void)
     /* after the test, we'll just wait */
     while (1) {
         /* do something other than nothing to help next program/debug session*/
+#ifndef SINGLE_THREADED
         vTaskDelay(1000);
+#endif
     }
 #endif
 }
