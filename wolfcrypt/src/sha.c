@@ -323,7 +323,7 @@
     ** This is automatically called by wc_ShaHash */
     static int InitSha(wc_Sha* sha)
     {
-        int ret = 0; /* TODO can this stack use be removed */
+        int ret = 0;
 
         sha->digest[0] = 0x67452301L;
         sha->digest[1] = 0xEFCDAB89L;
@@ -335,8 +335,9 @@
         sha->loLen   = 0;
         sha->hiLen   = 0;
 
-        sha->ctx.sha_type = SHA1;
-        ret = esp_sha_init(&(sha->ctx));
+        /* HW needs to be carefully initialized, taking into account soft copy.
+        ** If already in use; copy may revert to SW as needed. */
+        ret = esp_sha_init(&(sha->ctx), WC_HASH_TYPE_SHA);
 
         return ret;
     }
@@ -790,7 +791,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         sha->buffLen += WC_SHA_BLOCK_SIZE - sha->buffLen;
 
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        // r1
         ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
     #endif
 
@@ -823,7 +823,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     XMEMSET(&local[sha->buffLen], 0, WC_SHA_PAD_SIZE - sha->buffLen);
 
 #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-    // r2
     ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
 #endif
 
@@ -861,7 +860,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #endif
 
 #ifdef LITTLE_ENDIAN_ORDER
-  // r3
     ByteReverseWords(sha->digest, sha->digest, WC_SHA_DIGEST_SIZE);
 #endif
 

@@ -71,8 +71,59 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
+
+int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
+{
+    int ret = 0;
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
+        case WC_HASH_TYPE_SHA:
+            ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+        case WC_HASH_TYPE_SHA256:
+            ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+        case  WC_HASH_TYPE_SHA384:
+            ctx->sha_type = SHA2_384; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+        case WC_HASH_TYPE_SHA512:
+            ctx->sha_type = SHA2_512; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+        case WC_HASH_TYPE_SHA512_224:
+            /* Don't call init, always SW as there's no HW. */
+            ctx->mode = ESP32_SHA_SW;
+            ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
+            break;
+
+        case WC_HASH_TYPE_SHA512_256:
+            /* Don't call init, always SW as there's no HW. */
+            ctx->mode = ESP32_SHA_SW;
+            ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
+            break;
+
+        default:
+           ret = esp_sha_init_ctx(ctx);
+           ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
+           break;
+    }
+#else
+    /* other chipsets will be implemented here */
+#endif
+
+    return ret;
+}
+
 /* we'll call a separate init as there's only 1 HW acceleration */
-int esp_sha_init(WC_ESP32SHA* ctx)
+int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
     if (ctx->initializer == NULL) {
         ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx");
@@ -223,10 +274,12 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
+
         /* note we arrived here only because the src is already in HW mode */
         dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
-        /*  */
-        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        /* initializer will be set during init */
+        esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA);
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
             ESP_LOGI(TAG, "Confirmed Sha Copy set to SW");
@@ -268,8 +321,11 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         ESP_LOGI(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
         ret = esp_sha256_digest_process(dst, 0);
 
-        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
-        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+        /* provide init hint to possibly SW revert */
+        dst->ctx.mode = ESP32_SHA_HW_COPY;
+
+        /* initializer breadcrumb will be set during init */
+        esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA256 );
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
             ESP_LOGV(TAG, "Confirmed wc_Sha256 Copy set to SW");
@@ -299,8 +355,11 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ESP_LOGI(TAG, "esp_sha384_ctx_copy esp_sha512_digest_process");
         ret = esp_sha512_digest_process(dst, 0);
 
-        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
-        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+        /* provide init hint to SW revert */
+        dst->ctx.mode = ESP32_SHA_HW_COPY;
+
+         /* initializer will be set during init */
+        esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA384);
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
             ESP_LOGV(TAG, "Confirmed wc_Sha512 Copy set to SW");
@@ -331,7 +390,11 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 
         /* TODO init if HW not active? */
         dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
-        esp_sha_init(&(dst->ctx)); /* initializer will be set during init */
+
+        /* initializer will be set during init
+        ** reminder we should never arrive here for
+        ** ESP32 SHA512/224 or SHA512/224, as there's no HW */
+        esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA512);
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
             ESP_LOGV(TAG, "Confirmed wc_Sha512 Copy set to SW");

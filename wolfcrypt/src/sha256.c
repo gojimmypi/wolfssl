@@ -758,8 +758,7 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->loLen   = 0;
         sha256->hiLen   = 0;
 
-        sha256->ctx.sha_type = SHA2_256;
-        ret = esp_sha_init(&(sha256->ctx));
+        ret = esp_sha_init(&(sha256->ctx), WC_HASH_TYPE_SHA256);
 
         return ret;
     }

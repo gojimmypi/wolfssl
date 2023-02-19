@@ -294,13 +294,11 @@ static int InitSha512(wc_Sha512* sha512)
     sha512->loLen   = 0;
     sha512->hiLen   = 0;
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
 
-    sha512->ctx.sha_type = SHA2_512; /* assign Espressif SHA type */
-
-    /* HW needs to be carefully initialized, taking into account soft copy */
-    esp_sha_init(&(sha512->ctx));
+    /* HW needs to be carefully initialized, taking into account soft copy.
+    ** If already in use; copy may revert to SW as needed. */
+    esp_sha_init(&(sha512->ctx), WC_HASH_TYPE_SHA512);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -336,10 +334,12 @@ static int InitSha512_224(wc_Sha512* sha512)
     sha512->hiLen   = 0;
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-
-    /* No SHA512/224 HW support is available, set to SW. */
-    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
-    sha512->ctx.sha_type = SHA2_512;
+    /* HW needs to be carefully initialized, taking into account soft copy.
+    ** If already in use; copy may revert to SW as needed.
+    **
+    ** Note for original ESP32, there's no HW for SHA512/224
+    */
+    esp_sha_init(&(sha512->ctx), WC_HASH_TYPE_SHA512_224);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -377,10 +377,12 @@ static int InitSha512_256(wc_Sha512* sha512)
     sha512->hiLen   = 0;
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-
-    sha512->ctx.sha_type = SHA2_512;
-    // esp_sha_init(&(sha512->ctx));
-    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+    /* HW needs to be carefully initialized, taking into account soft copy.
+    ** If already in use; copy may revert to SW as needed.
+    **
+    ** Note for original ESP32, there's no HW for SHA512/2256.
+    */
+    esp_sha_init(&(sha512->ctx), WC_HASH_TYPE_SHA512_256);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -1345,8 +1347,9 @@ static int InitSha384(wc_Sha384* sha384)
     sha384->hiLen   = 0;
 
 #if  defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-    sha384->ctx.sha_type = SHA2_384;
-    esp_sha_init(&(sha384->ctx));
+    /* HW needs to be carefully initialized, taking into account soft copy.
+    ** If already in use; copy may revert to SW as needed. */
+    esp_sha_init(&(sha384->ctx), WC_HASH_TYPE_SHA384);
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
