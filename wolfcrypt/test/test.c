@@ -121,7 +121,9 @@
     #include <sys/time.h>
     #include <esp_log.h>
 
-	char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
+    /* there's a conflict iwth the TAG in sha256.c,
+    ** so we call this oneTEST_TAG */
+	char* TEST_TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
 
@@ -1696,7 +1698,8 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 #ifdef WOLFSSL_ESPIDF
         /* ESP_LOGI to print takes up a lot less memory than printf */
-        ESP_LOGI(TAG, "Exiting main with return code: % d\n", args.return_code);
+        ESP_LOGI(TEST_TAG, "Exiting main with return code: % d\n",
+                           args.return_code);
 #endif
 
 /* everything else will use printf */

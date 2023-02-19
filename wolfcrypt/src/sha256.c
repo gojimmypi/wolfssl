@@ -85,12 +85,11 @@ on the specific device platform.
 #endif
 
 #ifdef WOLFSSL_ESPIDF
-    /* Define the ESP_LOGx(TAG, "" value for output messages here. */
-    /*
-    ** TODO Is this file included twice? Enable this next line ends up
-    ** having the compiler complain about duplicate
+    /* Define the ESP_LOGx(TAG, "" value for output messages here.
+    **
+    ** Beware of possible conflict in test.c (that one now named TEST_TAG)
     */
-    /* char* TAG = "wc_sha256"; */
+    char* TAG = "wc_sha256";
 #endif
 
 /* determine if we are using Espressif SHA hardware acceleration */
@@ -778,7 +777,8 @@ static int InitSha256(wc_Sha256* sha256)
     #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         /* We know this is a fresh, uninitialized item, so set to INIT */
         if (sha256->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA256", "Set ctx mode %d", sha256->ctx.mode);
+            ESP_LOGV(TAG, "Set ctx mode from prior value: "
+                               "%d", sha256->ctx.mode);
         }
         sha256->ctx.mode = ESP32_SHA_INIT;
     #endif
@@ -1089,16 +1089,16 @@ static int InitSha256(wc_Sha256* sha256)
 
             #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
                 if (sha256->ctx.mode == ESP32_SHA_INIT) {
-                    ESP_LOGI("sha256", "Sha256Update try hardware");
+                    ESP_LOGV(TAG, "Sha256Update try hardware");
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGI("sha256", "Sha256Update process software");
+                    ESP_LOGV(TAG, "Sha256Update process software");
                     ret = XTRANSFORM(sha256, (const byte*)local);
                 }
                 else {
-                    ESP_LOGI("sha256", "Sha256Update process hardware");
+                    ESP_LOGV(TAG, "Sha256Update process hardware");
                     esp_sha256_process(sha256, (const byte*)local);
                 }
             #else
@@ -1173,15 +1173,15 @@ static int InitSha256(wc_Sha256* sha256)
 
             #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
                 if (sha256->ctx.mode == ESP32_SHA_INIT){
-                    ESP_LOGV("sha256", "Sha256Update try hardware loop");
+                    ESP_LOGV(TAG, "Sha256Update try hardware loop");
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGV("sha256", "Sha256Update process software loop");
+                    ESP_LOGV(TAG, "Sha256Update process software loop");
                     ret = XTRANSFORM(sha256, (const byte*)local32);
                 }
                 else {
-                    ESP_LOGV("sha256", "Sha256Update process hardware");
+                    ESP_LOGV(TAG, "Sha256Update process hardware");
                     esp_sha256_process(sha256, (const byte*)local32);
                 }
             #else
@@ -1595,7 +1595,8 @@ static int InitSha256(wc_Sha256* sha256)
     #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         /* We know this is a fresh, uninitialized item, so set to INIT */
         if (sha224->ctx.mode != ESP32_SHA_SW) {
-            ESP_LOGI("SHA256", "Set sha224 ctx mode ESP32_SHA_SW %d", sha224->ctx.mode);
+            ESP_LOGV(TAG, "Set sha224 ctx mode init to ESP32_SHA_SW. "
+                          "Prior value: %d", sha224->ctx.mode);
         }
         /* no sha224 HW support is available, set to SW */
         sha224->ctx.mode = ESP32_SHA_SW;
@@ -1615,7 +1616,8 @@ static int InitSha256(wc_Sha256* sha256)
 
     #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         if (sha224->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA224", "Set ctx mode %d", sha224->ctx.mode);
+            ESP_LOGV("SHA224", "Set ctx mode from prior value: "
+                               "%d", sha224->ctx.mode);
         }
         /* We know this is a fresh, uninitialized item, so set to INIT */
         sha224->ctx.mode = ESP32_SHA_INIT;
@@ -1804,10 +1806,10 @@ void wc_Sha256Free(wc_Sha256* sha256)
          * should have already been released (lockDepth = 0)
          */
         (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
-        ESP_LOGV("sha256", "Alert: hardware unlock needed in wc_Sha256Free.");
+        ESP_LOGV(TAG, "Alert: hardware unlock needed in wc_Sha256Free.");
     }
     else {
-        ESP_LOGV("sha256", "Hardware unlock not needed in wc_Sha256Free.");
+        ESP_LOGV(TAG, "Hardware unlock not needed in wc_Sha256Free.");
     }
 #endif
 }

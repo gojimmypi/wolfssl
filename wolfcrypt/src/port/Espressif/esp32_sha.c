@@ -197,20 +197,22 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
                 case ESP32_SHA_SW:
                     /* this should rarely, if ever occur */
-                    ESP_LOGI(TAG, "ALERT: unexpected SW WC_ESP32SHA ctx mode. "
-                                  "Copied?");
+                    ESP_LOGW(TAG, "ALERT: unexpected SW WC_ESP32SHA ctx mode. "
+                                  "Copied? Revert to ESP32_SHA_INIT.");
                     ctx->mode = ESP32_SHA_INIT;
                     break;
 
                 case ESP32_SHA_HW:
-                    /* this should rarely, if ever occur.  */
-                    ESP_LOGI(TAG, "ALERT: unexpected HW WC_ESP32SHA ctx mode. "
+                    /* this should rarely, if ever occur. */
+                    ESP_LOGW(TAG, "ALERT: unexpected HW WC_ESP32SHA ctx mode. "
                                   "Copied?");
                     ctx->mode = ESP32_SHA_INIT;
                     break;
 
                 case ESP32_SHA_HW_COPY:
-                    ESP_LOGI(TAG, "HW WC_ESP32SHA ctx mode = ESP32_SHA_HW_COPY.");
+                    /* This is an interesting but acceptable situation:
+                    ** an anticipated active HW copy that will demote to SW. */
+                    ESP_LOGV(TAG, "HW WC_ESP32SHA ctx mode = ESP32_SHA_HW_COPY.");
                     break;
 
                 default:
@@ -252,8 +254,9 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             break;
 
         case ESP32_SHA_SW:
-            /* likely a call when another SHA HW in progress */
-            ESP_LOGI(TAG, ">> SW Set to init.");
+            /* This is an interesting situation: likely a call when
+            ** another SHA in progress, but copied. */
+            ESP_LOGV(TAG, ">> SW Set to init.");
             ctx->mode = ESP32_SHA_INIT;
             break;
 
@@ -287,7 +290,8 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 {
     int ret;
     if (src->ctx.mode == ESP32_SHA_HW) {
-        ESP_LOGI(TAG, "esp_sha_ctx_copy esp_sha_digest_process");
+        /* this is an interesting situation to copy HW digest to SW */
+        ESP_LOGV(TAG, "esp_sha_ctx_copy esp_sha_digest_process");
 
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
@@ -299,9 +303,12 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA);
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
-            ESP_LOGI(TAG, "Confirmed Sha Copy set to SW");
+            /* The normal revert to SW in copy is expected */
+            ESP_LOGV(TAG, "Confirmed Sha Copy set to SW");
         }
         else {
+            /* However NOT reverting to SW is not right.
+            ** This should never happen. */
             ESP_LOGW(TAG, "Sha Copy NOT set to SW");
         }
     }
