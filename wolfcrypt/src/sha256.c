@@ -735,8 +735,8 @@ static int InitSha256(wc_Sha256* sha256)
     #define NEED_SOFT_SHA256
 
     /*
-     * soft SHA needs initialization digest, but HW does not.
-     */
+    ** soft SHA needs initialization digest, but HW does not.
+    */
     static int InitSha256(wc_Sha256* sha256)
     {
         int ret = 0; /* zero = success */
@@ -1883,10 +1883,11 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
 
     int wc_Sha224Copy(wc_Sha224* src, wc_Sha224* dst)
     {
-        int ret = 0;
+        int ret = 0; /* assume success unless proven otherwise */
 
-        if (src == NULL || dst == NULL)
+        if (src == NULL || dst == NULL) {
             return BAD_FUNC_ARG;
+        }
 
         XMEMCPY(dst, src, sizeof(wc_Sha224));
 
@@ -1903,28 +1904,14 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
         ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
     #endif
 
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-
-    esp_sha224_ctx_copy(src, dst);
-
-//    if (src->ctx.mode == ESP32_SHA_HW) {
-//        ESP_LOGI("sha224", "Sha224 Copy set to SW");
-//        ret = esp_sha256_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
-//        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
-//        esp_sha_init(&(dst->ctx));
-//        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
-//    }
-//    else {
-//        dst->ctx = src->ctx; /* copy the ctx */
-//        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
-//    }
-
-#endif
-
+    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+        ret = esp_sha224_ctx_copy(src, dst);
+    #endif
 
     #ifdef WOLFSSL_HASH_FLAGS
         dst->flags |= WC_HASH_FLAG_ISCOPY;
     #endif
+
     #if defined(WOLFSSL_HASH_KEEP)
         if (src->msg != NULL) {
             dst->msg = (byte*)XMALLOC(src->len, dst->heap,
@@ -2025,8 +2012,9 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 {
     int ret = 0;
 
-    if (src == NULL || dst == NULL)
+    if (src == NULL || dst == NULL) {
         return BAD_FUNC_ARG;
+    }
 
     XMEMCPY(dst, src, sizeof(wc_Sha256));
 
@@ -2046,30 +2034,19 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA256)
     ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
 #endif
+
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
 #endif
 
 #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
-
     esp_sha256_ctx_copy(src, dst);
-
-//    if (src->ctx.mode == ESP32_SHA_HW) {
-//        ESP_LOGI("sha256", "Sha256 Copy set to SW");
-//        ret = esp_sha256_digest_process(dst, 0); /* get a copy of the digest, but don't process it */
-//        XMEMSET(&(dst->ctx), 0, sizeof(WC_ESP32SHA));
-//        esp_sha_init(&(dst->ctx));
-//        dst->ctx.mode = ESP32_SHA_SW; /* a copy of HW must be SW */
-//    }
-//    else {
-//        dst->ctx = src->ctx; /* copy the ctx */
-//        dst->ctx.initializer = &dst->ctx; /* but assign the initializer to dest */
-//    }
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
      dst->flags |= WC_HASH_FLAG_ISCOPY;
 #endif
+
 #if defined(WOLFSSL_HASH_KEEP)
     if (src->msg != NULL) {
         dst->msg = (byte*)XMALLOC(src->len, dst->heap, DYNAMIC_TYPE_TMP_BUFFER);

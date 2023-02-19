@@ -639,8 +639,8 @@ int wc_InitSha512_224_ex(wc_Sha512* sha512, void* heap, int devId)
 int wc_InitSha512_256_ex(wc_Sha512* sha512, void* heap, int devId)
 {
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-    /* No SHA512/256 HW support is available, set to SW. */
-    sha512->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+    /* No SHA512/256 HW support is available on ESP32, set to SW. */
+    sha512->ctx.mode = ESP32_SHA_SW;
 #endif
     return InitSha512_Family(sha512, heap, devId, InitSha512_256);
 }

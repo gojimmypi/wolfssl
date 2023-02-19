@@ -558,10 +558,11 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
 #endif
 
 #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    if (sha->ctx.mode != ESP32_SHA_INIT) {
+        /* it may be interesting to see old values during debugging */
+        ESP_LOGV("SHA", "Set ctx mode from prior value: %d", sha->ctx.mode);
+    }
     /* We know this is a fresh, uninitialized item, so set to INIT */
-        if (sha->ctx.mode != ESP32_SHA_INIT) {
-            ESP_LOGI("SHA", "Set ctx mode from %d", sha->ctx.mode);
-        }
     sha->ctx.mode = ESP32_SHA_INIT;
 #endif
 
