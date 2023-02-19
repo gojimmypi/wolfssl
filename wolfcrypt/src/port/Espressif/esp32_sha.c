@@ -323,7 +323,9 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
     return ret;
 } /* esp_sha_ctx_copy */
 
-/* internal sha224 ctx copy (no ESP HW)  */
+/*
+** internal sha224 ctx copy (no ESP HW)
+*/
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware on ESP32 */
@@ -336,7 +338,9 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     return 0;
 } /* esp_sha224_ctx_copy */
 
-/* internal sha256 ctx copy for ESP HW  */
+/*
+** internal sha256 ctx copy for ESP HW
+*/
 int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     int ret;
@@ -370,7 +374,9 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     return ret;
 } /* esp_sha256_ctx_copy */
 
-/* internal sha384 ctx copy for ESP HW  */
+/*
+** internal sha384 ctx copy for ESP HW
+*/
 int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 {
     int ret;
@@ -403,7 +409,9 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
     return ret;
 } /* esp_sha384_ctx_copy */
 
-/* internal sha512 ctx copy for ESP HW  */
+/*
+** internal sha512 ctx copy for ESP HW
+*/
 int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 {
     int ret;
@@ -412,8 +420,8 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ESP_LOGI(TAG, "esp_sha512_ctx_copy esp_sha512_digest_process");
         ret = esp_sha512_digest_process(dst, 0);
 
-        /* TODO init if HW not active? */
-        dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+        /* provide init hint to SW revert */
+        dst->ctx.mode = ESP32_SHA_HW_COPY;
 
         /* initializer will be set during init
         ** reminder we should never arrive here for
@@ -437,23 +445,24 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
     return ret;
 } /* esp_sha512_ctx_copy */
 
-
 /*
- * determine the digest size, depending on SHA type.
- *
- * See FIPS PUB 180-4, Instruction Section 1.
- *
- *
-    enum SHA_TYPE {
-        SHA1 = 0,
-        SHA2_256,
-        SHA2_384,
-        SHA2_512,
-        SHA_INVALID = -1,
-    };
+** determine the digest size, depending on SHA type.
+**
+** See FIPS PUB 180-4, Instruction Section 1.
+**
+** see ESP32 shah.h for values:
+**
+**  enum SHA_TYPE {
+**      SHA1 = 0,
+**      SHA2_256,
+**      SHA2_384,
+**      SHA2_512,
+**      SHA_INVALID = -1,
+**  };
+**
+** given the SHA_TYPE (see Espressif sha.h) return WC digest size
+**
 */
-
-/* given the SHA_TYPE (see Espressif sha.h) return WC digest size*/
 static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 {
     ESP_LOGV(TAG, "  esp_sha_digest_size");
@@ -491,7 +500,7 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 } /* wc_esp_sha_digest_size */
 
 /*
-* wait until all engines becomes idle
+** wait until all engines becomes idle
 */
 static void wc_esp_wait_until_idle()
 {
@@ -501,22 +510,22 @@ static void wc_esp_wait_until_idle()
            (DPORT_REG_READ(SHA_512_BUSY_REG) != 0)) {
         /* do nothing while waiting. */
     }
-}
+} /* wc_esp_wait_until_idle */
 
 /*
- * hack alert. there really should have been something implemented
- * in periph_ctrl.c to detect ref_counts[periph] depth.
- *
- * since there is not at this time, we have this brute-force method.
- *
- * when trying to unwrap an arbitrary depth of peripheral-enable(s),
- * we'll check the register upon *enable* to see if we actually did.
- *
- * Note that enable / disable only occurs when ref_counts[periph] == 0
- *
- * TODO: check if this works with other ESP32 platforms ESP32-C3,
- * ESP32-S3, etc.  (A: generally, no. RISC-V has different HW accel.)
- */
+** hack alert. there really should have been something implemented
+** in Espressif periph_ctrl.c to detect ref_counts[periph] depth.
+**
+** since there is not at this time, we have this brute-force method.
+**
+** when trying to unwrap an arbitrary depth of peripheral-enable(s),
+** we'll check the register upon *enable* to see if we actually did.
+**
+** Note that enable / disable only occurs when ref_counts[periph] == 0
+**
+** TODO: check if this works with other ESP32 platforms ESP32-C3,
+** ESP32-S3, etc.  (A: generally, no. RISC-V has different HW accel.)
+*/
 int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 {
     if (ctx == NULL)
@@ -581,8 +590,8 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 } /* esp_unroll_sha_module_enable */
 
 /*
-* lock hw engine.
-* this should be called before using engine.
+** lock hw engine.
+** this should be called before using engine.
 */
 int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
@@ -705,7 +714,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 } /* esp_sha_try_hw_lock */
 
 /*
-* release hw engine. when we don't have it locked, SHA module is DISABLED
+** release HW engine. when we don't have it locked, SHA module is DISABLED
 */
 int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
@@ -834,7 +843,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 }
 
 /*
-* process message block
+** process message block
 */
 static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
                                  const word32* data,
@@ -871,11 +880,11 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     esp_sha_start_process(ctx);
 
     ESP_LOGV(TAG, "  leave esp_process_block");
-}
+} /* wc_esp_process_block */
 
 /*
- * retrieve sha digest from memory
- */
+** retrieve sha digest from memory
+*/
 int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 {
     word32 digestSz;
@@ -976,11 +985,11 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     ESP_LOGV(TAG, "leave esp_digest_state");
     return 0;
-}
+} /* wc_esp_digest_state */
 
 #ifndef NO_SHA
 /*
-* sha1 process
+** sha1 process
 */
 int esp_sha_process(struct wc_Sha* sha, const byte* data)
 {
@@ -992,10 +1001,10 @@ int esp_sha_process(struct wc_Sha* sha, const byte* data)
 
     ESP_LOGV(TAG, "leave esp_sha_process");
     return ret;
-}
+} /* esp_sha_process */
 
 /*
-* retrieve sha1 digest
+** retrieve sha1 digest
 */
 int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
 {
@@ -1012,21 +1021,20 @@ int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
     ESP_LOGV(TAG, "leave esp_sha_digest_process");
 
     return ret;
-}
+} /* esp_sha_digest_process */
 #endif /* NO_SHA */
 
 
 #ifndef NO_SHA256
 /*
-* sha256 process
-*
-* repeatedly call this for [N] blocks of [WC_SHA256_BLOCK_SIZE] bytes of data
+** sha256 process
+**
+** repeatedly call this for [N] blocks of [WC_SHA256_BLOCK_SIZE] bytes of data
 */
 int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
 {
     int ret = 0;
 
-    /* TODO enable metrics */
     ESP_LOGV(TAG, "  enter esp_sha256_process");
 
     if ((&sha->ctx)->sha_type == SHA2_256) {
@@ -1044,19 +1052,17 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
     ESP_LOGV(TAG, "  leave esp_sha256_process");
 
     return ret;
-}
+} /* esp_sha256_process */
 
 /*
-* retrieve sha256 digest
-*
-* note that wc_Sha256Final() in sha256.c expects to need to reverse byte
-* order, even though we could have returned them in the right order.
+** retrieve sha256 digest
+**
+** note that wc_Sha256Final() in sha256.c expects to need to reverse byte
+** order, even though we could have returned them in the right order.
 */
 int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 {
     int ret = 0;
-
-    /* TODO enable metrics */
 
     ESP_LOGV(TAG, "enter esp_sha256_digest_process");
 
@@ -1068,21 +1074,22 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 
     ESP_LOGV(TAG, "leave esp_sha256_digest_process");
     return ret;
-}
+} /* esp_sha256_digest_process */
 
 
 #endif /* NO_SHA256 */
 
 #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
 /*
-* sha512 process. this is used for sha384 too.
+** sha512 process. this is used for sha384 too.
 */
 void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
 {
     ESP_LOGV(TAG, "enter esp_sha512_block");
     /* start register offset */
 
-    if (sha->ctx.mode == ESP32_SHA_SW) { /* TODO add comment on word64 */
+    /* note that in SW mode, wolfSSL uses 64 bit words */
+    if (sha->ctx.mode == ESP32_SHA_SW) {
         ByteReverseWords64(sha->buffer,
                            sha->buffer,
                            WC_SHA512_BLOCK_SIZE);
@@ -1095,7 +1102,8 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
 
     }
     else {
-        ByteReverseWords((word32*)sha->buffer, /* TODO add comment HW 32 bit words */
+        /* when we are in HW mode, Espressif uses 32 bit words */
+        ByteReverseWords((word32*)sha->buffer,
                          (word32*)sha->buffer,
                          WC_SHA512_BLOCK_SIZE);
         if (isfinal) {
@@ -1108,9 +1116,10 @@ void esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
         wc_esp_process_block(&sha->ctx, data, WC_SHA512_BLOCK_SIZE);
     }
     ESP_LOGV(TAG, "leave esp_sha512_block");
-}
+} /* esp_sha512_block */
+
 /*
-* sha512 process. this is used for sha384 too.
+** sha512 process. this is used for sha384 too.
 */
 int esp_sha512_process(struct wc_Sha512* sha)
 {
@@ -1123,8 +1132,9 @@ int esp_sha512_process(struct wc_Sha512* sha)
     ESP_LOGV(TAG, "leave esp_sha512_process");
     return 0;
 }
+
 /*
-* retrieve sha512 digest. this is used for sha384, sha512-224, sha512-256 too.
+** retrieve sha512 digest. this is used for sha384, sha512-224, sha512-256 too.
 */
 int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 {
@@ -1136,7 +1146,6 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
         esp_sha512_block(sha, data, 1);
     }
     if (sha->ctx.mode == ESP32_SHA_HW) {
-        /* TODO == HW ?*/
         wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
     }
     else {
@@ -1145,7 +1154,7 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");
     return 0;
-}
+} /* esp_sha512_digest_process */
 #endif /* WOLFSSL_SHA512 || WOLFSSL_SHA384 */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT */
 #endif /* !defined(NO_SHA) ||... */
