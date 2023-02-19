@@ -3655,7 +3655,10 @@ static int SetupPskKey(WOLFSSL* ssl, PreSharedKey* psk, int clientHello)
                 ssl->options.cipherSuite  = psk->cipherSuite;
             }
             else {
-                byte pskCS[2] = { psk->cipherSuite0, psk->cipherSuite };
+                byte pskCS[2];
+                pskCS[0] = psk->cipherSuite0;
+                pskCS[1] = psk->cipherSuite;
+
                 /* Ensure PSK and negotiated cipher suites have same hash. */
                 if (SuiteMac(pskCS) != SuiteMac(suite)) {
                     WOLFSSL_ERROR_VERBOSE(PSK_KEY_ERROR);
@@ -5562,7 +5565,7 @@ static int FindPsk(WOLFSSL* ssl, PreSharedKey* psk, const byte* suite, int* err)
     *err = ret;
     return found;
 }
-#endif
+#endif /* !NO_PSK */
 
 /* Handle any Pre-Shared Key (PSK) extension.
  * Find a PSK that supports the cipher suite passed in.
@@ -5710,7 +5713,7 @@ static int DoPreSharedKeys(WOLFSSL* ssl, const byte* input, word32 inputSz,
                 return ret;
         }
         else
-    #endif
+    #endif /* HAVE_SESSION_TICKET */
     #ifndef NO_PSK
         if (FindPsk(ssl, current, suite, &ret)) {
             if (ret != 0)
@@ -5918,7 +5921,6 @@ static int CheckPreSharedKeys(WOLFSSL* ssl, const byte* input, word32 helloSz,
         }
         modes = ext->val;
 
-#if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
     #ifdef HAVE_SUPPORTED_CURVES
         ext = TLSX_Find(ssl->extensions, TLSX_KEY_SHARE);
         /* Use (EC)DHE for forward-security if possible. */
@@ -5945,7 +5947,6 @@ static int CheckPreSharedKeys(WOLFSSL* ssl, const byte* input, word32 helloSz,
 
             *usingPSK = 1;
         }
-#endif
     }
 #ifdef WOLFSSL_PSK_ID_PROTECTION
     else {
