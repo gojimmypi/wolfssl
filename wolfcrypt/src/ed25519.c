@@ -165,11 +165,6 @@ static int ed25519_hash(ed25519_key* key, const byte* in, word32 inLen,
     sha = &key->sha;
     ret = ed25519_hash_reset(key);
 #else
-    /* suggested:
-    **   XMEMSET(key, 0, sizeof(*key));
-    **   we probably don't want to wipe out the entire key here,
-    **   but init sha: */
-    /* moved to ed25519_hash_init: XMEMSET(sha, 0, sizeof(sha[1])); */
     ret = ed25519_hash_init(key, sha);
 #endif
     if (ret < 0)
@@ -349,16 +344,10 @@ int wc_ed25519_sign_msg_ex(const byte* in, word32 inLen, byte* out,
         wc_Sha512 *sha = &key->sha;
 #else
         wc_Sha512 sha[1];
-
-        /* suggested:
-        **   XMEMSET(key, 0, sizeof(*key));
-        **   we probably don't want to wipe out the entire key here,
-        **   but init sha: */
-        /* moved to ed25519_hash_init:  XMEMSET(sha, 0, sizeof(sha[1])); */
-
         ret = ed25519_hash_init(key, sha);
-        if (ret < 0)
+        if (ret < 0) {
             return ret;
+        }
 #endif
 
         if (type == Ed25519ctx || type == Ed25519ph) {
@@ -788,17 +777,11 @@ int wc_ed25519_verify_msg_ex(const byte* sig, word32 sigLen, const byte* msg,
 #ifdef WOLFSSL_ED25519_PERSISTENT_SHA
     sha = &key->sha;
 #else
-
-    /* suggested:
-    **   XMEMSET(key, 0, sizeof(*key));
-    **   we probably don't want to wipe out the entire key here,
-    **   but init sha: */
-    /* moved to ed25519_hash_init:     XMEMSET(sha, 0, sizeof(sha[1])); */
-
     ret = ed25519_hash_init(key, sha);
-    if (ret < 0)
+    if (ret < 0) {
         return ret;
-#endif
+    }
+#endif /* WOLFSSL_ED25519_PERSISTENT_SHA */
 
     ret = ed25519_verify_msg_init_with_sha(sig, sigLen, key, sha, type, context,
         contextLen);
