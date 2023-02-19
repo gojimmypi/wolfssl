@@ -60,7 +60,7 @@ static const char* TAG = "wolf_hw_sha";
     #define WC_SHA_DIGEST_SIZE 20
 #endif
 
-/* mutex */
+/* RTOS mutex or just InUse variable  */
 #if defined(SINGLE_THREADED)
     static int InUse = 0;
 #else
@@ -71,7 +71,16 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
-
+/* esp_sha_init
+**   ctx: any wolfSSL ctx from any hash algo
+**   hash_type: the specific wolfSSL enum for hash type
+**
+** Initializes ctx based on chipset capabilities and current state.
+** Active HW states, such as from during a copy operation, are demoted to SW.
+** For hash_type not available in HW, set SW mode.
+**
+** See esp_sha_init_ctx(ctx)
+*/
 int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
@@ -146,12 +155,15 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             switch (ctx->mode) {
                 case ESP32_SHA_INIT:
                 case ESP32_SHA_SW:
+                    /* nothing interesting here */
                     break;
 
                 case ESP32_SHA_HW:
+                    /* This will be dealt with below: likely demote to SW */
                     break;
 
                 case ESP32_SHA_HW_COPY:
+                    /* This is an interesting mode, caller gave HW mode hint */
                     ESP_LOGI(TAG, "ALERT: ESP32_SHA_HW_COPY?");
                     break;
 
@@ -159,7 +171,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
                     /* This should almost occur. We'd need to have an
                     ** uninitialized ctx that just happens to include the
                     ** breadcrumb initializer with the same address. */
-                    ESP_LOGW(TAG, "ALERT: unexpected WC_ESP32SHA ctx mode. ");
+                    ESP_LOGW(TAG, "ALERT: unexpected WC_ESP32SHA ctx mode: "
+                                  "%d. ", ctx->mode);
                     ctx->mode = ESP32_SHA_INIT;
                     break;
             }
@@ -179,6 +192,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             /* Always set to ESP32_SHA_INIT, but give debug info as to why: */
             switch (ctx->mode) {
                 case ESP32_SHA_INIT:
+                    /* if we are already in init mode, nothing to do. */
                     break;
 
                 case ESP32_SHA_SW:
@@ -215,13 +229,13 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     switch (ctx->mode) {
         case ESP32_SHA_INIT:
             /* Likely a fresh, new SHA, as desired. */
-            ESP_LOGV(TAG, ">> Init");
+            ESP_LOGV(TAG, "Normal ESP32_SHA_INIT");
             break;
 
         case ESP32_SHA_HW:
             /* We're already in hardware mode, so release. */
             /* Interesting, but normal. */
-            ESP_LOGV(TAG, ">> HW unlock");
+            ESP_LOGV(TAG, ">> HW unlock.");
 
             /* During init is the ONLY TIME we call unlock.
             ** If there's a problem, likely some undesired operation
@@ -252,7 +266,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
         default:
             /* Most likely corrupted memory. */
-            ESP_LOGW(TAG, "ALERT: \nunexpected mode value\n");
+            ESP_LOGW(TAG, "ALERT: \nunexpected mode value: "
+                          "%d \n", ctx->mode);
             ctx->mode = ESP32_SHA_INIT;
             break;
     } /* switch (ctx->mode)  */
@@ -263,9 +278,11 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     ctx->lockDepth = 0; /* new objects will always start with lock depth = 0 */
 
     return 0; /* Always return success. We assume all issues handled, above. */
-}
+} /* esp_sha_init_ctx */
 
-/* internal sha ctx copy for ESP HW  */
+/*
+** internal sha ctx copy for ESP HW
+*/
 int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 {
     int ret;
@@ -289,15 +306,15 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         }
     }
     else { /* src not in HW mode, ok to copy. */
-        ret = 0;
         /*
         ** reminder XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer breadcrumb: */
         dst->ctx.initializer = &(dst->ctx); /* assign new breadcrumb to dst */
+        ret = 0;
     }
     return ret;
-}
+} /* esp_sha_ctx_copy */
 
 /* internal sha224 ctx copy (no ESP HW)  */
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
@@ -310,7 +327,7 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     */
     dst->ctx.mode = ESP32_SHA_SW;
     return 0;
-}
+} /* esp_sha224_ctx_copy */
 
 /* internal sha256 ctx copy for ESP HW  */
 int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
@@ -377,7 +394,7 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
     }
     return ret;
-}
+} /* esp_sha384_ctx_copy */
 
 /* internal sha512 ctx copy for ESP HW  */
 int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
@@ -405,14 +422,13 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
     }
     else {
         ret = 0;
-        /*
-        ** reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
-        ** No special HW init needed in SW mode.
-        ** but we need to set our initializer: */
-        dst->ctx.initializer = &dst->ctx; /* assign the initializer to dest */
+        /* reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
+        ** No special HW init needed when not in active HW  mode.
+        ** but we need to set our initializer breadcrumb: */
+        dst->ctx.initializer = &dst->ctx; /*breadcrumb is this ctx address */
     }
     return ret;
-}
+} /* esp_sha512_ctx_copy */
 
 
 /*
