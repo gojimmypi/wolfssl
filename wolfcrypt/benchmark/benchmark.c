@@ -969,7 +969,7 @@ static const char* bench_desc_words[][15] = {
     static THREAD_LS_T word64 _xthal_get_ccount_last = 0;
 
     /* TAG for ESP_LOGx() */
-    static char * TAG = "wolfssl_benchmark";
+    static const char* TAG = "wolfssl_benchmark";
 
     #define HAVE_GET_CYCLES
     #define INIT_CYCLE_COUNTER
