@@ -43,7 +43,7 @@
     #include "soc/cpu.h"
 #endif
 
-#if ESP_IDF_VERSION_MAJOR >= 5
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     #include "esp_private/periph_ctrl.h"
 #else
     #include "driver/periph_ctrl.h"
