@@ -425,3 +425,14 @@ user_settings_asm.h
 /IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.save
 /IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.default
 /include.old
+/wolfssl/wolfcrypt/sha.h.WIP_FEB18
+/wolfcrypt/test/test.c.save
+/wolfcrypt/test/test.c.master
+/wolfcrypt/src/sha512.c.WIP_FEB18
+/wolfcrypt/src/sha512.c.Feb18
+/wolfcrypt/src/hash.c.WIP_FEB18
+/wolfcrypt/src/hash - Copy.c
+/wolfcrypt/src/evp.c.WIP_FEB18
+/wolfcrypt/src/evp - Copy.c
+/src/ssl.c.WIP_FEB18
+/include/user_settings.h.paul
