@@ -89,7 +89,7 @@ on the specific device platform.
     **
     ** Beware of possible conflict in test.c (that one now named TEST_TAG)
     */
-    char* TAG = "wc_sha256";
+    static const char* TAG = "wc_sha256";
 #endif
 
 /* determine if we are using Espressif SHA hardware acceleration */
