@@ -123,7 +123,7 @@
 
     /* there's a conflict iwth the TAG in sha256.c,
     ** so we call this oneTEST_TAG */
-	char* TEST_TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
+	static const char* TEST_TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
 
