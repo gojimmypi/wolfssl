@@ -226,8 +226,10 @@ void app_main(void)
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
 #endif
 
+#ifndef SINGLE_THREADED
     /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+#endif
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
 
 /* when using atecc608a on esp32-wroom-32se */
@@ -255,7 +257,9 @@ void app_main(void)
     /* wolfCrypt_Cleanup should always be called at completion,
     ** and is called in wolf_benchmark_task().
     */
+#ifndef SINGLE_THREADED
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+#endif
 
     /* after the test, we'll just wait */
     while (1) {
