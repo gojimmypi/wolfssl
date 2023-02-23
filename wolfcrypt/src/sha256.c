@@ -103,6 +103,16 @@ on the specific device platform.
     #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
 #endif
 
+#ifdef WOLFSSL_ESPIDF
+    /* Define the ESP_LOGx(TAG, "" value for output messages here.
+    **
+    ** Beware of possible conflict in test.c (that one now named TEST_TAG)
+    */
+    static const char* TAG = "wc_sha256";
+#endif
+
+
+
 /* fips wrapper calls, user can call direct */
 #if defined(HAVE_FIPS) && \
     (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
