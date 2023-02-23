@@ -1803,6 +1803,12 @@ extern void uITRON4_free(void *p) ;
 #endif
 #endif
 
+#ifdef WOLFSSL_IMXRT1170_CAAM
+    #define WOLFSSL_CAAM
+    #define WOLFSSL_CAAM_HASH
+    #define WOLFSSL_CAAM_CIPHER
+#endif
+
 /* If DCP is used without SINGLE_THREADED, enforce WOLFSSL_CRYPT_HW_MUTEX */
 #if defined(WOLFSSL_IMXRT_DCP) && !defined(SINGLE_THREADED)
     #undef WOLFSSL_CRYPT_HW_MUTEX
@@ -2803,7 +2809,7 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef HAVE_PQM4
 #define HAVE_PQC
-#define HAVE_KYBER
+#define WOLFSSL_HAVE_KYBER
 #define WOLFSSL_KYBER512
 #endif
 
@@ -2939,6 +2945,10 @@ extern void uITRON4_free(void *p) ;
         #undef WOLFSSL_SYS_CA_CERTS
     #endif
 #endif /* WOLFSSL_SYS_CA_CERTS */
+
+#if defined(SESSION_CACHE_DYNAMIC_MEM) && defined(PERSIST_SESSION_CACHE)
+#error "Dynamic session cache currently does not support persistent session cache."
+#endif
 
 #ifdef __cplusplus
     }   /* extern "C" */

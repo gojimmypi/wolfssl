@@ -84,13 +84,10 @@ on the specific device platform.
     #include <wolfssl/wolfcrypt/cryptocb.h>
 #endif
 
-#ifdef WOLFSSL_ESPIDF
-    /* Define the ESP_LOGx(TAG, "" value for output messages here.
-    **
-    ** Beware of possible conflict in test.c (that one now named TEST_TAG)
-    */
-    static const char* TAG = "wc_sha256";
+#ifdef WOLFSSL_IMXRT1170_CAAM
+    #include <wolfssl/wolfcrypt/port/caam/wolfcaam_fsl_nxp.h>
 #endif
+
 
 /* determine if we are using Espressif SHA hardware acceleration */
 #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
@@ -840,6 +837,9 @@ static int InitSha256(wc_Sha256* sha256)
     #else
         (void)devId;
     #endif /* WOLFSSL_ASYNC_CRYPT */
+    #ifdef WOLFSSL_IMXRT1170_CAAM
+         ret = wc_CAAM_HashInit(&sha256->hndl, &sha256->ctx, WC_HASH_TYPE_SHA256);
+    #endif
 
         return ret;
     }

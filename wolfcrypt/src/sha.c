@@ -578,6 +578,9 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
 #else
     (void)devId;
 #endif /* WOLFSSL_ASYNC_CRYPT */
+#ifdef WOLFSSL_IMXRT1170_CAAM
+   ret = wc_CAAM_HashInit(&sha->hndl, &sha->ctx, WC_HASH_TYPE_SHA);
+#endif
 
     return ret;
 } /* wc_InitSha_ex */

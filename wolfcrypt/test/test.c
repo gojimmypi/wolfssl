@@ -422,11 +422,11 @@ WOLFSSL_TEST_SUBROUTINE int  sha224_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha256_test(void);
 WOLFSSL_TEST_SUBROUTINE int  sha512_test(void);
 #if !defined(WOLFSSL_NOSHA512_224) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 WOLFSSL_TEST_SUBROUTINE int  sha512_224_test(void);
 #endif
 #if !defined(WOLFSSL_NOSHA512_256) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 WOLFSSL_TEST_SUBROUTINE int  sha512_256_test(void);
 #endif
 WOLFSSL_TEST_SUBROUTINE int  sha384_test(void);
@@ -598,7 +598,7 @@ WOLFSSL_TEST_SUBROUTINE int mutex_test(void);
 #if defined(USE_WOLFSSL_MEMORY) && !defined(FREERTOS)
 WOLFSSL_TEST_SUBROUTINE int memcb_test(void);
 #endif
-#ifdef WOLFSSL_IMX6_CAAM_BLOB
+#ifdef WOLFSSL_CAAM_BLOB
 WOLFSSL_TEST_SUBROUTINE int blob_test(void);
 #endif
 
@@ -951,22 +951,22 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     }
 
 #if !defined(WOLFSSL_NOSHA512_224) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
     if ((ret = sha512_224_test()) != 0) {
         return err_sys("SHA-512/224  test failed!\n", ret);
     }
     else
         TEST_PASS("SHA-512/224  test passed!\n");
-#endif /* !defined(WOLFSSL_NOSHA512_224) ... */
+#endif /* !defined(WOLFSSL_NOSHA512_224) && !FIPS ... */
 
 #if !defined(WOLFSSL_NOSHA512_256) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
     if ((ret = sha512_256_test()) != 0) {
         return err_sys("SHA-512/256  test failed!\n", ret);
     }
     else
         TEST_PASS("SHA-512/256  test passed!\n");
-#endif /* !defined(WOLFSSL_NOSHA512_256) ... */
+#endif /* !defined(WOLFSSL_NOSHA512_256) & !FIPS ... */
 
 #endif /* WOLFSSL_SHA512 */
 
@@ -1529,7 +1529,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("memcb    test passed!\n");
 #endif
 
-#ifdef WOLFSSL_IMX6_CAAM_BLOB
+#ifdef WOLFSSL_CAAM_BLOB
     if ( (ret = blob_test()) != 0)
         return err_sys("blob     test failed!\n", ret);
     else
@@ -3044,7 +3044,7 @@ exit:
 }
 
 #if !defined(WOLFSSL_NOSHA512_224) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
 {
     /*
@@ -3151,6 +3151,17 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         "\x91\xf5\x88\xc3\x05\xbb\x3f\x90"
         "\xe2\x4e\x85\x05";
 #endif
+    for (i = 0; i < times; ++i) {
+        ret = wc_Sha512_224Update(&sha, (byte*)large_input,
+            (word32)sizeof(large_input));
+        if (ret != 0)
+            ERROR_OUT(-22408, exit);
+    }
+    ret = wc_Sha512_224Final(&sha, hash);
+    if (ret != 0)
+        ERROR_OUT(-22409, exit);
+    if (XMEMCMP(hash, large_digest, WC_SHA512_224_DIGEST_SIZE) != 0)
+        ERROR_OUT(-22410, exit);
 
     for (i = 0; i < (int)sizeof(large_input); i++) {
         large_input[i] = (byte)(i & 0xFF);
@@ -3191,11 +3202,11 @@ exit:
 
     return ret;
 } /* sha512_224_test */
-#endif /* !defined(WOLFSSL_NOSHA512_224) ... */
+#endif /* !defined(WOLFSSL_NOSHA512_224) && !FIPS ... */
 
 
 #if !defined(WOLFSSL_NOSHA512_256) && \
-   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 2)) && !defined(HAVE_SELFTEST)
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 
 WOLFSSL_TEST_SUBROUTINE int sha512_256_test(void)
 {
@@ -3343,7 +3354,7 @@ exit:
 
     return ret;
 } /* sha512_256_test */
-#endif /* !defined(WOLFSSL_NOSHA512_256) ... */
+#endif /* !defined(WOLFSSL_NOSHA512_256) && !FIPS ... */
 
 #endif /* WOLFSSL_SHA512 */
 
@@ -13440,15 +13451,21 @@ WOLFSSL_TEST_SUBROUTINE int memory_test(void)
         byte *c = NULL;
         byte *b = (byte*)XMALLOC(MEM_TEST_SZ, HEAP_HINT,
                                  DYNAMIC_TYPE_TMP_BUFFER);
+        #ifndef WOLFSSL_NO_REALLOC
         if (b) {
             c = (byte*)XREALLOC(b, MEM_TEST_SZ+sizeof(word32), HEAP_HINT,
                                 DYNAMIC_TYPE_TMP_BUFFER);
             if (c)
                 b = c;
         }
+        #endif
         if (b)
             XFREE(b, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        if ((b == NULL) || (c == NULL)) {
+        if ((b == NULL)
+        #ifndef WOLFSSL_NO_REALLOC
+                || (c == NULL)
+        #endif
+        ) {
             return -7217;
         }
     }
@@ -14611,7 +14628,7 @@ static int rsa_nb_test(RsaKey* key, const byte* in, word32 inLen, byte* out,
     if (ret < 0) {
         return ret;
     }
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
     printf("RSA non-block sign: %d times\n", count);
 #endif
     signSz = ret;
@@ -14629,7 +14646,7 @@ static int rsa_nb_test(RsaKey* key, const byte* in, word32 inLen, byte* out,
     if (ret < 0) {
         return ret;
     }
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
     printf("RSA non-block verify: %d times\n", count);
 #endif
 
@@ -14649,7 +14666,7 @@ static int rsa_nb_test(RsaKey* key, const byte* in, word32 inLen, byte* out,
     if (ret < 0) {
         return ret;
     }
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
     printf("RSA non-block inline verify: %d times\n", count);
 #endif
 
@@ -19909,10 +19926,10 @@ WOLFSSL_TEST_SUBROUTINE int openssl_test(void)
             XMEMCMP(hash, f.output, WC_SHA512_DIGEST_SIZE) != 0) {
         return -8606;
     }
-#endif /* WOLFSSL_SHA512 */
 
-#if !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
-#if defined(WOLFSSL_SHA512) && !defined(WOLFSSL_NOSHA512_224)
+#if !defined(WOLFSSL_NOSHA512_224) && \
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
+
     f.input  = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhi"
                "jklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
     f.output = "\x23\xfe\xc5\xbb\x94\xd6\x0b\x23\x30\x81\x92\x64\x0b\x0c\x45"
@@ -19932,11 +19949,10 @@ WOLFSSL_TEST_SUBROUTINE int openssl_test(void)
             XMEMCMP(hash, f.output, WC_SHA512_224_DIGEST_SIZE) != 0) {
         return -8722;
     }
-#endif /* WOLFSSL_SHA512 && !WOLFSSL_NOSHA512_224 */
-#endif /* !HAVE_FIPS && !HAVE_SELFTEST */
+#endif /* !WOLFSSL_NOSHA512_224 && !FIPS ... */
 
-#if !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
-#if defined(WOLFSSL_SHA512) && !defined(WOLFSSL_NOSHA512_256)
+#if !defined(WOLFSSL_NOSHA512_256) && \
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
     f.input  = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhi"
                "jklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
     f.output = "\x39\x28\xe1\x84\xfb\x86\x90\xf8\x40\xda\x39\x88\x12\x1d\x31"
@@ -19957,8 +19973,8 @@ WOLFSSL_TEST_SUBROUTINE int openssl_test(void)
             XMEMCMP(hash, f.output, WC_SHA512_256_DIGEST_SIZE) != 0) {
         return -8723;
     }
-#endif /* WOLFSSL_SHA512 && !WOLFSSL_NOSHA512_224 */
-#endif /* !HAVE_FIPS && !HAVE_SELFTEST */
+#endif /* !WOLFSSL_NOSHA512_224 && !FIPS ... */
+#endif /* WOLFSSL_SHA512 */
 
 #ifdef WOLFSSL_SHA3
 #ifndef WOLFSSL_NOSHA3_224
@@ -24220,7 +24236,7 @@ static int ecc_test_make_pub(WC_RNG* rng)
     /* create a new key since above test for loading key is not supported */
 #if defined(WOLFSSL_CRYPTOCELL) || defined(NO_ECC256) || \
     defined(WOLFSSL_QNX_CAAM) || defined(WOLFSSL_SE050) || \
-    defined(WOLFSSL_SECO_CAAM)
+    defined(WOLFSSL_SECO_CAAM) || defined(WOLFSSL_IMXRT1170_CAAM)
     ret  = wc_ecc_make_key(rng, ECC_KEYGEN_SIZE, key);
     if (ret != 0) {
         ERROR_OUT(-9861, done);
@@ -26482,7 +26498,7 @@ static int crypto_ecc_verify(const byte *key, uint32_t keySz,
 
             /* This is where real-time work could be called */
         } while (ret == FP_WOULDBLOCK);
-    #ifdef DEBUG_WOLFSSL
+    #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
         printf("ECC non-block verify: %d times\n", count);
     #endif
         if (ret < 0)
@@ -26571,7 +26587,7 @@ static int crypto_ecc_sign(const byte *key, uint32_t keySz,
             /* This is where real-time work could be called */
         } while (ret == FP_WOULDBLOCK);
 
-    #ifdef DEBUG_WOLFSSL
+    #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
         printf("ECC non-block sign: %d times\n", count);
     #endif
         if (ret < 0)
@@ -26637,7 +26653,7 @@ static int ecc_test_nonblock_dhe(int curveId, word32 curveSz,
         if (ret < 0)
             ret = -16120;
     }
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
     fprintf(stderr, "ECC non-block key gen: %d times\n", count);
 #endif
     if (ret == 0) {
@@ -26660,7 +26676,7 @@ static int ecc_test_nonblock_dhe(int curveId, word32 curveSz,
         if (ret < 0)
             ret = -16123;
     }
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_NONBLOCK)
     fprintf(stderr, "ECC non-block shared secret: %d times\n", count);
 #endif
     if (ret == 0) {
@@ -43542,7 +43558,7 @@ exit_memcb:
 #endif /* USE_WOLFSSL_MEMORY && !WOLFSSL_NO_MALLOC */
 
 
-#ifdef WOLFSSL_IMX6_CAAM_BLOB
+#if defined(WOLFSSL_CAAM_BLOB)
 WOLFSSL_TEST_SUBROUTINE int blob_test(void)
 {
     int ret = 0;
