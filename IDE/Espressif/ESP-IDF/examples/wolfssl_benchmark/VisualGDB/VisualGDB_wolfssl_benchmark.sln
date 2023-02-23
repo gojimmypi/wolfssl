@@ -7,9 +7,9 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "VisualGDB_wolfssl_benchmark
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{51FEFEA9-C2BA-43A1-8B36-9140367E5AAF}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.c
-		..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.h
-		..\..\..\..\..\..\include\user_settings.h = ..\..\..\..\..\..\include\user_settings.h
+		..\..\..\..\..\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.c
+		..\..\..\..\..\wolfcrypt\benchmark\benchmark.h = ..\..\..\..\..\wolfcrypt\benchmark\benchmark.h
+		components\wolfssl\CMakeLists.txt = components\wolfssl\CMakeLists.txt
 	EndProjectSection
 EndProject
 Global
