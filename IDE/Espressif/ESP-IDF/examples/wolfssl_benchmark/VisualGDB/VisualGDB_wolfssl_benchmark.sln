@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{E0C1
 	ProjectSection(SolutionItems) = preProject
 		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
 		..\components\wolfssl\component.mk = ..\components\wolfssl\component.mk
+		..\..\..\..\..\..\wolfcrypt\src\sha.c = ..\..\..\..\..\..\wolfcrypt\src\sha.c
+		..\..\..\..\..\..\wolfcrypt\src\sha256.c = ..\..\..\..\..\..\wolfcrypt\src\sha256.c
+		..\..\..\..\..\..\wolfcrypt\src\sha3.c = ..\..\..\..\..\..\wolfcrypt\src\sha3.c
+		..\..\..\..\..\..\wolfcrypt\src\sha512.c = ..\..\..\..\..\..\wolfcrypt\src\sha512.c
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{530960D7-4FAB-4683-9C83-35ADE6C00358}"
