@@ -58,8 +58,10 @@ set(COMPONENT_SRCDIRS \"${WOLFSSL_ROOT}/src/\"
 set(COMPONENT_REQUIRES lwip)
 
 
+set(WOLFSSL_PROJECT_DIR "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
+
 # check to see if there's both a local copy and EDP-IDF copy of the wolfssl and/or wolfssh components
-if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PATH}/components/wolfssl/" )
+if( EXISTS "${WOLFSSL_PROJECT_DIR}" AND EXISTS "$ENV{IDF_PATH}/components/wolfssl/" )
     #
     # wolfSSL found in both ESP-IDF and local project - needs to be resolved by user
     #
@@ -70,7 +72,7 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     message(STATUS "")
     message(STATUS "To proceed: ")
     message(STATUS "")
-    message(STATUS "Remove either the local project component: ${CMAKE_HOME_DIRECTORY}/components/wolfssl/ ")
+    message(STATUS "Remove either the local project component: ${WOLFSSL_PROJECT_DIR} ")
     message(STATUS "or the Espressif shared component installed at: $ENV{IDF_PATH}/components/wolfssl/ ")
     message(STATUS "")
     message(FATAL_ERROR "Please use wolfSSL in either local project or Espressif components, but not both.")
@@ -94,13 +96,14 @@ else()
         # wolfSSL is not an ESP-IDF component. We need to now determine if it is local and if so if it is part of the wolfSSL repo
         # or if  wolfSSL is simply installed as a local component.
         #
-        if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" )
+
+        if( EXISTS "${WOLFSSL_PROJECT_DIR}" )
             #
             # wolfSSL found in local project.
             #
-            if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/include/" )
+            if( EXISTS "${WOLFSSL_PROJECT_DIR}wolfcrypt/" )
                 message(STATUS "")
-                message(STATUS "Using installed project ./components/wolfssl in CMAKE_HOME_DIRECTORY = $ENV{CMAKE_HOME_DIRECTORY}")
+                message(STATUS "Using installed project ./components/wolfssl in CMAKE_HOME_DIRECTORY = ${CMAKE_HOME_DIRECTORY}")
                 message(STATUS "")
                 #
                 # Note we already checked above and confirmed there's not another wolfSSL installed in the ESP-IDF components.
@@ -109,11 +112,11 @@ else()
                 #
             else()
                 #
-                # This is the developer repo mode. wolfSSL will be assume to be not installed to ESP-IDF nor local project
+                # This is the developer repo mode. wolfSSL will be assumed to be not installed to ESP-IDF nor local project
                 # In this configuration, we are likely running a wolfSSL example found directly in the repo.
                 #
                 message(STATUS "")
-                message(STATUS "Using developer repo ./components/wolfssl in CMAKE_HOME_DIRECTORY = $ENV{CMAKE_HOME_DIRECTORY}")
+                message(STATUS "Using developer repo ./components/wolfssl in CMAKE_HOME_DIRECTORY = ${CMAKE_HOME_DIRECTORY}")
                 message(STATUS "")
 
                 message(STATUS "************************************************************************************************")
@@ -122,21 +125,30 @@ else()
                 #
                 # first check if there's a [root]/include/user_settings.h
                 if( EXISTS "${WOLFSSL_ROOT}/include/user_settings.h" )
-                    # we won't overwrite an existing user settings file, just note that we already have one:
-                    message(STATUS "Found wolfSSL user_settings.h in ${WOLFSSL_ROOT}/include/user_settings.h")
+                    message(FATAL_ERROR "Found stray wolfSSL user_settings.h in ${WOLFSSL_ROOT}/include/user_settings.h (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
                 else()
-                    message(STATUS "Installing wolfSSL user_settings.h to ${WOLFSSL_ROOT}/include/user_settings.h")
-                    file(COPY "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/user_settings.h" DESTINATION "${WOLFSSL_ROOT}/include/")
+                    # we won't overwrite an existing user settings file, just note that we already have one:
+                    if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/user_settings.h" )
+                        message(STATUS "Using existing wolfSSL user_settings.h in ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+                    else()
+                        message(STATUS "Installing wolfSSL user_settings.h to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+                        file(COPY "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/user_settings.h" DESTINATION "${CMAKE_HOME_DIRECTORY}/wolfssl/include/")
+                    endif()
                 endif() # user_settings.h
 
                 # next check if there's a [root]/include/config.h
                 if( EXISTS "${WOLFSSL_ROOT}/include/config.h" )
-                    message(STATUS "Found wolfSSL config.h in ${WOLFSSL_ROOT}/include/config.h")
+                    message(FATAL_ERROR "Found stray wolfSSL config.h in ${WOLFSSL_ROOT}/include/config.h (please move it to ${WOLFSSL_PROJECT_DIR}/include/config.h")
                 else()
-                    message(STATUS "Installing wolfSSL config.h to ${WOLFSSL_ROOT}/include/config.h")
-                    file(COPY "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/dummy_config_h" DESTINATION "${WOLFSSL_ROOT}/include/")
-                    file(RENAME "${WOLFSSL_ROOT}/include/dummy_config_h" "${WOLFSSL_ROOT}/include/config.h")
-                endif() # config.h
+                    # we won't overwrite an existing user settings file, just note that we already have one:
+                    if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/config.h" )
+                        message(STATUS "Using existing wolfSSL config.h in ${WOLFSSL_PROJECT_DIR}/include/config.h")
+                    else()
+                        message(STATUS "Installing wolfSSL config.h to ${WOLFSSL_PROJECT_DIR}/include/config.h")
+                        file(COPY   "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/dummy_config_h" DESTINATION "${WOLFSSL_PROJECT_DIR}/include/")
+                        file(RENAME "${WOLFSSL_PROJECT_DIR}/include/dummy_config_h" "${WOLFSSL_PROJECT_DIR}/include/config.h")
+                    endif() # Project config.h
+                endif() # WOLFSSL_ROOT config.h
                 message(STATUS "************************************************************************************************")
                 message(STATUS "")
             endif()
@@ -187,7 +199,7 @@ if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
 endif()
 
 set(COMPONENT_SRCEXCLUDE
-    \"${WOLFSSL_ROOT}/wolfssl/src/bio.c\"
+    \"${WOLFSSL_ROOT}/src/bio.c\"
     \"${WOLFSSL_ROOT}/src/conf.c\"
     \"${WOLFSSL_ROOT}/src/misc.c\"
     \"${WOLFSSL_ROOT}/src/pk.c\"
@@ -228,7 +240,7 @@ if (0)
 endif()
 
 # check to see if there's both a local copy and EDP-IDF copy of the wolfssl components
-if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PATH}/components/wolfssl/" )
+if( EXISTS "${WOLFSSL_PROJECT_DIR}" AND EXISTS "$ENV{IDF_PATH}/components/wolfssl/" )
     message(STATUS "")
     message(STATUS "")
     message(STATUS "********************************************************************")
