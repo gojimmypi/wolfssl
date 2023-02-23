@@ -23,8 +23,9 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 
-# We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
-# The root of wolfSSL is 7 directories up from here:
+# set the root of wolfSSL:
+# set(WOLFSSL_ROOT  "C:/some path/with/spaces")
+# set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
 get_filename_component(WOLFSSL_ROOT  "../../../../../../../" ABSOLUTE)
 
 # Espressif may take several passes through this makefile. Check to see if we found IDF
@@ -46,10 +47,10 @@ endif()
 
 set(INCLUDE_PATH ${WOLFSSL_ROOT})
 
-set(COMPONENT_SRCDIRS "${WOLFSSL_ROOT}/src/"
-                        "${WOLFSSL_ROOT}/wolfcrypt/src/"
-                        "${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/"
-                        "${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel/"
+set(COMPONENT_SRCDIRS \"${WOLFSSL_ROOT}/src/\"
+                        \"${WOLFSSL_ROOT}/wolfcrypt/src/\"
+                        \"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/\"
+                        \"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel/\"
                         "${WOLFSSL_ROOT}/wolfcrypt/benchmark/"
                         "${WOLFSSL_ROOT}/wolfcrypt/test/"
                         )
@@ -166,18 +167,18 @@ string(REPLACE "\\" "/" RTOS_IDF_PATH5 "$ENV{IDF_PATH}/components/freertos/FreeR
 
 if(IS_DIRECTORY ${IDF_PATH}/components/freertos/FreeRTOS-Kernel/)
     set(COMPONENT_ADD_INCLUDEDIRS
-        "."
-       "${WOLFSSL_ROOT}/include"
-       "${RTOS_IDF_PATH5}"
-       "${WOLFSSL_ROOT}"
+       "."
+       "./include"
+       \"${RTOS_IDF_PATH5}\"
+       \"${WOLFSSL_ROOT}\"
        )
 else()
 
    set(COMPONENT_ADD_INCLUDEDIRS
        "."
-       "${WOLFSSL_ROOT}/include"
-       "${RTOS_IDF_PATH}"
-       "${WOLFSSL_ROOT}"
+       "./include"
+       \"${RTOS_IDF_PATH}\"
+       \"${WOLFSSL_ROOT}\"
       )
 endif()
 
@@ -186,19 +187,30 @@ if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
 endif()
 
 set(COMPONENT_SRCEXCLUDE
-    "${WOLFSSL_ROOT}/src/bio.c"
-    "${WOLFSSL_ROOT}/src/conf.c"
-    "${WOLFSSL_ROOT}/src/misc.c"
-    "${WOLFSSL_ROOT}/src/pk.c"
-    "${WOLFSSL_ROOT}/src/ssl_misc.c" # included by ssl.c
-    "${WOLFSSL_ROOT}/src/x509.c"
-    "${WOLFSSL_ROOT}/src/x509_str.c"
-    "${WOLFSSL_ROOT}/wolfcrypt/src/evp.c"
-    "${WOLFSSL_ROOT}/wolfcrypt/src/misc.c"
-    "${EXCLUDE_ASM}"
+    \"${WOLFSSL_ROOT}/wolfssl/src/bio.c\"
+    \"${WOLFSSL_ROOT}/src/conf.c\"
+    \"${WOLFSSL_ROOT}/src/misc.c\"
+    \"${WOLFSSL_ROOT}/src/pk.c\"
+    \"${WOLFSSL_ROOT}/src/ssl_misc.c\" # included by ssl.c
+    \"${WOLFSSL_ROOT}/src/x509.c\"
+    \"${WOLFSSL_ROOT}/src/x509_str.c\"
+    \"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\"
+    \"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\"
+    \"${EXCLUDE_ASM}\"
     )
 
-register_component()
+spaces2list(COMPONENT_REQUIRES)
+
+separate_arguments(COMPONENT_SRCDIRS NATIVE_COMMAND "${COMPONENT_SRCDIRS}")
+separate_arguments(COMPONENT_SRCEXCLUDE NATIVE_COMMAND "${COMPONENT_SRCEXCLUDE}")
+separate_arguments(COMPONENT_ADD_INCLUDEDIRS NATIVE_COMMAND "${COMPONENT_ADD_INCLUDEDIRS}")
+
+idf_component_register(
+                        SRC_DIRS "${COMPONENT_SRCDIRS}"
+                        INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
+                        REQUIRES "${COMPONENT_REQUIRES}"
+                        EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
+                      )
 
 # some optional diagnostics
 if (0)
@@ -225,5 +237,4 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     message(STATUS "")
 endif()
 # end multiple component check
-
 
