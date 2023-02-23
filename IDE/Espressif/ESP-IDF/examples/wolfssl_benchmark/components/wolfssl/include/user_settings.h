@@ -49,21 +49,29 @@
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
 
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
 /* when you want to use SINGLE THREAD */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
+
+#define WOLFSSL_RIPEMD
+#define WOLFSSL_SHA224
+#define WOLFSSL_SHA3
 /* when you want to use SHA384 */
-/* #define WOLFSSL_SHA384 */
+#define WOLFSSL_SHA384
 #define WOLFSSL_SHA512
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 #define HAVE_ED25519
 
+#define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
-/* #define HAVE_PKCS7 */
+
+#define HAVE_PKCS7
 
 #if defined(HAVE_PKCS7)
     #define HAVE_AES_KEYWRAP
@@ -97,8 +105,8 @@
 #endif
 
 /* debug options */
-/* #define DEBUG_WOLFSSL */
-/* #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
+// #define DEBUG_WOLFSSL
+#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -108,10 +116,12 @@
 /* #define XTIME time */
 
 /* when you want not to use HW acceleration */
-/* #define NO_ESP32WROOM32_CRYPT */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH*/
+// #define NO_ESP32WROOM32_CRYPT
+// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES */
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
 /* adjust wait-timeout count if you see timeout in rsa hw acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
+
+#define HASH_SIZE_LIMIT /* for test.c */
