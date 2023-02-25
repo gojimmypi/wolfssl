@@ -177,7 +177,9 @@ void app_main(void)
 #endif
 
     /* all platforms: stack high water mark check */
-#ifndef SINGLE_THREADED
+#if defined(SINGLE_THREADED)
+    /* TODO need single thread stack check */
+#else
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 #endif
 
