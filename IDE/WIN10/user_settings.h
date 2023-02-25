@@ -2,7 +2,7 @@
 #define _WIN_USER_SETTINGS_H_
 
 /* Set the following to 1 for WCv5.0-RC12 build. */
-#if 0
+#if 1
 #undef HAVE_FIPS
 #define HAVE_FIPS
 #undef HAVE_FIPS_VERSION
