@@ -39,9 +39,6 @@
 /* adder for HW crypto */
 #if defined(STM32_HASH)
     #define CTX_SHA_HW_ADDER sizeof(STM32_HASH_Context)
-#elif defined(WOLFSSL_ESPWROOM32) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-    void* holder[(112 + WC_ASYNC_DEV_SIZE + sizeof(WC_ESP32SHA)) /
-        sizeof(void*)];
 #elif defined(WOLFSSL_IMXRT1170_CAAM)
     #define CTX_SHA_HW_ADDER (sizeof(caam_hash_ctx_t) + sizeof(caam_handle_t))
 #elif defined(WOLFSSL_ESPWROOM32) && \
