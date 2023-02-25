@@ -107,17 +107,21 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             ret = esp_sha_init_ctx(ctx);
             break;
 
+    #ifndef WOLFSSL_NOSHA512_224
         case WC_HASH_TYPE_SHA512_224:
             /* Don't call init, always SW as there's no HW. */
             ctx->mode = ESP32_SHA_SW;
             ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
             break;
+    #endif
 
+    #ifndef WOLFSSL_NOSHA512_256
         case WC_HASH_TYPE_SHA512_256:
             /* Don't call init, always SW as there's no HW. */
             ctx->mode = ESP32_SHA_SW;
             ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
             break;
+    #endif
 
         default:
            ret = esp_sha_init_ctx(ctx);
