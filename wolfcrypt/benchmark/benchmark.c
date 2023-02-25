@@ -4874,6 +4874,8 @@ exit:
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
 
+#if !defined(WOLFSSL_NOSHA512_224) && \
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 void bench_sha512_224(int useDeviceID)
 {
     wc_Sha512_224 hash[BENCH_MAX_PENDING];
@@ -4964,7 +4966,10 @@ exit:
 
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
+#endif /* WOLFSSL_NOSHA512_224 && !FIPS ... */
 
+#if !defined(WOLFSSL_NOSHA512_256) && \
+   (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
 void bench_sha512_256(int useDeviceID)
 {
     wc_Sha512_256 hash[BENCH_MAX_PENDING];
@@ -5055,6 +5060,7 @@ exit:
 
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
+#endif /* WOLFSSL_NOSHA512_256 && !FIPS ... */
 
 #if !defined(WOLFSSL_NOSHA512_224) && \
    (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
@@ -5148,7 +5154,7 @@ exit:
 
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
-#endif
+#endif /* WOLFSSL_NOSHA512_224 && !FIPS ... */
 
 #if !defined(WOLFSSL_NOSHA512_256) && \
    (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5, 3)) && !defined(HAVE_SELFTEST)
@@ -5243,9 +5249,9 @@ exit:
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
 
-#endif
+#endif /* WOLFSSL_NOSHA512_256 && !FIPS ... */
 
-#endif
+#endif /* WOLFSSL_SHA512 */
 
 
 #ifdef WOLFSSL_SHA3
