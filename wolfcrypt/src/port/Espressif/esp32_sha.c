@@ -508,12 +508,16 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 */
 static void wc_esp_wait_until_idle()
 {
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* ESP32-C3 RISC-V TODO */
+#else
     while ((DPORT_REG_READ(SHA_1_BUSY_REG)   != 0) ||
            (DPORT_REG_READ(SHA_256_BUSY_REG) != 0) ||
            (DPORT_REG_READ(SHA_384_BUSY_REG) != 0) ||
            (DPORT_REG_READ(SHA_512_BUSY_REG) != 0)) {
         /* do nothing while waiting. */
     }
+#endif
 } /* wc_esp_wait_until_idle */
 
 /*
@@ -541,6 +545,9 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     /* if we end up here, there was a prior unexpected fail and
      * we need to unroll enables */
     int ret = 0; /* assume success unless proven otherwise */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* ESP32-C3 RISC-V TODO */
+#else
     uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
     int actual_unroll_count = 0;
     int max_unroll_count = 1000; /* never get stuck in a hardware wait loop */
@@ -567,7 +574,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             break;
         }
     }
-
+#endif
     if (ret == 0) {
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
@@ -702,6 +709,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     }
 #endif /* not defined(SINGLE_THREADED) */
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* ESP32-C3 RISC-V TODO */
+#else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
         periph_module_enable(PERIPH_SHA_MODULE);
@@ -711,7 +721,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ESP_LOGW(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
         ctx->mode = ESP32_SHA_SW;
     }
-
+#endif
     ESP_LOGV(TAG, "leave esp_sha_hw_lock");
 
     return ret;
@@ -724,9 +734,12 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+        /* ESP32-C3 RISC-V TODO */
+#else
     /* Disable AES hardware */
     periph_module_disable(PERIPH_SHA_MODULE);
-
+#endif
     /* we'll keep track of our lock depth.
      * in case of unexpected results, all the periph_module_disable() calls
      * and periph_module_disable() need to be unwound.
@@ -762,6 +775,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        /* ESP32-C3 RISC-V TODO */
+    #else
     if (sha->isfirstblock) {
         /* start registers for first message block
          * we don't make any relational memory position assumptions.
@@ -773,7 +789,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
             case SHA2_256:
                 DPORT_REG_WRITE(SHA_256_START_REG, 1);
-            break;
+                break;
 
         #if defined(WOLFSSL_SHA384)
             case SHA2_384:
@@ -784,25 +800,25 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
         #if defined(WOLFSSL_SHA512)
             case SHA2_512:
                 DPORT_REG_WRITE(SHA_512_START_REG, 1);
-            break;
+                break;
         #endif
 
             default:
                 sha->mode = ESP32_SHA_FAIL_NEED_UNROLL;
                 ret = -1;
                 break;
-       }
+        }
 
         sha->isfirstblock = 0;
         ESP_LOGV(TAG, "      set sha->isfirstblock = 0");
 
         #if defined(DEBUG_WOLFSSL)
-            this_block_num = 1; /* one-based counter, just for debug info */
-        #endif
+        this_block_num = 1; /* one-based counter, just for debug info */
+#endif
 
     }
     else {
-        /* continue  */
+
         /* continue registers for next message block.
          * we don't make any relational memory position assumptions
          * for future chip architecture changes.
@@ -814,7 +830,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
             case SHA2_256:
                 DPORT_REG_WRITE(SHA_256_CONTINUE_REG, 1);
-            break;
+                break;
 
         #if defined(WOLFSSL_SHA384)
             case SHA2_384:
@@ -825,7 +841,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
         #if defined(WOLFSSL_SHA512)
             case SHA2_512:
                 DPORT_REG_WRITE(SHA_512_CONTINUE_REG, 1);
-            break;
+                break;
         #endif
 
             default:
@@ -833,13 +849,14 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
                 sha->mode = ESP32_SHA_FAIL_NEED_UNROLL;
                 ret = -1;
                 break;
-       }
+        }
+    }
+    #endif
+
         #if defined(DEBUG_WOLFSSL)
             this_block_num++; /* one-based counter */
             ESP_LOGV(TAG, "      continue block #%d", this_block_num);
         #endif
-
-   }
 
    ESP_LOGV(TAG, "    leave esp_sha_start_process");
 
@@ -874,7 +891,10 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
          *
          * Write value to DPORT register (does not require protecting)
          */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#else
         DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
+#endif
         /* memw confirmed auto inserted by compiler here */
     }
 
@@ -911,6 +931,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     wc_esp_wait_until_idle();
 
     /* each sha_type register is at a different location  */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* ESP32-C3 RISC-V TODO */
+#else
     switch (ctx->sha_type) {
         case SHA1:
             DPORT_REG_WRITE(SHA_1_LOAD_REG, 1);
@@ -936,6 +959,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
             ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
             return -1;
     }
+
 
 
     if (ctx->isfirstblock == 1) {
@@ -973,6 +997,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         SHA_TEXT_BASE,   /* there's a fixed reg addr for all SHA */
         digestSz / sizeof(word32) /* # 4-byte */
     );
+#endif
 
 #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
     if (ctx->sha_type == SHA2_384 || ctx->sha_type == SHA2_512) {
