@@ -4,12 +4,15 @@
 #
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
+#idf_component_register(SRCS "main.c"
+                    #INCLUDE_DIRS ".")
+#
 set(COMPONENT_SRCS "main.c")
 
 # when using time helper:
 # set(COMPONENT_SRCS "main.c" "time_helper.c")
 
-set(COMPONENT_ADD_INCLUDEDIRS ".")
+# set(COMPONENT_ADD_INCLUDEDIRS ".")
 
 set (git_cmd "git")
 
@@ -23,8 +26,10 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_MULTI_INSTALL_WARNING")
 endif()
 
-register_component()
-
+# register_component()
+idf_component_register(SRCS "main.c"
+                       INCLUDE_DIRS "."
+                       REQUIRES wolfssl)
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
 #
