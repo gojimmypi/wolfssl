@@ -221,7 +221,8 @@ idf_component_register(
                         INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
                         REQUIRES "${COMPONENT_REQUIRES}"
                         EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
-                        )
+                        PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
+                       )
 
 # some optional diagnostics
 if (0)

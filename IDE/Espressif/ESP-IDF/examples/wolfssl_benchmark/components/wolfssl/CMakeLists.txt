@@ -26,6 +26,8 @@ set(CMAKE_CURRENT_SOURCE_DIR ".")
 # set the root of wolfSSL:
 # set(WOLFSSL_ROOT  "C:/some path/with/spaces")
 # set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
+# We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
+# The root of wolfSSL is 7 directories up from here:
 get_filename_component(WOLFSSL_ROOT  "../../../../../../../" ABSOLUTE)
 
 # Espressif may take several passes through this makefile. Check to see if we found IDF
@@ -219,7 +221,8 @@ idf_component_register(
                         INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
                         REQUIRES "${COMPONENT_REQUIRES}"
                         EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
-                      )
+                        PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
+                       )
 
 # some optional diagnostics
 if (0)
