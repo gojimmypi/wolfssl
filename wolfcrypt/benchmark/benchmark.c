@@ -88,7 +88,7 @@
      !defined(NO_ERROR_STRINGS) && !defined(NO_MAIN_DRIVER) &&        \
      !defined(BENCH_EMBEDDED))
     #include <errno.h>
-    #ifndef WOLFSSL_ZEPHYR
+    #if !defined(WOLFSSL_ZEPHYR) && !defined(_WIN32)
         #include <unistd.h>
     #endif
 #endif
@@ -5456,7 +5456,7 @@ exit:
 }
 #endif /* WOLFSSL_NOSHA3_512 */
 
-#ifndef WOLFSSL_NO_SHAKE128
+#ifdef WOLFSSL_SHAKE128
 void bench_shake128(int useDeviceID)
 {
     wc_Shake hash[BENCH_MAX_PENDING];
@@ -5549,7 +5549,7 @@ exit:
 
     WC_FREE_ARRAY(digest, BENCH_MAX_PENDING, HEAP_HINT);
 }
-#endif /* WOLFSSL_NO_SHAKE128 */
+#endif /* WOLFSSL_SHAKE128 */
 
 #ifdef WOLFSSL_SHAKE256
 void bench_shake256(int useDeviceID)
@@ -6763,7 +6763,7 @@ void bench_dh(int useDeviceID)
     word32 pubSz2 = BENCH_DH_KEY_SIZE;
     word32 privSz2 = BENCH_DH_PRIV_SIZE;
     word32 agreeSz[BENCH_MAX_PENDING];
-#if defined(HAVE_FFDHE_2048) || defined(HAVE_FFDHE_3072)
+#if defined(HAVE_FFDHE_2048) || defined(HAVE_FFDHE_3072) || defined(HAVE_FFDHE_4096)
 #ifdef HAVE_PUBLIC_FFDHE
     const DhParams *params = NULL;
 #else
