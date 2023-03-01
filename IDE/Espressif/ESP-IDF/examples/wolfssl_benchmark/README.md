@@ -2,6 +2,13 @@
 
 The Example contains of wolfSSL benchmark program.
 
+## VisualGDB
+
+Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
+No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
+
+## ESP-IDF Commandline
+
 1. `idf.py menuconfig` to configure the program.  
     1-1. Example Configuration ->
 

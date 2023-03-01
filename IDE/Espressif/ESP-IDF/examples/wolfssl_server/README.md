@@ -1,5 +1,13 @@
 # wolfSSL Server Example
 
+
+## VisualGDB
+
+Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
+No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
+
+## ESP-IDF Commandline
+
 The Example contains a wolfSSL simple server.
 
 1. `idf.py menuconfigure` to configure the project
