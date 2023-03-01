@@ -6,6 +6,12 @@ This IDF version does NOT contain a local component and exists only to test wolf
 
 The recommended configuration is to have only the CMakeLists.txt in the local project components\wolfssl directory. See the [wolfssl_test](../wolfssl_test/README.md) example.
 
+## VisualGDB
+
+Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
+
+## ESP-IDF Commandline
+
 1. `idf.py menuconfig` to configure the program.  
     1-1. Example Configuration ->
 
