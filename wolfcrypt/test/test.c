@@ -3212,6 +3212,19 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         "\x91\xf5\x88\xc3\x05\xbb\x3f\x90"
         "\xe2\x4e\x85\x05";
 #endif
+
+/*
+TODO add HW copy test
+See https://github.com/wolfSSL/wolfssl/pull/6134
+
+    for (i = 0; i < (int)sizeof(large_input); i++) {
+        large_input[i] = (byte)(i & 0xFF);
+    }
+#ifdef HASH_SIZE_LIMIT
+    times = 20;
+#else
+    times = 100;
+#endif
     for (i = 0; i < times; ++i) {
         ret = wc_Sha512_224Update(&sha, (byte*)large_input,
             (word32)sizeof(large_input));
@@ -3223,6 +3236,7 @@ WOLFSSL_TEST_SUBROUTINE int sha512_224_test(void)
         ERROR_OUT(-22409, exit);
     if (XMEMCMP(hash, large_digest, WC_SHA512_224_DIGEST_SIZE) != 0)
         ERROR_OUT(-22410, exit);
+*/
 
     for (i = 0; i < (int)sizeof(large_input); i++) {
         large_input[i] = (byte)(i & 0xFF);
