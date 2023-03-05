@@ -17,8 +17,10 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
-# cmake for wolfssl
+# cmake for wolfssl Espressif projects
 #
+# Version 5.4.4.001
+
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
@@ -225,7 +227,7 @@ idf_component_register(
                        )
 
 # some optional diagnostics
-if (0)
+if (1)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
     message(STATUS "")
@@ -290,15 +292,23 @@ endfunction() # LIBWOLFSSL_SAVE_INFO
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     set (git_cmd "git")
 
-    # LIBWOLFSSL_VERSION_GIT_HASH
+    # LIBWOLFSSL_VERSION_GIT_ORIGIN: git config --get remote.origin.url
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_ORIGIN "${TMP_OUT}" "${TMP_RES}")
+
+    # LIBWOLFSSL_VERSION_GIT_BRANCH: git rev-parse --abbrev-ref HEAD
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--abbrev-ref" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_BRANCH "${TMP_OUT}" "${TMP_RES}")
+
+    # LIBWOLFSSL_VERSION_GIT_HASH: git rev-parse HEAD
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
 
-    # LIBWOLFSSL_VERSION_GIT_SHORT_HASH
+    # LIBWOLFSSL_VERSION_GIT_SHORT_HASH: git rev-parse --short HEAD
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--short" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_SHORT_HASH "${TMP_OUT}" "${TMP_RES}")
 
-    # LIBWOLFSSL_VERSION_GIT_HASH_DATE
+    # LIBWOLFSSL_VERSION_GIT_HASH_DATE git show --no-patch --no-notes --pretty=\'\%cd\'
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
 endif()
