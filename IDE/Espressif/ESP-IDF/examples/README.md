@@ -10,6 +10,10 @@ These are the core examples for wolfSSL:
 
 - [TLS Server](./wolfssl_server/README.md)
 
+There's an additional example that uses wolfSSL installed as a component to the shared ESP-IDF:
+
+- [Test IDF](./wolfssl_test_idf/README.md)
+
 ## Other Espressif wolfSSL Examples
 
 - [wolfssl-examples](https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32)
