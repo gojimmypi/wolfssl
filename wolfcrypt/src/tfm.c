@@ -643,7 +643,8 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
     return FP_OKAY;
   }
 
-#ifdef WOLFSSL_SMALL_STACK
+#ifdef WOLFSSL_SMALL_STACK          /* 0  1  2  3   4  */
+  /* allocate 5 elements of fp_int for q, x, y, t1, t2 */
   q = (fp_int*)XMALLOC(sizeof(fp_int) * 5, NULL, DYNAMIC_TYPE_BIGINT);
   if (q == NULL) {
       return FP_MEM;
@@ -657,7 +658,17 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
 
   fp_init(t1);
   fp_init(t2);
+
+/* Appease compiler for configurations known to need it.
+**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
+#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
+  fp_init(x); /* Init x to appease some compilers before call to get a copy. */
+  fp_init(y); /* Init y to appease some compilers before call to get b copy. */
+#endif
+
+  /* init a copy (x) of the input (a) */
   fp_init_copy(x, a);
+  /* init a copy (y) of the input (b) */
   fp_init_copy(y, b);
 
   /* fix the sign */
@@ -5735,8 +5746,13 @@ int mp_radix_size (mp_int *a, int radix, int *size)
         return FP_MEM;
 #endif
 
+/* Appease compiler for configurations known to need it.
+**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
+#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
+    fp_init(t); /* Init t to appease some compilers before call to get a copy. */
+#endif
     /* init a copy of the input */
-    fp_init_copy (t, a);
+    fp_init_copy (t, a); /* Init a copy (t) of the input (a) */
 
     /* force temp to positive */
     t->sign = FP_ZPOS;
@@ -5808,7 +5824,12 @@ int mp_toradix (mp_int *a, char *str, int radix)
         return FP_MEM;
 #endif
 
-    /* init a copy of the input */
+/* Appease compiler for configurations known to need it.
+**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
+#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
+    fp_init(t); /* Init x to appease some compilers before call to get copy. */
+#endif
+    /* init a copy (t) of the input (a) */
     fp_init_copy (t, a);
 
     /* if it is negative output a - */
