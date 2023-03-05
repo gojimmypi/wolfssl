@@ -66,7 +66,7 @@
 #include <wolfssl/wolfcrypt/ecc.h>
 
 #ifdef WOLFSSL_ESPIDF
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         #include "driver/gptimer.h"
         gptimer_handle_t esp_gptimer = NULL;
         gptimer_config_t esp_timer_config = {
@@ -74,8 +74,12 @@
                             .direction = GPTIMER_COUNT_UP,
                             .resolution_hz = CONFIG_XTAL_FREQ * 1000000,
                          };
+    #elif defined(CONFIG_IDF_TARGET_ESP32) || \
+          defined(CONFIG_IDF_TARGET_ESP32S2) || \
+          defined(CONFIG_IDF_TARGET_ESP32S3)
+        #include <xtensa/hal.h>
     #else
-        #include <xtensa/hal.h> /* reminder Espressif RISC-V not yet implemented */
+        #error "CONFIG_IDF_TARGET not implemented"
     #endif
     #include <esp_log.h>
 #endif
@@ -1016,10 +1020,11 @@ static const char* bench_desc_words[][15] = {
         /* reminder: unsigned long long max = 18,446,744,073,709,551,615 */
 
         /* the currently observed clock counter value */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         word64 thisVal = 0;;
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer, &thisVal));
 #else
+        /* reminder unsupported CONFIG_IDF_TARGET captured above */
         word64 thisVal = xthal_get_ccount();
 #endif
         /* if the current value is less than the previous value,
@@ -1048,7 +1053,7 @@ static const char* bench_desc_words[][15] = {
         _xthal_get_ccount_ex += (thisVal - _xthal_get_ccount_last);
 
         /* all of this took some time, so reset the "last seen" value */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer, &_xthal_get_ccount_last));
 #else
          _xthal_get_ccount_last = xthal_get_ccount();
@@ -9088,7 +9093,7 @@ static int string_matches(const char* arg, const char* str)
         int argc = construct_argv();
         char** argv = (char**)__argv;
 
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
         ESP_LOGI(TAG, "Enable ESP32-C3 timer ");
         ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));

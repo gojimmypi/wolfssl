@@ -508,7 +508,7 @@ static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
 */
 static void wc_esp_wait_until_idle()
 {
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
 #else
     while ((DPORT_REG_READ(SHA_1_BUSY_REG)   != 0) ||
@@ -545,7 +545,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     /* if we end up here, there was a prior unexpected fail and
      * we need to unroll enables */
     int ret = 0; /* assume success unless proven otherwise */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
 #else
     uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
@@ -709,7 +709,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     }
 #endif /* not defined(SINGLE_THREADED) */
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
 #else
     if (ret == 0) {
@@ -734,7 +734,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         /* ESP32-C3 RISC-V TODO */
 #else
     /* Disable AES hardware */
@@ -775,7 +775,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         /* ESP32-C3 RISC-V TODO */
     #else
     if (sha->isfirstblock) {
@@ -891,7 +891,8 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
          *
          * Write value to DPORT register (does not require protecting)
          */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* ESP32-C3 RISC-V TODO */
 #else
         DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
 #endif
@@ -931,7 +932,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     wc_esp_wait_until_idle();
 
     /* each sha_type register is at a different location  */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
 #else
     switch (ctx->sha_type) {
