@@ -129,3 +129,6 @@
 #define HASH_SIZE_LIMIT /* for test.c */
 
 #define OPENSSL_EXTRA
+
+#define USE_FAST_MATH
+#define WOLFSSL_SMALL_STACK
