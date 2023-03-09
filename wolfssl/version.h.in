@@ -30,7 +30,7 @@ extern "C" {
 
 #define LIBWOLFSSL_VERSION_STRING "@VERSION@"
 #define LIBWOLFSSL_VERSION_HEX @HEX_VERSION@
-
+int ShowExtendedSystemInfo(void);
 #ifdef __cplusplus
 }
 #endif
