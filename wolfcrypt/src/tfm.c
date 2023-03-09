@@ -659,17 +659,17 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   fp_init(t1);
   fp_init(t2);
 
-/* Appease compiler for configurations known to need it.
-**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
-#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
-  fp_init(x); /* Init x to appease some compilers before call to get a copy. */
-  fp_init(y); /* Init y to appease some compilers before call to get b copy. */
-#endif
+  /* Init a copy (y) of the input (b) and
+  ** Init a copy (x) of the input (a)
+  **
+  ** ALERT: Not calling fp_init_copy() as some compiler optimization settings
+  ** such as -O2 will complain that (x) or (y) "may be used uninitialized".
+  ** The fp_init() is here only to appease the compiler.  */
+  fp_init(x);
+  fp_copy(x, a);
 
-  /* init a copy (x) of the input (a) */
-  fp_init_copy(x, a);
-  /* init a copy (y) of the input (b) */
-  fp_init_copy(y, b);
+  fp_init(y);
+  fp_copy(y, b);
 
   /* fix the sign */
   neg = (a->sign == b->sign) ? FP_ZPOS : FP_NEG;
@@ -5101,6 +5101,8 @@ int mp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng)
         return FP_VAL;
     if (a->sign == FP_NEG)
         return FP_VAL;
+    if (t <= 0 || t > FP_PRIME_SIZE)
+        return FP_VAL;
 
     if (fp_isone(a)) {
         *result = FP_NO;
@@ -5519,7 +5521,7 @@ static wcchar fp_s_rmap = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                     "abcdefghijklmnopqrstuvwxyz+/";
 #endif
 
-#if !defined(NO_DSA) || defined(HAVE_ECC)
+#if defined(OPENSSL_EXTRA) || !defined(NO_DSA) || defined(HAVE_ECC)
 #if DIGIT_BIT == 64 || DIGIT_BIT == 32
 static int fp_read_radix_16(fp_int *a, const char *str)
 {
@@ -5746,13 +5748,13 @@ int mp_radix_size (mp_int *a, int radix, int *size)
         return FP_MEM;
 #endif
 
-/* Appease compiler for configurations known to need it.
-**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
-#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
-    fp_init(t); /* Init t to appease some compilers before call to get a copy. */
-#endif
-    /* init a copy of the input */
-    fp_init_copy (t, a); /* Init a copy (t) of the input (a) */
+    /* Init a copy (t) of the input (a)
+    **
+    ** ALERT: Not calling fp_init_copy() as some compiler optimization settings
+    ** such as -O2 will complain that (t) "may be used uninitialized"
+    ** The fp_init() is here only to appease the compiler.  */
+    fp_init(t);
+    fp_copy(t, a);
 
     /* force temp to positive */
     t->sign = FP_ZPOS;
@@ -5824,13 +5826,13 @@ int mp_toradix (mp_int *a, char *str, int radix)
         return FP_MEM;
 #endif
 
-/* Appease compiler for configurations known to need it.
-**   CONFIG_COMPILER_OPTIMIZATION_PERF: Espressif -O2 */
-#if defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
-    fp_init(t); /* Init x to appease some compilers before call to get copy. */
-#endif
-    /* init a copy (t) of the input (a) */
-    fp_init_copy (t, a);
+    /* Init a copy (t) of the input (a)
+    **
+    ** ALERT: Not calling fp_init_copy() as some compiler optimization settings
+    ** such as -O2 will complain that (t) "may be used uninitialized"
+    ** The fp_init() is here only to appease the compiler.  */
+    fp_init(t);
+    fp_copy(t, a);
 
     /* if it is negative output a - */
     if (t->sign == FP_NEG) {
