@@ -666,10 +666,10 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   ** such as -O2 will complain that (x) or (y) "may be used uninitialized".
   ** The fp_init() is here only to appease the compiler.  */
   fp_init(x);
-  fp_copy(x, a);
+  fp_copy(a, x); /* copy (src = a) to (dst = x) */
 
   fp_init(y);
-  fp_copy(y, b);
+  fp_copy(b, y); /* copy (src = b) to (dst = y) */
 
   /* fix the sign */
   neg = (a->sign == b->sign) ? FP_ZPOS : FP_NEG;
@@ -4468,6 +4468,7 @@ int mp_div_2d(fp_int* a, int b, fp_int* c, fp_int* d)
   return MP_OKAY;
 }
 
+/* copy (src = a) to (dst = b) */
 void fp_copy(const fp_int *a, fp_int *b)
 {
     /* if source and destination are different */
@@ -4505,11 +4506,13 @@ int mp_init_copy(fp_int * a, fp_int * b)
     return MP_OKAY;
 }
 
+/* Copy (dst = a) from (src = b) */
 void fp_init_copy(fp_int *a, fp_int* b)
 {
     if (a != b) {
         fp_init(a);
-        fp_copy(b, a);
+        /* Note reversed parameter order! */
+        fp_copy(b, a); /* copy (src = b) to (dst = a) */
     }
 }
 
@@ -5754,7 +5757,7 @@ int mp_radix_size (mp_int *a, int radix, int *size)
     ** such as -O2 will complain that (t) "may be used uninitialized"
     ** The fp_init() is here only to appease the compiler.  */
     fp_init(t);
-    fp_copy(t, a);
+    fp_copy(a, t); /* copy (src = a) to (dst = t)*/
 
     /* force temp to positive */
     t->sign = FP_ZPOS;
@@ -5832,7 +5835,7 @@ int mp_toradix (mp_int *a, char *str, int radix)
     ** such as -O2 will complain that (t) "may be used uninitialized"
     ** The fp_init() is here only to appease the compiler.  */
     fp_init(t);
-    fp_copy(t, a);
+    fp_copy(a, t); /* copy (src = a) to (dst = t) */
 
     /* if it is negative output a - */
     if (t->sign == FP_NEG) {
