@@ -18,6 +18,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{8927
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{E9586E44-7821-4956-9F72-A79B988B3211}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\user_settings.h = ..\..\..\user_settings.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -41,6 +46,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{20662F9E-D386-4839-B855-857D7F922C99} = {CD9E73EC-27FB-49E4-B3A3-B0502C20A818}
 		{89279333-68BD-4E6A-B970-E645967CE5FA} = {20662F9E-D386-4839-B855-857D7F922C99}
+		{E9586E44-7821-4956-9F72-A79B988B3211} = {CD9E73EC-27FB-49E4-B3A3-B0502C20A818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7F8E1DC0-55AD-4DF8-B65A-CD65B60E17F9}
