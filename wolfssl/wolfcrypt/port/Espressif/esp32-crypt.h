@@ -37,6 +37,14 @@
 
 #include <freertos/FreeRTOS.h>
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #include "soc/dport_reg.h"
+    #include "soc/hwcrypto_reg.h"
+    #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+        #include "esp_private/periph_ctrl.h"
+    #else
+        #include "driver/periph_ctrl.h"
+    #endif
 #else
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
