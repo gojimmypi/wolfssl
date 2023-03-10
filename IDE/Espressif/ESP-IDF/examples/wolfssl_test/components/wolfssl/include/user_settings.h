@@ -18,11 +18,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESPWROOM32
 #undef WOLFSSL_ESPWROOM32SE
 #undef WOLFSSL_ESPWROOM32
 #undef WOLFSSL_ESP8266
+
+/* The Espressif sdkconfig will have chipset info.
+**
+** Possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
+*/
+#include "sdkconfig.h"
 
 #define WOLFSSL_ESPIDF
 
@@ -99,7 +111,7 @@
 #if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
-    /* threshold for performance adjustment for hw primitive use   */
+    /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
     #define EPS_RSA_EXPT_XBTIS           36
     /* X and Y of X * Y mod P greater than                         */
@@ -118,12 +130,12 @@
 /* #define XTIME time */
 
 /* when you want not to use HW acceleration */
-#define NO_ESP32WROOM32_CRYPT
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+//#define NO_ESP32WROOM32_CRYPT
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
-/* adjust wait-timeout count if you see timeout in rsa hw acceleration */
+/* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 #define HASH_SIZE_LIMIT /* for test.c */
@@ -132,3 +144,8 @@
 
 #define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
+
+#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
+    /* AES192 is not supported on the ESP32-S3 HW at this time */
+    #define NO_AES_192
+#endif
