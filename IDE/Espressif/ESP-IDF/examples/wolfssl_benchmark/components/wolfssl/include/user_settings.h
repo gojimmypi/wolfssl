@@ -26,6 +26,17 @@
 #undef WOLFSSL_ESPWROOM32
 #undef WOLFSSL_ESP8266
 
+/* The Espressif sdkconfig will have chipset info.
+**
+** Possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
+*/
+#include "sdkconfig.h"
+
 #define WOLFSSL_ESPIDF
 
 /*
@@ -136,3 +147,8 @@
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 #define HASH_SIZE_LIMIT /* for test.c */
+
+#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
+    /* AES192 is not supported on the ESP32-S3 HW at this time */
+    #define NO_AES_192
+#endif
