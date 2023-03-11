@@ -130,10 +130,10 @@
 /* #define XTIME time */
 
 /* when you want not to use HW acceleration */
-//#define NO_ESP32WROOM32_CRYPT
-//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+#define NO_ESP32WROOM32_CRYPT
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
