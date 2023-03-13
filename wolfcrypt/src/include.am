@@ -14,6 +14,7 @@ EXTRA_DIST += wolfcrypt/src/misc.c
 EXTRA_DIST += wolfcrypt/src/evp.c
 EXTRA_DIST += wolfcrypt/src/asm.c
 EXTRA_DIST += wolfcrypt/src/aes_asm.asm
+EXTRA_DIST += wolfcrypt/src/aes_gcm_asm.asm
 EXTRA_DIST += wolfcrypt/src/wc_dsp.c
 EXTRA_DIST += wolfcrypt/src/sp_dsp32.c
 EXTRA_DIST += wolfcrypt/src/sp_x86_64_asm.asm
@@ -124,6 +125,8 @@ EXTRA_DIST += wolfcrypt/src/port/ti/ti-aes.c \
               wolfcrypt/src/port/Renesas/renesas_sce_aes.c \
               wolfcrypt/src/port/Renesas/renesas_sce_sha.c \
               wolfcrypt/src/port/Renesas/renesas_common.c \
+              wolfcrypt/src/port/Renesas/renesas_rx64_hw_sha.c \
+              wolfcrypt/src/port/Renesas/renesas_rx64_hw_util.c \
               wolfcrypt/src/port/Renesas/README.md \
               wolfcrypt/src/port/cypress/psoc6_crypto.c
 

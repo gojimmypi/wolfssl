@@ -4353,7 +4353,9 @@ static const byte dnsSRVOid[] = {43, 6, 1, 5, 5, 7, 8, 7};
     defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL) || \
     defined(WOLFSSL_ASN_TEMPLATE)
 /* Pilot attribute types (0.9.2342.19200300.100.1.*) */
-static const byte uidOid[] = {9, 146, 38, 137, 147, 242, 44, 100, 1, 1}; /* user id */
+#define PLT_ATTR_TYPE_OID_BASE(num) {9, 146, 38, 137, 147, 242, 44, 100, 1, num}
+static const byte uidOid[] = PLT_ATTR_TYPE_OID_BASE(1); /* user id */
+static const byte fvrtDrk[] = PLT_ATTR_TYPE_OID_BASE(5);/* favourite drink*/
 #endif
 
 #if defined(WOLFSSL_CERT_GEN) || \
@@ -12408,6 +12410,15 @@ static int GetRDN(DecodedCert* cert, char* full, word32* idx, int* nid,
         *nid = NID_domainComponent;
     #endif
     }
+    else if (oidSz == sizeof(fvrtDrk) && XMEMCMP(oid, fvrtDrk, oidSz) == 0) {
+        /* Set the favourite drink, type string, length and NID. */
+        id = ASN_FAVOURITE_DRINK;
+        typeStr = WOLFSSL_FAVOURITE_DRINK;
+        typeStrLen = sizeof(WOLFSSL_FAVOURITE_DRINK) - 1;
+    #ifdef WOLFSSL_X509_NAME_AVAILABLE
+        *nid = NID_favouriteDrink;
+    #endif
+    }
     /* Other OIDs that start with the same values. */
     else if (oidSz == sizeof(dcOid) && XMEMCMP(oid, dcOid, oidSz-1) == 0) {
         WOLFSSL_MSG("Unknown pilot attribute type");
@@ -13594,7 +13605,7 @@ int GetAsnTimeString(void* currTime, byte* buf, word32 len)
         /* -1 below excludes null terminator */
         *data_ptr = (byte)ASN_UTC_TIME_SIZE - 1; data_ptr++; data_len++;
         XMEMCPY(data_ptr, (byte *)uf_time, ASN_UTC_TIME_SIZE - 1);
-        *data_ptr += ASN_UTC_TIME_SIZE - 1;
+        data_ptr += ASN_UTC_TIME_SIZE - 1;
     }
     else if (data_len == ASN_GENERALIZED_TIME_SIZE-1) {
         /* increment data_len for ASN length byte after adding the data_ptr */
@@ -13602,7 +13613,7 @@ int GetAsnTimeString(void* currTime, byte* buf, word32 len)
         /* -1 below excludes null terminator */
         *data_ptr = (byte)ASN_GENERALIZED_TIME_SIZE - 1; data_ptr++; data_len++;
         XMEMCPY(data_ptr, (byte*)uf_time, ASN_GENERALIZED_TIME_SIZE - 1);
-        *data_ptr += ASN_GENERALIZED_TIME_SIZE - 1;
+        data_ptr += ASN_GENERALIZED_TIME_SIZE - 1;
     }
     else {
         WOLFSSL_MSG("Invalid time size returned");
@@ -25806,6 +25817,10 @@ static int EncodeName(EncodedName* name, const char* nameStr,
             thisLen += (int)sizeof(uidOid);
             firstSz  = (int)sizeof(uidOid);
             break;
+        case ASN_FAVOURITE_DRINK:
+            thisLen += (int)sizeof(fvrtDrk);
+            firstSz  = (int)sizeof(fvrtDrk);
+            break;
     #ifdef WOLFSSL_CUSTOM_OID
         case ASN_CUSTOM_NAME:
             thisLen += cname->custom.oidSz;
@@ -25858,6 +25873,12 @@ static int EncodeName(EncodedName* name, const char* nameStr,
         case ASN_USER_ID:
             XMEMCPY(name->encoded + idx, uidOid, sizeof(uidOid));
             idx += (int)sizeof(uidOid);
+            /* str type */
+            name->encoded[idx++] = nameTag;
+            break;
+        case ASN_FAVOURITE_DRINK:
+            XMEMCPY(name->encoded + idx, fvrtDrk, sizeof(fvrtDrk));
+            idx += (int)sizeof(fvrtDrk);
             /* str type */
             name->encoded[idx++] = nameTag;
             break;
@@ -25930,6 +25951,10 @@ static int EncodeName(EncodedName* name, const char* nameStr,
                 /* Domain component OID different to standard types. */
                 oid = uidOid;
                 oidSz = sizeof(uidOid);
+                break;
+            case ASN_FAVOURITE_DRINK:
+                oid = fvrtDrk;
+                oidSz = sizeof(fvrtDrk);
                 break;
         #ifdef WOLFSSL_CUSTOM_OID
             case ASN_CUSTOM_NAME:
@@ -26078,6 +26103,9 @@ static int SetNameRdnItems(ASNSetData* dataASN, ASNItem* namesASN,
         j = -1;
         /* Put DomainComponents before OrgUnitName. */
         while (FindMultiAttrib(name, type, &j)) {
+            if (GetCertNameId(i) != ASN_DOMAIN_COMPONENT) {
+                continue;
+            }
             if (dataASN != NULL && namesASN != NULL) {
                 if (idx > maxIdx - (int)rdnASN_Length) {
                     WOLFSSL_MSG("Wanted to write more ASN than allocated");
@@ -26115,6 +26143,12 @@ static int SetNameRdnItems(ASNSetData* dataASN, ASNItem* namesASN,
                         sizeof(uidOid), GetNameType(name, i),
                         (const byte*)GetOneCertName(name, i), nameLen[i]);
                 }
+                else if (type == ASN_FAVOURITE_DRINK) {
+                    /* Copy favourite drink data into dynamic vars. */
+                    SetRdnItems(namesASN + idx, dataASN + idx, fvrtDrk,
+                        sizeof(fvrtDrk), GetNameType(name, i),
+                        (const byte*)GetOneCertName(name, i), nameLen[i]);
+                }
                 else if (type == ASN_CUSTOM_NAME) {
                 #ifdef WOLFSSL_CUSTOM_OID
                     SetRdnItems(namesASN + idx, dataASN + idx, name->custom.oid,
@@ -26136,6 +26170,9 @@ static int SetNameRdnItems(ASNSetData* dataASN, ASNItem* namesASN,
         j = -1;
         /* Write all other attributes of this type. */
         while (FindMultiAttrib(name, type, &j)) {
+            if (GetCertNameId(i) == ASN_DOMAIN_COMPONENT) {
+                continue;
+            }
             if (dataASN != NULL && namesASN != NULL) {
                 if (idx > maxIdx - (int)rdnASN_Length) {
                     WOLFSSL_MSG("Wanted to write more ASN than allocated");
@@ -29254,15 +29291,10 @@ static int SignCert(int requestSz, int sType, byte* buf, word32 buffSz,
 {
     int sigSz = 0;
     void* heap = NULL;
-    CertSignCtx* certSignCtx;
-#ifndef WOLFSSL_ASYNC_CRYPT
     CertSignCtx  certSignCtx_lcl;
+    CertSignCtx* certSignCtx = &certSignCtx_lcl;
 
-    certSignCtx = &certSignCtx_lcl;
-    XMEMSET(certSignCtx, 0, sizeof(CertSignCtx));
-#else
-    certSignCtx = NULL;
-#endif
+    XMEMSET(certSignCtx, 0, sizeof(*certSignCtx));
 
     if (requestSz < 0)
         return requestSz;
@@ -29288,12 +29320,6 @@ static int SignCert(int requestSz, int sType, byte* buf, word32 buffSz,
         return NOT_COMPILED_IN;
     #endif /* HAVE_ECC */
     }
-
-#ifdef WOLFSSL_ASYNC_CRYPT
-    if (certSignCtx == NULL) {
-        return BAD_FUNC_ARG;
-    }
-#endif
 
     if (certSignCtx->sig == NULL) {
         certSignCtx->sig = (byte*)XMALLOC(MAX_ENCODED_SIG_SZ, heap,
@@ -31117,11 +31143,13 @@ static int EccSpecifiedECDomainDecode(const byte* input, word32 inSz,
     if ((ret == 0) && (version < 1 || version > 3)) {
         ret = ASN_PARSE_E;
     }
+#ifndef WOLFSSL_NO_ASN_STRICT
     /* Only version 2 and above can have a seed. */
     if ((ret == 0) && (dataASN[ECCSPECIFIEDASN_IDX_PARAM_SEED].tag != 0) &&
             (version < 2)) {
         ret = ASN_PARSE_E;
     }
+#endif
     /* Only version 2 and above can have a hash algorithm. */
     if ((ret == 0) && (dataASN[ECCSPECIFIEDASN_IDX_HASH_SEQ].tag != 0) &&
             (version < 2)) {

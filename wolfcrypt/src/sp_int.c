@@ -618,7 +618,12 @@ This library provides single precision (SP) integer math functions.
     while (0)
 /* Index of highest bit set. */
 #define SP_ASM_HI_BIT_SET_IDX(va, vi)                    \
-    vi = _BitScanReverse64(va)
+    do {                                                 \
+        unsigned long idx;                               \
+        _BitScanReverse64(&idx, va);                     \
+        vi = idx;                                        \
+    }                                                    \
+    while (0)
 #endif
 
 #if !defined(WOLFSSL_SP_DIV_WORD_HALF) && (!defined(_MSC_VER) || \
@@ -18153,12 +18158,17 @@ int sp_prime_is_prime_ex(const sp_int* a, int trials, int* result, WC_RNG* rng)
     if ((a == NULL) || (result == NULL) || (rng == NULL)) {
         err = MP_VAL;
     }
-
 #ifdef WOLFSSL_SP_INT_NEGATIVE
     if ((err == MP_OKAY) && (a->sign == MP_NEG)) {
         err = MP_VAL;
     }
 #endif
+
+    /* Ensure trials is valid. Maximum based on number of small primes
+     * available. */
+    if ((err == MP_OKAY) && ((trials <= 0) || (trials > SP_PRIME_SIZE))) {
+        err = MP_VAL;
+    }
 
     if ((err == MP_OKAY) && sp_isone(a)) {
         ret = MP_NO;

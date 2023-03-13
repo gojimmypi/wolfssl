@@ -232,6 +232,9 @@
 
 #ifndef WOLFSSL_HAVE_MIN
     #define WOLFSSL_HAVE_MIN
+    #ifdef NO_INLINE
+        #define min no_inline_min
+    #endif
     static WC_INLINE word32 min(word32 a, word32 b)
     {
         return a > b ? b : a;
@@ -2033,7 +2036,8 @@ static WC_INLINE void tcp_listen(SOCKET_T* sockfd, word16* port, int useAnyAddr,
 
     /* don't use INADDR_ANY by default, firewall may block, make user switch
        on */
-    build_addr(&addr, (useAnyAddr ? INADDR_ANY : wolfSSLIP), *port, udp, sctp);
+    build_addr(&addr, (useAnyAddr ? (const char*)INADDR_ANY : wolfSSLIP),
+        *port, udp, sctp);
     tcp_socket(sockfd, udp, sctp);
 
 #if !defined(USE_WINDOWS_API) && !defined(WOLFSSL_MDK_ARM)\
@@ -2111,7 +2115,8 @@ static WC_INLINE void udp_accept(SOCKET_T* sockfd, SOCKET_T* clientfd,
     SOCKADDR_IN_T addr;
 
     (void)args;
-    build_addr(&addr, (useAnyAddr ? INADDR_ANY : wolfSSLIP), port, 1, 0);
+    build_addr(&addr, (useAnyAddr ? (const char*)INADDR_ANY : wolfSSLIP),
+        port, 1, 0);
     tcp_socket(sockfd, 1, 0);
 
 
@@ -2278,6 +2283,27 @@ static WC_INLINE void tcp_set_nonblocking(SOCKET_T* sockfd)
         if (flags < 0)
             err_sys_with_errno("fcntl get failed");
         flags = fcntl(*sockfd, F_SETFL, flags | O_NONBLOCK);
+        if (flags < 0)
+            err_sys_with_errno("fcntl set failed");
+    #endif
+}
+
+static WC_INLINE void tcp_set_blocking(SOCKET_T* sockfd)
+{
+    #ifdef USE_WINDOWS_API
+        unsigned long blocking = 0;
+        int ret = ioctlsocket(*sockfd, FIONBIO, &blocking);
+        if (ret == SOCKET_ERROR)
+            err_sys_with_errno("ioctlsocket failed");
+    #elif defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET) \
+        || defined (WOLFSSL_TIRTOS)|| defined(WOLFSSL_VXWORKS) \
+        || defined(WOLFSSL_ZEPHYR)
+         /* non blocking not supported, for now */
+    #else
+        int flags = fcntl(*sockfd, F_GETFL, 0);
+        if (flags < 0)
+            err_sys_with_errno("fcntl get failed");
+        flags = fcntl(*sockfd, F_SETFL, flags & (~O_NONBLOCK));
         if (flags < 0)
             err_sys_with_errno("fcntl set failed");
     #endif

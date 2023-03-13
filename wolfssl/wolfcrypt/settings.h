@@ -244,6 +244,9 @@
 /* Uncomment next line if using RENESAS RA6M4 */
 /* #define WOLFSSL_RENESAS_RA6M4 */
 
+/* Uncomment next line if using RENESAS RX64 hardware acceleration */
+/* #define WOLFSSL_RENESAS_RX64_HASH */
+
 /* Uncomment next line if using Solaris OS*/
 /* #define WOLFSSL_SOLARIS */
 
@@ -367,6 +370,11 @@
         #define WOLFSSL_RENESAS_TSIP_TLS_AES_CRYPT
     #endif
 #endif /* WOLFSSL_RENESAS_TSIP */
+
+#if !defined(WOLFSSL_NO_HASH_RAW) && defined(WOLFSSL_RENESAS_RX64_HASH)
+    /* RAW hash function APIs are not implemented with RX64 hardware acceleration */
+    #define WOLFSSL_NO_HASH_RAW
+#endif
 
 #if defined(WOLFSSL_RENESAS_SCEPROTECT)
     #define SCE_TLS_MASTERSECRET_SIZE         80  /* 20 words */
@@ -1928,6 +1936,11 @@ extern void uITRON4_free(void *p) ;
     #define XGEN_ALIGN
 #endif
 
+#if defined(__mips) || defined(__mips64) || \
+    defined(WOLFSSL_SP_MIPS64) || defined(WOLFSSL_SP_MIPS)
+    #undef WOLFSSL_SP_INT_DIGIT_ALIGN
+    #define WOLFSSL_SP_INT_DIGIT_ALIGN
+#endif
 
 #ifdef __INTEL_COMPILER
     #pragma warning(disable:2259) /* explicit casts to smaller sizes, disable */
@@ -2692,7 +2705,7 @@ extern void uITRON4_free(void *p) ;
     #define NO_SESSION_CACHE
 #endif
 
-/* Use static ECC structs for Position Independant Code (PIC) */
+/* Use static ECC structs for Position Independent Code (PIC) */
 #if defined(__IAR_SYSTEMS_ICC__) && defined(__ROPI__)
     #define WOLFSSL_ECC_CURVE_STATIC
     #define WOLFSSL_NAMES_STATIC
@@ -2909,7 +2922,7 @@ extern void uITRON4_free(void *p) ;
 
 
 /* ---------------------------------------------------------------------------
- * Depricated Algorithm Handling
+ * Deprecated Algorithm Handling
  *   Unless allowed via a build macro, disable support
  * ---------------------------------------------------------------------------*/
 

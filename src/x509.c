@@ -9987,6 +9987,7 @@ static int ConvertNIDToWolfSSL(int nid)
         case NID_businessCategory: return ASN_BUS_CAT;
         case NID_domainComponent: return ASN_DOMAIN_COMPONENT;
         case NID_postalCode: return ASN_POSTAL_CODE;
+        case NID_favouriteDrink: return ASN_FAVOURITE_DRINK;
         default:
             WOLFSSL_MSG("Attribute NID not found");
             return -1;
@@ -11125,6 +11126,11 @@ err:
                                             dataSz) == WOLFSSL_SUCCESS) {
                     ne->set = 1;
                 }
+                else {
+                    /* Free the ASN1_STRING if it is not set. */
+                    wolfSSL_ASN1_STRING_free(ne->value);
+                    ne->value = NULL;
+                }
             }
         }
 
@@ -11173,6 +11179,11 @@ err:
             if (wolfSSL_ASN1_STRING_set(ne->value, (const void*)data, dataSz)
                     == WOLFSSL_SUCCESS) {
                 ne->set = 1;
+            }
+            else {
+                /* Free the ASN1_STRING if it is not set. */
+                wolfSSL_ASN1_STRING_free(ne->value);
+                ne->value = NULL;
             }
         }
 

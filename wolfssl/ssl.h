@@ -729,6 +729,7 @@ typedef struct WOLFSSL_RAND_METHOD {
  * Add alert string to the function wolfSSL_alert_type_string_long in src/ssl.c
  */
 enum AlertDescription {
+    invalid_alert                   =  -1,
     close_notify                    =   0,
     unexpected_message              =  10,
     bad_record_mac                  =  20,
@@ -4591,7 +4592,6 @@ WOLFSSL_API void wolfSSL_sk_X509_INFO_pop_free(WOLF_STACK_OF(WOLFSSL_X509_INFO)*
     void (*f) (WOLFSSL_X509_INFO*));
 WOLFSSL_API void wolfSSL_sk_X509_INFO_free(WOLF_STACK_OF(WOLFSSL_X509_INFO)*);
 
-typedef unsigned long (*wolf_sk_hash_cb) (const void *v);
 WOLFSSL_API WOLF_STACK_OF(WOLFSSL_X509_NAME)* wolfSSL_sk_X509_NAME_new(
     WOLF_SK_COMPARE_CB(WOLFSSL_X509_NAME, cb));
 WOLFSSL_API int wolfSSL_sk_X509_NAME_push(WOLF_STACK_OF(WOLFSSL_X509_NAME)*,

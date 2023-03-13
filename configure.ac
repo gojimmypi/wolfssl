@@ -6348,7 +6348,6 @@ AC_ARG_ENABLE([examples],
     )
 
 AS_IF([test "x$ENABLED_FILESYSTEM" = "xno"], [ENABLED_EXAMPLES="no"])
-AS_IF([test "x$ENABLED_INLINE" = "xno"], [ENABLED_EXAMPLES="no"])
 AS_IF([test "x$ENABLED_CRYPTONLY" = "xyes"], [ENABLED_EXAMPLES="no"])
 
 
@@ -6783,6 +6782,10 @@ do
     ENABLED_SP_FF_4096=yes
     ;;
 
+  smallstack)
+    ENABLED_SP_SMALL_STACK=yes
+    ;;
+
   nomalloc)
     ENABLED_SP_NO_MALLOC=yes
     ;;
@@ -6866,6 +6869,10 @@ fi
 if test "$ENABLED_SP_SMALL" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SP_SMALL"
     AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SP_SMALL"
+fi
+if test "$ENABLED_SP_SMALL_STACK" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SP_SMALL_STACK"
+    AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SP_SMALL_STACK"
 fi
 if test "$ENABLED_SP_NO_MALLOC" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SP_NO_MALLOC"
@@ -8708,6 +8715,26 @@ case $host_os in
 esac
 
 rm cyassl/options.h.bak
+
+if test "$ENABLED_OPENSSLEXTRA" = "yes" && test "$ENABLED_LINUXKM" = "no"
+then
+    SAVE_CFLAGS=$CFLAGS
+    CFLAGS="$CFLAGS -I$srcdir"
+    build_pwd="$(pwd)"
+    cd "$srcdir"
+    openssl_headers=$(echo wolfssl/openssl/*.h)
+    cd "$build_pwd"
+    for header in $openssl_headers
+    do
+        AC_CHECK_HEADER([$header], [], [
+                AC_MSG_ERROR([Error including $header. Possible circular dependency introduced or missing include.])
+            ], [
+            #include <wolfssl/options.h>
+            extern int dummy_int_to_make_compiler_happy;
+        ])
+    done
+    CFLAGS=$SAVE_CFLAGS
+fi
 
 if test "$silent" != "yes"; then
 

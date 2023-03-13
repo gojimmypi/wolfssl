@@ -648,22 +648,35 @@ static void render_error_message(const char* msg, int es)
         break;
     case WC_TEST_RET_TAG_ERRNO:
     {
-#if defined(_GNU_SOURCE) || \
-    (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L))
+
+/* strerror_r() comes in two mutually incompatible flavors, a native glibc
+ * flavor that always returns a non-null char pointer that must be used
+ * directly, and a POSIX flavor that returns an error int, and iff success,
+ * stores an error string in the supplied buffer.  this is all most
+ * infelicitous...
+ */
+#if !defined(STRING_USER) && !defined(NO_ERROR_STRINGS) &&      \
+    (defined(_GNU_SOURCE) || defined(__USE_GNU) ||              \
+     (defined(__USE_XOPEN2K) &&                                 \
+      defined(_POSIX_C_SOURCE) &&                               \
+      (_POSIX_C_SOURCE >= 200112L)))
+
         char errno_buf[64], *errno_string;
-#if defined(_GNU_SOURCE)
-        errno_string = strerror_r(WC_TEST_RET_DEC_I(es),
-                                  errno_buf, sizeof(errno_buf));
-#else
+        /* precisely mirror the gate used in glibc string.h */
+#if defined __USE_XOPEN2K && !defined __USE_GNU
         if (strerror_r(WC_TEST_RET_DEC_I(es),
                        errno_buf, sizeof(errno_buf)) != 0)
             XSTRLCPY(errno_buf, "?", sizeof(errno_buf));
         errno_string = errno_buf;
+#else
+        errno_string = strerror_r(WC_TEST_RET_DEC_I(es),
+                                  errno_buf, sizeof(errno_buf));
 #endif
         err_sys_printf("%s error L=%d errno=%d (%s)\n", msg,
                        WC_TEST_RET_DEC_LN(es), WC_TEST_RET_DEC_I(es),
                        errno_string);
-#else
+
+#else /* can't figure out how to strerror_r(), or don't want error strings */
         err_sys_printf("%s error L=%d errno=%d\n", msg,
                        WC_TEST_RET_DEC_LN(es), WC_TEST_RET_DEC_I(es));
 #endif
@@ -13869,20 +13882,20 @@ static void initDefaultName(void)
     n = &certDefaultName.name[0];
     n->id   = ASN_ORGUNIT_NAME;
     n->type = CTC_UTF8;
-    n->sz   = sizeof("Development-2");
+    n->sz   = XSTRLEN("Development-2");
     XMEMCPY(n->value, "Development-2", sizeof("Development-2"));
 
     #if CTC_MAX_ATTRIB > 3
     n = &certDefaultName.name[1];
     n->id   = ASN_DOMAIN_COMPONENT;
     n->type = CTC_UTF8;
-    n->sz   = sizeof("com");
+    n->sz   = XSTRLEN("com");
     XMEMCPY(n->value, "com", sizeof("com"));
 
     n = &certDefaultName.name[2];
     n->id   = ASN_DOMAIN_COMPONENT;
     n->type = CTC_UTF8;
-    n->sz   = sizeof("wolfssl");
+    n->sz   = XSTRLEN("wolfssl");
     XMEMCPY(n->value, "wolfssl", sizeof("wolfssl"));
     #endif
 #endif /* WOLFSSL_MULTI_ATTRIB && WOLFSSL_TEST_CERT */
