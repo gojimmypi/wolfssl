@@ -735,7 +735,8 @@ src_libwolfssl@LIBSUFFIX@_la_SOURCES += \
                src/wolfio.c \
                src/keys.c \
                src/ssl.c \
-               src/tls.c
+               src/tls.c \
+               src/version.c
 
 if BUILD_TLS13
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/tls13.c
