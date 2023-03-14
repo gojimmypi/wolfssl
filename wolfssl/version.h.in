@@ -28,9 +28,11 @@
 extern "C" {
 #endif
 
+#include <wolfssl/wolfcrypt/settings.h>
+
 #define LIBWOLFSSL_VERSION_STRING "@VERSION@"
 #define LIBWOLFSSL_VERSION_HEX @HEX_VERSION@
-int ShowExtendedSystemInfo(void);
+WOLFSSL_API int ShowExtendedSystemInfo(void);
 #ifdef __cplusplus
 }
 #endif
