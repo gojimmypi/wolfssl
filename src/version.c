@@ -224,7 +224,7 @@ static int ShowExtendedSystemInfo_platform()
 extern "C" {
 #endif
 
-WOLFSSL_API int ShowExtendedSystemInfo(void)
+int ShowExtendedSystemInfo(void)
 {
     WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
 
