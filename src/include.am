@@ -765,10 +765,11 @@ if BUILD_DTLS
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/dtls.c
 endif
 
+if BUILD_VERSION_EXTENDED_INFO
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/version.c
+endif
+
 endif !BUILD_CRYPTONLY
 
 
 endif !BUILD_FIPS_RAND
-
-src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/version.c
-
