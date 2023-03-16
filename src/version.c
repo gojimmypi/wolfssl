@@ -20,10 +20,11 @@
  */
 #include <wolfssl/version.h>
 
+#ifdef HAVE_VERSION_EXTENDED_INFO
+
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-
 #include <wolfssl/wolfcrypt/settings.h>
 
 #if defined(WOLFSSL_ESPIDF)
@@ -248,9 +249,9 @@ int ShowExtendedSystemInfo(void)
     ShowExtendedSystemInfo_git();
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
-
     return 0;
 }
+#endif /* NO_VERSION_EXTENDED_INFO */
 
 #ifdef __cplusplus
 }
