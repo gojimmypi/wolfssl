@@ -59,6 +59,7 @@ static const char *TAG = "wifi station";
 
 static int s_retry_num = 0;
 
+#include "server-tls.h"
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -160,5 +161,5 @@ void app_main(void)
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
 
-
+    tls_smp_server_task();
 }
