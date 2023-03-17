@@ -1,0 +1,121 @@
+ESP-ROM:esp32c3-api1-20210207
+Build:Feb  7 2021
+rst:0x3 (RTC_SW_SYS_RST),boot:0xd (SPI_FAST_FLASH_BOOT)
+Saved PC:0x20000830
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fcd5820,len:0x16dc
+load:0x403cc710,len:0x96c
+load:0x403ce710,len:0x2e2c
+entry 0x403cc710
+I (35) boot: ESP-IDF v5.0-dirty 2nd stage bootloader
+I (35) boot: compile time 15:02:21
+I (35) boot: chip revision: v0.3
+I (37) boot.esp32c3: SPI Speed      : 80MHz
+I (42) boot.esp32c3: SPI Mode       : DIO
+I (47) boot.esp32c3: SPI Flash Size : 2MB
+I (52) boot: Enabling RNG early entropy source...
+I (57) boot: Partition Table:
+I (61) boot: ## Label            Usage          Type ST Offset   Length
+I (68) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (75) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (83) boot:  2 factory          factory app      00 00 00010000 00177000
+I (90) boot: End of partition table
+I (94) esp_image: segment 0: paddr=00010020 vaddr=3c050020 size=14200h ( 82432) map
+I (116) esp_image: segment 1: paddr=00024228 vaddr=3fc8a400 size=01500h (  5376) load
+I (117) esp_image: segment 2: paddr=00025730 vaddr=40380000 size=0a314h ( 41748) load
+I (129) esp_image: segment 3: paddr=0002fa4c vaddr=50000010 size=00010h (    16) load
+I (130) esp_image: segment 4: paddr=0002fa64 vaddr=00000000 size=005b4h (  1460) 
+I (138) esp_image: segment 5: paddr=00030020 vaddr=42000020 size=414bch (267452) map
+I (191) boot: Loaded app from partition at offset 0x10000
+I (191) boot: Disabling RNG early entropy source...
+I (403) cpu_start: Pro cpu up.
+I (411) cpu_start: Pro cpu start user code
+I (411) cpu_start: cpu freq: 160000000 Hz
+I (411) cpu_start: Application information:
+I (414) cpu_start: Project name:     wolfssl_benchmark
+I (420) cpu_start: App version:      v5.5.4-stable-749-ge63732345-di
+I (427) cpu_start: Compile time:     Mar 17 2023 15:02:19
+I (433) cpu_start: ELF file SHA256:  a1ffe640b9c0639d...
+I (439) cpu_start: ESP-IDF:          v5.0-dirty
+I (445) heap_init: Initializing. RAM available for dynamic allocation:
+I (452) heap_init: At 3FC8D890 len 0004EE80 (315 KiB): DRAM
+I (458) heap_init: At 3FCDC710 len 00002950 (10 KiB): STACK/DRAM
+I (465) heap_init: At 50000020 len 00001FE0 (7 KiB): RTCRAM
+I (472) spi_flash: detected chip: generic
+I (476) spi_flash: flash io: dio
+W (480) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (493) cpu_start: Starting scheduler.
+I (930) wolfssl_benchmark: --------------------------------------------------------
+I (930) wolfssl_benchmark: --------------------------------------------------------
+I (935) wolfssl_benchmark: ---------------------- BEGIN MAIN ----------------------
+I (944) wolfssl_benchmark: --------------------------------------------------------
+I (952) wolfssl_benchmark: --------------------------------------------------------
+I (960) Version Info: Extended Version and Platform Information.
+I (967) Version Info: LIBWOLFSSL_VERSION_STRING = 5.5.4
+I (973) Version Info: LIBWOLFSSL_VERSION_HEX = 5005004
+I (979) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (988) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (995) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = e6373234547f1116ce4b1923ee6bf15d5120f448
+I (1004) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = e63732345
+I (1011) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri Mar 17 14:55:37 2023 -0700'
+I (1020) Version Info: CONFIG_IDF_TARGET = esp32c3
+I (1026) Version Info: NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.
+I (1034) Version Info: SINGLE_THREADED
+I (1038) wolfssl_benchmark: app_main CONFIG_BENCH_ARGV = -lng 0
+I (1045) wolfssl_benchmark: construct_argv arg:-lng 0
+
+I (1051) wolfssl_benchmark: Enable ESP32-C3 timer 
+------------------------------------------------------------------------------
+ wolfSSL version 5.5.4
+------------------------------------------------------------------------------
+wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
+RNG                        922 KB took 1.025 seconds,  899.122 KB/s Cycles per byte =  44.50
+AES-128-CBC-enc           1766 KB took 1.007 seconds, 1754.121 KB/s Cycles per byte =  22.80
+AES-128-CBC-dec           1741 KB took 1.013 seconds, 1718.460 KB/s Cycles per byte =  23.27
+AES-192-CBC-enc           1536 KB took 1.016 seconds, 1511.811 KB/s Cycles per byte =  26.45
+AES-192-CBC-dec           1510 KB took 1.014 seconds, 1489.546 KB/s Cycles per byte =  26.86
+AES-256-CBC-enc           1331 KB took 1.006 seconds, 1323.260 KB/s Cycles per byte =  30.21
+AES-256-CBC-dec           1331 KB took 1.017 seconds, 1308.948 KB/s Cycles per byte =  30.55
+AES-128-GCM-enc            461 KB took 1.057 seconds,  435.951 KB/s Cycles per byte =  91.83
+AES-128-GCM-dec            461 KB took 1.058 seconds,  435.539 KB/s Cycles per byte =  91.83
+AES-192-GCM-enc            435 KB took 1.040 seconds,  418.462 KB/s Cycles per byte =  95.53
+AES-192-GCM-dec            435 KB took 1.040 seconds,  418.462 KB/s Cycles per byte =  95.54
+AES-256-GCM-enc            410 KB took 1.018 seconds,  402.358 KB/s Cycles per byte =  99.35
+AES-256-GCM-dec            410 KB took 1.018 seconds,  402.358 KB/s Cycles per byte =  99.35
+GMAC Default               581 KB took 1.000 seconds,  580.608 KB/s Cycles per byte =  68.86
+3DES                       410 KB took 1.060 seconds,  386.415 KB/s Cycles per byte = 103.48
+MD5                      10906 KB took 1.000 seconds, 10905.600 KB/s Cycles per byte =   3.67
+SHA                       5555 KB took 1.004 seconds, 5533.068 KB/s Cycles per byte =   7.23
+SHA-224                   2176 KB took 1.007 seconds, 2160.874 KB/s Cycles per byte =  18.52
+SHA-256                   2176 KB took 1.007 seconds, 2160.874 KB/s Cycles per byte =  18.52
+SHA-384                   1382 KB took 1.006 seconds, 1374.155 KB/s Cycles per byte =  29.12
+SHA-512                   1382 KB took 1.007 seconds, 1372.790 KB/s Cycles per byte =  29.12
+SHA-512/224               1382 KB took 1.006 seconds, 1374.155 KB/s Cycles per byte =  29.12
+SHA-512/256               1382 KB took 1.007 seconds, 1372.790 KB/s Cycles per byte =  29.12
+SHA3-224                   973 KB took 1.018 seconds,  955.599 KB/s Cycles per byte =  41.87
+SHA3-256                   922 KB took 1.023 seconds,  900.880 KB/s Cycles per byte =  44.39
+SHA3-384                   717 KB took 1.033 seconds,  693.901 KB/s Cycles per byte =  57.65
+SHA3-512                   486 KB took 1.004 seconds,  484.462 KB/s Cycles per byte =  82.61
+SHAKE128                  1126 KB took 1.019 seconds, 1105.397 KB/s Cycles per byte =  36.16
+SHAKE256                   922 KB took 1.023 seconds,  900.880 KB/s Cycles per byte =  44.39
+RIPEMD                    4429 KB took 1.004 seconds, 4411.155 KB/s Cycles per byte =   9.07
+HMAC-MD5                 10803 KB took 1.001 seconds, 10792.408 KB/s Cycles per byte =   3.71
+HMAC-SHA                  5504 KB took 1.004 seconds, 5482.072 KB/s Cycles per byte =   7.29
+HMAC-SHA224               2150 KB took 1.004 seconds, 2141.833 KB/s Cycles per byte =  18.67
+HMAC-SHA256               2150 KB took 1.004 seconds, 2141.833 KB/s Cycles per byte =  18.67
+HMAC-SHA384               1357 KB took 1.005 seconds, 1350.050 KB/s Cycles per byte =  29.63
+HMAC-SHA512               1357 KB took 1.003 seconds, 1352.742 KB/s Cycles per byte =  29.57
+PBKDF2                       0 KB took 1.002 seconds,    0.255 KB/s Cycles per byte = 156579.28
+RSA     2048   public        48 ops took 1.003 sec, avg 20.896 ms, 47.856 ops/sec
+RSA     2048  private         2 ops took 2.543 sec, avg 1271.500 ms, 0.786 ops/sec
+ECC   [      SECP256R1]   256  key gen         8 ops took 1.097 sec, avg 137.125 ms, 7.293 ops/sec
+ECDHE [      SECP256R1]   256    agree         8 ops took 1.094 sec, avg 136.750 ms, 7.313 ops/sec
+ECDSA [      SECP256R1]   256     sign         8 ops took 1.115 sec, avg 139.375 ms, 7.175 ops/sec
+ECDSA [      SECP256R1]   256   verify         4 ops took 1.058 sec, avg 264.500 ms, 3.781 ops/sec
+CURVE  25519  key gen         3 ops took 1.056 sec, avg 352.000 ms, 2.841 ops/sec
+CURVE  25519    agree         4 ops took 1.407 sec, avg 351.750 ms, 2.843 ops/sec
+ED     25519  key gen        73 ops took 1.000 sec, avg 13.699 ms, 73.000 ops/sec
+ED     25519     sign        62 ops took 1.002 sec, avg 16.161 ms, 61.876 ops/sec
+ED     25519   verify        40 ops took 1.032 sec, avg 25.800 ms, 38.760 ops/sec
+Benchmark complete
