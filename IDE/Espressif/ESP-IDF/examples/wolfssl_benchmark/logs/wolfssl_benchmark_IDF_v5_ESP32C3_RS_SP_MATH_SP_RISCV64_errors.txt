@@ -1,0 +1,2012 @@
+Run "C:\SysGCC\esp32\tools\ninja\1.10.2\ninja.exe " in directory "C:\workspace\wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples\wolfssl_benchmark\VisualGDB/../build/VisualGDB/Debug" on local computer
+C:\SysGCC\esp32\tools\ninja\1.10.2\ninja.exe 
+[1/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/ocsp.c.obj
+[2/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/crl.c.obj
+[3/109] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+[4/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/dtls13.c.obj
+[5/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/version.c.obj
+[6/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/quic.c.obj
+[7/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/dtls.c.obj
+[8/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/keys.c.obj
+[9/109] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/sniffer.c.obj
+[10/109] Performing build step for 'bootloader'
+[1/1] cmd.exe /C "cd /D C:\workspace\wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples\wolfssl_benchmark\build\VisualGDB\Debug\bootloader\esp-idf\esptool_py && python C:/SysGCC/esp32/esp-idf/v5.0/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 C:/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/build/VisualGDB/Debug/bootloader/bootloader.bin"
+Bootloader binary size 0x4ed0 bytes. 0x3130 bytes (38%) free.
+[11/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/arc4.c.obj
+[12/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/ssl_bn.c.obj
+C:/workspace/wolfssl-gojimmypi/src/ssl_bn.c:35:10: warning: #warning ssl_bn.c does not need to be compiled separately from ssl.c [-Wcpp]
+   35 |         #warning ssl_bn.c does not need to be compiled separately from ssl.c
+      |          ^~~~~~~
+[13/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/asm.c.obj
+[14/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/wolfio.c.obj
+[15/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/blake2s.c.obj
+[16/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/camellia.c.obj
+[17/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/aes.c.obj
+[18/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/tls.c.obj
+[19/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/chacha20_poly1305.c.obj
+[20/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/chacha.c.obj
+[21/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/tls13.c.obj
+[22/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/blake2b.c.obj
+[23/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/compress.c.obj
+[24/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/cmac.c.obj
+[25/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/curve25519.c.obj
+[26/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/cryptocb.c.obj
+[27/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/cpuid.c.obj
+[28/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/coding.c.obj
+[29/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/dh.c.obj
+[30/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/dsa.c.obj
+[31/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/internal.c.obj
+[32/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ecc.c.obj
+[33/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/curve448.c.obj
+[34/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/dilithium.c.obj
+[35/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/asn.c.obj
+[36/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/des3.c.obj
+[37/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/error.c.obj
+[38/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ed448.c.obj
+[39/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ext_kyber.c.obj
+[40/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/eccsi.c.obj
+[41/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ed25519.c.obj
+[42/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/falcon.c.obj
+[43/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/fe_448.c.obj
+[44/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/fe_low_mem.c.obj
+[45/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ge_448.c.obj
+[46/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ge_low_mem.c.obj
+[47/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/fe_operations.c.obj
+[48/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/hmac.c.obj
+[49/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/md2.c.obj
+[50/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/md4.c.obj
+[51/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/hash.c.obj
+[52/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/integer.c.obj
+[53/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/kdf.c.obj
+[54/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/hpke.c.obj
+[55/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/logging.c.obj
+[56/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/poly1305.c.obj
+[57/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/memory.c.obj
+[58/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/md5.c.obj
+[59/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/pwdbased.c.obj
+[60/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ge_operations.c.obj
+[61/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/pkcs12.c.obj
+[62/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/rc2.c.obj
+[63/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/ripemd.c.obj
+[64/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/rsa.c.obj
+[65/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sakke.c.obj
+[66/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/siphash.c.obj
+[67/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sha256.c.obj
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sha256.c:111:24: warning: 'TAG' defined but not used [-Wunused-variable]
+  111 |     static const char* TAG = "wc_sha256";
+      |                        ^~~
+[68/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/random.c.obj
+[69/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sha3.c.obj
+[70/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sha.c.obj
+[71/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c32.c.obj
+[72/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/signature.c.obj
+[73/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_arm32.c.obj
+[74/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_arm64.c.obj
+[75/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sha512.c.obj
+[76/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/srp.c.obj
+[77/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_armthumb.c.obj
+[78/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sphincs.c.obj
+[79/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c.obj
+FAILED: esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c.obj 
+C:\SysGCC\esp32\tools\riscv32-esp-elf\esp-2022r1-11.2.0\riscv32-esp-elf\bin\riscv32-esp-elf-gcc.exe -DLIBWOLFSSL_VERSION_GIT_BRANCH=\"ED25519_SHA2_fix\" -DLIBWOLFSSL_VERSION_GIT_HASH=\"ef625ae869f31d86aa7eb1cc4d22e284331e0f50\" -DLIBWOLFSSL_VERSION_GIT_HASH_DATE="\"'Thu Mar 16 18:22:33 2023 -0700'\"" -DLIBWOLFSSL_VERSION_GIT_ORIGIN=\"https://github.com/gojimmypi/wolfssl.git\" -DLIBWOLFSSL_VERSION_GIT_SHORT_HASH=\"ef625ae86\" -Iconfig -I../../../components/wolfssl -I../../../components/wolfssl/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/include/freertos -IC:/workspace/wolfssl-gojimmypi -IC:/SysGCC/esp32/esp-idf/v5.0/components/newlib/platform_include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/esp_additions/include/freertos -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/portable/riscv/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/esp_additions/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include/soc -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include/soc/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/port/esp32c3/. -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/port/esp32c3/private_include -IC:/SysGCC/esp32/esp-idf/v5.0/components/heap/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/log/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/esp32c3/. -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/esp32c3/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/esp32c3/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/platform_port/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/include/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_common/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/soc -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/include/riscv -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/include/private -IC:/SysGCC/esp32/esp-idf/v5.0/components/riscv/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include/apps -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include/apps/sntp -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/lwip/src/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/port/esp32/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/port/esp32/include/arch -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_timer/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/driver/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/driver/deprecated -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_pm/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_ringbuf/include -march=rv32imc  -DWOLFSSL_USER_SETTINGS -g -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=deprecated-declarations -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -nostartfiles -Og -fstack-protector -fmacro-prefix-map=C:/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark=. -fmacro-prefix-map=C:/SysGCC/esp32/esp-idf/v5.0=/IDF -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -DconfigENABLE_FREERTOS_DEBUG_OCDAWARE=1 -std=gnu17 -Wno-old-style-declaration -D_GNU_SOURCE -DIDF_VER=\"v5.0-dirty\" -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS -MD -MT esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c.obj -MF esp-idf\wolfssl\CMakeFiles\__idf_wolfssl.dir\C_\workspace\wolfssl-gojimmypi\wolfcrypt\src\sp_int.c.obj.d -o esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c.obj -c C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c: In function 'sp_div_word':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c:6138:5: error: unknown type name 'sp_int_word'; did you mean 'sp_isword'?
+ 6138 |     sp_int_word w;
+      |     ^~~~~~~~~~~
+      |     sp_isword
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c:6142:11: error: 'sp_int_word' undeclared (first use in this function); did you mean 'sp_div_word'?
+ 6142 |     w = ((sp_int_word)hi << SP_WORD_SIZE) | lo;
+      |           ^~~~~~~~~~~
+      |           sp_div_word
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c:6142:11: note: each undeclared identifier is reported only once for each function it appears in
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_int.c:6142:23: error: expected ')' before 'hi'
+ 6142 |     w = ((sp_int_word)hi << SP_WORD_SIZE) | lo;
+      |         ~             ^~
+      |                       )
+[80/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/pkcs7.c.obj
+[81/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_dsp32.c.obj
+[82/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_x86_64.c.obj
+[83/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_cortexm.c.obj
+[84/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/wc_kyber.c.obj
+[85/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/wc_encrypt.c.obj
+[86/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/wc_dsp.c.obj
+[87/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/src/ssl.c.obj
+[88/107] Building C object esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c.obj
+FAILED: esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c.obj 
+C:\SysGCC\esp32\tools\riscv32-esp-elf\esp-2022r1-11.2.0\riscv32-esp-elf\bin\riscv32-esp-elf-gcc.exe -DLIBWOLFSSL_VERSION_GIT_BRANCH=\"ED25519_SHA2_fix\" -DLIBWOLFSSL_VERSION_GIT_HASH=\"ef625ae869f31d86aa7eb1cc4d22e284331e0f50\" -DLIBWOLFSSL_VERSION_GIT_HASH_DATE="\"'Thu Mar 16 18:22:33 2023 -0700'\"" -DLIBWOLFSSL_VERSION_GIT_ORIGIN=\"https://github.com/gojimmypi/wolfssl.git\" -DLIBWOLFSSL_VERSION_GIT_SHORT_HASH=\"ef625ae86\" -Iconfig -I../../../components/wolfssl -I../../../components/wolfssl/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/include/freertos -IC:/workspace/wolfssl-gojimmypi -IC:/SysGCC/esp32/esp-idf/v5.0/components/newlib/platform_include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/esp_additions/include/freertos -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/FreeRTOS-Kernel/portable/riscv/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/freertos/esp_additions/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include/soc -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/include/soc/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/port/esp32c3/. -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_hw_support/port/esp32c3/private_include -IC:/SysGCC/esp32/esp-idf/v5.0/components/heap/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/log/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/esp32c3/. -IC:/SysGCC/esp32/esp-idf/v5.0/components/soc/esp32c3/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/esp32c3/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/hal/platform_port/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/include/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_rom/esp32c3 -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_common/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/soc -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/include/riscv -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_system/port/include/private -IC:/SysGCC/esp32/esp-idf/v5.0/components/riscv/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include/apps -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/include/apps/sntp -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/lwip/src/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/port/esp32/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/lwip/port/esp32/include/arch -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_timer/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/driver/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/driver/deprecated -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_pm/include -IC:/SysGCC/esp32/esp-idf/v5.0/components/esp_ringbuf/include -march=rv32imc  -DWOLFSSL_USER_SETTINGS -g -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=deprecated-declarations -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -nostartfiles -Og -fstack-protector -fmacro-prefix-map=C:/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark=. -fmacro-prefix-map=C:/SysGCC/esp32/esp-idf/v5.0=/IDF -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -DconfigENABLE_FREERTOS_DEBUG_OCDAWARE=1 -std=gnu17 -Wno-old-style-declaration -D_GNU_SOURCE -DIDF_VER=\"v5.0-dirty\" -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS -MD -MT esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c.obj -MF esp-idf\wolfssl\CMakeFiles\__idf_wolfssl.dir\C_\workspace\wolfssl-gojimmypi\wolfcrypt\src\sp_c64.c.obj.d -o esp-idf/wolfssl/CMakeFiles/__idf_wolfssl.dir/C_/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c.obj -c C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_9':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3598:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+ 3598 |     sp_uint128 t0;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3599:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+ 3599 |     sp_uint128 t1;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3602:12: error: 'sp_uint128' undeclared (first use in this function); did you mean 'sp_uint32'?
+ 3602 |     t0 = ((sp_uint128)a[ 0]) * b[ 0];
+      |            ^~~~~~~~~~
+      |            sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3602:12: note: each undeclared identifier is reported only once for each function it appears in
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3602:23: error: expected ')' before 'a'
+ 3602 |     t0 = ((sp_uint128)a[ 0]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3603:23: error: expected ')' before 'a'
+ 3603 |     t1 = ((sp_uint128)a[ 0]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3604:23: error: expected ')' before 'a'
+ 3604 |        + ((sp_uint128)a[ 1]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3605:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3605 |     t[ 0] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3606:23: error: expected ')' before 'a'
+ 3606 |     t0 = ((sp_uint128)a[ 0]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3607:23: error: expected ')' before 'a'
+ 3607 |        + ((sp_uint128)a[ 1]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3608:23: error: expected ')' before 'a'
+ 3608 |        + ((sp_uint128)a[ 2]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3609:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3609 |     t[ 1] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3610:23: error: expected ')' before 'a'
+ 3610 |     t1 = ((sp_uint128)a[ 0]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3611:23: error: expected ')' before 'a'
+ 3611 |        + ((sp_uint128)a[ 1]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3612:23: error: expected ')' before 'a'
+ 3612 |        + ((sp_uint128)a[ 2]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3613:23: error: expected ')' before 'a'
+ 3613 |        + ((sp_uint128)a[ 3]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3614:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3614 |     t[ 2] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3615:23: error: expected ')' before 'a'
+ 3615 |     t0 = ((sp_uint128)a[ 0]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3616:23: error: expected ')' before 'a'
+ 3616 |        + ((sp_uint128)a[ 1]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3617:23: error: expected ')' before 'a'
+ 3617 |        + ((sp_uint128)a[ 2]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3618:23: error: expected ')' before 'a'
+ 3618 |        + ((sp_uint128)a[ 3]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3619:23: error: expected ')' before 'a'
+ 3619 |        + ((sp_uint128)a[ 4]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3620:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3620 |     t[ 3] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3621:23: error: expected ')' before 'a'
+ 3621 |     t1 = ((sp_uint128)a[ 0]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3622:23: error: expected ')' before 'a'
+ 3622 |        + ((sp_uint128)a[ 1]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3623:23: error: expected ')' before 'a'
+ 3623 |        + ((sp_uint128)a[ 2]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3624:23: error: expected ')' before 'a'
+ 3624 |        + ((sp_uint128)a[ 3]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3625:23: error: expected ')' before 'a'
+ 3625 |        + ((sp_uint128)a[ 4]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3626:23: error: expected ')' before 'a'
+ 3626 |        + ((sp_uint128)a[ 5]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3627:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3627 |     t[ 4] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3628:23: error: expected ')' before 'a'
+ 3628 |     t0 = ((sp_uint128)a[ 0]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3629:23: error: expected ')' before 'a'
+ 3629 |        + ((sp_uint128)a[ 1]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3630:23: error: expected ')' before 'a'
+ 3630 |        + ((sp_uint128)a[ 2]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3631:23: error: expected ')' before 'a'
+ 3631 |        + ((sp_uint128)a[ 3]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3632:23: error: expected ')' before 'a'
+ 3632 |        + ((sp_uint128)a[ 4]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3633:23: error: expected ')' before 'a'
+ 3633 |        + ((sp_uint128)a[ 5]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3634:23: error: expected ')' before 'a'
+ 3634 |        + ((sp_uint128)a[ 6]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3635:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3635 |     t[ 5] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3636:23: error: expected ')' before 'a'
+ 3636 |     t1 = ((sp_uint128)a[ 0]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3637:23: error: expected ')' before 'a'
+ 3637 |        + ((sp_uint128)a[ 1]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3638:23: error: expected ')' before 'a'
+ 3638 |        + ((sp_uint128)a[ 2]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3639:23: error: expected ')' before 'a'
+ 3639 |        + ((sp_uint128)a[ 3]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3640:23: error: expected ')' before 'a'
+ 3640 |        + ((sp_uint128)a[ 4]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3641:23: error: expected ')' before 'a'
+ 3641 |        + ((sp_uint128)a[ 5]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3642:23: error: expected ')' before 'a'
+ 3642 |        + ((sp_uint128)a[ 6]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3643:23: error: expected ')' before 'a'
+ 3643 |        + ((sp_uint128)a[ 7]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3644:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3644 |     t[ 6] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3645:23: error: expected ')' before 'a'
+ 3645 |     t0 = ((sp_uint128)a[ 0]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3646:23: error: expected ')' before 'a'
+ 3646 |        + ((sp_uint128)a[ 1]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3647:23: error: expected ')' before 'a'
+ 3647 |        + ((sp_uint128)a[ 2]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3648:23: error: expected ')' before 'a'
+ 3648 |        + ((sp_uint128)a[ 3]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3649:23: error: expected ')' before 'a'
+ 3649 |        + ((sp_uint128)a[ 4]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3650:23: error: expected ')' before 'a'
+ 3650 |        + ((sp_uint128)a[ 5]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3651:23: error: expected ')' before 'a'
+ 3651 |        + ((sp_uint128)a[ 6]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3652:23: error: expected ')' before 'a'
+ 3652 |        + ((sp_uint128)a[ 7]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3653:23: error: expected ')' before 'a'
+ 3653 |        + ((sp_uint128)a[ 8]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3654:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3654 |     t[ 7] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3655:23: error: expected ')' before 'a'
+ 3655 |     t1 = ((sp_uint128)a[ 1]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3656:23: error: expected ')' before 'a'
+ 3656 |        + ((sp_uint128)a[ 2]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3657:23: error: expected ')' before 'a'
+ 3657 |        + ((sp_uint128)a[ 3]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3658:23: error: expected ')' before 'a'
+ 3658 |        + ((sp_uint128)a[ 4]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3659:23: error: expected ')' before 'a'
+ 3659 |        + ((sp_uint128)a[ 5]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3660:23: error: expected ')' before 'a'
+ 3660 |        + ((sp_uint128)a[ 6]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3661:23: error: expected ')' before 'a'
+ 3661 |        + ((sp_uint128)a[ 7]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3662:23: error: expected ')' before 'a'
+ 3662 |        + ((sp_uint128)a[ 8]) * b[ 1];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3663:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3663 |     t[ 8] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3664:23: error: expected ')' before 'a'
+ 3664 |     t0 = ((sp_uint128)a[ 2]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3665:23: error: expected ')' before 'a'
+ 3665 |        + ((sp_uint128)a[ 3]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3666:23: error: expected ')' before 'a'
+ 3666 |        + ((sp_uint128)a[ 4]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3667:23: error: expected ')' before 'a'
+ 3667 |        + ((sp_uint128)a[ 5]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3668:23: error: expected ')' before 'a'
+ 3668 |        + ((sp_uint128)a[ 6]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3669:23: error: expected ')' before 'a'
+ 3669 |        + ((sp_uint128)a[ 7]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3670:23: error: expected ')' before 'a'
+ 3670 |        + ((sp_uint128)a[ 8]) * b[ 2];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3671:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3671 |     r[ 9] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3672:23: error: expected ')' before 'a'
+ 3672 |     t1 = ((sp_uint128)a[ 3]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3673:23: error: expected ')' before 'a'
+ 3673 |        + ((sp_uint128)a[ 4]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3674:23: error: expected ')' before 'a'
+ 3674 |        + ((sp_uint128)a[ 5]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3675:23: error: expected ')' before 'a'
+ 3675 |        + ((sp_uint128)a[ 6]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3676:23: error: expected ')' before 'a'
+ 3676 |        + ((sp_uint128)a[ 7]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3677:23: error: expected ')' before 'a'
+ 3677 |        + ((sp_uint128)a[ 8]) * b[ 3];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3678:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3678 |     r[10] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3679:23: error: expected ')' before 'a'
+ 3679 |     t0 = ((sp_uint128)a[ 4]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3680:23: error: expected ')' before 'a'
+ 3680 |        + ((sp_uint128)a[ 5]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3681:23: error: expected ')' before 'a'
+ 3681 |        + ((sp_uint128)a[ 6]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3682:23: error: expected ')' before 'a'
+ 3682 |        + ((sp_uint128)a[ 7]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3683:23: error: expected ')' before 'a'
+ 3683 |        + ((sp_uint128)a[ 8]) * b[ 4];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3684:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3684 |     r[11] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3685:23: error: expected ')' before 'a'
+ 3685 |     t1 = ((sp_uint128)a[ 5]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3686:23: error: expected ')' before 'a'
+ 3686 |        + ((sp_uint128)a[ 6]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3687:23: error: expected ')' before 'a'
+ 3687 |        + ((sp_uint128)a[ 7]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3688:23: error: expected ')' before 'a'
+ 3688 |        + ((sp_uint128)a[ 8]) * b[ 5];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3689:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3689 |     r[12] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3690:23: error: expected ')' before 'a'
+ 3690 |     t0 = ((sp_uint128)a[ 6]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3691:23: error: expected ')' before 'a'
+ 3691 |        + ((sp_uint128)a[ 7]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3692:23: error: expected ')' before 'a'
+ 3692 |        + ((sp_uint128)a[ 8]) * b[ 6];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3693:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3693 |     r[13] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3694:23: error: expected ')' before 'a'
+ 3694 |     t1 = ((sp_uint128)a[ 7]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3695:23: error: expected ')' before 'a'
+ 3695 |        + ((sp_uint128)a[ 8]) * b[ 7];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3696:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3696 |     r[14] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3697:23: error: expected ')' before 'a'
+ 3697 |     t0 = ((sp_uint128)a[ 8]) * b[ 8];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3698:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3698 |     r[15] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3700:27: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3700 |     r[17] = (sp_digit)(t0 >> 57);
+      |                           ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_sqr_9':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3893:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+ 3893 |     sp_uint128 t0;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3894:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+ 3894 |     sp_uint128 t1;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3897:13: error: 'sp_uint128' undeclared (first use in this function); did you mean 'sp_uint32'?
+ 3897 |     t0 =  ((sp_uint128)a[ 0]) * a[ 0];
+      |             ^~~~~~~~~~
+      |             sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3897:24: error: expected ')' before 'a'
+ 3897 |     t0 =  ((sp_uint128)a[ 0]) * a[ 0];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3898:24: error: expected ')' before 'a'
+ 3898 |     t1 = (((sp_uint128)a[ 0]) * a[ 1]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3899:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3899 |     t[ 0] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3900:24: error: expected ')' before 'a'
+ 3900 |     t0 = (((sp_uint128)a[ 0]) * a[ 2]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3901:24: error: expected ')' before 'a'
+ 3901 |        +  ((sp_uint128)a[ 1]) * a[ 1];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3902:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3902 |     t[ 1] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3903:24: error: expected ')' before 'a'
+ 3903 |     t1 = (((sp_uint128)a[ 0]) * a[ 3]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3904:24: error: expected ')' before 'a'
+ 3904 |        +  ((sp_uint128)a[ 1]) * a[ 2]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3905:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3905 |     t[ 2] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3906:24: error: expected ')' before 'a'
+ 3906 |     t0 = (((sp_uint128)a[ 0]) * a[ 4]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3907:24: error: expected ')' before 'a'
+ 3907 |        +  ((sp_uint128)a[ 1]) * a[ 3]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3908:24: error: expected ')' before 'a'
+ 3908 |        +  ((sp_uint128)a[ 2]) * a[ 2];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3909:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3909 |     t[ 3] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3910:24: error: expected ')' before 'a'
+ 3910 |     t1 = (((sp_uint128)a[ 0]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3911:24: error: expected ')' before 'a'
+ 3911 |        +  ((sp_uint128)a[ 1]) * a[ 4]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3912:24: error: expected ')' before 'a'
+ 3912 |        +  ((sp_uint128)a[ 2]) * a[ 3]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3913:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3913 |     t[ 4] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3914:24: error: expected ')' before 'a'
+ 3914 |     t0 = (((sp_uint128)a[ 0]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3915:24: error: expected ')' before 'a'
+ 3915 |        +  ((sp_uint128)a[ 1]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3916:24: error: expected ')' before 'a'
+ 3916 |        +  ((sp_uint128)a[ 2]) * a[ 4]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3917:24: error: expected ')' before 'a'
+ 3917 |        +  ((sp_uint128)a[ 3]) * a[ 3];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3918:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3918 |     t[ 5] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3919:24: error: expected ')' before 'a'
+ 3919 |     t1 = (((sp_uint128)a[ 0]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3920:24: error: expected ')' before 'a'
+ 3920 |        +  ((sp_uint128)a[ 1]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3921:24: error: expected ')' before 'a'
+ 3921 |        +  ((sp_uint128)a[ 2]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3922:24: error: expected ')' before 'a'
+ 3922 |        +  ((sp_uint128)a[ 3]) * a[ 4]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3923:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3923 |     t[ 6] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3924:24: error: expected ')' before 'a'
+ 3924 |     t0 = (((sp_uint128)a[ 0]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3925:24: error: expected ')' before 'a'
+ 3925 |        +  ((sp_uint128)a[ 1]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3926:24: error: expected ')' before 'a'
+ 3926 |        +  ((sp_uint128)a[ 2]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3927:24: error: expected ')' before 'a'
+ 3927 |        +  ((sp_uint128)a[ 3]) * a[ 5]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3928:24: error: expected ')' before 'a'
+ 3928 |        +  ((sp_uint128)a[ 4]) * a[ 4];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3929:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3929 |     t[ 7] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3930:24: error: expected ')' before 'a'
+ 3930 |     t1 = (((sp_uint128)a[ 1]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3931:24: error: expected ')' before 'a'
+ 3931 |        +  ((sp_uint128)a[ 2]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3932:24: error: expected ')' before 'a'
+ 3932 |        +  ((sp_uint128)a[ 3]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3933:24: error: expected ')' before 'a'
+ 3933 |        +  ((sp_uint128)a[ 4]) * a[ 5]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3934:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3934 |     t[ 8] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3935:24: error: expected ')' before 'a'
+ 3935 |     t0 = (((sp_uint128)a[ 2]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3936:24: error: expected ')' before 'a'
+ 3936 |        +  ((sp_uint128)a[ 3]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3937:24: error: expected ')' before 'a'
+ 3937 |        +  ((sp_uint128)a[ 4]) * a[ 6]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3938:24: error: expected ')' before 'a'
+ 3938 |        +  ((sp_uint128)a[ 5]) * a[ 5];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3939:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3939 |     r[ 9] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3940:24: error: expected ')' before 'a'
+ 3940 |     t1 = (((sp_uint128)a[ 3]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3941:24: error: expected ')' before 'a'
+ 3941 |        +  ((sp_uint128)a[ 4]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3942:24: error: expected ')' before 'a'
+ 3942 |        +  ((sp_uint128)a[ 5]) * a[ 6]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3943:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3943 |     r[10] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3944:24: error: expected ')' before 'a'
+ 3944 |     t0 = (((sp_uint128)a[ 4]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3945:24: error: expected ')' before 'a'
+ 3945 |        +  ((sp_uint128)a[ 5]) * a[ 7]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3946:24: error: expected ')' before 'a'
+ 3946 |        +  ((sp_uint128)a[ 6]) * a[ 6];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3947:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3947 |     r[11] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3948:24: error: expected ')' before 'a'
+ 3948 |     t1 = (((sp_uint128)a[ 5]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3949:24: error: expected ')' before 'a'
+ 3949 |        +  ((sp_uint128)a[ 6]) * a[ 7]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3950:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3950 |     r[12] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3951:24: error: expected ')' before 'a'
+ 3951 |     t0 = (((sp_uint128)a[ 6]) * a[ 8]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3952:24: error: expected ')' before 'a'
+ 3952 |        +  ((sp_uint128)a[ 7]) * a[ 7];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3953:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3953 |     r[13] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3954:24: error: expected ')' before 'a'
+ 3954 |     t1 = (((sp_uint128)a[ 7]) * a[ 8]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3955:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3955 |     r[14] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3956:24: error: expected ')' before 'a'
+ 3956 |     t0 =  ((sp_uint128)a[ 8]) * a[ 8];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3957:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3957 |     r[15] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:3959:27: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 3959 |     r[17] = (sp_digit)(t0 >> 57);
+      |                           ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_d_36':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4035:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4035 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4036:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4036 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4038:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4038 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4048:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4048 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4052:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4052 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4056:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4056 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4060:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4060 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_add_18':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4162:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4162 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4163:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4163 |     sp_int128 t[8];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4169:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4169 |         r[i+1] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4171:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4171 |         r[i+2] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4173:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4173 |         r[i+3] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4175:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4175 |         r[i+4] += (sp_digit)((t[3] >> 57) + (t[4] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4177:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4177 |         r[i+5] += (sp_digit)((t[4] >> 57) + (t[5] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4179:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4179 |         r[i+6] += (sp_digit)((t[5] >> 57) + (t[6] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4181:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4181 |         r[i+7] += (sp_digit)((t[6] >> 57) + (t[7] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4183:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4183 |         r[i+8] += (sp_digit)((t[7] >> 57) + (t[0] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4186:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4186 |     r[17] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4187:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4187 |     r[18] +=  (sp_digit)(t[1] >> 57);
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_d_18':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4285:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4285 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4286:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4286 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4288:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4288 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4298:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4298 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4302:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4302 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4306:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4306 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4310:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4310 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4315:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4315 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4318:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4318 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_div_word_18':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4391:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 4391 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4391:21: error: 'sp_int128' undeclared (first use in this function); did you mean 'sp_int32'?
+ 4391 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                     ^~~~~~~~~
+      |                     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4391:31: error: expected ')' before 'd1'
+ 4391 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                   ~           ^~
+      |                               )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4393:32: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4393 |     sp_digit t1 = (sp_digit)(d >> 57);
+      |                                ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4399:14: error: expected ';' before 'm'
+ 4399 |     sp_int128 m;
+      |              ^~
+      |              ;
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4413:5: error: 'm' undeclared (first use in this function)
+ 4413 |     m = d - ((sp_int128)r * div);
+      |     ^
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4413:25: error: expected ')' before 'r'
+ 4413 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4415:25: error: expected ')' before 'r'
+ 4415 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4416:46: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 4416 |     r += (sp_digit)(m >> 114) - (sp_digit)(d >> 114);
+      |                                              ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4418:25: error: expected ')' before 'r'
+ 4418 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:4424:25: error: expected ')' before 'r'
+ 4424 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_add_36':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5008:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5008 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5009:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5009 |     sp_int128 t[8];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5015:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5015 |         r[i+1] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5017:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5017 |         r[i+2] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5019:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5019 |         r[i+3] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5021:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5021 |         r[i+4] += (sp_digit)((t[3] >> 57) + (t[4] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5023:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5023 |         r[i+5] += (sp_digit)((t[4] >> 57) + (t[5] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5025:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5025 |         r[i+6] += (sp_digit)((t[5] >> 57) + (t[6] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5027:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5027 |         r[i+7] += (sp_digit)((t[6] >> 57) + (t[7] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5029:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5029 |         r[i+8] += (sp_digit)((t[7] >> 57) + (t[0] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5032:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5032 |     r[33] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5034:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5034 |     r[34] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5036:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5036 |     r[35] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5037:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5037 |     r[36] +=  (sp_digit)(t[3] >> 57);
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_mul_d_72':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5173:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5173 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5174:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5174 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5176:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5176 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5186:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5186 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5190:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5190 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5194:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5194 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5198:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5198 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_2048_div_word_36':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5277:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+ 5277 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5277:21: error: 'sp_int128' undeclared (first use in this function); did you mean 'sp_int32'?
+ 5277 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                     ^~~~~~~~~
+      |                     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5277:31: error: expected ')' before 'd1'
+ 5277 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                   ~           ^~
+      |                               )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5279:32: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5279 |     sp_digit t1 = (sp_digit)(d >> 57);
+      |                                ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5285:14: error: expected ';' before 'm'
+ 5285 |     sp_int128 m;
+      |              ^~
+      |              ;
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5299:5: error: 'm' undeclared (first use in this function)
+ 5299 |     m = d - ((sp_int128)r * div);
+      |     ^
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5299:25: error: expected ')' before 'r'
+ 5299 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5301:25: error: expected ')' before 'r'
+ 5301 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5302:46: warning: right shift count >= width of type [-Wshift-count-overflow]
+ 5302 |     r += (sp_digit)(m >> 114) - (sp_digit)(d >> 114);
+      |                                              ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5304:25: error: expected ')' before 'r'
+ 5304 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:5310:25: error: expected ')' before 'r'
+ 5310 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_9':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10484:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+10484 |     sp_uint128 t0;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10485:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+10485 |     sp_uint128 t1;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10488:12: error: 'sp_uint128' undeclared (first use in this function); did you mean 'sp_uint32'?
+10488 |     t0 = ((sp_uint128)a[ 0]) * b[ 0];
+      |            ^~~~~~~~~~
+      |            sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10488:23: error: expected ')' before 'a'
+10488 |     t0 = ((sp_uint128)a[ 0]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10489:23: error: expected ')' before 'a'
+10489 |     t1 = ((sp_uint128)a[ 0]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10490:23: error: expected ')' before 'a'
+10490 |        + ((sp_uint128)a[ 1]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10491:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10491 |     t[ 0] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10492:23: error: expected ')' before 'a'
+10492 |     t0 = ((sp_uint128)a[ 0]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10493:23: error: expected ')' before 'a'
+10493 |        + ((sp_uint128)a[ 1]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10494:23: error: expected ')' before 'a'
+10494 |        + ((sp_uint128)a[ 2]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10495:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10495 |     t[ 1] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10496:23: error: expected ')' before 'a'
+10496 |     t1 = ((sp_uint128)a[ 0]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10497:23: error: expected ')' before 'a'
+10497 |        + ((sp_uint128)a[ 1]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10498:23: error: expected ')' before 'a'
+10498 |        + ((sp_uint128)a[ 2]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10499:23: error: expected ')' before 'a'
+10499 |        + ((sp_uint128)a[ 3]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10500:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10500 |     t[ 2] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10501:23: error: expected ')' before 'a'
+10501 |     t0 = ((sp_uint128)a[ 0]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10502:23: error: expected ')' before 'a'
+10502 |        + ((sp_uint128)a[ 1]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10503:23: error: expected ')' before 'a'
+10503 |        + ((sp_uint128)a[ 2]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10504:23: error: expected ')' before 'a'
+10504 |        + ((sp_uint128)a[ 3]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10505:23: error: expected ')' before 'a'
+10505 |        + ((sp_uint128)a[ 4]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10506:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10506 |     t[ 3] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10507:23: error: expected ')' before 'a'
+10507 |     t1 = ((sp_uint128)a[ 0]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10508:23: error: expected ')' before 'a'
+10508 |        + ((sp_uint128)a[ 1]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10509:23: error: expected ')' before 'a'
+10509 |        + ((sp_uint128)a[ 2]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10510:23: error: expected ')' before 'a'
+10510 |        + ((sp_uint128)a[ 3]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10511:23: error: expected ')' before 'a'
+10511 |        + ((sp_uint128)a[ 4]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10512:23: error: expected ')' before 'a'
+10512 |        + ((sp_uint128)a[ 5]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10513:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10513 |     t[ 4] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10514:23: error: expected ')' before 'a'
+10514 |     t0 = ((sp_uint128)a[ 0]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10515:23: error: expected ')' before 'a'
+10515 |        + ((sp_uint128)a[ 1]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10516:23: error: expected ')' before 'a'
+10516 |        + ((sp_uint128)a[ 2]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10517:23: error: expected ')' before 'a'
+10517 |        + ((sp_uint128)a[ 3]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10518:23: error: expected ')' before 'a'
+10518 |        + ((sp_uint128)a[ 4]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10519:23: error: expected ')' before 'a'
+10519 |        + ((sp_uint128)a[ 5]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10520:23: error: expected ')' before 'a'
+10520 |        + ((sp_uint128)a[ 6]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10521:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10521 |     t[ 5] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10522:23: error: expected ')' before 'a'
+10522 |     t1 = ((sp_uint128)a[ 0]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10523:23: error: expected ')' before 'a'
+10523 |        + ((sp_uint128)a[ 1]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10524:23: error: expected ')' before 'a'
+10524 |        + ((sp_uint128)a[ 2]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10525:23: error: expected ')' before 'a'
+10525 |        + ((sp_uint128)a[ 3]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10526:23: error: expected ')' before 'a'
+10526 |        + ((sp_uint128)a[ 4]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10527:23: error: expected ')' before 'a'
+10527 |        + ((sp_uint128)a[ 5]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10528:23: error: expected ')' before 'a'
+10528 |        + ((sp_uint128)a[ 6]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10529:23: error: expected ')' before 'a'
+10529 |        + ((sp_uint128)a[ 7]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10530:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10530 |     t[ 6] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10531:23: error: expected ')' before 'a'
+10531 |     t0 = ((sp_uint128)a[ 0]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10532:23: error: expected ')' before 'a'
+10532 |        + ((sp_uint128)a[ 1]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10533:23: error: expected ')' before 'a'
+10533 |        + ((sp_uint128)a[ 2]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10534:23: error: expected ')' before 'a'
+10534 |        + ((sp_uint128)a[ 3]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10535:23: error: expected ')' before 'a'
+10535 |        + ((sp_uint128)a[ 4]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10536:23: error: expected ')' before 'a'
+10536 |        + ((sp_uint128)a[ 5]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10537:23: error: expected ')' before 'a'
+10537 |        + ((sp_uint128)a[ 6]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10538:23: error: expected ')' before 'a'
+10538 |        + ((sp_uint128)a[ 7]) * b[ 1]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10539:23: error: expected ')' before 'a'
+10539 |        + ((sp_uint128)a[ 8]) * b[ 0];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10540:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10540 |     t[ 7] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10541:23: error: expected ')' before 'a'
+10541 |     t1 = ((sp_uint128)a[ 1]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10542:23: error: expected ')' before 'a'
+10542 |        + ((sp_uint128)a[ 2]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10543:23: error: expected ')' before 'a'
+10543 |        + ((sp_uint128)a[ 3]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10544:23: error: expected ')' before 'a'
+10544 |        + ((sp_uint128)a[ 4]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10545:23: error: expected ')' before 'a'
+10545 |        + ((sp_uint128)a[ 5]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10546:23: error: expected ')' before 'a'
+10546 |        + ((sp_uint128)a[ 6]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10547:23: error: expected ')' before 'a'
+10547 |        + ((sp_uint128)a[ 7]) * b[ 2]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10548:23: error: expected ')' before 'a'
+10548 |        + ((sp_uint128)a[ 8]) * b[ 1];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10549:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10549 |     t[ 8] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10550:23: error: expected ')' before 'a'
+10550 |     t0 = ((sp_uint128)a[ 2]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10551:23: error: expected ')' before 'a'
+10551 |        + ((sp_uint128)a[ 3]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10552:23: error: expected ')' before 'a'
+10552 |        + ((sp_uint128)a[ 4]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10553:23: error: expected ')' before 'a'
+10553 |        + ((sp_uint128)a[ 5]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10554:23: error: expected ')' before 'a'
+10554 |        + ((sp_uint128)a[ 6]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10555:23: error: expected ')' before 'a'
+10555 |        + ((sp_uint128)a[ 7]) * b[ 3]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10556:23: error: expected ')' before 'a'
+10556 |        + ((sp_uint128)a[ 8]) * b[ 2];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10557:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10557 |     r[ 9] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10558:23: error: expected ')' before 'a'
+10558 |     t1 = ((sp_uint128)a[ 3]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10559:23: error: expected ')' before 'a'
+10559 |        + ((sp_uint128)a[ 4]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10560:23: error: expected ')' before 'a'
+10560 |        + ((sp_uint128)a[ 5]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10561:23: error: expected ')' before 'a'
+10561 |        + ((sp_uint128)a[ 6]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10562:23: error: expected ')' before 'a'
+10562 |        + ((sp_uint128)a[ 7]) * b[ 4]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10563:23: error: expected ')' before 'a'
+10563 |        + ((sp_uint128)a[ 8]) * b[ 3];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10564:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10564 |     r[10] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10565:23: error: expected ')' before 'a'
+10565 |     t0 = ((sp_uint128)a[ 4]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10566:23: error: expected ')' before 'a'
+10566 |        + ((sp_uint128)a[ 5]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10567:23: error: expected ')' before 'a'
+10567 |        + ((sp_uint128)a[ 6]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10568:23: error: expected ')' before 'a'
+10568 |        + ((sp_uint128)a[ 7]) * b[ 5]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10569:23: error: expected ')' before 'a'
+10569 |        + ((sp_uint128)a[ 8]) * b[ 4];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10570:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10570 |     r[11] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10571:23: error: expected ')' before 'a'
+10571 |     t1 = ((sp_uint128)a[ 5]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10572:23: error: expected ')' before 'a'
+10572 |        + ((sp_uint128)a[ 6]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10573:23: error: expected ')' before 'a'
+10573 |        + ((sp_uint128)a[ 7]) * b[ 6]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10574:23: error: expected ')' before 'a'
+10574 |        + ((sp_uint128)a[ 8]) * b[ 5];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10575:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10575 |     r[12] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10576:23: error: expected ')' before 'a'
+10576 |     t0 = ((sp_uint128)a[ 6]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10577:23: error: expected ')' before 'a'
+10577 |        + ((sp_uint128)a[ 7]) * b[ 7]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10578:23: error: expected ')' before 'a'
+10578 |        + ((sp_uint128)a[ 8]) * b[ 6];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10579:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10579 |     r[13] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10580:23: error: expected ')' before 'a'
+10580 |     t1 = ((sp_uint128)a[ 7]) * b[ 8]
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10581:23: error: expected ')' before 'a'
+10581 |        + ((sp_uint128)a[ 8]) * b[ 7];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10582:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10582 |     r[14] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10583:23: error: expected ')' before 'a'
+10583 |     t0 = ((sp_uint128)a[ 8]) * b[ 8];
+      |          ~            ^
+      |                       )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10584:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10584 |     r[15] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10586:27: warning: right shift count >= width of type [-Wshift-count-overflow]
+10586 |     r[17] = (sp_digit)(t0 >> 57);
+      |                           ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_sqr_9':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10837:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+10837 |     sp_uint128 t0;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10838:5: error: unknown type name 'sp_uint128'; did you mean 'sp_uint32'?
+10838 |     sp_uint128 t1;
+      |     ^~~~~~~~~~
+      |     sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10841:13: error: 'sp_uint128' undeclared (first use in this function); did you mean 'sp_uint32'?
+10841 |     t0 =  ((sp_uint128)a[ 0]) * a[ 0];
+      |             ^~~~~~~~~~
+      |             sp_uint32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10841:24: error: expected ')' before 'a'
+10841 |     t0 =  ((sp_uint128)a[ 0]) * a[ 0];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10842:24: error: expected ')' before 'a'
+10842 |     t1 = (((sp_uint128)a[ 0]) * a[ 1]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10843:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10843 |     t[ 0] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10844:24: error: expected ')' before 'a'
+10844 |     t0 = (((sp_uint128)a[ 0]) * a[ 2]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10845:24: error: expected ')' before 'a'
+10845 |        +  ((sp_uint128)a[ 1]) * a[ 1];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10846:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10846 |     t[ 1] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10847:24: error: expected ')' before 'a'
+10847 |     t1 = (((sp_uint128)a[ 0]) * a[ 3]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10848:24: error: expected ')' before 'a'
+10848 |        +  ((sp_uint128)a[ 1]) * a[ 2]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10849:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10849 |     t[ 2] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10850:24: error: expected ')' before 'a'
+10850 |     t0 = (((sp_uint128)a[ 0]) * a[ 4]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10851:24: error: expected ')' before 'a'
+10851 |        +  ((sp_uint128)a[ 1]) * a[ 3]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10852:24: error: expected ')' before 'a'
+10852 |        +  ((sp_uint128)a[ 2]) * a[ 2];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10853:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10853 |     t[ 3] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10854:24: error: expected ')' before 'a'
+10854 |     t1 = (((sp_uint128)a[ 0]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10855:24: error: expected ')' before 'a'
+10855 |        +  ((sp_uint128)a[ 1]) * a[ 4]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10856:24: error: expected ')' before 'a'
+10856 |        +  ((sp_uint128)a[ 2]) * a[ 3]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10857:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10857 |     t[ 4] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10858:24: error: expected ')' before 'a'
+10858 |     t0 = (((sp_uint128)a[ 0]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10859:24: error: expected ')' before 'a'
+10859 |        +  ((sp_uint128)a[ 1]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10860:24: error: expected ')' before 'a'
+10860 |        +  ((sp_uint128)a[ 2]) * a[ 4]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10861:24: error: expected ')' before 'a'
+10861 |        +  ((sp_uint128)a[ 3]) * a[ 3];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10862:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10862 |     t[ 5] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10863:24: error: expected ')' before 'a'
+10863 |     t1 = (((sp_uint128)a[ 0]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10864:24: error: expected ')' before 'a'
+10864 |        +  ((sp_uint128)a[ 1]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10865:24: error: expected ')' before 'a'
+10865 |        +  ((sp_uint128)a[ 2]) * a[ 5]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10866:24: error: expected ')' before 'a'
+10866 |        +  ((sp_uint128)a[ 3]) * a[ 4]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10867:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10867 |     t[ 6] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10868:24: error: expected ')' before 'a'
+10868 |     t0 = (((sp_uint128)a[ 0]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10869:24: error: expected ')' before 'a'
+10869 |        +  ((sp_uint128)a[ 1]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10870:24: error: expected ')' before 'a'
+10870 |        +  ((sp_uint128)a[ 2]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10871:24: error: expected ')' before 'a'
+10871 |        +  ((sp_uint128)a[ 3]) * a[ 5]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10872:24: error: expected ')' before 'a'
+10872 |        +  ((sp_uint128)a[ 4]) * a[ 4];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10873:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10873 |     t[ 7] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10874:24: error: expected ')' before 'a'
+10874 |     t1 = (((sp_uint128)a[ 1]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10875:24: error: expected ')' before 'a'
+10875 |        +  ((sp_uint128)a[ 2]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10876:24: error: expected ')' before 'a'
+10876 |        +  ((sp_uint128)a[ 3]) * a[ 6]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10877:24: error: expected ')' before 'a'
+10877 |        +  ((sp_uint128)a[ 4]) * a[ 5]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10878:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10878 |     t[ 8] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10879:24: error: expected ')' before 'a'
+10879 |     t0 = (((sp_uint128)a[ 2]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10880:24: error: expected ')' before 'a'
+10880 |        +  ((sp_uint128)a[ 3]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10881:24: error: expected ')' before 'a'
+10881 |        +  ((sp_uint128)a[ 4]) * a[ 6]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10882:24: error: expected ')' before 'a'
+10882 |        +  ((sp_uint128)a[ 5]) * a[ 5];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10883:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10883 |     r[ 9] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10884:24: error: expected ')' before 'a'
+10884 |     t1 = (((sp_uint128)a[ 3]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10885:24: error: expected ')' before 'a'
+10885 |        +  ((sp_uint128)a[ 4]) * a[ 7]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10886:24: error: expected ')' before 'a'
+10886 |        +  ((sp_uint128)a[ 5]) * a[ 6]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10887:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10887 |     r[10] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10888:24: error: expected ')' before 'a'
+10888 |     t0 = (((sp_uint128)a[ 4]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10889:24: error: expected ')' before 'a'
+10889 |        +  ((sp_uint128)a[ 5]) * a[ 7]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10890:24: error: expected ')' before 'a'
+10890 |        +  ((sp_uint128)a[ 6]) * a[ 6];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10891:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10891 |     r[11] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10892:24: error: expected ')' before 'a'
+10892 |     t1 = (((sp_uint128)a[ 5]) * a[ 8]
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10893:24: error: expected ')' before 'a'
+10893 |        +  ((sp_uint128)a[ 6]) * a[ 7]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10894:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10894 |     r[12] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10895:24: error: expected ')' before 'a'
+10895 |     t0 = (((sp_uint128)a[ 6]) * a[ 8]) * 2
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10896:24: error: expected ')' before 'a'
+10896 |        +  ((sp_uint128)a[ 7]) * a[ 7];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10897:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10897 |     r[13] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10898:24: error: expected ')' before 'a'
+10898 |     t1 = (((sp_uint128)a[ 7]) * a[ 8]) * 2;
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10899:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10899 |     r[14] = t0 & 0x1ffffffffffffffL; t1 += t0 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10900:24: error: expected ')' before 'a'
+10900 |     t0 =  ((sp_uint128)a[ 8]) * a[ 8];
+      |           ~            ^
+      |                        )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10901:47: warning: right shift count >= width of type [-Wshift-count-overflow]
+10901 |     r[15] = t1 & 0x1ffffffffffffffL; t0 += t1 >> 57;
+      |                                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:10903:27: warning: right shift count >= width of type [-Wshift-count-overflow]
+10903 |     r[17] = (sp_digit)(t0 >> 57);
+      |                           ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_d_54':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11001:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11001 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11002:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11002 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11004:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11004 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11014:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11014 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11018:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11018 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11022:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11022 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11026:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11026 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11031:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+11031 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11034:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+11034 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_add_27':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11165:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11165 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11166:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11166 |     sp_int128 t[8];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11172:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11172 |         r[i+1] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11174:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11174 |         r[i+2] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11176:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11176 |         r[i+3] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11178:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11178 |         r[i+4] += (sp_digit)((t[3] >> 57) + (t[4] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11180:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11180 |         r[i+5] += (sp_digit)((t[4] >> 57) + (t[5] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11182:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11182 |         r[i+6] += (sp_digit)((t[5] >> 57) + (t[6] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11184:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11184 |         r[i+7] += (sp_digit)((t[6] >> 57) + (t[7] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11186:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+11186 |         r[i+8] += (sp_digit)((t[7] >> 57) + (t[0] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11189:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+11189 |     r[25] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11191:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+11191 |     r[26] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11192:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+11192 |     r[27] +=  (sp_digit)(t[2] >> 57);
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_d_27':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11301:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11301 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11302:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11302 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11304:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11304 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11314:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11314 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11318:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11318 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11322:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11322 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11326:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+11326 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11331:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+11331 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11334:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+11334 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11337:7: warning: right shift count >= width of type [-Wshift-count-overflow]
+11337 |     t >>= 57;
+      |       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_div_word_27':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11412:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+11412 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11412:21: error: 'sp_int128' undeclared (first use in this function); did you mean 'sp_int32'?
+11412 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                     ^~~~~~~~~
+      |                     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11412:31: error: expected ')' before 'd1'
+11412 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                   ~           ^~
+      |                               )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11414:32: warning: right shift count >= width of type [-Wshift-count-overflow]
+11414 |     sp_digit t1 = (sp_digit)(d >> 57);
+      |                                ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11420:14: error: expected ';' before 'm'
+11420 |     sp_int128 m;
+      |              ^~
+      |              ;
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11434:5: error: 'm' undeclared (first use in this function)
+11434 |     m = d - ((sp_int128)r * div);
+      |     ^
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11434:25: error: expected ')' before 'r'
+11434 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11436:25: error: expected ')' before 'r'
+11436 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11437:46: warning: right shift count >= width of type [-Wshift-count-overflow]
+11437 |     r += (sp_digit)(m >> 114) - (sp_digit)(d >> 114);
+      |                                              ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11439:25: error: expected ')' before 'r'
+11439 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:11445:25: error: expected ')' before 'r'
+11445 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_add_54':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12035:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12035 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12036:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12036 |     sp_int128 t[8];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12042:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12042 |         r[i+1] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12044:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12044 |         r[i+2] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12046:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12046 |         r[i+3] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12048:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12048 |         r[i+4] += (sp_digit)((t[3] >> 57) + (t[4] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12050:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12050 |         r[i+5] += (sp_digit)((t[4] >> 57) + (t[5] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12052:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12052 |         r[i+6] += (sp_digit)((t[5] >> 57) + (t[6] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12054:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12054 |         r[i+7] += (sp_digit)((t[6] >> 57) + (t[7] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12056:36: warning: right shift count >= width of type [-Wshift-count-overflow]
+12056 |         r[i+8] += (sp_digit)((t[7] >> 57) + (t[0] & 0x1ffffffffffffffL));
+      |                                    ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12059:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12059 |     r[49] += (sp_digit)((t[0] >> 57) + (t[1] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12061:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12061 |     r[50] += (sp_digit)((t[1] >> 57) + (t[2] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12063:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12063 |     r[51] += (sp_digit)((t[2] >> 57) + (t[3] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12065:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12065 |     r[52] += (sp_digit)((t[3] >> 57) + (t[4] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12067:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12067 |     r[53] += (sp_digit)((t[4] >> 57) + (t[5] & 0x1ffffffffffffffL));
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12068:31: warning: right shift count >= width of type [-Wshift-count-overflow]
+12068 |     r[54] +=  (sp_digit)(t[5] >> 57);
+      |                               ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mont_shift_54':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12079:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12079 |     sp_int128 n = a[53] >> 51;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12080:12: error: 'sp_int128' undeclared (first use in this function); did you mean 'sp_int32'?
+12080 |     n += ((sp_int128)a[54]) << 6;
+      |            ^~~~~~~~~
+      |            sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12080:22: error: expected ')' before 'a'
+12080 |     n += ((sp_int128)a[54]) << 6;
+      |          ~           ^
+      |                      )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12083:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12083 |         n >>= 57; n += ((sp_int128)a[i + 55]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12083:36: error: expected ')' before 'a'
+12083 |         n >>= 57; n += ((sp_int128)a[i + 55]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12085:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12085 |         n >>= 57; n += ((sp_int128)a[i + 56]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12085:36: error: expected ')' before 'a'
+12085 |         n >>= 57; n += ((sp_int128)a[i + 56]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12087:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12087 |         n >>= 57; n += ((sp_int128)a[i + 57]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12087:36: error: expected ')' before 'a'
+12087 |         n >>= 57; n += ((sp_int128)a[i + 57]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12089:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12089 |         n >>= 57; n += ((sp_int128)a[i + 58]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12089:36: error: expected ')' before 'a'
+12089 |         n >>= 57; n += ((sp_int128)a[i + 58]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12091:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12091 |         n >>= 57; n += ((sp_int128)a[i + 59]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12091:36: error: expected ')' before 'a'
+12091 |         n >>= 57; n += ((sp_int128)a[i + 59]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12093:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12093 |         n >>= 57; n += ((sp_int128)a[i + 60]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12093:36: error: expected ')' before 'a'
+12093 |         n >>= 57; n += ((sp_int128)a[i + 60]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12095:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12095 |         n >>= 57; n += ((sp_int128)a[i + 61]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12095:36: error: expected ')' before 'a'
+12095 |         n >>= 57; n += ((sp_int128)a[i + 61]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12097:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12097 |         n >>= 57; n += ((sp_int128)a[i + 62]) << 6;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12097:36: error: expected ')' before 'a'
+12097 |         n >>= 57; n += ((sp_int128)a[i + 62]) << 6;
+      |                        ~           ^
+      |                                    )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12099:39: warning: right shift count >= width of type [-Wshift-count-overflow]
+12099 |     r[48] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[103]) << 6;
+      |                                       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12099:64: error: expected ')' before 'a'
+12099 |     r[48] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[103]) << 6;
+      |                                                    ~           ^
+      |                                                                )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12100:39: warning: right shift count >= width of type [-Wshift-count-overflow]
+12100 |     r[49] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[104]) << 6;
+      |                                       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12100:64: error: expected ')' before 'a'
+12100 |     r[49] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[104]) << 6;
+      |                                                    ~           ^
+      |                                                                )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12101:39: warning: right shift count >= width of type [-Wshift-count-overflow]
+12101 |     r[50] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[105]) << 6;
+      |                                       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12101:64: error: expected ')' before 'a'
+12101 |     r[50] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[105]) << 6;
+      |                                                    ~           ^
+      |                                                                )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12102:39: warning: right shift count >= width of type [-Wshift-count-overflow]
+12102 |     r[51] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[106]) << 6;
+      |                                       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12102:64: error: expected ')' before 'a'
+12102 |     r[51] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[106]) << 6;
+      |                                                    ~           ^
+      |                                                                )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12103:39: warning: right shift count >= width of type [-Wshift-count-overflow]
+12103 |     r[52] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[107]) << 6;
+      |                                       ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12103:64: error: expected ')' before 'a'
+12103 |     r[52] = n & 0x1ffffffffffffffL; n >>= 57; n += ((sp_int128)a[107]) << 6;
+      |                                                    ~           ^
+      |                                                                )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_mul_d_108':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12201:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12201 |     sp_int128 tb = b;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12202:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12202 |     sp_int128 t = 0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12204:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12204 |     sp_int128 p[4];
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12214:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12214 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12218:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12218 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12222:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12222 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12226:11: warning: right shift count >= width of type [-Wshift-count-overflow]
+12226 |         t >>= 57;
+      |           ^~~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c: In function 'sp_3072_div_word_54':
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12309:5: error: unknown type name 'sp_int128'; did you mean 'sp_int32'?
+12309 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |     ^~~~~~~~~
+      |     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12309:21: error: 'sp_int128' undeclared (first use in this function); did you mean 'sp_int32'?
+12309 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                     ^~~~~~~~~
+      |                     sp_int32
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12309:31: error: expected ')' before 'd1'
+12309 |     sp_int128 d = ((sp_int128)d1 << 57) + d0;
+      |                   ~           ^~
+      |                               )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12311:32: warning: right shift count >= width of type [-Wshift-count-overflow]
+12311 |     sp_digit t1 = (sp_digit)(d >> 57);
+      |                                ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12317:14: error: expected ';' before 'm'
+12317 |     sp_int128 m;
+      |              ^~
+      |              ;
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12331:5: error: 'm' undeclared (first use in this function)
+12331 |     m = d - ((sp_int128)r * div);
+      |     ^
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12331:25: error: expected ')' before 'r'
+12331 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12333:25: error: expected ')' before 'r'
+12333 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12334:46: warning: right shift count >= width of type [-Wshift-count-overflow]
+12334 |     r += (sp_digit)(m >> 114) - (sp_digit)(d >> 114);
+      |                                              ^~
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12336:25: error: expected ')' before 'r'
+12336 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+C:/workspace/wolfssl-gojimmypi/wolfcrypt/src/sp_c64.c:12342:25: error: expected ')' before 'r'
+12342 |     m = d - ((sp_int128)r * div);
+      |             ~           ^
+      |                         )
+ninja: build stopped: subcommand failed.
+-------------------------------------------------------------
+Command exited with code 1
+Executable: C:\SysGCC\esp32\tools\ninja\1.10.2\ninja.exe
+Arguments: 
+Directory: C:\workspace\wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples\wolfssl_benchmark\VisualGDB/../build/VisualGDB/Debug
+Command-line action failed
+
+========== Project Build Summary ==========
+    wolfssl_benchmark_IDF_v5_ESP32C3  built in 00:09
+========== Build: 0 Succeeded, 1 Failed, 0 Skipped ==========
