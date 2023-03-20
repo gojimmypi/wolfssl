@@ -1,0 +1,22 @@
+# command script for refresh.sh
+#
+# comments must be removed in calling script (e.g. cut -d'#' -f1)
+#
+./configure
+  ##
+  ## enabled features:
+  ##
+  --enable-kyber
+  --with-liboqs
+
+  --enable-all
+  --enable-stacksize=verbose
+  --enable-trackmemory=verbose
+  --enable-stacksize
+  --enable-benchmark
+            --disable-psk
+            --disable-shared
+            --enable-intelasm  \
+            --enable-aesni \
+            --enable-sp-math-all
+            --enable-sp-asm
