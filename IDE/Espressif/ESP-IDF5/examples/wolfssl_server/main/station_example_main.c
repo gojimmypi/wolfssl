@@ -24,9 +24,22 @@
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+
+#define HAS_MY_PRIVATE_CONFIG
+#ifdef HAS_MY_PRIVATE_CONFIG
+    #include "/workspace/my_private_config.h"
+#endif
+
+#ifndef EXAMPLE_ESP_WIFI_SSID
+    #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
+#endif
+
+#ifndef EXAMPLE_ESP_WIFI_PASS
+    #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+#endif
+
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
+
 
 #if CONFIG_ESP_WIFI_AUTH_OPEN
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN

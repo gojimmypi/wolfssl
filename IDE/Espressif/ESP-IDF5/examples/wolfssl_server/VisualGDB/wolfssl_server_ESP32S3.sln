@@ -5,6 +5,14 @@ VisualStudioVersion = 16.0.33328.57
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_server_ESP32S3", "wolfssl_server_ESP32S3.vgdbproj", "{87DDC804-5472-4386-8A7A-87C8A60A91BC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0959F599-8B26-4AB5-8AB3-4CCAF3990BE4}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\my_private_config.h = ..\..\..\..\..\..\..\my_private_config.h
+		..\sdkconfig = ..\sdkconfig
+		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

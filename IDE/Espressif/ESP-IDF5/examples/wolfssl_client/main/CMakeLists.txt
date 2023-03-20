@@ -22,7 +22,7 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
 idf_component_register(
-                    SRCS "main.c" client-tls.c
+                    SRCS "main.c" client-tls.c wifi_connect.c
                     INCLUDE_DIRS "."
                     REQUIRES wolfssl esp_wifi nvs_flash)
 

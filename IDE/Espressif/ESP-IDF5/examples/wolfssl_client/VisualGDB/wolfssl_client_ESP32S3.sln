@@ -7,8 +7,10 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_client_ESP32S3", "w
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F9D2079-6594-418B-9BF3-C1CCBD2E7BDE}"
 	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
 		..\sdkconfig = ..\sdkconfig
 		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\sdkconfig.defaults.esp32s3 = ..\sdkconfig.defaults.esp32s3
 		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
 	EndProjectSection
 EndProject
