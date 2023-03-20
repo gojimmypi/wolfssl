@@ -189,10 +189,11 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
+#ifdef HAVE_VERSION_EXTENDED_INFO
     ShowExtendedSystemInfo();
+#endif
+
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
-
-
 
 /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
