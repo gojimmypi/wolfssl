@@ -71,7 +71,7 @@
           <Subdirectory>esp-idf/v5.0</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM9</COMPort>
+        <COMPort>COM23</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32C3</DeviceID>
@@ -93,7 +93,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM9</ComPortName>
+      <ComPortName>COM24</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -219,8 +219,10 @@
     </AdditionalGDBSettings>
     <DebugMethod>
       <ID>openocd</ID>
+      <InterfaceID>esp_usb_jtag</InterfaceID>
+      <InterfaceSerialNumber>60:55:F9:BC:29:94</InterfaceSerialNumber>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 20000" -f target/esp32c3.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 3000" -f target/esp32c3.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />

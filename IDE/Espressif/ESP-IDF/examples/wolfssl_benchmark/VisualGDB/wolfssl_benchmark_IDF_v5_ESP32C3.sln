@@ -30,6 +30,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif Port", "Espressif
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{3BA29EA8-68C5-4144-B471-33BA380C323E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -53,6 +55,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{35897992-1F28-4AB1-B432-7F7D76D61162} = {68202294-86F7-471F-BBBF-47F6B3E3137C}
 		{66DEEB01-9378-4714-9EF7-23A0CA65A996} = {68202294-86F7-471F-BBBF-47F6B3E3137C}
+		{3BA29EA8-68C5-4144-B471-33BA380C323E} = {68202294-86F7-471F-BBBF-47F6B3E3137C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8F3E87F6-73E7-446B-A5B7-ADB94756C9D4}

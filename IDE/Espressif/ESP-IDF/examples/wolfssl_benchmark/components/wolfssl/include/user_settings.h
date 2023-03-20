@@ -152,3 +152,10 @@
     /* AES192 is not supported on the ESP32-S3 HW at this time */
     #define NO_AES_192
 #endif
+
+#define HAVE_VERSION_EXTENDED_INFO
+
+// #define WOLFSSL_HAVE_SP_RSA
+#define WOLFSSL_SP_MATH_ALL
+#define WOLFSSL_SP_RISCV32
+// #define WOLFSSL_SP_RISCV64
