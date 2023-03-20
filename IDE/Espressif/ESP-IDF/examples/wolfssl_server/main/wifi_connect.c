@@ -18,25 +18,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+ #include "wifi_connect.h"
+
 /*ESP specific */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
+#include <esp_log.h>
+
+#include "esp_wifi.h"
+
 #include "wifi_connect.h"
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include "lwip/apps/sntp.h"
-#include "nvs_flash.h"
+// #include "nvs_flash.h"
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
 #include <wolfssl/version.h>
+#include "server-tls.h"
 #ifndef WOLFSSL_ESPIDF
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
 #endif
 
-#if ESP_IDF_VERSION_MAJOR >= 4
+#if ESP_IDF_VERSION_MAJOR >= 5
+#elif ESP_IDF_VERSION_MAJOR >= 4
     #include "protocol_examples_common.h"
 #else
     const static int CONNECTED_BIT = BIT0;
@@ -46,8 +54,8 @@
 /* prefix for logging */
 const static char *TAG = "tls_server";
 /* proto-type definition */
-extern void tls_smp_server_task();
-static void tls_smp_server_init();
+// extern void tls_smp_server_task();
+// static void tls_smp_server_init();
 
 static void set_time()
 {
@@ -80,7 +88,6 @@ static void set_time()
                                             false, true, portMAX_DELAY);
 #endif
     /* now we start client tasks. */
-    tls_smp_server_init();
 }
 
 /* create task */
@@ -183,7 +190,7 @@ void app_main(void)
     /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
-    ESP_ERROR_CHECK(nvs_flash_init());
+//    ESP_ERROR_CHECK(nvs_flash_init());
 
     ESP_LOGI(TAG, "Initialize wifi");
     /* TCP/IP adapter initialization */

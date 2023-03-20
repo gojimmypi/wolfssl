@@ -39,4 +39,6 @@
 #define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
 #define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
 
+static void tls_smp_server_init();
+
 #endif

@@ -219,15 +219,15 @@ separate_arguments(COMPONENT_SRCEXCLUDE NATIVE_COMMAND "${COMPONENT_SRCEXCLUDE}"
 separate_arguments(COMPONENT_ADD_INCLUDEDIRS NATIVE_COMMAND "${COMPONENT_ADD_INCLUDEDIRS}")
 
 idf_component_register(
-                        SRC_DIRS "${COMPONENT_SRCDIRS}"
+                        SRC_DIRS "${COMPONENT_SRCDIRS}" "../../main"
                         INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
                         REQUIRES "${COMPONENT_REQUIRES}"
                         EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
-                        PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
+                        PRIV_REQUIRES esp_wifi esp_timer driver
                        )
 
 # some optional diagnostics
-if (1)
+if (0)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
     message(STATUS "")

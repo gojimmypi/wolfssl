@@ -265,3 +265,10 @@ void tls_smp_server_task()
 
     return;                 /* Return reporting a success               */
 }
+
+/* for FreeRTOS */
+void app_main(void)
+{
+    tls_smp_server_init();
+    tls_smp_server_task();
+}

@@ -7,7 +7,7 @@
     </CustomSourceDirectories>
     <AutoProgramSPIFFSPartition>true</AutoProgramSPIFFSPartition>
     <ProjectModeSettings>
-      <ProjectGUID>28e68579-a670-4342-bcb8-c6c7b3ca04b6</ProjectGUID>
+      <ProjectGUID>63883b8e-8fa2-4e2f-807c-31c07f619c51</ProjectGUID>
       <GroupSourcesByTypes>true</GroupSourcesByTypes>
       <GroupSourcesByPaths>true</GroupSourcesByPaths>
       <HeaderScanMode>SourceDirs</HeaderScanMode>
@@ -58,8 +58,9 @@
         <BuildAllTargetsInSubdir>false</BuildAllTargetsInSubdir>
         <FoldSingleItemPathLevels>true</FoldSingleItemPathLevels>
       </ProjectItemSettings>
+      <TargetSpecificSettings />
       <SetLDLibraryPathFromDependentArtifacts>true</SetLDLibraryPathFromDependentArtifacts>
-      <ProjectGUID>87ddc804-5472-4386-8a7a-87c8a60a91bc</ProjectGUID>
+      <ProjectGUID>cd5a90ca-2d40-461a-a0c3-27654371bb00</ProjectGUID>
       <VirtualFolders />
       <ConfigurationNameCase>Upper</ConfigurationNameCase>
       <DefaultHeaderDiscoveryMode>HeaderDirectoryAndSubdirectories</DefaultHeaderDiscoveryMode>
@@ -156,6 +157,7 @@
     <ShowMessageAfterExecuting>true</ShowMessageAfterExecuting>
   </CustomShortcuts>
   <UserDefinedVariables />
+  <ImportedPropertySheets />
   <CodeSense>
     <Enabled>Unknown</Enabled>
     <ExtraSettings>
@@ -178,6 +180,7 @@
       <BuildSettingsExtension xsi:type="com.visualgdb.build.external.esp-idf.cmake.extension" />
     </VisualGDBConfiguration>
   </Configurations>
+  <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
     <AdditionalStartupCommands />
     <AdditionalGDBSettings>
@@ -219,7 +222,7 @@
       <InterfaceID>esp_usb_jtag</InterfaceID>
       <InterfaceSerialNumber>7C:DF:A1:E6:25:C8</InterfaceSerialNumber>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 3000" -f target/esp32s3.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -f target/esp32s3.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
@@ -251,7 +254,7 @@
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
-    <SemihostingSupport>Auto</SemihostingSupport>
+    <SemihostingSupport>Disabled</SemihostingSupport>
     <SemihostingPollingDelay>0</SemihostingPollingDelay>
     <StepIntoEntryPoint>false</StepIntoEntryPoint>
     <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>

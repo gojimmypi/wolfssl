@@ -7,7 +7,7 @@
     </CustomSourceDirectories>
     <AutoProgramSPIFFSPartition>true</AutoProgramSPIFFSPartition>
     <ProjectModeSettings>
-      <ProjectGUID>28e68579-a670-4342-bcb8-c6c7b3ca04b6</ProjectGUID>
+      <ProjectGUID>88e26e7f-bff8-4948-baf3-1744afe9058e</ProjectGUID>
       <GroupSourcesByTypes>true</GroupSourcesByTypes>
       <GroupSourcesByPaths>true</GroupSourcesByPaths>
       <HeaderScanMode>SourceDirs</HeaderScanMode>
@@ -58,8 +58,9 @@
         <BuildAllTargetsInSubdir>false</BuildAllTargetsInSubdir>
         <FoldSingleItemPathLevels>true</FoldSingleItemPathLevels>
       </ProjectItemSettings>
+      <TargetSpecificSettings />
       <SetLDLibraryPathFromDependentArtifacts>true</SetLDLibraryPathFromDependentArtifacts>
-      <ProjectGUID>87ddc804-5472-4386-8a7a-87c8a60a91bc</ProjectGUID>
+      <ProjectGUID>a8b1dd31-e163-4db8-8cc3-e383880e7b3b</ProjectGUID>
       <VirtualFolders />
       <ConfigurationNameCase>Upper</ConfigurationNameCase>
       <DefaultHeaderDiscoveryMode>HeaderDirectoryAndSubdirectories</DefaultHeaderDiscoveryMode>
@@ -156,6 +157,7 @@
     <ShowMessageAfterExecuting>true</ShowMessageAfterExecuting>
   </CustomShortcuts>
   <UserDefinedVariables />
+  <ImportedPropertySheets />
   <CodeSense>
     <Enabled>Unknown</Enabled>
     <ExtraSettings>
@@ -178,6 +180,7 @@
       <BuildSettingsExtension xsi:type="com.visualgdb.build.external.esp-idf.cmake.extension" />
     </VisualGDBConfiguration>
   </Configurations>
+  <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
     <AdditionalStartupCommands />
     <AdditionalGDBSettings>
