@@ -20,6 +20,16 @@
  */
 #include <wolfssl/version.h>
 
+
+/*
+** NOTICE: HAVE_WC_INTROSPECTION requires requires that the configuration
+** and build time artifacts, particularly the date/time of build and git
+** parameters, be excluded from the build.
+**
+** Edit extended version information with care.
+*/
+#define HAVE_VERSION_EXTENDED_INFO
+
 #ifdef HAVE_VERSION_EXTENDED_INFO
 
 #ifdef HAVE_CONFIG_H
@@ -246,11 +256,22 @@ int ShowExtendedSystemInfo(void)
     WOLFSSL_VERSION_PRINTF("");
 #endif
 
+#ifdef HAVE_WC_INTROSPECTION
+#pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
+                "HAVE_WC_INTROSPECTION are enabled. Some extended " \
+                "information details will not be available.")
+
+    WOLFSSL_VERSION_PRINTF("HAVE_WC_INTROSPECTION enabled. "
+                           "Some extended system details not available.");
+#else
     ShowExtendedSystemInfo_git();
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
+#endif /*  HAVE_WC_INTROSPECTION */
+
     return 0;
 }
+
 #endif /* NO_VERSION_EXTENDED_INFO */
 
 #ifdef __cplusplus

@@ -141,8 +141,10 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
-    ShowExtendedSystemInfo();
 
+#ifdef HAVE_VERSION_EXTENDED_INFO
+    ShowExtendedSystemInfo();
+#endif
 
 #if defined (WOLFSSL_USE_TIME_HELPER)
     set_time();

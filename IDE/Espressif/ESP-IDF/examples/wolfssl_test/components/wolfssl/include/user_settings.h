@@ -149,3 +149,6 @@
     /* AES192 is not supported on the ESP32-S3 HW at this time */
     #define NO_AES_192
 #endif
+
+#define HAVE_VERSION_EXTENDED_INFO
+#define HAVE_WC_INTROSPECTION
