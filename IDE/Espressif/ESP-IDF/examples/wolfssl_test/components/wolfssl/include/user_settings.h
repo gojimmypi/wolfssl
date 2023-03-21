@@ -66,15 +66,19 @@
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 /* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/* #define SINGLE_THREADED */
+
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
 
 #define WOLFSSL_RIPEMD
-// #define WOLFSSL_SHA224
-#define WOLFSSL_SHA3
+/* when you want to use SHA224 */
+#define WOLFSSL_SHA224
+
 /* when you want to use SHA384 */
+#define WOLFSSL_SHA3
+
 #define WOLFSSL_SHA384
 #define WOLFSSL_SHA512
 #define HAVE_ECC
@@ -140,8 +144,6 @@
 
 #define HASH_SIZE_LIMIT /* for test.c */
 
-#define OPENSSL_EXTRA
-
 #define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
 
@@ -152,3 +154,5 @@
 
 #define HAVE_VERSION_EXTENDED_INFO
 #define HAVE_WC_INTROSPECTION
+
+#define  HAVE_SESSION_TICKET
