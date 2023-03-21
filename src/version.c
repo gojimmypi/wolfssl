@@ -22,13 +22,14 @@
 
 
 /*
-** NOTICE: HAVE_WC_INTROSPECTION requires requires that the configuration
-** and build time artifacts, particularly the date/time of build and git
-** parameters, be excluded from the build.
+** NOTICE: HAVE_WC_INTROSPECTION requires that the configuration and build time
+** artifacts, particularly the date/time of build and git parameters, be
+** excluded from the build. See #ifdef HAVE_WC_INTROSPECTION, below.
+**
+** Fundamentally: the object code needs to be maximally bitwise-invariant.
 **
 ** Edit extended version information with care.
 */
-#define HAVE_VERSION_EXTENDED_INFO
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
 
@@ -167,6 +168,18 @@ static int ShowExtendedSystemInfo_platform_espressif()
 */
 static int ShowExtendedSystemInfo_git()
 {
+#ifdef HAVE_WC_INTROSPECTION
+#pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
+                "HAVE_WC_INTROSPECTION are enabled. Some extended " \
+                "information details will not be available.")
+
+    WOLFSSL_VERSION_PRINTF("HAVE_WC_INTROSPECTION enabled. "
+                           "Some extended system details not available.");
+#else
+/* Display some interesting git values that may change,
+** but not desired for introspection which requires object code to be
+** maximally bitwise-invariant.
+*/
 #if defined(LIBWOLFSSL_VERSION_GIT_ORIGIN)
     /* git config --get remote.origin.url */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_ORIGIN = %s",
@@ -193,6 +206,8 @@ static int ShowExtendedSystemInfo_git()
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s",
                             LIBWOLFSSL_VERSION_GIT_HASH_DATE);
 #endif
+
+#endif /* else not HAVE_WC_INTROSPECTION */
     return 0;
 }
 
@@ -250,25 +265,16 @@ int ShowExtendedSystemInfo(void)
 #endif
 
 #if defined(WOLFSSL_MULTI_INSTALL_WARNING)
+    /* CMake may have detected undesired multiple installs, so give warning. */
     WOLFSSL_VERSION_PRINTF("");
     WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
     WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
     WOLFSSL_VERSION_PRINTF("");
 #endif
 
-#ifdef HAVE_WC_INTROSPECTION
-#pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
-                "HAVE_WC_INTROSPECTION are enabled. Some extended " \
-                "information details will not be available.")
-
-    WOLFSSL_VERSION_PRINTF("HAVE_WC_INTROSPECTION enabled. "
-                           "Some extended system details not available.");
-#else
-    ShowExtendedSystemInfo_git();
+    ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
-#endif /*  HAVE_WC_INTROSPECTION */
-
     return 0;
 }
 
