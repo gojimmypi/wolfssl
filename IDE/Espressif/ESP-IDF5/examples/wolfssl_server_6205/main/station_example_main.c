@@ -206,5 +206,11 @@ void app_main(void)
         ;
     }
 
+    Cert request;
+    wc_InitCert(&request);
+
+    // ret = wc_MakeCertReq(&request, der, sizeof(der), NULL, &key);
+
+
     ESP_LOGI(TAG, "%s", pem);
 }
