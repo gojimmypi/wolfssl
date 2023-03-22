@@ -1,135 +1,163 @@
-/* ******************************************************************
-*  user_settings.h
-*  Build configuration for WolfSSL library.
-*  Organized into the following sections:
-*    o Debugging
-*    o Target specific
-*    o Project configuration.
-*  ****************************************************************** */
+/* user_settings.h
+ *
+ * Copyright (C) 2006-2023 wolfSSL Inc.
+ *
+ * This file is part of wolfSSL.
+ *
+ * wolfSSL is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * wolfSSL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+ */
 
-/* BuildConfiguration.h missing  */
-/* #include "../../../main/BuildConfiguration.h" */
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
+#undef WOLFSSL_ESPIDF
+#undef WOLFSSL_ESPWROOM32
+#undef WOLFSSL_ESPWROOM32SE
+#undef WOLFSSL_ESPWROOM32
+#undef WOLFSSL_ESP8266
+
+/* The Espressif sdkconfig will have chipset info.
+**
+** Possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
+*/
+#include "sdkconfig.h"
+
+#define WOLFSSL_ESPIDF
+
+/*
+ * choose ONE of these Espressif chips to define:
+ *
+ * WOLFSSL_ESPWROOM32
+ * WOLFSSL_ESPWROOM32SE
+ * WOLFSSL_ESP8266
+ */
+
+#define WOLFSSL_ESPWROOM32
+/* #define WOLFSSL_NOSHA512_224 */
+/* #define WOLFSSL_NOSHA512_256 */
+
+/* #define DEBUG_WOLFSSL_VERBOSE */
+
+#define BENCH_EMBEDDED
+#define USE_CERT_BUFFERS_2048
+
+/* TLS 1.3                                 */
+#define WOLFSSL_TLS13
+#define HAVE_TLS_EXTENSIONS
+#define WC_RSA_PSS
+#define HAVE_HKDF
+#define HAVE_AEAD
+#define HAVE_SUPPORTED_CURVES
+
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+/* when you want to use SINGLE THREAD */
+/* #define SINGLE_THREADED */
+
+#define NO_FILESYSTEM
+
+#define HAVE_AESGCM
+
+#define WOLFSSL_RIPEMD
+/* when you want to use SHA224 */
+#define WOLFSSL_SHA224
+
+/* when you want to use SHA384 */
+#define WOLFSSL_SHA3
+
+#define WOLFSSL_SHA384
+#define WOLFSSL_SHA512
+#define HAVE_ECC
+#define HAVE_CURVE25519
+#define CURVE25519_SMALL
+#define HAVE_ED25519
+
+// #define OPENSSL_EXTRA
+/* when you want to use pkcs7 */
+
+#define HAVE_PKCS7
+
+#if defined(HAVE_PKCS7)
+    #define HAVE_AES_KEYWRAP
+    #define HAVE_X963_KDF
+    #define WOLFSSL_AES_DIRECT
 #endif
 
-#include <wolfssl/wolfcrypt/settings.h>
+/* when you want to use aes counter mode */
+/* #define WOLFSSL_AES_DIRECT */
+/* #define WOLFSSL_AES_COUNTER */
 
-/* ==================================================================
- * Debugging
- **/
-
-// Enable debugging and logging support
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter08.html
-#define DEBUG_WOLFSSL
-
-// Undocumented, but exposes a lot of extra debug information. Helpful
-// to see encryption/decryption steps output to console.
-//#define DEBUG_WOLFSSL_VERBOSE
-
-// Enable additional debugging during a TLS connection
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#wolfssl_debug_tls
-//#define WOLFSSL_DEBUG_TLS
-
-// Undocumented ESP32 specific debugging. Not sure if this does anything useful.
-//#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
-
-// DEBUG ONLY!
-// Enable things needed to decode SSL messages with wireshark, writing SSL
-// secrets into a file. This file can be used for (Pre)-Master-Secret log
-// filename in Wireshark->Edit->Preferences->Protocol->TLS.
-// https ://www.wolfssl.com/forums/topic1580-creating-a-nss-key-log-file.html
-// https ://github.com/wolfSSL/wolfssl-examples/blob/master/tls/client-tls13.c
-//#define HAVE_SECRET_CALLBACK
-
-#if 0
-// Enable memory diagnostics.
-// https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/wolfcrypt/mem_track.h
-#define USE_WOLFSSL_MEMORY
-#define WOLFSSL_TRACK_MEMORY
+/* esp32-wroom-32se specific definition */
+#if defined(WOLFSSL_ESPWROOM32SE)
+    #define WOLFSSL_ATECC508A
+    #define HAVE_PK_CALLBACKS
+    /* when you want to use a custom slot allocation for ATECC608A */
+    /* unless your configuration is unusual, you can use default   */
+    /* implementation.                                             */
+    /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-#if 0
-// Undocumented. Disable hardware acceleration of cryptography functions including RSA
+/* rsa primitive specific definition */
+#if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
+    /* Define USE_FAST_MATH and SMALL_STACK                        */
+    #define ESP32_USE_RSA_PRIMITIVE
+    /* threshold for performance adjustment for HW primitive use   */
+    /* X bits of G^X mod P greater than                            */
+    #define EPS_RSA_EXPT_XBTIS           36
+    /* X and Y of X * Y mod P greater than                         */
+    #define ESP_RSA_MULM_BITS            2000
+#endif
+
+/* debug options */
+// #define DEBUG_WOLFSSL
+#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+/* #define WOLFSSL_ATECC508A_DEBUG          */
+
+/* date/time                               */
+/* if it cannot adjust time in the device, */
+/* enable macro below                      */
+/* #define NO_ASN_TIME */
+/* #define XTIME time */
+
+/* when you want not to use HW acceleration */
 #define NO_ESP32WROOM32_CRYPT
-
-// Undocumented. Disable hardware acceleration of RSA primitives?
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
-// Undocumented. Disable hardware acceleration of SHA (e.g., SHA-256, SHA-512)
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+/* adjust wait-timeout count if you see timeout in RSA HW acceleration */
+#define ESP_RSA_TIMEOUT_CNT    0x249F00
 
-// Undocumented. Disable hardware acceleration of AES
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+#define HASH_SIZE_LIMIT /* for test.c */
 
-#endif
-
-
-/* ==================================================================
- * Target specific
- **/
-
-// Minimum stack size required for any task that creates TLS sessions.
-// Todo: figure out a suitable value.
-#define TLS_MIN_STACK_SIZE 0 // bytes
-
-// Enable ESP32-WROOM-32 hardware crypto and RNG support. Applies to
-// customized support for ESP32s3 as well.
-// See https://www.wolfssl.com/documentation/manuals/wolfssl/chapter04.html#esp32-wroom-32
-// Options are: WOLFSSL_ESPWROOM32, WOLFSSL_ESPWROOM32SE, WOLFSSL_ESP8266
-#define WOLFSSL_ESPWROOM32
-
-// Exclude error strings (reduces code-size)
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#no_error_strings
-// Saves about 11k from DATA_FLASH and 7k from INSTR_FLASH.
-//#define NO_ERROR_STRINGS
-
-// Disable use of CRT (Chinese remainder therom), which slows down RSA calculations
-// but uses less "memory". Not sure if that's heap or stack or both. Untested.
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#rsa_low_mem
-// https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
-// Note: defining this significantly increases connection time, by more than 4s (from
-// about 2.6s to 7s with defined too).
-//#define RSA_LOW_MEM
-
-// Uses a slower implementation for curve25519 that requires less memory.
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#curve25519_small
-#define CURVE25519_SMALL
-
-// Increases use of dynamic memory in `wolfcrypt/src/integer.c` but can lead to slower performance
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#wolfssl_small_stack
-// Apparently stack variables > 100 bytes are allocated from the heap.
-#if !defined(_WIN32) && (defined(NO_ESP32WROOM32_CRYPT) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES))
+#define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
+
+#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
+    /* AES192 is not supported on the ESP32-S3 HW at this time */
+    #define NO_AES_192
 #endif
 
+#define HAVE_VERSION_EXTENDED_INFO
+#define HAVE_WC_INTROSPECTION
 
-// Undocumented
-// Apparently reduce peak TLS memory use.
-//#define WOLFSSL_SMALL_STACK_CACHE
+#define  HAVE_SESSION_TICKET
 
-// Use smaller versions of the code and avoid large stack variables.
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#wolfssl_sp_small
-//#define WOLFSSL_SP_SMALL
-
-// Enable SP math and algorithms.
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#wolfssl_sp_math_all
-//#define WOLFSSL_SP_MATH_ALL
-
-// Verify certificate signature without using DecodedCert. Increases code size but
-// reduces peak heap use.
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#wolfssl_small_cert_verify
-#define WOLFSSL_SMALL_CERT_VERIFY
-
-// Reduces the size of the session cache
-// https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#no_session_cache
-#define SMALL_SESSION_CACHE
-
-/* ==================================================================
- * Project configuration.
- **/
-
-
+#define HAVE_HASHDRBG
 #define WOLFSSL_KEY_GEN
 
 /* Shared configuration in same directory */
