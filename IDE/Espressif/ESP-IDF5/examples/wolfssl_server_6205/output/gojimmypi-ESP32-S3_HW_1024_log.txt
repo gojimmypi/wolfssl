@@ -1,0 +1,54 @@
+I (1064) wifi:security: WPA2-PSK, phy: bgn, rssi: -39
+I (1074) wifi:pm start, type: 1
+
+I (1074) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 0, mt_pti: 25000, mt_time: 10000
+I (1124) wifi:BcnInt:102400, DTIM:1
+I (3254) esp_netif_handlers: sta ip: 192.168.25.125, mask: 255.255.255.0, gw: 192.168.25.1
+I (3254) wifi station: got ip:192.168.25.125
+I (3254) wifi station: Generating an RSA key 1024 bits long
+I (7834) wifi station: 
+
+Cert pem:
+
+-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQCpLWDv9M/oB7ow24Zyy+Op1ShwNvJQ1FchIVZ3KpRmYEd/js6S
+LV8WhkP8uQWWU/7n22xK2ZklcxMLM3gFZgvv8K2LeeMxu+yJPBFDmOnE5K5Wtkl/
+dPr4LwNkkFAJ8S7khp4UegbYbJWNx21GGEtKjIkDr6jHbjeK+WgGlhUVZQIDAQAB
+AoGBAKY+AVPKrcLEVSJNlgCYek8ZN3ONivACuNvFdsIDBXDUi229VyAtlZL8vTJK
+XkMqpwIPjIrA6Mz0F3KaUQZ9EJxN9HNqFK2pKlXBX/U+8Ifh4jhNepz1noOHiepa
+vJkrcRfGqEJLwtEXXyPuZkhdLTNMszf6en6zyTZisfEJ5aABAkEA2TWXpVtwuVu3
+kYvqr2ZQU5a/yDaejF204icuSkrxaPpmgNRRDcsEWzYcFbUa2p/odCyGVshJ2umT
+pQYoZBw45QJBAMdj2UAMx5HUj1iDux5oZayXhGw/3hv1okxcjeY0+RSZOc9YIjz0
+7JPyo5F+9qC9ccP/nIWEGm0MSbYK6JQ2IoECQQCJCir3BM4F5DvY9DHJIAAl/MJb
+CzrUzHpHBPlLniTZWsI5HbtVvHSvJ2Bowa6DqMf8I+tN7WfLWfrw7wWkw7mRAkAI
+Tw3fkGjEl/H9Q0gJ5VnPTmUTSboMujiwK+8x16VFiXkSPd73YVF2fNb6GitW2W4j
+N8Si/7VGNAviTSQSAQuBAkEAiQcq9q0eef2J+ta/i1fsF4Rn9ir4rSrk/zTdC1Db
+JrUFgzeKc7DOhkPITLcBMJ4awcdHGVgHOxfmfOsqvbtXLw==
+-----END RSA PRIVATE KEY-----
+
+
+
+I (8014) wifi station: 
+
+
+I (8014) wifi station: 
+
+Request pem: (paste into file for CA sign)
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIIBvzCCASgCAQAwfzELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAP
+BgNVBAcMCEhhbWlsdG9uMSAwHgYDVQQKDBdCbHVlIExlYWYgU29mdHdhcmUsIEx0
+ZDEpMCcGA1UEAwwgTHVtb3MgU1csIHNlcmlhbE51bWJlciA9IEJMUy0wMDEwgZ8w
+DQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKktYO/0z+gHujDbhnLL46nVKHA28lDU
+VyEhVncqlGZgR3+OzpItXxaGQ/y5BZZT/ufbbErZmSVzEwszeAVmC+/wrYt54zG7
+7Ik8EUOY6cTkrla2SX90+vgvA2SQUAnxLuSGnhR6BthslY3HbUYYS0qMiQOvqMdu
+N4r5aAaWFRVlAgMBAAGgADANBgkqhkiG9w0BAQsFAAOBgQA7vsc199s61Il/SdV6
+dwDcR8I9b+Nm8bAb/rviOhUeULKu9l0bpI9hRwpcyx4C747cOwyc46BzGQ2gUiQE
+nBq1oSX6B4CYCyBmcQ6MU5GEs/0FP2vjs8pCsDCd/8ARFRuu+QoNjymhKkJfYjB6
++rNl4c9MkFXf7pl1qzAG0rJttg==
+-----END CERTIFICATE REQUEST-----
+
+
+
+I (8074) wifi station: Done!
+I (8074) wifi station: ESP32WROOM32_CRYPT is enabled for ESP32-S3.

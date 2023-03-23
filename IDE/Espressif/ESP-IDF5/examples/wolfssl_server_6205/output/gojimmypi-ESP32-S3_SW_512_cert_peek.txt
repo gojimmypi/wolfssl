@@ -1,0 +1,76 @@
+0 $  ./cert_peek.sh SW 512
+HW/SW: SW
+RSA size: 512
+
+Files:
+
+-rwxrwxrwx 1 gojimmypi gojimmypi 2904 Mar 22 17:00 ./output/gojimmypi-ESP32-S3_SW_512_cert_peek.txt
+-rwxrwxrwx 1 gojimmypi gojimmypi    0 Mar 22 16:58 ./output/gojimmypi-ESP32-S3_SW_512_log.txt
+-rwxrwxrwx 1 gojimmypi gojimmypi  504 Mar 22 16:59 ./output/gojimmypi-ESP32-S3_SW_512_private_key.txt
+-rwxrwxrwx 1 gojimmypi gojimmypi  508 Mar 22 16:59 ./output/gojimmypi-ESP32-S3_SW_512_request.crt
+
+RSA Private-Key: (512 bit, 2 primes)
+modulus:
+    00:b1:25:30:0b:de:fd:70:08:5d:02:15:28:b5:e2:
+    cd:b7:61:5f:a8:3b:a9:15:65:c5:ab:48:ec:80:65:
+    97:79:d0:84:ce:ff:1a:8a:a1:82:b3:ac:0d:22:11:
+    c9:a8:70:ab:be:22:05:55:79:ae:51:f5:38:2c:58:
+    e0:f5:f6:72:b7
+publicExponent: 65537 (0x10001)
+privateExponent:
+    00:aa:cf:eb:06:67:5d:06:1c:6a:62:c9:b8:59:ba:
+    7b:16:ea:a3:ec:7a:aa:cd:e1:36:bb:b5:33:a7:93:
+    4e:7e:bb:ff:99:9b:1b:58:14:c0:dd:19:d4:d3:4b:
+    d1:5b:19:11:7e:02:1a:54:f9:76:d1:84:3d:d5:f6:
+    39:63:53:90:01
+prime1:
+    00:eb:fa:9c:1e:7a:1a:97:27:b2:51:a0:85:75:6b:
+    ec:68:1a:7e:cf:33:cf:6f:af:45:50:5e:fd:f1:71:
+    27:dc:01
+prime2:
+    00:c0:2c:ba:77:70:02:55:a6:d0:93:0c:4a:fb:c6:
+    50:79:3e:fa:c0:a7:de:32:1d:27:37:fa:a5:35:a8:
+    f0:2e:b7
+exponent1:
+    00:8b:bc:63:26:48:f7:e5:fa:43:c5:c2:60:45:20:
+    1b:65:aa:0a:dd:77:b8:a6:52:0b:a1:84:1e:ac:12:
+    6d:a0:01
+exponent2:
+    00:af:57:e0:67:5c:0e:f5:41:b8:ab:83:1a:e3:b1:
+    25:fa:0a:e9:d6:61:14:8e:db:24:ce:a1:e6:9e:18:
+    5f:d5:ef
+coefficient:
+    00:ba:b7:79:ae:0f:64:67:0e:40:7c:7c:3b:99:bd:
+    58:16:47:73:33:05:79:a0:6e:0b:10:8a:76:74:00:
+    f5:97:5e
+
+Request:
+
+Certificate Request:
+    Data:
+        Version: 1 (0x0)
+        Subject: C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos SW, serialNumber = BLS-001"
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (512 bit)
+                Modulus:
+                    00:b1:25:30:0b:de:fd:70:08:5d:02:15:28:b5:e2:
+                    cd:b7:61:5f:a8:3b:a9:15:65:c5:ab:48:ec:80:65:
+                    97:79:d0:84:ce:ff:1a:8a:a1:82:b3:ac:0d:22:11:
+                    c9:a8:70:ab:be:22:05:55:79:ae:51:f5:38:2c:58:
+                    e0:f5:f6:72:b7
+                Exponent: 65537 (0x10001)
+        Attributes:
+            a0:00
+    Signature Algorithm: sha256WithRSAEncryption
+         a8:5d:3a:78:7f:d0:14:08:cc:0e:d7:8b:ee:50:58:d6:8f:01:
+         f1:dd:87:8e:7a:d8:35:a0:00:32:eb:7f:9f:3b:84:dc:cd:e2:
+         ec:8a:3d:d6:17:39:57:ea:7e:09:1e:cb:12:39:1a:8c:76:af:
+         aa:82:b1:f9:12:ac:3f:bc:76:d6
+
+CA sign:
+
+Signature ok
+subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos SW, serialNumber = BLS-001"
+Getting CA Private Key
+gojimmypi@DESKTOP(WSL): /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205 (ED25519_SHA2_fix * u=) gojimmypi/wolfssl

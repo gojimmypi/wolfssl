@@ -1,0 +1,155 @@
+0 $  ./cert_peek.sh HW 2048
+HW/SW: HW
+RSA size: 2048
+
+Files:
+
+-rwxrwxrwx 1 gojimmypi gojimmypi 3433 Mar 22 17:14 ./output/gojimmypi-ESP32-S3_HW_2048_log.txt
+-rwxrwxrwx 1 gojimmypi gojimmypi 1704 Mar 22 17:15 ./output/gojimmypi-ESP32-S3_HW_2048_private_key.txt
+-rwxrwxrwx 1 gojimmypi gojimmypi 1052 Mar 22 17:15 ./output/gojimmypi-ESP32-S3_HW_2048_request.crt
+
+RSA Private-Key: (2048 bit, 2 primes)
+modulus:
+    00:b6:85:04:b3:34:b6:5f:29:db:6d:f7:ad:41:50:
+    67:31:55:09:56:1a:aa:8d:e1:83:0c:e9:9c:65:92:
+    8b:e5:c4:2e:bd:33:cf:2f:e5:4a:c9:1d:1d:98:27:
+    da:64:4a:6d:db:2c:42:d0:19:25:57:74:82:1b:de:
+    d2:a5:c1:29:46:01:f9:1a:6b:2d:d7:6f:3f:a9:4b:
+    ac:da:9f:08:d6:4b:3b:a2:6b:40:b6:15:2f:99:16:
+    38:f5:92:1c:9a:ef:74:68:3c:81:49:48:5d:c4:9e:
+    8a:02:56:ef:84:81:ce:a6:82:99:90:bd:f1:f0:8a:
+    90:67:b4:b4:3a:a9:a4:ba:74:88:ad:30:97:7c:f0:
+    cb:10:79:95:4a:b2:20:59:ee:f0:99:54:dc:9f:a4:
+    39:81:9e:df:23:f7:a8:d9:d6:48:d4:98:a0:58:d5:
+    47:a2:4b:b2:7d:57:92:1c:49:a0:5b:e9:68:d2:4d:
+    cf:73:24:31:f0:bb:49:92:e3:d8:53:8c:74:4f:93:
+    37:37:88:9c:f4:ac:f5:d7:10:9e:a4:ee:03:da:c7:
+    15:cb:15:4f:23:15:3d:f5:f6:48:92:00:ad:53:53:
+    30:89:4a:55:ea:21:09:45:fe:59:7a:c3:40:24:3f:
+    8f:2e:42:3c:6f:79:1d:42:87:58:00:61:c3:53:ff:
+    04:85
+publicExponent: 65537 (0x10001)
+privateExponent:
+    66:d5:d6:50:0d:c4:06:58:db:74:88:0d:71:42:30:
+    fc:d3:a3:fe:b2:56:d1:c7:3d:94:ee:a0:c5:6b:46:
+    f3:f8:63:c8:f5:7f:c7:b7:08:af:ee:71:46:28:5d:
+    bc:6c:74:17:67:09:dd:ea:fe:17:a1:09:17:d6:56:
+    da:bf:f2:47:71:bf:bb:80:b0:21:eb:52:28:b4:70:
+    74:51:08:ec:e7:6a:17:73:a3:df:8d:c6:e6:14:96:
+    44:63:14:1a:a2:84:e0:e5:1f:31:17:e7:86:77:fe:
+    ac:2a:b9:f0:5d:21:62:91:6d:ce:4b:1a:7e:39:dc:
+    a4:0d:88:bc:8a:92:01:a3:cf:b6:63:6d:22:ad:77:
+    dc:2c:8d:c1:9c:47:5e:1b:c8:e3:a1:85:76:8a:19:
+    cc:54:95:59:70:0b:33:9c:a0:46:f4:2b:e1:91:72:
+    19:23:93:7d:33:dd:a6:8f:31:5d:ed:ce:0f:fe:7f:
+    f8:00:25:b3:e1:d8:bf:3c:11:2f:c8:32:cf:8d:b2:
+    d6:85:1f:ee:6c:50:11:a8:b9:78:a0:1a:59:23:db:
+    05:65:1d:3b:0d:26:51:b0:fc:89:a9:08:f2:9b:76:
+    d1:55:10:d0:8b:62:d2:96:69:51:cc:4b:69:8e:67:
+    27:a5:bd:2a:55:f8:e3:b5:f3:14:af:ab:d8:ed:db:
+    f6
+prime1:
+    00:ed:f3:27:d1:df:89:bc:76:01:18:11:aa:f4:24:
+    d0:04:a8:31:2c:14:73:ba:eb:c6:bf:46:fb:34:30:
+    0a:8b:89:25:07:df:03:f9:2d:19:23:51:14:6f:b5:
+    de:09:84:50:48:b0:bb:80:8e:39:19:f8:ef:b6:bd:
+    3d:74:a7:53:71:6c:92:92:16:81:af:7a:30:65:e8:
+    bd:21:ba:3e:1f:28:ef:46:50:e0:a8:72:ed:4e:56:
+    6e:ed:d6:74:e9:da:8a:5a:d4:c3:9a:77:76:51:16:
+    fe:6b:7f:97:18:f9:bd:c4:84:d3:c4:24:07:3c:b5:
+    31:e8:e1:a1:b1:e0:67:78:0d
+prime2:
+    00:c4:5d:70:d5:bf:0f:6e:3b:99:3f:a7:d7:08:38:
+    94:ad:b0:86:1a:2e:7f:d3:bb:ea:96:fe:dd:73:3e:
+    2e:57:69:0b:60:f8:15:b5:1f:fe:a6:8c:a4:4f:26:
+    2f:fc:e1:ed:1c:87:61:3e:a8:e7:fd:92:d6:4f:27:
+    ba:b6:6f:42:57:d1:e0:03:a6:24:75:33:ca:37:ea:
+    05:72:8c:fd:12:ef:3e:90:e4:21:02:5e:5b:f1:94:
+    db:0e:99:69:3b:7b:0b:f2:fc:ea:a6:54:c0:6f:aa:
+    fd:ec:f6:1f:a3:4c:d8:6e:26:4c:df:95:a6:1f:bf:
+    1e:1e:e9:e1:6d:eb:05:68:59
+exponent1:
+    00:aa:80:6d:13:9f:dc:8b:cb:bd:b0:2a:20:ca:3e:
+    37:ee:e7:da:57:ce:34:89:ed:09:65:1e:2c:b8:ee:
+    48:2c:b3:89:c7:ec:9b:70:9d:fc:7d:66:3f:25:e7:
+    28:b1:67:a2:2e:f8:c0:c7:53:33:5b:0e:0b:35:bf:
+    54:2c:4a:0d:c7:42:e4:9a:93:4e:46:64:28:4a:2f:
+    69:a1:56:d5:a0:18:94:7c:dd:76:8c:28:8a:af:50:
+    36:ce:bc:46:79:24:73:4d:f5:80:83:37:91:98:0f:
+    9e:27:ae:98:fc:99:7f:10:51:e1:fe:b5:ca:c5:74:
+    6c:e6:9e:a3:08:76:52:8b:0e
+exponent2:
+    05:19:39:b1:12:d8:7e:64:7a:ca:4d:12:3b:c2:3e:
+    07:8a:43:ed:92:b0:4c:67:9f:c3:38:72:d4:a2:fa:
+    68:27:43:4d:8d:13:82:10:9b:76:0c:19:7d:fe:26:
+    ee:13:08:46:dd:ca:d4:13:c2:92:e0:20:c5:fc:f2:
+    ab:09:b1:76:00:95:ac:64:47:aa:6d:79:d2:e1:5e:
+    89:db:ab:1f:8d:d3:e2:a7:32:37:b4:51:e3:50:7e:
+    c6:42:90:72:83:1d:ec:bf:25:95:1f:de:b7:d2:5f:
+    e8:92:33:82:b1:ad:4a:37:a8:df:b0:36:67:6c:6a:
+    ed:5a:65:2a:f4:bf:f2:d6
+coefficient:
+    00:c5:a3:b4:9e:88:91:81:d6:43:59:8c:bc:8b:87:
+    c7:63:17:db:a8:0b:e1:f3:ad:b4:06:9c:e2:f7:12:
+    a8:a7:38:fb:e7:8a:d0:70:6c:cc:26:b3:54:6f:36:
+    86:3b:32:53:9f:52:d5:d7:71:33:2d:14:8d:54:ea:
+    84:63:10:42:61:61:f9:6f:52:48:6e:8f:17:96:ea:
+    2b:42:5f:53:67:af:d5:5b:78:5b:56:e8:f1:47:b7:
+    69:89:c1:6c:c4:f4:73:2c:2e:f0:36:d7:fe:c0:7e:
+    a4:b7:97:19:a5:9e:2e:a9:5a:b3:cb:e3:3f:a2:3d:
+    65:2a:de:e5:e8:ff:54:3f:5a
+
+Request:
+
+Certificate Request:
+    Data:
+        Version: 1 (0x0)
+        Subject: C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos SW, serialNumber = BLS-001"
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:b6:85:04:b3:34:b6:5f:29:db:6d:f7:ad:41:50:
+                    67:31:55:09:56:1a:aa:8d:e1:83:0c:e9:9c:65:92:
+                    8b:e5:c4:2e:bd:33:cf:2f:e5:4a:c9:1d:1d:98:27:
+                    da:64:4a:6d:db:2c:42:d0:19:25:57:74:82:1b:de:
+                    d2:a5:c1:29:46:01:f9:1a:6b:2d:d7:6f:3f:a9:4b:
+                    ac:da:9f:08:d6:4b:3b:a2:6b:40:b6:15:2f:99:16:
+                    38:f5:92:1c:9a:ef:74:68:3c:81:49:48:5d:c4:9e:
+                    8a:02:56:ef:84:81:ce:a6:82:99:90:bd:f1:f0:8a:
+                    90:67:b4:b4:3a:a9:a4:ba:74:88:ad:30:97:7c:f0:
+                    cb:10:79:95:4a:b2:20:59:ee:f0:99:54:dc:9f:a4:
+                    39:81:9e:df:23:f7:a8:d9:d6:48:d4:98:a0:58:d5:
+                    47:a2:4b:b2:7d:57:92:1c:49:a0:5b:e9:68:d2:4d:
+                    cf:73:24:31:f0:bb:49:92:e3:d8:53:8c:74:4f:93:
+                    37:37:88:9c:f4:ac:f5:d7:10:9e:a4:ee:03:da:c7:
+                    15:cb:15:4f:23:15:3d:f5:f6:48:92:00:ad:53:53:
+                    30:89:4a:55:ea:21:09:45:fe:59:7a:c3:40:24:3f:
+                    8f:2e:42:3c:6f:79:1d:42:87:58:00:61:c3:53:ff:
+                    04:85
+                Exponent: 65537 (0x10001)
+        Attributes:
+            a0:00
+    Signature Algorithm: sha256WithRSAEncryption
+         16:96:a2:34:35:82:49:28:8b:4b:62:8f:db:3c:5a:69:67:8b:
+         2a:2a:8f:b8:ce:8a:d1:6b:01:2f:dd:59:df:8e:b6:86:49:22:
+         91:ad:10:be:3b:ad:a0:77:a6:fe:29:dd:2e:fc:6a:82:15:0f:
+         4e:17:40:2c:6d:e9:41:65:18:ed:69:61:e0:a9:52:0a:20:30:
+         02:13:d9:79:59:b1:a3:db:24:c8:c7:73:15:ba:2a:c7:56:72:
+         84:ae:37:9a:e3:3c:f7:aa:6e:e4:63:ba:24:4c:cd:aa:a0:10:
+         96:4f:41:0c:e2:12:8b:68:fd:3f:00:f5:7d:74:e0:a0:4c:44:
+         17:f4:69:f5:dd:ee:5e:c4:3d:f5:30:ab:a7:09:85:5e:84:f4:
+         cb:29:c3:8f:71:5a:d4:50:a1:a0:8a:e1:3f:02:56:79:e7:dc:
+         9e:f2:6c:87:05:57:74:c4:b1:d3:32:fe:7d:06:ae:5b:bb:3f:
+         34:cf:c5:bc:26:ab:ea:5c:0c:a7:2a:93:97:fb:83:d3:4b:55:
+         f0:64:af:20:14:06:0c:ce:cb:61:fd:6e:59:eb:95:a3:9b:7d:
+         8d:7d:99:c3:5a:b3:3e:ad:89:4b:10:81:09:5d:27:ca:df:a3:
+         81:82:a2:76:ae:7a:50:e8:88:37:f9:99:26:7d:08:78:3b:cd:
+         e0:ab:f1:19
+
+CA sign:
+
+Signature did not match the certificate request
+gojimmypi@DESKTOP(WSL): /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205 (ED25519_SHA2_fix * u=) gojimmypi/wolfssl
+
+0 $

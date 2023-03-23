@@ -1,0 +1,54 @@
+I (1192) wifi:security: WPA2-PSK, phy: bgn, rssi: -39
+I (1202) wifi:pm start, type: 1
+
+I (1202) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 0, mt_pti: 25000, mt_time: 10000
+I (1292) wifi:BcnInt:102400, DTIM:1
+I (3492) esp_netif_handlers: sta ip: 192.168.25.125, mask: 255.255.255.0, gw: 192.168.25.1
+I (3492) wifi station: got ip:192.168.25.125
+I (3492) wifi station: Generating an RSA key 1024 bits long
+I (23712) wifi station: 
+
+Cert pem:
+
+-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDRRcMhxasGCFmUPRQ3IuizChq8uCWBxkfwT9heMlYfF1vNCNr0
+4nOr/ev6A00v6j+FcHJwbSFGNwRWLAL2NMfZwsQ3zNUcq31N80nNQ6ogYmYS+CvP
+1MJh6IpV85HngGZmS2195QPKKEldaU1jOKQulfna7NDnxOx4r0+I22GjOQIDAQAB
+AoGBAMN8y38sy0njWuqi89NdhMpa0gcgbckAlArkS1YS52g7xcGOWBsRvsQXeuwd
+UWlFBPl9xSlIiCCzHBXzHwEm5NfSLXq5R66nZB+D7H6nWIkXI2R0pmYWfclLgGGa
+J2ACkA21lVR7fdfWL47J9f/DdQRzoYfdp19CmeMSWSfct1xRAkEA5/f+ZVQ7qF9x
+voTzLVBj0hItrp/VnrIUdnHK/6ZPoGP3eFiitvVSlBiljN81DSFWvgOBEg1Z5Fr4
+IA3bs6OYvwJBAObz2H7tYmmn006x8Ks4ZhJ1VXBOmJ/tNgozQB/Sy6K5Hoe7ej79
+pJtNN1g0IclF0zUnh3imKW0MyWLUcVVPCgcCQFTbLV6X77LqJ0vQirya2ckxCTEG
+GzkQX9fsTJw0lJBRwWdu1Sckmu6+DWF5DYkeFwMvePnHlIiqlnXzW9ldETUCQQCq
+cgYyTqGV1k0FxB8ZTitOrhebJfZP+TIrvv0xP1IYSsT0aXFj8a+9CfSxfO/+ajDh
+BsZdTUw/dfNeo+jsi8ObAkAQKcfo6mT5CK40/JJzziACvtTYL0fOixVoPMpw3o6W
+DFk5nzxjyYEw4zrPEKIH2ONoMIkSg4kVRhz7ljwUIRdE
+-----END RSA PRIVATE KEY-----
+
+
+
+I (24112) wifi station: 
+
+
+I (24112) wifi station: 
+
+Request pem: (paste into file for CA sign)
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIIBvzCCASgCAQAwfzELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAP
+BgNVBAcMCEhhbWlsdG9uMSAwHgYDVQQKDBdCbHVlIExlYWYgU29mdHdhcmUsIEx0
+ZDEpMCcGA1UEAwwgTHVtb3MgU1csIHNlcmlhbE51bWJlciA9IEJMUy0wMDEwgZ8w
+DQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBANFFwyHFqwYIWZQ9FDci6LMKGry4JYHG
+R/BP2F4yVh8XW80I2vTic6v96/oDTS/qP4VwcnBtIUY3BFYsAvY0x9nCxDfM1Ryr
+fU3zSc1DqiBiZhL4K8/UwmHoilXzkeeAZmZLbX3lA8ooSV1pTWM4pC6V+drs0OfE
+7HivT4jbYaM5AgMBAAGgADANBgkqhkiG9w0BAQsFAAOBgQCOGyrjVW7j2wmwZDQz
+ps7PvAmqYRo2JB9rBb7EQgw6gpIWtT2QVxPaETBGMe2VEtcpWFVcUQymdrGw0OqE
++9ovXtgF/U9TZML7n3bJ9Pby9ViaL2Fjx8p5fczBtFpoAnAFHcvXpN4rHFnZDDip
+/0pdtZX0OEpBlgJjMq2Yu11pJQ==
+-----END CERTIFICATE REQUEST-----
+
+
+
+I (24172) wifi station: Done!
+I (24172) wifi station: NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.
