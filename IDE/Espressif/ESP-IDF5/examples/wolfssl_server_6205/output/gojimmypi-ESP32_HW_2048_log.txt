@@ -1,0 +1,70 @@
+I (894) wifi:security: WPA2-PSK, phy: bgn, rssi: -59
+I (894) wifi:pm start, type: 1
+
+I (974) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (3134) esp_netif_handlers: sta ip: 192.168.25.128, mask: 255.255.255.0, gw: 192.168.25.1
+I (3134) wifi station: got ip:192.168.25.128
+I (3134) wifi station: Generating an RSA key 2048 bits long
+I (17104) wifi station: 
+
+Cert pem:
+
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA6B0umekQPIDysYSuQvmfDsIV1gQn/evjwVLaJfLjP7tObyBb
+EqLahzszWINqhHIj6ih/C9LOC9/xyRKtxQpSAy1SvOXeN3wWUcBnkDAhVOg6Tt4f
+/Wnrwl5eI8bxkS4wjuc0hsPkdin02qXRSZ5bkYRmtEuc8NywbOxM4wHyF8k76NU7
+jc+jaEhifwiM4+fer+OydDw080L72j137/7e/KiMuR1lrvYU1kzB1agWbC1Eowto
+8Lg9LzABAmKyCYFpdLLnwZgdKFuGnyhwkYni/ebK8tJ/v9qyd+GD7gKzs1GOp8Yp
+b3PM8/mXcTXsVu1deeUy7JxN504O+R2aHtBdxQIDAQABAoIBAEjwOnq/h7oQ6E+L
+OOxzjlx//UZjZc7vKs18V1Eqi2kRlH7nIg6703OEIsfQY5RXdEP2NI8LDyNNOSa+
+IoMD3l3hmFgV3cG4+gGkIpFgL1h38avrHHSXXRmUujusJs8kAEfddORVV6wT+P0o
+3onMO2hLkLjS/VHctE/5OvZG0t+YcZryw4UBm26vOLFU0d7VQQfQv4y5qiVU1dp9
+ZCVT0EwqGFW+S2Vq25Qb2ta5IzGhi2/TnoqhIfH37tNnWfQPr+in0fmaSLGMwoBw
+q1oCA1XiVuuoGmjEr4jNX/GVhAgahhSGQY/8zzsX0FnowEccywc+Me9aaUFR0WM8
+w3W6eLcCgYEA+SbHBsoKqshELBF6oLhz1LwRYSrE5peEN4oG8aiq90TqfszfdljR
+zIxe+iJ0XpIlE+BuoyvPR7dSq4MMi0/jmeHy2SLpHWRpnD4W4qhWbYLkFKNhxsFy
+hYtjLK3lidZhHrNPttyf81dOfxy6sFuooyNe6YVXO8cpJ7GmzAX3mxECgYEA7n6E
+A77qib89m/EY+yDseF+6m7RP9GK4ulnqn6ekpKfLJNG2b9IsuaDjsAuQOFRInzsz
+IGUcH4yqjXp1Rxy9mSzZIIhgpXfSypxCUWJyk04epxBWB8LmDKQLem1+PvfvUtOu
+/b3TEZrroerMe+/jGE+/ugNCXbe3sIGJuHSIj3UCgYEAzLuFbXt21JN1atvjV1Av
+XzcddIGf/zvub6Z4/0wwH+hBpZlPvO6KmhN5le9cEXjnIuUGB8Y7/Hl7BGRBQcNn
+EyO73PlppUH2ynRObs9m2hLX6b7epZofP48iK2I/mHvzOjQ84aYRXQzjGe6CLLq3
+HnxYtzTeuH4e7ZXNpGpHT2cCgYEAy3HkusE3IjjyRUDrpPsANA7zNcW5/Ed+bQ8e
+ei0OD8g4hqMCLaJGaXqmeU1mFQiNlwCFMoQaE1DCrylzvjEaX6mbnV45zfoADLzZ
+xrQ4MFfrqOG0Ngpsq7Dd47kxQemFl08ST2QnbdmNDfNKNjr3Fq0RV+KycBPT/7HE
+NV/OGqsCgYBwJCi7FoKJV9p4EWMfQoqnYQWSVIQGFSVo5g2Gb/IBBLwEzEDQscTr
+20+J2n5yC7I2l2TGLMz6b1fO2PHSO6bR8iU9WIbQDTOFRwHOxKYtYXq9ejNtNIf3
+lGhE1mRPR15TEiYQbI3XdbRSLwVZCPbK2TkRAM3+AYI4O0OSTD/r1A==
+-----END RSA PRIVATE KEY-----
+
+
+
+I (17644) wifi station: 
+
+
+I (17644) wifi station: 
+
+Request pem: (paste into file for CA sign)
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIICxDCCAawCAQAwfzELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAP
+BgNVBAcMCEhhbWlsdG9uMSAwHgYDVQQKDBdCbHVlIExlYWYgU29mdHdhcmUsIEx0
+ZDEpMCcGA1UEAwwgTHVtb3MgSFcsIHNlcmlhbE51bWJlciA9IEJMUy0wMDIwggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDoHS6Z6RA8gPKxhK5C+Z8OwhXW
+BCf96+PBUtol8uM/u05vIFsSotqHOzNYg2qEciPqKH8L0s4L3/HJEq3FClIDLVK8
+5d43fBZRwGeQMCFU6DpO3h/9aevCXl4jxvGRLjCO5zSGw+R2KfTapdFJnluRhGa0
+S5zw3LBs7EzjAfIXyTvo1TuNz6NoSGJ/CIzj596v47J0PDTzQvvaPXfv/t78qIy5
+HWWu9hTWTMHVqBZsLUSjC2jwuD0vMAECYrIJgWl0sufBmB0oW4afKHCRieL95sry
+0n+/2rJ34YPuArOzUY6nxilvc8zz+ZdxNexW7V155TLsnE3nTg75HZoe0F3FAgMB
+AAGgADANBgkqhkiG9w0BAQsFAAOCAQEAZ0Wp3LKw6QdpoKyjDmrCx0Oxd6m3Hndi
+J3XOlrbmUur8jF+nQhWzX/guzqnOKamgNGinUvJxhsq8wVMNyyHg13huV+x4TXN0
+GaW9xGAn0m7kEhXM+j5pZAGd+Tj57ioRp+ZErHDwn2e77OXePxS7nU0ltHMmBzu+
+iiExHjwkKlKDli/k5COgRPiBPve2kJ/e+ds3s6hem6xXa9vebkCCgX0swkiNbnhK
+5Kq4DdIyzZbDn5QpmtiMyAZjb7l5nk3CtFmF1BwzUotxQBDFsR8oSh1P2Y6RsvAl
+9Em72ygXEzjEQODA3o3RzK5JwZ6rDZgJRee0xQofY6w7vmKeCaxrmg==
+-----END CERTIFICATE REQUEST-----
+
+
+
+I (17734) wifi station: Done!
+I (17734) wifi station: ESP32WROOM32_CRYPT is enabled for ESP32.
