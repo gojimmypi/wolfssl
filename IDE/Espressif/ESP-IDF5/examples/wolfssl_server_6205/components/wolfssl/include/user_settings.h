@@ -133,8 +133,8 @@
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
 
-/* when you want not to use HW acceleration */
-
+/* Default is HW enabled unless turned off.
+** Uncomment these lines for SW: */
 /*
 #define NO_ESP32WROOM32_CRYPT
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
@@ -165,3 +165,5 @@
 
 /* Shared configuration in same directory */
 // #include "Wolf_Features.h"
+#define WOLFSSL_CERT_GEN
+#define WOLFSSL_CERT_REQ
