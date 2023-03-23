@@ -1,0 +1,44 @@
+I (985) wifi:security: WPA2-PSK, phy: bgn, rssi: -60
+I (995) wifi:pm start, type: 1
+
+I (1035) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (6135) esp_netif_handlers: sta ip: 192.168.25.128, mask: 255.255.255.0, gw: 192.168.25.1
+I (6135) wifi station: got ip:192.168.25.128
+I (6135) wifi station: Generating an RSA key 512 bits long
+I (9355) wifi station: 
+
+Cert pem:
+
+-----BEGIN RSA PRIVATE KEY-----
+MIIBOgIBAAJBANJ9SYkc1N/aysWZOHRY8RgSaow3udRkCpxbSQN/zkG0ccbuuXFM
+o+owQd3X6cEDea39wfR2Xq66FaIxT0fT53cCAwEAAQJAQmc6AqJw2aoJXCsJL1M7
+w+9TY6bU3hctbcQylYMFS56Ry5t6/Ey29LfMTxaDcMevgvBR93cS7xcJW9+qcPUc
+4QIhAPHnyLnuqVCoTliWYfGnWgOsgLUukfPhXB/9dVfuk//xAiEA3sDobUrybmsX
+2Ox93/BqZTIQyC3HEREr+tUsN+0MRecCICuB34UpWoRqMOUX7veyfKsKfH+Zp6Bw
+WMxcHp25CB9RAiBLh8HH/VfC1RFa/qWX319UPOuv1MXhJZ9yCAJcXEaDFQIhANyC
+fq7S3SxJ8tlp9BbSRiYH0a43vm46CpUU1VyQA8th
+-----END RSA PRIVATE KEY-----
+
+
+
+I (9415) wifi station: 
+
+
+I (9415) wifi station: 
+
+Request pem: (paste into file for CA sign)
+
+-----BEGIN CERTIFICATE REQUEST-----
+MIIBOTCB5AIBADB/MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
+A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
+MSkwJwYDVQQDDCBMdW1vcyBIVywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMjBcMA0G
+CSqGSIb3DQEBAQUAA0sAMEgCQQDSfUmJHNTf2srFmTh0WPEYEmqMN7nUZAqcW0kD
+f85BtHHG7rlxTKPqMEHd1+nBA3mt/cH0dl6uuhWiMU9H0+d3AgMBAAGgADANBgkq
+hkiG9w0BAQsFAANBAJpoK68B7olmm4MTwo9Ye/V1Ekze01aQQGxcwPjVJfa/9f9c
+UwusEMIqjG2dPEbUPOPa9ZX+wiiNVQFJoVLK/3g=
+-----END CERTIFICATE REQUEST-----
+
+
+
+I (9465) wifi station: Done!
+I (9465) wifi station: ESP32WROOM32_CRYPT is enabled for ESP32.
