@@ -45,7 +45,7 @@ DEVICE_ID=4242
 openssl req -new -key ./input/$SRC \
   -nodes \
   -out ./output/$CSR_OUT \
-  -subj "/C=NZ/ST=Waikato/L=Hamilton/O=Blue Leaf Software Ltd/CN=Lumos-%DeviceId%/serialNumber=$DEVICE_ID" \
+  -subj "/C=NZ/ST=Waikato/L=Hamilton/O=Blue Leaf Software Ltd/CN=Lumos-$DEVICE_ID/serialNumber=$DEVICE_ID" \
   -addext "subjectAltName = URI:dev:ops:59430-Lumos-$DEVICE_ID" \
   -addext "extendedKeyUsage = serverAuth, clientAuth"
 
@@ -76,7 +76,16 @@ openssl x509 -req -in "./output/$CSR_OUT" -days 10   -CA "private/CertificateAut
 ```
 
 
+### View CA Public Key
 
+```
+openssl x509 -in ./private/CertificateAuthority-4096-PublicKey.crt -text -noout
+```
+
+### View Private CA Key
+```
+openssl rsa -in ./private/CertificateAuthority-4096-PrivateKey.pem -text -noout
+```
 
 ```
 openssl x509 -req -in "Input/BLS-001 - ESP32s3 - HW acceleration - New private key - Jim ED25519_SHA2_fix -signing request.csr" -days 10   -CA "private/CertificateAuthority-4096-PublicKey.crt" -CAkey "private/CertificateAuthority-4096-PrivateKey.pem" -passin pass:secret -CAcreateserial   -extfile "private/CertificateExtensions.txt" -extensions LumosDevice   -out Output\Test-Device-Certificate.crt -text
