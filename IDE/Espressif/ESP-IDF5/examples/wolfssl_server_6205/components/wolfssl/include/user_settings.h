@@ -136,12 +136,11 @@
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
-/*
-#define NO_ESP32WROOM32_CRYPT
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
-*/
+
+//#define NO_ESP32WROOM32_CRYPT
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
@@ -157,11 +156,11 @@
 #endif
 
 #define HAVE_VERSION_EXTENDED_INFO
-// #define HAVE_WC_INTROSPECTION
+#define HAVE_WC_INTROSPECTION
 
-#define  HAVE_SESSION_TICKET
+#define HAVE_SESSION_TICKET
 
-// #define HAVE_HASHDRBG
+#define HAVE_HASHDRBG
 
 /* Shared configuration in same directory */
 // #include "Wolf_Features.h"
@@ -170,29 +169,6 @@
 #define WOLFSSL_CERT_GEN
 #define WOLFSSL_CERT_EXT
 #define WOLFSSL_SYS_CA_CERTS
+#define WOLFSSL_ASN_TEMPLATE
 
-
-//#define WOLFSSL_CERT_TEXT
-
-//#define WOLFSSL_ASN_TEMPLATE
-
-/*
-#undef  WOLFSSL_KEY_GEN
-
-#undef  WOLFSSL_CERT_REQ
-
-#undef  WOLFSSL_CERT_GEN
-
-#undef  WOLFSSL_CERT_EXT
-
-#undef  WOLFSSL_SYS_CA_CERTS
-*/
-
-/*
---enable-keygen
---enable-certgen
---enable-certreq
---enable-certext
---enable-asn-template
-*/
-
+#define WOLFSSL_RSA_KEY_SIZE 2048
