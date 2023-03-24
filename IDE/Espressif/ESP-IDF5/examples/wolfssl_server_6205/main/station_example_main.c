@@ -39,8 +39,6 @@
 #include <wolfssl/wolfcrypt/rsa.h>
 #include <wolfssl/wolfcrypt/asn.h>
 
-
-
 /* The examples use WiFi configuration that you can set via project configuration menu
 
    If you'd rather not, just change the below entries to strings with
@@ -188,7 +186,6 @@ void app_main(void)
 {
     #define DER_SIZE 4096
     #define PEM_SIZE 4096
-    #define KEY_SIZE 512
 
     byte der[DER_SIZE];
     byte pem[PEM_SIZE];
@@ -200,6 +197,7 @@ void app_main(void)
     RNG rng;
 
     XMEMSET(der, 0, DER_SIZE);
+    XMEMSET(pem, 0, PEM_SIZE);
 
 #if !defined(WOLFSSL_CERT_REQ) || !defined(WOLFSSL_CERT_GEN) || !defined(WOLFSSL_KEY_GEN)
     ESP_LOGI(TAG,
@@ -223,9 +221,20 @@ void app_main(void)
     **
     ** see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/random.html
     **
-    ** Otherwise consider using bootloader_random_enable().
+    ** Otherwise consider using bootloader_random_enable().  (see bootloader_random.h)
     */
-    wifi_init_sta();
+    // wifi_init_sta();
+    // bootloader_random_enable();
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+
+    ESP_LOGW(TAG, "Warning test");
+    ESP_LOGE(TAG, "Error test");
+    ESP_LOGV(TAG, "Verbose test");
+
+    esp_log_level_set("*", ESP_LOG_VERBOSE);
+
     wc_InitRng(&rng);
 
     /*
@@ -248,8 +257,8 @@ void app_main(void)
     */
     wc_InitRsaKey(&genKey, 0);
 
-    ESP_LOGI(TAG, "Generating an RSA key %d bits long", KEY_SIZE);
-    ret = wc_MakeRsaKey(&genKey, KEY_SIZE, 65537, &rng);
+    ESP_LOGI(TAG, "Generating an RSA key %d bits long", WOLFSSL_RSA_KEY_SIZE);
+    ret = wc_MakeRsaKey(&genKey, WOLFSSL_RSA_KEY_SIZE, 65537, &rng);
     if (ret != 0) {
         ESP_LOGI(TAG, "wc_MakeRsaKey error %d", ret);
     }
@@ -288,7 +297,7 @@ void app_main(void)
     */
     wc_InitCert(&request);
 
-    strncpy(request.subject.country, "NZ", CTC_NAME_SIZE);
+    strncpy(request.subject.country, "NZ", CTC_COUNTRY_SIZE + 1); /* +1 null terminated */
     strncpy(request.subject.state, "Waikato", CTC_NAME_SIZE);
     strncpy(request.subject.locality, "Hamilton", CTC_NAME_SIZE);
     strncpy(request.subject.org, "Blue Leaf Software, Ltd", CTC_NAME_SIZE);
@@ -296,7 +305,7 @@ void app_main(void)
 #if defined(NO_ESP32WROOM32_CRYPT)
     strncpy(request.subject.commonName, "Lumos SW, serialNumber = BLS-001", CTC_NAME_SIZE);
 #else
-    strncpy(request.subject.commonName, "Lumos SW, serialNumber = BLS-001", CTC_NAME_SIZE);
+    strncpy(request.subject.commonName, "Lumos HW, serialNumber = BLS-002", CTC_NAME_SIZE);
 #endif
 
     request.version = 0;
@@ -322,6 +331,8 @@ void app_main(void)
         ESP_LOGE(TAG, "Sign Cert failed: %d\n", ret);
     }
     derSz = ret;
+
+    XMEMSET(pem, 0, PEM_SIZE);
 
     /* convert the DER to PEM */
     pemSz = wc_DerToPem(der, derSz,
