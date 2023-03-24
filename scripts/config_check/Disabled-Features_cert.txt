@@ -35,10 +35,6 @@
    * BLAKE2S:                    no
    * SipHash:                    no
    * CMAC:                       no
-   * keygen:                     no
-   * certgen:                    no
-   * certreq:                    no
-   * certext:                    no
    * certgencache:               no
    * XCHACHA:                    no
    * MmemUse Entropy:            no

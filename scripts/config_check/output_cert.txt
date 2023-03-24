@@ -1,6 +1,11 @@
 Running command: 
 
 CMD = ./configure
+--enable-keygen
+--enable-certgen
+--enable-certreq
+--enable-certext
+--enable-asn-template
 Running configure from /mnt/c/workspace/wolfssl-gojimmypi
 
 ------------------------
@@ -307,10 +312,10 @@ Configuration summary for wolfssl version 5.5.4
    * BLAKE2S:                    no
    * SipHash:                    no
    * CMAC:                       no
-   * keygen:                     no
-   * certgen:                    no
-   * certreq:                    no
-   * certext:                    no
+   * keygen:                     yes
+   * certgen:                    yes
+   * certreq:                    yes
+   * certext:                    yes
    * certgencache:               no
    * CHACHA:                     yes
    * XCHACHA:                    no

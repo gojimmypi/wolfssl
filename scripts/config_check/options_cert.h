@@ -144,6 +144,18 @@ extern "C" {
 #undef  WOLFSSL_SYS_CA_CERTS
 #define WOLFSSL_SYS_CA_CERTS
 
+#undef  WOLFSSL_KEY_GEN
+#define WOLFSSL_KEY_GEN
+
+#undef  WOLFSSL_CERT_REQ
+#define WOLFSSL_CERT_REQ
+
+#undef  WOLFSSL_CERT_GEN
+#define WOLFSSL_CERT_GEN
+
+#undef  WOLFSSL_CERT_EXT
+#define WOLFSSL_CERT_EXT
+
 #undef  NO_DES3
 #define NO_DES3
 

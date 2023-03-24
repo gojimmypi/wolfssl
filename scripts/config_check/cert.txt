@@ -8,3 +8,8 @@
 # Edit parameters as needed (example shown, set your own parameters and comments)
 #
 
+--enable-keygen
+--enable-certgen
+--enable-certreq
+--enable-certext
+--enable-asn-template

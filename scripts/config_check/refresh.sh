@@ -17,12 +17,18 @@ fi
 
 echo This WOLFSSL_REPO = $PWD
 
+# the directory where output files go (a github repo is helpful for tracking changes)
+WOLFSSL_FILE_ROOT="$WOLFSSL_REPO/scripts/config_check"
+echo "WOLFSSL_FILE_ROOT = $WOLFSSL_FILE_ROOT"
+
+mkdir -p "$WOLFSSL_FILE_ROOT"
+
 if [ "$1" == "" ]; then
   # set a variable for the input command
   WOLFSSL_CMD_FILE="$WOLFSSL_FILE_ROOT/cmd.txt"
 else
   WOLFSSL_CMD_FILE="$WOLFSSL_FILE_ROOT/$1.txt"
-  if [ -f "$WOLFSSL_CMD_FILE"]; then
+  if [ -f "$WOLFSSL_CMD_FILE" ]; then
     echo "Using command file: $WOLFSSL_CMD_FILE"
   else
     WOLFSSL_CMD_FILE="$WOLFSSL_FILE_ROOT/cmd.txt"
@@ -30,12 +36,6 @@ else
   fi
   WOLFSSL_LOG_SUFFIX=_$1
 fi
-
-# the directory where output files go (a github repo is helpful for tracking changes)
-WOLFSSL_FILE_ROOT="$WOLFSSL_REPO/scripts/config_check"
-echo "WOLFSSL_FILE_ROOT = $WOLFSSL_FILE_ROOT"
-
-mkdir -p "$WOLFSSL_FILE_ROOT"
 
 # make sure we actually have a cmd.txt file
 if [ ! -f "$WOLFSSL_CMD_FILE" ]; then

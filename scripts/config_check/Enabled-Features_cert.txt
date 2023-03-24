@@ -13,6 +13,10 @@
    * SHA-384:                    yes
    * SHA-512:                    yes
    * SHA3:                       yes
+   * keygen:                     yes
+   * certgen:                    yes
+   * certreq:                    yes
+   * certext:                    yes
    * CHACHA:                     yes
    * Hash DRBG:                  yes
    * PWDBASED:                   yes
