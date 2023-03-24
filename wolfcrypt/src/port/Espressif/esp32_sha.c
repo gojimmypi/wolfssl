@@ -578,7 +578,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     while (periph_ll_periph_enabled(PERIPH_SHA_MODULE)) {
 #else
     /* this is the bit-mask for our SHA CLK_EN_REG */
-    uint32_t this_sha_mask = periph_ll_get_clk_en_mask(PERIPH_SHA_MODULE);
+    this_sha_mask = periph_ll_get_clk_en_mask(PERIPH_SHA_MODULE);
     asm volatile("memw");
     while ((this_sha_mask & *(uint32_t*)DPORT_PERI_CLK_EN_REG) != 0) {
 #endif
