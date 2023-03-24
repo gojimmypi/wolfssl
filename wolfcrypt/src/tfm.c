@@ -232,6 +232,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     int   ret = 0;
     int   y, yy, oldused;
 
+/* TFM HW Marker 1 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
   ret = esp_mp_mul(A, B, C);
@@ -2816,10 +2817,20 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
 
+/* TFM HW Marker 2 fails RSA 512 bit length CSR sig */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-   int x = fp_count_bits (X);
-#endif
+    #if defined(WOLFSSL_RSA_KEY_SIZE)
+        #if WOLFSSL_RSA_KEY_SIZE != 512
+           /* there's a known problem with length = 512
+           ** see https://github.com/wolfSSL/wolfssl/issues/6205
+           */
+           int x = fp_count_bits (X);
+        #endif
+    #else
+        #warning "WOLFSSL_RSA_KEY_SIZE not defined"
+    #endif /* WOLFSSL_RSA_KEY_SIZE */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
@@ -2838,12 +2849,22 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
+/* TFM HW Marker 3 fails RSA 512 bit length CSR sig */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-   if(x > EPS_RSA_EXPT_XBTIS) {
-      return esp_mp_exptmod(G, X, x, P, Y);
-   }
-#endif
+    #if defined(WOLFSSL_RSA_KEY_SIZE)
+        #if WOLFSSL_RSA_KEY_SIZE != 512
+           /* there's a known problem with length = 512
+           ** see https://github.com/wolfSSL/wolfssl/issues/6205
+           */
+           if(x > EPS_RSA_EXPT_XBTIS) {
+              return esp_mp_exptmod(G, X, x, P, Y);
+           }
+        #endif
+    #else
+        #warning "WOLFSSL_RSA_KEY_SIZE not defined"
+    #endif /* WOLFSSL_RSA_KEY_SIZE */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
    if (X->sign == FP_NEG) {
 #ifndef POSITIVE_EXP_ONLY  /* reduce stack if assume no negatives */
@@ -2901,6 +2922,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
 
+/* TFM HW Marker 5 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    int x = fp_count_bits (X);
@@ -2923,6 +2945,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
+/* TMF test 6 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    if(x > EPS_RSA_EXPT_XBTIS) {
@@ -2985,6 +3008,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 
 int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
+/* TFM HW Marker 9 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    int x = fp_count_bits (X);
@@ -3000,6 +3024,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_VAL;
    }
 
+/* TFM HW Marker 10 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    if(x > EPS_RSA_EXPT_XBTIS) {
@@ -4310,15 +4335,25 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
- #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    int A = fp_count_bits (a);
-    int B = fp_count_bits (b);
+ /* TFM HW Marker 8 FAILS HERE for RSA 2048 bit length */
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+    #if defined(WOLFSSL_RSA_KEY_SIZE)
+        #if WOLFSSL_RSA_KEY_SIZE != 2048
+           /* there's a known problem with length = 2048
+           ** see https://github.com/wolfSSL/wolfssl/issues/6205
+           */
+            int A = fp_count_bits (a);
+            int B = fp_count_bits (b);
 
-    if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS)
-        return esp_mp_mulmod(a, b, c, d);
-    else
- #endif
+            if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
+                return esp_mp_mulmod(a, b, c, d);
+            }
+        #endif
+    #else
+        #warning "WOLFSSL_RSA_KEY_SIZE not defined"
+    #endif /* WOLFSSL_RSA_KEY_SIZE */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
    return fp_mulmod(a, b, c, d);
 }
 
