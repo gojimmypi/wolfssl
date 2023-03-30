@@ -450,7 +450,7 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
 };
 #endif
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 /* create the hpke key and ech config to send to clients */
 int wolfSSL_CTX_GenerateEchConfig(WOLFSSL_CTX* ctx, const char* publicName,
     word16 kemId, word16 kdfId, word16 aeadId)
@@ -698,7 +698,9 @@ int wolfSSL_SetEchConfigs(WOLFSSL* ssl, const byte* echConfigs,
                 (WOLFSSL_EchConfig*)XMALLOC(sizeof(WOLFSSL_EchConfig),
                 ssl->heap, DYNAMIC_TYPE_TMP_BUFFER);
             configList = workingConfig;
-            workingConfig->next = NULL;
+            if (workingConfig != NULL) {
+                workingConfig->next = NULL;
+            }
         }
         else {
             lastConfig = workingConfig;
@@ -1039,7 +1041,7 @@ int GetEchConfigsEx(WOLFSSL_EchConfig* configs, byte* output, word32* outputLen)
 
     return WOLFSSL_SUCCESS;
 }
-#endif /* HAVE_ECH */
+#endif /* WOLFSSL_TLS13 && HAVE_ECH */
 
 
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_SCEPROTECT)
@@ -6398,7 +6400,7 @@ int wolfSSL_Init(void)
     #endif
         if ((ret == WOLFSSL_SUCCESS) &&
             (wolfSSL_RAND_seed(NULL, 0) != WOLFSSL_SUCCESS)) {
-            WOLFSSL_MSG("wolfSSL_RAND_Seed failed");
+            WOLFSSL_MSG("wolfSSL_RAND_seed failed");
             ret = WC_INIT_E;
         }
 #endif
@@ -11495,11 +11497,24 @@ int wolfSSL_set_session(WOLFSSL* ssl, WOLFSSL_SESSION* session)
 int wolfSSL_SetServerID(WOLFSSL* ssl, const byte* id, int len, int newSession)
 {
     WOLFSSL_SESSION* session = NULL;
+    byte idHash[SERVER_ID_LEN];
 
     WOLFSSL_ENTER("wolfSSL_SetServerID");
 
     if (ssl == NULL || id == NULL || len <= 0)
         return BAD_FUNC_ARG;
+
+    if (len > SERVER_ID_LEN) {
+#if defined(NO_SHA) && !defined(NO_SHA256)
+        if (wc_Sha256Hash(id, len, idHash) != 0)
+            return WOLFSSL_FAILURE;
+#else
+        if (wc_ShaHash(id, len, idHash) != 0)
+            return WOLFSSL_FAILURE;
+#endif
+        id = idHash;
+        len = SERVER_ID_LEN;
+    }
 
     if (newSession == 0) {
         session = wolfSSL_GetSessionClient(ssl, id, len);
@@ -11517,8 +11532,8 @@ int wolfSSL_SetServerID(WOLFSSL* ssl, const byte* id, int len, int newSession)
     if (session == NULL) {
         WOLFSSL_MSG("Valid ServerID not cached already");
 
-        ssl->session->idLen = (word16)min(SERVER_ID_LEN, (word32)len);
-        XMEMCPY(ssl->session->serverID, id, ssl->session->idLen);
+        ssl->session->idLen = (word16)len;
+        XMEMCPY(ssl->session->serverID, id, len);
     }
 #ifdef HAVE_EXT_CACHE
     else {
@@ -13505,6 +13520,12 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                 #ifdef WOLFSSL_CHECK_ALERT_ON_ERR
                     ProcessReplyEx(ssl, 1); /* See if an alert was sent. */
                 #endif
+#ifdef WOLFSSL_EXTRA_ALERTS
+                    if (ssl->error == NO_PEER_KEY ||
+                        ssl->error == PSK_KEY_ERROR) {
+                        SendAlert(ssl, alert_fatal, handshake_failure);
+                    }
+#endif
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
                 }
@@ -20008,6 +20029,16 @@ size_t wolfSSL_get_client_random(const WOLFSSL* ssl, unsigned char* out,
         ssl->extensions = NULL;
     #endif
 
+        if (ssl->keys.encryptionOn) {
+            ForceZero(ssl->buffers.inputBuffer.buffer -
+                ssl->buffers.inputBuffer.offset,
+                ssl->buffers.inputBuffer.bufferSize);
+        #ifdef WOLFSSL_CHECK_MEM_ZERO
+            wc_MemZero_Check(ssl->buffers.inputBuffer.buffer -
+                ssl->buffers.inputBuffer.offset,
+                ssl->buffers.inputBuffer.bufferSize);
+        #endif
+        }
         ssl->keys.encryptionOn = 0;
         XMEMSET(&ssl->msgsReceived, 0, sizeof(ssl->msgsReceived));
 

@@ -656,7 +656,8 @@ static void render_error_message(const char* msg, int es)
  * infelicitous...
  */
 #if !defined(STRING_USER) && !defined(NO_ERROR_STRINGS) &&      \
-    (defined(_GNU_SOURCE) || defined(__USE_GNU) ||              \
+    (defined(__STDC_VERSION__) && (__STDC_VERSION__ > 199901L)) &&      \
+    ((defined(__GLIBC__) && (__GLIBC__ >= 2)) ||                \
      (defined(__USE_XOPEN2K) &&                                 \
       defined(_POSIX_C_SOURCE) &&                               \
       (_POSIX_C_SOURCE >= 200112L)))
@@ -9796,7 +9797,7 @@ static int aesecb_test(void)
 #ifdef WOLFSSL_AES_COUNTER
 static int aesctr_test(Aes* enc, Aes* dec, byte* cipher, byte* plain)
 {
-    int ret;
+    int ret = 0;
 
     /* test vectors from "Recommendation for Block Cipher Modes of
      * Operation" NIST Special Publication 800-38A */
@@ -42944,7 +42945,7 @@ WOLFSSL_TEST_SUBROUTINE int mp_test(void)
 #ifndef WOLFSSL_SP_MATH
     int    k;
 #endif
-    mp_digit d;
+    mp_digit d = 0;
 #endif
 #ifdef WOLFSSL_SMALL_STACK
     mp_int *a = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,

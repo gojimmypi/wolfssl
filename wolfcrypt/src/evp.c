@@ -4954,7 +4954,7 @@ int wolfSSL_EVP_MD_type(const WOLFSSL_EVP_MD* type)
 
 #endif /* !WOLFSSL_NOSHA512_224 */
 
-#ifndef WOLFSSL_NOSHA512_224
+#ifndef WOLFSSL_NOSHA512_256
     const WOLFSSL_EVP_MD* wolfSSL_EVP_sha512_256(void)
     {
         WOLFSSL_ENTER("EVP_sha512_256");
@@ -9496,7 +9496,8 @@ WOLFSSL_EVP_PKEY* wolfSSL_EVP_PKEY_new_ex(void* heap)
         ret = wc_InitRng(&pkey->rng);
 #endif
         if (ret != 0){
-            wolfSSL_EVP_PKEY_free(pkey);
+            /* Free directly since mutex for ref count not set yet */
+            XFREE(pkey, heap, DYNAMIC_TYPE_PUBLIC_KEY);
             WOLFSSL_MSG("Issue initializing RNG");
             return NULL;
         }

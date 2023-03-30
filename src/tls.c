@@ -1268,7 +1268,7 @@ static WC_INLINE word16 TLSX_ToSemaphore(word16 type)
         case TLSX_KEY_QUIC_TP_PARAMS_DRAFT: /* 0xffa5 */
             return 64;
 #endif
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
         case TLSX_ECH: /* 0xfe0d */
             return 65;
 #endif
@@ -2029,7 +2029,7 @@ static int TLSX_SNI_Parse(WOLFSSL* ssl, const byte* input, word16 length,
     byte type;
     int matchStat;
     byte matched;
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     WOLFSSL_ECH* ech = NULL;
     WOLFSSL_EchConfig* workingConfig;
     TLSX* echX;
@@ -2122,7 +2122,7 @@ static int TLSX_SNI_Parse(WOLFSSL* ssl, const byte* input, word16 length,
     matched = cacheOnly || (XSTRLEN(sni->data.host_name) == size &&
          XSTRNCMP(sni->data.host_name, (const char*)input + offset, size) == 0);
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     echX = TLSX_Find(ssl->extensions, TLSX_ECH);
     if (echX != NULL)
         ech = (WOLFSSL_ECH*)(echX->data);
@@ -4897,7 +4897,6 @@ int TLSX_SupportedCurve_Copy(TLSX* src, TLSX** dst, void* heap)
     extension = TLSX_Find(src, TLSX_SUPPORTED_GROUPS);
     if (extension != NULL) {
         SupportedCurve* curve;
-        curve = (SupportedCurve*)extension->data;
         for (curve = (SupportedCurve*)extension->data; curve != NULL;
                 curve = curve->next) {
             ret = TLSX_UseSupportedCurve(dst, curve->name, heap);
@@ -7121,7 +7120,7 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
         kse->keyLen = keySize;
         kse->pubKeyLen = keySize * 2 + 1;
 
-    #if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+    #if defined(WOLFSSL_RENESAS_TSIP_TLS)
         ret = tsip_Tls13GenEccKeyPair(ssl, kse);
         if (ret != CRYPTOCB_UNAVAILABLE) {
             return ret;
@@ -7925,7 +7924,7 @@ static int TLSX_KeyShare_ProcessEcc(WOLFSSL* ssl, KeyShareEntry* keyShareEntry)
             XFREE(ssl->peerEccKey, ssl->heap, DYNAMIC_TYPE_ECC);
             ssl->peerEccKeyPresent = 0;
         }
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
         ret = tsip_Tls13GenSharedSecret(ssl, keyShareEntry);
         if (ret != CRYPTOCB_UNAVAILABLE) {
             return ret;
@@ -10430,7 +10429,7 @@ void TLSX_Remove(TLSX** list, TLSX_Type type, void* heap)
     }
 }
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 #define GREASE_ECH_SIZE 160
 #define MAX_PUBLIC_NAME_SZ 256
 #define TLS_INFO_CONST_STRING "tls ech"
@@ -11243,7 +11242,7 @@ void TLSX_FreeAll(TLSX* list, void* heap)
             CID_FREE((byte*)extension->data, heap);
             break;
 #endif /* WOLFSSL_DTLS_CID */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
         case TLSX_ECH:
             ECH_FREE((WOLFSSL_ECH*)extension->data, heap);
             break;
@@ -11416,7 +11415,7 @@ static int TLSX_GetSize(TLSX* list, byte* semaphore, byte msgType,
                 length += CID_GET_SIZE((byte*)extension->data);
                 break;
 #endif /* WOLFSSL_DTLS_CID */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
             case TLSX_ECH:
                 length += ECH_GET_SIZE((WOLFSSL_ECH*)extension->data);
                 break;
@@ -11624,7 +11623,7 @@ static int TLSX_Write(TLSX* list, byte* output, byte* semaphore,
                 break;
 
 #endif /* WOLFSSL_DTLS_CID */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
             case TLSX_ECH:
                 ret = ECH_WRITE((WOLFSSL_ECH*)extension->data,
                     output + offset, &offset);
@@ -12302,7 +12301,7 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
 
 #if defined(WOLFSSL_TLS13) || !defined(NO_WOLFSSL_CLIENT)
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 /* because the size of ech depends on the size of other extensions we need to
  * get the size with ech special and process ech last, return status */
 static int TLSX_GetSizeWithEch(WOLFSSL* ssl, byte* semaphore, byte msgType,
@@ -12460,7 +12459,6 @@ int TLSX_GetRequestSize(WOLFSSL* ssl, byte msgType, word16* pLength)
          */
     }
     #endif
-#endif
 #if defined(HAVE_ECH)
     if (ssl->options.useEch == 1 && msgType == client_hello) {
         ret = TLSX_GetSizeWithEch(ssl, semaphore, msgType, &length);
@@ -12468,7 +12466,8 @@ int TLSX_GetRequestSize(WOLFSSL* ssl, byte msgType, word16* pLength)
             return ret;
     }
     else
-#endif
+#endif /* HAVE_ECH */
+#endif /* WOLFSSL_TLS13 */
     {
         if (ssl->extensions) {
             ret = TLSX_GetSize(ssl->extensions, semaphore, msgType, &length);
@@ -12498,7 +12497,7 @@ int TLSX_GetRequestSize(WOLFSSL* ssl, byte msgType, word16* pLength)
     return ret;
 }
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 /* return status after writing the extensions with ech written last */
 static int TLSX_WriteWithEch(WOLFSSL* ssl, byte* output, byte* semaphore,
     byte msgType, word16* pOffset)
@@ -12692,7 +12691,7 @@ int TLSX_WriteRequest(WOLFSSL* ssl, byte* output, byte msgType, word16* pOffset)
     }
     #endif
 #endif
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     if (ssl->options.useEch == 1 && msgType == client_hello) {
         ret = TLSX_WriteWithEch(ssl, output, semaphore,
                          msgType, &offset);
@@ -13663,7 +13662,7 @@ int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length, byte msgType,
                 break;
 
 #endif /* defined(WOLFSSL_DTLS_CID) */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
             case TLSX_ECH:
                 ret = ECH_PARSE(ssl, input + offset, size, msgType);
                 break;

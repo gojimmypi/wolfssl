@@ -1042,7 +1042,7 @@ int DeriveEarlySecret(WOLFSSL* ssl)
     if (ssl == NULL || ssl->arrays == NULL) {
         return BAD_FUNC_ARG;
     }
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13DeriveEarlySecret(ssl);
     if (ret != CRYPTOCB_UNAVAILABLE)
         return ret;
@@ -1078,7 +1078,7 @@ int DeriveHandshakeSecret(WOLFSSL* ssl)
     if (ssl == NULL || ssl->arrays == NULL) {
         return BAD_FUNC_ARG;
     }
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13DeriveHandshakeSecret(ssl);
     if (ret != CRYPTOCB_UNAVAILABLE)
         return ret;
@@ -1113,7 +1113,7 @@ int DeriveMasterSecret(WOLFSSL* ssl)
         return BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13DeriveMasterSecret(ssl);
     if (ret != CRYPTOCB_UNAVAILABLE)
         return ret;
@@ -1338,7 +1338,7 @@ int DeriveTls13Keys(WOLFSSL* ssl, int secret, int side, int store)
 #endif
     int   provision;
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13DeriveKeys(ssl, secret, side);
     if (ret != CRYPTOCB_UNAVAILABLE) {
         return ret;
@@ -2418,7 +2418,7 @@ static int EncryptTls13(WOLFSSL* ssl, byte* output, const byte* input,
         ssl->error = 0; /* clear async */
     }
 #endif
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13AesEncrypt(ssl, output, input, dataSz);
     if (ret != CRYPTOCB_UNAVAILABLE) {
         if (ret > 0) {
@@ -2427,7 +2427,7 @@ static int EncryptTls13(WOLFSSL* ssl, byte* output, const byte* input,
         return ret;
     }
     ret = 0;
-#endif /* WOLFSSL_RENESAS_TSIP_TLS && WOLFSSL_RENESAS_TSIP_VER >= 115 */
+#endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
     switch (ssl->encrypt.state) {
         case CIPHER_STATE_BEGIN:
@@ -2778,7 +2778,7 @@ int DecryptTls13(WOLFSSL* ssl, byte* output, const byte* input, word16 sz,
 
     WOLFSSL_ENTER("DecryptTls13");
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13AesDecrypt(ssl, output, input, sz);
 
     if (ret != CRYPTOCB_UNAVAILABLE) {
@@ -3348,6 +3348,10 @@ int CreateCookieExt(const WOLFSSL* ssl, byte* hash, word16 hashSz,
     byte cookie[OPAQUE8_LEN + WC_MAX_DIGEST_SIZE + OPAQUE16_LEN * 2];
     TLSX* ext;
     word16 cookieSz = 0;
+
+    if (hash == NULL || hashSz == 0) {
+        return BAD_FUNC_ARG;
+    }
 
     /* Cookie Data = Hash Len | Hash | CS | KeyShare Group */
     cookie[cookieSz++] = (byte)hashSz;
@@ -5869,7 +5873,6 @@ static int CheckPreSharedKeys(WOLFSSL* ssl, const byte* input, word32 helloSz,
 #else
     ret = DoPreSharedKeys(ssl, input, helloSz - bindersLen, suite, usingPSK,
         &first);
-    CleanupClientTickets((PreSharedKey*)ext->data);
     if (ret != 0) {
         WOLFSSL_MSG_EX("DoPreSharedKeys: %d", ret);
         return ret;
@@ -8163,13 +8166,13 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
 
     ssl->options.buildingMsg = 1;
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13SendCertVerify(ssl);
     if (ret != CRYPTOCB_UNAVAILABLE) {
         goto exit_scv;
     }
     ret = 0;
-#endif /* WOLFSSL_RENESAS_TSIP_TLS && WOLFSSL_RENESAS_TSIP_VER >= 115 */
+#endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
 #ifdef WOLFSSL_DTLS13
     /* can be negative */
@@ -8763,7 +8766,7 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
     WOLFSSL_START(WC_FUNC_CERTIFICATE_VERIFY_DO);
     WOLFSSL_ENTER("DoTls13CertificateVerify");
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13CertificateVerify(ssl, input, inOutIdx, totalSz);
     if (ret != CRYPTOCB_UNAVAILABLE) {
         goto exit_dcv;
@@ -9270,7 +9273,7 @@ int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     if (*inOutIdx + size > totalSz)
         return BUFFER_E;
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_Tls13HandleFinished(ssl, input, inOutIdx, size, totalSz);
     if (ret == 0) {
         ssl->options.serverState = SERVER_FINISHED_COMPLETE;
@@ -9285,7 +9288,7 @@ int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         return ret;
     }
     ret = 0;
-#endif /* WOLFSSL_RENESAS_TSIP_TLS &&  WOLFSSL_RENESAS_TSIP_VER >= 115 */
+#endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
     if (ssl->options.handShakeDone) {
         ret = DeriveFinishedSecret(ssl, ssl->clientSecret,
@@ -9451,7 +9454,7 @@ static int SendTls13Finished(WOLFSSL* ssl)
 
     AddTls13HandShakeHeader(input, finishedSz, 0, finishedSz, finished, ssl);
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     if (ssl->options.side == WOLFSSL_CLIENT_END) {
         ret = tsip_Tls13SendFinished(ssl, output, outputSz, input, 1);
         if (ret != CRYPTOCB_UNAVAILABLE) {
@@ -9459,7 +9462,7 @@ static int SendTls13Finished(WOLFSSL* ssl)
         }
         ret = 0;
     }
-#endif /* WOLFSSL_RENESAS_TSIP_TLS &&  WOLFSSL_RENESAS_TSIP_VER >= 115 */
+#endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
     /* make finished hashes */
     if (ssl->options.handShakeDone) {
@@ -10016,6 +10019,10 @@ static int DoTls13NewSessionTicket(WOLFSSL* ssl, const byte* input,
 #endif
     const byte* nonce;
     byte        nonceLength;
+#ifndef NO_SESSION_CACHE
+    const byte* id;
+    byte idSz;
+#endif
 
     WOLFSSL_START(WC_FUNC_NEW_SESSION_TICKET_DO);
     WOLFSSL_ENTER("DoTls13NewSessionTicket");
@@ -10113,6 +10120,14 @@ static int DoTls13NewSessionTicket(WOLFSSL* ssl, const byte* input,
 
     #ifndef NO_SESSION_CACHE
     AddSession(ssl);
+    id = ssl->session->sessionID;
+    idSz = ssl->session->sessionIDSz;
+    if (ssl->session->haveAltSessionID) {
+        id = ssl->session->altSessionID;
+        idSz = ID_LEN;
+    }
+    AddSessionToCache(ssl->ctx, ssl->session, id, idSz, NULL,
+        ssl->session->side, 1, &ssl->clientSession);
     #endif
 
     /* Always encrypted. */
@@ -12825,15 +12840,16 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
             FALL_THROUGH;
 
         case TLS13_ACCEPT_THIRD_REPLY_DONE :
-#if defined(HAVE_SUPPORTED_CURVES) && (defined(HAVE_SESSION_TICKET) || \
-    !defined(NO_PSK))
+    #ifdef HAVE_SUPPORTED_CURVES
+        #if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
             if (!ssl->options.noPskDheKe)
-#endif
+        #endif
             {
                 ssl->error = TLSX_KeyShare_DeriveSecret(ssl);
                 if (ssl->error != 0)
                     return WOLFSSL_FATAL_ERROR;
             }
+    #endif
 
             if ((ssl->error = SendTls13EncryptedExtensions(ssl)) != 0) {
                 WOLFSSL_ERROR(ssl->error);

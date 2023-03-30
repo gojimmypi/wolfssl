@@ -2404,7 +2404,7 @@ void wolfSSL_CRYPTO_cleanup_ex_data(WOLFSSL_CRYPTO_EX_DATA* ex_data)
 }
 #endif /* HAVE_EX_DATA_CLEANUP_HOOKS */
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 /* free all ech configs in the list */
 static void FreeEchConfigs(WOLFSSL_EchConfig* configs, void* heap)
 {
@@ -2591,7 +2591,7 @@ void SSL_CtxResourceFree(WOLFSSL_CTX* ctx)
     }
     #endif
 #endif
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     FreeEchConfigs(ctx->echConfigs, ctx->heap);
     ctx->echConfigs = NULL;
 #endif
@@ -6934,8 +6934,10 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     #endif
     #if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
         ssl->options.noPskDheKe = ctx->noPskDheKe;
+    #ifdef HAVE_SUPPORTED_CURVES
         ssl->options.onlyPskDheKe = ctx->onlyPskDheKe;
-    #endif
+    #endif /* HAVE_SUPPORTED_CURVES */
+    #endif /* HAVE_SESSION_TICKET || !NO_PSK */
     #if defined(WOLFSSL_POST_HANDSHAKE_AUTH)
         ssl->options.postHandshakeAuth = ctx->postHandshakeAuth;
         ssl->options.verifyPostHandshake = ctx->verifyPostHandshake;
@@ -7598,10 +7600,8 @@ void SSL_ResourceFree(WOLFSSL* ssl)
     ForceZero(&ssl->keys, sizeof(Keys));
 
 #ifdef WOLFSSL_TLS13
-    if (ssl->options.tls1_3) {
-        ForceZero(&ssl->clientSecret, sizeof(ssl->clientSecret));
-        ForceZero(&ssl->serverSecret, sizeof(ssl->serverSecret));
-    }
+    ForceZero(&ssl->clientSecret, sizeof(ssl->clientSecret));
+    ForceZero(&ssl->serverSecret, sizeof(ssl->serverSecret));
 
 #if defined(HAVE_ECH)
     if (ssl->options.useEch == 1) {
@@ -7612,8 +7612,8 @@ void SSL_ResourceFree(WOLFSSL* ssl)
         FreeHandshakeHashes(ssl);
         ssl->options.useEch = 0;
     }
-#endif
-#endif
+#endif /* HAVE_ECH */
+#endif /* WOLFSSL_TLS13 */
 #ifdef WOLFSSL_HAVE_TLS_UNIQUE
     ForceZero(&ssl->clientFinished, TLS_FINISHED_SZ_MAX);
     ForceZero(&ssl->serverFinished, TLS_FINISHED_SZ_MAX);
@@ -9388,12 +9388,12 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         return BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) && (WOLFSSL_RENESAS_TSIP_VER >= 115)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS)
     ret = tsip_StoreMessage(ssl, data, sz);
     if (ret != 0 && ret != CRYPTOCB_UNAVAILABLE) {
         return ret;
     }
-#endif /* WOLFSSL_RENESAS_TSIP_TLS && WOLFSSL_RENESAS_TSIP_VER >= 115 */
+#endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
 #ifndef NO_OLD_TLS
     #ifndef NO_SHA
@@ -9954,9 +9954,8 @@ void ShrinkInputBuffer(WOLFSSL* ssl, int forcedFree)
                usedLength);
     }
 
-    ForceZero(ssl->buffers.inputBuffer.buffer -
-        ssl->buffers.inputBuffer.offset,
-        ssl->buffers.inputBuffer.bufferSize);
+    ForceZero(ssl->buffers.inputBuffer.buffer,
+        ssl->buffers.inputBuffer.length);
     XFREE(ssl->buffers.inputBuffer.buffer - ssl->buffers.inputBuffer.offset,
           ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
     ssl->buffers.inputBuffer.buffer = ssl->buffers.inputBuffer.staticBuffer;
@@ -10177,9 +10176,8 @@ int GrowInputBuffer(WOLFSSL* ssl, int size, int usedLength)
 
     if (ssl->buffers.inputBuffer.dynamicFlag) {
         if (IsEncryptionOn(ssl, 1)) {
-            ForceZero(ssl->buffers.inputBuffer.buffer -
-                ssl->buffers.inputBuffer.offset,
-                ssl->buffers.inputBuffer.bufferSize);
+            ForceZero(ssl->buffers.inputBuffer.buffer,
+                ssl->buffers.inputBuffer.length);
         }
         XFREE(ssl->buffers.inputBuffer.buffer - ssl->buffers.inputBuffer.offset,
               ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
@@ -10530,9 +10528,6 @@ static int GetRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
 #endif /* WOLFSSL_DTLS13 */
         else {
             WOLFSSL_MSG("SSL version error");
-            /* send alert per RFC5246 Appendix E. Backward Compatibility */
-            if (ssl->options.side == WOLFSSL_CLIENT_END)
-                SendAlert(ssl, alert_fatal, wolfssl_alert_protocol_version);
             WOLFSSL_ERROR_VERBOSE(VERSION_ERROR);
             return VERSION_ERROR;              /* only use requested version */
         }
@@ -10541,7 +10536,6 @@ static int GetRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
     /* record layer length check */
 #ifdef HAVE_MAX_FRAGMENT
     if (*size > (ssl->max_fragment + MAX_COMP_EXTRA + MAX_MSG_EXTRA)) {
-        SendAlert(ssl, alert_fatal, record_overflow);
         WOLFSSL_ERROR_VERBOSE(LENGTH_ERROR);
         return LENGTH_ERROR;
     }
@@ -14728,10 +14722,6 @@ static int DoCertificate(WOLFSSL* ssl, byte* input, word32* inOutIdx,
 #endif /* SESSION_CERTS */
 
     ret = ProcessPeerCerts(ssl, input, inOutIdx, size);
-#ifdef WOLFSSL_EXTRA_ALERTS
-    if (ret == BUFFER_ERROR || ret == ASN_PARSE_E)
-        SendAlert(ssl, alert_fatal, decode_error);
-#endif
 
 #ifdef OPENSSL_EXTRA
     ssl->options.serverState = SERVER_CERT_COMPLETE;
@@ -15008,9 +14998,6 @@ int DoFinished(WOLFSSL* ssl, const byte* input, word32* inOutIdx, word32 size,
     if (sniff == NO_SNIFF) {
         if (XMEMCMP(input + *inOutIdx, &ssl->hsHashes->verifyHashes,size) != 0){
             WOLFSSL_MSG("Verify finished error on hashes");
-    #ifdef WOLFSSL_EXTRA_ALERTS
-            SendAlert(ssl, alert_fatal, decrypt_error);
-    #endif
             WOLFSSL_ERROR_VERBOSE(VERIFY_FINISHED_ERROR);
             return VERIFY_FINISHED_ERROR;
         }
@@ -15134,9 +15121,6 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
         #endif
             if (ssl->msgsReceived.got_client_hello) {
                 WOLFSSL_MSG("Duplicate ClientHello received");
-    #ifdef WOLFSSL_EXTRA_ALERTS
-                SendAlert(ssl, alert_fatal, unexpected_message);
-    #endif
                 WOLFSSL_ERROR_VERBOSE(DUPLICATE_MSG_E);
                 return DUPLICATE_MSG_E;
             }
@@ -15428,9 +15412,6 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
         #endif
             if (ssl->msgsReceived.got_client_key_exchange) {
                 WOLFSSL_MSG("Duplicate ClientKeyExchange received");
-    #ifdef WOLFSSL_EXTRA_ALERTS
-                SendAlert(ssl, alert_fatal, unexpected_message);
-    #endif
                 WOLFSSL_ERROR_VERBOSE(DUPLICATE_MSG_E);
                 return DUPLICATE_MSG_E;
             }
@@ -15463,9 +15444,6 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
 
             if (ssl->msgsReceived.got_change_cipher == 0) {
                 WOLFSSL_MSG("Finished received before ChangeCipher");
-    #ifdef WOLFSSL_EXTRA_ALERTS
-                SendAlert(ssl, alert_fatal, unexpected_message);
-    #endif
                 WOLFSSL_ERROR_VERBOSE(NO_CHANGE_CIPHER_E);
                 return NO_CHANGE_CIPHER_E;
             }
@@ -15519,9 +15497,6 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
                 if (!ssl->options.resuming &&
                                ssl->msgsReceived.got_client_key_exchange == 0) {
                     WOLFSSL_MSG("No ClientKeyExchange before ChangeCipher");
-    #ifdef WOLFSSL_EXTRA_ALERTS
-                    SendAlert(ssl, alert_fatal, unexpected_message);
-    #endif
                     WOLFSSL_ERROR_VERBOSE(OUT_OF_ORDER_E);
                     return OUT_OF_ORDER_E;
                 }
@@ -16052,6 +16027,67 @@ static int DoHandShakeMsg(WOLFSSL* ssl, byte* input, word32* inOutIdx,
 
 #endif /* !WOLFSSL_NO_TLS12 */
 
+#ifdef WOLFSSL_EXTRA_ALERTS
+void SendFatalAlertOnly(WOLFSSL *ssl, int error)
+{
+    int why;
+
+    /* already sent a more specific fatal alert  */
+    if (ssl->alert_history.last_tx.level == alert_fatal)
+        return;
+
+    switch (error) {
+        /* not fatal errors */
+    case WANT_WRITE:
+    case WANT_READ:
+    case ZERO_RETURN:
+#ifdef WOLFSSL_ASYNC_CRYPT
+    case WC_PENDING_E:
+#endif
+        return;
+
+    /* peer already disconnected and ssl is possibly in bad state
+     * don't try to send an alert */
+    case SOCKET_ERROR_E:
+        return;
+
+    case BUFFER_ERROR:
+    case ASN_PARSE_E:
+    case COMPRESSION_ERROR:
+        why = decode_error;
+        break;
+    case MATCH_SUITE_ERROR:
+        why = illegal_parameter;
+        break;
+    case VERIFY_FINISHED_ERROR:
+    case SIG_VERIFY_E:
+        why = decrypt_error;
+        break;
+    case DUPLICATE_MSG_E:
+    case NO_CHANGE_CIPHER_E:
+    case OUT_OF_ORDER_E:
+        why = unexpected_message;
+        break;
+    case ECC_OUT_OF_RANGE_E:
+        why = bad_record_mac;
+        break;
+    case VERSION_ERROR:
+    default:
+        why = handshake_failure;
+        break;
+    }
+
+    SendAlert(ssl, alert_fatal, why);
+}
+#else
+void SendFatalAlertOnly(WOLFSSL *ssl, int error)
+{
+    (void)ssl;
+    (void)error;
+    /* no op */
+}
+#endif /* WOLFSSL_EXTRA_ALERTS */
+
 #ifdef WOLFSSL_DTLS
 
 static int _DtlsCheckWindow(WOLFSSL* ssl)
@@ -16456,7 +16492,6 @@ static WC_INLINE int Dtls13UpdateWindow(WOLFSSL* ssl)
 }
 #endif /* WOLFSSL_DTLS13 */
 
-
 int DtlsMsgDrain(WOLFSSL* ssl)
 {
     DtlsMsg* item = ssl->dtls_rx_msg_list;
@@ -16481,6 +16516,9 @@ int DtlsMsgDrain(WOLFSSL* ssl)
     #endif
         if (ret == 0) {
             DtlsTxMsgListClean(ssl);
+        }
+        else if (!IsAtLeastTLSv1_3(ssl->version)) {
+            SendFatalAlertOnly(ssl, ret);
         }
     #ifdef WOLFSSL_ASYNC_CRYPT
         if (ret == WC_PENDING_E) {
@@ -19313,8 +19351,25 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
                     continue;
             }
 #endif
-            if (ret != 0)
+            if (ret != 0) {
+                switch (ret) {
+                case VERSION_ERROR:
+                    /* send alert per RFC5246 Appendix E. Backward
+                     * Compatibility */
+                    if (ssl->options.side == WOLFSSL_CLIENT_END)
+                        SendAlert(ssl, alert_fatal,
+                            wolfssl_alert_protocol_version);
+                    break;
+#ifdef HAVE_MAX_FRAGMENT
+                case LENGTH_ERROR:
+                    SendAlert(ssl, alert_fatal, record_overflow);
+                    break;
+#endif /* HAVE_MAX_FRAGMENT */
+default:
+                    break;
+                }
                 return ret;
+            }
 
 #ifdef WOLFSSL_TLS13
             if (IsAtLeastTLSv1_3(ssl->version) && IsEncryptionOn(ssl, 0) &&
@@ -19784,6 +19839,8 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
                                                          ssl->buffers.inputBuffer.buffer,
                                                          &ssl->buffers.inputBuffer.idx,
                                                          ssl->buffers.inputBuffer.length);
+                                if (ret != 0)
+                                    SendFatalAlertOnly(ssl, ret);
                         }
 #endif
 #ifdef WOLFSSL_DTLS13
@@ -19820,6 +19877,8 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
                                             ssl->buffers.inputBuffer.buffer,
                                             &ssl->buffers.inputBuffer.idx,
                                             ssl->buffers.inputBuffer.length);
+                        if (ret != 0)
+                            SendFatalAlertOnly(ssl, ret);
 #else
                         ret = BUFFER_ERROR;
 #endif
@@ -21454,8 +21513,7 @@ int SendCertificate(WOLFSSL* ssl)
     #ifdef OPENSSL_EXTRA
         if (ssl->version.major == SSLv3_MAJOR
             && ssl->version.minor == SSLv3_MINOR){
-            SendAlert(ssl, alert_warning, no_certificate);
-            return 0;
+            return SendAlert(ssl, alert_warning, no_certificate);
         } else {
     #endif
             certSz = 0;
@@ -24148,8 +24206,8 @@ const char* GetCipherKeaStr(char n[][MAX_SEGMENT_SZ]) {
         keaStr = "PSK";
     else if (XSTRCMP(n[0],"EDH") == 0)
         keaStr = "EDH";
-    else if ((XSTRCMP(n[1],"SHA") == 0) || (XSTRCMP(n[2],"SHA") == 0) ||
-             (XSTRCMP(n[3],"SHA") == 0) || (XSTRCMP(n[4],"SHA") == 0) ||
+    else if ((XSTRNCMP(n[1],"SHA", 3) == 0) || (XSTRNCMP(n[2],"SHA", 3) == 0) ||
+             (XSTRNCMP(n[3],"SHA", 3) == 0) || (XSTRNCMP(n[4],"SHA", 3) == 0) ||
              (XSTRCMP(n[2],"RSA") == 0) || (XSTRCMP(n[0],"AES128") == 0) ||
              (XSTRCMP(n[0],"AES256") == 0) || (XSTRCMP(n[1],"MD5") == 0))
         keaStr = "RSA";
@@ -24173,7 +24231,7 @@ const char* GetCipherAuthStr(char n[][MAX_SEGMENT_SZ]) {
         ((XSTRCMP(n[0],"TLS13") == 0) && ((XSTRCMP(n[1],"AES128") == 0) ||
          (XSTRCMP(n[1],"AES256") == 0) || (XSTRCMP(n[1],"CHACHA20") == 0))) ||
         (XSTRCMP(n[0],"RSA") == 0) || (XSTRCMP(n[1],"RSA") == 0) ||
-        (XSTRCMP(n[1],"SHA") == 0) || (XSTRCMP(n[2],"SHA") == 0) ||
+        (XSTRNCMP(n[1],"SHA", 3) == 0) || (XSTRNCMP(n[2],"SHA", 3) == 0) ||
         (XSTRCMP(n[1],"MD5") == 0))
         authStr = "RSA";
     else if (XSTRCMP(n[0],"PSK") == 0 || XSTRCMP(n[1],"PSK") == 0)
@@ -30290,7 +30348,7 @@ int SendCertificateVerify(WOLFSSL* ssl)
                         goto exit_scv;
                     }
                 }
-                #if defined(HAVE_CURVE25519) || defined(HAVE_CURVE448)
+                #if defined(HAVE_ED25519) || defined(HAVE_ED448)
                 FALL_THROUGH;
                 #endif
             #endif /* WOLFSSL_CHECK_SIG_FAULTS */
@@ -30671,7 +30729,6 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             case INVALID_PARAMETER:
             case HRR_COOKIE_ERROR:
                 return illegal_parameter;
-                break;
             case INCOMPLETE_DATA:
                 return missing_extension;
             case MATCH_SUITE_ERROR:
@@ -32381,8 +32438,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                                     goto exit_sske;
                                 }
                             }
-                            #if defined(HAVE_CURVE25519) || \
-                                                          defined(HAVE_CURVE448)
+                            #if defined(HAVE_E25519) || defined(HAVE_ED448)
                             FALL_THROUGH;
                             #endif
                         #endif /*  WOLFSSL_CHECK_SIG_FAULTS */
@@ -33227,9 +33283,6 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
             if (!ssl->options.downgrade) {
                 WOLFSSL_MSG("Client trying to connect with lesser version");
-#if defined(WOLFSSL_EXTRA_ALERTS) ||  defined(OPENSSL_EXTRA)
-                SendAlert(ssl, alert_fatal, handshake_failure);
-#endif
                 ret = VERSION_ERROR;
                 goto out;
             }
@@ -33243,9 +33296,6 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
             if (belowMinDowngrade) {
                 WOLFSSL_MSG("\tversion below minimum allowed, fatal error");
-#if defined(WOLFSSL_EXTRA_ALERTS) ||  defined(OPENSSL_EXTRA)
-                SendAlert(ssl, alert_fatal, handshake_failure);
-#endif
                 ret = VERSION_ERROR;
                 goto out;
             }
@@ -33743,12 +33793,6 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         if (ret == 0)
             ret = MatchSuite(ssl, clSuites);
 
-#ifdef WOLFSSL_EXTRA_ALERTS
-        if (ret == BUFFER_ERROR)
-            SendAlert(ssl, alert_fatal, decode_error);
-        else if (ret < 0)
-            SendAlert(ssl, alert_fatal, handshake_failure);
-#endif
 #if defined(HAVE_TLS_EXTENSIONS) && defined(HAVE_ENCRYPT_THEN_MAC) && \
     !defined(WOLFSSL_AEAD_ONLY)
         if (ret == 0 && ssl->options.encThenMac &&
@@ -34638,15 +34682,18 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                 return VERSION_ERROR;
             }
         }
+    #ifdef WOLFSSL_TLS13
         /* Check resumption master secret. */
         if (IsAtLeastTLSv1_3(it->pv) &&
                 it->ticketNonceLen > MAX_TICKET_NONCE_STATIC_SZ) {
             WOLFSSL_MSG("Unsupported ticketNonce len in ticket");
             return BAD_TICKET_ENCRYPT;
         }
+    #endif
         return 0;
     }
 
+#if defined(WOLFSSL_TLS13)
     /* Return 0 when check successful. <0 on failure. */
     int DoClientTicketCheck(const WOLFSSL* ssl, const PreSharedKey* psk,
             sword64 timeout, const byte* suite)
@@ -34712,6 +34759,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 #endif
         return 0;
     }
+#endif /* WOLFSSL_SLT13 */
 
     void DoClientTicketFinalize(WOLFSSL* ssl, InternalTicket* it)
     {
@@ -34751,11 +34799,13 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 #ifdef WOLFSSL_32BIT_MILLI_TIME
             ato32(it->timestamp, &ssl->session->ticketSeen);
 #else
-            word32 seenHi, seenLo;
+            {
+                word32 seenHi, seenLo;
 
-            ato32(it->timestamp               , &seenHi);
-            ato32(it->timestamp + OPAQUE32_LEN, &seenLo);
-            ssl->session->ticketSeen = ((sword64)seenHi << 32) + seenLo;
+                ato32(it->timestamp               , &seenHi);
+                ato32(it->timestamp + OPAQUE32_LEN, &seenLo);
+                ssl->session->ticketSeen = ((sword64)seenHi << 32) + seenLo;
+            }
 #endif
             ato32(it->ageAdd, &ssl->session->ticketAdd);
             ssl->session->cipherSuite0 = it->suite[0];
@@ -34784,6 +34834,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         ssl->version.minor = it->pv.minor;
     }
 
+#if defined(WOLFSSL_TLS13)
     /* Parse ticket sent by client, returns callback return value. Doesn't
      * modify ssl and stores the InternalTicket inside psk */
     int DoClientTicket_ex(const WOLFSSL* ssl, PreSharedKey* psk)
@@ -34809,7 +34860,8 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         }
     #ifdef WOLFSSL_CHECK_MEM_ZERO
         /* Internal ticket successfully decrypted. */
-        wc_MemZero_Add("Do Client Ticket internal", it, sizeof(InternalTicket));
+        wc_MemZero_Add("Do Client Ticket internal", psk->it,
+            sizeof(InternalTicket));
     #endif
 
         ret = DoClientTicketCheckVersion(ssl, psk->it);
@@ -34823,6 +34875,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         }
         return decryptRet;
     }
+#endif /* WOLFSL_TLS13 */
 
     /* Parse ticket sent by client, returns callback return value */
     int DoClientTicket(WOLFSSL* ssl, const byte* input, word32 len)
@@ -34862,6 +34915,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         return decryptRet;
     }
 
+#ifdef WOLFSSL_TLS13
     void CleanupClientTickets(PreSharedKey* psk)
     {
         for (; psk != NULL; psk = psk->next) {
@@ -34878,6 +34932,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             }
         }
     }
+#endif /* WOLFSSL_TLS13 */
 
 
     /* send Session Ticket */
@@ -35920,18 +35975,12 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
 
                         /* import peer ECC key */
                         if ((args->idx - args->begin) + OPAQUE8_LEN > size) {
-                        #ifdef WOLFSSL_EXTRA_ALERTS
-                            SendAlert(ssl, alert_fatal, decode_error);
-                        #endif
                             ERROR_OUT(BUFFER_ERROR, exit_dcke);
                         }
 
                         args->length = input[args->idx++];
 
                         if ((args->idx - args->begin) + args->length > size) {
-                        #ifdef WOLFSSL_EXTRA_ALERTS
-                            SendAlert(ssl, alert_fatal, decode_error);
-                        #endif
                             ERROR_OUT(BUFFER_ERROR, exit_dcke);
                         }
 
@@ -36116,9 +36165,6 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
                         args->idx += OPAQUE16_LEN;
 
                         if ((args->idx - args->begin) + clientPubSz > size) {
-                        #ifdef WOLFSSL_EXTRA_ALERTS
-                            SendAlert(ssl, alert_fatal, decode_error);
-                        #endif
                             ERROR_OUT(BUFFER_ERROR, exit_dcke);
                         }
 
@@ -36868,6 +36914,7 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
     {
         int ad = 0;
         int sniRet = 0;
+        int ret = 0;
         /* Stunnel supports a custom sni callback to switch an SSL's ctx
         * when SNI is received. Call it now if exists */
         if(ssl && ssl->ctx && ssl->ctx->sniRecvCb) {
@@ -36876,7 +36923,7 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
             switch (sniRet) {
                 case warning_return:
                     WOLFSSL_MSG("Error in custom sni callback. Warning alert");
-                    SendAlert(ssl, alert_warning, ad);
+                    ret = SendAlert(ssl, alert_warning, ad);
                     break;
                 case fatal_return:
                     WOLFSSL_MSG("Error in custom sni callback. Fatal alert");
@@ -36889,7 +36936,7 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
                     break;
             }
         }
-        return 0;
+        return ret;
     }
 #endif /* HAVE_SNI */
 

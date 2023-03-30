@@ -1449,7 +1449,11 @@ enum Misc {
     COMP_LEN     =  1,         /* compression length      */
     CURVE_LEN    =  2,         /* ecc named curve length  */
     KE_GROUP_LEN =  2,         /* key exchange group length */
-    SERVER_ID_LEN = 20,        /* server session id length  */
+#if defined(NO_SHA) && !defined(NO_SHA256)
+    SERVER_ID_LEN = WC_SHA256_DIGEST_SIZE,
+#else
+    SERVER_ID_LEN = WC_SHA_DIGEST_SIZE,
+#endif
 
     HANDSHAKE_HEADER_SZ   = 4,  /* type + length(3)        */
     RECORD_HEADER_SZ      = 5,  /* type + version + len(2) */
@@ -2546,6 +2550,8 @@ typedef struct Keys {
 #endif
 } Keys;
 
+/* Forward declare opaque pointer to make available for func def */
+typedef struct Options Options;
 
 
 /** TLS Extensions - RFC 6066 */
@@ -2606,12 +2612,12 @@ typedef enum {
 #ifdef WOLFSSL_QUIC
     TLSX_KEY_QUIC_TP_PARAMS_DRAFT   = 0xffa5, /* from draft-ietf-quic-tls-27 */
 #endif
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     TLSX_ECH                        = 0xfe0d, /* from draft-ietf-tls-esni-13 */
 #endif
 } TLSX_Type;
 
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 
 typedef enum {
     ECH_TYPE_OUTER = 0,
@@ -2674,13 +2680,13 @@ WOLFSSL_LOCAL int GetEchConfigsEx(WOLFSSL_EchConfig* configs,
     byte* output, word32* outputLen);
 #endif
 
-typedef struct TLSX {
+struct TLSX {
     TLSX_Type    type; /* Extension Type  */
     void*        data; /* Extension Data  */
     word32       val;  /* Extension Value */
     byte         resp; /* IsResponse Flag */
     struct TLSX* next; /* List Behavior   */
-} TLSX;
+};
 
 WOLFSSL_LOCAL TLSX* TLSX_Find(TLSX* list, TLSX_Type type);
 WOLFSSL_LOCAL void  TLSX_Remove(TLSX** list, TLSX_Type type, void* heap);
@@ -2705,8 +2711,6 @@ WOLFSSL_LOCAL int   TLSX_WriteResponse(WOLFSSL *ssl, byte* output, byte msgType,
 
 WOLFSSL_LOCAL int   TLSX_ParseVersion(WOLFSSL* ssl, const byte* input,
                                       word16 length, byte msgType, int* found);
-/* Forward declare opaque pointer to make available for func def */
-typedef struct Options Options;
 WOLFSSL_LOCAL int TLSX_SupportedVersions_Parse(const WOLFSSL* ssl,
         const byte* input, word16 length, byte msgType, ProtocolVersion* pv,
         Options* opts, TLSX** exts);
@@ -3623,7 +3627,7 @@ struct WOLFSSL_CTX {
         const WOLFSSL_QUIC_METHOD *method;
     } quic;
 #endif
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     WOLFSSL_EchConfig* echConfigs;
 #endif
 };
@@ -4229,7 +4233,7 @@ enum cipherState {
     CIPHER_STATE_END,
 };
 
-typedef struct Options {
+struct Options {
 #ifndef NO_PSK
     wc_psk_client_callback client_psk_cb;
     wc_psk_server_callback server_psk_cb;
@@ -4393,7 +4397,7 @@ typedef struct Options {
 #ifdef WOLFSSL_DTLS_CID
     word16            useDtlsCID:1;
 #endif /* WOLFSSL_DTLS_CID */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     word16            useEch:1;
 #endif
 #ifdef WOLFSSL_SEND_HRR_COOKIE
@@ -4444,7 +4448,7 @@ typedef struct Options {
 #ifdef WOLFSSL_TLS13
     byte            oldMinor;          /* client preferred version < TLS 1.3 */
 #endif
-} Options;
+};
 
 typedef struct Arrays {
     byte*           pendingMsg;         /* defrag buffer */
@@ -4459,7 +4463,7 @@ typedef struct Arrays {
     byte            psk_key[MAX_PSK_KEY_LEN];
 #endif
     byte            clientRandom[RAN_LEN];
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     byte            clientRandomInner[RAN_LEN];
 #endif
     byte            serverRandom[RAN_LEN];
@@ -5027,7 +5031,7 @@ struct WOLFSSL {
     byte            serverSecret[SECRET_LEN];
 #endif
     HS_Hashes*      hsHashes;
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     HS_Hashes*      hsHashesEch;
 #endif
     void*           IOCB_ReadCtx;
@@ -5489,7 +5493,7 @@ struct WOLFSSL {
                                           * content have not been handled yet by quic */
     } quic;
 #endif /* WOLFSSL_QUIC */
-#if defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     WOLFSSL_EchConfig* echConfigs;
 #endif
 };
@@ -5656,12 +5660,16 @@ WOLFSSL_LOCAL int SendTicket(WOLFSSL* ssl);
 WOLFSSL_LOCAL int DoDecryptTicket(const WOLFSSL* ssl, const byte* input,
         word32 len, InternalTicket **it);
 /* Return 0 when check successful. <0 on failure. */
+WOLFSSL_LOCAL void DoClientTicketFinalize(WOLFSSL* ssl, InternalTicket* it);
+
+#ifdef WOLFSSL_TLS13
 WOLFSSL_LOCAL int DoClientTicketCheck(const WOLFSSL* ssl,
         const PreSharedKey* psk, sword64 timeout, const byte* suite);
-WOLFSSL_LOCAL void DoClientTicketFinalize(WOLFSSL* ssl, InternalTicket* it);
 WOLFSSL_LOCAL void CleanupClientTickets(PreSharedKey* psk);
-WOLFSSL_LOCAL int DoClientTicket(WOLFSSL* ssl, const byte* input, word32 len);
 WOLFSSL_LOCAL int DoClientTicket_ex(const WOLFSSL* ssl, PreSharedKey* psk);
+#endif
+
+WOLFSSL_LOCAL int DoClientTicket(WOLFSSL* ssl, const byte* input, word32 len);
 #endif /* HAVE_SESSION_TICKET */
 WOLFSSL_LOCAL int SendData(WOLFSSL* ssl, const void* data, int sz);
 #ifdef WOLFSSL_TLS13
@@ -5685,6 +5693,7 @@ WOLFSSL_LOCAL int ReceiveData(WOLFSSL* ssl, byte* output, int sz, int peek);
 WOLFSSL_LOCAL int SendFinished(WOLFSSL* ssl);
 WOLFSSL_LOCAL int RetrySendAlert(WOLFSSL* ssl);
 WOLFSSL_LOCAL int SendAlert(WOLFSSL* ssl, int severity, int type);
+WOLFSSL_LOCAL void SendFatalAlertOnly(WOLFSSL *ssl, int error);
 WOLFSSL_LOCAL int ProcessReply(WOLFSSL* ssl);
 WOLFSSL_LOCAL int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr);
 
