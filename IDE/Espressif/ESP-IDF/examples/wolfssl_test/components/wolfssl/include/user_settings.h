@@ -50,7 +50,7 @@
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
-/* #define DEBUG_WOLFSSL_VERBOSE */
+#define DEBUG_WOLFSSL_VERBOSE
 
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
@@ -123,8 +123,9 @@
 #endif
 
 /* debug options */
-// #define DEBUG_WOLFSSL
+#define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -133,16 +134,19 @@
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
 
-/* when you want not to use HW acceleration */
+/* Default is HW enabled unless turned off.
+** Uncomment these lines for SW: */
+/*
 #define NO_ESP32WROOM32_CRYPT
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+*/
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
-#define HASH_SIZE_LIMIT /* for test.c */
+/* #define HASH_SIZE_LIMIT */ /* for test.c */
 
 #define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
@@ -153,6 +157,43 @@
 #endif
 
 #define HAVE_VERSION_EXTENDED_INFO
-#define HAVE_WC_INTROSPECTION
+/* #define HAVE_WC_INTROSPECTION */
 
 #define  HAVE_SESSION_TICKET
+
+/* #define HAVE_HASHDRBG */
+
+/* Shared configuration in same directory */
+/* #include "Wolf_Features.h" */
+
+#define WOLFSSL_KEY_GEN
+#define WOLFSSL_CERT_REQ
+#define WOLFSSL_CERT_GEN
+#define WOLFSSL_CERT_EXT
+#define WOLFSSL_SYS_CA_CERTS
+
+
+#define WOLFSSL_CERT_TEXT
+
+#define WOLFSSL_ASN_TEMPLATE
+
+/*
+#undef  WOLFSSL_KEY_GEN
+
+#undef  WOLFSSL_CERT_REQ
+
+#undef  WOLFSSL_CERT_GEN
+
+#undef  WOLFSSL_CERT_EXT
+
+#undef  WOLFSSL_SYS_CA_CERTS
+*/
+
+/*
+--enable-keygen
+--enable-certgen
+--enable-certreq
+--enable-certext
+--enable-asn-template
+*/
+
