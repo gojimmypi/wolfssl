@@ -48,6 +48,8 @@
  */
 
 #define WOLFSSL_ESPWROOM32
+/* #define WOLFSSL_NOSHA512_224 */
+/* #define WOLFSSL_NOSHA512_256 */
 
 /* #define DEBUG_WOLFSSL_VERBOSE */
 
@@ -66,14 +68,18 @@
 
 /* when you want to use SINGLE THREAD */
 #define SINGLE_THREADED
+
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
 
 #define WOLFSSL_RIPEMD
+/* when you want to use SHA224 */
 #define WOLFSSL_SHA224
-#define WOLFSSL_SHA3
+
 /* when you want to use SHA384 */
+#define WOLFSSL_SHA3
+
 #define WOLFSSL_SHA384
 #define WOLFSSL_SHA512
 #define HAVE_ECC
@@ -110,7 +116,7 @@
 #if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
-    /* threshold for performance adjustment for hw primitive use   */
+    /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
     #define EPS_RSA_EXPT_XBTIS           36
     /* X and Y of X * Y mod P greater than                         */
@@ -143,10 +149,13 @@
     /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES        */
     /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI    */
 #endif
-/* adjust wait-timeout count if you see timeout in rsa hw acceleration */
+/* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 #define HASH_SIZE_LIMIT /* for test.c */
+
+#define USE_FAST_MATH
+#define WOLFSSL_SMALL_STACK
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
     /* AES192 is not supported on the ESP32-S3 HW at this time */
@@ -154,8 +163,18 @@
 #endif
 
 #define HAVE_VERSION_EXTENDED_INFO
+#define HAVE_WC_INTROSPECTION
+
+#define  HAVE_SESSION_TICKET
+#define WOLFSSL_RSA_KEY_SIZE 2048
 
 // #define WOLFSSL_HAVE_SP_RSA
-#define WOLFSSL_SP_MATH_ALL
-#define WOLFSSL_SP_RISCV32
-// #define WOLFSSL_SP_RISCV64
+// #define WOLFSSL_SP_MATH_ALL
+
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* #define WOLFSSL_SP_RISCV32 */
+#else
+    #if defined(WOLFSSL_SP_RISCV32)
+        #error "WOLFSSL_SP_RISCV32 not supported for this target"
+    #endif
+#endif
