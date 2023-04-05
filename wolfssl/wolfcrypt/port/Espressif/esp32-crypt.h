@@ -37,6 +37,7 @@
 
 #include <freertos/FreeRTOS.h>
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* no includes for ESP32C3 at this time (no HW implemented yet) */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
@@ -106,9 +107,10 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
 
-#if (!defined(NO_SHA) || !defined(NO_SHA256) || defined(WOLFSSL_SHA384) || \
-      defined(WOLFSSL_SHA512)) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) &&     \
+   (!defined(NO_SHA) || !defined(NO_SHA256) ||          \
+     defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512) \
+   )
 
     /* RAW hash function APIs are not implemented with esp32 hardware acceleration*/
     #define WOLFSSL_NO_HASH_RAW
@@ -148,6 +150,14 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
         /* see esp_rom/include/esp32/rom/sha.h */
         enum SHA_TYPE sha_type; /* the Espressif type: SHA1, SHA256, etc.*/
+
+        //    #if defined(CONFIG_IDF_TARGET_ESP32S3)
+//        SHA_TYPE sha_type;
+//    #else
+//        enum SHA_TYPE sha_type;
+//    #endif
+        /* see esp_rom/include/esp32/rom/sha.h */
+
         void* initializer; /* pointer to object the initialized HW; to track copies */
         int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
         byte g3;
@@ -156,9 +166,6 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         /* we'll keep track of our own locks.
         ** actual enable/disable only occurs for ref_counts[periph] == 0 */
         byte isfirstblock; /* 0 is not first block; 1 = is first block   */
-
-        enum SHA_TYPE sha_type;
-    #endif
     } WC_ESP32SHA;
 
     int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type);
