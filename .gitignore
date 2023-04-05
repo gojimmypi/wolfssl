@@ -436,3 +436,5 @@ user_settings_asm.h
 /wolfcrypt/src/evp - Copy.c
 /src/ssl.c.WIP_FEB18
 /include/user_settings.h.paul
+/wolfcrypt/src/port/Espressif/backup
+/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205/private
