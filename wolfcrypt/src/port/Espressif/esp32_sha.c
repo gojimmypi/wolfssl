@@ -138,7 +138,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     }
 #else
     /* other chipsets will be implemented here */
-#endif
+#endif /* defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3) */
 
     return ret;
 }
@@ -549,23 +549,24 @@ static void wc_esp_wait_until_idle()
 */
 int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 {
+    /* if we end up here, there was a prior unexpected fail and
+     * we need to unroll enables */
+    int ret = 0; /* assume success unless proven otherwise */
+    int actual_unroll_count = 0;
+    int max_unroll_count = 1000; /* never get stuck in a hardware wait loop */
+#if CONFIG_IDF_TARGET_ESP
+    uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
+#endif
     if (ctx == NULL)
     {
         ESP_LOGE(TAG, "esp_unroll_sha_module_enable called with null ctx.");
         return -1;
     }
 
-    /* if we end up here, there was a prior unexpected fail and
-     * we need to unroll enables */
-    int ret = 0; /* assume success unless proven otherwise */
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
+    /*  RISC-V Architecture: TODO */
 #else
-    uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
-    int actual_unroll_count = 0;
-    int max_unroll_count = 1000; /* never get stuck in a hardware wait loop */
-
-    this_sha_mask = periph_ll_get_clk_en_mask(PERIPH_SHA_MODULE);
+    /* Xtensa Architecture */
 
     /* unwind prior calls to THIS ctx. decrement ref_counts[periph] */
     /* only when ref_counts[periph] == 0 does something actually happen */
@@ -581,7 +582,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     this_sha_mask = periph_ll_get_clk_en_mask(PERIPH_SHA_MODULE);
     asm volatile("memw");
     while ((this_sha_mask & *(uint32_t*)DPORT_PERI_CLK_EN_REG) != 0) {
-#endif
+#endif /* CONFIG_IDF_TARGET_ESP32S3 */
         periph_module_disable(PERIPH_SHA_MODULE);
         asm volatile("memw");
         actual_unroll_count++;
@@ -941,8 +942,10 @@ static void wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
                                  const word32* data,
                                  word32 len)
 {
-    int i;
     int word32_to_save = (len) / (sizeof(word32));
+#ifndef CONFIG_IDF_TARGET_ESP32S3
+    int i;
+#endif
     ESP_LOGV(TAG, "  enter esp_process_block");
     if (word32_to_save > 0x31) {
         word32_to_save = 0x31;
