@@ -438,3 +438,4 @@ user_settings_asm.h
 /include/user_settings.h.paul
 /wolfcrypt/src/port/Espressif/backup
 /IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205/private
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.old
