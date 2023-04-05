@@ -39,7 +39,7 @@
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
 #endif
-#include <wolfssl/wolfcrypt/tfm.h>
+#include <wolfssl/wolfcrypt/wolfmath.h>
 
 static const char* const TAG = "wolfssl_mp";
 
@@ -126,12 +126,12 @@ static int esp_mp_hw_lock()
             espmp_CryptHwMutexInit = 1;
         }
         else {
-            ESP_LOGE(TAG, "mp mutx initialization failed.");
+            ESP_LOGE(TAG, "mp mutex initialization failed.");
             return MP_NG;
         }
     }
     else {
-        /* esp aes has already been iniitlized */
+        /* esp aes has already been initialized */
     }
 
     /* lock hardware */
@@ -191,9 +191,9 @@ static void esp_mp_hw_unlock( void )
     esp_CryptHwMutexUnLock(&mp_mutex);
 }
 
-/* this is based on an article by Cetin Kaya Koc, A New Algorithm for Inversion*/
-/* mod p^k, June 28 2017.                                                     */
-static int esp_calc_Mdash(mp_int *M, word32 k, mp_digit* md)
+/* this is based on an article by Cetin Kaya Koc,
+ * A New Algorithm for Inversion: mod p^k, June 28 2017 */
+static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
     int i;
     int xi;
@@ -251,7 +251,7 @@ static int wait_until_done(word32 reg)
 
 /* read data from memory into mp_init          */
 static void esp_memblock_to_mpint(word32 mem_address,
-                                  mp_int* mp,
+                                  MATH_INT_T* mp,
                                   word32 numwords)
 {
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
@@ -260,7 +260,7 @@ static void esp_memblock_to_mpint(word32 mem_address,
 
 /* write mp_init into memory block
  */
-static void esp_mpint_to_memblock(word32 mem_address, const mp_int* mp,
+static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
                                                       const word32 bits,
                                                       const word32 hwords)
 {
@@ -301,7 +301,7 @@ static word32 bits2words(word32 bits)
 }
 
 /* get rinv */
-static int esp_get_rinv(mp_int *rinv, mp_int *M, word32 exp)
+static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
     int ret = 0;
 
@@ -321,7 +321,7 @@ static int esp_get_rinv(mp_int *rinv, mp_int *M, word32 exp)
 }
 
 /* Z = X * Y;  */
-int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
+int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
     int ret = 0;
     int neg = (X->sign == Y->sign)? MP_ZPOS : MP_NEG;
@@ -408,6 +408,9 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
 
+    /* neg check - X*Y becomes negative */
+    neg = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
+
     /* ask bits number */
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
@@ -473,17 +476,19 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     /* step.7 clear and release hw                    */
     esp_mp_hw_unlock();
 
-    Z->sign = (Z->used > 0) ? neg : MP_ZPOS;
+    if (!mp_iszero(Z) && neg) {
+        mp_setneg(mpi);
+    }
 
     return ret;
 #endif
 }
 
 /* Z = X * Y (mod M)                                  */
-int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
+int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     int ret = 0;
-    int negcheck = 0;
+    int negcheck;
     word32 Xs;
     word32 Ys;
     word32 Ms;
@@ -491,15 +496,13 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     word32 hwWords_sz;
     word32 zwords;
 
-    mp_int r_inv;
-    mp_int tmpZ;
+    MATH_INT_T r_inv;
+    MATH_INT_T tmpZ;
     mp_digit mp;
 
-    /* neg check */
-    if (X->sign != Y->sign) {
-        /* X*Y becomes negative */
-        negcheck = 1;
-    }
+    /* neg check - X*Y becomes negative */
+    negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
+
     /* ask bits number */
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
@@ -678,7 +681,7 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
 
     /* additional steps                               */
     /* this needs for known issue when Z is greater than M */
-    if (mp_cmp(&tmpZ, M) == FP_GT) {
+    if (mp_cmp(&tmpZ, M) == MP_GT) {
         /*  Z -= M  */
         mp_sub(&tmpZ, M, &tmpZ);
     }
@@ -714,7 +717,7 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
 .*
 .* Note some DH references may use: Y = (G ^ X) mod P
  */
-int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
+int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
     int ret = 0;
 
@@ -723,7 +726,7 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
 
-    mp_int r_inv;
+    MATH_INT_T r_inv;
     mp_digit mp;
 
     /* ask bits number */
@@ -867,6 +870,8 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     return ret;
 #endif
 }
-#endif /* !NO_RSA || HAVE_ECC */
 
-#endif /* (WOLFSS_ESP32WROOM32_CRYPT) && (NO_WOLFSSL_ESP32WROOM32_CRYPT_RES_PRI)*/
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) &&
+        * !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+
+#endif /* !NO_RSA || HAVE_ECC */
