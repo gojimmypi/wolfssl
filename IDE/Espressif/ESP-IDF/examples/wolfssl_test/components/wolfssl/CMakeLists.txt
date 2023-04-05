@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# File Version 5.4.4.003
+# Version 5.6.0.002
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -29,17 +29,33 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 
 # set the root of wolfSSL:
-# set(WOLFSSL_ROOT  "C:/some path/with/spaces")
-# set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
-# We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
-# The root of wolfSSL is 7 directories up from here:
-get_filename_component(WOLFSSL_ROOT  "../../../../../../../" ABSOLUTE)
+#   set(WOLFSSL_ROOT  "C:/some path/with/spaces")
+#   set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
+#   or use this logic to  assign value from Environment Variable,
+#   or  assume this is an example 7 subdirectories below:
+if( "$ENV{WOLFSSL_ROOT}" STREQUAL "" )
+    message(STATUS "Environment Variable WOLFSSL_ROOT not set.")
+    # We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
+    # The root of wolfSSL is 7 directories up from here:
+    get_filename_component(WOLFSSL_ROOT  "../../../../../../../" ABSOLUTE)
+else()
+    set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}")
+    if( EXISTS "${WOLFSSL_ROOT}" )
+        get_filename_component(WOLFSSL_ROOT  "$ENV{WOLFSSL_ROOT}" ABSOLUTE)
+        message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
+    else()
+        message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found:")
+        message(STATUS "$ENV{WOLFSSL_ROOT}")
+    endif()
+endif()
+message(STATUS "WOLFSSL_ROOT = ${WOLFSSL_ROOT}")
+
 
 # Espressif may take several passes through this makefile. Check to see if we found IDF
 string(COMPARE EQUAL "${PROJECT_SOURCE_DIR}" "" WOLFSSL_FOUND_IDF)
 
 # get a list of all wolfcrypt assembly files; we'll exclude them as they don't target Xtensa
-FILE(GLOB EXCLUDE_ASM *.S)
+file(GLOB EXCLUDE_ASM *.S)
 file(GLOB_RECURSE EXCLUDE_ASM ${CMAKE_SOURCE_DIR} "${WOLFSSL_ROOT}/wolfcrypt/src/*.S")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
@@ -204,6 +220,7 @@ endif()
 
 set(COMPONENT_SRCEXCLUDE
     \"${WOLFSSL_ROOT}/src/bio.c\"
+    \"${WOLFSSL_ROOT}/src/ssl_bn.c\" # included by ssl.c
     \"${WOLFSSL_ROOT}/src/conf.c\"
     \"${WOLFSSL_ROOT}/src/misc.c\"
     \"${WOLFSSL_ROOT}/src/pk.c\"

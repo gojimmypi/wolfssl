@@ -19,7 +19,10 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.001
+# Version 5.6.0.002
+#
+# See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
+#
 
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
@@ -235,6 +238,9 @@ separate_arguments(COMPONENT_SRCDIRS NATIVE_COMMAND "${COMPONENT_SRCDIRS}")
 separate_arguments(COMPONENT_SRCEXCLUDE NATIVE_COMMAND "${COMPONENT_SRCEXCLUDE}")
 separate_arguments(COMPONENT_ADD_INCLUDEDIRS NATIVE_COMMAND "${COMPONENT_ADD_INCLUDEDIRS}")
 
+#
+# See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html#example-component-requirements
+#
 idf_component_register(
                         SRC_DIRS "${COMPONENT_SRCDIRS}"
                         INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
