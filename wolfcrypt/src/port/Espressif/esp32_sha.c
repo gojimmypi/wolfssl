@@ -554,7 +554,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     int ret = 0; /* assume success unless proven otherwise */
     int actual_unroll_count = 0;
     int max_unroll_count = 1000; /* never get stuck in a hardware wait loop */
-#if CONFIG_IDF_TARGET_ESP
+#if defined(CONFIG_IDF_TARGET_ESP32)
     uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
 #endif
     if (ctx == NULL)
