@@ -1,0 +1,522 @@
+ets Jun  8 2016 00:22:57
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:6996
+load:0x40078000,len:15352
+load:0x40080400,len:3628
+entry 0x4008061c
+I (26) boot: ESP-IDF v5.0-dirty 2nd stage bootloader
+I (27) boot: compile time 21:12:53
+I (27) boot: chip revision: v1.0
+I (30) boot_comm: chip revision: 1, min. bootloader chip revision: 0
+I (37) boot.esp32: SPI Speed      : 80MHz
+I (42) boot.esp32: SPI Mode       : DIO
+I (46) boot.esp32: SPI Flash Size : 2MB
+I (51) boot: Enabling RNG early entropy source...
+I (56) boot: Partition Table:
+I (60) boot: ## Label            Usage          Type ST Offset   Length
+I (67) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (74) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (82) boot:  2 factory          factory app      00 00 00010000 00177000
+I (89) boot: End of partition table
+I (93) boot_comm: chip revision: 1, min. application chip revision: 0
+I (101) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=11dc4h ( 73156) map
+I (131) esp_image: segment 1: paddr=00021dec vaddr=3ffb0000 size=01c54h (  7252) load
+I (134) esp_image: segment 2: paddr=00023a48 vaddr=40080000 size=0a4f4h ( 42228) load
+I (152) esp_image: segment 3: paddr=0002df44 vaddr=50000000 size=00010h (    16) load
+I (152) esp_image: segment 4: paddr=0002df5c vaddr=00000000 size=020bch (  8380) 
+I (160) esp_image: segment 5: paddr=00030020 vaddr=400d0020 size=381c0h (229824) map
+I (240) boot: Loaded app from partition at offset 0x10000
+I (240) boot: Disabling RNG early entropy source...
+I (252) cpu_start: Pro cpu up.
+I (252) cpu_start: Single core mode
+I (260) cpu_start: Pro cpu start user code
+I (260) cpu_start: cpu freq: 240000000 Hz
+I (260) cpu_start: Application information:
+I (265) cpu_start: Project name:     wolfssl_benchmark
+I (271) cpu_start: App version:      v5.6.0-stable-dirty
+I (277) cpu_start: Compile time:     Apr  6 2023 09:19:41
+I (283) cpu_start: ELF file SHA256:  3191345e6aae07e4...
+I (289) cpu_start: ESP-IDF:          v5.0-dirty
+I (294) heap_init: Initializing. RAM available for dynamic allocation:
+I (301) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (307) heap_init: At 3FFB3550 len 0002CAB0 (178 KiB): DRAM
+I (314) heap_init: At 3FFE0440 len 0001FBC0 (126 KiB): D/IRAM
+I (320) heap_init: At 40078000 len 00008000 (32 KiB): IRAM
+I (326) heap_init: At 4008A4F4 len 00015B0C (86 KiB): IRAM
+I (332) heap_init: At 3FF80000 len 00002000 (8 KiB): RTCRAM
+I (339) spi_flash: detected chip: generic
+I (344) spi_flash: flash io: dio
+W (347) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (361) cpu_start: Starting scheduler on PRO CPU.
+I (366) wolfssl_benchmark: --------------------------------------------------------
+I (374) wolfssl_benchmark: --------------------------------------------------------
+I (382) wolfssl_benchmark: ---------------------- BEGIN MAIN ----------------------
+I (390) wolfssl_benchmark: --------------------------------------------------------
+I (399) wolfssl_benchmark: --------------------------------------------------------
+I (407) wolfssl_benchmark: CONFIG_IDF_TARGET = esp32
+I (413) wolfssl_benchmark: LIBWOLFSSL_VERSION_STRING = 5.6.0
+I (419) wolfssl_benchmark: LIBWOLFSSL_VERSION_GIT_HASH = 979707380c677dfa65e3ba48f19e149773a4a32d
+I (429) wolfssl_benchmark: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 979707380
+I (436) wolfssl_benchmark: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri Mar 24 10:14:19 2023 -0700'
+I (445) wolfssl_benchmark: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = 240 MHz
+I (453) wolfssl_benchmark: Xthal_have_ccount = 1
+I (458) wolfssl_benchmark: app_main CONFIG_BENCH_ARGV = -lng 0
+I (464) wolfssl_benchmark: construct_argv arg:-lng 0
+
+------------------------------------------------------------------------------
+ wolfSSL version 5.6.0
+------------------------------------------------------------------------------
+wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
+RNG                       3430 KB took 1.000 seconds, 3430.400 KB/s Cycles per byte =  69.97
+AES-128-CBC-enc          11776 KB took 1.001 seconds, 11764.236 KB/s Cycles per byte =  20.40
+AES-128-CBC-dec          11187 KB took 1.000 seconds, 11187.200 KB/s Cycles per byte =  21.47
+AES-192-CBC-enc          11443 KB took 1.000 seconds, 11443.200 KB/s Cycles per byte =  20.98
+AES-192-CBC-dec          11187 KB took 1.002 seconds, 11164.870 KB/s Cycles per byte =  21.48
+AES-256-CBC-enc          11443 KB took 1.001 seconds, 11431.768 KB/s Cycles per byte =  20.99
+AES-256-CBC-dec          11162 KB took 1.000 seconds, 11161.600 KB/s Cycles per byte =  21.49
+AES-128-GCM-enc            486 KB took 1.007 seconds,  483.019 KB/s Cycles per byte = 496.72
+AES-128-GCM-dec            486 KB took 1.007 seconds,  483.019 KB/s Cycles per byte = 496.79
+AES-192-GCM-enc            486 KB took 1.009 seconds,  482.061 KB/s Cycles per byte = 498.33
+AES-192-GCM-dec            486 KB took 1.010 seconds,  481.584 KB/s Cycles per byte = 498.43
+AES-256-GCM-enc            486 KB took 1.011 seconds,  481.108 KB/s Cycles per byte = 498.97
+AES-256-GCM-dec            486 KB took 1.012 seconds,  480.632 KB/s Cycles per byte = 499.07
+GMAC Default               559 KB took 1.001 seconds,  558.545 KB/s Cycles per byte = 429.72
+3DES                       640 KB took 1.035 seconds,  618.357 KB/s Cycles per byte = 388.20
+MD5                      18074 KB took 1.000 seconds, 18073.600 KB/s Cycles per byte =  13.28
+SHA                      34176 KB took 1.000 seconds, 34176.000 KB/s Cycles per byte =   7.02
+E (17596) wolf_hw_sha:     ERROR sha type call mismatch
+E (17599) wolf_hw_sha:     ERROR sha type call mismatch
+E (17605) wolf_hw_sha:     ERROR sha type call mismatch
+E (17611) wolf_hw_sha:     ERROR sha type call mismatch
+E (17617) wolf_hw_sha:     ERROR sha type call mismatch
+E (17623) wolf_hw_sha:     ERROR sha type call mismatch
+E (17629) wolf_hw_sha:     ERROR sha type call mismatch
+E (17635) wolf_hw_sha:     ERROR sha type call mismatch
+E (17641) wolf_hw_sha:     ERROR sha type call mismatch
+E (17646) wolf_hw_sha:     ERROR sha type call mismatch
+E (17652) wolf_hw_sha:     ERROR sha type call mismatch
+E (17658) wolf_hw_sha:     ERROR sha type call mismatch
+E (17664) wolf_hw_sha:     ERROR sha type call mismatch
+E (17670) wolf_hw_sha:     ERROR sha type call mismatch
+E (17676) wolf_hw_sha:     ERROR sha type call mismatch
+E (17682) wolf_hw_sha:     ERROR sha type call mismatch
+E (17688) wolf_hw_sha:     ERROR sha type call mismatch
+E (17694) wolf_hw_sha:     ERROR sha type call mismatch
+E (17700) wolf_hw_sha:     ERROR sha type call mismatch
+E (17706) wolf_hw_sha:     ERROR sha type call mismatch
+E (17711) wolf_hw_sha:     ERROR sha type call mismatch
+E (17717) wolf_hw_sha:     ERROR sha type call mismatch
+E (17723) wolf_hw_sha:     ERROR sha type call mismatch
+E (17729) wolf_hw_sha:     ERROR sha type call mismatch
+E (17735) wolf_hw_sha:     ERROR sha type call mismatch
+E (17741) wolf_hw_sha:     ERROR sha type call mismatch
+E (17747) wolf_hw_sha:     ERROR sha type call mismatch
+E (17753) wolf_hw_sha:     ERROR sha type call mismatch
+E (17759) wolf_hw_sha:     ERROR sha type call mismatch
+E (17765) wolf_hw_sha:     ERROR sha type call mismatch
+E (17770) wolf_hw_sha:     ERROR sha type call mismatch
+E (17776) wolf_hw_sha:     ERROR sha type call mismatch
+E (17782) wolf_hw_sha:     ERROR sha type call mismatch
+E (17788) wolf_hw_sha:     ERROR sha type call mismatch
+E (17794) wolf_hw_sha:     ERROR sha type call mismatch
+E (17800) wolf_hw_sha:     ERROR sha type call mismatch
+E (17806) wolf_hw_sha:     ERROR sha type call mismatch
+E (17812) wolf_hw_sha:     ERROR sha type call mismatch
+E (17818) wolf_hw_sha:     ERROR sha type call mismatch
+E (17824) wolf_hw_sha:     ERROR sha type call mismatch
+E (17829) wolf_hw_sha:     ERROR sha type call mismatch
+E (17835) wolf_hw_sha:     ERROR sha type call mismatch
+E (17841) wolf_hw_sha:     ERROR sha type call mismatch
+E (17847) wolf_hw_sha:     ERROR sha type call mismatch
+E (17853) wolf_hw_sha:     ERROR sha type call mismatch
+E (17859) wolf_hw_sha:     ERROR sha type call mismatch
+E (17865) wolf_hw_sha:     ERROR sha type call mismatch
+E (17871) wolf_hw_sha:     ERROR sha type call mismatch
+E (17877) wolf_hw_sha:     ERROR sha type call mismatch
+E (17883) wolf_hw_sha:     ERROR sha type call mismatch
+E (17889) wolf_hw_sha:     ERROR sha type call mismatch
+E (17894) wolf_hw_sha:     ERROR sha type call mismatch
+E (17900) wolf_hw_sha:     ERROR sha type call mismatch
+E (17906) wolf_hw_sha:     ERROR sha type call mismatch
+E (17912) wolf_hw_sha:     ERROR sha type call mismatch
+E (17918) wolf_hw_sha:     ERROR sha type call mismatch
+E (17924) wolf_hw_sha:     ERROR sha type call mismatch
+E (17930) wolf_hw_sha:     ERROR sha type call mismatch
+E (17936) wolf_hw_sha:     ERROR sha type call mismatch
+E (17942) wolf_hw_sha:     ERROR sha type call mismatch
+E (17948) wolf_hw_sha:     ERROR sha type call mismatch
+E (17953) wolf_hw_sha:     ERROR sha type call mismatch
+E (17959) wolf_hw_sha:     ERROR sha type call mismatch
+E (17965) wolf_hw_sha:     ERROR sha type call mismatch
+E (17971) wolf_hw_sha:     ERROR sha type call mismatch
+E (17977) wolf_hw_sha:     ERROR sha type call mismatch
+E (17983) wolf_hw_sha:     ERROR sha type call mismatch
+E (17989) wolf_hw_sha:     ERROR sha type call mismatch
+E (17995) wolf_hw_sha:     ERROR sha type call mismatch
+E (18001) wolf_hw_sha:     ERROR sha type call mismatch
+E (18007) wolf_hw_sha:     ERROR sha type call mismatch
+E (18012) wolf_hw_sha:     ERROR sha type call mismatch
+E (18018) wolf_hw_sha:     ERROR sha type call mismatch
+E (18024) wolf_hw_sha:     ERROR sha type call mismatch
+E (18030) wolf_hw_sha:     ERROR sha type call mismatch
+E (18036) wolf_hw_sha:     ERROR sha type call mismatch
+E (18042) wolf_hw_sha:     ERROR sha type call mismatch
+E (18048) wolf_hw_sha:     ERROR sha type call mismatch
+E (18054) wolf_hw_sha:     ERROR sha type call mismatch
+E (18060) wolf_hw_sha:     ERROR sha type call mismatch
+E (18066) wolf_hw_sha:     ERROR sha type call mismatch
+E (18071) wolf_hw_sha:     ERROR sha type call mismatch
+E (18077) wolf_hw_sha:     ERROR sha type call mismatch
+E (18083) wolf_hw_sha:     ERROR sha type call mismatch
+E (18089) wolf_hw_sha:     ERROR sha type call mismatch
+E (18095) wolf_hw_sha:     ERROR sha type call mismatch
+E (18101) wolf_hw_sha:     ERROR sha type call mismatch
+E (18107) wolf_hw_sha:     ERROR sha type call mismatch
+E (18113) wolf_hw_sha:     ERROR sha type call mismatch
+E (18119) wolf_hw_sha:     ERROR sha type call mismatch
+E (18125) wolf_hw_sha:     ERROR sha type call mismatch
+E (18131) wolf_hw_sha:     ERROR sha type call mismatch
+E (18136) wolf_hw_sha:     ERROR sha type call mismatch
+E (18142) wolf_hw_sha:     ERROR sha type call mismatch
+E (18148) wolf_hw_sha:     ERROR sha type call mismatch
+E (18154) wolf_hw_sha:     ERROR sha type call mismatch
+E (18160) wolf_hw_sha:     ERROR sha type call mismatch
+E (18166) wolf_hw_sha:     ERROR sha type call mismatch
+E (18172) wolf_hw_sha:     ERROR sha type call mismatch
+E (18178) wolf_hw_sha:     ERROR sha type call mismatch
+E (18184) wolf_hw_sha:     ERROR sha type call mismatch
+E (18190) wolf_hw_sha:     ERROR sha type call mismatch
+E (18195) wolf_hw_sha:     ERROR sha type call mismatch
+E (18201) wolf_hw_sha:     ERROR sha type call mismatch
+E (18207) wolf_hw_sha:     ERROR sha type call mismatch
+E (18213) wolf_hw_sha:     ERROR sha type call mismatch
+E (18219) wolf_hw_sha:     ERROR sha type call mismatch
+E (18225) wolf_hw_sha:     ERROR sha type call mismatch
+E (18231) wolf_hw_sha:     ERROR sha type call mismatch
+E (18237) wolf_hw_sha:     ERROR sha type call mismatch
+E (18243) wolf_hw_sha:     ERROR sha type call mismatch
+E (18249) wolf_hw_sha:     ERROR sha type call mismatch
+E (18254) wolf_hw_sha:     ERROR sha type call mismatch
+E (18260) wolf_hw_sha:     ERROR sha type call mismatch
+E (18266) wolf_hw_sha:     ERROR sha type call mismatch
+E (18272) wolf_hw_sha:     ERROR sha type call mismatch
+E (18278) wolf_hw_sha:     ERROR sha type call mismatch
+E (18284) wolf_hw_sha:     ERROR sha type call mismatch
+E (18290) wolf_hw_sha:     ERROR sha type call mismatch
+E (18296) wolf_hw_sha:     ERROR sha type call mismatch
+E (18302) wolf_hw_sha:     ERROR sha type call mismatch
+E (18308) wolf_hw_sha:     ERROR sha type call mismatch
+E (18314) wolf_hw_sha:     ERROR sha type call mismatch
+E (18319) wolf_hw_sha:     ERROR sha type call mismatch
+E (18325) wolf_hw_sha:     ERROR sha type call mismatch
+E (18331) wolf_hw_sha:     ERROR sha type call mismatch
+E (18337) wolf_hw_sha:     ERROR sha type call mismatch
+E (18343) wolf_hw_sha:     ERROR sha type call mismatch
+E (18349) wolf_hw_sha:     ERROR sha type call mismatch
+E (18355) wolf_hw_sha:     ERROR sha type call mismatch
+E (18361) wolf_hw_sha:     ERROR sha type call mismatch
+E (18367) wolf_hw_sha:     ERROR sha type call mismatch
+E (18373) wolf_hw_sha:     ERROR sha type call mismatch
+E (18378) wolf_hw_sha:     ERROR sha type call mismatch
+E (18384) wolf_hw_sha:     ERROR sha type call mismatch
+E (18390) wolf_hw_sha:     ERROR sha type call mismatch
+E (18396) wolf_hw_sha:     ERROR sha type call mismatch
+E (18402) wolf_hw_sha:     ERROR sha type call mismatch
+E (18408) wolf_hw_sha:     ERROR sha type call mismatch
+E (18414) wolf_hw_sha:     ERROR sha type call mismatch
+E (18420) wolf_hw_sha:     ERROR sha type call mismatch
+E (18426) wolf_hw_sha:     ERROR sha type call mismatch
+E (18432) wolf_hw_sha:     ERROR sha type call mismatch
+E (18437) wolf_hw_sha:     ERROR sha type call mismatch
+E (18443) wolf_hw_sha:     ERROR sha type call mismatch
+E (18449) wolf_hw_sha:     ERROR sha type call mismatch
+E (18455) wolf_hw_sha:     ERROR sha type call mismatch
+E (18461) wolf_hw_sha:     ERROR sha type call mismatch
+E (18467) wolf_hw_sha:     ERROR sha type call mismatch
+E (18473) wolf_hw_sha:     ERROR sha type call mismatch
+E (18479) wolf_hw_sha:     ERROR sha type call mismatch
+E (18485) wolf_hw_sha:     ERROR sha type call mismatch
+E (18491) wolf_hw_sha:     ERROR sha type call mismatch
+E (18496) wolf_hw_sha:     ERROR sha type call mismatch
+E (18502) wolf_hw_sha:     ERROR sha type call mismatch
+E (18508) wolf_hw_sha:     ERROR sha type call mismatch
+E (18514) wolf_hw_sha:     ERROR sha type call mismatch
+E (18520) wolf_hw_sha:     ERROR sha type call mismatch
+E (18526) wolf_hw_sha:     ERROR sha type call mismatch
+E (18532) wolf_hw_sha:     ERROR sha type call mismatch
+E (18538) wolf_hw_sha:     ERROR sha type call mismatch
+E (18544) wolf_hw_sha:     ERROR sha type call mismatch
+E (18550) wolf_hw_sha:     ERROR sha type call mismatch
+E (18556) wolf_hw_sha:     ERROR sha type call mismatch
+E (18561) wolf_hw_sha:     ERROR sha type call mismatch
+E (18567) wolf_hw_sha:     ERROR sha type call mismatch
+E (18573) wolf_hw_sha:     ERROR sha type call mismatch
+E (18579) wolf_hw_sha:     ERROR sha type call mismatch
+E (18585) wolf_hw_sha:     ERROR sha type call mismatch
+E (18591) wolf_hw_sha:     ERROR sha type call mismatch
+E (18597) wolf_hw_sha:     ERROR sha type call mismatch
+E (18603) wolf_hw_sha:     ERROR sha type call mismatch
+E (18609) wolf_hw_sha:     ERROR sha type call mismatch
+E (18615) wolf_hw_sha:     ERROR sha type call mismatch
+E (18620) wolf_hw_sha:     ERROR sha type call mismatch
+E (18626) wolf_hw_sha:     ERROR sha type call mismatch
+E (18632) wolf_hw_sha:     ERROR sha type call mismatch
+E (18638) wolf_hw_sha:     ERROR sha type call mismatch
+E (18644) wolf_hw_sha:     ERROR sha type call mismatch
+E (18650) wolf_hw_sha:     ERROR sha type call mismatch
+E (18656) wolf_hw_sha:     ERROR sha type call mismatch
+E (18662) wolf_hw_sha:     ERROR sha type call mismatch
+E (18668) wolf_hw_sha:     ERROR sha type call mismatch
+E (18674) wolf_hw_sha:     ERROR sha type call mismatch
+E (18679) wolf_hw_sha:     ERROR sha type call mismatch
+E (18685) wolf_hw_sha:     ERROR sha type call mismatch
+E (18691) wolf_hw_sha:     ERROR sha type call mismatch
+E (18697) wolf_hw_sha:     ERROR sha type call mismatch
+E (18703) wolf_hw_sha:     ERROR sha type call mismatch
+E (18709) wolf_hw_sha:     ERROR sha type call mismatch
+E (18715) wolf_hw_sha:     ERROR sha type call mismatch
+E (18721) wolf_hw_sha:     ERROR sha type call mismatch
+E (18727) wolf_hw_sha:     ERROR sha type call mismatch
+E (18733) wolf_hw_sha:     ERROR sha type call mismatch
+E (18739) wolf_hw_sha:     ERROR sha type call mismatch
+E (18744) wolf_hw_sha:     ERROR sha type call mismatch
+E (18750) wolf_hw_sha:     ERROR sha type call mismatch
+E (18756) wolf_hw_sha:     ERROR sha type call mismatch
+E (18762) wolf_hw_sha:     ERROR sha type call mismatch
+E (18768) wolf_hw_sha:     ERROR sha type call mismatch
+E (18774) wolf_hw_sha:     ERROR sha type call mismatch
+E (18780) wolf_hw_sha:     ERROR sha type call mismatch
+E (18786) wolf_hw_sha:     ERROR sha type call mismatch
+E (18792) wolf_hw_sha:     ERROR sha type call mismatch
+E (18798) wolf_hw_sha:     ERROR sha type call mismatch
+E (18803) wolf_hw_sha:     ERROR sha type call mismatch
+E (18809) wolf_hw_sha:     ERROR sha type call mismatch
+E (18815) wolf_hw_sha:     ERROR sha type call mismatch
+E (18821) wolf_hw_sha:     ERROR sha type call mismatch
+E (18827) wolf_hw_sha:     ERROR sha type call mismatch
+E (18833) wolf_hw_sha:     ERROR sha type call mismatch
+E (18839) wolf_hw_sha:     ERROR sha type call mismatch
+E (18845) wolf_hw_sha:     ERROR sha type call mismatch
+E (18851) wolf_hw_sha:     ERROR sha type call mismatch
+E (18857) wolf_hw_sha:     ERROR sha type call mismatch
+E (18862) wolf_hw_sha:     ERROR sha type call mismatch
+E (18868) wolf_hw_sha:     ERROR sha type call mismatch
+E (18874) wolf_hw_sha:     ERROR sha type call mismatch
+E (18880) wolf_hw_sha:     ERROR sha type call mismatch
+E (18886) wolf_hw_sha:     ERROR sha type call mismatch
+E (18892) wolf_hw_sha:     ERROR sha type call mismatch
+E (18898) wolf_hw_sha:     ERROR sha type call mismatch
+E (18904) wolf_hw_sha:     ERROR sha type call mismatch
+E (18910) wolf_hw_sha:     ERROR sha type call mismatch
+E (18916) wolf_hw_sha:     ERROR sha type call mismatch
+E (18921) wolf_hw_sha:     ERROR sha type call mismatch
+E (18927) wolf_hw_sha:     ERROR sha type call mismatch
+E (18933) wolf_hw_sha:     ERROR sha type call mismatch
+E (18939) wolf_hw_sha:     ERROR sha type call mismatch
+E (18945) wolf_hw_sha:     ERROR sha type call mismatch
+E (18951) wolf_hw_sha:     ERROR sha type call mismatch
+E (18957) wolf_hw_sha:     ERROR sha type call mismatch
+E (18963) wolf_hw_sha:     ERROR sha type call mismatch
+E (18969) wolf_hw_sha:     ERROR sha type call mismatch
+E (18975) wolf_hw_sha:     ERROR sha type call mismatch
+E (18981) wolf_hw_sha:     ERROR sha type call mismatch
+E (18986) wolf_hw_sha:     ERROR sha type call mismatch
+E (18992) wolf_hw_sha:     ERROR sha type call mismatch
+E (18998) wolf_hw_sha:     ERROR sha type call mismatch
+E (19004) wolf_hw_sha:     ERROR sha type call mismatch
+E (19010) wolf_hw_sha:     ERROR sha type call mismatch
+E (19016) wolf_hw_sha:     ERROR sha type call mismatch
+E (19022) wolf_hw_sha:     ERROR sha type call mismatch
+E (19028) wolf_hw_sha:     ERROR sha type call mismatch
+E (19034) wolf_hw_sha:     ERROR sha type call mismatch
+E (19040) wolf_hw_sha:     ERROR sha type call mismatch
+E (19045) wolf_hw_sha:     ERROR sha type call mismatch
+E (19051) wolf_hw_sha:     ERROR sha type call mismatch
+E (19057) wolf_hw_sha:     ERROR sha type call mismatch
+E (19063) wolf_hw_sha:     ERROR sha type call mismatch
+E (19069) wolf_hw_sha:     ERROR sha type call mismatch
+E (19075) wolf_hw_sha:     ERROR sha type call mismatch
+E (19081) wolf_hw_sha:     ERROR sha type call mismatch
+E (19087) wolf_hw_sha:     ERROR sha type call mismatch
+E (19093) wolf_hw_sha:     ERROR sha type call mismatch
+E (19099) wolf_hw_sha:     ERROR sha type call mismatch
+E (19104) wolf_hw_sha:     ERROR sha type call mismatch
+E (19110) wolf_hw_sha:     ERROR sha type call mismatch
+E (19116) wolf_hw_sha:     ERROR sha type call mismatch
+E (19122) wolf_hw_sha:     ERROR sha type call mismatch
+E (19128) wolf_hw_sha:     ERROR sha type call mismatch
+E (19134) wolf_hw_sha:     ERROR sha type call mismatch
+E (19140) wolf_hw_sha:     ERROR sha type call mismatch
+E (19146) wolf_hw_sha:     ERROR sha type call mismatch
+E (19152) wolf_hw_sha:     ERROR sha type call mismatch
+E (19158) wolf_hw_sha:     ERROR sha type call mismatch
+E (19163) wolf_hw_sha:     ERROR sha type call mismatch
+E (19169) wolf_hw_sha:     ERROR sha type call mismatch
+E (19175) wolf_hw_sha:     ERROR sha type call mismatch
+E (19181) wolf_hw_sha:     ERROR sha type call mismatch
+E (19187) wolf_hw_sha:     ERROR sha type call mismatch
+E (19193) wolf_hw_sha:     ERROR sha type call mismatch
+E (19199) wolf_hw_sha:     ERROR sha type call mismatch
+E (19205) wolf_hw_sha:     ERROR sha type call mismatch
+E (19211) wolf_hw_sha:     ERROR sha type call mismatch
+E (19217) wolf_hw_sha:     ERROR sha type call mismatch
+E (19223) wolf_hw_sha:     ERROR sha type call mismatch
+E (19228) wolf_hw_sha:     ERROR sha type call mismatch
+E (19234) wolf_hw_sha:     ERROR sha type call mismatch
+E (19240) wolf_hw_sha:     ERROR sha type call mismatch
+E (19246) wolf_hw_sha:     ERROR sha type call mismatch
+E (19252) wolf_hw_sha:     ERROR sha type call mismatch
+E (19258) wolf_hw_sha:     ERROR sha type call mismatch
+E (19264) wolf_hw_sha:     ERROR sha type call mismatch
+E (19270) wolf_hw_sha:     ERROR sha type call mismatch
+E (19276) wolf_hw_sha:     ERROR sha type call mismatch
+E (19282) wolf_hw_sha:     ERROR sha type call mismatch
+E (19287) wolf_hw_sha:     ERROR sha type call mismatch
+E (19293) wolf_hw_sha:     ERROR sha type call mismatch
+E (19299) wolf_hw_sha:     ERROR sha type call mismatch
+E (19305) wolf_hw_sha:     ERROR sha type call mismatch
+E (19311) wolf_hw_sha:     ERROR sha type call mismatch
+E (19317) wolf_hw_sha:     ERROR sha type call mismatch
+E (19323) wolf_hw_sha:     ERROR sha type call mismatch
+E (19329) wolf_hw_sha:     ERROR sha type call mismatch
+E (19335) wolf_hw_sha:     ERROR sha type call mismatch
+E (19341) wolf_hw_sha:     ERROR sha type call mismatch
+E (19346) wolf_hw_sha:     ERROR sha type call mismatch
+E (19352) wolf_hw_sha:     ERROR sha type call mismatch
+E (19358) wolf_hw_sha:     ERROR sha type call mismatch
+E (19364) wolf_hw_sha:     ERROR sha type call mismatch
+E (19370) wolf_hw_sha:     ERROR sha type call mismatch
+E (19376) wolf_hw_sha:     ERROR sha type call mismatch
+E (19382) wolf_hw_sha:     ERROR sha type call mismatch
+E (19388) wolf_hw_sha:     ERROR sha type call mismatch
+E (19394) wolf_hw_sha:     ERROR sha type call mismatch
+E (19400) wolf_hw_sha:     ERROR sha type call mismatch
+E (19406) wolf_hw_sha:     ERROR sha type call mismatch
+E (19411) wolf_hw_sha:     ERROR sha type call mismatch
+E (19417) wolf_hw_sha:     ERROR sha type call mismatch
+E (19423) wolf_hw_sha:     ERROR sha type call mismatch
+E (19429) wolf_hw_sha:     ERROR sha type call mismatch
+E (19435) wolf_hw_sha:     ERROR sha type call mismatch
+E (19441) wolf_hw_sha:     ERROR sha type call mismatch
+E (19447) wolf_hw_sha:     ERROR sha type call mismatch
+E (19453) wolf_hw_sha:     ERROR sha type call mismatch
+E (19459) wolf_hw_sha:     ERROR sha type call mismatch
+E (19465) wolf_hw_sha:     ERROR sha type call mismatch
+E (19470) wolf_hw_sha:     ERROR sha type call mismatch
+E (19476) wolf_hw_sha:     ERROR sha type call mismatch
+E (19482) wolf_hw_sha:     ERROR sha type call mismatch
+E (19488) wolf_hw_sha:     ERROR sha type call mismatch
+E (19494) wolf_hw_sha:     ERROR sha type call mismatch
+E (19500) wolf_hw_sha:     ERROR sha type call mismatch
+E (19506) wolf_hw_sha:     ERROR sha type call mismatch
+E (19512) wolf_hw_sha:     ERROR sha type call mismatch
+E (19518) wolf_hw_sha:     ERROR sha type call mismatch
+E (19524) wolf_hw_sha:     ERROR sha type call mismatch
+E (19529) wolf_hw_sha:     ERROR sha type call mismatch
+E (19535) wolf_hw_sha:     ERROR sha type call mismatch
+E (19541) wolf_hw_sha:     ERROR sha type call mismatch
+E (19547) wolf_hw_sha:     ERROR sha type call mismatch
+E (19553) wolf_hw_sha:     ERROR sha type call mismatch
+E (19559) wolf_hw_sha:     ERROR sha type call mismatch
+E (19565) wolf_hw_sha:     ERROR sha type call mismatch
+E (19571) wolf_hw_sha:     ERROR sha type call mismatch
+E (19577) wolf_hw_sha:     ERROR sha type call mismatch
+E (19583) wolf_hw_sha:     ERROR sha type call mismatch
+E (19588) wolf_hw_sha:     ERROR sha type call mismatch
+E (19594) wolf_hw_sha:     ERROR sha type call mismatch
+E (19600) wolf_hw_sha:     ERROR sha type call mismatch
+E (19606) wolf_hw_sha:     ERROR sha type call mismatch
+E (19612) wolf_hw_sha:     ERROR sha type call mismatch
+E (19618) wolf_hw_sha:     ERROR sha type call mismatch
+E (19624) wolf_hw_sha:     ERROR sha type call mismatch
+E (19630) wolf_hw_sha:     ERROR sha type call mismatch
+E (19636) wolf_hw_sha:     ERROR sha type call mismatch
+E (19642) wolf_hw_sha:     ERROR sha type call mismatch
+E (19648) wolf_hw_sha:     ERROR sha type call mismatch
+E (19653) wolf_hw_sha:     ERROR sha type call mismatch
+E (19659) wolf_hw_sha:     ERROR sha type call mismatch
+E (19665) wolf_hw_sha:     ERROR sha type call mismatch
+E (19671) wolf_hw_sha:     ERROR sha type call mismatch
+E (19677) wolf_hw_sha:     ERROR sha type call mismatch
+E (19683) wolf_hw_sha:     ERROR sha type call mismatch
+E (19689) wolf_hw_sha:     ERROR sha type call mismatch
+E (19695) wolf_hw_sha:     ERROR sha type call mismatch
+E (19701) wolf_hw_sha:     ERROR sha type call mismatch
+E (19707) wolf_hw_sha:     ERROR sha type call mismatch
+E (19712) wolf_hw_sha:     ERROR sha type call mismatch
+E (19718) wolf_hw_sha:     ERROR sha type call mismatch
+E (19724) wolf_hw_sha:     ERROR sha type call mismatch
+E (19730) wolf_hw_sha:     ERROR sha type call mismatch
+E (19736) wolf_hw_sha:     ERROR sha type call mismatch
+E (19742) wolf_hw_sha:     ERROR sha type call mismatch
+E (19748) wolf_hw_sha:     ERROR sha type call mismatch
+E (19754) wolf_hw_sha:     ERROR sha type call mismatch
+E (19760) wolf_hw_sha:     ERROR sha type call mismatch
+E (19766) wolf_hw_sha:     ERROR sha type call mismatch
+E (19771) wolf_hw_sha:     ERROR sha type call mismatch
+E (19777) wolf_hw_sha:     ERROR sha type call mismatch
+E (19783) wolf_hw_sha:     ERROR sha type call mismatch
+E (19789) wolf_hw_sha:     ERROR sha type call mismatch
+E (19795) wolf_hw_sha:     ERROR sha type call mismatch
+E (19801) wolf_hw_sha:     ERROR sha type call mismatch
+E (19807) wolf_hw_sha:     ERROR sha type call mismatch
+E (19813) wolf_hw_sha:     ERROR sha type call mismatch
+E (19819) wolf_hw_sha:     ERROR sha type call mismatch
+E (19825) wolf_hw_sha:     ERROR sha type call mismatch
+E (19831) wolf_hw_sha:     ERROR sha type call mismatch
+E (19836) wolf_hw_sha:     ERROR sha type call mismatch
+E (19842) wolf_hw_sha:     ERROR sha type call mismatch
+E (19848) wolf_hw_sha:     ERROR sha type call mismatch
+E (19854) wolf_hw_sha:     ERROR sha type call mismatch
+E (19860) wolf_hw_sha:     ERROR sha type call mismatch
+E (19866) wolf_hw_sha:     ERROR sha type call mismatch
+E (19872) wolf_hw_sha:     ERROR sha type call mismatch
+E (19878) wolf_hw_sha:     ERROR sha type call mismatch
+E (19884) wolf_hw_sha:     ERROR sha type call mismatch
+E (19890) wolf_hw_sha:     ERROR sha type call mismatch
+E (19895) wolf_hw_sha:     ERROR sha type call mismatch
+E (19901) wolf_hw_sha:     ERROR sha type call mismatch
+E (19907) wolf_hw_sha:     ERROR sha type call mismatch
+E (19913) wolf_hw_sha:     ERROR sha type call mismatch
+E (19919) wolf_hw_sha:     ERROR sha type call mismatch
+E (19925) wolf_hw_sha:     ERROR sha type call mismatch
+E (19931) wolf_hw_sha:     ERROR sha type call mismatch
+E (19937) wolf_hw_sha:     ERROR sha type call mismatch
+E (19943) wolf_hw_sha:     ERROR sha type call mismatch
+E (19949) wolf_hw_sha:     ERROR sha type call mismatch
+SHA-224                     26 KB took 2.358 seconds,   10.857 KB/s Cycles per byte = 22107.61
+SHA-256                  32973 KB took 1.000 seconds, 32972.800 KB/s Cycles per byte =   7.28
+SHA-384                  32819 KB took 1.000 seconds, 32819.200 KB/s Cycles per byte =   7.31
+SHA-512                  32640 KB took 1.000 seconds, 32640.000 KB/s Cycles per byte =   7.35
+SHA-512/224              32666 KB took 1.000 seconds, 32665.600 KB/s Cycles per byte =   7.35
+SHA-512/256              32640 KB took 1.000 seconds, 32640.000 KB/s Cycles per byte =   7.35
+SHA3-224                   998 KB took 1.003 seconds,  995.414 KB/s Cycles per byte = 241.06
+SHA3-256                   947 KB took 1.008 seconds,  939.683 KB/s Cycles per byte = 255.54
+SHA3-384                   742 KB took 1.028 seconds,  722.179 KB/s Cycles per byte = 332.39
+SHA3-512                   512 KB took 1.018 seconds,  502.947 KB/s Cycles per byte = 476.94
+SHAKE128                  1178 KB took 1.020 seconds, 1154.510 KB/s Cycles per byte = 207.87
+SHAKE256                   947 KB took 1.008 seconds,  939.683 KB/s Cycles per byte = 255.55
+RIPEMD                    6042 KB took 1.000 seconds, 6041.600 KB/s Cycles per byte =  39.73
+HMAC-MD5                 17869 KB took 1.001 seconds, 17850.949 KB/s Cycles per byte =  13.44
+HMAC-SHA                 33536 KB took 1.000 seconds, 33536.000 KB/s Cycles per byte =   7.15
+HMAC-SHA224 (error?)        26 KB took 2.370 seconds,   10.802 KB/s Cycles per byte = 22218.14
+HMAC-SHA256              32282 KB took 1.000 seconds, 32281.600 KB/s Cycles per byte =   7.43
+HMAC-SHA384              31872 KB took 1.000 seconds, 31872.000 KB/s Cycles per byte =   7.53
+HMAC-SHA512              31744 KB took 1.000 seconds, 31744.000 KB/s Cycles per byte =   7.56
+PBKDF2                       2 KB took 1.015 seconds,    1.702 KB/s Cycles per byte = 141055.16
+RSA     2048   public        64 ops took 1.016 sec, avg 15.875 ms, 62.992 ops/sec
+RSA     2048  private         6 ops took 1.411 sec, avg 235.167 ms, 4.252 ops/sec
+ECC   [      SECP256R1]   256  key gen         4 ops took 1.231 sec, avg 307.750 ms, 3.249 ops/sec
+ECDHE [      SECP256R1]   256    agree         4 ops took 1.231 sec, avg 307.750 ms, 3.249 ops/sec
+ECDSA [      SECP256R1]   256     sign         4 ops took 1.240 sec, avg 310.000 ms, 3.226 ops/sec
+ECDSA [      SECP256R1]   256   verify         2 ops took 1.182 sec, avg 591.000 ms, 1.692 ops/sec
+CURVE  25519  key gen         5 ops took 1.016 sec, avg 203.200 ms, 4.921 ops/sec
+CURVE  25519    agree         6 ops took 1.212 sec, avg 202.000 ms, 4.950 ops/sec
+ED     25519  key gen       103 ops took 1.000 sec, avg 9.709 ms, 103.000 ops/sec
+ED     25519     sign        90 ops took 1.007 sec, avg 11.189 ms, 89.374 ops/sec
+ED     25519   verify        56 ops took 1.014 sec, avg 18.107 ms, 55.227 ops/sec
+Benchmark complete
