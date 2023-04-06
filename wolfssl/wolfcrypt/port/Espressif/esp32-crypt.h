@@ -75,6 +75,8 @@
     extern "C" {
 #endif
 
+int esp_ShowExtendedSystemInfo(void);
+
 int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
 int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);

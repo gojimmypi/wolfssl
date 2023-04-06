@@ -26,6 +26,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
 #include <wolfssl/version.h>
+#include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
 #ifndef WOLFSSL_ESPIDF
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
 #endif
@@ -190,7 +191,7 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
-    ShowExtendedSystemInfo();
+    esp_ShowExtendedSystemInfo();
 #endif
 
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);

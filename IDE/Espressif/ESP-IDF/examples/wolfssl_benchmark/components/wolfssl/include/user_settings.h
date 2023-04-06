@@ -165,11 +165,15 @@
 #define HAVE_VERSION_EXTENDED_INFO
 #define HAVE_WC_INTROSPECTION
 
+/* allows for all version info, even that supporessed with intospection */
+#define ALLOW_BINARY_MISMATCH_INTROSPECTION
+
 #define  HAVE_SESSION_TICKET
 #define WOLFSSL_RSA_KEY_SIZE 2048
 
 // #define WOLFSSL_HAVE_SP_RSA
 // #define WOLFSSL_SP_MATH_ALL
+
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     /* #define WOLFSSL_SP_RISCV32 */
