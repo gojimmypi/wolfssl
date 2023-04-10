@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.003 for wolfssh
+# Version 5.6.0.004 for wolfssh
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -318,7 +318,8 @@ else()
 
     set(COMPONENT_SRCEXCLUDE
         "\"${WOLFSSL_ROOT}/src/bio.c\""
-        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\"" # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_asn1.c\"" # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\""   # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/conf.c\""
         "\"${WOLFSSL_ROOT}/src/misc.c\""
         "\"${WOLFSSL_ROOT}/src/pk.c\""
