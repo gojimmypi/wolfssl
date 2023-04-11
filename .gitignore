@@ -407,7 +407,7 @@ async
 # Generated user_settings_asm.h.
 user_settings_asm.h
 
-# VisualGD
+# VisualGDB
 **/.visualgdb
 
 # Espressif sdk config default should be saved in sdkconfig.defaults
