@@ -677,7 +677,6 @@
 #endif
 
 #ifdef WOLFSSL_RIOT_OS
-    #define NO_WRITEV
     #define TFM_NO_ASM
     #define NO_FILESYSTEM
     #define USE_CERT_BUFFERS_2048
@@ -1995,6 +1994,9 @@ extern void uITRON4_free(void *p) ;
     defined(WOLFSSL_SP_MIPS64) || defined(WOLFSSL_SP_MIPS)
     #undef WOLFSSL_SP_INT_DIGIT_ALIGN
     #define WOLFSSL_SP_INT_DIGIT_ALIGN
+#endif
+#ifdef __APPLE__
+    #define WOLFSSL_SP_NO_DYN_STACK
 #endif
 
 #ifdef __INTEL_COMPILER

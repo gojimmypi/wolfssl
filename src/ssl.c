@@ -6641,8 +6641,535 @@ static int ProcessUserChain(WOLFSSL_CTX* ctx, const unsigned char* buff,
     return ret;
 }
 
-static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl, DerBuffer* der,
-    int* keySz, word32* idx, int* resetSuites, int* keyFormat, void* heap, int devId)
+#ifndef NO_RSA
+#if !defined(HAVE_FIPS) || (defined(HAVE_FIPS_VERSION) && \
+    (HAVE_FIPS_VERSION > 2))
+static int ProcessBufferTryDecodeRsa(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    int devId)
+{
+    int ret;
+
+    (void)devId;
+
+    *idx = 0;
+    ret = wc_RsaPrivateKeyValidate(der->buffer, idx, keySz, der->length);
+#ifdef WOLF_PRIVATE_KEY_ID
+    if ((ret != 0) && (devId != INVALID_DEVID
+    #ifdef HAVE_PK_CALLBACKS
+        || wolfSSL_CTX_IsPrivatePkSet(ctx)
+    #endif
+    )) {
+        word32 nSz;
+
+        /* if using crypto or PK callbacks, try public key decode */
+        *idx = 0;
+        ret = wc_RsaPublicKeyDecode_ex(der->buffer, idx, der->length, NULL,
+            &nSz, NULL, NULL);
+        if (ret == 0) {
+            *keySz = (int)nSz;
+        }
+    }
+#endif
+    if (ret != 0) {
+    #if !defined(HAVE_ECC) && !defined(HAVE_ED25519) && \
+        !defined(HAVE_ED448) && !defined(HAVE_PQC)
+        WOLFSSL_MSG("RSA decode failed and other algorithms "
+                    "not enabled to try");
+        ret = WOLFSSL_BAD_FILE;
+    #else
+        ret = 0; /* continue trying other algorithms */
+    #endif
+    }
+    else {
+        /* check that the size of the RSA key is enough */
+        int minRsaSz = ssl ? ssl->options.minRsaKeySz : ctx->minRsaKeySz;
+        if (*keySz < minRsaSz) {
+            ret = RSA_KEY_SIZE_E;
+            WOLFSSL_MSG("Private Key size too small");
+        }
+
+        if (ssl) {
+            ssl->buffers.keyType = rsa_sa_algo;
+            ssl->buffers.keySz = *keySz;
+        }
+        else {
+            ctx->privateKeyType = rsa_sa_algo;
+            ctx->privateKeySz = *keySz;
+        }
+
+        *keyFormat = RSAk;
+
+        if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
+            ssl->options.haveStaticECC = 0;
+            *resetSuites = 1;
+        }
+    }
+
+    return ret;
+}
+#else
+static int ProcessBufferTryDecodeRsa(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap, int devId)
+{
+    int ret;
+
+    /* make sure RSA key can be used */
+#ifdef WOLFSSL_SMALL_STACK
+    RsaKey* key;
+#else
+    RsaKey  key[1];
+#endif
+
+#ifdef WOLFSSL_SMALL_STACK
+    key = (RsaKey*)XMALLOC(sizeof(RsaKey), heap, DYNAMIC_TYPE_RSA);
+    if (key == NULL)
+        return MEMORY_E;
+#endif
+
+    ret = wc_InitRsaKey_ex(key, heap, devId);
+    if (ret == 0) {
+        *idx = 0;
+        ret = wc_RsaPrivateKeyDecode(der->buffer, idx, key, der->length);
+    #ifdef WOLF_PRIVATE_KEY_ID
+        if (ret != 0 && (devId != INVALID_DEVID
+        #ifdef HAVE_PK_CALLBACKS
+            || wolfSSL_CTX_IsPrivatePkSet(ctx)
+        #endif
+        )) {
+            /* if using crypto or PK callbacks, try public key decode */
+            *idx = 0;
+            ret = wc_RsaPublicKeyDecode(der->buffer, idx, key, der->length);
+        }
+    #endif
+        if (ret != 0) {
+        #if !defined(HAVE_ECC) && !defined(HAVE_ED25519) && \
+            !defined(HAVE_ED448) && !defined(HAVE_PQC)
+            WOLFSSL_MSG("RSA decode failed and other algorithms "
+                        "not enabled to try");
+            ret = WOLFSSL_BAD_FILE;
+        #else
+            ret = 0; /* continue trying other algorithms */
+        #endif
+        }
+        else {
+            /* check that the size of the RSA key is enough */
+            int minRsaSz = ssl ? ssl->options.minRsaKeySz : ctx->minRsaKeySz;
+            *keySz = wc_RsaEncryptSize((RsaKey*)key);
+            if (*keySz < minRsaSz) {
+                ret = RSA_KEY_SIZE_E;
+                WOLFSSL_MSG("Private Key size too small");
+            }
+
+            if (ssl) {
+                ssl->buffers.keyType = rsa_sa_algo;
+                ssl->buffers.keySz = *keySz;
+            }
+            else {
+                ctx->privateKeyType = rsa_sa_algo;
+                ctx->privateKeySz = *keySz;
+            }
+
+            *keyFormat = RSAk;
+
+            if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
+                ssl->options.haveStaticECC = 0;
+                *resetSuites = 1;
+            }
+        }
+
+        wc_FreeRsaKey(key);
+    }
+
+#ifdef WOLFSSL_SMALL_STACK
+    XFREE(key, heap, DYNAMIC_TYPE_RSA);
+#endif
+
+    return ret;
+}
+#endif
+#endif /* !NO_RSA */
+
+#ifdef HAVE_ECC
+static int ProcessBufferTryDecodeEcc(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap, int devId)
+{
+    int ret = 0;
+    /* make sure ECC key can be used */
+#ifdef WOLFSSL_SMALL_STACK
+    ecc_key* key;
+#else
+    ecc_key  key[1];
+#endif
+
+#ifdef WOLFSSL_SMALL_STACK
+    key = (ecc_key*)XMALLOC(sizeof(ecc_key), heap, DYNAMIC_TYPE_ECC);
+    if (key == NULL)
+        return MEMORY_E;
+#endif
+
+    if (wc_ecc_init_ex(key, heap, devId) == 0) {
+        *idx = 0;
+        ret = wc_EccPrivateKeyDecode(der->buffer, idx, key, der->length);
+    #ifdef WOLF_PRIVATE_KEY_ID
+        if (ret != 0 && (devId != INVALID_DEVID
+        #ifdef HAVE_PK_CALLBACKS
+            || wolfSSL_CTX_IsPrivatePkSet(ctx)
+        #endif
+        )) {
+            /* if using crypto or PK callbacks, try public key decode */
+            *idx = 0;
+            ret = wc_EccPublicKeyDecode(der->buffer, idx, key, der->length);
+        }
+    #endif
+        if (ret == 0) {
+            /* check for minimum ECC key size and then free */
+            int minKeySz = ssl ? ssl->options.minEccKeySz : ctx->minEccKeySz;
+            *keySz = wc_ecc_size(key);
+            if (*keySz < minKeySz) {
+                WOLFSSL_MSG("ECC private key too small");
+                ret = ECC_KEY_SIZE_E;
+            }
+
+            *keyFormat = ECDSAk;
+            if (ssl) {
+                ssl->options.haveStaticECC = 1;
+                ssl->buffers.keyType = ecc_dsa_sa_algo;
+                ssl->buffers.keySz = *keySz;
+            }
+            else {
+                ctx->haveStaticECC = 1;
+                ctx->privateKeyType = ecc_dsa_sa_algo;
+                ctx->privateKeySz = *keySz;
+            }
+
+            if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
+                *resetSuites = 1;
+            }
+        }
+        else {
+            ret = 0; /* continue trying other algorithms */
+        }
+
+        wc_ecc_free(key);
+    }
+
+#ifdef WOLFSSL_SMALL_STACK
+    XFREE(key, heap, DYNAMIC_TYPE_ECC);
+#endif
+    return ret;
+}
+#endif /* HAVE_ECC */
+
+#if defined(HAVE_ED25519) && defined(HAVE_ED25519_KEY_IMPORT)
+static int ProcessBufferTryDecodeEd25519(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap, int devId)
+{
+    int ret;
+    /* make sure Ed25519 key can be used */
+#ifdef WOLFSSL_SMALL_STACK
+    ed25519_key* key;
+#else
+    ed25519_key  key[1];
+#endif
+
+#ifdef WOLFSSL_SMALL_STACK
+    key = (ed25519_key*)XMALLOC(sizeof(ed25519_key), heap,
+                                                          DYNAMIC_TYPE_ED25519);
+    if (key == NULL)
+        return MEMORY_E;
+#endif
+
+    ret = wc_ed25519_init_ex(key, heap, devId);
+    if (ret == 0) {
+        *idx = 0;
+        ret = wc_Ed25519PrivateKeyDecode(der->buffer, idx, key, der->length);
+    #ifdef WOLF_PRIVATE_KEY_ID
+        if (ret != 0 && (devId != INVALID_DEVID
+        #ifdef HAVE_PK_CALLBACKS
+            || wolfSSL_CTX_IsPrivatePkSet(ctx)
+        #endif
+        )) {
+            /* if using crypto or PK callbacks, try public key decode */
+            *idx = 0;
+            ret = wc_Ed25519PublicKeyDecode(der->buffer, idx, key, der->length);
+        }
+    #endif
+        if (ret == 0) {
+            /* check for minimum key size and then free */
+            int minKeySz = ssl ? ssl->options.minEccKeySz : ctx->minEccKeySz;
+            *keySz = ED25519_KEY_SIZE;
+            if (*keySz < minKeySz) {
+                WOLFSSL_MSG("ED25519 private key too small");
+                ret = ECC_KEY_SIZE_E;
+            }
+            if (ret == 0) {
+                if (ssl) {
+                    ssl->buffers.keyType = ed25519_sa_algo;
+                    ssl->buffers.keySz = *keySz;
+                }
+                else if (ctx) {
+                    ctx->privateKeyType = ed25519_sa_algo;
+                    ctx->privateKeySz = *keySz;
+                }
+
+                *keyFormat = ED25519k;
+                if (ssl != NULL) {
+                    /* ED25519 requires caching enabled for tracking message
+                     * hash used in EdDSA_Update for signing */
+                    ssl->options.cacheMessages = 1;
+                    if (ssl->options.side == WOLFSSL_SERVER_END) {
+                        *resetSuites = 1;
+                    }
+                }
+            }
+        }
+        else {
+            ret = 0; /* continue trying other algorithms */
+        }
+
+        wc_ed25519_free(key);
+    }
+
+#ifdef WOLFSSL_SMALL_STACK
+    XFREE(key, heap, DYNAMIC_TYPE_ED25519);
+#endif
+    return ret;
+}
+#endif /* HAVE_ED25519 && HAVE_ED25519_KEY_IMPORT */
+
+#if defined(HAVE_ED448) && defined(HAVE_ED448_KEY_IMPORT)
+static int ProcessBufferTryDecodeEd448(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap, int devId)
+{
+    int ret;
+    /* make sure Ed448 key can be used */
+#ifdef WOLFSSL_SMALL_STACK
+    ed448_key* key = NULL;
+#else
+    ed448_key  key[1];
+#endif
+
+#ifdef WOLFSSL_SMALL_STACK
+    key = (ed448_key*)XMALLOC(sizeof(ed448_key), heap, DYNAMIC_TYPE_ED448);
+    if (key == NULL)
+        return MEMORY_E;
+#endif
+
+    ret = wc_ed448_init_ex(key, heap, devId);
+    if (ret == 0) {
+        *idx = 0;
+        ret = wc_Ed448PrivateKeyDecode(der->buffer, idx, key, der->length);
+    #ifdef WOLF_PRIVATE_KEY_ID
+        if (ret != 0 && (devId != INVALID_DEVID
+        #ifdef HAVE_PK_CALLBACKS
+            || wolfSSL_CTX_IsPrivatePkSet(ctx)
+        #endif
+        )) {
+            /* if using crypto or PK callbacks, try public key decode */
+            *idx = 0;
+            ret = wc_Ed448PublicKeyDecode(der->buffer, idx, key, der->length);
+        }
+    #endif
+        if (ret == 0) {
+            /* check for minimum key size and then free */
+            int minKeySz = ssl ? ssl->options.minEccKeySz : ctx->minEccKeySz;
+            *keySz = ED448_KEY_SIZE;
+            if (*keySz < minKeySz) {
+                WOLFSSL_MSG("ED448 private key too small");
+                ret = ECC_KEY_SIZE_E;
+            }
+        }
+        if (ret == 0) {
+            if (ssl) {
+                ssl->buffers.keyType = ed448_sa_algo;
+                ssl->buffers.keySz = *keySz;
+            }
+            else if (ctx) {
+                ctx->privateKeyType = ed448_sa_algo;
+                ctx->privateKeySz = *keySz;
+            }
+
+            *keyFormat = ED448k;
+            if (ssl != NULL) {
+                /* ED448 requires caching enabled for tracking message
+                 * hash used in EdDSA_Update for signing */
+                ssl->options.cacheMessages = 1;
+                if (ssl->options.side == WOLFSSL_SERVER_END) {
+                    *resetSuites = 1;
+                }
+            }
+        }
+
+        wc_ed448_free(key);
+    }
+
+#ifdef WOLFSSL_SMALL_STACK
+    XFREE(key, heap, DYNAMIC_TYPE_ED448);
+#endif
+    return ret;
+}
+#endif /* HAVE_ED448 && HAVE_ED448_KEY_IMPORT */
+
+#if defined(HAVE_PQC)
+#if defined(HAVE_FALCON)
+static int ProcessBufferTryDecodeFalcon(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap)
+{
+    int ret;
+    /* make sure Falcon key can be used */
+    falcon_key* key = (falcon_key*)XMALLOC(sizeof(falcon_key), heap,
+                                           DYNAMIC_TYPE_FALCON);
+    if (key == NULL) {
+        return MEMORY_E;
+    }
+    ret = wc_falcon_init(key);
+    if (ret == 0) {
+        if (*keyFormat == FALCON_LEVEL1k) {
+            ret = wc_falcon_set_level(key, 1);
+        }
+        else if (*keyFormat == FALCON_LEVEL5k) {
+            ret = wc_falcon_set_level(key, 5);
+        }
+        else {
+            /* What if *keyformat is 0? We might want to do something more
+             * graceful here. */
+            wc_falcon_free(key);
+            ret = ALGO_ID_E;
+        }
+    }
+
+    if (ret == 0) {
+        *idx = 0;
+        ret = wc_falcon_import_private_only(der->buffer, der->length, key);
+        if (ret == 0) {
+            /* check for minimum key size and then free */
+            int minKeySz = ssl ? ssl->options.minFalconKeySz :
+                                 ctx->minFalconKeySz;
+            *keySz = FALCON_MAX_KEY_SIZE;
+            if (*keySz < minKeySz) {
+                WOLFSSL_MSG("Falcon private key too small");
+                ret = FALCON_KEY_SIZE_E;
+            }
+            if (ssl) {
+                if (*keyFormat == FALCON_LEVEL1k) {
+                    ssl->buffers.keyType = falcon_level1_sa_algo;
+                }
+                else {
+                    ssl->buffers.keyType = falcon_level5_sa_algo;
+                }
+                ssl->buffers.keySz = *keySz;
+            }
+            else {
+                if (*keyFormat == FALCON_LEVEL1k) {
+                    ctx->privateKeyType = falcon_level1_sa_algo;
+                }
+                else {
+                    ctx->privateKeyType = falcon_level5_sa_algo;
+                }
+                ctx->privateKeySz = *keySz;
+            }
+
+            if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
+                *resetSuites = 1;
+            }
+        }
+        wc_falcon_free(key);
+    }
+    XFREE(key, heap, DYNAMIC_TYPE_FALCON);
+    return ret;
+}
+#endif
+
+#if defined(HAVE_DILITHIUM)
+static int ProcessBufferTryDecodeDilithium(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap)
+{
+    int ret;
+    /* make sure Dilithium key can be used */
+    dilithium_key* key = (dilithium_key*)XMALLOC(sizeof(dilithium_key), heap,
+                                                 DYNAMIC_TYPE_DILITHIUM);
+    if (key == NULL) {
+        return MEMORY_E;
+    }
+    ret = wc_dilithium_init(key);
+    if (ret == 0) {
+        if (*keyFormat == DILITHIUM_LEVEL2k) {
+            ret = wc_dilithium_set_level(key, 2);
+        }
+        else if (*keyFormat == DILITHIUM_LEVEL3k) {
+            ret = wc_dilithium_set_level(key, 3);
+        }
+        else if (*keyFormat == DILITHIUM_LEVEL5k) {
+            ret = wc_dilithium_set_level(key, 5);
+        }
+        else {
+            /* What if *keyformat is 0? We might want to do something more
+             * graceful here. */
+            wc_dilithium_free(key);
+            ret = ALGO_ID_E;
+        }
+    }
+
+    if (ret == 0) {
+        *idx = 0;
+        ret = wc_dilithium_import_private_only(der->buffer, der->length, key);
+        if (ret == 0) {
+            /* check for minimum key size and then free */
+            int minKeySz = ssl ? ssl->options.minDilithiumKeySz :
+                                 ctx->minDilithiumKeySz;
+            *keySz = DILITHIUM_MAX_KEY_SIZE;
+            if (*keySz < minKeySz) {
+                WOLFSSL_MSG("Dilithium private key too small");
+                ret = DILITHIUM_KEY_SIZE_E;
+            }
+            if (ssl) {
+                if (*keyFormat == DILITHIUM_LEVEL2k) {
+                    ssl->buffers.keyType = dilithium_level2_sa_algo;
+                }
+                else if (*keyFormat == DILITHIUM_LEVEL3k) {
+                    ssl->buffers.keyType = dilithium_level3_sa_algo;
+                }
+                else if (*keyFormat == DILITHIUM_LEVEL5k) {
+                    ssl->buffers.keyType = dilithium_level5_sa_algo;
+                }
+                ssl->buffers.keySz = *keySz;
+            }
+            else {
+                if (*keyFormat == DILITHIUM_LEVEL2k) {
+                    ctx->privateKeyType = dilithium_level2_sa_algo;
+                }
+                else if (*keyFormat == DILITHIUM_LEVEL3k) {
+                    ctx->privateKeyType = dilithium_level3_sa_algo;
+                }
+                else if (*keyFormat == DILITHIUM_LEVEL5k) {
+                    ctx->privateKeyType = dilithium_level5_sa_algo;
+                }
+                ctx->privateKeySz = *keySz;
+            }
+
+            if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
+                *resetSuites = 1;
+            }
+        }
+        wc_dilithium_free(key);
+    }
+    XFREE(key, heap, DYNAMIC_TYPE_DILITHIUM);
+
+    return ret;
+}
+#endif /* HAVE_DILITHIUM */
+#endif /* HAVE_PQC */
+
+static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+    DerBuffer* der, int* keySz, word32* idx, int* resetSuites, int* keyFormat,
+    void* heap, int devId)
 {
     int ret = 0;
 
@@ -6656,294 +7183,38 @@ static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl, DerBuffer* der
 
 #ifndef NO_RSA
     if ((*keyFormat == 0 || *keyFormat == RSAk)) {
-        /* make sure RSA key can be used */
-    #ifdef WOLFSSL_SMALL_STACK
-        RsaKey* key;
-    #else
-        RsaKey  key[1];
-    #endif
-
-    #ifdef WOLFSSL_SMALL_STACK
-        key = (RsaKey*)XMALLOC(sizeof(RsaKey), heap, DYNAMIC_TYPE_RSA);
-        if (key == NULL)
-            return MEMORY_E;
-    #endif
-
-        ret = wc_InitRsaKey_ex(key, heap, devId);
-        if (ret == 0) {
-            *idx = 0;
-            ret = wc_RsaPrivateKeyDecode(der->buffer, idx, key, der->length);
-        #ifdef WOLF_PRIVATE_KEY_ID
-            if (ret != 0 && (devId != INVALID_DEVID
-            #ifdef HAVE_PK_CALLBACKS
-                || wolfSSL_CTX_IsPrivatePkSet(ctx)
-            #endif
-            )) {
-                /* if using crypto or PK callbacks, try public key decode */
-                *idx = 0;
-                ret = wc_RsaPublicKeyDecode(der->buffer, idx, key, der->length);
-            }
-        #endif
-            if (ret != 0) {
-            #if !defined(HAVE_ECC) && !defined(HAVE_ED25519) && \
-                !defined(HAVE_ED448) && !defined(HAVE_PQC)
-                WOLFSSL_MSG("RSA decode failed and other algorithms "
-                            "not enabled to try");
-                ret = WOLFSSL_BAD_FILE;
-            #else
-                ret = 0; /* continue trying other algorithms */
-            #endif
-            }
-            else {
-                /* check that the size of the RSA key is enough */
-                int minRsaSz = ssl ? ssl->options.minRsaKeySz :
-                    ctx->minRsaKeySz;
-                *keySz = wc_RsaEncryptSize((RsaKey*)key);
-                if (*keySz < minRsaSz) {
-                    ret = RSA_KEY_SIZE_E;
-                    WOLFSSL_MSG("Private Key size too small");
-                }
-
-                if (ssl) {
-                    ssl->buffers.keyType = rsa_sa_algo;
-                    ssl->buffers.keySz = *keySz;
-                }
-                else {
-                    ctx->privateKeyType = rsa_sa_algo;
-                    ctx->privateKeySz = *keySz;
-                }
-
-                *keyFormat = RSAk;
-
-                if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
-                    ssl->options.haveStaticECC = 0;
-                    *resetSuites = 1;
-                }
-            }
-
-            wc_FreeRsaKey(key);
-        }
-
-    #ifdef WOLFSSL_SMALL_STACK
-        XFREE(key, heap, DYNAMIC_TYPE_RSA);
-    #endif
+#if !defined(HAVE_FIPS) || (defined(HAVE_FIPS_VERSION) && \
+    (HAVE_FIPS_VERSION > 2))
+        ret = ProcessBufferTryDecodeRsa(ctx, ssl, der, keySz, idx, resetSuites,
+            keyFormat, devId);
+#else
+        ret = ProcessBufferTryDecodeRsa(ctx, ssl, der, keySz, idx, resetSuites,
+            keyFormat, heap, devId);
+#endif
         if (ret != 0)
             return ret;
     }
 #endif
 #ifdef HAVE_ECC
     if ((*keyFormat == 0 || *keyFormat == ECDSAk)) {
-        /* make sure ECC key can be used */
-    #ifdef WOLFSSL_SMALL_STACK
-        ecc_key* key;
-    #else
-        ecc_key  key[1];
-    #endif
-
-    #ifdef WOLFSSL_SMALL_STACK
-        key = (ecc_key*)XMALLOC(sizeof(ecc_key), heap, DYNAMIC_TYPE_ECC);
-        if (key == NULL)
-            return MEMORY_E;
-    #endif
-
-        if (wc_ecc_init_ex(key, heap, devId) == 0) {
-            *idx = 0;
-            ret = wc_EccPrivateKeyDecode(der->buffer, idx, key, der->length);
-        #ifdef WOLF_PRIVATE_KEY_ID
-            if (ret != 0 && (devId != INVALID_DEVID
-            #ifdef HAVE_PK_CALLBACKS
-                || wolfSSL_CTX_IsPrivatePkSet(ctx)
-            #endif
-            )) {
-                /* if using crypto or PK callbacks, try public key decode */
-                *idx = 0;
-                ret = wc_EccPublicKeyDecode(der->buffer, idx, key, der->length);
-            }
-        #endif
-            if (ret == 0) {
-                /* check for minimum ECC key size and then free */
-                int minKeySz = ssl ? ssl->options.minEccKeySz :
-                                                        ctx->minEccKeySz;
-                *keySz = wc_ecc_size(key);
-                if (*keySz < minKeySz) {
-                    WOLFSSL_MSG("ECC private key too small");
-                    ret = ECC_KEY_SIZE_E;
-                }
-
-                *keyFormat = ECDSAk;
-                if (ssl) {
-                    ssl->options.haveStaticECC = 1;
-                    ssl->buffers.keyType = ecc_dsa_sa_algo;
-                    ssl->buffers.keySz = *keySz;
-                }
-                else {
-                    ctx->haveStaticECC = 1;
-                    ctx->privateKeyType = ecc_dsa_sa_algo;
-                    ctx->privateKeySz = *keySz;
-                }
-
-                if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
-                    *resetSuites = 1;
-                }
-            }
-            else {
-                ret = 0; /* continue trying other algorithms */
-            }
-
-            wc_ecc_free(key);
-        }
-
-    #ifdef WOLFSSL_SMALL_STACK
-        XFREE(key, heap, DYNAMIC_TYPE_ECC);
-    #endif
+        ret = ProcessBufferTryDecodeEcc(ctx, ssl, der, keySz, idx, resetSuites,
+            keyFormat, heap, devId);
         if (ret != 0)
             return ret;
     }
 #endif /* HAVE_ECC */
 #if defined(HAVE_ED25519) && defined(HAVE_ED25519_KEY_IMPORT)
     if ((*keyFormat == 0 || *keyFormat == ED25519k)) {
-        /* make sure Ed25519 key can be used */
-    #ifdef WOLFSSL_SMALL_STACK
-        ed25519_key* key;
-    #else
-        ed25519_key  key[1];
-    #endif
-
-    #ifdef WOLFSSL_SMALL_STACK
-        key = (ed25519_key*)XMALLOC(sizeof(ed25519_key), heap,
-                                                      DYNAMIC_TYPE_ED25519);
-        if (key == NULL)
-            return MEMORY_E;
-    #endif
-
-        ret = wc_ed25519_init_ex(key, heap, devId);
-        if (ret == 0) {
-            *idx = 0;
-            ret = wc_Ed25519PrivateKeyDecode(der->buffer, idx, key, der->length);
-        #ifdef WOLF_PRIVATE_KEY_ID
-            if (ret != 0 && (devId != INVALID_DEVID
-            #ifdef HAVE_PK_CALLBACKS
-                || wolfSSL_CTX_IsPrivatePkSet(ctx)
-            #endif
-            )) {
-                /* if using crypto or PK callbacks, try public key decode */
-                *idx = 0;
-                ret = wc_Ed25519PublicKeyDecode(der->buffer, idx, key,
-                                                der->length);
-            }
-        #endif
-            if (ret == 0) {
-                /* check for minimum key size and then free */
-                int minKeySz = ssl ? ssl->options.minEccKeySz :
-                                                           ctx->minEccKeySz;
-                *keySz = ED25519_KEY_SIZE;
-                if (*keySz < minKeySz) {
-                    WOLFSSL_MSG("ED25519 private key too small");
-                    ret = ECC_KEY_SIZE_E;
-                }
-                if (ret == 0) {
-                    if (ssl) {
-                        ssl->buffers.keyType = ed25519_sa_algo;
-                        ssl->buffers.keySz = *keySz;
-                    }
-                    else if (ctx) {
-                        ctx->privateKeyType = ed25519_sa_algo;
-                        ctx->privateKeySz = *keySz;
-                    }
-
-                    *keyFormat = ED25519k;
-                    if (ssl != NULL) {
-                        /* ED25519 requires caching enabled for tracking message
-                         * hash used in EdDSA_Update for signing */
-                        ssl->options.cacheMessages = 1;
-                        if (ssl->options.side == WOLFSSL_SERVER_END) {
-                            *resetSuites = 1;
-                        }
-                    }
-                }
-            }
-            else {
-                ret = 0; /* continue trying other algorithms */
-            }
-
-            wc_ed25519_free(key);
-        }
-
-    #ifdef WOLFSSL_SMALL_STACK
-        XFREE(key, heap, DYNAMIC_TYPE_ED25519);
-    #endif
+        ret = ProcessBufferTryDecodeEd25519(ctx, ssl, der, keySz, idx,
+            resetSuites, keyFormat, heap, devId);
         if (ret != 0)
             return ret;
     }
 #endif /* HAVE_ED25519 && HAVE_ED25519_KEY_IMPORT */
 #if defined(HAVE_ED448) && defined(HAVE_ED448_KEY_IMPORT)
     if ((*keyFormat == 0 || *keyFormat == ED448k)) {
-        /* make sure Ed448 key can be used */
-    #ifdef WOLFSSL_SMALL_STACK
-        ed448_key* key = NULL;
-    #else
-        ed448_key  key[1];
-    #endif
-
-    #ifdef WOLFSSL_SMALL_STACK
-        key = (ed448_key*)XMALLOC(sizeof(ed448_key), heap, DYNAMIC_TYPE_ED448);
-        if (key == NULL)
-            return MEMORY_E;
-    #endif
-
-        ret = wc_ed448_init(key);
-        if (ret == 0) {
-            *idx = 0;
-            ret = wc_Ed448PrivateKeyDecode(der->buffer, idx, key, der->length);
-        #ifdef WOLF_PRIVATE_KEY_ID
-            if (ret != 0 && (devId != INVALID_DEVID
-            #ifdef HAVE_PK_CALLBACKS
-                || wolfSSL_CTX_IsPrivatePkSet(ctx)
-            #endif
-            )) {
-                /* if using crypto or PK callbacks, try public key decode */
-                *idx = 0;
-                ret = wc_Ed448PublicKeyDecode(der->buffer, idx, key,
-                                              der->length);
-            }
-        #endif
-            if (ret == 0) {
-                /* check for minimum key size and then free */
-                int minKeySz = ssl ? ssl->options.minEccKeySz :
-                                                               ctx->minEccKeySz;
-                *keySz = ED448_KEY_SIZE;
-                if (*keySz < minKeySz) {
-                    WOLFSSL_MSG("ED448 private key too small");
-                    ret = ECC_KEY_SIZE_E;
-                }
-            }
-            if (ret == 0) {
-                if (ssl) {
-                    ssl->buffers.keyType = ed448_sa_algo;
-                    ssl->buffers.keySz = *keySz;
-                }
-                else if (ctx) {
-                    ctx->privateKeyType = ed448_sa_algo;
-                    ctx->privateKeySz = *keySz;
-                }
-
-                *keyFormat = ED448k;
-                if (ssl != NULL) {
-                    /* ED448 requires caching enabled for tracking message
-                     * hash used in EdDSA_Update for signing */
-                    ssl->options.cacheMessages = 1;
-                    if (ssl->options.side == WOLFSSL_SERVER_END) {
-                        *resetSuites = 1;
-                    }
-                }
-            }
-
-            wc_ed448_free(key);
-        }
-
-    #ifdef WOLFSSL_SMALL_STACK
-        XFREE(key, heap, DYNAMIC_TYPE_ED448);
-    #endif
+        ret = ProcessBufferTryDecodeEd448(ctx, ssl, der, keySz, idx,
+            resetSuites, keyFormat, heap, devId);
         if (ret != 0)
             return ret;
     }
@@ -6952,66 +7223,8 @@ static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl, DerBuffer* der
 #if defined(HAVE_FALCON)
     if (((*keyFormat == 0) || (*keyFormat == FALCON_LEVEL1k) ||
          (*keyFormat == FALCON_LEVEL5k))) {
-        /* make sure Falcon key can be used */
-        falcon_key* key = (falcon_key*)XMALLOC(sizeof(falcon_key), heap,
-                                               DYNAMIC_TYPE_FALCON);
-        if (key == NULL) {
-            return MEMORY_E;
-        }
-        ret = wc_falcon_init(key);
-        if (ret == 0) {
-            if (*keyFormat == FALCON_LEVEL1k) {
-                ret = wc_falcon_set_level(key, 1);
-            }
-            else if (*keyFormat == FALCON_LEVEL5k) {
-                ret = wc_falcon_set_level(key, 5);
-            }
-            else {
-                /* What if *keyformat is 0? We might want to do something more
-                 * graceful here. */
-                wc_falcon_free(key);
-                ret = ALGO_ID_E;
-            }
-        }
-
-        if (ret == 0) {
-            *idx = 0;
-            ret = wc_falcon_import_private_only(der->buffer, der->length, key);
-            if (ret == 0) {
-                /* check for minimum key size and then free */
-                int minKeySz = ssl ? ssl->options.minFalconKeySz :
-                                     ctx->minFalconKeySz;
-                *keySz = FALCON_MAX_KEY_SIZE;
-                if (*keySz < minKeySz) {
-                    WOLFSSL_MSG("Falcon private key too small");
-                    ret = FALCON_KEY_SIZE_E;
-                }
-                if (ssl) {
-                    if (*keyFormat == FALCON_LEVEL1k) {
-                        ssl->buffers.keyType = falcon_level1_sa_algo;
-                    }
-                    else {
-                        ssl->buffers.keyType = falcon_level5_sa_algo;
-                    }
-                    ssl->buffers.keySz = *keySz;
-                }
-                else {
-                    if (*keyFormat == FALCON_LEVEL1k) {
-                        ctx->privateKeyType = falcon_level1_sa_algo;
-                    }
-                    else {
-                        ctx->privateKeyType = falcon_level5_sa_algo;
-                    }
-                    ctx->privateKeySz = *keySz;
-                }
-
-                if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
-                    *resetSuites = 1;
-                }
-            }
-            wc_falcon_free(key);
-        }
-        XFREE(key, heap, DYNAMIC_TYPE_FALCON);
+        ret = ProcessBufferTryDecodeFalcon(ctx, ssl, der, keySz, idx,
+            resetSuites, keyFormat, heap);
         if (ret != 0)
             return ret;
     }
@@ -7021,77 +7234,8 @@ static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl, DerBuffer* der
         (*keyFormat == DILITHIUM_LEVEL2k) ||
         (*keyFormat == DILITHIUM_LEVEL3k) ||
         (*keyFormat == DILITHIUM_LEVEL5k)) {
-        /* make sure Dilithium key can be used */
-        dilithium_key* key = (dilithium_key*)XMALLOC(sizeof(dilithium_key),
-                                                     heap,
-                                                     DYNAMIC_TYPE_DILITHIUM);
-        if (key == NULL) {
-            return MEMORY_E;
-        }
-        ret = wc_dilithium_init(key);
-        if (ret == 0) {
-            if (*keyFormat == DILITHIUM_LEVEL2k) {
-                ret = wc_dilithium_set_level(key, 2);
-            }
-            else if (*keyFormat == DILITHIUM_LEVEL3k) {
-                ret = wc_dilithium_set_level(key, 3);
-            }
-            else if (*keyFormat == DILITHIUM_LEVEL5k) {
-                ret = wc_dilithium_set_level(key, 5);
-            }
-            else {
-                /* What if *keyformat is 0? We might want to do something more
-                 * graceful here. */
-                wc_dilithium_free(key);
-                ret = ALGO_ID_E;
-            }
-        }
-
-        if (ret == 0) {
-            *idx = 0;
-            ret = wc_dilithium_import_private_only(der->buffer, der->length,
-                                                   key);
-            if (ret == 0) {
-                /* check for minimum key size and then free */
-                int minKeySz = ssl ? ssl->options.minDilithiumKeySz :
-                                     ctx->minDilithiumKeySz;
-                *keySz = DILITHIUM_MAX_KEY_SIZE;
-                if (*keySz < minKeySz) {
-                    WOLFSSL_MSG("Dilithium private key too small");
-                    ret = DILITHIUM_KEY_SIZE_E;
-                }
-                if (ssl) {
-                    if (*keyFormat == DILITHIUM_LEVEL2k) {
-                        ssl->buffers.keyType = dilithium_level2_sa_algo;
-                    }
-                    else if (*keyFormat == DILITHIUM_LEVEL3k) {
-                        ssl->buffers.keyType = dilithium_level3_sa_algo;
-                    }
-                    else if (*keyFormat == DILITHIUM_LEVEL5k) {
-                        ssl->buffers.keyType = dilithium_level5_sa_algo;
-                    }
-                    ssl->buffers.keySz = *keySz;
-                }
-                else {
-                    if (*keyFormat == DILITHIUM_LEVEL2k) {
-                        ctx->privateKeyType = dilithium_level2_sa_algo;
-                    }
-                    else if (*keyFormat == DILITHIUM_LEVEL3k) {
-                        ctx->privateKeyType = dilithium_level3_sa_algo;
-                    }
-                    else if (*keyFormat == DILITHIUM_LEVEL5k) {
-                        ctx->privateKeyType = dilithium_level5_sa_algo;
-                    }
-                    ctx->privateKeySz = *keySz;
-                }
-
-                if (ssl && ssl->options.side == WOLFSSL_SERVER_END) {
-                    *resetSuites = 1;
-                }
-            }
-            wc_dilithium_free(key);
-        }
-        XFREE(key, heap, DYNAMIC_TYPE_DILITHIUM);
+        ret = ProcessBufferTryDecodeDilithium(ctx, ssl, der, keySz, idx,
+            resetSuites, keyFormat, heap);
         if (ret != 0) {
             return ret;
         }
@@ -8629,7 +8773,10 @@ int ProcessFile(WOLFSSL_CTX* ctx, const char* fname, int format, int type,
         return WOLFSSL_BAD_FILE;
     }
     sz = XFTELL(file);
-    XREWIND(file);
+    if (XFSEEK(file, 0, XSEEK_SET) != 0) {
+        XFCLOSE(file);
+        return WOLFSSL_BAD_FILE;
+    }
 
     if (sz > MAX_WOLFSSL_FILE_SIZE || sz <= 0) {
         WOLFSSL_MSG("ProcessFile file size error");
@@ -9102,7 +9249,10 @@ int wolfSSL_CertManagerVerify(WOLFSSL_CERT_MANAGER* cm, const char* fname,
         return WOLFSSL_BAD_FILE;
     }
     sz = XFTELL(file);
-    XREWIND(file);
+    if(XFSEEK(file, 0, XSEEK_SET) != 0) {
+        XFCLOSE(file);
+        return WOLFSSL_BAD_FILE;
+    }
 
     if (sz > MAX_WOLFSSL_FILE_SIZE || sz <= 0) {
         WOLFSSL_MSG("CertManagerVerify file size error");
@@ -9564,7 +9714,10 @@ static int wolfSSL_SetTmpDH_file_wrapper(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
         return WOLFSSL_BAD_FILE;
     }
     sz = XFTELL(file);
-    XREWIND(file);
+    if(XFSEEK(file, 0, XSEEK_SET) != 0) {
+        XFCLOSE(file);
+        return WOLFSSL_BAD_FILE;
+    }
 
     if (sz > MAX_WOLFSSL_FILE_SIZE || sz <= 0) {
         WOLFSSL_MSG("SetTmpDH file size error");
@@ -12245,7 +12398,10 @@ int CM_RestoreCertCache(WOLFSSL_CERT_MANAGER* cm, const char* fname)
         return WOLFSSL_BAD_FILE;
     }
     memSz = (int)XFTELL(file);
-    XREWIND(file);
+    if(XFSEEK(file, 0, XSEEK_SET) != 0) {
+        XFCLOSE(file);
+        return WOLFSSL_BAD_FILE;
+    }
 
     if (memSz > MAX_WOLFSSL_FILE_SIZE || memSz <= 0) {
         WOLFSSL_MSG("CM_RestoreCertCache file size error");
@@ -14916,6 +15072,7 @@ int wolfSSL_SetSession(WOLFSSL* ssl, WOLFSSL_SESSION* session)
     session = ClientSessionToSession(session);
 
     if (ssl == NULL || session == NULL) {
+        WOLFSSL_MSG("ssl or session NULL");
         return WOLFSSL_FAILURE;
     }
 
@@ -14956,7 +15113,8 @@ int wolfSSL_SetSession(WOLFSSL* ssl, WOLFSSL_SESSION* session)
 #endif
         {
             ret = wolfSSL_DupSession(session, ssl->session, 0);
-            WOLFSSL_MSG("Session duplicate failed");
+            if (ret != WOLFSSL_SUCCESS)
+                WOLFSSL_MSG("Session duplicate failed");
         }
     }
 
@@ -15169,6 +15327,8 @@ WOLFSSL_SESSION* ClientSessionToSession(const WOLFSSL_SESSION* session)
         if (error == 0) {
             /* Check the session ID hash matches */
             error = clientSession->sessionIDHash != sessionIDHash;
+            if (error != 0)
+                WOLFSSL_MSG("session ID hash don't match");
         }
         if (error == 0) {
             /* Hashes match */
@@ -21157,11 +21317,21 @@ static int wolfSSL_DupSessionEx(const WOLFSSL_SESSION* input,
                 ret = WOLFSSL_FAILURE;
             }
             else {
+#ifdef WOLFSSL_NO_REALLOC
+                tmp = (byte*)XMALLOC(input->ticketLen,
+                        output->heap, DYNAMIC_TYPE_SESSION_TICK);
+                XFREE(ticBuff, output->heap, DYNAMIC_TYPE_SESSION_TICK);
+                ticBuff = NULL;
+#else
                 tmp = (byte*)XREALLOC(ticBuff, input->ticketLen,
                         output->heap, DYNAMIC_TYPE_SESSION_TICK);
+#endif /* WOLFSSL_NO_REALLOC */
                 if (tmp == NULL) {
                     WOLFSSL_MSG("Failed to allocate memory for ticket");
+#ifndef WOLFSSL_NO_REALLOC
                     XFREE(ticBuff, output->heap, DYNAMIC_TYPE_SESSION_TICK);
+                    ticBuff = NULL;
+#endif /* WOLFSSL_NO_REALLOC */
                     output->ticket = NULL;
                     output->ticketLen = 0;
                     output->ticketLenAlloc = 0;
@@ -25732,7 +25902,10 @@ int wolfSSL_cmp_peer_cert_to_file(WOLFSSL* ssl, const char *fname)
             return WOLFSSL_BAD_FILE;
         }
         sz = XFTELL(file);
-        XREWIND(file);
+        if (XFSEEK(file, 0, XSEEK_SET) != 0) {
+            XFCLOSE(file);
+            return WOLFSSL_BAD_FILE;
+        }
 
         if (sz > MAX_WOLFSSL_FILE_SIZE || sz < 0) {
             WOLFSSL_MSG("cmp_peer_cert_to_file size error");
@@ -33256,7 +33429,7 @@ static int set_curves_list(WOLFSSL* ssl, WOLFSSL_CTX *ctx, const char* names)
     char name[MAX_CURVE_NAME_SZ];
     byte groups_len = 0;
 #ifdef WOLFSSL_SMALL_STACK
-    void *heap = ssl? ssl->heap : ctx->heap;
+    void *heap = ssl? ssl->heap : ctx ? ctx->heap : NULL;
     int *groups;
 #else
     int groups[WOLFSSL_MAX_GROUP_COUNT];

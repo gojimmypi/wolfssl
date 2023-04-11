@@ -1129,7 +1129,7 @@ static WC_INLINE void showPeerEx(WOLFSSL* ssl, int lng_index)
 #ifndef NO_DH
     int bits;
 #endif
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
     int nid;
 #endif
 #ifdef KEEP_PEER_CERT
@@ -1149,7 +1149,7 @@ static WC_INLINE void showPeerEx(WOLFSSL* ssl, int lng_index)
 
     cipher = wolfSSL_get_current_cipher(ssl);
     printf("%s %s\n", words[1], wolfSSL_CIPHER_get_name(cipher));
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
     if (wolfSSL_get_signature_nid(ssl, &nid) == WOLFSSL_SUCCESS) {
         printf("%s %s\n", words[2], OBJ_nid2sn(nid));
     }
@@ -2685,9 +2685,9 @@ static WC_INLINE void OCSPRespFreeCb(void* ioCtx, unsigned char* response)
             return BAD_PATH_ERROR;
         }
 
-        LIBCALL_CHECK_RET(fseek(lFile, 0, SEEK_END));
+        LIBCALL_CHECK_RET(XFSEEK(lFile, 0, XSEEK_END));
         fileSz = (int)ftell(lFile);
-        rewind(lFile);
+        LIBCALL_CHECK_RET(XFSEEK(lFile, 0, XSEEK_SET));
         if (fileSz  > 0) {
             *bufLen = (size_t)fileSz;
             *buf = (byte*)malloc(*bufLen);
