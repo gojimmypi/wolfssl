@@ -193,10 +193,11 @@ void wifi_init_sta(void)
 ** return '-170' when using wc_ecc_shared_secret?
 **
 */
-ecc_key my_private_key; // ECC_SECP256R1
+struct ecc_key my_private_key; // ECC_SECP256R1
 
 /* 042493a5d09d8beb47ccde8fac187b86ad009910c94122fd8deae398604d897e5941839388606b228f357ad17eb66c26ac01770b60e4869b20c799d3 765b5fc174 */
-byte my_public_key[65] = {0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb,
+#define  MY_PUBLIC_KEY_SIZE 65
+byte my_public_key[MY_PUBLIC_KEY_SIZE] = {0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb,
                           0x47, 0xcc, 0xde, 0x8f, 0xac, 0x18, 0x7b, 0x86,
                           0xad, 0x00, 0x99, 0x10, 0xc9, 0x41, 0x22, 0xfd,
                           0x8d, 0xea, 0xe3, 0x98, 0x60, 0x4d, 0x89, 0x7e,
@@ -274,9 +275,69 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     byte shared_key = 0;
     word32 shared_key_len = 0;
 
+    RNG rng;
+    wc_InitRng(&rng);
+
     wc_ecc_init(&other_pub_key);
+    wc_ecc_init(&my_private_key);
     ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &other_pub_key);
     ESP_LOGI(TAG, "wc_ecc_import_x963 result = %d", ret);
+
+/*    int wc_ecc_import_private_key(const byte* priv,
+                                    word32 privSz,
+                                    const byte* pub,
+                                    word32 pubSz,
+                                    ecc_key* key);
+*/
+
+    /* my_private_key is imported through the.pem file */
+
+    /*
+
+    -----BEGIN EC PRIVATE KEY-----
+    MHcCAQEEIGXOdeNRODqoWF2G1Pv5c/9606thVSgAR2b0MDRZErxwoAoGCCqGSM49
+    AwEHoUQDQgAEJJOl0J2L60fM3o+sGHuGrQCZEMlBIv2N6uOYYE2JfllBg5OIYGsi
+    jzV60X62bCasAXcLYOSGmyDHmdN2W1/BdA==
+    -----END EC PRIVATE KEY-----
+
+    */
+
+    /* openssl ec -in my_private_key_example.pem.txt -pubout -outform der -out temppub.der
+    ** xxd -i  temppub.der
+    */
+    unsigned char temppub_der[] = {
+      0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+      0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+      0x42, 0x00, 0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb, 0x47, 0xcc,
+      0xde, 0x8f, 0xac, 0x18, 0x7b, 0x86, 0xad, 0x00, 0x99, 0x10, 0xc9, 0x41,
+      0x22, 0xfd, 0x8d, 0xea, 0xe3, 0x98, 0x60, 0x4d, 0x89, 0x7e, 0x59, 0x41,
+      0x83, 0x93, 0x88, 0x60, 0x6b, 0x22, 0x8f, 0x35, 0x7a, 0xd1, 0x7e, 0xb6,
+      0x6c, 0x26, 0xac, 0x01, 0x77, 0x0b, 0x60, 0xe4, 0x86, 0x9b, 0x20, 0xc7,
+      0x99, 0xd3, 0x76, 0x5b, 0x5f, 0xc1, 0x74
+    };
+    unsigned int temppub_der_len = 91;
+
+    ecc_key my_ecc_key;
+    ret = wc_ecc_import_private_key((const byte *)&temppub_der, temppub_der_len, /* private key, converted to DER */
+                              (const byte *)&my_public_key, MY_PUBLIC_KEY_SIZE, /* public key */
+                              &my_ecc_key);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully imported private key to my_ecc_key");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed to import private key to my_ecc_key. Error = %d", ret);
+    }
+
+    ret = wc_ecc_make_key(&rng, ephemeral_key.len, &other_pub_key);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wc_ecc_make_key for other_pub_key");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed during call to wc_ecc_make_key. Error = %d", ret);
+    }
+
+
+    wc_ecc_free(&other_pub_key);
 
     //int curve_idx = wc_ecc_get_curve_idx(ECC_SECP256R1);
     //other_pub_key= wc_ecc_new_point(); // ecc_point *other_pub_key;
@@ -289,6 +350,8 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     ** int wc_ecc_shared_secret_ex(ecc_key* private_key, ecc_point* point,
     **                             byte* out, word32 *outlen);
     */
+    my_private_key.type = ECC_PRIVATEKEY;
+    my_private_key.dp = 0; /* ?? */
     ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, (byte *)&shared_key, (word32 *)&shared_key_len);
     if (ret != 0) {
         ESP_LOGI(TAG, "========= wc_ecc_shared_secret error %d", ret);
@@ -301,7 +364,6 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
 void app_main(void)
 {
     esp_err_t ret; /* return codes */
-    RNG rng;
 
     /* Initialize non-volatile storage */
     ret = nvs_flash_init();
@@ -331,7 +393,6 @@ void app_main(void)
 
     esp_log_level_set("*", ESP_LOG_VERBOSE);
 
-    wc_InitRng(&rng);
 
     struct ProtobufCBinaryData myProtobufCBinaryData;
 
