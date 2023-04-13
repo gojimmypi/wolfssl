@@ -208,7 +208,7 @@ byte my_public_key[MY_PUBLIC_KEY_SIZE] = {0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x
                           0x74 }; // wc_ecc_export_x963_ex()
 int curveId = ECC_SECP256R1;
 char* GATTC_TAG = "GATTC_TAG";
-struct ecc_key other_pub_key;
+struct ecc_key my_ecc_public_key;
 
 /* see
 ** https://protobuf-c.github.io/protobuf-c/structProtobufCBinaryData.html
@@ -278,9 +278,9 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     RNG rng;
     wc_InitRng(&rng);
 
-    wc_ecc_init(&other_pub_key);
+    wc_ecc_init(&my_ecc_public_key);
     wc_ecc_init(&my_private_key);
-    ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &other_pub_key);
+    ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &my_ecc_public_key);
     ESP_LOGI(TAG, "wc_ecc_import_x963 result = %d", ret);
 
 /*    int wc_ecc_import_private_key(const byte* priv,
@@ -317,10 +317,10 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     };
     unsigned int temppub_der_len = 91;
 
-    ecc_key my_ecc_key;
-    ret = wc_ecc_import_private_key((const byte *)&temppub_der, temppub_der_len, /* private key, converted to DER */
-                              (const byte *)&my_public_key, MY_PUBLIC_KEY_SIZE, /* public key */
-                              &my_ecc_key);
+    ecc_key my_ecc_private_key;
+    ret = wc_ecc_import_private_key(temppub_der, sizeof(temppub_der), /* private key, converted to DER */
+                                   my_public_key, MY_PUBLIC_KEY_SIZE, /* public key */
+                                   &my_ecc_private_key);
     if (ret == 0) {
         ESP_LOGI(TAG, "Successfully imported private key to my_ecc_key");
     }
@@ -328,16 +328,13 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
         ESP_LOGE(TAG, "Failed to import private key to my_ecc_key. Error = %d", ret);
     }
 
-    ret = wc_ecc_make_key(&rng, ephemeral_key.len, &other_pub_key);
-    if (ret == 0) {
-        ESP_LOGI(TAG, "Successfully called wc_ecc_make_key for other_pub_key");
-    }
-    else {
-        ESP_LOGE(TAG, "Failed during call to wc_ecc_make_key. Error = %d", ret);
-    }
-
-
-    wc_ecc_free(&other_pub_key);
+//    ret = wc_ecc_make_key(&rng, ephemeral_key.len, &my_ecc_public_key);
+//    if (ret == 0) {
+//        ESP_LOGI(TAG, "Successfully called wc_ecc_make_key for my_ecc_public_key");
+//    }
+//    else {
+//        ESP_LOGE(TAG, "Failed during call to wc_ecc_make_key. Error = %d", ret);
+//    }
 
     //int curve_idx = wc_ecc_get_curve_idx(ECC_SECP256R1);
     //other_pub_key= wc_ecc_new_point(); // ecc_point *other_pub_key;
@@ -350,12 +347,10 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     ** int wc_ecc_shared_secret_ex(ecc_key* private_key, ecc_point* point,
     **                             byte* out, word32 *outlen);
     */
-    my_private_key.type = ECC_PRIVATEKEY;
-    my_private_key.dp = 0; /* ?? */
-    ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, (byte *)&shared_key, (word32 *)&shared_key_len);
+    ret = wc_ecc_shared_secret(&my_ecc_private_key, &my_ecc_public_key, (byte *)&shared_key, (word32 *)&shared_key_len);
     if (ret != 0) {
         ESP_LOGI(TAG, "========= wc_ecc_shared_secret error %d", ret);
-        wc_ecc_free(&other_pub_key);
+        wc_ecc_free(&my_ecc_public_key);
         return -4; // Error computing shared key
     }
     return 0;
