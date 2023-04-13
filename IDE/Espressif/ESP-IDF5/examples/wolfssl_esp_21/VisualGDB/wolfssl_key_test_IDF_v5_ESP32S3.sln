@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33328.57
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_key_test_IDF_v5_ESP32S3", "wolfssl_key_test_IDF_v5_ESP32S3.vgdbproj", "{87DDC804-5472-4386-8A7A-87C8A60A91BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DB7E20CB-6885-4E1C-9D99-ED77AC74465B}"
+	ProjectSection(SolutionItems) = preProject
+		..\cert_peek.sh = ..\cert_peek.sh
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|VisualGDB = Debug|VisualGDB
+		Release|VisualGDB = Release|VisualGDB
+		Tests (Debug)|VisualGDB = Tests (Debug)|VisualGDB
+		Tests (Release)|VisualGDB = Tests (Release)|VisualGDB
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Debug|VisualGDB.ActiveCfg = Debug|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Debug|VisualGDB.Build.0 = Debug|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Release|VisualGDB.ActiveCfg = Release|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Release|VisualGDB.Build.0 = Release|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Tests (Debug)|VisualGDB.ActiveCfg = Tests (Debug)|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Tests (Debug)|VisualGDB.Build.0 = Tests (Debug)|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Tests (Release)|VisualGDB.ActiveCfg = Tests (Release)|VisualGDB
+		{87DDC804-5472-4386-8A7A-87C8A60A91BC}.Tests (Release)|VisualGDB.Build.0 = Tests (Release)|VisualGDB
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0DC4F788-8817-4F1F-9813-8F670C34F5C2}
+	EndGlobalSection
+EndGlobal
