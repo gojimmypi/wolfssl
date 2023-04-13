@@ -45,7 +45,7 @@
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
 
-#define HAS_MY_PRIVATE_CONFIG
+// #define HAS_MY_PRIVATE_CONFIG
 #ifdef HAS_MY_PRIVATE_CONFIG
     #include "/workspace/my_private_config.h"
 #endif
@@ -194,24 +194,89 @@ void wifi_init_sta(void)
 **
 */
 ecc_key my_private_key; // ECC_SECP256R1
-byte my_public_key[65]; // wc_ecc_export_x963_ex()
 
+/* 042493a5d09d8beb47ccde8fac187b86ad009910c94122fd8deae398604d897e5941839388606b228f357ad17eb66c26ac01770b60e4869b20c799d3 765b5fc174 */
+byte my_public_key[65] = {0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb,
+                          0x47, 0xcc, 0xde, 0x8f, 0xac, 0x18, 0x7b, 0x86,
+                          0xad, 0x00, 0x99, 0x10, 0xc9, 0x41, 0x22, 0xfd,
+                          0x8d, 0xea, 0xe3, 0x98, 0x60, 0x4d, 0x89, 0x7e,
+                          0x59, 0x41, 0x83, 0x93, 0x88, 0x60, 0x6b, 0x22,
+                          0x8f, 0x35, 0x7a, 0xd1, 0x7e, 0xb6, 0x6c, 0x26,
+                          0xac, 0x01, 0x77, 0x0b, 0x60, 0xe4, 0x86, 0x9b,
+                          0x20, 0xc7, 0x99, 0xd3, 0x76, 0x5b, 0x5f, 0xc1,
+                          0x74 }; // wc_ecc_export_x963_ex()
+int curveId = ECC_SECP256R1;
+char* GATTC_TAG = "GATTC_TAG";
 struct ecc_key other_pub_key;
 
+/* see
+** https://protobuf-c.github.io/protobuf-c/structProtobufCBinaryData.html
+*/
 struct ProtobufCBinaryData
 {
     size_t 	len;
     byte* data;
 };
 
+
+static void generate_public_key(void)
+{
+    int ret;
+    word32 buffSz = sizeof(my_public_key);
+
+    ret = wc_ecc_export_x963_ex(&my_private_key, (byte *)my_public_key, &buffSz, 0);
+    if (ret != 0) {
+        // error exporting key
+        ESP_LOGI(TAG, "error exporting public key");
+    }
+    ESP_LOGI(TAG, "public key: ");
+    for (int i = 0; i < 65; i++) {
+        printf("%02x", (unsigned char)my_public_key[i]);
+    }
+}
+static void generate_private_key(void)
+{
+    int ret;
+
+    int private_key_pem_end = 0, private_key_pem_start = 0;
+
+    long fileSz = private_key_pem_end - private_key_pem_start;
+    int inSz = (int)fileSz;
+
+    word32 idx = 0;
+
+    wc_ecc_init(&my_private_key); // initialize key
+
+    byte der[ECC_BUFSIZE];
+
+    wc_KeyPemToDer(private_key_pem_start, (int)fileSz, &der, ECC_BUFSIZE, NULL);
+
+    ret = wc_EccPrivateKeyDecode(&der, &idx, &my_private_key, (word32)inSz);
+    if (ret < 0) {
+        ESP_LOGI(GATTC_TAG, "error decoding ecc key "); // error decoding ecc key
+    }
+
+    int check_result;
+
+    check_result = wc_ecc_check_key(&my_private_key);
+
+    if (check_result == MP_OKAY) {
+        ESP_LOGI(GATTC_TAG, "check_private_key yes==============");
+    }
+    else {
+        ESP_LOGI(GATTC_TAG, "check_private_key no==============");
+    }
+}
+
 int to_load_key(struct ProtobufCBinaryData ephemeral_key)
 {
     int ret = 0;
-    byte* shared_key;
-    word32* shared_key_len;
+    byte shared_key = 0;
+    word32 shared_key_len = 0;
 
     wc_ecc_init(&other_pub_key);
     ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &other_pub_key);
+    ESP_LOGI(TAG, "wc_ecc_import_x963 result = %d", ret);
 
     //int curve_idx = wc_ecc_get_curve_idx(ECC_SECP256R1);
     //other_pub_key= wc_ecc_new_point(); // ecc_point *other_pub_key;
@@ -222,9 +287,9 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
     ** https://github.com/wolfSSL/wolfssl/blob/6bed0c57579c8cbb68a85b01ca67e0e4ef4228ea/wolfssl/wolfcrypt/ecc.h#L602
     **
     ** int wc_ecc_shared_secret_ex(ecc_key* private_key, ecc_point* point,
-    **                         byte* out, word32 *outlen);
+    **                             byte* out, word32 *outlen);
     */
-    ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, shared_key, shared_key_len);
+    ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, (byte *)&shared_key, (word32 *)&shared_key_len);
     if (ret != 0) {
         ESP_LOGI(TAG, "========= wc_ecc_shared_secret error %d", ret);
         wc_ecc_free(&other_pub_key);
@@ -269,14 +334,23 @@ void app_main(void)
     wc_InitRng(&rng);
 
     struct ProtobufCBinaryData myProtobufCBinaryData;
-    myProtobufCBinaryData.data = { 0x0,   };
+
+    /* ephemeral_key.data  b'04f3476fb37270eef09966fd17ca7967ede63a2bb3d23b4aee6e8b459482aebd7a939a95cbbbd01a1ec46b1976509e1cb82990d8eec34c98d14b69c5d8f7cee21c' */
+    unsigned char ephemeral_key_data[65] = { 0x04, 0xf3, 0x47, 0x6f, 0xb3, 0x72, 0x70, 0xee,
+                                             0xf0, 0x99, 0x66, 0xfd, 0x17, 0xca, 0x79, 0x67,
+                                             0xed, 0xe6, 0x3a, 0x2b, 0xb3, 0xd2, 0x3b, 0x4a,
+                                             0xee, 0x6e, 0x8b, 0x45, 0x94, 0x82, 0xae, 0xbd,
+                                             0x7a, 0x93, 0x9a, 0x95, 0xcb, 0xbb, 0xd0, 0x1a,
+                                             0x1e, 0xc4, 0x6b, 0x19, 0x76, 0x50, 0x9e, 0x1c,
+                                             0xb8, 0x29, 0x90, 0xd8, 0xee, 0xc3, 0x4c, 0x98,
+                                             0xd1, 0x4b, 0x69, 0xc5, 0xd8, 0xf7, 0xce, 0xe2,
+                                             0x1c };
+
+    myProtobufCBinaryData.data = (byte*)&ephemeral_key_data;
     myProtobufCBinaryData.len = 65;
 
     to_load_key(myProtobufCBinaryData);
 
-    /* see
-    ** https://protobuf-c.github.io/protobuf-c/structProtobufCBinaryData.html
-    */
 
 
 }
