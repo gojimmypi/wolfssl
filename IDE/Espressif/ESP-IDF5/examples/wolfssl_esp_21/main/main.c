@@ -182,30 +182,61 @@ void wifi_init_sta(void)
     }
 }
 
+/*
+** code as-found in https://github.com/espressif/esp-wolfssl/issues/21
+**
+** "My program receives an ephemeral_key (publickey) in the format
+** ProtobufCBinaryData.
+**
+** I want to use my private key (private_key ECC_SECP256R1) and
+** ephemeral_key to generate a shared key, What do I do when I always
+** return '-170' when using wc_ecc_shared_secret?
+**
+*/
+ecc_key my_private_key; // ECC_SECP256R1
+byte my_public_key[65]; // wc_ecc_export_x963_ex()
+
+struct ecc_key other_pub_key;
+
+struct ProtobufCBinaryData
+{
+    size_t 	len;
+    byte* data;
+};
+
+int to_load_key(struct ProtobufCBinaryData ephemeral_key)
+{
+    int ret = 0;
+    byte* shared_key;
+    word32* shared_key_len;
+
+    wc_ecc_init(&other_pub_key);
+    ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &other_pub_key);
+
+    //int curve_idx = wc_ecc_get_curve_idx(ECC_SECP256R1);
+    //other_pub_key= wc_ecc_new_point(); // ecc_point *other_pub_key;
+    //ret = wc_ecc_import_point_der(ephemeral_key.data, ephemeral_key.len, curve_idx, other_pub_key);
+
+    /*
+    ** see
+    ** https://github.com/wolfSSL/wolfssl/blob/6bed0c57579c8cbb68a85b01ca67e0e4ef4228ea/wolfssl/wolfcrypt/ecc.h#L602
+    **
+    ** int wc_ecc_shared_secret_ex(ecc_key* private_key, ecc_point* point,
+    **                         byte* out, word32 *outlen);
+    */
+    ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, shared_key, shared_key_len);
+    if (ret != 0) {
+        ESP_LOGI(TAG, "========= wc_ecc_shared_secret error %d", ret);
+        wc_ecc_free(&other_pub_key);
+        return -4; // Error computing shared key
+    }
+    return 0;
+}
+
 void app_main(void)
 {
-    #define DER_SIZE 4096
-    #define PEM_SIZE 4096
-
-    byte der[DER_SIZE];
-    byte pem[PEM_SIZE];
     esp_err_t ret; /* return codes */
-    int derSz = 0; /* DER size found */
-
-    Cert request;
-    RsaKey genKey;
     RNG rng;
-
-    XMEMSET(der, 0, DER_SIZE);
-    XMEMSET(pem, 0, PEM_SIZE);
-
-#if !defined(WOLFSSL_CERT_REQ) || !defined(WOLFSSL_CERT_GEN) || !defined(WOLFSSL_KEY_GEN)
-    ESP_LOGI(TAG,
-             "ERROR: Need to enable "
-             "WOLFSSL_CERT_REQ, and/or "
-             "WOLFSSL_CERT_GEN, and/or "
-             "WOLFSSL_KEY_GEN");
-#endif
 
     /* Initialize non-volatile storage */
     ret = nvs_flash_init();
@@ -237,33 +268,15 @@ void app_main(void)
 
     wc_InitRng(&rng);
 
+    struct ProtobufCBinaryData myProtobufCBinaryData;
+    myProtobufCBinaryData.data = { 0x0,   };
+    myProtobufCBinaryData.len = 65;
 
-    /*
-    ** code as-found in https://github.com/espressif/esp-wolfssl/issues/21
+    to_load_key(myProtobufCBinaryData);
+
+    /* see
+    ** https://protobuf-c.github.io/protobuf-c/structProtobufCBinaryData.html
     */
-    ecc_key my_private_key; // ECC_SECP256R1
-    byte my_public_key[65]; // wc_ecc_export_x963_ex()
 
-    ecc_key other_pub_key[65];
-
-    int to_load_key(ProtobufCBinaryData ephemeral_key)
-    {
-        int ret = 0;
-
-        wc_ecc_init(&other_pub_key);
-        ret = wc_ecc_import_x963((byte *)ephemeral_key.data, (word32)ephemeral_key.len, &other_pub_key);
-
-        //int curve_idx = wc_ecc_get_curve_idx(ECC_SECP256R1);
-        //other_pub_key= wc_ecc_new_point(); // ecc_point *other_pub_key;
-        //ret = wc_ecc_import_point_der(ephemeral_key.data, ephemeral_key.len, curve_idx, other_pub_key);
-
-        ret = wc_ecc_shared_secret(&my_private_key, &other_pub_key, shared_key, shared_key_len);
-        if (ret != 0) {
-            ESP_LOGI(TAG, "========= wc_ecc_shared_secret error %d", ret);
-            wc_ecc_free(&other_pub_key);
-            return -4; // Error computing shared key
-        }
-        return 0;
-    }
 
 }
