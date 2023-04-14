@@ -1,9 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.33328.57
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_key_test_IDF_v5_ESP32", "wolfssl_key_test_IDF_v5_ESP32.vgdbproj", "{87DDC804-5472-4386-8A7A-87C8A60A91BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Key Files", "Key Files", "{C8EC5885-F6E2-4E82-9240-19BB81AA6F1C}"
+	ProjectSection(SolutionItems) = preProject
+		..\my_private_key_example.pem.txt = ..\my_private_key_example.pem.txt
+		..\temppriv.der = ..\temppriv.der
+		..\temppub.der = ..\temppub.der
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7ADF238C-CA63-4887-9198-EC75E243F0CF}"
+	ProjectSection(SolutionItems) = preProject
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
