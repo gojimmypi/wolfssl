@@ -43,7 +43,7 @@
 /* The examples use WiFi configuration that you can set via project configuration menu
 
    If you'd rather not, just change the below entries to strings with
-   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
+   the config you want - i.e. #define EXAMPLE_WIFI_SSID "mywifissid"
 */
 #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
 
@@ -146,7 +146,7 @@ int CertDemo() {
     }
 
     ESP_LOGI(TAG, "\n\n"
-                   "Cert pem:"
+                   "Cert PEM:"
                    "\n\n"
                    "%s"
                    "\n\n"
@@ -175,7 +175,7 @@ int CertDemo() {
     request.version = 0;
     ret = wc_MakeCertReq_ex(&request, der, sizeof(der), RSA_TYPE, &genKey);
     if (ret <= 0) {
-        ESP_LOGE(TAG, "Make Cert Req failed: %d\n", ret);
+        ESP_LOGE(TAG, "Make Cert Request failed: %d\n", ret);
     }
     derSz = ret;
 
@@ -216,11 +216,11 @@ int CertDemo() {
     ***************************************************************************
     ** Show Certificate Request
     **
-    ** Paste the following "Request pem:" into an output file.
+    ** Paste the following "Request PEM:" into an output file.
     **
     ** To validate:
     **
-    ** openssl req -in "./output/gojimmypi-ESP32_request.crt" -noout -text
+    ** openssl req -in "./output/test_request.crt" -noout -text
     **
     ***************************************************************************
     */
@@ -236,13 +236,24 @@ int CertDemo() {
     ***************************************************************************
     ** Sign the Certificate Request with OpenSSL
     ***************************************************************************
+    */
+#define OS "openssl x509 -req -in ./output/test_request.crt -days 10    \\ \n \
+    -CA private/CertificateAuthority-4096-PublicKey.crt                 \\ \n \
+    -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \\ \n \
+    -passin pass:secret -CAcreateserial                                 \\ \n \
+    -extfile private/CertificateExtensions.txt -extensions LumosDevice  \\ \n \
+    -out ./output/test-Device-Certificate_hw.crt -text                     \n \
+        "
 
-openssl x509 -req -in "./output/gojimmypi-ESP32_request.crt" -days 10     \
+    ESP_LOGI(TAG, OS);
+
+         /*
+openssl x509 -req -in "./output/test_request.crt" -days 10     \
     -CA "private/CertificateAuthority-4096-PublicKey.crt"                 \
     -CAkey "private/CertificateAuthority-4096-PrivateKey.pem"             \
     -passin pass:secret -CAcreateserial                                   \
     -extfile "private/CertificateExtensions.txt" -extensions LumosDevice  \
-    -out ./output/gojimmypi-Device-Certificate_hw.crt -text
+    -out ./output/test-Device-Certificate_hw.crt -text
 
     */
 
