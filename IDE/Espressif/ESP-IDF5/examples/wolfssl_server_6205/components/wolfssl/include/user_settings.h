@@ -147,8 +147,8 @@
 
 // #define HASH_SIZE_LIMIT /* for test.c */
 
-/* test 0001  */
-#define USE_FAST_MATH
+/* test 0002  */
+// #define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)

@@ -23,32 +23,32 @@ I (74) boot:  1 phy_init         RF data          01 01 0000f000 00001000
 I (82) boot:  2 factory          factory app      00 00 00010000 00177000
 I (89) boot: End of partition table
 I (93) boot_comm: chip revision: 1, min. application chip revision: 0
-I (100) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=22f18h (143128) map
-I (152) esp_image: segment 1: paddr=00032f40 vaddr=3ffb0000 size=03a4ch ( 14924) load
-I (157) esp_image: segment 2: paddr=00036994 vaddr=40080000 size=09684h ( 38532) load
-I (172) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size=79e38h (499256) map
-I (322) esp_image: segment 4: paddr=000b9e60 vaddr=40089684 size=0ab38h ( 43832) load
-I (338) esp_image: segment 5: paddr=000c49a0 vaddr=50000000 size=00010h (    16) load
-I (348) boot: Loaded app from partition at offset 0x10000
+I (100) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=22ab8h (142008) map
+I (152) esp_image: segment 1: paddr=00032ae0 vaddr=3ffb0000 size=03a4ch ( 14924) load
+I (157) esp_image: segment 2: paddr=00036534 vaddr=40080000 size=09ae4h ( 39652) load
+I (172) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size=7a5dch (501212) map
+I (323) esp_image: segment 4: paddr=000ba604 vaddr=40089ae4 size=0a6d8h ( 42712) load
+I (338) esp_image: segment 5: paddr=000c4ce4 vaddr=50000000 size=00010h (    16) load
+I (349) boot: Loaded app from partition at offset 0x10000
 I (349) boot: Disabling RNG early entropy source...
-I (360) cpu_start: Pro cpu up.
-I (360) cpu_start: Starting app cpu, entry point is 0x400812d0
-I (347) cpu_start: App cpu up.
+I (361) cpu_start: Pro cpu up.
+I (361) cpu_start: Starting app cpu, entry point is 0x400812d0
+I (348) cpu_start: App cpu up.
 I (375) cpu_start: Pro cpu start user code
 I (375) cpu_start: cpu freq: 160000000 Hz
 I (375) cpu_start: Application information:
 I (380) cpu_start: Project name:     key_test
-I (385) cpu_start: App version:      v5.6.0-stable-540-g8baf07d90-di
-I (392) cpu_start: Compile time:     Apr 20 2023 21:12:06
-I (398) cpu_start: ELF file SHA256:  a1929be05887b2cc...
+I (385) cpu_start: App version:      v5.6.0-stable-541-g9e446a0fe-di
+I (392) cpu_start: Compile time:     Apr 20 2023 21:23:39
+I (398) cpu_start: ELF file SHA256:  f3b7d7829d7ef142...
 I (404) cpu_start: ESP-IDF:          v5.0-dirty
 I (409) heap_init: Initializing. RAM available for dynamic allocation:
 I (416) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
-I (422) heap_init: At 3FFB69E0 len 00029620 (165 KiB): DRAM
-I (428) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (422) heap_init: At 3FFB69D8 len 00029628 (165 KiB): DRAM
+I (429) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
 I (435) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
-I (441) heap_init: At 400941BC len 0000BE44 (47 KiB): IRAM
-I (448) spi_flash: detected chip: generic
+I (442) heap_init: At 400941BC len 0000BE44 (47 KiB): IRAM
+I (449) spi_flash: detected chip: generic
 I (452) spi_flash: flash io: dio
 W (456) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048
 k). Using the size in the binary image header.
@@ -65,9 +65,9 @@ I (520) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
 I (530) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.g
 it
 I (530) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (540) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 8baf07d90bbea76ab76930b0066bd9e9826cc9b9
-I (550) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 8baf07d90
-I (560) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Thu Apr 20 21:10:38 2023 +0200'
+I (540) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 9e446a0feea9c2bcbbc456079d4c2eedfaafbcf0
+I (550) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 9e446a0fe
+I (560) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Thu Apr 20 21:19:18 2023 +0200'
 I (570) Version Info: CONFIG_IDF_TARGET = esp32
 I (570) Version Info: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
 I (580) Version Info: Xthal_have_ccount: 1
@@ -75,11 +75,11 @@ I (580) Version Info: CONFIG_MAIN_TASK_STACK_SIZE: 55000
 I (590) Version Info: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55000
 I (600) Version Info: CONFIG_TIMER_TASK_STACK_SIZE: 3584
 I (600) Version Info: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
-I (610) Version Info: Stack HWM: 53724
+I (610) Version Info: Stack HWM: 53732
 I (610) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32.
 I (620) Version Info: NOT SINGLE_THREADED
 I (660) key test: ESP_WIFI_MODE_STA
-I (670) wifi:wifi driver task: 3ffc95b4, prio:23, stack:6656, core=0
+I (670) wifi:wifi driver task: 3ffc95ac, prio:23, stack:6656, core=0
 I (670) system_api: Base MAC address is not set
 I (670) system_api: read default base MAC address from EFUSE
 I (690) wifi:wifi firmware version: 0d470ef
@@ -105,41 +105,41 @@ I (760) wifi_init: WiFi RX IRAM OP enabled
 W (760) key test: Warning test
 E (760) key test: Error test
 I (770) key test: Generating an RSA key 2048 bits long
-I (29370) key test:
+I (132980) key test:
 
 Cert PEM:
 
 -----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 
 
 
-I (29830) key test:
+I (134530) key test:
 
 Request pem: (paste into file for CA sign)
 
@@ -147,28 +147,28 @@ Request pem: (paste into file for CA sign)
 MIICxDCCAawCAQAwfzELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAP
 BgNVBAcMCEhhbWlsdG9uMSAwHgYDVQQKDBdCbHVlIExlYWYgU29mdHdhcmUsIEx0
 ZDEpMCcGA1UEAwwgTHVtb3MgSFcsIHNlcmlhbE51bWJlciA9IEJMUy0wMDIwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+A9qRTbqIuPBJjC9CpnkCOlNc
-tahjtCGGaozN4qH/dIpdMOMZzBoLiaDtUTllquXTqDQoV46b2bAAq5QqiI0zrFGS
-LoNC2GusgRI77gwxDtNIr1etxctyHWWIc7bJj1GquOZ4+C5Fyag4NLJoc8q6aafR
-cXhRcadYxIdxnjz59l9r7ySGlgE9fkiqI1aKR56IItAOLnukOq9Ok71ySKLGo8sY
-h1OcUpd0GiEXTycrkc8TFocTog74Y3gfFAQ82Vkf9IjH+1EatpNVimyOh1dUfNMS
-VANzNPqGlA/LSdnyJVd+trY6LOaalHstaUpPSceL80tVRbiRk0hImZ6HqXNZAgMB
-AAGgADANBgkqhkiG9w0BAQsFAAOCAQEAanOA6JdlFJ5pi2l//FhPBFdGrvlKcosK
-tR3rkS2fwyyYYOH2ZOgGJHRKOhCrNbhr84VKDiteKR9kNGAPdm3fsGILGcZBle3S
-LvCQ0iAgjMv9BbZtI+k/sWvwmveSu6c3C4EMC59Y7HmVVMwI5Mj9MgF+DCg6sV1x
-COnS4tjabhDJQInhTLbACmXc9NPVgtZukusW3okxiyGqLNB2kZvqfIoD3inHGZd7
-py95l+qSgZij/UaFe4Adgjqu/lv5y3lr+gSC0zJQKHpSC5yohXZe+ge3+Je5SmXx
-l7EoIXDXxMGe9E4O+iCPfYBq1fKxR0n2LialDDMPaDwlIvE+e2bdpg==
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC3CKRYfsdnXmj3SUFzpL9eSk6I
+kBflxUYNX52AK+a8SUR8C9hAIS0enpoP2Tr32WAYTXHZ/GhyuZ5vI+BLDgT9Xm05
+Ey9UbB4eaz7DKBgeYqYZzTG7dZ3lkFw87tap4jl8TISVIqvdEuh2l7eUPNVAN6z6
+ep8re0ZV5paEUDOXUGFy+LTdI0BY7hFvYWbsoFyloRHxtOHEbtYQS7C+J2hZPXW1
+E8w4puLEiwn3aMhjqAk8zBbLWGJyl6EoD2fiGdy/0toouWzV4EG0gUVbKgJk2Qk0
+05sEQ7YRxRmGfA/yKjc+xHH5FrrkXatssTmfZ+2f4pd8qwFTtdodV8aBXy3TAgMB
+AAGgADANBgkqhkiG9w0BAQsFAAOCAQEAho6+C4iqLE+VN3mMfaWV3zFlt4O8C6xd
+WFgb4Vtvhwfst5y4NJZ3DHmtix98fIB7C1ZlN/DjP+c38LA6MkYoEEEeSxKIBHWe
+zaeYgi5ak+FWWk7x5X/6+cywrn6QZ/yw1PVEOUy6U/08N41d8IsU+Dfn4p1iX4kl
+GJxP3WyDXShebwXWyA9qwqxHGJLR0+XX2fsfgVjne+D8Gmll/RUC8fXLpwff2DXV
+L52VfNPccRFGwrL56gE8wD27GxjWxEke9HZPRKjctnJMKzNz4IXDiybv4uHcgZNl
+JnGQCYrctXc4Rj+aD+Yrh8BFO6VxWG7ufYOFAvhhvhmo85vq/kFphw==
 -----END CERTIFICATE REQUEST-----
 
 
 
-I (29920) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
+I (134620) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
      -CA private/CertificateAuthority-4096-PublicKey.crt                 \
      -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
      -passin pass:secret -CAcreateserial                                 \
      -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
      -out ./output/test-Device-Certificate_hw.crt -text
 
-I (29960) key test: ESP32WROOM32_CRYPT is enabled for ESP32.
-I (29970) key test: Done!
+I (134660) key test: ESP32WROOM32_CRYPT is enabled for ESP32.
+I (134660) key test: Done!
