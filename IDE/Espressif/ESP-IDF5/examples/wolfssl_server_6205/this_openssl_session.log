@@ -1,0 +1,9 @@
+gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
+$ openssl x509 -req -in "./output/test_request.crt" -days 10         -CA "private/CertificateAuthority-4096-PublicKey.crt"                     -CAkey "private/CertificateAuthority-4096-PrivateKey.pem"                 -passin pass:secret -CAcreateserial                                       -extfile "private/CertificateExtensions.txt" -extensions LumosDevice      -out ./output/test-Device-Certificate_hw.crt -text
+Certificate request self-signature did not match the contents
+40077EA7FF7F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:../crypto/rsa/rsa_pk1.c:75:
+40077EA7FF7F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:../crypto/rsa/rsa_ossl.c:606:
+40077EA7FF7F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:../providers/implementations/signature/rsa_sig.c:774:
+40077EA7FF7F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:../crypto/asn1/a_verify.c:217:
+gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
+$
