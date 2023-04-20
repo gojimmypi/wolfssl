@@ -25,7 +25,7 @@
 #include <config.h>
 #endif
 #include <wolfssl/wolfcrypt/settings.h>
-
+#include "user_settings.h"
 #include "wolfssl/wolfcrypt/logging.h"
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
@@ -50,7 +50,7 @@ static const char* const TAG = "wolfssl_mp";
 #define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)       /* (s+(32-1))/ 8/ 4*/
 
 #define MP_NG   -1
-
+#define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
 /* mutex */
 static wolfSSL_Mutex mp_mutex;
 static int espmp_CryptHwMutexInit = 0;
@@ -60,9 +60,9 @@ static int espmp_CryptHwMutexInit = 0;
 static int esp_mp_hw_wait_clean()
 {
     int timeout = 0;
-    while (++timeout < ESP_RSA_TIMEOUT && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {}
+    while (++timeout < ESP_RSA_TIMEOUT_CNT && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {}
 
-    if (timeout >= ESP_RSA_TIMEOUT) {
+    if (timeout >= ESP_RSA_TIMEOUT_CNT) {
         ESP_LOGE(TAG, "waiting hw ready is time-outed.");
         return MP_NG;
     }
@@ -149,7 +149,7 @@ static int wait_uitil_done(word32 reg)
     int timeout = 0;
     /* wait until done && not timeout */
     while (1) {
-        if (++timeout < ESP_RSA_TIMEOUT && DPORT_REG_READ(reg) == 1) {
+        if (++timeout < ESP_RSA_TIMEOUT_CNT && DPORT_REG_READ(reg) == 1) {
             break;
         }
     }
@@ -157,7 +157,7 @@ static int wait_uitil_done(word32 reg)
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
 
-    if (timeout >= ESP_RSA_TIMEOUT) {
+    if (timeout >= ESP_RSA_TIMEOUT_CNT) {
         ESP_LOGE(TAG, "rsa operation is time-outed.");
         return MP_NG;
     }
