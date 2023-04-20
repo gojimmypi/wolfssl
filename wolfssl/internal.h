@@ -4414,6 +4414,7 @@ struct Options {
     word16            saveArrays:1;       /* save array Memory for user get keys
                                            or psk */
     word16            weOwnRng:1;         /* will be true unless CTX owns */
+    word16            dontFreeDigest:1;   /* when true, we used SetDigest */
     word16            haveEMS:1;          /* using extended master secret */
 #ifdef HAVE_POLY1305
     word16            oldPoly:1;        /* set when to use old rfc way of poly*/
@@ -4801,6 +4802,10 @@ struct WOLFSSL_X509 {
     byte             authKeyIdSet:1;
     byte             authKeyIdCrit:1;
     byte             issuerSet:1;
+#ifdef WOLFSSL_CUSTOM_OID
+    CertExtension    custom_exts[NUM_CUSTOM_EXT];
+    int              customExtCount;
+#endif /* WOLFSSL_CUSTOM_OID */
 #endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
 #ifdef WOLFSSL_CERT_REQ
     byte             isCSR:1;

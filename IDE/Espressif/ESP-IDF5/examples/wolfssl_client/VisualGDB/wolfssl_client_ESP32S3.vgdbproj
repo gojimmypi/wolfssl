@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<VisualGDBProjectSettings2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<VisualGDBProjectSettings2 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Project xsi:type="com.visualgdb.project.external.esp-idf">
     <CustomSourceDirectories>
       <Directories />
@@ -71,7 +71,7 @@
           <Subdirectory>esp-idf/v5.0</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM20</COMPort>
+        <COMPort>COM9</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32S3</DeviceID>
@@ -104,7 +104,7 @@
     </Connection>
     <LastConnectionTime>0</LastConnectionTime>
     <EchoTypedCharacters>false</EchoTypedCharacters>
-    <ClearContentsWhenReconnecting>false</ClearContentsWhenReconnecting>
+    <ClearContentsWhenReconnecting>true</ClearContentsWhenReconnecting>
     <ReconnectAutomatically>false</ReconnectAutomatically>
     <DisplayMode>ASCII</DisplayMode>
     <Colors>
@@ -220,7 +220,11 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
+<<<<<<<< HEAD:IDE/Espressif/ESP-IDF5/examples/wolfssl_client/VisualGDB/wolfssl_client_ESP32S3.vgdbproj
         <CommandLine>-f interface/tigard.cfg -c "adapter_khz 3000" -f target/esp32.cfg</CommandLine>
+========
+        <CommandLine>-f interface/ftdi/tigard.cfg -c "adapter_khz 15000" -f target/esp32.cfg</CommandLine>
+>>>>>>>> 574d8c3f63644e850156f0386f09f8a9cb9a4271:IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_test-IDF_v5_ESP32.vgdbproj
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />

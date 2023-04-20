@@ -146,6 +146,51 @@ void app_main(void)
     ShowExtendedSystemInfo();
 #endif
 
+#if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s", LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
+#endif
+
+#if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
+    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+#endif
+
+
+    /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* not available for C3 at this time */
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+             );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#else
+    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
+            );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#endif
+
+    /* all platforms: stack high water mark check */
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+    /* check to see if we are using hardware encryption */
+#if defined(NO_ESP32WROOM32_CRYPT)
+    ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.");
+#else
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-C3"
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S2"
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        /* #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S3" */
+        ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled for  ESP32-S3.");
+    #else
+        ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled.");
+    #endif
+#endif
+
+
+
 #if defined (WOLFSSL_USE_TIME_HELPER)
     set_time();
 #endif

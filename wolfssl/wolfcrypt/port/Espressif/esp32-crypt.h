@@ -106,8 +106,8 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
-    void wc_esp32TimerStart();
-    uint64_t  wc_esp32elapsedTime();
+    void wc_esp32TimerStart(void);
+    uint64_t  wc_esp32elapsedTime(void);
 
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
 
@@ -141,35 +141,30 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
     typedef struct
     {
-        byte g1;
-        byte g2;
-        /* NOTE:
+        /* pointer to object the initialized HW; to track copies */
+        void* initializer;
+
+        /* an ESP32_MODE value; typically:
+        **   0 init,
+        **   1 HW,
+        **   2 SW     */
+        ESP32_MODE mode;
+
+        /* see esp_rom/include/esp32/rom/sha.h
         **
-        ** There's a known Espressif byte alignment issue. See:
-        ** https://github.com/wolfSSL/wolfssl/issues/5948
-        **
-        ** To avoid problems, list the largest types first.
+        **  the Espressif type: SHA1, SHA256, etc.
         */
-        ESP32_MODE mode; /* an ESP32_MODE value; typically 0 init, 1 HW, 2 SW */
-
-        /* see esp_rom/include/esp32/rom/sha.h */
-        enum SHA_TYPE sha_type; /* the Espressif type: SHA1, SHA256, etc.*/
-
-        //    #if defined(CONFIG_IDF_TARGET_ESP32S3)
-//        SHA_TYPE sha_type;
-//    #else
-//        enum SHA_TYPE sha_type;
-//    #endif
-        /* see esp_rom/include/esp32/rom/sha.h */
-
-        void* initializer; /* pointer to object the initialized HW; to track copies */
-        int lockDepth; /* see ref_counts[periph] in periph_ctrl.c    */
-        byte g3;
-        byte g4;
+        enum SHA_TYPE sha_type;
 
         /* we'll keep track of our own locks.
-        ** actual enable/disable only occurs for ref_counts[periph] == 0 */
-        byte isfirstblock; /* 0 is not first block; 1 = is first block   */
+        ** actual enable/disable only occurs for ref_counts[periph] == 0
+        **
+        **  see ref_counts[periph] in periph_ctrl.c */
+        byte lockDepth:7;   /* 7 bits for a small number, pack with below. */
+
+        /* 0 (false) this is NOT first block.
+        ** 1 (true ) this is first block.  */
+        byte isfirstblock:1; /* 1 bit only for true / false */
     } WC_ESP32SHA;
 
     int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type);

@@ -216,6 +216,7 @@ int wc_CmacFinal(Cmac* cmac, byte* out, word32* outSz)
 {
     int ret;
     const byte* subKey;
+    word32 remainder;
 
     if (cmac == NULL || out == NULL || outSz == NULL) {
         return BAD_FUNC_ARG;
@@ -241,7 +242,7 @@ int wc_CmacFinal(Cmac* cmac, byte* out, word32* outSz)
         if (cmac->bufferSz > AES_BLOCK_SIZE) {
             return BAD_STATE_E;
         }
-        word32 remainder = AES_BLOCK_SIZE - cmac->bufferSz;
+        remainder = AES_BLOCK_SIZE - cmac->bufferSz;
 
         if (remainder == 0) {
             remainder = AES_BLOCK_SIZE;
@@ -341,7 +342,7 @@ int wc_AesCmacVerify(const byte* check, word32 checkSz,
 
     XMEMSET(a, 0, aSz);
     ret = wc_AesCmacGenerate(a, &aSz, in, inSz, key, keySz);
-    compareRet = ConstantCompare(check, a, min(checkSz, aSz));
+    compareRet = ConstantCompare(check, a, (int)min(checkSz, aSz));
 
     if (ret == 0)
         ret = compareRet ? 1 : 0;

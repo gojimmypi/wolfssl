@@ -111,8 +111,6 @@ on the specific device platform.
     static const char* TAG = "wc_sha256";
 #endif
 
-
-
 /* fips wrapper calls, user can call direct */
 #if defined(HAVE_FIPS) && \
     (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
@@ -945,7 +943,7 @@ static int InitSha256(wc_Sha256* sha256)
             S[i] = sha256->digest[i];
 
         for (i = 0; i < 16; i++)
-            W[i] = *((const word32*)&data[i*sizeof(word32)]);
+            W[i] = *((const word32*)&data[i*(int)sizeof(word32)]);
 
         for (i = 16; i < WC_SHA256_BLOCK_SIZE; i++)
             W[i] = Gamma1(W[i-2]) + W[i-7] + Gamma0(W[i-15]) + W[i-16];
@@ -1136,7 +1134,7 @@ static int InitSha256(wc_Sha256* sha256)
             /* get number of blocks */
             /* 64-1 = 0x3F (~ Inverted = 0xFFFFFFC0) */
             /* len (masked by 0xFFFFFFC0) returns block aligned length */
-            blocksLen = len & ~(WC_SHA256_BLOCK_SIZE-1);
+            blocksLen = len & ~((word32)WC_SHA256_BLOCK_SIZE-1);
             if (blocksLen > 0) {
                 /* Byte reversal and alignment handled in function if required */
                 XTRANSFORM_LEN(sha256, data, blocksLen);
@@ -1631,6 +1629,9 @@ static int InitSha256(wc_Sha256* sha256)
     #else
         (void)devId;
     #endif /* WOLFSSL_ASYNC_CRYPT */
+#ifdef WOLFSSL_IMXRT1170_CAAM
+     ret = wc_CAAM_HashInit(&sha224->hndl, &sha224->ctx, WC_HASH_TYPE_SHA224);
+#endif
 
     #ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
         if (sha224->ctx.mode != ESP32_SHA_INIT) {
