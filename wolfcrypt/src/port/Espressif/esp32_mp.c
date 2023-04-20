@@ -844,59 +844,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         return ret;
     }
 
-#if CONFIG_IDF_TARGET_ESP32S3
-    /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
-     * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
-     * maximum number of bits in the X and Y is 2048.
-     * See §20.3.3 of ESP32-S3 technical manual
-     *  1. Wait until the hardware is ready.
-     *  2. Enable/disable interrupt that signals completion -- we don't use the interrupt.
-     *  3. Write (N_bits/32 - 1) to the RSA_MODE_REG (now called RSA_LENGTH_REG).
-     *     Here N_bits is the maximum number of bits in X, Y and M.
-     *  4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG).
-     *  5. Load X, Y, M, r' operands to memory blocks.
-     *  6. Start the operation by writing 1 to RSA_MODEXP_START_REG, then wait for it
-     *     to complete by monitoring RSA_IDLE_REG (which is now called RSA_QUERY_INTERRUPT_REG).
-     *  7. Read the result out.
-     *  8. Release the hardware lock so others can use it.
-     *  x. Clear the interrupt flag, if you used it (we don't). */
-
-    /* 1. Wait until hardware is ready. */
-    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY)
-    {
-      return ret;
-    }
-
-    /* 2. Disable completion interrupt singal; we don't use. */
-    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0); // 0 => no interrupt; 1 => interrupt on completion.
-
-    /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
-    uint32_t uOperandBits = max(max(Xs, Ys), Ms);
-    if (uOperandBits > ESP_HW_MULTI_RSAMAX_BITS)
-    {
-      ESP_LOGW(TAG, "result exceeds max bit length");
-      return -2;
-    }
-    int nWordsForOperand = bits2words(uOperandBits);
-    DPORT_REG_WRITE(RSA_LENGTH_REG, nWordsForOperand - 1);
-
-    /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
-    DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
-
-    /* 5. Load X, Y, M, r' operands. */
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, Ys, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, &r_inv, mp_count_bits(&r_inv), hwWords_sz);
-
-    /* 6. Start operation and wait until it completes. */
-    process_start(RSA_MODEXP_START_REG);
-    ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
-    if (MP_OKAY != ret)
-    {
-      return ret;
-    }
-
     /* 7. read the result form MEM_Z              */
     esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(Ms));
 

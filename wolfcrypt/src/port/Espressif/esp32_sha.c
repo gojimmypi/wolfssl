@@ -591,14 +591,6 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     int ret = 0; /* assume success unless proven otherwise */
     int actual_unroll_count = 0;
     int max_unroll_count = 1000; /* never get stuck in a hardware wait loop */
-#if defined(CONFIG_IDF_TARGET_ESP32)
-    uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
-#endif
-    if (ctx == NULL)
-    {
-        ESP_LOGE(TAG, "esp_unroll_sha_module_enable called with null ctx.");
-        return -1;
-    }
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     uint32_t this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
@@ -933,9 +925,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
         sha->isfirstblock = false;
         ESP_LOGV(TAG, "      set sha->isfirstblock = 0");
 
-        #if defined(DEBUG_WOLFSSL)
-            this_block_num = 1; /* one-based counter, just for debug info */
-        #endif
+    #if defined(DEBUG_WOLFSSL)
+        this_block_num = 1; /* one-based counter, just for debug info */
+    #endif
 
     }
     else {
@@ -991,6 +983,12 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
                                  const word32* data,
                                  word32 len)
 {
+    int ret = 0; /* assume success */
+    word32 word32_to_save = (len) / (sizeof(word32));
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+    uint32_t* MessageSource;
+    uint32_t* AcceleratorMessage;
+#else
     int i;
 #endif
     ESP_LOGV(TAG, "  enter esp_process_block");
@@ -999,20 +997,38 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
         ESP_LOGE(TAG, "  ERROR esp_process_block length exceeds 0x31 words.");
     }
 
-    /* check if there are any busy engine */
-    wc_esp_wait_until_idle();
+    /* wait until the engine is available */
+    ret = wc_esp_wait_until_idle();
 
-    /* load [len] words of message data into hw */
+#if CONFIG_IDF_TARGET_ESP32S3
+    MessageSource = (uint32_t*)data;
+    AcceleratorMessage = (uint32_t*)(SHA_TEXT_BASE);
+    while (word32_to_save--) {
+      /* Must swap endianness of data loaded into hardware accelerator to produce
+       * correct result. Using DPORT_REG_WRITE doesn't avoid this for ESP32s3.
+       * Note: data sheet claims we also need to swap endianness across 64 byte words
+       * when doing SHA-512, but the SHA-512 result is not correct if you do that. */
+      DPORT_REG_WRITE(AcceleratorMessage, __builtin_bswap32(*MessageSource));
+      ++AcceleratorMessage;
+      ++MessageSource;
+    } /*  (word32_to_save--) */
+
+#else
+    /* load [len] words of message data into HW */
     for (i = 0; i < word32_to_save; i++) {
         /* by using DPORT_REG_WRITE, we avoid the need
-         * to call __builtin_bswap32 to address endiness
+         * to call __builtin_bswap32 to address endianness.
          *
          * a useful watch array cast to watch at runtime:
          *   ((uint32_t[32])  (*(volatile uint32_t *)(SHA_TEXT_BASE)))
          *
          * Write value to DPORT register (does not require protecting)
          */
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+        /* ESP32-C3 RISC-V TODO */
+    #else
         DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
+    #endif
         /* memw confirmed auto inserted by compiler here */
     }
 #endif
@@ -1023,17 +1039,27 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     ret = esp_sha_start_process(ctx);
 
     ESP_LOGV(TAG, "  leave esp_process_block");
-}
+    return ret;
+} /* wc_esp_process_block */
 
 /*
- * retrieve sha digest from memory
- */
+** retrieve SHA digest from memory
+*/
 int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 {
+    word32 digestSz;
+
+#if CONFIG_IDF_TARGET_ESP32S3
+    uint64_t* pHash64Buffer;
+    uint32_t* pHashDestination;
+    size_t szHashWords;
+    size_t szHash64Words;
+# endif
+
     ESP_LOGV(TAG, "enter esp_digest_state");
 
-    if (ctx == NULL)    {
-        return -1;
+    if (ctx == NULL) {
+        return BAD_FUNC_ARG;
     }
 
     /* sanity check */
@@ -1043,10 +1069,36 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
         return -1;
     }
-
-    if (ctx == NULL) {
-        return -1;
+#if CONFIG_IDF_TARGET_ESP32S3
+    if (ctx->isfirstblock == true) {
+        /* no hardware use yet. Nothing to do yet */
+        return 0;
     }
+
+    /* wait until idle */
+    wc_esp_wait_until_idle();
+
+    /* read hash result into buffer & flip endianness */
+    pHashDestination = (uint32_t*)hash;
+    szHashWords = wc_esp_sha_digest_size(ctx->sha_type) / sizeof(uint32_t);
+    esp_dport_access_read_buffer(pHashDestination, SHA_H_BASE, szHashWords);
+
+    if (ctx->sha_type == SHA2_512) {
+        /* Although we don't have to swap endianness on 64-bit words
+        ** at the input, we do for the output. */
+        szHash64Words = szHashWords / 2;
+        pHash64Buffer = (uint64_t*)pHashDestination;
+        while (szHash64Words--) {
+            *pHash64Buffer = __builtin_bswap64(*pHash64Buffer);
+            ++pHash64Buffer;
+        }
+    } /*  (ctx->sha_type == SHA2_512) */
+    else {
+        while (szHashWords--) {
+            *pHashDestination = __builtin_bswap32(*pHashDestination);
+            ++pHashDestination;
+        }
+    } /* not (ctx->sha_type == SHA2_512) */
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
@@ -1084,8 +1136,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
             return -1;
     }
 
-
-    if(ctx->isfirstblock == 1){
+    if (ctx->isfirstblock == true) {
         /* no hardware use yet. Nothing to do yet */
         return 0;
     }
@@ -1133,6 +1184,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         }
     }
 #endif
+#endif /* not CONFIG_IDF_TARGET_ESP32S3 */
 
     ESP_LOGV(TAG, "leave esp_digest_state");
     return 0;
@@ -1254,9 +1306,12 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
         }
     }
     else {
-        ByteReverseWords((word32*)sha->buffer, (word32*)sha->buffer,
-                                                        WC_SHA512_BLOCK_SIZE);
-        if(isfinal){
+        /* when we are in HW mode, Espressif uses 32 bit words */
+        ByteReverseWords((word32*)sha->buffer,
+                         (word32*)sha->buffer,
+                         WC_SHA512_BLOCK_SIZE);
+
+        if (isfinal) {
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 2] =
                                         rotlFixed64(sha->hiLen, 32U);
             sha->buffer[WC_SHA512_BLOCK_SIZE / sizeof(word64) - 1] =
@@ -1266,7 +1321,9 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
         ret = wc_esp_process_block(&sha->ctx, data, WC_SHA512_BLOCK_SIZE);
     }
     ESP_LOGV(TAG, "leave esp_sha512_block");
-}
+    return ret;
+} /* esp_sha512_block */
+
 /*
 ** sha512 process. this is used for sha384 too.
 */
@@ -1302,12 +1359,10 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
     else {
         ESP_LOGW(TAG, "Call esp_sha512_digest_process in non-HW mode?");
     }
-    if(sha->ctx.mode != ESP32_SHA_SW)
-        wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
 
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");
-    return 0;
-}
+    return ret;
+} /* esp_sha512_digest_process */
 #endif /* WOLFSSL_SHA512 || WOLFSSL_SHA384 */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT */
 #endif /* !defined(NO_SHA) ||... */
