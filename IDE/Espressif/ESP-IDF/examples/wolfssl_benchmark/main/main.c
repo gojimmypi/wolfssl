@@ -229,7 +229,10 @@ void app_main(void)
 #endif
     /* after the test, we'll just wait */
     while (1) {
-        /* nothing */
+        /* do something other than nothing to help next program/debug session*/
+#ifndef SINGLE_THREADED
+        vTaskDelay(1000);
+#endif
     }
 
 #endif /* NO_CRYPT_BENCHMARK */
