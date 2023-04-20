@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
-    #include <config.h>
+#include <config.h>
 #endif
 #include <wolfssl/wolfcrypt/settings.h>
 
@@ -34,10 +34,10 @@
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
 
 #ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
+#include <wolfssl/wolfcrypt/misc.h>
 #else
-    #define WOLFSSL_MISC_INCLUDED
-    #include <wolfcrypt/src/misc.c>
+#define WOLFSSL_MISC_INCLUDED
+#include <wolfcrypt/src/misc.c>
 #endif
 #include <wolfssl/wolfcrypt/tfm.h>
 
@@ -51,8 +51,6 @@ static const char* const TAG = "wolfssl_mp";
 
 #define MP_NG   -1
 
-#define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
-
 /* mutex */
 static wolfSSL_Mutex mp_mutex;
 static int espmp_CryptHwMutexInit = 0;
@@ -61,12 +59,11 @@ static int espmp_CryptHwMutexInit = 0;
 */
 static int esp_mp_hw_wait_clean()
 {
-    word32 timeout = 0;
-    while(!ESP_TIMEOUT(++timeout) &&
-                DPORT_REG_READ(RSA_CLEAN_REG) != 1) { }
+    int timeout = 0;
+    while (++timeout < ESP_RSA_TIMEOUT && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {}
 
-    if(ESP_TIMEOUT(timeout)) {
-        ESP_LOGE(TAG, "waiting hw ready is timed out.");
+    if (timeout >= ESP_RSA_TIMEOUT) {
+        ESP_LOGE(TAG, "waiting hw ready is time-outed.");
         return MP_NG;
     }
     return MP_OKAY;
@@ -79,31 +76,31 @@ static int esp_mp_hw_lock()
 {
     int ret = 0;
 
-    if(espmp_CryptHwMutexInit == 0) {
+    if (espmp_CryptHwMutexInit == 0) {
         ret = esp_CryptHwMutexInit(&mp_mutex);
-        if(ret == 0){
+        if (ret == 0) {
             espmp_CryptHwMutexInit = 1;
-        } else {
+        }
+        else {
             ESP_LOGE(TAG, "mp mutx initialization failed.");
             return MP_NG;
         }
     }
     /* lock hardware */
     ret = esp_CryptHwMutexLock(&mp_mutex, portMAX_DELAY);
-    if(ret != 0) {
+    if (ret != 0) {
         ESP_LOGE(TAG, "mp engine lock failed.");
         return MP_NG;
     }
     /* Enable RSA hardware */
     periph_module_enable(PERIPH_RSA_MODULE);
 
-    DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
     return ret;
 }
 /*
 *   Release hw engine
 */
-static void esp_mp_hw_unlock( void )
+static void esp_mp_hw_unlock(void)
 {
     /* Disable RSA hardware */
     periph_module_disable(PERIPH_RSA_MODULE);
@@ -126,9 +123,9 @@ static int esp_calc_Mdash(mp_int *M, word32 k, mp_digit* md)
     bi = b0;
     x  = 0;
 
-    for(i = 0; i < k; i++) {
+    for (i = 0; i < k; i++) {
         xi = bi % 2;
-        if(xi < 0){
+        if (xi < 0) {
             xi *= -1;
         }
         bi = (bi - N * xi) / 2;
@@ -141,7 +138,7 @@ static int esp_calc_Mdash(mp_int *M, word32 k, mp_digit* md)
 /* start hw process */
 static void process_start(word32 reg)
 {
-     /* clear interrupt */
+    /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     /* start process  */
     DPORT_REG_WRITE(reg, 1);
@@ -149,16 +146,19 @@ static void process_start(word32 reg)
 /* wait until done */
 static int wait_uitil_done(word32 reg)
 {
-    word32 timeout = 0;
+    int timeout = 0;
     /* wait until done && not timeout */
-    while(!ESP_TIMEOUT(++timeout) &&
-                DPORT_REG_READ(reg) != 1) { }
+    while (1) {
+        if (++timeout < ESP_RSA_TIMEOUT && DPORT_REG_READ(reg) == 1) {
+            break;
+        }
+    }
 
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
 
-    if(ESP_TIMEOUT(timeout)) {
-        ESP_LOGE(TAG, "rsa operation is timed out.");
+    if (timeout >= ESP_RSA_TIMEOUT) {
+        ESP_LOGE(TAG, "rsa operation is time-outed.");
         return MP_NG;
     }
 
@@ -172,19 +172,21 @@ static void esp_memblock_to_mpint(word32 mem_address, mp_int* mp, word32 numword
 }
 
 /* write mp_init into memory block             */
-static void esp_mpint_to_memblock(word32 mem_address, const mp_int* mp,
-                                                      const word32 bits,
-                                                      const word32 hwords)
+static void esp_mpint_to_memblock(word32 mem_address,
+                                  const mp_int* mp,
+                                  const word32 bits,
+                                  const word32 hwords)
 {
     word32 i;
     word32 len = (bits / 8 + ((bits & 7) != 0 ? 1 : 0));
 
-    len = (len+sizeof(word32)-1)/sizeof(word32);
+    len = (len + sizeof(word32) - 1) / sizeof(word32);
 
-    for(i=0;i < hwords; i++) {
-        if(i < len) {
+    for (i = 0; i < hwords; i++) {
+        if (i < len) {
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
-        } else {
+        }
+        else {
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
         }
     }
@@ -197,7 +199,7 @@ static word32 words2hwords(word32 wd)
 {
     const word32 shit_ = 4;
 
-    return (((wd + 0xf)>>shit_)<<shit_);
+    return (((wd + 0xf) >> shit_) << shit_);
 }
 /* count the number of words is needed for bits */
 static word32 bits2words(word32 bits)
@@ -205,7 +207,7 @@ static word32 bits2words(word32 bits)
     /* 32 bits */
     const word32 d = sizeof(word32) * WOLFSSL_BIT_SIZE;
 
-    return((bits + (d - 1))/d);
+    return ((bits + (d - 1)) / d);
 }
 /* get rinv */
 static int esp_get_rinv(mp_int *rinv, mp_int *M, word32 exp)
@@ -213,13 +215,13 @@ static int esp_get_rinv(mp_int *rinv, mp_int *M, word32 exp)
     int ret = 0;
 
     /* 2^(exp)*/
-    if((ret = mp_2expt(rinv, exp)) != MP_OKAY) {
+    if ((ret = mp_2expt(rinv, exp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate mp_2expt()");
         return ret;
     }
 
     /* r_inv = R^2 mod M(=P) */
-    if(ret == 0 && (ret = mp_mod(rinv, M, rinv)) != MP_OKAY){
+    if (ret == 0 && (ret = mp_mod(rinv, M, rinv)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate mp_mod()");
         return ret;
     }
@@ -230,7 +232,7 @@ static int esp_get_rinv(mp_int *rinv, mp_int *M, word32 exp)
 int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
 {
     int ret = 0;
-    int neg = (X->sign == Y->sign)? MP_ZPOS : MP_NEG;
+    int neg = (X->sign == Y->sign) ? MP_ZPOS : MP_NEG;
 
     word32 Xs;
     word32 Ys;
@@ -248,7 +250,7 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     hwWords_sz  = words2hwords(maxWords_sz);
 
     /* sanity check */
-    if((hwWords_sz<<5) > ESP_HW_MULTI_RSAMAX_BITS) {
+    if ((hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "exceeds max bit length(2048)");
         return -2;
     }
@@ -268,10 +270,10 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     * 9. Release the hw engine
     */
     /* lock hw for use */
-    if((ret = esp_mp_hw_lock()) != MP_OKAY)
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY)
         return ret;
 
-    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY){
+    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
         return ret;
     }
 
@@ -280,7 +282,7 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     /* step.2 write X, M and r_inv into memory */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     /* Y(let-extend)                          */
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (hwWords_sz<<2), Y, Ys, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (hwWords_sz << 2), Y, Ys, hwWords_sz);
     /* step.3 start process                           */
     process_start(RSA_MULT_START_REG);
 
@@ -292,7 +294,7 @@ int esp_mp_mul(fp_int* X, fp_int* Y, fp_int* Z)
     /* step.7 clear and release hw                    */
     esp_mp_hw_unlock();
 
-    Z->sign = (Z->used > 0)? neg : MP_ZPOS;
+    Z->sign = (Z->used > 0) ? neg : MP_ZPOS;
 
     return ret;
 }
@@ -313,7 +315,7 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     mp_digit mp;
 
     /* neg check */
-    if(X->sign != Y->sign) {
+    if (X->sign != Y->sign) {
         /* X*Y becomes negative */
         negcheck = 1;
     }
@@ -327,7 +329,7 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     zwords      = bits2words(min(Ms, Xs + Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
 
-    if((hwWords_sz<<5) > ESP_HW_RSAMAX_BIT) {
+    if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds hw maximum bits");
         return -2;
     }
@@ -336,20 +338,20 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     *    accordingly R^2 = 2^(n*32*2)
     */
     ret = mp_init_multi(&tmpZ, &r_inv, NULL, NULL, NULL, NULL);
-    if(ret == 0 && (ret = esp_get_rinv(&r_inv, M, (hwWords_sz<<6))) != MP_OKAY) {
+    if (ret == 0 && (ret = esp_get_rinv(&r_inv, M, (hwWords_sz << 6))) != MP_OKAY) {
         ESP_LOGE(TAG, "calculate r_inv failed.");
         mp_clear(&tmpZ);
         mp_clear(&r_inv);
         return ret;
     }
     /* lock hw for use */
-    if((ret = esp_mp_hw_lock()) != MP_OKAY){
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
         mp_clear(&tmpZ);
         mp_clear(&r_inv);
         return ret;
     }
     /* Calculate M' */
-    if((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
+    if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(&tmpZ);
         mp_clear(&r_inv);
@@ -374,7 +376,7 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     * 13. Release the hw engine
     */
 
-    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY){
+    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
         return ret;
     }
     /* step.1                     512 bits => 16 words */
@@ -383,8 +385,10 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
     /* step.2 write X, M and r_inv into memory */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, &r_inv, mp_count_bits(&r_inv),
-                                                                  hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                          &r_inv,
+                          mp_count_bits(&r_inv),
+                          hwWords_sz);
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
@@ -409,11 +413,11 @@ int esp_mp_mulmod(fp_int* X, fp_int* Y, fp_int* M, fp_int* Z)
 
     /* additional steps                               */
     /* this needs for known issue when Z is greater than M */
-    if(mp_cmp(&tmpZ, M)==FP_GT) {
-         /* Z -= M    */
-         mp_sub(&tmpZ, M, &tmpZ);
+    if (mp_cmp(&tmpZ, M) == FP_GT) {
+        /* Z -= M    */
+        mp_sub(&tmpZ, M, &tmpZ);
     }
-    if(negcheck) {
+    if (negcheck) {
         mp_sub(M, &tmpZ, &tmpZ);
     }
 
@@ -444,7 +448,7 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     hwWords_sz  = words2hwords(maxWords_sz);
 
-    if((hwWords_sz<<5) > ESP_HW_RSAMAX_BIT) {
+    if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds hw maximum bits");
         return -2;
     }
@@ -453,19 +457,19 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     *    accordingly R^2 = 2^(n*32*2)
     */
     ret = mp_init(&r_inv);
-    if(ret == 0 && (ret = esp_get_rinv(&r_inv, M, (hwWords_sz<<6))) != MP_OKAY) {
+    if (ret == 0 && (ret = esp_get_rinv(&r_inv, M, (hwWords_sz << 6))) != MP_OKAY) {
         ESP_LOGE(TAG, "calculate r_inv failed.");
         mp_clear(&r_inv);
         return ret;
     }
     /* lock and init the hw                           */
-    if((ret = esp_mp_hw_lock()) != MP_OKAY) {
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
         mp_clear(&r_inv);
         return ret;
     }
     /* calc M' */
     /* if Pm is odd, uses mp_montgomery_setup() */
-    if((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
+    if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(&r_inv);
         return -1;
@@ -483,7 +487,7 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     * 6. Read the result Z(=Y) from Z_MEM
     * 7. Write 1 to INTERRUPT_REG to clear the interrupt.
     */
-    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY){
+    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
         return ret;
     }
 
@@ -493,8 +497,10 @@ int esp_mp_exptmod(fp_int* X, fp_int* Y, word32 Ys, fp_int* M, fp_int* Z)
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, Ys, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, &r_inv, mp_count_bits(&r_inv),
-                                                                   hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                          &r_inv,
+                          mp_count_bits(&r_inv),
+                          hwWords_sz);
     /* step.3 write M' into memory                    */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
