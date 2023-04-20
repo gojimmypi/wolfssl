@@ -81,6 +81,11 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     return 0;
 #endif
 }
+#endif
+
+/* esp_ShowExtendedSystemInfo
+** available regardless if HW acceleration is turned on or not.
+*/
 
 /*
 ** Version / Platform info.
@@ -331,5 +336,4 @@ int esp_ShowExtendedSystemInfo()
     return ShowExtendedSystemInfo();
 }
 
-#endif
 
