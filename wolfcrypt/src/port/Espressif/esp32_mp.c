@@ -69,7 +69,7 @@ static int espmp_CryptHwMutexInit = 0;
 */
 static int esp_mp_hw_wait_clean(void)
 {
-	int ret = MP_OKAY;
+    int ret = MP_OKAY;
     word32 timeout = 0;
 
 #if CONFIG_IDF_TARGET_ESP32S3
