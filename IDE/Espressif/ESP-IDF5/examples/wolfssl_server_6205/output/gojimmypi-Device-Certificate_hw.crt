@@ -1,0 +1,96 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            7c:5d:81:57:1f:8f:ae:88:8c:84:18:af:37:d4:74:c0:62:2f:4e:f0
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C = NZ, ST = Waikato, L = Hamilton, O = Blue Leaf Software Ltd, CN = Blue Leaf Software CA
+        Validity
+            Not Before: Apr 20 09:04:33 2023 GMT
+            Not After : Apr 30 09:04:33 2023 GMT
+        Subject: C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos, serialNumber = BLS-001"
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:bd:3b:0b:38:89:14:56:c7:41:bf:98:d8:81:05:
+                    5b:f4:88:b3:7a:5a:20:31:bc:02:fc:ee:c4:c7:e5:
+                    af:9d:77:e9:c9:a1:f3:fa:01:3d:07:5d:55:b0:3c:
+                    f7:ce:5d:1b:cb:f1:19:45:68:2d:e0:ce:c7:a8:7b:
+                    e8:0f:81:19:85:ea:34:76:11:68:bb:10:03:4f:09:
+                    45:e8:a6:0c:c7:98:62:bd:c9:c3:1c:4e:0a:99:d1:
+                    24:f9:b5:59:34:de:ac:69:73:59:a0:51:63:b1:69:
+                    99:ea:3e:4b:d7:f3:eb:d3:84:50:a1:43:57:95:1d:
+                    4f:19:25:1f:ba:b0:61:0d:f1
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Certificate Policies: critical
+                Policy: 1.3.6.1.4.1.59430.2.1
+                Policy: 1.3.6.1.4.1.59430.2.1.1
+                Policy: 1.3.6.1.4.1.59430.2.1.2
+            X509v3 Subject Key Identifier: 
+                35:DF:57:1C:91:3C:51:57:2A:5D:72:A4:2E:CD:26:86:D6:D3:2A:C6
+            X509v3 Authority Key Identifier: 
+                1C:D0:70:E6:15:83:CD:8E:FB:08:71:37:00:05:95:4C:4E:93:82:6B
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        3a:26:b2:2b:01:aa:4c:e7:10:e0:82:cb:0e:96:75:bc:50:c6:
+        0c:bb:1f:2b:8d:a7:f4:b9:b9:e0:fb:b3:fc:a4:74:03:d4:7c:
+        6e:98:7a:38:98:17:7b:e8:c4:1e:8f:9d:e9:aa:5d:1c:81:8b:
+        c0:4a:7a:eb:b1:a0:5d:39:18:27:58:6c:d7:06:f9:c8:7e:4d:
+        8d:c1:7a:07:c7:b4:b2:ec:be:d7:96:c0:0b:14:ae:d4:b5:a0:
+        ba:66:df:d2:b9:ad:58:8f:71:f5:65:69:e8:5a:74:c1:e2:23:
+        00:4d:91:b2:6f:a3:ec:cc:cc:90:83:34:61:03:09:4a:1a:0d:
+        ca:b3:08:38:4a:b0:ee:b4:04:8d:e0:86:fa:78:d2:a1:c7:bb:
+        7f:c4:6b:00:32:3e:1a:62:a4:dd:ac:5e:c8:b5:69:73:2d:fa:
+        d9:56:c6:1c:1d:77:53:f7:ec:6a:7d:0a:d4:47:f1:c0:40:1d:
+        d8:03:bb:4f:f1:af:ef:a3:65:55:97:e8:6c:6d:85:f9:9e:ed:
+        89:f2:96:c0:75:ba:5f:06:15:e2:63:07:be:3a:80:f0:c0:13:
+        f0:6a:23:67:a7:77:be:ec:e0:66:c4:05:1f:de:3e:48:93:b0:
+        8e:d8:d9:bf:06:d3:9a:95:03:18:d6:1c:e9:1a:fb:76:fa:17:
+        2b:dd:f7:45:8f:92:ca:a2:49:d8:59:55:13:d0:20:0f:13:37:
+        73:f4:3d:b8:55:9a:a1:92:af:1a:60:fe:e8:b5:aa:6c:ef:14:
+        ac:4d:07:04:f3:8a:f4:6f:a7:84:9a:b9:ed:a9:80:3d:2d:90:
+        1c:f7:03:ee:64:92:4a:4e:c6:e6:0b:d1:2a:57:bf:f8:b1:d7:
+        dd:12:93:5b:1e:ea:ec:aa:20:57:31:a8:6e:54:e5:13:89:76:
+        de:05:11:b3:a4:df:dc:06:62:b3:b0:b1:13:85:99:42:c2:66:
+        46:e9:8a:a3:7e:f6:d1:21:56:80:8c:27:6d:7d:6a:a6:23:09:
+        25:80:5f:38:63:0d:95:f2:68:71:71:b8:14:93:15:28:5f:81:
+        7c:7b:0f:54:f1:82:e2:f8:63:b5:2d:17:96:8a:b1:c1:e1:f1:
+        bf:8f:85:2f:30:a3:84:7d:e7:fb:35:65:87:ef:1e:e4:1d:64:
+        d5:6c:df:43:72:80:37:15:7d:cd:10:04:c9:56:55:5a:6c:7b:
+        35:19:04:3c:2a:1a:5a:f0:b1:45:63:5b:9d:b8:a1:29:90:fd:
+        eb:b8:99:88:ec:65:14:c9:55:49:22:31:4a:3b:b2:4c:d7:d1:
+        fd:25:2d:cd:35:cd:2e:24:bf:a1:a9:41:a1:7b:60:d0:26:86:
+        13:3e:3c:7a:90:91:ef:1d
+-----BEGIN CERTIFICATE-----
+MIIEoTCCAomgAwIBAgIUfF2BVx+ProiMhBivN9R0wGIvTvAwDQYJKoZIhvcNAQEL
+BQAwczELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAPBgNVBAcMCEhh
+bWlsdG9uMR8wHQYDVQQKDBZCbHVlIExlYWYgU29mdHdhcmUgTHRkMR4wHAYDVQQD
+DBVCbHVlIExlYWYgU29mdHdhcmUgQ0EwHhcNMjMwNDIwMDkwNDMzWhcNMjMwNDMw
+MDkwNDMzWjB8MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8GA1UE
+BwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRkMSYw
+JAYDVQQDDB1MdW1vcywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMTCBnzANBgkqhkiG
+9w0BAQEFAAOBjQAwgYkCgYEAvTsLOIkUVsdBv5jYgQVb9IizelogMbwC/O7Ex+Wv
+nXfpyaHz+gE9B11VsDz3zl0by/EZRWgt4M7HqHvoD4EZheo0dhFouxADTwlF6KYM
+x5hivcnDHE4KmdEk+bVZNN6saXNZoFFjsWmZ6j5L1/Pr04RQoUNXlR1PGSUfurBh
+DfECAwEAAaOBpzCBpDAJBgNVHRMEAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
+BgEFBQcDAjA4BgNVHSABAf8ELjAsMAwGCisGAQQBg9AmAgEwDQYLKwYBBAGD0CYC
+AQEwDQYLKwYBBAGD0CYCAQIwHQYDVR0OBBYEFDXfVxyRPFFXKl1ypC7NJobW0yrG
+MB8GA1UdIwQYMBaAFBzQcOYVg82O+whxNwAFlUxOk4JrMA0GCSqGSIb3DQEBCwUA
+A4ICAQA6JrIrAapM5xDggssOlnW8UMYMux8rjaf0ubng+7P8pHQD1HxumHo4mBd7
+6MQej53pql0cgYvASnrrsaBdORgnWGzXBvnIfk2NwXoHx7Sy7L7XlsALFK7UtaC6
+Zt/Sua1Yj3H1ZWnoWnTB4iMATZGyb6PszMyQgzRhAwlKGg3Kswg4SrDutASN4Ib6
+eNKhx7t/xGsAMj4aYqTdrF7ItWlzLfrZVsYcHXdT9+xqfQrUR/HAQB3YA7tP8a/v
+o2VVl+hsbYX5nu2J8pbAdbpfBhXiYwe+OoDwwBPwaiNnp3e+7OBmxAUf3j5Ik7CO
+2Nm/BtOalQMY1hzpGvt2+hcr3fdFj5LKoknYWVUT0CAPEzdz9D24VZqhkq8aYP7o
+taps7xSsTQcE84r0b6eEmrntqYA9LZAc9wPuZJJKTsbmC9EqV7/4sdfdEpNbHurs
+qiBXMahuVOUTiXbeBRGzpN/cBmKzsLEThZlCwmZG6YqjfvbRIVaAjCdtfWqmIwkl
+gF84Yw2V8mhxcbgUkxUoX4F8ew9U8YLi+GO1LReWirHB4fG/j4UvMKOEfef7NWWH
+7x7kHWTVbN9DcoA3FX3NEATJVlVabHs1GQQ8Khpa8LFFY1uduKEpkP3ruJmI7GUU
+yVVJIjFKO7JM19H9JS3NNc0uJL+hqUGhe2DQJoYTPjx6kJHvHQ==
+-----END CERTIFICATE-----
