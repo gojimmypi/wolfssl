@@ -346,6 +346,7 @@
     #define NO_WOLFSSL_DIR
     #define WOLFSSL_NO_CURRDIR
 
+    /* test 0001 */
     #define TFM_TIMING_RESISTANT
     // #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING

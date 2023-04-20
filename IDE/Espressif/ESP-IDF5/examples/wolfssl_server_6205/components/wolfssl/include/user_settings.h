@@ -147,6 +147,7 @@
 
 // #define HASH_SIZE_LIMIT /* for test.c */
 
+/* test 0001  */
 #define USE_FAST_MATH
 #define WOLFSSL_SMALL_STACK
 
