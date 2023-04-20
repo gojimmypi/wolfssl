@@ -33,6 +33,11 @@
 #include "user_settings.h"
 #include <wolfssl/wolfcrypt/ecc.h>
 
+/* what OpenAI generated */
+// #include <wolfssl/wolfcrypt/base64.h>
+
+/* what I actually needed */
+#include <wolfssl/wolfcrypt/coding.h>
 
 static const char *TAG = "wolfSSL ecc key demo";
 #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
@@ -55,8 +60,9 @@ struct ecc_key my_private_key; // ECC_SECP256R1
 byte my_public_key[MY_PUBLIC_KEY_SIZE] = {0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb,
                           0x47, 0xcc, 0xde, 0x8f, 0xac, 0x18, 0x7b, 0x86,
                           0xad, 0x00, 0x99, 0x10, 0xc9, 0x41, 0x22, 0xfd,
-                          0x8d, 0xea, 0xe3, 0x98, 0x60, 0x4d, 0x89, 0x7e,
-                          0x59, 0x41, 0x83, 0x93, 0x88, 0x60, 0x6b, 0x22,
+                          0x8d, 0xea, 0xe3, 0x98, 0x60,
+                          0x4d, 0x89, 0x7e, 0x59,
+                          0x41, 0x83, 0x93, 0x88, 0x60, 0x6b, 0x22,
                           0x8f, 0x35, 0x7a, 0xd1, 0x7e, 0xb6, 0x6c, 0x26,
                           0xac, 0x01, 0x77, 0x0b, 0x60, 0xe4, 0x86, 0x9b,
                           0x20, 0xc7, 0x99, 0xd3, 0x76, 0x5b, 0x5f, 0xc1,
@@ -336,11 +342,213 @@ int to_load_key(struct ProtobufCBinaryData ephemeral_key)
         ESP_LOGE(TAG, "Failed to call wc_ecc_shared_secret for my_ecc_private_key and my_ecc_public_key. Error = %d", rc);
     }
 
+    byte pub_key_b64_buf[512];
+    word32 sz = sizeof(pub_key_b64_buf);
+    rc = Base64_Encode(shared_key, shared_key_len, pub_key_b64_buf, &sz);
+    if (rc == MP_OKAY) {
+        ESP_LOGI(TAG, "Successfully called Base64_Encode");
+        ESP_LOGI(TAG, "%s\n", pub_key_b64_buf);
+        }
+    else {
+        ESP_LOGE(TAG, "Failed to call Base64_Encode. Error = %d", rc);
+    }
+
     return rc;
 }
 
+/*
+int ret;
+byte pub[] = { initialize with ANSI X9.63 formatted key };
+byte priv[] = { initialize with the raw private key };
+
+ecc_key key;
+wc_ecc_init(&key);
+ret = wc_ecc_import_private_key(priv, sizeof(priv), pub, sizeof(pub),
+&key);
+if ( ret != 0) {
+    // error importing key
+}
+**/
+
+/*
+** See "Elliptic Curve Private Key Structure":
+**     https://www.rfc-editor.org/rfc/rfc5915
+*/
+const unsigned char* myPEM =   (const unsigned char*) \
+    "-----BEGIN EC PRIVATE KEY-----\n"
+    "MHcCAQEEIGXOdeNRODqoWF2G1Pv5c/9606thVSgAR2b0MDRZErxwoAoGCCqGSM49\n"
+    "AwEHoUQDQgAEJJOl0J2L60fM3o+sGHuGrQCZEMlBIv2N6uOYYE2JfllBg5OIYGsi\n"
+    "jzV60X62bCasAXcLYOSGmyDHmdN2W1/BdA==\n"
+    "-----END EC PRIVATE KEY-----"
+    "\n";
+
+
+//    unsigned char private_key[] = {
+//        0x65, 0xce, 0x75, 0xe3, 0x51, 0x38, 0x3a, 0xa8, 0x58, 0x5d, 0x86, 0xd4, 0xfb, 0xf9, 0x73,
+//        0xff, 0x7a, 0xd3, 0xab, 0x61, 0x55, 0x28, 0x00, 0x47, 0x66, 0xf4, 0x30, 0x34, 0x59, 0x12,
+//        0xbc, 0x70
+//    };
+//
+//    unsigned char public_key[] = {
+//        0x04, 0x24, 0x93, 0xa5, 0xd0, 0x9d, 0x8b, 0xeb, 0x47, 0xcc, 0xde, 0x8f, 0xac, 0x18, 0x7b,
+//        0x86, 0xad, 0x00, 0x99, 0x10, 0xc9, 0x41, 0x22, 0xfd, 0x8d, 0xea, 0xe3, 0x98, 0x60, 0x4d,
+//        0x89, 0x7e, 0x59, 0x41, 0x83, 0x93, 0x88, 0x60, 0x6b, 0x22, 0x8f, 0x35, 0x7a, 0xd1, 0x7e,
+//        0xb6, 0x6c, 0x26, 0xac, 0x01, 0x77, 0x0b, 0x60, 0xe4, 0x86, 0x9b, 0x20, 0xc7, 0x99, 0xd3,
+//        0x76, 0x5b, 0x5f, 0xc1, 0x74
+//    };
+
+int PEM_size()
+{
+    int Size = 0;
+    while (myPEM[Size] != '\0') Size++;
+    return Size;
+}
+
+#include <wolfssl/wolfcrypt/asn_public.h>
+#include  <wolfssl/ssl.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfcrypt/ecc.h>
+#include <wolfssl/openssl/evp.h>
 void app_main(void)
 {
+    int ret;
+    WOLFSSL_CTX*  ctx = 0;
+    int myPEM_size = PEM_size();
+    ESP_LOGI(TAG, "my_PEM:\n\n%s", myPEM);
+    ESP_LOGI(TAG, "my_PEM_size = %d", myPEM_size);
+
+    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
+    }
+
+
+    //  int wolfSSL_EccPrivateKeyDecode(const byte* input, word32* inOutIdx, ecc_key* key, word32 inSz);
+/*
+ int wc_EccPrivateKeyDecode(
+    const byte * input,
+    word32 * inOutIdx,
+    ecc_key * key,
+    word32 inSz
+)
+ **/
+    /*
+    **  Convert PEM to Distinguished Encoding Rules: DER, X.690
+    */
+    char mybuff[255] = {};
+    unsigned char* der_key = (unsigned char*) &mybuff;
+    int der_size = sizeof(mybuff);
+    der_size = wc_KeyPemToDer(myPEM, myPEM_size, der_key, der_size, NULL);
+    if (der_size > 0) {
+        ESP_LOGI(TAG, "Successfully called wc_KeyPemToDer for myPEM. Length = %d", der_size);
+    }
+
+    ecc_key my_ecc_key; // to store key in when reading from DER.
+    word32 idx = 0;
+    ret = wc_EccPrivateKeyDecode(der_key, &idx, &my_ecc_key, der_size);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wc_EccPrivateKeyDecode for myPEM");
+        ESP_LOGI(TAG, "Found key name: %s", my_ecc_key.dp->name);
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wc_EccPrivateKeyDecode for myPEM. Error = %d", ret);
+    }
+
+    ecc_key pub_key;
+    wc_ecc_init(&pub_key);
+    word32 my_inOutIdx = 0; /* 	Index to start reading input buffer from. On output, index is set to last position parsed of input buffer */
+    ret = wc_EccPublicKeyDecode(der_key, &my_inOutIdx, &pub_key, der_size);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wc_EccPublicKeyDecode for der_key");
+        ESP_LOGI(TAG, "Public my_inOutIdx = %d", my_inOutIdx);
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wc_EccPublicKeyDecode for der_key. Error = %d", ret);
+    }
+
+
+    // Print the ECC private key details
+    printf("Private-Key: (EC)\n");
+    printf("priv:\n");
+    for (int i = 0; i < my_ecc_key.k.used; i++) {
+        printf("%02X ", my_ecc_key.k.dp[i]);
+    }
+    printf("\n");
+    //wc_PrintHex(key.k, key.k.size);
+    //wolfSSL_Debug(NULL, NULL, (const byte*)ecc_key.k.data, ecc_key.k.size, 0);
+
+    printf("\n");
+//    method = wolfSSLv3_client_method();
+//    if (method == NULL) {
+//    }
+//
+//    ctx = wolfSSL_CTX_new(method);
+
+    //wolfSSL_CTX_use_PrivateKey_buffer (WOLFSSL_CTX *ctx, const unsigned char *in, long sz, int format)
+    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
+    }
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx, myPEM, myPEM_size, SSL_FILETYPE_PEM);
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Successfully called wolfSSL_CTX_use_PrivateKey_buffer for myPEM");
+//        ESP_LOG_BUFFER_HEX_LEVEL(TAG, *(((ctx*)->privateKey).buffer), ctx.privateKey->length, ESP_LOG_INFO);
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wolfSSL_CTX_use_PrivateKey_buffer for myPEM. Error = %d", ret);
+    }
+
+   //
+#if (0)
+// --—BEGIN CERTIFICATE--—
+
+    // Example for force loading an expired certificate
+    ret = wolfSSL_CTX_load_verify_buffer_ex(ctx,
+                                            myPEM,
+                                            myPEM_size,
+                                            SSL_FILETYPE_PEM,
+                                            0,
+                                            (WOLFSSL_LOAD_FLAG_DATE_ERR_OKAY));
+
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wolfSSL_CTX_load_verify_buffer_ex for myPEM");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wolfSSL_CTX_load_verify_buffer_ex for myPEM. Error = %d", ret);
+    }
+
+    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
+    }
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx, myPEM, myPEM_size, SSL_FILETYPE_PEM);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wolfSSL_CTX_use_certificate_buffer for myPEM");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wolfSSL_CTX_use_certificate_buffer for myPEM. Error = %d", ret);
+    }
+
+    WOLFSSL* ssl = 0;
+    ret = wolfSSL_use_PrivateKey_buffer(ssl, myPEM, myPEM_size, SSL_FILETYPE_PEM);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "Successfully called wolfSSL_use_PrivateKey_buffer for myPEM");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed wolfSSL_use_PrivateKey_buffer for myPEM. Error = %d", ret);
+    }
+
+
+//    if (ret != SSL_SUCCESS) {
+//    byte pub[] = { initialize with ANSI X9.63 formatted key };
+//    byte priv[] = { initialize with the raw private key };
+//
+//    ecc_key key;
+//    wc_ecc_init(&key);
+//    ret = wc_ecc_import_private_key(priv,
+//                                    sizeof(priv),
+//                                    pub,
+//                                    sizeof(pub),
+//                                    &key);
+#endif
+
     struct ProtobufCBinaryData myProtobufCBinaryData;
 
     /* ephemeral_key.data  b'04f3476fb37270eef09966fd17ca7967ede63a2bb3d23b4aee6e8b459482aebd7a939a95cbbbd01a1ec46b1976509e1cb82990d8eec34c98d14b69c5d8f7cee21c' */

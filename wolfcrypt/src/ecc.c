@@ -24,7 +24,7 @@
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-
+#include <esp_log.h>
 /* in case user set HAVE_ECC there */
 #include <wolfssl/wolfcrypt/settings.h>
 
@@ -3648,6 +3648,10 @@ int wc_ecc_mulmod_ex2(const mp_int* k, ecc_point* G, ecc_point* R, mp_int* a,
 #endif
    /* k can't have more bits than order */
    if (mp_count_bits(k) > mp_count_bits(order)) {
+      int mp_count_bits_k =   mp_count_bits(k);
+      int mp_count_bits_order =  mp_count_bits(order);
+      ESP_LOGI("peek", "mp_count_bits_k = %d, mp_count_bits_order = %d", mp_count_bits_k, mp_count_bits_order);
+
       return ECC_OUT_OF_RANGE_E;
    }
 

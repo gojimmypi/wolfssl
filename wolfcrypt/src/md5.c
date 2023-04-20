@@ -453,8 +453,10 @@ int wc_Md5Final(wc_Md5* md5, byte* hash)
     local = (byte*)md5->buffer; /* buffer allocated in word32 size */
 
     /* ensure we have a valid buffer length; (-1 to append a byte to length) */
-    if (md5->buffLen > WC_MD5_BLOCK_SIZE - 1)
+    if (md5->buffLen > WC_MD5_BLOCK_SIZE - 1) {
+        /* some places consider this BAD_STATE_E */
         return BUFFER_E;
+    }
 
     local[md5->buffLen++] = 0x80;  /* add 1 */
 
