@@ -47,15 +47,13 @@
 */
 #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
 
+#define DER_SIZE 4096
+#define PEM_SIZE 4096
+
+
 static const char *TAG = "key test";
 
-
-
-void app_main(void)
-{
-    #define DER_SIZE 4096
-    #define PEM_SIZE 4096
-
+int CertDemo() {
     byte der[DER_SIZE];
     byte pem[PEM_SIZE];
     esp_err_t ret; /* return codes */
@@ -64,9 +62,6 @@ void app_main(void)
     Cert request;
     RsaKey genKey;
     RNG rng;
-
-    esp_ShowExtendedSystemInfo();
-
     XMEMSET(der, 0, DER_SIZE);
     XMEMSET(pem, 0, PEM_SIZE);
 
@@ -126,7 +121,6 @@ void app_main(void)
     ***************************************************************************
     */
     wc_InitRsaKey(&genKey, 0);
-
     ESP_LOGI(TAG, "Generating an RSA key %d bits long", WOLFSSL_RSA_KEY_SIZE);
     ret = wc_MakeRsaKey(&genKey, WOLFSSL_RSA_KEY_SIZE, 65537, &rng);
     if (ret != 0) {
@@ -230,7 +224,6 @@ void app_main(void)
     **
     ***************************************************************************
     */
-    ESP_LOGI(TAG, "\n\n");
     ESP_LOGI(TAG, "\n\n"
                    "Request pem: (paste into file for CA sign)"
                    "\n\n"
@@ -252,7 +245,6 @@ openssl x509 -req -in "./output/gojimmypi-ESP32_request.crt" -days 10     \
     -out ./output/gojimmypi-Device-Certificate_hw.crt -text
 
     */
-    ESP_LOGI(TAG, "Done!");
 
     /* check to see if we are using hardware encryption */
 #if defined(NO_ESP32WROOM32_CRYPT)
@@ -287,5 +279,27 @@ openssl x509 -req -in "./output/gojimmypi-ESP32_request.crt" -days 10     \
                                "(disabled HW RSA)");
     #endif
 #endif
+
+    return 0;
+}
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    esp_ShowExtendedSystemInfo();
+
+    CertDemo();
+
+    ESP_LOGI(TAG, "Done!");
+    while (1) {
+        /* do something other than nothing to help next program/debug session*/
+#ifndef SINGLE_THREADED
+        vTaskDelay(1000);
+#endif
+    }
 
 }
