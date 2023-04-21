@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.007 for wolfssl 6205 spaces in path and cleanup
+# Version 5.6.0.008 for wolfssl 6205 git tag, CMAKE_C_FLAGS check
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -56,13 +56,30 @@ else()
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
 
+    # ensure the main app defines WOLFSSL_USER_SETTINGS
+    # example:
+    #   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+    set(FOUND_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    message(STATUS "CMAKE_C_FLAGS = ${FOUND_CMAKE_C_FLAGS}")
+
+    spaces2list(FOUND_CMAKE_C_FLAGS)
+    message(STATUS "CMAKE_C_FLAGS list = ${FOUND_CMAKE_C_FLAGS}")
+
+    # if ("-DWOLFSSL_USER_SETTINGS" IN_LIST "${FOUND_CMAKE_C_FLAGS}") # only for cmake 3.3 or later, instead:
+    list (FIND FOUND_CMAKE_C_FLAGS "-DWOLFSSL_USER_SETTINGS" FOUND_CMAKE_WOLFSSL_USER_SETTING)
+    if (${FOUND_CMAKE_WOLFSSL_USER_SETTING} GREATER -1)
+        message(STATUS "Confirmed CMAKE_C_FLAGS contains definition for WOLFSSL_USER_SETTINGS")
+    else()
+        message(FATAL_ERROR "CMakeLists.txt; CMAKE_C_FLAGS must contain: -DWOLFSSL_USER_SETTINGS")
+    endif()
+
     # Check to see if we're already in wolfssl, and only if WOLFSSL_ROOT not specified
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # wolfssl examples are 7 directories deep from wolfssl repo root
         #                        1  2  3  4  5  6  7
         set(THIS_RELATIVE_PATH "../../../../../../..")
         get_filename_component(THIS_SEARCH_PATH  "${THIS_RELATIVE_PATH}" ABSOLUTE)
-        message(STATUS "Searching in path = ${THIS_SEARCH_PATH}")
+        message(STATUS "Searching for wolfcrypt source in path = ${THIS_SEARCH_PATH}")
 
         if (EXISTS "${THIS_SEARCH_PATH}/wolfcrypt/src")
             # we're already in wolfssl examples!
@@ -482,6 +499,13 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # LIBWOLFSSL_VERSION_GIT_HASH_DATE git show --no-patch --no-notes --pretty=\'\%cd\'
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
+
+    # LIBWOLFSSL_VERSION_GIT_TAG git describe --tags --abbrev=0
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "describe" "--tags" "--abbrev=0" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_TAG "${TMP_OUT}" "${TMP_RES}")
+
+    # LIBWOLFSSL_VERSION_CMAKE_CURRENT_LIST_DIR
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_CMAKE_HOME_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" "0") # no actual command, so send "0" command result = success.
 
     message(STATUS "************************************************************************************************")
     message(STATUS "wolfssl component config complete!")
