@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.004 for wolfssh
+# Version 5.6.0.005 for wolfssl 6205 cleaning up RTOS detect
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -288,41 +288,47 @@ else()
     # RTOS_IDF_PATH is typically:
     # "/Users/{username}/Desktop/esp-idf/components/freertos/include/freertos"
     # depending on the environment, we may need to swap backslashes with forward slashes
-    string(REPLACE "\\" "/" RTOS_IDF_PATH "$ENV{IDF_PATH}/components/freertos/include/freertos")
+    string(REPLACE "\\" "/" RTOS_IDF_PATH "$ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos")
 
-    # ESP-IDF after version 4.4x has a different RTOS directory structure
-    string(REPLACE "\\" "/" RTOS_IDF_PATH5 "$ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos")
 
-    if(IS_DIRECTORY ${IDF_PATH}/components/freertos/FreeRTOS-Kernel/)
-        set(COMPONENT_ADD_INCLUDEDIRS
-           "."
-           "./include" # this is the location of wolfssl user_settings.h
-           \"${RTOS_IDF_PATH5}\"
-           \"${WOLFSSL_ROOT}\"
-           )
+    if(IS_DIRECTORY "${RTOS_IDF_PATH}")
+        message(STATUS "Found current RTOS path: ${RTOS_IDF_PATH}")
     else()
+        # ESP-IDF prior version 4.4x has a different RTOS directory structure
+        string(REPLACE "\\" "/" RTOS_IDF_PATH "$ENV{IDF_PATH}/components/freertos/include/freertos")
+        if(IS_DIRECTORY "${RTOS_IDF_PATH}")
+            message(STATUS "Found legacy RTOS path: ${RTOS_IDF_PATH}")
+        else()
+            message(STATUS "Could not find RTOS path")
+        endif()
+    endif()
 
-       set(COMPONENT_ADD_INCLUDEDIRS
-           "."
-           "./include" # this is the location of wolfssl user_settings.h
-           \"${RTOS_IDF_PATH}\"
-           \"${WOLFSSL_ROOT}\"
-          )
 
-    endif() # early
-    #wow2
+    set(COMPONENT_ADD_INCLUDEDIRS
+        "."
+        "./include" # this is the location of wolfssl user_settings.h
+        "\"${RTOS_IDF_PATH}\""
+        "\"${WOLFSSL_ROOT}\""
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
+        )
+
 
     if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
         list(APPEND COMPONENT_ADD_INCLUDEDIRS "../cryptoauthlib/lib")
     endif()
 
+    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/\"")
+    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\"")
+
+
+
     set(COMPONENT_SRCEXCLUDE
         "\"${WOLFSSL_ROOT}/src/bio.c\""
-        "\"${WOLFSSL_ROOT}/src/ssl_asn1.c\"" # included by ssl.c
-        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\""   # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/conf.c\""
         "\"${WOLFSSL_ROOT}/src/misc.c\""
         "\"${WOLFSSL_ROOT}/src/pk.c\""
+        "\"${WOLFSSL_ROOT}/src/ssl_asn1.c\"" # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\""   # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/ssl_misc.c\"" # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
