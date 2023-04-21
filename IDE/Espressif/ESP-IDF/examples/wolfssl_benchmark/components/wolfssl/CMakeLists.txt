@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.005 for wolfssl 6205 cleaning up RTOS detect
+# Version 5.6.0.007 for wolfssl 6205 spaces in path and cleanup
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -27,7 +27,11 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
-set(COMPONENT_REQUIRES lwip)
+# set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+
+# COMPONENT_NAME = wolfssl
+# The component name is the directory name. "No feature to change this".
+# See https://github.com/espressif/esp-idf/issues/8978#issuecomment-1129892685
 
 # set the root of wolfSSL:
 #   set(WOLFSSL_ROOT  "C:/some path/with/spaces")
@@ -36,7 +40,7 @@ set(COMPONENT_REQUIRES lwip)
 #   or use this logic to assign value from Environment Variable WOLFSSL_ROOT,
 #   or assume this is an example 7 subdirectories below:
 
-# We are currently in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
+# We are typically in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
 # The root of wolfSSL is 7 directories up from here:
 
 if(CMAKE_BUILD_EARLY_EXPANSION)
@@ -57,21 +61,35 @@ else()
         # wolfssl examples are 7 directories deep from wolfssl repo root
         #                        1  2  3  4  5  6  7
         set(THIS_RELATIVE_PATH "../../../../../../..")
-        if( EXISTS "${THIS_RELATIVE_PATH}/wolfcrypt/src")
+        get_filename_component(THIS_SEARCH_PATH  "${THIS_RELATIVE_PATH}" ABSOLUTE)
+        message(STATUS "Searching in path = ${THIS_SEARCH_PATH}")
+
+        if (EXISTS "${THIS_SEARCH_PATH}/wolfcrypt/src")
             # we're already in wolfssl examples!
-            get_filename_component(WOLFSSL_ROOT  "${THIS_RELATIVE_PATH}" ABSOLUTE)
+            get_filename_component(WOLFSSL_ROOT  "${THIS_SEARCH_PATH}" ABSOLUTE)
+            message(STATUS "Using wolfSSL example with root ${WOLFSSL_ROOT}")
         else()
             # We're in some other repo such as wolfssh, so we'll search for an
-            # adjacent-level directory for wolfssl. (8 directories up)
+            # adjacent-level directory for wolfssl. (8 directories up, then down one)
+            #
+            # For example wolfSSL examples:
+            #   C:\workspace\wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples\wolfssl_benchmark\components\wolfssl
+            #
+            # For example wolfSSH examples:
+            #   C:\workspace\wolfssh-gojimmypi\ide\Espressif\ESP-IDF\examples\wolfssh_benchmark\components\wolfssl
+            #
             #                        1  2  3  4  5  6  7  8
             set(THIS_RELATIVE_PATH "../../../../../../../..")
+            get_filename_component(THIS_SEARCH_PATH  "${THIS_RELATIVE_PATH}" ABSOLUTE)
+            message(STATUS "Searching next in path = ${THIS_SEARCH_PATH}")
         endif()
     endif()
 
+    # search other possible locations
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # there's not a hard-coded WOLFSSL_ROOT value above, so let's see if we can find it.
         if( "$ENV{WOLFSSL_ROOT}" STREQUAL "" )
-            message(STATUS "Environment Variable WOLFSSL_ROOT not set.")
+            message(STATUS "Environment Variable WOLFSSL_ROOT not set. Will search common locations.")
 
             message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
             get_filename_component(THIS_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
@@ -105,19 +123,19 @@ else()
             else()
                 # We found an environment USER name!
                 # The first place to look for wolfssl will be in a user-clone called "wolfssl-[username]"
-                message(STATUS "Found THIS_USER = ${THIS_USER}")
+                message(STATUS "Using [THIS_USER = ${THIS_USER}] to see if there's a [relative path]/wolfssl-${THIS_USER} directory.")
                 get_filename_component(WOLFSSL_ROOT  "${THIS_RELATIVE_PATH}/wolfssl-${THIS_USER}" ABSOLUTE)
 
                 if( EXISTS "${WOLFSSL_ROOT}" )
-                    message(STATUS "Found {WOLFSSL_ROOT}")
+                    message(STATUS "Found wolfssl in user-suffix ${WOLFSSL_ROOT}")
                 else()
                     # If there's not a user-clone called "wolfssl-[username]",
-                    # perhaps there's simpel a git clone called "wolfssl"?
-                    message(STATUS "did not find wolfssl-${THIS_USER}")
+                    # perhaps there's simply a git clone called "wolfssl"?
+                    message(STATUS "Did not find wolfssl-${THIS_USER}; continuing search...")
                     get_filename_component(WOLFSSL_ROOT  "${THIS_RELATIVE_PATH}/wolfssl" ABSOLUTE)
 
                     if( EXISTS "${WOLFSSL_ROOT}" )
-                        message(STATUS "Found wolfssl")
+                        message(STATUS "Found wolfssl in standard ${WOLFSSL_ROOT}")
                     else()
                         # Things are looking pretty bleak. We'll likely not be able to compile.
                         message(STATUS "Did not find wolfssl in ${WOLFSSL_ROOT}")
@@ -140,10 +158,10 @@ else()
         # end of search for wolfssl component root
     else()
         # There's already a value assigned; we won't search for anything else.
-        message(STATUS "Found user-specified WOLFSSL_ROOT value")
+        message(STATUS "Found user-specified WOLFSSL_ROOT value.")
     endif() # WOLFSSL_ROOT user defined
 
-    # After all the logic above, does our WOLFSSL_ROOT actualy exist?
+    # After all the logic above, does our WOLFSSL_ROOT actually exist?
     if( EXISTS "${WOLFSSL_ROOT}" )
         message(STATUS "WOLFSSL_ROOT = ${WOLFSSL_ROOT}")
     else()
@@ -151,15 +169,17 @@ else()
         message(FATAL_ERROR "Could not find wolfssl in ${WOLFSSL_ROOT}. Try setting environment variable or git clone.")
     endif()
 
+
     set(INCLUDE_PATH ${WOLFSSL_ROOT})
 
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel/\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/benchmark/\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/test/\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/benchmark\"" # the benchmark application
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/test\"" # the test application
        ) # COMPONENT_SRCDIRS
+    message(STATUS "This COMPONENT_SRCDIRS = ${COMPONENT_SRCDIRS}")
 
     set(WOLFSSL_PROJECT_DIR "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
 
@@ -209,7 +229,8 @@ else()
             message(STATUS "")
         else()
             #
-            # wolfSSL is not an ESP-IDF component. We need to now determine if it is local and if so if it is part of the wolfSSL repo
+            # wolfSSL is not an ESP-IDF component.
+            # We need to now determine if it is local and if so if it is part of the wolfSSL repo,
             # or if  wolfSSL is simply installed as a local component.
             #
 
@@ -241,14 +262,19 @@ else()
                     #
                     # first check if there's a [root]/include/user_settings.h
                     if( EXISTS "${WOLFSSL_ROOT}/include/user_settings.h" )
-                        message(FATAL_ERROR "Found stray wolfSSL user_settings.h in ${WOLFSSL_ROOT}/include/user_settings.h (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+                        message(FATAL_ERROR "Found stray wolfSSL user_settings.h in "
+                                            "${WOLFSSL_ROOT}/include/user_settings.h "
+                                            " (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h )")
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/user_settings.h" )
-                            message(STATUS "Using existing wolfSSL user_settings.h in ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+                            message(STATUS "Using existing wolfSSL user_settings.h in "
+                                           "${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
                         else()
-                            message(STATUS "Installing wolfSSL user_settings.h to     ${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
-                            file(COPY "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/user_settings.h" DESTINATION "${CMAKE_HOME_DIRECTORY}/wolfssl/include/")
+                            message(STATUS "Installing wolfSSL user_settings.h to "
+                                           "${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+                            file(COPY "${WOLFSSL_ROOT}/IDE/Espressif/ESP-IDF/user_settings.h"
+                            DESTINATION "${CMAKE_HOME_DIRECTORY}/wolfssl/include/")
                         endif()
                     endif() # user_settings.h
 
@@ -290,6 +316,7 @@ else()
     # depending on the environment, we may need to swap backslashes with forward slashes
     string(REPLACE "\\" "/" RTOS_IDF_PATH "$ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos")
 
+    string(REPLACE "\\" "/" WOLFSSL_ROOT ${WOLFSSL_ROOT})
 
     if(IS_DIRECTORY "${RTOS_IDF_PATH}")
         message(STATUS "Found current RTOS path: ${RTOS_IDF_PATH}")
@@ -305,11 +332,11 @@ else()
 
 
     set(COMPONENT_ADD_INCLUDEDIRS
-        "."
         "./include" # this is the location of wolfssl user_settings.h
-        "\"${RTOS_IDF_PATH}\""
-        "\"${WOLFSSL_ROOT}\""
+        "\"${WOLFSSL_ROOT}/\""
+        "\"${WOLFSSL_ROOT}/wolfssl/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
+        "\"${RTOS_IDF_PATH}/\""
         )
 
 
@@ -350,6 +377,11 @@ else()
     message(STATUS "COMPONENT_ADD_INCLUDEDIRS = ${COMPONENT_ADD_INCLUDEDIRS}")
     message(STATUS "COMPONENT_REQUIRES = ${COMPONENT_REQUIRES}")
     message(STATUS "COMPONENT_SRCEXCLUDE = ${COMPONENT_SRCEXCLUDE}")
+
+    #
+    # see https://docs.espressif.com/projects/esp-idf/en/stable/esp32/migration-guides/release-5.x/build-system.html?highlight=space%20path
+    #
+    set(EXTRA_COMPONENT_DIRS "${COMPONENT_SRCDIRS}")
     idf_component_register(
                             SRC_DIRS "${COMPONENT_SRCDIRS}"
                             INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
@@ -371,6 +403,8 @@ else()
         message(STATUS "ALL VARIABLES END")
         message(STATUS "")
     endif()
+
+    # target_sources(wolfssl PRIVATE  "\"${WOLFSSL_ROOT}/wolfssl/\""  "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt\"")
 endif() # CMAKE_BUILD_EARLY_EXPANSION
 
 
@@ -423,8 +457,11 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUPUT THIS_VAR VAR_RESULT )
     endif()
 endfunction() # LIBWOLFSSL_SAVE_INFO
 
+# create some programmatic #define values that will be used by ShowExtendedSystemInfo().
+# see wolfcrypt\src\port\Espressif\esp32_utl.c
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     set (git_cmd "git")
+    message(STATUS "Adding macro definitions:")
 
     # LIBWOLFSSL_VERSION_GIT_ORIGIN: git config --get remote.origin.url
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
@@ -445,4 +482,8 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # LIBWOLFSSL_VERSION_GIT_HASH_DATE git show --no-patch --no-notes --pretty=\'\%cd\'
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
+
+    message(STATUS "************************************************************************************************")
+    message(STATUS "wolfssl component config complete!")
+    message(STATUS "************************************************************************************************")
 endif()
