@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{B6250AC3-88B8-4DB9-A8A8-CA48DB569A35}"
 	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
+		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
+		..\components\wolfssl\Kconfig.projbuild = ..\components\wolfssl\Kconfig.projbuild
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
