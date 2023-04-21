@@ -235,8 +235,16 @@ static int ShowExtendedSystemInfo_git()
     ** but not desired for introspection which requires object code to be
     ** maximally bitwise-invariant.
     */
+
+
+#if defined(LIBWOLFSSL_VERSION_GIT_TAG)
+    /* git config describe --tags --abbrev=0 */
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_TAG = %s",
+                           LIBWOLFSSL_VERSION_GIT_TAG);
+#endif
+
 #if defined(LIBWOLFSSL_VERSION_GIT_ORIGIN)
-        /* git config --get remote.origin.url */
+    /* git config --get remote.origin.url */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_ORIGIN = %s",
                            LIBWOLFSSL_VERSION_GIT_ORIGIN);
 #endif
@@ -248,16 +256,19 @@ static int ShowExtendedSystemInfo_git()
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_HASH)
+    /* git rev-parse HEAD */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH = %s",
                            LIBWOLFSSL_VERSION_GIT_HASH);
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
+    /* git rev-parse --short HEAD */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s",
                            LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
+    /* git show --no-patch --no-notes --pretty=\'\%cd\' */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s",
                            LIBWOLFSSL_VERSION_GIT_HASH_DATE);
 #endif
