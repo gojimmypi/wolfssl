@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.005 for wolfssl 6205 cleaning up RTOS detect
+# Version 5.6.0.006 for wolfssl 6205 polish
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -71,7 +71,7 @@ else()
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # there's not a hard-coded WOLFSSL_ROOT value above, so let's see if we can find it.
         if( "$ENV{WOLFSSL_ROOT}" STREQUAL "" )
-            message(STATUS "Environment Variable WOLFSSL_ROOT not set.")
+            message(STATUS "Environment Variable WOLFSSL_ROOT not set. Will search common locations.")
 
             message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
             get_filename_component(THIS_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
@@ -105,19 +105,19 @@ else()
             else()
                 # We found an environment USER name!
                 # The first place to look for wolfssl will be in a user-clone called "wolfssl-[username]"
-                message(STATUS "Found THIS_USER = ${THIS_USER}")
+                message(STATUS "Using THIS_USER = ${THIS_USER} to see if there's a [relative path]/wolfssl-${THIS_USER} directory.")
                 get_filename_component(WOLFSSL_ROOT  "${THIS_RELATIVE_PATH}/wolfssl-${THIS_USER}" ABSOLUTE)
 
                 if( EXISTS "${WOLFSSL_ROOT}" )
-                    message(STATUS "Found {WOLFSSL_ROOT}")
+                    message(STATUS "Found wolfssl in ${WOLFSSL_ROOT}")
                 else()
                     # If there's not a user-clone called "wolfssl-[username]",
-                    # perhaps there's simpel a git clone called "wolfssl"?
-                    message(STATUS "did not find wolfssl-${THIS_USER}")
+                    # perhaps there's simply a git clone called "wolfssl"?
+                    message(STATUS "Did not find wolfssl-${THIS_USER}; continuing search...")
                     get_filename_component(WOLFSSL_ROOT  "${THIS_RELATIVE_PATH}/wolfssl" ABSOLUTE)
 
                     if( EXISTS "${WOLFSSL_ROOT}" )
-                        message(STATUS "Found wolfssl")
+                        message(STATUS "Found wolfssl in ${WOLFSSL_ROOT}")
                     else()
                         # Things are looking pretty bleak. We'll likely not be able to compile.
                         message(STATUS "Did not find wolfssl in ${WOLFSSL_ROOT}")
@@ -305,11 +305,11 @@ else()
 
 
     set(COMPONENT_ADD_INCLUDEDIRS
-        "."
         "./include" # this is the location of wolfssl user_settings.h
-        "\"${RTOS_IDF_PATH}\""
-        "\"${WOLFSSL_ROOT}\""
+        "\"${WOLFSSL_ROOT}/\""
+        "\"${WOLFSSL_ROOT}/wolfssl/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
+        "\"${RTOS_IDF_PATH}/\""
         )
 
 
