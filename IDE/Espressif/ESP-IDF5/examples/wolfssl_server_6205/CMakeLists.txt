@@ -3,4 +3,8 @@
 cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(key_test)
+
+project(key_test DESCRIPTION "wolfSSL Example" )
+
+# set(CMAKE_PROJECT_HOMEPAGE_URL  "http://wolfssl.com")
+
