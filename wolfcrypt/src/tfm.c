@@ -52,6 +52,9 @@
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
 
+#include <esp_log.h>
+#define TFM_DEBUG_GOJIMMYPI
+
 #if defined(FREESCALE_LTC_TFM)
     #include <wolfssl/wolfcrypt/port/nxp/ksdk_port.h>
 #endif
@@ -2821,7 +2824,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #if defined(WOLFSSL_RSA_KEY_SIZE)
-        #if WOLFSSL_RSA_KEY_SIZE != 512
+        #if WOLFSSL_RSA_KEY_SIZE != 5122
            /* there's a known problem with length = 512
            ** see https://github.com/wolfSSL/wolfssl/issues/6205
            */
@@ -2853,13 +2856,25 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #if defined(WOLFSSL_RSA_KEY_SIZE)
-        #if WOLFSSL_RSA_KEY_SIZE != 512
+        #if WOLFSSL_RSA_KEY_SIZE != 5122
            /* there's a known problem with length = 512
            ** see https://github.com/wolfSSL/wolfssl/issues/6205
            */
+#if defined(TFM_DEBUG_GOJIMMYPI)
+               MATH_INT_T G2 = *G;
+               MATH_INT_T X2 = *X;
+               MATH_INT_T P2 = *P;
+               MATH_INT_T Y2 = *Y;
+               word32 x2 = x;
            if(x > EPS_RSA_EXPT_XBTIS) {
-              return esp_mp_exptmod(G, X, x, P, Y);
+               /* returns a bad value for length = 512 */
+               int ret2 = 0;
+               // ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
+               if (ret2 != 0 ){
+                   ESP_LOGI("TFM","esp_mp_exptmod ret = %d", ret2);
+               }
            }
+#endif
         #endif
     #else
         #warning "WOLFSSL_RSA_KEY_SIZE not defined"
@@ -2912,7 +2927,37 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    else {
       /* Positive exponent so just exptmod */
 #ifdef TFM_TIMING_RESISTANT
-      return _fp_exptmod_ct(G, X, X->used, P, Y);
+
+       int ret = _fp_exptmod_ct(G, X, X->used, P, Y);
+
+#if defined(TFM_DEBUG_GOJIMMYPI)
+       if (fp_cmp(G, &G2) == FP_EQ) {
+           // ESP_LOGI("TFM", "match!");
+       }
+       else {
+           ESP_LOGI("TFM", "G2 mismatch!");
+       }
+       if (fp_cmp(X, &X2) == FP_EQ) {
+           // ESP_LOGI("TFM", "match!");
+       }
+       else {
+           ESP_LOGI("TFM", "X2 mismatch!");
+       }
+       if (fp_cmp(P, &P2) == FP_EQ) {
+           // ESP_LOGI("TFM", "match!");
+       }
+       else {
+           ESP_LOGI("TFM", "P2 mismatch!");
+       }
+       if (fp_cmp(Y, &Y2) == FP_EQ) {
+           // ESP_LOGI("TFM", "match!");
+       }
+       else {
+           ESP_LOGI("TFM", "Y2 mismatch!");
+       }
+#endif
+
+       return ret;
 #else
       return _fp_exptmod_nct(G, X, P, Y);
 #endif
@@ -4347,7 +4392,11 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
             int B = fp_count_bits (b);
 
             if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
+                ESP_LOGI("TFM", "calling esp_mp_mulmod");
                 return esp_mp_mulmod(a, b, c, d);
+            }
+            else{
+                ESP_LOGI("TFM", "skipping esp_mp_mulmod");
             }
         #endif
     #else
