@@ -74,10 +74,15 @@ int CertDemo() {
 #endif
 
     /* Initialize non-volatile storage */
+    /*
+    Used DATA_FLASH: 167KB out of 8192KB (2%) [+584]
+    Used INSTR_FLASH: 750KB out of 3264KB (22%) [+12K]
+    Used INSTR_RAM: 97KB out of 128KB (76%) [+2832]
+    */
     ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
@@ -90,8 +95,9 @@ int CertDemo() {
     ** Otherwise consider using bootloader_random_enable().  (see bootloader_random.h)
     */
     // bootloader_random_enable();
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 
     ESP_LOGW(TAG, "Warning test");
