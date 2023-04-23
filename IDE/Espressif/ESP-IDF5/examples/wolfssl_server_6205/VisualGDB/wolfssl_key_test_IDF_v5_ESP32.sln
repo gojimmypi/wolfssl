@@ -7,7 +7,9 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_key_test_IDF_v5_ESP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F225B268-C706-48E5-870A-7169B977354E}"
 	ProjectSection(SolutionItems) = preProject
+		..\cert_peek.sh = ..\cert_peek.sh
 		..\output\gojimmypi-Device-Certificate_hw.crt = ..\output\gojimmypi-Device-Certificate_hw.crt
+		..\inspect_test.sh = ..\inspect_test.sh
 		..\output\test-Device-Certificate_hw.crt = ..\output\test-Device-Certificate_hw.crt
 		..\output\test_request.crt = ..\output\test_request.crt
 		..\this_esp32_output.log = ..\this_esp32_output.log
@@ -20,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{B625
 		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
 		..\components\wolfssl\Kconfig.projbuild = ..\components\wolfssl\Kconfig.projbuild
 		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
+		..\..\..\..\..\..\wolfcrypt\src\tfm.c = ..\..\..\..\..\..\wolfcrypt\src\tfm.c
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
