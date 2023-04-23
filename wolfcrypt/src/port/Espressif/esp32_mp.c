@@ -160,6 +160,8 @@ static int esp_mp_hw_lock()
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
+        DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+        asm volatile("memw");
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
     }
 #endif
@@ -757,6 +759,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     uint32_t OperandBits;
     uint32_t WordsForOperand;
 #endif
+/*
+ max bits = 0x400 = 1024 bits
+1024 / 8 = 128 bytes
+ 128 / 4 = 32 words (0x20)
+ */
+
 
     /* ask bits number */
     Xs = mp_count_bits(X);
@@ -769,6 +777,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         ESP_LOGE(TAG, "exceeds HW maximum bits");
         return MP_VAL; /*  Error: value is not able to be used. */
     }
+
+    /* test */
+    // return ret;
+
+
     /* calculate r_inv = R^2 mode M
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
@@ -780,6 +793,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         mp_clear(&r_inv);
         return ret;
     }
+
+
+
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         mp_clear(&r_inv);

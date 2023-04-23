@@ -238,8 +238,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 /* TFM HW Marker 1 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-  ret = esp_mp_mul(A, B, C);
-  if(ret != -2) return ret;
+  /* TODO - we call esp_mp_mult but continue on? */
+//  ret = esp_mp_mul(A, B, C);
+//  if(ret != -2) return ret;
 #endif
 
     oldused = C->used;
@@ -2868,12 +2869,17 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
                word32 x2 = x;
            if(x > EPS_RSA_EXPT_XBTIS) {
                /* returns a bad value for length = 512 */
+               ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod");
                int ret2 = 0;
+
                // ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
                if (ret2 != 0 ){
                    ESP_LOGI("TFM","esp_mp_exptmod ret = %d", ret2);
                }
            }
+            else {
+                ESP_LOGI("TFM", "x <= EPS_RSA_EXPT_XBTIS");
+            }
 #endif
         #endif
     #else
@@ -2970,6 +2976,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 /* TFM HW Marker 5 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+   ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 5 fp_count_bits");
    int x = fp_count_bits (X);
 #endif
 
@@ -2994,6 +3001,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    if(x > EPS_RSA_EXPT_XBTIS) {
+      ESP_LOGI("TFM", "x <= EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
       return esp_mp_exptmod(G, X, x, P, Y);
    }
 #endif
@@ -3073,7 +3081,8 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    if(x > EPS_RSA_EXPT_XBTIS) {
-      return esp_mp_exptmod(G, X, x, P, Y);
+       ESP_LOGI("TFM", "x <= EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
+       return esp_mp_exptmod(G, X, x, P, Y);
    }
 #endif
 
@@ -4392,11 +4401,11 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
             int B = fp_count_bits (b);
 
             if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
-                ESP_LOGI("TFM", "calling esp_mp_mulmod");
+                ESP_LOGI("TFM", "calling esp_mp_mulmod marker 8");
                 return esp_mp_mulmod(a, b, c, d);
             }
             else{
-                ESP_LOGI("TFM", "skipping esp_mp_mulmod");
+                ESP_LOGI("TFM", "skipping esp_mp_mulmod marker 8");
             }
         #endif
     #else

@@ -140,7 +140,7 @@
 //#define NO_ESP32WROOM32_CRYPT
 //#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
 //#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+//#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
@@ -173,4 +173,5 @@
 #define WOLFSSL_SYS_CA_CERTS
 #define WOLFSSL_ASN_TEMPLATE
 
-#define WOLFSSL_RSA_KEY_SIZE 2048 /* fails HW */
+// #define WOLFSSL_RSA_KEY_SIZE 2048 /* fails HW */
+#define WOLFSSL_RSA_KEY_SIZE 512 /* fails HW */
