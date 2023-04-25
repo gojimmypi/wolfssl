@@ -235,14 +235,6 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     int   ret = 0;
     int   y, yy, oldused;
 
-/* TFM HW Marker 1 */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-  /* TODO - we call esp_mp_mult but continue on? */
-//  ret = esp_mp_mul(A, B, C);
-//  if(ret != -2) return ret;
-#endif
-
     oldused = C->used;
 
     y  = MAX(A->used, B->used);
@@ -250,9 +242,17 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 
     /* fail if we are out of range */
     if (y + yy >= FP_SIZE) {
-       ret = FP_VAL;
-       goto clean;
+        ret = FP_VAL;
+        goto clean;
     }
+
+    /* TFM HW Marker 1 */
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+  /* TODO - we call esp_mp_mult but continue on? */
+    ret = esp_mp_mul(A, B, C);
+#else
+
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
        of the largest input.  We also want to avoid doing excess mults if the
@@ -353,7 +353,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 #endif
         ret = fp_mul_comba(A,B,C);
 
-clean:
+#endif
+    clean:
+
     /* zero any excess digits on the destination that we didn't write to */
     for (y = C->used; y >= 0 && y < oldused; y++) {
         C->dp[y] = 0;
