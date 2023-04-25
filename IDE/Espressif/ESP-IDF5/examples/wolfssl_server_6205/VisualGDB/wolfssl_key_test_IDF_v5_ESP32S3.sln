@@ -1,13 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.33328.57
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_key_test_IDF_v5_ESP32S3", "wolfssl_key_test_IDF_v5_ESP32S3.vgdbproj", "{87DDC804-5472-4386-8A7A-87C8A60A91BC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DB7E20CB-6885-4E1C-9D99-ED77AC74465B}"
 	ProjectSection(SolutionItems) = preProject
 		..\cert_peek.sh = ..\cert_peek.sh
+		..\output\test-Device-Certificate_hw.crt = ..\output\test-Device-Certificate_hw.crt
+		..\test_request.asn.txt = ..\test_request.asn.txt
+		..\output\test_request.crt = ..\output\test_request.crt
+		..\this_esp32_output.log = ..\this_esp32_output.log
+		..\this_openssl_session.log = ..\this_openssl_session.log
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{E8771172-2BDE-4386-B00C-8532E1B43BA7}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
+		..\..\..\..\..\..\wolfcrypt\src\tfm.c = ..\..\..\..\..\..\wolfcrypt\src\tfm.c
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
@@ -30,6 +42,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E8771172-2BDE-4386-B00C-8532E1B43BA7} = {DB7E20CB-6885-4E1C-9D99-ED77AC74465B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0DC4F788-8817-4F1F-9813-8F670C34F5C2}
