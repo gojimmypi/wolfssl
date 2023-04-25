@@ -251,6 +251,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
   /* TODO - we call esp_mp_mult but continue on? */
     ret = esp_mp_mul(A, B, C);
+    if (ret != -2) {
+        goto clean;
+    }
 #else
 
 
@@ -3002,10 +3005,13 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 /* TMF test 6 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-   if(x > EPS_RSA_EXPT_XBTIS) {
-      ESP_LOGI("TFM", "x <= EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
-      return esp_mp_exptmod(G, X, x, P, Y);
-   }
+    if (x > EPS_RSA_EXPT_XBTIS) {
+        ESP_LOGI("TFM test 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
+        return esp_mp_exptmod(G, X, x, P, Y);
+    }
+    else{
+        ESP_LOGI("TFM test 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
+    }
 #endif
 
    if (X->sign == FP_NEG) {
