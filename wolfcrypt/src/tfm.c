@@ -2872,7 +2872,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
                ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod");
                int ret2 = 0;
 
-               // ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
+               ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
                if (ret2 != 0 ){
                    ESP_LOGI("TFM","esp_mp_exptmod ret = %d", ret2);
                }
