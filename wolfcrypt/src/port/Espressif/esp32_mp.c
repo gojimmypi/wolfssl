@@ -460,10 +460,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     */
     /* lock HW for use */
     if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_lock fail");
         return ret;
     }
 
     if((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_wait_clean");
         return ret;
     }
 
@@ -500,7 +502,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         mp_setneg(Z);
     }
 #endif
-
     return ret;
 #endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
 }
