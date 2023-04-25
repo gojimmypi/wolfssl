@@ -24,29 +24,29 @@ I (78) boot:  1 phy_init         RF data          01 01 0000f000 00001000
 I (86) boot:  2 factory          factory app      00 00 00010000 00177000
 I (93) boot: End of partition table
 I (97) boot_comm: chip revision: 1, min. application chip revision: 0
-I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23710h (145168) map
-I (139) esp_image: segment 1: paddr=00033738 vaddr=3fc96600 size=0451ch ( 17692) load
-I (143) esp_image: segment 2: paddr=00037c5c vaddr=40374000 size=083bch ( 33724) load
-I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=79088h (495752) map
-I (243) esp_image: segment 4: paddr=000b90b0 vaddr=4037c3bc size=0a178h ( 41336) load
-I (252) esp_image: segment 5: paddr=000c3230 vaddr=50000000 size=00010h (    16) load
-I (260) boot: Loaded app from partition at offset 0x10000
+I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23858h (145496) map
+I (139) esp_image: segment 1: paddr=00033880 vaddr=3fc96600 size=0451ch ( 17692) load
+I (143) esp_image: segment 2: paddr=00037da4 vaddr=40374000 size=08274h ( 33396) load
+I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=791f8h (496120) map
+I (243) esp_image: segment 4: paddr=000b9220 vaddr=4037c274 size=0a2c0h ( 41664) load
+I (253) esp_image: segment 5: paddr=000c34e8 vaddr=50000000 size=00010h (    16) load
+I (261) boot: Loaded app from partition at offset 0x10000
 I (261) boot: Disabling RNG early entropy source...
-I (272) cpu_start: Pro cpu up.
+I (273) cpu_start: Pro cpu up.
 I (273) cpu_start: Starting app cpu, entry point is 0x403753a0
 I (0) cpu_start: App cpu up.
 I (287) cpu_start: Pro cpu start user code
 I (287) cpu_start: cpu freq: 160000000 Hz
 I (287) cpu_start: Application information:
 I (290) cpu_start: Project name:     key_test
-I (295) cpu_start: App version:      v5.6.0-stable-571-g5e9da2ae7-di
-I (302) cpu_start: Compile time:     Apr 25 2023 13:36:49
-I (308) cpu_start: ELF file SHA256:  1af08887c235f477...
+I (295) cpu_start: App version:      v5.6.0-stable-572-g3f7de6a73-di
+I (302) cpu_start: Compile time:     Apr 25 2023 14:25:53
+I (308) cpu_start: ELF file SHA256:  bb3db93b15eb5ce8...
 I (314) cpu_start: ESP-IDF:          v5.0-dirty
 I (319) heap_init: Initializing. RAM available for dynamic allocation:
-I (326) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
+I (327) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
 I (333) heap_init: At 3FCE9710 len 00005724 (21 KiB): STACK/DRAM
-I (339) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (340) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
 I (346) heap_init: At 600FE010 len 00001FF0 (7 KiB): RTCRAM
 I (353) spi_flash: detected chip: generic
 I (357) spi_flash: flash io: dio
@@ -54,59 +54,128 @@ W (361) spi_flash: Detected size(8192k) larger than the size in the binary image
 he size in the binary image header.
 I (375) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
-I (704) key test: --------------------------------------------------------
-I (714) key test: --------------------------------------------------------
-I (714) key test: ---------------------- BEGIN MAIN ----------------------
-I (724) key test: --------------------------------------------------------
-I (724) key test: --------------------------------------------------------
-I (734) Version Info: Extended Version and Platform Information.
-I (744) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (744) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
-I (754) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
-I (764) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
-I (774) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (774) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 5e9da2ae7a94adbbbdb3c2850dfac8af02156018
-I (784) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 5e9da2ae7
-I (794) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 12:32:55 2023 +0200'
-I (804) Version Info: CONFIG_IDF_TARGET = esp32s3
-I (804) Version Info: Xthal_have_ccount = 1
-I (814) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (824) Version Info: NOT SINGLE_THREADED
-I (844) key test: ESP_WIFI_MODE_STA
-I (844) pp: pp rom version: e7ae62f
-I (844) net80211: net80211 rom version: e7ae62f
-I (854) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
-I (854) system_api: Base MAC address is not set
-I (864) system_api: read default base MAC address from EFUSE
-I (874) wifi:wifi firmware version: 0d470ef
-I (874) wifi:wifi certification version: v7.0
-I (874) wifi:config NVS flash: enabled
-I (874) wifi:config nano formating: disabled
-I (884) wifi:Init data frame dynamic rx buffer num: 32
-I (884) wifi:Init management frame dynamic rx buffer num: 32
-I (894) wifi:Init management short buffer num: 32
-I (894) wifi:Init dynamic tx buffer num: 32
-I (904) wifi:Init static tx FG buffer num: 2
-I (904) wifi:Init static rx buffer size: 1600
-I (904) wifi:Init static rx buffer num: 10
-I (914) wifi:Init dynamic rx buffer num: 32
-I (914) wifi_init: rx ba win: 6
-I (924) wifi_init: tcpip mbox: 32
-I (924) wifi_init: udp mbox: 6
-I (924) wifi_init: tcp mbox: 6
-I (934) wifi_init: tcp tx win: 5744
-I (934) wifi_init: tcp rx win: 5744
-I (944) wifi_init: tcp mss: 1440
-I (944) wifi_init: WiFi IRAM OP enabled
-I (944) wifi_init: WiFi RX IRAM OP enabled
-W (954) key test: Warning test
-E (954) key test: Error test
-I (964) key test: Generating an RSA key 512 bits long
-I (3264) TFM: skipping esp_mp_mulmod marker 8
-I (3314) TFM: skipping esp_mp_mulmod marker 8
-I (3374) TFM: skipping esp_mp_mulmod marker 8
-I (3374) TFM: skipping esp_mp_mulmod marker 8
-I (3384) key test:
+I (715) key test: --------------------------------------------------------
+I (715) key test: --------------------------------------------------------
+I (715) key test: ---------------------- BEGIN MAIN ----------------------
+I (725) key test: --------------------------------------------------------
+I (735) key test: --------------------------------------------------------
+I (745) Version Info: Extended Version and Platform Information.
+I (745) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
+I (755) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
+I (755) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
+I (765) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (775) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (785) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 3f7de6a736d9ead28513a5d9a8fb2c1630ab3c75
+I (795) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 3f7de6a73
+I (795) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 14:25:33 2023 +0200'
+I (805) Version Info: CONFIG_IDF_TARGET = esp32s3
+I (815) Version Info: Xthal_have_ccount = 1
+I (815) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
+I (825) Version Info: NOT SINGLE_THREADED
+I (855) key test: ESP_WIFI_MODE_STA
+I (855) pp: pp rom version: e7ae62f
+I (855) net80211: net80211 rom version: e7ae62f
+I (865) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
+I (865) system_api: Base MAC address is not set
+I (865) system_api: read default base MAC address from EFUSE
+I (885) wifi:wifi firmware version: 0d470ef
+I (885) wifi:wifi certification version: v7.0
+I (885) wifi:config NVS flash: enabled
+I (885) wifi:config nano formating: disabled
+I (885) wifi:Init data frame dynamic rx buffer num: 32
+I (895) wifi:Init management frame dynamic rx buffer num: 32
+I (895) wifi:Init management short buffer num: 32
+I (905) wifi:Init dynamic tx buffer num: 32
+I (905) wifi:Init static tx FG buffer num: 2
+I (905) wifi:Init static rx buffer size: 1600
+I (915) wifi:Init static rx buffer num: 10
+I (915) wifi:Init dynamic rx buffer num: 32
+I (925) wifi_init: rx ba win: 6
+I (925) wifi_init: tcpip mbox: 32
+I (925) wifi_init: udp mbox: 6
+I (935) wifi_init: tcp mbox: 6
+I (935) wifi_init: tcp tx win: 5744
+I (945) wifi_init: tcp rx win: 5744
+I (945) wifi_init: tcp mss: 1440
+I (945) wifi_init: WiFi IRAM OP enabled
+I (955) wifi_init: WiFi RX IRAM OP enabled
+W (955) key test: Warning test
+E (965) key test: Error test
+I (965) key test: Generating an RSA key 512 bits long
+I (985) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5415) TFM: Y2 mismatch!
+I (5425) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5455) TFM: Y2 mismatch!
+I (5465) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5495) TFM: Y2 mismatch!
+I (5505) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5535) TFM: Y2 mismatch!
+I (5555) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5595) TFM: Y2 mismatch!
+I (5605) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5635) TFM: Y2 mismatch!
+I (5645) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5675) TFM: Y2 mismatch!
+I (5685) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5715) TFM: Y2 mismatch!
+I (5725) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5755) TFM: Y2 mismatch!
+I (5775) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5805) TFM: Y2 mismatch!
+I (5835) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5865) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5895) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5925) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5965) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (5995) TFM: Y2 mismatch!
+I (5995) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6025) TFM: Y2 mismatch!
+I (6025) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6055) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6105) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6135) TFM: Y2 mismatch!
+I (6155) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6185) TFM: Y2 mismatch!
+I (6205) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6235) TFM: Y2 mismatch!
+I (6245) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6275) TFM: Y2 mismatch!
+I (6285) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6315) TFM: Y2 mismatch!
+I (6335) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6365) TFM: Y2 mismatch!
+I (6375) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6405) TFM: Y2 mismatch!
+I (6425) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6455) TFM: Y2 mismatch!
+I (6475) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6505) TFM: Y2 mismatch!
+I (6525) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6555) TFM: Y2 mismatch!
+I (6585) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6615) TFM: Y2 mismatch!
+I (6625) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6665) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6695) TFM: Y2 mismatch!
+I (6695) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6725) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6755) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6785) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6825) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6855) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6915) TFM: skipping esp_mp_mulmod marker 8
+I (6915) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (6945) TFM: Y2 mismatch!
+I (6955) TFM: x <= EPS_RSA_EXPT_XBTIS
+I (6965) TFM: G2 mismatch!
+I (6965) TFM: Y2 mismatch!
+I (6965) TFM: skipping esp_mp_mulmod marker 8
+I (6965) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (7005) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (7035) TFM: G2 mismatch!
+I (7035) TFM: skipping esp_mp_mulmod marker 8
+I (7035) TFM: skipping esp_mp_mulmod marker 8
+I (7045) key test:
 
 Request pem: (paste into file for CA sign)
 
@@ -114,23 +183,23 @@ Request pem: (paste into file for CA sign)
 MIIBOTCB5AIBADB/MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
 A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
 MSkwJwYDVQQDDCBMdW1vcyBIVywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMjBcMA0G
-CSqGSIb3DQEBAQUAA0sAMEgCQQC3YV+81AcPBJC4Iq9CCLcK13pZRyMX67q/tQU6
-wdrW4gQ2jvE2H7MQNZIhw20P1in9fBoz9mEuioED+273FOVNAgMBAAGgADANBgkq
-hkiG9w0BAQsFAANBAHmrr4i+N73koUgtpExQ8Ac5Z1Mlf+zQ1b4fwGJDTHOpxi3p
-xTF2JgnCkEzgOuzhv6tvA54Rer4keGwnSPJkpK4=
+CSqGSIb3DQEBAQUAA0sAMEgCQQDlzD+9KhfoCew00n5pW8tRdJqXk3ThtanfYm3N
+IpizrOHKVkeKh/eiPBGlvSrUlJE4Bo/gmAvMpFZ6bV6ccpUhAgMBAAGgADANBgkq
+hkiG9w0BAQsFAANBAKifmooBbZ6yR355kJOsRGukqTpeIjCGovhyZkNxybt9jpCs
+yxKGR4IcDe74pStgIre15dLGV7E1cd2VFTqHI5w=
 -----END CERTIFICATE REQUEST-----
 
 
 
-I (3434) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
+I (7095) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
      -CA private/CertificateAuthority-4096-PublicKey.crt                 \
      -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
      -passin pass:secret -CAcreateserial                                 \
      -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
      -out ./output/test-Device-Certificate_hw.crt -text
 
-I (3474) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (3474) key test: Done!
+I (7135) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
+I (7145) key test: Done!
 ESP-ROM:esp32s3-20210327
 Build:Mar 27 2021
 rst:0x3 (RTC_SW_SYS_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
@@ -157,89 +226,196 @@ I (78) boot:  1 phy_init         RF data          01 01 0000f000 00001000
 I (86) boot:  2 factory          factory app      00 00 00010000 00177000
 I (93) boot: End of partition table
 I (97) boot_comm: chip revision: 1, min. application chip revision: 0
-I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23710h (145168) map
-I (139) esp_image: segment 1: paddr=00033738 vaddr=3fc96600 size=0451ch ( 17692) load
-I (143) esp_image: segment 2: paddr=00037c5c vaddr=40374000 size=083bch ( 33724) load
-I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=79088h (495752) map
-I (243) esp_image: segment 4: paddr=000b90b0 vaddr=4037c3bc size=0a178h ( 41336) load
-I (252) esp_image: segment 5: paddr=000c3230 vaddr=50000000 size=00010h (    16) load
-I (260) boot: Loaded app from partition at offset 0x10000
+I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23858h (145496) map
+I (139) esp_image: segment 1: paddr=00033880 vaddr=3fc96600 size=0451ch ( 17692) load
+I (143) esp_image: segment 2: paddr=00037da4 vaddr=40374000 size=08274h ( 33396) load
+I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=791f8h (496120) map
+I (243) esp_image: segment 4: paddr=000b9220 vaddr=4037c274 size=0a2c0h ( 41664) load
+I (253) esp_image: segment 5: paddr=000c34e8 vaddr=50000000 size=00010h (    16) load
+I (261) boot: Loaded app from partition at offset 0x10000
 I (261) boot: Disabling RNG early entropy source...
-I (272) cpu_start: Pro cpu up.
+I (273) cpu_start: Pro cpu up.
 I (273) cpu_start: Starting app cpu, entry point is 0x403753a0
 I (0) cpu_start: App cpu up.
 I (287) cpu_start: Pro cpu start user code
 I (287) cpu_start: cpu freq: 160000000 Hz
 I (287) cpu_start: Application information:
 I (290) cpu_start: Project name:     key_test
-I (295) cpu_start: App version:      v5.6.0-stable-571-g5e9da2ae7-di
-I (302) cpu_start: Compile time:     Apr 25 2023 13:36:49
-I (308) cpu_start: ELF file SHA256:  1af08887c235f477...
+I (295) cpu_start: App version:      v5.6.0-stable-572-g3f7de6a73-di
+I (302) cpu_start: Compile time:     Apr 25 2023 14:25:53
+I (308) cpu_start: ELF file SHA256:  bb3db93b15eb5ce8...
 I (314) cpu_start: ESP-IDF:          v5.0-dirty
 I (319) heap_init: Initializing. RAM available for dynamic allocation:
-I (326) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
+I (327) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
 I (333) heap_init: At 3FCE9710 len 00005724 (21 KiB): STACK/DRAM
-I (339) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (340) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
 I (346) heap_init: At 600FE010 len 00001FF0 (7 KiB): RTCRAM
 I (353) spi_flash: detected chip: generic
 I (357) spi_flash: flash io: dio
-W (361) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using t
-he size in the binary image header.
+W (361) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). U
+sing the size in the binary image header.
 I (375) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
-I (394) key test: --------------------------------------------------------
-I (394) key test: --------------------------------------------------------
-I (404) key test: ---------------------- BEGIN MAIN ----------------------
-I (414) key test: --------------------------------------------------------
-I (424) key test: --------------------------------------------------------
-I (424) Version Info: Extended Version and Platform Information.
-I (434) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (444) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
-I (444) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
-I (454) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 5e9da2ae7a94adbbbdb3c2850dfac8af02156018
-I (474) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 5e9da2ae7
-I (484) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 12:32:55 2023 +0200'
-I (494) Version Info: CONFIG_IDF_TARGET = esp32s3
-I (494) Version Info: Xthal_have_ccount = 1
-I (504) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (514) Version Info: NOT SINGLE_THREADED
-I (534) key test: ESP_WIFI_MODE_STA
-I (534) pp: pp rom version: e7ae62f
-I (534) net80211: net80211 rom version: e7ae62f
-I (554) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
-I (554) system_api: Base MAC address is not set
-I (554) system_api: read default base MAC address from EFUSE
-I (564) wifi:wifi firmware version: 0d470ef
-I (564) wifi:wifi certification version: v7.0
-I (564) wifi:config NVS flash: enabled
-I (564) wifi:config nano formating: disabled
-I (574) wifi:Init data frame dynamic rx buffer num: 32
-I (574) wifi:Init management frame dynamic rx buffer num: 32
-I (584) wifi:Init management short buffer num: 32
-I (584) wifi:Init dynamic tx buffer num: 32
-I (594) wifi:Init static tx FG buffer num: 2
-I (594) wifi:Init static rx buffer size: 1600
-I (604) wifi:Init static rx buffer num: 10
-I (604) wifi:Init dynamic rx buffer num: 32
-I (604) wifi_init: rx ba win: 6
-I (614) wifi_init: tcpip mbox: 32
-I (614) wifi_init: udp mbox: 6
-I (614) wifi_init: tcp mbox: 6
-I (624) wifi_init: tcp tx win: 5744
-I (624) wifi_init: tcp rx win: 5744
-I (634) wifi_init: tcp mss: 1440
-I (634) wifi_init: WiFi IRAM OP enabled
-I (634) wifi_init: WiFi RX IRAM OP enabled
-W (644) key test: Warning test
-E (644) key test: Error test
-I (654) key test: Generating an RSA key 512 bits long
-I (2204) TFM: skipping esp_mp_mulmod marker 8
-I (2254) TFM: skipping esp_mp_mulmod marker 8
-I (2324) TFM: skipping esp_mp_mulmod marker 8
-I (2324) TFM: skipping esp_mp_mulmod marker 8
-I (2324) key test:
+I (395) key test: --------------------------------------------------------
+I (395) key test: --------------------------------------------------------
+I (405) key test: ---------------------- BEGIN MAIN ----------------------
+I (415) key test: --------------------------------------------------------
+I (425) key test: --------------------------------------------------------
+I (425) Version Info: Extended Version and Platform Information.
+I (435) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
+I (445) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
+I (445) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
+I (455) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (465) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (465) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 3f7de6a736d9ead28513a5d9a8fb2c1630ab3c75
+I (475) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 3f7de6a73
+I (485) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 14:25:33 2023 +0200'
+I (495) Version Info: CONFIG_IDF_TARGET = esp32s3
+I (495) Version Info: Xthal_have_ccount = 1
+I (505) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
+I (515) Version Info: NOT SINGLE_THREADED
+I (535) key test: ESP_WIFI_MODE_STA
+I (535) pp: pp rom version: e7ae62f
+I (535) net80211: net80211 rom version: e7ae62f
+I (555) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
+I (555) system_api: Base MAC address is not set
+I (555) system_api: read default base MAC address from EFUSE
+I (565) wifi:wifi firmware version: 0d470ef
+I (565) wifi:wifi certification version: v7.0
+I (565) wifi:config NVS flash: enabled
+I (565) wifi:config nano formating: disabled
+I (575) wifi:Init data frame dynamic rx buffer num: 32
+I (575) wifi:Init management frame dynamic rx buffer num: 32
+I (585) wifi:Init management short buffer num: 32
+I (585) wifi:Init dynamic tx buffer num: 32
+I (595) wifi:Init static tx FG buffer num: 2
+I (595) wifi:Init static rx buffer size: 1600
+I (605) wifi:Init static rx buffer num: 10
+I (605) wifi:Init dynamic rx buffer num: 32
+I (605) wifi_init: rx ba win: 6
+I (615) wifi_init: tcpip mbox: 32
+I (615) wifi_init: udp mbox: 6
+I (615) wifi_init: tcp mbox: 6
+I (625) wifi_init: tcp tx win: 5744
+I (625) wifi_init: tcp rx win: 5744
+I (635) wifi_init: tcp mss: 1440
+I (635) wifi_init: WiFi IRAM OP enabled
+I (645) wifi_init: WiFi RX IRAM OP enabled
+W (645) key test: Warning test
+E (645) key test: Error test
+I (655) key test: Generating an RSA key 512 bits long
+I (665) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (705) TFM: Y2 mismatch!
+I (715) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (745) TFM: Y2 mismatch!
+I (755) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (785) TFM: Y2 mismatch!
+I (795) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (835) TFM: Y2 mismatch!
+I (865) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (895) TFM: Y2 mismatch!
+I (915) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (945) TFM: Y2 mismatch!
+I (955) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (985) TFM: Y2 mismatch!
+I (995) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1025) TFM: Y2 mismatch!
+I (1035) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1075) TFM: Y2 mismatch!
+I (1085) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1115) TFM: Y2 mismatch!
+I (1125) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1155) TFM: Y2 mismatch!
+I (1165) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1195) TFM: Y2 mismatch!
+I (1215) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1245) TFM: Y2 mismatch!
+I (1255) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1285) TFM: Y2 mismatch!
+I (1305) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1335) TFM: Y2 mismatch!
+I (1345) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1375) TFM: Y2 mismatch!
+I (1395) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1435) TFM: Y2 mismatch!
+I (1435) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1465) TFM: Y2 mismatch!
+I (1495) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1525) TFM: Y2 mismatch!
+I (1545) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1575) TFM: Y2 mismatch!
+I (1595) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1625) TFM: Y2 mismatch!
+I (1655) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1685) TFM: Y2 mismatch!
+I (1695) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1725) TFM: Y2 mismatch!
+I (1735) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1765) TFM: Y2 mismatch!
+I (1775) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1805) TFM: Y2 mismatch!
+I (1815) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1855) TFM: Y2 mismatch!
+I (1885) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1915) TFM: Y2 mismatch!
+I (1925) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (1965) TFM: Y2 mismatch!
+I (1975) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2005) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2035) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2065) TFM: Y2 mismatch!
+I (2065) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2095) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2135) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2165) TFM: Y2 mismatch!
+I (2165) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2195) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2225) TFM: Y2 mismatch!
+I (2275) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2305) TFM: Y2 mismatch!
+I (2315) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2355) TFM: Y2 mismatch!
+I (2375) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2405) TFM: Y2 mismatch!
+I (2415) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2445) TFM: Y2 mismatch!
+I (2465) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2495) TFM: Y2 mismatch!
+I (2505) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2535) TFM: Y2 mismatch!
+I (2555) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2595) TFM: Y2 mismatch!
+I (2615) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2645) TFM: Y2 mismatch!
+I (2655) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2685) TFM: Y2 mismatch!
+I (2695) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2725) TFM: Y2 mismatch!
+I (2745) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2775) TFM: Y2 mismatch!
+I (2785) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2815) TFM: Y2 mismatch!
+I (2825) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2855) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2895) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2925) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2955) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (2985) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3025) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3055) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3115) TFM: skipping esp_mp_mulmod marker 8
+I (3115) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3145) TFM: Y2 mismatch!
+I (3155) TFM: x <= EPS_RSA_EXPT_XBTIS
+I (3165) TFM: G2 mismatch!
+I (3165) TFM: Y2 mismatch!
+I (3165) TFM: skipping esp_mp_mulmod marker 8
+I (3165) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3205) TFM: x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod
+I (3235) TFM: G2 mismatch!
+I (3245) TFM: skipping esp_mp_mulmod marker 8
+I (3245) TFM: skipping esp_mp_mulmod marker 8
+I (3245) key test:
 
 Request pem: (paste into file for CA sign)
 
@@ -247,286 +423,20 @@ Request pem: (paste into file for CA sign)
 MIIBOTCB5AIBADB/MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
 A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
 MSkwJwYDVQQDDCBMdW1vcyBIVywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMjBcMA0G
-CSqGSIb3DQEBAQUAA0sAMEgCQQCcgjIbIkI3eSkyk6UYxmbIojlwgighePdDkoG3
-fF7H1MJCgumLQpXgzq/d89ZMZH/W7B5n5tMOEOL1ZUu2TxDvAgMBAAGgADANBgkq
-hkiG9w0BAQsFAANBAFC/rpQS2LKyJBGN1JEV/tSISyR1tZuVXX/Sbd1blHFXdjmI
-s9G9ZiaFnjFMiMMKXnBNzqGFAyvIsFEjb5C9AlA=
+CSqGSIb3DQEBAQUAA0sAMEgCQQCPmCLpE/Q+EBFZ8TR2EtNC3VUZR5oOxd5KYRbl
+Z+Fr1oL9qPMn5KZA9cgqzlpjzQboenDx4hnLkVQdGPSldZmHAgMBAAGgADANBgkq
+hkiG9w0BAQsFAANBAIvytWwucHwE3j39h6OlumdpugDAQlutZFbCYsVTZ+AatthW
+GOL5zJzdN1v3u8CKDzHs7MFty4ONSmdVy7PdDEU=
 -----END CERTIFICATE REQUEST-----
 
 
 
-I (2374) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
+I (3295) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
      -CA private/CertificateAuthority-4096-PublicKey.crt                 \
      -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
      -passin pass:secret -CAcreateserial                                 \
      -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
      -out ./output/test-Device-Certificate_hw.crt -text
 
-I (2414) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (2424) key test: Done!
-ESP-ROM:esp32s3-20210327
-Build:Mar 27 2021
-rst:0x3 (RTC_SW_SYS_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
-Saved PC:0x40376e62
-pro cpu reset by JTAG
-SPIWP:0xee
-mode:DIO, clock div:1
-load:0x3fce3810,len:0x1684
-load:0x403c9700,len:0xbe8
-load:0x403cc700,len:0x2e98
-entry 0x403c9904
-I (31) boot: ESP-IDF v5.0-dirty 2nd stage bootloader
-I (31) boot: compile time 13:37:03
-I (31) boot: chip revision: v0.1
-I (33) boot_comm: chip revision: 1, min. bootloader chip revision: 0
-I (40) boot.esp32s3: Boot SPI Speed : 80MHz
-I (45) boot.esp32s3: SPI Mode       : DIO
-I (50) boot.esp32s3: SPI Flash Size : 2MB
-I (55) boot: Enabling RNG early entropy source...
-I (60) boot: Partition Table:
-I (64) boot: ## Label            Usage          Type ST Offset   Length
-I (71) boot:  0 nvs              WiFi data        01 02 00009000 00006000
-I (78) boot:  1 phy_init         RF data          01 01 0000f000 00001000
-I (86) boot:  2 factory          factory app      00 00 00010000 00177000
-I (93) boot: End of partition table
-I (97) boot_comm: chip revision: 1, min. application chip revision: 0
-I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23710h (145168) map
-I (139) esp_image: segment 1: paddr=00033738 vaddr=3fc96600 size=0451ch ( 17692) load
-I (143) esp_image: segment 2: paddr=00037c5c vaddr=40374000 size=083bch ( 33724) load
-I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=79088h (495752) map
-I (243) esp_image: segment 4: paddr=000b90b0 vaddr=4037c3bc size=0a178h ( 41336) load
-I (252) esp_image: segment 5: paddr=000c3230 vaddr=50000000 size=00010h (    16) load
-I (260) boot: Loaded app from partition at offset 0x10000
-I (261) boot: Disabling RNG early entropy source...
-I (272) cpu_start: Pro cpu up.
-I (273) cpu_start: Starting app cpu, entry point is 0x403753a0
-I (0) cpu_start: App cpu up.
-I (287) cpu_start: Pro cpu start user code
-I (287) cpu_start: cpu freq: 160000000 Hz
-I (287) cpu_start: Application information:
-I (290) cpu_start: Project name:     key_test
-I (295) cpu_start: App version:      v5.6.0-stable-571-g5e9da2ae7-di
-I (302) cpu_start: Compile time:     Apr 25 2023 13:36:49
-I (308) cpu_start: ELF file SHA256:  1af08887c235f477...
-I (314) cpu_start: ESP-IDF:          v5.0-dirty
-I (319) heap_init: Initializing. RAM available for dynamic allocation:
-I (326) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
-I (333) heap_init: At 3FCE9710 len 00005724 (21 KiB): STACK/DRAM
-I (339) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
-I (346) heap_init: At 600FE010 len 00001FF0 (7 KiB): RTCRAM
-I (353) spi_flash: detected chip: generic
-I (357) spi_flash: flash io: dio
-W (361) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using t
-he size in the binary image header.
-I (375) cpu_start: Starting scheduler on PRO CPU.
-I (0) cpu_start: Starting scheduler on APP CPU.
-I (394) key test: --------------------------------------------------------
-I (394) key test: --------------------------------------------------------
-I (404) key test: ---------------------- BEGIN MAIN ----------------------
-I (414) key test: --------------------------------------------------------
-I (424) key test: --------------------------------------------------------
-I (424) Version Info: Extended Version and Platform Information.
-I (434) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (444) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
-I (444) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
-I (454) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 5e9da2ae7a94adbbbdb3c2850dfac8af02156018
-I (474) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 5e9da2ae7
-I (484) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 12:32:55 2023 +0200'
-I (494) Version Info: CONFIG_IDF_TARGET = esp32s3
-I (494) Version Info: Xthal_have_ccount = 1
-I (504) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (514) Version Info: NOT SINGLE_THREADED
-I (534) key test: ESP_WIFI_MODE_STA
-I (534) pp: pp rom version: e7ae62f
-I (534) net80211: net80211 rom version: e7ae62f
-I (554) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
-I (554) system_api: Base MAC address is not set
-I (554) system_api: read default base MAC address from EFUSE
-I (564) wifi:wifi firmware version: 0d470ef
-I (564) wifi:wifi certification version: v7.0
-I (564) wifi:config NVS flash: enabled
-I (564) wifi:config nano formating: disabled
-I (574) wifi:Init data frame dynamic rx buffer num: 32
-I (574) wifi:Init management frame dynamic rx buffer num: 32
-I (584) wifi:Init management short buffer num: 32
-I (584) wifi:Init dynamic tx buffer num: 32
-I (594) wifi:Init static tx FG buffer num: 2
-I (594) wifi:Init static rx buffer size: 1600
-I (604) wifi:Init static rx buffer num: 10
-I (604) wifi:Init dynamic rx buffer num: 32
-I (604) wifi_init: rx ba win: 6
-I (614) wifi_init: tcpip mbox: 32
-I (614) wifi_init: udp mbox: 6
-I (614) wifi_init: tcp mbox: 6
-I (624) wifi_init: tcp tx win: 5744
-I (624) wifi_init: tcp rx win: 5744
-I (634) wifi_init: tcp mss: 1440
-I (634) wifi_init: WiFi IRAM OP enabled
-I (634) wifi_init: WiFi RX IRAM OP enabled
-W (644) key test: Warning test
-E (644) key test: Error test
-I (654) key test: Generating an RSA key 512 bits long
-I (1904) TFM: skipping esp_mp_mulmod marker 8
-I (1954) TFM: skipping esp_mp_mulmod marker 8
-I (2024) TFM: skipping esp_mp_mulmod marker 8
-I (2024) TFM: skipping esp_mp_mulmod marker 8
-I (2024) key test:
-
-Request pem: (paste into file for CA sign)
-
------BEGIN CERTIFICATE REQUEST-----
-MIIBOTCB5AIBADB/MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
-A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
-MSkwJwYDVQQDDCBMdW1vcyBIVywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMjBcMA0G
-CSqGSIb3DQEBAQUAA0sAMEgCQQCkmAKdpoNsfNvTLG0/wzh1QTgnjIU0vYggQrtb
-juUjrEyyE5yDScUjdbgiaV/34jqG7IZl2E5Lot4jNu+j+tcVAgMBAAGgADANBgkq
-hkiG9w0BAQsFAANBAC+ax2gy+ujGRx3o/7DWG02cUOA57v187cxSeHwqew75Gv/q
-TwLwdBmu986OSY1vF6XAC8DkqAtjXLxsMHv6WO0=
------END CERTIFICATE REQUEST-----
-
-
-
-I (2074) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
-     -CA private/CertificateAuthority-4096-PublicKey.crt                 \
-     -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
-     -passin pass:secret -CAcreateserial                                 \
-     -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
-     -out ./output/test-Device-Certificate_hw.crt -text
-
-I (2114) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (2124) key test: Done!
-ESP-ROM:esp32s3-20210327
-Build:Mar 27 2021
-rst:0x3 (RTC_SW_SYS_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
-Saved PC:0x40376e62
-pro cpu reset by JTAG
-SPIWP:0xee
-mode:DIO, clock div:1
-load:0x3fce3810,len:0x1684
-load:0x403c9700,len:0xbe8
-load:0x403cc700,len:0x2e98
-entry 0x403c9904
-I (31) boot: ESP-IDF v5.0-dirty 2nd stage bootloader
-I (31) boot: compile time 13:37:03
-I (31) boot: chip revision: v0.1
-I (33) boot_comm: chip revision: 1, min. bootloader chip revision: 0
-I (40) boot.esp32s3: Boot SPI Speed : 80MHz
-I (45) boot.esp32s3: SPI Mode       : DIO
-I (50) boot.esp32s3: SPI Flash Size : 2MB
-I (55) boot: Enabling RNG early entropy source...
-I (60) boot: Partition Table:
-I (64) boot: ## Label            Usage          Type ST Offset   Length
-I (71) boot:  0 nvs              WiFi data        01 02 00009000 00006000
-I (78) boot:  1 phy_init         RF data          01 01 0000f000 00001000
-I (86) boot:  2 factory          factory app      00 00 00010000 00177000
-I (93) boot: End of partition table
-I (97) boot_comm: chip revision: 1, min. application chip revision: 0
-I (105) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=23710h (145168) map
-I (139) esp_image: segment 1: paddr=00033738 vaddr=3fc96600 size=0451ch ( 17692) load
-I (143) esp_image: segment 2: paddr=00037c5c vaddr=40374000 size=083bch ( 33724) load
-I (153) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=79088h (495752) map
-I (243) esp_image: segment 4: paddr=000b90b0 vaddr=4037c3bc size=0a178h ( 41336) load
-I (252) esp_image: segment 5: paddr=000c3230 vaddr=50000000 size=00010h (    16) load
-I (260) boot: Loaded app from partition at offset 0x10000
-I (261) boot: Disabling RNG early entropy source...
-I (272) cpu_start: Pro cpu up.
-I (273) cpu_start: Starting app cpu, entry point is 0x403753a0
-I (0) cpu_start: App cpu up.
-I (287) cpu_start: Pro cpu start user code
-I (287) cpu_start: cpu freq: 160000000 Hz
-I (287) cpu_start: Application information:
-I (290) cpu_start: Project name:     key_test
-I (295) cpu_start: App version:      v5.6.0-stable-571-g5e9da2ae7-di
-I (302) cpu_start: Compile time:     Apr 25 2023 13:36:49
-I (308) cpu_start: ELF file SHA256:  1af08887c235f477...
-I (314) cpu_start: ESP-IDF:          v5.0-dirty
-I (319) heap_init: Initializing. RAM available for dynamic allocation:
-I (326) heap_init: At 3FC9D8C0 len 0004BE50 (303 KiB): D/IRAM
-I (333) heap_init: At 3FCE9710 len 00005724 (21 KiB): STACK/DRAM
-I (339) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
-I (346) heap_init: At 600FE010 len 00001FF0 (7 KiB): RTCRAM
-I (353) spi_flash: detected chip: generic
-I (357) spi_flash: flash io: dio
-W (361) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using t
-he size in the binary image header.
-I (375) cpu_start: Starting scheduler on PRO CPU.
-I (0) cpu_start: Starting scheduler on APP CPU.
-I (394) key test: --------------------------------------------------------
-I (394) key test: --------------------------------------------------------
-I (404) key test: ---------------------- BEGIN MAIN ----------------------
-I (414) key test: --------------------------------------------------------
-I (424) key test: --------------------------------------------------------
-I (424) Version Info: Extended Version and Platform Information.
-I (434) Version Info: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (444) Version Info: LIBWOLFSSL_VERSION_HEX = 5006000
-I (444) Version Info: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
-I (454) Version Info: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (464) Version Info: LIBWOLFSSL_VERSION_GIT_HASH = 5e9da2ae7a94adbbbdb3c2850dfac8af02156018
-I (474) Version Info: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 5e9da2ae7
-I (484) Version Info: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Apr 25 12:32:55 2023 +0200'
-I (494) Version Info: CONFIG_IDF_TARGET = esp32s3
-I (494) Version Info: Xthal_have_ccount = 1
-I (504) Version Info: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (514) Version Info: NOT SINGLE_THREADED
-I (534) key test: ESP_WIFI_MODE_STA
-I (534) pp: pp rom version: e7ae62f
-I (534) net80211: net80211 rom version: e7ae62f
-I (554) wifi:wifi driver task: 3fceca9c, prio:23, stack:6656, core=0
-I (554) system_api: Base MAC address is not set
-I (554) system_api: read default base MAC address from EFUSE
-I (564) wifi:wifi firmware version: 0d470ef
-I (564) wifi:wifi certification version: v7.0
-I (564) wifi:config NVS flash: enabled
-I (564) wifi:config nano formating: disabled
-I (574) wifi:Init data frame dynamic rx buffer num: 32
-I (574) wifi:Init management frame dynamic rx buffer num: 32
-I (584) wifi:Init management short buffer num: 32
-I (584) wifi:Init dynamic tx buffer num: 32
-I (594) wifi:Init static tx FG buffer num: 2
-I (594) wifi:Init static rx buffer size: 1600
-I (604) wifi:Init static rx buffer num: 10
-I (604) wifi:Init dynamic rx buffer num: 32
-I (604) wifi_init: rx ba win: 6
-I (614) wifi_init: tcpip mbox: 32
-I (614) wifi_init: udp mbox: 6
-I (614) wifi_init: tcp mbox: 6
-I (624) wifi_init: tcp tx win: 5744
-I (624) wifi_init: tcp rx win: 5744
-I (634) wifi_init: tcp mss: 1440
-I (634) wifi_init: WiFi IRAM OP enabled
-I (634) wifi_init: WiFi RX IRAM OP enabled
-W (644) key test: Warning test
-E (644) key test: Error test
-I (654) key test: Generating an RSA key 512 bits long
-I (2894) TFM: skipping esp_mp_mulmod marker 8
-I (2934) TFM: skipping esp_mp_mulmod marker 8
-I (3004) TFM: skipping esp_mp_mulmod marker 8
-I (3004) TFM: skipping esp_mp_mulmod marker 8
-I (3004) key test:
-
-Request pem: (paste into file for CA sign)
-
------BEGIN CERTIFICATE REQUEST-----
-MIIBOTCB5AIBADB/MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
-A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
-MSkwJwYDVQQDDCBMdW1vcyBIVywgc2VyaWFsTnVtYmVyID0gQkxTLTAwMjBcMA0G
-CSqGSIb3DQEBAQUAA0sAMEgCQQC/IJs+UZAEfTwA/BaDlutVrqx5RJY7m3T93J0Q
-qgTAJAbRWPJGGiJe4s7+hw/pGQFn/Bu5d4GbfxRMqUiAuxXBAgMBAAGgADANBgkq
-hkiG9w0BAQsFAANBAF9xOR4rRpKuHiwmSCtn4sGik9MMWrCb7jNwUlIs7G8JgLo7
-XiVc99iF7Ne+1sA8OIEij2PjddE9EZyMZiSC/uw=
------END CERTIFICATE REQUEST-----
-
-
-
-I (3054) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
-     -CA private/CertificateAuthority-4096-PublicKey.crt                 \
-     -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
-     -passin pass:secret -CAcreateserial                                 \
-     -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
-     -out ./output/test-Device-Certificate_hw.crt -text
-
-I (3094) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
-I (3104) key test: Done!
+I (3335) key test: ESP32WROOM32_CRYPT is enabled for ESP32-S3.
+I (3345) key test: Done!
