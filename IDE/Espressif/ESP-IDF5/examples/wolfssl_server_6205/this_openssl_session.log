@@ -1,5 +1,43 @@
 gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
-$ openssl x509 -req -in "./output/test_request.crt" -days 10         -CA "private/CertificateAuthority-4096-PublicKey.crt"                      -CAkey "private/CertificateAuthority-4096-PrivateKey.pem"                  -passin pass:secret -CAcreateserial                                      -extfile "private/CertificateExtensions.txt" -extensions LumosDevice       -out "./output/test-Device-Certificate_hw.crt" -text
-Certificate request self-signature ok
-subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, serialNumber = BLS-002"
+$ ./inspect_test.sh
+    0:d=0  hl=4 l= 313 cons: SEQUENCE
+    4:d=1  hl=3 l= 228 cons: SEQUENCE
+    7:d=2  hl=2 l=   1 prim: INTEGER           :00
+   10:d=2  hl=2 l= 127 cons: SEQUENCE
+   12:d=3  hl=2 l=  11 cons: SET
+   14:d=4  hl=2 l=   9 cons: SEQUENCE
+   16:d=5  hl=2 l=   3 prim: OBJECT            :countryName
+   21:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :NZ
+   25:d=3  hl=2 l=  16 cons: SET
+   27:d=4  hl=2 l=  14 cons: SEQUENCE
+   29:d=5  hl=2 l=   3 prim: OBJECT            :stateOrProvinceName
+   34:d=5  hl=2 l=   7 prim: UTF8STRING        :Waikato
+   43:d=3  hl=2 l=  17 cons: SET
+   45:d=4  hl=2 l=  15 cons: SEQUENCE
+   47:d=5  hl=2 l=   3 prim: OBJECT            :localityName
+   52:d=5  hl=2 l=   8 prim: UTF8STRING        :Hamilton
+   62:d=3  hl=2 l=  32 cons: SET
+   64:d=4  hl=2 l=  30 cons: SEQUENCE
+   66:d=5  hl=2 l=   3 prim: OBJECT            :organizationName
+   71:d=5  hl=2 l=  23 prim: UTF8STRING        :Blue Leaf Software, Ltd
+   96:d=3  hl=2 l=  41 cons: SET
+   98:d=4  hl=2 l=  39 cons: SEQUENCE
+  100:d=5  hl=2 l=   3 prim: OBJECT            :commonName
+  105:d=5  hl=2 l=  32 prim: UTF8STRING        :Lumos HW, serialNumber = BLS-002
+  139:d=2  hl=2 l=  92 cons: SEQUENCE
+  141:d=3  hl=2 l=  13 cons: SEQUENCE
+  143:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption
+  154:d=4  hl=2 l=   0 prim: NULL
+  156:d=3  hl=2 l=  75 prim: BIT STRING
+  233:d=2  hl=2 l=   0 cons: cont [ 0 ]
+  235:d=1  hl=2 l=  13 cons: SEQUENCE
+  237:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption
+  248:d=2  hl=2 l=   0 prim: NULL
+  250:d=1  hl=2 l=  65 prim: BIT STRING
+Certificate request self-signature did not match the contents
+4007424EB77F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:../crypto/rsa/rsa_pk1.c:75:
+4007424EB77F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:../crypto/rsa/rsa_ossl.c:606:
+4007424EB77F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:../providers/implementations/signature/rsa_sig.c:774:
+4007424EB77F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:../crypto/asn1/a_verify.c:217:
 gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
+$
