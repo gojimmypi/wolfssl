@@ -312,6 +312,8 @@ void app_main(void)
 
     CertDemo();
 
+    WOLFSSL_VERSION_PRINTF("Stack HWM: %d",
+                           uxTaskGetStackHighWaterMark(NULL));
     ESP_LOGI(TAG, "Done!");
     while (1) {
         /* do something other than nothing to help next program/debug session*/
