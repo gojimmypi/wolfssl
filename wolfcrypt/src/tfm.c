@@ -54,9 +54,9 @@
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #include <esp_log.h>
-    #define TFM_DEBUG_GOJIMMYPI
+    #define TFM_DEBUG_GOJIMMYPI_disabled
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-       // #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+       #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
     #endif
 #endif
@@ -238,14 +238,29 @@ void s_fp_sub(fp_int *a, fp_int *b, fp_int *c)
 /* c = a * b */
 int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 {
-    int   ret = 0;
+    int   ret = FP_OKAY;
     int   y, yy, oldused;
+    fp_int A2[1];
+    fp_int B2[1];
+    fp_int C2[1];
+    fp_init(A2);
+    fp_init(B2);
+    fp_init(C2);
 
 /* TFM HW Marker 1 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
     /* TODO - we call esp_mp_mult but continue on? */
-  ret = esp_mp_mul(A, B, C);
-  if(ret != -2) return ret;
+//  ret = esp_mp_mul(A, B, C);
+    fp_copy(A, A2); /* copy (src = A) to (dst = A2) */
+    fp_copy(B, B2);
+    // esp_mp_mul(A2, B2, C2);
+    // ESP_LOGI("fp_mul", "MP_OKAY = %d", MP_OKAY);
+    if (ret != -2) {
+ //       return ret;
+    }
+    else {
+        ESP_LOGE("TFM", "esp_mp_mul == 2");
+    }
 #endif
 
     oldused = C->used;
@@ -357,18 +372,38 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         }
 #endif
 
-#if defined SW
-        ret = fp_mul_comba(A,B,C);
-#else
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+    ret = fp_mul_comba(A2,B2,C2);
     ret = esp_mp_mul(A, B, C);
-    // if (ret != -2) return ret;
+    // ret = fp_mul_comba(A, B, C); /* working */
+#else
+    ret = fp_mul_comba(A, B, C);
 #endif
 
 clean:
-//    /* zero any excess digits on the destination that we didn't write to */
-//    for (y = C->used; y >= 0 && y < oldused; y++) {
-//        C->dp[y] = 0;
-//    }
+    /* zero any excess digits on the destination that we didn't write to */
+    for (y = C->used; y >= 0 && y < oldused; y++) {
+        C->dp[y] = 0;
+    }
+
+    if (fp_cmp(A, A2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGI("TFM fp_mul", "A2 mismatch!");
+    }
+    if (fp_cmp(B, B2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGI("TFM fp_mul", "B2 mismatch!");
+    }
+    if (fp_cmp(C, C2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGI("TFM fp_mul", "C2 mismatch!");
+    }
 
     return ret;
 }
@@ -2877,7 +2912,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
                word32 x2 = x;
            if(x > EPS_RSA_EXPT_XBTIS) {
                /* returns a bad value for length = 512 */
-               ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod");
+               //ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod");
                int ret2 = 0;
 
                ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
