@@ -356,13 +356,19 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
            goto clean;
         }
 #endif
+
+#if defined SW
         ret = fp_mul_comba(A,B,C);
+#else
+    ret = esp_mp_mul(A, B, C);
+    // if (ret != -2) return ret;
+#endif
 
 clean:
-    /* zero any excess digits on the destination that we didn't write to */
-    for (y = C->used; y >= 0 && y < oldused; y++) {
-        C->dp[y] = 0;
-    }
+//    /* zero any excess digits on the destination that we didn't write to */
+//    for (y = C->used; y >= 0 && y < oldused; y++) {
+//        C->dp[y] = 0;
+//    }
 
     return ret;
 }
