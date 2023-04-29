@@ -1,4 +1,5 @@
 #!/bin/bash
+
 openssl asn1parse -in "./output/test_request.crt" | tee test_request.asn.txt
 
 openssl x509 -req -outform der -in "./output/test_request.crt" -out "./output/test_request.der"

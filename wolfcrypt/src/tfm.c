@@ -373,7 +373,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    ret = fp_mul_comba(A2,B2,C2);
+    //ret = fp_mul_comba(A2,B2,C2);
     ret = esp_mp_mul(A, B, C);
     // ret = fp_mul_comba(A, B, C); /* working */
 #else
