@@ -43,4 +43,3 @@ Certificate request self-signature ok
 subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, serialNumber = BLS-002"
 We need a private key to sign with, use -key or -CAkey or -CA with private key
 gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
-$
