@@ -59,6 +59,11 @@
        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
     #endif
+
+fp_int A2[1];
+fp_int B2[1];
+fp_int C2[1];
+
 #endif
 
 #if defined(FREESCALE_LTC_TFM)
@@ -240,9 +245,6 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 {
     int   ret = FP_OKAY;
     int   y, yy, oldused;
-    fp_int A2[1];
-    fp_int B2[1];
-    fp_int C2[1];
     fp_init(A2);
     fp_init(B2);
     fp_init(C2);
@@ -612,6 +614,8 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
    COMBA_START;
    COMBA_CLEAR;
 
+    /* marker */
+
    /* get size of output and trim */
    pa = A->used + B->used;
    if (pa >= FP_SIZE) {
@@ -652,13 +656,37 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
   }
   COMBA_FINI;
 
+  /* marker below */
   dst->used = pa;
   dst->sign = A->sign ^ B->sign;
   fp_clamp(dst);
-  fp_copy(dst, C);
 
-  /* Variables used but not seen by cppcheck. */
-  (void)c0; (void)c1; (void)c2;
+    if (fp_cmp(A, A2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGI("TFM fp_mul_comba", "A2 calc mismatch step 1!");
+    }
+    if (C == A) {
+        ESP_LOGI("TFM fp_mul_comba", "C == A");
+    }
+
+        fp_copy(dst, C);
+
+    if (C == A) {
+        ESP_LOGI("TFM fp_mul_comba", "C == A (2)");
+    }
+
+    if (fp_cmp(A, A2) == FP_EQ) {
+            // ESP_LOGI("TFM", "match!");
+        }
+        else {
+            ESP_LOGI("TFM fp_mul_comba", "A2 calc mismatch step 2!");
+        }
+
+        /* Variables used but not seen by cppcheck. */
+        (void)c0; (void)c1; (void)c2;
+
 
 #ifdef WOLFSSL_SMALL_STACK
   XFREE(tmp, NULL, DYNAMIC_TYPE_BIGINT);
@@ -4631,7 +4659,23 @@ void fp_copy(const fp_int *a, fp_int *b)
         /* all dp's are same size, so do straight copy */
         b->used = a->used;
         b->sign = a->sign;
+        if (fp_cmp(a, A2) == FP_EQ) {
+            // ESP_LOGI("TFM", "match!");
+        }
+        else {
+//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 3!");
+        }
+        //(void)(((a) != (b)) && memcpy((b), (a), sizeof(fp_int)))
         XMEMCPY(b->dp, a->dp, FP_SIZE * sizeof(fp_digit));
+        if (fp_cmp(a, A2) == FP_EQ) {
+            // ESP_LOGI("TFM", "match!");
+        }
+        else {
+//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(FP_SIZE * sizeof(fp_digit)));
+//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(FP_SIZE));
+//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(sizeof(fp_digit)));
+//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(sizeof(fp_int)));
+        }
 #endif
     }
 }
