@@ -2607,6 +2607,11 @@ extern void uITRON4_free(void *p) ;
     #define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
 #endif
 
+/* Disable time checking if no timer */
+#if defined(NO_ASN_TIME)
+    #define NO_ASN_TIME_CHECK
+#endif
+
 /* both CURVE and ED small math should be enabled */
 #ifdef CURVED25519_SMALL
     #define CURVE25519_SMALL
@@ -2728,12 +2733,6 @@ extern void uITRON4_free(void *p) ;
     (!defined(WOLFSSL_NO_TLS12) || defined(HAVE_KEYING_MATERIAL))
     #undef  WOLFSSL_HAVE_PRF
     #define WOLFSSL_HAVE_PRF
-#endif
-
-#if defined(NO_AES) && defined(NO_DES3) && !defined(HAVE_CAMELLIA) && \
-       !defined(WOLFSSL_HAVE_PRF) && defined(NO_PWDBASED)
-    #undef  WOLFSSL_NO_XOR_OPS
-    #define WOLFSSL_NO_XOR_OPS
 #endif
 
 #if defined(NO_ASN) && defined(WOLFCRYPT_ONLY) && !defined(WOLFSSL_WOLFSSH)

@@ -2023,6 +2023,8 @@ WOLFSSL_ASN_API DNS_entry* AltNameNew(void* heap);
 #endif /* IGNORE_NAME_CONSTRAINTS */
 WOLFSSL_ASN_API void InitDecodedCert(DecodedCert* cert, const byte* source,
                                      word32 inSz, void* heap);
+WOLFSSL_LOCAL void InitDecodedCert_ex(DecodedCert* cert, const byte* source,
+                                     word32 inSz, void* heap, int devId);
 WOLFSSL_ASN_API void FreeDecodedCert(DecodedCert* cert);
 WOLFSSL_ASN_API int  ParseCert(DecodedCert* cert, int type, int verify,
                                void* cm);
@@ -2044,6 +2046,11 @@ WOLFSSL_LOCAL int CheckCertSignaturePubKey(const byte* cert, word32 certSz,
 WOLFSSL_API int wc_CheckCertSigPubKey(const byte* cert, word32 certSz,
                                       void* heap, const byte* pubKey,
                                       word32 pubKeySz, int pubKeyOID);
+#endif
+#if (defined(HAVE_ED25519) && defined(HAVE_ED25519_KEY_IMPORT) || \
+    (defined(HAVE_ED448) && defined(HAVE_ED448_KEY_IMPORT)))
+WOLFSSL_LOCAL int wc_CertGetPubKey(const byte* cert, word32 certSz,
+    const unsigned char** pubKey, word32* pubKeySz);
 #endif
 
 #ifdef WOLFSSL_CERT_REQ

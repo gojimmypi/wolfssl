@@ -186,10 +186,10 @@ AC_ARG_ENABLE([harden-tls],
 
 if test "x$ENABLED_HARDEN_TLS" != "xno"
 then
-    if test "x$ENABLED_HARDEN_TLS" == "xyes" || test "x$ENABLED_HARDEN_TLS" == "x112"
+    if test "x$ENABLED_HARDEN_TLS" = "xyes" || test "x$ENABLED_HARDEN_TLS" = "x112"
     then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HARDEN_TLS=112"
-    elif test "x$ENABLED_HARDEN_TLS" == "x128"
+    elif test "x$ENABLED_HARDEN_TLS" = "x128"
     then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HARDEN_TLS=128"
     else
@@ -1616,7 +1616,7 @@ then
 fi
 
 if test "x$ENABLED_PSA" != "xyes" && \
-    (test "x$PSA_LIB"! = "x" || test "x$PSA_INCLUDE" != "x" || test "x$PSA_LIB_NAME" != "x" )
+    (test "x$PSA_LIB" != "x" || test "x$PSA_INCLUDE" != "x" || test "x$PSA_LIB_NAME" != "x" )
 then
     AC_MSG_ERROR([to use PSA you need to enable it with --enable-psa])
 fi
@@ -4006,7 +4006,7 @@ fi
 if test "$ENABLED_ASN" = "no" && test "$ENABLED_DSA" = "no" && \
    test "$ENABLED_DH" = "no" && test "$ENABLED_ECC" = "no" && \
    test "$ENABLED_RSA" = "no" && test "$ENABLED_OPENSSLEXTRA" = "no" && \
-   test "$ENABLED_OPENSSLALL" ="yes"
+   test "$ENABLED_OPENSSLALL" = "yes"
 then
     ENABLED_SP_MATH_ALL="no"
     ENABLED_FASTMATH="no"
@@ -4068,7 +4068,7 @@ then
         then
                 AC_MSG_ERROR([You need to enable both DTLS and TLSv1.3 to use DTLSv1.3])
         fi
-        if test "x$ENABLED_SEND_HRR_COOKIE" == "xundefined"
+        if test "x$ENABLED_SEND_HRR_COOKIE" = "xundefined"
         then
                 AC_MSG_NOTICE([DTLSv1.3 is enabled, enabling HRR cookie])
                 AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SEND_HRR_COOKIE"
@@ -5221,7 +5221,7 @@ then
 fi
 if test "$ENABLED_TLS13_EARLY_DATA" = "yes"
 then
-    if test "x$ENABLED_TLS13" = "xno" && test "X$ENABLED_ALL" = "xno"
+    if test "x$ENABLED_TLS13" = "xno" && test "x$ENABLED_ALL" = "xno"
     then
         AC_MSG_ERROR([cannot enable earlydata without enabling tls13.])
     fi
@@ -6072,7 +6072,7 @@ then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ALT_CERT_CHAINS"
     fi
 
-    if test "xENABLE_IP_ALT_NAME" = "xno"
+    if test "x$ENABLE_IP_ALT_NAME" = "xno"
     then
         ENABLE_IP_ALT_NAME="yes"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_IP_ALT_NAME"
@@ -7537,7 +7537,7 @@ fi
 
 if test -n "$MPI_MAX_KEY_BITS" -o -n "$WITH_MAX_ECC_BITS"; then
    if test -n "$MAX_MPI_KEY_BITS" -a -n "$WITH_MAX_ECC_BITS"; then
-       if test -n "$MAX_MPI_KEY_BITS" -lt "$WITH_MAX_ECC_BITS"; then
+       if test "$MAX_MPI_KEY_BITS" -lt "$WITH_MAX_ECC_BITS"; then
            MPI_MAX_KEY_BITS="$WITH_MAX_ECC_BITS"
        fi
    elif test -n "$WITH_MAX_ECC_BITS"; then
@@ -8650,8 +8650,8 @@ fi
 
 if test "$ENABLED_REPRODUCIBLE_BUILD" != "yes"
 then
-    echo "#define LIBWOLFSSL_CONFIGURE_ARGS \"$ac_configure_args\"" > "${output_objdir}/.build_params" &&
-        echo "#define LIBWOLFSSL_GLOBAL_CFLAGS \"$CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS\" LIBWOLFSSL_GLOBAL_EXTRA_CFLAGS" >> "${output_objdir}/.build_params" ||
+    echo "#define LIBWOLFSSL_CONFIGURE_ARGS \"$ac_configure_args\"" | sed 's/\\/\\\\/g' > "${output_objdir}/.build_params" &&
+        echo "#define LIBWOLFSSL_GLOBAL_CFLAGS \"$CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS\" LIBWOLFSSL_GLOBAL_EXTRA_CFLAGS" | sed 's/\\/\\\\/g' >> "${output_objdir}/.build_params" ||
         AC_MSG_ERROR([Couldn't create ${output_objdir}/.build_params.])
 else
     rm -f "${output_objdir}/.build_params"
@@ -8684,9 +8684,9 @@ echo "#endif" >> $OPTION_FILE
 echo "" >> $OPTION_FILE
 
 # check for supported command to trim option with
-if colrm &> /dev/null; then
+if colrm >/dev/null 2>&1 </dev/null; then
     TRIM="colrm 3"
-elif cut &> /dev/null; then
+elif cut >/dev/null 2>&1 </dev/null; then
     TRIM="cut -c1-2"
 else
     AC_MSG_ERROR([Could not find colrm or cut to make options file])
@@ -8696,8 +8696,9 @@ for option in $CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS; do
     opt_type=$(echo $option | $TRIM )
     case "$opt_type" in
     -D)
-        RHS_only=$(echo $option | sed 's/^-D//')
-        noequalsign=$(echo $RHS_only | sed 's/=/ /')
+        option=$(echo "$option" | tr -d '\\')
+        RHS_only=$(echo "$option" | sed 's/^-D//')
+        noequalsign=$(echo "$RHS_only" | tr '=' ' ')
         if test "$noequalsign" = "NDEBUG" || test "$noequalsign" = "DEBUG"
         then
             if test "$verbose" = "yes"; then
@@ -8713,7 +8714,9 @@ for option in $CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS; do
             echo "#ifndef WOLFSSL_OPTIONS_IGNORE_SYS" >> $OPTION_FILE
         fi
 
-        noarg=$(echo "$RHS_only" | sed 's/=.*//')
+        # note need to use both autotools-style [] quoting and shell-style ''
+        # quoting for sed script with [] character set expression here.
+        noarg=$(echo "$RHS_only" | sed ['s/\(([^=)]*)\)\{0,1\}=.*//'])
         echo "#undef  $noarg" >> $OPTION_FILE
         echo "#define $noequalsign" >> $OPTION_FILE
 
@@ -8912,7 +8915,6 @@ echo "   * wolfCrypt Only:             $ENABLED_CRYPTONLY"
 echo "   * HKDF:                       $ENABLED_HKDF"
 echo "   * HPKE:                       $ENABLED_HPKE"
 echo "   * X9.63 KDF:                  $ENABLED_X963KDF"
-echo "   * MD4:                        $ENABLED_MD4"
 echo "   * PSK:                        $ENABLED_PSK"
 echo "   * Poly1305:                   $ENABLED_POLY1305"
 echo "   * LEANPSK:                    $ENABLED_LEANPSK"
