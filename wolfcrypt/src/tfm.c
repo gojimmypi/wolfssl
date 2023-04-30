@@ -64,6 +64,9 @@ fp_int A2[1];
 fp_int B2[1];
 fp_int C2[1];
 
+fp_int A3[1];
+fp_int B3[1];
+fp_int C3[1];
 #endif
 
 #if defined(FREESCALE_LTC_TFM)
@@ -248,6 +251,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     fp_init(A2);
     fp_init(B2);
     fp_init(C2);
+    fp_init(A3);
+    fp_init(B3);
+    fp_init(C3);
 
 /* TFM HW Marker 1 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
@@ -255,6 +261,8 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 //  ret = esp_mp_mul(A, B, C);
     fp_copy(A, A2); /* copy (src = A) to (dst = A2) */
     fp_copy(B, B2);
+    fp_copy(A, A3); /* copy (src = A) to (dst = A3) */
+    fp_copy(B, B3);
     // esp_mp_mul(A2, B2, C2);
     // ESP_LOGI("fp_mul", "MP_OKAY = %d", MP_OKAY);
     if (ret != -2) {
@@ -377,7 +385,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
     ret = fp_mul_comba(A2,B2,C2);
 
-    ret = esp_mp_mul(A, B, C); /* HW */
+    ret = esp_mp_mul(A3, B3, C3); /* HW */
+    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
+
     // ret = fp_mul_comba(A, B, C); /* SW working */
 #else
     ret = fp_mul_comba(A, B, C);
@@ -387,6 +397,20 @@ clean:
     /* zero any excess digits on the destination that we didn't write to */
     for (y = C->used; y >= 0 && y < oldused; y++) {
         C->dp[y] = 0;
+    }
+
+    if (A == C) {
+        ESP_LOGI("TFM", "A == C");
+    }
+    if (B == C) {
+        ESP_LOGI("TFM", "A == C");
+    }
+
+    if (fp_cmp(C2, C3) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGI("TFM fp_mul", "C2 C3 mismatch!");
     }
 
     if (fp_cmp(A, A2) == FP_EQ) {
@@ -659,6 +683,8 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
 
   /* marker below */
   dst->used = pa;
+
+  /* warning: WOLFSSL_SP_INT_NEGATIVE may disable negnative numbers */
   dst->sign = A->sign ^ B->sign;
   fp_clamp(dst);
 

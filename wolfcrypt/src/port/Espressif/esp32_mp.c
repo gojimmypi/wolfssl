@@ -502,6 +502,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         mp_setneg(Z);
     }
 #endif
+    Z->sign = X->sign ^ Y->sign;
     return ret;
 #endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
 }
