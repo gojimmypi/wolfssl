@@ -81,8 +81,10 @@ static int esp_mp_hw_wait_clean(void)
 #else
   /* RSA_CLEAN_REG is now called RSA_QUERY_CLEAN_REG. hwcrypto_reg.h maintains
    * RSA_CLEAN_REG for backwards compatibility so this block _might_ be not needed. */
+    asm volatile("memw");
     while(!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {
         /*  wait. expected delay 1 to 2 uS  */
+        asm volatile("memw");
     }
 #endif
 
@@ -160,9 +162,10 @@ static int esp_mp_hw_lock()
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
-        DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+        // DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
         asm volatile("memw");
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+        asm volatile("memw");
     }
 #endif
 
@@ -233,7 +236,10 @@ static void process_start(word32 reg)
      /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     /* start process  */
+    DPORT_REG_WRITE(reg, 0);
+    asm volatile("memw");
     DPORT_REG_WRITE(reg, 1);
+    asm volatile("memw");
 }
 
 /* wait until done */
@@ -726,6 +732,21 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 }
 
+int show_math_int(char* c, MATH_INT_T* X)
+{
+    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
+    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+    ESP_LOGI("MATH_INT_T", "%s.dp[0] = %x", c, X->dp[0]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[1] = %x", c, X->dp[1]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[2] = %x", c, X->dp[2]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[3] = %x", c, X->dp[3]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[4] = %x", c, X->dp[4]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[5] = %x", c, X->dp[5]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[6] = %x", c, X->dp[6]);
+    ESP_LOGI("MATH_INT_T", "%s.dp[7] = %x", c, X->dp[7]);
+    return 0;
+}
+
 /* Large Number Modular Exponentiation
  *
  *    Z = X^Y mod M
@@ -748,7 +769,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
     int ret = 0;
-
+//    show_math_int("X", X);
+//    show_math_int("Y", Y);
+//    show_math_int("M", M);
+//    show_math_int("Z", Z);
     word32 Xs;
     word32 Ms;
     word32 maxWords_sz;
@@ -767,6 +791,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
  128 / 4 = 32 words (0x20)
  */
 
+// try_again:
 
     /* ask bits number */
     Xs = mp_count_bits(X);
@@ -775,6 +800,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     hwWords_sz  = words2hwords(maxWords_sz);
 
+    ESP_LOGI(TAG, "hwWords_sz = %d", hwWords_sz);
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds HW maximum bits");
         return MP_VAL; /*  Error: value is not able to be used. */
@@ -892,6 +918,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
     /* step.1                                         */
+    ESP_LOGI(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
+
     DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (hwWords_sz >> 4) - 1);
     /* step.2 write G, X, P, r_inv and M' into memory */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
@@ -902,9 +930,10 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
                           mp_count_bits(&r_inv),
                           hwWords_sz);
     /* step.3 write M' into memory                    */
+    ESP_LOGI(TAG, "M' = %d", mp);
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
-    process_start(RSA_START_MODEXP_REG);
+    process_start(RSA_MODEXP_START_REG); // was RSA_START_MODEXP_REG; RSA_MODEXP_START_REG as in docs?
 
     /* step.5 wait until done                         */
     wait_until_done(RSA_INTERRUPT_REG);
@@ -914,6 +943,24 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     esp_mp_hw_unlock();
 
     mp_clear(&r_inv);
+
+    /* trim any trailing zeros and adjust z.used size */
+    if (Z->used > 1 && (Z->dp[0] == 1)) {
+        for (size_t i = Z->used; i > 1; i--) {
+            if (Z->dp[i - 1] == 0) { /* last element in zero based array */
+                Z->used = i - 1;
+            }
+            else {
+                break; /* if not zero, nothing else to do */
+            }
+        }
+        ESP_LOGI(TAG, "Oops! Z->dp[0] == 1; Z->used = %d", Z->used);
+        // Z->used = 1;
+        // goto try_again;
+    }
+    else {
+        ESP_LOGI(TAG, "ok");
+    }
 
     return ret;
 #endif

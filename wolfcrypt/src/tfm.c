@@ -69,6 +69,17 @@ fp_int B3[1];
 fp_int C3[1];
 #endif
 
+fp_int G2[1];
+fp_int X2[1];
+fp_int P2[1];
+fp_int Y2[1];
+
+fp_int G3[1];
+fp_int X3[1];
+fp_int P3[1];
+fp_int Y3[1];
+
+
 #if defined(FREESCALE_LTC_TFM)
     #include <wolfssl/wolfcrypt/port/nxp/ksdk_port.h>
 #endif
@@ -2056,7 +2067,15 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
 }
 
 #endif /* WC_RSA_NONBLOCK */
-
+int show_math_int2(char* c, MATH_INT_T* X)
+{
+    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
+    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+    for (size_t i = 0; i < X->used; i++) {
+        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x",  c, i, X->dp[i]);
+    }
+    return 0;
+}
 
 /* timing resistant montgomery ladder based exptmod
    Based on work by Marc Joye, Sung-Ming Yen, "The Montgomery Powering Ladder",
@@ -2065,6 +2084,67 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
 static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
+    show_math_int2("G", G);
+    show_math_int2("X", X);
+    show_math_int2("P", P);
+    show_math_int2("Y", Y);
+
+    fp_init(G2);
+    fp_init(X2);
+    fp_init(P2);
+    fp_init(Y2);
+
+    fp_init(G3);
+    fp_init(X3);
+    fp_init(P3);
+    fp_init(Y3);
+
+    fp_copy(G, G2); /* copy (src = A) to (dst = A2) */
+    fp_copy(X, X2);
+    fp_copy(P, P2); /* copy (src = A) to (dst = A3) */
+    fp_copy(Y, Y2);
+
+    fp_copy(G, G3); /* copy (src = A) to (dst = A2) */
+    fp_copy(X, X3);
+    fp_copy(P, P3); /* copy (src = A) to (dst = A3) */
+    fp_copy(Y, Y3);
+
+    int ret2 = 0;
+    int xct2 = fp_count_bits(X);
+    ret2 = esp_mp_exptmod(G2, X2, xct2, P2, Y2);
+
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD_disabled)
+    int x = fp_count_bits(X);
+    int ret = 0;
+    if ((int)G == (int)Y) {
+        /* we get here from line 2614 of rsa.c
+        ** if (mp_exptmod(rnd, &key->e, &key->n, rnd) != MP_OKAY)
+        */
+        ESP_LOGI("*", "G = Y");
+    }
+    if ((int)X == (int)Y) {
+        ESP_LOGI("*", "X = Y");
+    }
+    if ((int)G == (int)X) {
+        ESP_LOGI("*", "G = X");
+    }
+    ret = esp_mp_exptmod(G, X, x, P, Y);
+    if ((int)G == (int)Y) {
+        ESP_LOGI("*", "G = Y");
+        fp_copy(Y2, Y);
+    }
+    //fp_copy(Y2, Y);
+    ESP_LOGI("*", "**************************");
+    show_math_int2("G", G);
+    show_math_int2("X", X);
+    show_math_int2("P", P);
+    show_math_int2("Y", Y);
+    ESP_LOGI("esp_mp_exptmod", "result = %d", ret);
+    ESP_LOGI("*", "**************************");
+    ESP_LOGI("*", "**************************");
+    return ret;
+#else
+
 #ifndef WOLFSSL_SMALL_STACK
 #ifdef WC_NO_CACHE_RESISTANT
   fp_int   R[2];
@@ -2237,8 +2317,55 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #ifdef WOLFSSL_SMALL_STACK
    XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
+
+    if (Y->used > 1 && (Y->dp[0] == 1 || (Y->dp[1] == 0))) {
+        ESP_LOGI("TFM Y", "Oops! X = %d", (int)Y->dp[0]);
+//        Z->used = 1;
+    }
+    else {
+        ESP_LOGI("TFM Y", "ok");
+    }
+
+    ESP_LOGI("*", "**************************");
+    show_math_int2("G", G);
+    show_math_int2("X", X);
+    show_math_int2("P", P);
+    show_math_int2("Y", Y);
+    show_math_int2("Y2", Y2);
+
+    if (fp_cmp(G, G2) == FP_EQ) {
+        ESP_LOGI("TFM", "G match!, err = %d", err);
+    }
+    else {
+        ESP_LOGI("TFM exptmod", "G G2 mismatch!");
+    }
+
+    if (fp_cmp(X, X2) == FP_EQ) {
+        ESP_LOGI("TFM", "X match!, err = %d", err);
+    }
+    else {
+        ESP_LOGI("TFM exptmod", "X X2 mismatch!");
+    }
+
+    if (fp_cmp(P, P2) == FP_EQ) {
+        ESP_LOGI("TFM", "P match!, err = %d", err);
+    }
+    else {
+        ESP_LOGI("TFM exptmod", "P P2 mismatch!");
+    }
+
+    if (fp_cmp(Y, Y2) == FP_EQ) {
+        ESP_LOGI("TFM", "Y match!, err = %d", err);
+    }
+    else {
+        ESP_LOGI("TFM exptmod", "Y Y2 mismatch!");
+    }
+    ESP_LOGI("*", "**************************");
+    ESP_LOGI("*", "**************************");
    return err;
+#endif
 }
+
 
 #endif /* TFM_TIMING_RESISTANT */
 
@@ -2941,9 +3068,25 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
            /* there's a known problem with length = 512
            ** see https://github.com/wolfSSL/wolfssl/issues/6205
            */
+    fp_init(G2);
+    fp_init(X2);
+    fp_init(P2);
+    fp_init(Y2);
+
+    /* TFM HW Marker 1 */
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+    fp_copy(G, G2); /* copy (src = A) to (dst = A2) */
+    fp_copy(X, X2);
+    fp_copy(P, P2); /* copy (src = A) to (dst = A3) */
+    fp_copy(Y, Y2);
+#endif
+
+
     if (x > EPS_RSA_EXPT_XBTIS) {
-    //     return esp_mp_exptmod(G, X, x, P, Y);
-    }    
+        int ret2 = 0;
+        //ret2 = esp_mp_exptmod(G2, X2, x, P2, Y2);
+        //ESP_LOGI("esp_mp_exptmod", "esp_mp_exptmod ret2 = %d", ret2);
+    }
     #if defined(TFM_DEBUG_GOJIMMYPI)
                MATH_INT_T G2 = *G;
                MATH_INT_T X2 = *X;
@@ -3005,7 +3148,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return err;
 #else
       return FP_VAL;
-#endif
+#endif /* POSITIVE_EXP_ONLY */
    }
    else if (G->used == 1 && G->dp[0] == 2) {
       return _fp_exptmod_base_2(X, X->used, P, Y);
