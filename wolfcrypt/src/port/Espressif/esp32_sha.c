@@ -926,7 +926,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
         ESP_LOGV(TAG, "      set sha->isfirstblock = 0");
 
     #if defined(DEBUG_WOLFSSL)
-        this_block_num = 1; /* one-based counter, just for debug info */
+        //this_block_num = 1; /* one-based counter, just for debug info */
     #endif
 
     }
@@ -967,8 +967,8 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     #endif
 
         #if defined(DEBUG_WOLFSSL)
-            this_block_num++; /* one-based counter */
-            ESP_LOGV(TAG, "      continue block #%d", this_block_num);
+            //this_block_num++; /* one-based counter */
+            //ESP_LOGV(TAG, "      continue block #%d", this_block_num);
         #endif
 
    ESP_LOGV(TAG, "    leave esp_sha_start_process");
