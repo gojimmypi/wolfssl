@@ -2611,9 +2611,12 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 
         /* rnd = rnd^e */
     #ifndef WOLFSSL_SP_MATH_ALL
-        if (mp_exptmod(rnd, &key->e, &key->n, rnd) != MP_OKAY) {
+        mp_int tmprnd[1];
+        fp_init(tmprnd);
+        if (mp_exptmod(rnd, &key->e, &key->n, tmprnd) != MP_OKAY) {
             ret = MP_EXPTMOD_E;
         }
+        fp_copy(tmprnd, rnd);
     #else
         if (mp_exptmod_nct(rnd, &key->e, &key->n, rnd) != MP_OKAY) {
             ret = MP_EXPTMOD_E;
