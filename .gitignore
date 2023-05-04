@@ -439,3 +439,6 @@ user_settings_asm.h
 /wolfcrypt/src/port/Espressif/backup
 /IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205/private
 /IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.old
+/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205_new
+/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205_old
+/wolfcrypt/src/port/Espressif/esp32_mp - WIP
