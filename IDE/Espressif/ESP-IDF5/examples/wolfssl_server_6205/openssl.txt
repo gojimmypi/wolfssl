@@ -1,0 +1,18 @@
+./openssl: /lib/x86_64-linux-gnu/libssl.so.3: version `OPENSSL_3.2.0' not found (required by ./openssl)
+./openssl: /lib/x86_64-linux-gnu/libcrypto.so.3: version `OPENSSL_3.0.9' not found (required by ./openssl)
+./openssl: /lib/x86_64-linux-gnu/libcrypto.so.3: version `OPENSSL_3.2.0' not found (required by ./openssl)
+
+# check
+ls /lib/x86_64-linux-gnu/libssl.so.3
+ls /lib/x86_64-linux-gnu/libcrypto.so.3
+
+
+cp /lib/x86_64-linux-gnu/libssl.so.3     /lib/x86_64-linux-gnu/libssl.so.3.bak
+cp /lib/x86_64-linux-gnu/libcrypto.so.3  /lib/x86_64-linux-gnu/libcrypto.so.3.bak
+
+
+# install
+sudo cp /mnt/c/workspace/openssl/libssl.so.3     /lib/x86_64-linux-gnu/libssl.so.3
+sudo cp /mnt/c/workspace/openssl/libcrypto.so.3  /lib/x86_64-linux-gnu/libcrypto.so.3
+
+# remove
