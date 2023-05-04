@@ -2084,10 +2084,10 @@ int show_math_int2(char* c, MATH_INT_T* X)
 static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
-    show_math_int2("G", G);
-    show_math_int2("X", X);
-    show_math_int2("P", P);
-    show_math_int2("Y", Y);
+//    show_math_int2("G", G);
+//    show_math_int2("X", X);
+//    show_math_int2("P", P);
+//    show_math_int2("Y", Y);
 
     fp_init(G2);
     fp_init(X2);
@@ -2099,21 +2099,22 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     fp_init(P3);
     fp_init(Y3);
 
-    fp_copy(G, G2); /* copy (src = A) to (dst = A2) */
+    fp_copy(G, G2); /* copy (src = G) to (dst = G2) */
     fp_copy(X, X2);
-    fp_copy(P, P2); /* copy (src = A) to (dst = A3) */
+    fp_copy(P, P2); /* copy (src = P) to (dst = P2) */
     fp_copy(Y, Y2);
 
-    fp_copy(G, G3); /* copy (src = A) to (dst = A2) */
+    fp_copy(G, G3); /* copy (src = G) to (dst = G3) */
     fp_copy(X, X3);
-    fp_copy(P, P3); /* copy (src = A) to (dst = A3) */
+    fp_copy(P, P3); /* copy (src = P) to (dst = P3) */
     fp_copy(Y, Y3);
 
     int ret2 = 0;
     int xct2 = fp_count_bits(X);
+    /* perform HW calc, save in [V]2 */
     ret2 = esp_mp_exptmod(G2, X2, xct2, P2, Y2);
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD_disabled)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     int x = fp_count_bits(X);
     int ret = 0;
     if ((int)G == (int)Y) {
@@ -2128,12 +2129,15 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     if ((int)G == (int)X) {
         ESP_LOGI("*", "G = X");
     }
+
+    /* perform HW calc on real parameters */
     ret = esp_mp_exptmod(G, X, x, P, Y);
+
     if ((int)G == (int)Y) {
         ESP_LOGI("*", "G = Y");
-        fp_copy(Y2, Y);
+        // fp_copy(Y2, Y);
     }
-    //fp_copy(Y2, Y);
+    // fp_copy(Y2, Y);
     ESP_LOGI("*", "**************************");
     show_math_int2("G", G);
     show_math_int2("X", X);
@@ -2159,6 +2163,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 
   /* now setup montgomery  */
   if ((err = fp_montgomery_setup (P, &mp)) != FP_OKAY) {
+     ESP_LOGE("TFM error", "fp_montgomery_setup failed");
      return err;
   }
 
@@ -2168,8 +2173,10 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #else
    R = (fp_int*)XMALLOC(sizeof(fp_int) * 2, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
-   if (R == NULL)
-       return FP_MEM;
+    if (R == NULL) {
+        ESP_LOGE("TFM error", "XMALLOC failed");
+        return FP_MEM;
+    }
 #endif
   fp_init(&R[0]);
   fp_init(&R[1]);
@@ -2183,6 +2190,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
   #ifdef WOLFSSL_SMALL_STACK
     XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
   #endif
+    ESP_LOGE("TFM error", "fp_montgomery_calc_normalization fail");
     return err;
   }
 
@@ -2194,16 +2202,19 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #ifdef WOLFSSL_SMALL_STACK
          XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
+         ESP_LOGE("TFM error", "fp_mod fail");
          return err;
      }
   } else {
      fp_copy(G, &R[1]);
   }
+  /* SW: are we calling HW here ?? */
   err = fp_mulmod (&R[1], &R[0], P, &R[1]);
   if (err != FP_OKAY) {
 #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
+      ESP_LOGE("TFM error", "fp_mulmod fail");
       return err;
   }
 
@@ -2270,6 +2281,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
+      ESP_LOGE("TFM error", "fp_mul fail");
       return err;
     }
     err = fp_montgomery_reduce(&R[2], P, mp);
@@ -2277,6 +2289,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
+      ESP_LOGE("TFM error", "fp_montgomery_reduce fail");
       return err;
     }
     /* instead of using R[y^1] for mul, which leaks key bit to cache monitor,
@@ -2297,6 +2310,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
+      ESP_LOGE("TFM error", "fp_sqr fail");
       return err;
     }
     err = fp_montgomery_reduce(&R[2], P, mp);
@@ -2304,6 +2318,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
+        ESP_LOGE("TFM error", "xfree fail");
       return err;
     }
     fp_copy(&R[2],
@@ -2327,42 +2342,51 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     }
 
     ESP_LOGI("*", "**************************");
-    show_math_int2("G", G);
-    show_math_int2("X", X);
-    show_math_int2("P", P);
-    show_math_int2("Y", Y);
-    show_math_int2("Y2", Y2);
-
     if (fp_cmp(G, G2) == FP_EQ) {
-        ESP_LOGI("TFM", "G match!, err = %d", err);
+        // ESP_LOGI("TFM", "G match!, err = %d", err);
     }
     else {
         ESP_LOGI("TFM exptmod", "G G2 mismatch!");
     }
 
     if (fp_cmp(X, X2) == FP_EQ) {
-        ESP_LOGI("TFM", "X match!, err = %d", err);
+        // ESP_LOGI("TFM", "X match!, err = %d", err);
     }
     else {
         ESP_LOGI("TFM exptmod", "X X2 mismatch!");
     }
 
     if (fp_cmp(P, P2) == FP_EQ) {
-        ESP_LOGI("TFM", "P match!, err = %d", err);
+        // ESP_LOGI("TFM", "P match!, err = %d", err);
     }
     else {
         ESP_LOGI("TFM exptmod", "P P2 mismatch!");
     }
-
-    if (fp_cmp(Y, Y2) == FP_EQ) {
-        ESP_LOGI("TFM", "Y match!, err = %d", err);
+    int e = memcmp(Y, Y2, sizeof(fp_int));
+    if (fp_cmp(Y, Y2) == FP_EQ ) {
+        if (e == 0) {
+            ESP_LOGI("TFM exptmod", "e match!");
+        }
+        else {
+            ESP_LOGE("TFM exptmod", "e mismatch!");
+        }
     }
     else {
         ESP_LOGI("TFM exptmod", "Y Y2 mismatch!");
+        show_math_int2("G", G);
+        show_math_int2("X", X);
+        show_math_int2("P", P);
+
+        show_math_int2("Y", Y);
+        show_math_int2("Y2", Y2);
     }
     ESP_LOGI("*", "**************************");
     ESP_LOGI("*", "**************************");
-   return err;
+    fp_copy(G2, G);
+    fp_copy(X2, X);
+    fp_copy(P2, P);
+    // fp_copy(Y2, Y);
+    return err;
 #endif
 }
 

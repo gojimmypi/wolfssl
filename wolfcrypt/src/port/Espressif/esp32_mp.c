@@ -772,8 +772,13 @@ int show_math_int(char* c, MATH_INT_T* X)
 .*
 .* Note some DH references may use: Y = (G ^ X) mod P
  */
+static int depth_counter = 0;
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
+    if (depth_counter != 0) {
+        ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
+    }
+    depth_counter++;
     int ret = 0;
 //    show_math_int("X", X);
 //    show_math_int("Y", Y);
@@ -806,7 +811,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     hwWords_sz  = words2hwords(maxWords_sz);
 
-    ESP_LOGI(TAG, "hwWords_sz = %d", hwWords_sz);
+    // ESP_LOGI(TAG, "hwWords_sz = %d", hwWords_sz);
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds HW maximum bits");
         return MP_VAL; /*  Error: value is not able to be used. */
@@ -832,6 +837,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
+        ESP_LOGE(TAG, "esp_mp_hw_lock failed");
         mp_clear(&r_inv);
         return ret;
     }
@@ -862,6 +868,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     /* 1. Wait until hardware is ready. */
     if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_wait_clean failed!");
         return ret;
     }
 
@@ -892,6 +899,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     process_start(RSA_MODEXP_START_REG);
     ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
     if (MP_OKAY != ret) {
+        ESP_LOGW(TAG, "wait_until_done failed");
         return ret;
     }
 
@@ -903,7 +911,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     mp_clear(&r_inv);
 
-    return ret;
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
     /* non-ESP32S3 Xtensa (regular ESP32) */
@@ -925,7 +932,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
     /* step.1                                         */
-    ESP_LOGI(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
+    // ESP_LOGI(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
 
     DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (hwWords_sz >> 4) - 1);
     /* step.2 write G, X, P, r_inv and M' into memory */
@@ -937,7 +944,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
                           mp_count_bits(&r_inv),
                           hwWords_sz);
     /* step.3 write M' into memory                    */
-    ESP_LOGI(TAG, "M' = %d", mp);
+    // ESP_LOGI(TAG, "M' = %d", mp);
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
     process_start(RSA_MODEXP_START_REG); // was RSA_START_MODEXP_REG; RSA_MODEXP_START_REG as in docs?
@@ -950,6 +957,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     esp_mp_hw_unlock();
 
     mp_clear(&r_inv);
+
+    int this_extra = Z->used;
+    while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
+        Z->dp[this_extra] = 0;
+        this_extra++;
+    }
 
     /* trim any trailing zeros and adjust z.used size */
     if (Z->used > 1 && (Z->dp[0] == 1)) {
@@ -968,9 +981,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     else {
         ESP_LOGI(TAG, "ok");
     }
-
-    return ret;
 #endif
+    depth_counter--;
+    return ret;
 }
 
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) &&
