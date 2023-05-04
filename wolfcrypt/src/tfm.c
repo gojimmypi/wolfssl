@@ -166,9 +166,32 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
   oldused = MIN(c->used, FP_SIZE);   /* help static analysis w/ largest size */
   c->used = y;
 
-  t = 0;
+  t = 0; /* our total starts at zero */
   for (x = 0; x < y; x++) {
-      t         += ((fp_word)a->dp[x]) + ((fp_word)b->dp[x]);
+      if ( (x < a->used) && (x < b->used) ) {
+          /* x is less than both [a].used and [b].used, so we add both */
+                  t += ((fp_word)a->dp[x])    +    ((fp_word)b->dp[x]);
+      }
+      else {
+          /* Here we honor the actual [a].used and [b].used values
+           * and NOT assume that values beyond [used] are zero. */
+          if ((x >= a->used) && (x < b->used)) {
+                  /* x more than [a].used, [b] ok, so just add [b] */
+                  t += /* ((fp_word)(0))      + */ ((fp_word)b->dp[x]);
+          }
+          else {
+              if ((x < a->used) && (x >= b->used)) {
+                  /* x more than [b].used, [a] ok, so just add [a] */
+                  t += ((fp_word)a->dp[x]) /* +     (fp_word)(0) */;
+              }
+              else {
+                  /* we should never get here, as a.used cannot be greater
+                   * than b.used, while b.used is greater than a.used! */
+                  ESP_LOGI("ER", "oops");
+               /* t += 0 + 0 */
+              }
+          }
+      }
       c->dp[x]   = (fp_digit)t;
       t        >>= DIGIT_BIT;
   }
@@ -247,7 +270,7 @@ void s_fp_sub(fp_int *a, fp_int *b, fp_int *c)
      t         = (t >> DIGIT_BIT)&1;
    }
 
-  /* zero any excess digits on the destination that we didn't write to */
+  /* zero any excess digits on the destination that we didn't write to. */
   for (; x < oldused; x++) {
      c->dp[x] = 0;
   }
@@ -4614,7 +4637,7 @@ int mp_add (mp_int * a, mp_int * b, mp_int * c)
 /* high level subtraction (handles signs) */
 int mp_sub (mp_int * a, mp_int * b, mp_int * c)
 {
-  return fp_sub(a, b, c);
+  return fp_sub(a, b, c); /* used ok */
 }
 
 /* high level multiplication (handles sign) */
