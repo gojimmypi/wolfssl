@@ -107,6 +107,7 @@ int CertDemo() {
     esp_log_level_set("*", ESP_LOG_VERBOSE);
 
     wc_InitRng(&rng);
+    ESP_LOG_BUFFER_HEXDUMP(TAG, &rng, sizeof(rng), ESP_LOG_INFO);
 
     /*
     ** ensure Digital Signature (DS) is not active
@@ -128,15 +129,19 @@ int CertDemo() {
     */
     wc_InitRsaKey(&genKey, 0);
     ESP_LOGI(TAG, "Generating an RSA key %d bits long", WOLFSSL_RSA_KEY_SIZE);
+    ESP_LOG_BUFFER_HEXDUMP(TAG, &rng, sizeof(rng), ESP_LOG_INFO);
     ret = wc_MakeRsaKey(&genKey, WOLFSSL_RSA_KEY_SIZE, 65537, &rng);
     if (ret != 0) {
-        ESP_LOGI(TAG, "wc_MakeRsaKey error %d", ret);
+        ESP_LOGE(TAG, "wc_MakeRsaKey error %d", ret);
     }
 
 
     derSz = wc_RsaKeyToDer(&genKey, der, sizeof(der));
     if (derSz < 0) {
         ESP_LOGE(TAG, "wc_RsaKeyToDer error %d", ret);
+    }
+    else {
+        ESP_LOGI(TAG, "wc_RsaKeyToDer derSz %d", derSz);
     }
 
     int  pemSz = wc_DerToPem(der, derSz,
@@ -146,6 +151,7 @@ int CertDemo() {
         ESP_LOGE(TAG, "wc_DerToPem error %d", ret);
     }
     else {
+        ESP_LOGI(TAG, "wc_DerToPem pemSz %d", pemSz);
         if (pemSz < PEM_SIZE) {
             pem[pemSz] = 0x0; /* We'll print this, so add string terminator. */
         }
@@ -166,21 +172,25 @@ int CertDemo() {
     ** Create Request
     ***************************************************************************
     */
+    ESP_LOGI(TAG, "Begin  wc_InitCert");
     wc_InitCert(&request);
+    ESP_LOGI(TAG, "End  wc_InitCert");
 
-    strncpy(request.subject.country, "NZ", CTC_COUNTRY_SIZE + 1); /* +1 null terminated */
-    strncpy(request.subject.state, "Waikato", CTC_NAME_SIZE);
-    strncpy(request.subject.locality, "Hamilton", CTC_NAME_SIZE);
-    strncpy(request.subject.org, "Blue Leaf Software, Ltd", CTC_NAME_SIZE);
+    strncpy(request.subject.country, "NZ\0", CTC_COUNTRY_SIZE + 1); /* +1 null terminated */
+    strncpy(request.subject.state, "Waikato\0", CTC_NAME_SIZE);
+    strncpy(request.subject.locality, "Hamilton\0", CTC_NAME_SIZE);
+    strncpy(request.subject.org, "Blue Leaf Software, Ltd\0", CTC_NAME_SIZE);
 
 #if defined(NO_ESP32WROOM32_CRYPT)
-    strncpy(request.subject.commonName, "Lumos SW, serialNumber = BLS-001", CTC_NAME_SIZE);
+    strncpy(request.subject.commonName, "Lumos SW, SN = BLS-001\0", CTC_NAME_SIZE);
 #else
-    strncpy(request.subject.commonName, "Lumos HW, serialNumber = BLS-002", CTC_NAME_SIZE);
+    strncpy(request.subject.commonName, "Lumos HW, SN = BLS-002\0", CTC_NAME_SIZE);
 #endif
 
     request.version = 0;
+    ESP_LOGI(TAG, "Begin  wc_MakeCertReq_ex");
     ret = wc_MakeCertReq_ex(&request, der, sizeof(der), RSA_TYPE, &genKey);
+    ESP_LOGI(TAG, "Begin  wc_MakeCertReq_ex");
     if (ret <= 0) {
         ESP_LOGE(TAG, "Make Cert Request failed: %d\n", ret);
     }
@@ -193,11 +203,14 @@ int CertDemo() {
     ***************************************************************************
     */
     request.sigType = CTC_SHA256wRSA;
+    ESP_LOGI(TAG, "Begin  wc_SignCert_ex");
+    ESP_LOG_BUFFER_HEXDUMP(TAG, &rng, sizeof(rng), ESP_LOG_INFO);
     ret = wc_SignCert_ex(request.bodySz, request.sigType,
                          der, sizeof(der),
                          RSA_TYPE,
                          &genKey, &rng
                         );
+    ESP_LOGI(TAG, "End  wc_SignCert_ex");
     if (ret <= 0) {
         ESP_LOGE(TAG, "Sign Cert failed: %d\n", ret);
     }
