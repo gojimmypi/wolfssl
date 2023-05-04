@@ -779,6 +779,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
     }
     depth_counter++;
+    XMEMSET(Z, 0, sizeof(MATH_INT_T));
     int ret = 0;
 //    show_math_int("X", X);
 //    show_math_int("Y", Y);
@@ -960,6 +961,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     int this_extra = Z->used;
     while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
+        ESP_LOGI(TAG, "Adjust! %d", this_extra);
         Z->dp[this_extra] = 0;
         this_extra++;
     }
