@@ -10461,7 +10461,7 @@ static int GetDtlsRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
 static int GetRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
                            RecordLayerHeader* rh, word16 *size)
 {
-    byte tls12minor;
+    byte tls12minor = 0;
 
 #ifdef OPENSSL_ALL
     word32 start = *inOutIdx;
@@ -20913,7 +20913,7 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
             if (args->ivSz > 0) {
                 XMEMCPY(output + args->idx, args->iv,
                                         min(args->ivSz, MAX_IV_SZ));
-                args->idx += args->ivSz;
+                args->idx += min(args->ivSz, MAX_IV_SZ);
             }
             XMEMCPY(output + args->idx, input, inSz);
             args->idx += inSz;
@@ -25415,6 +25415,29 @@ int PickHashSigAlgo(WOLFSSL* ssl, const byte* hashSigAlgo, word32 hashSigAlgoSz)
                 if (ret == 0 && hashAlgo > ssl->options.hashAlgo)
                     break;
             #endif
+                if (IsAtLeastTLSv1_2(ssl) && !IsAtLeastTLSv1_3(ssl->version) &&
+                        (ssl->options.side == WOLFSSL_CLIENT_END)) {
+                    /* TLS 1.2 client deciding hash algorithm for
+                     * CertificateVerify. Hash must be one of the handshake
+                     * hashes being maintained. */
+                    if (1
+                    #ifndef NO_SHA
+                        && (hashAlgo != sha_mac)
+                    #endif
+                    #ifndef NO_SHA256
+                        && (hashAlgo != sha256_mac)
+                    #endif
+                    #ifdef WOLFSSL_SHA384
+                        && (hashAlgo != sha384_mac)
+                    #endif
+                    #ifdef WOLFSSL_SHA512
+                        && (hashAlgo != sha512_mac)
+                    #endif
+                        )
+                        {
+                            break;
+                        }
+                }
                 /* The chosen one - but keep looking. */
                 ssl->options.hashAlgo = hashAlgo;
                 ssl->options.sigAlgo = sigAlgo;
@@ -30188,17 +30211,22 @@ int SendCertificateVerify(WOLFSSL* ssl)
             }
         #endif
 
-    #ifndef NO_OLD_TLS
-        #ifndef NO_SHA
-            /* old tls default */
-            SetDigest(ssl, sha_mac);
-        #endif
-    #else
-        #ifndef NO_SHA256
-            /* new tls default */
-            SetDigest(ssl, sha256_mac);
-        #endif
-    #endif /* !NO_OLD_TLS */
+            if (!IsAtLeastTLSv1_2(ssl)) {
+        #ifndef NO_OLD_TLS
+            #ifndef NO_SHA
+                /* old tls default */
+                SetDigest(ssl, sha_mac);
+            #endif
+        #else
+            #ifndef NO_SHA256
+                /* new tls default */
+                SetDigest(ssl, sha256_mac);
+            #endif
+        #endif /* !NO_OLD_TLS */
+            }
+            else {
+                SetDigest(ssl, ssl->options.hashAlgo);
+            }
 
             if (ssl->hsType == DYNAMIC_TYPE_RSA) {
         #ifdef WC_RSA_PSS

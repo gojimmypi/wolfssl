@@ -43,6 +43,11 @@
     #include <wolfssl/wolfcrypt/aes.h>
 #endif
 
+#ifndef WOLFSSL_HAVE_ECC_KEY_GET_PRIV
+    /* FIPS build has replaced ecc.h. */
+    #define wc_ecc_key_get_priv(key) (&((key)->k))
+    #define WOLFSSL_HAVE_ECC_KEY_GET_PRIV
+#endif
 
 #ifdef STM32_HASH
 
@@ -234,7 +239,7 @@ static void wc_Stm32_Hash_Data(STM32_HASH_Context* stmCtx, word32 len)
     if (len > stmCtx->buffLen)
         len = stmCtx->buffLen;
 
-    /* calculate number of 32-bit blocks */
+    /* calculate number of 32-bit blocks - round up */
     blocks = ((len + STM32_HASH_REG_SIZE-1) / STM32_HASH_REG_SIZE);
 #ifdef DEBUG_STM32_HASH
     printf("STM DIN %d blocks\n", blocks);
@@ -268,17 +273,16 @@ int wc_Stm32_Hash_Update(STM32_HASH_Context* stmCtx, word32 algo,
     byte* local = (byte*)stmCtx->buffer;
     int wroteToFifo = 0;
     const word32 fifoSz = (STM32_HASH_FIFO_SIZE * STM32_HASH_REG_SIZE);
-
-    if (blockSize > fifoSz)
-        blockSize = fifoSz;
+    word32 chunkSz;
 
 #ifdef DEBUG_STM32_HASH
     printf("STM Hash Update: algo %x, len %d, blockSz %d\n",
         algo, len, blockSize);
 #endif
+    (void)blockSize;
 
     /* check that internal buffLen is valid */
-    if (stmCtx->buffLen > blockSize) {
+    if (stmCtx->buffLen > (word32)sizeof(stmCtx->buffer)) {
         return BUFFER_E;
     }
 
@@ -288,37 +292,44 @@ int wc_Stm32_Hash_Update(STM32_HASH_Context* stmCtx, word32 algo,
     /* restore hash context or init as new hash */
     wc_Stm32_Hash_RestoreContext(stmCtx, algo);
 
+    chunkSz = fifoSz;
+#ifdef STM32_HASH_FIFO_WORKAROUND
+    /* if FIFO already has bytes written then fill remainder first */
+    if (stmCtx->fifoBytes > 0) {
+        chunkSz -= stmCtx->fifoBytes;
+        stmCtx->fifoBytes = 0;
+    }
+#endif
+
     /* write blocks to FIFO */
     while (len) {
-        word32 fillBlockSz = blockSize, add;
-
-        /* if FIFO already has bytes written then fill remainder first */
-        if (stmCtx->fifoBytes > 0) {
-            fillBlockSz -= stmCtx->fifoBytes;
-            stmCtx->fifoBytes = 0;
-        }
-
-        add = min(len, fillBlockSz - stmCtx->buffLen);
+        word32 add = min(len, chunkSz - stmCtx->buffLen);
         XMEMCPY(&local[stmCtx->buffLen], data, add);
 
         stmCtx->buffLen += add;
         data            += add;
         len             -= add;
 
-        if (len > 0 && stmCtx->buffLen == fillBlockSz) {
+    #ifdef STM32_HASH_FIFO_WORKAROUND
+        /* We cannot leave the FIFO full and do save/restore
+         * the last must be large enough to flush block from FIFO */
+        if (stmCtx->buffLen + len <= fifoSz * 2) {
+            chunkSz = fifoSz + STM32_HASH_REG_SIZE;
+        }
+    #endif
+
+        if (len >= 0 && stmCtx->buffLen == chunkSz) {
             wc_Stm32_Hash_Data(stmCtx, stmCtx->buffLen);
             wroteToFifo = 1;
+        #ifdef STM32_HASH_FIFO_WORKAROUND
+            if (chunkSz > fifoSz)
+                stmCtx->fifoBytes = chunkSz - fifoSz;
+            chunkSz = fifoSz;
+        #endif
         }
     }
 
     if (wroteToFifo) {
-    #ifdef STM32_HASH_FIFO_WORKAROUND
-        /* If we wrote a block send one more 32-bit to FIFO to trigger start.
-         * The save/restore feature cannot leave 16 deep FIFO filled. */
-        wc_Stm32_Hash_Data(stmCtx, 4);
-        stmCtx->fifoBytes += 4;
-    #endif
-
         /* make sure hash operation is done */
         ret = wc_Stm32_Hash_WaitDone(stmCtx);
 
@@ -948,7 +959,8 @@ int stm32_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
     if (status == MP_OKAY)
         status = stm32_get_from_mp_int(Qybin, key->pubkey.y, szModulus);
     if (status == MP_OKAY)
-        status = stm32_get_from_mp_int(privKeybin, &key->k, szModulus);
+        status = stm32_get_from_mp_int(privKeybin, wc_ecc_key_get_priv(key),
+            szModulus);
     if (status != MP_OKAY)
         return status;
 
@@ -1014,7 +1026,7 @@ int stm32_ecc_sign_hash_ex(const byte* hash, word32 hashlen, WC_RNG* rng,
 
     size = wc_ecc_size(key);
 
-    status = stm32_get_from_mp_int(Keybin, &key->k, size);
+    status = stm32_get_from_mp_int(Keybin, wc_ecc_key_get_priv(key), size);
     if (status != MP_OKAY)
         return status;
 
