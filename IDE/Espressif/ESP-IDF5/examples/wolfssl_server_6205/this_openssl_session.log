@@ -1,3 +1,4 @@
+gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
 $ ./inspect_test.sh
     0:d=0  hl=4 l= 313 cons: SEQUENCE
     4:d=1  hl=3 l= 228 cons: SEQUENCE
@@ -33,12 +34,32 @@ $ ./inspect_test.sh
   237:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption
   248:d=2  hl=2 l=   0 prim: NULL
   250:d=1  hl=2 l=  65 prim: BIT STRING
-Certificate request self-signature ok
-subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, serialNumber = BLS-002"
-We need a private key to sign with, use -key or -CAkey or -CA with private key
-Certificate request self-signature ok
-subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, serialNumber = BLS-002"
-Certificate request self-signature ok
-subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, serialNumber = BLS-002"
-We need a private key to sign with, use -key or -CAkey or -CA with private key
+Warning: CSR self-signature does not match the contentsCertificate request self-signature did not match the contents
+40072CD6677F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+40072CD6677F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+40072CD6677F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+40072CD6677F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
+40072CD6677F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+40072CD6677F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+40072CD6677F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+40072CD6677F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
+Warning: CSR self-signature does not match the contentsCertificate request self-signature did not match the contents
+4007F2A29E7F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+4007F2A29E7F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+4007F2A29E7F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+4007F2A29E7F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
+4007F2A29E7F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+4007F2A29E7F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+4007F2A29E7F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+4007F2A29E7F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
+Warning: CSR self-signature does not match the contentsCertificate request self-signature did not match the contents
+4007CDB1607F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+4007CDB1607F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+4007CDB1607F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+4007CDB1607F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
+4007CDB1607F0000:error:0200008A:rsa routines:RSA_padding_check_PKCS1_type_1:invalid padding:crypto/rsa/rsa_pk1.c:79:
+4007CDB1607F0000:error:02000072:rsa routines:rsa_ossl_public_decrypt:padding check failed:crypto/rsa/rsa_ossl.c:732:
+4007CDB1607F0000:error:1C880004:Provider routines:rsa_verify:RSA lib:providers/implementations/signature/rsa_sig.c:785:
+4007CDB1607F0000:error:06880006:asn1 encoding routines:ASN1_item_verify_ctx:EVP lib:crypto/asn1/a_verify.c:215:
 gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
+$
