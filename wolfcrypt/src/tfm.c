@@ -2392,9 +2392,21 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
         }
         else {
             ESP_LOGE("TFM exptmod", "e mismatch!");
+            if (Y->dp[0] == 1) {
+                ESP_LOGE("TFM exptmod", "Both memcmp and fp_cmp fail!");
+            }
         }
     }
     else {
+        if (e == 0) {
+            ESP_LOGI("TFM exptmod", "e match! memcmp error!");
+        }
+        else {
+            ESP_LOGE("TFM exptmod", "e mismatch! memcmp ok");
+            if (Y->dp[0] == 1) {
+                ESP_LOGE("TFM exptmod", "Both memcmp and fp_cmp fail!");
+            }
+        }
         ESP_LOGI("TFM exptmod", "Y Y2 mismatch!");
         show_math_int2("G", G);
         show_math_int2("X", X);
