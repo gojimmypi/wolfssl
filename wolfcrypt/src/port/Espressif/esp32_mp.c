@@ -834,8 +834,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         return ret;
     }
 
-
-
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         ESP_LOGE(TAG, "esp_mp_hw_lock failed");
@@ -966,6 +964,10 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         this_extra++;
     }
 
+    if (Z->dp[0] == 1) {
+        ESP_LOGI(TAG, "Z->dp[0] == 1");
+    }
+
     /* trim any trailing zeros and adjust z.used size */
     if (Z->used > 1 && (Z->dp[0] == 1)) {
         for (size_t i = Z->used; i > 1; i--) {
@@ -977,8 +979,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
             }
         }
         ESP_LOGI(TAG, "Oops! Z->dp[0] == 1; Z->used = %d", Z->used);
-        // Z->used = 1;
-        // goto try_again;
     }
     else {
         ESP_LOGI(TAG, "ok");
