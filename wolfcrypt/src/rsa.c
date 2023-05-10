@@ -2641,11 +2641,11 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     }
 #else
     if (ret == 0) {
-        mp_int  tmpa; // = tmp;
+        mp_int  tmpa[1]; // = tmp;
         XMEMCPY(&tmpa, tmp, sizeof(mp_int));
 #if defined(WC_RSA_BLINDING) && !defined(WC_NO_RNG)
-        mp_int  tmpb; // = rnd;
-        XMEMCPY(&tmpb, rnd, sizeof(mp_int));
+        mp_int  tmpb[1]; // = rnd;
+        XMEMCPY(tmpb, rnd, sizeof(mp_int));
 #else
         DECL_MP_INT_SIZE_DYN(tmpb, mp_bitsused(&key->n), RSA_MAX_SIZE);
 #endif
@@ -2671,11 +2671,11 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     #endif
 
         /* tmpb = tmp^dQ mod q */
-        if (ret == 0 && mp_exptmod(&tmpc, &key->dQ, &key->q, &tmpb) != MP_OKAY)
+        if (ret == 0 && mp_exptmod(&tmpc, &key->dQ, &key->q, tmpb) != MP_OKAY)
             ret = MP_EXPTMOD_E;
 
         /* tmpa = tmp^dP mod p */
-        if (ret == 0 && mp_exptmod(&tmpc, &key->dP, &key->p, &tmpa) != MP_OKAY)
+        if (ret == 0 && mp_exptmod(&tmpc, &key->dP, &key->p, tmpa) != MP_OKAY)
             ret = MP_EXPTMOD_E;
 
         /* tmp = (tmp - tmpb) * qInv (mod p) */
@@ -2696,7 +2696,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
             ret = MP_MUL_E;
 
 
-        if (ret == 0 && mp_add(&tmpc, &tmpb, &tmpc) != MP_OKAY)
+        if (ret == 0 && mp_add(&tmpc, tmpb, &tmpc) != MP_OKAY)
             ret = MP_ADD_E;
 
 #if !defined(WC_RSA_BLINDING) || defined(WC_NO_RNG)
