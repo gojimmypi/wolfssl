@@ -4674,29 +4674,15 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
- /* TFM HW Marker 8 FAILS HERE for RSA 2048 bit length */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    #if defined(WOLFSSL_RSA_KEY_SIZE)
-        #if WOLFSSL_RSA_KEY_SIZE != 2048
-           /* there's a known problem with length = 2048
-           ** see https://github.com/wolfSSL/wolfssl/issues/6205
-           */
-            int A = fp_count_bits (a);
-            int B = fp_count_bits (b);
+ #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+    int A = fp_count_bits (a);
+    int B = fp_count_bits (b);
 
-            if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
-                ESP_LOGI("TFM", "calling esp_mp_mulmod marker 8");
-                return esp_mp_mulmod(a, b, c, d);
-            }
-            else{
-                ESP_LOGI("TFM", "skipping esp_mp_mulmod marker 8");
-            }
-        #endif
-    #else
-        #warning "WOLFSSL_RSA_KEY_SIZE not defined"
-    #endif /* WOLFSSL_RSA_KEY_SIZE */
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+    if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS)
+        return esp_mp_mulmod(a, b, c, d);
+    else
+ #endif
    return fp_mulmod(a, b, c, d);
 }
 
