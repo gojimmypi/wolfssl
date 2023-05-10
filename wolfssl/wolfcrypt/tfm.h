@@ -307,6 +307,7 @@
 #define FP_MEM      (-2)
 #define FP_NOT_INF  (-3)
 #define FP_WOULDBLOCK (-4)
+#define FP_HW_BUSY    (-5)
 
 /* equalities */
 #define FP_LT        (-1)   /* less than */
@@ -778,6 +779,7 @@ int  fp_sqr_comba64(fp_int *a, fp_int *b);
 #define MP_MEM  FP_MEM  /* memory error */
 #define MP_NOT_INF FP_NOT_INF /* point not at infinity */
 #define MP_OKAY FP_OKAY /* ok result    */
+#define MP_HW_BUSY FP_HW_BUSY /* hardware is busy, need to fall back to SW */
 #define MP_NO   FP_NO   /* yes/no result */
 #define MP_YES  FP_YES  /* yes/no result */
 #define MP_ZPOS FP_ZPOS
