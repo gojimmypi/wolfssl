@@ -118,14 +118,11 @@
     #endif
     #include "os/os_time.h"
 #elif defined(WOLFSSL_ESPIDF)
-
     #include <time.h>
     #include <sys/time.h>
     #include <esp_log.h>
 
-    /* there's a conflict iwth the TAG in sha256.c,
-    ** so we call this oneTEST_TAG */
-	static const char* TEST_TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
+    static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
 
@@ -418,6 +415,7 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Wunused-function\"")
 PRAGMA_CLANG("clang diagnostic ignored \"-Wunused-function\"")
 
 WOLFSSL_TEST_SUBROUTINE int  error_test(void);
+WOLFSSL_TEST_SUBROUTINE int  math_test(void);
 WOLFSSL_TEST_SUBROUTINE int  base64_test(void);
 WOLFSSL_TEST_SUBROUTINE int  base16_test(void);
 WOLFSSL_TEST_SUBROUTINE int  asn_test(void);
@@ -625,6 +623,33 @@ WOLFSSL_TEST_SUBROUTINE int aes_siv_test(void);
 
 
 #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
+
+
+static void debug_message(const char* msg)
+{
+#if defined(DEBUG_WOLFSSL)
+    #ifdef WOLFSSL_ESPIDF
+        ESP_LOGI(TAG,"%s", msg);
+    #else
+        print("%s", msg);
+    #endif // WOLFSSL_ESPIDF
+#else
+    /* no message */
+#endif // #if defined(DEBUG_WOLFSSL)
+}
+
+static void debug_message_value(const char* msg, int val)
+{
+#if defined(DEBUG_WOLFSSL)
+    #ifdef WOLFSSL_ESPIDF
+        ESP_LOGI(TAG,"%s Value = %d", msg, val);
+    #else
+        print("%s", msg, val);
+    #endif // WOLFSSL_ESPIDF
+#else
+    /* no message */
+#endif // #if defined(DEBUG_WOLFSSL)}
+}
 
 static void render_error_message(const char* msg, int es)
 {
@@ -979,6 +1004,13 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("MEMORY   test passed!\n");
 
+#ifndef NO_MATH_TEST
+    if ((ret = math_test()) != 0)
+        TEST_FAIL("math   test failed!\n", ret);
+    else
+        TEST_PASS("math  test passed!\n");
+#endif
+
 #ifndef NO_CODING
     if ( (ret = base64_test()) != 0)
         TEST_FAIL("base64   test failed!\n", ret);
@@ -1173,7 +1205,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
             TEST_FAIL("HMAC-SHA512 test failed!\n", ret);
         else
             TEST_PASS("HMAC-SHA512 test passed!\n");
-
     #endif
 
     #if !defined(NO_HMAC) && defined(WOLFSSL_SHA3) && \
@@ -1788,9 +1819,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
             printf("wolfCrypt_Init failed %d\n", ret);
             err_sys("Error with wolfCrypt_Init!\n", WC_TEST_RET_ENC_EC(ret));
         }
-#ifdef HAVE_VERSION_EXTENDED_INFO
-        ShowExtendedSystemInfo();
-#endif
 
     #ifdef HAVE_WC_INTROSPECTION
         printf("Math: %s\n", wc_GetMathInfo());
@@ -1826,7 +1854,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 #ifdef WOLFSSL_ESPIDF
         /* ESP_LOGI to print takes up a lot less memory than printf */
-        ESP_LOGI(TEST_TAG, "Exiting main with return code: % d\n",
+        ESP_LOGI(TAG, "Exiting main with return code: % d\n",
                            args.return_code);
 #endif
 
@@ -1921,6 +1949,142 @@ static int _SaveDerAndPem(const byte* der, int derSz,
     return 0;
 }
 #endif /* WOLFSSL_KEY_GEN || WOLFSSL_CERT_GEN */
+
+
+WOLFSSL_TEST_SUBROUTINE int math_test(void)
+{
+#define BADVAL 0xf5f5f5f5 /* simulate uninitialized memory with 0xf5 */
+    int ret = FP_OKAY; /* assume success until proven otherwise */
+    int retf = FP_OKAY; /* we'll inspect some interim functions */
+
+#if defined(DEBUG_WOLFSSL)
+    retf = CheckRunTimeFastMath();
+    printf("CheckRunTimeFastMath() = %d\n", retf);
+    printf("FP_SIZE= %d\n", FP_SIZE);
+    printf("DIGIT_BIT= %d\n", DIGIT_BIT);
+#endif /* DEBUG_WOLFSSL */
+
+#ifdef USE_FAST_MATH
+    int oldused;
+    mp_int a[1], b[1]; /* operands */
+    mp_int c[1]; /* result */
+
+    c->used = BADVAL; /* we have an uninitialized result variable */
+
+    /* oldused should never write more than FPSIZE words in s_fp_add
+    ** (see ending zero any excess digits for loop */
+    oldused = MIN(c->used, FP_SIZE); /* help static analysis w/ largest size */
+    if (oldused <= FP_SIZE && oldused > -1) {
+        debug_message("Success oldused range check \n");
+    }
+    else {
+        debug_message_value("Fail oldused range check.\n", oldused);
+        ret = -1;
+    }
+
+    if (oldused == FP_SIZE || oldused == FP_SIZE) {
+        debug_message("Success oldused MIN check \n");
+    }
+    else {
+        debug_message_value("Fail oldused MIN check.\n", oldused);
+        ret = -1;
+    }
+
+    fp_init(a);
+    fp_init(b);
+
+    memset(a, 0, sizeof(fp_int));
+    memset(b, 0, sizeof(fp_int));
+    memset(c, 0, sizeof(fp_int));
+
+    /* the values are both 0, both [a] and [b] claim to use the
+    ** same umber of words. the values should still be equal */
+    if (mp_cmp(a, b) == 0) {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Success fp_cmp on 0 == 0 check.\n");
+#endif
+    }
+    else {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Fail fp_cmp on 0 == 0 check.\n");
+#endif
+        ret = -1;
+    }
+
+    /* here we set different used lengths for a and b
+    ** note this is only interesting with non-zero data in
+    ** unused words. but if they are unused, why do they need
+    ** to be initialized? */
+    debug_message("/nTest adding different sized fp_int values.\n");
+    a->used = 1; /* only a->dp[0] is used */
+    b->used = 2; /* both b->dp[0] and b->dp[1] are used */
+
+    /* the values are both 0, but [a] claims to use more words
+    ** than [the other]b]. the values should still be equal */
+    if (mp_cmp(a, b) == 0) {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Success fp_cmp on 0 == 0 check with used value mismatch\n");
+#endif
+    }
+    else {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Fail fp_cmp on 0 == 0 check\n");
+#endif
+        ret = -1;
+    }
+
+    /* the values are both 1, but [a] claims to use more words
+    ** than [the other]b]. the values should still be equal */
+    /* reminder a->dp[0] = 0 and b->dp[0] = 0 */
+    a->dp[1] = 0x1;
+    b->dp[1] = 0x1;
+    if (mp_cmp(a, b) == 0) {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Success fp_cmp on 1 == 1 check\n");
+#endif
+    }
+    else {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Fail fp_cmp on 1 == 1 check\n");
+#endif
+        ret = -1;
+    }
+
+    /* check mp_add */
+    retf = mp_add(a, b, c);
+    if (retf == 0) {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Successfully called mp_add on 1 + 1 check.\n");
+#endif
+    }
+    else {
+#if defined(DEBUG_WOLFSSL)
+        debug_message_value("Error when called mp_add on 1 + 1 check.\n", retf);
+#endif
+        ret = -1;
+    }
+
+    /* only b has used=2, the result should be one */
+    if (c->dp[1] == 1) {
+#if defined(DEBUG_WOLFSSL)
+        debug_message("Successfully added 1 + 1 with mp_add()\n");
+#endif
+    }
+    else {
+#if defined(DEBUG_WOLFSSL)
+        debug_message_value("Error when adding 1 + 1. c->dp[0]\n", c->dp[0]);
+#endif
+        ret = -1;
+    }
+
+#else /* not using USE_FAST_MATH */
+    #if defined(DEBUG_WOLFSSL)
+        debug_message("Not using USE_FAST_MATH, math test not implemented");
+    #endif
+#endif /* USE_FAST_MATH */
+
+    return ret;
+}
 
 WOLFSSL_TEST_SUBROUTINE int error_test(void)
 {
