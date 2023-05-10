@@ -57,6 +57,64 @@ static const char* const TAG = "wolfssl_mp";
 /* mutex */
 static wolfSSL_Mutex mp_mutex;
 static int espmp_CryptHwMutexInit = 0;
+
+#ifdef DEBUG_WOLFSSL
+    /* when debugging, we'll double-check the mutex with call depth */
+    static int esp_mp_exptmod_depth_counter = 0;
+#endif // DEBUG_WOLFSSL
+
+/* print a MATH_INT_T */
+int esp_show_mp(char* c, MATH_INT_T* X)
+{
+    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
+    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+    for (size_t i = 0; i < X->used; i++) {
+        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x", c, i, X->dp[i]);
+    }
+    return 0;
+}
+
+int esp_mp_cmp(mp_int* A, mp_int* B)
+{
+    int ret = MP_OKAY;
+    int e = memcmp(A, B, sizeof(fp_int));
+    if (fp_cmp(A, B) == FP_EQ) {
+        if (e == 0) {
+            /* we always want to be here: both esp_show_mp and binary equal! */
+            ESP_LOGV(TAG, "fp_cmp and memcmp match!");
+        }
+        else {
+            ret = MP_NG;
+            ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch!");
+            if (A->dp[0] == 1) {
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+            }
+        }
+    }
+    else {
+        ret = MP_NG;
+        if (e == 0) {
+            ESP_LOGI(TAG, "memcmp error!");
+        }
+        else {
+            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok");
+            if (A->dp[0] == 1) {
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+            }
+        }
+        ESP_LOGI(TAG, "A B mismatch!");
+    }
+
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "esp_mp_cmp equal!");
+    }
+    else {
+        esp_show_mp("A", A);
+        esp_show_mp("B", B);
+    }
+    return ret;
+}
+
 /*
 * check if the HW is ready before accessing it
 *
@@ -90,7 +148,7 @@ static int esp_mp_hw_wait_clean(void)
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean waiting HW ready timed out.");
-        ret = MP_NG;
+        ret = MP_HW_BUSY;
     }
     return ret;
 }
@@ -142,7 +200,7 @@ static int esp_mp_hw_lock()
         ret = esp_CryptHwMutexLock(&mp_mutex, portMAX_DELAY);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
-            ret = MP_NG;
+            ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
         }
    }
 
@@ -228,6 +286,58 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     /* 2's complement */
     *md = ~x + 1;
     return MP_OKAY;
+}
+
+/* the result may need to have extra bytes zeroed or used length adjusted */
+static int esp_clean_result(MATH_INT_T* Z, int used_padding)
+{
+    int ret = MP_OKAY;
+    int this_extra;
+    this_extra = Z->used;
+
+    while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
+        ESP_LOGI(TAG, "Adjust! %d", this_extra);
+        Z->dp[this_extra] = 0;
+        this_extra++;
+    }
+
+    /* a result of 1 is interesting */
+    if (Z->dp[0] == 1) {
+        /*
+         * When the exponent is 0: In this case, the result of the modular
+         * exponentiation operation will always be 1, regardless of the value
+         * of the base.
+         *
+         * When the base is 1: If the base is equal to 1, then the result of
+         * the modular exponentiation operation will always be 1, regardless
+         * of the value of the exponent.
+         *
+         * When the exponent is equal to the totient of the modulus: If the
+         * exponent is equal to the totient of the modulus, and the base is
+         * relatively prime to the modulus, then the result of the modular
+         * exponentiation operation will be 1.
+         */
+        ESP_LOGV(TAG, "Z->dp[0] == 1");
+    }
+
+    /* trim any trailing zeros and adjust z.used size */
+    if (Z->used > 1 && (Z->dp[0] == 1)) {
+        ESP_LOGV(TAG, "ZTrim: Z->dp[0] == 1; Z->used = %d", Z->used);
+        for (size_t i = Z->used; i > 1; i--) {
+            if (Z->dp[i - 1] == 0) {
+                /* last element in zero based array */
+                Z->used = i - 1;
+            }
+            else {
+                break; /* if not zero, nothing else to do */
+            }
+        }
+        ESP_LOGV(TAG, "New Z->used = %d", Z->used);
+    }
+    else {
+        ESP_LOGV(TAG, "no z-trim needed");
+    }
+    return ret;
 }
 
 /* start HW process */
@@ -772,13 +882,14 @@ int show_math_int(char* c, MATH_INT_T* X)
 .*
 .* Note some DH references may use: Y = (G ^ X) mod P
  */
-static int depth_counter = 0;
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
-    if (depth_counter != 0) {
+#ifdef DEBUG_WOLFSSL
+    if (esp_mp_exptmod_depth_counter != 0) {
         ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
     }
-    depth_counter++;
+    esp_mp_exptmod_depth_counter++;
+#endif
     XMEMSET(Z, 0, sizeof(MATH_INT_T));
     int ret = 0;
 //    show_math_int("X", X);
@@ -957,6 +1068,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     mp_clear(&r_inv);
 
+    esp_clean_result(Z, 0);
+
+#ifdef to_omit
     int this_extra = Z->used;
     while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
         ESP_LOGI(TAG, "Adjust! %d", this_extra);
@@ -981,10 +1095,18 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         ESP_LOGI(TAG, "Oops! Z->dp[0] == 1; Z->used = %d", Z->used);
     }
     else {
-        ESP_LOGI(TAG, "ok");
+        ESP_LOGV(TAG, "value is not one");
     }
 #endif
-    depth_counter--;
+
+#endif /* regular ESP32 */
+
+#ifdef DEBUG_WOLFSSL
+    if (esp_mp_exptmod_depth_counter != 1) {
+        ESP_LOGE(TAG, "esp_mp_exptmod exit Depth Counter Error!");
+    }
+    esp_mp_exptmod_depth_counter--;
+#endif
     return ret;
 }
 

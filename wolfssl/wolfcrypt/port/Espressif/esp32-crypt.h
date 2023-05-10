@@ -76,6 +76,7 @@
 #endif
 
 int esp_ShowExtendedSystemInfo(void);
+int esp_mp_cmp(MATH_INT_T* A, MATH_INT_T* B);
 
 int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
