@@ -407,6 +407,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+    ret = fp_mul_comba(A, B, C);
     ret = esp_mp_mul(A3, B3, C3); /* HW */
     fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
 #else
@@ -634,6 +635,7 @@ WC_INLINE static int fp_mul_comba_mulx(fp_int *A, fp_int *B, fp_int *C)
 }
 #endif
 
+/* C = A * B */
 int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
 {
    int       ret = 0;
@@ -705,28 +707,7 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
   dst->sign = A->sign ^ B->sign;
   fp_clamp(dst);
 
-    if (fp_cmp(A, A2) == FP_EQ) {
-        // ESP_LOGI("TFM", "match!");
-    }
-    else {
-        ESP_LOGI("TFM fp_mul_comba", "A2 calc mismatch step 1!");
-    }
-    if (C == A) {
-        ESP_LOGI("TFM fp_mul_comba", "C == A");
-    }
-
-        fp_copy(dst, C);
-
-    if (C == A) {
-        ESP_LOGI("TFM fp_mul_comba", "C == A (2)");
-    }
-
-    if (fp_cmp(A, A2) == FP_EQ) {
-            // ESP_LOGI("TFM", "match!");
-        }
-        else {
-            ESP_LOGI("TFM fp_mul_comba", "A2 calc mismatch step 2!");
-        }
+  fp_copy(dst, C);
 
   /* Variables used but not seen by cppcheck. */
   (void)c0; (void)c1; (void)c2;
@@ -2137,7 +2118,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     /* perform HW calc, save in [V]2 */
     ret2 = esp_mp_exptmod(G2, X2, xct2, P2, Y2);
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD_disabled)
     int x = fp_count_bits(X);
     int ret = 0;
     if ((int)G == (int)Y) {
@@ -2361,10 +2342,9 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 //        Z->used = 1;
     }
     else {
-        ESP_LOGI("TFM Y", "ok");
+        ESP_LOGV("TFM Y", "ok");
     }
 
-    ESP_LOGI("*", "**************************");
     if (fp_cmp(G, G2) == FP_EQ) {
         // ESP_LOGI("TFM", "G match!, err = %d", err);
     }
@@ -2385,6 +2365,9 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     else {
         ESP_LOGI("TFM exptmod", "P P2 mismatch!");
     }
+    esp_mp_cmp(Y, Y2);
+
+#ifdef moved
     int e = memcmp(Y, Y2, sizeof(fp_int));
     if (fp_cmp(Y, Y2) == FP_EQ ) {
         if (e == 0) {
@@ -2417,6 +2400,8 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     }
     ESP_LOGI("*", "**************************");
     ESP_LOGI("*", "**************************");
+#endif // DEBUG
+
     fp_copy(G2, G);
     fp_copy(X2, X);
     fp_copy(P2, P);
