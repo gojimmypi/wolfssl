@@ -17,6 +17,10 @@
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_DTLS_CID
 
+/* added for TFM test */
+#define USE_FAST_MATH
+#define DEBUG_WOLFSSL
+
 /* Configurations */
 #if defined(HAVE_FIPS)
     /* FIPS */
