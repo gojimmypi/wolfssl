@@ -47,6 +47,10 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
        #endif
 #endif
 
+#ifdef WOLFSSL_ESPIDF
+    static const char* TAG = "rsa";
+#endif
+
 #include <wolfssl/wolfcrypt/rsa.h>
 
 #ifdef WOLFSSL_AFALG_XILINX_RSA
@@ -2567,6 +2571,8 @@ static int RsaFunction_SP(const byte* in, word32 inLen, byte* out,
 
 #if !defined(WOLFSSL_SP_MATH)
 #if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(WOLFSSL_RSA_VERIFY_ONLY)
+
+int rsaMarker = 0;
 static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 {
     int    ret = 0;
@@ -2574,7 +2580,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     DECL_MP_INT_SIZE_DYN(rnd, mp_bitsused(&key->n), RSA_MAX_SIZE);
     DECL_MP_INT_SIZE_DYN(rndi, mp_bitsused(&key->n), RSA_MAX_SIZE);
 #endif /* WC_RSA_BLINDING && !WC_NO_RNG */
-
+    rsaMarker++;
     (void)rng;
 
 #if defined(WC_RSA_BLINDING) && !defined(WC_NO_RNG)
@@ -2597,17 +2603,31 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
         /* blind */
         ret = mp_rand(rnd, get_digit_count(&key->n), rng);
     }
+
+    if (rnd->dp[0] == 0) {
+        ESP_LOGE(TAG, "rnd a = 0!");
+    }
+
     if (ret == 0) {
         /* rndi = 1/rnd mod n */
         if (mp_invmod(rnd, &key->n, rndi) != MP_OKAY) {
             ret = MP_INVMOD_E;
         }
     }
+
+    if (rnd->dp[0] == 0) {
+        ESP_LOGE(TAG, "rnd b = 0!");
+    }
+
     if (ret == 0) {
     #ifdef WOLFSSL_CHECK_MEM_ZERO
         mp_memzero_add("RSA Private rnd", rnd);
         mp_memzero_add("RSA Private rndi", rndi);
     #endif
+
+        if (rnd->dp[0] == 0) {
+            ESP_LOGE(TAG, "rnd c = 0!");
+        }
 
         /* rnd = rnd^e */
     #ifndef WOLFSSL_SP_MATH_ALL
@@ -2621,6 +2641,9 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     #endif
     }
 
+    if (rnd->dp[0] == 0) {
+        ESP_LOGE(TAG, "rnd d = 0! rsaMarker = %d", rsaMarker);
+    }
     if (ret == 0) {
         /* tmp = tmp*rnd mod n */
         if (mp_mulmod(tmp, rnd, &key->n, tmp) != MP_OKAY) {

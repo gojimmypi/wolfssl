@@ -535,7 +535,13 @@ int fp_mul_2d(fp_int *a, int b, fp_int *c)
       if (x == FP_SIZE)
          return FP_VAL;
    }
+   if (c->used < 1) {
+       ESP_LOGE(TAG, ">> pre-clamp c->used = %d", c->used);
+   }
    fp_clamp(c);
+   if (c->used < 1) {
+       ESP_LOGE(TAG, ">> poat-clamp c->used = %d", c->used);
+   }
    return FP_OKAY;
 }
 
@@ -673,11 +679,16 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
   return ret;
 }
 
+int interesting = 0;
+
 /* a/b => cb + d == a */
 int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
 {
   int     n, t, i, norm, neg;
   int     ret;
+    fp_int x2[1];
+    fp_int y2[1];
+
 #ifndef WOLFSSL_SMALL_STACK
   fp_int  q[1], x[1], y[1], t1[1], t2[1];
 #else
@@ -729,6 +740,27 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   fp_init(y);
   fp_copy(b, y); /* copy (src = b) to (dst = y) */
 
+  fp_copy(y, y2);
+  fp_copy(x, x2);
+
+  if (a->used == 0 ){
+      ESP_LOGE(TAG, "a.used = 0!");
+  }
+  if (b->used == 0 ){
+      ESP_LOGE(TAG, "b.used = 0!");
+  }
+  if (x->used == 0 ){
+      ESP_LOGE(TAG, "x.used = 0!");
+  }
+  if (y->used == 0 ){
+      ESP_LOGE(TAG, "y.used = 0!");
+  }
+
+
+  if (y->used < -10 || y->used > 5000) {
+      ESP_LOGE(TAG, " bad y used value %d", y->used);
+  }
+
   /* fix the sign */
   neg = (a->sign == b->sign) ? FP_ZPOS : FP_NEG;
   x->sign = y->sign = FP_ZPOS;
@@ -737,14 +769,33 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   norm = fp_count_bits(y) % DIGIT_BIT;
   if (norm < (int)(DIGIT_BIT-1)) {
     norm = (DIGIT_BIT-1) - norm;
+
+      if ((x->used == 0) || (y->used == 0)) {
+          ESP_LOGE(TAG, "bad y used value %d A", y->used);
+      }
+      interesting++;
     ret = fp_mul_2d (x, norm, x);
+
+      if ((x->used == 0) || (y->used == 0)) {
+          ESP_LOGE(TAG, "bad y used value %d B", y->used);
+      }
+
     if (ret != FP_OKAY) {
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(q, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
       return ret;
     }
-    ret = fp_mul_2d (y, norm, y);
+
+      if ((x->used == 0) || (y->used == 0)) {
+          ESP_LOGE(TAG, "bad y used value %d C", y->used);
+      }
+
+      ret = fp_mul_2d (y, norm, y);
+  if ((x->used == 0) || (y->used == 0)) {
+      ESP_LOGE(TAG, "bad y used value %d D", y->used);
+  }
+
     if (ret != FP_OKAY) {
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(q, NULL, DYNAMIC_TYPE_BIGINT);
@@ -755,6 +806,13 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
     norm = 0;
   }
 
+  if (y->used < -10 || y->used > 5000) {
+      ESP_LOGE(TAG, "bad y used value %d", y->used);
+  }
+
+  if ((x->used == 0) || (y->used == 0)) {
+      ESP_LOGE(TAG, "x or y used value isalnum zero!");
+  }
   /* note hac does 0 based, so if used==5 then its 0,1,2,3,4, e.g. use 4 */
   n = x->used - 1;
   t = y->used - 1;
@@ -768,6 +826,11 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
     return ret;
   }
 
+  if (y->used < -10 || y->used > 5000) {
+      ESP_LOGE(TAG, " bad y used value %d", y->used);
+  }
+
+
   while (fp_cmp (x, y) != FP_LT) {
     ++(q->dp[n - t]);
     ret = fp_sub (x, y, x);
@@ -777,6 +840,10 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
     #endif
       return ret;
     }
+      if (y->used < -10 || y->used > 5000) {
+          ESP_LOGE(TAG, " bad y used value %d", y->used);
+      }
+
   }
 
   /* reset y by shifting it back down */
@@ -2913,13 +2980,16 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
    if (fp_isone(P)) {
       fp_set(Y, 0);
+      ESP_LOGI(TAG, "fp_exptmod P is zero, set Y=0");
       return FP_OKAY;
    }
    if (fp_iszero(X)) {
       fp_set(Y, 1);
+      ESP_LOGI(TAG, "fp_exptmod X is zero, set Y=1");
       return FP_OKAY;
    }
    if (fp_iszero(G)) {
+      ESP_LOGI(TAG, "fp_exptmod G is zero, set Y=0");
       fp_set(Y, 0);
       return FP_OKAY;
    }
@@ -2930,6 +3000,9 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
         int ret2 = 0;
         ret2 = esp_mp_exptmod(G, X, x, P, Y);
         return ret2;
+    }
+    else {
+        ESP_LOGI(TAG, "skipping esp_mp_exptmod, x = %d", EPS_RSA_EXPT_XBTIS);
     }
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
