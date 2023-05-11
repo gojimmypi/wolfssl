@@ -67,9 +67,9 @@ static int espmp_CryptHwMutexInit = 0;
 #ifdef DEBUG_WOLFSSL
     /* when debugging, we'll double-check the mutex with call depth */
     static int esp_mp_exptmod_depth_counter = 0;
-#endif // DEBUG_WOLFSSL
+#endif /* DEBUG_WOLFSSL */
 
-/* print a MATH_INT_T */
+/* Print a MATH_INT_T */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
     ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
@@ -80,6 +80,8 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     return 0;
 }
 
+/* Perform a full fp_cmp and binary compare.
+ * (typically only used during debugging) */
 int esp_mp_cmp(mp_int* A, mp_int* B)
 {
     int ret = MP_OKAY;
@@ -226,8 +228,13 @@ static int esp_mp_hw_lock()
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
-        // DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
-        asm volatile("memw");
+
+        /*
+         * We may consider first disabling, then enable fresh:
+         *
+         * DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+         * asm volatile("memw");
+         */
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
         asm volatile("memw");
     }
@@ -922,8 +929,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
  128 / 4 = 32 words (0x20)
  */
 
-// try_again:
-
     /* ask bits number */
     Xs = mp_count_bits(X);
     Ms = mp_count_bits(M);
@@ -931,15 +936,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     hwWords_sz  = words2hwords(maxWords_sz);
 
-    // ESP_LOGI(TAG, "hwWords_sz = %d", hwWords_sz);
+    ESP_LOGV(TAG, "hwWords_sz = %d", hwWords_sz);
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds HW maximum bits");
         return MP_VAL; /*  Error: value is not able to be used. */
     }
-
-    /* test */
-    // return ret;
-
 
     /* calculate r_inv = R^2 mode M
     *    where: R = b^n, and b = 2^32
@@ -1050,7 +1051,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
     /* step.1                                         */
-    // ESP_LOGI(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
+    ESP_LOGV(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
 
     DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (hwWords_sz >> 4) - 1);
     /* step.2 write G, X, P, r_inv and M' into memory */
@@ -1062,7 +1063,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
                           mp_count_bits(&r_inv),
                           hwWords_sz);
     /* step.3 write M' into memory                    */
-    // ESP_LOGI(TAG, "M' = %d", mp);
+    ESP_LOGV(TAG, "M' = %d", mp);
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
     process_start(RSA_MODEXP_START_REG); // was RSA_START_MODEXP_REG; RSA_MODEXP_START_REG as in docs?
