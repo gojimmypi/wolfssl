@@ -420,9 +420,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     else {
         ESP_LOGE("TFM fp_mul", "A2 mismatch post!"); /* this will occur when a = a * b*/
     }
-//    ret = esp_mp_mul(A3, B3, C3); /* HW */
-//    esp_mp_cmp(C3, C);
-//    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
+    ret = esp_mp_mul(A3, B3, C3); /* HW */
+    esp_mp_cmp(C3, C);
+    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
 #else
     ret = fp_mul_comba(A, B, C);
 #endif
