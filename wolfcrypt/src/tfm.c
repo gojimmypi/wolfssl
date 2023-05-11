@@ -54,8 +54,10 @@
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #include <esp_log.h>
+    static const char* TAG = "TFM"; /* esp log breadbrumb */
     #define TFM_DEBUG_GOJIMMYPI_disabled
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+       /* Each individual math HW can be turned on or off. */
        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
     #endif
@@ -308,6 +310,23 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
        goto clean;
     }
 
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+    // we'll optionall compare to SW during debug mode
+    // ret = fp_mul_comba(A3, B3, C3);
+    // esp_mp_cmp(C3, C);
+    //    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
+    ret = esp_mp_mul(A, B, C); /* HW */
+    if (ret == MP_OKAY) {
+        goto clean;
+    }
+    else {
+        ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
+    }
+#else
+    ret = fp_mul_comba(A, B, C);
+#endif
+
+
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
        of the largest input.  We also want to avoid doing excess mults if the
        inputs are not close to the next power of two.  That is, for example,
@@ -406,14 +425,6 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         }
 #endif
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    ret = fp_mul_comba(A3, B3, C3);
-    ret = esp_mp_mul(A, B, C); /* HW */
-    esp_mp_cmp(C3, C);
-//    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
-#else
-    ret = fp_mul_comba(A, B, C);
-#endif
 
 clean:
     /* zero any excess digits on the destination that we didn't write to */
