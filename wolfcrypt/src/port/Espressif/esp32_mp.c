@@ -25,6 +25,13 @@
  * esp_mp_exptmod()  Large Number Modular Exponentiation Z = X^Y mod M
  * esp_mp_mulmod()   Large Number Modular Multiplication Z = X × Y mod M
  * esp_mp_mul()      Large Number Multiplication         Z = X × Y
+ *
+ * The RSA Accelerator supports operand lengths of:
+ * N ∈ {512,1024 , 1536, 2048, 2560, 3072, 3584, 4096} bits. The bit length
+ * of arguments Z, X, Y , M, and r can be any one from the N set, but all
+ * numbers in a calculation must be of the same length.
+ *
+ * The bit length of M′ is always 32.
  */
 
 #ifdef HAVE_CONFIG_H
