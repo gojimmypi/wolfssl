@@ -52,36 +52,6 @@
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    #include <esp_log.h>
-    static const char* TAG = "TFM"; /* esp log breadbrumb */
-    #define TFM_DEBUG_GOJIMMYPI_disabled
-    #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-       /* Each individual math HW can be turned on or off. */
-       #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-       #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-    #endif
-
-fp_int A2[1];
-fp_int B2[1];
-fp_int C2[1];
-
-fp_int A3[1];
-fp_int B3[1];
-fp_int C3[1];
-#endif
-
-fp_int G2[1];
-fp_int X2[1];
-fp_int P2[1];
-fp_int Y2[1];
-
-fp_int G3[1];
-fp_int X3[1];
-fp_int P3[1];
-fp_int Y3[1];
-
-
 #if defined(FREESCALE_LTC_TFM)
     #include <wolfssl/wolfcrypt/port/nxp/ksdk_port.h>
 #endif
@@ -168,32 +138,9 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
   oldused = MIN(c->used, FP_SIZE);   /* help static analysis w/ largest size */
   c->used = y;
 
-  t = 0; /* our total starts at zero */
+  t = 0;
   for (x = 0; x < y; x++) {
-      if ( (x < a->used) && (x < b->used) ) {
-          /* x is less than both [a].used and [b].used, so we add both */
-                  t += ((fp_word)a->dp[x])    +    ((fp_word)b->dp[x]);
-      }
-      else {
-          /* Here we honor the actual [a].used and [b].used values
-           * and NOT assume that values beyond [used] are zero. */
-          if ((x >= a->used) && (x < b->used)) {
-                  /* x more than [a].used, [b] ok, so just add [b] */
-                  t += /* ((fp_word)(0))      + */ ((fp_word)b->dp[x]);
-          }
-          else {
-              if ((x < a->used) && (x >= b->used)) {
-                  /* x more than [b].used, [a] ok, so just add [a] */
-                  t += ((fp_word)a->dp[x]) /* +     (fp_word)(0) */;
-              }
-              else {
-                  /* we should never get here, as a.used cannot be greater
-                   * than b.used, while b.used is greater than a.used! */
-                  ESP_LOGI("ER", "oops");
-               /* t += 0 + 0 */
-              }
-          }
-      }
+      t         += ((fp_word)a->dp[x]) + ((fp_word)b->dp[x]);
       c->dp[x]   = (fp_digit)t;
       t        >>= DIGIT_BIT;
   }
@@ -272,7 +219,7 @@ void s_fp_sub(fp_int *a, fp_int *b, fp_int *c)
      t         = (t >> DIGIT_BIT)&1;
    }
 
-  /* zero any excess digits on the destination that we didn't write to. */
+  /* zero any excess digits on the destination that we didn't write to */
   for (; x < oldused; x++) {
      c->dp[x] = 0;
   }
@@ -282,24 +229,13 @@ void s_fp_sub(fp_int *a, fp_int *b, fp_int *c)
 /* c = a * b */
 int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 {
-    int   ret = FP_OKAY;
+    int   ret = 0;
     int   y, yy, oldused;
 
-#ifdef somedebugging
-    fp_init(A2);
-    fp_init(B2);
-    fp_init(C2);
-    fp_init(A3);
-    fp_init(B3);
-    fp_init(C3);
-
-/* TFM HW Marker 1 */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    fp_copy(A, A2); /* copy (src = A) to (dst = A2) */
-    fp_copy(B, B2);
-    fp_copy(A, A3); /* copy (src = A) to (dst = A3) */
-    fp_copy(B, B3);
-#endif
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+  ret = esp_mp_mul(A, B, C);
+  if(ret != -2) return ret;
 #endif
 
     oldused = C->used;
@@ -312,23 +248,6 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
        ret = FP_VAL;
        goto clean;
     }
-
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    // we'll optionall compare to SW during debug mode
-    // ret = fp_mul_comba(A3, B3, C3);
-    // esp_mp_cmp(C3, C);
-    //    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
-    ret = esp_mp_mul(A, B, C); /* HW */
-    if (ret == MP_OKAY) {
-        goto clean;
-    }
-    else {
-        ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
-    }
-#else
-    ret = fp_mul_comba(A, B, C);
-#endif
-
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
        of the largest input.  We also want to avoid doing excess mults if the
@@ -427,7 +346,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
            goto clean;
         }
 #endif
-
+        ret = fp_mul_comba(A,B,C);
 
 clean:
     /* zero any excess digits on the destination that we didn't write to */
@@ -617,7 +536,6 @@ WC_INLINE static int fp_mul_comba_mulx(fp_int *A, fp_int *B, fp_int *C)
 }
 #endif
 
-/* C = A * B */
 int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
 {
    int       ret = 0;
@@ -684,11 +602,8 @@ int fp_mul_comba(fp_int *A, fp_int *B, fp_int *C)
   COMBA_FINI;
 
   dst->used = pa;
-
-  /* warning: WOLFSSL_SP_INT_NEGATIVE may disable negative numbers */
   dst->sign = A->sign ^ B->sign;
   fp_clamp(dst);
-
   fp_copy(dst, C);
 
   /* Variables used but not seen by cppcheck. */
@@ -2053,15 +1968,7 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
 }
 
 #endif /* WC_RSA_NONBLOCK */
-int show_math_int2(char* c, MATH_INT_T* X)
-{
-    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
-    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
-    for (size_t i = 0; i < X->used; i++) {
-        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x",  c, i, X->dp[i]);
-    }
-    return 0;
-}
+
 
 /* timing resistant montgomery ladder based exptmod
    Based on work by Marc Joye, Sung-Ming Yen, "The Montgomery Powering Ladder",
@@ -2070,71 +1977,6 @@ int show_math_int2(char* c, MATH_INT_T* X)
 static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
-//    show_math_int2("G", G);
-//    show_math_int2("X", X);
-//    show_math_int2("P", P);
-//    show_math_int2("Y", Y);
-
-    fp_init(G2);
-    fp_init(X2);
-    fp_init(P2);
-    fp_init(Y2);
-
-    fp_init(G3);
-    fp_init(X3);
-    fp_init(P3);
-    fp_init(Y3);
-
-    fp_copy(G, G2); /* copy (src = G) to (dst = G2) */
-    fp_copy(X, X2);
-    fp_copy(P, P2); /* copy (src = P) to (dst = P2) */
-    fp_copy(Y, Y2);
-
-    fp_copy(G, G3); /* copy (src = G) to (dst = G3) */
-    fp_copy(X, X3);
-    fp_copy(P, P3); /* copy (src = P) to (dst = P3) */
-    fp_copy(Y, Y3);
-
-    int ret2 = 0;
-    int xct2 = fp_count_bits(X);
-    /* perform HW calc, save in [V]2 */
-    ret2 = esp_mp_exptmod(G2, X2, xct2, P2, Y2);
-
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD_disabled)
-    int x = fp_count_bits(X);
-    int ret = 0;
-    if ((int)G == (int)Y) {
-        /* we get here from line 2614 of rsa.c
-        ** if (mp_exptmod(rnd, &key->e, &key->n, rnd) != MP_OKAY)
-        */
-        ESP_LOGI("*", "G = Y");
-    }
-    if ((int)X == (int)Y) {
-        ESP_LOGI("*", "X = Y");
-    }
-    if ((int)G == (int)X) {
-        ESP_LOGI("*", "G = X");
-    }
-
-    /* perform HW calc on real parameters */
-    ret = esp_mp_exptmod(G, X, x, P, Y);
-
-    if ((int)G == (int)Y) {
-        ESP_LOGI("*", "G = Y");
-        // fp_copy(Y2, Y);
-    }
-    // fp_copy(Y2, Y);
-    ESP_LOGI("*", "**************************");
-    show_math_int2("G", G);
-    show_math_int2("X", X);
-    show_math_int2("P", P);
-    show_math_int2("Y", Y);
-    ESP_LOGI("esp_mp_exptmod", "result = %d", ret);
-    ESP_LOGI("*", "**************************");
-    ESP_LOGI("*", "**************************");
-    return ret;
-#else
-
 #ifndef WOLFSSL_SMALL_STACK
 #ifdef WC_NO_CACHE_RESISTANT
   fp_int   R[2];
@@ -2149,7 +1991,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 
   /* now setup montgomery  */
   if ((err = fp_montgomery_setup (P, &mp)) != FP_OKAY) {
-     ESP_LOGE("TFM error", "fp_montgomery_setup failed");
      return err;
   }
 
@@ -2159,10 +2000,8 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #else
    R = (fp_int*)XMALLOC(sizeof(fp_int) * 2, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
-    if (R == NULL) {
-        ESP_LOGE("TFM error", "XMALLOC failed");
-        return FP_MEM;
-    }
+   if (R == NULL)
+       return FP_MEM;
 #endif
   fp_init(&R[0]);
   fp_init(&R[1]);
@@ -2176,7 +2015,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
   #ifdef WOLFSSL_SMALL_STACK
     XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
   #endif
-    ESP_LOGE("TFM error", "fp_montgomery_calc_normalization fail");
     return err;
   }
 
@@ -2188,19 +2026,16 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #ifdef WOLFSSL_SMALL_STACK
          XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
-         ESP_LOGE("TFM error", "fp_mod fail");
          return err;
      }
   } else {
      fp_copy(G, &R[1]);
   }
-  /* SW: are we calling HW here ?? */
   err = fp_mulmod (&R[1], &R[0], P, &R[1]);
   if (err != FP_OKAY) {
 #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
-      ESP_LOGE("TFM error", "fp_mulmod fail");
       return err;
   }
 
@@ -2267,7 +2102,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
-      ESP_LOGE("TFM error", "fp_mul fail");
       return err;
     }
     err = fp_montgomery_reduce(&R[2], P, mp);
@@ -2275,7 +2109,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
-      ESP_LOGE("TFM error", "fp_montgomery_reduce fail");
       return err;
     }
     /* instead of using R[y^1] for mul, which leaks key bit to cache monitor,
@@ -2296,7 +2129,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
-      ESP_LOGE("TFM error", "fp_sqr fail");
       return err;
     }
     err = fp_montgomery_reduce(&R[2], P, mp);
@@ -2304,7 +2136,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     #ifdef WOLFSSL_SMALL_STACK
       XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
     #endif
-        ESP_LOGE("TFM error", "xfree fail");
       return err;
     }
     fp_copy(&R[2],
@@ -2318,80 +2149,8 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #ifdef WOLFSSL_SMALL_STACK
    XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
-
-    if (Y->used > 1 && (Y->dp[0] == 1 || (Y->dp[1] == 0))) {
-        ESP_LOGI("TFM Y", "Oops! X = %d", (int)Y->dp[0]);
-//        Z->used = 1;
-    }
-    else {
-        ESP_LOGV("TFM Y", "ok");
-    }
-
-    if (fp_cmp(G, G2) == FP_EQ) {
-        // ESP_LOGI("TFM", "G match!, err = %d", err);
-    }
-    else {
-        ESP_LOGI("TFM exptmod", "G G2 mismatch!");
-    }
-
-    if (fp_cmp(X, X2) == FP_EQ) {
-        // ESP_LOGI("TFM", "X match!, err = %d", err);
-    }
-    else {
-        ESP_LOGI("TFM exptmod", "X X2 mismatch!");
-    }
-
-    if (fp_cmp(P, P2) == FP_EQ) {
-        // ESP_LOGI("TFM", "P match!, err = %d", err);
-    }
-    else {
-        ESP_LOGI("TFM exptmod", "P P2 mismatch!");
-    }
-    esp_mp_cmp(Y, Y2);
-
-#ifdef moved
-    int e = memcmp(Y, Y2, sizeof(fp_int));
-    if (fp_cmp(Y, Y2) == FP_EQ ) {
-        if (e == 0) {
-            ESP_LOGI("TFM exptmod", "e match!");
-        }
-        else {
-            ESP_LOGE("TFM exptmod", "e mismatch!");
-            if (Y->dp[0] == 1) {
-                ESP_LOGE("TFM exptmod", "Both memcmp and fp_cmp fail!");
-            }
-        }
-    }
-    else {
-        if (e == 0) {
-            ESP_LOGI("TFM exptmod", "e match! memcmp error!");
-        }
-        else {
-            ESP_LOGE("TFM exptmod", "e mismatch! memcmp ok");
-            if (Y->dp[0] == 1) {
-                ESP_LOGE("TFM exptmod", "Both memcmp and fp_cmp fail!");
-            }
-        }
-        ESP_LOGI("TFM exptmod", "Y Y2 mismatch!");
-        show_math_int2("G", G);
-        show_math_int2("X", X);
-        show_math_int2("P", P);
-
-        show_math_int2("Y", Y);
-        show_math_int2("Y2", Y2);
-    }
-    ESP_LOGI("*", "**************************");
-    ESP_LOGI("*", "**************************");
-#endif // DEBUG
-
-    fp_copy(G2, G);
-    fp_copy(X2, X);
-    fp_copy(P2, P);
-    // fp_copy(Y2, Y);
-    return err;
-#endif
+   return err;
 }
-
 
 #endif /* TFM_TIMING_RESISTANT */
 
@@ -3064,13 +2823,10 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
 
-/* TFM HW Marker 2 fails RSA 512 bit length CSR sig */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    /* there's a known problem with length = 512
-    ** see https://github.com/wolfSSL/wolfssl/issues/6205
-    */
-    int x = fp_count_bits (X);
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+   int x = fp_count_bits (X);
+#endif
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
@@ -3089,52 +2845,12 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-/* TFM HW Marker 3 fails RSA 512 bit length CSR sig */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-           /* there's a known problem with length = 512
-           ** see https://github.com/wolfSSL/wolfssl/issues/6205
-           */
-    fp_init(G2);
-    fp_init(X2);
-    fp_init(P2);
-    fp_init(Y2);
-
-    /* TFM HW Marker 1 */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    fp_copy(G, G2); /* copy (src = A) to (dst = A2) */
-    fp_copy(X, X2);
-    fp_copy(P, P2); /* copy (src = A) to (dst = A3) */
-    fp_copy(Y, Y2);
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+   if(x > EPS_RSA_EXPT_XBTIS) {
+      return esp_mp_exptmod(G, X, x, P, Y);
+   }
 #endif
-
-
-    if (x > EPS_RSA_EXPT_XBTIS) {
-        int ret2 = 0;
-        //ret2 = esp_mp_exptmod(G2, X2, x, P2, Y2);
-        //ESP_LOGI("esp_mp_exptmod", "esp_mp_exptmod ret2 = %d", ret2);
-    }
-    #if defined(TFM_DEBUG_GOJIMMYPI)
-               MATH_INT_T G2 = *G;
-               MATH_INT_T X2 = *X;
-               MATH_INT_T P2 = *P;
-               MATH_INT_T Y2 = *Y;
-               word32 x2 = x;
-           if(x > EPS_RSA_EXPT_XBTIS) {
-               /* returns a bad value for length = 512 */
-               //ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, TFM marker 1 esp_mp_exptmod");
-               int ret2 = 0;
-
-               ret2 = esp_mp_exptmod(&G2, &X2, x2, &P2, &Y2);
-               if (ret2 != 0 ){
-                   ESP_LOGI("TFM","esp_mp_exptmod ret = %d", ret2);
-               }
-           }
-            else {
-                ESP_LOGI("TFM", "x <= EPS_RSA_EXPT_XBTIS");
-            }
-    #endif
-
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
    if (X->sign == FP_NEG) {
 #ifndef POSITIVE_EXP_ONLY  /* reduce stack if assume no negatives */
@@ -3174,7 +2890,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return err;
 #else
       return FP_VAL;
-#endif /* POSITIVE_EXP_ONLY */
+#endif
    }
    else if (G->used == 1 && G->dp[0] == 2) {
       return _fp_exptmod_base_2(X, X->used, P, Y);
@@ -3182,37 +2898,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    else {
       /* Positive exponent so just exptmod */
 #ifdef TFM_TIMING_RESISTANT
-
-       int ret = _fp_exptmod_ct(G, X, X->used, P, Y);
-
-#if defined(TFM_DEBUG_GOJIMMYPI) && defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-       if (fp_cmp(G, &G2) == FP_EQ) {
-           // ESP_LOGI("TFM", "match!");
-       }
-       else {
-           ESP_LOGI("TFM", "G2 mismatch!");
-       }
-       if (fp_cmp(X, &X2) == FP_EQ) {
-           // ESP_LOGI("TFM", "match!");
-       }
-       else {
-           ESP_LOGI("TFM", "X2 mismatch!");
-       }
-       if (fp_cmp(P, &P2) == FP_EQ) {
-           // ESP_LOGI("TFM", "match!");
-       }
-       else {
-           ESP_LOGI("TFM", "P2 mismatch!");
-       }
-       if (fp_cmp(Y, &Y2) == FP_EQ) {
-           // ESP_LOGI("TFM", "match!");
-       }
-       else {
-           ESP_LOGI("TFM", "Y2 mismatch!");
-       }
-#endif
-
-       return ret;
+      return _fp_exptmod_ct(G, X, X->used, P, Y);
 #else
       return _fp_exptmod_nct(G, X, P, Y);
 #endif
@@ -3222,11 +2908,9 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
 
-/* TFM HW Marker 5 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    int x = fp_count_bits (X);
-   ESP_LOGI("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
 #endif
 
    /* handle modulus of zero and prevent overflows */
@@ -3246,16 +2930,11 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-/* TFM test 6 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    if (x > EPS_RSA_EXPT_XBTIS) {
-        ESP_LOGI("TFM test 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
-        return esp_mp_exptmod(G, X, x, P, Y);
-    }
-    else{
-        ESP_LOGI("TFM test 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
-    }
+   if(x > EPS_RSA_EXPT_XBTIS) {
+      return esp_mp_exptmod(G, X, x, P, Y);
+   }
 #endif
 
    if (X->sign == FP_NEG) {
@@ -3313,7 +2992,6 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 
 int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
-/* TFM HW Marker 9 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    int x = fp_count_bits (X);
@@ -3329,12 +3007,10 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_VAL;
    }
 
-/* TFM HW Marker 10 */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
    if(x > EPS_RSA_EXPT_XBTIS) {
-       ESP_LOGI("TFM", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
-       return esp_mp_exptmod(G, X, x, P, Y);
+      return esp_mp_exptmod(G, X, x, P, Y);
    }
 #endif
 
@@ -4616,7 +4292,7 @@ int mp_add (mp_int * a, mp_int * b, mp_int * c)
 /* high level subtraction (handles signs) */
 int mp_sub (mp_int * a, mp_int * b, mp_int * c)
 {
-  return fp_sub(a, b, c); /* used ok */
+  return fp_sub(a, b, c);
 }
 
 /* high level multiplication (handles sign) */
@@ -4826,23 +4502,7 @@ void fp_copy(const fp_int *a, fp_int *b)
         /* all dp's are same size, so do straight copy */
         b->used = a->used;
         b->sign = a->sign;
-        if (fp_cmp(a, A2) == FP_EQ) {
-            // ESP_LOGI("TFM", "match!");
-        }
-        else {
-//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 3!");
-        }
-        //(void)(((a) != (b)) && memcpy((b), (a), sizeof(fp_int)))
         XMEMCPY(b->dp, a->dp, FP_SIZE * sizeof(fp_digit));
-        if (fp_cmp(a, A2) == FP_EQ) {
-            // ESP_LOGI("TFM", "match!");
-        }
-        else {
-//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(FP_SIZE * sizeof(fp_digit)));
-//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(FP_SIZE));
-//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(sizeof(fp_digit)));
-//            ESP_LOGI("TFM fp_copy", "A2 calc mismatch step 4!  %d", (int)(sizeof(fp_int)));
-        }
 #endif
     }
 }
