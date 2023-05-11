@@ -35,12 +35,12 @@ $ ./inspect_test.sh
   238:d=2  hl=2 l=   0 prim: NULL
   240:d=1  hl=2 l=  65 prim: BIT STRING
 Certificate request self-signature ok
-subject=C=NZ, ST=Waikato, L=Hamilton, O=Blue Leaf Software, Ltd, CN=Lumos HW, SN = BLS-002
+subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, SN = BLS-002"
 We need a private key to sign with, use -key or -CAkey or -CA with private key
 Certificate request self-signature ok
-subject=C=NZ, ST=Waikato, L=Hamilton, O=Blue Leaf Software, Ltd, CN=Lumos HW, SN = BLS-002
+subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, SN = BLS-002"
 Certificate request self-signature ok
-subject=C=NZ, ST=Waikato, L=Hamilton, O=Blue Leaf Software, Ltd, CN=Lumos HW, SN = BLS-002
+subject=C = NZ, ST = Waikato, L = Hamilton, O = "Blue Leaf Software, Ltd", CN = "Lumos HW, SN = BLS-002"
 We need a private key to sign with, use -key or -CAkey or -CA with private key
 gojimmypi:/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205
 $
