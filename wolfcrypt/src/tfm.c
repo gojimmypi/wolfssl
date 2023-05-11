@@ -407,9 +407,22 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+    if (fp_cmp(A, A2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGE("TFM fp_mul", "A2 mismatch pre!");
+    }
     ret = fp_mul_comba(A, B, C);
-    ret = esp_mp_mul(A3, B3, C3); /* HW */
-    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
+    if (fp_cmp(A, A2) == FP_EQ) {
+        // ESP_LOGI("TFM", "match!");
+    }
+    else {
+        ESP_LOGE("TFM fp_mul", "A2 mismatch post!"); /* this will occur when a = a * b*/
+    }
+//    ret = esp_mp_mul(A3, B3, C3); /* HW */
+//    esp_mp_cmp(C3, C);
+//    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
 #else
     ret = fp_mul_comba(A, B, C);
 #endif
