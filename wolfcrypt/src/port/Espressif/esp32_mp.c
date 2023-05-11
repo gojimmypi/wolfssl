@@ -18,8 +18,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#include <string.h>
-#include <stdio.h>
+
+/*
+ * See ESP32 Technical Reference Manual - RSA Accelerator Chapter
+ *
+ * esp_mp_exptmod()  Large Number Modular Exponentiation Z = X^Y mod M
+ * esp_mp_mulmod()   Large Number Modular Multiplication Z = X × Y mod M
+ * esp_mp_mul()      Large Number Multiplication         Z = X × Y
+ */
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
