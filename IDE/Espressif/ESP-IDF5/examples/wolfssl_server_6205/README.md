@@ -1,6 +1,12 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-S2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
+broken at this point :|
+see working commit:
+ID	Author	Date	Message
+3a66ad7353c8904db2d9054cb44c1e592ef3693a	gojimmypi <jim@wolfssl.com>	5/10/2023 11:21:09 PM +00:00	new esp_mp_cmp, esp_show_mp, esp_clean_result
+
+
 # Wi-Fi Station Example
 
 (See the README.md file in the upper level 'examples' directory for more information about examples.)

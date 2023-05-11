@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\cert_peek.sh = ..\cert_peek.sh
 		..\output\gojimmypi-Device-Certificate_hw.crt = ..\output\gojimmypi-Device-Certificate_hw.crt
 		..\inspect_test.sh = ..\inspect_test.sh
+		..\README.md = ..\README.md
 		..\output\test-Device-Certificate_hw.crt = ..\output\test-Device-Certificate_hw.crt
 		..\output\test_request.crt = ..\output\test_request.crt
 		..\this_esp32_output.log = ..\this_esp32_output.log
