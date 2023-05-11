@@ -52,8 +52,8 @@ static const char* const TAG = "wolfssl_mp";
 #define ESP_HW_RSAMAX_BIT           4096
 #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #define ESP_HW_RSAMIN_BIT           512
-#define BYTE_TO_WORDS(s)            (((s+3)>>2))           /* (s+(4-1))/ 4    */
-#define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)       /* (s+(32-1))/ 8/ 4*/
+#define BYTE_TO_WORDS(s)            (((s+3)>>2))         /* (s+(4-1))/ 4    */
+#define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
 #define BITS_IN_ONE_WORD            32
 
 #define MP_NG   -1
@@ -102,7 +102,7 @@ int esp_mp_cmp(mp_int* A, mp_int* B)
     else {
         ret = MP_NG;
         if (e == 0) {
-            ESP_LOGI(TAG, "memcmp error!");
+            ESP_LOGE(TAG, "memcmp error!");
         }
         else {
             ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok");
@@ -139,14 +139,14 @@ static int esp_mp_hw_wait_clean(void)
     word32 timeout = 0;
 
 #if CONFIG_IDF_TARGET_ESP32S3
-
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_QUERY_CLEAN_REG) != 1)
     {
       /*  wait. expected delay 1 to 2 uS  */
     }
 #else
-  /* RSA_CLEAN_REG is now called RSA_QUERY_CLEAN_REG. hwcrypto_reg.h maintains
-   * RSA_CLEAN_REG for backwards compatibility so this block _might_ be not needed. */
+  /* RSA_CLEAN_REG is now called RSA_QUERY_CLEAN_REG.
+   * hwcrypto_reg.h maintains RSA_CLEAN_REG for backwards compatibility:
+   * so this block _might_ not be needed. */
     asm volatile("memw");
     while(!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {
         /*  wait. expected delay 1 to 2 uS  */
@@ -309,7 +309,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     this_extra = Z->used;
 
     while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
-        ESP_LOGI(TAG, "Adjust! %d", this_extra);
+        ESP_LOGV(TAG, "Adjust! %d", this_extra);
         Z->dp[this_extra] = 0;
         this_extra++;
     }
@@ -345,7 +345,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
                 break; /* if not zero, nothing else to do */
             }
         }
-        ESP_LOGI(TAG, "New Z->used = %d", Z->used);
+        ESP_LOGV(TAG, "New Z->used = %d", Z->used);
     }
     else {
         ESP_LOGV(TAG, "no z-trim needed");
@@ -487,7 +487,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      * enough to represent the larger one. */
     int MinXYBits = max(BitsInX, BitsInY);
 
-    /* Figure out how many words we need to represent each operand & the result. */
+    /* Figure out how many words we need to
+     * represent each operand & the result. */
     int WordsForOperand = bits2words(MinXYBits);
     int WordsForResult = bits2words(BitsInX + BitsInY);
 
@@ -1051,7 +1052,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
     /* step.1                                         */
-    ESP_LOGV(TAG, "hwWords_sz = %d, num = %d", hwWords_sz, (hwWords_sz >> 4) - 1);
+    ESP_LOGV(TAG, "hwWords_sz = %d, num = %d",
+                   hwWords_sz, (hwWords_sz >> 4) - 1);
 
     DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (hwWords_sz >> 4) - 1);
     /* step.2 write G, X, P, r_inv and M' into memory */
@@ -1066,7 +1068,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     ESP_LOGV(TAG, "M' = %d", mp);
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     /* step.4 start process                           */
-    process_start(RSA_MODEXP_START_REG); // was RSA_START_MODEXP_REG; RSA_MODEXP_START_REG as in docs?
+    process_start(RSA_MODEXP_START_REG); /* was RSA_START_MODEXP_REG;
+                                          * RSA_MODEXP_START_REG as in docs? */
 
     /* step.5 wait until done                         */
     wait_until_done(RSA_INTERRUPT_REG);
@@ -1076,35 +1079,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     esp_mp_hw_unlock();
 
     mp_clear(&r_inv);
-
-#ifdef to_omit
-    int this_extra = Z->used;
-    while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
-        ESP_LOGI(TAG, "Adjust! %d", this_extra);
-        Z->dp[this_extra] = 0;
-        this_extra++;
-    }
-
-    if (Z->dp[0] == 1) {
-        ESP_LOGI(TAG, "Z->dp[0] == 1");
-    }
-
-    /* trim any trailing zeros and adjust z.used size */
-    if (Z->used > 1 && (Z->dp[0] == 1)) {
-        for (size_t i = Z->used; i > 1; i--) {
-            if (Z->dp[i - 1] == 0) { /* last element in zero based array */
-                Z->used = i - 1;
-            }
-            else {
-                break; /* if not zero, nothing else to do */
-            }
-        }
-        ESP_LOGI(TAG, "Oops! Z->dp[0] == 1; Z->used = %d", Z->used);
-    }
-    else {
-        ESP_LOGV(TAG, "value is not one");
-    }
-#endif
 
 #endif /* regular ESP32 */
 
