@@ -16,3 +16,8 @@ sudo cp /mnt/c/workspace/openssl/libssl.so.3     /lib/x86_64-linux-gnu/libssl.so
 sudo cp /mnt/c/workspace/openssl/libcrypto.so.3  /lib/x86_64-linux-gnu/libcrypto.so.3
 
 # remove
+
+# restore
+
+sudo cp /lib/x86_64-linux-gnu/libssl.so.3.bak /lib/x86_64-linux-gnu/libssl.so.3 
+sudo cp /lib/x86_64-linux-gnu/libcrypto.so.3.bak /lib/x86_64-linux-gnu/libcrypto.so.3  
