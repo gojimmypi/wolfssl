@@ -197,3 +197,4 @@
 --enable-asn-template
 */
 
+#define NO_MATH_TEST
