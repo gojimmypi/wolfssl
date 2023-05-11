@@ -49,9 +49,10 @@
 
 #define DER_SIZE 4096
 #define PEM_SIZE 4096
-
+#include <wolfssl/ssl.h>
 
 static const char *TAG = "key test";
+char error_buffer[80];
 
 int CertDemo() {
     byte der[DER_SIZE];
@@ -100,9 +101,9 @@ int CertDemo() {
      ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 
-    ESP_LOGW(TAG, "Warning test");
-    ESP_LOGE(TAG, "Error test");
-    ESP_LOGV(TAG, "Verbose test");
+    ESP_LOGW(TAG, "  Warning test");
+    ESP_LOGE(TAG, "  Error test");
+    ESP_LOGV(TAG, "  Verbose test");
 
     esp_log_level_set("*", ESP_LOG_VERBOSE);
 
@@ -128,11 +129,20 @@ int CertDemo() {
     ***************************************************************************
     */
     wc_InitRsaKey(&genKey, 0);
+    if (WOLFSSL_RSA_KEY_SIZE <= RSA_MAX_SIZE) {
+        ESP_LOGI(TAG, "Generating an RSA key %d bits long", WOLFSSL_RSA_KEY_SIZE);
+    }
+    else {
+        ESP_LOGE(TAG, "Error: WOLFSSL_RSA_KEY_SIZE = %d > RSA_MAX_SIZE = %d",
+                              WOLFSSL_RSA_KEY_SIZE,       RSA_MAX_SIZE);
+    }
     ESP_LOGI(TAG, "Generating an RSA key %d bits long", WOLFSSL_RSA_KEY_SIZE);
     ESP_LOG_BUFFER_HEXDUMP(TAG, &rng, sizeof(rng), ESP_LOG_INFO);
     ret = wc_MakeRsaKey(&genKey, WOLFSSL_RSA_KEY_SIZE, 65537, &rng);
     if (ret != 0) {
-        ESP_LOGE(TAG, "wc_MakeRsaKey error %d", ret);
+        char * c;
+        c = wolfSSL_ERR_error_string(ret, error_buffer);
+        ESP_LOGE(TAG, "wc_MakeRsaKey error %d; message = %s", ret, error_buffer);
     }
 
 
@@ -174,7 +184,7 @@ int CertDemo() {
     */
     ESP_LOGI(TAG, "Begin  wc_InitCert");
     wc_InitCert(&request);
-    ESP_LOGI(TAG, "End  wc_InitCert");
+    ESP_LOGI(TAG, "End    wc_InitCert");
 
     strncpy(request.subject.country, "NZ\0", CTC_COUNTRY_SIZE + 1); /* +1 null terminated */
     strncpy(request.subject.state, "Waikato\0", CTC_NAME_SIZE);
