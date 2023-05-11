@@ -625,6 +625,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif
     Z->sign = X->sign ^ Y->sign;
+    esp_clean_result(Z, 0);
     return ret;
 }
 
@@ -843,6 +844,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     mp_clear(&tmpZ);
     mp_clear(&r_inv);
+
+    esp_clean_result(Z, 0);
 
     return ret;
 #endif
@@ -1068,8 +1071,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     mp_clear(&r_inv);
 
-    esp_clean_result(Z, 0);
-
 #ifdef to_omit
     int this_extra = Z->used;
     while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
@@ -1107,6 +1108,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
     esp_mp_exptmod_depth_counter--;
 #endif
+
+    esp_clean_result(Z, 0);
+
     return ret;
 }
 
