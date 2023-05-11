@@ -284,6 +284,8 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 {
     int   ret = FP_OKAY;
     int   y, yy, oldused;
+
+#ifdef somedebugging
     fp_init(A2);
     fp_init(B2);
     fp_init(C2);
@@ -297,6 +299,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     fp_copy(B, B2);
     fp_copy(A, A3); /* copy (src = A) to (dst = A3) */
     fp_copy(B, B3);
+#endif
 #endif
 
     oldused = C->used;
@@ -430,39 +433,6 @@ clean:
     /* zero any excess digits on the destination that we didn't write to */
     for (y = C->used; y >= 0 && y < oldused; y++) {
         C->dp[y] = 0;
-    }
-
-    if (A == C) {
-        ESP_LOGI("TFM", "A == C");
-    }
-    if (B == C) {
-        ESP_LOGI("TFM", "A == C");
-    }
-
-    if (fp_cmp(C2, C3) == FP_EQ) {
-        // ESP_LOGI("TFM", "match!");
-    }
-    else {
-       // ESP_LOGI("TFM fp_mul", "C2 C3 mismatch!");
-    }
-
-    if (fp_cmp(A, A2) == FP_EQ) {
-        // ESP_LOGI("TFM", "match!");
-    }
-    else {
-        ESP_LOGI("TFM fp_mul", "A2 mismatch!");
-    }
-    if (fp_cmp(B, B2) == FP_EQ) {
-        // ESP_LOGI("TFM", "match!");
-    }
-    else {
-        ESP_LOGI("TFM fp_mul", "B2 mismatch!");
-    }
-    if (fp_cmp(C, C2) == FP_EQ) {
-        // ESP_LOGI("TFM", "match!");
-    }
-    else {
-       // ESP_LOGI("TFM fp_mul", "C2 mismatch!");
     }
 
     return ret;

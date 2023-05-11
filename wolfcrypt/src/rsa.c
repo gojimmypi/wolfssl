@@ -2615,7 +2615,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 
         /* rnd = rnd^e */
     #ifndef WOLFSSL_SP_MATH_ALL
-        mp_int tmprnd[1]; /* tmp needed here? */
+        mp_int tmprnd[1]; /* tmp needed here? why & why not other similar places?  */
         fp_init(tmprnd);
         if (mp_exptmod(rnd, &key->e, &key->n, tmprnd) != MP_OKAY) {
             ret = MP_EXPTMOD_E;
@@ -2628,9 +2628,10 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     #endif
     }
 
+    mp_int tmpc[1];
     if (ret == 0) {
         /* tmp = tmp*rnd mod n */
-        if (mp_mulmod(tmp, rnd, &key->n, tmp) != MP_OKAY) {
+        if (mp_mulmod(tmp, rnd, &key->n, tmpc) != MP_OKAY) {
             ret = MP_MULMOD_E;
         }
     }
@@ -2638,15 +2639,17 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 
 #ifdef RSA_LOW_MEM      /* half as much memory but twice as slow */
     if (ret == 0) {
-        if (mp_exptmod(tmp, &key->d, &key->n, tmp) != MP_OKAY) {
+        if (mp_exptmod(tmp, &key->d, &key->n, tmpc) != MP_OKAY) {
             ret = MP_EXPTMOD_E;
         }
     }
 #else
     if (ret == 0) {
-        mp_int* tmpa = tmp;
+        mp_int  tmpa[1]; // = tmp;
+        XMEMCPY(tmpa, tmp, sizeof(mp_int));
 #if defined(WC_RSA_BLINDING) && !defined(WC_NO_RNG)
-        mp_int* tmpb = rnd;
+        mp_int  tmpb[1]; // = rnd;
+        XMEMCPY(tmpb, rnd, sizeof(mp_int));
 #else
         DECL_MP_INT_SIZE_DYN(tmpb, mp_bitsused(&key->n), RSA_MAX_SIZE);
 #endif
@@ -2672,14 +2675,14 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     #endif
 
         /* tmpb = tmp^dQ mod q */
-        if (ret == 0 && mp_exptmod(tmp, &key->dQ, &key->q, tmpb) != MP_OKAY)
+        if (ret == 0 && mp_exptmod(tmpc, &key->dQ, &key->q, tmpb) != MP_OKAY)
             ret = MP_EXPTMOD_E;
 
         ESP_LOGI("rsa peek 2", "tmp  = %02X", (unsigned int)tmp);
         ESP_LOGI("rsa peek 2", "tmpa = %02X", (unsigned int)tmpa);
 
         /* tmpa = tmp^dP mod p */
-        if (ret == 0 && mp_exptmod(tmp, &key->dP, &key->p, tmpa) != MP_OKAY)
+        if (ret == 0 && mp_exptmod(tmpc, &key->dP, &key->p, tmpa) != MP_OKAY)
             ret = MP_EXPTMOD_E;
 
         ESP_LOGI("rsa peek 2", "tmp  = %02X", (unsigned int)tmp);
@@ -2691,18 +2694,19 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
         if (ret == 0 && mp_submod(tmpa, tmpb, &key->p, tmp) != MP_OKAY)
             ret = MP_SUB_E;
     #else
-        if (ret == 0 && mp_sub(tmpa, tmpb, tmp) != MP_OKAY)
+        if (ret == 0 && mp_sub(tmpa, tmpb, tmpc) != MP_OKAY)
             ret = MP_SUB_E;
     #endif
 
-        if (ret == 0 && mp_mulmod(tmp, &key->u, &key->p, tmp) != MP_OKAY)
+        if (ret == 0 && mp_mulmod(tmpc, &key->u, &key->p, tmpc) != MP_OKAY)
             ret = MP_MULMOD_E;
 
         /* tmp = tmpb + q * tmp */
-        if (ret == 0 && mp_mul(tmp, &key->q, tmp) != MP_OKAY)
+        if (ret == 0 && mp_mul(tmpc, &key->q, tmpc) != MP_OKAY)
             ret = MP_MUL_E;
 
-        if (ret == 0 && mp_add(tmp, tmpb, tmp) != MP_OKAY)
+
+        if (ret == 0 && mp_add(tmpc, tmpb, tmpc) != MP_OKAY)
             ret = MP_ADD_E;
 
 #if !defined(WC_RSA_BLINDING) || defined(WC_NO_RNG)
@@ -2717,7 +2721,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 
 #if defined(WC_RSA_BLINDING) && !defined(WC_NO_RNG)
     /* unblind */
-    if (ret == 0 && mp_mulmod(tmp, rndi, &key->n, tmp) != MP_OKAY)
+    if (ret == 0 && mp_mulmod(tmpc, rndi, &key->n, tmpc) != MP_OKAY)
         ret = MP_MULMOD_E;
 
     ESP_LOGI("rsa peek", "rnd  = %02X", (unsigned int)rnd);
@@ -2738,6 +2742,9 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     ESP_LOGI("rsa peek", "rnd  = %02X", (unsigned int)rnd);
     ESP_LOGI("rsa peek", "rndi = %02X", (unsigned int)rndi);
 
+
+    /* assign our tmpc to the return parameter, tmp */
+    XMEMCPY(tmp, tmpc, sizeof(mp_int));
     return ret;
 }
 #endif
@@ -2775,7 +2782,7 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
         case RSA_PRIVATE_DECRYPT:
         case RSA_PRIVATE_ENCRYPT:
         {
-            ret = RsaFunctionPrivate(tmp, key, rng); /* should tmp change here? */
+            ret = RsaFunctionPrivate(tmp, key, rng);  /* should tmp change here? */
             break;
         }
     #endif
@@ -2805,7 +2812,6 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
 #if !defined(MP_INT_SIZE_CHECK_NULL) && defined(WOLFSSL_CHECK_MEM_ZERO)
     mp_memzero_check(tmp);
 #endif
-
     return ret;
 }
 #endif /* !WOLFSSL_SP_MATH */
