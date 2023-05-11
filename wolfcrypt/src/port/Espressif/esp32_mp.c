@@ -338,7 +338,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
                 break; /* if not zero, nothing else to do */
             }
         }
-        ESP_LOGV(TAG, "New Z->used = %d", Z->used);
+        ESP_LOGI(TAG, "New Z->used = %d", Z->used);
     }
     else {
         ESP_LOGV(TAG, "no z-trim needed");
@@ -899,12 +899,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
     esp_mp_exptmod_depth_counter++;
 #endif
-    XMEMSET(Z, 0, sizeof(MATH_INT_T));
+     /* Danger! Do not initialize any parameters, not even the result Z.
+      * Some operations such as (rnd = rnd^e) will wipe out the rnd operand
+      * value upon initialization.
+      * (e.g. the address of X and Z could be the same when called) */
     int ret = 0;
-//    show_math_int("X", X);
-//    show_math_int("Y", Y);
-//    show_math_int("M", M);
-//    show_math_int("Z", Z);
     word32 Xs;
     word32 Ms;
     word32 maxWords_sz;
