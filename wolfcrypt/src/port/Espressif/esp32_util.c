@@ -21,6 +21,8 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/version.h>
 
+#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
+
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
   (!defined(NO_AES)        || !defined(NO_SHA) || !defined(NO_SHA256) ||\
    defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512))
@@ -28,7 +30,6 @@
 #include <wolfssl/wolfcrypt/wc_port.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
-#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
 /*
  * initialize our mutex used to lock hardware access
@@ -348,16 +349,18 @@ int esp_ShowExtendedSystemInfo()
 /* Print a MATH_INT_T */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
+    static const char* MP_TAG = "MATH_INT_T";
     int ret = 0;
     if (X == NULL) {
         ret = -1;
-        ESP_LOGV("MATH_INT_T", "esp_show_mp called with X == NULL");
+        ESP_LOGV(MP_TAG, "esp_show_mp called with X == NULL");
     }
     else {
-        ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
-        ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+        ESP_LOGI(MP_TAG, "");
+        ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
+        ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
         for (size_t i = 0; i < X->used; i++) {
-            ESP_LOGI("MATH_INT_T", "%s.dp[%d] = 0x%08x",
+            ESP_LOGI(MP_TAG, "%s.dp[%d] = 0x%08x",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
                                    (unsigned int)X->dp[i]); /* the value */
