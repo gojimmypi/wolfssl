@@ -348,12 +348,19 @@ int esp_ShowExtendedSystemInfo()
 /* Print a MATH_INT_T */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
-    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
-    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
-    for (size_t i = 0; i < X->used; i++) {
-        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x", c, i, X->dp[i]);
+    int ret = 0;
+    if (X == NULL) {
+        ret = -1;
+        ESP_LOGV("MATH_INT_T", "esp_show_mp called with X == NULL");
     }
-    return 0;
+    else {
+        ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
+        ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+        for (size_t i = 0; i < X->used; i++) {
+            ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x", c, i, X->dp[i]);
+        }
+    }
+    return ret;
 }
 
 /* Perform a full fp_cmp and binary compare.
