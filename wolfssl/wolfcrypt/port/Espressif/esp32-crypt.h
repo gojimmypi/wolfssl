@@ -75,8 +75,10 @@
     extern "C" {
 #endif
 
+/* Some common utilities */
 int esp_ShowExtendedSystemInfo(void);
 int esp_mp_cmp(MATH_INT_T* A, MATH_INT_T* B);
+int esp_show_mp(char* c, MATH_INT_T* X);
 
 int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
@@ -234,6 +236,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
                       MATH_INT_T* Z);
 
 #endif /* !NO_RSA || HAVE_ECC*/
+
 
 /* end c++ wrapper */
 #ifdef __cplusplus
