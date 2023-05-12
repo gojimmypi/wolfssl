@@ -119,7 +119,7 @@
     /* X bits of G^X mod P greater than                            */
     #define EPS_RSA_EXPT_XBTIS           0 /* TODO 36 */
     /* X and Y of X * Y mod P greater than                         */
-    #define ESP_RSA_MULM_BITS            2000
+    #define ESP_RSA_MULM_BITS            0 /* TODO 2000 */
 #endif
 
 /* debug options */
@@ -173,11 +173,11 @@
 #define WOLFSSL_SYS_CA_CERTS
 #define WOLFSSL_ASN_TEMPLATE
 
-//#define WOLFSSL_RSA_KEY_SIZE 512  /* HW Success */
+#define WOLFSSL_RSA_KEY_SIZE 512  /* HW Success */
 //#define WOLFSSL_RSA_KEY_SIZE 1024 /* HW Success */
 //#define WOLFSSL_RSA_KEY_SIZE 1536 /* HW Success */
-#define WOLFSSL_RSA_KEY_SIZE 2048
-//#define WOLFSSL_RSA_KEY_SIZE 2560 /* wc_MakeRsaKey error -173 */
+//#define WOLFSSL_RSA_KEY_SIZE 2048
+//#define WOLFSSL_RSA_KEY_SIZE 2560 /* wc_MakeRsaKey error -173, adjust FP_MAX_BITS */
 //#define WOLFSSL_RSA_KEY_SIZE 3072
 //#define WOLFSSL_RSA_KEY_SIZE 3584
 //#define WOLFSSL_RSA_KEY_SIZE 4096
