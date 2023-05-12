@@ -627,7 +627,7 @@ WOLFSSL_TEST_SUBROUTINE int aes_siv_test(void);
 
 static void debug_message(const char* msg)
 {
-#if defined(DEBUG_WOLFSSL)
+#ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
         ESP_LOGI(TAG,"%s", msg);
     #else
@@ -638,16 +638,18 @@ static void debug_message(const char* msg)
 #endif // #if defined(DEBUG_WOLFSSL)
 }
 
-static void debug_message_value(const char* msg, int val)
+static void debug_message_value(const char* msg, int val,
+                                fp_int* a)
 {
-#if defined(DEBUG_WOLFSSL)
+#ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
         ESP_LOGI(TAG,"%s Value = %d", msg, val);
+
     #else
         print("%s", msg, val);
     #endif // WOLFSSL_ESPIDF
 #else
-    /* no message */
+    /* no message when not debugging  */
 #endif // #if defined(DEBUG_WOLFSSL)}
 }
 
@@ -1968,6 +1970,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     int oldused;
     mp_int a[1], b[1]; /* operands */
     mp_int c[1]; /* result */
+    mp_int d[1]; /* result */
+    mp_int e[1]; /* expected result */
 
     c->used = BADVAL; /* we have an uninitialized result variable */
 
@@ -1978,7 +1982,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message("Success oldused range check \n");
     }
     else {
-        debug_message_value("Fail oldused range check.\n", oldused);
+        debug_message_value("Fail oldused range check.\n", oldused, NULL);
         ret = -1;
     }
 
@@ -1986,12 +1990,15 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message("Success oldused MIN check \n");
     }
     else {
-        debug_message_value("Fail oldused MIN check.\n", oldused);
+        debug_message_value("Fail oldused MIN check.\n", oldused, NULL);
         ret = -1;
     }
 
     fp_init(a);
     fp_init(b);
+    fp_init(c);
+    fp_init(d);
+    fp_init(e);
 
     memset(a, 0, sizeof(fp_int));
     memset(b, 0, sizeof(fp_int));
@@ -2000,14 +2007,10 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* the values are both 0, both [a] and [b] claim to use the
     ** same umber of words. the values should still be equal */
     if (mp_cmp(a, b) == 0) {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Success fp_cmp on 0 == 0 check.\n");
-#endif
     }
     else {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Fail fp_cmp on 0 == 0 check.\n");
-#endif
         ret = -1;
     }
 
@@ -2022,14 +2025,10 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* the values are both 0, but [a] claims to use more words
     ** than [the other]b]. the values should still be equal */
     if (mp_cmp(a, b) == 0) {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Success fp_cmp on 0 == 0 check with used value mismatch\n");
-#endif
     }
     else {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Fail fp_cmp on 0 == 0 check\n");
-#endif
         ret = -1;
     }
 
@@ -2039,44 +2038,56 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     a->dp[1] = 0x1;
     b->dp[1] = 0x1;
     if (mp_cmp(a, b) == 0) {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Success fp_cmp on 1 == 1 check\n");
-#endif
     }
     else {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Fail fp_cmp on 1 == 1 check\n");
-#endif
         ret = -1;
     }
 
     /* check mp_add */
     retf = mp_add(a, b, c);
     if (retf == 0) {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Successfully called mp_add on 1 + 1 check.\n");
-#endif
     }
     else {
-#if defined(DEBUG_WOLFSSL)
-        debug_message_value("Error when called mp_add on 1 + 1 check.\n", retf);
-#endif
+        debug_message_value("Error when called mp_add on 1 + 1 check.\n", retf, NULL);
         ret = -1;
     }
 
     /* only b has used=2, the result should be one */
     if (c->dp[1] == 1) {
-#if defined(DEBUG_WOLFSSL)
         debug_message("Successfully added 1 + 1 with mp_add()\n");
-#endif
     }
     else {
-#if defined(DEBUG_WOLFSSL)
-        debug_message_value("Error when adding 1 + 1. c->dp[0]\n", c->dp[0]);
-#endif
+        debug_message_value("Error when adding 1 + 1. c->dp[0]\n", c->dp[0], NULL);
         ret = -1;
     }
 
+    /*
+     * math tests
+     */
+
+    /*
+     * mp_mulmod(): a * b mod c
+     */
+    a[0].used = 1; a[0].dp[0] = 20002;
+    b[0].used = 1; b[0].dp[0] = 2;
+    c[0].used = 1; c[0].dp[0] = 5;
+    ret = mp_mulmod(a, b, c, d);
+    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4*/
+
+    /* check d == e; d = (a * b mod c) */
+    if (mp_cmp(d, e) == 0) {
+        debug_message("Success mp_mulmod(): a * b mod c check.\n");
+    }
+    else {
+        ret = -1;
+        debug_message_value("Fail mp_mulmod(): a * b mod c check.\n", ret, NULL);
+    }
+
+
+    /* end of math tests */
 #else /* not using USE_FAST_MATH */
     #if defined(DEBUG_WOLFSSL)
         debug_message("Not using USE_FAST_MATH, math test not implemented");
