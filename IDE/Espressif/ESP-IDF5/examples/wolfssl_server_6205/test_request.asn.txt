@@ -1,34 +1,34 @@
-    0:d=0  hl=4 l= 303 cons: SEQUENCE          
-    4:d=1  hl=3 l= 218 cons: SEQUENCE          
-    7:d=2  hl=2 l=   1 prim: INTEGER           :00
-   10:d=2  hl=2 l= 117 cons: SEQUENCE          
-   12:d=3  hl=2 l=  11 cons: SET               
-   14:d=4  hl=2 l=   9 cons: SEQUENCE          
-   16:d=5  hl=2 l=   3 prim: OBJECT            :countryName
-   21:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :NZ
-   25:d=3  hl=2 l=  16 cons: SET               
-   27:d=4  hl=2 l=  14 cons: SEQUENCE          
-   29:d=5  hl=2 l=   3 prim: OBJECT            :stateOrProvinceName
-   34:d=5  hl=2 l=   7 prim: UTF8STRING        :Waikato
-   43:d=3  hl=2 l=  17 cons: SET               
-   45:d=4  hl=2 l=  15 cons: SEQUENCE          
-   47:d=5  hl=2 l=   3 prim: OBJECT            :localityName
-   52:d=5  hl=2 l=   8 prim: UTF8STRING        :Hamilton
-   62:d=3  hl=2 l=  32 cons: SET               
-   64:d=4  hl=2 l=  30 cons: SEQUENCE          
-   66:d=5  hl=2 l=   3 prim: OBJECT            :organizationName
-   71:d=5  hl=2 l=  23 prim: UTF8STRING        :Blue Leaf Software, Ltd
-   96:d=3  hl=2 l=  31 cons: SET               
-   98:d=4  hl=2 l=  29 cons: SEQUENCE          
-  100:d=5  hl=2 l=   3 prim: OBJECT            :commonName
-  105:d=5  hl=2 l=  22 prim: UTF8STRING        :Lumos HW, SN = BLS-002
-  129:d=2  hl=2 l=  92 cons: SEQUENCE          
-  131:d=3  hl=2 l=  13 cons: SEQUENCE          
-  133:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption
-  144:d=4  hl=2 l=   0 prim: NULL              
-  146:d=3  hl=2 l=  75 prim: BIT STRING        
-  223:d=2  hl=2 l=   0 cons: cont [ 0 ]        
-  225:d=1  hl=2 l=  13 cons: SEQUENCE          
-  227:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption
-  238:d=2  hl=2 l=   0 prim: NULL              
-  240:d=1  hl=2 l=  65 prim: BIT STRING        
+    0:d=0  hl=4 l= 698 cons: SEQUENCE          
+    4:d=1  hl=4 l= 418 cons: SEQUENCE          
+    8:d=2  hl=2 l=   1 prim: INTEGER           :00
+   11:d=2  hl=2 l= 117 cons: SEQUENCE          
+   13:d=3  hl=2 l=  11 cons: SET               
+   15:d=4  hl=2 l=   9 cons: SEQUENCE          
+   17:d=5  hl=2 l=   3 prim: OBJECT            :countryName
+   22:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :NZ
+   26:d=3  hl=2 l=  16 cons: SET               
+   28:d=4  hl=2 l=  14 cons: SEQUENCE          
+   30:d=5  hl=2 l=   3 prim: OBJECT            :stateOrProvinceName
+   35:d=5  hl=2 l=   7 prim: UTF8STRING        :Waikato
+   44:d=3  hl=2 l=  17 cons: SET               
+   46:d=4  hl=2 l=  15 cons: SEQUENCE          
+   48:d=5  hl=2 l=   3 prim: OBJECT            :localityName
+   53:d=5  hl=2 l=   8 prim: UTF8STRING        :Hamilton
+   63:d=3  hl=2 l=  32 cons: SET               
+   65:d=4  hl=2 l=  30 cons: SEQUENCE          
+   67:d=5  hl=2 l=   3 prim: OBJECT            :organizationName
+   72:d=5  hl=2 l=  23 prim: UTF8STRING        :Blue Leaf Software, Ltd
+   97:d=3  hl=2 l=  31 cons: SET               
+   99:d=4  hl=2 l=  29 cons: SEQUENCE          
+  101:d=5  hl=2 l=   3 prim: OBJECT            :commonName
+  106:d=5  hl=2 l=  22 prim: UTF8STRING        :Lumos HW, SN = BLS-002
+  130:d=2  hl=4 l= 290 cons: SEQUENCE          
+  134:d=3  hl=2 l=  13 cons: SEQUENCE          
+  136:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption
+  147:d=4  hl=2 l=   0 prim: NULL              
+  149:d=3  hl=4 l= 271 prim: BIT STRING        
+  424:d=2  hl=2 l=   0 cons: cont [ 0 ]        
+  426:d=1  hl=2 l=  13 cons: SEQUENCE          
+  428:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption
+  439:d=2  hl=2 l=   0 prim: NULL              
+  441:d=1  hl=4 l= 257 prim: BIT STRING        

@@ -173,8 +173,15 @@
 #define WOLFSSL_SYS_CA_CERTS
 #define WOLFSSL_ASN_TEMPLATE
 
-// #define WOLFSSL_RSA_KEY_SIZE 2048 /* fails HW */
-#define WOLFSSL_RSA_KEY_SIZE 512 /* fails HW */
+//#define WOLFSSL_RSA_KEY_SIZE 512  /* HW Success */
+//#define WOLFSSL_RSA_KEY_SIZE 1024 /* HW Success */
+//#define WOLFSSL_RSA_KEY_SIZE 1536 /* HW Success */
+#define WOLFSSL_RSA_KEY_SIZE 2048
+//#define WOLFSSL_RSA_KEY_SIZE 2560 /* wc_MakeRsaKey error -173 */
+//#define WOLFSSL_RSA_KEY_SIZE 3072
+//#define WOLFSSL_RSA_KEY_SIZE 3584
+//#define WOLFSSL_RSA_KEY_SIZE 4096
+
 
 /* the new math test is known to be failing */
 #define NO_MATH_TEST
