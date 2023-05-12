@@ -28,7 +28,7 @@
 #include <wolfssl/wolfcrypt/wc_port.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
-
+#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
 /*
  * initialize our mutex used to lock hardware access
@@ -340,11 +340,64 @@ int ShowExtendedSystemInfo(void)
         return 0;
     }
 
-
-
 int esp_ShowExtendedSystemInfo()
 {
     return ShowExtendedSystemInfo();
 }
+
+/* Print a MATH_INT_T */
+int esp_show_mp(char* c, MATH_INT_T* X)
+{
+    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
+    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
+    for (size_t i = 0; i < X->used; i++) {
+        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x", c, i, X->dp[i]);
+    }
+    return 0;
+}
+
+/* Perform a full fp_cmp and binary compare.
+ * (typically only used during debugging) */
+int esp_mp_cmp(MATH_INT_T* A, MATH_INT_T* B)
+{
+    int ret = MP_OKAY;
+    int e = memcmp(A, B, sizeof(fp_int));
+    if (fp_cmp(A, B) == FP_EQ) {
+        if (e == 0) {
+            /* we always want to be here: both esp_show_mp and binary equal! */
+            ESP_LOGV(TAG, "fp_cmp and memcmp match!");
+        }
+        else {
+            ret = FP_VAL;
+            ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch!");
+            if (A->dp[0] == 1) {
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+            }
+        }
+    }
+    else {
+        ret = FP_VAL;
+        if (e == 0) {
+            ESP_LOGE(TAG, "memcmp error!");
+        }
+        else {
+            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok");
+            if (A->dp[0] == 1) {
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+            }
+        }
+        ESP_LOGI(TAG, "A B mismatch!");
+    }
+
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "esp_mp_cmp equal!");
+    }
+    else {
+        esp_show_mp("A", A);
+        esp_show_mp("B", B);
+    }
+    return ret;
+}
+
 
 

@@ -76,60 +76,6 @@ static int espmp_CryptHwMutexInit = 0;
     static int esp_mp_exptmod_depth_counter = 0;
 #endif /* DEBUG_WOLFSSL */
 
-/* Print a MATH_INT_T */
-int esp_show_mp(char* c, MATH_INT_T* X)
-{
-    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
-    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
-    for (size_t i = 0; i < X->used; i++) {
-        ESP_LOGI("MATH_INT_T", "%s.dp[%d] = %x", c, i, X->dp[i]);
-    }
-    return 0;
-}
-
-/* Perform a full fp_cmp and binary compare.
- * (typically only used during debugging) */
-int esp_mp_cmp(mp_int* A, mp_int* B)
-{
-    int ret = MP_OKAY;
-    int e = memcmp(A, B, sizeof(fp_int));
-    if (fp_cmp(A, B) == FP_EQ) {
-        if (e == 0) {
-            /* we always want to be here: both esp_show_mp and binary equal! */
-            ESP_LOGV(TAG, "fp_cmp and memcmp match!");
-        }
-        else {
-            ret = MP_NG;
-            ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch!");
-            if (A->dp[0] == 1) {
-                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
-            }
-        }
-    }
-    else {
-        ret = MP_NG;
-        if (e == 0) {
-            ESP_LOGE(TAG, "memcmp error!");
-        }
-        else {
-            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok");
-            if (A->dp[0] == 1) {
-                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
-            }
-        }
-        ESP_LOGI(TAG, "A B mismatch!");
-    }
-
-    if (ret == MP_OKAY) {
-        ESP_LOGV(TAG, "esp_mp_cmp equal!");
-    }
-    else {
-        esp_show_mp("A", A);
-        esp_show_mp("B", B);
-    }
-    return ret;
-}
-
 /*
 * check if the HW is ready before accessing it
 *
@@ -377,13 +323,15 @@ static int wait_until_done(word32 reg)
 {
     word32 timeout = 0;
     /* wait until done && not timeout */
+    asm volatile("memw");
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
-        /* wait */
+        asm volatile("memw"); /* wait */
     }
 
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+    asm volatile("memw");
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation is timed out.");
@@ -650,9 +598,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     return ret;
 }
 
-/* Z = X * Y (mod M)                                  */
+/// Large Number Modular Multiplication Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
+    /* not working properly */
     int ret = 0;
     int negcheck;
     word32 Xs;
@@ -662,8 +611,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     word32 hwWords_sz;
     word32 zwords;
 
-    MATH_INT_T r_inv;
-    MATH_INT_T tmpZ;
+    MATH_INT_T r_inv[1];
+    MATH_INT_T tmpZ[1];
     mp_digit mp;
 
     uint32_t Exponent;
@@ -698,25 +647,25 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #else
     Exponent = hwWords_sz << 6;
 #endif
-    ret = mp_init_multi(&tmpZ, &r_inv, NULL, NULL, NULL, NULL);
-    if (ret == 0 && (ret = esp_get_rinv(&r_inv, M, Exponent)) != MP_OKAY) {
+    ret = mp_init_multi(tmpZ, r_inv, NULL, NULL, NULL, NULL);
+    if (ret == 0 && (ret = esp_get_rinv(r_inv, M, Exponent)) != MP_OKAY) {
         ESP_LOGE(TAG, "calculate r_inv failed.");
-        mp_clear(&tmpZ);
-        mp_clear(&r_inv);
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
         return ret;
     }
 
     /* lock HW for use */
     if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(&tmpZ);
-        mp_clear(&r_inv);
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
         return ret;
     }
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
-        mp_clear(&tmpZ);
-        mp_clear(&r_inv);
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
         return ret;
     }
 
@@ -740,6 +689,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* 1. Wait until hardware is ready. */
     if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
+        ESP_LOGE(TAG, "esp_mp_hw_wait_clean failed.");
         return ret;
     }
 
@@ -767,7 +717,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, Ys, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, &r_inv, mp_count_bits(&r_inv), hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, r_inv, mp_count_bits(r_inv), hwWords_sz);
 
     /* 6. Start operation and wait until it completes. */
     process_start(RSA_MOD_MULT_START_REG);
@@ -777,7 +727,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 7. read the result form MEM_Z              */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, &tmpZ, zwords);
+    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, tmpZ, zwords);
 
     /* 8. clear and release HW                    */
     esp_mp_hw_unlock();
@@ -824,15 +774,17 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
-                          &r_inv,
-                          mp_count_bits(&r_inv),
+                          r_inv,
+                          mp_count_bits(r_inv),
                           hwWords_sz);
 
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
+    asm volatile("memw");
 
     /* step.4 start process                           */
     process_start(RSA_MULT_START_REG);
+    asm volatile("memw");
 
     /* step.5,6 wait until done                       */
     wait_until_done(RSA_INTERRUPT_REG);
@@ -846,25 +798,25 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     wait_until_done(RSA_INTERRUPT_REG);
 
     /* step.12 read the result from MEM_Z             */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, &tmpZ, zwords);
+    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, tmpZ, zwords);
 
     /* step.13 clear and release HW                   */
     esp_mp_hw_unlock();
 
     /* additional steps                               */
     /* this needs for known issue when Z is greater than M */
-    if (mp_cmp(&tmpZ, M) == MP_GT) {
-        /*  Z -= M  */
-        mp_sub(&tmpZ, M, &tmpZ);
-    }
-    if (negcheck) {
-        mp_sub(M, &tmpZ, &tmpZ);
-    }
+//    if (mp_cmp(tmpZ, M) == MP_GT) {
+//        /*  Z -= M  */
+//        mp_sub(tmpZ, M, tmpZ);
+//    }
+//    if (negcheck) {
+//        mp_sub(M, tmpZ, tmpZ);
+//    }
 
-    mp_copy(&tmpZ, Z);
+    mp_copy(tmpZ, Z);
 
-    mp_clear(&tmpZ);
-    mp_clear(&r_inv);
+    mp_clear(tmpZ);
+    mp_clear(r_inv);
 
     esp_clean_result(Z, 0);
 
