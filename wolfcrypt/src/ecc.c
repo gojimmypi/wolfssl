@@ -24,7 +24,7 @@
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-#include <esp_log.h>
+
 /* in case user set HAVE_ECC there */
 #include <wolfssl/wolfcrypt/settings.h>
 
@@ -32,6 +32,10 @@
 #undef WOLFSSL_SMALL_STACK
 #undef WOLFSSL_SMALL_STACK_CACHE
 #endif
+
+#ifdef WOLFSSL_ESPIDF
+    #include <esp_log.h>
+#endif // WOLFSSL_IDF
 
 /*
 Possible ECC enable options:
