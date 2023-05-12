@@ -625,10 +625,11 @@ WOLFSSL_TEST_SUBROUTINE int aes_siv_test(void);
 
 #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
 
-
 static int debug_message(const char* msg)
 {
     int ret = 0;
+    (void)msg;
+
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
     if (0 == XMEMCMP(msg, "Fail", 4)) {
@@ -655,6 +656,14 @@ static int debug_message_value(const char* msg, int val,
                                 )
 {
     int ret = 0;
+    (void)msg,
+    (void)val;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
+
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
         debug_message(msg);
@@ -1027,9 +1036,9 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 #ifndef NO_MATH_TEST
     if ((ret = math_test()) != 0)
-        TEST_FAIL("math   test failed!\n", ret);
+        TEST_FAIL("mp_math  test failed!\n", ret);
     else
-        TEST_PASS("math  test passed!\n");
+        TEST_PASS("mp_math  test passed!\n");
 #endif
 
 #ifndef NO_CODING
@@ -1993,28 +2002,28 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 #endif /* DEBUG_WOLFSSL */
 
 #ifdef USE_FAST_MATH
-    int oldused;
+    int oldused;  (void)oldused;
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
     MATH_INT_T d[1]; /* result for 3 operand functions */
     MATH_INT_T e[1]; /* expected result */
 
-    const unsigned char* val = 0;
+    const unsigned char* val = 0; (void)val;
 
     WOLFSSL_SMALL_STACK_STATIC const fp_digit msg4[] =
     {
         0x000000d3,
         0x0000001a
-    };
+    };  (void)msg4;
 
     c->used = BADVAL; /* we have an uninitialized result variable */
 
-    fp_init(a);
-    fp_init(b);
-    fp_init(c);
-    fp_init(d);
-    fp_init(e);
+    mp_init(a);
+    mp_init(b);
+    mp_init(c);
+    mp_init(d);
+    mp_init(e);
 
     memset(a, 0, sizeof(fp_int));
     memset(b, 0, sizeof(fp_int));
@@ -2038,12 +2047,59 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         ret = FP_VAL;
     }
 
+#ifdef CHECK_MP_READ_UNSIGNED_BIN
     #undef  THIS_TEST_MESSAGE
-    #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check"
-    fp_init(a);
-    fp_init(b);
+    #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check 1"
+    mp_init(a);
+    mp_init(b);
+    a[0].used = 2; a[0].dp[0] = 1;
+                   a[0].dp[1] = 2;
+    b[0].used = 2;
+    /* first, we try the simplest copy: a pointer to the a.dp copied to b */
+    val = (const unsigned char*)(fp_digit*)&a[0].dp;
+    retf = mp_read_unsigned_bin(b, val, sizeof(fp_digit));
+    if (mp_cmp(a, b) == 0) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        /* It appears tfm reverses endianness in mp_read_unsigned_bin()
+         * see  https://github.com/wolfSSL/wolfssl/blob/870f7cc95b1061b0f829d15315c66b6b6823eb99/wolfcrypt/src/tfm.c#L3729
+         * the counter [c] starts at the high value, working backwards,
+         * but [b] starts at the beginning, counting upwards
+         *
+         * To honor little endian, the smallest byte value should be read first,
+         * and applied to [b] as the counter starts at zero and *increments*
+         *
+         * Further, the entire word order is reversed. see output:
+         *
+         *  I (737) wolfcrypt_test: Expected a
+         *  I (737) MATH_INT_T: a.used = 2
+         *  I (737) MATH_INT_T: a.sign = 0
+         *  I (737) MATH_INT_T: a.dp[0] = 0x000000d3
+         *  I (737) MATH_INT_T: a.dp[1] = 0x0000001a
+         *  I (747) wolfcrypt_test: Observed b
+         *  I (747) MATH_INT_T: b.used = 2
+         *  I (747) MATH_INT_T: b.sign = 0
+         *  I (747) MATH_INT_T: b.dp[0] = 0x1a000000
+         *  I (747) MATH_INT_T: b.dp[1] = 0xd3000000
+         */
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            NULL, NULL, NULL, NULL, NULL);
+        debug_message_value("Expected a", retf,
+                            a,    NULL, NULL, NULL, NULL);
+        debug_message_value("Observed b", retf, NULL,
+                            b,    NULL, NULL, NULL);
+        ret = FP_VAL;
+    }
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check 2"
+    mp_init(a);
+    mp_init(b);
     a[0].used = 2; a[0].dp[0] = msg4[0];
                    a[0].dp[1] = msg4[1];
+    b[0].used = 2;
+
+    /* next, we try a more interesting const message */
     val = (const unsigned char*)&msg4;
     retf = mp_read_unsigned_bin(b, val, sizeof(msg4));
     if (mp_cmp(a, b) == 0) {
@@ -2079,6 +2135,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             b,    NULL, NULL, NULL);
         ret = FP_VAL;
     }
+#endif /* CHECK_MP_READ_UNSIGNED_BIN */
 
 #ifdef HONOR_MATH_USED_LENGTH
     /* oldused should never write more than FPSIZE words in s_fp_add
@@ -2144,8 +2201,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     }
 
     /* checking addition with mismatched length */
-    fp_init(a);
-    fp_init(b);
+    mp_init(a);
+    mp_init(b);
     a[0].used = 1; a[0].dp[0] = 1;
     b[0].used = 2; b[0].dp[0] = 1;
     /* only b has used=2, the result should be one */
@@ -2166,8 +2223,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** Addition: c = a + b
     **************************************************************************
     */
-    fp_init(a);
-    fp_init(b);
+    mp_init(a);
+    mp_init(b);
     a[0].used = 1; a[0].dp[0] = 1;
     b[0].used = 1; b[0].dp[0] = 1;
 
