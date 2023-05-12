@@ -4413,11 +4413,36 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 {
  #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    int A = fp_count_bits (a);
-    int B = fp_count_bits (b);
+    int ret = MP_OKAY;
+    int A;
+    int B;
 
-    if( A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS)
-        return esp_mp_mulmod(a, b, c, d);
+#ifdef DEBUG_WOLFSSL
+    mp_int A2[1];
+    mp_int B2[1];
+    mp_int C2[1];
+    mp_int D2[1];
+
+    fp_copy(a, A2); /* copy (src = a) to (dst = A2) */
+    fp_copy(b, B2); /* copy (src = b) to (dst = B2) */
+    fp_copy(c, C2); /* copy (src = c) to (dst = C2) */
+    fp_copy(d, D2); /* copy (src = d) to (dst = D2) */
+    fp_mulmod(A2, B2, C2, D2);
+#endif // DEBUG_WOLFSSL
+
+    A = fp_count_bits(a);
+    B = fp_count_bits(b);
+
+    if (A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
+        ret = esp_mp_mulmod(a, b, c, d);
+#ifdef DEBUG_WOLFSSL
+        esp_mp_cmp(a, A2);
+        esp_mp_cmp(b, B2);
+        esp_mp_cmp(c, C2);
+        esp_mp_cmp(d, D2);
+#endif // DEBUG_WOLFSSL
+        return ret;
+    }
     else
  #endif
    return fp_mulmod(a, b, c, d);
