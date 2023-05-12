@@ -647,13 +647,22 @@ static int debug_message(const char* msg)
 }
 
 static int debug_message_value(const char* msg, int val,
-                                fp_int* a)
+                                fp_int* a,
+                                fp_int* b,
+                                fp_int* c,
+                                fp_int* d,
+                                fp_int* e
+                                )
 {
     int ret = 0;
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI(TAG,"%s Value = %d", msg, val);
+        debug_message(msg);
         esp_show_mp("a", a);
+        esp_show_mp("b", b);
+        esp_show_mp("c", c);
+        esp_show_mp("d", d);
+        esp_show_mp("e", e);
     #else
         print("%s", msg, val);
     #endif /* WOLFSSL_ESPIDF */
@@ -1975,20 +1984,31 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
-    debug_message_value("CheckRunTimeFastMath() = %d", retf, NULL);
-    debug_message_value("FP_SIZE= %d", FP_SIZE, NULL);
-    debug_message_value("DIGIT_BIT= %d", DIGIT_BIT, NULL);
+    debug_message_value("CheckRunTimeFastMath() = %d", retf,
+                         NULL, NULL, NULL, NULL, NULL);
+    debug_message_value("FP_SIZE= %d", FP_SIZE,
+                         NULL, NULL, NULL, NULL, NULL);
+    debug_message_value("DIGIT_BIT= %d", DIGIT_BIT,
+                         NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
 
 #ifdef USE_FAST_MATH
     int oldused;
-    mp_int a[1], b[1]; /* operands */
-    mp_int c[1]; /* result */
-    mp_int d[1]; /* result */
-    mp_int e[1]; /* expected result */
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
+
+    const unsigned char* val = 0;
+
+    WOLFSSL_SMALL_STACK_STATIC const fp_digit msg4[] =
+    {
+        0x000000d3,
+        0x0000001a
+    };
 
     c->used = BADVAL; /* we have an uninitialized result variable */
-
 
     fp_init(a);
     fp_init(b);
@@ -2018,6 +2038,48 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         ret = FP_VAL;
     }
 
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check"
+    fp_init(a);
+    fp_init(b);
+    a[0].used = 2; a[0].dp[0] = msg4[0];
+                   a[0].dp[1] = msg4[1];
+    val = (const unsigned char*)&msg4;
+    retf = mp_read_unsigned_bin(b, val, sizeof(msg4));
+    if (mp_cmp(a, b) == 0) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        /* It appears tfm reverses endianness in mp_read_unsigned_bin()
+         * see  https://github.com/wolfSSL/wolfssl/blob/870f7cc95b1061b0f829d15315c66b6b6823eb99/wolfcrypt/src/tfm.c#L3729
+         * the counter [c] starts at the high value, working backwards,
+         * but [b] starts at the beginning, counting upwards
+         *
+         * To honor little endian, the smallest byte value should be read first,
+         * and applied to [b] as the counter starts at zero and *increments*
+         *
+         * Further, the entire word order is reversed. see output:
+         *
+         *  I (737) wolfcrypt_test: Expected a
+         *  I (737) MATH_INT_T: a.used = 2
+         *  I (737) MATH_INT_T: a.sign = 0
+         *  I (737) MATH_INT_T: a.dp[0] = 0x000000d3
+         *  I (737) MATH_INT_T: a.dp[1] = 0x0000001a
+         *  I (747) wolfcrypt_test: Observed b
+         *  I (747) MATH_INT_T: b.used = 2
+         *  I (747) MATH_INT_T: b.sign = 0
+         *  I (747) MATH_INT_T: b.dp[0] = 0x1a000000
+         *  I (747) MATH_INT_T: b.dp[1] = 0xd3000000
+         */
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            NULL, NULL, NULL, NULL, NULL);
+        debug_message_value("Expected a", retf,
+                            a,    NULL, NULL, NULL, NULL);
+        debug_message_value("Observed b", retf, NULL,
+                            b,    NULL, NULL, NULL);
+        ret = FP_VAL;
+    }
+
 #ifdef HONOR_MATH_USED_LENGTH
     /* oldused should never write more than FPSIZE words in s_fp_add
     ** (see ending zero any excess digits for loop */
@@ -2028,7 +2090,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused, NULL);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused,
+                            NULL, NULL, NULL, NULL, NULL);
         ret = FP_VAL;
     }
 
@@ -2038,7 +2101,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused, NULL);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused,
+                            NULL, NULL, NULL, NULL, NULL);
         ret = FP_VAL;
     }
 
@@ -2078,6 +2142,23 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
         ret = FP_VAL;
     }
+
+    /* checking addition with mismatched length */
+    fp_init(a);
+    fp_init(b);
+    a[0].used = 1; a[0].dp[0] = 1;
+    b[0].used = 2; b[0].dp[0] = 1;
+    /* only b has used=2, the result should be one */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "added 1 + 1 with mp_add(), mismatched length"
+    if (c->dp[1] == 1) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, c->dp[0],
+                            NULL, NULL, NULL, NULL, NULL);
+        ret = FP_VAL;
+    }
 #endif /* HONOR_MATH_USED_LENGTH */
 
     /*
@@ -2098,22 +2179,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, NULL);
-        ret = FP_VAL;
-    }
-
-    fp_init(a);
-    fp_init(b);
-    a[0].used = 1; a[0].dp[0] = 1;
-    b[0].used = 2; b[0].dp[0] = 1;
-    /* only b has used=2, the result should be one */
-    #undef  THIS_TEST_MESSAGE
-    #define THIS_TEST_MESSAGE "added 1 + 1 with mp_add()"
-    if (c->dp[1] == 1) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, c->dp[0], NULL);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            NULL, NULL, NULL, NULL, NULL);
         ret = FP_VAL;
     }
 
@@ -2140,10 +2207,11 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, c);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, c, NULL, NULL, NULL, NULL);
         ret = FP_VAL;
     }
 
+    debug_message("Math test completed.");
     /* end of math tests */
 #else /* not using USE_FAST_MATH */
     #if defined(DEBUG_WOLFSSL)
