@@ -155,7 +155,7 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
   c->used = y;
 
   t = 0;
-#ifdef HONOR_USED_LENGTH
+#ifdef HONOR_MATH_USED_LENGTH
   for (x = 0; x < y; x++) {
       if ( (x < a->used) && (x < b->used) ) {
           /* x is less than both [a].used and [b].used, so we add both */
@@ -192,7 +192,7 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
       c->dp[x]   = (fp_digit)t;
       t        >>= DIGIT_BIT;
   }
-#endif // HONOR_USED_LENGTH
+#endif // HONOR_MATH_USED_LENGTH
 
   if (t != 0) {
      if (x == FP_SIZE)
