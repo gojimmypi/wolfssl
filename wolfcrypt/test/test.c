@@ -666,7 +666,12 @@ static int debug_message_value(const char* msg, int val,
 
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
-        debug_message(msg);
+        if (0 == XMEMCMP(msg, "%", XSTRLEN(msg))) {
+            debug_message(msg);
+        }
+        else {
+            ESP_LOGI(TAG, "%s %d", msg, val);
+        }
         esp_show_mp("a", a);
         esp_show_mp("b", b);
         esp_show_mp("c", c);
@@ -1993,11 +1998,11 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
-    debug_message_value("CheckRunTimeFastMath() = %d", retf,
+    debug_message_value("CheckRunTimeFastMath() = ", retf,
                          NULL, NULL, NULL, NULL, NULL);
-    debug_message_value("FP_SIZE= %d", FP_SIZE,
+    debug_message_value("FP_SIZE   = ", FP_SIZE,
                          NULL, NULL, NULL, NULL, NULL);
-    debug_message_value("DIGIT_BIT= %d", DIGIT_BIT,
+    debug_message_value("DIGIT_BIT = ", DIGIT_BIT,
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
 
