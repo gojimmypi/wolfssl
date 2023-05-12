@@ -121,6 +121,7 @@
     #include <time.h>
     #include <sys/time.h>
     #include <esp_log.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
     static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
@@ -625,32 +626,41 @@ WOLFSSL_TEST_SUBROUTINE int aes_siv_test(void);
 #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
 
 
-static void debug_message(const char* msg)
+static int debug_message(const char* msg)
 {
+    int ret = 0;
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI(TAG,"%s", msg);
+    if (0 == XMEMCMP(msg, "Fail", 4)) {
+        ESP_LOGE(TAG, "%s", msg);
+    }
+    else {
+        ESP_LOGI(TAG, "%s", msg);
+    }
     #else
         print("%s", msg);
     #endif // WOLFSSL_ESPIDF
 #else
     /* no message */
 #endif // #if defined(DEBUG_WOLFSSL)
+    return ret;
 }
 
-static void debug_message_value(const char* msg, int val,
+static int debug_message_value(const char* msg, int val,
                                 fp_int* a)
 {
+    int ret = 0;
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
         ESP_LOGI(TAG,"%s Value = %d", msg, val);
-
+        esp_show_mp("a", a);
     #else
         print("%s", msg, val);
-    #endif // WOLFSSL_ESPIDF
+    #endif /* WOLFSSL_ESPIDF */
 #else
     /* no message when not debugging  */
-#endif // #if defined(DEBUG_WOLFSSL)}
+#endif /* #if defined(DEBUG_WOLFSSL) */
+    return ret;
 }
 
 static void render_error_message(const char* msg, int es)
@@ -1952,18 +1962,22 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 }
 #endif /* WOLFSSL_KEY_GEN || WOLFSSL_CERT_GEN */
 
-
 WOLFSSL_TEST_SUBROUTINE int math_test(void)
 {
 #define BADVAL 0xf5f5f5f5 /* simulate uninitialized memory with 0xf5 */
+#define MP_SUCCESS_MSG "Success: "
+#define MP_FAILURE_MSG "Failed:  "
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE ""
+
     int ret = FP_OKAY; /* assume success until proven otherwise */
     int retf = FP_OKAY; /* we'll inspect some interim functions */
 
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
-    printf("CheckRunTimeFastMath() = %d\n", retf);
-    printf("FP_SIZE= %d\n", FP_SIZE);
-    printf("DIGIT_BIT= %d\n", DIGIT_BIT);
+    debug_message_value("CheckRunTimeFastMath() = %d", retf, NULL);
+    debug_message_value("FP_SIZE= %d", FP_SIZE, NULL);
+    debug_message_value("DIGIT_BIT= %d", DIGIT_BIT, NULL);
 #endif /* DEBUG_WOLFSSL */
 
 #ifdef USE_FAST_MATH
@@ -1975,24 +1989,6 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     c->used = BADVAL; /* we have an uninitialized result variable */
 
-    /* oldused should never write more than FPSIZE words in s_fp_add
-    ** (see ending zero any excess digits for loop */
-    oldused = MIN(c->used, FP_SIZE); /* help static analysis w/ largest size */
-    if (oldused <= FP_SIZE && oldused > -1) {
-        debug_message("Success oldused range check \n");
-    }
-    else {
-        debug_message_value("Fail oldused range check.\n", oldused, NULL);
-        ret = -1;
-    }
-
-    if (oldused == FP_SIZE || oldused == FP_SIZE) {
-        debug_message("Success oldused MIN check \n");
-    }
-    else {
-        debug_message_value("Fail oldused MIN check.\n", oldused, NULL);
-        ret = -1;
-    }
 
     fp_init(a);
     fp_init(b);
@@ -2004,88 +2000,149 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     memset(b, 0, sizeof(fp_int));
     memset(c, 0, sizeof(fp_int));
 
+    /*
+    **************************************************************************
+    ** Basic math functionality tests
+    **************************************************************************
+    */
+
     /* the values are both 0, both [a] and [b] claim to use the
     ** same umber of words. the values should still be equal */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero"
     if (mp_cmp(a, b) == 0) {
-        debug_message("Success fp_cmp on 0 == 0 check.\n");
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message("Fail fp_cmp on 0 == 0 check.\n");
-        ret = -1;
+        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+        ret = FP_VAL;
+    }
+
+#ifdef HONOR_MATH_USED_LENGTH
+    /* oldused should never write more than FPSIZE words in s_fp_add
+    ** (see ending zero any excess digits for loop */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "oldused range check"
+    oldused = MIN(c->used, FP_SIZE); /* help static analysis w/ largest size */
+    if (oldused <= FP_SIZE && oldused > -1) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused, NULL);
+        ret = FP_VAL;
+    }
+
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "oldused MIN check"
+    if (oldused == FP_SIZE || oldused == FP_SIZE) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused, NULL);
+        ret = FP_VAL;
     }
 
     /* here we set different used lengths for a and b
     ** note this is only interesting with non-zero data in
     ** unused words. but if they are unused, why do they need
     ** to be initialized? */
-    debug_message("/nTest adding different sized fp_int values.\n");
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length mismatch"
+    debug_message("Test "THIS_TEST_MESSAGE);
     a->used = 1; /* only a->dp[0] is used */
     b->used = 2; /* both b->dp[0] and b->dp[1] are used */
 
     /* the values are both 0, but [a] claims to use more words
     ** than [the other]b]. the values should still be equal */
     if (mp_cmp(a, b) == 0) {
-        debug_message("Success fp_cmp on 0 == 0 check with used value mismatch\n");
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message("Fail fp_cmp on 0 == 0 check\n");
-        ret = -1;
+        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+        ret = FP_VAL;
     }
 
     /* the values are both 1, but [a] claims to use more words
     ** than [the other]b]. the values should still be equal */
     /* reminder a->dp[0] = 0 and b->dp[0] = 0 */
+    a->used = 1; /* only a->dp[0] is used */
+    b->used = 2; /* both b->dp[0] and b->dp[1] are used */
     a->dp[1] = 0x1;
     b->dp[1] = 0x1;
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "fp_cmp on 1 == 1 mismatched used length check"
     if (mp_cmp(a, b) == 0) {
-        debug_message("Success fp_cmp on 1 == 1 check\n");
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message("Fail fp_cmp on 1 == 1 check\n");
-        ret = -1;
+        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+        ret = FP_VAL;
     }
+#endif /* HONOR_MATH_USED_LENGTH */
+
+    /*
+    **************************************************************************
+    ** Addition: c = a + b
+    **************************************************************************
+    */
+    fp_init(a);
+    fp_init(b);
+    a[0].used = 1; a[0].dp[0] = 1;
+    b[0].used = 1; b[0].dp[0] = 1;
 
     /* check mp_add */
     retf = mp_add(a, b, c);
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_add on standard 1 + 1 check"
     if (retf == 0) {
-        debug_message("Successfully called mp_add on 1 + 1 check.\n");
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value("Error when called mp_add on 1 + 1 check.\n", retf, NULL);
-        ret = -1;
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, NULL);
+        ret = FP_VAL;
     }
 
+    fp_init(a);
+    fp_init(b);
+    a[0].used = 1; a[0].dp[0] = 1;
+    b[0].used = 2; b[0].dp[0] = 1;
     /* only b has used=2, the result should be one */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "added 1 + 1 with mp_add()"
     if (c->dp[1] == 1) {
-        debug_message("Successfully added 1 + 1 with mp_add()\n");
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value("Error when adding 1 + 1. c->dp[0]\n", c->dp[0], NULL);
-        ret = -1;
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, c->dp[0], NULL);
+        ret = FP_VAL;
     }
 
     /*
-     * math tests
-     */
+    **************************************************************************
+    ** math tests
+    **************************************************************************
+    */
 
     /*
-     * mp_mulmod(): a * b mod c
-     */
+    **************************************************************************
+    ** mp_mulmod(): a * b mod c
+    **************************************************************************
+    */
     a[0].used = 1; a[0].dp[0] = 20002;
     b[0].used = 1; b[0].dp[0] = 2;
     c[0].used = 1; c[0].dp[0] = 5;
-    ret = mp_mulmod(a, b, c, d);
-    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4*/
-
+    retf = mp_mulmod(a, b, c, d);
+    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4 */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : a * b mod c check: 4"
     /* check d == e; d = (a * b mod c) */
-    if (mp_cmp(d, e) == 0) {
-        debug_message("Success mp_mulmod(): a * b mod c check.\n");
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        ret = -1;
-        debug_message_value("Fail mp_mulmod(): a * b mod c check.\n", ret, NULL);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, c);
+        ret = FP_VAL;
     }
-
 
     /* end of math tests */
 #else /* not using USE_FAST_MATH */
