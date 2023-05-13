@@ -52,9 +52,12 @@
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
     static const char* TAG = "TFM"; /* esp log breadbrumb */
+#endif
+
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #define TFM_DEBUG_GOJIMMYPI_disabled // not meant for production
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
        /* Each individual math HW can be turned on or off. */
