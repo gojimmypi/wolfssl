@@ -670,13 +670,24 @@ static int debug_message_value(const char* msg, int val,
             debug_message(msg);
         }
         else {
-            ESP_LOGI(TAG, "%s %d", msg, val);
+            if (0 == XMEMCMP(msg, "Fail", 4)) {
+                ESP_LOGE(TAG, "%s %d", msg, val);
+            }
+            else {
+                ESP_LOGI(TAG, "%s %d", msg, val);
+            }
         }
-        esp_show_mp("a", a);
-        esp_show_mp("b", b);
-        esp_show_mp("c", c);
-        esp_show_mp("d", d);
-        esp_show_mp("e", e);
+
+        esp_show_mp("Operand a", a);
+        esp_show_mp("Operand b", b) ;
+        if (d == NULL) {
+            esp_show_mp("Result: c", c) ;
+        }
+        else {
+            esp_show_mp("Operand c", c) ;
+            esp_show_mp("Result: d", d) ;
+        }
+        esp_show_mp("Expect: e", e) ;
     #else
         print("%s", msg, val);
     #endif /* WOLFSSL_ESPIDF */
@@ -2269,7 +2280,84 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf, c, NULL, NULL, NULL, NULL);
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
+        ret = FP_VAL;
+    }
+
+    /*
+    ** two-word multiplication result mp_mulmod test
+    */
+    a[0].used = 1; a[0].dp[0] = 0xF0F0F0F3;
+    b[0].used = 1; b[0].dp[0] = 0x0211;
+    c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
+    retf = mp_mulmod(a, b, c, d);
+
+    /* a * b = 2138388424227 */
+    /* 2138388424227 mod 5 = 2 */
+    e[0].used = 1; e[0].dp[0] = 2;
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : two-word interim a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
+        ret = FP_VAL;
+    }
+
+    /*
+    ** two-word operand mp_mulmod test
+    */
+    a[0].used = 2; a[0].dp[0] = 0xF0F0F0F1;
+                   a[0].dp[1] = 0xF0F0F0F2;
+    b[0].used = 2; b[0].dp[0] = 0x0213;
+                   b[0].dp[1] = 0x0214;
+    c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
+    retf = mp_mulmod(a, b, c, d);
+
+    e[0].used = 1; e[0].dp[0] = 4; /* calculated with HW disabled */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : two-word operands a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
+        ret = FP_VAL;
+    }
+
+    /*
+    ** eight-word x two-word operand mp_mulmod test
+    */
+    a[0].used = 8;  a[0].dp[0] = 0xF0F0F0F1;
+                    a[0].dp[1] = 0xF0F0F0F2;
+                    a[0].dp[2] = 0xF0F0F0F3;
+                    a[0].dp[3] = 0xF0F0F0F4;
+                    a[0].dp[4] = 0xF0F0F0F5;
+                    a[0].dp[5] = 0xF0F0F0F6;
+                    a[0].dp[6] = 0xF0F0F0F7;
+                    a[0].dp[7] = 0xF0F0F0F8;
+
+    b[0].used = 2; b[0].dp[0] = 0x0213;
+                   b[0].dp[1] = 0x0214;
+    c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
+    retf = mp_mulmod(a, b, c, d);
+
+    e[0].used = 1; e[0].dp[0] = 3; /* calculated with HW disabled */
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : 8 word x 2 word operands a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
         ret = FP_VAL;
     }
 
