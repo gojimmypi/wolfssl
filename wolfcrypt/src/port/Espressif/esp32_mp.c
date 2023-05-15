@@ -40,7 +40,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #include "wolfssl/wolfcrypt/logging.h"
-static const char* MP_TAG = "MATH_INT_T2 omit";
+//static const char* MP_TAG = "MATH_INT_T2 omit";
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
 
@@ -622,6 +622,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int WordsForOperand;
 # endif
 
+    if (X->used == 32)
+    {
+        ESP_LOGI(TAG, "32!");
+    }
+
     /* neg check - X*Y becomes negative */
     negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
 
@@ -812,9 +817,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (mp_cmp(tmpZ, M) == MP_GT) {
         /*  Z -= M  */
         mp_sub(tmpZ, M, tmpZ);
+        ESP_LOGI(TAG, "Z is greater than M");
     }
     if (negcheck) {
         mp_sub(M, tmpZ, tmpZ);
+        ESP_LOGI(TAG, "neg check adjustment");
     }
 //  wip
 

@@ -7,6 +7,8 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_test-IDF_v5_ESP32",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{760F4DFF-595E-4725-BB3A-EFA5966D0B70}"
 	ProjectSection(SolutionItems) = preProject
+		..\logfile.md = ..\logfile.md
+		..\sdkconfig = ..\sdkconfig
 		..\..\..\..\..\..\wolfcrypt\test\test.c = ..\..\..\..\..\..\wolfcrypt\test\test.c
 	EndProjectSection
 EndProject
