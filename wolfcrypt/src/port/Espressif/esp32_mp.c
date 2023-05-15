@@ -634,11 +634,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Ms = mp_count_bits(M);
+    ESP_LOGI(TAG, "Bits:, Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
 
     /* maximum bits and words for writing to HW */
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     zwords      = bits2words(min(Ms, Xs + Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
+    ESP_LOGI(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
+                  maxWords_sz, zwords, hwWords_sz);
 
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
         ESP_LOGE(TAG, "exceeds HW maximum bits");
