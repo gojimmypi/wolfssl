@@ -4421,6 +4421,18 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     int B;
 
 #ifdef DEBUG_WOLFSSL
+    /* If there's a HW/SW discrepancy, save original values for review. */
+    mp_int AX[1];
+    mp_int BX[1];
+    mp_int CX[1];
+    mp_int DX[1];
+
+    fp_copy(a, AX); /* copy (src = a) to (dst = AX) */
+    fp_copy(b, BX); /* copy (src = b) to (dst = BX) */
+    fp_copy(c, CX); /* copy (src = c) to (dst = CX) */
+    fp_copy(d, DX); /* copy (src = d) to (dst = DX) */
+
+    /* We'll calculate a second time, and compare to #2 values: */
     mp_int A2[1];
     mp_int B2[1];
     mp_int C2[1];
@@ -4439,10 +4451,25 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     if (A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
         ret = esp_mp_mulmod(a, b, c, d);
 #ifdef DEBUG_WOLFSSL
-        esp_mp_cmp(a, A2);
-        esp_mp_cmp(b, B2);
-        esp_mp_cmp(c, C2);
-        esp_mp_cmp(d, D2);
+        if ((int)a == (int)d) {
+            ESP_LOGI(TAG, "Operand &a = result &d, skipping a/A2 compare.");
+        }
+        else {
+            esp_mp_cmp("a", a, "A2", A2);
+        }
+        if ((int)b == (int)d) {
+            ESP_LOGI(TAG, "Operand &b = operand &d, skipping b/B2 compare.");
+        }
+        else {
+            esp_mp_cmp("b", b, "B2", B2);
+        }
+        if ((int)c == (int)d) {
+            ESP_LOGI(TAG, "Operand &c = operand &d, skipping c/C2 compare.");
+        }
+        else {
+            esp_mp_cmp("c", c, "C2", C2);
+        }
+        esp_mp_cmp("d", d, "D2", D2);
 #endif // DEBUG_WOLFSSL
         return ret;
     }
