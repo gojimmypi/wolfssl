@@ -360,7 +360,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
         ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
         ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
         for (size_t i = 0; i < X->used; i++) {
-            ESP_LOGI(MP_TAG, "%s.dp[%d] = 0x%08x",
+            ESP_LOGI(MP_TAG, "%s.dp[%02d] = 0x%08x",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
                                    (unsigned int)X->dp[i]); /* the value */
@@ -398,8 +398,9 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                           name_A, name_B);
         }
         else {
-            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok. "
-                          "See offset 0x%02x for %s and %s!",
+            ESP_LOGI(TAG, "e = %d", e);
+            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp "
+                          "offset 0x%02x for %s vs %s!",
                            e, name_A, name_B);
             if (A->dp[0] == 1) {
                 ESP_LOGE(TAG, "Both memcmp and fp_cmp fail for %s and %s!",
@@ -415,8 +416,8 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                        name_A, name_B);
     }
     else {
-        esp_show_mp("A", A);
-        esp_show_mp("B", B);
+        esp_show_mp(name_A, A);
+        esp_show_mp(name_B, B);
     }
     return ret;
 }
