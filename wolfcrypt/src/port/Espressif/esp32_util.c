@@ -371,39 +371,48 @@ int esp_show_mp(char* c, MATH_INT_T* X)
 
 /* Perform a full fp_cmp and binary compare.
  * (typically only used during debugging) */
-int esp_mp_cmp(MATH_INT_T* A, MATH_INT_T* B)
+int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
 {
     int ret = MP_OKAY;
     int e = memcmp(A, B, sizeof(fp_int));
     if (fp_cmp(A, B) == FP_EQ) {
         if (e == 0) {
             /* we always want to be here: both esp_show_mp and binary equal! */
-            ESP_LOGV(TAG, "fp_cmp and memcmp match!");
+            ESP_LOGV(TAG, "fp_cmp and memcmp match for %s and %s!",
+                           name_A, name_B);
         }
         else {
             ret = FP_VAL;
-            ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch!");
+            ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch for %s and %s!",
+                           name_A, name_B);
             if (A->dp[0] == 1) {
-                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail for %s and %s!",
+                               name_A, name_B);
             }
         }
     }
     else {
         ret = FP_VAL;
         if (e == 0) {
-            ESP_LOGE(TAG, "memcmp error!");
+            ESP_LOGE(TAG, "memcmp error for %s and %s!",
+                          name_A, name_B);
         }
         else {
-            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok");
+            ESP_LOGE(TAG, "fp_cmp mismatch! memcmp ok. "
+                          "See offset 0x%02x for %s and %s!",
+                           e, name_A, name_B);
             if (A->dp[0] == 1) {
-                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail!");
+                ESP_LOGE(TAG, "Both memcmp and fp_cmp fail for %s and %s!",
+                               name_A, name_B);
             }
         }
-        ESP_LOGI(TAG, "A B mismatch!");
+        ESP_LOGI(TAG, "Mismatch for %s and %s!",
+                       name_A, name_B);
     }
 
     if (ret == MP_OKAY) {
-        ESP_LOGV(TAG, "esp_mp_cmp equal!");
+        ESP_LOGV(TAG, "esp_mp_cmp equal for %s and %s!",
+                       name_A, name_B);
     }
     else {
         esp_show_mp("A", A);

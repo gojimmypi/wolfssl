@@ -75,13 +75,31 @@
     extern "C" {
 #endif
 
-/* Some common utilities */
-int esp_ShowExtendedSystemInfo(void);
-int esp_mp_cmp(MATH_INT_T* A, MATH_INT_T* B);
-int esp_show_mp(char* c, MATH_INT_T* X);
+/*
+******************************************************************************
+** Some common esp utilities
+******************************************************************************
+*/
 
+int esp_ShowExtendedSystemInfo(void);
+
+/* Compare MATH_INT_T A to MATH_INT_T B
+ * During debug, the strings name_A and name_B can help
+ * identify variable name. */
+int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B,MATH_INT_T* B);
+
+/* Show MATH_INT_T A value.
+ * During debug, the string name_A can help
+ * identify variable name. */
+int esp_show_mp(char* name_X, MATH_INT_T* X);
+
+/* To use a Mutex, if must first be initialized */
 int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
+
+/* When the HW is in use, the mutex will be locked. */
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
+
+/* Release the mutex to indicate the HW is no longer in use. */
 int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #ifndef NO_AES
