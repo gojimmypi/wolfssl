@@ -4421,6 +4421,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     int B;
 
 #ifdef DEBUG_WOLFSSL
+    int reti = MP_OKAY;
     /* If there's a HW/SW discrepancy, save original values for review. */
     mp_int AX[1];
     mp_int BX[1];
@@ -4469,7 +4470,19 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         else {
             esp_mp_cmp("c", c, "C2", C2);
         }
-        esp_mp_cmp("d", d, "D2", D2);
+
+        /* Inspect the result. */
+        reti = esp_mp_cmp("d", d, "D2", D2);
+        if (reti == 0) {
+            ESP_LOGI(TAG, "Result d = result D2");
+        }
+        else {
+            ESP_LOGI(TAG, "Original saved parameters:");
+            esp_show_mp("AX", AX);
+            esp_show_mp("BX", BX);
+            esp_show_mp("CX", CX);
+            esp_show_mp("DX", DX);
+        }
 #endif // DEBUG_WOLFSSL
         return ret;
     }
