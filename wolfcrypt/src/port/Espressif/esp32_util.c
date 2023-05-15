@@ -97,7 +97,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #if defined(WOLFSSL_ESPIDF)
     #include <esp_log.h>
     #include "sdkconfig.h"
-    const char* TAG = "Version Info";
+    const char* TAG = "esp32_util";
     #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
 #else
     #include <stdio.h>
