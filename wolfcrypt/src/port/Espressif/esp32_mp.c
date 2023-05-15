@@ -40,6 +40,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #include "wolfssl/wolfcrypt/logging.h"
+static const char* MP_TAG = "MATH_INT_T2 omit";
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
 
@@ -598,7 +599,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     return ret;
 }
 
-/// Large Number Modular Multiplication Z = X × Y mod M */
+/* Large Number Modular Multiplication Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     /* not working properly */
@@ -770,7 +771,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* step.1                     512 bits => 16 words */
     DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
 
-    /* step.2 write X, M and r_inv into memory */
+    /* step.2 write X, M and r_inv into memory.
+     * The capacity of each memory block is 128 words.
+     * The memory blocks use the little endian format for storage,
+     * i.e. the least significant digit of each number is in lowest address.*/
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
@@ -812,6 +816,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 //    if (negcheck) {
 //        mp_sub(M, tmpZ, tmpZ);
 //    }
+// wip
 
     mp_copy(tmpZ, Z);
 
@@ -826,16 +831,16 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 int show_math_int(char* c, MATH_INT_T* X)
 {
-    ESP_LOGI("MATH_INT_T", "%s.used = %d", c, X->used);
-    ESP_LOGI("MATH_INT_T", "%s.sign = %d", c, X->sign);
-    ESP_LOGI("MATH_INT_T", "%s.dp[0] = %x", c, X->dp[0]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[1] = %x", c, X->dp[1]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[2] = %x", c, X->dp[2]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[3] = %x", c, X->dp[3]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[4] = %x", c, X->dp[4]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[5] = %x", c, X->dp[5]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[6] = %x", c, X->dp[6]);
-    ESP_LOGI("MATH_INT_T", "%s.dp[7] = %x", c, X->dp[7]);
+    ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
+    ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
+    ESP_LOGI(MP_TAG, "%s.dp[0] = %x", c, X->dp[0]);
+    ESP_LOGI(MP_TAG, "%s.dp[1] = %x", c, X->dp[1]);
+    ESP_LOGI(MP_TAG, "%s.dp[2] = %x", c, X->dp[2]);
+    ESP_LOGI(MP_TAG, "%s.dp[3] = %x", c, X->dp[3]);
+    ESP_LOGI(MP_TAG, "%s.dp[4] = %x", c, X->dp[4]);
+    ESP_LOGI(MP_TAG, "%s.dp[5] = %x", c, X->dp[5]);
+    ESP_LOGI(MP_TAG, "%s.dp[6] = %x", c, X->dp[6]);
+    ESP_LOGI(MP_TAG, "%s.dp[7] = %x", c, X->dp[7]);
     return 0;
 }
 
