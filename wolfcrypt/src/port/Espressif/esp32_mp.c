@@ -55,7 +55,7 @@
 #endif
 #include <wolfssl/wolfcrypt/wolfmath.h>
 
-static const char* const TAG = "wolfssl_mp";
+static const char* const TAG = "wolfssl_esp32_mp";
 
 #define ESP_HW_RSAMAX_BIT           4096
 #define ESP_HW_MULTI_RSAMAX_BITS    2048
