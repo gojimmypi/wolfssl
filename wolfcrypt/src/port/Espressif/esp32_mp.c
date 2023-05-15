@@ -809,14 +809,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* additional steps                               */
     /* this needs for known issue when Z is greater than M */
-//    if (mp_cmp(tmpZ, M) == MP_GT) {
-//        /*  Z -= M  */
-//        mp_sub(tmpZ, M, tmpZ);
-//    }
-//    if (negcheck) {
-//        mp_sub(M, tmpZ, tmpZ);
-//    }
-// wip
+    if (mp_cmp(tmpZ, M) == MP_GT) {
+        /*  Z -= M  */
+        mp_sub(tmpZ, M, tmpZ);
+    }
+    if (negcheck) {
+        mp_sub(M, tmpZ, tmpZ);
+    }
+//  wip
 
     mp_copy(tmpZ, Z);
 
@@ -827,21 +827,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     return ret;
 #endif
-}
-
-int show_math_int(char* c, MATH_INT_T* X)
-{
-    ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
-    ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
-    ESP_LOGI(MP_TAG, "%s.dp[0] = %x", c, X->dp[0]);
-    ESP_LOGI(MP_TAG, "%s.dp[1] = %x", c, X->dp[1]);
-    ESP_LOGI(MP_TAG, "%s.dp[2] = %x", c, X->dp[2]);
-    ESP_LOGI(MP_TAG, "%s.dp[3] = %x", c, X->dp[3]);
-    ESP_LOGI(MP_TAG, "%s.dp[4] = %x", c, X->dp[4]);
-    ESP_LOGI(MP_TAG, "%s.dp[5] = %x", c, X->dp[5]);
-    ESP_LOGI(MP_TAG, "%s.dp[6] = %x", c, X->dp[6]);
-    ESP_LOGI(MP_TAG, "%s.dp[7] = %x", c, X->dp[7]);
-    return 0;
 }
 
 /* Large Number Modular Exponentiation
