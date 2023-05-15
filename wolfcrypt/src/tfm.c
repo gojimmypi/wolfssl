@@ -4417,8 +4417,8 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
  #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     int ret = MP_OKAY;
-    int A;
-    int B;
+    int As; /* How many a bits? */
+    int Bs; /* How many b bits? */
 
 #ifdef DEBUG_WOLFSSL
     int reti = MP_OKAY;
@@ -4443,13 +4443,15 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     fp_copy(b, B2); /* copy (src = b) to (dst = B2) */
     fp_copy(c, C2); /* copy (src = c) to (dst = C2) */
     fp_copy(d, D2); /* copy (src = d) to (dst = D2) */
+
+    ESP_LOGI(TAG, "\n\nNew calc\n\n.");
     fp_mulmod(A2, B2, C2, D2);
 #endif // DEBUG_WOLFSSL
 
-    A = fp_count_bits(a);
-    B = fp_count_bits(b);
+    As = fp_count_bits(a);
+    Bs = fp_count_bits(b);
 
-    if (A >= ESP_RSA_MULM_BITS && B >= ESP_RSA_MULM_BITS) {
+    if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
         ret = esp_mp_mulmod(a, b, c, d);
 #ifdef DEBUG_WOLFSSL
         if ((int)a == (int)d) {
