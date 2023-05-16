@@ -4442,6 +4442,12 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     fp_copy(d, D2); /* copy (src = d) to (dst = D2) */
 
     ESP_LOGI(TAG, "\n\nNew calc\n\n.");
+    if (A2->used == 32) {
+        ESP_LOGI(TAG, "X->used == 32!");
+//        esp_show_mp("a", a);
+//        esp_show_mp("b", b);
+//        esp_show_mp("c", c);
+    }
     fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
 #endif // DEBUG_WOLFSSL
 
@@ -4453,6 +4459,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
         ret = esp_mp_mulmod(a, b, c, d);
+
 #ifdef DEBUG_WOLFSSL
         if ((int)a == (int)d) {
             ESP_LOGI(TAG, "Operand &a = result &d, skipping a/A2 compare.");
