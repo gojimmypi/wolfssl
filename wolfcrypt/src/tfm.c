@@ -54,15 +54,16 @@
 
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
-    static const char* TAG = "TFM"; /* esp log breadbrumb */
+    static const char* TAG = "TFM"; /* esp log breadcrumb */
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #define TFM_DEBUG_GOJIMMYPI_disabled // not meant for production
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
        /* Each individual math HW can be turned on or off. */
-       #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-       #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
     #endif
 
     /* Note with HW there's a EPS_RSA_EXPT_XBTIS setting
@@ -698,7 +699,7 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   }
 
   /* if a < b then q=0, r = a */
-  if (fp_cmp_mag (a, b) == FP_LT)
+  if (fp_cmp_mag (a, b) == FP_LT) /* TODO incorrect when zero padding, e.g. rinv*/
   {
     if (d != NULL) {
       fp_copy (a, d);
@@ -1045,7 +1046,7 @@ int fp_mod(fp_int *a, fp_int *b, fp_int *c)
       if (!fp_iszero(t) && (t->sign != b->sign)) {
          err = fp_add(t, b, c);
       } else {
-         fp_copy(t, c);
+         fp_copy(t, c); /* copy src t to dst c */
      }
   }
 
@@ -2911,7 +2912,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     int x;
     x = fp_count_bits(X);
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
@@ -2997,8 +2998,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
    int x = fp_count_bits (X);
    ESP_LOGV("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
 #endif
@@ -3020,8 +3020,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
    if (x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV("TFM peek 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
       return esp_mp_exptmod(G, X, x, P, Y);
@@ -3029,8 +3028,9 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
    else{
       ESP_LOGV("TFM peek 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
    }
-   /* As we didn't return from HW, we are falling through to SW: */
-#endif
+   /* As we didn't return from HW based on XBITS,
+   ** we are falling through to SW: */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
 #ifndef POSITIVE_EXP_ONLY  /* reduce stack if assume no negatives */
@@ -3087,8 +3087,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 
 int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
    int x = fp_count_bits (X);
 #endif
 
@@ -3102,8 +3101,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_VAL;
    }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
    if(x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV(TAG, "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
       return esp_mp_exptmod(G, X, x, P, Y);
@@ -3446,7 +3444,7 @@ int fp_cmp_mag(fp_int *a, fp_int *b)
 {
    int x;
 
-   if (a->used > b->used) {
+   if (a->used > b->used) { /* zero padding error */
       return FP_GT;
    } else if (a->used < b->used) {
       return FP_LT;
@@ -4414,8 +4412,7 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
- #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
     int ret = MP_OKAY;
     int As; /* How many a bits? */
     int Bs; /* How many b bits? */
@@ -4448,7 +4445,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     fp_mulmod(A2, B2, C2, D2);
 #endif // DEBUG_WOLFSSL
 
-    As = fp_count_bits(a);
+    As = fp_count_bits(a); /* TODO: do we even need this here? */
     Bs = fp_count_bits(b);
 
     if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
@@ -4479,18 +4476,22 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
             ESP_LOGI(TAG, "Result d = result D2");
         }
         else {
+            /* When d != D2, there's a HW/SW calc problem.
+             * Show the original interesting parameters. */
             ESP_LOGI(TAG, "Original saved parameters:");
-            esp_show_mp("AX", AX);
-            esp_show_mp("BX", BX);
-            esp_show_mp("CX", CX);
-            esp_show_mp("DX", DX);
+            esp_show_mp("a", AX);
+            esp_show_mp("b", BX);
+            esp_show_mp("c", CX);
+            esp_show_mp("d", DX);
         }
 #endif // DEBUG_WOLFSSL
         return ret;
     }
     else
- #endif
-   return fp_mulmod(a, b, c, d);
+        /* depending on ESP_RSA_MULM_BITS setting, we may
+        ** fall through to SW: */
+#endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
+    return fp_mulmod(a, b, c, d);
 }
 
 /* d = a - b (mod c) */
