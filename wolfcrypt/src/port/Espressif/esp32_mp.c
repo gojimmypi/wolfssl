@@ -643,13 +643,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (X->used == 32)
     {
-        ESP_LOGI(TAG, "32!");
+        ESP_LOGI(TAG, "X->used == 32!");
     }
 
     /* neg check - X*Y becomes negative */
     negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
 
-    /* ask bits number */
+    /* determine number of bits for HW parameter */
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Ms = mp_count_bits(M);
@@ -663,7 +663,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
                   maxWords_sz, zwords, hwWords_sz);
 
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGE(TAG, "exceeds HW maximum bits");
+        ESP_LOGE(TAG, "exceeds HW maximum bits = %d", ESP_HW_RSAMAX_BIT);
         return MP_VAL; /*  Error: value is not able to be used. */
     }
     /* calculate r_inv = R^2 mode M
@@ -686,7 +686,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* success, show details */
         Rs = mp_count_bits(r_inv);
         ESP_LOGI(TAG, "r_inv bits = %d", Rs);
-        ESP_LOGI(TAG, "Exponent = %lu", Exponent);
+        ESP_LOGI(TAG, "Exponent   = %lu", Exponent);
         esp_show_mp("    M", M);
         esp_show_mp("r_inv", r_inv);
     }
@@ -703,6 +703,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_clear(tmpZ);
         mp_clear(r_inv);
         return ret;
+    }
+    else {
+        ESP_LOGI(TAG, "mp = %d", mp);
     }
 
 #if CONFIG_IDF_TARGET_ESP32S3
