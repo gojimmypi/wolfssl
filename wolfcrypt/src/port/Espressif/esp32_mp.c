@@ -231,6 +231,8 @@ static void esp_mp_hw_unlock( void )
  * A New Algorithm for Inversion: mod p^k, June 28 2017 */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
+    ESP_LOGW(TAG, "\nBegin esp_calc_Mdash \n");
+
     int i;
     int xi;
     int b0 = 1;
@@ -252,6 +254,8 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     }
     /* 2's complement */
     *md = ~x + 1;
+    ESP_LOGW(TAG, "\nEnd esp_calc_Mdash \n");
+
     return MP_OKAY;
 }
 
@@ -365,9 +369,14 @@ static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
 
     for (i=0; i < hwords; i++) {
         if (i < len) {
+            ESP_LOGV(TAG, "Write i = %d value.", i);
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
         }
         else {
+            if (i == 0) {
+                ESP_LOGE(TAG, "esp_mpint_to_memblock zero?");
+            }
+            ESP_LOGV(TAG, "Write i = %d value = zero.", i);
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
         }
     }
@@ -397,6 +406,8 @@ static word32 bits2words(word32 bits)
 /* get rinv */
 static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
+    ESP_LOGW(TAG, "\nBegin esp_get_rinv \n");
+
     int ret = 0;
 
     /* 2^(exp)*/
@@ -411,12 +422,15 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
         return ret;
     }
 
+    ESP_LOGW(TAG, "\nEnd esp_get_rinv \n");
     return ret;
 }
 
 /* Z = X * Y;  */
 int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
+    ESP_LOGW(TAG, "\nBegin esp_mp_mul \n");
+
     int ret;
 
 #ifdef WOLFSSL_SP_INT_NEGATIVE
@@ -517,7 +531,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
 
-    /* ask bits number */
+    /* determine count of bits. Used as HW parameter.   */
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
@@ -596,18 +610,23 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif
     Z->sign = X->sign ^ Y->sign;
     esp_clean_result(Z, 0);
+
+    ESP_LOGW(TAG, "\nEnd esp_mp_mul \n");
+
     return ret;
 }
 
 /* Large Number Modular Multiplication Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
+    ESP_LOGW(TAG, "\nBegin esp_mp_mulmod \n");
     /* not working properly */
     int ret = 0;
     int negcheck;
     word32 Xs;
     word32 Ys;
     word32 Ms;
+    word32 Rs;
     word32 maxWords_sz;
     word32 hwWords_sz;
     word32 zwords;
@@ -662,6 +681,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_clear(tmpZ);
         mp_clear(r_inv);
         return ret;
+    }
+    else {
+        /* success, show details */
+        Rs = mp_count_bits(r_inv);
+        ESP_LOGI(TAG, "r_inv bits = %d", Rs);
+        ESP_LOGI(TAG, "Exponent = %lu", Exponent);
+        esp_show_mp("    M", M);
+        esp_show_mp("r_inv", r_inv);
     }
 
     /* lock HW for use */
@@ -783,12 +810,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      * The capacity of each memory block is 128 words.
      * The memory blocks use the little endian format for storage,
      * i.e. the least significant digit of each number is in lowest address.*/
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
-                          r_inv,
-                          mp_count_bits(r_inv),
-                          hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X,     Xs, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M,     Ms, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, r_inv, Rs, hwWords_sz);
 
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
@@ -828,13 +852,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 //  wip
 
-    mp_copy(tmpZ, Z);
+    mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
     mp_clear(tmpZ);
     mp_clear(r_inv);
 
     esp_clean_result(Z, 0);
 
+    ESP_LOGW(TAG, "\nEnd esp_mp_mulmod \n");
     return ret;
 #endif
 }
@@ -860,6 +885,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
  */
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
+    ESP_LOGW(TAG, "\nBegin esp_mp_exptmod \n");
+
 #ifdef DEBUG_WOLFSSL
     if (esp_mp_exptmod_depth_counter != 0) {
         ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
