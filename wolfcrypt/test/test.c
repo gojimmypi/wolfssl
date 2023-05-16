@@ -679,15 +679,15 @@ static int debug_message_value(const char* msg, int val,
         }
 
         esp_show_mp("Operand a", a);
-        esp_show_mp("Operand b", b) ;
+        esp_show_mp("Operand b", b);
         if (d == NULL) {
-            esp_show_mp("Result: c", c) ;
+            esp_show_mp("Result: c", c);
         }
         else {
-            esp_show_mp("Operand c", c) ;
-            esp_show_mp("Result: d", d) ;
+            esp_show_mp("Operand c", c);
+            esp_show_mp("Result: d", d);
         }
-        esp_show_mp("Expect: e", e) ;
+        esp_show_mp("Expect: e", e);
     #else
         print("%s", msg, val);
     #endif /* WOLFSSL_ESPIDF */
@@ -2513,7 +2513,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* failure:  d[0].dp[ 0] = 0x693790da
      * expected: e[0].dp[ 0] = 0x6dbbd8d1 */
 
-    /* call TFM */
+    /* call the interesting TFM */
     retf = mp_mulmod(a, b, c, d);
 
     /* call ESP directly (same result) */
