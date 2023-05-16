@@ -360,7 +360,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
         ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
         ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
         for (size_t i = 0; i < X->used; i++) {
-            ESP_LOGI(MP_TAG, "%s.dp[%02d] = 0x%08x",
+            ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
                                    (unsigned int)X->dp[i]); /* the value */
