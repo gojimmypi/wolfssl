@@ -146,15 +146,6 @@ void app_main(void)
     ShowExtendedSystemInfo();
 #endif
 
-#if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s", LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
-#endif
-
-
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     /* not available for C3 at this time */
