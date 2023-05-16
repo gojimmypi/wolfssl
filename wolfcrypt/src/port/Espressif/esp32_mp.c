@@ -231,7 +231,7 @@ static void esp_mp_hw_unlock( void )
  * A New Algorithm for Inversion: mod p^k, June 28 2017 */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
-    ESP_LOGW(TAG, "\nBegin esp_calc_Mdash \n");
+    ESP_LOGV(TAG, "\nBegin esp_calc_Mdash \n");
 
     int i;
     int xi;
@@ -254,7 +254,7 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     }
     /* 2's complement */
     *md = ~x + 1;
-    ESP_LOGW(TAG, "\nEnd esp_calc_Mdash \n");
+    ESP_LOGV(TAG, "\nEnd esp_calc_Mdash \n");
 
     return MP_OKAY;
 }
@@ -367,19 +367,25 @@ static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
 
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
+    portDISABLE_INTERRUPTS();
     for (i=0; i < hwords; i++) {
         if (i < len) {
             ESP_LOGV(TAG, "Write i = %d value.", i);
+            __asm__ volatile("memw");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
+            __asm__ volatile("memw");
         }
         else {
             if (i == 0) {
                 ESP_LOGE(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
+            __asm__ volatile("memw");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            __asm__ volatile("memw");
         }
     }
+    portENABLE_INTERRUPTS();
 }
 
 /* return needed HW words.
@@ -406,7 +412,7 @@ static word32 bits2words(word32 bits)
 /* get rinv */
 static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
-    ESP_LOGW(TAG, "\nBegin esp_get_rinv \n");
+    ESP_LOGV(TAG, "\nBegin esp_get_rinv \n");
 
     int ret = 0;
 
@@ -422,14 +428,14 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
         return ret;
     }
 
-    ESP_LOGW(TAG, "\nEnd esp_get_rinv \n");
+    ESP_LOGV(TAG, "\nEnd esp_get_rinv \n");
     return ret;
 }
 
 /* Z = X * Y;  */
 int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
-    ESP_LOGW(TAG, "\nBegin esp_mp_mul \n");
+    ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
 
     int ret;
 
@@ -611,7 +617,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Z->sign = X->sign ^ Y->sign;
     esp_clean_result(Z, 0);
 
-    ESP_LOGW(TAG, "\nEnd esp_mp_mul \n");
+    ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
     return ret;
 }
@@ -619,7 +625,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 /* Large Number Modular Multiplication Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
-    ESP_LOGW(TAG, "\nBegin esp_mp_mulmod \n");
+    ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
     /* not working properly */
     int ret = 0;
     int negcheck;
@@ -644,6 +650,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (X->used == 32)
     {
         ESP_LOGI(TAG, "X->used == 32!");
+//        esp_show_mp("a", X);
+//        esp_show_mp("b", Y);
+//        esp_show_mp("c", M);
     }
 
     /* neg check - X*Y becomes negative */
@@ -687,8 +696,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         Rs = mp_count_bits(r_inv);
         ESP_LOGI(TAG, "r_inv bits = %d", Rs);
         ESP_LOGI(TAG, "Exponent   = %lu", Exponent);
-        esp_show_mp("    M", M);
-        esp_show_mp("r_inv", r_inv);
+        //esp_show_mp("    M", M);
+        //esp_show_mp("r_inv", r_inv);
     }
 
     /* lock HW for use */
@@ -697,7 +706,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_clear(r_inv);
         return ret;
     }
-    /* Calculate M' */
+    /* Calculate M' */ // todo move before lock
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(tmpZ);
@@ -729,6 +738,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* 1. Wait until hardware is ready. */
     if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean failed.");
+        esp_mp_hw_unlock();
         return ret;
     }
 
@@ -740,6 +750,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     OperandBits = max(max(Xs, Ys), Ms);
     if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "result exceeds max bit length");
+        esp_mp_hw_unlock();
         return MP_VAL; /*  Error: value is not able to be used. */
     }
     WordsForOperand = bits2words(OperandBits);
@@ -753,15 +764,16 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* 5. Load X, Y, M, r' operands.
      * Note RSA_MEM_RB_BLOCK_BASE == RSA_MEM_Z_BLOC_BASE on ESP32s3*/
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, Ys, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, r_inv, mp_count_bits(r_inv), hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X,     Xs, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y,     Ys, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M,     Ms, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, r_inv, Rs, hwWords_sz);
 
     /* 6. Start operation and wait until it completes. */
     process_start(RSA_MOD_MULT_START_REG);
     ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
     if (MP_OKAY != ret) {
+        esp_mp_hw_unlock();
         return ret;
     }
 
@@ -772,14 +784,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_hw_unlock();
 
     if (negcheck) {
-        mp_sub(M, &tmpZ, &tmpZ);
+        mp_sub(M, tmpZ, tmpZ);
     }
 
-    mp_copy(&tmpZ, Z);
-    mp_clear(&tmpZ);
-    mp_clear(&r_inv);
 
-    return ret;
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
     /* non-S3 Xtensa */
@@ -819,11 +827,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
-    asm volatile("memw");
+    __asm__ volatile("memw");
 
     /* step.4 start process                           */
     process_start(RSA_MULT_START_REG);
-    asm volatile("memw");
+    __asm__ volatile("memw");
 
     /* step.5,6 wait until done                       */
     wait_until_done(RSA_INTERRUPT_REG);
@@ -841,9 +849,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.13 clear and release HW                   */
     esp_mp_hw_unlock();
+#endif
 
     /* additional steps                               */
-    /* this needs for known issue when Z is greater than M */
+    /* this is needed for known issue when Z is greater than M */
     if (mp_cmp(tmpZ, M) == MP_GT) {
         /*  Z -= M  */
         mp_sub(tmpZ, M, tmpZ);
@@ -853,7 +862,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_sub(M, tmpZ, tmpZ);
         ESP_LOGI(TAG, "neg check adjustment");
     }
-//  wip
 
     mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
@@ -862,9 +870,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     esp_clean_result(Z, 0);
 
-    ESP_LOGW(TAG, "\nEnd esp_mp_mulmod \n");
+    ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
     return ret;
-#endif
+
 }
 
 /* Large Number Modular Exponentiation
@@ -888,7 +896,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
  */
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
-    ESP_LOGW(TAG, "\nBegin esp_mp_exptmod \n");
+    ESP_LOGV(TAG, "\nBegin esp_mp_exptmod \n");
 
 #ifdef DEBUG_WOLFSSL
     if (esp_mp_exptmod_depth_counter != 0) {
