@@ -4442,13 +4442,16 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     fp_copy(d, D2); /* copy (src = d) to (dst = D2) */
 
     ESP_LOGI(TAG, "\n\nNew calc\n\n.");
-    fp_mulmod(A2, B2, C2, D2);
+    fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
 #endif // DEBUG_WOLFSSL
 
-    As = fp_count_bits(a); /* TODO: do we even need this here? */
+    As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
     Bs = fp_count_bits(b);
 
     if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
+        ESP_LOGI(TAG, "Both A's = %d and B's = %d are greater than "
+                      "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
+                       As, Bs, ESP_RSA_MULM_BITS);
         ret = esp_mp_mulmod(a, b, c, d);
 #ifdef DEBUG_WOLFSSL
         if ((int)a == (int)d) {
