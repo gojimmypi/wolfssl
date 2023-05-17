@@ -148,8 +148,8 @@
 
 /* #define HASH_SIZE_LIMIT */ /* for test.c */
 
-//#define USE_FAST_MATH
-#define SP_MATH
+#define USE_FAST_MATH
+// #define SP_MATH
 
 #define WOLFSSL_SMALL_STACK
 
