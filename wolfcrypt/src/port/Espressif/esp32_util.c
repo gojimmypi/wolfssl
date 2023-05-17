@@ -362,7 +362,9 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     else {
         ESP_LOGI(MP_TAG, "");
         ESP_LOGI(MP_TAG, "%s.used = %d;", c, X->used);
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
         ESP_LOGI(MP_TAG, "%s.sign = %d;", c, X->sign);
+#endif
         for (size_t i = 0; i < X->used; i++) {
             ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;",
                                    c, /* the supplied variable name      */
@@ -386,7 +388,7 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                            name_A, name_B);
         }
         else {
-            ret = FP_VAL;
+            ret = MP_VAL;
             ESP_LOGE(TAG, "fp_cmp match, memcmp mismatch for %s and %s!",
                            name_A, name_B);
             if (A->dp[0] == 1) {
@@ -396,7 +398,7 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
         }
     }
     else {
-        ret = FP_VAL;
+        ret = MP_VAL;
         if (e == 0) {
             ESP_LOGE(TAG, "memcmp error for %s and %s!",
                           name_A, name_B);
