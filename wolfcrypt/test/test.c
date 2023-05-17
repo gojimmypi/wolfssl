@@ -648,11 +648,11 @@ static int debug_message(const char* msg)
 }
 
 static int debug_message_value(const char* msg, int val,
-                                fp_int* a,
-                                fp_int* b,
-                                fp_int* c,
-                                fp_int* d,
-                                fp_int* e
+                                MATH_INT_T* a,
+                                MATH_INT_T* b,
+                                MATH_INT_T* c,
+                                MATH_INT_T* d,
+                                MATH_INT_T* e
                                 )
 {
     int ret = 0;
@@ -1996,13 +1996,20 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 }
 #endif /* WOLFSSL_KEY_GEN || WOLFSSL_CERT_GEN */
 
-WOLFSSL_TEST_SUBROUTINE int math_test(void)
-{
 #define BADVAL 0xf5f5f5f5 /* simulate uninitialized memory with 0xf5 */
 #define MP_SUCCESS_MSG "Success: "
 #define MP_FAILURE_MSG "Failed:  "
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE ""
+
+int math_test_1(void)
+{
+    int ret = FP_OKAY; /* assume success until proven otherwise */
+    return ret;
+}
+
+WOLFSSL_TEST_SUBROUTINE int math_test(void)
+{
 
     int ret = FP_OKAY; /* assume success until proven otherwise */
     int retf = FP_OKAY; /* we'll inspect some interim functions */
@@ -2017,7 +2024,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
 
-#ifdef USE_FAST_MATH
+#if defined(USE_FAST_MATH) || defined (SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
     int oldused;  (void)oldused;
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
