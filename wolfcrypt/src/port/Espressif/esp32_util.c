@@ -346,7 +346,11 @@ int esp_ShowExtendedSystemInfo()
     return ShowExtendedSystemInfo();
 }
 
-/* Print a MATH_INT_T */
+/* Print a MATH_INT_T value.
+ *
+ * Note with the right string parameters, the result can be pasted as
+ * initialization code.
+ */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
@@ -357,10 +361,10 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     }
     else {
         ESP_LOGI(MP_TAG, "");
-        ESP_LOGI(MP_TAG, "%s.used = %d", c, X->used);
-        ESP_LOGI(MP_TAG, "%s.sign = %d", c, X->sign);
+        ESP_LOGI(MP_TAG, "%s.used = %d;", c, X->used);
+        ESP_LOGI(MP_TAG, "%s.sign = %d;", c, X->sign);
         for (size_t i = 0; i < X->used; i++) {
-            ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x",
+            ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
                                    (unsigned int)X->dp[i]); /* the value */
@@ -416,8 +420,8 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                        name_A, name_B);
     }
     else {
-        esp_show_mp(name_A, A);
-        esp_show_mp(name_B, B);
+      //  esp_show_mp(name_A, A);
+      //  esp_show_mp(name_B, B);
     }
     return ret;
 }
