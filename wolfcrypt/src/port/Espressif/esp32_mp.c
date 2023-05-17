@@ -668,6 +668,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     zwords      = bits2words(min(Ms, Xs + Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
+
+    if ( (Xs == 1023) && (Ys = 1024) && (Ms = 1024) ) {
+        ESP_LOGI(TAG, "Challenge Property Match!");
+        esp_show_mp("a[0]", X);
+        esp_show_mp("b[0]", Y);
+        esp_show_mp("c[0]", M);
+    }
+
     ESP_LOGI(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
                   maxWords_sz, zwords, hwWords_sz);
 
