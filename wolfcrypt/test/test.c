@@ -2020,7 +2020,7 @@ int math_test_1(void)
     /* initialize operand a */
     {
         a[0].used = 32;
-        /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
+     /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
         a[0].dp[ 0] = 0x83771253;
         a[0].dp[ 1] = 0x92e70187;
         a[0].dp[ 2] = 0x9c8b5c4f;
@@ -2057,7 +2057,7 @@ int math_test_1(void)
     /* initialize operand b */
     {
         b[0].used = 32;
-        /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
+     /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
         b[0].dp[ 0] = 0xc2eb217b;
         b[0].dp[ 1] = 0x30fc9bb2;
         b[0].dp[ 2] = 0xee4af250;
@@ -2094,7 +2094,7 @@ int math_test_1(void)
     /* initialize operand c */
     {
         c[0].used = 32;
-        /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
+     /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
         c[0].dp[ 0] = 0xb75a21e0;
         c[0].dp[ 1] = 0xd2df7387;
         c[0].dp[ 2] = 0xc834720b;
