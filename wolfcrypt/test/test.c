@@ -2244,6 +2244,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     **************************************************************************
     */
     ret = math_test_1();
+    if (ret != MP_OKAY) {
+        return ret;
+    }
 
     /* the values are both 0, both [a] and [b] claim to use the
     ** same umber of words. the values should still be equal */
@@ -3137,7 +3140,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 #endif /* USE_FAST_MATH */
 
     //  TODO remove this, but allow for force success during testing
-    ret = 0;
+    // ret = 0;
 
     return ret;
 }
