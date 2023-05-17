@@ -47,6 +47,8 @@
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
 
+#define ESP_VERIFY_MEMBLOCK
+
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else
@@ -353,6 +355,12 @@ static void esp_memblock_to_mpint(word32 mem_address,
 {
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
     mp->used = numwords;
+
+#if defined(ESP_VERIFY_MEMBLOCK)
+    if (0 != XMEMCMP((const void *)mem_address, mp->dp, (int)numwords)) {
+        ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint ");
+    }
+#endif
 }
 
 /* write mp_init into memory block
@@ -371,21 +379,50 @@ static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
     for (i=0; i < hwords; i++) {
         if (i < len) {
             ESP_LOGV(TAG, "Write i = %d value.", i);
-            __asm__ volatile("memw");
+            __asm__ __volatile__("memw");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
-            __asm__ volatile("memw");
+            __asm__ __volatile__("memw");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+
         }
         else {
             if (i == 0) {
                 ESP_LOGE(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
-            __asm__ volatile("memw");
+            __asm__ __volatile__("memw");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
-            __asm__ volatile("memw");
+            __asm__ __volatile__("memw");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
+            __asm__ __volatile__("nop");
         }
     }
     portENABLE_INTERRUPTS();
+
+#if defined(ESP_VERIFY_MEMBLOCK)
+    len = XMEMCMP((const void *)mem_address, mp->dp, (int)len);
+    if (len != 0) {
+        ESP_LOGE(TAG, "Oops RSA_MEM_X_BLOCK_BASE");
+    }
+#endif
 }
 
 /* return needed HW words.
@@ -584,6 +621,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                           X,
                           Xs,
                           hwWords_sz);
+
     /* Y(let-extend)                          */
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (hwWords_sz<<2),
                           Y,
@@ -683,7 +721,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGE(TAG, "exceeds HW maximum bits = %d", ESP_HW_RSAMAX_BIT);
         return MP_VAL; /*  Error: value is not able to be used. */
     }
-    /* calculate r_inv = R^2 mode M
+    /* calculate r_inv = R^2 mod M
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
