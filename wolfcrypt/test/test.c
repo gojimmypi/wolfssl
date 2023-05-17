@@ -1996,12 +1996,243 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 }
 #endif /* WOLFSSL_KEY_GEN || WOLFSSL_CERT_GEN */
 
+
 #define BADVAL 0xf5f5f5f5 /* simulate uninitialized memory with 0xf5 */
 #define MP_SUCCESS_MSG "Success: "
 #define MP_FAILURE_MSG "Failed:  "
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE ""
+#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
+#ifndef NO_MATH_TEST
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_A_2_1[] =
+{
+    0x000000d3,
+    0x0000001a
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_A_32_1[] =
+{
+    0x83771253,
+    0x92e70187,
+    0x9c8b5c4f,
+    0x7c98248a,
+    0xf15131b7,
+    0xe3a44aaa,
+    0xf82f8e99,
+    0x322ed523,
+    0x440256e5,
+    0x000b4157,
+    0x9d371158,
+    0x06e1a99e,
+    0x1dc14e3a,
+    0xf32a34cb,
+    0x5d6c9ab8,
+    0x72edfe22,
+    0xa0c90031,
+    0xc558cba8,
+    0x9875d436,
+    0x2048e110,
+    0xe1dd7732,
+    0xd1fb01ab,
+    0x6b1f1c83,
+    0x5815a8ad,
+    0xa9d95191,
+    0x59356aec,
+    0xb6e7657f,
+    0xb9feeabf,
+    0x86d94415,
+    0xb80eb675,
+    0x927ec36d,
+    0x3b01b24f,
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_B_32_1[] =
+{
+    0xc2eb217b,
+    0x30fc9bb2,
+    0xee4af250,
+    0xb1c99162,
+    0x70c62557,
+    0x78adea62,
+    0x6e36e72d,
+    0x14240123,
+    0x82b6f7a7,
+    0x4f361f81,
+    0x73941edf,
+    0xfc4eb679,
+    0xcbae418c,
+    0x1c3bcf25,
+    0xb6b94991,
+    0x2fa451a3,
+    0xe37d3ead,
+    0x14afe708,
+    0x262e0ca1,
+    0x3986dbe9,
+    0x3deeac2a,
+    0x472fe551,
+    0x76787462,
+    0xfa64a5ac,
+    0xc6034935,
+    0x13d4fd9b,
+    0x4fb879f6,
+    0x2d2a5e3c,
+    0xc88248ec,
+    0xbe7ef69e,
+    0x1ad8d444,
+    0xedb16d1e,
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_C_32_1[] =
+{
+    0xb75a21e0,
+    0xd2df7387,
+    0xc834720b,
+    0x210183a3,
+    0xe743c335,
+    0x56b8d767,
+    0x35f3c110,
+    0xa5250acd,
+    0x5094303f,
+    0xcc583ea8,
+    0xd3fb8dcb,
+    0xebb78a9d,
+    0x0177b61f,
+    0x082146da,
+    0x0a1917a6,
+    0xdb032780,
+    0xf116c65b,
+    0x18ee2a7a,
+    0xc2722e0f,
+    0x9cf4b28f,
+    0xe350ad5f,
+    0x9b783a1c,
+    0xf1bfec06,
+    0x7421788f,
+    0xeae3b9b6,
+    0xd4a4504a,
+    0x6fba3023,
+    0x8501ad84,
+    0xfdb41f82,
+    0x8662adaf,
+    0x713ef79e,
+    0xc5868862,
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_32_1[] =
+{
+    0xd6d98ec1,
+    0x798a9709,
+    0xf667b0ae,
+    0x955c4c69,
+    0xace4e954,
+    0xf8cf5230,
+    0x752387e1,
+    0xddbf1ccb,
+    0x125fb4ad,
+    0xbfe0434d,
+    0x871df184,
+    0x5e431c22,
+    0xc6bf6f53,
+    0x87a80a70,
+    0xc5913175,
+    0x3d8fbf38,
+    0x543849ad,
+    0x12b8bd81,
+    0x67721be8,
+    0xa49e2882,
+    0x06126d1e,
+    0x7b247ee1,
+    0xf195a48d,
+    0x320f4839,
+    0x1ee50660,
+    0x6fcba0f2,
+    0x871a2c14,
+    0x35823cdc,
+    0xb75266c1,
+    0x5f1f4553,
+    0xc123d312,
+    0xbf79fcb7,
+};
+#endif /* MATH_TEST constant declarations */
+
+/*
+ * Initialize T.
+ *
+ * Load the (MATH_INT_T)T with [word_len] number of fp_digit
+ * values from the dp[] array. Also set the T.used value.
+ *
+ * Returns MP_OKAY if successful.
+ *
+ */
+int mp_init_load(MATH_INT_T* T, fp_digit dp[], int word_len)
+{
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+
+    if (T == NULL) {
+        ret = FP_VAL;
+    }
+
+    if (ret == MP_OKAY) {
+        mp_init(T);
+    }
+
+    if (ret == MP_OKAY) {
+        XMEMCPY(&T->dp, dp, word_len*sizeof(fp_digit));
+    }
+
+    if (ret == MP_OKAY) {
+        T->used = word_len;
+    }
+
+    return ret;
+}
+
+
+int math_test_byte_order_check()
+{
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1]; /* operands */
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_init_load() byte order check"
+    mp_init_load(a, (fp_digit *)&OPERAND_A_2_1, COUNT_OF(OPERAND_A_2_1));
+
+    if ((a[0].dp[0] != OPERAND_A_2_1[0]) || (a[0].dp[1] != OPERAND_A_2_1[1])) {
+        ESP_LOGE(TAG, "wow");
+        ret = MP_VAL; /* mp_init_load did not load data correctly? */
+    }
+
+    if (a[0].used != COUNT_OF(OPERAND_A_2_1)) {
+        ESP_LOGE(TAG, "wow");
+        ret = MP_VAL; /* mp_init_load did not load data correctly? */
+    }
+
+    if (a[0].sign != MP_ZPOS) {
+        ESP_LOGE(TAG, "wow");
+        ret = MP_VAL; /* mp_init_load did not load data correctly? */
+    }
+
+#if defined(LITTLE_ENDIAN_ORDER)
+    if (((unsigned char*)a[0].dp)[0] != ((unsigned char*)&OPERAND_A_2_1)[0]) {
+        ret = MP_VAL; /* mp_init_load did not load data correctly? */
+        ESP_LOGE(TAG, "wow");
+    }
+#endif
+
+    if (ret == MP_OKAY) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            ret,
+                            a,
+                            NULL, NULL, NULL, NULL);
+    }
+    return ret;
+}
+/* Math test 1 is a known case where HW fails to return same value as SW. v*/
 int math_test_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
@@ -2011,161 +2242,14 @@ int math_test_1(void)
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
 
-    mp_init(a);
-    mp_init(b);
-    mp_init(c);
+
+    /* 32-operand parameters for math test #1 */
+    mp_init_load(a, (fp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
+    mp_init_load(b, (fp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
+    mp_init_load(c, (fp_digit *)&OPERAND_C_32_1, COUNT_OF(OPERAND_C_32_1) );
     mp_init(d);
-    mp_init(e);
+    mp_init_load(e, (fp_digit *)&RESULT_E_32_1, COUNT_OF(RESULT_E_32_1) );
 
-    /* initialize operand a */
-    {
-        a[0].used = 32;
-     /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
-        a[0].dp[ 0] = 0x83771253;
-        a[0].dp[ 1] = 0x92e70187;
-        a[0].dp[ 2] = 0x9c8b5c4f;
-        a[0].dp[ 3] = 0x7c98248a;
-        a[0].dp[ 4] = 0xf15131b7;
-        a[0].dp[ 5] = 0xe3a44aaa;
-        a[0].dp[ 6] = 0xf82f8e99;
-        a[0].dp[ 7] = 0x322ed523;
-        a[0].dp[ 8] = 0x440256e5;
-        a[0].dp[ 9] = 0x000b4157;
-        a[0].dp[10] = 0x9d371158;
-        a[0].dp[11] = 0x06e1a99e;
-        a[0].dp[12] = 0x1dc14e3a;
-        a[0].dp[13] = 0xf32a34cb;
-        a[0].dp[14] = 0x5d6c9ab8;
-        a[0].dp[15] = 0x72edfe22;
-        a[0].dp[16] = 0xa0c90031;
-        a[0].dp[17] = 0xc558cba8;
-        a[0].dp[18] = 0x9875d436;
-        a[0].dp[19] = 0x2048e110;
-        a[0].dp[20] = 0xe1dd7732;
-        a[0].dp[21] = 0xd1fb01ab;
-        a[0].dp[22] = 0x6b1f1c83;
-        a[0].dp[23] = 0x5815a8ad;
-        a[0].dp[24] = 0xa9d95191;
-        a[0].dp[25] = 0x59356aec;
-        a[0].dp[26] = 0xb6e7657f;
-        a[0].dp[27] = 0xb9feeabf;
-        a[0].dp[28] = 0x86d94415;
-        a[0].dp[29] = 0xb80eb675;
-        a[0].dp[30] = 0x927ec36d;
-        a[0].dp[31] = 0x3b01b24f;
-    }
-    /* initialize operand b */
-    {
-        b[0].used = 32;
-     /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
-        b[0].dp[ 0] = 0xc2eb217b;
-        b[0].dp[ 1] = 0x30fc9bb2;
-        b[0].dp[ 2] = 0xee4af250;
-        b[0].dp[ 3] = 0xb1c99162;
-        b[0].dp[ 4] = 0x70c62557;
-        b[0].dp[ 5] = 0x78adea62;
-        b[0].dp[ 6] = 0x6e36e72d;
-        b[0].dp[ 7] = 0x14240123;
-        b[0].dp[ 8] = 0x82b6f7a7;
-        b[0].dp[ 9] = 0x4f361f81;
-        b[0].dp[10] = 0x73941edf;
-        b[0].dp[11] = 0xfc4eb679;
-        b[0].dp[12] = 0xcbae418c;
-        b[0].dp[13] = 0x1c3bcf25;
-        b[0].dp[14] = 0xb6b94991;
-        b[0].dp[15] = 0x2fa451a3;
-        b[0].dp[16] = 0xe37d3ead;
-        b[0].dp[17] = 0x14afe708;
-        b[0].dp[18] = 0x262e0ca1;
-        b[0].dp[19] = 0x3986dbe9;
-        b[0].dp[20] = 0x3deeac2a;
-        b[0].dp[21] = 0x472fe551;
-        b[0].dp[22] = 0x76787462;
-        b[0].dp[23] = 0xfa64a5ac;
-        b[0].dp[24] = 0xc6034935;
-        b[0].dp[25] = 0x13d4fd9b;
-        b[0].dp[26] = 0x4fb879f6;
-        b[0].dp[27] = 0x2d2a5e3c;
-        b[0].dp[28] = 0xc88248ec;
-        b[0].dp[29] = 0xbe7ef69e;
-        b[0].dp[30] = 0x1ad8d444;
-        b[0].dp[31] = 0xedb16d1e;
-    }
-    /* initialize operand c */
-    {
-        c[0].used = 32;
-     /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
-        c[0].dp[ 0] = 0xb75a21e0;
-        c[0].dp[ 1] = 0xd2df7387;
-        c[0].dp[ 2] = 0xc834720b;
-        c[0].dp[ 3] = 0x210183a3;
-        c[0].dp[ 4] = 0xe743c335;
-        c[0].dp[ 5] = 0x56b8d767;
-        c[0].dp[ 6] = 0x35f3c110;
-        c[0].dp[ 7] = 0xa5250acd;
-        c[0].dp[ 8] = 0x5094303f;
-        c[0].dp[ 9] = 0xcc583ea8;
-        c[0].dp[10] = 0xd3fb8dcb;
-        c[0].dp[11] = 0xebb78a9d;
-        c[0].dp[12] = 0x0177b61f;
-        c[0].dp[13] = 0x082146da;
-        c[0].dp[14] = 0x0a1917a6;
-        c[0].dp[15] = 0xdb032780;
-        c[0].dp[16] = 0xf116c65b;
-        c[0].dp[17] = 0x18ee2a7a;
-        c[0].dp[18] = 0xc2722e0f;
-        c[0].dp[19] = 0x9cf4b28f;
-        c[0].dp[20] = 0xe350ad5f;
-        c[0].dp[21] = 0x9b783a1c;
-        c[0].dp[22] = 0xf1bfec06;
-        c[0].dp[23] = 0x7421788f;
-        c[0].dp[24] = 0xeae3b9b6;
-        c[0].dp[25] = 0xd4a4504a;
-        c[0].dp[26] = 0x6fba3023;
-        c[0].dp[27] = 0x8501ad84;
-        c[0].dp[28] = 0xfdb41f82;
-        c[0].dp[29] = 0x8662adaf;
-        c[0].dp[30] = 0x713ef79e;
-        c[0].dp[31] = 0xc5868862;
-    }
-
-    /* initialized the expected result: e */
-    {
-        e[0].used = 32;
-     /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
-        e[0].dp[ 0] = 0xd6d98ec1;
-        e[0].dp[ 1] = 0x798a9709;
-        e[0].dp[ 2] = 0xf667b0ae;
-        e[0].dp[ 3] = 0x955c4c69;
-        e[0].dp[ 4] = 0xace4e954;
-        e[0].dp[ 5] = 0xf8cf5230;
-        e[0].dp[ 6] = 0x752387e1;
-        e[0].dp[ 7] = 0xddbf1ccb;
-        e[0].dp[ 8] = 0x125fb4ad;
-        e[0].dp[ 9] = 0xbfe0434d;
-        e[0].dp[10] = 0x871df184;
-        e[0].dp[11] = 0x5e431c22;
-        e[0].dp[12] = 0xc6bf6f53;
-        e[0].dp[13] = 0x87a80a70;
-        e[0].dp[14] = 0xc5913175;
-        e[0].dp[15] = 0x3d8fbf38;
-        e[0].dp[16] = 0x543849ad;
-        e[0].dp[17] = 0x12b8bd81;
-        e[0].dp[18] = 0x67721be8;
-        e[0].dp[19] = 0xa49e2882;
-        e[0].dp[20] = 0x06126d1e;
-        e[0].dp[21] = 0x7b247ee1;
-        e[0].dp[22] = 0xf195a48d;
-        e[0].dp[23] = 0x320f4839;
-        e[0].dp[24] = 0x1ee50660;
-        e[0].dp[25] = 0x6fcba0f2;
-        e[0].dp[26] = 0x871a2c14;
-        e[0].dp[27] = 0x35823cdc;
-        e[0].dp[28] = 0xb75266c1;
-        e[0].dp[29] = 0x5f1f4553;
-        e[0].dp[30] = 0xc123d312;
-        e[0].dp[31] = 0xbf79fcb7;
-    }
 
     /* call the interesting TFM */
     ret = mp_mulmod(a, b, c, d);
@@ -2220,11 +2304,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     const unsigned char* val = 0; (void)val;
 
-    WOLFSSL_SMALL_STACK_STATIC const mp_digit msg4[] =
-    {
-        0x000000d3,
-        0x0000001a
-    };  (void)msg4;
+
 
     c->used = BADVAL; /* we have an uninitialized result variable */
 
@@ -2238,6 +2318,29 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     memset(b, 0, sizeof(MATH_INT_T));
     memset(c, 0, sizeof(MATH_INT_T));
 
+
+    /*
+    **************************************************************************
+    ** Primitive Functionality Tests
+    **************************************************************************
+    */
+    /* the values are both 0, both [a] and [b] claim to use the
+    ** same umber of words. the values should still be equal */
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero."
+    if (mp_cmp(a, b) == 0) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+        ret = MP_VAL;
+    }
+
+    ret = math_test_byte_order_check();
+    if (ret != MP_OKAY) {
+        return ret;
+    }
+
     /*
     **************************************************************************
     ** Basic math functionality tests
@@ -2248,17 +2351,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         return ret;
     }
 
-    /* the values are both 0, both [a] and [b] claim to use the
-    ** same umber of words. the values should still be equal */
-    #undef  THIS_TEST_MESSAGE
-    #define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero."
-    if (mp_cmp(a, b) == 0) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
-        ret = MP_VAL;
-    }
+// #define CHECK_MP_READ_UNSIGNED_BIN 1
+// #define HONOR_MATH_USED_LENGTH 1
 
 #ifdef CHECK_MP_READ_UNSIGNED_BIN
     #undef  THIS_TEST_MESSAGE
@@ -2308,13 +2402,13 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check 2"
     mp_init(a);
     mp_init(b);
-    a[0].used = 2; a[0].dp[0] = msg4[0];
-                   a[0].dp[1] = msg4[1];
+    a[0].used = 2; a[0].dp[0] = OPERAND_A_2_1[0];
+                   a[0].dp[1] = OPERAND_A_2_1[1];
     b[0].used = 2;
 
     /* next, we try a more interesting const message */
-    val = (const unsigned char*)&msg4;
-    retf = mp_read_unsigned_bin(b, val, sizeof(msg4));
+    val = (const unsigned char*)&OPERAND_A_2_1;
+    retf = mp_read_unsigned_bin(b, val, sizeof(OPERAND_A_2_1));
     if (mp_cmp(a, b) == 0) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
@@ -2350,13 +2444,13 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     }
 #endif /* CHECK_MP_READ_UNSIGNED_BIN */
 
-#ifdef HONOR_MATH_USED_LENGTH
+#if defined(HONOR_MATH_USED_LENGTH) && defined(USE_FAST_MATH)
     /* oldused should never write more than FPSIZE words in s_fp_add
     ** (see ending zero any excess digits for loop */
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "oldused range check"
-    oldused = MIN(c->used, MP_SIZE); /* help static analysis w/ largest size */
-    if (oldused <= MP_SIZE && oldused > -1) {
+    oldused = MIN(c->used, FP_SIZE); /* help static analysis w/ largest size */
+    if (oldused <= FP_SIZE && oldused > -1) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
@@ -2367,7 +2461,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "oldused MIN check"
-    if (oldused == MP_SIZE || oldused == MP_SIZE) {
+    if (oldused == FP_SIZE || oldused == FP_SIZE) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
