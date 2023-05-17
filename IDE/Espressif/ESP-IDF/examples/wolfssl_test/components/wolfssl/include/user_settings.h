@@ -136,19 +136,21 @@
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
-/*
+
 #define NO_ESP32WROOM32_CRYPT
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
-*/
+
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 /* #define HASH_SIZE_LIMIT */ /* for test.c */
 
-#define USE_FAST_MATH
+//#define USE_FAST_MATH
+#define SP_MATH
+
 #define WOLFSSL_SMALL_STACK
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
