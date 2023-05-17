@@ -2004,7 +2004,191 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 
 int math_test_1(void)
 {
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(c);
+    mp_init(d);
+    mp_init(e);
+
+    /* initialize operand a */
+    {
+        a[0].used = 32;
+        /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
+        a[0].dp[ 0] = 0x83771253;
+        a[0].dp[ 1] = 0x92e70187;
+        a[0].dp[ 2] = 0x9c8b5c4f;
+        a[0].dp[ 3] = 0x7c98248a;
+        a[0].dp[ 4] = 0xf15131b7;
+        a[0].dp[ 5] = 0xe3a44aaa;
+        a[0].dp[ 6] = 0xf82f8e99;
+        a[0].dp[ 7] = 0x322ed523;
+        a[0].dp[ 8] = 0x440256e5;
+        a[0].dp[ 9] = 0x000b4157;
+        a[0].dp[10] = 0x9d371158;
+        a[0].dp[11] = 0x06e1a99e;
+        a[0].dp[12] = 0x1dc14e3a;
+        a[0].dp[13] = 0xf32a34cb;
+        a[0].dp[14] = 0x5d6c9ab8;
+        a[0].dp[15] = 0x72edfe22;
+        a[0].dp[16] = 0xa0c90031;
+        a[0].dp[17] = 0xc558cba8;
+        a[0].dp[18] = 0x9875d436;
+        a[0].dp[19] = 0x2048e110;
+        a[0].dp[20] = 0xe1dd7732;
+        a[0].dp[21] = 0xd1fb01ab;
+        a[0].dp[22] = 0x6b1f1c83;
+        a[0].dp[23] = 0x5815a8ad;
+        a[0].dp[24] = 0xa9d95191;
+        a[0].dp[25] = 0x59356aec;
+        a[0].dp[26] = 0xb6e7657f;
+        a[0].dp[27] = 0xb9feeabf;
+        a[0].dp[28] = 0x86d94415;
+        a[0].dp[29] = 0xb80eb675;
+        a[0].dp[30] = 0x927ec36d;
+        a[0].dp[31] = 0x3b01b24f;
+    }
+    /* initialize operand b */
+    {
+        b[0].used = 32;
+        /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
+        b[0].dp[ 0] = 0xc2eb217b;
+        b[0].dp[ 1] = 0x30fc9bb2;
+        b[0].dp[ 2] = 0xee4af250;
+        b[0].dp[ 3] = 0xb1c99162;
+        b[0].dp[ 4] = 0x70c62557;
+        b[0].dp[ 5] = 0x78adea62;
+        b[0].dp[ 6] = 0x6e36e72d;
+        b[0].dp[ 7] = 0x14240123;
+        b[0].dp[ 8] = 0x82b6f7a7;
+        b[0].dp[ 9] = 0x4f361f81;
+        b[0].dp[10] = 0x73941edf;
+        b[0].dp[11] = 0xfc4eb679;
+        b[0].dp[12] = 0xcbae418c;
+        b[0].dp[13] = 0x1c3bcf25;
+        b[0].dp[14] = 0xb6b94991;
+        b[0].dp[15] = 0x2fa451a3;
+        b[0].dp[16] = 0xe37d3ead;
+        b[0].dp[17] = 0x14afe708;
+        b[0].dp[18] = 0x262e0ca1;
+        b[0].dp[19] = 0x3986dbe9;
+        b[0].dp[20] = 0x3deeac2a;
+        b[0].dp[21] = 0x472fe551;
+        b[0].dp[22] = 0x76787462;
+        b[0].dp[23] = 0xfa64a5ac;
+        b[0].dp[24] = 0xc6034935;
+        b[0].dp[25] = 0x13d4fd9b;
+        b[0].dp[26] = 0x4fb879f6;
+        b[0].dp[27] = 0x2d2a5e3c;
+        b[0].dp[28] = 0xc88248ec;
+        b[0].dp[29] = 0xbe7ef69e;
+        b[0].dp[30] = 0x1ad8d444;
+        b[0].dp[31] = 0xedb16d1e;
+    }
+    /* initialize operand c */
+    {
+        c[0].used = 32;
+        /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
+        c[0].dp[ 0] = 0xb75a21e0;
+        c[0].dp[ 1] = 0xd2df7387;
+        c[0].dp[ 2] = 0xc834720b;
+        c[0].dp[ 3] = 0x210183a3;
+        c[0].dp[ 4] = 0xe743c335;
+        c[0].dp[ 5] = 0x56b8d767;
+        c[0].dp[ 6] = 0x35f3c110;
+        c[0].dp[ 7] = 0xa5250acd;
+        c[0].dp[ 8] = 0x5094303f;
+        c[0].dp[ 9] = 0xcc583ea8;
+        c[0].dp[10] = 0xd3fb8dcb;
+        c[0].dp[11] = 0xebb78a9d;
+        c[0].dp[12] = 0x0177b61f;
+        c[0].dp[13] = 0x082146da;
+        c[0].dp[14] = 0x0a1917a6;
+        c[0].dp[15] = 0xdb032780;
+        c[0].dp[16] = 0xf116c65b;
+        c[0].dp[17] = 0x18ee2a7a;
+        c[0].dp[18] = 0xc2722e0f;
+        c[0].dp[19] = 0x9cf4b28f;
+        c[0].dp[20] = 0xe350ad5f;
+        c[0].dp[21] = 0x9b783a1c;
+        c[0].dp[22] = 0xf1bfec06;
+        c[0].dp[23] = 0x7421788f;
+        c[0].dp[24] = 0xeae3b9b6;
+        c[0].dp[25] = 0xd4a4504a;
+        c[0].dp[26] = 0x6fba3023;
+        c[0].dp[27] = 0x8501ad84;
+        c[0].dp[28] = 0xfdb41f82;
+        c[0].dp[29] = 0x8662adaf;
+        c[0].dp[30] = 0x713ef79e;
+        c[0].dp[31] = 0xc5868862;
+    }
+
+    /* initialized the expected result: e */
+    {
+        e[0].used = 32;
+     /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
+        e[0].dp[ 0] = 0xd6d98ec1;
+        e[0].dp[ 1] = 0x798a9709;
+        e[0].dp[ 2] = 0xf667b0ae;
+        e[0].dp[ 3] = 0x955c4c69;
+        e[0].dp[ 4] = 0xace4e954;
+        e[0].dp[ 5] = 0xf8cf5230;
+        e[0].dp[ 6] = 0x752387e1;
+        e[0].dp[ 7] = 0xddbf1ccb;
+        e[0].dp[ 8] = 0x125fb4ad;
+        e[0].dp[ 9] = 0xbfe0434d;
+        e[0].dp[10] = 0x871df184;
+        e[0].dp[11] = 0x5e431c22;
+        e[0].dp[12] = 0xc6bf6f53;
+        e[0].dp[13] = 0x87a80a70;
+        e[0].dp[14] = 0xc5913175;
+        e[0].dp[15] = 0x3d8fbf38;
+        e[0].dp[16] = 0x543849ad;
+        e[0].dp[17] = 0x12b8bd81;
+        e[0].dp[18] = 0x67721be8;
+        e[0].dp[19] = 0xa49e2882;
+        e[0].dp[20] = 0x06126d1e;
+        e[0].dp[21] = 0x7b247ee1;
+        e[0].dp[22] = 0xf195a48d;
+        e[0].dp[23] = 0x320f4839;
+        e[0].dp[24] = 0x1ee50660;
+        e[0].dp[25] = 0x6fcba0f2;
+        e[0].dp[26] = 0x871a2c14;
+        e[0].dp[27] = 0x35823cdc;
+        e[0].dp[28] = 0xb75266c1;
+        e[0].dp[29] = 0x5f1f4553;
+        e[0].dp[30] = 0xc123d312;
+        e[0].dp[31] = 0xbf79fcb7;
+    }
+
+    /* call the interesting TFM */
+    ret = mp_mulmod(a, b, c, d);
+
+    /* call ESP directly (same result) */
+    // ret = esp_mp_mulmod(a, b, c, d);
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mulmod() : 32 word test, positive operands: a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ((ret == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            ret,
+                            a,
+                            b,
+                            c,
+                            d,
+                            e);
+        ret = MP_VAL;
+    }
     return ret;
 }
 
@@ -2059,6 +2243,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** Basic math functionality tests
     **************************************************************************
     */
+    ret = math_test_1();
 
     /* the values are both 0, both [a] and [b] claim to use the
     ** same umber of words. the values should still be equal */
@@ -2396,152 +2581,152 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     /* initialize operand a */
     {
-        a[0].used =	32;
-     /* a[0].sign =	0; initialized to zero (positive) in mp_init() */
-        a[0].dp[0]	= 0x65f77941;
-        a[0].dp[1]	= 0x967c46c1;
-        a[0].dp[2]	= 0xe5b875c0;
-        a[0].dp[3]	= 0x1520e798;
-        a[0].dp[4]	= 0x81dc904b;
-        a[0].dp[5]	= 0x08d1b971;
-        a[0].dp[6]	= 0x350595f1;
-        a[0].dp[7]	= 0x81629e43;
-        a[0].dp[8]	= 0x182a7dd8;
-        a[0].dp[9]	= 0x746f0dee;
-        a[0].dp[10]	= 0x872e0dda;
-        a[0].dp[11]	= 0x5db6b19a;
-        a[0].dp[12]	= 0x4868e268;
-        a[0].dp[13]	= 0x28794dde;
-        a[0].dp[14]	= 0x15eae186;
-        a[0].dp[15]	= 0x55075e7d;
-        a[0].dp[16]	= 0x7e5a8e4a;
-        a[0].dp[17]	= 0xaaeeac8e;
-        a[0].dp[18]	= 0x631fea5b;
-        a[0].dp[19]	= 0x6e74340c;
-        a[0].dp[20]	= 0x71228e0e;
-        a[0].dp[21]	= 0x06b96a89;
-        a[0].dp[22]	= 0xb045cb32;
-        a[0].dp[23]	= 0x7d395184;
-        a[0].dp[24]	= 0x912b9018;
-        a[0].dp[25]	= 0x474474e7;
-        a[0].dp[26]	= 0xeb654412;
-        a[0].dp[27]	= 0x28743112;
-        a[0].dp[28]	= 0x8e8c25ff;
-        a[0].dp[29]	= 0xb28ea9dd;
-        a[0].dp[30]	= 0x6d7c8103;
-        a[0].dp[31]	= 0x9c5170e5;
+        a[0].used = 32;
+     /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
+        a[0].dp[0] = 0x65f77941;
+        a[0].dp[1] = 0x967c46c1;
+        a[0].dp[2] = 0xe5b875c0;
+        a[0].dp[3] = 0x1520e798;
+        a[0].dp[4] = 0x81dc904b;
+        a[0].dp[5] = 0x08d1b971;
+        a[0].dp[6] = 0x350595f1;
+        a[0].dp[7] = 0x81629e43;
+        a[0].dp[8] = 0x182a7dd8;
+        a[0].dp[9] = 0x746f0dee;
+        a[0].dp[10] = 0x872e0dda;
+        a[0].dp[11] = 0x5db6b19a;
+        a[0].dp[12] = 0x4868e268;
+        a[0].dp[13] = 0x28794dde;
+        a[0].dp[14] = 0x15eae186;
+        a[0].dp[15] = 0x55075e7d;
+        a[0].dp[16] = 0x7e5a8e4a;
+        a[0].dp[17] = 0xaaeeac8e;
+        a[0].dp[18] = 0x631fea5b;
+        a[0].dp[19] = 0x6e74340c;
+        a[0].dp[20] = 0x71228e0e;
+        a[0].dp[21] = 0x06b96a89;
+        a[0].dp[22] = 0xb045cb32;
+        a[0].dp[23] = 0x7d395184;
+        a[0].dp[24] = 0x912b9018;
+        a[0].dp[25] = 0x474474e7;
+        a[0].dp[26] = 0xeb654412;
+        a[0].dp[27] = 0x28743112;
+        a[0].dp[28] = 0x8e8c25ff;
+        a[0].dp[29] = 0xb28ea9dd;
+        a[0].dp[30] = 0x6d7c8103;
+        a[0].dp[31] = 0x9c5170e5;
     }
     /* initialize operand b */
     {
-        b[0].used =	32;
-     /* b[0].sign =	0; initialized to zero (positive) in mp_init() */
-        b[0].dp[0]	= 0x9fcdf5bf;
-        b[0].dp[1]	= 0x654246a1;
-        b[0].dp[2]	= 0x455d1339;
-        b[0].dp[3]	= 0x935334a1;
-        b[0].dp[4]	= 0xabca5ce7;
-        b[0].dp[5]	= 0x9538be35;
-        b[0].dp[6]	= 0xf99f5d28;
-        b[0].dp[7]	= 0x894bb0f3;
-        b[0].dp[8]	= 0x863a51dd;
-        b[0].dp[9]	= 0xeb63f919;
-        b[0].dp[10]	= 0x8fe69640;
-        b[0].dp[11]	= 0x4e8c3a45;
-        b[0].dp[12]	= 0xcd187433;
-        b[0].dp[13]	= 0x4a6e68d5;
-        b[0].dp[14]	= 0x89bf72ec;
-        b[0].dp[15]	= 0xd557705c;
-        b[0].dp[16]	= 0x1e4d2134;
-        b[0].dp[17]	= 0x2da3750d;
-        b[0].dp[18]	= 0xc23037e3;
-        b[0].dp[19]	= 0x5ef351d2;
-        b[0].dp[20]	= 0xab3fd92a;
-        b[0].dp[21]	= 0x7f5fea8a;
-        b[0].dp[22]	= 0xf6213fd3;
-        b[0].dp[23]	= 0x7ca8da6e;
-        b[0].dp[24]	= 0xf0d3c862;
-        b[0].dp[25]	= 0xb57006f7;
-        b[0].dp[26]	= 0x0650d90f;
-        b[0].dp[27]	= 0xc630ac59;
-        b[0].dp[28]	= 0x65ae31c2;
-        b[0].dp[29]	= 0x10754786;
-        b[0].dp[30]	= 0x1b67b99f;
-        b[0].dp[31]	= 0x11d04bcf;
+        b[0].used = 32;
+     /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
+        b[0].dp[0] = 0x9fcdf5bf;
+        b[0].dp[1] = 0x654246a1;
+        b[0].dp[2] = 0x455d1339;
+        b[0].dp[3] = 0x935334a1;
+        b[0].dp[4] = 0xabca5ce7;
+        b[0].dp[5] = 0x9538be35;
+        b[0].dp[6] = 0xf99f5d28;
+        b[0].dp[7] = 0x894bb0f3;
+        b[0].dp[8] = 0x863a51dd;
+        b[0].dp[9] = 0xeb63f919;
+        b[0].dp[10] = 0x8fe69640;
+        b[0].dp[11] = 0x4e8c3a45;
+        b[0].dp[12] = 0xcd187433;
+        b[0].dp[13] = 0x4a6e68d5;
+        b[0].dp[14] = 0x89bf72ec;
+        b[0].dp[15] = 0xd557705c;
+        b[0].dp[16] = 0x1e4d2134;
+        b[0].dp[17] = 0x2da3750d;
+        b[0].dp[18] = 0xc23037e3;
+        b[0].dp[19] = 0x5ef351d2;
+        b[0].dp[20] = 0xab3fd92a;
+        b[0].dp[21] = 0x7f5fea8a;
+        b[0].dp[22] = 0xf6213fd3;
+        b[0].dp[23] = 0x7ca8da6e;
+        b[0].dp[24] = 0xf0d3c862;
+        b[0].dp[25] = 0xb57006f7;
+        b[0].dp[26] = 0x0650d90f;
+        b[0].dp[27] = 0xc630ac59;
+        b[0].dp[28] = 0x65ae31c2;
+        b[0].dp[29] = 0x10754786;
+        b[0].dp[30] = 0x1b67b99f;
+        b[0].dp[31] = 0x11d04bcf;
     }
     /* initialize operand c */
     {
-        c[0].used =	32;
-     /* c[0].sign =	0; initialized to zero (positive) in mp_init() */
-        c[0].dp[0]	= 0x949858a5;
-        c[0].dp[1]	= 0x3d8b848d;
-        c[0].dp[2]	= 0x478f54d3;
-        c[0].dp[3]	= 0x4dba30da;
-        c[0].dp[4]	= 0xd7b627b2;
-        c[0].dp[5]	= 0x27058cc3;
-        c[0].dp[6]	= 0x550387a6;
-        c[0].dp[7]	= 0x10cb64a5;
-        c[0].dp[8]	= 0xf47e32a6;
-        c[0].dp[9]	= 0x6c22d8e5;
-        c[0].dp[10]	= 0x1a8da757;
-        c[0].dp[11]	= 0x591f4e8a;
-        c[0].dp[12]	= 0x4121d431;
-        c[0].dp[13]	= 0x6a7e1c4f;
-        c[0].dp[14]	= 0x5894e72f;
-        c[0].dp[15]	= 0x14bbb40f;
-        c[0].dp[16]	= 0xfc389000;
-        c[0].dp[17]	= 0x269052ae;
-        c[0].dp[18]	= 0xd95e9b3f;
-        c[0].dp[19]	= 0xacdbcac7;
-        c[0].dp[20]	= 0x8fe77776;
-        c[0].dp[21]	= 0xb0062900;
-        c[0].dp[22]	= 0xcfa66c1e;
-        c[0].dp[23]	= 0x81b03fa2;
-        c[0].dp[24]	= 0x8458163a;
-        c[0].dp[25]	= 0x880d9457;
-        c[0].dp[26]	= 0xe9cc477a;
-        c[0].dp[27]	= 0xdeba7216;
-        c[0].dp[28]	= 0x21282f49;
-        c[0].dp[29]	= 0xdc527d88;
-        c[0].dp[30]	= 0x6933e971;
-        c[0].dp[31]	= 0xea24a7f9;
+        c[0].used = 32;
+     /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
+        c[0].dp[0] = 0x949858a5;
+        c[0].dp[1] = 0x3d8b848d;
+        c[0].dp[2] = 0x478f54d3;
+        c[0].dp[3] = 0x4dba30da;
+        c[0].dp[4] = 0xd7b627b2;
+        c[0].dp[5] = 0x27058cc3;
+        c[0].dp[6] = 0x550387a6;
+        c[0].dp[7] = 0x10cb64a5;
+        c[0].dp[8] = 0xf47e32a6;
+        c[0].dp[9] = 0x6c22d8e5;
+        c[0].dp[10] = 0x1a8da757;
+        c[0].dp[11] = 0x591f4e8a;
+        c[0].dp[12] = 0x4121d431;
+        c[0].dp[13] = 0x6a7e1c4f;
+        c[0].dp[14] = 0x5894e72f;
+        c[0].dp[15] = 0x14bbb40f;
+        c[0].dp[16] = 0xfc389000;
+        c[0].dp[17] = 0x269052ae;
+        c[0].dp[18] = 0xd95e9b3f;
+        c[0].dp[19] = 0xacdbcac7;
+        c[0].dp[20] = 0x8fe77776;
+        c[0].dp[21] = 0xb0062900;
+        c[0].dp[22] = 0xcfa66c1e;
+        c[0].dp[23] = 0x81b03fa2;
+        c[0].dp[24] = 0x8458163a;
+        c[0].dp[25] = 0x880d9457;
+        c[0].dp[26] = 0xe9cc477a;
+        c[0].dp[27] = 0xdeba7216;
+        c[0].dp[28] = 0x21282f49;
+        c[0].dp[29] = 0xdc527d88;
+        c[0].dp[30] = 0x6933e971;
+        c[0].dp[31] = 0xea24a7f9;
     }
 
     /* initialized the expected result: e */
     {
-        e[0].used =	32;
-     /* e[0].sign =	0; initialized to zero (positive) in mp_init() */
-        e[0].dp[0]	= 0x2b860dcb;
-        e[0].dp[1]	= 0x16ee3ce7;
-        e[0].dp[2]	= 0x34b3c5c4;
-        e[0].dp[3]	= 0x20c89e5a;
-        e[0].dp[4]	= 0xb311a914;
-        e[0].dp[5]	= 0x254bc3cb;
-        e[0].dp[6]	= 0x858131b0;
-        e[0].dp[7]	= 0x1aad7154;
-        e[0].dp[8]	= 0x831d6881;
-        e[0].dp[9]	= 0xce740b42;
-        e[0].dp[10]	= 0xefe66196;
-        e[0].dp[11]	= 0xc7e053ea;
-        e[0].dp[12]	= 0xfc55bd8b;
-        e[0].dp[13]	= 0x6afe7b2e;
-        e[0].dp[14]	= 0x562ee43a;
-        e[0].dp[15]	= 0x2570c5eb;
-        e[0].dp[16]	= 0x4d1d0d79;
-        e[0].dp[17]	= 0x0a8e1c36;
-        e[0].dp[18]	= 0xd10ea53e;
-        e[0].dp[19]	= 0x8db65638;
-        e[0].dp[20]	= 0x2bea8d46;
-        e[0].dp[21]	= 0x80152337;
-        e[0].dp[22]	= 0xc054af56;
-        e[0].dp[23]	= 0xb1458b1a;
-        e[0].dp[24]	= 0xa3220ee9;
-        e[0].dp[25]	= 0x38df7b2a;
-        e[0].dp[26]	= 0x16d4e950;
-        e[0].dp[27]	= 0x56b4cbe6;
-        e[0].dp[28]	= 0x1a4222c8;
-        e[0].dp[29]	= 0x6e51a3fe;
-        e[0].dp[30]	= 0x52adaa07;
-        e[0].dp[31]	= 0x4d1a158a;
+        e[0].used = 32;
+     /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
+        e[0].dp[0] = 0x2b860dcb;
+        e[0].dp[1] = 0x16ee3ce7;
+        e[0].dp[2] = 0x34b3c5c4;
+        e[0].dp[3] = 0x20c89e5a;
+        e[0].dp[4] = 0xb311a914;
+        e[0].dp[5] = 0x254bc3cb;
+        e[0].dp[6] = 0x858131b0;
+        e[0].dp[7] = 0x1aad7154;
+        e[0].dp[8] = 0x831d6881;
+        e[0].dp[9] = 0xce740b42;
+        e[0].dp[10] = 0xefe66196;
+        e[0].dp[11] = 0xc7e053ea;
+        e[0].dp[12] = 0xfc55bd8b;
+        e[0].dp[13] = 0x6afe7b2e;
+        e[0].dp[14] = 0x562ee43a;
+        e[0].dp[15] = 0x2570c5eb;
+        e[0].dp[16] = 0x4d1d0d79;
+        e[0].dp[17] = 0x0a8e1c36;
+        e[0].dp[18] = 0xd10ea53e;
+        e[0].dp[19] = 0x8db65638;
+        e[0].dp[20] = 0x2bea8d46;
+        e[0].dp[21] = 0x80152337;
+        e[0].dp[22] = 0xc054af56;
+        e[0].dp[23] = 0xb1458b1a;
+        e[0].dp[24] = 0xa3220ee9;
+        e[0].dp[25] = 0x38df7b2a;
+        e[0].dp[26] = 0x16d4e950;
+        e[0].dp[27] = 0x56b4cbe6;
+        e[0].dp[28] = 0x1a4222c8;
+        e[0].dp[29] = 0x6e51a3fe;
+        e[0].dp[30] = 0x52adaa07;
+        e[0].dp[31] = 0x4d1a158a;
     }
 
     /* call the interesting TFM */
@@ -2769,7 +2954,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand a */
     {
         a[0].used = 32;
-     /* a[0].sign =	0; initialized to zero (positive) in mp_init() */
+     /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
         a[0].dp[ 0] = 0xd0231537;
         a[0].dp[ 1] = 0xc0d02132;
         a[0].dp[ 2] = 0x15a431d4;
@@ -2807,7 +2992,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand b */
     {
         b[0].used = 32;
-     /* b[0].sign =	0; initialized to zero (positive) in mp_init() */
+     /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
         b[0].dp[ 0] = 0xc3f1fa77;
         b[0].dp[ 1] = 0xac67a525;
         b[0].dp[ 2] = 0xa0021827;
@@ -2845,7 +3030,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand c */
     {
         c[0].used = 32;
-     /* c[0].sign =	0; initialized to zero (positive) in mp_init() */
+     /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
         c[0].dp[ 0] = 0xd0d85d10;
         c[0].dp[ 1] = 0x95c920df;
         c[0].dp[ 2] = 0xc05cbb50;
@@ -2882,40 +3067,40 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     /* initialized the expected result: e */
     {
-        e[0].used =	32;
-     /* e[0].sign =	0; initialized to zero (positive) in mp_init() */
-        e[0].dp[ 0]	= 0x6dbbd8d1;
-        e[0].dp[ 1]	= 0xe4b146fc;
-        e[0].dp[ 2]	= 0x1070b4dc;
-        e[0].dp[ 3]	= 0xfe33f753;
-        e[0].dp[ 4]	= 0xd1f4bfde;
-        e[0].dp[ 5]	= 0x798ff526;
-        e[0].dp[ 6]	= 0x3a96340d;
-        e[0].dp[ 7]	= 0x7e48a9ab;
-        e[0].dp[ 8]	= 0xa2c6855a;
-        e[0].dp[ 9]	= 0xacc7c270;
-        e[0].dp[10]	= 0xcd01217d;
-        e[0].dp[11]	= 0xc1c2c687;
-        e[0].dp[12]	= 0x19d344d0;
-        e[0].dp[13]	= 0x662a4647;
-        e[0].dp[14]	= 0xabd41e26;
-        e[0].dp[15]	= 0x97f0d7ef;
-        e[0].dp[16]	= 0xcb0c9aac;
-        e[0].dp[17]	= 0xb0cae82f;
-        e[0].dp[18]	= 0x93ba1c2f;
-        e[0].dp[19]	= 0x390cf163;
-        e[0].dp[20]	= 0xaada3de7;
-        e[0].dp[21]	= 0x232d0e30;
-        e[0].dp[22]	= 0xf47889cf;
-        e[0].dp[23]	= 0x84003159;
-        e[0].dp[24]	= 0xd9286249;
-        e[0].dp[25]	= 0x0aacabb6;
-        e[0].dp[26]	= 0x583bc402;
-        e[0].dp[27]	= 0x1df88053;
-        e[0].dp[28]	= 0x2882b913;
-        e[0].dp[29]	= 0xbf11aaaa;
-        e[0].dp[30]	= 0x80177cef;
-        e[0].dp[31]	= 0x1feaf4e6;
+        e[0].used = 32;
+     /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
+        e[0].dp[ 0] = 0x6dbbd8d1;
+        e[0].dp[ 1] = 0xe4b146fc;
+        e[0].dp[ 2] = 0x1070b4dc;
+        e[0].dp[ 3] = 0xfe33f753;
+        e[0].dp[ 4] = 0xd1f4bfde;
+        e[0].dp[ 5] = 0x798ff526;
+        e[0].dp[ 6] = 0x3a96340d;
+        e[0].dp[ 7] = 0x7e48a9ab;
+        e[0].dp[ 8] = 0xa2c6855a;
+        e[0].dp[ 9] = 0xacc7c270;
+        e[0].dp[10] = 0xcd01217d;
+        e[0].dp[11] = 0xc1c2c687;
+        e[0].dp[12] = 0x19d344d0;
+        e[0].dp[13] = 0x662a4647;
+        e[0].dp[14] = 0xabd41e26;
+        e[0].dp[15] = 0x97f0d7ef;
+        e[0].dp[16] = 0xcb0c9aac;
+        e[0].dp[17] = 0xb0cae82f;
+        e[0].dp[18] = 0x93ba1c2f;
+        e[0].dp[19] = 0x390cf163;
+        e[0].dp[20] = 0xaada3de7;
+        e[0].dp[21] = 0x232d0e30;
+        e[0].dp[22] = 0xf47889cf;
+        e[0].dp[23] = 0x84003159;
+        e[0].dp[24] = 0xd9286249;
+        e[0].dp[25] = 0x0aacabb6;
+        e[0].dp[26] = 0x583bc402;
+        e[0].dp[27] = 0x1df88053;
+        e[0].dp[28] = 0x2882b913;
+        e[0].dp[29] = 0xbf11aaaa;
+        e[0].dp[30] = 0x80177cef;
+        e[0].dp[31] = 0x1feaf4e6;
     }
     /* failure:  d[0].dp[ 0] = 0x693790da on ESP32 v1.0 silicon
      * expected: e[0].dp[ 0] = 0x6dbbd8d1 */
