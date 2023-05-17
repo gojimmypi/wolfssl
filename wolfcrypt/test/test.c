@@ -2004,22 +2004,24 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 
 int math_test_1(void)
 {
-    int ret = FP_OKAY; /* assume success until proven otherwise */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
     return ret;
 }
 
 WOLFSSL_TEST_SUBROUTINE int math_test(void)
 {
 
-    int ret = FP_OKAY; /* assume success until proven otherwise */
-    int retf = FP_OKAY; /* we'll inspect some interim functions */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* we'll inspect some interim functions */
 
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
     debug_message_value("CheckRunTimeFastMath() = ", retf,
                          NULL, NULL, NULL, NULL, NULL);
+#ifdef USE_FAST_MATH
     debug_message_value("FP_SIZE   = ", FP_SIZE,
                          NULL, NULL, NULL, NULL, NULL);
+#endif // USE_FAST_MATH
     debug_message_value("DIGIT_BIT = ", DIGIT_BIT,
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
@@ -2034,7 +2036,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     const unsigned char* val = 0; (void)val;
 
-    WOLFSSL_SMALL_STACK_STATIC const fp_digit msg4[] =
+    WOLFSSL_SMALL_STACK_STATIC const mp_digit msg4[] =
     {
         0x000000d3,
         0x0000001a
@@ -2048,9 +2050,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     mp_init(d);
     mp_init(e);
 
-    memset(a, 0, sizeof(fp_int));
-    memset(b, 0, sizeof(fp_int));
-    memset(c, 0, sizeof(fp_int));
+    memset(a, 0, sizeof(MATH_INT_T));
+    memset(b, 0, sizeof(MATH_INT_T));
+    memset(c, 0, sizeof(MATH_INT_T));
 
     /*
     **************************************************************************
@@ -2067,7 +2069,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     }
     else {
         debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
 #ifdef CHECK_MP_READ_UNSIGNED_BIN
@@ -2112,7 +2114,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             a,    NULL, NULL, NULL, NULL);
         debug_message_value("Observed b", retf, NULL,
                             b,    NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "mp_read_unsigned_bin() byte order check 2"
@@ -2156,7 +2158,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             a,    NULL, NULL, NULL, NULL);
         debug_message_value("Observed b", retf, NULL,
                             b,    NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 #endif /* CHECK_MP_READ_UNSIGNED_BIN */
 
@@ -2165,25 +2167,25 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** (see ending zero any excess digits for loop */
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "oldused range check"
-    oldused = MIN(c->used, FP_SIZE); /* help static analysis w/ largest size */
-    if (oldused <= FP_SIZE && oldused > -1) {
+    oldused = MIN(c->used, MP_SIZE); /* help static analysis w/ largest size */
+    if (oldused <= MP_SIZE && oldused > -1) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused,
                             NULL, NULL, NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "oldused MIN check"
-    if (oldused == FP_SIZE || oldused == FP_SIZE) {
+    if (oldused == MP_SIZE || oldused == MP_SIZE) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, oldused,
                             NULL, NULL, NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /* here we set different used lengths for a and b
@@ -2203,7 +2205,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     }
     else {
         debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /* the values are both 1, but [a] claims to use more words
@@ -2220,7 +2222,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     }
     else {
         debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /* checking addition with mismatched length */
@@ -2237,7 +2239,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, c->dp[0],
                             NULL, NULL, NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 #endif /* HONOR_MATH_USED_LENGTH */
 
@@ -2248,6 +2250,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     */
     mp_init(a);
     mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
     a[0].used = 1; a[0].dp[0] = 1;
     b[0].used = 1; b[0].dp[0] = 1;
 
@@ -2261,7 +2264,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
                             NULL, NULL, NULL, NULL, NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
@@ -2275,6 +2278,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** mp_mulmod(): a * b mod c
     **************************************************************************
     */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
     a[0].used = 1; a[0].dp[0] = 20002;
     b[0].used = 1; b[0].dp[0] = 2;
     c[0].used = 1; c[0].dp[0] = 5;
@@ -2289,12 +2295,15 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
                             a, b, c, NULL, e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
     ** two-word multiplication result mp_mulmod test
     */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
     a[0].used = 1; a[0].dp[0] = 0xF0F0F0F3;
     b[0].used = 1; b[0].dp[0] = 0x0211;
     c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
@@ -2312,12 +2321,15 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
                             a, b, c, NULL, e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
     ** two-word operand mp_mulmod test
     */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
     a[0].used = 2; a[0].dp[0] = 0xF0F0F0F1;
                    a[0].dp[1] = 0xF0F0F0F2;
     b[0].used = 2; b[0].dp[0] = 0x0213;
@@ -2335,12 +2347,15 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
                             a, b, c, NULL, e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
     ** eight-word x two-word operand mp_mulmod test
     */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
     a[0].used = 8;  a[0].dp[0] = 0xF0F0F0F1;
                     a[0].dp[1] = 0xF0F0F0F2;
                     a[0].dp[2] = 0xF0F0F0F3;
@@ -2365,7 +2380,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
                             a, b, c, NULL, e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
@@ -2382,7 +2397,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand a */
     {
         a[0].used =	32;
-        a[0].sign =	0;
+     /* a[0].sign =	0; initialized to zero (positive) in mp_init() */
         a[0].dp[0]	= 0x65f77941;
         a[0].dp[1]	= 0x967c46c1;
         a[0].dp[2]	= 0xe5b875c0;
@@ -2419,7 +2434,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand b */
     {
         b[0].used =	32;
-        b[0].sign =	0;
+     /* b[0].sign =	0; initialized to zero (positive) in mp_init() */
         b[0].dp[0]	= 0x9fcdf5bf;
         b[0].dp[1]	= 0x654246a1;
         b[0].dp[2]	= 0x455d1339;
@@ -2456,7 +2471,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand c */
     {
         c[0].used =	32;
-        c[0].sign =	0;
+     /* c[0].sign =	0; initialized to zero (positive) in mp_init() */
         c[0].dp[0]	= 0x949858a5;
         c[0].dp[1]	= 0x3d8b848d;
         c[0].dp[2]	= 0x478f54d3;
@@ -2494,7 +2509,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialized the expected result: e */
     {
         e[0].used =	32;
-        e[0].sign =	0;
+     /* e[0].sign =	0; initialized to zero (positive) in mp_init() */
         e[0].dp[0]	= 0x2b860dcb;
         e[0].dp[1]	= 0x16ee3ce7;
         e[0].dp[2]	= 0x34b3c5c4;
@@ -2549,7 +2564,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             c,
                             NULL,
                             e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     /*
@@ -2557,6 +2572,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** observed 32 word success in SW and HW; operand a negative, b positive
     **************************************************************************
     */
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     mp_init(a);
     mp_init(b);
     mp_init(c);
@@ -2735,8 +2751,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             c,
                             NULL,
                             e);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
+#endif /* negative operand test */
 
     /*
     **************************************************************************
@@ -2752,7 +2769,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand a */
     {
         a[0].used = 32;
-        a[0].sign = 0;
+     /* a[0].sign =	0; initialized to zero (positive) in mp_init() */
         a[0].dp[ 0] = 0xd0231537;
         a[0].dp[ 1] = 0xc0d02132;
         a[0].dp[ 2] = 0x15a431d4;
@@ -2790,7 +2807,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand b */
     {
         b[0].used = 32;
-        b[0].sign = 0;
+     /* b[0].sign =	0; initialized to zero (positive) in mp_init() */
         b[0].dp[ 0] = 0xc3f1fa77;
         b[0].dp[ 1] = 0xac67a525;
         b[0].dp[ 2] = 0xa0021827;
@@ -2828,7 +2845,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialize operand c */
     {
         c[0].used = 32;
-        c[0].sign = 0;
+     /* c[0].sign =	0; initialized to zero (positive) in mp_init() */
         c[0].dp[ 0] = 0xd0d85d10;
         c[0].dp[ 1] = 0x95c920df;
         c[0].dp[ 2] = 0xc05cbb50;
@@ -2866,7 +2883,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     /* initialized the expected result: e */
     {
         e[0].used =	32;
-        e[0].sign =	0;
+     /* e[0].sign =	0; initialized to zero (positive) in mp_init() */
         e[0].dp[ 0]	= 0x6dbbd8d1;
         e[0].dp[ 1]	= 0xe4b146fc;
         e[0].dp[ 2]	= 0x1070b4dc;
@@ -2923,7 +2940,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                             NULL,
                             NULL,
                             NULL);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     debug_message("Math test completed.");
