@@ -4444,11 +4444,14 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     ESP_LOGI(TAG, "\n\nNew calc\n\n.");
     if (A2->used == 32) {
         ESP_LOGI(TAG, "X->used == 32!");
-//        esp_show_mp("a", a);
-//        esp_show_mp("b", b);
-//        esp_show_mp("c", c);
+//        esp_show_mp("a[0]", a);
+//        esp_show_mp("b[0]", b);
+//        esp_show_mp("c[0]", c);
     }
     fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
+//    if (A2->used == 32) {
+//        esp_show_mp("e[0]", D2);
+//    }
 #endif // DEBUG_WOLFSSL
 
     As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
@@ -4488,11 +4491,15 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         else {
             /* When d != D2, there's a HW/SW calc problem.
              * Show the original interesting parameters. */
-            ESP_LOGI(TAG, "Original saved parameters:");
+            ESP_LOGW(TAG, "Original saved parameters:");
             esp_show_mp("a", AX);
             esp_show_mp("b", BX);
             esp_show_mp("c", CX);
             esp_show_mp("d", DX);
+            ESP_LOGI(TAG, "SW Expected Result:");
+            esp_show_mp("d", D2);
+            ESP_LOGE(TAG, "HW Result Mismatch:");
+            esp_show_mp("d", d);
         }
 #endif // DEBUG_WOLFSSL
         return ret;
