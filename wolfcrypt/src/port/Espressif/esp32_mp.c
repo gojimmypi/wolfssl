@@ -662,7 +662,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Ms = mp_count_bits(M);
-    ESP_LOGI(TAG, "Bits:, Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
+    ESP_LOGI(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
 
     /* maximum bits and words for writing to HW */
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
