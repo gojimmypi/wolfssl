@@ -373,13 +373,13 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     return ret;
 }
 
-/* Perform a full fp_cmp and binary compare.
+/* Perform a full mp_cmp and binary compare.
  * (typically only used during debugging) */
 int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
 {
     int ret = MP_OKAY;
-    int e = memcmp(A, B, sizeof(fp_int));
-    if (fp_cmp(A, B) == FP_EQ) {
+    int e = memcmp(A, B, sizeof(mp_int));
+    if (mp_cmp(A, B) == MP_EQ) {
         if (e == 0) {
             /* we always want to be here: both esp_show_mp and binary equal! */
             ESP_LOGV(TAG, "fp_cmp and memcmp match for %s and %s!",
