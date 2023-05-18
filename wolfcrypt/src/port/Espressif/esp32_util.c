@@ -346,6 +346,29 @@ int esp_ShowExtendedSystemInfo()
     return ShowExtendedSystemInfo();
 }
 
+/* Print a MATH_INT_T attribute list.
+ *
+ * Note with the right string parameters, the result can be pasted as
+ * initialization code.
+ */
+int esp_show_mp_attributes(char* c, MATH_INT_T* X)
+{
+    static const char* MP_TAG = "MATH_INT_T";
+    int ret = 0;
+    if (X == NULL) {
+        ret = -1;
+        ESP_LOGV(MP_TAG, "esp_show_mp_attributes called with X == NULL");
+    }
+    else {
+        ESP_LOGI(MP_TAG, "");
+        ESP_LOGI(MP_TAG, "%s.used = %d;", c, X->used);
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+        ESP_LOGI(MP_TAG, "%s.sign = %d;", c, X->sign);
+#endif
+    }
+    return ret;
+}
+
 /* Print a MATH_INT_T value.
  *
  * Note with the right string parameters, the result can be pasted as
@@ -360,11 +383,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
         ESP_LOGV(MP_TAG, "esp_show_mp called with X == NULL");
     }
     else {
-        ESP_LOGI(MP_TAG, "");
-        ESP_LOGI(MP_TAG, "%s.used = %d;", c, X->used);
-#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-        ESP_LOGI(MP_TAG, "%s.sign = %d;", c, X->sign);
-#endif
+        esp_show_mp_attributes(c, X);
         for (size_t i = 0; i < X->used; i++) {
             ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;",
                                    c, /* the supplied variable name      */
