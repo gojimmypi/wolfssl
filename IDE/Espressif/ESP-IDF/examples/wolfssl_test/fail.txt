@@ -1,0 +1,150 @@
+    {
+        a[0].used = 32;
+        a[0].sign = 0;
+        a[0].dp[ 0] = 0xd0231537;
+        a[0].dp[ 1] = 0xc0d02132;
+        a[0].dp[ 2] = 0x15a431d4;
+        a[0].dp[ 3] = 0x4f7b95d2;
+        a[0].dp[ 4] = 0x4054544c;
+        a[0].dp[ 5] = 0x3c2323e7;
+        a[0].dp[ 6] = 0xf6d09a71;
+        a[0].dp[ 7] = 0x479f172a;
+        a[0].dp[ 8] = 0x5403c864;
+        a[0].dp[ 9] = 0x4be53e3f;
+        a[0].dp[10] = 0xaa68c94b;
+        a[0].dp[11] = 0x9aaa9fa0;
+        a[0].dp[12] = 0xd8e7a7c9;
+        a[0].dp[13] = 0xfc948609;
+        a[0].dp[14] = 0x8ec690ff;
+        a[0].dp[15] = 0x0532af10;
+        a[0].dp[16] = 0x07fc3a99;
+        a[0].dp[17] = 0x68cea58d;
+        a[0].dp[18] = 0x6d98eb17;
+        a[0].dp[19] = 0x50aa03f1;
+        a[0].dp[20] = 0x4a6f5926;
+        a[0].dp[21] = 0xabdc508d;
+        a[0].dp[22] = 0xf91842cf;
+        a[0].dp[23] = 0x34fd5770;
+        a[0].dp[24] = 0xd6be7749;
+        a[0].dp[25] = 0xd1736f9f;
+        a[0].dp[26] = 0xd4d43492;
+        a[0].dp[27] = 0x4994cc19;
+        a[0].dp[28] = 0x6005f5de;
+        a[0].dp[29] = 0x2e821d60;
+        a[0].dp[30] = 0x8c28df26;
+        a[0].dp[31] = 0x5a10f4c9;
+    }
+
+    /* initialize operand b */
+    {
+        b[0].used = 32;
+        b[0].sign = 0;
+        b[0].dp[ 0] = 0xc3f1fa77;
+        b[0].dp[ 1] = 0xac67a525;
+        b[0].dp[ 2] = 0xa0021827;
+        b[0].dp[ 3] = 0x6c2de7e0;
+        b[0].dp[ 4] = 0x148b254e;
+        b[0].dp[ 5] = 0xb651b6d0;
+        b[0].dp[ 6] = 0x233d5585;
+        b[0].dp[ 7] = 0x38f8edb5;
+        b[0].dp[ 8] = 0x2b0fb62f;
+        b[0].dp[ 9] = 0x170c6605;
+        b[0].dp[10] = 0x14b406af;
+        b[0].dp[11] = 0x9ddaf774;
+        b[0].dp[12] = 0xf0fe9cfb;
+        b[0].dp[13] = 0x852f97d4;
+        b[0].dp[14] = 0x30662c84;
+        b[0].dp[15] = 0x910e50d1;
+        b[0].dp[16] = 0xa4227541;
+        b[0].dp[17] = 0x5781327a;
+        b[0].dp[18] = 0x456430b3;
+        b[0].dp[19] = 0xadf6d647;
+        b[0].dp[20] = 0xd01e8219;
+        b[0].dp[21] = 0xada21cfd;
+        b[0].dp[22] = 0xe923c73b;
+        b[0].dp[23] = 0x93bd26ae;
+        b[0].dp[24] = 0x7f1a51a7;
+        b[0].dp[25] = 0x6f8b4111;
+        b[0].dp[26] = 0xd07522e2;
+        b[0].dp[27] = 0x29cb525b;
+        b[0].dp[28] = 0xe8027c9d;
+        b[0].dp[29] = 0x504bf7b4;
+        b[0].dp[30] = 0xd47a0f98;
+        b[0].dp[31] = 0x834230f6;
+    }
+
+    /* initialize operand c */
+    {
+        c[0].used = 32;
+        c[0].sign = 0;
+        c[0].dp[ 0] = 0xd0d85d10;
+        c[0].dp[ 1] = 0x95c920df;
+        c[0].dp[ 2] = 0xc05cbb50;
+        c[0].dp[ 3] = 0x387050d9;
+        c[0].dp[ 4] = 0xb8765dc3;
+        c[0].dp[ 5] = 0xf0325e40;
+        c[0].dp[ 6] = 0x870013d3;
+        c[0].dp[ 7] = 0x60485b82;
+        c[0].dp[ 8] = 0xa3578903;
+        c[0].dp[ 9] = 0x6aa1aeec;
+        c[0].dp[10] = 0xeb3a376f;
+        c[0].dp[11] = 0x84006e8c;
+        c[0].dp[12] = 0x9c1c518d;
+        c[0].dp[13] = 0xeb181f2f;
+        c[0].dp[14] = 0xbbc406f2;
+        c[0].dp[15] = 0x70a21491;
+        c[0].dp[16] = 0x4162ef05;
+        c[0].dp[17] = 0xb76b8eec;
+        c[0].dp[18] = 0x87b54190;
+        c[0].dp[19] = 0xa472e399;
+        c[0].dp[20] = 0x55464f69;
+        c[0].dp[21] = 0x68f1f634;
+        c[0].dp[22] = 0x9cf1786d;
+        c[0].dp[23] = 0x7cca7654;
+        c[0].dp[24] = 0x960ad78a;
+        c[0].dp[25] = 0x2d42af39;
+        c[0].dp[26] = 0xca6a1de0;
+        c[0].dp[27] = 0x77bec188;
+        c[0].dp[28] = 0xcebad8a5;
+        c[0].dp[29] = 0x1770ae97;
+        c[0].dp[30] = 0xbd3796c4;
+        c[0].dp[31] = 0xade56a3f;
+    }
+
+    /* initialized the expected result: e */
+    {
+        e[0].used =	32;
+        e[0].sign =	0;
+        e[0].dp[ 0]	= 0x6dbbd8d1;
+        e[0].dp[ 1]	= 0xe4b146fc;
+        e[0].dp[ 2]	= 0x1070b4dc;
+        e[0].dp[ 3]	= 0xfe33f753;
+        e[0].dp[ 4]	= 0xd1f4bfde;
+        e[0].dp[ 5]	= 0x798ff526;
+        e[0].dp[ 6]	= 0x3a96340d;
+        e[0].dp[ 7]	= 0x7e48a9ab;
+        e[0].dp[ 8]	= 0xa2c6855a;
+        e[0].dp[ 9]	= 0xacc7c270;
+        e[0].dp[10]	= 0xcd01217d;
+        e[0].dp[11]	= 0xc1c2c687;
+        e[0].dp[12]	= 0x19d344d0;
+        e[0].dp[13]	= 0x662a4647;
+        e[0].dp[14]	= 0xabd41e26;
+        e[0].dp[15]	= 0x97f0d7ef;
+        e[0].dp[16]	= 0xcb0c9aac;
+        e[0].dp[17]	= 0xb0cae82f;
+        e[0].dp[18]	= 0x93ba1c2f;
+        e[0].dp[19]	= 0x390cf163;
+        e[0].dp[20]	= 0xaada3de7;
+        e[0].dp[21]	= 0x232d0e30;
+        e[0].dp[22]	= 0xf47889cf;
+        e[0].dp[23]	= 0x84003159;
+        e[0].dp[24]	= 0xd9286249;
+        e[0].dp[25]	= 0x0aacabb6;
+        e[0].dp[26]	= 0x583bc402;
+        e[0].dp[27]	= 0x1df88053;
+        e[0].dp[28]	= 0x2882b913;
+        e[0].dp[29]	= 0xbf11aaaa;
+        e[0].dp[30]	= 0x80177cef;
+        e[0].dp[31]	= 0x1feaf4e6;
+    }
