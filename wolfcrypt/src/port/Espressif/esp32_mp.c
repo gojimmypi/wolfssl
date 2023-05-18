@@ -161,7 +161,8 @@ static int esp_mp_hw_lock()
 
     if (ret == 0) {
         /* lock hardware */
-        ret = esp_CryptHwMutexLock(&mp_mutex, portMAX_DELAY);
+        /* we don't actually want to wait forever */
+        ret = esp_CryptHwMutexLock(&mp_mutex, (TickType_t)1000);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
             ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
@@ -227,14 +228,63 @@ static void esp_mp_hw_unlock( void )
 
     /* unlock */
     esp_CryptHwMutexUnLock(&mp_mutex);
+
+    ESP_LOGV(TAG, "unlock");
 }
 
-/* this is based on an article by Cetin Kaya Koc,
- * A New Algorithm for Inversion: mod p^k, June 28 2017 */
+int _esp_mp_exptmod_busy = 0;
+int esp_mp_exptmod_busy(void)
+{
+    return (_esp_mp_exptmod_busy != 0);
+}
+
+/* M' M-Prime Calculation for HW Accelerator */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
+    int ret = MP_OKAY;
+
     ESP_LOGV(TAG, "\nBegin esp_calc_Mdash \n");
 
+#ifdef USE_ALT_MPRIME
+    /* M' = M^(-1) mod b; b = 2^32 */
+
+    /* Call Large Number Modular Exponentiation
+     *
+     *    Z = X^Y mod M
+     *
+     *    mp_exptmod notation: Y = (G ^ X) mod P
+     *
+     *    G is our parameter: M
+     */
+    MATH_INT_T X[1] = { };
+    MATH_INT_T P[1] = { };
+    MATH_INT_T Y[1] = { };
+    word32 Xs;
+    mp_init(X);
+    mp_init(P);
+    mp_init(Y);
+
+    /* MATH_INT_T value of (-1) */
+    X->dp[0] = 1;
+    X->sign = MP_NEG;
+    X->used = 1;
+
+    Xs = mp_count_bits(X);
+
+    /* MATH_INT_T value of 2^32 */
+    P->dp[1] = 1;
+    P->used = 2;
+
+    /* this fails due to even P number; ((b & 1) == 0) in fp_montgomery_setup()
+     * called from _fp_exptmod_ct, called from fp_exptmod */
+    ret = mp_exptmod(M, X, P, Y);
+
+    ESP_LOGI(TAG, "esp_calc_Mdash %u", *md);
+    *md = Y->dp[0];
+    ESP_LOGI(TAG, "esp_calc_Mdash %u", *md);
+#else
+    /* this is based on an article by Cetin Kaya Koc,
+     * A New Algorithm for Inversion: mod p^k, June 28 2017 */
     int i;
     int xi;
     int b0 = 1;
@@ -256,9 +306,11 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     }
     /* 2's complement */
     *md = ~x + 1;
+#endif
+
     ESP_LOGV(TAG, "\nEnd esp_calc_Mdash \n");
 
-    return MP_OKAY;
+    return ret;
 }
 
 /* the result may need to have extra bytes zeroed or used length adjusted */
@@ -316,7 +368,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 /* start HW process */
 static void process_start(word32 reg)
 {
-     /* clear interrupt */
+    /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     /* start process  */
     DPORT_REG_WRITE(reg, 0);
@@ -333,7 +385,7 @@ static int wait_until_done(word32 reg)
     asm volatile("memw");
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
-        asm volatile("memw"); /* wait */
+        asm volatile("nop"); /* wait */
     }
 
     /* clear interrupt */
@@ -453,7 +505,13 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 
     int ret = 0;
 
-    /* 2^(exp)*/
+    /* 2^(exp)
+     *
+     * rinv will have all zeros with a 1 in last word.
+     * e.g. exp=2048 will have a 1 in dp[0x40] = dp[64]
+     * this is the 65'th element (zero based)
+     * Value for used = 0x41 = 65
+     **/
     if ((ret = mp_2expt(rinv, exp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate mp_2expt()");
         return ret;
@@ -707,12 +765,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     zwords      = bits2words(min(Ms, Xs + Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
 
+#ifdef SEARCHING_FOR_INTERESTING_VALUES
     if ( (Xs == 1023) && (Ys = 1024) && (Ms = 1024) ) {
         ESP_LOGI(TAG, "Challenge Property Match!");
         esp_show_mp("a[0]", X);
         esp_show_mp("b[0]", Y);
         esp_show_mp("c[0]", M);
     }
+#endif
 
     ESP_LOGI(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
                   maxWords_sz, zwords, hwWords_sz);
@@ -741,18 +801,15 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* success, show details */
         Rs = mp_count_bits(r_inv);
         ESP_LOGI(TAG, "r_inv bits = %d", Rs);
-        ESP_LOGI(TAG, "Exponent   = %lu", Exponent);
-        //esp_show_mp("    M", M);
-        //esp_show_mp("r_inv", r_inv);
+        ESP_LOGI(TAG, "Exponent   = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
+        /* optionally show M and R inv
+           esp_show_mp("    M", M);
+           esp_show_mp("r_inv", r_inv);
+        */
     }
 
-    /* lock HW for use */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(tmpZ);
-        mp_clear(r_inv);
-        return ret;
-    }
-    /* Calculate M' */ // todo move before lock
+    /* Calculate M' = M^(-1) mod b; b = 2^32 */
+    /* Be sure to do this before HW lock, as we may call HW */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(tmpZ);
@@ -760,7 +817,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         return ret;
     }
     else {
-        ESP_LOGI(TAG, "mp = %d", mp);
+        ESP_LOGI(TAG, "mp = %u", mp);
+    }
+
+    /* lock HW for use */
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
+        return ret;
     }
 
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -998,16 +1062,20 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         return ret;
     }
 
+    /* calc M' */
+    _esp_mp_exptmod_busy = 1; /* Force SW when MPrime needed for mp_exptmod */
+    /* if Pm is odd, uses mp_montgomery_setup() */
+    if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
+        ESP_LOGE(TAG, "failed to calculate M dash");
+        mp_clear(&r_inv);
+        _esp_mp_exptmod_busy = 0;
+        return ret;
+    }
+    _esp_mp_exptmod_busy = 0;
+
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         ESP_LOGE(TAG, "esp_mp_hw_lock failed");
-        mp_clear(&r_inv);
-        return ret;
-    }
-    /* calc M' */
-    /* if Pm is odd, uses mp_montgomery_setup() */
-    if ( (ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY ) {
-        ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(&r_inv);
         return ret;
     }
