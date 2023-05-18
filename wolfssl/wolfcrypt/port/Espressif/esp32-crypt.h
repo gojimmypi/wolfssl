@@ -81,6 +81,8 @@
 ******************************************************************************
 */
 
+int esp_mp_exptmod_busy(void);
+
 int esp_ShowExtendedSystemInfo(void);
 
 /* Compare MATH_INT_T A to MATH_INT_T B
@@ -88,7 +90,13 @@ int esp_ShowExtendedSystemInfo(void);
  * identify variable name. */
 int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B,MATH_INT_T* B);
 
-/* Show MATH_INT_T A value.
+/* Show MATH_INT_T value attributes.  */
+int esp_show_mp_attributes(char* c, MATH_INT_T* X);
+
+/* Show MATH_INT_T value.
+ *
+ * Calls esp_show_mp_attributes().
+ *
  * During debug, the string name_A can help
  * identify variable name. */
 int esp_show_mp(char* name_X, MATH_INT_T* X);
