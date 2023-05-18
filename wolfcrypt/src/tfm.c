@@ -54,6 +54,7 @@
 
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
     static const char* TAG = "TFM"; /* esp log breadcrumb */
 #endif
 
@@ -2045,13 +2046,16 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    int x = fp_count_bits(X);
+    int x = 0;
     int ret = 0;
 
     /* any timing resistance should be performed in HW calc when enabled */
-    ret = esp_mp_exptmod(G, X, x, P, Y);
-
-    return ret;
+    if (esp_mp_exptmod_busy() == 0) {
+        x = fp_count_bits(X);
+        ret = esp_mp_exptmod(G, X, x, P, Y);
+        return ret;
+    }
+    /* else fall through to SW calc */
 #endif
 
 #ifndef WOLFSSL_SMALL_STACK
@@ -2910,8 +2914,7 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    int x;
-    x = fp_count_bits(X);
+    int x = 0;
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    /* handle modulus of zero and prevent overflows */
@@ -2932,7 +2935,8 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   if (x > EPS_RSA_EXPT_XBTIS) {
+    x = fp_count_bits(X);
+    if ((x > EPS_RSA_EXPT_XBTIS) && (esp_mp_exptmod_busy() == 0)) {
       int retHW = 0;
       retHW = esp_mp_exptmod(G, X, x, P, Y);
       return retHW;
@@ -4491,15 +4495,15 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         else {
             /* When d != D2, there's a HW/SW calc problem.
              * Show the original interesting parameters. */
-            ESP_LOGW(TAG, "Original saved parameters:");
-            esp_show_mp("a", AX);
-            esp_show_mp("b", BX);
-            esp_show_mp("c", CX);
-            esp_show_mp("d", DX);
-            ESP_LOGI(TAG, "SW Expected Result:");
-            esp_show_mp("d", D2);
-            ESP_LOGE(TAG, "HW Result Mismatch:");
-            esp_show_mp("d", d);
+//            ESP_LOGW(TAG, "Original saved parameters:");
+//            esp_show_mp("a", AX);
+//            esp_show_mp("b", BX);
+//            esp_show_mp("c", CX);
+//            esp_show_mp("d", DX);
+//            ESP_LOGI(TAG, "SW Expected Result:");
+//            esp_show_mp("d", D2);
+            ESP_LOGE(TAG, "HW Result Mismatch");
+//            esp_show_mp("d", d);
         }
 #endif // DEBUG_WOLFSSL
         return ret;
