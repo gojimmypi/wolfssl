@@ -47,7 +47,9 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "wolfssl component CMAKE_BUILD_EARLY_EXPANSION:")
     idf_component_register(
                             REQUIRES "${COMPONENT_REQUIRES}"
-                            PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
+                            PRIV_REQUIRES
+                                          esp_timer
+                                          driver # this will typically only be needed for wolfSSL benchmark
                            )
 
 else()
