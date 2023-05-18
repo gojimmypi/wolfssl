@@ -2232,7 +2232,7 @@ int math_test_byte_order_check()
     }
     return ret;
 }
-/* Math test 1 is a known case where HW fails to return same value as SW. v*/
+/* Math test 1 is a known case where HW fails to return same value as SW. */
 int math_test_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
@@ -2247,9 +2247,12 @@ int math_test_1(void)
     mp_init_load(a, (fp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
     mp_init_load(b, (fp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
     mp_init_load(c, (fp_digit *)&OPERAND_C_32_1, COUNT_OF(OPERAND_C_32_1) );
-    mp_init(d);
-    mp_init_load(e, (fp_digit *)&RESULT_E_32_1, COUNT_OF(RESULT_E_32_1) );
 
+    /* the result will be in d */
+    mp_init(d);
+
+    /* our expected result is in e */
+    mp_init_load(e, (fp_digit *)&RESULT_E_32_1,  COUNT_OF(RESULT_E_32_1)  );
 
     /* call the interesting TFM */
     ret = mp_mulmod(a, b, c, d);
@@ -2276,9 +2279,15 @@ int math_test_1(void)
     return ret;
 }
 
+/*
+******************************************************************************
+******************************************************************************
+** math_test()
+******************************************************************************
+******************************************************************************
+*/
 WOLFSSL_TEST_SUBROUTINE int math_test(void)
 {
-
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* we'll inspect some interim functions */
 
@@ -2303,8 +2312,6 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     MATH_INT_T e[1]; /* expected result */
 
     const unsigned char* val = 0; (void)val;
-
-
 
     c->used = BADVAL; /* we have an uninitialized result variable */
 
