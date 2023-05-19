@@ -64,8 +64,8 @@
         /* Each individual math HW can be turned on or off.
          * Listed in order of complexity and historical difficulty. */
         #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-        //#define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-        //#define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
     #endif
 
     #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)

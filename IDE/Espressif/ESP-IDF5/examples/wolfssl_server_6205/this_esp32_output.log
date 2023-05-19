@@ -24,127 +24,171 @@ I (76) boot:  1 phy_init         RF data          01 01 0000f000 00001000
 I (83) boot:  2 factory          factory app      00 00 00010000 00177000
 I (91) boot: End of partition table
 I (95) boot_comm: chip revision: 1, min. application chip revision: 0
-I (102) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=2617ch (156028) map
-I (167) esp_image: segment 1: paddr=000361a4 vaddr=3ffb0000 size=03b08h ( 15112) load
-I (173) esp_image: segment 2: paddr=00039cb4 vaddr=40080000 size=06364h ( 25444) load
-I (184) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size=7eaa8h (518824) map
-I (372) esp_image: segment 4: paddr=000bead0 vaddr=40086364 size=0e690h ( 59024) load
-I (396) esp_image: segment 5: paddr=000cd168 vaddr=50000000 size=00010h (    16) load
-I (407) boot: Loaded app from partition at offset 0x10000
-I (407) boot: Disabling RNG early entropy source...
-I (418) cpu_start: Pro cpu up.
-I (418) cpu_start: Starting app cpu, entry point is 0x40081300
-I (405) cpu_start: App cpu up.
-I (435) cpu_start: Pro cpu start user code
-I (435) cpu_start: cpu freq: 160000000 Hz
-I (435) cpu_start: Application information:
-I (440) cpu_start: Project name:     key_test
-I (445) cpu_start: App version:      v5.6.0-stable-855-g926c8d3ce-di
-I (452) cpu_start: Compile time:     May 19 2023 11:43:22
-I (458) cpu_start: ELF file SHA256:  0fcde09131ea0d33...
-I (464) cpu_start: ESP-IDF:          v5.0-dirty
-I (469) heap_init: Initializing. RAM available for dynamic allocation:
-I (476) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
-I (483) heap_init: At 3FFB6B38 len 000294C8 (165 KiB): DRAM
-I (489) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
-I (495) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
-I (502) heap_init: At 400949F4 len 0000B60C (45 KiB): IRAM
-I (509) spi_flash: detected chip: generic
-I (512) spi_flash: flash io: dio
-W (516) spi_flash: Detected size(4096k) larger than the size in the binary image header(204
-8k). Using the size in the binary image header.
-I (531) cpu_start: Starting scheduler on PRO CPU.
+I (102) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=266dch (157404) map
+I (168) esp_image: segment 1: paddr=00036704 vaddr=3ffb0000 size=03b08h ( 15112) load
+I (174) esp_image: segment 2: paddr=0003a214 vaddr=40080000 size=05e04h ( 24068) load
+I (184) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size=7f1fch (520700) map
+I (372) esp_image: segment 4: paddr=000bf224 vaddr=40085e04 size=0ebf0h ( 60400) load
+I (397) esp_image: segment 5: paddr=000cde1c vaddr=50000000 size=00010h (    16) load
+I (408) boot: Loaded app from partition at offset 0x10000
+I (408) boot: Disabling RNG early entropy source...
+I (420) cpu_start: Pro cpu up.
+I (420) cpu_start: Starting app cpu, entry point is 0x40081300
+I (406) cpu_start: App cpu up.
+I (436) cpu_start: Pro cpu start user code
+I (436) cpu_start: cpu freq: 160000000 Hz
+I (436) cpu_start: Application information:
+I (441) cpu_start: Project name:     key_test
+I (446) cpu_start: App version:      v5.6.0-stable-856-gee6b43fe3-di
+I (453) cpu_start: Compile time:     May 19 2023 11:48:26
+I (459) cpu_start: ELF file SHA256:  52042ef2c349f640...
+I (465) cpu_start: ESP-IDF:          v5.0-dirty
+I (471) heap_init: Initializing. RAM available for dynamic allocation:
+I (478) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (484) heap_init: At 3FFB6B40 len 000294C0 (165 KiB): DRAM
+I (490) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (496) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (503) heap_init: At 400949F4 len 0000B60C (45 KiB): IRAM
+I (510) spi_flash: detected chip: generic
+I (514) spi_flash: flash io: dio
+W (518) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the si
+ze in the binary image header.
+I (532) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
-I (540) key test: --------------------------------------------------------
-I (550) key test: --------------------------------------------------------
-I (560) key test: ---------------------- BEGIN MAIN ----------------------
-I (560) key test: --------------------------------------------------------
-I (570) key test: --------------------------------------------------------
-I (580) esp32_util: Extended Version and Platform Information.
-I (580) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (590) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006000
-I (600) esp32_util: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
-I (600) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.gi
-t
-I (610) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (620) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 926c8d3ce12dd94015cd9a8c8b5d5058b9041139
-I (630) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 926c8d3ce
-I (630) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri May 19 11:40:23 2023 -0700'
-I (640) esp32_util: CONFIG_IDF_TARGET = esp32
-I (650) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
-I (650) esp32_util: Xthal_have_ccount: 1
-I (660) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55000
-I (660) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55000
-I (670) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
-I (680) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
-I (680) esp32_util: Stack HWM: 53628
-I (690) esp32_util: ESP32WROOM32_CRYPT is enabled for ESP32.
-I (690) esp32_util: NOT SINGLE_THREADED
-I (720) key test: ESP_WIFI_MODE_STA
-I (740) wifi:wifi driver task: 3ffc9588, prio:23, stack:6656, core=0
-I (740) system_api: Base MAC address is not set
-I (740) system_api: read default base MAC address from EFUSE
-I (760) wifi:wifi firmware version: 0d470ef
-I (760) wifi:wifi certification version: v7.0
-I (760) wifi:config NVS flash: enabled
-I (760) wifi:config nano formating: disabled
-I (760) wifi:Init data frame dynamic rx buffer num: 32
-I (770) wifi:Init management frame dynamic rx buffer num: 32
-I (770) wifi:Init management short buffer num: 32
-I (780) wifi:Init dynamic tx buffer num: 32
-I (780) wifi:Init static rx buffer size: 1600
-I (780) wifi:Init static rx buffer num: 10
-I (790) wifi:Init dynamic rx buffer num: 32
-I (790) wifi_init: rx ba win: 6
-I (800) wifi_init: tcpip mbox: 32
-I (800) wifi_init: udp mbox: 6
-I (800) wifi_init: tcp mbox: 6
-I (810) wifi_init: tcp tx win: 5744
-I (810) wifi_init: tcp rx win: 5744
-I (820) wifi_init: tcp mss: 1440
-I (820) wifi_init: WiFi IRAM OP enabled
-I (820) wifi_init: WiFi RX IRAM OP enabled
-W (830) key test:   Warning test
-E (830) key test:   Error test
-I (840) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  34 e3 fc 3f 01 a5 a5 a5  |........4
-..?....|
-I (850) key test: Generating an RSA key 512 bits long
-I (850) key test: Generating an RSA key 512 bits long
-I (860) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  34 e3 fc 3f 01 a5 a5 a5  |........4
-..?....|
-I (3800) key test: wc_RsaKeyToDer derSz 320
-I (3800) key test: wc_DerToPem pemSz 497
-I (3800) key test: Begin  wc_InitCert
-I (3800) key test: End    wc_InitCert
-I (3810) key test: Begin  wc_MakeCertReq_ex
-I (3810) key test: Begin  wc_MakeCertReq_ex
-I (3820) key test: Begin  wc_SignCert_ex
-I (3820) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  34 e3 fc 3f 01 a5 a5 a5  |........
-4..?....|
-I (3920) key test: End  wc_SignCert_ex
-I (3920) key test:
+I (541) key test: --------------------------------------------------------
+I (551) key test: --------------------------------------------------------
+I (561) key test: ---------------------- BEGIN MAIN ----------------------
+I (561) key test: --------------------------------------------------------
+I (571) key test: --------------------------------------------------------
+I (581) esp32_util: Extended Version and Platform Information.
+I (581) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.0
+I (591) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006000
+I (601) esp32_util: LIBWOLFSSL_VERSION_GIT_TAG = v5.6.0-stable
+I (601) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (611) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (621) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = ee6b43fe34a97ae1dc14aed1e6b7c5136ad25647
+I (631) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = ee6b43fe3
+I (631) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri May 19 11:47:40 2023 -0700'
+I (641) esp32_util: CONFIG_IDF_TARGET = esp32
+I (651) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
+I (651) esp32_util: Xthal_have_ccount: 1
+I (661) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55000
+I (661) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55000
+I (671) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (681) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (681) esp32_util: Stack HWM: 53620
+I (691) esp32_util: ESP32WROOM32_CRYPT is enabled for ESP32.
+I (691) esp32_util: NOT SINGLE_THREADED
+I (721) key test: ESP_WIFI_MODE_STA
+I (741) wifi:wifi driver task: 3ffc9590, prio:23, stack:6656, core=0
+I (741) system_api: Base MAC address is not set
+I (741) system_api: read default base MAC address from EFUSE
+I (761) wifi:wifi firmware version: 0d470ef
+I (761) wifi:wifi certification version: v7.0
+I (761) wifi:config NVS flash: enabled
+I (761) wifi:config nano formating: disabled
+I (761) wifi:Init data frame dynamic rx buffer num: 32
+I (771) wifi:Init management frame dynamic rx buffer num: 32
+I (771) wifi:Init management short buffer num: 32
+I (781) wifi:Init dynamic tx buffer num: 32
+I (781) wifi:Init static rx buffer size: 1600
+I (781) wifi:Init static rx buffer num: 10
+I (791) wifi:Init dynamic rx buffer num: 32
+I (791) wifi_init: rx ba win: 6
+I (801) wifi_init: tcpip mbox: 32
+I (801) wifi_init: udp mbox: 6
+I (801) wifi_init: tcp mbox: 6
+I (811) wifi_init: tcp tx win: 5744
+I (811) wifi_init: tcp rx win: 5744
+I (821) wifi_init: tcp mss: 1440
+I (821) wifi_init: WiFi IRAM OP enabled
+I (821) wifi_init: WiFi RX IRAM OP enabled
+W (831) key test:   Warning test
+E (831) key test:   Error test
+I (841) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  3c e3 fc 3f 01 a5 a5 a5  |........<..?....|
+I (851) key test: Generating an RSA key 2048 bits long
+I (851) key test: Generating an RSA key 2048 bits long
+I (861) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  3c e3 fc 3f 01 a5 a5 a5  |........<..?....|
+I (4591) TFM:
+
+New calc
+
+.
+I (4601) wolfssl_esp32_mp: r_inv bits = 2043
+I (4601) wolfssl_esp32_mp: Exponent   = 4096 (0x00001000)
+I (4601) wolfssl_esp32_mp: mp = 794998175
+I (4611) esp32_util: e = -141
+E (4611) esp32_util: fp_cmp mismatch! memcmp offset 0xffffff73 for d vs D2!
+E (4621) TFM: HW Result Mismatch.
+W (4621) TFM: Returning software result.
+I (4641) key test: wc_RsaKeyToDer derSz 1191
+I (4651) key test: wc_DerToPem pemSz 1675
+I (4651) key test: Begin  wc_InitCert
+I (4651) key test: End    wc_InitCert
+I (4651) key test: Begin  wc_MakeCertReq_ex
+I (4661) key test: Begin  wc_MakeCertReq_ex
+I (4661) key test: Begin  wc_SignCert_ex
+I (4671) key test: 0x3ffc1708   a5 a5 a5 a5 00 00 00 00  3c e3 fc 3f 01 a5 a5 a5  |........<..?....|
+I (4871) TFM:
+
+New calc
+
+.
+I (4871) wolfssl_esp32_mp: r_inv bits = 2043
+I (4871) wolfssl_esp32_mp: Exponent   = 4096 (0x00001000)
+I (4871) wolfssl_esp32_mp: mp = 733230123
+I (4881) TFM: Result d = result D2
+I (5121) TFM:
+
+New calc
+
+.
+I (5121) TFM: X->used == 32!
+I (5121) wolfssl_esp32_mp: r_inv bits = 1023
+I (5121) wolfssl_esp32_mp: Exponent   = 2048 (0x00000800)
+I (5121) wolfssl_esp32_mp: mp = 870551559
+I (5131) TFM: Result d = result D2
+I (5131) TFM:
+
+New calc
+
+.
+I (5141) wolfssl_esp32_mp: r_inv bits = 2043
+I (5141) wolfssl_esp32_mp: Exponent   = 4096 (0x00001000)
+I (5151) wolfssl_esp32_mp: mp = 733230123
+I (5151) TFM: Result d = result D2
+I (5161) key test: End  wc_SignCert_ex
+I (5161) key test:
 
 Request pem: (paste into file for CA sign)
 
 -----BEGIN CERTIFICATE REQUEST-----
-MIIBLzCB2gIBADB1MQswCQYDVQQGEwJOWjEQMA4GA1UECAwHV2Fpa2F0bzERMA8G
-A1UEBwwISGFtaWx0b24xIDAeBgNVBAoMF0JsdWUgTGVhZiBTb2Z0d2FyZSwgTHRk
-MR8wHQYDVQQDDBZMdW1vcyBIVywgU04gPSBCTFMtMDAyMFwwDQYJKoZIhvcNAQEB
-BQADSwAwSAJBALZP6qfb8q6dzfopGxtiKhUwSo30EsYBgCPffBzxqX3rVI7AVIiA
-50oGHmbXxjyEFRZ3sfmRHXxllL1iTf+M41kCAwEAAaAAMA0GCSqGSIb3DQEBCwUA
-A0EAkrVpesE6UyP+132hKsJQ/Xt5isYllON5x+ZqjLhoA76ztHc2W8espxJD0J/g
-N81PTNlxxbH916qOfsHbpQEwqw==
+MIICujCCAaICAQAwdTELMAkGA1UEBhMCTloxEDAOBgNVBAgMB1dhaWthdG8xETAP
+BgNVBAcMCEhhbWlsdG9uMSAwHgYDVQQKDBdCbHVlIExlYWYgU29mdHdhcmUsIEx0
+ZDEfMB0GA1UEAwwWTHVtb3MgSFcsIFNOID0gQkxTLTAwMjCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAI4sR04Lc8zkJFvMxVgUywtPgM87pe+3NJ4EAApg
+X83+xZj312YnEleiFxCKtlBJ/p1AWaNPhTyOfHah6C40GeQlj97/7UI+CMTpJK0B
+3EGFljQvOImeCKTJkG3D17MVuPvkda5mZjd1zcJ95D3SzV4vjUMaF7Ee/5zqdIOp
+z5QjKS/Zmtx53yAnz2Khts8eRVUrqJxJFyDFw/5fstD9C1CnYtSm4SnzlAoHwcXa
+o/Q4o5smHwopidRiztBA7Pp5f6y/Mb0hksWx0sIM7y+MGJpOjlfaV4/nRk7X/84E
+jhDCUCKu3pSu0EL7gNt19BBOcYTw2QgzHv4MqGDuOu2xFX0CAwEAAaAAMA0GCSqG
+SIb3DQEBCwUAA4IBAQAPDVqSDVwcpcW+nyQBZQzIJtKx9TsFndsy0UPuJfNIUDdW
+Jo6PFkwNXBx9nk6XRkhsynsjOFwFd/1CAm/wJoy73hghKi3gia0y6/XeRY0ClbEG
+gW35Qq/HDZGHUyHWSnnmnlSiLruV37TbXvMkxlKnpsHle/bedhQ5RzeFHGMk9FAd
+C/dlYmPUuk02i6WxtZ5iCjq8XnDmaS7e59fYuJ4ohP6raU9QYDCGaHarseZVQE3j
+Dn5mjC4PplDsg1rd023+dTgzX7NMTtXcC6EleVQ578h9deqyONrTA0Lw5xnxKu/p
+GzSB7FqdhIRSskYx12HFgoWQNZBLNy1L/2Uggh6y
 -----END CERTIFICATE REQUEST-----
 
 
 
-I (3960) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
+I (5261) key test: openssl x509 -req -in ./output/test_request.crt -days 10    \
      -CA private/CertificateAuthority-4096-PublicKey.crt                 \
      -CAkey private/CertificateAuthority-4096-PrivateKey.pem             \
      -passin pass:secret -CAcreateserial                                 \
      -extfile private/CertificateExtensions.txt -extensions LumosDevice  \
      -out ./output/test-Device-Certificate_hw.crt -text
 
-I (4000) key test: ESP32WROOM32_CRYPT is enabled for ESP32.
-I (4010) key test: Stack HWM: 35692
-I (4020) key test: Done!
+I (5301) key test: ESP32WROOM32_CRYPT is enabled for ESP32.
+I (5311) key test: Stack HWM: 29668
+I (5311) key test: Done!

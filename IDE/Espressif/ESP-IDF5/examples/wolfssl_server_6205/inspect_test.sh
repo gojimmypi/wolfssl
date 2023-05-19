@@ -1,4 +1,10 @@
 #!/bin/bash
+echo "Signing Certificate:"
+ls -al "./output/test_request.crt"
+
+echo ""
+
+cat "./output/test_request.crt"
 
 openssl asn1parse -in "./output/test_request.crt" | tee test_request.asn.txt
 
