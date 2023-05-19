@@ -745,7 +745,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (X->used == 32)
     {
-        ESP_LOGI(TAG, "X->used == 32!");
+        ESP_LOGV(TAG, "X->used == 32!");
 //        esp_show_mp("a", X);
 //        esp_show_mp("b", Y);
 //        esp_show_mp("c", M);
@@ -758,7 +758,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Ms = mp_count_bits(M);
-    ESP_LOGI(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
+    ESP_LOGV(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
 
     /* maximum bits and words for writing to HW */
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
@@ -774,7 +774,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 #endif
 
-    ESP_LOGI(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
+    ESP_LOGV(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
                   maxWords_sz, zwords, hwWords_sz);
 
     if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
@@ -798,14 +798,16 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         return ret;
     }
     else {
-        /* success, show details */
         Rs = mp_count_bits(r_inv);
+        /* success, show details */
+#ifdef DEBUG_WOLFSSL
         ESP_LOGI(TAG, "r_inv bits = %d", Rs);
         ESP_LOGI(TAG, "Exponent   = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
         /* optionally show M and R inv
            esp_show_mp("    M", M);
            esp_show_mp("r_inv", r_inv);
         */
+#endif
     }
 
     /* Calculate M' = M^(-1) mod b; b = 2^32 */
@@ -817,7 +819,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         return ret;
     }
     else {
+#ifdef DEBUG_WOLFSSL
         ESP_LOGI(TAG, "mp = %u", mp);
+#endif
     }
 
     /* lock HW for use */
