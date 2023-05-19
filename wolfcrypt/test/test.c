@@ -122,6 +122,9 @@
     #include <sys/time.h>
     #include <esp_log.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#if defined(INCLUDE_ALT_HW_TEST)
+    #include <wolfcrypt/test/alt_hw_test.h>
+#endif
 
     static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
@@ -671,6 +674,7 @@ static int debug_message_value(const char* msg, int val,
         }
         else {
             if (0 == XMEMCMP(msg, "Fail", 4)) {
+                esp_show_mp_attributes("Operand a", a);
                 ESP_LOGE(TAG, "%s %d", msg, val);
             }
             else {
@@ -2005,6 +2009,14 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
 #ifndef NO_MATH_TEST
+/*
+******************************************************************************
+******************************************************************************
+** Math Test Declarations and Functions
+******************************************************************************
+******************************************************************************
+*/
+
 WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_A_2_1[] =
 {
     0x000000d3,
@@ -2162,6 +2174,8 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_32_1[] =
  * Load the (MATH_INT_T)T with [word_len] number of fp_digit
  * values from the dp[] array. Also set the T.used value.
  *
+ * Assumed to be positive value. Manually set sign as needed.
+ *
  * Returns MP_OKAY if successful.
  *
  */
@@ -2188,7 +2202,7 @@ int mp_init_load(MATH_INT_T* T, fp_digit dp[], int word_len)
     return ret;
 }
 
-
+/* byte order check; do the bytes end up in the right order in memory? */
 int math_test_byte_order_check()
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
@@ -2232,6 +2246,7 @@ int math_test_byte_order_check()
     }
     return ret;
 }
+
 /* Math test 1 is a known case where HW fails to return same value as SW. */
 int math_test_1(void)
 {
@@ -2241,7 +2256,6 @@ int math_test_1(void)
     MATH_INT_T d[1]; /* result for 3 operand functions */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
-
 
     /* 32-operand parameters for math test #1 */
     mp_init_load(a, (fp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
@@ -2254,11 +2268,8 @@ int math_test_1(void)
     /* our expected result is in e */
     mp_init_load(e, (fp_digit *)&RESULT_E_32_1,  COUNT_OF(RESULT_E_32_1)  );
 
-    /* call the interesting TFM */
+    /* call the interesting TFM: d = a * b (mod c) */
     ret = mp_mulmod(a, b, c, d);
-
-    /* call ESP directly (same result) */
-    // ret = esp_mp_mulmod(a, b, c, d);
 
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE "mp_mulmod() : 32 word test, positive operands: a * b mod c"
@@ -2276,6 +2287,255 @@ int math_test_1(void)
                             e);
         ret = MP_VAL;
     }
+
+    alt_mulmod_hw_compare(a, b, c, e);
+    return ret;
+}
+
+int math_test_mp_mulmod_1()
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
+
+    /*
+    **************************************************************************
+    ** mp_mulmod(): a * b mod c
+    **************************************************************************
+    */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
+    mp_init(e);
+    a[0].used = 1; a[0].dp[0] = 20002;
+    b[0].used = 1; b[0].dp[0] = 2;
+    c[0].used = 1; c[0].dp[0] = 5;
+    retf = mp_mulmod(a, b, c, d);
+    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4 */
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mulmod() : a * b mod c check: 4"
+    /* check d == e; d = (a * b mod c) */
+    if ((retf == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            retf,
+                            a,
+                            b,
+                            c,
+                            NULL,
+                            e);
+        ret = MP_VAL;
+    }
+
+    alt_mulmod_hw_compare(a, b, c, e);
+    return ret;
+}
+
+int math_test_mp_mulmod_2()
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
+
+    /*
+    **************************************************************************
+    ** observed 32 word success in SW and HW; operand a and b both positive
+    **************************************************************************
+    */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c);
+    mp_init(d);
+    mp_init(e);
+
+    /* initialize operand a */
+    {
+        a[0].used = 32;
+        /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
+        a[0].dp[0] = 0x65f77941;
+        a[0].dp[1] = 0x967c46c1;
+        a[0].dp[2] = 0xe5b875c0;
+        a[0].dp[3] = 0x1520e798;
+        a[0].dp[4] = 0x81dc904b;
+        a[0].dp[5] = 0x08d1b971;
+        a[0].dp[6] = 0x350595f1;
+        a[0].dp[7] = 0x81629e43;
+        a[0].dp[8] = 0x182a7dd8;
+        a[0].dp[9] = 0x746f0dee;
+        a[0].dp[10] = 0x872e0dda;
+        a[0].dp[11] = 0x5db6b19a;
+        a[0].dp[12] = 0x4868e268;
+        a[0].dp[13] = 0x28794dde;
+        a[0].dp[14] = 0x15eae186;
+        a[0].dp[15] = 0x55075e7d;
+        a[0].dp[16] = 0x7e5a8e4a;
+        a[0].dp[17] = 0xaaeeac8e;
+        a[0].dp[18] = 0x631fea5b;
+        a[0].dp[19] = 0x6e74340c;
+        a[0].dp[20] = 0x71228e0e;
+        a[0].dp[21] = 0x06b96a89;
+        a[0].dp[22] = 0xb045cb32;
+        a[0].dp[23] = 0x7d395184;
+        a[0].dp[24] = 0x912b9018;
+        a[0].dp[25] = 0x474474e7;
+        a[0].dp[26] = 0xeb654412;
+        a[0].dp[27] = 0x28743112;
+        a[0].dp[28] = 0x8e8c25ff;
+        a[0].dp[29] = 0xb28ea9dd;
+        a[0].dp[30] = 0x6d7c8103;
+        a[0].dp[31] = 0x9c5170e5;
+    }
+    /* initialize operand b */
+    {
+        b[0].used = 32;
+        /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
+        b[0].dp[0] = 0x9fcdf5bf;
+        b[0].dp[1] = 0x654246a1;
+        b[0].dp[2] = 0x455d1339;
+        b[0].dp[3] = 0x935334a1;
+        b[0].dp[4] = 0xabca5ce7;
+        b[0].dp[5] = 0x9538be35;
+        b[0].dp[6] = 0xf99f5d28;
+        b[0].dp[7] = 0x894bb0f3;
+        b[0].dp[8] = 0x863a51dd;
+        b[0].dp[9] = 0xeb63f919;
+        b[0].dp[10] = 0x8fe69640;
+        b[0].dp[11] = 0x4e8c3a45;
+        b[0].dp[12] = 0xcd187433;
+        b[0].dp[13] = 0x4a6e68d5;
+        b[0].dp[14] = 0x89bf72ec;
+        b[0].dp[15] = 0xd557705c;
+        b[0].dp[16] = 0x1e4d2134;
+        b[0].dp[17] = 0x2da3750d;
+        b[0].dp[18] = 0xc23037e3;
+        b[0].dp[19] = 0x5ef351d2;
+        b[0].dp[20] = 0xab3fd92a;
+        b[0].dp[21] = 0x7f5fea8a;
+        b[0].dp[22] = 0xf6213fd3;
+        b[0].dp[23] = 0x7ca8da6e;
+        b[0].dp[24] = 0xf0d3c862;
+        b[0].dp[25] = 0xb57006f7;
+        b[0].dp[26] = 0x0650d90f;
+        b[0].dp[27] = 0xc630ac59;
+        b[0].dp[28] = 0x65ae31c2;
+        b[0].dp[29] = 0x10754786;
+        b[0].dp[30] = 0x1b67b99f;
+        b[0].dp[31] = 0x11d04bcf;
+    }
+    /* initialize operand c */
+    {
+        c[0].used = 32;
+        /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
+        c[0].dp[0] = 0x949858a5;
+        c[0].dp[1] = 0x3d8b848d;
+        c[0].dp[2] = 0x478f54d3;
+        c[0].dp[3] = 0x4dba30da;
+        c[0].dp[4] = 0xd7b627b2;
+        c[0].dp[5] = 0x27058cc3;
+        c[0].dp[6] = 0x550387a6;
+        c[0].dp[7] = 0x10cb64a5;
+        c[0].dp[8] = 0xf47e32a6;
+        c[0].dp[9] = 0x6c22d8e5;
+        c[0].dp[10] = 0x1a8da757;
+        c[0].dp[11] = 0x591f4e8a;
+        c[0].dp[12] = 0x4121d431;
+        c[0].dp[13] = 0x6a7e1c4f;
+        c[0].dp[14] = 0x5894e72f;
+        c[0].dp[15] = 0x14bbb40f;
+        c[0].dp[16] = 0xfc389000;
+        c[0].dp[17] = 0x269052ae;
+        c[0].dp[18] = 0xd95e9b3f;
+        c[0].dp[19] = 0xacdbcac7;
+        c[0].dp[20] = 0x8fe77776;
+        c[0].dp[21] = 0xb0062900;
+        c[0].dp[22] = 0xcfa66c1e;
+        c[0].dp[23] = 0x81b03fa2;
+        c[0].dp[24] = 0x8458163a;
+        c[0].dp[25] = 0x880d9457;
+        c[0].dp[26] = 0xe9cc477a;
+        c[0].dp[27] = 0xdeba7216;
+        c[0].dp[28] = 0x21282f49;
+        c[0].dp[29] = 0xdc527d88;
+        c[0].dp[30] = 0x6933e971;
+        c[0].dp[31] = 0xea24a7f9;
+    }
+
+    /* initialized the expected result: e */
+    {
+        e[0].used = 32;
+        /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
+        e[0].dp[0] = 0x2b860dcb;
+        e[0].dp[1] = 0x16ee3ce7;
+        e[0].dp[2] = 0x34b3c5c4;
+        e[0].dp[3] = 0x20c89e5a;
+        e[0].dp[4] = 0xb311a914;
+        e[0].dp[5] = 0x254bc3cb;
+        e[0].dp[6] = 0x858131b0;
+        e[0].dp[7] = 0x1aad7154;
+        e[0].dp[8] = 0x831d6881;
+        e[0].dp[9] = 0xce740b42;
+        e[0].dp[10] = 0xefe66196;
+        e[0].dp[11] = 0xc7e053ea;
+        e[0].dp[12] = 0xfc55bd8b;
+        e[0].dp[13] = 0x6afe7b2e;
+        e[0].dp[14] = 0x562ee43a;
+        e[0].dp[15] = 0x2570c5eb;
+        e[0].dp[16] = 0x4d1d0d79;
+        e[0].dp[17] = 0x0a8e1c36;
+        e[0].dp[18] = 0xd10ea53e;
+        e[0].dp[19] = 0x8db65638;
+        e[0].dp[20] = 0x2bea8d46;
+        e[0].dp[21] = 0x80152337;
+        e[0].dp[22] = 0xc054af56;
+        e[0].dp[23] = 0xb1458b1a;
+        e[0].dp[24] = 0xa3220ee9;
+        e[0].dp[25] = 0x38df7b2a;
+        e[0].dp[26] = 0x16d4e950;
+        e[0].dp[27] = 0x56b4cbe6;
+        e[0].dp[28] = 0x1a4222c8;
+        e[0].dp[29] = 0x6e51a3fe;
+        e[0].dp[30] = 0x52adaa07;
+        e[0].dp[31] = 0x4d1a158a;
+    }
+
+    /* call the interesting TFM */
+    retf = mp_mulmod(a, b, c, d);
+
+    /* call ESP directly (same result) */
+    // retf = esp_mp_mulmod(a, b, c, d);
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mulmod() : 32 word test, positive operands: a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ((retf == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+        esp_show_mp_attributes("Operand a", a);
+        esp_show_mp_attributes("Operand b", a);
+        esp_show_mp_attributes("Operand b", a);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            retf,
+                            a,
+                            b,
+                            c,
+                            NULL,
+                            e);
+        ret = MP_VAL;
+    }
+
+    alt_mulmod_hw_compare(a, b, c, e);
+
     return ret;
 }
 
@@ -2290,6 +2550,12 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* we'll inspect some interim functions */
+    ret = math_test_1();
+    if (ret != MP_OKAY) {
+        // return ret;
+    }
+    ret = math_test_mp_mulmod_2();
+    ret = math_test_mp_mulmod_1();
 
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
@@ -2353,10 +2619,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** Basic math functionality tests
     **************************************************************************
     */
-    ret = math_test_1();
-    if (ret != MP_OKAY) {
-        return ret;
-    }
+
 
 // #define CHECK_MP_READ_UNSIGNED_BIN 1
 // #define HONOR_MATH_USED_LENGTH 1
@@ -2567,25 +2830,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     ** mp_mulmod(): a * b mod c
     **************************************************************************
     */
-    mp_init(a);
-    mp_init(b);
-    mp_init(c); /* note init is required for SP_INT result , to assign size */
-    a[0].used = 1; a[0].dp[0] = 20002;
-    b[0].used = 1; b[0].dp[0] = 2;
-    c[0].used = 1; c[0].dp[0] = 5;
-    retf = mp_mulmod(a, b, c, d);
-    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4 */
-    #undef  THIS_TEST_MESSAGE
-    #define THIS_TEST_MESSAGE "mp_mulmod() : a * b mod c check: 4"
-    /* check d == e; d = (a * b mod c) */
-    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
-                            a, b, c, NULL, e);
-        ret = MP_VAL;
-    }
+    ret = math_test_mp_mulmod_1();
 
     /*
     ** two-word multiplication result mp_mulmod test
@@ -2672,189 +2917,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
         ret = MP_VAL;
     }
 
-    /*
-    **************************************************************************
-    ** observed 32 word success in SW and HW; operand a and b both positive
-    **************************************************************************
-    */
-    mp_init(a);
-    mp_init(b);
-    mp_init(c);
-    mp_init(d);
-    mp_init(e);
 
-    /* initialize operand a */
-    {
-        a[0].used = 32;
-     /* a[0].sign = 0; initialized to zero (positive) in mp_init() */
-        a[0].dp[0] = 0x65f77941;
-        a[0].dp[1] = 0x967c46c1;
-        a[0].dp[2] = 0xe5b875c0;
-        a[0].dp[3] = 0x1520e798;
-        a[0].dp[4] = 0x81dc904b;
-        a[0].dp[5] = 0x08d1b971;
-        a[0].dp[6] = 0x350595f1;
-        a[0].dp[7] = 0x81629e43;
-        a[0].dp[8] = 0x182a7dd8;
-        a[0].dp[9] = 0x746f0dee;
-        a[0].dp[10] = 0x872e0dda;
-        a[0].dp[11] = 0x5db6b19a;
-        a[0].dp[12] = 0x4868e268;
-        a[0].dp[13] = 0x28794dde;
-        a[0].dp[14] = 0x15eae186;
-        a[0].dp[15] = 0x55075e7d;
-        a[0].dp[16] = 0x7e5a8e4a;
-        a[0].dp[17] = 0xaaeeac8e;
-        a[0].dp[18] = 0x631fea5b;
-        a[0].dp[19] = 0x6e74340c;
-        a[0].dp[20] = 0x71228e0e;
-        a[0].dp[21] = 0x06b96a89;
-        a[0].dp[22] = 0xb045cb32;
-        a[0].dp[23] = 0x7d395184;
-        a[0].dp[24] = 0x912b9018;
-        a[0].dp[25] = 0x474474e7;
-        a[0].dp[26] = 0xeb654412;
-        a[0].dp[27] = 0x28743112;
-        a[0].dp[28] = 0x8e8c25ff;
-        a[0].dp[29] = 0xb28ea9dd;
-        a[0].dp[30] = 0x6d7c8103;
-        a[0].dp[31] = 0x9c5170e5;
-    }
-    /* initialize operand b */
-    {
-        b[0].used = 32;
-     /* b[0].sign = 0; initialized to zero (positive) in mp_init() */
-        b[0].dp[0] = 0x9fcdf5bf;
-        b[0].dp[1] = 0x654246a1;
-        b[0].dp[2] = 0x455d1339;
-        b[0].dp[3] = 0x935334a1;
-        b[0].dp[4] = 0xabca5ce7;
-        b[0].dp[5] = 0x9538be35;
-        b[0].dp[6] = 0xf99f5d28;
-        b[0].dp[7] = 0x894bb0f3;
-        b[0].dp[8] = 0x863a51dd;
-        b[0].dp[9] = 0xeb63f919;
-        b[0].dp[10] = 0x8fe69640;
-        b[0].dp[11] = 0x4e8c3a45;
-        b[0].dp[12] = 0xcd187433;
-        b[0].dp[13] = 0x4a6e68d5;
-        b[0].dp[14] = 0x89bf72ec;
-        b[0].dp[15] = 0xd557705c;
-        b[0].dp[16] = 0x1e4d2134;
-        b[0].dp[17] = 0x2da3750d;
-        b[0].dp[18] = 0xc23037e3;
-        b[0].dp[19] = 0x5ef351d2;
-        b[0].dp[20] = 0xab3fd92a;
-        b[0].dp[21] = 0x7f5fea8a;
-        b[0].dp[22] = 0xf6213fd3;
-        b[0].dp[23] = 0x7ca8da6e;
-        b[0].dp[24] = 0xf0d3c862;
-        b[0].dp[25] = 0xb57006f7;
-        b[0].dp[26] = 0x0650d90f;
-        b[0].dp[27] = 0xc630ac59;
-        b[0].dp[28] = 0x65ae31c2;
-        b[0].dp[29] = 0x10754786;
-        b[0].dp[30] = 0x1b67b99f;
-        b[0].dp[31] = 0x11d04bcf;
-    }
-    /* initialize operand c */
-    {
-        c[0].used = 32;
-     /* c[0].sign = 0; initialized to zero (positive) in mp_init() */
-        c[0].dp[0] = 0x949858a5;
-        c[0].dp[1] = 0x3d8b848d;
-        c[0].dp[2] = 0x478f54d3;
-        c[0].dp[3] = 0x4dba30da;
-        c[0].dp[4] = 0xd7b627b2;
-        c[0].dp[5] = 0x27058cc3;
-        c[0].dp[6] = 0x550387a6;
-        c[0].dp[7] = 0x10cb64a5;
-        c[0].dp[8] = 0xf47e32a6;
-        c[0].dp[9] = 0x6c22d8e5;
-        c[0].dp[10] = 0x1a8da757;
-        c[0].dp[11] = 0x591f4e8a;
-        c[0].dp[12] = 0x4121d431;
-        c[0].dp[13] = 0x6a7e1c4f;
-        c[0].dp[14] = 0x5894e72f;
-        c[0].dp[15] = 0x14bbb40f;
-        c[0].dp[16] = 0xfc389000;
-        c[0].dp[17] = 0x269052ae;
-        c[0].dp[18] = 0xd95e9b3f;
-        c[0].dp[19] = 0xacdbcac7;
-        c[0].dp[20] = 0x8fe77776;
-        c[0].dp[21] = 0xb0062900;
-        c[0].dp[22] = 0xcfa66c1e;
-        c[0].dp[23] = 0x81b03fa2;
-        c[0].dp[24] = 0x8458163a;
-        c[0].dp[25] = 0x880d9457;
-        c[0].dp[26] = 0xe9cc477a;
-        c[0].dp[27] = 0xdeba7216;
-        c[0].dp[28] = 0x21282f49;
-        c[0].dp[29] = 0xdc527d88;
-        c[0].dp[30] = 0x6933e971;
-        c[0].dp[31] = 0xea24a7f9;
-    }
-
-    /* initialized the expected result: e */
-    {
-        e[0].used = 32;
-     /* e[0].sign = 0; initialized to zero (positive) in mp_init() */
-        e[0].dp[0] = 0x2b860dcb;
-        e[0].dp[1] = 0x16ee3ce7;
-        e[0].dp[2] = 0x34b3c5c4;
-        e[0].dp[3] = 0x20c89e5a;
-        e[0].dp[4] = 0xb311a914;
-        e[0].dp[5] = 0x254bc3cb;
-        e[0].dp[6] = 0x858131b0;
-        e[0].dp[7] = 0x1aad7154;
-        e[0].dp[8] = 0x831d6881;
-        e[0].dp[9] = 0xce740b42;
-        e[0].dp[10] = 0xefe66196;
-        e[0].dp[11] = 0xc7e053ea;
-        e[0].dp[12] = 0xfc55bd8b;
-        e[0].dp[13] = 0x6afe7b2e;
-        e[0].dp[14] = 0x562ee43a;
-        e[0].dp[15] = 0x2570c5eb;
-        e[0].dp[16] = 0x4d1d0d79;
-        e[0].dp[17] = 0x0a8e1c36;
-        e[0].dp[18] = 0xd10ea53e;
-        e[0].dp[19] = 0x8db65638;
-        e[0].dp[20] = 0x2bea8d46;
-        e[0].dp[21] = 0x80152337;
-        e[0].dp[22] = 0xc054af56;
-        e[0].dp[23] = 0xb1458b1a;
-        e[0].dp[24] = 0xa3220ee9;
-        e[0].dp[25] = 0x38df7b2a;
-        e[0].dp[26] = 0x16d4e950;
-        e[0].dp[27] = 0x56b4cbe6;
-        e[0].dp[28] = 0x1a4222c8;
-        e[0].dp[29] = 0x6e51a3fe;
-        e[0].dp[30] = 0x52adaa07;
-        e[0].dp[31] = 0x4d1a158a;
-    }
-
-    /* call the interesting TFM */
-    retf = mp_mulmod(a, b, c, d);
-
-    /* call ESP directly (same result) */
-    // retf = esp_mp_mulmod(a, b, c, d);
-
-#undef  THIS_TEST_MESSAGE
-#define THIS_TEST_MESSAGE "mp_mulmod() : 32 word test, positive operands: a * b mod c"
-    /* check d == e; d = (a * b mod c) */
-    if ((retf == 0) && (mp_cmp(d, e) == 0)) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
-                            retf,
-                            a,
-                            b,
-                            c,
-                            NULL,
-                            e);
-        ret = MP_VAL;
-    }
 
     /*
     **************************************************************************
@@ -3246,6 +3309,14 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     return ret;
 }
 
+
+/*
+******************************************************************************
+******************************************************************************
+** error_test()
+******************************************************************************
+******************************************************************************
+*/
 WOLFSSL_TEST_SUBROUTINE int error_test(void)
 {
     const char* errStr;

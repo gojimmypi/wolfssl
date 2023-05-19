@@ -205,3 +205,6 @@
 // #define CHECK_MP_READ_UNSIGNED_BIN
 // #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 // #define USE_CERT_BUFFERS_2048
+
+/* Optionally include alternate HW test library: alt_hw_test.h */
+#define INCLUDE_ALT_HW_TEST
