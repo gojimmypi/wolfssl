@@ -61,10 +61,23 @@
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #define TFM_DEBUG_GOJIMMYPI_disabled // not meant for production
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-       /* Each individual math HW can be turned on or off. */
+        /* Each individual math HW can be turned on or off.
+         * Listed in order of complexity and historical difficulty. */
         #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+        //#define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+        //#define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
     #endif
 
     /* Note with HW there's a EPS_RSA_EXPT_XBTIS setting
@@ -4418,9 +4431,13 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     int ret = MP_OKAY;
     int As; /* How many a bits? */
     int Bs; /* How many b bits? */
+    As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
+    Bs = fp_count_bits(b);
+
 
 #ifdef DEBUG_WOLFSSL
-    int reti = MP_OKAY;
+    int reti = MP_OKAY;   /* intermediate inspection result */
+    int ret_sw = MP_OKAY; /* the software calc result */
     /* If there's a HW/SW discrepancy, save original values for review. */
     mp_int AX[1];
     mp_int BX[1];
@@ -4450,24 +4467,35 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 //        esp_show_mp("b[0]", b);
 //        esp_show_mp("c[0]", c);
     }
-    fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
+
+    /* when debugging, we'll call SW to compare */
+    ret_sw = fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
+    if (ret_sw == MP_OKAY) {
+        ESP_LOGV(TAG, "Call to fp_mulmod was successful");
+    }
+    else {
+        ESP_LOGE(TAG, "Failed call to fp_mulmod. Exit code = %d", ret);
+    }
 //    if (A2->used == 32) {
 //        esp_show_mp("e[0]", D2);
 //    }
 #endif // DEBUG_WOLFSSL
-
-    As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
-    Bs = fp_count_bits(b);
 
     if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
         ret = esp_mp_mulmod(a, b, c, d);
+        if (ret == MP_OKAY) {
+            ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
+        }
+        else {
+            ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
+        }
 
 #ifdef DEBUG_WOLFSSL
         if ((int)a == (int)d) {
-            ESP_LOGI(TAG, "Operand &a = result &d, skipping a/A2 compare.");
+            ESP_LOGV(TAG, "Operand &a = result &d, skipping a/A2 compare.");
         }
         else {
             esp_mp_cmp("a", a, "A2", A2);
@@ -4493,6 +4521,8 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         else {
             /* When d != D2, there's a HW/SW calc problem.
              * Show the original interesting parameters. */
+            ESP_LOGE(TAG, "HW Result Mismatch.");
+
 //            ESP_LOGW(TAG, "Original saved parameters:");
 //            esp_show_mp("a", AX);
 //            esp_show_mp("b", BX);
@@ -4500,8 +4530,15 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 //            esp_show_mp("d", DX);
 //            ESP_LOGI(TAG, "SW Expected Result:");
 //            esp_show_mp("d", D2);
-            ESP_LOGE(TAG, "HW Result Mismatch");
 //            esp_show_mp("d", d);
+    #ifndef NO_HW_RECOVERY
+            ESP_LOGW(TAG, "Returning software result.");
+            fp_copy(A2, a); /* copy (src = A2) back to (dst = a) */
+            fp_copy(B2, b); /* copy (src = B2) back to (dst = b) */
+            fp_copy(C2, c); /* copy (src = C2) back to (dst = c) */
+            fp_copy(D2, d); /* copy (src = D2) back to (dst = d) */
+            ret = ret_sw; /* TODO one return */
+    #endif
         }
 #endif // DEBUG_WOLFSSL
         return ret;
@@ -4510,6 +4547,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         /* depending on ESP_RSA_MULM_BITS setting, we may
         ** fall through to SW: */
 #endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
+
     return fp_mulmod(a, b, c, d);
 }
 
