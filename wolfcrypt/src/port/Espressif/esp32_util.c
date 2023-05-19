@@ -421,10 +421,14 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
     else {
         ret = MP_VAL;
         if (e == 0) {
+            /* if mp_cmp says different,
+             * but memcmp says equal, that's a problem */
             ESP_LOGE(TAG, "memcmp error for %s and %s!",
                           name_A, name_B);
         }
         else {
+            /* in the normal case where mp_cmp and memcmp say the
+             * values are different, we'll optionally show details. */
             ESP_LOGI(TAG, "e = %d", e);
             ESP_LOGE(TAG, "fp_cmp mismatch! memcmp "
                           "offset 0x%02x for %s vs %s!",
@@ -434,7 +438,7 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                                name_A, name_B);
             }
         }
-        ESP_LOGI(TAG, "Mismatch for %s and %s!",
+        ESP_LOGV(TAG, "Mismatch for %s and %s!",
                        name_A, name_B);
     }
 
