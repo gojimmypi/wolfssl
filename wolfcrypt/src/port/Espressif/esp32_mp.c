@@ -385,7 +385,7 @@ static int wait_until_done(word32 reg)
     asm volatile("memw");
 
     if (ESP_TIMEOUT(timeout)) {
-        ESP_LOGE(TAG, "rsa operation is timed out.");
+        ESP_LOGE(TAG, "rsa operation timed out.");
         return MP_NG;
     }
 
@@ -426,7 +426,7 @@ static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
         }
         else {
             if (i == 0) {
-                ESP_LOGW(TAG, "esp_mpint_to_memblock zero?");
+                ESP_LOGV(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
@@ -505,6 +505,14 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif
     ret = MP_OKAY; /* assume success until proven wrong */
+
+    /* if either operand is zero, there's nothing to do.
+     * Y checked first, as it was observed to be zero during
+     * wolfcrypt tests more often than X */
+    if (mp_iszero(Y) || mp_iszero(X)) {
+        mp_forcezero(Z);
+        return ret;
+    }
 
 #if CONFIG_IDF_TARGET_ESP32S3
 
