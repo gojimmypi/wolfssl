@@ -22,13 +22,70 @@
 
 #define __ESP32_CRYPT_H__
 
-#include "wolfssl/wolfcrypt/settings.h"
-#include <wolfssl/wolfcrypt/types.h> /* for MATH_INT_T */
+#include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
 
-#include "esp_idf_version.h"
-#include "esp_types.h"
-#include "esp_log.h"
+/* wolfSSL  */
+#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+#include <wolfssl/wolfcrypt/types.h>    /* for MATH_INT_T */
 
+/* Espressif */
+#include <esp_idf_version.h>
+#include <esp_types.h>
+#include <esp_log.h>
+
+/*
+*******************************************************************************
+*******************************************************************************
+**
+** Primary Settings:
+**
+** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+**   Defined in wolfSSL settings.h: this turns on or off esp32_mp math library.
+**   Unless turned off, this is enabled by default for the ESP32
+**
+** NO_ESP32WROOM32_CRYPT
+**   When defined, disabled all hardware acceleration on the ESP32
+**
+** NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+**   Used to disabled only hash hardware algorithms: SHA2, etc.
+**
+**   WOLFSSL_NOSHA512_224
+**     Define to disabled SHA-512/224
+**
+**   WOLFSSL_NOSHA512_256
+**     Define to disabled SHA-512/512
+**
+** NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+**  Used to disabled only AES hardware algorithms. Software used instead.
+**
+*******************************************************************************
+** Optional Settings:
+*******************************************************************************
+**
+** LOG_LOCAL_LEVEL
+**   Debugging. Default value is ESP_LOG_DEBUG
+**
+** ESP_VERIFY_MEMBLOCK
+**   Used to re-read data from registers in esp32_mp and verify written contents
+**   actually match the source data.
+**
+** WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+**   When defined, enables hardware cryptography debugging
+**
+*******************************************************************************
+** Settings used from <esp_idf_version.h>
+*******************************************************************************
+**
+** ESP_IDF_VERSION_MAJOR
+**
+**
+*******************************************************************************
+** Settings used from ESP-IDF (sdkconfig.h)
+*******************************************************************************
+**
+**
+*******************************************************************************
+*/
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
     #undef LOG_LOCAL_LEVEL
     #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
@@ -81,7 +138,7 @@
 ******************************************************************************
 */
 
-int esp_mp_exptmod_busy(void);
+int esp_mp_exptmod_busy(void); /* TODO */
 
 int esp_ShowExtendedSystemInfo(void);
 
