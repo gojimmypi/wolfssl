@@ -2544,6 +2544,67 @@ int math_test_mp_mulmod_2()
     return ret;
 }
 
+int math_test_mp_mulmod_3()
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
+
+    /*
+    ** two-word multiplication result mp_mulmod test
+    */
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
+    a[0].used = 1; a[0].dp[0] = 0xF0F0F0F3;
+    b[0].used = 1; b[0].dp[0] = 0x0211;
+    c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
+    retf = mp_mulmod(a, b, c, d);
+
+    /* a * b = 2138388424227 */
+    /* 2138388424227 mod 5 = 2 */
+    e[0].used = 1; e[0].dp[0] = 2;
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : two-word interim a * b mod c"
+    /* check d == e; d = (a * b mod c) */
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
+        ret = MP_VAL;
+    }
+
+    return ret;
+}
+
+/* test template */
+int math_test_mp_mulmod_template()
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
+    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
+    mp_init(d);
+    mp_init(e);
+
+    return ret;
+}
+
+
+
 /*
 ******************************************************************************
 ******************************************************************************
@@ -2580,15 +2641,17 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     if (retf != MP_OKAY) {
         ret = retf;
         /* if it fails, does it fail a second time? */
+        debug_message("\nFAILED!"
+                      "Retrying math_test_challenge_1()");
         retf = math_test_challenge_1();
         if (retf != MP_OKAY) {
             ret = retf;
         }
     }
 
-    ret = math_test_mp_mulmod_2();
     ret = math_test_mp_mulmod_1();
-
+    ret = math_test_mp_mulmod_2();
+    ret = math_test_mp_mulmod_3();
 
 #if defined(USE_FAST_MATH) || defined (SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
     int oldused;  (void)oldused;
@@ -2641,7 +2704,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     **************************************************************************
     */
 
-/* These are disabled, typically faling in SW: */
+/* These are disabled, typically failing in SW: */
 /* #define CHECK_MP_READ_UNSIGNED_BIN 1        */
 /* #define HONOR_MATH_USED_LENGTH 1            */
 
@@ -2853,31 +2916,6 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     */
     ret = math_test_mp_mulmod_1();
 
-    /*
-    ** two-word multiplication result mp_mulmod test
-    */
-    mp_init(a);
-    mp_init(b);
-    mp_init(c); /* note init is required for SP_INT result , to assign size */
-    a[0].used = 1; a[0].dp[0] = 0xF0F0F0F3;
-    b[0].used = 1; b[0].dp[0] = 0x0211;
-    c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
-    retf = mp_mulmod(a, b, c, d);
-
-    /* a * b = 2138388424227 */
-    /* 2138388424227 mod 5 = 2 */
-    e[0].used = 1; e[0].dp[0] = 2;
-    #undef  THIS_TEST_MESSAGE
-    #define THIS_TEST_MESSAGE "mp_mulmod() : two-word interim a * b mod c"
-    /* check d == e; d = (a * b mod c) */
-    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
-                            a, b, c, NULL, e);
-        ret = MP_VAL;
-    }
 
     /*
     ** two-word operand mp_mulmod test
