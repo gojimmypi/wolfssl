@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#include "sdkconfig.h"
 
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESPWROOM32
@@ -50,7 +51,6 @@
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
-// #define DEBUG_WOLFSSL_VERBOSE
 
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
@@ -122,9 +122,6 @@
     #define ESP_RSA_MULM_BITS            0
 #endif
 
-/* debug options */
-// #define DEBUG_WOLFSSL
-#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -134,15 +131,6 @@
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
 
-/* Default is HW enabled unless turned off.
-** Uncomment these lines for SW: */
-
-/*
-#define NO_ESP32WROOM32_CRYPT
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
-*/
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
@@ -208,3 +196,21 @@
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 // #define INCLUDE_ALT_HW_TEST
+
+
+/* Default is HW enabled unless turned off.
+** Uncomment these lines for SW: */
+
+/*
+#define NO_ESP32WROOM32_CRYPT
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+*/
+
+
+/* debug options */
+#define ESP_VERIFY_MEMBLOCK
+#define DEBUG_WOLFSSL_VERBOSE
+#define DEBUG_WOLFSSL
+#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
