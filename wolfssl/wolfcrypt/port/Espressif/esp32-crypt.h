@@ -44,19 +44,45 @@
 **   Unless turned off, this is enabled by default for the ESP32
 **
 ** NO_ESP32WROOM32_CRYPT
-**   When defined, disabled all hardware acceleration on the ESP32
+**   When defined, disables all hardware acceleration on the ESP32
 **
 ** NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
 **   Used to disabled only hash hardware algorithms: SHA2, etc.
 **
 **   WOLFSSL_NOSHA512_224
-**     Define to disabled SHA-512/224
+**     Define to disable SHA-512/224
 **
 **   WOLFSSL_NOSHA512_256
-**     Define to disabled SHA-512/512
+**     Define to disable SHA-512/512
 **
 ** NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-**  Used to disabled only AES hardware algorithms. Software used instead.
+**   Used to disable only AES hardware algorithms. Software used instead.
+**
+** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+**   Turns off hardware acceleration esp_mp_mul()
+**
+** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+**   Turns off hardware acceleration esp_mp_exptmod()
+**
+** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+**   Turns off hardware acceleration esp_mp_mulmod()
+**
+*******************************************************************************
+** Math library settings: TFM
+*******************************************************************************
+** Listed in increasing order of complexity:
+**
+** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+**   When defined, use hardware acceleration esp_mp_mul()
+**   for Large Number Multiplication: Z = X × Y
+**
+** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+**   When defined, use hardware acceleration esp_mp_exptmod()
+**   for Large Number Modular Exponentiation Z = X^Y mod M
+**
+** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+**   When defined, use hardware acceleration esp_mp_mulmod()
+**   for Large Number Modular Multiplication: Z = X × Y mod M
 **
 *******************************************************************************
 ** Optional Settings:
