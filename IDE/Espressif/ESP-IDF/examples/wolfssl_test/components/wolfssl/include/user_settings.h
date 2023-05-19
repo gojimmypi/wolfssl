@@ -50,7 +50,7 @@
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
-#define DEBUG_WOLFSSL_VERBOSE
+// #define DEBUG_WOLFSSL_VERBOSE
 
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
@@ -123,7 +123,7 @@
 #endif
 
 /* debug options */
-#define DEBUG_WOLFSSL
+// #define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
 /* #define WOLFSSL_ATECC508A_DEBUG          */
@@ -200,11 +200,11 @@
 --enable-asn-template
 */
 
-// #define NO_MATH_TEST
+#define NO_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH
 // #define CHECK_MP_READ_UNSIGNED_BIN
 // #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 // #define USE_CERT_BUFFERS_2048
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
-#define INCLUDE_ALT_HW_TEST
+// #define INCLUDE_ALT_HW_TEST
