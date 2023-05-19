@@ -353,6 +353,7 @@ int esp_ShowExtendedSystemInfo()
  */
 int esp_show_mp_attributes(char* c, MATH_INT_T* X)
 {
+    return 0;
     static const char* MP_TAG = "MATH_INT_T";
     int ret = 0;
     if (X == NULL) {
@@ -376,6 +377,7 @@ int esp_show_mp_attributes(char* c, MATH_INT_T* X)
  */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
+    return 0;
     static const char* MP_TAG = "MATH_INT_T";
     int ret = 0;
     if (X == NULL) {

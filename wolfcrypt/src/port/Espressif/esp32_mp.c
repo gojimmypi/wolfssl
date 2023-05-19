@@ -161,8 +161,8 @@ static int esp_mp_hw_lock()
 
     if (ret == 0) {
         /* lock hardware */
-        /* we don't actually want to wait forever */
-        ret = esp_CryptHwMutexLock(&mp_mutex, (TickType_t)1000);
+        /* we don't actually want to wait forever  TODO */
+        ret = esp_CryptHwMutexLock(&mp_mutex, portMAX_DELAY);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
             ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
@@ -231,14 +231,8 @@ static void esp_mp_hw_unlock( void )
 
     ESP_LOGV(TAG, "unlock");
 }
-
-int _esp_mp_exptmod_busy = 0;
-int esp_mp_exptmod_busy(void)
-{
-    return (_esp_mp_exptmod_busy != 0);
-}
-
 /* M' M-Prime Calculation for HW Accelerator */
+
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
     int ret = MP_OKAY;
@@ -385,7 +379,7 @@ static int wait_until_done(word32 reg)
     asm volatile("memw");
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
-        asm volatile("nop"); /* wait */
+        asm volatile("memw"); /* wait */
     }
 
     /* clear interrupt */
@@ -427,54 +421,19 @@ static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
 
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
-    portDISABLE_INTERRUPTS();
     for (i=0; i < hwords; i++) {
         if (i < len) {
             ESP_LOGV(TAG, "Write i = %d value.", i);
-            __asm__ __volatile__("memw");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
-            __asm__ __volatile__("memw");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-
         }
         else {
             if (i == 0) {
-                ESP_LOGE(TAG, "esp_mpint_to_memblock zero?");
+                ESP_LOGW(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
-            __asm__ __volatile__("memw");
             DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
-            __asm__ __volatile__("memw");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
-            __asm__ __volatile__("nop");
         }
     }
-    portENABLE_INTERRUPTS();
-
-#if defined(ESP_VERIFY_MEMBLOCK)
-    len = XMEMCMP((const void *)mem_address, mp->dp, (int)len);
-    if (len != 0) {
-        ESP_LOGE(TAG, "Oops RSA_MEM_X_BLOCK_BASE");
-    }
-#endif
 }
 
 /* return needed HW words.
@@ -810,8 +769,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
-    /* Calculate M' = M^(-1) mod b; b = 2^32 */
-    /* Be sure to do this before HW lock, as we may call HW */
+    /* lock HW for use */
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
+        return ret;
+    }
+    /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(tmpZ);
@@ -822,14 +786,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
         ESP_LOGI(TAG, "mp = %u", mp);
 #endif
-    }
-
-    /* lock HW for use */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(tmpZ);
-        mp_clear(r_inv);
-        return ret;
-    }
+   }
 
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
@@ -852,7 +809,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* 1. Wait until hardware is ready. */
     if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean failed.");
-        esp_mp_hw_unlock();
         return ret;
     }
 
@@ -864,7 +820,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     OperandBits = max(max(Xs, Ys), Ms);
     if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "result exceeds max bit length");
-        esp_mp_hw_unlock();
         return MP_VAL; /*  Error: value is not able to be used. */
     }
     WordsForOperand = bits2words(OperandBits);
@@ -881,13 +836,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X,     Xs, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y,     Ys, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M,     Ms, hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, r_inv, Rs, hwWords_sz);
+    esp_mpint_to_memblock(RSA_MEM_RB_BLOCK_BASE, r_inv, mp_count_bits(r_inv), hwWords_sz);
 
     /* 6. Start operation and wait until it completes. */
     process_start(RSA_MOD_MULT_START_REG);
     ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
     if (MP_OKAY != ret) {
-        esp_mp_hw_unlock();
         return ret;
     }
 
@@ -941,11 +895,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
-    __asm__ volatile("memw");
+    asm volatile("memw");
 
     /* step.4 start process                           */
     process_start(RSA_MULT_START_REG);
-    __asm__ volatile("memw");
+    asm volatile("memw");
 
     /* step.5,6 wait until done                       */
     wait_until_done(RSA_INTERRUPT_REG);
@@ -970,12 +924,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (mp_cmp(tmpZ, M) == MP_GT) {
         /*  Z -= M  */
         mp_sub(tmpZ, M, tmpZ);
-        ESP_LOGI(TAG, "Z is greater than M");
+        ESP_LOGV(TAG, "Z is greater than M");
     }
     if (negcheck) {
         mp_sub(M, tmpZ, tmpZ);
-        ESP_LOGI(TAG, "neg check adjustment");
+        ESP_LOGV(TAG, "neg check adjustment");
     }
+//  wip
 
     mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
@@ -1066,20 +1021,16 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         return ret;
     }
 
-    /* calc M' */
-    _esp_mp_exptmod_busy = 1; /* Force SW when MPrime needed for mp_exptmod */
-    /* if Pm is odd, uses mp_montgomery_setup() */
-    if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
-        ESP_LOGE(TAG, "failed to calculate M dash");
-        mp_clear(&r_inv);
-        _esp_mp_exptmod_busy = 0;
-        return ret;
-    }
-    _esp_mp_exptmod_busy = 0;
-
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         ESP_LOGE(TAG, "esp_mp_hw_lock failed");
+        mp_clear(&r_inv);
+        return ret;
+    }
+    /* calc M' */
+    /* if Pm is odd, uses mp_montgomery_setup() */
+    if ( (ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY ) {
+        ESP_LOGE(TAG, "failed to calculate M dash");
         mp_clear(&r_inv);
         return ret;
     }

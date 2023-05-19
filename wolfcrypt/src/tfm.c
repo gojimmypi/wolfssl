@@ -2050,12 +2050,10 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     int ret = 0;
 
     /* any timing resistance should be performed in HW calc when enabled */
-    if (esp_mp_exptmod_busy() == 0) {
         x = fp_count_bits(X);
         ret = esp_mp_exptmod(G, X, x, P, Y);
         return ret;
-    }
-    /* else fall through to SW calc */
+    /* else fall through to SW calc  TODO */
 #endif
 
 #ifndef WOLFSSL_SMALL_STACK
@@ -2936,7 +2934,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     x = fp_count_bits(X);
-    if ((x > EPS_RSA_EXPT_XBTIS) && (esp_mp_exptmod_busy() == 0)) {
+    if ((x > EPS_RSA_EXPT_XBTIS) ) {
       int retHW = 0;
       retHW = esp_mp_exptmod(G, X, x, P, Y);
       return retHW;
@@ -4462,7 +4460,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     Bs = fp_count_bits(b);
 
     if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
-        ESP_LOGI(TAG, "Both A's = %d and B's = %d are greater than "
+        ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
         ret = esp_mp_mulmod(a, b, c, d);
