@@ -2248,7 +2248,7 @@ int math_test_byte_order_check()
 }
 
 /* Math test 1 is a known case where HW fails to return same value as SW. */
-int math_test_1(void)
+int math_test_challenge_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
@@ -2256,7 +2256,7 @@ int math_test_1(void)
     MATH_INT_T d[1]; /* result for 3 operand functions */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
-
+    debug_message("Begin math_test_challenge_1()");
     /* 32-operand parameters for math test #1 */
     mp_init_load(a, (fp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
     mp_init_load(b, (fp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
@@ -2272,7 +2272,8 @@ int math_test_1(void)
     ret = mp_mulmod(a, b, c, d);
 
 #undef  THIS_TEST_MESSAGE
-#define THIS_TEST_MESSAGE "mp_mulmod() : 32 word test, positive operands: a * b mod c"
+#define THIS_TEST_MESSAGE "mp_mulmod() : challenge:\n" \
+                          "32 word test, positive operands: a * b mod c"
     /* check d == e; d = (a * b mod c) */
     if ((ret == 0) && (mp_cmp(d, e) == 0)) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
@@ -2292,6 +2293,8 @@ int math_test_1(void)
     return ret;
 }
 
+/* math_test_mp_mulmod_1() is a simple Large Number Modular Multiplication
+ * test using small numbers and it expected to always pass HW & SW */
 int math_test_mp_mulmod_1()
 {
     /* MATH_INT_T is an opaque type. See types.h  */
@@ -2337,6 +2340,8 @@ int math_test_mp_mulmod_1()
     return ret;
 }
 
+/* math_test_mp_mulmod_2() is a simple Large Number Modular Multiplication
+ * test using small numbers and it expected to always pass HW & SW */
 int math_test_mp_mulmod_2()
 {
     /* MATH_INT_T is an opaque type. See types.h  */
@@ -2550,24 +2555,40 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* we'll inspect some interim functions */
-    ret = math_test_1();
-    if (ret != MP_OKAY) {
-        // return ret;
-    }
-    ret = math_test_mp_mulmod_2();
-    ret = math_test_mp_mulmod_1();
 
+    debug_message("Begin math_test()");
+
+    /* print some math info */
 #if defined(DEBUG_WOLFSSL)
     retf = CheckRunTimeFastMath();
     debug_message_value("CheckRunTimeFastMath() = ", retf,
                          NULL, NULL, NULL, NULL, NULL);
-#ifdef USE_FAST_MATH
-    debug_message_value("FP_SIZE   = ", FP_SIZE,
-                         NULL, NULL, NULL, NULL, NULL);
-#endif // USE_FAST_MATH
+
+    #ifdef USE_FAST_MATH
+    {
+        debug_message_value("FP_SIZE   = ", FP_SIZE,
+                             NULL, NULL, NULL, NULL, NULL);
+    }
+    #endif /* USE_FAST_MATH */
+
     debug_message_value("DIGIT_BIT = ", DIGIT_BIT,
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
+
+    /* Let's start with the most challenging test: one known to fail in HW */
+    retf = math_test_challenge_1();
+    if (retf != MP_OKAY) {
+        ret = retf;
+        /* if it fails, does it fail a second time? */
+        retf = math_test_challenge_1();
+        if (retf != MP_OKAY) {
+            ret = retf;
+        }
+    }
+
+    ret = math_test_mp_mulmod_2();
+    ret = math_test_mp_mulmod_1();
+
 
 #if defined(USE_FAST_MATH) || defined (SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
     int oldused;  (void)oldused;
@@ -2620,9 +2641,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     **************************************************************************
     */
 
-
-// #define CHECK_MP_READ_UNSIGNED_BIN 1
-// #define HONOR_MATH_USED_LENGTH 1
+/* These are disabled, typically faling in SW: */
+/* #define CHECK_MP_READ_UNSIGNED_BIN 1        */
+/* #define HONOR_MATH_USED_LENGTH 1            */
 
 #ifdef CHECK_MP_READ_UNSIGNED_BIN
     #undef  THIS_TEST_MESSAGE
