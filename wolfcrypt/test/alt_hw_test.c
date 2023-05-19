@@ -3,9 +3,12 @@
 #include <esp_log.h>
 #include <wolfssl/wolfcrypt/wolfmath.h>
 
+
+#ifdef INCLUDE_ALT_HW_TEST
 #include <mbedtls/bignum.h>
 
 static const char * TAG = "ALT_HW_TEST";
+
 /* Alternate mulmod hardware calc comparison
  * Large Number Modular Multiplication Z = X × Y mod M */
 int alt_mulmod_hw_compare(MATH_INT_T* a, MATH_INT_T* b, MATH_INT_T* c, MATH_INT_T* e)
@@ -43,4 +46,5 @@ int alt_mulmod_hw_compare(MATH_INT_T* a, MATH_INT_T* b, MATH_INT_T* c, MATH_INT_
 
     return ret;
 }
+#endif
 
