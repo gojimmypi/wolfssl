@@ -26730,6 +26730,14 @@ static int ecc_test_curve(WC_RNG* rng, int keySize)
 {
     int ret;
 
+#ifdef DEBUG_WOLFSSL
+    #ifdef WOLFSSL_ESPIDF
+    ESP_LOGI(TAG, "ecc_test_curve keySize = %d\n", keySize);
+    #else
+        /* printf("ecc_test_curve keySize = %d\n", keySize); */
+    #endif
+#endif
+
     ret = ecc_test_curve_size(rng, keySize, ECC_TEST_VERIFY_COUNT,
         ECC_CURVE_DEF, NULL);
     if (ret < 0) {
@@ -28512,6 +28520,19 @@ WOLFSSL_TEST_SUBROUTINE int ecc_test(void)
 {
     int ret;
     WC_RNG rng;
+
+#ifdef DEBUG_WOLFSSL
+    #ifdef WOLFSSL_ESPIDF
+        #if defined(ECC_MIN_KEY_SZ)
+            ESP_LOGI(TAG,"ecc_test ECC_MIN_KEY_SZ = %d\n", ECC_MIN_KEY_SZ);
+        #else
+            ESP_LOGI(TAG,"ecc_test ECC_MIN_KEY_SZ not defined.");
+        #endif
+    #else
+        /* printf("ecc_test keySize = %d\n", keySize); */
+    #endif
+#endif
+
 
 #if defined(WOLFSSL_CERT_EXT) && \
     (!defined(NO_ECC256) || defined(HAVE_ALL_CURVES)) && ECC_MIN_KEY_SZ <= 256
