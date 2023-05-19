@@ -2166,7 +2166,6 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_32_1[] =
     0xc123d312,
     0xbf79fcb7,
 };
-#endif /* MATH_TEST constant declarations */
 
 /*
  * Initialize T.
@@ -2289,7 +2288,10 @@ int math_test_challenge_1(void)
         ret = MP_VAL;
     }
 
+#if defined(INCLUDE_ALT_HW_TEST)
     alt_mulmod_hw_compare(a, b, c, e);
+#endif
+
     return ret;
 }
 
@@ -2336,7 +2338,10 @@ int math_test_mp_mulmod_1()
         ret = MP_VAL;
     }
 
+#if defined(INCLUDE_ALT_HW_TEST)
     alt_mulmod_hw_compare(a, b, c, e);
+#endif
+
     return ret;
 }
 
@@ -2539,7 +2544,9 @@ int math_test_mp_mulmod_2()
         ret = MP_VAL;
     }
 
+#if defined(INCLUDE_ALT_HW_TEST)
     alt_mulmod_hw_compare(a, b, c, e);
+#endif
 
     return ret;
 }
@@ -3367,6 +3374,7 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
 
     return ret;
 }
+#endif /* MATH_TEST constant declarations */
 
 
 /*
