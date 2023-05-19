@@ -195,7 +195,10 @@
 // #define USE_CERT_BUFFERS_2048
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
-// #define INCLUDE_ALT_HW_TEST
+/* When enabling, the ./components/wolfssl/CMakeLists.txt file
+ * will need the name of the library in the idf_component_register
+ * for the PRIV_REQUIRES list. */
+/* #define INCLUDE_ALT_HW_TEST */
 
 
 /* Default is HW enabled unless turned off.
