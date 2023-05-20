@@ -370,7 +370,7 @@ static void process_start(word32 reg)
 }
 
 /* wait until done */
-static int wait_until_done(word32 reg)
+static int wait_until_done(volatile u_int32_t reg)
 {
     word32 timeout = 0;
     /* wait until done && not timeout */
@@ -378,6 +378,7 @@ static int wait_until_done(word32 reg)
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
         asm volatile("memw"); /* wait */
+        asm volatile("nop"); /* wait */
     }
 
     /* clear interrupt */
@@ -393,45 +394,104 @@ static int wait_until_done(word32 reg)
 }
 
 /* read data from memory into mp_init          */
-static void esp_memblock_to_mpint(word32 mem_address,
-                                  MATH_INT_T* mp,
-                                  word32 numwords)
+static int esp_memblock_to_mpint(volatile u_int32_t mem_address,
+                                 MATH_INT_T* mp,
+                                 word32 numwords)
 {
+    int ret = FP_OKAY;
+#ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
+#else
+    DPORT_INTERRUPT_DISABLE();
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+    for (volatile uint32_t i = 0;  i < numwords; ++i) {
+        __asm__ __volatile__ ("memw");
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        __asm__ __volatile__ ("nop"); /* wait */
+        mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
+    }
+    DPORT_INTERRUPT_RESTORE();
+#endif
     mp->used = numwords;
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    if (0 != XMEMCMP((const void *)mem_address, mp->dp, (int)numwords)) {
-        ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint ");
+    ret = XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32));
+    if (ret != 0 ) {
+        ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
+                      "Reading %u Words at Address =  0x%08x",
+                       (int)(numwords * sizeof(word32)),
+                       (unsigned int)mem_address);
+        ESP_LOGI(TAG, "Trying again... ");
+        esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
+        mp->used = numwords;
+        if (0 != XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32))) {
+            ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint "
+                           "a second time. Giving up.");
+            ret = FP_VAL;
+        }
+        else {
+            ESP_LOGI(TAG, "Successfully re-read after Validation Failure.");
+            ret = FP_OKAY;
+        }
     }
 #endif
+    return ret;
 }
 
 /* write mp_init into memory block
  */
-static void esp_mpint_to_memblock(word32 mem_address, const MATH_INT_T* mp,
-                                                      const word32 bits,
-                                                      const word32 hwords)
+static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
+                                 const MATH_INT_T* mp,
+                                 const word32 bits,
+                                 const word32 hwords)
 {
+    int ret = MP_OKAY;
+
     /* init */
     word32 i;
     word32 len = (bits / 8 + ((bits & 7) != 0 ? 1 : 0));
 
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
+    portDISABLE_INTERRUPTS();
     for (i=0; i < hwords; i++) {
         if (i < len) {
             ESP_LOGV(TAG, "Write i = %d value.", i);
-            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), mp->dp[i]);
+            __asm__ volatile ("memw");
+            DPORT_REG_WRITE((volatile void *)mem_address + (i * sizeof(word32)), mp->dp[i]);
+            __asm__ volatile ("nop");
+            __asm__ volatile ("nop");
+            __asm__ volatile ("nop");
         }
         else {
             if (i == 0) {
                 ESP_LOGV(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
-            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            //DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
         }
     }
+    portENABLE_INTERRUPTS();
+
+#if defined(ESP_VERIFY_MEMBLOCK)
+    len = XMEMCMP((const void *)mem_address, mp->dp, (int)len);
+    if (len != 0) {
+        ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
+        ret = FP_VAL;
+    }
+#endif
+    return ret;
 }
 
 /* return needed HW words.
