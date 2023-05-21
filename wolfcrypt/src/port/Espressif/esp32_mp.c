@@ -394,15 +394,24 @@ static int wait_until_done(volatile u_int32_t reg)
 }
 
 /* read data from memory into mp_init          */
-static int esp_memblock_to_mpint(volatile u_int32_t mem_address,
-                                 MATH_INT_T* mp,
+static // __attribute__((optimize("O0")))
+int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
+                          volatile MATH_INT_T* mp,
                                  word32 numwords)
 {
     int ret = FP_OKAY;
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
+    int try_ct = 20;
     DPORT_INTERRUPT_DISABLE();
+    __asm__ volatile ("memw");
+    do {
+        try_ct--;
+        mp->dp[0] = DPORT_SEQUENCE_REG_READ(mem_address);
+    } while (try_ct > 0 && (mp->dp[0] == 0));
+
+        __asm__ __volatile__ ("memw"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
@@ -410,7 +419,7 @@ static int esp_memblock_to_mpint(volatile u_int32_t mem_address,
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
-    for (volatile uint32_t i = 0;  i < numwords; ++i) {
+    for (volatile uint32_t i = 1;  i < numwords; ++i) {
         __asm__ __volatile__ ("memw");
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
@@ -419,20 +428,22 @@ static int esp_memblock_to_mpint(volatile u_int32_t mem_address,
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
+//        __asm__ __volatile__ ("memw");
+        DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
     mp->used = numwords;
 
-#if defined(ESP_VERIFY_MEMBLOCK)
+#if defined(ESP_VERIFY_MEMBLOCKx)
     ret = XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32));
     if (ret != 0 ) {
         ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
                       "Reading %u Words at Address =  0x%08x",
                        (int)(numwords * sizeof(word32)),
                        (unsigned int)mem_address);
-        ESP_LOGI(TAG, "Trying again... ");
+        ESP_LOGI(TAG, "Trying again... %d ", try_ct);
         esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
         mp->used = numwords;
         if (0 != XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32))) {
@@ -452,7 +463,7 @@ static int esp_memblock_to_mpint(volatile u_int32_t mem_address,
 /* write mp_init into memory block
  */
 static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
-                                 const MATH_INT_T* mp,
+                                 volatile const MATH_INT_T* mp,
                                  const word32 bits,
                                  const word32 hwords)
 {
@@ -757,12 +768,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
     word32 zwords;
-
+    uint32_t Exponent;
+    mp_digit mp;
     MATH_INT_T r_inv[1];
     MATH_INT_T tmpZ[1];
-    mp_digit mp;
 
-    uint32_t Exponent;
 #if CONFIG_IDF_TARGET_ESP32S3
     uint32_t OperandBits;
     int WordsForOperand;
