@@ -404,7 +404,8 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
     int try_ct = 20;
-    DPORT_INTERRUPT_DISABLE();
+    // DPORT_INTERRUPT_DISABLE();
+    portDISABLE_INTERRUPTS();
     __asm__ volatile ("memw");
     do {
         try_ct--;
@@ -432,7 +433,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
-    DPORT_INTERRUPT_RESTORE();
+    portENABLE_INTERRUPTS();
 #endif
     mp->used = numwords;
 
@@ -463,7 +464,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
 /* write mp_init into memory block
  */
 static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
-                                 volatile const MATH_INT_T* mp,
+                                 const MATH_INT_T* mp,
                                  const word32 bits,
                                  const word32 hwords)
 {
@@ -493,15 +494,15 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
             //DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
         }
     }
-    portENABLE_INTERRUPTS();
 
-#if defined(ESP_VERIFY_MEMBLOCK)
-    len = XMEMCMP((const void *)mem_address, mp->dp, (int)len);
+#if defined(ESP_VERIFY_MEMBLOCKx)
+    len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)len);
     if (len != 0) {
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
         ret = FP_VAL;
     }
 #endif
+    portENABLE_INTERRUPTS();
     return ret;
 }
 
@@ -972,6 +973,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* step.3 write M' into memory                   */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     asm volatile("memw");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
 
     /* step.4 start process                           */
     process_start(RSA_MULT_START_REG);
