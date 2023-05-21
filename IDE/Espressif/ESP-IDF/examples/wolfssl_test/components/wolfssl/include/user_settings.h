@@ -188,7 +188,7 @@
 --enable-asn-template
 */
 
-#define NO_MATH_TEST
+// #define NO_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH
 // #define CHECK_MP_READ_UNSIGNED_BIN
 // #define WOLFSSL_PUBLIC_MP /* used by benchmark */
