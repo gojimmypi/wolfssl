@@ -60,6 +60,16 @@
 /* see wolfssl/wolfcrypt/test/test.h */
 extern void wolf_crypt_task();
 
+//void IRAM_ATTR start_cpu1_default(void)
+//{
+//    // Wait for the app to initialze on CPU0
+//    while (1) {
+//#ifndef SINGLE_THREADED
+//        vTaskDelay(1000);
+//#endif
+//    }
+//    // do things
+//}
 
 static const char* const TAG = "wolfssl_test";
 
