@@ -53,7 +53,6 @@
 
 
 #define BENCH_EMBEDDED
-#define USE_CERT_BUFFERS_2048
 
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
@@ -188,11 +187,6 @@
 --enable-asn-template
 */
 
-// #define NO_MATH_TEST
-// #define HONOR_MATH_USED_LENGTH
-// #define CHECK_MP_READ_UNSIGNED_BIN
-// #define WOLFSSL_PUBLIC_MP /* used by benchmark */
-// #define USE_CERT_BUFFERS_2048
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -217,5 +211,14 @@
 #define DEBUG_WOLFSSL_VERBOSE
 #define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+
+/* optionally turn off individual math HW accleration feature */
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+
+#define NO_MATH_TEST
+#define HONOR_MATH_USED_LENGTH
+#define CHECK_MP_READ_UNSIGNED_BIN
+#define WOLFSSL_PUBLIC_MP /* used by benchmark */
+#define USE_CERT_BUFFERS_2048
