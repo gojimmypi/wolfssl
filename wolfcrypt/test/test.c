@@ -26730,7 +26730,7 @@ done:
     (void)keySize;
     (void)curve_id;
     (void)rng;
-
+    WOLFSSL_LEAVE("ecc_test_curve_size", ret);
     return ret;
 }
 

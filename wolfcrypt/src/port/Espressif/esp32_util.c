@@ -353,7 +353,6 @@ int esp_ShowExtendedSystemInfo()
  */
 int esp_show_mp_attributes(char* c, MATH_INT_T* X)
 {
-    return 0;
     static const char* MP_TAG = "MATH_INT_T";
     int ret = 0;
     if (X == NULL) {
@@ -377,21 +376,25 @@ int esp_show_mp_attributes(char* c, MATH_INT_T* X)
  */
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
-    return 0;
     static const char* MP_TAG = "MATH_INT_T";
-    int ret = 0;
+    int ret = FP_OKAY;
+
     if (X == NULL) {
         ret = -1;
         ESP_LOGV(MP_TAG, "esp_show_mp called with X == NULL");
     }
     else {
+        ESP_LOGI(MP_TAG, "%s:",c);
         esp_show_mp_attributes(c, X);
         for (size_t i = 0; i < X->used; i++) {
-            ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;",
+            ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;  /* %2d */ ",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
-                                   (unsigned int)X->dp[i]); /* the value */
+                                   (unsigned int)X->dp[i], /* the value  */
+                                   i  /* the index, again, for comment   */
+                     );
         }
+        ESP_LOGI(MP_TAG, "");
     }
     return ret;
 }

@@ -7090,6 +7090,9 @@ int wc_CreatePKCS8Key(byte* out, word32* outSz, byte* key, word32 keySz,
     }
 
     FREE_ASNSETDATA(dataASN, NULL);
+
+    WOLFSSL_LEAVE("wc_CreatePKCS8Key", ret);
+
     return ret;
 #endif /* WOLFSSL_ASN_TEMPLATE */
 }

@@ -316,14 +316,17 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     // ret = fp_mul_comba(A3, B3, C3);
     // esp_mp_cmp(C3, C);
     //    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
-    ret = esp_mp_mul(A, B, C); /* HW */
-    if (ret == MP_OKAY) {
-        goto clean;
-    }
-    else {
-        ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
-        /* if errors actually encountered, consider fall through to SW */
-        goto clean;
+
+    if (!esp_hw_validation_active()) {
+        ret = esp_mp_mul(A, B, C); /* HW */
+        if (ret == MP_OKAY) {
+            goto clean;
+        }
+        else {
+            ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
+            /* if errors actually encountered, consider fall through to SW */
+            goto clean;
+        }
     }
 #endif
 

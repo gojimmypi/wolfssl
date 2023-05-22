@@ -346,6 +346,10 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #endif /* !NO_RSA || HAVE_ECC*/
 
+#ifdef DEBUG_WOLFSSL
+    int esp_hw_validation_active(void);
+#endif /* DEBUG_WOLFSSL */
+
 
 /* end c++ wrapper */
 #ifdef __cplusplus

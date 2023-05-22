@@ -352,8 +352,8 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     }
 
     /* trim any trailing zeros and adjust z.used size */
-    if (Z->used > 1 && (Z->dp[0] == 1)) {
-        ESP_LOGV(TAG, "ZTrim: Z->dp[0] == 1; Z->used = %d", Z->used);
+    if (Z->used > 1) {
+        ESP_LOGV(TAG, "ZTrim: Z->used = %d", Z->used);
         for (size_t i = Z->used; i > 1; i--) {
             if (Z->dp[i - 1] == 0) {
                 /* last element in zero based array */
@@ -570,6 +570,17 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
     return ret;
 }
 
+static int hw_validation = 0;
+static int esp_mp_mul_usage_ct = 0;
+static int esp_mp_mul_error_ct = 0;
+#define SET_HW_VALIDATION {hw_validation = 1;}
+#define CLR_HW_VALIDATION {hw_validation = 0;}
+#define IS_HW_VALIDATION (hw_validation == 1)
+
+int esp_hw_validation_active(void)
+{
+    return IS_HW_VALIDATION;
+}
 /* Large Number Modular Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -577,9 +588,47 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
  * Z = X * Y;  */
 int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
+    int ret;
+    ret = MP_OKAY; /* assume success until proven wrong */
+
+    word32 Xs;
+    word32 Ys;
+    word32 Zs;
+    word32 maxWords_sz;
+    word32 hwWords_sz;
+
     ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
 
-    int ret;
+    /* if either operand is zero, there's nothing to do.
+     * Y checked first, as it was observed to be zero during
+     * wolfcrypt tests more often than X */
+    if (mp_iszero(Y) || mp_iszero(X)) {
+        mp_forcezero(Z);
+        return FP_OKAY;
+    }
+
+#ifdef DEBUG_WOLFSSL
+    MATH_INT_T X2[1];
+    MATH_INT_T Y2[1];
+    MATH_INT_T Z2[1];
+    if (IS_HW_VALIDATION) {
+        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
+    }
+    else {
+
+        mp_init(X2);
+        mp_init(Y2);
+        mp_init(Z2);
+
+        mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
+        mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
+        mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
+
+        SET_HW_VALIDATION;
+        mp_mul(X2, Y2, Z2);
+        CLR_HW_VALIDATION;
+    }
+#endif /* DEBUG_WOLFSSL */
 
 #ifdef WOLFSSL_SP_INT_NEGATIVE
     /* neg check: X*Y becomes negative */
@@ -594,15 +643,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                        mp_isneg(X),      mp_isneg(Y),           neg);
     }
 #endif
-    ret = MP_OKAY; /* assume success until proven wrong */
-
-    /* if either operand is zero, there's nothing to do.
-     * Y checked first, as it was observed to be zero during
-     * wolfcrypt tests more often than X */
-    if (mp_iszero(Y) || mp_iszero(X)) {
-        mp_forcezero(Z);
-        return ret;
-    }
 
 #if CONFIG_IDF_TARGET_ESP32S3
 
@@ -681,11 +721,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
 #else /* not CONFIG_IDF_TARGET_ESP32S3 */
     /* assumed to be regular Xtensa here */
-    word32 Xs;
-    word32 Ys;
-    word32 Zs;
-    word32 maxWords_sz;
-    word32 hwWords_sz;
 
     /* determine count of bits. Used as HW parameter.   */
     Xs = mp_count_bits(X);
@@ -698,7 +733,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* sanity check */
     if((hwWords_sz<<5) > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "exceeds max bit length(2048)");
+        ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
         return MP_VAL; /*  Error: value is not able to be used. */
     }
 
@@ -770,6 +805,24 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Z->sign = X->sign ^ Y->sign;
     esp_clean_result(Z, 0);
 
+#ifdef DEBUG_WOLFSSL
+    esp_mp_mul_usage_ct++;
+    if (fp_cmp(X, X2) != 0) {
+        // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
+    }
+    if (fp_cmp(Y, Y2) != 0) {
+        // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
+    }
+    if (fp_cmp(Z, Z2) != 0) {
+        esp_mp_mul_error_ct++;
+        ESP_LOGE(TAG, "mp_mul Z vs Z2 mismatch!");
+        esp_show_mp("X", X);
+        esp_show_mp("Y", Y);
+        esp_show_mp("Z", Z);
+        esp_show_mp("Z2", Z2);
+        mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
+    }
+#endif
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
     return ret;
