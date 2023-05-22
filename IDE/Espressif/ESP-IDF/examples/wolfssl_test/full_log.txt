@@ -52,24 +52,23 @@ I (387) cpu_start: Pro cpu start user code
 I (387) cpu_start: cpu freq: 160000000 Hz
 I (387) cpu_start: Application information:
 I (392) cpu_start: Project name:     wolfssl_test
-I (397) cpu_start: App version:      v5.6.0-stable-877-g0e681d6f1-
-di
-I (404) cpu_start: Compile time:     May 22 2023 14:05:09
-I (410) cpu_start: ELF file SHA256:  f77e4f73bbff75e4...
+I (397) cpu_start: App version:      v5.6.0-stable-879-geb12552d9
+I (404) cpu_start: Compile time:     May 22 2023 14:13:53
+I (410) cpu_start: ELF file SHA256:  cf7770a24b0d84f9...
 I (416) cpu_start: ESP-IDF:          v5.0-dirty
 I (421) heap_init: Initializing. RAM available for dynamic allocat
 ion:
-I (429) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
-I (435) heap_init: At 3FFB3AB8 len 0002C548 (177 KiB): DRAM
-I (441) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (428) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (434) heap_init: At 3FFB3AB8 len 0002C548 (177 KiB): DRAM
+I (440) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
 I (447) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
-I (454) heap_init: At 4008BC1C len 000143E4 (80 KiB): IRAM
+I (453) heap_init: At 4008BC1C len 000143E4 (80 KiB): IRAM
 I (461) spi_flash: detected chip: generic
 I (464) spi_flash: flash io: dio
 W (468) spi_flash: Detected size(4096k) larger than the size in th
 e binary image header(2048k). Using the size in the binary image h
 eader.
-I (483) cpu_start: Starting scheduler on PRO CPU.
+I (482) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
 I (492) wolfssl_test: --------------------------------------------
 ------------
@@ -88,11 +87,11 @@ I (542) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github
 .com/gojimmypi/wolfssl.git
 I (552) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_f
 ix
-I (552) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 0e681d6f1fb13ee4
-d5c4bbc209bcbbb975cf5e86
-I (562) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 0e681d6f1
+I (552) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = eb12552d943e23be
+e405149fb82c2995156561a8
+I (562) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = eb12552d9
 I (572) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Mon May 22
- 14:03:55 2023 -0700'
+ 14:13:22 2023 -0700'
 I (582) esp32_util: CONFIG_IDF_TARGET = esp32
 I (582) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
 I (592) esp32_util: Xthal_have_ccount: 1
@@ -116,107 +115,113 @@ I (652) wolfssl_test: ESP32WROOM32_CRYPT is enabled.
 error    test passed!
 MEMORY   test passed!
 mp       test passed!
-I (6192) wolfcrypt_test: Begin math_test()
-I (6192) wolfcrypt_test: CheckRunTimeFastMath() =  136
-I (6192) wolfcrypt_test: FP_SIZE   =  136
-I (6192) wolfcrypt_test: DIGIT_BIT =  32
-I (6202) wolfcrypt_test: Begin math_test_challenge_1()
-I (6202) wolfcrypt_test: Success: mp_mulmod() : challenge:
+I (6162) wolfcrypt_test: Begin math_test()
+I (6162) wolfcrypt_test: CheckRunTimeFastMath() =  136
+I (6162) wolfcrypt_test: FP_SIZE   =  136
+I (6162) wolfcrypt_test: DIGIT_BIT =  32
+I (6172) wolfcrypt_test: Begin math_test_challenge_1()
+I (6172) wolfcrypt_test: Success: mp_mulmod() : challenge:
 32 word test, positive operands: a * b mod c
-I (6212) wolfcrypt_test: Success: mp_mulmod() : a * b mod c check:
+I (6182) wolfcrypt_test: Success: mp_mulmod() : a * b mod c check:
  4
-I (6222) wolfcrypt_test: Success: mp_mulmod() : 32 word test, posi
+I (6192) wolfcrypt_test: Success: mp_mulmod() : 32 word test, posi
 tive operands: a * b mod c
-I (6232) wolfcrypt_test: Success: mp_mulmod() : two-word interim a
+I (6202) wolfcrypt_test: Success: mp_mulmod() : two-word interim a
  * b mod c
-I (6242) wolfcrypt_test: Success: fp_cmp on 0 == 0; used length ze
+I (6212) wolfcrypt_test: Success: fp_cmp on 0 == 0; used length ze
 ro.
-I (6242) wolfcrypt_test: Success: mp_init_load() byte order check
-I (6252) wolfcrypt_test: Success: mp_add on standard 1 + 1 check
-I (6262) wolfcrypt_test: Success: mp_mulmod() : a * b mod c check:
+I (6212) wolfcrypt_test: Success: mp_init_load() byte order check
+I (6222) wolfcrypt_test: Success: mp_add on standard 1 + 1 check
+I (6232) wolfcrypt_test: Success: mp_mulmod() : a * b mod c check:
  4
-I (6262) wolfcrypt_test: Success: mp_mulmod() : two-word operands
+I (6232) wolfcrypt_test: Success: mp_mulmod() : two-word operands
 a * b mod c
-I (6272) wolfcrypt_test: Success: mp_mulmod() : 8 word x 2 word op
+I (6242) wolfcrypt_test: Success: mp_mulmod() : 8 word x 2 word op
 erands a * b mod c
-I (6282) wolfcrypt_test: Success: mp_mulmod() : 32 word test, a is
+I (6252) wolfcrypt_test: Success: mp_mulmod() : 32 word test, a is
  negative: a * b mod c
-I (6292) wolfcrypt_test: Success: mp_mulmod() : 32 Word HW Challen
+I (6262) wolfcrypt_test: Success: mp_mulmod() : 32 Word HW Challen
 ge: a * b mod c
-I (6302) wolfcrypt_test: Math test completed.
+I (6272) wolfcrypt_test: Math test completed.
 mp_math  test passed!
-I (6312) wolfssl: Bad Base64 Decode data, too small
+I (6272) wolfssl: Bad Base64 Decode data, too small
+I (6282) wolfssl: Bad Base64 Decode data, too small
+I (6292) wolfssl: Bad Base64 Decode data, too big
+I (6292) wolfssl: Bad Base64 Decode data, too small
+I (6302) wolfssl: Bad Base64 Decode data, too big
+I (6302) wolfssl: Bad Base64 Decode data, too small
+I (6312) wolfssl: Bad Base64 Decode data, too big
 I (6312) wolfssl: Bad Base64 Decode data, too small
 I (6322) wolfssl: Bad Base64 Decode data, too big
 I (6322) wolfssl: Bad Base64 Decode data, too small
-I (6332) wolfssl: Bad Base64 Decode data, too big
 I (6332) wolfssl: Bad Base64 Decode data, too small
-I (6342) wolfssl: Bad Base64 Decode data, too big
+I (6332) wolfssl: Bad Base64 Decode data, too small
 I (6342) wolfssl: Bad Base64 Decode data, too small
-I (6352) wolfssl: Bad Base64 Decode data, too big
 I (6352) wolfssl: Bad Base64 Decode data, too small
+I (6352) wolfssl: Bad Base64 Decode data, too small
+I (6362) wolfssl: Bad Base64 Decode data, too small
 I (6362) wolfssl: Bad Base64 Decode data, too small
 I (6372) wolfssl: Bad Base64 Decode data, too small
 I (6372) wolfssl: Bad Base64 Decode data, too small
 I (6382) wolfssl: Bad Base64 Decode data, too small
 I (6382) wolfssl: Bad Base64 Decode data, too small
-I (6392) wolfssl: Bad Base64 Decode data, too small
-I (6392) wolfssl: Bad Base64 Decode data, too small
+I (6392) wolfssl: Bad end of line in Base64 Decode
 I (6402) wolfssl: Bad Base64 Decode data, too small
 I (6402) wolfssl: Bad Base64 Decode data, too small
 I (6412) wolfssl: Bad Base64 Decode data, too small
+I (6412) wolfssl: Bad Base64 Decode data, too small
 I (6422) wolfssl: Bad Base64 Decode data, too small
-I (6422) wolfssl: Bad end of line in Base64 Decode
+I (6422) wolfssl: Bad Base64 Decode data, too small
 I (6432) wolfssl: Bad Base64 Decode data, too small
 I (6432) wolfssl: Bad Base64 Decode data, too small
 I (6442) wolfssl: Bad Base64 Decode data, too small
-I (6442) wolfssl: Bad Base64 Decode data, too small
 I (6452) wolfssl: Bad Base64 Decode data, too small
 I (6452) wolfssl: Bad Base64 Decode data, too small
+I (6462) wolfssl: Bad Base64 Decode data, too small
 I (6462) wolfssl: Bad Base64 Decode data, too small
 I (6472) wolfssl: Bad Base64 Decode data, too small
 I (6472) wolfssl: Bad Base64 Decode data, too small
 I (6482) wolfssl: Bad Base64 Decode data, too small
 I (6482) wolfssl: Bad Base64 Decode data, too small
 I (6492) wolfssl: Bad Base64 Decode data, too small
-I (6492) wolfssl: Bad Base64 Decode data, too small
 I (6502) wolfssl: Bad Base64 Decode data, too small
 I (6502) wolfssl: Bad Base64 Decode data, too small
+I (6512) wolfssl: Bad Base64 Decode data, too small
 I (6512) wolfssl: Bad Base64 Decode data, too small
 I (6522) wolfssl: Bad Base64 Decode data, too small
 I (6522) wolfssl: Bad Base64 Decode data, too small
 I (6532) wolfssl: Bad Base64 Decode data, too small
 I (6532) wolfssl: Bad Base64 Decode data, too small
 I (6542) wolfssl: Bad Base64 Decode data, too small
-I (6542) wolfssl: Bad Base64 Decode data, too small
 I (6552) wolfssl: Bad Base64 Decode data, too small
 I (6552) wolfssl: Bad Base64 Decode data, too small
-I (6562) wolfssl: Bad Base64 Decode data, too small
-I (6572) wolfssl: Bad Base64 Decode data, too small
-I (6572) wolfssl: Bad Base64 Decode data, too small
-I (6582) wolfssl: Bad Base64 Decode data, too small
-I (6582) wolfssl: Bad Base64 Decode data, too small
+I (6562) wolfssl: Bad Base64 Decode bad character
+I (6562) wolfssl: Bad Base64 Decode bad character
+I (6572) wolfssl: Bad Base64 Decode bad character
+I (6572) wolfssl: Bad Base64 Decode bad character
+I (6582) wolfssl: Bad Base64 Decode bad character
+I (6582) wolfssl: Bad Base64 Decode bad character
 I (6592) wolfssl: Bad Base64 Decode bad character
 I (6592) wolfssl: Bad Base64 Decode bad character
-I (6602) wolfssl: Bad Base64 Decode bad character
 I (6602) wolfssl: Bad Base64 Decode bad character
 I (6612) wolfssl: Bad Base64 Decode bad character
 I (6612) wolfssl: Bad Base64 Decode bad character
 I (6622) wolfssl: Bad Base64 Decode bad character
 I (6622) wolfssl: Bad Base64 Decode bad character
 I (6632) wolfssl: Bad Base64 Decode bad character
+I (6632) wolfssl: Bad Base64 Decode bad character
 I (6642) wolfssl: Bad Base64 Decode bad character
-I (6642) wolfssl: Bad Base64 Decode bad character
-I (6652) wolfssl: Bad Base64 Decode bad character
-I (6652) wolfssl: Bad Base64 Decode bad character
-I (6662) wolfssl: Bad Base64 Decode bad character
-I (6662) wolfssl: Bad Base64 Decode bad character
-I (6672) wolfssl: Bad Base64 Decode bad character
+I (6642) wolfssl: Bad Base64 Decode data, too big
+I (6652) wolfssl: Bad Base64 Decode data, too big
+I (6652) wolfssl: Bad Base64 Decode data, too big
+I (6662) wolfssl: Bad Base64 Decode data, too big
+I (6662) wolfssl: Bad Base64 Decode data, too big
 I (6672) wolfssl: Bad Base64 Decode data, too big
 I (6682) wolfssl: Bad Base64 Decode data, too big
 I (6682) wolfssl: Bad Base64 Decode data, too big
 I (6692) wolfssl: Bad Base64 Decode data, too big
 I (6692) wolfssl: Bad Base64 Decode data, too big
+I (6702) wolfssl: Bad Base64 Decode data, too big
 I (6702) wolfssl: Bad Base64 Decode data, too big
 I (6712) wolfssl: Bad Base64 Decode data, too big
 I (6712) wolfssl: Bad Base64 Decode data, too big
@@ -225,11 +230,11 @@ I (6722) wolfssl: Bad Base64 Decode data, too big
 I (6732) wolfssl: Bad Base64 Decode data, too big
 I (6732) wolfssl: Bad Base64 Decode data, too big
 I (6742) wolfssl: Bad Base64 Decode data, too big
-I (6742) wolfssl: Bad Base64 Decode data, too big
 I (6752) wolfssl: Bad Base64 Decode data, too big
 I (6752) wolfssl: Bad Base64 Decode data, too big
 I (6762) wolfssl: Bad Base64 Decode data, too big
 I (6762) wolfssl: Bad Base64 Decode data, too big
+I (6772) wolfssl: Bad Base64 Decode data, too big
 I (6772) wolfssl: Bad Base64 Decode data, too big
 I (6782) wolfssl: Bad Base64 Decode data, too big
 I (6782) wolfssl: Bad Base64 Decode data, too big
@@ -238,11 +243,11 @@ I (6792) wolfssl: Bad Base64 Decode data, too big
 I (6802) wolfssl: Bad Base64 Decode data, too big
 I (6802) wolfssl: Bad Base64 Decode data, too big
 I (6812) wolfssl: Bad Base64 Decode data, too big
-I (6812) wolfssl: Bad Base64 Decode data, too big
 I (6822) wolfssl: Bad Base64 Decode data, too big
 I (6822) wolfssl: Bad Base64 Decode data, too big
 I (6832) wolfssl: Bad Base64 Decode data, too big
 I (6832) wolfssl: Bad Base64 Decode data, too big
+I (6842) wolfssl: Bad Base64 Decode data, too big
 I (6842) wolfssl: Bad Base64 Decode data, too big
 I (6852) wolfssl: Bad Base64 Decode data, too big
 I (6852) wolfssl: Bad Base64 Decode data, too big
@@ -251,11 +256,11 @@ I (6862) wolfssl: Bad Base64 Decode data, too big
 I (6872) wolfssl: Bad Base64 Decode data, too big
 I (6872) wolfssl: Bad Base64 Decode data, too big
 I (6882) wolfssl: Bad Base64 Decode data, too big
-I (6882) wolfssl: Bad Base64 Decode data, too big
 I (6892) wolfssl: Bad Base64 Decode data, too big
 I (6892) wolfssl: Bad Base64 Decode data, too big
 I (6902) wolfssl: Bad Base64 Decode data, too big
 I (6902) wolfssl: Bad Base64 Decode data, too big
+I (6912) wolfssl: Bad Base64 Decode data, too big
 I (6912) wolfssl: Bad Base64 Decode data, too big
 I (6922) wolfssl: Bad Base64 Decode data, too big
 I (6922) wolfssl: Bad Base64 Decode data, too big
@@ -264,11 +269,11 @@ I (6932) wolfssl: Bad Base64 Decode data, too big
 I (6942) wolfssl: Bad Base64 Decode data, too big
 I (6942) wolfssl: Bad Base64 Decode data, too big
 I (6952) wolfssl: Bad Base64 Decode data, too big
-I (6952) wolfssl: Bad Base64 Decode data, too big
 I (6962) wolfssl: Bad Base64 Decode data, too big
 I (6962) wolfssl: Bad Base64 Decode data, too big
 I (6972) wolfssl: Bad Base64 Decode data, too big
 I (6972) wolfssl: Bad Base64 Decode data, too big
+I (6982) wolfssl: Bad Base64 Decode data, too big
 I (6982) wolfssl: Bad Base64 Decode data, too big
 I (6992) wolfssl: Bad Base64 Decode data, too big
 I (6992) wolfssl: Bad Base64 Decode data, too big
@@ -277,11 +282,11 @@ I (7002) wolfssl: Bad Base64 Decode data, too big
 I (7012) wolfssl: Bad Base64 Decode data, too big
 I (7012) wolfssl: Bad Base64 Decode data, too big
 I (7022) wolfssl: Bad Base64 Decode data, too big
-I (7022) wolfssl: Bad Base64 Decode data, too big
 I (7032) wolfssl: Bad Base64 Decode data, too big
 I (7032) wolfssl: Bad Base64 Decode data, too big
 I (7042) wolfssl: Bad Base64 Decode data, too big
 I (7042) wolfssl: Bad Base64 Decode data, too big
+I (7052) wolfssl: Bad Base64 Decode data, too big
 I (7052) wolfssl: Bad Base64 Decode data, too big
 I (7062) wolfssl: Bad Base64 Decode data, too big
 I (7062) wolfssl: Bad Base64 Decode data, too big
@@ -290,11 +295,11 @@ I (7072) wolfssl: Bad Base64 Decode data, too big
 I (7082) wolfssl: Bad Base64 Decode data, too big
 I (7082) wolfssl: Bad Base64 Decode data, too big
 I (7092) wolfssl: Bad Base64 Decode data, too big
-I (7092) wolfssl: Bad Base64 Decode data, too big
 I (7102) wolfssl: Bad Base64 Decode data, too big
 I (7102) wolfssl: Bad Base64 Decode data, too big
 I (7112) wolfssl: Bad Base64 Decode data, too big
 I (7112) wolfssl: Bad Base64 Decode data, too big
+I (7122) wolfssl: Bad Base64 Decode data, too big
 I (7122) wolfssl: Bad Base64 Decode data, too big
 I (7132) wolfssl: Bad Base64 Decode data, too big
 I (7132) wolfssl: Bad Base64 Decode data, too big
@@ -303,11 +308,11 @@ I (7142) wolfssl: Bad Base64 Decode data, too big
 I (7152) wolfssl: Bad Base64 Decode data, too big
 I (7152) wolfssl: Bad Base64 Decode data, too big
 I (7162) wolfssl: Bad Base64 Decode data, too big
-I (7162) wolfssl: Bad Base64 Decode data, too big
 I (7172) wolfssl: Bad Base64 Decode data, too big
 I (7172) wolfssl: Bad Base64 Decode data, too big
 I (7182) wolfssl: Bad Base64 Decode data, too big
 I (7182) wolfssl: Bad Base64 Decode data, too big
+I (7192) wolfssl: Bad Base64 Decode data, too big
 I (7192) wolfssl: Bad Base64 Decode data, too big
 I (7202) wolfssl: Bad Base64 Decode data, too big
 I (7202) wolfssl: Bad Base64 Decode data, too big
@@ -316,11 +321,11 @@ I (7212) wolfssl: Bad Base64 Decode data, too big
 I (7222) wolfssl: Bad Base64 Decode data, too big
 I (7222) wolfssl: Bad Base64 Decode data, too big
 I (7232) wolfssl: Bad Base64 Decode data, too big
-I (7232) wolfssl: Bad Base64 Decode data, too big
 I (7242) wolfssl: Bad Base64 Decode data, too big
 I (7242) wolfssl: Bad Base64 Decode data, too big
 I (7252) wolfssl: Bad Base64 Decode data, too big
 I (7252) wolfssl: Bad Base64 Decode data, too big
+I (7262) wolfssl: Bad Base64 Decode data, too big
 I (7262) wolfssl: Bad Base64 Decode data, too big
 I (7272) wolfssl: Bad Base64 Decode data, too big
 I (7272) wolfssl: Bad Base64 Decode data, too big
@@ -329,23 +334,17 @@ I (7282) wolfssl: Bad Base64 Decode data, too big
 I (7292) wolfssl: Bad Base64 Decode data, too big
 I (7292) wolfssl: Bad Base64 Decode data, too big
 I (7302) wolfssl: Bad Base64 Decode data, too big
-I (7302) wolfssl: Bad Base64 Decode data, too big
 I (7312) wolfssl: Bad Base64 Decode data, too big
 I (7312) wolfssl: Bad Base64 Decode data, too big
 I (7322) wolfssl: Bad Base64 Decode data, too big
 I (7322) wolfssl: Bad Base64 Decode data, too big
 I (7332) wolfssl: Bad Base64 Decode data, too big
+I (7332) wolfssl: Bad Base64 Decode data, too big
 I (7342) wolfssl: Bad Base64 Decode data, too big
 I (7342) wolfssl: Bad Base64 Decode data, too big
 I (7352) wolfssl: Bad Base64 Decode data, too big
 I (7352) wolfssl: Bad Base64 Decode data, too big
-I (7362) wolfssl: Bad Base64 Decode data, too big
-I (7362) wolfssl: Bad Base64 Decode data, too big
-I (7372) wolfssl: Bad Base64 Decode data, too big
-I (7372) wolfssl: Bad Base64 Decode data, too big
-I (7382) wolfssl: Bad Base64 Decode data, too big
-I (7382) wolfssl: Bad Base64 Decode data, too big
-I (7392) wolfssl: Escape buffer max too small
+I (7362) wolfssl: Escape buffer max too small
 base64   test passed!
 asn      test passed!
 RANDOM   test passed!
@@ -381,138 +380,143 @@ AES192   test passed!
 AES256   test passed!
 AES-GCM  test passed!
 AES Key Wrap test passed!
-I (8982) wolfssl: GetLength - value exceeds buffer length
-I (8982) wolfssl: GetLength - value exceeds buffer length
-I (8982) wolfssl: GetLength - value exceeds buffer length
-I (8992) wolfssl: GetLength - value exceeds buffer length
-I (8992) wolfssl: GetLength - value exceeds buffer length
-I (9002) wolfssl: GetLength - value exceeds buffer length
-I (9012) wolfssl: GetLength - bad index on input
-I (9012) wolfssl: wc_SignatureGetSize: Invalid RsaKey key size
-I (12342) wolfssl: RSA Signature Verify failed!
-I (20322) wolfssl: wolfSSL Using RSA OAEP padding
-I (21912) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (21922) wolfssl: wolfSSL Using RSA OAEP padding
-I (23512) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (25072) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (25072) wolfssl: wolfSSL Using RSA OAEP padding
-I (26662) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (26662) wolfssl: wolfSSL Using RSA OAEP padding
-I (28262) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (28262) wolfssl: wolfSSL Using RSA OAEP padding
-I (29852) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (29852) wolfssl: wolfSSL Using RSA OAEP padding
-I (31442) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (52762) wolfssl: Date BEFORE check failed
-I (52762) wolfssl: Getting Cert Name
-I (52762) wolfssl: Getting Cert Name
-I (52762) wolfssl: wolfSSL Entering GetAlgoId
-I (52772) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (52772) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (52782) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (52782) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (52792) wolfssl: wolfSSL Entering DecodeAltNames
-I (52802) wolfssl:      Unsupported name type, skipping
-I (52802) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (52812) wolfssl: Date BEFORE check failed
-I (52812) wolfssl: Getting Cert Name
-I (52822) wolfssl: Getting Cert Name
-I (52822) wolfssl: wolfSSL Entering GetAlgoId
-I (52832) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (52832) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (52842) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (52842) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (52852) wolfssl: wolfSSL Entering DecodeAltNames
-I (52852) wolfssl:      Unsupported name type, skipping
-I (52862) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (54432) wolfssl: Date BEFORE check failed
-I (54442) wolfssl: Getting Cert Name
-I (54442) wolfssl: Getting Cert Name
-I (54442) wolfssl: wolfSSL Entering GetAlgoId
-I (54442) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (54452) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (54452) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (54462) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (54472) wolfssl: wolfSSL Entering DecodeAltNames
-I (54472) wolfssl:      Unsupported name type, skipping
-I (54482) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (54482) wolfssl: Date BEFORE check failed
-I (54492) wolfssl: Getting Cert Name
-I (54492) wolfssl: Getting Cert Name
-I (54502) wolfssl: wolfSSL Entering GetAlgoId
-I (54502) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (54512) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (54512) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (54522) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (54522) wolfssl: wolfSSL Entering DecodeAltNames
-I (54532) wolfssl:      Unsupported name type, skipping
-I (54542) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (57672) wolfssl: wolfSSL Using RSA PSS padding
-I (59272) wolfssl: wolfSSL Using RSA PSS un-padding
-I (59272) wolfssl: wolfSSL Using RSA PSS padding
-I (60862) wolfssl: wolfSSL Using RSA PSS un-padding
-I (60862) wolfssl: wolfSSL Using RSA PSS padding
-I (62452) wolfssl: wolfSSL Using RSA PSS un-padding
-I (62452) wolfssl: wolfSSL Using RSA PSS padding
-I (64042) wolfssl: wolfSSL Using RSA PSS un-padding
-I (64052) wolfssl: wolfSSL Using RSA PSS padding
-I (65642) wolfssl: wolfSSL Using RSA PSS un-padding
-I (65642) wolfssl: wolfSSL Using RSA PSS padding
-I (67232) wolfssl: wolfSSL Using RSA PSS un-padding
-I (67232) wolfssl: wolfSSL Using RSA PSS padding
-I (68822) wolfssl: wolfSSL Using RSA PSS un-padding
-I (68822) wolfssl: wolfSSL Using RSA PSS padding
-I (70412) wolfssl: wolfSSL Using RSA PSS un-padding
-I (70422) wolfssl: wolfSSL Using RSA PSS padding
-I (72012) wolfssl: wolfSSL Using RSA PSS un-padding
-I (72012) wolfssl: wolfSSL Using RSA PSS padding
-I (73602) wolfssl: wolfSSL Using RSA PSS un-padding
-I (73602) wolfssl: wolfSSL Using RSA PSS padding
-I (75192) wolfssl: wolfSSL Using RSA PSS un-padding
-I (75192) wolfssl: wolfSSL Using RSA PSS padding
-I (76782) wolfssl: wolfSSL Using RSA PSS un-padding
-I (76792) wolfssl: wolfSSL Using RSA PSS padding
-I (78382) wolfssl: wolfSSL Using RSA PSS un-padding
-I (78382) wolfssl: wolfSSL Using RSA PSS padding
-I (79972) wolfssl: wolfSSL Using RSA PSS un-padding
-I (79972) wolfssl: wolfSSL Using RSA PSS padding
-I (81562) wolfssl: wolfSSL Using RSA PSS un-padding
-I (81562) wolfssl: wolfSSL Using RSA PSS padding
-I (83152) wolfssl: wolfSSL Using RSA PSS un-padding
-I (83152) wolfssl: wolfSSL Using RSA PSS padding
-I (84752) wolfssl: wolfSSL Using RSA PSS un-padding
-I (84752) wolfssl: wolfSSL Using RSA PSS padding
-I (86342) wolfssl: wolfSSL Using RSA PSS un-padding
-I (86342) wolfssl: wolfSSL Using RSA PSS padding
-I (87932) wolfssl: wolfSSL Using RSA PSS un-padding
-I (87932) wolfssl: wolfSSL Using RSA PSS padding
-I (89522) wolfssl: wolfSSL Using RSA PSS un-padding
-I (89522) wolfssl: wolfSSL Using RSA PSS padding
-I (91112) wolfssl: wolfSSL Using RSA PSS un-padding
-I (91122) wolfssl: wolfSSL Using RSA PSS padding
-I (92712) wolfssl: wolfSSL Using RSA PSS un-padding
-I (92712) wolfssl: wolfSSL Using RSA PSS padding
-I (94302) wolfssl: wolfSSL Using RSA PSS un-padding
-I (94302) wolfssl: wolfSSL Using RSA PSS padding
-I (95892) wolfssl: wolfSSL Using RSA PSS un-padding
-I (95892) wolfssl: wolfSSL Using RSA PSS padding
-I (97482) wolfssl: wolfSSL Using RSA PSS un-padding
-I (97482) wolfssl: wolfSSL Using RSA PSS padding
-I (99082) wolfssl: wolfSSL Using RSA PSS un-padding
-I (99112) wolfssl: wolfSSL Using RSA PSS un-padding
-I (99112) wolfssl: wolfSSL Using RSA PSS padding
+I (8952) wolfssl: GetLength - value exceeds buffer length
+I (8952) wolfssl: GetLength - value exceeds buffer length
+I (8952) wolfssl: GetLength - value exceeds buffer length
+I (8962) wolfssl: GetLength - value exceeds buffer length
+I (8962) wolfssl: GetLength - value exceeds buffer length
+I (8972) wolfssl: GetLength - value exceeds buffer length
+I (8982) wolfssl: GetLength - bad index on input
+I (8982) wolfssl: wc_SignatureGetSize: Invalid RsaKey key size
+I (12312) wolfssl: RSA Signature Verify failed!
+I (20292) wolfssl: wolfSSL Using RSA OAEP padding
+I (21882) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (21882) wolfssl: wolfSSL Using RSA OAEP padding
+I (23472) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (25042) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (25042) wolfssl: wolfSSL Using RSA OAEP padding
+I (26632) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (26632) wolfssl: wolfSSL Using RSA OAEP padding
+I (28222) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (28222) wolfssl: wolfSSL Using RSA OAEP padding
+I (29822) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (29822) wolfssl: wolfSSL Using RSA OAEP padding
+I (31412) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (51972) wolfssl: Date BEFORE check failed
+I (51972) wolfssl: Getting Cert Name
+I (51972) wolfssl: Getting Cert Name
+I (51972) wolfssl: wolfSSL Entering GetAlgoId
+I (51982) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (51992) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (51992) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (52002) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (52002) wolfssl: wolfSSL Entering DecodeAltNames
+I (52012) wolfssl:      Unsupported name type, skipping
+I (52012) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (52022) wolfssl: Date BEFORE check failed
+I (52022) wolfssl: Getting Cert Name
+I (52032) wolfssl: Getting Cert Name
+I (52032) wolfssl: wolfSSL Entering GetAlgoId
+I (52042) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (52042) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (52052) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (52052) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (52062) wolfssl: wolfSSL Entering DecodeAltNames
+I (52072) wolfssl:      Unsupported name type, skipping
+I (52072) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (53652) wolfssl: Date BEFORE check failed
+I (53652) wolfssl: Getting Cert Name
+I (53652) wolfssl: Getting Cert Name
+I (53652) wolfssl: wolfSSL Entering GetAlgoId
+I (53652) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (53662) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (53672) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (53672) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (53682) wolfssl: wolfSSL Entering DecodeAltNames
+I (53682) wolfssl:      Unsupported name type, skipping
+I (53692) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (53702) wolfssl: Date BEFORE check failed
+I (53702) wolfssl: Getting Cert Name
+I (53702) wolfssl: Getting Cert Name
+I (53712) wolfssl: wolfSSL Entering GetAlgoId
+I (53712) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (53722) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (53722) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (53732) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (53742) wolfssl: wolfSSL Entering DecodeAltNames
+I (53742) wolfssl:      Unsupported name type, skipping
+I (53752) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (56892) wolfssl: wolfSSL Using RSA PSS padding
+I (58482) wolfssl: wolfSSL Using RSA PSS un-padding
+I (58482) wolfssl: wolfSSL Using RSA PSS padding
+I (60072) wolfssl: wolfSSL Using RSA PSS un-padding
+I (60072) wolfssl: wolfSSL Using RSA PSS padding
+I (61662) wolfssl: wolfSSL Using RSA PSS un-padding
+I (61662) wolfssl: wolfSSL Using RSA PSS padding
+I (63252) wolfssl: wolfSSL Using RSA PSS un-padding
+I (63262) wolfssl: wolfSSL Using RSA PSS padding
+I (64852) wolfssl: wolfSSL Using RSA PSS un-padding
+I (64852) wolfssl: wolfSSL Using RSA PSS padding
+I (66442) wolfssl: wolfSSL Using RSA PSS un-padding
+I (66442) wolfssl: wolfSSL Using RSA PSS padding
+I (68032) wolfssl: wolfSSL Using RSA PSS un-padding
+I (68032) wolfssl: wolfSSL Using RSA PSS padding
+I (69622) wolfssl: wolfSSL Using RSA PSS un-padding
+I (69632) wolfssl: wolfSSL Using RSA PSS padding
+I (71222) wolfssl: wolfSSL Using RSA PSS un-padding
+I (71222) wolfssl: wolfSSL Using RSA PSS padding
+I (72812) wolfssl: wolfSSL Using RSA PSS un-padding
+I (72812) wolfssl: wolfSSL Using RSA PSS padding
+I (74402) wolfssl: wolfSSL Using RSA PSS un-padding
+I (74402) wolfssl: wolfSSL Using RSA PSS padding
+I (76002) wolfssl: wolfSSL Using RSA PSS un-padding
+I (76002) wolfssl: wolfSSL Using RSA PSS padding
+I (77592) wolfssl: wolfSSL Using RSA PSS un-padding
+I (77592) wolfssl: wolfSSL Using RSA PSS padding
+I (79182) wolfssl: wolfSSL Using RSA PSS un-padding
+I (79182) wolfssl: wolfSSL Using RSA PSS padding
+I (80772) wolfssl: wolfSSL Using RSA PSS un-padding
+I (80772) wolfssl: wolfSSL Using RSA PSS padding
+I (82362) wolfssl: wolfSSL Using RSA PSS un-padding
+I (82372) wolfssl: wolfSSL Using RSA PSS padding
+I (83962) wolfssl: wolfSSL Using RSA PSS un-padding
+I (83962) wolfssl: wolfSSL Using RSA PSS padding
+I (85552) wolfssl: wolfSSL Using RSA PSS un-padding
+I (85552) wolfssl: wolfSSL Using RSA PSS padding
+I (87142) wolfssl: wolfSSL Using RSA PSS un-padding
+I (87142) wolfssl: wolfSSL Using RSA PSS padding
+I (88732) wolfssl: wolfSSL Using RSA PSS un-padding
+I (88732) wolfssl: wolfSSL Using RSA PSS padding
+I (90332) wolfssl: wolfSSL Using RSA PSS un-padding
+I (90332) wolfssl: wolfSSL Using RSA PSS padding
+I (91922) wolfssl: wolfSSL Using RSA PSS un-padding
+I (91922) wolfssl: wolfSSL Using RSA PSS padding
+I (93512) wolfssl: wolfSSL Using RSA PSS un-padding
+I (93512) wolfssl: wolfSSL Using RSA PSS padding
+I (95112) wolfssl: wolfSSL Using RSA PSS un-padding
+I (95112) wolfssl: wolfSSL Using RSA PSS padding
+I (96702) wolfssl: wolfSSL Using RSA PSS un-padding
+I (96702) wolfssl: wolfSSL Using RSA PSS padding
+I (98292) wolfssl: wolfSSL Using RSA PSS un-padding
+I (98322) wolfssl: wolfSSL Using RSA PSS un-padding
+I (98322) wolfssl: wolfSSL Using RSA PSS padding
 RSA      test passed!
 PWDBASED test passed!
-I (99362) wolfcrypt_test: ecc_test ECC_MIN_KEY_SZ = 224
+I (98572) wolfcrypt_test: ecc_test ECC_MIN_KEY_SZ = 224
 
-I (99362) wolfssl: GetLength - value exceeds buffer length
-I (99362) wolfcrypt_test: ecc_test_curve keySize = 28
+I (98572) wolfssl: GetLength - value exceeds buffer length
+I (98582) wolfcrypt_test: ecc_test_curve keySize = 28
 
-ecc_test_vector 28 failed!: -25011
+I (104802) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (104802) wolfssl: Checking size of PKCS8
+I (104802) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (104812) wolfcrypt_test: ecc_test_curve keySize = 30
+
+ecc_test_curve_size 30 failed!: -26678
 ECC      test failed!
- error L=25011
+ error L=26678
  [fiducial line numbers: 9087 24567 34953 47108]
-I (104412) wolfssl: wolfSSL Entering wolfCrypt_Cleanup
-I (104422) wolfcrypt_test: Exiting main with return code: -1
+I (109602) wolfssl: wolfSSL Entering wolfCrypt_Cleanup
+I (109612) wolfcrypt_test: Exiting main with return code: -1
 
-E (104432) wolfssl_test: wolf_test_task FAIL result code = -1
+E (109622) wolfssl_test: wolf_test_task FAIL result code = -1
