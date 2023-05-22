@@ -80,6 +80,15 @@ static int espmp_CryptHwMutexInit = 0;
 /*
 * check if the HW is ready before accessing it
 *
+* See 24.3.1 Initialization of ESP32 Technical Reference Manual
+* https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+*
+* The RSA Accelerator is activated by enabling the corresponding peripheral
+* clock, and by clearing the DPORT_RSA_PD bit in the DPORT_RSA_PD_CTRL_REG
+* register. This releases the RSA Accelerator from reset.
+*
+* See esp_mp_hw_lock().
+*
 * When the RSA Accelerator is released from reset, the register RSA_CLEAN_REG
 * reads 0 and an initialization process begins. Hardware initializes the four
 * memory blocks by setting them to 0. After initialization is complete,
@@ -102,7 +111,11 @@ static int esp_mp_hw_wait_clean(void)
    * hwcrypto_reg.h maintains RSA_CLEAN_REG for backwards compatibility:
    * so this block _might_ not be needed. */
     asm volatile("memw");
-    while(!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_CLEAN_REG) != 1) {
+
+    /* wait until ready,
+     * or timeout counter exceeds ESP_RSA_TIMEOUT_CNT in user_settings */
+
+    while(!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_CLEAN_REG) == 0) {
         /*  wait. expected delay 1 to 2 uS  */
         asm volatile("memw");
     }
@@ -157,6 +170,7 @@ static int esp_mp_hw_lock()
         /* ESP AES has already been initialized */
     }
 
+    /* Set our mutex to indicate the HW is in use */
     if (ret == 0) {
         /* lock hardware */
         /* we don't actually want to wait forever  TODO */
@@ -364,7 +378,7 @@ static void process_start(word32 reg)
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     /* start process  */
     DPORT_REG_WRITE(reg, 0);
-    asm volatile("memw");
+    asm volatile("memw"); /* TODO confirm all compiler settings do this */
     DPORT_REG_WRITE(reg, 1);
     asm volatile("memw");
 }
@@ -556,7 +570,11 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
     return ret;
 }
 
-/* Z = X * Y;  */
+/* Large Number Modular Multiplication
+ *
+ * See 24.3.3 of the ESP32 Technical Reference Manual
+ *
+ * Z = X * Y;  */
 int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
     ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
@@ -699,7 +717,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     * 9. Release the HW engine
     */
     /* lock HW for use */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+    ret = esp_mp_hw_lock(); /* enables HW clock */
+    if (ret != MP_OKAY) {
         ESP_LOGW(TAG, "esp_mp_hw_lock fail");
         return ret;
     }
@@ -711,6 +730,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
     DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
+
     /* step.2 write X, M and r_inv into memory */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
                           X,
@@ -755,7 +775,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     return ret;
 }
 
-/* Large Number Modular Multiplication Z = X × Y mod M */
+/* Large Number Modular Multiplication
+ *
+ * See 24.3.3 of the ESP32 Technical Reference Manual
+ *
+ * Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
@@ -846,12 +870,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
-    /* lock HW for use */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(tmpZ);
-        mp_clear(r_inv);
-        return ret;
-    }
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
@@ -864,6 +882,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGI(TAG, "mp = %u", mp);
 #endif
    }
+
+    /* lock HW for use, enable peripheral clock */
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
+        return ret;
+    }
 
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
@@ -1031,9 +1056,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
  *
  *    Z = X^Y mod M
  *
- * See:
- *  ESP32, Chapter 24, https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
- *  ESP32s3, section 20.3.1, https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+ *  ESP32, Section 24.3.2  https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+ *  ESP32S3, Section 20.3.1, https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+ *
  * The operation is based on Montgomery multiplication. Aside from the
  * arguments X, Y , and M, two additional ones are needed —r and M′
 .* These arguments are calculated in advance by software.
