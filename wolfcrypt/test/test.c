@@ -1063,10 +1063,10 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #ifndef NO_MATH_TEST
-//    if ((ret = math_test()) != 0)
-//        TEST_FAIL("mp_math  test failed!\n", ret);
-//    else
-//        TEST_PASS("mp_math  test passed!\n");
+    if ((ret = math_test()) != 0)
+        TEST_FAIL("mp_math  test failed!\n", ret);
+    else
+        TEST_PASS("mp_math  test passed!\n");
 #endif
 
 #ifndef NO_CODING
