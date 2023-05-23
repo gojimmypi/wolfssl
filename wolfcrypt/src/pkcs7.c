@@ -9878,7 +9878,6 @@ static int wc_PKCS7_DecryptKari(PKCS7* pkcs7, byte* in, word32 inSz,
     word32 tmpIdx = (idx) ? *idx : 0;
 #endif
 
-    WOLFSSL_ENTER("wc_PKCS7_DecryptKari");
     if (pkcs7 == NULL || pkiMsg == NULL ||
             ((pkcs7->singleCert == NULL || pkcs7->singleCertSz == 0) &&
               pkcs7->wrapCEKCb == NULL) ||
@@ -10137,7 +10136,6 @@ static int wc_PKCS7_DecryptRecipientInfos(PKCS7* pkcs7, byte* in,
         return BAD_FUNC_ARG;
     }
 
-    WOLFSSL_ENTER("wc_PKCS7_DecryptRecipientInfos");
 #ifndef NO_PKCS7_STREAM
     tmpIdx = *idx;
 #endif
