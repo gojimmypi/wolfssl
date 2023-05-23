@@ -88,6 +88,9 @@
 ** Optional Settings:
 *******************************************************************************
 **
+** DEBUG_WOLFSSL
+**   Turns on development testing. Validates HW accelerated results to software
+**
 ** LOG_LOCAL_LEVEL
 **   Debugging. Default value is ESP_LOG_DEBUG
 **
@@ -97,6 +100,10 @@
 **
 ** WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 **   When defined, enables hardware cryptography debugging
+**
+** NO_RECOVER_SOFTWARE_CALC
+**   When defined, will NOT recover software calculation result when not
+**   matched with hardware. Useful only during development. Needs DEBUG_WOLFSSL
 **
 *******************************************************************************
 ** Settings used from <esp_idf_version.h>

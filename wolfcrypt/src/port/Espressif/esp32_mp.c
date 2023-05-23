@@ -40,7 +40,6 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #include "wolfssl/wolfcrypt/logging.h"
-//static const char* MP_TAG = "MATH_INT_T2 omit";
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
 
@@ -953,14 +952,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int WordsForOperand;
 # endif
 
-    if (X->used == 32)
-    {
-        ESP_LOGV(TAG, "X->used == 32!");
-//        esp_show_mp("a", X);
-//        esp_show_mp("b", Y);
-//        esp_show_mp("c", M);
-    }
-
     /* neg check - X*Y becomes negative */
     negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
 
@@ -974,15 +965,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
     zwords      = bits2words(min(Ms, Xs + Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
-
-#ifdef SEARCHING_FOR_INTERESTING_VALUES
-    if ( (Xs == 1023) && (Ys = 1024) && (Ms = 1024) ) {
-        ESP_LOGI(TAG, "Challenge Property Match!");
-        esp_show_mp("a[0]", X);
-        esp_show_mp("b[0]", Y);
-        esp_show_mp("c[0]", M);
-    }
-#endif
 
     ESP_LOGV(TAG, "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
                   maxWords_sz, zwords, hwWords_sz);
@@ -1188,7 +1170,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_sub(M, tmpZ, tmpZ);
         ESP_LOGV(TAG, "neg check adjustment");
     }
-//  wip
 
     mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
