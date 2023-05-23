@@ -30,6 +30,14 @@ Including the following examples:
  3. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
  4. Find [Example programs](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples) under _/path/to/esp_`/esp-idf/examples/protocols/wolfssl_xxx` (where xxx is the project name)
 
+## Setup for VisualGDB
+
+### Clone a specific version:
+
+```
+C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espressif/esp-idf.git v5.0.2
+```
+
 ## Configuration
  1. The `user_settings.h` can be found in _/path/to/esp_`/esp-idf/components/wolfssl/include/user_settings.h`
 
