@@ -32,16 +32,16 @@ I (92) boot: End of partition table
 I (96) boot_comm: chip revision: 3, min. application chip revisi
 on: 0
 I (103) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size
-=23b68h (146280) map
-I (164) esp_image: segment 1: paddr=00033b90 vaddr=3ffb0000 size
+=23c98h (146584) map
+I (164) esp_image: segment 1: paddr=00033cc0 vaddr=3ffb0000 size
 =02930h ( 10544) load
-I (169) esp_image: segment 2: paddr=000364c8 vaddr=40080000 size
-=09b50h ( 39760) load
+I (169) esp_image: segment 2: paddr=000365f8 vaddr=40080000 size
+=09a20h ( 39456) load
 I (186) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size
-=6a5d0h (435664) map
-I (344) esp_image: segment 4: paddr=000aa5f8 vaddr=40089b50 size
-=020cch (  8396) load
-I (348) esp_image: segment 5: paddr=000ac6cc vaddr=50000000 size
+=6a6c4h (435908) map
+I (344) esp_image: segment 4: paddr=000aa6ec vaddr=40089a20 size
+=021fch (  8700) load
+I (348) esp_image: segment 5: paddr=000ac8f0 vaddr=50000000 size
 =00010h (    16) load
 I (356) boot: Loaded app from partition at offset 0x10000
 I (356) boot: Disabling RNG early entropy source...
@@ -55,8 +55,8 @@ I (392) cpu_start: Project name:     wolfssl_test
 I (397) cpu_start: App version:      v5.6.0-stable-888-gf8af6b6b
 7-di
 I (404) cpu_start: Compile time:     May 23 2023 10:40:47
-I (410) cpu_start: ELF file SHA256:  c3cc7b2f441989a2...
-I (416) cpu_start: ESP-IDF:          v5.0-dirty
+I (411) cpu_start: ELF file SHA256:  7af460e808d12fde...
+I (417) cpu_start: ESP-IDF:          v5.0-dirty
 I (422) heap_init: Initializing. RAM available for dynamic alloc
 ation:
 I (429) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
@@ -122,242 +122,401 @@ I (7493) wolfcrypt_test: Begin math_test()
 I (7493) wolfcrypt_test: CheckRunTimeFastMath() =  136
 I (7493) wolfcrypt_test: FP_SIZE   =  136
 I (7493) wolfcrypt_test: DIGIT_BIT =  32
-I (7503) wolfcrypt_test: Begin math_test_challenge_1()
-I (7513) wolfcrypt_test: Success: mp_mulmod() : challenge:
-32 word test, positive operands: a * b mod c
-I (7513) wolfcrypt_test: Success: mp_mulmod() : a * b mod c chec
-k: 4
-I (7523) wolfcrypt_test: Success: mp_mulmod() : 32 word test, po
-sitive operands: a * b mod c
-I (7533) MATH_INT_T:
-I (7533) MATH_INT_T: Operand a.used = 32;
-I (7543) MATH_INT_T: Operand a.sign = 0;
-I (7543) MATH_INT_T:
-I (7543) MATH_INT_T: Operand b.used = 32;
-I (7553) MATH_INT_T: Operand b.sign = 0;
-I (7553) MATH_INT_T:
-I (7563) MATH_INT_T: Operand b.used = 32;
-I (7563) MATH_INT_T: Operand b.sign = 0;
-I (7573) wolfcrypt_test: Success: mp_mulmod() : two-word interim
- a * b mod c
-I (7573) wolfcrypt_test: Success: fp_cmp on 0 == 0; used length
-zero.
-I (7583) wolfcrypt_test: Success: mp_init_load() byte order chec
-k
-I (7593) wolfcrypt_test: Success: mp_add on standard 1 + 1 check
-I (7603) wolfcrypt_test: Success: mp_mulmod() : a * b mod c chec
-k: 4
-I (7603) wolfcrypt_test: Success: mp_mulmod() : two-word operand
-s a * b mod c
-I (7613) wolfcrypt_test: Success: mp_mulmod() : 8 word x 2 word
-operands a * b mod c
-I (7623) wolfcrypt_test: Success: mp_mulmod() : 32 word test, a
-is negative: a * b mod c
-I (7633) wolfcrypt_test: Success: mp_mulmod() : 32 Word HW Chall
-enge: a * b mod c
-I (7633) wolfcrypt_test: Math test completed.
-mp_math  test passed!
-I (7643) wolfssl: Bad Base64 Decode data, too small
-I (7653) wolfssl: Bad Base64 Decode data, too small
-I (7653) wolfssl: Bad Base64 Decode data, too big
-I (7663) wolfssl: Bad Base64 Decode data, too small
-I (7663) wolfssl: Bad Base64 Decode data, too big
-I (7673) wolfssl: Bad Base64 Decode data, too small
-I (7673) wolfssl: Bad Base64 Decode data, too big
-I (7683) wolfssl: Bad Base64 Decode data, too small
-I (7693) wolfssl: Bad Base64 Decode data, too big
-I (7693) wolfssl: Bad Base64 Decode data, too small
-I (7703) wolfssl: Bad Base64 Decode data, too small
-I (7703) wolfssl: Bad Base64 Decode data, too small
-I (7713) wolfssl: Bad Base64 Decode data, too small
-I (7713) wolfssl: Bad Base64 Decode data, too small
-I (7723) wolfssl: Bad Base64 Decode data, too small
-I (7723) wolfssl: Bad Base64 Decode data, too small
-I (7733) wolfssl: Bad Base64 Decode data, too small
-I (7743) wolfssl: Bad Base64 Decode data, too small
-I (7743) wolfssl: Bad Base64 Decode data, too small
-I (7753) wolfssl: Bad Base64 Decode data, too small
-I (7753) wolfssl: Bad Base64 Decode data, too small
-I (7763) wolfssl: Bad end of line in Base64 Decode
-I (7763) wolfssl: Bad Base64 Decode data, too small
-I (7773) wolfssl: Bad Base64 Decode data, too small
-I (7773) wolfssl: Bad Base64 Decode data, too small
-I (7783) wolfssl: Bad Base64 Decode data, too small
-I (7793) wolfssl: Bad Base64 Decode data, too small
-I (7793) wolfssl: Bad Base64 Decode data, too small
-I (7803) wolfssl: Bad Base64 Decode data, too small
-I (7803) wolfssl: Bad Base64 Decode data, too small
-I (7813) wolfssl: Bad Base64 Decode data, too small
-I (7813) wolfssl: Bad Base64 Decode data, too small
-I (7823) wolfssl: Bad Base64 Decode data, too small
-I (7823) wolfssl: Bad Base64 Decode data, too small
-I (7833) wolfssl: Bad Base64 Decode data, too small
-I (7843) wolfssl: Bad Base64 Decode data, too small
-I (7843) wolfssl: Bad Base64 Decode data, too small
-I (7853) wolfssl: Bad Base64 Decode data, too small
-I (7853) wolfssl: Bad Base64 Decode data, too small
-I (7863) wolfssl: Bad Base64 Decode data, too small
-I (7863) wolfssl: Bad Base64 Decode data, too small
-I (7873) wolfssl: Bad Base64 Decode data, too small
-I (7873) wolfssl: Bad Base64 Decode data, too small
-I (7883) wolfssl: Bad Base64 Decode data, too small
-I (7893) wolfssl: Bad Base64 Decode data, too small
-I (7893) wolfssl: Bad Base64 Decode data, too small
-I (7903) wolfssl: Bad Base64 Decode data, too small
-I (7903) wolfssl: Bad Base64 Decode data, too small
-I (7913) wolfssl: Bad Base64 Decode data, too small
-I (7913) wolfssl: Bad Base64 Decode data, too small
-I (7923) wolfssl: Bad Base64 Decode data, too small
-I (7923) wolfssl: Bad Base64 Decode bad character
-I (7933) wolfssl: Bad Base64 Decode bad character
-I (7943) wolfssl: Bad Base64 Decode bad character
-I (7943) wolfssl: Bad Base64 Decode bad character
-I (7953) wolfssl: Bad Base64 Decode bad character
-I (7953) wolfssl: Bad Base64 Decode bad character
-I (7963) wolfssl: Bad Base64 Decode bad character
-I (7963) wolfssl: Bad Base64 Decode bad character
-I (7973) wolfssl: Bad Base64 Decode bad character
-I (7973) wolfssl: Bad Base64 Decode bad character
-I (7983) wolfssl: Bad Base64 Decode bad character
-I (7983) wolfssl: Bad Base64 Decode bad character
-I (7993) wolfssl: Bad Base64 Decode bad character
-I (7993) wolfssl: Bad Base64 Decode bad character
-I (8003) wolfssl: Bad Base64 Decode bad character
-I (8013) wolfssl: Bad Base64 Decode bad character
-I (8013) wolfssl: Bad Base64 Decode data, too big
-I (8023) wolfssl: Bad Base64 Decode data, too big
-I (8023) wolfssl: Bad Base64 Decode data, too big
-I (8033) wolfssl: Bad Base64 Decode data, too big
-I (8033) wolfssl: Bad Base64 Decode data, too big
-I (8043) wolfssl: Bad Base64 Decode data, too big
-I (8043) wolfssl: Bad Base64 Decode data, too big
-I (8053) wolfssl: Bad Base64 Decode data, too big
-I (8053) wolfssl: Bad Base64 Decode data, too big
-I (8063) wolfssl: Bad Base64 Decode data, too big
-I (8063) wolfssl: Bad Base64 Decode data, too big
-I (8073) wolfssl: Bad Base64 Decode data, too big
-I (8083) wolfssl: Bad Base64 Decode data, too big
-I (8083) wolfssl: Bad Base64 Decode data, too big
-I (8093) wolfssl: Bad Base64 Decode data, too big
-I (8093) wolfssl: Bad Base64 Decode data, too big
-I (8103) wolfssl: Bad Base64 Decode data, too big
-I (8103) wolfssl: Bad Base64 Decode data, too big
-I (8113) wolfssl: Bad Base64 Decode data, too big
-I (8113) wolfssl: Bad Base64 Decode data, too big
-I (8123) wolfssl: Bad Base64 Decode data, too big
-I (8123) wolfssl: Bad Base64 Decode data, too big
-I (8133) wolfssl: Bad Base64 Decode data, too big
-I (8133) wolfssl: Bad Base64 Decode data, too big
-I (8143) wolfssl: Bad Base64 Decode data, too big
-I (8153) wolfssl: Bad Base64 Decode data, too big
-I (8153) wolfssl: Bad Base64 Decode data, too big
-I (8163) wolfssl: Bad Base64 Decode data, too big
-I (8163) wolfssl: Bad Base64 Decode data, too big
-I (8173) wolfssl: Bad Base64 Decode data, too big
-I (8173) wolfssl: Bad Base64 Decode data, too big
-I (8183) wolfssl: Bad Base64 Decode data, too big
-I (8183) wolfssl: Bad Base64 Decode data, too big
-I (8193) wolfssl: Bad Base64 Decode data, too big
-I (8193) wolfssl: Bad Base64 Decode data, too big
-I (8203) wolfssl: Bad Base64 Decode data, too big
-I (8203) wolfssl: Bad Base64 Decode data, too big
-I (8213) wolfssl: Bad Base64 Decode data, too big
-I (8223) wolfssl: Bad Base64 Decode data, too big
-I (8223) wolfssl: Bad Base64 Decode data, too big
-I (8233) wolfssl: Bad Base64 Decode data, too big
-I (8233) wolfssl: Bad Base64 Decode data, too big
-I (8243) wolfssl: Bad Base64 Decode data, too big
-I (8243) wolfssl: Bad Base64 Decode data, too big
-I (8253) wolfssl: Bad Base64 Decode data, too big
-I (8253) wolfssl: Bad Base64 Decode data, too big
-I (8263) wolfssl: Bad Base64 Decode data, too big
-I (8263) wolfssl: Bad Base64 Decode data, too big
-I (8273) wolfssl: Bad Base64 Decode data, too big
-I (8273) wolfssl: Bad Base64 Decode data, too big
-I (8283) wolfssl: Bad Base64 Decode data, too big
-I (8293) wolfssl: Bad Base64 Decode data, too big
-I (8293) wolfssl: Bad Base64 Decode data, too big
-I (8303) wolfssl: Bad Base64 Decode data, too big
-I (8303) wolfssl: Bad Base64 Decode data, too big
-I (8313) wolfssl: Bad Base64 Decode data, too big
-I (8313) wolfssl: Bad Base64 Decode data, too big
-I (8323) wolfssl: Bad Base64 Decode data, too big
-I (8323) wolfssl: Bad Base64 Decode data, too big
-I (8333) wolfssl: Bad Base64 Decode data, too big
-I (8333) wolfssl: Bad Base64 Decode data, too big
-I (8343) wolfssl: Bad Base64 Decode data, too big
-I (8343) wolfssl: Bad Base64 Decode data, too big
-I (8353) wolfssl: Bad Base64 Decode data, too big
-I (8363) wolfssl: Bad Base64 Decode data, too big
-I (8363) wolfssl: Bad Base64 Decode data, too big
-I (8373) wolfssl: Bad Base64 Decode data, too big
-I (8373) wolfssl: Bad Base64 Decode data, too big
-I (8383) wolfssl: Bad Base64 Decode data, too big
-I (8383) wolfssl: Bad Base64 Decode data, too big
-I (8393) wolfssl: Bad Base64 Decode data, too big
-I (8393) wolfssl: Bad Base64 Decode data, too big
-I (8403) wolfssl: Bad Base64 Decode data, too big
-I (8403) wolfssl: Bad Base64 Decode data, too big
-I (8413) wolfssl: Bad Base64 Decode data, too big
-I (8413) wolfssl: Bad Base64 Decode data, too big
-I (8423) wolfssl: Bad Base64 Decode data, too big
-I (8433) wolfssl: Bad Base64 Decode data, too big
-I (8433) wolfssl: Bad Base64 Decode data, too big
-I (8443) wolfssl: Bad Base64 Decode data, too big
-I (8443) wolfssl: Bad Base64 Decode data, too big
-I (8453) wolfssl: Bad Base64 Decode data, too big
-I (8453) wolfssl: Bad Base64 Decode data, too big
-I (8463) wolfssl: Bad Base64 Decode data, too big
-I (8463) wolfssl: Bad Base64 Decode data, too big
-I (8473) wolfssl: Bad Base64 Decode data, too big
-I (8473) wolfssl: Bad Base64 Decode data, too big
-I (8483) wolfssl: Bad Base64 Decode data, too big
-I (8483) wolfssl: Bad Base64 Decode data, too big
-I (8493) wolfssl: Bad Base64 Decode data, too big
-I (8493) wolfssl: Bad Base64 Decode data, too big
-I (8503) wolfssl: Bad Base64 Decode data, too big
-I (8513) wolfssl: Bad Base64 Decode data, too big
-I (8513) wolfssl: Bad Base64 Decode data, too big
-I (8523) wolfssl: Bad Base64 Decode data, too big
-I (8523) wolfssl: Bad Base64 Decode data, too big
-I (8533) wolfssl: Bad Base64 Decode data, too big
-I (8533) wolfssl: Bad Base64 Decode data, too big
-I (8543) wolfssl: Bad Base64 Decode data, too big
-I (8543) wolfssl: Bad Base64 Decode data, too big
-I (8553) wolfssl: Bad Base64 Decode data, too big
-I (8553) wolfssl: Bad Base64 Decode data, too big
-I (8563) wolfssl: Bad Base64 Decode data, too big
-I (8563) wolfssl: Bad Base64 Decode data, too big
-I (8573) wolfssl: Bad Base64 Decode data, too big
-I (8583) wolfssl: Bad Base64 Decode data, too big
-I (8583) wolfssl: Bad Base64 Decode data, too big
-I (8593) wolfssl: Bad Base64 Decode data, too big
-I (8593) wolfssl: Bad Base64 Decode data, too big
-I (8603) wolfssl: Bad Base64 Decode data, too big
-I (8603) wolfssl: Bad Base64 Decode data, too big
-I (8613) wolfssl: Bad Base64 Decode data, too big
-I (8613) wolfssl: Bad Base64 Decode data, too big
-I (8623) wolfssl: Bad Base64 Decode data, too big
-I (8623) wolfssl: Bad Base64 Decode data, too big
-I (8633) wolfssl: Bad Base64 Decode data, too big
-I (8633) wolfssl: Bad Base64 Decode data, too big
-I (8643) wolfssl: Bad Base64 Decode data, too big
-I (8653) wolfssl: Bad Base64 Decode data, too big
-I (8653) wolfssl: Bad Base64 Decode data, too big
-I (8663) wolfssl: Bad Base64 Decode data, too big
-I (8663) wolfssl: Bad Base64 Decode data, too big
-I (8673) wolfssl: Bad Base64 Decode data, too big
-I (8673) wolfssl: Bad Base64 Decode data, too big
-I (8683) wolfssl: Bad Base64 Decode data, too big
-I (8683) wolfssl: Bad Base64 Decode data, too big
-I (8693) wolfssl: Bad Base64 Decode data, too big
-I (8693) wolfssl: Bad Base64 Decode data, too big
-I (8703) wolfssl: Bad Base64 Decode data, too big
-I (8703) wolfssl: Bad Base64 Decode data, too big
-I (8713) wolfssl: Bad Base64 Decode data, too big
-I (8723) wolfssl: Bad Base64 Decode data, too big
-I (8723) wolfssl: Bad Base64 Decode data, too big
-I (8733) wolfssl: Escape buffer max too small
+I (7513) wolfcrypt_test: Begin math_test_mp_mul_1()
+I (7513) wolfcrypt_test: Success: mp_mul() : challe
+nge:
+8 word test, positive operands: a * b
+I (7523) wolfc
+rypt_test: Beg
+in math_test_c
+hallenge_1()
+I (7523) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : challeng
+e:
+32 word test,
+positive opera
+nds: a * b mod
+ c
+I (7523) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : a * b mo
+d c check: 4
+I (7523) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : 32 word
+test, positive
+ operands: a *
+ b mod c
+I (7533) MATH_
+INT_T:
+I (7533) MATH_
+INT_T: Operand
+ a.used = 32;
+I (7533) MATH_
+INT_T: Operand
+ a.sign = 0;
+I (7543) MATH_
+INT_T:
+I (7543) MATH_
+INT_T: Operand
+ b.used = 32;
+I (7553) MATH_
+INT_T: Operand
+ b.sign = 0;
+I (7553) MATH_
+INT_T:
+I (7553) MATH_
+INT_T: Operand
+ b.used = 32;
+I (7563) MATH_
+INT_T: Operand
+ b.sign = 0;
+I (7563) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : two-word
+ interim a * b
+ mod c
+I (7573) wolfc
+rypt_test: Suc
+cess: fp_cmp o
+n 0 == 0; used
+ length zero.
+I (7583) wolfc
+rypt_test: Suc
+cess: mp_init_
+load() byte or
+der check
+I (7583) wolfc
+rypt_test: Suc
+cess: mp_add o
+n standard 1 +
+ 1 check
+I (7593) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : a * b mo
+d c check: 4
+I (7603) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : two-word
+ operands a *
+b mod c
+I (7613) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : 8 word x
+ 2 word operan
+ds a * b mod c
+I (7623) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : 32 word
+test, a is neg
+ative: a * b m
+od c
+I (7623) wolfc
+rypt_test: Suc
+cess: mp_mulmo
+d() : 32 Word
+HW Challenge:
+a * b mod c
+I (7633) wolfc
+rypt_test: Mat
+h test complet
+ed.
+mp_math  test
+passed!
+I (7643) wolfc
+rypt_test: ecc
+_test ECC_MIN_
+KEY_SZ = 224
+
+I (7643) wolfs
+sl: GetLength
+- value exceed
+s buffer lengt
+h
+I (7653) wolfc
+rypt_test: ecc
+_test_curve ke
+ySize = 28
+
+I (16983) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
+I (21213) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (21213) wolfssl: Checking size of PKCS8
+I (21213) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (21213) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (21223) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 60
+I (21233) wolfcrypt_test: ecc_test_curve keySize = 30
+
+I (31543) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
+I (34363) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (34373) wolfssl: Checking size of PKCS8
+I (34373) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (34373) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (34383) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 65
+I (34383) wolfcrypt_test: ecc_test_curve keySize = 32
+
+I (45553) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
+I (50603) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (50603) wolfssl: Checking size of PKCS8
+I (50603) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (50613) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (50623) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 67
+I (65753) wolfcrypt_test: ecc_test_curve keySize = 40
+
+I (71393) wolfssl: wolfSSL Leaving ecc_test_curve_size, return -172
+I (77043) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (77043) wolfssl: Checking size of PKCS8
+I (77043) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (77053) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (77053) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 80
+I (77063) wolfcrypt_test: ecc_test_curve keySize = 48
+
+I (97703) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
+I (107043) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (107043) wolfssl: Checking size of PKCS8
+I (107043) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (107053) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (107063) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 80
+I (107063) wolfcrypt_test: ecc_test_curve keySize = 64
+
+I (117373) wolfssl: wolfSSL Leaving ecc_test_curve_size, return -172
+I (127683) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (127683) wolfssl: Checking size of PKCS8
+I (127683) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (127693) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (127693) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 98
+I (127703) wolfcrypt_test: ecc_test_curve keySize = 66
+
+I (165373) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
+I (182423) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (182423) wolfssl: Checking size of PKCS8
+I (182423) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
+I (182433) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
+I (182433) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 98
+I (182443) wolfssl: wolfSSL Entering wc_ecc_make_pub
+I (182453) wolfssl: wolfSSL Entering wc_ecc_make_pub_ex
+I (182453) wolfssl: wolfSSL Entering wc_ecc_make_pub
+I (182463) wolfssl: wolfSSL Entering wc_ecc_make_pub_ex
+I (184523) wolfssl: Verify called with private key, generating public part
+I (190623) wolfssl: Date BEFORE check failed
+I (190623) wolfssl: Getting Cert Name
+I (190623) wolfssl: Getting Cert Name
+I (190623) wolfssl: wolfSSL Entering GetAlgoId
+I (190623) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (190633) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (190643) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (190643) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (190653) wolfssl: wolfSSL Entering DecodeKeyUsage
+ECC      test passed!
+I (193593) wolfssl: Bad Base64 Decode data, too small
+I (193593) wolfssl: Bad Base64 Decode data, too small
+I (193593) wolfssl: Bad Base64 Decode data, too big
+I (193603) wolfssl: Bad Base64 Decode data, too small
+I (193603) wolfssl: Bad Base64 Decode data, too big
+I (193613) wolfssl: Bad Base64 Decode data, too small
+I (193623) wolfssl: Bad Base64 Decode data, too big
+I (193623) wolfssl: Bad Base64 Decode data, too small
+I (193633) wolfssl: Bad Base64 Decode data, too big
+I (193633) wolfssl: Bad Base64 Decode data, too small
+I (193643) wolfssl: Bad Base64 Decode data, too small
+I (193643) wolfssl: Bad Base64 Decode data, too small
+I (193653) wolfssl: Bad Base64 Decode data, too small
+I (193663) wolfssl: Bad Base64 Decode data, too small
+I (193663) wolfssl: Bad Base64 Decode data, too small
+I (193673) wolfssl: Bad Base64 Decode data, too small
+I (193673) wolfssl: Bad Base64 Decode data, too small
+I (193683) wolfssl: Bad Base64 Decode data, too small
+I (193683) wolfssl: Bad Base64 Decode data, too small
+I (193693) wolfssl: Bad Base64 Decode data, too small
+I (193703) wolfssl: Bad Base64 Decode data, too small
+I (193703) wolfssl: Bad end of line in Base64 Decode
+I (193713) wolfssl: Bad Base64 Decode data, too small
+I (193713) wolfssl: Bad Base64 Decode data, too small
+I (193723) wolfssl: Bad Base64 Decode data, too small
+I (193723) wolfssl: Bad Base64 Decode data, too small
+I (193733) wolfssl: Bad Base64 Decode data, too small
+I (193743) wolfssl: Bad Base64 Decode data, too small
+I (193743) wolfssl: Bad Base64 Decode data, too small
+I (193753) wolfssl: Bad Base64 Decode data, too small
+I (193753) wolfssl: Bad Base64 Decode data, too small
+I (193763) wolfssl: Bad Base64 Decode data, too small
+I (193763) wolfssl: Bad Base64 Decode data, too small
+I (193773) wolfssl: Bad Base64 Decode data, too small
+I (193783) wolfssl: Bad Base64 Decode data, too small
+I (193783) wolfssl: Bad Base64 Decode data, too small
+I (193793) wolfssl: Bad Base64 Decode data, too small
+I (193793) wolfssl: Bad Base64 Decode data, too small
+I (193803) wolfssl: Bad Base64 Decode data, too small
+I (193803) wolfssl: Bad Base64 Decode data, too small
+I (193813) wolfssl: Bad Base64 Decode data, too small
+I (193823) wolfssl: Bad Base64 Decode data, too small
+I (193823) wolfssl: Bad Base64 Decode data, too small
+I (193833) wolfssl: Bad Base64 Decode data, too small
+I (193833) wolfssl: Bad Base64 Decode data, too small
+I (193843) wolfssl: Bad Base64 Decode data, too small
+I (193843) wolfssl: Bad Base64 Decode data, too small
+I (193853) wolfssl: Bad Base64 Decode data, too small
+I (193863) wolfssl: Bad Base64 Decode data, too small
+I (193863) wolfssl: Bad Base64 Decode data, too small
+I (193873) wolfssl: Bad Base64 Decode data, too small
+I (193873) wolfssl: Bad Base64 Decode bad character
+I (193883) wolfssl: Bad Base64 Decode bad character
+I (193883) wolfssl: Bad Base64 Decode bad character
+I (193893) wolfssl: Bad Base64 Decode bad character
+I (193903) wolfssl: Bad Base64 Decode bad character
+I (193903) wolfssl: Bad Base64 Decode bad character
+I (193913) wolfssl: Bad Base64 Decode bad character
+I (193913) wolfssl: Bad Base64 Decode bad character
+I (193923) wolfssl: Bad Base64 Decode bad character
+I (193923) wolfssl: Bad Base64 Decode bad character
+I (193933) wolfssl: Bad Base64 Decode bad character
+I (193933) wolfssl: Bad Base64 Decode bad character
+I (193943) wolfssl: Bad Base64 Decode bad character
+I (193953) wolfssl: Bad Base64 Decode bad character
+I (193953) wolfssl: Bad Base64 Decode bad character
+I (193963) wolfssl: Bad Base64 Decode bad character
+I (193963) wolfssl: Bad Base64 Decode data, too big
+I (193973) wolfssl: Bad Base64 Decode data, too big
+I (193973) wolfssl: Bad Base64 Decode data, too big
+I (193983) wolfssl: Bad Base64 Decode data, too big
+I (193983) wolfssl: Bad Base64 Decode data, too big
+I (193993) wolfssl: Bad Base64 Decode data, too big
+I (194003) wolfssl: Bad Base64 Decode data, too big
+I (194003) wolfssl: Bad Base64 Decode data, too big
+I (194013) wolfssl: Bad Base64 Decode data, too big
+I (194013) wolfssl: Bad Base64 Decode data, too big
+I (194023) wolfssl: Bad Base64 Decode data, too big
+I (194023) wolfssl: Bad Base64 Decode data, too big
+I (194033) wolfssl: Bad Base64 Decode data, too big
+I (194033) wolfssl: Bad Base64 Decode data, too big
+I (194043) wolfssl: Bad Base64 Decode data, too big
+I (194053) wolfssl: Bad Base64 Decode data, too big
+I (194053) wolfssl: Bad Base64 Decode data, too big
+I (194063) wolfssl: Bad Base64 Decode data, too big
+I (194063) wolfssl: Bad Base64 Decode data, too big
+I (194073) wolfssl: Bad Base64 Decode data, too big
+I (194073) wolfssl: Bad Base64 Decode data, too big
+I (194083) wolfssl: Bad Base64 Decode data, too big
+I (194083) wolfssl: Bad Base64 Decode data, too big
+I (194093) wolfssl: Bad Base64 Decode data, too big
+I (194103) wolfssl: Bad Base64 Decode data, too big
+I (194103) wolfssl: Bad Base64 Decode data, too big
+I (194113) wolfssl: Bad Base64 Decode data, too big
+I (194113) wolfssl: Bad Base64 Decode data, too big
+I (194123) wolfssl: Bad Base64 Decode data, too big
+I (194123) wolfssl: Bad Base64 Decode data, too big
+I (194133) wolfssl: Bad Base64 Decode data, too big
+I (194133) wolfssl: Bad Base64 Decode data, too big
+I (194143) wolfssl: Bad Base64 Decode data, too big
+I (194153) wolfssl: Bad Base64 Decode data, too big
+I (194153) wolfssl: Bad Base64 Decode data, too big
+I (194163) wolfssl: Bad Base64 Decode data, too big
+I (194163) wolfssl: Bad Base64 Decode data, too big
+I (194173) wolfssl: Bad Base64 Decode data, too big
+I (194173) wolfssl: Bad Base64 Decode data, too big
+I (194183) wolfssl: Bad Base64 Decode data, too big
+I (194183) wolfssl: Bad Base64 Decode data, too big
+I (194193) wolfssl: Bad Base64 Decode data, too big
+I (194203) wolfssl: Bad Base64 Decode data, too big
+I (194203) wolfssl: Bad Base64 Decode data, too big
+I (194213) wolfssl: Bad Base64 Decode data, too big
+I (194213) wolfssl: Bad Base64 Decode data, too big
+I (194223) wolfssl: Bad Base64 Decode data, too big
+I (194223) wolfssl: Bad Base64 Decode data, too big
+I (194233) wolfssl: Bad Base64 Decode data, too big
+I (194233) wolfssl: Bad Base64 Decode data, too big
+I (194243) wolfssl: Bad Base64 Decode data, too big
+I (194253) wolfssl: Bad Base64 Decode data, too big
+I (194253) wolfssl: Bad Base64 Decode data, too big
+I (194263) wolfssl: Bad Base64 Decode data, too big
+I (194263) wolfssl: Bad Base64 Decode data, too big
+I (194273) wolfssl: Bad Base64 Decode data, too big
+I (194273) wolfssl: Bad Base64 Decode data, too big
+I (194283) wolfssl: Bad Base64 Decode data, too big
+I (194283) wolfssl: Bad Base64 Decode data, too big
+I (194293) wolfssl: Bad Base64 Decode data, too big
+I (194303) wolfssl: Bad Base64 Decode data, too big
+I (194303) wolfssl: Bad Base64 Decode data, too big
+I (194313) wolfssl: Bad Base64 Decode data, too big
+I (194313) wolfssl: Bad Base64 Decode data, too big
+I (194323) wolfssl: Bad Base64 Decode data, too big
+I (194323) wolfssl: Bad Base64 Decode data, too big
+I (194333) wolfssl: Bad Base64 Decode data, too big
+I (194333) wolfssl: Bad Base64 Decode data, too big
+I (194343) wolfssl: Bad Base64 Decode data, too big
+I (194353) wolfssl: Bad Base64 Decode data, too big
+I (194353) wolfssl: Bad Base64 Decode data, too big
+I (194363) wolfssl: Bad Base64 Decode data, too big
+I (194363) wolfssl: Bad Base64 Decode data, too big
+I (194373) wolfssl: Bad Base64 Decode data, too big
+I (194373) wolfssl: Bad Base64 Decode data, too big
+I (194383) wolfssl: Bad Base64 Decode data, too big
+I (194383) wolfssl: Bad Base64 Decode data, too big
+I (194393) wolfssl: Bad Base64 Decode data, too big
+I (194403) wolfssl: Bad Base64 Decode data, too big
+I (194403) wolfssl: Bad Base64 Decode data, too big
+I (194413) wolfssl: Bad Base64 Decode data, too big
+I (194413) wolfssl: Bad Base64 Decode data, too big
+I (194423) wolfssl: Bad Base64 Decode data, too big
+I (194423) wolfssl: Bad Base64 Decode data, too big
+I (194433) wolfssl: Bad Base64 Decode data, too big
+I (194433) wolfssl: Bad Base64 Decode data, too big
+I (194443) wolfssl: Bad Base64 Decode data, too big
+I (194453) wolfssl: Bad Base64 Decode data, too big
+I (194453) wolfssl: Bad Base64 Decode data, too big
+I (194463) wolfssl: Bad Base64 Decode data, too big
+I (194463) wolfssl: Bad Base64 Decode data, too big
+I (194473) wolfssl: Bad Base64 Decode data, too big
+I (194473) wolfssl: Bad Base64 Decode data, too big
+I (194483) wolfssl: Bad Base64 Decode data, too big
+I (194483) wolfssl: Bad Base64 Decode data, too big
+I (194493) wolfssl: Bad Base64 Decode data, too big
+I (194503) wolfssl: Bad Base64 Decode data, too big
+I (194503) wolfssl: Bad Base64 Decode data, too big
+I (194513) wolfssl: Bad Base64 Decode data, too big
+I (194513) wolfssl: Bad Base64 Decode data, too big
+I (194523) wolfssl: Bad Base64 Decode data, too big
+I (194523) wolfssl: Bad Base64 Decode data, too big
+I (194533) wolfssl: Bad Base64 Decode data, too big
+I (194533) wolfssl: Bad Base64 Decode data, too big
+I (194543) wolfssl: Bad Base64 Decode data, too big
+I (194553) wolfssl: Bad Base64 Decode data, too big
+I (194553) wolfssl: Bad Base64 Decode data, too big
+I (194563) wolfssl: Bad Base64 Decode data, too big
+I (194563) wolfssl: Bad Base64 Decode data, too big
+I (194573) wolfssl: Bad Base64 Decode data, too big
+I (194573) wolfssl: Bad Base64 Decode data, too big
+I (194583) wolfssl: Bad Base64 Decode data, too big
+I (194583) wolfssl: Bad Base64 Decode data, too big
+I (194593) wolfssl: Bad Base64 Decode data, too big
+I (194603) wolfssl: Bad Base64 Decode data, too big
+I (194603) wolfssl: Bad Base64 Decode data, too big
+I (194613) wolfssl: Bad Base64 Decode data, too big
+I (194613) wolfssl: Bad Base64 Decode data, too big
+I (194623) wolfssl: Bad Base64 Decode data, too big
+I (194623) wolfssl: Bad Base64 Decode data, too big
+I (194633) wolfssl: Bad Base64 Decode data, too big
+I (194633) wolfssl: Bad Base64 Decode data, too big
+I (194643) wolfssl: Bad Base64 Decode data, too big
+I (194653) wolfssl: Bad Base64 Decode data, too big
+I (194653) wolfssl: Bad Base64 Decode data, too big
+I (194663) wolfssl: Bad Base64 Decode data, too big
+I (194663) wolfssl: Bad Base64 Decode data, too big
+I (194673) wolfssl: Bad Base64 Decode data, too big
+I (194673) wolfssl: Bad Base64 Decode data, too big
+I (194683) wolfssl: Bad Base64 Decode data, too big
+I (194683) wolfssl: Bad Base64 Decode data, too big
+I (194693) wolfssl: Bad Base64 Decode data, too big
+I (194703) wolfssl: Bad Base64 Decode data, too big
+I (194703) wolfssl: Escape buffer max too small
 base64   test passed!
 asn      test passed!
 RANDOM   test passed!
@@ -393,355 +552,327 @@ AES192   test passed!
 AES256   test passed!
 AES-GCM  test passed!
 AES Key Wrap test passed!
-I (10333) wolfssl: GetLength - value exceeds buffer length
-I (10333) wolfssl: GetLength - value exceeds buffer length
-I (10333) wolfssl: GetLength - value exceeds buffer length
-I (10343) wolfssl: GetLength - value exceeds buffer length
-I (10343) wolfssl: GetLength - value exceeds buffer length
-I (10353) wolfssl: GetLength - value exceeds buffer length
-I (10363) wolfssl: GetLength - bad index on input
-I (10363) wolfssl: wc_SignatureGetSize: Invalid RsaKey key size
-I (15133) wolfssl: RSA Signature Verify failed!
-I (26653) wolfssl: wolfSSL Using RSA OAEP padding
-I (28953) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (28953) wolfssl: wolfSSL Using RSA OAEP padding
-I (31253) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (33513) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (33513) wolfssl: wolfSSL Using RSA OAEP padding
-I (35813) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (35813) wolfssl: wolfSSL Using RSA OAEP padding
-I (38113) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (38113) wolfssl: wolfSSL Using RSA OAEP padding
-I (40413) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (40413) wolfssl: wolfSSL Using RSA OAEP padding
-I (42713) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (88723) wolfssl: Date BEFORE check failed
-I (88723) wolfssl: Getting Cert Name
-I (88723) wolfssl: Getting Cert Name
-I (88723) wolfssl: wolfSSL Entering GetAlgoId
-I (88733) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (88743) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (88743) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (88753) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (88753) wolfssl: wolfSSL Entering DecodeAltNames
-I (88763) wolfssl:      Unsupported name type, skipping
-I (88763) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (88773) wolfssl: Date BEFORE check failed
-I (88773) wolfssl: Getting Cert Name
-I (88783) wolfssl: Getting Cert Name
-I (88783) wolfssl: wolfSSL Entering GetAlgoId
-I (88793) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (88793) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (88803) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (88803) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (88813) wolfssl: wolfSSL Entering DecodeAltNames
-I (88823) wolfssl:      Unsupported name type, skipping
-I (88823) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (91113) wolfssl: Date BEFORE check failed
-I (91113) wolfssl: Getting Cert Name
-I (91113) wolfssl: Getting Cert Name
-I (91113) wolfssl: wolfSSL Entering GetAlgoId
-I (91113) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (91123) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (91123) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (91133) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (91143) wolfssl: wolfSSL Entering DecodeAltNames
-I (91143) wolfssl:      Unsupported name type, skipping
-I (91153) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (91153) wolfssl: Date BEFORE check failed
-I (91163) wolfssl: Getting Cert Name
-I (91163) wolfssl: Getting Cert Name
-I (91173) wolfssl: wolfSSL Entering GetAlgoId
-I (91173) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (91183) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (91183) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (91193) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (91203) wolfssl: wolfSSL Entering DecodeAltNames
-I (91203) wolfssl:      Unsupported name type, skipping
-I (91213) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (95763) wolfssl: wolfSSL Using RSA PSS padding
-I (98063) wolfssl: wolfSSL Using RSA PSS un-padding
-I (98063) wolfssl: wolfSSL Using RSA PSS padding
-I (100363) wolfssl: wolfSSL Using RSA PSS un-padding
-I (100363) wolfssl: wolfSSL Using RSA PSS padding
-I (102663) wolfssl: wolfSSL Using RSA PSS un-padding
-I (102663) wolfssl: wolfSSL Using RSA PSS padding
-I (104963) wolfssl: wolfSSL Using RSA PSS un-padding
-I (104963) wolfssl: wolfSSL Using RSA PSS padding
-I (107263) wolfssl: wolfSSL Using RSA PSS un-padding
-I (107263) wolfssl: wolfSSL Using RSA PSS padding
-I (109563) wolfssl: wolfSSL Using RSA PSS un-padding
-I (109563) wolfssl: wolfSSL Using RSA PSS padding
-I (111863) wolfssl: wolfSSL Using RSA PSS un-padding
-I (111863) wolfssl: wolfSSL Using RSA PSS padding
-I (114163) wolfssl: wolfSSL Using RSA PSS un-padding
-I (114163) wolfssl: wolfSSL Using RSA PSS padding
-I (116463) wolfssl: wolfSSL Using RSA PSS un-padding
-I (116463) wolfssl: wolfSSL Using RSA PSS padding
-I (118763) wolfssl: wolfSSL Using RSA PSS un-padding
-I (118763) wolfssl: wolfSSL Using RSA PSS padding
-I (121063) wolfssl: wolfSSL Using RSA PSS un-padding
-I (121063) wolfssl: wolfSSL Using RSA PSS padding
-I (123363) wolfssl: wolfSSL Using RSA PSS un-padding
-I (123373) wolfssl: wolfSSL Using RSA PSS padding
-I (125663) wolfssl: wolfSSL Using RSA PSS un-padding
-I (125673) wolfssl: wolfSSL Using RSA PSS padding
-I (127963) wolfssl: wolfSSL Using RSA PSS un-padding
-I (127973) wolfssl: wolfSSL Using RSA PSS padding
-I (130263) wolfssl: wolfSSL Using RSA PSS un-padding
-I (130273) wolfssl: wolfSSL Using RSA PSS padding
-I (132573) wolfssl: wolfSSL Using RSA PSS un-padding
-I (132573) wolfssl: wolfSSL Using RSA PSS padding
-I (134873) wolfssl: wolfSSL Using RSA PSS un-padding
-I (134873) wolfssl: wolfSSL Using RSA PSS padding
-I (137173) wolfssl: wolfSSL Using RSA PSS un-padding
-I (137173) wolfssl: wolfSSL Using RSA PSS padding
-I (139473) wolfssl: wolfSSL Using RSA PSS un-padding
-I (139473) wolfssl: wolfSSL Using RSA PSS padding
-I (141773) wolfssl: wolfSSL Using RSA PSS un-padding
-I (141773) wolfssl: wolfSSL Using RSA PSS padding
-I (144073) wolfssl: wolfSSL Using RSA PSS un-padding
-I (144073) wolfssl: wolfSSL Using RSA PSS padding
-I (146373) wolfssl: wolfSSL Using RSA PSS un-padding
-I (146373) wolfssl: wolfSSL Using RSA PSS padding
-I (148673) wolfssl: wolfSSL Using RSA PSS un-padding
-I (148673) wolfssl: wolfSSL Using RSA PSS padding
-I (150973) wolfssl: wolfSSL Using RSA PSS un-padding
-I (150973) wolfssl: wolfSSL Using RSA PSS padding
-I (153273) wolfssl: wolfSSL Using RSA PSS un-padding
-I (153273) wolfssl: wolfSSL Using RSA PSS padding
-I (155573) wolfssl: wolfSSL Using RSA PSS un-padding
-I (155603) wolfssl: wolfSSL Using RSA PSS un-padding
-I (155603) wolfssl: wolfSSL Using RSA PSS padding
+I (196303) wolfssl: GetLength - value exceeds buffer length
+I (196303) wolfssl: GetLength - value exceeds buffer length
+I (196313) wolfssl: GetLength - value exceeds buffer length
+I (196313) wolfssl: GetLength - value exceeds buffer length
+I (196323) wolfssl: GetLength - value exceeds buffer length
+I (196323) wolfssl: GetLength - value exceeds buffer length
+I (196333) wolfssl: GetLength - bad index on input
+I (196343) wolfssl: wc_SignatureGetSize: Invalid RsaKey key size
+I (201103) wolfssl: RSA Signature Verify failed!
+I (212623) wolfssl: wolfSSL Using RSA OAEP padding
+I (214923) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (214923) wolfssl: wolfSSL Using RSA OAEP padding
+I (217223) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (219493) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (219493) wolfssl: wolfSSL Using RSA OAEP padding
+I (221793) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (221793) wolfssl: wolfSSL Using RSA OAEP padding
+I (224093) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (224093) wolfssl: wolfSSL Using RSA OAEP padding
+I (226393) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (226393) wolfssl: wolfSSL Using RSA OAEP padding
+I (228693) wolfssl: wolfSSL Using RSA OAEP un-padding
+I (260003) wolfssl: Date BEFORE check failed
+I (260003) wolfssl: Getting Cert Name
+I (260003) wolfssl: Getting Cert Name
+I (260003) wolfssl: wolfSSL Entering GetAlgoId
+I (260013) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (260013) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (260023) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (260023) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (260033) wolfssl: wolfSSL Entering DecodeAltNames
+I (260033) wolfssl:     Unsupported name type, skipping
+I (260043) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (260053) wolfssl: Date BEFORE check failed
+I (260053) wolfssl: Getting Cert Name
+I (260063) wolfssl: Getting Cert Name
+I (260063) wolfssl: wolfSSL Entering GetAlgoId
+I (260073) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (260073) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (260083) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (260083) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (260093) wolfssl: wolfSSL Entering DecodeAltNames
+I (260093) wolfssl:     Unsupported name type, skipping
+I (260103) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (262383) wolfssl: Date BEFORE check failed
+I (262383) wolfssl: Getting Cert Name
+I (262393) wolfssl: Getting Cert Name
+I (262393) wolfssl: wolfSSL Entering GetAlgoId
+I (262393) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (262403) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (262403) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (262413) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (262423) wolfssl: wolfSSL Entering DecodeAltNames
+I (262423) wolfssl:     Unsupported name type, skipping
+I (262433) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (262433) wolfssl: Date BEFORE check failed
+I (262443) wolfssl: Getting Cert Name
+I (262443) wolfssl: Getting Cert Name
+I (262453) wolfssl: wolfSSL Entering GetAlgoId
+I (262453) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (262463) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (262463) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (262473) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
+I (262473) wolfssl: wolfSSL Entering DecodeAltNames
+I (262483) wolfssl:     Unsupported name type, skipping
+I (262493) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (267043) wolfssl: wolfSSL Using RSA PSS padding
+I (269343) wolfssl: wolfSSL Using RSA PSS un-padding
+I (269343) wolfssl: wolfSSL Using RSA PSS padding
+I (271643) wolfssl: wolfSSL Using RSA PSS un-padding
+I (271643) wolfssl: wolfSSL Using RSA PSS padding
+I (273943) wolfssl: wolfSSL Using RSA PSS un-padding
+I (273943) wolfssl: wolfSSL Using RSA PSS padding
+I (276243) wolfssl: wolfSSL Using RSA PSS un-padding
+I (276243) wolfssl: wolfSSL Using RSA PSS padding
+I (278543) wolfssl: wolfSSL Using RSA PSS un-padding
+I (278543) wolfssl: wolfSSL Using RSA PSS padding
+I (280843) wolfssl: wolfSSL Using RSA PSS un-padding
+I (280843) wolfssl: wolfSSL Using RSA PSS padding
+I (283143) wolfssl: wolfSSL Using RSA PSS un-padding
+I (283143) wolfssl: wolfSSL Using RSA PSS padding
+I (285443) wolfssl: wolfSSL Using RSA PSS un-padding
+I (285443) wolfssl: wolfSSL Using RSA PSS padding
+I (287743) wolfssl: wolfSSL Using RSA PSS un-padding
+I (287743) wolfssl: wolfSSL Using RSA PSS padding
+I (290043) wolfssl: wolfSSL Using RSA PSS un-padding
+I (290043) wolfssl: wolfSSL Using RSA PSS padding
+I (292343) wolfssl: wolfSSL Using RSA PSS un-padding
+I (292343) wolfssl: wolfSSL Using RSA PSS padding
+I (294643) wolfssl: wolfSSL Using RSA PSS un-padding
+I (294643) wolfssl: wolfSSL Using RSA PSS padding
+I (296943) wolfssl: wolfSSL Using RSA PSS un-padding
+I (296943) wolfssl: wolfSSL Using RSA PSS padding
+I (299243) wolfssl: wolfSSL Using RSA PSS un-padding
+I (299243) wolfssl: wolfSSL Using RSA PSS padding
+I (301543) wolfssl: wolfSSL Using RSA PSS un-padding
+I (301543) wolfssl: wolfSSL Using RSA PSS padding
+I (303843) wolfssl: wolfSSL Using RSA PSS un-padding
+I (303843) wolfssl: wolfSSL Using RSA PSS padding
+I (306143) wolfssl: wolfSSL Using RSA PSS un-padding
+I (306143) wolfssl: wolfSSL Using RSA PSS padding
+I (308443) wolfssl: wolfSSL Using RSA PSS un-padding
+I (308443) wolfssl: wolfSSL Using RSA PSS padding
+I (310743) wolfssl: wolfSSL Using RSA PSS un-padding
+I (310743) wolfssl: wolfSSL Using RSA PSS padding
+I (313043) wolfssl: wolfSSL Using RSA PSS un-padding
+I (313043) wolfssl: wolfSSL Using RSA PSS padding
+I (315343) wolfssl: wolfSSL Using RSA PSS un-padding
+I (315343) wolfssl: wolfSSL Using RSA PSS padding
+I (317643) wolfssl: wolfSSL Using RSA PSS un-padding
+I (317643) wolfssl: wolfSSL Using RSA PSS padding
+I (319943) wolfssl: wolfSSL Using RSA PSS un-padding
+I (319943) wolfssl: wolfSSL Using RSA PSS padding
+I (322243) wolfssl: wolfSSL Using RSA PSS un-padding
+I (322243) wolfssl: wolfSSL Using RSA PSS padding
+I (324543) wolfssl: wolfSSL Using RSA PSS un-padding
+I (324543) wolfssl: wolfSSL Using RSA PSS padding
+I (326843) wolfssl: wolfSSL Using RSA PSS un-padding
+I (326873) wolfssl: wolfSSL Using RSA PSS un-padding
+I (326873) wolfssl: wolfSSL Using RSA PSS padding
 RSA      test passed!
 PWDBASED test passed!
-I (155863) wolfcrypt_test: ecc_test ECC_MIN_KEY_SZ = 224
+I (327133) wolfcrypt_test: ecc_test ECC_MIN_KEY_SZ = 224
 
-I (155863) wolfssl: GetLength - value exceeds buffer length
-I (155863) wolfcrypt_test: ecc_test_curve keySize = 28
+I (327133) wolfssl: GetLength - value exceeds buffer length
+I (327133) wolfcrypt_test: ecc_test_curve keySize = 28
 
-I (165203) wolfssl: wolfSSL Leaving ecc_test_curve_size, return
-0
-I (169423) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (169423) wolfssl: Checking size of PKCS8
-I (169423) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -2
-02
-I (169433) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (169443) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 60
-I (169443) wolfcrypt_test: ecc_test_curve keySize = 30
-
-I (179773) wolfssl: wolfSSL Leaving ecc_test_curve_size, return
-0
-I (182593) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (182593) wolfssl: Checking size of PKCS8
-I (182593) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -2
-02
-I (182603) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (182603) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 65
-I (182613) wolfcrypt_test: ecc_test_curve keySize = 32
-
-E (184123) wolfssl_esp32_mp: mp_mul Z vs Z2 mismatch!
-I (184123) wolfssl_esp32_mp: Xs            = 254
-I (184123) wolfssl_esp32_mp: Ys            = 256
-I (184123) wolfssl_esp32_mp: Zs            = 510
-I (184133) wolfssl_esp32_mp: found_z_used  = 16
-I (184133) wolfssl_esp32_mp: z.used        = 8
-I (184143) wolfssl_esp32_mp: hwWords_sz    = 16
-I (184143) wolfssl_esp32_mp: maxWords_sz   = 8
-I (184153) wolfssl_esp32_mp: left_pad_offset = 64
-I (184153) wolfssl_esp32_mp: hwWords_sz<<2   = 64
-I (184163) MATH_INT_T: X:
-I (184163) MATH_INT_T:
-I (184163) MATH_INT_T: X.used = 8;
-I (184173) MATH_INT_T: X.sign = 0;
-I (184173) MATH_INT_T: X.dp[ 0] = 0x4643236e;  /*  0 */
-I (184183) MATH_INT_T: X.dp[ 1] = 0xd023791e;  /*  1 */
-I (184183) MATH_INT_T: X.dp[ 2] = 0x1dc432ab;  /*  2 */
-I (184193) MATH_INT_T: X.dp[ 3] = 0x17d12a72;  /*  3 */
-I (184203) MATH_INT_T: X.dp[ 4] = 0x62518f57;  /*  4 */
-I (184203) MATH_INT_T: X.dp[ 5] = 0xc0dbff61;  /*  5 */
-I (184213) MATH_INT_T: X.dp[ 6] = 0x5c81b049;  /*  6 */
-I (184213) MATH_INT_T: X.dp[ 7] = 0x353ea4fc;  /*  7 */
-I (184223) MATH_INT_T:
-I (184223) MATH_INT_T: Y:
-I (184233) MATH_INT_T:
-I (184233) MATH_INT_T: Y.used = 8;
-I (184233) MATH_INT_T: Y.sign = 0;
-I (184243) MATH_INT_T: Y.dp[ 0] = 0x0b0df8ae;  /*  0 */
-I (184243) MATH_INT_T: Y.dp[ 1] = 0x308db72d;  /*  1 */
-I (184253) MATH_INT_T: Y.dp[ 2] = 0x76fca0a3;  /*  2 */
-I (184263) MATH_INT_T: Y.dp[ 3] = 0x2aa4a880;  /*  3 */
-I (184263) MATH_INT_T: Y.dp[ 4] = 0x296f7f92;  /*  4 */
-I (184273) MATH_INT_T: Y.dp[ 5] = 0x908d20e3;  /*  5 */
-I (184273) MATH_INT_T: Y.dp[ 6] = 0xb11c1dc1;  /*  6 */
-I (184283) MATH_INT_T: Y.dp[ 7] = 0xf5e97df6;  /*  7 */
-I (184293) MATH_INT_T:
-I (184293) MATH_INT_T: Peek Z:
-I (184293) MATH_INT_T:
-I (184303) MATH_INT_T: Peek Z.used = 128;
-I (184303) MATH_INT_T: Peek Z.sign = 0;
-I (184303) MATH_INT_T: Peek Z.dp[ 0] = 0x00000000;  /*  0 */
-I (184313) MATH_INT_T: Peek Z.dp[ 1] = 0x00000000;  /*  1 */
-I (184323) MATH_INT_T: Peek Z.dp[ 2] = 0x00000000;  /*  2 */
-I (184323) MATH_INT_T: Peek Z.dp[ 3] = 0x00000000;  /*  3 */
-I (184333) MATH_INT_T: Peek Z.dp[ 4] = 0x00000000;  /*  4 */
-I (184343) MATH_INT_T: Peek Z.dp[ 5] = 0x00000000;  /*  5 */
-I (184343) MATH_INT_T: Peek Z.dp[ 6] = 0x00000000;  /*  6 */
-I (184353) MATH_INT_T: Peek Z.dp[ 7] = 0x00000000;  /*  7 */
-I (184363) MATH_INT_T: Peek Z.dp[ 8] = 0x00000000;  /*  8 */
-I (184363) MATH_INT_T: Peek Z.dp[ 9] = 0x00000000;  /*  9 */
-I (184373) MATH_INT_T: Peek Z.dp[10] = 0x00000000;  /* 10 */
-I (184383) MATH_INT_T: Peek Z.dp[11] = 0x00000000;  /* 11 */
-I (184383) MATH_INT_T: Peek Z.dp[12] = 0x00000000;  /* 12 */
-I (184393) MATH_INT_T: Peek Z.dp[13] = 0x00000000;  /* 13 */
-I (184393) MATH_INT_T: Peek Z.dp[14] = 0x00000000;  /* 14 */
-I (184403) MATH_INT_T: Peek Z.dp[15] = 0x00000000;  /* 15 */
-I (184413) MATH_INT_T: Peek Z.dp[16] = 0x0b0df8ae;  /* 16 */
-I (184413) MATH_INT_T: Peek Z.dp[17] = 0x308db72d;  /* 17 */
-I (184423) MATH_INT_T: Peek Z.dp[18] = 0x76fca0a3;  /* 18 */
-I (184433) MATH_INT_T: Peek Z.dp[19] = 0x2aa4a880;  /* 19 */
-I (184433) MATH_INT_T: Peek Z.dp[20] = 0x296f7f92;  /* 20 */
-I (184443) MATH_INT_T: Peek Z.dp[21] = 0x908d20e3;  /* 21 */
-I (184453) MATH_INT_T: Peek Z.dp[22] = 0xb11c1dc1;  /* 22 */
-I (184453) MATH_INT_T: Peek Z.dp[23] = 0xf5e97df6;  /* 23 */
-I (184463) MATH_INT_T: Peek Z.dp[24] = 0x00000000;  /* 24 */
-I (184473) MATH_INT_T: Peek Z.dp[25] = 0x00000000;  /* 25 */
-I (184473) MATH_INT_T: Peek Z.dp[26] = 0x00000000;  /* 26 */
-I (184483) MATH_INT_T: Peek Z.dp[27] = 0x00000000;  /* 27 */
-I (184483) MATH_INT_T: Peek Z.dp[28] = 0x00000000;  /* 28 */
-I (184493) MATH_INT_T: Peek Z.dp[29] = 0x00000000;  /* 29 */
-I (184503) MATH_INT_T: Peek Z.dp[30] = 0x00000000;  /* 30 */
-I (184503) MATH_INT_T: Peek Z.dp[31] = 0x00000000;  /* 31 */
-I (184513) MATH_INT_T: Peek Z.dp[32] = 0x00000000;  /* 32 */
-I (184523) MATH_INT_T: Peek Z.dp[33] = 0x00000000;  /* 33 */
-I (184523) MATH_INT_T: Peek Z.dp[34] = 0x00000000;  /* 34 */
-I (184533) MATH_INT_T: Peek Z.dp[35] = 0x00000000;  /* 35 */
-I (184543) MATH_INT_T: Peek Z.dp[36] = 0x00000000;  /* 36 */
-I (184543) MATH_INT_T: Peek Z.dp[37] = 0x00000000;  /* 37 */
-I (184553) MATH_INT_T: Peek Z.dp[38] = 0x00000000;  /* 38 */
-I (184563) MATH_INT_T: Peek Z.dp[39] = 0x00000000;  /* 39 */
-I (184563) MATH_INT_T: Peek Z.dp[40] = 0x00000000;  /* 40 */
-I (184573) MATH_INT_T: Peek Z.dp[41] = 0x00000000;  /* 41 */
-I (184573) MATH_INT_T: Peek Z.dp[42] = 0x00000000;  /* 42 */
-I (184583) MATH_INT_T: Peek Z.dp[43] = 0x00000000;  /* 43 */
-I (184593) MATH_INT_T: Peek Z.dp[44] = 0x00000000;  /* 44 */
-I (184593) MATH_INT_T: Peek Z.dp[45] = 0x00000000;  /* 45 */
-I (184603) MATH_INT_T: Peek Z.dp[46] = 0x00000000;  /* 46 */
-I (184613) MATH_INT_T: Peek Z.dp[47] = 0x00000000;  /* 47 */
-I (184613) MATH_INT_T: Peek Z.dp[48] = 0x00000000;  /* 48 */
-I (184623) MATH_INT_T: Peek Z.dp[49] = 0x00000000;  /* 49 */
-I (184633) MATH_INT_T: Peek Z.dp[50] = 0x00000000;  /* 50 */
-I (184633) MATH_INT_T: Peek Z.dp[51] = 0x00000000;  /* 51 */
-I (184643) MATH_INT_T: Peek Z.dp[52] = 0x00000000;  /* 52 */
-I (184653) MATH_INT_T: Peek Z.dp[53] = 0x00000000;  /* 53 */
-I (184653) MATH_INT_T: Peek Z.dp[54] = 0x00000000;  /* 54 */
-I (184663) MATH_INT_T: Peek Z.dp[55] = 0x00000000;  /* 55 */
-I (184663) MATH_INT_T: Peek Z.dp[56] = 0x00000000;  /* 56 */
-I (184673) MATH_INT_T: Peek Z.dp[57] = 0x00000000;  /* 57 */
-I (184683) MATH_INT_T: Peek Z.dp[58] = 0x00000000;  /* 58 */
-I (184683) MATH_INT_T: Peek Z.dp[59] = 0x00000000;  /* 59 */
-I (184693) MATH_INT_T: Peek Z.dp[60] = 0x00000000;  /* 60 */
-I (184703) MATH_INT_T: Peek Z.dp[61] = 0x00000000;  /* 61 */
-I (184703) MATH_INT_T: Peek Z.dp[62] = 0x00000000;  /* 62 */
-I (184713) MATH_INT_T: Peek Z.dp[63] = 0x00000000;  /* 63 */
-I (184723) MATH_INT_T: Peek Z.dp[64] = 0x00000000;  /* 64 */
-I (184723) MATH_INT_T: Peek Z.dp[65] = 0x00000000;  /* 65 */
-I (184733) MATH_INT_T: Peek Z.dp[66] = 0x00000000;  /* 66 */
-I (184743) MATH_INT_T: Peek Z.dp[67] = 0x00000000;  /* 67 */
-I (184743) MATH_INT_T: Peek Z.dp[68] = 0x00000000;  /* 68 */
-I (184753) MATH_INT_T: Peek Z.dp[69] = 0x00000000;  /* 69 */
-I (184753) MATH_INT_T: Peek Z.dp[70] = 0x00000000;  /* 70 */
-I (184763) MATH_INT_T: Peek Z.dp[71] = 0x00000000;  /* 71 */
-I (184773) MATH_INT_T: Peek Z.dp[72] = 0x00000000;  /* 72 */
-I (184773) MATH_INT_T: Peek Z.dp[73] = 0x00000000;  /* 73 */
-I (184783) MATH_INT_T: Peek Z.dp[74] = 0x00000000;  /* 74 */
-I (184793) MATH_INT_T: Peek Z.dp[75] = 0x00000000;  /* 75 */
-I (184793) MATH_INT_T: Peek Z.dp[76] = 0x00000000;  /* 76 */
-I (184803) MATH_INT_T: Peek Z.dp[77] = 0x00000000;  /* 77 */
-I (184813) MATH_INT_T: Peek Z.dp[78] = 0x00000000;  /* 78 */
-I (184813) MATH_INT_T: Peek Z.dp[79] = 0x00000000;  /* 79 */
-I (184823) MATH_INT_T: Peek Z.dp[80] = 0x00000000;  /* 80 */
-I (184833) MATH_INT_T: Peek Z.dp[81] = 0x00000000;  /* 81 */
-I (184833) MATH_INT_T: Peek Z.dp[82] = 0x00000000;  /* 82 */
-I (184843) MATH_INT_T: Peek Z.dp[83] = 0x00000000;  /* 83 */
-I (184843) MATH_INT_T: Peek Z.dp[84] = 0x00000000;  /* 84 */
-I (184853) MATH_INT_T: Peek Z.dp[85] = 0x00000000;  /* 85 */
-I (184863) MATH_INT_T: Peek Z.dp[86] = 0x00000000;  /* 86 */
-I (184863) MATH_INT_T: Peek Z.dp[87] = 0x00000000;  /* 87 */
-I (184873) MATH_INT_T: Peek Z.dp[88] = 0x00000000;  /* 88 */
-I (184883) MATH_INT_T: Peek Z.dp[89] = 0x00000000;  /* 89 */
-I (184883) MATH_INT_T: Peek Z.dp[90] = 0x00000000;  /* 90 */
-I (184893) MATH_INT_T: Peek Z.dp[91] = 0x00000000;  /* 91 */
-I (184903) MATH_INT_T: Peek Z.dp[92] = 0x00000000;  /* 92 */
-I (184903) MATH_INT_T: Peek Z.dp[93] = 0x00000000;  /* 93 */
-I (184913) MATH_INT_T: Peek Z.dp[94] = 0x00000000;  /* 94 */
-I (184923) MATH_INT_T: Peek Z.dp[95] = 0x00000000;  /* 95 */
-I (184923) MATH_INT_T: Peek Z.dp[96] = 0x00000000;  /* 96 */
-I (184933) MATH_INT_T: Peek Z.dp[97] = 0x00000000;  /* 97 */
-I (184933) MATH_INT_T: Peek Z.dp[98] = 0x00000000;  /* 98 */
-I (184943) MATH_INT_T: Peek Z.dp[99] = 0x00000000;  /* 99 */
-I (184953) MATH_INT_T: Peek Z.dp[100] = 0x00000000;  /* 100 */
-I (184953) MATH_INT_T: Peek Z.dp[101] = 0x00000000;  /* 101 */
-I (184963) MATH_INT_T: Peek Z.dp[102] = 0x00000000;  /* 102 */
-I (184973) MATH_INT_T: Peek Z.dp[103] = 0x00000000;  /* 103 */
-I (184973) MATH_INT_T: Peek Z.dp[104] = 0x00000000;  /* 104 */
-I (184983) MATH_INT_T: Peek Z.dp[105] = 0x00000000;  /* 105 */
-I (184993) MATH_INT_T: Peek Z.dp[106] = 0x00000000;  /* 106 */
-I (184993) MATH_INT_T: Peek Z.dp[107] = 0x00000000;  /* 107 */
-I (185003) MATH_INT_T: Peek Z.dp[108] = 0x00000000;  /* 108 */
-I (185013) MATH_INT_T: Peek Z.dp[109] = 0x00000000;  /* 109 */
-I (185013) MATH_INT_T: Peek Z.dp[110] = 0x00000000;  /* 110 */
-I (185023) MATH_INT_T: Peek Z.dp[111] = 0x00000000;  /* 111 */
-I (185033) MATH_INT_T: Peek Z.dp[112] = 0x00000000;  /* 112 */
-I (185033) MATH_INT_T: Peek Z.dp[113] = 0x00000000;  /* 113 */
-I (185043) MATH_INT_T: Peek Z.dp[114] = 0x00000000;  /* 114 */
-I (185053) MATH_INT_T: Peek Z.dp[115] = 0x00000000;  /* 115 */
-I (185053) MATH_INT_T: Peek Z.dp[116] = 0x00000000;  /* 116 */
-I (185063) MATH_INT_T: Peek Z.dp[117] = 0x00000000;  /* 117 */
-I (185073) MATH_INT_T: Peek Z.dp[118] = 0x00000000;  /* 118 */
-I (185073) MATH_INT_T: Peek Z.dp[119] = 0x00000000;  /* 119 */
-I (185083) MATH_INT_T: Peek Z.dp[120] = 0x00000000;  /* 120 */
-I (185093) MATH_INT_T: Peek Z.dp[121] = 0x00000000;  /* 121 */
-I (185093) MATH_INT_T: Peek Z.dp[122] = 0x00000000;  /* 122 */
-I (185103) MATH_INT_T: Peek Z.dp[123] = 0x00000000;  /* 123 */
-I (185113) MATH_INT_T: Peek Z.dp[124] = 0x00000000;  /* 124 */
-I (185113) MATH_INT_T: Peek Z.dp[125] = 0x00000000;  /* 125 */
-I (185123) MATH_INT_T: Peek Z.dp[126] = 0x00000000;  /* 126 */
-I (185133) MATH_INT_T: Peek Z.dp[127] = 0x00000000;  /* 127 */
-I (185133) MATH_INT_T:
-I (185143) MATH_INT_T: Z:
-I (185143) MATH_INT_T:
-I (185143) MATH_INT_T: Z.used = 8;
-I (185153) MATH_INT_T: Z.sign = 0;
-I (185153) MATH_INT_T: Z.dp[ 0] = 0x2965f9a8;  /*  0 */
-I (185163) MATH_INT_T: Z.dp[ 1] = 0x5c30af87;  /*  1 */
-I (185163) MATH_INT_T: Z.dp[ 2] = 0xa51c628d;  /*  2 */
-I (185173) MATH_INT_T: Z.dp[ 3] = 0x1a2be20e;  /*  3 */
-I (185173) MATH_INT_T: Z.dp[ 4] = 0x6e00ab9d;  /*  4 */
-I (185183) MATH_INT_T: Z.dp[ 5] = 0x53c9b40b;  /*  5 */
-I (185193) MATH_INT_T: Z.dp[ 6] = 0x5d91a864;  /*  6 */
-I (185193) MATH_INT_T: Z.dp[ 7] = 0x0aa34866;  /*  7 */
-I (185203) MATH_INT_T:
-I (185203) MATH_INT_T: Z2:
-I (185203) MATH_INT_T:
-I (185213) MATH_INT_T: Z2.used = 16;
-I (185213) MATH_INT_T: Z2.sign = 0;
-I (185223) MATH_INT_T: Z2.dp[ 0] = 0x528aa4c4;  /*  0 */
-I (185223) MATH_INT_T: Z2.dp[ 1] = 0xc4b6f6e9;  /*  1 */
-I (185233) MATH_INT_T: Z2.dp[ 2] = 0xdcf281a0;  /*  2 */
-I (185233) MATH_INT_T: Z2.dp[ 3] = 0x4b7d6962;  /*  3 */
-I (185243) MATH_INT_T: Z2.dp[ 4] = 0x41a653a6;  /*  4 */
-I (185253) MATH_INT_T: Z2.dp[ 5] = 0x89e90487;  /*  5 */
-I (185253) MATH_INT_T: Z2.dp[ 6] = 0xa93b4630;  /*  6 */
-I (185263) MATH_INT_T: Z2.dp[ 7] = 0xcd1d1087;  /*  7 */
-I (185263) MATH_INT_T: Z2.dp[ 8] = 0x36e8974f;  /*  8 */
-I (185273) MATH_INT_T: Z2.dp[ 9] = 0x23ba3efb;  /*  9 */
-I (185283) MATH_INT_T: Z2.dp[10] = 0x57343914;  /* 10 */
-I (185283) MATH_INT_T: Z2.dp[11] = 0xf3aa08c1;  /* 11 */
-I (185293) MATH_INT_T: Z2.dp[12] = 0xfdcdec21;  /* 12 */
-I (185293) MATH_INT_T: Z2.dp[13] = 0x22f1d6a2;  /* 13 */
-I (185303) MATH_INT_T: Z2.dp[14] = 0x93d03c89;  /* 14 */
-I (185313) MATH_INT_T: Z2.dp[15] = 0x3325841c;  /* 15 */
-I (185313) MATH_INT_T:
-W (185323) wolfssl_esp32_mp: Recovering mp_mul error with softwa
-re result
+E (328653) wolfssl_esp32_mp: mp_mul Z vs Z2 mismatch!
+I (328653) wolfssl_esp32_mp: Xs            = 224
+I (328653) wolfssl_esp32_mp: Ys            = 224
+I (328653) wolfssl_esp32_mp: Zs            = 448
+I (328663) wolfssl_esp32_mp: found_z_used  = 14
+I (328663) wolfssl_esp32_mp: z.used        = 5
+I (328673) wolfssl_esp32_mp: hwWords_sz    = 16
+I (328673) wolfssl_esp32_mp: maxWords_sz   = 7
+I (328683) wolfssl_esp32_mp: left_pad_offset = 64
+I (328683) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (328693) MATH_INT_T: X:
+I (328693) MATH_INT_T:
+I (328693) MATH_INT_T: X.used = 7;
+I (328703) MATH_INT_T: X.sign = 0;
+I (328703) MATH_INT_T: X.dp[ 0] = 0xb5c5c2d7;  /*  0 */
+I (328713) MATH_INT_T: X.dp[ 1] = 0x4b6fc0cc;  /*  1 */
+I (328713) MATH_INT_T: X.dp[ 2] = 0xd9ba860e;  /*  2 */
+I (328723) MATH_INT_T: X.dp[ 3] = 0xa296f50d;  /*  3 */
+I (328733) MATH_INT_T: X.dp[ 4] = 0x1c30dad8;  /*  4 */
+I (328733) MATH_INT_T: X.dp[ 5] = 0x9c7a8b74;  /*  5 */
+I (328743) MATH_INT_T: X.dp[ 6] = 0xa8b40270;  /*  6 */
+I (328743) MATH_INT_T:
+I (328753) MATH_INT_T: Y:
+I (328753) MATH_INT_T:
+I (328753) MATH_INT_T: Y.used = 7;
+I (328763) MATH_INT_T: Y.sign = 0;
+I (328763) MATH_INT_T: Y.dp[ 0] = 0x7b44ea44;  /*  0 */
+I (328773) MATH_INT_T: Y.dp[ 1] = 0x52c7ef9f;  /*  1 */
+I (328773) MATH_INT_T: Y.dp[ 2] = 0xb056a8a5;  /*  2 */
+I (328783) MATH_INT_T: Y.dp[ 3] = 0xe1d1ff27;  /*  3 */
+I (328793) MATH_INT_T: Y.dp[ 4] = 0xb8217f14;  /*  4 */
+I (328793) MATH_INT_T: Y.dp[ 5] = 0x81090e95;  /*  5 */
+I (328803) MATH_INT_T: Y.dp[ 6] = 0xd53ea1b7;  /*  6 */
+I (328803) MATH_INT_T:
+I (328813) MATH_INT_T: Peek Z:
+I (328813) MATH_INT_T:
+I (328813) MATH_INT_T: Peek Z.used = 128;
+I (328823) MATH_INT_T: Peek Z.sign = 0;
+I (328823) MATH_INT_T: Peek Z.dp[ 0] = 0x00000000;  /*  0 */
+I (328833) MATH_INT_T: Peek Z.dp[ 1] = 0x00000000;  /*  1 */
+I (328843) MATH_INT_T: Peek Z.dp[ 2] = 0x00000000;  /*  2 */
+I (328843) MATH_INT_T: Peek Z.dp[ 3] = 0x00000000;  /*  3 */
+I (328853) MATH_INT_T: Peek Z.dp[ 4] = 0x00000000;  /*  4 */
+I (328863) MATH_INT_T: Peek Z.dp[ 5] = 0x00000000;  /*  5 */
+I (328863) MATH_INT_T: Peek Z.dp[ 6] = 0x00000000;  /*  6 */
+I (328873) MATH_INT_T: Peek Z.dp[ 7] = 0x00000000;  /*  7 */
+I (328873) MATH_INT_T: Peek Z.dp[ 8] = 0x00000000;  /*  8 */
+I (328883) MATH_INT_T: Peek Z.dp[ 9] = 0x00000000;  /*  9 */
+I (328893) MATH_INT_T: Peek Z.dp[10] = 0x00000000;  /* 10 */
+I (328893) MATH_INT_T: Peek Z.dp[11] = 0x00000000;  /* 11 */
+I (328903) MATH_INT_T: Peek Z.dp[12] = 0x00000000;  /* 12 */
+I (328913) MATH_INT_T: Peek Z.dp[13] = 0x00000000;  /* 13 */
+I (328913) MATH_INT_T: Peek Z.dp[14] = 0x00000000;  /* 14 */
+I (328923) MATH_INT_T: Peek Z.dp[15] = 0x00000000;  /* 15 */
+I (328933) MATH_INT_T: Peek Z.dp[16] = 0x7b44ea44;  /* 16 */
+I (328933) MATH_INT_T: Peek Z.dp[17] = 0x52c7ef9f;  /* 17 */
+I (328943) MATH_INT_T: Peek Z.dp[18] = 0xb056a8a5;  /* 18 */
+I (328953) MATH_INT_T: Peek Z.dp[19] = 0xe1d1ff27;  /* 19 */
+I (328953) MATH_INT_T: Peek Z.dp[20] = 0xb8217f14;  /* 20 */
+I (328963) MATH_INT_T: Peek Z.dp[21] = 0x81090e95;  /* 21 */
+I (328963) MATH_INT_T: Peek Z.dp[22] = 0xd53ea1b7;  /* 22 */
+I (328973) MATH_INT_T: Peek Z.dp[23] = 0x00000000;  /* 23 */
+I (328983) MATH_INT_T: Peek Z.dp[24] = 0x00000000;  /* 24 */
+I (328983) MATH_INT_T: Peek Z.dp[25] = 0x00000000;  /* 25 */
+I (328993) MATH_INT_T: Peek Z.dp[26] = 0x00000000;  /* 26 */
+I (329003) MATH_INT_T: Peek Z.dp[27] = 0x00000000;  /* 27 */
+I (329003) MATH_INT_T: Peek Z.dp[28] = 0x00000000;  /* 28 */
+I (329013) MATH_INT_T: Peek Z.dp[29] = 0x00000000;  /* 29 */
+I (329023) MATH_INT_T: Peek Z.dp[30] = 0x00000000;  /* 30 */
+I (329023) MATH_INT_T: Peek Z.dp[31] = 0x00000000;  /* 31 */
+I (329033) MATH_INT_T: Peek Z.dp[32] = 0x00000000;  /* 32 */
+I (329043) MATH_INT_T: Peek Z.dp[33] = 0x00000000;  /* 33 */
+I (329043) MATH_INT_T: Peek Z.dp[34] = 0x00000000;  /* 34 */
+I (329053) MATH_INT_T: Peek Z.dp[35] = 0x00000000;  /* 35 */
+I (329053) MATH_INT_T: Peek Z.dp[36] = 0x00000000;  /* 36 */
+I (329063) MATH_INT_T: Peek Z.dp[37] = 0x00000000;  /* 37 */
+I (329073) MATH_INT_T: Peek Z.dp[38] = 0x00000000;  /* 38 */
+I (329073) MATH_INT_T: Peek Z.dp[39] = 0x00000000;  /* 39 */
+I (329083) MATH_INT_T: Peek Z.dp[40] = 0x00000000;  /* 40 */
+I (329093) MATH_INT_T: Peek Z.dp[41] = 0x00000000;  /* 41 */
+I (329093) MATH_INT_T: Peek Z.dp[42] = 0x00000000;  /* 42 */
+I (329103) MATH_INT_T: Peek Z.dp[43] = 0x00000000;  /* 43 */
+I (329113) MATH_INT_T: Peek Z.dp[44] = 0x00000000;  /* 44 */
+I (329113) MATH_INT_T: Peek Z.dp[45] = 0x00000000;  /* 45 */
+I (329123) MATH_INT_T: Peek Z.dp[46] = 0x00000000;  /* 46 */
+I (329123) MATH_INT_T: Peek Z.dp[47] = 0x00000000;  /* 47 */
+I (329133) MATH_INT_T: Peek Z.dp[48] = 0x00000000;  /* 48 */
+I (329143) MATH_INT_T: Peek Z.dp[49] = 0x00000000;  /* 49 */
+I (329143) MATH_INT_T: Peek Z.dp[50] = 0x00000000;  /* 50 */
+I (329153) MATH_INT_T: Peek Z.dp[51] = 0x00000000;  /* 51 */
+I (329163) MATH_INT_T: Peek Z.dp[52] = 0x00000000;  /* 52 */
+I (329163) MATH_INT_T: Peek Z.dp[53] = 0x00000000;  /* 53 */
+I (329173) MATH_INT_T: Peek Z.dp[54] = 0x00000000;  /* 54 */
+I (329183) MATH_INT_T: Peek Z.dp[55] = 0x00000000;  /* 55 */
+I (329183) MATH_INT_T: Peek Z.dp[56] = 0x00000000;  /* 56 */
+I (329193) MATH_INT_T: Peek Z.dp[57] = 0x00000000;  /* 57 */
+I (329203) MATH_INT_T: Peek Z.dp[58] = 0x00000000;  /* 58 */
+I (329203) MATH_INT_T: Peek Z.dp[59] = 0x00000000;  /* 59 */
+I (329213) MATH_INT_T: Peek Z.dp[60] = 0x00000000;  /* 60 */
+I (329213) MATH_INT_T: Peek Z.dp[61] = 0x00000000;  /* 61 */
+I (329223) MATH_INT_T: Peek Z.dp[62] = 0x00000000;  /* 62 */
+I (329233) MATH_INT_T: Peek Z.dp[63] = 0x00000000;  /* 63 */
+I (329233) MATH_INT_T: Peek Z.dp[64] = 0x00000000;  /* 64 */
+I (329243) MATH_INT_T: Peek Z.dp[65] = 0x00000000;  /* 65 */
+I (329253) MATH_INT_T: Peek Z.dp[66] = 0x00000000;  /* 66 */
+I (329253) MATH_INT_T: Peek Z.dp[67] = 0x00000000;  /* 67 */
+I (329263) MATH_INT_T: Peek Z.dp[68] = 0x00000000;  /* 68 */
+I (329273) MATH_INT_T: Peek Z.dp[69] = 0x00000000;  /* 69 */
+I (329273) MATH_INT_T: Peek Z.dp[70] = 0x00000000;  /* 70 */
+I (329283) MATH_INT_T: Peek Z.dp[71] = 0x00000000;  /* 71 */
+I (329293) MATH_INT_T: Peek Z.dp[72] = 0x00000000;  /* 72 */
+I (329293) MATH_INT_T: Peek Z.dp[73] = 0x00000000;  /* 73 */
+I (329303) MATH_INT_T: Peek Z.dp[74] = 0x00000000;  /* 74 */
+I (329303) MATH_INT_T: Peek Z.dp[75] = 0x00000000;  /* 75 */
+I (329313) MATH_INT_T: Peek Z.dp[76] = 0x00000000;  /* 76 */
+I (329323) MATH_INT_T: Peek Z.dp[77] = 0x00000000;  /* 77 */
+I (329323) MATH_INT_T: Peek Z.dp[78] = 0x00000000;  /* 78 */
+I (329333) MATH_INT_T: Peek Z.dp[79] = 0x00000000;  /* 79 */
+I (329343) MATH_INT_T: Peek Z.dp[80] = 0x00000000;  /* 80 */
+I (329343) MATH_INT_T: Peek Z.dp[81] = 0x00000000;  /* 81 */
+I (329353) MATH_INT_T: Peek Z.dp[82] = 0x00000000;  /* 82 */
+I (329363) MATH_INT_T: Peek Z.dp[83] = 0x00000000;  /* 83 */
+I (329363) MATH_INT_T: Peek Z.dp[84] = 0x00000000;  /* 84 */
+I (329373) MATH_INT_T: Peek Z.dp[85] = 0x00000000;  /* 85 */
+I (329383) MATH_INT_T: Peek Z.dp[86] = 0x00000000;  /* 86 */
+I (329383) MATH_INT_T: Peek Z.dp[87] = 0x00000000;  /* 87 */
+I (329393) MATH_INT_T: Peek Z.dp[88] = 0x00000000;  /* 88 */
+I (329393) MATH_INT_T: Peek Z.dp[89] = 0x00000000;  /* 89 */
+I (329403) MATH_INT_T: Peek Z.dp[90] = 0x00000000;  /* 90 */
+I (329413) MATH_INT_T: Peek Z.dp[91] = 0x00000000;  /* 91 */
+I (329413) MATH_INT_T: Peek Z.dp[92] = 0x00000000;  /* 92 */
+I (329423) MATH_INT_T: Peek Z.dp[93] = 0x00000000;  /* 93 */
+I (329433) MATH_INT_T: Peek Z.dp[94] = 0x00000000;  /* 94 */
+I (329433) MATH_INT_T: Peek Z.dp[95] = 0x00000000;  /* 95 */
+I (329443) MATH_INT_T: Peek Z.dp[96] = 0x00000000;  /* 96 */
+I (329453) MATH_INT_T: Peek Z.dp[97] = 0x00000000;  /* 97 */
+I (329453) MATH_INT_T: Peek Z.dp[98] = 0x00000000;  /* 98 */
+I (329463) MATH_INT_T: Peek Z.dp[99] = 0x00000000;  /* 99 */
+I (329473) MATH_INT_T: Peek Z.dp[100] = 0x00000000;  /* 100 */
+I (329473) MATH_INT_T: Peek Z.dp[101] = 0x00000000;  /* 101 */
+I (329483) MATH_INT_T: Peek Z.dp[102] = 0x00000000;  /* 102 */
+I (329493) MATH_INT_T: Peek Z.dp[103] = 0x00000000;  /* 103 */
+I (329493) MATH_INT_T: Peek Z.dp[104] = 0x00000000;  /* 104 */
+I (329503) MATH_INT_T: Peek Z.dp[105] = 0x00000000;  /* 105 */
+I (329513) MATH_INT_T: Peek Z.dp[106] = 0x00000000;  /* 106 */
+I (329513) MATH_INT_T: Peek Z.dp[107] = 0x00000000;  /* 107 */
+I (329523) MATH_INT_T: Peek Z.dp[108] = 0x00000000;  /* 108 */
+I (329523) MATH_INT_T: Peek Z.dp[109] = 0x00000000;  /* 109 */
+I (329533) MATH_INT_T: Peek Z.dp[110] = 0x00000000;  /* 110 */
+I (329543) MATH_INT_T: Peek Z.dp[111] = 0x00000000;  /* 111 */
+I (329543) MATH_INT_T: Peek Z.dp[112] = 0x00000000;  /* 112 */
+I (329553) MATH_INT_T: Peek Z.dp[113] = 0x00000000;  /* 113 */
+I (329563) MATH_INT_T: Peek Z.dp[114] = 0x00000000;  /* 114 */
+I (329563) MATH_INT_T: Peek Z.dp[115] = 0x00000000;  /* 115 */
+I (329573) MATH_INT_T: Peek Z.dp[116] = 0x00000000;  /* 116 */
+I (329583) MATH_INT_T: Peek Z.dp[117] = 0x00000000;  /* 117 */
+I (329583) MATH_INT_T: Peek Z.dp[118] = 0x00000000;  /* 118 */
+I (329593) MATH_INT_T: Peek Z.dp[119] = 0x00000000;  /* 119 */
+I (329603) MATH_INT_T: Peek Z.dp[120] = 0x00000000;  /* 120 */
+I (329603) MATH_INT_T: Peek Z.dp[121] = 0x00000000;  /* 121 */
+I (329613) MATH_INT_T: Peek Z.dp[122] = 0x00000000;  /* 122 */
+I (329623) MATH_INT_T: Peek Z.dp[123] = 0x00000000;  /* 123 */
+I (329623) MATH_INT_T: Peek Z.dp[124] = 0x00000000;  /* 124 */
+I (329633) MATH_INT_T: Peek Z.dp[125] = 0x00000000;  /* 125 */
+I (329643) MATH_INT_T: Peek Z.dp[126] = 0x00000000;  /* 126 */
+I (329643) MATH_INT_T: Peek Z.dp[127] = 0x00000000;  /* 127 */
+I (329653) MATH_INT_T:
+I (329653) MATH_INT_T: Z:
+I (329663) MATH_INT_T:
+I (329663) MATH_INT_T: Z.used = 5;
+I (329663) MATH_INT_T: Z.sign = 0;
+I (329673) MATH_INT_T: Z.dp[ 0] = 0xcb465a8b;  /*  0 */
+I (329673) MATH_INT_T: Z.dp[ 1] = 0xcdf54a51;  /*  1 */
+I (329683) MATH_INT_T: Z.dp[ 2] = 0x0f8e90f6;  /*  2 */
+I (329693) MATH_INT_T: Z.dp[ 3] = 0x89dfe4eb;  /*  3 */
+I (329693) MATH_INT_T: Z.dp[ 4] = 0x5c9b704c;  /*  4 */
+I (329703) MATH_INT_T:
+I (329703) MATH_INT_T: Z2:
+I (329703) MATH_INT_T:
+I (329713) MATH_INT_T: Z2.used = 14;
+I (329713) MATH_INT_T: Z2.sign = 0;
+I (329723) MATH_INT_T: Z2.dp[ 0] = 0x1abc471c;  /*  0 */
+I (329723) MATH_INT_T: Z2.dp[ 1] = 0x9b7c5e35;  /*  1 */
+I (329733) MATH_INT_T: Z2.dp[ 2] = 0xa36f96a0;  /*  2 */
+I (329733) MATH_INT_T: Z2.dp[ 3] = 0x40afb8f4;  /*  3 */
+I (329743) MATH_INT_T: Z2.dp[ 4] = 0xe55e545c;  /*  4 */
+I (329753) MATH_INT_T: Z2.dp[ 5] = 0xd6a64866;  /*  5 */
+I (329753) MATH_INT_T: Z2.dp[ 6] = 0xcaa79b0b;  /*  6 */
+I (329763) MATH_INT_T: Z2.dp[ 7] = 0x4d112cca;  /*  7 */
+I (329763) MATH_INT_T: Z2.dp[ 8] = 0x453db154;  /*  8 */
+I (329773) MATH_INT_T: Z2.dp[ 9] = 0xd9ffece3;  /*  9 */
+I (329783) MATH_INT_T: Z2.dp[10] = 0xa19db163;  /* 10 */
+I (329783) MATH_INT_T: Z2.dp[11] = 0xa5ef7908;  /* 11 */
+I (329793) MATH_INT_T: Z2.dp[12] = 0x6cb719c9;  /* 12 */
+I (329793) MATH_INT_T: Z2.dp[13] = 0x8c870c32;  /* 13 */
+I (329803) MATH_INT_T:
+W (329803) wolfssl_esp32_mp: Recovering mp_mul error with software result
