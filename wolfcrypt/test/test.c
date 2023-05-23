@@ -1069,6 +1069,14 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("mp_math  test passed!\n");
 #endif
 
+    PRIVATE_KEY_UNLOCK();
+    if ( (ret = ecc_test()) != 0)
+        TEST_FAIL("ECC      test failed!\n", ret);
+    else
+        TEST_PASS("ECC      test passed!\n");
+    PRIVATE_KEY_LOCK();
+
+
 #ifndef NO_CODING
     if ( (ret = base64_test()) != 0)
         TEST_FAIL("base64   test failed!\n", ret);
@@ -2175,6 +2183,52 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_32_1[] =
     0xbf79fcb7,
 };
 
+
+/* OPERAND_A_08_1 observed failing in HW */
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_A_08_1[] =
+{
+    0x4643236e, /*  0 */
+    0xd023791e, /*  1 */
+    0x1dc432ab, /*  2 */
+    0x17d12a72, /*  3 */
+    0x62518f57, /*  4 */
+    0xc0dbff61, /*  5 */
+    0x5c81b049, /*  6 */
+    0x353ea4fc  /*  7 */
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit OPERAND_B_08_1[] =
+{
+    0x0b0df8ae, /*  0 */
+    0x308db72d, /*  1 */
+    0x76fca0a3, /*  2 */
+    0x2aa4a880, /*  3 */
+    0x296f7f92, /*  4 */
+    0x908d20e3, /*  5 */
+    0xb11c1dc1, /*  6 */
+    0xf5e97df6  /*  7 */
+};
+
+WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_08_1[] =
+{
+    0x528aa4c4, /*  0 */
+    0xc4b6f6e9, /*  1 */
+    0xdcf281a0, /*  2 */
+    0x4b7d6962, /*  3 */
+    0x41a653a6, /*  4 */
+    0x89e90487, /*  5 */
+    0xa93b4630, /*  6 */
+    0xcd1d1087, /*  7 */
+    0x36e8974f, /*  8 */
+    0x23ba3efb, /*  9 */
+    0x57343914, /* 10 */
+    0xf3aa08c1, /* 11 */
+    0xfdcdec21, /* 12 */
+    0x22f1d6a2, /* 13 */
+    0x93d03c89, /* 14 */
+    0x3325841c  /* 15 */
+};
+
 /*
  * Initialize T.
  *
@@ -2259,8 +2313,8 @@ static int math_test_challenge_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
     debug_message("Begin math_test_challenge_1()");
@@ -2309,8 +2363,8 @@ static int math_test_mp_mulmod_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* assume success until proven otherwise */
@@ -2359,8 +2413,8 @@ static int math_test_mp_mulmod_2(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* assume success until proven otherwise */
@@ -2565,8 +2619,8 @@ static int math_test_mp_mulmod_3(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* assume success until proven otherwise */
@@ -2600,13 +2654,63 @@ static int math_test_mp_mulmod_3(void)
     return ret;
 }
 
+static int math_test_mp_mul_1(void)
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    /* int retf = MP_OKAY*/ ; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
+    mp_init(d);
+    mp_init(e);
+
+    debug_message("Begin math_test_mp_mul_1()");
+    /* 32-operand parameters for math test #1 */
+    mp_init_load(a, (fp_digit *)&OPERAND_A_08_1, COUNT_OF(OPERAND_A_08_1) );
+    mp_init_load(b, (fp_digit *)&OPERAND_B_08_1, COUNT_OF(OPERAND_B_08_1) );
+
+    /* the result will be in d */
+    mp_init(d);
+
+    /* our expected result is in e */
+    mp_init_load(e, (fp_digit *)&RESULT_E_08_1,  COUNT_OF(RESULT_E_08_1)  );
+
+    /* call the interesting TFM: d = a * b */
+    ret = mp_mul(a, b, d);
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mul() : challenge:\n" \
+                          "8 word test, positive operands: a * b"
+    /* check d == e; d = (a * b) */
+    if ((ret == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            ret,
+                            a,
+                            b,
+                            NULL,
+                            d,
+                            e);
+        ret = MP_VAL;
+    }
+    return ret;
+}
+
 /* test template */
 static int math_test_mp_mulmod_template(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
     /* int retf = MP_OKAY*/ ; /* assume success until proven otherwise */
@@ -2653,6 +2757,9 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
 
+    /* math_test_mp_mul_1 */
+    ret = math_test_mp_mul_1();
+
     /* Let's start with the most challenging test: one known to fail in HW */
     retf = math_test_challenge_1();
     if (retf != MP_OKAY) {
@@ -2674,8 +2781,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
     int oldused;  (void)oldused;
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
-    MATH_INT_T c[1]; /* operand, or result for 3 operand functions */
-    MATH_INT_T d[1]; /* result for 3 operand functions */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
 
     const unsigned char* val = 0; (void)val;
