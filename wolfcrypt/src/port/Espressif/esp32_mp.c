@@ -612,6 +612,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 hwWords_sz;
 
     ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
+    if (X == Z) {
+        ESP_LOGW(TAG, "mp_mul X == Z");
+    }
+    if (Y == Z) {
+        ESP_LOGW(TAG, "mp_mul Y == Z");
+    }
 
     /* if either operand is zero, there's nothing to do.
      * Y checked first, as it was observed to be zero during
@@ -786,8 +792,34 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                           Xs,
                           hwWords_sz);
 
-    /* Y(let-extend)                          */
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (hwWords_sz<<2),
+    /* Y (left-extend)
+     * Accelerator supports large-number multiplication with only
+     * four operand lengths of N ∈ {512, 1024, 1536, 2048} */
+    int left_pad_offset = maxWords_sz << 2; /* e.g. 32 words * 4 bytes = 128 bytes */
+    if (left_pad_offset <= 512 >> 3) {
+        left_pad_offset = 512 >> 3; /* 64 bytes = 16 words */
+    }
+    else {
+        if (left_pad_offset <= 1024 >> 3) {
+            left_pad_offset = 1024 >> 3; /* 128 bytes = 32 words */
+        }
+        else {
+            if (left_pad_offset <= 1536 >> 3) {
+                left_pad_offset = 1536 >> 3; /* 192 bytes = 48 words */
+            }
+            else {
+                if (left_pad_offset <= 2048 >> 3) {
+                    left_pad_offset = 2048 >> 3; /* 256 bytes = 64 words */
+                }
+                else {
+                    ret = FP_VAL;
+                    ESP_LOGE(TAG, "Unsupported operand length: %d", hwWords_sz);
+                }
+            }
+        }
+    }
+
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset), /* hwWords_sz<<2 */
                           Y,
                           Ys,
                           hwWords_sz);
@@ -802,9 +834,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
     /* step.6 read the result form MEM_Z              */
     esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(Zs));
-
-    /* step.7 clear and release HW                    */
-    esp_mp_hw_unlock();
 
 #endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
 
@@ -829,7 +858,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
     if (fp_cmp(Z, Z2) != 0) {
         esp_mp_mul_error_ct++;
+
         ESP_LOGE(TAG, "mp_mul Z vs Z2 mismatch!");
+        ESP_LOGI(TAG, "Xs            = %d", Xs);
+        ESP_LOGI(TAG, "Ys            = %d", Ys);
+        ESP_LOGI(TAG, "Zs            = %d", Zs);
+        ESP_LOGI(TAG, "hwWords_sz    = %d", hwWords_sz);
+        ESP_LOGI(TAG, "maxWords_sz   = %d", maxWords_sz);
+        ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
+        ESP_LOGI(TAG, "hwWords_sz<<2   = %d", hwWords_sz << 2);
         esp_show_mp("X", X);
         esp_show_mp("Y", Y);
         esp_show_mp("Z", Z);
@@ -837,6 +874,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
     }
 #endif
+
+    /* step.7 clear and release HW                    */
+    esp_mp_hw_unlock();
+
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
     return ret;
