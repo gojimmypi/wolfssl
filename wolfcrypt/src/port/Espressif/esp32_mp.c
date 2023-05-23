@@ -194,9 +194,9 @@ static int esp_mp_hw_lock()
 #else
     /* Enable RSA hardware */
     if (ret == 0) {
-        if (0 != peek_periph_module_counter(PERIPH_RSA_MODULE)) {
-            ESP_LOGW(TAG, "peek_periph_module_counter not zero!!");
-        };
+//        if (0 != peek_periph_module_counter(PERIPH_RSA_MODULE)) {
+//            ESP_LOGW(TAG, "peek_periph_module_counter not zero!!");
+//        };
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
