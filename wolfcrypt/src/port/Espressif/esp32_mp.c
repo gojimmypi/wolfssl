@@ -223,8 +223,9 @@ static int esp_mp_hw_lock()
 /*
 *   Release HW engine
 */
-static void esp_mp_hw_unlock( void )
+static int esp_mp_hw_unlock( void )
 {
+    int ret = MP_OKAY;
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
@@ -245,6 +246,7 @@ static void esp_mp_hw_unlock( void )
     esp_CryptHwMutexUnLock(&mp_mutex);
 
     ESP_LOGV(TAG, "unlock");
+    return ret;
 }
 /* M' M-Prime Calculation for HW Accelerator */
 
@@ -378,10 +380,10 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 static void process_start(word32 reg)
 {
     /* clear interrupt */
-    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+    //DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     /* start process  */
-    DPORT_REG_WRITE(reg, 0);
-    asm volatile("memw"); /* TODO confirm all compiler settings do this */
+//    DPORT_REG_WRITE(reg, 0);
+//    asm volatile("memw"); /* TODO confirm all compiler settings do this */
     DPORT_REG_WRITE(reg, 1);
     asm volatile("memw");
 }
@@ -847,21 +849,20 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
     esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int));
+
+    /* write the left-padded Y value into Z */
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset), /* hwWords_sz<<2 */
                           Y,
                           Ys,
                           hwWords_sz);
+
+#ifdef DEBUG_WOLFSSL
+    /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
     esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
                           PEEK,
                           128);
 
-    asm volatile("memw");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
+#endif
 
     /* step.3 start process                           */
     process_start(RSA_MULT_START_REG);
