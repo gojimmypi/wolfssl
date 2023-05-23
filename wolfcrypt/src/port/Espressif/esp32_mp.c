@@ -68,6 +68,16 @@ static const char* const TAG = "wolfssl_esp32_mp";
 
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
 
+#ifdef DEBUG_WOLFSSL
+    static int hw_validation = 0; /* are we validating HW and SW? (prevent call to HW) */
+    static int esp_mp_mul_usage_ct = 0; /* how many times as esp_mul() been called ? */
+    static int esp_mp_mul_error_ct = 0; /* how many esp_mul() validation failures have been encountered? */
+    #define SET_HW_VALIDATION {hw_validation = 1;}
+    #define CLR_HW_VALIDATION {hw_validation = 0;}
+    #define IS_HW_VALIDATION (hw_validation == 1)
+#endif
+
+
 /* mutex */
 static wolfSSL_Mutex mp_mutex;
 static int espmp_CryptHwMutexInit = 0;
@@ -194,19 +204,9 @@ static int esp_mp_hw_lock()
 #else
     /* Enable RSA hardware */
     if (ret == 0) {
-//        if (0 != peek_periph_module_counter(PERIPH_RSA_MODULE)) {
-//            ESP_LOGW(TAG, "peek_periph_module_counter not zero!!");
-//        };
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
-
-        /*
-         * We may consider first disabling, then enable fresh:
-         *
-         * DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
-         * asm volatile("memw");
-         */
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
         asm volatile("memw");
     }
@@ -248,8 +248,8 @@ static int esp_mp_hw_unlock( void )
     ESP_LOGV(TAG, "unlock");
     return ret;
 }
-/* M' M-Prime Calculation for HW Accelerator */
 
+/* M' M-Prime Calculation for HW Accelerator */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
     int ret = MP_OKAY;
@@ -379,11 +379,6 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 /* start HW process */
 static void process_start(word32 reg)
 {
-    /* clear interrupt */
-    //DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
-    /* start process  */
-//    DPORT_REG_WRITE(reg, 0);
-//    asm volatile("memw"); /* TODO confirm all compiler settings do this */
     DPORT_REG_WRITE(reg, 1);
     asm volatile("memw");
 }
@@ -396,7 +391,6 @@ static int wait_until_done(volatile u_int32_t reg)
     asm volatile("memw");
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
-//        asm volatile("memw"); /* wait */
         asm volatile("nop"); /* wait */
     }
 
@@ -423,7 +417,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
     int try_ct = 20;
-    // DPORT_INTERRUPT_DISABLE();
+
     portDISABLE_INTERRUPTS();
     __asm__ volatile ("memw");
     do {
@@ -448,7 +442,6 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
         __asm__ __volatile__ ("nop"); /* wait */
-//        __asm__ __volatile__ ("memw");
         DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
@@ -480,6 +473,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
     return ret;
 }
 
+/* Write 0x00 to [wordSz] of register memory starting at mem_address */
 static int esp_zero_memblock(volatile const u_int32_t mem_address,
                             int wordSz)
 {
@@ -495,7 +489,7 @@ static int esp_zero_memblock(volatile const u_int32_t mem_address,
     return ret;
 }
 
-/* write mp_init into memory block
+/* write MATH_INT_T mp value (dp[]) into memory block
  */
 static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
                                  const MATH_INT_T* mp,
@@ -590,13 +584,9 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
     return ret;
 }
 
-static int hw_validation = 0;
-static int esp_mp_mul_usage_ct = 0;
-static int esp_mp_mul_error_ct = 0;
-#define SET_HW_VALIDATION {hw_validation = 1;}
-#define CLR_HW_VALIDATION {hw_validation = 0;}
-#define IS_HW_VALIDATION (hw_validation == 1)
+#ifdef DEBUG_WOLFSSL
 
+/* during debug, we'll track some useage metrics */
 int esp_show_usage_metrics(void)
 {
     int ret = FP_OKAY;
@@ -611,10 +601,12 @@ int esp_show_usage_metrics(void)
     return ret;
 }
 
+/* during debug, we'll compare HW to SW results */
 int esp_hw_validation_active(void)
 {
     return IS_HW_VALIDATION;
 }
+#endif
 
 /* Large Number Modular Multiplication
  *
