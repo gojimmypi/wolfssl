@@ -194,6 +194,9 @@ static int esp_mp_hw_lock()
 #else
     /* Enable RSA hardware */
     if (ret == 0) {
+        if (0 != peek_periph_module_counter(PERIPH_RSA_MODULE)) {
+            ESP_LOGW(TAG, "peek_periph_module_counter not zero!!");
+        };
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
@@ -391,7 +394,7 @@ static int wait_until_done(volatile u_int32_t reg)
     asm volatile("memw");
     while (!ESP_TIMEOUT(++timeout) &&
                 DPORT_REG_READ(reg) != 1) {
-        asm volatile("memw"); /* wait */
+//        asm volatile("memw"); /* wait */
         asm volatile("nop"); /* wait */
     }
 
@@ -475,6 +478,21 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
     return ret;
 }
 
+static int esp_zero_memblock(volatile const u_int32_t mem_address,
+                            int wordSz)
+{
+    int ret = MP_OKAY;
+    portDISABLE_INTERRUPTS();
+    for (int i=0; i < wordSz; i++) {
+        __asm__ volatile ("memw");
+        DPORT_REG_WRITE((volatile void *)mem_address + (i * sizeof(word32)), 0);
+        __asm__ volatile ("nop");
+        __asm__ volatile ("nop");
+        __asm__ volatile ("nop");
+    }
+    return ret;
+}
+
 /* write mp_init into memory block
  */
 static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
@@ -522,8 +540,8 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
 
 /* return needed HW words.
  * supported words length
- *  words : {16 ,  32,  48,    64,   80,   96, 112,   128}
- *  bits  : {512,1024, 1536, 2048, 2560, 3072, 3584, 4096}
+ *  words    : { 16,   32,  48,    64,   80,   96,  112,  128}
+ *  bits     : {512, 1024, 1536, 2048, 2560, 3072, 3584, 4096}
  */
 static word32 words2hwords(word32 wd)
 {
@@ -595,6 +613,7 @@ int esp_hw_validation_active(void)
 {
     return IS_HW_VALIDATION;
 }
+
 /* Large Number Modular Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -611,13 +630,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
 
-    ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
-    if (X == Z) {
-        ESP_LOGW(TAG, "mp_mul X == Z");
-    }
-    if (Y == Z) {
-        ESP_LOGW(TAG, "mp_mul Y == Z");
-    }
+//    ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
+//    if (X == Z) {
+//        ESP_LOGW(TAG, "mp_mul X == Z");
+//    }
+//    if (Y == Z) {
+//        ESP_LOGW(TAG, "mp_mul Y == Z");
+//    }
 
     /* if either operand is zero, there's nothing to do.
      * Y checked first, as it was observed to be zero during
@@ -631,6 +650,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     MATH_INT_T X2[1];
     MATH_INT_T Y2[1];
     MATH_INT_T Z2[1];
+    MATH_INT_T PEEK[1];
     if (IS_HW_VALIDATION) {
         ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
     }
@@ -771,33 +791,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     * 8. Write 1 to RSA_INTERUPT_REG to clear the interrupt.
     * 9. Release the HW engine
     */
-    /* lock HW for use */
-    ret = esp_mp_hw_lock(); /* enables HW clock */
-    if (ret != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_lock fail");
-        return ret;
-    }
-
-    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_wait_clean");
-        return ret;
-    }
-
-    /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
-    DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
-
-    /* step.2 write X, M and r_inv into memory */
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
-                          X,
-                          Xs,
-                          hwWords_sz);
 
     /* Y (left-extend)
      * Accelerator supports large-number multiplication with only
      * four operand lengths of N ∈ {512, 1024, 1536, 2048} */
     int left_pad_offset = maxWords_sz << 2; /* e.g. 32 words * 4 bytes = 128 bytes */
     if (left_pad_offset <= 512 >> 3) {
-        left_pad_offset = 512 >> 3; /* 64 bytes = 16 words */
+        left_pad_offset = 512 >> 3; /* 64 bytes (16 words) */
     }
     else {
         if (left_pad_offset <= 1024 >> 3) {
@@ -819,10 +819,50 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
     }
 
+    /* lock HW for use */
+    ret = esp_mp_hw_lock(); /* enables HW clock */
+    if (ret != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_lock fail");
+        return ret;
+    }
+
+    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_wait_clean");
+        return ret;
+    }
+
+    /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
+    /* Write 2*N/512 - 1 + 8  */
+    // DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
+
+    DPORT_REG_WRITE(RSA_MULT_MODE_REG, (2*left_pad_offset*8/512) -1 + 8);
+
+    /* step.2 write X into memory */
+    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                          X,
+                          Xs,
+                          hwWords_sz);
+
+
+
+    /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
+    esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int));
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset), /* hwWords_sz<<2 */
                           Y,
                           Ys,
                           hwWords_sz);
+    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
+                          PEEK,
+                          128);
+
+    asm volatile("memw");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+
     /* step.3 start process                           */
     process_start(RSA_MULT_START_REG);
 
@@ -846,6 +886,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif
     Z->sign = X->sign ^ Y->sign;
+    int found_z_used = Z->used;
     esp_clean_result(Z, 0);
 
 #ifdef DEBUG_WOLFSSL
@@ -863,15 +904,23 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGI(TAG, "Xs            = %d", Xs);
         ESP_LOGI(TAG, "Ys            = %d", Ys);
         ESP_LOGI(TAG, "Zs            = %d", Zs);
+        ESP_LOGI(TAG, "found_z_used  = %d", found_z_used);
+        ESP_LOGI(TAG, "z.used        = %d", Z->used);
         ESP_LOGI(TAG, "hwWords_sz    = %d", hwWords_sz);
         ESP_LOGI(TAG, "maxWords_sz   = %d", maxWords_sz);
         ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
         ESP_LOGI(TAG, "hwWords_sz<<2   = %d", hwWords_sz << 2);
-        esp_show_mp("X", X);
-        esp_show_mp("Y", Y);
-        esp_show_mp("Z", Z);
-        esp_show_mp("Z2", Z2);
+        esp_show_mp("X", X2);  /* show the copy in X2, as X may have been clobbered */
+        esp_show_mp("Y", Y2);  /* show the copy in Y2, as Y may have been clobbered */
+        esp_show_mp("Peek Z", PEEK); /* this is the Z before start */
+        esp_show_mp("Z", Z);   /* this is the HW result */
+        esp_show_mp("Z2", Z2); /* this is the SW result */
+    #ifndef NO_RECOVER_SOFTWARE_CALC
+        ESP_LOGW(TAG, "Recovering mp_mul error with software result");
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
+    #else
+        ret = FP_VAL;
+    #endif
     }
 #endif
 
