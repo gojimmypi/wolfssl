@@ -33,6 +33,7 @@
 #endif
 
 #include <wolfcrypt/test/test.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 /*
 ** the wolfssl component can be installed in either:
@@ -135,12 +136,6 @@ void my_atmel_free(int slotId)
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
 #include <wolfssl/wolfcrypt/types.h>
-    typedef enum {
-        ESP32_SHA_INIT = 0,
-        ESP32_SHA_HW = 1,
-        ESP32_SHA_SW = 2,
-        ESP32_SHA_FAIL_NEED_UNROLL = -1
-    } ESP32_MODE;
 
 /* entry point */
 void app_main(void)
@@ -228,6 +223,8 @@ void app_main(void)
         ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
         /* see wolfssl/wolfcrypt/error-crypt.h */
     }
+
+    esp_show_usage_metrics();
 
     /* after the test, we'll just wait */
     while (1) {

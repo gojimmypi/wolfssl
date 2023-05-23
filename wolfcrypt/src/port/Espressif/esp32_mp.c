@@ -577,6 +577,20 @@ static int esp_mp_mul_error_ct = 0;
 #define CLR_HW_VALIDATION {hw_validation = 0;}
 #define IS_HW_VALIDATION (hw_validation == 1)
 
+int esp_show_usage_metrics(void)
+{
+    int ret = FP_OKAY;
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %d", esp_mp_mul_usage_ct);
+    if (esp_mp_mul_error_ct == 0) {
+        ESP_LOGI(TAG, "Success: no esp_mp_mul() errors.");
+    }
+    else {
+        ESP_LOGW(TAG, "Number of esp_mp_mul failures: %d", esp_mp_mul_error_ct);
+        ret = FP_VAL;
+    }
+    return ret;
+}
+
 int esp_hw_validation_active(void)
 {
     return IS_HW_VALIDATION;

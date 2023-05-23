@@ -348,6 +348,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #ifdef DEBUG_WOLFSSL
     int esp_hw_validation_active(void);
+    int esp_show_usage_metrics(void);
 #endif /* DEBUG_WOLFSSL */
 
 
