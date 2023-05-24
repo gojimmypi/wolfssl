@@ -742,8 +742,9 @@ typedef struct sp_ecc_ctx {
 /* Unused error. Defined for backward compatibility. */
 #define MP_NOT_INF      (-5)
 /* Unused error. Defined for backward compatibility. */
-#define MP_RANGE        MP_NOT_INF
-
+#define MP_HW_BUSY      (-7)
+#define MP_RANGE        MP_HW_BUSY /* range is last item */
+#define MP_SIZE SP_INT_DIGITS
 #ifdef USE_FAST_MATH
 /* For old FIPS, need FP_MEM defined for old implementation. */
 #define FP_MEM          (-2)
