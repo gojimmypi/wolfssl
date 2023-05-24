@@ -2318,7 +2318,7 @@ static int hw_math_test_challenge_1(void)
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     int ret = MP_OKAY; /* assume success until proven otherwise */
-    debug_message("Begin math_test_challenge_1()");
+    debug_message("\n\nBegin math_test_challenge_1()");
     /* 32-operand parameters for math test #1 */
     mp_init_load(a, (mp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
     mp_init_load(b, (mp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
