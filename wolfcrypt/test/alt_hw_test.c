@@ -10,8 +10,11 @@
 static const char * TAG = "ALT_HW_TEST";
 
 /* Alternate mulmod hardware calc comparison
- * Large Number Modular Multiplication Z = X × Y mod M */
-int alt_mulmod_hw_compare(MATH_INT_T* a, MATH_INT_T* b, MATH_INT_T* c, MATH_INT_T* e)
+ * Large Number Modular Multiplication Z = X × Y mod M
+ *
+ * The expected answer needs to be supplied in E.
+ */
+int alt_mulmod_hw_compare(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* e)
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
     //int esp_mpi_mul_mpi_mod(mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M)
@@ -24,24 +27,24 @@ int alt_mulmod_hw_compare(MATH_INT_T* a, MATH_INT_T* b, MATH_INT_T* c, MATH_INT_
     mbedtls_mpi_init(mx);
     mbedtls_mpi_init(my);
     mbedtls_mpi_init(mm);
-    mx->private_n = a->used;
-    mx->private_p = (mbedtls_mpi_uint*)&a->dp;
+    mx->private_n = X->used;
+    mx->private_p = (mbedtls_mpi_uint*)&X->dp;
 
-    my->private_n = b->used;
-    my->private_p = (mbedtls_mpi_uint*)&b->dp;
+    my->private_n = Y->used;
+    my->private_p = (mbedtls_mpi_uint*)&Y->dp;
 
-    mm->private_n = c->used;
-    mm->private_p = (mbedtls_mpi_uint*)&c->dp;
+    mm->private_n = M->used;
+    mm->private_p = (mbedtls_mpi_uint*)&M->dp;
 
     // int esp_mpi_mul_mpi_mod(mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M)
     /* Z = (X * Y) mod M */
     ret = esp_mpi_mul_mpi_mod(mz, mx, my, mm);
 
     if (0 == XMEMCMP(e->dp, mz->private_p, mz->private_s * 4)) {
-        ESP_LOGI(TAG, "mbedtls match!");
+        ESP_LOGI(TAG, "mbedtls success: matched result!");
     }
     else {
-        ESP_LOGW(TAG, "no mbedtls match!");
+        ESP_LOGW(TAG, "mbedtls failed! calculated result did not match expected E value.");
     }
 
     return ret;
