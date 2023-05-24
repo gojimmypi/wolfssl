@@ -530,7 +530,11 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
                 ESP_LOGV(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
-            //DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            __asm__ volatile ("memw");
+            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            __asm__ volatile ("nop");
+            __asm__ volatile ("nop");
+            __asm__ volatile ("nop");
         }
     }
 
