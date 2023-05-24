@@ -4451,13 +4451,14 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 {
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
     int ret = MP_OKAY;
+
     int As; /* How many a bits? */
     int Bs; /* How many b bits? */
     As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
     Bs = fp_count_bits(b);
 
 
-#ifdef DEBUG_WOLFSSL
+#ifdef DEBUG_WOLFSSLx
     int reti = MP_OKAY;   /* intermediate inspection result */
     int ret_sw = MP_OKAY; /* the software calc result */
     /* If there's a HW/SW discrepancy, save original values for review. */
@@ -4507,15 +4508,21 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
-        ret = esp_mp_mulmod(a, b, c, d);
-        if (ret == MP_OKAY) {
-            ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
+        if (esp_hw_validation_active()) {
+            ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
         }
         else {
-            ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
+            ret = esp_mp_mulmod(a, b, c, d);
+            if (ret == MP_OKAY) {
+                ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
+                return ret;
+            }
+            else {
+                ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
+            }
         }
 
-#ifdef DEBUG_WOLFSSL
+#ifdef DEBUG_WOLFSSLx
         if ((int)a == (int)d) {
             ESP_LOGV(TAG, "Operand &a = result &d, skipping a/A2 compare.");
         }
@@ -4563,14 +4570,13 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     #endif
         }
 #endif // DEBUG_WOLFSSL
-        return ret;
-    }
-    else
-        /* depending on ESP_RSA_MULM_BITS setting, we may
-        ** fall through to SW: */
-#endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
+    } /* ESP_RSA_MULM_BITS check  */
 
-    return fp_mulmod(a, b, c, d);
+    /* depending on ESP_RSA_MULM_BITS setting, we may
+     ** fall through to SW: */
+#endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
+    ret = fp_mulmod(a, b, c, d);
+    return ret;
 }
 
 /* d = a - b (mod c) */
