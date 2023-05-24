@@ -212,10 +212,10 @@
 #define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
-/* optionally turn off individual math HW accleration feature */
-// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+/* optionally turn off individual math HW acceleration features */
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 
 // #define NO_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
