@@ -31,6 +31,8 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 
+#define MAX_WORDS_ESP_SHOW_MP 32
+
 /*
  * initialize our mutex used to lock hardware access
  *
@@ -378,15 +380,23 @@ int esp_show_mp(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
     int ret = MP_OKAY;
+    int words_to_show = 0;
 
     if (X == NULL) {
         ret = -1;
         ESP_LOGV(MP_TAG, "esp_show_mp called with X == NULL");
     }
     else {
+        words_to_show = X->used;
+        if (words_to_show > MAX_WORDS_ESP_SHOW_MP) {
+            ESP_LOGI(MP_TAG, "Limiting word count from %d to %d",
+                             words_to_show,
+                             MAX_WORDS_ESP_SHOW_MP);
+            words_to_show = MAX_WORDS_ESP_SHOW_MP;
+        }
         ESP_LOGI(MP_TAG, "%s:",c);
         esp_show_mp_attributes(c, X);
-        for (size_t i = 0; i < X->used; i++) {
+        for (size_t i = 0; i < words_to_show; i++) {
             ESP_LOGI(MP_TAG, "%s.dp[%2d] = 0x%08x;  /* %2d */ ",
                                    c, /* the supplied variable name      */
                                    i, /* the index, i for dp[%d]         */
