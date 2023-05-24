@@ -328,9 +328,19 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 {
     int ret = MP_OKAY;
     int this_extra;
+
+/* TODO remove this section if MP_SIZE accepted into sp_int.h */
+    int dp_length = 0;
+#ifdef USE_FAST_MATH
+    dp_length = FP_SIZE;
+#else
+    dp_length = SP_INT_DIGITS;
+#endif
+/* TODO end */
+
     this_extra = Z->used;
 
-    while (Z->dp[this_extra] > 0 && (this_extra < FP_SIZE)) {
+    while (Z->dp[this_extra] > 0 && (this_extra < MP_SIZE)) {
         ESP_LOGV(TAG, "Adjust! %d", this_extra);
         Z->dp[this_extra] = 0;
         this_extra++;
@@ -411,7 +421,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
                           volatile MATH_INT_T* mp,
                                  word32 numwords)
 {
-    int ret = FP_OKAY;
+    int ret = MP_OKAY;
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
@@ -636,7 +646,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      * wolfcrypt tests more often than X */
     if (mp_iszero(Y) || mp_iszero(X)) {
         mp_forcezero(Z);
-        return FP_OKAY;
+        return MP_OKAY;
     }
 
 #ifdef DEBUG_WOLFSSL
@@ -805,7 +815,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                     left_pad_offset = 2048 >> 3; /* 256 bytes = 64 words */
                 }
                 else {
-                    ret = FP_VAL;
+                    ret = MP_VAL;
                     ESP_LOGE(TAG, "Unsupported operand length: %d", hwWords_sz);
                 }
             }
@@ -877,8 +887,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         mp_setneg(Z);
     }
 #endif
-    Z->sign = X->sign ^ Y->sign;
-    int found_z_used = Z->used;
+
+    // TODO confirm WOLFSSL_SP_INT_NEGATIVE Z->sign = X->sign ^ Y->sign;
     esp_clean_result(Z, 0);
 
 #ifdef DEBUG_WOLFSSL
@@ -890,6 +900,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
     }
     if (fp_cmp(Z, Z2) != 0) {
+        int found_z_used = Z->used;
         esp_mp_mul_error_ct++;
 
         ESP_LOGE(TAG, "mp_mul Z vs Z2 mismatch!");
@@ -1267,7 +1278,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
          ((ret = esp_get_rinv(r_inv, M, (hwWords_sz << 6))) != MP_OKAY) ) {
         ESP_LOGE(TAG, "calculate r_inv failed.");
         mp_clear(r_inv);
+#ifdef DEBUG_WOLFSSL
         esp_mp_exptmod_depth_counter--;
+#endif
         return ret;
     }
 
@@ -1275,7 +1288,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         ESP_LOGE(TAG, "esp_mp_hw_lock failed");
         mp_clear(r_inv);
+#ifdef DEBUG_WOLFSSL
         esp_mp_exptmod_depth_counter--;
+#endif
         return ret;
     }
     /* calc M' */

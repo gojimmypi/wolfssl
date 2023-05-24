@@ -2232,7 +2232,7 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_08_1[] =
 /*
  * Initialize T.
  *
- * Load the (MATH_INT_T)T with [word_len] number of fp_digit
+ * Load the (MATH_INT_T)T with [word_len] number of mp_digit
  * values from the dp[] array. Also set the T.used value.
  *
  * Assumed to be positive value. Manually set sign as needed.
@@ -2240,12 +2240,12 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_08_1[] =
  * Returns MP_OKAY if successful.
  *
  */
-static int mp_init_load(MATH_INT_T* T, fp_digit dp[], int word_len)
+static int mp_init_load(MATH_INT_T* T, mp_digit dp[], int word_len)
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
 
     if (T == NULL) {
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     if (ret == MP_OKAY) {
@@ -2253,7 +2253,7 @@ static int mp_init_load(MATH_INT_T* T, fp_digit dp[], int word_len)
     }
 
     if (ret == MP_OKAY) {
-        XMEMCPY(&T->dp, dp, word_len*sizeof(fp_digit));
+        XMEMCPY(&T->dp, dp, word_len*sizeof(mp_digit));
     }
 
     if (ret == MP_OKAY) {
@@ -2272,7 +2272,7 @@ static int math_test_byte_order_check(void)
 
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE "mp_init_load() byte order check"
-    mp_init_load(a, (fp_digit *)&OPERAND_A_2_1, COUNT_OF(OPERAND_A_2_1));
+    mp_init_load(a, (mp_digit *)&OPERAND_A_2_1, COUNT_OF(OPERAND_A_2_1));
 
     if ((a[0].dp[0] != OPERAND_A_2_1[0]) || (a[0].dp[1] != OPERAND_A_2_1[1])) {
         WOLFSSL_MSG("mp_init_load error?");
@@ -2283,11 +2283,12 @@ static int math_test_byte_order_check(void)
         WOLFSSL_MSG("mp_init_load used error?");
         ret = MP_VAL; /* mp_init_load did not load data correctly? */
     }
-
+#ifdef WOLFSSL_SP_INT_NEGATIVE
     if (a[0].sign != MP_ZPOS) {
         WOLFSSL_MSG("mp_init_load sign error?");
         ret = MP_VAL; /* mp_init_load did not load data correctly? */
     }
+#endif
 
 #if defined(LITTLE_ENDIAN_ORDER)
     if (((unsigned char*)a[0].dp)[0] != ((unsigned char*)&OPERAND_A_2_1)[0]) {
@@ -2319,15 +2320,15 @@ static int math_test_challenge_1(void)
     int ret = MP_OKAY; /* assume success until proven otherwise */
     debug_message("Begin math_test_challenge_1()");
     /* 32-operand parameters for math test #1 */
-    mp_init_load(a, (fp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
-    mp_init_load(b, (fp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
-    mp_init_load(c, (fp_digit *)&OPERAND_C_32_1, COUNT_OF(OPERAND_C_32_1) );
+    mp_init_load(a, (mp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
+    mp_init_load(b, (mp_digit *)&OPERAND_B_32_1, COUNT_OF(OPERAND_B_32_1) );
+    mp_init_load(c, (mp_digit *)&OPERAND_C_32_1, COUNT_OF(OPERAND_C_32_1) );
 
     /* the result will be in d */
     mp_init(d);
 
     /* our expected result is in e */
-    mp_init_load(e, (fp_digit *)&RESULT_E_32_1,  COUNT_OF(RESULT_E_32_1)  );
+    mp_init_load(e, (mp_digit *)&RESULT_E_32_1,  COUNT_OF(RESULT_E_32_1)  );
 
     /* call the interesting TFM: d = a * b (mod c) */
     ret = mp_mulmod(a, b, c, d);
@@ -2672,14 +2673,14 @@ static int math_test_mp_mul_1(void)
 
     debug_message("Begin math_test_mp_mul_1()");
     /* 32-operand parameters for math test #1 */
-    mp_init_load(a, (fp_digit *)&OPERAND_A_08_1, COUNT_OF(OPERAND_A_08_1) );
-    mp_init_load(b, (fp_digit *)&OPERAND_B_08_1, COUNT_OF(OPERAND_B_08_1) );
+    mp_init_load(a, (mp_digit *)&OPERAND_A_08_1, COUNT_OF(OPERAND_A_08_1) );
+    mp_init_load(b, (mp_digit *)&OPERAND_B_08_1, COUNT_OF(OPERAND_B_08_1) );
 
     /* the result will be in d */
     mp_init(d);
 
     /* our expected result is in e */
-    mp_init_load(e, (fp_digit *)&RESULT_E_08_1,  COUNT_OF(RESULT_E_08_1)  );
+    mp_init_load(e, (mp_digit *)&RESULT_E_08_1,  COUNT_OF(RESULT_E_08_1)  );
 
     /* call the interesting TFM: d = a * b */
     ret = mp_mul(a, b, d);
@@ -2841,8 +2842,8 @@ WOLFSSL_TEST_SUBROUTINE int math_test(void)
                    a[0].dp[1] = 2;
     b[0].used = 2;
     /* first, we try the simplest copy: a pointer to the a.dp copied to b */
-    val = (const unsigned char*)(fp_digit*)&a[0].dp;
-    retf = mp_read_unsigned_bin(b, val, sizeof(fp_digit));
+    val = (const unsigned char*)(mp_digit*)&a[0].dp;
+    retf = mp_read_unsigned_bin(b, val, sizeof(mp_digit));
     if (mp_cmp(a, b) == 0) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }

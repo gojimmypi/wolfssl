@@ -377,7 +377,7 @@ int esp_show_mp_attributes(char* c, MATH_INT_T* X)
 int esp_show_mp(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
-    int ret = FP_OKAY;
+    int ret = MP_OKAY;
 
     if (X == NULL) {
         ret = -1;
