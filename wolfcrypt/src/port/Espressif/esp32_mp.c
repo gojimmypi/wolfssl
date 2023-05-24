@@ -1002,6 +1002,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
+
+    /* lock HW for use, enable peripheral clock */
+    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
+        return ret;
+    }
+
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
@@ -1014,13 +1022,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGI(TAG, "mp = %u", mp);
 #endif
    }
-
-    /* lock HW for use, enable peripheral clock */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(tmpZ);
-        mp_clear(r_inv);
-        return ret;
-    }
 
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
@@ -1200,12 +1201,21 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 .* but all numbers in a calculation must be of the same length.
 .* The bit length of M′ is always 32.
 .*
-.* Note some DH references may use: Y = (G ^ X) mod P
- */
+ * Z = (X ^ Y) mod M   : Espressif generic notation
+ * Y = (G ^ X) mod P   : wolfSSL DH reference notation */
 int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
 {
     ESP_LOGV(TAG, "\nBegin esp_mp_exptmod \n");
 
+    if (mp_iszero(M)) {
+        ESP_LOGW(TAG, "esp_mp_exptmod M is zero!");
+        return MP_VAL;
+    }
+
+    if (mp_isone(M)) {
+        mp_clear(Z);
+        return MP_OKAY;
+    }
 #ifdef DEBUG_WOLFSSL
     if (esp_mp_exptmod_depth_counter != 0) {
         ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
@@ -1222,7 +1232,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     word32 maxWords_sz;
     word32 hwWords_sz;
 
-    MATH_INT_T r_inv;
+    MATH_INT_T r_inv[1];
     mp_digit mp;
 
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -1252,25 +1262,27 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
-    ret = mp_init(&r_inv);
+    ret = mp_init(r_inv);
     if ( (ret == 0) &&
-         ((ret = esp_get_rinv(&r_inv, M, (hwWords_sz << 6))) != MP_OKAY) ) {
+         ((ret = esp_get_rinv(r_inv, M, (hwWords_sz << 6))) != MP_OKAY) ) {
         ESP_LOGE(TAG, "calculate r_inv failed.");
-        mp_clear(&r_inv);
+        mp_clear(r_inv);
+        esp_mp_exptmod_depth_counter--;
         return ret;
     }
 
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
         ESP_LOGE(TAG, "esp_mp_hw_lock failed");
-        mp_clear(&r_inv);
+        mp_clear(r_inv);
+        esp_mp_exptmod_depth_counter--;
         return ret;
     }
     /* calc M' */
     /* if Pm is odd, uses mp_montgomery_setup() */
     if ( (ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY ) {
         ESP_LOGE(TAG, "failed to calculate M dash");
-        mp_clear(&r_inv);
+        mp_clear(r_inv);
         return ret;
     }
 
@@ -1366,8 +1378,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, Ys, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
-                          &r_inv,
-                          mp_count_bits(&r_inv),
+                          r_inv,
+                          mp_count_bits(r_inv),
                           hwWords_sz);
     /* step.3 write M' into memory                    */
     ESP_LOGV(TAG, "M' = %d", mp);
@@ -1383,7 +1395,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     /* step.7 clear and release HW                    */
     esp_mp_hw_unlock();
 
-    mp_clear(&r_inv);
+    mp_clear(r_inv);
 
 #endif /* regular ESP32 */
 
