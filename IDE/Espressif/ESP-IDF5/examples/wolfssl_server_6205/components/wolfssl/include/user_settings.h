@@ -184,5 +184,5 @@
 
 
 /* the new math test is known to be failing */
-#define NO_MATH_TEST
+#define NO_HW_MATH_TEST
 

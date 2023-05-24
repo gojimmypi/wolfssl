@@ -419,7 +419,7 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Wunused-function\"")
 PRAGMA_CLANG("clang diagnostic ignored \"-Wunused-function\"")
 
 WOLFSSL_TEST_SUBROUTINE int  error_test(void);
-WOLFSSL_TEST_SUBROUTINE int  math_test(void);
+WOLFSSL_TEST_SUBROUTINE int  hw_math_test(void);
 WOLFSSL_TEST_SUBROUTINE int  base64_test(void);
 WOLFSSL_TEST_SUBROUTINE int  base16_test(void);
 WOLFSSL_TEST_SUBROUTINE int  asn_test(void);
@@ -1062,8 +1062,8 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("mp       test passed!\n");
 #endif
 
-#ifndef NO_MATH_TEST
-    if ((ret = math_test()) != 0)
+#ifndef NO_HW_MATH_TEST
+    if ((ret = hw_math_test()) != 0)
         TEST_FAIL("mp_math  test failed!\n", ret);
     else
         TEST_PASS("mp_math  test passed!\n");
@@ -2024,7 +2024,7 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 #define THIS_TEST_MESSAGE ""
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#ifndef NO_MATH_TEST
+#ifndef NO_HW_MATH_TEST
 /*
 ******************************************************************************
 ******************************************************************************
@@ -2734,7 +2734,7 @@ static int math_test_mp_mulmod_template(void)
 ******************************************************************************
 ******************************************************************************
 */
-WOLFSSL_TEST_SUBROUTINE int math_test(void)
+WOLFSSL_TEST_SUBROUTINE int hw_math_test(void)
 {
     int ret = MP_OKAY; /* assume success until proven otherwise */
     int retf = MP_OKAY; /* we'll inspect some interim functions */

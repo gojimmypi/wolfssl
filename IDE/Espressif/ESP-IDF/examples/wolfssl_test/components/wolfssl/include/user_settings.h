@@ -217,7 +217,7 @@
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 // #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 
-// #define NO_MATH_TEST
+// #define NO_HW_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
 // #define CHECK_MP_READ_UNSIGNED_BIN /* this is known to fail in TFM */
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
