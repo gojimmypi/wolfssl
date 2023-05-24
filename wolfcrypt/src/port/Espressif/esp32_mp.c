@@ -1104,31 +1104,46 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
-    /* non-S3 Xtensa */
+    /* Classic ESP32, non-S3 Xtensa */
 
     /*Steps to use HW in the following order:
-    * 1. wait until clean HW engine
-    * 2. Write(N/512bits - 1) to MULT_MODE_REG
-    * 3. Write X,M(=G, X, P) to memory blocks
+    * prep:  wait until clean HW engine
+    *
+    * 1. Write (N/512bits - 1) to MULT_MODE_REG
+    * 2. Write X,M(=G, X, P) to memory blocks
     *    need to write data to each memory block only according to the length
     *    of the number.
-    * 4. Write M' to M_PRIME_REG
-    * 5. Write 1  to MODEXP_START_REG
-    * 6. Wait for the first operation to be done. Poll INTERRUPT_REG until it reads 1.
+    * 3. Write M' to M_PRIME_REG
+    * 4. Write 1  to MODEXP_START_REG
+    * 5. Wait for the first round of the operation to be completed.
+    *    Poll RSA_INTERRUPT_REG until it reads 1,
+    *    or until the RSA_INTR interrupt is generated.
     *    (Or until the INTER interrupt is generated.)
-    * 7. Write 1 to RSA_INTERRUPT_REG to clear the interrupt.
-    * 8. Write Y to RSA_X_MEM
-    * 9. Write 1 to RSA_MULT_START_REG
-    * 10. Wait for the second operation to be completed. Poll INTERRUPT_REG until it reads 1.
-    * 11. Read the Z from RSA_Z_MEM
-    * 12. Write 1 to RSA_INTERUPT_REG to clear the interrupt.
-    * 13. Release the HW engine
+    * 6. Write 1 to RSA_INTERRUPT_REG to clear the interrupt.
+    * 7. Write Yi (i ∈ [0, n) ∩ N) to RSA_X_MEM
+    *    Users need to write to the memory block only according to the length
+    *    of the number. Data beyond this length is ignored.
+    * 8. Write 1 to RSA_MULT_START_REG
+    * 9. Wait for the second operation to be completed.
+    *    Poll INTERRUPT_REG until it reads 1.
+    * 10. Read the Zi (i ∈ [0, n) ∩ N) from RSA_Z_MEM
+    * 11. Write 1 to RSA_INTERUPT_REG to clear the interrupt.
+    *
+    * post: Release the HW engine
+    *
+    * After the operation, the RSA_MULT_MODE_REG register, and memory blocks
+    * RSA_M_MEM and RSA_M_PRIME_REG remain unchanged. Users do not need to
+    * refresh these registers or memory blocks if the values remain the same.
     */
 
+    /* Prep wait for the engine */
     if ( (ret = esp_mp_hw_wait_clean()) != MP_OKAY ) {
         return ret;
     }
-    /* step.1                     512 bits => 16 words */
+
+    /* step.1
+     *  Write (N/512bits - 1) to MULT_MODE_REG
+     *  512 bits => 16 words */
     DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
 
     /* step.2 write X, M and r_inv into memory.
@@ -1176,11 +1191,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (mp_cmp(tmpZ, M) == MP_GT) {
         /*  Z -= M  */
         mp_sub(tmpZ, M, tmpZ);
-        ESP_LOGV(TAG, "Z is greater than M");
+        ESP_LOGI(TAG, "Z is greater than M");
     }
     if (negcheck) {
         mp_sub(M, tmpZ, tmpZ);
-        ESP_LOGV(TAG, "neg check adjustment");
+        ESP_LOGI(TAG, "neg check adjustment");
     }
 
     mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
