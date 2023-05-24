@@ -2066,9 +2066,16 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     int ret = 0;
 
     /* any timing resistance should be performed in HW calc when enabled */
+    if (mp_iszero(P)) {
+        ESP_LOGW(TAG, "esp_mp_exptmod, P is zero");
+    }
+    else {
         x = fp_count_bits(X);
         ret = esp_mp_exptmod(G, X, x, P, Y);
-        return ret;
+        if (ret == FP_OKAY) {
+            return ret;
+        }
+    }
     /* else fall through to SW calc  TODO */
 #endif
 
@@ -2951,9 +2958,11 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     x = fp_count_bits(X);
     if ((x > EPS_RSA_EXPT_XBTIS) ) {
-      int retHW = 0;
+      int retHW = FP_OKAY;
       retHW = esp_mp_exptmod(G, X, x, P, Y);
-      return retHW;
+      if (retHW == FP_OKAY) {
+         return retHW;
+      }
    }
    else {
       ESP_LOGV(TAG, "skipping esp_mp_exptmod, x = %d", EPS_RSA_EXPT_XBTIS);
@@ -3041,7 +3050,11 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
    if (x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV("TFM peek 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
-      return esp_mp_exptmod(G, X, x, P, Y);
+      int retHW = FP_OKAY;
+      retHW = esp_mp_exptmod(G, X, x, P, Y);
+      if (retHW == FP_OKAY) {
+         return retHW;
+      }
    }
    else{
       ESP_LOGV("TFM peek 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
@@ -3120,11 +3133,17 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   if(x > EPS_RSA_EXPT_XBTIS) {
+   if (x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV(TAG, "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
-      return esp_mp_exptmod(G, X, x, P, Y);
+      int retHW = FP_OKAY;
+      retHW = esp_mp_exptmod(G, X, x, P, Y);
+      if (retHW == FP_OKAY) {
+          return retHW;
+      }
    }
-   /* As we didn't return from HW, we are falling through to SW: */
+   else {
+      ESP_LOGV(TAG, "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
+   }    /* As we didn't return from HW, we are falling through to SW: */
 #endif
 
    if (X->sign == FP_NEG) {
