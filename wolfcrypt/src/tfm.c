@@ -4449,7 +4449,9 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+#ifndef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+    return fp_mulmod(a, b, c, d);
+#else
     int ret = MP_OKAY;
 
     int As; /* How many a bits? */
