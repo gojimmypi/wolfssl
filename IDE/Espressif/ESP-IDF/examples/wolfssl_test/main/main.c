@@ -224,7 +224,9 @@ void app_main(void)
         /* see wolfssl/wolfcrypt/error-crypt.h */
     }
 
+#ifdef DEBUG_WOLFSSL
     esp_show_usage_metrics();
+#endif
 
     /* after the test, we'll just wait */
     while (1) {
