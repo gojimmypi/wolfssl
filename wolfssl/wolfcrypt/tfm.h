@@ -307,7 +307,7 @@
 #define FP_MEM      (-2)
 #define FP_NOT_INF  (-3)
 #define FP_WOULDBLOCK (-4)
-#define FP_HW_BUSY    (-5)
+#define FP_HW_BUSY    (-7) /* assigned -7 to match SP_HW_BUSY */
 
 /* equalities */
 #define FP_LT        (-1)   /* less than */
