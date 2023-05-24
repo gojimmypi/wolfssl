@@ -1047,8 +1047,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         Rs = mp_count_bits(r_inv);
         /* success, show details */
 #ifdef DEBUG_WOLFSSL
-        ESP_LOGI(TAG, "r_inv bits = %d", Rs);
-        ESP_LOGI(TAG, "Exponent   = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
+        esp_show_mp("r_inv", r_inv);
+        ESP_LOGI(TAG, "r_inv bits    = %d", Rs);
+        ESP_LOGI(TAG, "Exponent      = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
         /* optionally show M and R inv
            esp_show_mp("    M", M);
            esp_show_mp("r_inv", r_inv);
@@ -1073,7 +1074,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
     else {
 #ifdef DEBUG_WOLFSSL
-        ESP_LOGI(TAG, "mp = %u", mp);
+        ESP_LOGI(TAG, "mp            = 0x%08x = %u", mp, mp);
 #endif
    }
 
