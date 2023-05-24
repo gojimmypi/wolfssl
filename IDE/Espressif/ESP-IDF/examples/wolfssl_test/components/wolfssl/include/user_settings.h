@@ -188,12 +188,6 @@
 */
 
 
-/* Optionally include alternate HW test library: alt_hw_test.h */
-/* When enabling, the ./components/wolfssl/CMakeLists.txt file
- * will need the name of the library in the idf_component_register
- * for the PRIV_REQUIRES list. */
-/* #define INCLUDE_ALT_HW_TEST */
-
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
@@ -222,3 +216,10 @@
 // #define CHECK_MP_READ_UNSIGNED_BIN /* this is known to fail in TFM */
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
+
+/* Optionally include alternate HW test library: alt_hw_test.h */
+/* When enabling, the ./components/wolfssl/CMakeLists.txt file
+ * will need the name of the library in the idf_component_register
+ * for the PRIV_REQUIRES list. */
+#define INCLUDE_ALT_HW_TEST
+
