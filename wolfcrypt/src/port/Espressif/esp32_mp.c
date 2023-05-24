@@ -70,7 +70,9 @@ static const char* const TAG = "wolfssl_esp32_mp";
 #ifdef DEBUG_WOLFSSL
     static int hw_validation = 0; /* are we validating HW and SW? (prevent call to HW) */
     static int esp_mp_mul_usage_ct = 0; /* how many times as esp_mul() been called ? */
+    static int esp_mp_mulmod_usage_ct = 0; /* how many times as esp_mul() been called ? */
     static int esp_mp_mul_error_ct = 0; /* how many esp_mul() validation failures have been encountered? */
+    static int esp_mp_mulmod_error_ct = 0; /* how many esp_mul() validation failures have been encountered? */
     #define SET_HW_VALIDATION {hw_validation = 1;}
     #define CLR_HW_VALIDATION {hw_validation = 0;}
     #define IS_HW_VALIDATION (hw_validation == 1)
@@ -607,6 +609,16 @@ int esp_show_usage_metrics(void)
         ESP_LOGW(TAG, "Number of esp_mp_mul failures: %d", esp_mp_mul_error_ct);
         ret = FP_VAL;
     }
+
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %d", esp_mp_mulmod_usage_ct);
+    if (esp_mp_mul_error_ct == 0) {
+        ESP_LOGI(TAG, "Success: no esp_mp_mulmod() errors.");
+    }
+    else {
+        ESP_LOGW(TAG, "Number of esp_mp_mul failures: %d", esp_mp_mulmod_error_ct);
+        ret = FP_VAL;
+    }
+
     return ret;
 }
 
@@ -958,6 +970,33 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T r_inv[1];
     MATH_INT_T tmpZ[1];
 
+#ifdef DEBUG_WOLFSSL
+    MATH_INT_T X2[1];
+    MATH_INT_T Y2[1];
+    MATH_INT_T M2[1];
+    MATH_INT_T Z2[1];
+    MATH_INT_T PEEK[1];
+    if (IS_HW_VALIDATION) {
+        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
+    }
+    else {
+
+        mp_init(X2);
+        mp_init(Y2);
+        mp_init(M2);
+        mp_init(Z2);
+
+        mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
+        mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
+        mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
+        mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
+
+        SET_HW_VALIDATION;
+        mp_mulmod(X2, Y2, M2, Z2);
+        CLR_HW_VALIDATION;
+    }
+#endif /* DEBUG_WOLFSSL */
+
 #if CONFIG_IDF_TARGET_ESP32S3
     uint32_t OperandBits;
     int WordsForOperand;
@@ -1204,6 +1243,42 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     mp_clear(r_inv);
 
     esp_clean_result(Z, 0);
+
+#ifdef DEBUG_WOLFSSL
+    esp_mp_mulmod_usage_ct++;
+    if (fp_cmp(X, X2) != 0) {
+        // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
+    }
+    if (fp_cmp(Y, Y2) != 0) {
+        // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
+    }
+    if (fp_cmp(Z, Z2) != 0) {
+        int found_z_used = Z->used;
+        esp_mp_mulmod_error_ct++;
+
+        ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
+        ESP_LOGI(TAG, "Xs            = %d", Xs);
+        ESP_LOGI(TAG, "Ys            = %d", Ys);
+       // ESP_LOGI(TAG, "Zs            = %d", Zs);
+        ESP_LOGI(TAG, "found_z_used  = %d", found_z_used);
+        ESP_LOGI(TAG, "z.used        = %d", Z->used);
+        ESP_LOGI(TAG, "hwWords_sz    = %d", hwWords_sz);
+        ESP_LOGI(TAG, "maxWords_sz   = %d", maxWords_sz);
+       // ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
+        ESP_LOGI(TAG, "hwWords_sz<<2   = %d", hwWords_sz << 2);
+        esp_show_mp("X", X2);  /* show the copy in X2, as X may have been clobbered */
+        esp_show_mp("Y", Y2);  /* show the copy in Y2, as Y may have been clobbered */
+        esp_show_mp("Peek Z", PEEK); /* this is the Z before start */
+        esp_show_mp("Z", Z);   /* this is the HW result */
+        esp_show_mp("Z2", Z2); /* this is the SW result */
+    #ifndef NO_RECOVER_SOFTWARE_CALC
+        ESP_LOGW(TAG, "Recovering mp_mul error with software result");
+        mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
+    #else
+        ret = FP_VAL;
+    #endif
+    }
+#endif
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
     return ret;
