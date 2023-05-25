@@ -1025,7 +1025,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
 
         SET_HW_VALIDATION;
-        mp_mulmod(X2, Y2, M2, Z2);
+        int ret2 = 0;
+        ret2 = mp_mulmod(X2, Y2, M2, Z2);
+        if (ret2 == 0) {
+            ESP_LOGI(TAG, "wolfSSL mp_mulmod success");
+        }
+        else {
+            ESP_LOGE(TAG, "wolfSSL mp_mulmod failed");
+        }
         CLR_HW_VALIDATION;
     }
 #endif /* DEBUG_WOLFSSL */
@@ -1315,7 +1322,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
         }
         else {
-            ESP_LOGI(TAG, "\n\n"
+            ESP_LOGW(TAG, "\n\n"
                           "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
                           "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
                           mp, mp, mp2[0], mp2[0] );
