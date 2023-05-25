@@ -74,7 +74,7 @@
 **
 ** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 **   When defined, use hardware acceleration esp_mp_mul()
-**   for Large Number Multiplication: Z = X × Y
+**   for Large Number Multiplication: Z = X * Y
 **
 ** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 **   When defined, use hardware acceleration esp_mp_exptmod()
@@ -82,7 +82,7 @@
 **
 ** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 **   When defined, use hardware acceleration esp_mp_mulmod()
-**   for Large Number Modular Multiplication: Z = X × Y mod M
+**   for Large Number Modular Multiplication: Z = X * Y mod M
 **
 *******************************************************************************
 ** Optional Settings:
@@ -323,6 +323,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         #define ESP_RSA_TIMEOUT_CNT     0x249F00
     #endif
 
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
     /*
      * The parameter names in the Espressif implementation are arbitrary.
      *
@@ -338,18 +339,22 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
                        word32 Xbits, /* Ys   typically = mp_count_bits (X) */
                        MATH_INT_T* M,    /* P  */
                        MATH_INT_T* Z);   /* Y  */
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
     /* Z = X * Y */
     int esp_mp_mul(MATH_INT_T* X,
                    MATH_INT_T* Y,
                    MATH_INT_T* Z);
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL */
 
-
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
     /* Z = X * Y (mod M) */
     int esp_mp_mulmod(MATH_INT_T* X,
                       MATH_INT_T* Y,
                       MATH_INT_T* M,
                       MATH_INT_T* Z);
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
 
 #endif /* !NO_RSA || HAVE_ECC*/
 

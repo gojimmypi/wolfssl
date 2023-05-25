@@ -250,6 +250,11 @@ static int esp_mp_hw_unlock( void )
     return ret;
 }
 
+
+#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+   || !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+   /* M' only used for mulmod and mulexp_mod */
+
 /* M' M-Prime Calculation for HW Accelerator */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
@@ -323,6 +328,7 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 
     return ret;
 }
+#endif /* ! xEXPTMOD || ! xMULMOD for M' */
 
 /* the result may need to have extra bytes zeroed or used length adjusted */
 static int esp_clean_result(MATH_INT_T* Z, int used_padding)
@@ -584,6 +590,9 @@ static word32 bits2words(word32 bits)
     return ((bits + (d - 1)) / d);
 }
 
+#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+   || !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+   /* rinv and M' only used for mulmod and mulexp_mod */
 /* get rinv */
 static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
@@ -627,6 +636,7 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
     ESP_LOGV(TAG, "\nEnd esp_get_rinv \n");
     return ret;
 }
+#endif /* ! xEXPTMOD || ! xMULMOD for rinv */
 
 #ifdef DEBUG_WOLFSSL
 
@@ -662,6 +672,7 @@ int esp_hw_validation_active(void)
 }
 #endif
 
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Modular Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -693,6 +704,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         mp_forcezero(Z);
         return MP_OKAY;
     }
+#ifdef DEBUG_WOLFSSL
+    if (!esp_hw_validation_active()) {
+        return MP_HW_VALIDATION_ACTIVE
+    }
+#endif
 
 #ifdef DEBUG_WOLFSSL
     MATH_INT_T X2[1];
@@ -979,7 +995,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     return ret;
 }
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL*/
 
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 /* Large Number Modular Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -1002,6 +1020,19 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     mp_digit mp;
     MATH_INT_T r_inv[1];
     MATH_INT_T tmpZ[1];
+
+    if ((M->dp[0] & 1) == 0) {
+#ifdef WOLFSSL_DEBUG
+        ESP_LOGW(TAG, "esp_mp_mulmod does not support even numbers");
+#endif
+        return MP_VAL;
+    }
+
+#ifdef WOLFSSL_DEBUG
+    if (esp_hw_validation_active()) {
+        return MP_HW_VALIDATION_ACTIVE;
+    }
+#endif
 
 #ifdef DEBUG_WOLFSSL
     MATH_INT_T X2[1];
@@ -1227,7 +1258,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      *  Write (N/512bits - 1) to MULT_MODE_REG
      *  512 bits => 16 words */
     DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
+#ifdef WOLFSSL_DEBUG
     ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (hwWords_sz >> 4) - 1);
+#endif // WOLFSSL_DEBUG
 
     /* step.2 write X, M, and r_inv into memory.
      * The capacity of each memory block is 128 words.
@@ -1238,6 +1271,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, r_inv, Rs, hwWords_sz);
 
     /* step.3 write M' into memory                   */
+    /* confirmed with Sean that mp2 does not support even modulus
+     * indeed we see a failure, but we can predict when modules is odd
+     * or when mp != mp2[0] */
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
     asm volatile("memw");
     asm volatile("nop");
@@ -1360,7 +1396,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     return ret;
 
 }
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
 
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 /* Large Number Modular Exponentiation
  *
  *    Z = X^Y mod M
@@ -1591,6 +1629,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 
     return ret;
 }
+#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) &&
         * !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
