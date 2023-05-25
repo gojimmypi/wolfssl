@@ -2081,9 +2081,11 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     }
     else {
         x = fp_count_bits(X);
-        ret = esp_mp_exptmod(G, X, x, P, Y);
-        if (ret == FP_OKAY) {
-            return ret;
+        if (x > EPS_RSA_EXPT_XBTIS) {
+            ret = esp_mp_exptmod(G, X, x, P, Y);
+            if (ret == FP_OKAY) {
+                return ret;
+            }
         }
     }
     /* else fall through to SW calc  TODO */
@@ -3036,8 +3038,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   int x = fp_count_bits (X);
-   ESP_LOGV("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
+    int x = 0;
 #endif
 
    /* handle modulus of zero and prevent overflows */
@@ -3061,6 +3062,8 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
    if (x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV("TFM peek 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
       int retHW = FP_OKAY;
+      x = fp_count_bits (X);
+      ESP_LOGV("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
       retHW = esp_mp_exptmod(G, X, x, P, Y);
       if (retHW == FP_OKAY) {
          return retHW;
@@ -3154,6 +3157,9 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    else {
       ESP_LOGV(TAG, "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
    }    /* As we didn't return from HW, we are falling through to SW: */
+   /* TODO - if we contonue on, we need to have saved params!
+    * current pointers may get clobbered
+    * e.g. when parameter is also result*/
 #endif
 
    if (X->sign == FP_NEG) {
