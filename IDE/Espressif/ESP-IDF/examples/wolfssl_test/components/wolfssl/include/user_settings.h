@@ -201,15 +201,15 @@
 
 
 /* debug options */
-#define ESP_VERIFY_MEMBLOCK
+// #define ESP_VERIFY_MEMBLOCK
 #define DEBUG_WOLFSSL_VERBOSE
 #define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
 /* optionally turn off individual math HW acceleration features */
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 
 // #define NO_HW_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
@@ -221,5 +221,5 @@
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
  * will need the name of the library in the idf_component_register
  * for the PRIV_REQUIRES list. */
-#define INCLUDE_ALT_HW_TEST
+// #define INCLUDE_ALT_HW_TEST
 
