@@ -116,7 +116,7 @@
     #define ESP32_USE_RSA_PRIMITIVE
     /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
-    #define EPS_RSA_EXPT_XBTIS           0
+    #define EPS_RSA_EXPT_XBTIS           32 /* NOTE HW unreliable for small values! */
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            0
 #endif
@@ -207,8 +207,8 @@
 #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
 /* optionally turn off individual math HW acceleration features */
-// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
 
 // #define NO_HW_MATH_TEST
