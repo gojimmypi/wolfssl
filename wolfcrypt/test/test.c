@@ -1054,12 +1054,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("MEMORY   test passed!\n");
 
-#ifndef NO_HW_MATH_TEST
-    if ((ret = hw_math_test()) != 0)
-        TEST_FAIL("mp_math  test failed!\n", ret);
-    else
-        TEST_PASS("mp_math  test passed!\n");
-#endif
+
 
 #if defined(WOLFSSL_PUBLIC_MP) && \
     (defined(WOLFSSL_SP_MATH_ALL) || defined(USE_FAST_MATH))
@@ -1067,6 +1062,13 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_FAIL("mp       test failed!\n", ret);
     else
         TEST_PASS("mp       test passed!\n");
+#endif
+
+#ifndef NO_HW_MATH_TEST
+    if ((ret = hw_math_test()) != 0)
+        TEST_FAIL("mp_math  test failed!\n", ret);
+    else
+        TEST_PASS("mp_math  test passed!\n");
 #endif
 
     PRIVATE_KEY_UNLOCK();
@@ -44736,6 +44738,8 @@ WOLFSSL_TEST_SUBROUTINE int mp_test(void)
          #if !defined(WOLFSSL_SP_MATH) || (defined(HAVE_ECC) && \
                                        (defined(ECC_SHAMIR) || defined(FP_ECC)))
             /* Ensure sqrmod produce same result as mulmod. */
+//            a->dp[0] = 6;
+//            p->dp[0] = 5;
             ret = mp_sqrmod(a, p, r1);
             if (ret != 0)
                 ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
