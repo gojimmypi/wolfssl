@@ -326,7 +326,12 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
             goto clean;
         }
         else {
-            ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
+            if (ret == MP_HW_VALIDATION_ACTIVE) {
+                ESP_LOGV(TAG, "esp_mp_mul validation active");
+            }
+            else {
+                ESP_LOGE(TAG, "esp_mp_mul failure in tfm = %d", ret);
+            }
             /* if errors actually encountered, consider fall through to SW */
   //          goto clean;
         }
