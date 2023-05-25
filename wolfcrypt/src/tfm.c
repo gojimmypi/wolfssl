@@ -317,7 +317,10 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     // esp_mp_cmp(C3, C);
     //    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
 
-    if (!esp_hw_validation_active()) {
+//    if (esp_hw_validation_active()) {
+//        ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
+//    }
+//    else {
         ret = esp_mp_mul(A, B, C); /* HW */
         if (ret == MP_OKAY) {
             goto clean;
@@ -325,9 +328,11 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         else {
             ESP_LOGE(TAG, "esp_mp_mul failure in tfm");
             /* if errors actually encountered, consider fall through to SW */
-            goto clean;
+  //          goto clean;
         }
-    }
+//    }
+    /* TODO confirm SW result returned in HW upon failure or fall through here
+     * if we fall through, we'll need */
 #endif
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
@@ -4510,19 +4515,21 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
-        if (esp_hw_validation_active()) {
-            ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
-        }
-        else {
+//        if (esp_hw_validation_active()) {
+//            ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
+//        }
+//        else {
             ret = esp_mp_mulmod(a, b, c, d);
             if (ret == MP_OKAY) {
                 ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
                 return ret;
             }
             else {
+#ifdef WOLFSSL_DEBUG
                 ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
-            }
-        }
+#endif
+            } /* esp_mp_mulmod exit check */
+//        }
 
 #ifdef DEBUG_WOLFSSLx
         if ((int)a == (int)d) {
@@ -4577,8 +4584,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     /* depending on ESP_RSA_MULM_BITS setting, we may
      ** fall through to SW: */
 #endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
-    ret = fp_mulmod(a, b, c, d);
-    return ret;
+    return fp_mulmod(a, b, c, d); /* TODO clean this up */
 }
 
 /* d = a - b (mod c) */

@@ -742,8 +742,17 @@ typedef struct sp_ecc_ctx {
 /* Unused error. Defined for backward compatibility. */
 #define MP_NOT_INF      (-5)
 /* Unused error. Defined for backward compatibility. */
+
+/* HW busy is a signal to the caller that the hardware was busy and
+ * could not complete. Caller should fall through to SW */
 #define MP_HW_BUSY      (-7)
-#define MP_RANGE        MP_HW_BUSY /* range is last item */
+
+/* typically used only during debugging, validation active
+ * will prevent recursive calls to HW for SW validation check.*/
+#define MP_HW_VALIDATION_ACTIVE (-8)
+
+/* range is last item */
+#define MP_RANGE        MP_HW_VALIDATION_ACTIVE
 #define MP_SIZE SP_INT_DIGITS
 #ifdef USE_FAST_MATH
 /* For old FIPS, need FP_MEM defined for old implementation. */
