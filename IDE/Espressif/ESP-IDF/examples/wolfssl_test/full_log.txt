@@ -2,8 +2,7 @@ ets Jul 29 2019 12:21:46
 
 rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
 configsip: 0, SPIWP:0xee
-clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_d
-rv:0x00
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
 mode:DIO, clock div:2
 load:0x3fff0030,len:7000
 load:0x40078000,len:15452
@@ -11,868 +10,1439 @@ ho 0 tail 12 room 4
 load:0x40080400,len:3840
 entry 0x4008064c
 I (29) boot: ESP-IDF v5.0-dirty 2nd stage bootloader
-I (29) boot: compile time 08:23:45
+I (29) boot: compile time 10:20:13
 I (29) boot: chip revision: v3.0
-I (32) boot_comm: chip revision: 3, min. bootloader chip revisio
-n: 0
+I (32) boot_comm: chip revision: 3, min. bootloader chip revision: 0
 I (39) boot.esp32: SPI Speed      : 40MHz
 I (44) boot.esp32: SPI Mode       : DIO
 I (48) boot.esp32: SPI Flash Size : 2MB
 I (53) boot: Enabling RNG early entropy source...
 I (58) boot: Partition Table:
-I (62) boot: ## Label            Usage          Type ST Offset
- Length
-I (69) boot:  0 nvs              WiFi data        01 02 00009000
- 00006000
-I (77) boot:  1 phy_init         RF data          01 01 0000f000
- 00001000
-I (84) boot:  2 factory          factory app      00 00 00010000
- 00177000
+I (62) boot: ## Label            Usage          Type ST Offset   Length
+I (69) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (77) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (84) boot:  2 factory          factory app      00 00 00010000 00177000
 I (92) boot: End of partition table
-I (96) boot_comm: chip revision: 3, min. application chip revisi
-on: 0
-I (103) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size
-=23c98h (146584) map
-I (164) esp_image: segment 1: paddr=00033cc0 vaddr=3ffb0000 size
-=02930h ( 10544) load
-I (169) esp_image: segment 2: paddr=000365f8 vaddr=40080000 size
-=09a20h ( 39456) load
-I (186) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size
-=6a6c4h (435908) map
-I (344) esp_image: segment 4: paddr=000aa6ec vaddr=40089a20 size
-=021fch (  8700) load
-I (348) esp_image: segment 5: paddr=000ac8f0 vaddr=50000000 size
-=00010h (    16) load
-I (356) boot: Loaded app from partition at offset 0x10000
-I (356) boot: Disabling RNG early entropy source...
-I (373) cpu_start: Pro cpu up.
-I (373) cpu_start: Starting app cpu, entry point is 0x4008112c
-I (359) cpu_start: App cpu up.
-I (387) cpu_start: Pro cpu start user code
-I (387) cpu_start: cpu freq: 160000000 Hz
-I (387) cpu_start: Application information:
-I (392) cpu_start: Project name:     wolfssl_test
-I (397) cpu_start: App version:      v5.6.0-stable-888-gf8af6b6b
-7-di
-I (404) cpu_start: Compile time:     May 23 2023 10:40:47
-I (411) cpu_start: ELF file SHA256:  7af460e808d12fde...
-I (417) cpu_start: ESP-IDF:          v5.0-dirty
-I (422) heap_init: Initializing. RAM available for dynamic alloc
-ation:
-I (429) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
-I (435) heap_init: At 3FFB3AC0 len 0002C540 (177 KiB): DRAM
-I (441) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
-I (448) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
-I (454) heap_init: At 4008BC1C len 000143E4 (80 KiB): IRAM
-I (462) spi_flash: detected chip: generic
-I (465) spi_flash: flash io: dio
-W (469) spi_flash: Detected size(4096k) larger than the size in
-the binary image header(2048k). Using the size in the binary ima
-ge header.
-I (483) cpu_start: Starting scheduler on PRO CPU.
+I (96) boot_comm: chip revision: 3, min. application chip revision: 0
+I (103) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=242f8h (148216) map
+I (165) esp_image: segment 1: paddr=00034320 vaddr=3ffb0000 size=02930h ( 10544) load
+I (169) esp_image: segment 2: paddr=00036c58 vaddr=40080000 size=093c0h ( 37824) load
+I (186) esp_image: segment 3: paddr=00040020 vaddr=400d0020 size=6bd38h (441656) map
+I (346) esp_image: segment 4: paddr=000abd60 vaddr=400893c0 size=028dch ( 10460) load
+I (351) esp_image: segment 5: paddr=000ae644 vaddr=50000000 size=00010h (    16) load
+I (358) boot: Loaded app from partition at offset 0x10000
+I (358) boot: Disabling RNG early entropy source...
+I (375) cpu_start: Pro cpu up.
+I (375) cpu_start: Starting app cpu, entry point is 0x40081130
+I (361) cpu_start: App cpu up.
+I (389) cpu_start: Pro cpu start user code
+I (389) cpu_start: cpu freq: 160000000 Hz
+I (389) cpu_start: Application information:
+I (394) cpu_start: Project name:     wolfssl_test
+I (399) cpu_start: App version:      v5.6.0-stable-919-g78cafb6ce-di
+I (406) cpu_start: Compile time:     May 24 2023 17:42:30
+I (413) cpu_start: ELF file SHA256:  dd52878df3738cc8...
+I (419) cpu_start: ESP-IDF:          v5.0-dirty
+I (424) heap_init: Initializing. RAM available for dynamic allocation:
+I (431) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (437) heap_init: At 3FFB3AD0 len 0002C530 (177 KiB): DRAM
+I (443) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (450) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (456) heap_init: At 4008BC9C len 00014364 (80 KiB): IRAM
+I (464) spi_flash: detected chip: generic
+I (467) spi_flash: flash io: dio
+W (471) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using
+the size in the binary image header.
+I (485) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
-I (503) wolfssl_test: ------------------------------------------
---------------
-I (503) wolfssl_test: ------------------------------------------
---------------
-I (503) wolfssl_test: ---------------------- BEGIN MAIN --------
---------------
-I (503) wolfssl_test: ------------------------------------------
---------------
-I (513) wolfssl_test: ------------------------------------------
---------------
-I (523) esp32_util: Extended Version and Platform Information.
-I (533) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.0
-I (533) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006000
-I (543) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://gith
-ub.com/gojimmypi/wolfssl.git
-I (553) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2
-_fix
-I (553) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = f8af6b6b742a48
-14ba3e675765e8b3d0d114b119
-I (563) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = f8af6b6b
-7
-I (573) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Mon May
-22 23:04:48 2023 -0700'
-I (583) esp32_util: CONFIG_IDF_TARGET = esp32
-I (583) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
-I (593) esp32_util: Xthal_have_ccount: 1
-I (593) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 50000
-I (603) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 50000
-I (613) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
-I (613) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
-I (623) esp32_util: Stack HWM: 48656
-I (623) esp32_util: ESP32WROOM32_CRYPT is enabled for ESP32.
-I (633) esp32_util: NOT SINGLE_THREADED
-I (633) wolfssl_test: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = 160 MH
-z
-I (643) wolfssl_test: Xthal_have_ccount = 1
-I (643) wolfssl_test: Stack HWM: 48656
+I (495) wolfssl_test: --------------------------------------------------------
+I (495) wolfssl_test: --------------------------------------------------------
+I (505) wolfssl_test: ---------------------- BEGIN MAIN ----------------------
+I (505) wolfssl_test: --------------------------------------------------------
+I (515) wolfssl_test: --------------------------------------------------------
+I (525) esp32_util: Extended Version and Platform Information.
+I (535) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.0
+I (535) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006000
+I (545) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (555) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (555) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 78cafb6cec891e87b6243d2244cbc546cead39e1
+I (565) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 78cafb6ce
+I (575) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Wed May 24 17:25:46 2023 -0700'
+I (585) esp32_util: CONFIG_IDF_TARGET = esp32
+I (585) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
+I (595) esp32_util: Xthal_have_ccount: 1
+I (595) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 50000
+I (605) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 50000
+I (615) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (615) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (625) esp32_util: Stack HWM: 48656
+I (625) esp32_util: ESP32WROOM32_CRYPT is enabled for ESP32.
+I (635) esp32_util: NOT SINGLE_THREADED
+I (635) wolfssl_test: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = 160 MHz
+I (645) wolfssl_test: Xthal_have_ccount = 1
+I (645) wolfssl_test: Stack HWM: 48656
 
-I (653) wolfssl_test: ESP32WROOM32_CRYPT is enabled.
-----------------------------------------------------------------
---------------
+I (655) wolfssl_test: ESP32WROOM32_CRYPT is enabled.
+------------------------------------------------------------------------------
  wolfSSL version 5.6.0
-----------------------------------------------------------------
---------------
+------------------------------------------------------------------------------
 error    test passed!
 MEMORY   test passed!
-mp       test passed!
-I (7493) wolfcrypt_test: Begin math_test()
-I (7493) wolfcrypt_test: CheckRunTimeFastMath() =  136
-I (7493) wolfcrypt_test: FP_SIZE   =  136
-I (7493) wolfcrypt_test: DIGIT_BIT =  32
-I (7513) wolfcrypt_test: Begin math_test_mp_mul_1()
-I (7513) wolfcrypt_test: Success: mp_mul() : challe
-nge:
-8 word test, positive operands: a * b
-I (7523) wolfc
-rypt_test: Beg
-in math_test_c
-hallenge_1()
-I (7523) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : challeng
-e:
-32 word test,
-positive opera
-nds: a * b mod
- c
-I (7523) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : a * b mo
-d c check: 4
-I (7523) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : 32 word
-test, positive
- operands: a *
- b mod c
-I (7533) MATH_
-INT_T:
-I (7533) MATH_
-INT_T: Operand
- a.used = 32;
-I (7533) MATH_
-INT_T: Operand
- a.sign = 0;
-I (7543) MATH_
-INT_T:
-I (7543) MATH_
-INT_T: Operand
- b.used = 32;
-I (7553) MATH_
-INT_T: Operand
- b.sign = 0;
-I (7553) MATH_
-INT_T:
-I (7553) MATH_
-INT_T: Operand
- b.used = 32;
-I (7563) MATH_
-INT_T: Operand
- b.sign = 0;
-I (7563) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : two-word
- interim a * b
- mod c
-I (7573) wolfc
-rypt_test: Suc
-cess: fp_cmp o
-n 0 == 0; used
- length zero.
-I (7583) wolfc
-rypt_test: Suc
-cess: mp_init_
-load() byte or
-der check
-I (7583) wolfc
-rypt_test: Suc
-cess: mp_add o
-n standard 1 +
- 1 check
-I (7593) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : a * b mo
-d c check: 4
-I (7603) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : two-word
- operands a *
-b mod c
-I (7613) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : 8 word x
- 2 word operan
-ds a * b mod c
-I (7623) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : 32 word
-test, a is neg
-ative: a * b m
-od c
-I (7623) wolfc
-rypt_test: Suc
-cess: mp_mulmo
-d() : 32 Word
-HW Challenge:
-a * b mod c
-I (7633) wolfc
-rypt_test: Mat
-h test complet
-ed.
-mp_math  test
-passed!
-I (7643) wolfc
-rypt_test: ecc
-_test ECC_MIN_
-KEY_SZ = 224
+I (685) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (685) MATH_INT_T: r_inv:
+I (685) MATH_INT_T:
+I (695) MATH_INT_T: r_inv.used = 1;
+I (695) MATH_INT_T: r_inv.sign = 0;
+I (705) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (705) MATH_INT_T:
+I (705) wolfssl_esp32_mp: r_inv bits    = 5
+I (715) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (725) wolfssl_esp32_mp: mp            = 0x10204081 = 270549121
+I (725) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (735) wolfssl_esp32_mp: Xs            = 8
+I (735) wolfssl_esp32_mp: Ys            = 8
+I (745) wolfssl_esp32_mp: found_z_used  = 1
+I (745) wolfssl_esp32_mp: z.used        = 1
+I (755) wolfssl_esp32_mp: hwWords_sz    = 16
+I (755) wolfssl_esp32_mp: maxWords_sz   = 1
+I (765) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (765) MATH_INT_T: X:
+I (775) MATH_INT_T:
+I (775) MATH_INT_T: X.used = 1;
+I (775) MATH_INT_T: X.sign = 0;
+I (785) MATH_INT_T: X.dp[ 0] = 0x000000b9;  /*  0 */
+I (785) MATH_INT_T:
+I (785) MATH_INT_T: Y:
+I (795) MATH_INT_T:
+I (795) MATH_INT_T: Y.used = 1;
+I (795) MATH_INT_T: Y.sign = 0;
+I (805) MATH_INT_T: Y.dp[ 0] = 0x000000b9;  /*  0 */
+I (805) MATH_INT_T:
+I (815) MATH_INT_T: M:
+I (815) MATH_INT_T:
+I (815) MATH_INT_T: M.used = 1;
+I (825) MATH_INT_T: M.sign = 0;
+I (825) MATH_INT_T: M.dp[ 0] = 0x0000007e;  /*  0 */
+I (835) MATH_INT_T:
+I (835) MATH_INT_T: r_inv:
+I (835) MATH_INT_T:
+I (835) MATH_INT_T: r_inv.used = 1;
+I (845) MATH_INT_T: r_inv.sign = 0;
+I (845) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (855) MATH_INT_T:
+I (855) wolfssl_esp32_mp:
 
-I (7643) wolfs
-sl: GetLength
-- value exceed
-s buffer lengt
-h
-I (7653) wolfc
-rypt_test: ecc
-_test_curve ke
-ySize = 28
+M' MISMATCH esp_calc_Mdash = 0x10204081 = 270549121
+vs mp_montgomery_setup     = 0xa5a5a5a5 = -1515870811
 
-I (16983) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
-I (21213) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (21213) wolfssl: Checking size of PKCS8
-I (21213) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (21213) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (21223) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 60
-I (21233) wolfcrypt_test: ecc_test_curve keySize = 30
 
-I (31543) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
-I (34363) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (34373) wolfssl: Checking size of PKCS8
-I (34373) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (34373) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (34383) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 65
-I (34383) wolfcrypt_test: ecc_test_curve keySize = 32
+I (875) MATH_INT_T: HW Z:
+I (875) MATH_INT_T:
+I (875) MATH_INT_T: HW Z.used = 1;
+I (885) MATH_INT_T: HW Z.sign = 0;
+I (885) MATH_INT_T: HW Z.dp[ 0] = 0x00000069;  /*  0 */
+I (895) MATH_INT_T:
+I (895) MATH_INT_T: SW Z2:
+I (895) MATH_INT_T:
+I (895) MATH_INT_T: SW Z2.used = 1;
+I (905) MATH_INT_T: SW Z2.sign = 0;
+I (905) MATH_INT_T: SW Z2.dp[ 0] = 0x0000004f;  /*  0 */
+I (915) MATH_INT_T:
+I (915) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 1 tries
+I (925) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 0 failures
+I (925) wolfssl_esp32_mp:
+E (935) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (935) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (945) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (955) MATH_INT_T: r_inv:
+I (955) MATH_INT_T:
+I (955) MATH_INT_T: r_inv.used = 1;
+I (965) MATH_INT_T: r_inv.sign = 0;
+I (965) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (975) MATH_INT_T:
+I (975) wolfssl_esp32_mp: r_inv bits    = 5
+I (985) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (985) wolfssl_esp32_mp: mp            = 0x3ef368eb = 1056139499
+I (995) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (1005) wolfssl_esp32_mp: Xs            = 6
+I (1005) wolfssl_esp32_mp: Ys            = 6
+I (1005) wolfssl_esp32_mp: found_z_used  = 1
+I (1015) wolfssl_esp32_mp: z.used        = 1
+I (1015) wolfssl_esp32_mp: hwWords_sz    = 16
+I (1025) wolfssl_esp32_mp: maxWords_sz   = 1
+I (1025) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (1035) MATH_INT_T: X:
+I (1035) MATH_INT_T:
+I (1045) MATH_INT_T: X.used = 1;
+I (1045) MATH_INT_T: X.sign = 0;
+I (1045) MATH_INT_T: X.dp[ 0] = 0x0000003a;  /*  0 */
+I (1055) MATH_INT_T:
+I (1055) MATH_INT_T: Y:
+I (1065) MATH_INT_T:
+I (1065) MATH_INT_T: Y.used = 1;
+I (1065) MATH_INT_T: Y.sign = 0;
+I (1075) MATH_INT_T: Y.dp[ 0] = 0x0000003a;  /*  0 */
+I (1075) MATH_INT_T:
+I (1085) MATH_INT_T: M:
+I (1085) MATH_INT_T:
+I (1085) MATH_INT_T: M.used = 1;
+I (1095) MATH_INT_T: M.sign = 0;
+I (1095) MATH_INT_T: M.dp[ 0] = 0x0000003d;  /*  0 */
+I (1105) MATH_INT_T:
+I (1105) MATH_INT_T: r_inv:
+I (1105) MATH_INT_T:
+I (1105) MATH_INT_T: r_inv.used = 1;
+I (1115) MATH_INT_T: r_inv.sign = 0;
+I (1115) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (1125) MATH_INT_T:
+I (1125) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = 1056139499  !
+I (1135) MATH_INT_T: HW Z:
+I (1135) MATH_INT_T:
+I (1145) MATH_INT_T: HW Z.used = 1;
+I (1145) MATH_INT_T: HW Z.sign = 0;
+I (1155) MATH_INT_T: HW Z.dp[ 0] = 0x00000009;  /*  0 */
+I (1155) MATH_INT_T:
+I (1155) MATH_INT_T: SW Z2:
+I (1165) MATH_INT_T:
+I (1165) MATH_INT_T: SW Z2.used = 1;
+I (1175) MATH_INT_T: SW Z2.sign = 0;
+I (1175) MATH_INT_T: SW Z2.dp[ 0] = 0x00000009;  /*  0 */
+I (1185) MATH_INT_T:
+I (1185) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 2 tries
+I (1185) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 1 failures
+I (1195) wolfssl_esp32_mp:
+I (1195) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (1205) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (1215) MATH_INT_T: r_inv:
+I (1215) MATH_INT_T:
+I (1215) MATH_INT_T: r_inv.used = 1;
+I (1225) MATH_INT_T: r_inv.sign = 0;
+I (1225) MATH_INT_T: r_inv.dp[ 0] = 0x00000087;  /*  0 */
+I (1235) MATH_INT_T:
+I (1235) wolfssl_esp32_mp: r_inv bits    = 8
+I (1245) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (1245) wolfssl_esp32_mp: mp            = 0xc2ec81f3 = 3270279667
+I (1255) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (1265) wolfssl_esp32_mp: Xs            = 8
+I (1265) wolfssl_esp32_mp: Ys            = 8
+I (1265) wolfssl_esp32_mp: found_z_used  = 1
+I (1275) wolfssl_esp32_mp: z.used        = 1
+I (1275) wolfssl_esp32_mp: hwWords_sz    = 16
+I (1285) wolfssl_esp32_mp: maxWords_sz   = 1
+I (1285) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (1295) MATH_INT_T: X:
+I (1295) MATH_INT_T:
+I (1305) MATH_INT_T: X.used = 1;
+I (1305) MATH_INT_T: X.sign = 0;
+I (1305) MATH_INT_T: X.dp[ 0] = 0x000000ae;  /*  0 */
+I (1315) MATH_INT_T:
+I (1315) MATH_INT_T: Y:
+I (1325) MATH_INT_T:
+I (1325) MATH_INT_T: Y.used = 1;
+I (1325) MATH_INT_T: Y.sign = 0;
+I (1335) MATH_INT_T: Y.dp[ 0] = 0x000000ae;  /*  0 */
+I (1335) MATH_INT_T:
+I (1345) MATH_INT_T: M:
+I (1345) MATH_INT_T:
+I (1345) MATH_INT_T: M.used = 1;
+I (1355) MATH_INT_T: M.sign = 0;
+I (1355) MATH_INT_T: M.dp[ 0] = 0x000000c5;  /*  0 */
+I (1355) MATH_INT_T:
+I (1365) MATH_INT_T: r_inv:
+I (1365) MATH_INT_T:
+I (1365) MATH_INT_T: r_inv.used = 1;
+I (1375) MATH_INT_T: r_inv.sign = 0;
+I (1375) MATH_INT_T: r_inv.dp[ 0] = 0x00000087;  /*  0 */
+I (1385) MATH_INT_T:
+I (1385) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -1024687629  !
+I (1395) MATH_INT_T: HW Z:
+I (1395) MATH_INT_T:
+I (1405) MATH_INT_T: HW Z.used = 1;
+I (1405) MATH_INT_T: HW Z.sign = 0;
+I (1415) MATH_INT_T: HW Z.dp[ 0] = 0x00000087;  /*  0 */
+I (1415) MATH_INT_T:
+I (1415) MATH_INT_T: SW Z2:
+I (1425) MATH_INT_T:
+I (1425) MATH_INT_T: SW Z2.used = 1;
+I (1435) MATH_INT_T: SW Z2.sign = 0;
+I (1435) MATH_INT_T: SW Z2.dp[ 0] = 0x00000087;  /*  0 */
+I (1445) MATH_INT_T:
+I (1445) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 3 tries
+I (1445) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 1 failures
+I (1455) wolfssl_esp32_mp:
+I (1455) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (1465) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (1475) MATH_INT_T: r_inv:
+I (1475) MATH_INT_T:
+I (1475) MATH_INT_T: r_inv.used = 1;
+I (1485) MATH_INT_T: r_inv.sign = 0;
+I (1485) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (1495) MATH_INT_T:
+I (1495) wolfssl_esp32_mp: r_inv bits    = 5
+I (1505) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (1505) wolfssl_esp32_mp: mp            = 0xf0243f6f = 4028907375
+I (1515) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (1525) wolfssl_esp32_mp: Xs            = 8
+I (1525) wolfssl_esp32_mp: Ys            = 8
+I (1525) wolfssl_esp32_mp: found_z_used  = 1
+I (1535) wolfssl_esp32_mp: z.used        = 1
+I (1535) wolfssl_esp32_mp: hwWords_sz    = 16
+I (1545) wolfssl_esp32_mp: maxWords_sz   = 1
+I (1545) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (1555) MATH_INT_T: X:
+I (1555) MATH_INT_T:
+I (1565) MATH_INT_T: X.used = 1;
+I (1565) MATH_INT_T: X.sign = 0;
+I (1565) MATH_INT_T: X.dp[ 0] = 0x00000084;  /*  0 */
+I (1575) MATH_INT_T:
+I (1575) MATH_INT_T: Y:
+I (1585) MATH_INT_T:
+I (1585) MATH_INT_T: Y.used = 1;
+I (1585) MATH_INT_T: Y.sign = 0;
+I (1595) MATH_INT_T: Y.dp[ 0] = 0x00000084;  /*  0 */
+I (1595) MATH_INT_T:
+I (1605) MATH_INT_T: M:
+I (1605) MATH_INT_T:
+I (1605) MATH_INT_T: M.used = 1;
+I (1615) MATH_INT_T: M.sign = 0;
+I (1615) MATH_INT_T: M.dp[ 0] = 0x00000070;  /*  0 */
+I (1615) MATH_INT_T:
+I (1625) MATH_INT_T: r_inv:
+I (1625) MATH_INT_T:
+I (1625) MATH_INT_T: r_inv.used = 1;
+I (1635) MATH_INT_T: r_inv.sign = 0;
+I (1635) MATH_INT_T: r_inv.dp[ 0] = 0x00000010;  /*  0 */
+I (1645) MATH_INT_T:
+I (1645) wolfssl_esp32_mp:
 
-I (45553) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
-I (50603) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (50603) wolfssl: Checking size of PKCS8
-I (50603) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (50613) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (50623) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 67
-I (65753) wolfcrypt_test: ecc_test_curve keySize = 40
+M' MISMATCH esp_calc_Mdash = 0xf0243f6f = -266059921
+vs mp_montgomery_setup     = 0xc2ec81f3 = -1024687629
 
-I (71393) wolfssl: wolfSSL Leaving ecc_test_curve_size, return -172
-I (77043) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (77043) wolfssl: Checking size of PKCS8
-I (77043) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (77053) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (77053) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 80
-I (77063) wolfcrypt_test: ecc_test_curve keySize = 48
 
-I (97703) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
-I (107043) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (107043) wolfssl: Checking size of PKCS8
-I (107043) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (107053) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (107063) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 80
-I (107063) wolfcrypt_test: ecc_test_curve keySize = 64
+I (1665) MATH_INT_T: HW Z:
+I (1665) MATH_INT_T:
+I (1665) MATH_INT_T: HW Z.used = 1;
+I (1675) MATH_INT_T: HW Z.sign = 0;
+I (1675) MATH_INT_T: HW Z.dp[ 0] = 0x00000050;  /*  0 */
+I (1685) MATH_INT_T:
+I (1685) MATH_INT_T: SW Z2:
+I (1685) MATH_INT_T:
+I (1695) MATH_INT_T: SW Z2.used = 1;
+I (1695) MATH_INT_T: SW Z2.sign = 0;
+I (1695) MATH_INT_T: SW Z2.dp[ 0] = 0x00000040;  /*  0 */
+I (1705) MATH_INT_T:
+I (1705) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 4 tries
+I (1715) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 1 failures
+I (1725) wolfssl_esp32_mp:
+E (1725) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (1735) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (1735) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (1745) MATH_INT_T: r_inv:
+I (1745) MATH_INT_T:
+I (1755) MATH_INT_T: r_inv.used = 1;
+I (1755) MATH_INT_T: r_inv.sign = 0;
+I (1765) MATH_INT_T: r_inv.dp[ 0] = 0x00001495;  /*  0 */
+I (1765) MATH_INT_T:
+I (1765) wolfssl_esp32_mp: r_inv bits    = 13
+I (1775) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (1785) wolfssl_esp32_mp: mp            = 0x2f80db8f = 796973967
+I (1785) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (1795) wolfssl_esp32_mp: Xs            = 15
+I (1795) wolfssl_esp32_mp: Ys            = 15
+I (1805) wolfssl_esp32_mp: found_z_used  = 1
+I (1805) wolfssl_esp32_mp: z.used        = 1
+I (1815) wolfssl_esp32_mp: hwWords_sz    = 16
+I (1815) wolfssl_esp32_mp: maxWords_sz   = 1
+I (1825) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (1825) MATH_INT_T: X:
+I (1835) MATH_INT_T:
+I (1835) MATH_INT_T: X.used = 1;
+I (1835) MATH_INT_T: X.sign = 0;
+I (1845) MATH_INT_T: X.dp[ 0] = 0x000075ac;  /*  0 */
+I (1845) MATH_INT_T:
+I (1855) MATH_INT_T: Y:
+I (1855) MATH_INT_T:
+I (1855) MATH_INT_T: Y.used = 1;
+I (1865) MATH_INT_T: Y.sign = 0;
+I (1865) MATH_INT_T: Y.dp[ 0] = 0x000075ac;  /*  0 */
+I (1875) MATH_INT_T:
+I (1875) MATH_INT_T: M:
+I (1875) MATH_INT_T:
+I (1875) MATH_INT_T: M.used = 1;
+I (1885) MATH_INT_T: M.sign = 0;
+I (1885) MATH_INT_T: M.dp[ 0] = 0x00001c91;  /*  0 */
+I (1895) MATH_INT_T:
+I (1895) MATH_INT_T: r_inv:
+I (1895) MATH_INT_T:
+I (1905) MATH_INT_T: r_inv.used = 1;
+I (1905) MATH_INT_T: r_inv.sign = 0;
+I (1915) MATH_INT_T: r_inv.dp[ 0] = 0x00001495;  /*  0 */
+I (1915) MATH_INT_T:
+I (1915) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = 796973967  !
+I (1925) MATH_INT_T: HW Z:
+I (1935) MATH_INT_T:
+I (1935) MATH_INT_T: HW Z.used = 1;
+I (1935) MATH_INT_T: HW Z.sign = 0;
+I (1945) MATH_INT_T: HW Z.dp[ 0] = 0x00001be9;  /*  0 */
+I (1945) MATH_INT_T:
+I (1955) MATH_INT_T: SW Z2:
+I (1955) MATH_INT_T:
+I (1955) MATH_INT_T: SW Z2.used = 1;
+I (1965) MATH_INT_T: SW Z2.sign = 0;
+I (1965) MATH_INT_T: SW Z2.dp[ 0] = 0x00001be9;  /*  0 */
+I (1975) MATH_INT_T:
+I (1975) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 5 tries
+I (1985) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 2 failures
+I (1985) wolfssl_esp32_mp:
+I (1995) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (1995) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (2005) MATH_INT_T: r_inv:
+I (2005) MATH_INT_T:
+I (2015) MATH_INT_T: r_inv.used = 1;
+I (2015) MATH_INT_T: r_inv.sign = 0;
+I (2025) MATH_INT_T: r_inv.dp[ 0] = 0x0000490d;  /*  0 */
+I (2025) MATH_INT_T:
+I (2025) wolfssl_esp32_mp: r_inv bits    = 15
+I (2035) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (2045) wolfssl_esp32_mp: mp            = 0xcdc97cdd = 3452533981
+I (2045) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (2055) wolfssl_esp32_mp: Xs            = 16
+I (2055) wolfssl_esp32_mp: Ys            = 16
+I (2065) wolfssl_esp32_mp: found_z_used  = 1
+I (2065) wolfssl_esp32_mp: z.used        = 1
+I (2075) wolfssl_esp32_mp: hwWords_sz    = 16
+I (2075) wolfssl_esp32_mp: maxWords_sz   = 1
+I (2085) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (2085) MATH_INT_T: X:
+I (2095) MATH_INT_T:
+I (2095) MATH_INT_T: X.used = 1;
+I (2095) MATH_INT_T: X.sign = 0;
+I (2105) MATH_INT_T: X.dp[ 0] = 0x0000f912;  /*  0 */
+I (2105) MATH_INT_T:
+I (2115) MATH_INT_T: Y:
+I (2115) MATH_INT_T:
+I (2115) MATH_INT_T: Y.used = 1;
+I (2125) MATH_INT_T: Y.sign = 0;
+I (2125) MATH_INT_T: Y.dp[ 0] = 0x0000f912;  /*  0 */
+I (2135) MATH_INT_T:
+I (2135) MATH_INT_T: M:
+I (2135) MATH_INT_T:
+I (2135) MATH_INT_T: M.used = 1;
+I (2145) MATH_INT_T: M.sign = 0;
+I (2145) MATH_INT_T: M.dp[ 0] = 0x0000c48b;  /*  0 */
+I (2155) MATH_INT_T:
+I (2155) MATH_INT_T: r_inv:
+I (2155) MATH_INT_T:
+I (2165) MATH_INT_T: r_inv.used = 1;
+I (2165) MATH_INT_T: r_inv.sign = 0;
+I (2175) MATH_INT_T: r_inv.dp[ 0] = 0x0000490d;  /*  0 */
+I (2175) MATH_INT_T:
+I (2175) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -842433315  !
+I (2185) MATH_INT_T: HW Z:
+I (2195) MATH_INT_T:
+I (2195) MATH_INT_T: HW Z.used = 1;
+I (2195) MATH_INT_T: HW Z.sign = 0;
+I (2205) MATH_INT_T: HW Z.dp[ 0] = 0x00009c4e;  /*  0 */
+I (2205) MATH_INT_T:
+I (2215) MATH_INT_T: SW Z2:
+I (2215) MATH_INT_T:
+I (2215) MATH_INT_T: SW Z2.used = 1;
+I (2225) MATH_INT_T: SW Z2.sign = 0;
+I (2225) MATH_INT_T: SW Z2.dp[ 0] = 0x00009c4e;  /*  0 */
+I (2235) MATH_INT_T:
+I (2235) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 6 tries
+I (2245) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 2 failures
+I (2245) wolfssl_esp32_mp:
+I (2255) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (2255) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (2265) MATH_INT_T: r_inv:
+I (2265) MATH_INT_T:
+I (2275) MATH_INT_T: r_inv.used = 1;
+I (2275) MATH_INT_T: r_inv.sign = 0;
+I (2285) MATH_INT_T: r_inv.dp[ 0] = 0x0000085f;  /*  0 */
+I (2285) MATH_INT_T:
+I (2285) wolfssl_esp32_mp: r_inv bits    = 12
+I (2295) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (2305) wolfssl_esp32_mp: mp            = 0xc02664af = 3223741615
+I (2305) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (2315) wolfssl_esp32_mp: Xs            = 14
+I (2315) wolfssl_esp32_mp: Ys            = 14
+I (2325) wolfssl_esp32_mp: found_z_used  = 1
+I (2325) wolfssl_esp32_mp: z.used        = 1
+I (2335) wolfssl_esp32_mp: hwWords_sz    = 16
+I (2335) wolfssl_esp32_mp: maxWords_sz   = 1
+I (2345) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (2345) MATH_INT_T: X:
+I (2355) MATH_INT_T:
+I (2355) MATH_INT_T: X.used = 1;
+I (2355) MATH_INT_T: X.sign = 0;
+I (2365) MATH_INT_T: X.dp[ 0] = 0x00002e3f;  /*  0 */
+I (2365) MATH_INT_T:
+I (2375) MATH_INT_T: Y:
+I (2375) MATH_INT_T:
+I (2375) MATH_INT_T: Y.used = 1;
+I (2385) MATH_INT_T: Y.sign = 0;
+I (2385) MATH_INT_T: Y.dp[ 0] = 0x00002e3f;  /*  0 */
+I (2395) MATH_INT_T:
+I (2395) MATH_INT_T: M:
+I (2395) MATH_INT_T:
+I (2395) MATH_INT_T: M.used = 1;
+I (2405) MATH_INT_T: M.sign = 0;
+I (2405) MATH_INT_T: M.dp[ 0] = 0x00008db1;  /*  0 */
+I (2415) MATH_INT_T:
+I (2415) MATH_INT_T: r_inv:
+I (2415) MATH_INT_T:
+I (2425) MATH_INT_T: r_inv.used = 1;
+I (2425) MATH_INT_T: r_inv.sign = 0;
+I (2435) MATH_INT_T: r_inv.dp[ 0] = 0x0000085f;  /*  0 */
+I (2435) MATH_INT_T:
+I (2445) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -1071225681  !
+I (2445) MATH_INT_T: HW Z:
+I (2455) MATH_INT_T:
+I (2455) MATH_INT_T: HW Z.used = 1;
+I (2455) MATH_INT_T: HW Z.sign = 0;
+I (2465) MATH_INT_T: HW Z.dp[ 0] = 0x00000be9;  /*  0 */
+I (2465) MATH_INT_T:
+I (2475) MATH_INT_T: SW Z2:
+I (2475) MATH_INT_T:
+I (2475) MATH_INT_T: SW Z2.used = 1;
+I (2485) MATH_INT_T: SW Z2.sign = 0;
+I (2485) MATH_INT_T: SW Z2.dp[ 0] = 0x00000be9;  /*  0 */
+I (2495) MATH_INT_T:
+I (2495) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 7 tries
+I (2505) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 2 failures
+I (2505) wolfssl_esp32_mp:
+I (2515) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (2525) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (2525) MATH_INT_T: r_inv:
+I (2525) MATH_INT_T:
+I (2535) MATH_INT_T: r_inv.used = 1;
+I (2535) MATH_INT_T: r_inv.sign = 0;
+I (2545) MATH_INT_T: r_inv.dp[ 0] = 0x00000698;  /*  0 */
+I (2545) MATH_INT_T:
+I (2545) wolfssl_esp32_mp: r_inv bits    = 11
+I (2555) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (2565) wolfssl_esp32_mp: mp            = 0xf27dcb4b = 4068330315
+I (2565) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (2575) wolfssl_esp32_mp: Xs            = 16
+I (2575) wolfssl_esp32_mp: Ys            = 16
+I (2585) wolfssl_esp32_mp: found_z_used  = 1
+I (2585) wolfssl_esp32_mp: z.used        = 1
+I (2595) wolfssl_esp32_mp: hwWords_sz    = 16
+I (2595) wolfssl_esp32_mp: maxWords_sz   = 1
+I (2605) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (2605) MATH_INT_T: X:
+I (2615) MATH_INT_T:
+I (2615) MATH_INT_T: X.used = 1;
+I (2615) MATH_INT_T: X.sign = 0;
+I (2625) MATH_INT_T: X.dp[ 0] = 0x0000a5a3;  /*  0 */
+I (2625) MATH_INT_T:
+I (2635) MATH_INT_T: Y:
+I (2635) MATH_INT_T:
+I (2635) MATH_INT_T: Y.used = 1;
+I (2645) MATH_INT_T: Y.sign = 0;
+I (2645) MATH_INT_T: Y.dp[ 0] = 0x0000a5a3;  /*  0 */
+I (2655) MATH_INT_T:
+I (2655) MATH_INT_T: M:
+I (2655) MATH_INT_T:
+I (2655) MATH_INT_T: M.used = 1;
+I (2665) MATH_INT_T: M.sign = 0;
+I (2665) MATH_INT_T: M.dp[ 0] = 0x0000199c;  /*  0 */
+I (2675) MATH_INT_T:
+I (2675) MATH_INT_T: r_inv:
+I (2675) MATH_INT_T:
+I (2685) MATH_INT_T: r_inv.used = 1;
+I (2685) MATH_INT_T: r_inv.sign = 0;
+I (2695) MATH_INT_T: r_inv.dp[ 0] = 0x00000698;  /*  0 */
+I (2695) MATH_INT_T:
+I (2705) wolfssl_esp32_mp:
 
-I (117373) wolfssl: wolfSSL Leaving ecc_test_curve_size, return -172
-I (127683) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (127683) wolfssl: Checking size of PKCS8
-I (127683) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (127693) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (127693) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 98
-I (127703) wolfcrypt_test: ecc_test_curve keySize = 66
+M' MISMATCH esp_calc_Mdash = 0xf27dcb4b = -226636981
+vs mp_montgomery_setup     = 0xc02664af = -1071225681
 
-I (165373) wolfssl: wolfSSL Leaving ecc_test_curve_size, return 0
-I (182423) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (182423) wolfssl: Checking size of PKCS8
-I (182423) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return -202
-I (182433) wolfssl: wolfSSL Entering wc_CreatePKCS8Key
-I (182433) wolfssl: wolfSSL Leaving wc_CreatePKCS8Key, return 98
-I (182443) wolfssl: wolfSSL Entering wc_ecc_make_pub
-I (182453) wolfssl: wolfSSL Entering wc_ecc_make_pub_ex
-I (182453) wolfssl: wolfSSL Entering wc_ecc_make_pub
-I (182463) wolfssl: wolfSSL Entering wc_ecc_make_pub_ex
-I (184523) wolfssl: Verify called with private key, generating public part
-I (190623) wolfssl: Date BEFORE check failed
-I (190623) wolfssl: Getting Cert Name
-I (190623) wolfssl: Getting Cert Name
-I (190623) wolfssl: wolfSSL Entering GetAlgoId
-I (190623) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (190633) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (190643) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (190643) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (190653) wolfssl: wolfSSL Entering DecodeKeyUsage
-ECC      test passed!
-I (193593) wolfssl: Bad Base64 Decode data, too small
-I (193593) wolfssl: Bad Base64 Decode data, too small
-I (193593) wolfssl: Bad Base64 Decode data, too big
-I (193603) wolfssl: Bad Base64 Decode data, too small
-I (193603) wolfssl: Bad Base64 Decode data, too big
-I (193613) wolfssl: Bad Base64 Decode data, too small
-I (193623) wolfssl: Bad Base64 Decode data, too big
-I (193623) wolfssl: Bad Base64 Decode data, too small
-I (193633) wolfssl: Bad Base64 Decode data, too big
-I (193633) wolfssl: Bad Base64 Decode data, too small
-I (193643) wolfssl: Bad Base64 Decode data, too small
-I (193643) wolfssl: Bad Base64 Decode data, too small
-I (193653) wolfssl: Bad Base64 Decode data, too small
-I (193663) wolfssl: Bad Base64 Decode data, too small
-I (193663) wolfssl: Bad Base64 Decode data, too small
-I (193673) wolfssl: Bad Base64 Decode data, too small
-I (193673) wolfssl: Bad Base64 Decode data, too small
-I (193683) wolfssl: Bad Base64 Decode data, too small
-I (193683) wolfssl: Bad Base64 Decode data, too small
-I (193693) wolfssl: Bad Base64 Decode data, too small
-I (193703) wolfssl: Bad Base64 Decode data, too small
-I (193703) wolfssl: Bad end of line in Base64 Decode
-I (193713) wolfssl: Bad Base64 Decode data, too small
-I (193713) wolfssl: Bad Base64 Decode data, too small
-I (193723) wolfssl: Bad Base64 Decode data, too small
-I (193723) wolfssl: Bad Base64 Decode data, too small
-I (193733) wolfssl: Bad Base64 Decode data, too small
-I (193743) wolfssl: Bad Base64 Decode data, too small
-I (193743) wolfssl: Bad Base64 Decode data, too small
-I (193753) wolfssl: Bad Base64 Decode data, too small
-I (193753) wolfssl: Bad Base64 Decode data, too small
-I (193763) wolfssl: Bad Base64 Decode data, too small
-I (193763) wolfssl: Bad Base64 Decode data, too small
-I (193773) wolfssl: Bad Base64 Decode data, too small
-I (193783) wolfssl: Bad Base64 Decode data, too small
-I (193783) wolfssl: Bad Base64 Decode data, too small
-I (193793) wolfssl: Bad Base64 Decode data, too small
-I (193793) wolfssl: Bad Base64 Decode data, too small
-I (193803) wolfssl: Bad Base64 Decode data, too small
-I (193803) wolfssl: Bad Base64 Decode data, too small
-I (193813) wolfssl: Bad Base64 Decode data, too small
-I (193823) wolfssl: Bad Base64 Decode data, too small
-I (193823) wolfssl: Bad Base64 Decode data, too small
-I (193833) wolfssl: Bad Base64 Decode data, too small
-I (193833) wolfssl: Bad Base64 Decode data, too small
-I (193843) wolfssl: Bad Base64 Decode data, too small
-I (193843) wolfssl: Bad Base64 Decode data, too small
-I (193853) wolfssl: Bad Base64 Decode data, too small
-I (193863) wolfssl: Bad Base64 Decode data, too small
-I (193863) wolfssl: Bad Base64 Decode data, too small
-I (193873) wolfssl: Bad Base64 Decode data, too small
-I (193873) wolfssl: Bad Base64 Decode bad character
-I (193883) wolfssl: Bad Base64 Decode bad character
-I (193883) wolfssl: Bad Base64 Decode bad character
-I (193893) wolfssl: Bad Base64 Decode bad character
-I (193903) wolfssl: Bad Base64 Decode bad character
-I (193903) wolfssl: Bad Base64 Decode bad character
-I (193913) wolfssl: Bad Base64 Decode bad character
-I (193913) wolfssl: Bad Base64 Decode bad character
-I (193923) wolfssl: Bad Base64 Decode bad character
-I (193923) wolfssl: Bad Base64 Decode bad character
-I (193933) wolfssl: Bad Base64 Decode bad character
-I (193933) wolfssl: Bad Base64 Decode bad character
-I (193943) wolfssl: Bad Base64 Decode bad character
-I (193953) wolfssl: Bad Base64 Decode bad character
-I (193953) wolfssl: Bad Base64 Decode bad character
-I (193963) wolfssl: Bad Base64 Decode bad character
-I (193963) wolfssl: Bad Base64 Decode data, too big
-I (193973) wolfssl: Bad Base64 Decode data, too big
-I (193973) wolfssl: Bad Base64 Decode data, too big
-I (193983) wolfssl: Bad Base64 Decode data, too big
-I (193983) wolfssl: Bad Base64 Decode data, too big
-I (193993) wolfssl: Bad Base64 Decode data, too big
-I (194003) wolfssl: Bad Base64 Decode data, too big
-I (194003) wolfssl: Bad Base64 Decode data, too big
-I (194013) wolfssl: Bad Base64 Decode data, too big
-I (194013) wolfssl: Bad Base64 Decode data, too big
-I (194023) wolfssl: Bad Base64 Decode data, too big
-I (194023) wolfssl: Bad Base64 Decode data, too big
-I (194033) wolfssl: Bad Base64 Decode data, too big
-I (194033) wolfssl: Bad Base64 Decode data, too big
-I (194043) wolfssl: Bad Base64 Decode data, too big
-I (194053) wolfssl: Bad Base64 Decode data, too big
-I (194053) wolfssl: Bad Base64 Decode data, too big
-I (194063) wolfssl: Bad Base64 Decode data, too big
-I (194063) wolfssl: Bad Base64 Decode data, too big
-I (194073) wolfssl: Bad Base64 Decode data, too big
-I (194073) wolfssl: Bad Base64 Decode data, too big
-I (194083) wolfssl: Bad Base64 Decode data, too big
-I (194083) wolfssl: Bad Base64 Decode data, too big
-I (194093) wolfssl: Bad Base64 Decode data, too big
-I (194103) wolfssl: Bad Base64 Decode data, too big
-I (194103) wolfssl: Bad Base64 Decode data, too big
-I (194113) wolfssl: Bad Base64 Decode data, too big
-I (194113) wolfssl: Bad Base64 Decode data, too big
-I (194123) wolfssl: Bad Base64 Decode data, too big
-I (194123) wolfssl: Bad Base64 Decode data, too big
-I (194133) wolfssl: Bad Base64 Decode data, too big
-I (194133) wolfssl: Bad Base64 Decode data, too big
-I (194143) wolfssl: Bad Base64 Decode data, too big
-I (194153) wolfssl: Bad Base64 Decode data, too big
-I (194153) wolfssl: Bad Base64 Decode data, too big
-I (194163) wolfssl: Bad Base64 Decode data, too big
-I (194163) wolfssl: Bad Base64 Decode data, too big
-I (194173) wolfssl: Bad Base64 Decode data, too big
-I (194173) wolfssl: Bad Base64 Decode data, too big
-I (194183) wolfssl: Bad Base64 Decode data, too big
-I (194183) wolfssl: Bad Base64 Decode data, too big
-I (194193) wolfssl: Bad Base64 Decode data, too big
-I (194203) wolfssl: Bad Base64 Decode data, too big
-I (194203) wolfssl: Bad Base64 Decode data, too big
-I (194213) wolfssl: Bad Base64 Decode data, too big
-I (194213) wolfssl: Bad Base64 Decode data, too big
-I (194223) wolfssl: Bad Base64 Decode data, too big
-I (194223) wolfssl: Bad Base64 Decode data, too big
-I (194233) wolfssl: Bad Base64 Decode data, too big
-I (194233) wolfssl: Bad Base64 Decode data, too big
-I (194243) wolfssl: Bad Base64 Decode data, too big
-I (194253) wolfssl: Bad Base64 Decode data, too big
-I (194253) wolfssl: Bad Base64 Decode data, too big
-I (194263) wolfssl: Bad Base64 Decode data, too big
-I (194263) wolfssl: Bad Base64 Decode data, too big
-I (194273) wolfssl: Bad Base64 Decode data, too big
-I (194273) wolfssl: Bad Base64 Decode data, too big
-I (194283) wolfssl: Bad Base64 Decode data, too big
-I (194283) wolfssl: Bad Base64 Decode data, too big
-I (194293) wolfssl: Bad Base64 Decode data, too big
-I (194303) wolfssl: Bad Base64 Decode data, too big
-I (194303) wolfssl: Bad Base64 Decode data, too big
-I (194313) wolfssl: Bad Base64 Decode data, too big
-I (194313) wolfssl: Bad Base64 Decode data, too big
-I (194323) wolfssl: Bad Base64 Decode data, too big
-I (194323) wolfssl: Bad Base64 Decode data, too big
-I (194333) wolfssl: Bad Base64 Decode data, too big
-I (194333) wolfssl: Bad Base64 Decode data, too big
-I (194343) wolfssl: Bad Base64 Decode data, too big
-I (194353) wolfssl: Bad Base64 Decode data, too big
-I (194353) wolfssl: Bad Base64 Decode data, too big
-I (194363) wolfssl: Bad Base64 Decode data, too big
-I (194363) wolfssl: Bad Base64 Decode data, too big
-I (194373) wolfssl: Bad Base64 Decode data, too big
-I (194373) wolfssl: Bad Base64 Decode data, too big
-I (194383) wolfssl: Bad Base64 Decode data, too big
-I (194383) wolfssl: Bad Base64 Decode data, too big
-I (194393) wolfssl: Bad Base64 Decode data, too big
-I (194403) wolfssl: Bad Base64 Decode data, too big
-I (194403) wolfssl: Bad Base64 Decode data, too big
-I (194413) wolfssl: Bad Base64 Decode data, too big
-I (194413) wolfssl: Bad Base64 Decode data, too big
-I (194423) wolfssl: Bad Base64 Decode data, too big
-I (194423) wolfssl: Bad Base64 Decode data, too big
-I (194433) wolfssl: Bad Base64 Decode data, too big
-I (194433) wolfssl: Bad Base64 Decode data, too big
-I (194443) wolfssl: Bad Base64 Decode data, too big
-I (194453) wolfssl: Bad Base64 Decode data, too big
-I (194453) wolfssl: Bad Base64 Decode data, too big
-I (194463) wolfssl: Bad Base64 Decode data, too big
-I (194463) wolfssl: Bad Base64 Decode data, too big
-I (194473) wolfssl: Bad Base64 Decode data, too big
-I (194473) wolfssl: Bad Base64 Decode data, too big
-I (194483) wolfssl: Bad Base64 Decode data, too big
-I (194483) wolfssl: Bad Base64 Decode data, too big
-I (194493) wolfssl: Bad Base64 Decode data, too big
-I (194503) wolfssl: Bad Base64 Decode data, too big
-I (194503) wolfssl: Bad Base64 Decode data, too big
-I (194513) wolfssl: Bad Base64 Decode data, too big
-I (194513) wolfssl: Bad Base64 Decode data, too big
-I (194523) wolfssl: Bad Base64 Decode data, too big
-I (194523) wolfssl: Bad Base64 Decode data, too big
-I (194533) wolfssl: Bad Base64 Decode data, too big
-I (194533) wolfssl: Bad Base64 Decode data, too big
-I (194543) wolfssl: Bad Base64 Decode data, too big
-I (194553) wolfssl: Bad Base64 Decode data, too big
-I (194553) wolfssl: Bad Base64 Decode data, too big
-I (194563) wolfssl: Bad Base64 Decode data, too big
-I (194563) wolfssl: Bad Base64 Decode data, too big
-I (194573) wolfssl: Bad Base64 Decode data, too big
-I (194573) wolfssl: Bad Base64 Decode data, too big
-I (194583) wolfssl: Bad Base64 Decode data, too big
-I (194583) wolfssl: Bad Base64 Decode data, too big
-I (194593) wolfssl: Bad Base64 Decode data, too big
-I (194603) wolfssl: Bad Base64 Decode data, too big
-I (194603) wolfssl: Bad Base64 Decode data, too big
-I (194613) wolfssl: Bad Base64 Decode data, too big
-I (194613) wolfssl: Bad Base64 Decode data, too big
-I (194623) wolfssl: Bad Base64 Decode data, too big
-I (194623) wolfssl: Bad Base64 Decode data, too big
-I (194633) wolfssl: Bad Base64 Decode data, too big
-I (194633) wolfssl: Bad Base64 Decode data, too big
-I (194643) wolfssl: Bad Base64 Decode data, too big
-I (194653) wolfssl: Bad Base64 Decode data, too big
-I (194653) wolfssl: Bad Base64 Decode data, too big
-I (194663) wolfssl: Bad Base64 Decode data, too big
-I (194663) wolfssl: Bad Base64 Decode data, too big
-I (194673) wolfssl: Bad Base64 Decode data, too big
-I (194673) wolfssl: Bad Base64 Decode data, too big
-I (194683) wolfssl: Bad Base64 Decode data, too big
-I (194683) wolfssl: Bad Base64 Decode data, too big
-I (194693) wolfssl: Bad Base64 Decode data, too big
-I (194703) wolfssl: Bad Base64 Decode data, too big
-I (194703) wolfssl: Escape buffer max too small
-base64   test passed!
-asn      test passed!
-RANDOM   test passed!
-MD5      test passed!
-MD4      test passed!
-SHA      test passed!
-SHA-224  test passed!
-SHA-256  test passed!
-SHA-384  test passed!
-SHA-512  test passed!
-SHA-512/224  test passed!
-SHA-512/256  test passed!
-SHA-3    test passed!
-SHAKE128 test passed!
-SHAKE256 test passed!
-Hash     test passed!
-RIPEMD   test passed!
-HMAC-MD5 test passed!
-HMAC-SHA test passed!
-HMAC-SHA224 test passed!
-HMAC-SHA256 test passed!
-HMAC-SHA384 test passed!
-HMAC-SHA512 test passed!
-HMAC-SHA3   test passed!
-HMAC-KDF    test passed!
-TLSv1.3 KDF test passed!
-X963-KDF    test passed!
-GMAC     test passed!
-DES      test passed!
-DES3     test passed!
-AES      test passed!
-AES192   test passed!
-AES256   test passed!
-AES-GCM  test passed!
-AES Key Wrap test passed!
-I (196303) wolfssl: GetLength - value exceeds buffer length
-I (196303) wolfssl: GetLength - value exceeds buffer length
-I (196313) wolfssl: GetLength - value exceeds buffer length
-I (196313) wolfssl: GetLength - value exceeds buffer length
-I (196323) wolfssl: GetLength - value exceeds buffer length
-I (196323) wolfssl: GetLength - value exceeds buffer length
-I (196333) wolfssl: GetLength - bad index on input
-I (196343) wolfssl: wc_SignatureGetSize: Invalid RsaKey key size
-I (201103) wolfssl: RSA Signature Verify failed!
-I (212623) wolfssl: wolfSSL Using RSA OAEP padding
-I (214923) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (214923) wolfssl: wolfSSL Using RSA OAEP padding
-I (217223) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (219493) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (219493) wolfssl: wolfSSL Using RSA OAEP padding
-I (221793) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (221793) wolfssl: wolfSSL Using RSA OAEP padding
-I (224093) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (224093) wolfssl: wolfSSL Using RSA OAEP padding
-I (226393) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (226393) wolfssl: wolfSSL Using RSA OAEP padding
-I (228693) wolfssl: wolfSSL Using RSA OAEP un-padding
-I (260003) wolfssl: Date BEFORE check failed
-I (260003) wolfssl: Getting Cert Name
-I (260003) wolfssl: Getting Cert Name
-I (260003) wolfssl: wolfSSL Entering GetAlgoId
-I (260013) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (260013) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (260023) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (260023) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (260033) wolfssl: wolfSSL Entering DecodeAltNames
-I (260033) wolfssl:     Unsupported name type, skipping
-I (260043) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (260053) wolfssl: Date BEFORE check failed
-I (260053) wolfssl: Getting Cert Name
-I (260063) wolfssl: Getting Cert Name
-I (260063) wolfssl: wolfSSL Entering GetAlgoId
-I (260073) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (260073) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (260083) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (260083) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (260093) wolfssl: wolfSSL Entering DecodeAltNames
-I (260093) wolfssl:     Unsupported name type, skipping
-I (260103) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (262383) wolfssl: Date BEFORE check failed
-I (262383) wolfssl: Getting Cert Name
-I (262393) wolfssl: Getting Cert Name
-I (262393) wolfssl: wolfSSL Entering GetAlgoId
-I (262393) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (262403) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (262403) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (262413) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (262423) wolfssl: wolfSSL Entering DecodeAltNames
-I (262423) wolfssl:     Unsupported name type, skipping
-I (262433) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (262433) wolfssl: Date BEFORE check failed
-I (262443) wolfssl: Getting Cert Name
-I (262443) wolfssl: Getting Cert Name
-I (262453) wolfssl: wolfSSL Entering GetAlgoId
-I (262453) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (262463) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (262463) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (262473) wolfssl: wolfSSL Entering DecodeBasicCaConstraints
-I (262473) wolfssl: wolfSSL Entering DecodeAltNames
-I (262483) wolfssl:     Unsupported name type, skipping
-I (262493) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (267043) wolfssl: wolfSSL Using RSA PSS padding
-I (269343) wolfssl: wolfSSL Using RSA PSS un-padding
-I (269343) wolfssl: wolfSSL Using RSA PSS padding
-I (271643) wolfssl: wolfSSL Using RSA PSS un-padding
-I (271643) wolfssl: wolfSSL Using RSA PSS padding
-I (273943) wolfssl: wolfSSL Using RSA PSS un-padding
-I (273943) wolfssl: wolfSSL Using RSA PSS padding
-I (276243) wolfssl: wolfSSL Using RSA PSS un-padding
-I (276243) wolfssl: wolfSSL Using RSA PSS padding
-I (278543) wolfssl: wolfSSL Using RSA PSS un-padding
-I (278543) wolfssl: wolfSSL Using RSA PSS padding
-I (280843) wolfssl: wolfSSL Using RSA PSS un-padding
-I (280843) wolfssl: wolfSSL Using RSA PSS padding
-I (283143) wolfssl: wolfSSL Using RSA PSS un-padding
-I (283143) wolfssl: wolfSSL Using RSA PSS padding
-I (285443) wolfssl: wolfSSL Using RSA PSS un-padding
-I (285443) wolfssl: wolfSSL Using RSA PSS padding
-I (287743) wolfssl: wolfSSL Using RSA PSS un-padding
-I (287743) wolfssl: wolfSSL Using RSA PSS padding
-I (290043) wolfssl: wolfSSL Using RSA PSS un-padding
-I (290043) wolfssl: wolfSSL Using RSA PSS padding
-I (292343) wolfssl: wolfSSL Using RSA PSS un-padding
-I (292343) wolfssl: wolfSSL Using RSA PSS padding
-I (294643) wolfssl: wolfSSL Using RSA PSS un-padding
-I (294643) wolfssl: wolfSSL Using RSA PSS padding
-I (296943) wolfssl: wolfSSL Using RSA PSS un-padding
-I (296943) wolfssl: wolfSSL Using RSA PSS padding
-I (299243) wolfssl: wolfSSL Using RSA PSS un-padding
-I (299243) wolfssl: wolfSSL Using RSA PSS padding
-I (301543) wolfssl: wolfSSL Using RSA PSS un-padding
-I (301543) wolfssl: wolfSSL Using RSA PSS padding
-I (303843) wolfssl: wolfSSL Using RSA PSS un-padding
-I (303843) wolfssl: wolfSSL Using RSA PSS padding
-I (306143) wolfssl: wolfSSL Using RSA PSS un-padding
-I (306143) wolfssl: wolfSSL Using RSA PSS padding
-I (308443) wolfssl: wolfSSL Using RSA PSS un-padding
-I (308443) wolfssl: wolfSSL Using RSA PSS padding
-I (310743) wolfssl: wolfSSL Using RSA PSS un-padding
-I (310743) wolfssl: wolfSSL Using RSA PSS padding
-I (313043) wolfssl: wolfSSL Using RSA PSS un-padding
-I (313043) wolfssl: wolfSSL Using RSA PSS padding
-I (315343) wolfssl: wolfSSL Using RSA PSS un-padding
-I (315343) wolfssl: wolfSSL Using RSA PSS padding
-I (317643) wolfssl: wolfSSL Using RSA PSS un-padding
-I (317643) wolfssl: wolfSSL Using RSA PSS padding
-I (319943) wolfssl: wolfSSL Using RSA PSS un-padding
-I (319943) wolfssl: wolfSSL Using RSA PSS padding
-I (322243) wolfssl: wolfSSL Using RSA PSS un-padding
-I (322243) wolfssl: wolfSSL Using RSA PSS padding
-I (324543) wolfssl: wolfSSL Using RSA PSS un-padding
-I (324543) wolfssl: wolfSSL Using RSA PSS padding
-I (326843) wolfssl: wolfSSL Using RSA PSS un-padding
-I (326873) wolfssl: wolfSSL Using RSA PSS un-padding
-I (326873) wolfssl: wolfSSL Using RSA PSS padding
-RSA      test passed!
-PWDBASED test passed!
-I (327133) wolfcrypt_test: ecc_test ECC_MIN_KEY_SZ = 224
 
-I (327133) wolfssl: GetLength - value exceeds buffer length
-I (327133) wolfcrypt_test: ecc_test_curve keySize = 28
+I (2715) MATH_INT_T: HW Z:
+I (2715) MATH_INT_T:
+I (2725) MATH_INT_T: HW Z.used = 1;
+I (2725) MATH_INT_T: HW Z.sign = 0;
+I (2725) MATH_INT_T: HW Z.dp[ 0] = 0x00001272;  /*  0 */
+I (2735) MATH_INT_T:
+I (2735) MATH_INT_T: SW Z2:
+I (2745) MATH_INT_T:
+I (2745) MATH_INT_T: SW Z2.used = 1;
+I (2745) MATH_INT_T: SW Z2.sign = 0;
+I (2755) MATH_INT_T: SW Z2.dp[ 0] = 0x00001441;  /*  0 */
+I (2755) MATH_INT_T:
+I (2765) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 8 tries
+I (2765) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 2 failures
+I (2775) wolfssl_esp32_mp:
+E (2775) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (2785) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (2795) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (2795) MATH_INT_T: r_inv:
+I (2805) MATH_INT_T:
+I (2805) MATH_INT_T: r_inv.used = 1;
+I (2805) MATH_INT_T: r_inv.sign = 0;
+I (2815) MATH_INT_T: r_inv.dp[ 0] = 0x000045ee;  /*  0 */
+I (2815) MATH_INT_T:
+I (2825) wolfssl_esp32_mp: r_inv bits    = 15
+I (2825) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (2835) wolfssl_esp32_mp: mp            = 0x050316b5 = 84088501
+I (2845) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (2845) wolfssl_esp32_mp: Xs            = 16
+I (2855) wolfssl_esp32_mp: Ys            = 16
+I (2855) wolfssl_esp32_mp: found_z_used  = 1
+I (2865) wolfssl_esp32_mp: z.used        = 1
+I (2865) wolfssl_esp32_mp: hwWords_sz    = 16
+I (2875) wolfssl_esp32_mp: maxWords_sz   = 1
+I (2875) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (2885) MATH_INT_T: X:
+I (2885) MATH_INT_T:
+I (2885) MATH_INT_T: X.used = 1;
+I (2895) MATH_INT_T: X.sign = 0;
+I (2895) MATH_INT_T: X.dp[ 0] = 0x0000bad4;  /*  0 */
+I (2905) MATH_INT_T:
+I (2905) MATH_INT_T: Y:
+I (2905) MATH_INT_T:
+I (2905) MATH_INT_T: Y.used = 1;
+I (2915) MATH_INT_T: Y.sign = 0;
+I (2915) MATH_INT_T: Y.dp[ 0] = 0x0000bad4;  /*  0 */
+I (2925) MATH_INT_T:
+I (2925) MATH_INT_T: M:
+I (2925) MATH_INT_T:
+I (2935) MATH_INT_T: M.used = 1;
+I (2935) MATH_INT_T: M.sign = 0;
+I (2945) MATH_INT_T: M.dp[ 0] = 0x00005863;  /*  0 */
+I (2945) MATH_INT_T:
+I (2945) MATH_INT_T: r_inv:
+I (2955) MATH_INT_T:
+I (2955) MATH_INT_T: r_inv.used = 1;
+I (2955) MATH_INT_T: r_inv.sign = 0;
+I (2965) MATH_INT_T: r_inv.dp[ 0] = 0x000045ee;  /*  0 */
+I (2975) MATH_INT_T:
+I (2975) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = 84088501  !
+I (2985) MATH_INT_T: HW Z:
+I (2985) MATH_INT_T:
+I (2985) MATH_INT_T: HW Z.used = 1;
+I (2995) MATH_INT_T: HW Z.sign = 0;
+I (2995) MATH_INT_T: HW Z.dp[ 0] = 0x000047d8;  /*  0 */
+I (3005) MATH_INT_T:
+I (3005) MATH_INT_T: SW Z2:
+I (3005) MATH_INT_T:
+I (3015) MATH_INT_T: SW Z2.used = 1;
+I (3015) MATH_INT_T: SW Z2.sign = 0;
+I (3025) MATH_INT_T: SW Z2.dp[ 0] = 0x000047d8;  /*  0 */
+I (3025) MATH_INT_T:
+I (3025) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 9 tries
+I (3035) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 3 failures
+I (3045) wolfssl_esp32_mp:
+I (3045) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (3055) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (3055) MATH_INT_T: r_inv:
+I (3065) MATH_INT_T:
+I (3065) MATH_INT_T: r_inv.used = 1;
+I (3065) MATH_INT_T: r_inv.sign = 0;
+I (3075) MATH_INT_T: r_inv.dp[ 0] = 0x00006d0c;  /*  0 */
+I (3075) MATH_INT_T:
+I (3085) wolfssl_esp32_mp: r_inv bits    = 15
+I (3085) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (3095) wolfssl_esp32_mp: mp            = 0xa21a84af = 2719646895
+I (3105) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (3105) wolfssl_esp32_mp: Xs            = 15
+I (3115) wolfssl_esp32_mp: Ys            = 15
+I (3115) wolfssl_esp32_mp: found_z_used  = 1
+I (3125) wolfssl_esp32_mp: z.used        = 1
+I (3125) wolfssl_esp32_mp: hwWords_sz    = 16
+I (3135) wolfssl_esp32_mp: maxWords_sz   = 1
+I (3135) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (3145) MATH_INT_T: X:
+I (3145) MATH_INT_T:
+I (3145) MATH_INT_T: X.used = 1;
+I (3155) MATH_INT_T: X.sign = 0;
+I (3155) MATH_INT_T: X.dp[ 0] = 0x00005712;  /*  0 */
+I (3165) MATH_INT_T:
+I (3165) MATH_INT_T: Y:
+I (3165) MATH_INT_T:
+I (3165) MATH_INT_T: Y.used = 1;
+I (3175) MATH_INT_T: Y.sign = 0;
+I (3175) MATH_INT_T: Y.dp[ 0] = 0x00005712;  /*  0 */
+I (3185) MATH_INT_T:
+I (3185) MATH_INT_T: M:
+I (3185) MATH_INT_T:
+I (3195) MATH_INT_T: M.used = 1;
+I (3195) MATH_INT_T: M.sign = 0;
+I (3205) MATH_INT_T: M.dp[ 0] = 0x0000adb1;  /*  0 */
+I (3205) MATH_INT_T:
+I (3205) MATH_INT_T: r_inv:
+I (3215) MATH_INT_T:
+I (3215) MATH_INT_T: r_inv.used = 1;
+I (3215) MATH_INT_T: r_inv.sign = 0;
+I (3225) MATH_INT_T: r_inv.dp[ 0] = 0x00006d0c;  /*  0 */
+I (3235) MATH_INT_T:
+I (3235) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -1575320401  !
+I (3245) MATH_INT_T: HW Z:
+I (3245) MATH_INT_T:
+I (3245) MATH_INT_T: HW Z.used = 1;
+I (3255) MATH_INT_T: HW Z.sign = 0;
+I (3255) MATH_INT_T: HW Z.dp[ 0] = 0x00008f2f;  /*  0 */
+I (3265) MATH_INT_T:
+I (3265) MATH_INT_T: SW Z2:
+I (3265) MATH_INT_T:
+I (3275) MATH_INT_T: SW Z2.used = 1;
+I (3275) MATH_INT_T: SW Z2.sign = 0;
+I (3285) MATH_INT_T: SW Z2.dp[ 0] = 0x00008f2f;  /*  0 */
+I (3285) MATH_INT_T:
+I (3285) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 10 tries
+I (3295) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 3 failures
+I (3305) wolfssl_esp32_mp:
+I (3305) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (3315) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (3315) MATH_INT_T: r_inv:
+I (3325) MATH_INT_T:
+I (3325) MATH_INT_T: r_inv.used = 1;
+I (3325) MATH_INT_T: r_inv.sign = 0;
+I (3335) MATH_INT_T: r_inv.dp[ 0] = 0x0000802d;  /*  0 */
+I (3335) MATH_INT_T:
+I (3345) wolfssl_esp32_mp: r_inv bits    = 16
+I (3345) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (3355) wolfssl_esp32_mp: mp            = 0x3a82c7d9 = 981649369
+I (3365) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (3365) wolfssl_esp32_mp: Xs            = 13
+I (3375) wolfssl_esp32_mp: Ys            = 13
+I (3375) wolfssl_esp32_mp: found_z_used  = 1
+I (3385) wolfssl_esp32_mp: z.used        = 1
+I (3385) wolfssl_esp32_mp: hwWords_sz    = 16
+I (3395) wolfssl_esp32_mp: maxWords_sz   = 1
+I (3395) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (3405) MATH_INT_T: X:
+I (3405) MATH_INT_T:
+I (3405) MATH_INT_T: X.used = 1;
+I (3415) MATH_INT_T: X.sign = 0;
+I (3415) MATH_INT_T: X.dp[ 0] = 0x00001e15;  /*  0 */
+I (3425) MATH_INT_T:
+I (3425) MATH_INT_T: Y:
+I (3425) MATH_INT_T:
+I (3435) MATH_INT_T: Y.used = 1;
+I (3435) MATH_INT_T: Y.sign = 0;
+I (3435) MATH_INT_T: Y.dp[ 0] = 0x00001e15;  /*  0 */
+I (3445) MATH_INT_T:
+I (3445) MATH_INT_T: M:
+I (3445) MATH_INT_T:
+I (3455) MATH_INT_T: M.used = 1;
+I (3455) MATH_INT_T: M.sign = 0;
+I (3465) MATH_INT_T: M.dp[ 0] = 0x0000b797;  /*  0 */
+I (3465) MATH_INT_T:
+I (3465) MATH_INT_T: r_inv:
+I (3475) MATH_INT_T:
+I (3475) MATH_INT_T: r_inv.used = 1;
+I (3475) MATH_INT_T: r_inv.sign = 0;
+I (3485) MATH_INT_T: r_inv.dp[ 0] = 0x0000802d;  /*  0 */
+I (3495) MATH_INT_T:
+I (3495) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = 981649369  !
+I (3505) MATH_INT_T: HW Z:
+I (3505) MATH_INT_T:
+I (3505) MATH_INT_T: HW Z.used = 1;
+I (3515) MATH_INT_T: HW Z.sign = 0;
+I (3515) MATH_INT_T: HW Z.dp[ 0] = 0x00009aee;  /*  0 */
+I (3525) MATH_INT_T:
+I (3525) MATH_INT_T: SW Z2:
+I (3525) MATH_INT_T:
+I (3535) MATH_INT_T: SW Z2.used = 1;
+I (3535) MATH_INT_T: SW Z2.sign = 0;
+I (3545) MATH_INT_T: SW Z2.dp[ 0] = 0x00009aee;  /*  0 */
+I (3545) MATH_INT_T:
+I (3545) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 11 tries
+I (3555) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 3 failures
+I (3565) wolfssl_esp32_mp:
+I (3565) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (3575) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (3575) MATH_INT_T: r_inv:
+I (3585) MATH_INT_T:
+I (3585) MATH_INT_T: r_inv.used = 1;
+I (3585) MATH_INT_T: r_inv.sign = 0;
+I (3595) MATH_INT_T: r_inv.dp[ 0] = 0x0000063e;  /*  0 */
+I (3595) MATH_INT_T:
+I (3605) wolfssl_esp32_mp: r_inv bits    = 11
+I (3605) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (3615) wolfssl_esp32_mp: mp            = 0x8b78e4b9 = 2339955897
+I (3625) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (3625) wolfssl_esp32_mp: Xs            = 15
+I (3635) wolfssl_esp32_mp: Ys            = 15
+I (3635) wolfssl_esp32_mp: found_z_used  = 1
+I (3645) wolfssl_esp32_mp: z.used        = 1
+I (3645) wolfssl_esp32_mp: hwWords_sz    = 16
+I (3655) wolfssl_esp32_mp: maxWords_sz   = 1
+I (3655) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (3665) MATH_INT_T: X:
+I (3665) MATH_INT_T:
+I (3665) MATH_INT_T: X.used = 1;
+I (3675) MATH_INT_T: X.sign = 0;
+I (3675) MATH_INT_T: X.dp[ 0] = 0x000076d1;  /*  0 */
+I (3685) MATH_INT_T:
+I (3685) MATH_INT_T: Y:
+I (3685) MATH_INT_T:
+I (3695) MATH_INT_T: Y.used = 1;
+I (3695) MATH_INT_T: Y.sign = 0;
+I (3695) MATH_INT_T: Y.dp[ 0] = 0x000076d1;  /*  0 */
+I (3705) MATH_INT_T:
+I (3705) MATH_INT_T: M:
+I (3705) MATH_INT_T:
+I (3715) MATH_INT_T: M.used = 1;
+I (3715) MATH_INT_T: M.sign = 0;
+I (3725) MATH_INT_T: M.dp[ 0] = 0x00001e76;  /*  0 */
+I (3725) MATH_INT_T:
+I (3725) MATH_INT_T: r_inv:
+I (3735) MATH_INT_T:
+I (3735) MATH_INT_T: r_inv.used = 1;
+I (3745) MATH_INT_T: r_inv.sign = 0;
+I (3745) MATH_INT_T: r_inv.dp[ 0] = 0x0000063e;  /*  0 */
+I (3755) MATH_INT_T:
+I (3755) wolfssl_esp32_mp:
 
-E (328653) wolfssl_esp32_mp: mp_mul Z vs Z2 mismatch!
-I (328653) wolfssl_esp32_mp: Xs            = 224
-I (328653) wolfssl_esp32_mp: Ys            = 224
-I (328653) wolfssl_esp32_mp: Zs            = 448
-I (328663) wolfssl_esp32_mp: found_z_used  = 14
-I (328663) wolfssl_esp32_mp: z.used        = 5
-I (328673) wolfssl_esp32_mp: hwWords_sz    = 16
-I (328673) wolfssl_esp32_mp: maxWords_sz   = 7
-I (328683) wolfssl_esp32_mp: left_pad_offset = 64
-I (328683) wolfssl_esp32_mp: hwWords_sz<<2   = 64
-I (328693) MATH_INT_T: X:
-I (328693) MATH_INT_T:
-I (328693) MATH_INT_T: X.used = 7;
-I (328703) MATH_INT_T: X.sign = 0;
-I (328703) MATH_INT_T: X.dp[ 0] = 0xb5c5c2d7;  /*  0 */
-I (328713) MATH_INT_T: X.dp[ 1] = 0x4b6fc0cc;  /*  1 */
-I (328713) MATH_INT_T: X.dp[ 2] = 0xd9ba860e;  /*  2 */
-I (328723) MATH_INT_T: X.dp[ 3] = 0xa296f50d;  /*  3 */
-I (328733) MATH_INT_T: X.dp[ 4] = 0x1c30dad8;  /*  4 */
-I (328733) MATH_INT_T: X.dp[ 5] = 0x9c7a8b74;  /*  5 */
-I (328743) MATH_INT_T: X.dp[ 6] = 0xa8b40270;  /*  6 */
-I (328743) MATH_INT_T:
-I (328753) MATH_INT_T: Y:
-I (328753) MATH_INT_T:
-I (328753) MATH_INT_T: Y.used = 7;
-I (328763) MATH_INT_T: Y.sign = 0;
-I (328763) MATH_INT_T: Y.dp[ 0] = 0x7b44ea44;  /*  0 */
-I (328773) MATH_INT_T: Y.dp[ 1] = 0x52c7ef9f;  /*  1 */
-I (328773) MATH_INT_T: Y.dp[ 2] = 0xb056a8a5;  /*  2 */
-I (328783) MATH_INT_T: Y.dp[ 3] = 0xe1d1ff27;  /*  3 */
-I (328793) MATH_INT_T: Y.dp[ 4] = 0xb8217f14;  /*  4 */
-I (328793) MATH_INT_T: Y.dp[ 5] = 0x81090e95;  /*  5 */
-I (328803) MATH_INT_T: Y.dp[ 6] = 0xd53ea1b7;  /*  6 */
-I (328803) MATH_INT_T:
-I (328813) MATH_INT_T: Peek Z:
-I (328813) MATH_INT_T:
-I (328813) MATH_INT_T: Peek Z.used = 128;
-I (328823) MATH_INT_T: Peek Z.sign = 0;
-I (328823) MATH_INT_T: Peek Z.dp[ 0] = 0x00000000;  /*  0 */
-I (328833) MATH_INT_T: Peek Z.dp[ 1] = 0x00000000;  /*  1 */
-I (328843) MATH_INT_T: Peek Z.dp[ 2] = 0x00000000;  /*  2 */
-I (328843) MATH_INT_T: Peek Z.dp[ 3] = 0x00000000;  /*  3 */
-I (328853) MATH_INT_T: Peek Z.dp[ 4] = 0x00000000;  /*  4 */
-I (328863) MATH_INT_T: Peek Z.dp[ 5] = 0x00000000;  /*  5 */
-I (328863) MATH_INT_T: Peek Z.dp[ 6] = 0x00000000;  /*  6 */
-I (328873) MATH_INT_T: Peek Z.dp[ 7] = 0x00000000;  /*  7 */
-I (328873) MATH_INT_T: Peek Z.dp[ 8] = 0x00000000;  /*  8 */
-I (328883) MATH_INT_T: Peek Z.dp[ 9] = 0x00000000;  /*  9 */
-I (328893) MATH_INT_T: Peek Z.dp[10] = 0x00000000;  /* 10 */
-I (328893) MATH_INT_T: Peek Z.dp[11] = 0x00000000;  /* 11 */
-I (328903) MATH_INT_T: Peek Z.dp[12] = 0x00000000;  /* 12 */
-I (328913) MATH_INT_T: Peek Z.dp[13] = 0x00000000;  /* 13 */
-I (328913) MATH_INT_T: Peek Z.dp[14] = 0x00000000;  /* 14 */
-I (328923) MATH_INT_T: Peek Z.dp[15] = 0x00000000;  /* 15 */
-I (328933) MATH_INT_T: Peek Z.dp[16] = 0x7b44ea44;  /* 16 */
-I (328933) MATH_INT_T: Peek Z.dp[17] = 0x52c7ef9f;  /* 17 */
-I (328943) MATH_INT_T: Peek Z.dp[18] = 0xb056a8a5;  /* 18 */
-I (328953) MATH_INT_T: Peek Z.dp[19] = 0xe1d1ff27;  /* 19 */
-I (328953) MATH_INT_T: Peek Z.dp[20] = 0xb8217f14;  /* 20 */
-I (328963) MATH_INT_T: Peek Z.dp[21] = 0x81090e95;  /* 21 */
-I (328963) MATH_INT_T: Peek Z.dp[22] = 0xd53ea1b7;  /* 22 */
-I (328973) MATH_INT_T: Peek Z.dp[23] = 0x00000000;  /* 23 */
-I (328983) MATH_INT_T: Peek Z.dp[24] = 0x00000000;  /* 24 */
-I (328983) MATH_INT_T: Peek Z.dp[25] = 0x00000000;  /* 25 */
-I (328993) MATH_INT_T: Peek Z.dp[26] = 0x00000000;  /* 26 */
-I (329003) MATH_INT_T: Peek Z.dp[27] = 0x00000000;  /* 27 */
-I (329003) MATH_INT_T: Peek Z.dp[28] = 0x00000000;  /* 28 */
-I (329013) MATH_INT_T: Peek Z.dp[29] = 0x00000000;  /* 29 */
-I (329023) MATH_INT_T: Peek Z.dp[30] = 0x00000000;  /* 30 */
-I (329023) MATH_INT_T: Peek Z.dp[31] = 0x00000000;  /* 31 */
-I (329033) MATH_INT_T: Peek Z.dp[32] = 0x00000000;  /* 32 */
-I (329043) MATH_INT_T: Peek Z.dp[33] = 0x00000000;  /* 33 */
-I (329043) MATH_INT_T: Peek Z.dp[34] = 0x00000000;  /* 34 */
-I (329053) MATH_INT_T: Peek Z.dp[35] = 0x00000000;  /* 35 */
-I (329053) MATH_INT_T: Peek Z.dp[36] = 0x00000000;  /* 36 */
-I (329063) MATH_INT_T: Peek Z.dp[37] = 0x00000000;  /* 37 */
-I (329073) MATH_INT_T: Peek Z.dp[38] = 0x00000000;  /* 38 */
-I (329073) MATH_INT_T: Peek Z.dp[39] = 0x00000000;  /* 39 */
-I (329083) MATH_INT_T: Peek Z.dp[40] = 0x00000000;  /* 40 */
-I (329093) MATH_INT_T: Peek Z.dp[41] = 0x00000000;  /* 41 */
-I (329093) MATH_INT_T: Peek Z.dp[42] = 0x00000000;  /* 42 */
-I (329103) MATH_INT_T: Peek Z.dp[43] = 0x00000000;  /* 43 */
-I (329113) MATH_INT_T: Peek Z.dp[44] = 0x00000000;  /* 44 */
-I (329113) MATH_INT_T: Peek Z.dp[45] = 0x00000000;  /* 45 */
-I (329123) MATH_INT_T: Peek Z.dp[46] = 0x00000000;  /* 46 */
-I (329123) MATH_INT_T: Peek Z.dp[47] = 0x00000000;  /* 47 */
-I (329133) MATH_INT_T: Peek Z.dp[48] = 0x00000000;  /* 48 */
-I (329143) MATH_INT_T: Peek Z.dp[49] = 0x00000000;  /* 49 */
-I (329143) MATH_INT_T: Peek Z.dp[50] = 0x00000000;  /* 50 */
-I (329153) MATH_INT_T: Peek Z.dp[51] = 0x00000000;  /* 51 */
-I (329163) MATH_INT_T: Peek Z.dp[52] = 0x00000000;  /* 52 */
-I (329163) MATH_INT_T: Peek Z.dp[53] = 0x00000000;  /* 53 */
-I (329173) MATH_INT_T: Peek Z.dp[54] = 0x00000000;  /* 54 */
-I (329183) MATH_INT_T: Peek Z.dp[55] = 0x00000000;  /* 55 */
-I (329183) MATH_INT_T: Peek Z.dp[56] = 0x00000000;  /* 56 */
-I (329193) MATH_INT_T: Peek Z.dp[57] = 0x00000000;  /* 57 */
-I (329203) MATH_INT_T: Peek Z.dp[58] = 0x00000000;  /* 58 */
-I (329203) MATH_INT_T: Peek Z.dp[59] = 0x00000000;  /* 59 */
-I (329213) MATH_INT_T: Peek Z.dp[60] = 0x00000000;  /* 60 */
-I (329213) MATH_INT_T: Peek Z.dp[61] = 0x00000000;  /* 61 */
-I (329223) MATH_INT_T: Peek Z.dp[62] = 0x00000000;  /* 62 */
-I (329233) MATH_INT_T: Peek Z.dp[63] = 0x00000000;  /* 63 */
-I (329233) MATH_INT_T: Peek Z.dp[64] = 0x00000000;  /* 64 */
-I (329243) MATH_INT_T: Peek Z.dp[65] = 0x00000000;  /* 65 */
-I (329253) MATH_INT_T: Peek Z.dp[66] = 0x00000000;  /* 66 */
-I (329253) MATH_INT_T: Peek Z.dp[67] = 0x00000000;  /* 67 */
-I (329263) MATH_INT_T: Peek Z.dp[68] = 0x00000000;  /* 68 */
-I (329273) MATH_INT_T: Peek Z.dp[69] = 0x00000000;  /* 69 */
-I (329273) MATH_INT_T: Peek Z.dp[70] = 0x00000000;  /* 70 */
-I (329283) MATH_INT_T: Peek Z.dp[71] = 0x00000000;  /* 71 */
-I (329293) MATH_INT_T: Peek Z.dp[72] = 0x00000000;  /* 72 */
-I (329293) MATH_INT_T: Peek Z.dp[73] = 0x00000000;  /* 73 */
-I (329303) MATH_INT_T: Peek Z.dp[74] = 0x00000000;  /* 74 */
-I (329303) MATH_INT_T: Peek Z.dp[75] = 0x00000000;  /* 75 */
-I (329313) MATH_INT_T: Peek Z.dp[76] = 0x00000000;  /* 76 */
-I (329323) MATH_INT_T: Peek Z.dp[77] = 0x00000000;  /* 77 */
-I (329323) MATH_INT_T: Peek Z.dp[78] = 0x00000000;  /* 78 */
-I (329333) MATH_INT_T: Peek Z.dp[79] = 0x00000000;  /* 79 */
-I (329343) MATH_INT_T: Peek Z.dp[80] = 0x00000000;  /* 80 */
-I (329343) MATH_INT_T: Peek Z.dp[81] = 0x00000000;  /* 81 */
-I (329353) MATH_INT_T: Peek Z.dp[82] = 0x00000000;  /* 82 */
-I (329363) MATH_INT_T: Peek Z.dp[83] = 0x00000000;  /* 83 */
-I (329363) MATH_INT_T: Peek Z.dp[84] = 0x00000000;  /* 84 */
-I (329373) MATH_INT_T: Peek Z.dp[85] = 0x00000000;  /* 85 */
-I (329383) MATH_INT_T: Peek Z.dp[86] = 0x00000000;  /* 86 */
-I (329383) MATH_INT_T: Peek Z.dp[87] = 0x00000000;  /* 87 */
-I (329393) MATH_INT_T: Peek Z.dp[88] = 0x00000000;  /* 88 */
-I (329393) MATH_INT_T: Peek Z.dp[89] = 0x00000000;  /* 89 */
-I (329403) MATH_INT_T: Peek Z.dp[90] = 0x00000000;  /* 90 */
-I (329413) MATH_INT_T: Peek Z.dp[91] = 0x00000000;  /* 91 */
-I (329413) MATH_INT_T: Peek Z.dp[92] = 0x00000000;  /* 92 */
-I (329423) MATH_INT_T: Peek Z.dp[93] = 0x00000000;  /* 93 */
-I (329433) MATH_INT_T: Peek Z.dp[94] = 0x00000000;  /* 94 */
-I (329433) MATH_INT_T: Peek Z.dp[95] = 0x00000000;  /* 95 */
-I (329443) MATH_INT_T: Peek Z.dp[96] = 0x00000000;  /* 96 */
-I (329453) MATH_INT_T: Peek Z.dp[97] = 0x00000000;  /* 97 */
-I (329453) MATH_INT_T: Peek Z.dp[98] = 0x00000000;  /* 98 */
-I (329463) MATH_INT_T: Peek Z.dp[99] = 0x00000000;  /* 99 */
-I (329473) MATH_INT_T: Peek Z.dp[100] = 0x00000000;  /* 100 */
-I (329473) MATH_INT_T: Peek Z.dp[101] = 0x00000000;  /* 101 */
-I (329483) MATH_INT_T: Peek Z.dp[102] = 0x00000000;  /* 102 */
-I (329493) MATH_INT_T: Peek Z.dp[103] = 0x00000000;  /* 103 */
-I (329493) MATH_INT_T: Peek Z.dp[104] = 0x00000000;  /* 104 */
-I (329503) MATH_INT_T: Peek Z.dp[105] = 0x00000000;  /* 105 */
-I (329513) MATH_INT_T: Peek Z.dp[106] = 0x00000000;  /* 106 */
-I (329513) MATH_INT_T: Peek Z.dp[107] = 0x00000000;  /* 107 */
-I (329523) MATH_INT_T: Peek Z.dp[108] = 0x00000000;  /* 108 */
-I (329523) MATH_INT_T: Peek Z.dp[109] = 0x00000000;  /* 109 */
-I (329533) MATH_INT_T: Peek Z.dp[110] = 0x00000000;  /* 110 */
-I (329543) MATH_INT_T: Peek Z.dp[111] = 0x00000000;  /* 111 */
-I (329543) MATH_INT_T: Peek Z.dp[112] = 0x00000000;  /* 112 */
-I (329553) MATH_INT_T: Peek Z.dp[113] = 0x00000000;  /* 113 */
-I (329563) MATH_INT_T: Peek Z.dp[114] = 0x00000000;  /* 114 */
-I (329563) MATH_INT_T: Peek Z.dp[115] = 0x00000000;  /* 115 */
-I (329573) MATH_INT_T: Peek Z.dp[116] = 0x00000000;  /* 116 */
-I (329583) MATH_INT_T: Peek Z.dp[117] = 0x00000000;  /* 117 */
-I (329583) MATH_INT_T: Peek Z.dp[118] = 0x00000000;  /* 118 */
-I (329593) MATH_INT_T: Peek Z.dp[119] = 0x00000000;  /* 119 */
-I (329603) MATH_INT_T: Peek Z.dp[120] = 0x00000000;  /* 120 */
-I (329603) MATH_INT_T: Peek Z.dp[121] = 0x00000000;  /* 121 */
-I (329613) MATH_INT_T: Peek Z.dp[122] = 0x00000000;  /* 122 */
-I (329623) MATH_INT_T: Peek Z.dp[123] = 0x00000000;  /* 123 */
-I (329623) MATH_INT_T: Peek Z.dp[124] = 0x00000000;  /* 124 */
-I (329633) MATH_INT_T: Peek Z.dp[125] = 0x00000000;  /* 125 */
-I (329643) MATH_INT_T: Peek Z.dp[126] = 0x00000000;  /* 126 */
-I (329643) MATH_INT_T: Peek Z.dp[127] = 0x00000000;  /* 127 */
-I (329653) MATH_INT_T:
-I (329653) MATH_INT_T: Z:
-I (329663) MATH_INT_T:
-I (329663) MATH_INT_T: Z.used = 5;
-I (329663) MATH_INT_T: Z.sign = 0;
-I (329673) MATH_INT_T: Z.dp[ 0] = 0xcb465a8b;  /*  0 */
-I (329673) MATH_INT_T: Z.dp[ 1] = 0xcdf54a51;  /*  1 */
-I (329683) MATH_INT_T: Z.dp[ 2] = 0x0f8e90f6;  /*  2 */
-I (329693) MATH_INT_T: Z.dp[ 3] = 0x89dfe4eb;  /*  3 */
-I (329693) MATH_INT_T: Z.dp[ 4] = 0x5c9b704c;  /*  4 */
-I (329703) MATH_INT_T:
-I (329703) MATH_INT_T: Z2:
-I (329703) MATH_INT_T:
-I (329713) MATH_INT_T: Z2.used = 14;
-I (329713) MATH_INT_T: Z2.sign = 0;
-I (329723) MATH_INT_T: Z2.dp[ 0] = 0x1abc471c;  /*  0 */
-I (329723) MATH_INT_T: Z2.dp[ 1] = 0x9b7c5e35;  /*  1 */
-I (329733) MATH_INT_T: Z2.dp[ 2] = 0xa36f96a0;  /*  2 */
-I (329733) MATH_INT_T: Z2.dp[ 3] = 0x40afb8f4;  /*  3 */
-I (329743) MATH_INT_T: Z2.dp[ 4] = 0xe55e545c;  /*  4 */
-I (329753) MATH_INT_T: Z2.dp[ 5] = 0xd6a64866;  /*  5 */
-I (329753) MATH_INT_T: Z2.dp[ 6] = 0xcaa79b0b;  /*  6 */
-I (329763) MATH_INT_T: Z2.dp[ 7] = 0x4d112cca;  /*  7 */
-I (329763) MATH_INT_T: Z2.dp[ 8] = 0x453db154;  /*  8 */
-I (329773) MATH_INT_T: Z2.dp[ 9] = 0xd9ffece3;  /*  9 */
-I (329783) MATH_INT_T: Z2.dp[10] = 0xa19db163;  /* 10 */
-I (329783) MATH_INT_T: Z2.dp[11] = 0xa5ef7908;  /* 11 */
-I (329793) MATH_INT_T: Z2.dp[12] = 0x6cb719c9;  /* 12 */
-I (329793) MATH_INT_T: Z2.dp[13] = 0x8c870c32;  /* 13 */
-I (329803) MATH_INT_T:
-W (329803) wolfssl_esp32_mp: Recovering mp_mul error with software result
+M' MISMATCH esp_calc_Mdash = 0x8b78e4b9 = -1955011399
+vs mp_montgomery_setup     = 0x3a82c7d9 = 981649369
+
+
+I (3765) MATH_INT_T: HW Z:
+I (3775) MATH_INT_T:
+I (3775) MATH_INT_T: HW Z.used = 1;
+I (3775) MATH_INT_T: HW Z.sign = 0;
+I (3785) MATH_INT_T: HW Z.dp[ 0] = 0x00001d24;  /*  0 */
+I (3785) MATH_INT_T:
+I (3795) MATH_INT_T: SW Z2:
+I (3795) MATH_INT_T:
+I (3795) MATH_INT_T: SW Z2.used = 1;
+I (3805) MATH_INT_T: SW Z2.sign = 0;
+I (3805) MATH_INT_T: SW Z2.dp[ 0] = 0x000000b3;  /*  0 */
+I (3815) MATH_INT_T:
+I (3815) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 12 tries
+I (3825) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 3 failures
+I (3825) wolfssl_esp32_mp:
+E (3835) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (3835) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (3845) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (3855) MATH_INT_T: r_inv:
+I (3855) MATH_INT_T:
+I (3855) MATH_INT_T: r_inv.used = 1;
+I (3865) MATH_INT_T: r_inv.sign = 0;
+I (3865) MATH_INT_T: r_inv.dp[ 0] = 0x0018699c;  /*  0 */
+I (3875) MATH_INT_T:
+I (3875) wolfssl_esp32_mp: r_inv bits    = 21
+I (3885) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (3885) wolfssl_esp32_mp: mp            = 0x89e00489 = 2313159817
+I (3895) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (3895) wolfssl_esp32_mp: Xs            = 20
+I (3905) wolfssl_esp32_mp: Ys            = 20
+I (3905) wolfssl_esp32_mp: found_z_used  = 1
+I (3915) wolfssl_esp32_mp: z.used        = 1
+I (3915) wolfssl_esp32_mp: hwWords_sz    = 16
+I (3925) wolfssl_esp32_mp: maxWords_sz   = 1
+I (3925) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (3935) MATH_INT_T: X:
+I (3935) MATH_INT_T:
+I (3945) MATH_INT_T: X.used = 1;
+I (3945) MATH_INT_T: X.sign = 0;
+I (3945) MATH_INT_T: X.dp[ 0] = 0x000c26ce;  /*  0 */
+I (3955) MATH_INT_T:
+I (3955) MATH_INT_T: Y:
+I (3965) MATH_INT_T:
+I (3965) MATH_INT_T: Y.used = 1;
+I (3965) MATH_INT_T: Y.sign = 0;
+I (3975) MATH_INT_T: Y.dp[ 0] = 0x000c26ce;  /*  0 */
+I (3975) MATH_INT_T:
+I (3975) MATH_INT_T: M:
+I (3985) MATH_INT_T:
+I (3985) MATH_INT_T: M.used = 1;
+I (3985) MATH_INT_T: M.sign = 0;
+I (3995) MATH_INT_T: M.dp[ 0] = 0x00554e46;  /*  0 */
+I (3995) MATH_INT_T:
+I (4005) MATH_INT_T: r_inv:
+I (4005) MATH_INT_T:
+I (4005) MATH_INT_T: r_inv.used = 1;
+I (4015) MATH_INT_T: r_inv.sign = 0;
+I (4015) MATH_INT_T: r_inv.dp[ 0] = 0x0018699c;  /*  0 */
+I (4025) MATH_INT_T:
+I (4025) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0x89e00489 = -1981807479
+vs mp_montgomery_setup     = 0x3a82c7d9 = 981649369
+
+
+I (4045) MATH_INT_T: HW Z:
+I (4045) MATH_INT_T:
+I (4045) MATH_INT_T: HW Z.used = 1;
+I (4055) MATH_INT_T: HW Z.sign = 0;
+I (4055) MATH_INT_T: HW Z.dp[ 0] = 0x0041aa24;  /*  0 */
+I (4065) MATH_INT_T:
+I (4065) MATH_INT_T: SW Z2:
+I (4065) MATH_INT_T:
+I (4075) MATH_INT_T: SW Z2.used = 1;
+I (4075) MATH_INT_T: SW Z2.sign = 0;
+I (4075) MATH_INT_T: SW Z2.dp[ 0] = 0x0014e304;  /*  0 */
+I (4085) MATH_INT_T:
+I (4085) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 13 tries
+I (4095) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 4 failures
+I (4105) wolfssl_esp32_mp:
+E (4105) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (4115) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (4115) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (4125) MATH_INT_T: r_inv:
+I (4125) MATH_INT_T:
+I (4135) MATH_INT_T: r_inv.used = 1;
+I (4135) MATH_INT_T: r_inv.sign = 0;
+I (4135) MATH_INT_T: r_inv.dp[ 0] = 0x005b2080;  /*  0 */
+I (4145) MATH_INT_T:
+I (4145) wolfssl_esp32_mp: r_inv bits    = 23
+I (4155) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (4165) wolfssl_esp32_mp: mp            = 0xeadb5231 = 3940241969
+I (4165) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (4175) wolfssl_esp32_mp: Xs            = 24
+I (4175) wolfssl_esp32_mp: Ys            = 24
+I (4185) wolfssl_esp32_mp: found_z_used  = 1
+I (4185) wolfssl_esp32_mp: z.used        = 1
+I (4195) wolfssl_esp32_mp: hwWords_sz    = 16
+I (4195) wolfssl_esp32_mp: maxWords_sz   = 1
+I (4205) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (4205) MATH_INT_T: X:
+I (4215) MATH_INT_T:
+I (4215) MATH_INT_T: X.used = 1;
+I (4215) MATH_INT_T: X.sign = 0;
+I (4225) MATH_INT_T: X.dp[ 0] = 0x00fd6905;  /*  0 */
+I (4225) MATH_INT_T:
+I (4235) MATH_INT_T: Y:
+I (4235) MATH_INT_T:
+I (4235) MATH_INT_T: Y.used = 1;
+I (4245) MATH_INT_T: Y.sign = 0;
+I (4245) MATH_INT_T: Y.dp[ 0] = 0x00fd6905;  /*  0 */
+I (4245) MATH_INT_T:
+I (4255) MATH_INT_T: M:
+I (4255) MATH_INT_T:
+I (4255) MATH_INT_T: M.used = 1;
+I (4265) MATH_INT_T: M.sign = 0;
+I (4265) MATH_INT_T: M.dp[ 0] = 0x009f392f;  /*  0 */
+I (4275) MATH_INT_T:
+I (4275) MATH_INT_T: r_inv:
+I (4275) MATH_INT_T:
+I (4285) MATH_INT_T: r_inv.used = 1;
+I (4285) MATH_INT_T: r_inv.sign = 0;
+I (4295) MATH_INT_T: r_inv.dp[ 0] = 0x005b2080;  /*  0 */
+I (4295) MATH_INT_T:
+I (4295) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -354725327  !
+I (4305) MATH_INT_T: HW Z:
+I (4315) MATH_INT_T:
+I (4315) MATH_INT_T: HW Z.used = 1;
+I (4315) MATH_INT_T: HW Z.sign = 0;
+I (4325) MATH_INT_T: HW Z.dp[ 0] = 0x0031517c;  /*  0 */
+I (4325) MATH_INT_T:
+I (4335) MATH_INT_T: SW Z2:
+I (4335) MATH_INT_T:
+I (4335) MATH_INT_T: SW Z2.used = 1;
+I (4345) MATH_INT_T: SW Z2.sign = 0;
+I (4345) MATH_INT_T: SW Z2.dp[ 0] = 0x0031517c;  /*  0 */
+I (4355) MATH_INT_T:
+I (4355) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 14 tries
+I (4365) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 5 failures
+I (4365) wolfssl_esp32_mp:
+I (4375) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (4375) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (4385) MATH_INT_T: r_inv:
+I (4385) MATH_INT_T:
+I (4395) MATH_INT_T: r_inv.used = 1;
+I (4395) MATH_INT_T: r_inv.sign = 0;
+I (4395) MATH_INT_T: r_inv.dp[ 0] = 0x00651e98;  /*  0 */
+I (4405) MATH_INT_T:
+I (4405) wolfssl_esp32_mp: r_inv bits    = 23
+I (4415) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (4425) wolfssl_esp32_mp: mp            = 0x58e9b377 = 1491710839
+I (4425) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (4435) wolfssl_esp32_mp: Xs            = 23
+I (4435) wolfssl_esp32_mp: Ys            = 23
+I (4445) wolfssl_esp32_mp: found_z_used  = 1
+I (4445) wolfssl_esp32_mp: z.used        = 1
+I (4455) wolfssl_esp32_mp: hwWords_sz    = 16
+I (4455) wolfssl_esp32_mp: maxWords_sz   = 1
+I (4465) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (4465) MATH_INT_T: X:
+I (4475) MATH_INT_T:
+I (4475) MATH_INT_T: X.used = 1;
+I (4475) MATH_INT_T: X.sign = 0;
+I (4485) MATH_INT_T: X.dp[ 0] = 0x00425eec;  /*  0 */
+I (4485) MATH_INT_T:
+I (4495) MATH_INT_T: Y:
+I (4495) MATH_INT_T:
+I (4495) MATH_INT_T: Y.used = 1;
+I (4505) MATH_INT_T: Y.sign = 0;
+I (4505) MATH_INT_T: Y.dp[ 0] = 0x00425eec;  /*  0 */
+I (4515) MATH_INT_T:
+I (4515) MATH_INT_T: M:
+I (4515) MATH_INT_T:
+I (4515) MATH_INT_T: M.used = 1;
+I (4525) MATH_INT_T: M.sign = 0;
+I (4525) MATH_INT_T: M.dp[ 0] = 0x00eae9b8;  /*  0 */
+I (4535) MATH_INT_T:
+I (4535) MATH_INT_T: r_inv:
+I (4535) MATH_INT_T:
+I (4545) MATH_INT_T: r_inv.used = 1;
+I (4545) MATH_INT_T: r_inv.sign = 0;
+I (4555) MATH_INT_T: r_inv.dp[ 0] = 0x00651e98;  /*  0 */
+I (4555) MATH_INT_T:
+I (4555) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0x58e9b377 = 1491710839
+vs mp_montgomery_setup     = 0xeadb5231 = -354725327
+
+
+I (4575) MATH_INT_T: HW Z:
+I (4575) MATH_INT_T:
+I (4575) MATH_INT_T: HW Z.used = 1;
+I (4585) MATH_INT_T: HW Z.sign = 0;
+I (4585) MATH_INT_T: HW Z.dp[ 0] = 0x009cf545;  /*  0 */
+I (4595) MATH_INT_T:
+I (4595) MATH_INT_T: SW Z2:
+I (4605) MATH_INT_T:
+I (4605) MATH_INT_T: SW Z2.used = 1;
+I (4605) MATH_INT_T: SW Z2.sign = 0;
+I (4615) MATH_INT_T: SW Z2.dp[ 0] = 0x004863d8;  /*  0 */
+I (4615) MATH_INT_T:
+I (4625) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 15 tries
+I (4625) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 5 failures
+I (4635) wolfssl_esp32_mp:
+E (4635) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (4645) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (4655) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (4655) MATH_INT_T: r_inv:
+I (4665) MATH_INT_T:
+I (4665) MATH_INT_T: r_inv.used = 1;
+I (4665) MATH_INT_T: r_inv.sign = 0;
+I (4675) MATH_INT_T: r_inv.dp[ 0] = 0x000973c0;  /*  0 */
+I (4675) MATH_INT_T:
+I (4685) wolfssl_esp32_mp: r_inv bits    = 20
+I (4685) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (4695) wolfssl_esp32_mp: mp            = 0x29098adf = 688491231
+I (4705) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (4705) wolfssl_esp32_mp: Xs            = 24
+I (4715) wolfssl_esp32_mp: Ys            = 24
+I (4715) wolfssl_esp32_mp: found_z_used  = 1
+I (4725) wolfssl_esp32_mp: z.used        = 1
+I (4725) wolfssl_esp32_mp: hwWords_sz    = 16
+I (4735) wolfssl_esp32_mp: maxWords_sz   = 1
+I (4735) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (4745) MATH_INT_T: X:
+I (4745) MATH_INT_T:
+I (4745) MATH_INT_T: X.used = 1;
+I (4755) MATH_INT_T: X.sign = 0;
+I (4755) MATH_INT_T: X.dp[ 0] = 0x00c6fef5;  /*  0 */
+I (4765) MATH_INT_T:
+I (4765) MATH_INT_T: Y:
+I (4765) MATH_INT_T:
+I (4765) MATH_INT_T: Y.used = 1;
+I (4775) MATH_INT_T: Y.sign = 0;
+I (4775) MATH_INT_T: Y.dp[ 0] = 0x00c6fef5;  /*  0 */
+I (4785) MATH_INT_T:
+I (4785) MATH_INT_T: M:
+I (4785) MATH_INT_T:
+I (4795) MATH_INT_T: M.used = 1;
+I (4795) MATH_INT_T: M.sign = 0;
+I (4795) MATH_INT_T: M.dp[ 0] = 0x00534ee0;  /*  0 */
+I (4805) MATH_INT_T:
+I (4805) MATH_INT_T: r_inv:
+I (4815) MATH_INT_T:
+I (4815) MATH_INT_T: r_inv.used = 1;
+I (4815) MATH_INT_T: r_inv.sign = 0;
+I (4825) MATH_INT_T: r_inv.dp[ 0] = 0x000973c0;  /*  0 */
+I (4825) MATH_INT_T:
+I (4835) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0x29098adf = 688491231
+vs mp_montgomery_setup     = 0xeadb5231 = -354725327
+
+
+I (4845) MATH_INT_T: HW Z:
+I (4845) MATH_INT_T:
+I (4855) MATH_INT_T: HW Z.used = 1;
+I (4855) MATH_INT_T: HW Z.sign = 0;
+I (4865) MATH_INT_T: HW Z.dp[ 0] = 0x0039f17a;  /*  0 */
+I (4865) MATH_INT_T:
+I (4865) MATH_INT_T: SW Z2:
+I (4875) MATH_INT_T:
+I (4875) MATH_INT_T: SW Z2.used = 1;
+I (4885) MATH_INT_T: SW Z2.sign = 0;
+I (4885) MATH_INT_T: SW Z2.dp[ 0] = 0x000aab99;  /*  0 */
+I (4895) MATH_INT_T:
+I (4895) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 16 tries
+I (4905) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 6 failures
+I (4905) wolfssl_esp32_mp:
+E (4915) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (4915) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (4925) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (4935) MATH_INT_T: r_inv:
+I (4935) MATH_INT_T:
+I (4935) MATH_INT_T: r_inv.used = 1;
+I (4945) MATH_INT_T: r_inv.sign = 0;
+I (4945) MATH_INT_T: r_inv.dp[ 0] = 0x001aa498;  /*  0 */
+I (4955) MATH_INT_T:
+I (4955) wolfssl_esp32_mp: r_inv bits    = 21
+I (4955) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (4965) wolfssl_esp32_mp: mp            = 0xeb3dc76f = 3946694511
+I (4975) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (4975) wolfssl_esp32_mp: Xs            = 22
+I (4985) wolfssl_esp32_mp: Ys            = 22
+I (4985) wolfssl_esp32_mp: found_z_used  = 1
+I (4995) wolfssl_esp32_mp: z.used        = 1
+I (4995) wolfssl_esp32_mp: hwWords_sz    = 16
+I (5005) wolfssl_esp32_mp: maxWords_sz   = 1
+I (5005) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (5015) MATH_INT_T: X:
+I (5015) MATH_INT_T:
+I (5015) MATH_INT_T: X.used = 1;
+I (5025) MATH_INT_T: X.sign = 0;
+I (5025) MATH_INT_T: X.dp[ 0] = 0x002d5414;  /*  0 */
+I (5035) MATH_INT_T:
+I (5035) MATH_INT_T: Y:
+I (5035) MATH_INT_T:
+I (5045) MATH_INT_T: Y.used = 1;
+I (5045) MATH_INT_T: Y.sign = 0;
+I (5055) MATH_INT_T: Y.dp[ 0] = 0x002d5414;  /*  0 */
+I (5055) MATH_INT_T:
+I (5055) MATH_INT_T: M:
+I (5065) MATH_INT_T:
+I (5065) MATH_INT_T: M.used = 1;
+I (5065) MATH_INT_T: M.sign = 0;
+I (5075) MATH_INT_T: M.dp[ 0] = 0x00b88871;  /*  0 */
+I (5075) MATH_INT_T:
+I (5085) MATH_INT_T: r_inv:
+I (5085) MATH_INT_T:
+I (5085) MATH_INT_T: r_inv.used = 1;
+I (5095) MATH_INT_T: r_inv.sign = 0;
+I (5095) MATH_INT_T: r_inv.dp[ 0] = 0x001aa498;  /*  0 */
+I (5105) MATH_INT_T:
+I (5105) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -348272785  !
+I (5115) MATH_INT_T: HW Z:
+I (5115) MATH_INT_T:
+I (5125) MATH_INT_T: HW Z.used = 1;
+I (5125) MATH_INT_T: HW Z.sign = 0;
+I (5125) MATH_INT_T: HW Z.dp[ 0] = 0x00b3b1a8;  /*  0 */
+I (5135) MATH_INT_T:
+I (5135) MATH_INT_T: SW Z2:
+I (5145) MATH_INT_T:
+I (5145) MATH_INT_T: SW Z2.used = 1;
+I (5145) MATH_INT_T: SW Z2.sign = 0;
+I (5155) MATH_INT_T: SW Z2.dp[ 0] = 0x00b3b1a8;  /*  0 */
+I (5155) MATH_INT_T:
+I (5165) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 17 tries
+I (5165) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 7 failures
+I (5175) wolfssl_esp32_mp:
+I (5175) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (5185) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (5195) MATH_INT_T: r_inv:
+I (5195) MATH_INT_T:
+I (5195) MATH_INT_T: r_inv.used = 1;
+I (5205) MATH_INT_T: r_inv.sign = 0;
+I (5205) MATH_INT_T: r_inv.dp[ 0] = 0x003039f9;  /*  0 */
+I (5215) MATH_INT_T:
+I (5215) wolfssl_esp32_mp: r_inv bits    = 22
+I (5225) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (5225) wolfssl_esp32_mp: mp            = 0x25821e27 = 629284391
+I (5235) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (5235) wolfssl_esp32_mp: Xs            = 24
+I (5245) wolfssl_esp32_mp: Ys            = 24
+I (5245) wolfssl_esp32_mp: found_z_used  = 1
+I (5255) wolfssl_esp32_mp: z.used        = 1
+I (5255) wolfssl_esp32_mp: hwWords_sz    = 16
+I (5265) wolfssl_esp32_mp: maxWords_sz   = 1
+I (5265) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (5275) MATH_INT_T: X:
+I (5275) MATH_INT_T:
+I (5275) MATH_INT_T: X.used = 1;
+I (5285) MATH_INT_T: X.sign = 0;
+I (5285) MATH_INT_T: X.dp[ 0] = 0x00d07c13;  /*  0 */
+I (5295) MATH_INT_T:
+I (5295) MATH_INT_T: Y:
+I (5295) MATH_INT_T:
+I (5305) MATH_INT_T: Y.used = 1;
+I (5305) MATH_INT_T: Y.sign = 0;
+I (5315) MATH_INT_T: Y.dp[ 0] = 0x00d07c13;  /*  0 */
+I (5315) MATH_INT_T:
+I (5315) MATH_INT_T: M:
+I (5325) MATH_INT_T:
+I (5325) MATH_INT_T: M.used = 1;
+I (5325) MATH_INT_T: M.sign = 0;
+I (5335) MATH_INT_T: M.dp[ 0] = 0x00d88e69;  /*  0 */
+I (5335) MATH_INT_T:
+I (5345) MATH_INT_T: r_inv:
+I (5345) MATH_INT_T:
+I (5345) MATH_INT_T: r_inv.used = 1;
+I (5355) MATH_INT_T: r_inv.sign = 0;
+I (5355) MATH_INT_T: r_inv.dp[ 0] = 0x003039f9;  /*  0 */
+I (5365) MATH_INT_T:
+I (5365) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = 629284391  !
+I (5375) MATH_INT_T: HW Z:
+I (5375) MATH_INT_T:
+I (5385) MATH_INT_T: HW Z.used = 1;
+I (5385) MATH_INT_T: HW Z.sign = 0;
+I (5385) MATH_INT_T: HW Z.dp[ 0] = 0x00786640;  /*  0 */
+I (5395) MATH_INT_T:
+I (5395) MATH_INT_T: SW Z2:
+I (5405) MATH_INT_T:
+I (5405) MATH_INT_T: SW Z2.used = 1;
+I (5405) MATH_INT_T: SW Z2.sign = 0;
+I (5415) MATH_INT_T: SW Z2.dp[ 0] = 0x00786640;  /*  0 */
+I (5415) MATH_INT_T:
+I (5425) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 18 tries
+I (5425) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 7 failures
+I (5435) wolfssl_esp32_mp:
+I (5435) wolfssl_esp32_mp: esp_mp_mulmod success!
+I (5445) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (5455) MATH_INT_T: r_inv:
+I (5455) MATH_INT_T:
+I (5455) MATH_INT_T: r_inv.used = 1;
+I (5465) MATH_INT_T: r_inv.sign = 0;
+I (5465) MATH_INT_T: r_inv.dp[ 0] = 0x00078100;  /*  0 */
+I (5475) MATH_INT_T:
+I (5475) wolfssl_esp32_mp: r_inv bits    = 19
+I (5485) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (5485) wolfssl_esp32_mp: mp            = 0x6c6e22ff = 1819157247
+I (5495) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (5495) wolfssl_esp32_mp: Xs            = 24
+I (5505) wolfssl_esp32_mp: Ys            = 24
+I (5505) wolfssl_esp32_mp: found_z_used  = 1
+I (5515) wolfssl_esp32_mp: z.used        = 1
+I (5515) wolfssl_esp32_mp: hwWords_sz    = 16
+I (5525) wolfssl_esp32_mp: maxWords_sz   = 1
+I (5525) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (5535) MATH_INT_T: X:
+I (5535) MATH_INT_T:
+I (5535) MATH_INT_T: X.used = 1;
+I (5545) MATH_INT_T: X.sign = 0;
+I (5545) MATH_INT_T: X.dp[ 0] = 0x00cd094d;  /*  0 */
+I (5555) MATH_INT_T:
+I (5555) MATH_INT_T: Y:
+I (5555) MATH_INT_T:
+I (5565) MATH_INT_T: Y.used = 1;
+I (5565) MATH_INT_T: Y.sign = 0;
+I (5575) MATH_INT_T: Y.dp[ 0] = 0x00cd094d;  /*  0 */
+I (5575) MATH_INT_T:
+I (5575) MATH_INT_T: M:
+I (5585) MATH_INT_T:
+I (5585) MATH_INT_T: M.used = 1;
+I (5585) MATH_INT_T: M.sign = 0;
+I (5595) MATH_INT_T: M.dp[ 0] = 0x00372300;  /*  0 */
+I (5595) MATH_INT_T:
+I (5605) MATH_INT_T: r_inv:
+I (5605) MATH_INT_T:
+I (5605) MATH_INT_T: r_inv.used = 1;
+I (5615) MATH_INT_T: r_inv.sign = 0;
+I (5615) MATH_INT_T: r_inv.dp[ 0] = 0x00078100;  /*  0 */
+I (5625) MATH_INT_T:
+I (5625) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0x6c6e22ff = 1819157247
+vs mp_montgomery_setup     = 0x25821e27 = 629284391
+
+
+I (5635) MATH_INT_T: HW Z:
+I (5645) MATH_INT_T:
+I (5645) MATH_INT_T: HW Z.used = 1;
+I (5645) MATH_INT_T: HW Z.sign = 0;
+I (5655) MATH_INT_T: HW Z.dp[ 0] = 0x0030272e;  /*  0 */
+I (5665) MATH_INT_T:
+I (5665) MATH_INT_T: SW Z2:
+I (5665) MATH_INT_T:
+I (5665) MATH_INT_T: SW Z2.used = 1;
+I (5675) MATH_INT_T: SW Z2.sign = 0;
+I (5675) MATH_INT_T: SW Z2.dp[ 0] = 0x00346c29;  /*  0 */
+I (5685) MATH_INT_T:
+I (5685) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 19 tries
+I (5695) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 7 failures
+I (5695) wolfssl_esp32_mp:
+E (5705) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (5705) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (5715) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (5725) MATH_INT_T: r_inv:
+I (5725) MATH_INT_T:
+I (5735) MATH_INT_T: r_inv.used = 1;
+I (5735) MATH_INT_T: r_inv.sign = 0;
+I (5735) MATH_INT_T: r_inv.dp[ 0] = 0x00440f08;  /*  0 */
+I (5745) MATH_INT_T:
+I (5745) wolfssl_esp32_mp: r_inv bits    = 23
+I (5755) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (5755) wolfssl_esp32_mp: mp            = 0xe5ba2665 = 3854181989
+I (5765) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (5775) wolfssl_esp32_mp: Xs            = 24
+I (5775) wolfssl_esp32_mp: Ys            = 24
+I (5785) wolfssl_esp32_mp: found_z_used  = 1
+I (5785) wolfssl_esp32_mp: z.used        = 1
+I (5795) wolfssl_esp32_mp: hwWords_sz    = 16
+I (5795) wolfssl_esp32_mp: maxWords_sz   = 1
+I (5805) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (5805) MATH_INT_T: X:
+I (5805) MATH_INT_T:
+I (5815) MATH_INT_T: X.used = 1;
+I (5815) MATH_INT_T: X.sign = 0;
+I (5825) MATH_INT_T: X.dp[ 0] = 0x0080990d;  /*  0 */
+I (5825) MATH_INT_T:
+I (5825) MATH_INT_T: Y:
+I (5835) MATH_INT_T:
+I (5835) MATH_INT_T: Y.used = 1;
+I (5835) MATH_INT_T: Y.sign = 0;
+I (5845) MATH_INT_T: Y.dp[ 0] = 0x0080990d;  /*  0 */
+I (5845) MATH_INT_T:
+I (5855) MATH_INT_T: M:
+I (5855) MATH_INT_T:
+I (5855) MATH_INT_T: M.used = 1;
+I (5865) MATH_INT_T: M.sign = 0;
+I (5865) MATH_INT_T: M.dp[ 0] = 0x00a2e492;  /*  0 */
+I (5875) MATH_INT_T:
+I (5875) MATH_INT_T: r_inv:
+I (5875) MATH_INT_T:
+I (5885) MATH_INT_T: r_inv.used = 1;
+I (5885) MATH_INT_T: r_inv.sign = 0;
+I (5885) MATH_INT_T: r_inv.dp[ 0] = 0x00440f08;  /*  0 */
+I (5895) MATH_INT_T:
+I (5895) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0xe5ba2665 = -440785307
+vs mp_montgomery_setup     = 0x25821e27 = 629284391
+
+
+I (5915) MATH_INT_T: HW Z:
+I (5915) MATH_INT_T:
+I (5915) MATH_INT_T: HW Z.used = 1;
+I (5925) MATH_INT_T: HW Z.sign = 0;
+I (5925) MATH_INT_T: HW Z.dp[ 0] = 0x006e1edb;  /*  0 */
+I (5935) MATH_INT_T:
+I (5935) MATH_INT_T: SW Z2:
+I (5935) MATH_INT_T:
+I (5945) MATH_INT_T: SW Z2.used = 1;
+I (5945) MATH_INT_T: SW Z2.sign = 0;
+I (5955) MATH_INT_T: SW Z2.dp[ 0] = 0x002a9ea5;  /*  0 */
+I (5955) MATH_INT_T:
+I (5955) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 20 tries
+I (5965) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 8 failures
+I (5975) wolfssl_esp32_mp:
+E (5975) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (5985) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (5995) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (5995) MATH_INT_T: r_inv:
+I (6005) MATH_INT_T:
+I (6005) MATH_INT_T: r_inv.used = 1;
+I (6005) MATH_INT_T: r_inv.sign = 0;
+I (6015) MATH_INT_T: r_inv.dp[ 0] = 0x00a3a92c;  /*  0 */
+I (6015) MATH_INT_T:
+I (6025) wolfssl_esp32_mp: r_inv bits    = 24
+I (6025) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (6035) wolfssl_esp32_mp: mp            = 0x55cb60e5 = 1439391973
+I (6035) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (6045) wolfssl_esp32_mp: Xs            = 24
+I (6045) wolfssl_esp32_mp: Ys            = 24
+I (6055) wolfssl_esp32_mp: found_z_used  = 1
+I (6055) wolfssl_esp32_mp: z.used        = 1
+I (6065) wolfssl_esp32_mp: hwWords_sz    = 16
+I (6065) wolfssl_esp32_mp: maxWords_sz   = 1
+I (6065) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (6065) MATH_INT_T: X:
+I (6075) MATH_INT_T:
+I (6075) MATH_INT_T: X.used = 1;
+I (6075) MATH_INT_T: X.sign = 0;
+I (6085) MATH_INT_T: X.dp[ 0] = 0x00e45a0c;  /*  0 */
+I (6085) MATH_INT_T:
+I (6095) MATH_INT_T: Y:
+I (6095) MATH_INT_T:
+I (6095) MATH_INT_T: Y.used = 1;
+I (6105) MATH_INT_T: Y.sign = 0;
+I (6105) MATH_INT_T: Y.dp[ 0] = 0x00e45a0c;  /*  0 */
+I (6115) MATH_INT_T:
+I (6115) MATH_INT_T: M:
+I (6115) MATH_INT_T:
+I (6115) MATH_INT_T: M.used = 1;
+I (6125) MATH_INT_T: M.sign = 0;
+I (6125) MATH_INT_T: M.dp[ 0] = 0x00fea312;  /*  0 */
+I (6135) MATH_INT_T:
+I (6135) MATH_INT_T: r_inv:
+I (6135) MATH_INT_T:
+I (6145) MATH_INT_T: r_inv.used = 1;
+I (6145) MATH_INT_T: r_inv.sign = 0;
+I (6155) MATH_INT_T: r_inv.dp[ 0] = 0x00a3a92c;  /*  0 */
+I (6155) MATH_INT_T:
+I (6165) wolfssl_esp32_mp:
+
+M' MISMATCH esp_calc_Mdash = 0x55cb60e5 = 1439391973
+vs mp_montgomery_setup     = 0x25821e27 = 629284391
+
+
+I (6175) MATH_INT_T: HW Z:
+I (6175) MATH_INT_T:
+I (6185) MATH_INT_T: HW Z.used = 1;
+I (6185) MATH_INT_T: HW Z.sign = 0;
+I (6185) MATH_INT_T: HW Z.dp[ 0] = 0x006dd292;  /*  0 */
+I (6195) MATH_INT_T:
+I (6195) MATH_INT_T: SW Z2:
+I (6205) MATH_INT_T:
+I (6205) MATH_INT_T: SW Z2.used = 1;
+I (6205) MATH_INT_T: SW Z2.sign = 0;
+I (6215) MATH_INT_T: SW Z2.dp[ 0] = 0x00ce412c;  /*  0 */
+I (6215) MATH_INT_T:
+I (6225) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 21 tries
+I (6225) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 9 failures
+I (6235) wolfssl_esp32_mp:
+E (6235) wolfssl_esp32_mp: esp_mp_mulmod Z vs Z2 mismatch!
+W (6245) wolfssl_esp32_mp: Recovering mp_mul error with software result
+I (6255) TFM: Skipping call to esp_mp_mulmod during active validation.
+I (6255) MATH_INT_T: r_inv:
+I (6265) MATH_INT_T:
+I (6265) MATH_INT_T: r_inv.used = 1;
+I (6265) MATH_INT_T: r_inv.sign = 0;
+I (6275) MATH_INT_T: r_inv.dp[ 0] = 0x00254c67;  /*  0 */
+I (6275) MATH_INT_T:
+I (6285) wolfssl_esp32_mp: r_inv bits    = 22
+I (6285) wolfssl_esp32_mp: Exponent      = 1024 (0x00000400)
+I (6295) wolfssl_esp32_mp: mp            = 0x933a1151 = 2470056273
+I (6305) wolfssl_esp32_mp: RSA_MULT_MODE_REG = 0
+I (6305) wolfssl_esp32_mp: Xs            = 21
+I (6315) wolfssl_esp32_mp: Ys            = 21
+I (6315) wolfssl_esp32_mp: found_z_used  = 1
+I (6325) wolfssl_esp32_mp: z.used        = 1
+I (6325) wolfssl_esp32_mp: hwWords_sz    = 16
+I (6335) wolfssl_esp32_mp: maxWords_sz   = 1
+I (6335) wolfssl_esp32_mp: hwWords_sz<<2   = 64
+I (6345) MATH_INT_T: X:
+I (6345) MATH_INT_T:
+I (6345) MATH_INT_T: X.used = 1;
+I (6355) MATH_INT_T: X.sign = 0;
+I (6355) MATH_INT_T: X.dp[ 0] = 0x00100f43;  /*  0 */
+I (6365) MATH_INT_T:
+I (6365) MATH_INT_T: Y:
+I (6365) MATH_INT_T:
+I (6375) MATH_INT_T: Y.used = 1;
+I (6375) MATH_INT_T: Y.sign = 0;
+I (6375) MATH_INT_T: Y.dp[ 0] = 0x00100f43;  /*  0 */
+I (6385) MATH_INT_T:
+I (6385) MATH_INT_T: M:
+I (6385) MATH_INT_T:
+I (6395) MATH_INT_T: M.used = 1;
+I (6395) MATH_INT_T: M.sign = 0;
+I (6405) MATH_INT_T: M.dp[ 0] = 0x0060284f;  /*  0 */
+I (6405) MATH_INT_T:
+I (6405) MATH_INT_T: r_inv:
+I (6415) MATH_INT_T:
+I (6415) MATH_INT_T: r_inv.used = 1;
+I (6425) MATH_INT_T: r_inv.sign = 0;
+I (6425) MATH_INT_T: r_inv.dp[ 0] = 0x00254c67;  /*  0 */
+I (6435) MATH_INT_T:
+I (6435) wolfssl_esp32_mp: M' match esp_calc_Mdash vs mp_montgomery_setup = -1824911023  !
+I (6445) MATH_INT_T: HW Z:
+I (6445) MATH_INT_T:
+I (6445) MATH_INT_T: HW Z.used = 1;
+I (6455) MATH_INT_T: HW Z.sign = 0;
+I (6455) MATH_INT_T: HW Z.dp[ 0] = 0x000b8f3c;  /*  0 */
+I (6465) MATH_INT_T:
+I (6465) MATH_INT_T: SW Z2:
+I (6465) MATH_INT_T:
+I (6475) MATH_INT_T: SW Z2.used = 1;
+I (6475) MATH_INT_T: SW Z2.sign = 0;
+I (6485) MATH_INT_T: SW Z2.dp[ 0] = 0x000b8f3c;  /*  0 */
+I (6485) MATH_INT_T:
+I (6495) wolfssl_esp32_mp: esp_mp_mulmod_usage_ct = 22 tries
+I (6495) wolfssl_esp32_mp: esp_mp_mulmod_error_ct = 10 failures
+I (6505) wolfssl_esp32_mp:
+I (6505) wolfssl_esp32_mp: esp_mp_mulmod success!
