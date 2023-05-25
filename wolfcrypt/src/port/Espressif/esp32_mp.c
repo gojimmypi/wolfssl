@@ -1433,7 +1433,13 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         mp_clear(Z);
         return MP_OKAY;
     }
+
 #ifdef DEBUG_WOLFSSL
+    if (esp_hw_validation_active()) {
+        /* recall there's only one HW for all math accelerations */
+        return MP_HW_VALIDATION_ACTIVE;
+    }
+
     if (esp_mp_exptmod_depth_counter != 0) {
         ESP_LOGE(TAG, "esp_mp_exptmod Depth Counter Error!");
     }
@@ -1499,6 +1505,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
 #endif
         return ret;
     }
+
+
+    fp_digit mp2[1];
+    ret = mp_montgomery_setup(M, mp2);
+
     /* calc M' */
     /* if Pm is odd, uses mp_montgomery_setup() */
     if ( (ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY ) {
@@ -1506,6 +1517,16 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         mp_clear(r_inv);
         return ret;
     }
+        if (mp == mp2[0]) {
+            ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
+        }
+        else {
+            ESP_LOGW(TAG, "\n\n"
+                          "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
+                          "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
+                          mp, mp, mp2[0], mp2[0] );
+            mp = mp2[0];
+        }
 
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
@@ -1605,6 +1626,14 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     /* step.3 write M' into memory                    */
     ESP_LOGV(TAG, "M' = %d", mp);
     DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
+    asm volatile("memw");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+    asm volatile("nop");
+
     /* step.4 start process                           */
     process_start(RSA_MODEXP_START_REG); /* was RSA_START_MODEXP_REG;
                                           * RSA_MODEXP_START_REG as in docs? */
@@ -1627,7 +1656,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     esp_mp_exptmod_depth_counter--;
 #endif
 
-    esp_clean_result(Z, 0);
+     esp_clean_result(Z, 0);
 
     return ret;
 }
