@@ -85,7 +85,9 @@ static int espmp_CryptHwMutexInit = 0;
 
 #ifdef DEBUG_WOLFSSL
     /* when debugging, we'll double-check the mutex with call depth */
-    static int esp_mp_exptmod_depth_counter = 0;
+    #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+        static int esp_mp_exptmod_depth_counter = 0;
+    #endif /* NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 #endif /* DEBUG_WOLFSSL */
 
 /*
@@ -480,7 +482,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
 #endif
     mp->used = numwords;
 
-#if defined(ESP_VERIFY_MEMBLOCKx)
+#if defined(ESP_VERIFY_MEMBLOCK)
     ret = XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32));
     if (ret != 0 ) {
         ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
@@ -558,7 +560,7 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
         }
     }
 
-#if defined(ESP_VERIFY_MEMBLOCKx)
+#if defined(ESP_VERIFY_MEMBLOCK)
     len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)len);
     if (len != 0) {
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
@@ -705,8 +707,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         return MP_OKAY;
     }
 #ifdef DEBUG_WOLFSSL
-    if (!esp_hw_validation_active()) {
-        return MP_HW_VALIDATION_ACTIVE
+    if (esp_hw_validation_active()) {
+        return MP_HW_VALIDATION_ACTIVE;
     }
 #endif
 
