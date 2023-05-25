@@ -291,7 +291,6 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
      * called from _fp_exptmod_ct, called from fp_exptmod */
     ret = mp_exptmod(M, X, P, Y);
 
-    ESP_LOGI(TAG, "esp_calc_Mdash %u", *md);
     *md = Y->dp[0];
     ESP_LOGI(TAG, "esp_calc_Mdash %u", *md);
 #else
@@ -332,7 +331,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     int this_extra;
 
 /* TODO remove this section if MP_SIZE accepted into sp_int.h */
-    int dp_length = 0;
+    int dp_length = 0; (void) dp_length;
 #ifdef USE_FAST_MATH
     dp_length = FP_SIZE;
 #else
@@ -384,6 +383,10 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     else {
         ESP_LOGV(TAG, "no z-trim needed");
     }
+
+    if (Z->sign != 0) {
+        Z->sign = 1;
+    }
     return ret;
 }
 
@@ -392,6 +395,9 @@ static void process_start(word32 reg)
 {
     DPORT_REG_WRITE(reg, 1);
     asm volatile("memw");
+    for (int i = 0; i < 1000; i++) {
+        asm volatile("nop"); /* wait */
+    }
 }
 
 /* wait until done */
@@ -405,6 +411,10 @@ static int wait_until_done(volatile u_int32_t reg)
         asm volatile("nop"); /* wait */
     }
 
+    for (int i = 0; i < 1000; i++) {
+        asm volatile("nop"); /* wait */
+    }
+
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
     asm volatile("memw");
@@ -412,6 +422,10 @@ static int wait_until_done(volatile u_int32_t reg)
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
         return MP_NG;
+    }
+
+    for (int i = 0; i < 1000; i++) {
+        asm volatile("nop"); /* wait */
     }
 
     return MP_OKAY;
@@ -1057,14 +1071,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
-
-    /* lock HW for use, enable peripheral clock */
-    if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
-        mp_clear(tmpZ);
-        mp_clear(r_inv);
-        return ret;
-    }
-
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
@@ -1077,6 +1083,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGI(TAG, "mp            = 0x%08x = %u", mp, mp);
 #endif
    }
+
+   /* lock HW for use, enable peripheral clock */
+   if ((ret = esp_mp_hw_lock()) != MP_OKAY) {
+        mp_clear(tmpZ);
+        mp_clear(r_inv);
+        return ret;
+    }
+
 
 #if CONFIG_IDF_TARGET_ESP32S3
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
@@ -1189,8 +1203,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      *  Write (N/512bits - 1) to MULT_MODE_REG
      *  512 bits => 16 words */
     DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
+    ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (hwWords_sz >> 4) - 1);
 
-    /* step.2 write X, M and r_inv into memory.
+    /* step.2 write X, M, and r_inv into memory.
      * The capacity of each memory block is 128 words.
      * The memory blocks use the little endian format for storage,
      * i.e. the least significant digit of each number is in lowest address.*/
@@ -1216,6 +1231,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     wait_until_done(RSA_INTERRUPT_REG);
     /* step.7 Y to MEM_X                              */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, Y, Ys, hwWords_sz);
+
+#ifdef DEBUG_WOLFSSL
+    /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
+    esp_memblock_to_mpint(RSA_MEM_X_BLOCK_BASE,
+                          PEEK,
+                          128);
+    esp_clean_result(PEEK, 0);
+#endif
 
     /* step.8 start process                           */
     process_start(RSA_MULT_START_REG);
@@ -1244,9 +1267,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
-    mp_clear(tmpZ);
-    mp_clear(r_inv);
-
     esp_clean_result(Z, 0);
 
 #ifdef DEBUG_WOLFSSL
@@ -1257,25 +1277,33 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (fp_cmp(Y, Y2) != 0) {
         // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
     }
-    if (fp_cmp(Z, Z2) != 0) {
         int found_z_used = Z->used;
-        esp_mp_mulmod_error_ct++;
 
-        ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
         ESP_LOGI(TAG, "Xs            = %d", Xs);
         ESP_LOGI(TAG, "Ys            = %d", Ys);
-       // ESP_LOGI(TAG, "Zs            = %d", Zs);
+        // ESP_LOGI(TAG, "Zs            = %d", Zs);
         ESP_LOGI(TAG, "found_z_used  = %d", found_z_used);
         ESP_LOGI(TAG, "z.used        = %d", Z->used);
         ESP_LOGI(TAG, "hwWords_sz    = %d", hwWords_sz);
         ESP_LOGI(TAG, "maxWords_sz   = %d", maxWords_sz);
-       // ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
+        // ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
         ESP_LOGI(TAG, "hwWords_sz<<2   = %d", hwWords_sz << 2);
-        esp_show_mp("X", X2);  /* show the copy in X2, as X may have been clobbered */
-        esp_show_mp("Y", Y2);  /* show the copy in Y2, as Y may have been clobbered */
-        esp_show_mp("Peek Z", PEEK); /* this is the Z before start */
-        esp_show_mp("Z", Z);   /* this is the HW result */
-        esp_show_mp("Z2", Z2); /* this is the SW result */
+        esp_show_mp("X", X2); /* show the copy in X2, as X may have been clobbered */
+        esp_show_mp("Y", Y2); /* show the copy in Y2, as Y may have been clobbered */
+        esp_show_mp("M", M2); /* show the copy in M2, as M may have been clobbered */
+        esp_show_mp("r_inv", r_inv); /*show r_inv  */
+        esp_show_mp("Peek X", PEEK); /* this is the X before second start */
+        esp_show_mp("HW Z", Z); /* this is the HW result */
+        esp_show_mp("SW Z2", Z2); /* this is the SW result */
+        ESP_LOGI(TAG, "esp_mp_mulmod_usage_ct = %d tries", esp_mp_mulmod_usage_ct);
+        ESP_LOGI(TAG, "esp_mp_mulmod_error_ct = %d failures", esp_mp_mulmod_error_ct);
+        ESP_LOGI(TAG, "");
+
+
+    if (fp_cmp(Z, Z2) != 0) {
+        ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
+
+        esp_mp_mulmod_error_ct++;
     #ifndef NO_RECOVER_SOFTWARE_CALC
         ESP_LOGW(TAG, "Recovering mp_mul error with software result");
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
@@ -1283,7 +1311,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ret = FP_VAL;
     #endif
     }
+    else {
+         ESP_LOGI(TAG, "esp_mp_mulmod success!");
+    }
 #endif
+    mp_clear(tmpZ);
+    mp_clear(r_inv);
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
     return ret;
