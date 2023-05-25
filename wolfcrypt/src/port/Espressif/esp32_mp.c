@@ -545,7 +545,7 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
             __asm__ volatile ("memw");
-            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            // DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
@@ -587,9 +587,16 @@ static word32 bits2words(word32 bits)
 /* get rinv */
 static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
+//     return mp_montgomery_calc_normalization(rinv, M);
     ESP_LOGV(TAG, "\nBegin esp_get_rinv \n");
 
     int ret = 0;
+#ifdef DEBUG_WOLFSSL
+    MATH_INT_T rinv2[1];
+    MATH_INT_T M2[1];
+    mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
+    mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
+#endif
 
     /* 2^(exp)
      *
@@ -608,6 +615,14 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
         ESP_LOGE(TAG, "failed to calculate mp_mod()");
         return ret;
     }
+
+#ifdef DEBUG_WOLFSSL
+    int ret2; (void)ret2;
+    /* computes a = B**n mod b without division or multiplication useful for
+    * normalizing numbers in a Montgomery system. */
+    ret2 = mp_montgomery_calc_normalization(rinv2, M2);
+
+#endif
 
     ESP_LOGV(TAG, "\nEnd esp_get_rinv \n");
     return ret;
@@ -1071,6 +1086,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
+    fp_digit mp2[1];
+    ret = mp_montgomery_setup(M, mp2);
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
         ESP_LOGE(TAG, "failed to calculate M dash");
@@ -1229,6 +1246,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.5,6 wait until done                       */
     wait_until_done(RSA_INTERRUPT_REG);
+
     /* step.7 Y to MEM_X                              */
     esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, Y, Ys, hwWords_sz);
 
@@ -1292,7 +1310,20 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_show_mp("Y", Y2); /* show the copy in Y2, as Y may have been clobbered */
         esp_show_mp("M", M2); /* show the copy in M2, as M may have been clobbered */
         esp_show_mp("r_inv", r_inv); /*show r_inv  */
-        esp_show_mp("Peek X", PEEK); /* this is the X before second start */
+
+        if (mp == mp2[0]) {
+            ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
+        }
+        else {
+            ESP_LOGI(TAG, "\n\n"
+                          "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
+                          "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
+                          mp, mp, mp2[0], mp2[0] );
+            mp = mp2[0];
+        }
+
+
+       // esp_show_mp("Peek X", PEEK); /* this is the X before second start */
         esp_show_mp("HW Z", Z); /* this is the HW result */
         esp_show_mp("SW Z2", Z2); /* this is the SW result */
         ESP_LOGI(TAG, "esp_mp_mulmod_usage_ct = %d tries", esp_mp_mulmod_usage_ct);
