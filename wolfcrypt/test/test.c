@@ -2726,6 +2726,7 @@ static int hw_math_test_mp_mulmod_8_word()
     c[0].used = 1; c[0].dp[0] = 5; /* mod 5 */
     retf = mp_mulmod(a, b, c, d);
 
+    /* the expected answer is 3 */
     e[0].used = 1; e[0].dp[0] = 3; /* calculated with HW disabled */
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "mp_mulmod() : 8 word x 2 word operands a * b mod c"
@@ -3530,14 +3531,12 @@ WOLFSSL_TEST_SUBROUTINE int hw_math_test(void)
 
     debug_message("Math test completed.");
     /* end of math tests */
-#else /* not using USE_FAST_MATH */
+#else /* not USE_FAST_MAT, SP_MATH, WOLFSSL_SP_MATH_ALL */
     #if defined(DEBUG_WOLFSSL)
-        debug_message("Not using USE_FAST_MATH, math test not implemented");
+        debug_message("Not using USE_FAST_MATH or SP_MATH. "
+                      "Math test not implemented.");
     #endif
 #endif /* USE_FAST_MATH */
-
-    //  TODO remove this, but allow for force success during testing
-    // ret = 0;
 
     return ret;
 }
