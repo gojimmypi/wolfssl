@@ -671,13 +671,16 @@ int esp_show_usage_metrics(void)
     return ret;
 }
 
+#endif
 /* during debug, we'll compare HW to SW results */
 int esp_hw_validation_active(void)
 {
+#ifdef DEBUG_WOLFSSL
     return IS_HW_VALIDATION;
-}
+#else
+    return 0; /* we're never validating when not debugging */
 #endif
-
+}
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Modular Multiplication
  *
@@ -931,7 +934,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
 
     /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
-    esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int));
+    esp_zero_memblock((volatile void * )RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int));
 
     /* write the left-padded Y value into Z */
     esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset), /* hwWords_sz<<2 */
@@ -966,7 +969,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     if (!mp_iszero(Z) && neg) {
         /* for non-zero negative numbers, set negative flag for our result:
          *   Z->sign = FP_NEG */
-        ESP_LOGI(TAG, "neg!");
+        ESP_LOGV(TAG, "Setting Z to negative result!");
         mp_setneg(Z);
     }
     else {
@@ -1385,7 +1388,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_show_mp("r_inv", r_inv); /*show r_inv  */
 
         if (mp == mp2[0]) {
-            ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
+            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
         }
         else {
             ESP_LOGW(TAG, "\n\n"
@@ -1412,7 +1415,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     #endif
     }
     else {
-         ESP_LOGI(TAG, "esp_mp_mulmod success!");
+         ESP_LOGV(TAG, "esp_mp_mulmod success!");
     }
 #endif
     mp_clear(tmpZ);
@@ -1542,7 +1545,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         return ret;
     }
         if (mp == mp2[0]) {
-            ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
+            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
         }
         else {
             ESP_LOGW(TAG, "\n\n"
