@@ -678,7 +678,7 @@ int esp_hw_validation_active(void)
 #endif
 }
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-/* Large Number Modular Multiplication
+/* Large Number Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
  *

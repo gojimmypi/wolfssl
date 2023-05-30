@@ -199,17 +199,26 @@
 #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 */
 
-
 /* debug options */
-// #define ESP_VERIFY_MEMBLOCK
-//#define DEBUG_WOLFSSL_VERBOSE
-//#define DEBUG_WOLFSSL
-//#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#define ESP_VERIFY_MEMBLOCK
+#define DEBUG_WOLFSSL_VERBOSE
+#define DEBUG_WOLFSSL
+#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
-// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-// #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+
+/* Turn off Large Number Multiplication:
+** [Z = X * Y] in esp_mp_mul()                                  */
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL         */
+
+/* Turn off Large Number Modular Exponentiation:
+** [Z = X^Y mod M] in esp_mp_exptmod()                          */
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD        */
+
+/* Turn off Large Number Modular Multiplication
+** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD         */
 
 // #define NO_HW_MATH_TEST
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
@@ -222,4 +231,3 @@
  * will need the name of the library in the idf_component_register
  * for the PRIV_REQUIRES list. */
 // #define INCLUDE_ALT_HW_TEST
-
