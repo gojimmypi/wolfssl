@@ -101,6 +101,9 @@
 ** WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 **   When defined, enables hardware cryptography debugging
 **
+** NO_HW_MATH_TEST
+**   Even if HW is enabled, do not run HW math tests. See HW_MATH_ENABLED.
+**
 ** NO_RECOVER_SOFTWARE_CALC
 **   When defined, will NOT recover software calculation result when not
 **   matched with hardware. Useful only during development. Needs DEBUG_WOLFSSL
@@ -116,6 +119,18 @@
 ** Settings used from ESP-IDF (sdkconfig.h)
 *******************************************************************************
 **
+**
+*******************************************************************************
+**
+**
+*******************************************************************************
+** Informative settings. Not meant to be edited
+*******************************************************************************
+**
+** HW_MATH_ENABLED
+**   Used to detect if any hardware math acceleration algorithms are used.
+**   This is typically only used to flag wolfCrypt tests to run HW tests.
+**   See NO_HW_MATH_TEST.
 **
 *******************************************************************************
 */
@@ -339,6 +354,9 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
                        word32 Xbits, /* Ys   typically = mp_count_bits (X) */
                        MATH_INT_T* M,    /* P  */
                        MATH_INT_T* Z);   /* Y  */
+    /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
+    #undef  HW_MATH_ENABLED
+    #define HW_MATH_ENABLED
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
@@ -346,6 +364,9 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     int esp_mp_mul(MATH_INT_T* X,
                    MATH_INT_T* Y,
                    MATH_INT_T* Z);
+    /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
+    #undef  HW_MATH_ENABLED
+    #define HW_MATH_ENABLED
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL */
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
@@ -354,6 +375,9 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
                       MATH_INT_T* Y,
                       MATH_INT_T* M,
                       MATH_INT_T* Z);
+    /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
+    #undef  HW_MATH_ENABLED
+    #define HW_MATH_ENABLED
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
 
 #endif /* !NO_RSA || HAVE_ECC*/

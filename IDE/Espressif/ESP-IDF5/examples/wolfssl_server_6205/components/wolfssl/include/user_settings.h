@@ -183,6 +183,5 @@
 //#define WOLFSSL_RSA_KEY_SIZE 4096
 
 
-/* the new math test is known to be failing */
-#define NO_HW_MATH_TEST
+
 

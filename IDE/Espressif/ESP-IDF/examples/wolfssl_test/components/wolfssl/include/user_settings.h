@@ -220,7 +220,7 @@
 ** [Z = X × Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD         */
 
-// #define NO_HW_MATH_TEST
+
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
 // #define CHECK_MP_READ_UNSIGNED_BIN /* this is known to fail in TFM */
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
@@ -230,4 +230,6 @@
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
  * will need the name of the library in the idf_component_register
  * for the PRIV_REQUIRES list. */
-// #define INCLUDE_ALT_HW_TEST
+/* #define INCLUDE_ALT_HW_TEST */
+
+/* #define NO_HW_MATH_TEST */

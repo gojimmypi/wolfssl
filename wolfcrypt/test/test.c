@@ -1055,7 +1055,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("MEMORY   test passed!\n");
 
 
-#ifndef NO_HW_MATH_TEST
+#if defined(HW_MATH_ENABLED) && !defined(NO_HW_MATH_TEST)
     if ((ret = hw_math_test()) != 0)
         TEST_FAIL("hw_math_test test failed!\n", ret);
     else
@@ -2027,7 +2027,8 @@ static int _SaveDerAndPem(const byte* der, int derSz,
 #define THIS_TEST_MESSAGE ""
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#ifndef NO_HW_MATH_TEST
+#if defined(HW_MATH_ENABLED) && !defined(NO_HW_MATH_TEST)
+
 /*
 ******************************************************************************
 ******************************************************************************
@@ -3540,7 +3541,7 @@ WOLFSSL_TEST_SUBROUTINE int hw_math_test(void)
 
     return ret;
 }
-#endif /* MATH_TEST constant declarations */
+#endif /* HW_MATH_ENABLED constant declarations */
 
 
 /*
