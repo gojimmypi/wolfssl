@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.008 for mbedtls comparison
+# Version 5.6.0.007 for wolfssl 6205 spaces in path and cleanup
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
