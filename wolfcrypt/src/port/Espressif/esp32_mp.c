@@ -487,7 +487,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
     mp->used = numwords;
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    ret = XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32));
+    ret = XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32));
     if (ret != 0 ) {
         ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
                       "Reading %u Words at Address =  0x%08x",
@@ -496,7 +496,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         ESP_LOGI(TAG, "Trying again... %d ", try_ct);
         esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
         mp->used = numwords;
-        if (0 != XMEMCMP((const void *)mem_address, mp->dp, numwords * sizeof(word32))) {
+        if (0 != XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32))) {
             ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint "
                            "a second time. Giving up.");
             ret = FP_VAL;
@@ -511,7 +511,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
 }
 
 /* Write 0x00 to [wordSz] of register memory starting at mem_address */
-static int esp_zero_memblock(volatile const u_int32_t mem_address,
+static int esp_zero_memblock(volatile const u_int32_t* mem_address,
                             int wordSz)
 {
     int ret = MP_OKAY;
