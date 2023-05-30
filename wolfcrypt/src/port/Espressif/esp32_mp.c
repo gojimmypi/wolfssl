@@ -449,7 +449,7 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
-    int try_ct = 20;
+    int try_ct = 18;
 
     portDISABLE_INTERRUPTS();
     __asm__ volatile ("memw");
@@ -479,6 +479,10 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
     portENABLE_INTERRUPTS();
+
+    if (try_ct < 1) {
+       // ESP_LOGW(TAG, "esp_memblock_to_mpint timeout exceeded during read");
+    }
 #endif
     mp->used = numwords;
 
@@ -691,6 +695,36 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
 
+    /* if either operand is zero, there's nothing to do.
+     * Y checked first, as it was observed to be zero during
+     * wolfcrypt tests more often than X */
+    if (mp_iszero(Y) || mp_iszero(X)) {
+        mp_forcezero(Z);
+        return MP_OKAY;
+    }
+
+/* During debug, we may be validating against SW result. */
+#ifdef DEBUG_WOLFSSL
+    MATH_INT_T X2[1];
+    MATH_INT_T Y2[1];
+    MATH_INT_T Z2[1];
+    MATH_INT_T PEEK[1];
+
+    /* The caller should have checked if the call was for a SW validation.
+     * During debug, we'll return an error. */
+    if (esp_hw_validation_active()) {
+        return MP_HW_VALIDATION_ACTIVE;
+    }
+    mp_init(X2);
+    mp_init(Y2);
+    mp_init(Z2);
+
+    mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
+    mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
+    mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
+
+#endif
+
 //    ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
 //    if (X == Z) {
 //        ESP_LOGW(TAG, "mp_mul X == Z");
@@ -699,44 +733,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 //        ESP_LOGW(TAG, "mp_mul Y == Z");
 //    }
 
-    /* if either operand is zero, there's nothing to do.
-     * Y checked first, as it was observed to be zero during
-     * wolfcrypt tests more often than X */
-    if (mp_iszero(Y) || mp_iszero(X)) {
-        mp_forcezero(Z);
-        return MP_OKAY;
-    }
-#ifdef DEBUG_WOLFSSL
-    if (esp_hw_validation_active()) {
-        return MP_HW_VALIDATION_ACTIVE;
-    }
-#endif
-
-#ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1];
-    MATH_INT_T Y2[1];
-    MATH_INT_T Z2[1];
-    MATH_INT_T PEEK[1];
-    if (IS_HW_VALIDATION) {
-        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
-    }
-    else {
-
-        mp_init(X2);
-        mp_init(Y2);
-        mp_init(Z2);
-
-        mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
-        mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
-        mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
-
-        SET_HW_VALIDATION;
-        mp_mul(X2, Y2, Z2);
-        CLR_HW_VALIDATION;
-    }
-#endif /* DEBUG_WOLFSSL */
-
-#ifdef WOLFSSL_SP_INT_NEGATIVE
+/* if we are supporting negative numbers, check that first since operands
+ * may be later modified (e.g. Z = Z * X) */
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     /* neg check: X*Y becomes negative */
     int neg;
 
@@ -749,6 +748,19 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                        mp_isneg(X),      mp_isneg(Y),           neg);
     }
 #endif
+
+
+#ifdef DEBUG_WOLFSSL
+    if (IS_HW_VALIDATION) {
+        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
+    }
+    else {
+
+        SET_HW_VALIDATION;
+        mp_mul(X2, Y2, Z2);
+        CLR_HW_VALIDATION;
+    }
+#endif /* DEBUG_WOLFSSL */
 
 #if CONFIG_IDF_TARGET_ESP32S3
 
@@ -832,6 +844,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
+
+    if (Zs <= sizeof(fp_digit)) {
+        Z->dp[0] = X->dp[0] * Y->dp[0];
+        Z->used = 1;
+        Z->sign = neg;
+        return MP_OKAY;
+    }
 
     /* maximum bits and words for writing to HW */
     maxWords_sz = bits2words(max(Xs, Ys));
@@ -920,7 +939,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                           Ys,
                           hwWords_sz);
 
-#ifdef DEBUG_WOLFSSL
+#ifdef DEBUG_WOLFSSLx
     /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
     esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
                           PEEK,
@@ -943,11 +962,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
 
     /* common exit for all chipset types */
-#ifdef WOLFSSL_SP_INT_NEGATIVE
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (!mp_iszero(Z) && neg) {
         /* for non-zero negative numbers, set negative flag for our result:
          *   Z->sign = FP_NEG */
+        ESP_LOGI(TAG, "neg!");
         mp_setneg(Z);
+    }
+    else {
+        Z->sign = 0;
     }
 #endif
 
@@ -1061,7 +1084,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         int ret2 = 0;
         ret2 = mp_mulmod(X2, Y2, M2, Z2);
         if (ret2 == 0) {
-            ESP_LOGI(TAG, "wolfSSL mp_mulmod success");
+            ESP_LOGV(TAG, "wolfSSL mp_mulmod success");
         }
         else {
             ESP_LOGE(TAG, "wolfSSL mp_mulmod failed");
@@ -1116,9 +1139,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         Rs = mp_count_bits(r_inv);
         /* success, show details */
 #ifdef DEBUG_WOLFSSL
-        esp_show_mp("r_inv", r_inv);
-        ESP_LOGI(TAG, "r_inv bits    = %d", Rs);
-        ESP_LOGI(TAG, "Exponent      = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
+//        esp_show_mp("r_inv", r_inv);
+//        ESP_LOGI(TAG, "r_inv bits    = %d", Rs);
+//        ESP_LOGI(TAG, "Exponent      = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
         /* optionally show M and R inv
            esp_show_mp("    M", M);
            esp_show_mp("r_inv", r_inv);
@@ -1137,7 +1160,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
     else {
 #ifdef DEBUG_WOLFSSL
-        ESP_LOGI(TAG, "mp            = 0x%08x = %u", mp, mp);
+        ESP_LOGV(TAG, "mp            = 0x%08x = %u", mp, mp);
 #endif
    }
 
@@ -1340,6 +1363,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (fp_cmp(Y, Y2) != 0) {
         // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
     }
+
+    if (fp_cmp(Z, Z2) != 0) {
+        ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
+
+        esp_mp_mulmod_error_ct++;
         int found_z_used = Z->used;
 
         ESP_LOGI(TAG, "Xs            = %d", Xs);
@@ -1376,10 +1404,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGI(TAG, "");
 
 
-    if (fp_cmp(Z, Z2) != 0) {
-        ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
-
-        esp_mp_mulmod_error_ct++;
     #ifndef NO_RECOVER_SOFTWARE_CALC
         ESP_LOGW(TAG, "Recovering mp_mul error with software result");
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
