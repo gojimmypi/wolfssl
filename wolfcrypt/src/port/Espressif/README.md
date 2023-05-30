@@ -30,6 +30,11 @@ To disable portions of the hardware acceleration you can optionally define:
 
 In your application you must include `<wolfssl/wolfcrypt/settings.h>` before any other wolfSSL headers. If building the sources directly we recommend defining `WOLFSSL_USER_SETTINGS` and adding your own `user_settings.h` file. You can find a good reference for this in `IDE/GCC-ARM/Header/user_settings.h`.
 
+To view disassembly, add `__attribute__((section(".iram1")))` decorator. Foe example:
+
+```
+static int __attribute__((section(".iram1"))) memblock_peek(volatile u_int32_t mem_address)
+```
 
 ### Benchmarks
 
