@@ -451,7 +451,6 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
 #else
     int try_ct = 18;
 
-    portDISABLE_INTERRUPTS();
     __asm__ volatile ("memw");
     do {
         try_ct--;
@@ -478,7 +477,6 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
-    portENABLE_INTERRUPTS();
 
     if (try_ct < 1) {
        // ESP_LOGW(TAG, "esp_memblock_to_mpint timeout exceeded during read");
@@ -515,7 +513,6 @@ static int esp_zero_memblock(volatile const u_int32_t* mem_address,
                             int wordSz)
 {
     int ret = MP_OKAY;
-    portDISABLE_INTERRUPTS();
     for (int i=0; i < wordSz; i++) {
         __asm__ volatile ("memw");
         DPORT_REG_WRITE((volatile void *)mem_address + (i * sizeof(word32)), 0);
@@ -541,7 +538,6 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
 
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
-    portDISABLE_INTERRUPTS();
     for (i=0; i < hwords; i++) {
         if (i < len) {
             ESP_LOGV(TAG, "Write i = %d value.", i);
@@ -557,7 +553,8 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
             __asm__ volatile ("memw");
-            // DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            /* TODO we may be able to skip zero in certain circumstances */
+            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
@@ -565,13 +562,12 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
     }
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)len);
+    len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)hwords);
     if (len != 0) {
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
         ret = FP_VAL;
     }
 #endif
-    portENABLE_INTERRUPTS();
     return ret;
 }
 
@@ -1411,7 +1407,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGW(TAG, "Recovering mp_mul error with software result");
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
     #else
-        ret = FP_VAL;
+        ret = FP_VAL; /* if we are not recovering, then we have an error */
     #endif
     }
     else {
