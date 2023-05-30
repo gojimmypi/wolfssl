@@ -321,6 +321,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 //        ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
 //    }
 //    else {
+        /* TODO check for SW validation, check for min bits */
         ret = esp_mp_mul(A, B, C); /* HW */
         if (ret == MP_OKAY) {
             goto clean;
@@ -4522,14 +4523,14 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 //    }
 #endif // DEBUG_WOLFSSL
 
-    if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS) {
+    if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS && !mp_iseven(c)) {
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
-//        if (esp_hw_validation_active()) {
-//            ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
-//        }
-//        else {
+        if (esp_hw_validation_active()) {
+            ESP_LOGV(TAG, "Skipping call to esp_mp_mulmod during active validation.");
+        }
+        else {
             ret = esp_mp_mulmod(a, b, c, d);
             if (ret == MP_OKAY) {
                 ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
@@ -4540,56 +4541,8 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
                 ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
 #endif
             } /* esp_mp_mulmod exit check */
-//        }
-
-#ifdef DEBUG_WOLFSSLx
-        if ((int)a == (int)d) {
-            ESP_LOGV(TAG, "Operand &a = result &d, skipping a/A2 compare.");
-        }
-        else {
-            esp_mp_cmp("a", a, "A2", A2);
-        }
-        if ((int)b == (int)d) {
-            ESP_LOGI(TAG, "Operand &b = operand &d, skipping b/B2 compare.");
-        }
-        else {
-            esp_mp_cmp("b", b, "B2", B2);
-        }
-        if ((int)c == (int)d) {
-            ESP_LOGI(TAG, "Operand &c = operand &d, skipping c/C2 compare.");
-        }
-        else {
-            esp_mp_cmp("c", c, "C2", C2);
         }
 
-        /* Inspect the result. */
-        reti = esp_mp_cmp("d", d, "D2", D2);
-        if (reti == 0) {
-            ESP_LOGI(TAG, "Result d = result D2");
-        }
-        else {
-            /* When d != D2, there's a HW/SW calc problem.
-             * Show the original interesting parameters. */
-            ESP_LOGE(TAG, "HW Result Mismatch.");
-
-//            ESP_LOGW(TAG, "Original saved parameters:");
-//            esp_show_mp("a", AX);
-//            esp_show_mp("b", BX);
-//            esp_show_mp("c", CX);
-//            esp_show_mp("d", DX);
-//            ESP_LOGI(TAG, "SW Expected Result:");
-//            esp_show_mp("d", D2);
-//            esp_show_mp("d", d);
-    #ifndef NO_HW_RECOVERY
-            ESP_LOGW(TAG, "Returning software result.");
-            fp_copy(A2, a); /* copy (src = A2) back to (dst = a) */
-            fp_copy(B2, b); /* copy (src = B2) back to (dst = b) */
-            fp_copy(C2, c); /* copy (src = C2) back to (dst = c) */
-            fp_copy(D2, d); /* copy (src = D2) back to (dst = d) */
-            ret = ret_sw; /* TODO one return */
-    #endif
-        }
-#endif // DEBUG_WOLFSSL
     } /* ESP_RSA_MULM_BITS check  */
 
     /* depending on ESP_RSA_MULM_BITS setting, we may
