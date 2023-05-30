@@ -1055,6 +1055,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("MEMORY   test passed!\n");
 
 
+#ifndef NO_HW_MATH_TEST
+    if ((ret = hw_math_test()) != 0)
+        TEST_FAIL("hw_math_test test failed!\n", ret);
+    else
+        TEST_PASS("hw_math_test test passed!\n");
+#endif
 
 #if defined(WOLFSSL_PUBLIC_MP) && \
     (defined(WOLFSSL_SP_MATH_ALL) || defined(USE_FAST_MATH))
@@ -1064,12 +1070,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("mp       test passed!\n");
 #endif
 
-#ifndef NO_HW_MATH_TEST
-    if ((ret = hw_math_test()) != 0)
-        TEST_FAIL("mp_math  test failed!\n", ret);
-    else
-        TEST_PASS("mp_math  test passed!\n");
-#endif
+
 
     PRIVATE_KEY_UNLOCK();
     if ( (ret = ecc_test()) != 0)
