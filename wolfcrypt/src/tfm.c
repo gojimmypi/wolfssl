@@ -316,7 +316,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
                       "during active validation.");
     }
     else {
-        /* TODO check for SW validation, check for min bits */
+        /* TODO check for min bits */
         ret = esp_mp_mul(A, B, C); /* HW */
         if (ret == MP_OKAY) {
             goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
@@ -328,10 +328,9 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         /* If HW errors actually encountered,
         ** we are NOT falling through to SW.
         **
-        ** Any future implementation: save operands that may be overwritten! */
+        ** Any future fall-through implementation:
+        ** save operands that may be overwritten! (e.g. C = A * C) */
     }
-    /* TODO confirm SW result returned in HW upon failure or fall through here
-     * if we fall through, we'll need */
 #endif
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
@@ -2066,7 +2065,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    int x = 0;
+    int Xbits = 0;
     int ret = 0;
 
     /* any timing resistance should be performed in HW calc when enabled */
@@ -2074,12 +2073,12 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
         ESP_LOGW(TAG, "esp_mp_exptmod, P is zero");
     }
     else {
-        x = fp_count_bits(X);
-        if (x > EPS_RSA_EXPT_XBTIS) {
+        Xbits = fp_count_bits(X);
+        if (Xbits >= EPS_RSA_EXPT_XBTIS) {
             /* esp_mp_exptmod:
             ** Z = (X ^ Y) mod M   : Espressif generic notation
             ** Y = (G ^ X) mod P   : wolfSSL DH reference notation */
-            ret = esp_mp_exptmod(G, X, x, P, Y);
+            ret = esp_mp_exptmod(G, X, Xbits, P, Y);
             if (ret == FP_OKAY) {
                 ESP_LOGV(TAG, "esp_mp_exptmod success.");
             }
@@ -2090,7 +2089,12 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW.
             **
-            ** Any future implementation: save operands that may be overwritten! */
+            ** Any future falling through implementation:
+            ** save operands that may be overwritten! */
+        }
+        else {
+            ESP_LOGE(TAG, "esp_mp_exptmod Xbits = %d < %d.",
+                          Xbits, EPS_RSA_EXPT_XBTIS );
         }
     }
     /* else fall through to SW calc  TODO */
@@ -4501,7 +4505,8 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW.
             **
-            ** Any future implementation: save operands that may be overwritten! */
+            ** Any future implementation:
+            ** save operands that may be overwritten! */
         }
     } /* ESP_RSA_MULM_BITS check  */
     else {
