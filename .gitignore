@@ -443,3 +443,8 @@ user_settings_asm.h
 /IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205_old
 /wolfcrypt/src/port/Espressif/esp32_mp - WIP
 /examples/asn1/asn1
+/IDE/Espressif/component_test
+/IDE/Espressif/another_test
+
+# Espressif directories to exclude:
+**/managed_components/**
