@@ -211,7 +211,15 @@ void app_main(void)
     /* Although wolfCrypt_Init() may be explicitly called above,
     ** Note it is still always called in wolf_test_task.
     */
-    rc = wolf_test_task();
+    int loops = 0;
+    do {
+        rc = wolf_test_task();
+        loops++;
+    }
+    while (rc == 0);
+    ESP_LOGI(TAG, "loops = %d", loops);
+
+
     /* note wolfCrypt_Cleanup() should always be called when finished.
     ** This is called at the end of wolf_test_task();
     */
