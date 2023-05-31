@@ -2093,8 +2093,10 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
             ** save operands that may be overwritten! */
         }
         else {
-            ESP_LOGE(TAG, "esp_mp_exptmod Xbits = %d < %d.",
+    #if defined(DEBUG_WOLFSSL)
+            ESP_LOGI(TAG, "esp_mp_exptmod Xbits = %d < %d.",
                           Xbits, EPS_RSA_EXPT_XBTIS );
+    #endif
         }
     }
     /* else fall through to SW calc  TODO */
@@ -2276,7 +2278,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESPIDF)
     /* a value of 1 is interesting in HW; check for padding */
     if (Y->used > 1 && (Y->dp[0] == 1 || (Y->dp[1] == 0))) {
-        ESP_LOGI("TFM Y", "Y=1 length mismatch; Y = %d", (int)Y->dp[0]);
+        ESP_LOGW("TFM Y", "Y=1 length mismatch; Y = %d", (int)Y->dp[0]);
     }
     else {
         ESP_LOGV("TFM Y", "Y=1 ok");
