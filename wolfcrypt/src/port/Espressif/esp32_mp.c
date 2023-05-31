@@ -1159,7 +1159,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
     else {
 #ifdef DEBUG_WOLFSSL
-        ESP_LOGV(TAG, "mp            = 0x%08x = %u", mp, mp);
 #endif
    }
 
@@ -1382,9 +1381,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_show_mp("Y", Y2); /* show the copy in Y2, as Y may have been clobbered */
         esp_show_mp("M", M2); /* show the copy in M2, as M may have been clobbered */
         esp_show_mp("r_inv", r_inv); /*show r_inv  */
+        ESP_LOGI(TAG, "mp            = 0x%08x = %u", mp, mp);
 
         if (mp == mp2[0]) {
-            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
+            ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mp );
         }
         else {
             ESP_LOGW(TAG, "\n\n"
