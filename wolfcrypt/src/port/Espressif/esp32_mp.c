@@ -275,9 +275,9 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
      *
      *    G is our parameter: M
      */
-    MATH_INT_T X[1] = { };
-    MATH_INT_T P[1] = { };
-    MATH_INT_T Y[1] = { };
+    MATH_INT_T X[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T P[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
     word32 Xs;
     mp_init(X);
     mp_init(P);
@@ -603,8 +603,8 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 
     int ret = 0;
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T rinv2[1];
-    MATH_INT_T M2[1];
+    MATH_INT_T rinv2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T M2[1];    /* TODO WOLFSSL_SMALL_STACK */
     mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
     mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
 #endif
@@ -704,10 +704,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
 /* During debug, we may be validating against SW result. */
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1];
-    MATH_INT_T Y2[1];
-    MATH_INT_T Z2[1];
-    MATH_INT_T PEEK[1];
+    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
 
     /* The caller should have checked if the call was for a SW validation.
      * During debug, we'll return an error. */
@@ -1042,8 +1042,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     word32 zwords;
     uint32_t Exponent;
     mp_digit mp;
-    MATH_INT_T r_inv[1];
-    MATH_INT_T tmpZ[1];
+    MATH_INT_T r_inv[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T tmpZ[1]; /* TODO WOLFSSL_SMALL_STACK */
 
     if ((M->dp[0] & 1) == 0) {
 #ifdef WOLFSSL_DEBUG
@@ -1059,11 +1059,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1];
-    MATH_INT_T Y2[1];
-    MATH_INT_T M2[1];
-    MATH_INT_T Z2[1];
-    MATH_INT_T PEEK[1];
+    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T M2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
     if (IS_HW_VALIDATION) {
         ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
     }
@@ -1148,7 +1148,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     }
 
-    fp_digit mp2[1];
+    fp_digit mp2[1]; /* TODO WOLFSSL_SMALL_STACK */
     ret = mp_montgomery_setup(M, mp2);
     /* Calculate M' */
     if ((ret = esp_calc_Mdash(M, 32/* bits */, &mp)) != MP_OKAY) {
@@ -1478,7 +1478,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     word32 maxWords_sz;
     word32 hwWords_sz;
 
-    MATH_INT_T r_inv[1];
+    MATH_INT_T r_inv[1]; /* TODO WOLFSSL_SMALL_STACK */
     mp_digit mp;
 
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -1530,7 +1530,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
 
-    fp_digit mp2[1];
+    fp_digit mp2[1]; /* TODO WOLFSSL_SMALL_STACK */
     ret = mp_montgomery_setup(M, mp2);
 
     /* calc M' */
