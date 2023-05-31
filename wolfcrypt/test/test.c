@@ -2362,6 +2362,7 @@ static int hw_math_test_challenge_1(void)
     return ret;
 }
 
+
 /* math_test_mp_mulmod_1() is a simple Large Number Modular Multiplication
  * test using small numbers and it expected to always pass HW & SW */
 static int hw_math_test_mp_mulmod_1(void)
@@ -2658,6 +2659,62 @@ static int hw_math_test_mp_mulmod_3(void)
 
     return ret;
 }
+
+/* */
+static int hw_math_test_mp_mulmod_4(void)
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T c[1]; /* optional 3rd operand */
+    MATH_INT_T d[1]; /* result */
+    MATH_INT_T e[1]; /* expected result */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(c); /* note init is required for SP_INT result , to assign size */
+    mp_init(d);
+
+    /* X: */
+    a->used = 1;
+    a->sign = 0;
+    a->dp[0] = 0x00000087; /*  0 */
+
+    /* Y: */
+
+    b->used = 1;
+    b->sign = 0;
+    b->dp[0] = 0x00000087; /*  0 */
+
+    /* M: */
+
+    c->used = 1;
+    c->sign = 0;
+    c->dp[0] = 0x0000001b; /*  0 */
+
+    retf = mp_mulmod(a, b, c, d);
+
+    /* e: expected answer is zero */
+    mp_init(e);
+
+    #undef  THIS_TEST_MESSAGE
+    #define THIS_TEST_MESSAGE "mp_mulmod() : two-word (0x87 * 0x87) mod 0x1b"
+    /* check d == e; d = (a * b mod c) */
+    if ( (retf == 0) && (mp_cmp(d, e) == 0) ) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+                            a, b, c, NULL, e);
+        ret = MP_VAL;
+    }
+
+
+
+    return ret;
+}
+
 
 /*
 ** simple two-word operand mp_mulmod test
@@ -3067,6 +3124,7 @@ WOLFSSL_TEST_SUBROUTINE int hw_math_test(void)
     ret = hw_math_test_mp_mulmod_2_word();
     ret = hw_math_test_mp_mulmod_8_word();
     ret = hw_math_test_mp_mulmod_32_word_neg();
+    ret = hw_math_test_mp_mulmod_4();
 
     /* The most challenging test: one known to fail in HW */
     retf = hw_math_test_challenge_1();
