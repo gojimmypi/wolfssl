@@ -2064,13 +2064,24 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
 static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
                           fp_int * Y)
 {
+#ifndef WOLFSSL_SMALL_STACK
+#ifdef WC_NO_CACHE_RESISTANT
+  fp_int   R[2];
+#else
+  fp_int   R[3];   /* need a temp for cache resistance */
+#endif
+#else
+   fp_int  *R;
+#endif
+  fp_digit buf, mp;
+  int      err, bitcnt, digidx, y;
+
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     int Xbits = 0;
-    int ret = 0;
 
     /* any timing resistance should be performed in HW calc when enabled */
     if (mp_iszero(P)) {
-        ESP_LOGW(TAG, "esp_mp_exptmod, P is zero");
+        ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_exptmod, P is zero");
     }
     else {
         Xbits = fp_count_bits(X);
@@ -2078,14 +2089,14 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
             /* esp_mp_exptmod:
             ** Z = (X ^ Y) mod M   : Espressif generic notation
             ** Y = (G ^ X) mod P   : wolfSSL DH reference notation */
-            ret = esp_mp_exptmod(G, X, Xbits, P, Y);
-            if (ret == FP_OKAY) {
-                ESP_LOGV(TAG, "esp_mp_exptmod success.");
+            err = esp_mp_exptmod(G, X, Xbits, P, Y); /* _fp_exptmod_ct */
+            if (err == FP_OKAY) {
+                ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
             }
             else {
-                ESP_LOGE(TAG, "esp_mp_exptmod failed.");
+                ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed.");
             }
-            return ret;
+            return err;
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW.
             **
@@ -2102,19 +2113,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     /* else fall through to SW calc  TODO */
 #endif
 
-#ifndef WOLFSSL_SMALL_STACK
-#ifdef WC_NO_CACHE_RESISTANT
-  fp_int   R[2];
-#else
-  fp_int   R[3];   /* need a temp for cache resistance */
-#endif
-#else
-   fp_int  *R;
-#endif
-  fp_digit buf, mp;
-  int      err, bitcnt, digidx, y;
-
-  /* now setup montgomery  */
+    /* now setup montgomery  */
   if ((err = fp_montgomery_setup (P, &mp)) != FP_OKAY) {
      return err;
   }
@@ -2305,6 +2304,40 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
   /* find window size */
   x = fp_count_bits (X);
+
+#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+    if (mp_iszero(P)) {
+        ESP_LOGW(TAG, "_fp_exptmod_nct esp_mp_exptmod, P is zero");
+    }
+    else {
+        if (x >= EPS_RSA_EXPT_XBTIS) {
+            /* esp_mp_exptmod:
+            ** Z = (X ^ Y) mod M   : Espressif generic notation
+            ** Y = (G ^ X) mod P   : wolfSSL DH reference notation */
+            err = esp_mp_exptmod(G, X, x, P, Y); /* _fp_exptmod_nct */
+            if (err == FP_OKAY) {
+                ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_exptmod success.");
+            }
+            else {
+                ESP_LOGE(TAG, "_fp_exptmod_nct esp_mp_exptmod failed.");
+            }
+            return err;
+            /* If HW errors actually encountered,
+            ** we are NOT falling through to SW.
+            **
+            ** Any future falling through implementation:
+            ** save operands that may be overwritten! */
+        }
+        else {
+    #if defined(DEBUG_WOLFSSL)
+            ESP_LOGI(TAG, "esp_mp_exptmod Xbits = %d < %d.",
+                          x, EPS_RSA_EXPT_XBTIS );
+    #endif
+        }
+    }
+    /* else fall through to SW calc  TODO */
+#endif
+
   if (x <= 21) {
     winsize = 1;
   } else if (x <= 36) {
@@ -2982,7 +3015,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     x = fp_count_bits(X);
     if ((x > EPS_RSA_EXPT_XBTIS) ) {
       int retHW = FP_OKAY;
-      retHW = esp_mp_exptmod(G, X, x, P, Y);
+      retHW = esp_mp_exptmod(G, X, x, P, Y); /* fp_exptmod */
       if (retHW == FP_OKAY) {
          return retHW;
       }
@@ -3070,18 +3103,21 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   if (x > EPS_RSA_EXPT_XBTIS) {
+   if (x >= EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV("TFM peek 6", "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
       int retHW = FP_OKAY;
       x = fp_count_bits (X);
-      ESP_LOGV("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
-      retHW = esp_mp_exptmod(G, X, x, P, Y);
+      ESP_LOGI("TFM", "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
+      retHW = esp_mp_exptmod(G, X, x, P, Y); /* fp_exptmod_ex */
       if (retHW == FP_OKAY) {
          return retHW;
       }
+      else {
+         ESP_LOGE("TFM", "fp_exptmod_ex failed");
+      }
    }
    else{
-      ESP_LOGV("TFM peek 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
+      ESP_LOGI("TFM peek 6", "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
    }
    /* As we didn't return from HW based on XBITS,
    ** we are falling through to SW: */
@@ -3160,7 +3196,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    if (x > EPS_RSA_EXPT_XBTIS) {
       ESP_LOGV(TAG, "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
       int retHW = FP_OKAY;
-      retHW = esp_mp_exptmod(G, X, x, P, Y);
+      retHW = esp_mp_exptmod(G, X, x, P, Y); /* fp_exptmod_nct */
       if (retHW == FP_OKAY) {
           return retHW;
       }
