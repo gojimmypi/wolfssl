@@ -4548,9 +4548,13 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         }
     } /* ESP_RSA_MULM_BITS check  */
     else {
-        ESP_LOGI(TAG, "esp_mp_mulmod did not meet criteria, "
-                      "Falling back to SW.");
-    }
+        if (mp_iseven(c)) {
+            ESP_LOGI(TAG, "esp_mp_mulmod has even modulus");
+        }
+        ESP_LOGI(TAG,
+                 "esp_mp_mulmod did not meet criteria, "
+                 "Falling back to SW.");
+              }
     /* depending on ESP_RSA_MULM_BITS setting, we may
      ** fall through to SW: */
 #endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
