@@ -214,6 +214,8 @@ void app_main(void)
     int loops = 0;
     do {
         rc = wolf_test_task();
+        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
         loops++;
     }
     while (rc == 0);
