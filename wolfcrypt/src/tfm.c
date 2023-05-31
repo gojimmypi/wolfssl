@@ -59,7 +59,6 @@
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-    #define TFM_DEBUG_GOJIMMYPI_disabled // not meant for production
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
         /* Each individual math HW can be turned on or off.
          * Listed in order of complexity and historical difficulty. */
@@ -210,7 +209,7 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
       c->dp[x]   = (fp_digit)t;
       t        >>= DIGIT_BIT;
   }
-#endif // HONOR_MATH_USED_LENGTH
+#endif /* HONOR_MATH_USED_LENGTH */
 
   if (t != 0) {
      if (x == FP_SIZE)
@@ -312,31 +311,25 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-    // we'll optionally compare to SW during debug mode
-    // ret = fp_mul_comba(A3, B3, C3);
-    // esp_mp_cmp(C3, C);
-    //    fp_copy(C3, C); /* copy (src = C3) to (dst = C) */
-
-//    if (esp_hw_validation_active()) {
-//        ESP_LOGI(TAG, "Skipping call to esp_mp_mulmod during active validation.");
-//    }
-//    else {
+    if (esp_hw_validation_active()) {
+        ESP_LOGV(TAG, "Skipping call to fp_mul "
+                      "during active validation.");
+    }
+    else {
         /* TODO check for SW validation, check for min bits */
         ret = esp_mp_mul(A, B, C); /* HW */
         if (ret == MP_OKAY) {
-            goto clean;
+            goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
         }
         else {
-            if (ret == MP_HW_VALIDATION_ACTIVE) {
-                ESP_LOGV(TAG, "esp_mp_mul validation active");
-            }
-            else {
-                ESP_LOGE(TAG, "esp_mp_mul failure in tfm = %d", ret);
-            }
-            /* if errors actually encountered, consider fall through to SW */
-  //          goto clean;
+            ESP_LOGE(TAG, "esp_mp_mul failure in tfm = %d", ret);
+            return ret; /* failure */
         }
-//    }
+        /* If HW errors actually encountered,
+        ** we are NOT falling through to SW.
+        **
+        ** Any future implementation: save operands that may be overwritten! */
+    }
     /* TODO confirm SW result returned in HW upon failure or fall through here
      * if we fall through, we'll need */
 #endif
@@ -2083,10 +2076,21 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
     else {
         x = fp_count_bits(X);
         if (x > EPS_RSA_EXPT_XBTIS) {
+            /* esp_mp_exptmod:
+            ** Z = (X ^ Y) mod M   : Espressif generic notation
+            ** Y = (G ^ X) mod P   : wolfSSL DH reference notation */
             ret = esp_mp_exptmod(G, X, x, P, Y);
             if (ret == FP_OKAY) {
-                return ret;
+                ESP_LOGV(TAG, "esp_mp_exptmod success.");
             }
+            else {
+                ESP_LOGE(TAG, "esp_mp_exptmod failed.");
+            }
+            return ret;
+            /* If HW errors actually encountered,
+            ** we are NOT falling through to SW.
+            **
+            ** Any future implementation: save operands that may be overwritten! */
         }
     }
     /* else fall through to SW calc  TODO */
@@ -4476,75 +4480,34 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
     Bs = fp_count_bits(b);
 
-
-#ifdef DEBUG_WOLFSSLx
-    int reti = MP_OKAY;   /* intermediate inspection result */
-    int ret_sw = MP_OKAY; /* the software calc result */
-    /* If there's a HW/SW discrepancy, save original values for review. */
-    mp_int AX[1];
-    mp_int BX[1];
-    mp_int CX[1];
-    mp_int DX[1];
-
-    fp_copy(a, AX); /* copy (src = a) to (dst = AX) */
-    fp_copy(b, BX); /* copy (src = b) to (dst = BX) */
-    fp_copy(c, CX); /* copy (src = c) to (dst = CX) */
-    fp_copy(d, DX); /* copy (src = d) to (dst = DX) */
-
-    /* We'll calculate a second time, and compare to #2 values: */
-    mp_int A2[1];
-    mp_int B2[1];
-    mp_int C2[1];
-    mp_int D2[1];
-
-    fp_copy(a, A2); /* copy (src = a) to (dst = A2) */
-    fp_copy(b, B2); /* copy (src = b) to (dst = B2) */
-    fp_copy(c, C2); /* copy (src = c) to (dst = C2) */
-    fp_copy(d, D2); /* copy (src = d) to (dst = D2) */
-
-    ESP_LOGI(TAG, "\n\nNew calc\n\n.");
-    if (A2->used == 32) {
-        ESP_LOGI(TAG, "X->used == 32!");
-//        esp_show_mp("a[0]", a);
-//        esp_show_mp("b[0]", b);
-//        esp_show_mp("c[0]", c);
-    }
-
-    /* when debugging, we'll call SW to compare */
-    ret_sw = fp_mulmod(A2, B2, C2, D2); /* reminder fp_mulmod may call esp_mp_mul */
-    if (ret_sw == MP_OKAY) {
-        ESP_LOGV(TAG, "Call to fp_mulmod was successful");
-    }
-    else {
-        ESP_LOGE(TAG, "Failed call to fp_mulmod. Exit code = %d", ret);
-    }
-//    if (A2->used == 32) {
-//        esp_show_mp("e[0]", D2);
-//    }
-#endif // DEBUG_WOLFSSL
-
     if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS && !mp_iseven(c)) {
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
         if (esp_hw_validation_active()) {
-            ESP_LOGV(TAG, "Skipping call to esp_mp_mulmod during active validation.");
+            ESP_LOGV(TAG, "Skipping call to esp_mp_mulmod "
+                          "during active validation.");
         }
         else {
             ret = esp_mp_mulmod(a, b, c, d);
             if (ret == MP_OKAY) {
                 ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
-                return ret;
             }
             else {
-#ifdef WOLFSSL_DEBUG
-                ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. Exit code = %d", ret);
-#endif
+                ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. "
+                              "Exit code = %d", ret);
             } /* esp_mp_mulmod exit check */
+            return ret;
+            /* If HW errors actually encountered,
+            ** we are NOT falling through to SW.
+            **
+            ** Any future implementation: save operands that may be overwritten! */
         }
-
     } /* ESP_RSA_MULM_BITS check  */
-
+    else {
+        ESP_LOGI(TAG, "esp_mp_mulmod did not meet criteria, "
+                      "Falling back to SW.");
+    }
     /* depending on ESP_RSA_MULM_BITS setting, we may
      ** fall through to SW: */
 #endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
