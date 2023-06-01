@@ -460,3 +460,7 @@ user_settings_asm.h
 
 # temporary wolfssl component install
 /IDE/Espressif/wolfssl
+/IDE/Espressif/component-manager/wolfssl
+/IDE/Espressif/component-manager/wolfcrypt
+/IDE/Espressif/component-manager/src
+/IDE/Espressif/component-manager/dist
