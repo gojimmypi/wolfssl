@@ -448,3 +448,5 @@ user_settings_asm.h
 
 # Espressif directories to exclude:
 **/managed_components/**
+
+/IDE/Espressif/wolfssl
