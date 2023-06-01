@@ -18,6 +18,12 @@ if [ ! -e "$IDF_PATH/export.sh" ]; then
     exit 1
 fi
 
+# check if IDF_COMPONENT_API_TOKEN is set
+if [ -z "IDF_COMPONENT_API_TOKEN" ]; then
+    echo "Please follow the instructions and set IDF_COMPONENT_API_TOKEN."
+    exit 1
+fi
+
 echo ""
 echo "Publishing local wolfSSL source to ESP Registry: components.espressif.com"
 echo ""
@@ -38,7 +44,7 @@ done
 if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo;
     echo "Here we go!"
-    # compote component upload --namespace wolfssl --name wolfssl
+    compote component upload --namespace wolfssl --name wolfssl
 else
     echo;
     echo "No files published!"

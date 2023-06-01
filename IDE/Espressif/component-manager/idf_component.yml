@@ -1,7 +1,20 @@
 version: "1.0.5-dev"
 description: "wolfSSL Embedded SSL/TLS Library"
 url: "https://www.wolfssl.com" # URL of the component homepage
-repository: "https://github.com/wolfSSL/wolfssl/" # URL of the public repository with component source code, i.e GitHub, GitLab, etc.
-documentation: "https://www.wolfssl.com/docs/" # URL of the component documentation
+# repository: "https://github.com/wolfSSL/wolfssl.git" # URL of the public repository with component source code, i.e GitHub, GitLab, etc.
+documentation: "https://www.wolfssl.com/docs" # URL of the component documentation
 issues: "https://github.com/wolfSSL/wolfssl/issues" # URL of the issue tracker
-discussion: "https://www.wolfssl.com/forums/" # URL of the component discussion, i.e. Discord, Gitter, forum, etc.
+discussion: "https://www.wolfssl.com/forums" # URL of the component discussion, i.e. Discord, Gitter, forum, etc.
+files:
+  exclude:
+    - "*.py"         # Exclude all Python files
+    - "**/*.list"    # Exclude `.list` files in all directories
+    - "**/.vs/**/*"
+    - "**/build/**/*"
+    - "**/dist/**/*"
+    - "**/out/**/*"
+  include:
+    - "./include/"    # included by default, listed only for clarity
+    - "./src/"        # included by default, listed only for clarity
+    - "./wolfcrypt/"  # included by default, listed only for clarity
+    - "./wolfss/"     # included by default, listed only for clarity
