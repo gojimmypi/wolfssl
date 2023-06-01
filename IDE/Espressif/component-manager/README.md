@@ -1,4 +1,4 @@
-This is the Expressif Component Version 5.6 of wolfSSL, test #6 (v1.0.5-dev)
+This is the Expressif Component Version 5.6 of wolfSSL, test #7 (v1.0.6-dev)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
