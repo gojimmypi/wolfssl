@@ -5,11 +5,11 @@ dependencies:
       type: idf
     version: 5.0.0
   wolfssl/wolfssl:
-    component_hash: 5d6b6191b5b12ff295eb33454a70bc19564e2552c5d459c119af035c9191564c
+    component_hash: 9edfcefb7fb8bf550b512276e647c20eb55ecbd8e041313c6a73a86666e54eb1
     source:
       service_url: https://api.components.espressif.com/
       type: service
-    version: 1.0.3-dev
-manifest_hash: bd1d372a44fa4ba1ef459c3d5d5be68a4df5bd3ef103b1eaa32d3d1fbee0d60f
+    version: 1.0.4-dev
+manifest_hash: d7a0d4daa3a66f46df6205aeb10588e789cefee084db68bda34aba3c51ee748f
 target: esp32
 version: 1.0.0
