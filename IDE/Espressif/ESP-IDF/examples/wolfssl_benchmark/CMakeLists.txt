@@ -1,3 +1,6 @@
+# This tag is used to include this file in the ESP Component Registry:
+# __ESP_COMPONENT_SOURCE__
+
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)

@@ -1,3 +1,5 @@
+# This tag is used to include this file in the ESP Component Registry:
+# __ESP_COMPONENT_SOURCE__
 
 #
 # wolfssl crypt test
@@ -28,8 +30,7 @@ endif()
 
 # register_component()
 idf_component_register(SRCS "main.c"
-                       INCLUDE_DIRS "."
-                       REQUIRES wolfssl)
+                       INCLUDE_DIRS ".")
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
 #
