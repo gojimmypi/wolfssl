@@ -68,11 +68,7 @@ echo "Creating directories in destination..."
 find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} sh -c 'mkdir --parents ../../component-manager/examples/"$(dirname {})"'
 find ../../component-manager/examples/ -type d
 
-# need to test build
-# need to purge build and managed components directories
-
-
-# this is the same as the "Found File" above, but copying instead os displaying:
+# This is the same as the "Found example [source]" above, but copying instead just displaying:
 echo Copying files...
 find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
 
@@ -82,21 +78,27 @@ pwd
 
 # find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && idf.py build'
 
+# Check to see if we failed to previously build:
+if [ -e "./build_failed.txt" ]; then
+    echo "Removing semaphore file: build_failed.txt"
+    rm ./build_failed.txt
+fi
 
 # build all the projects in ./examples/
 # if an error is encountered, create a semaphore file called build_failed.txt
-find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {}\n\n" && idf.py build || touch ../build_failed.txt'
+find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {}\n\n" && idf.py build || touch ../../build_failed.txt'
 
-# is export.sh in the IDF path?
-if [ -e "build_failed.txt" ]; then
+# Check to see if we failed on this build:
+if [ -e "./build_failed.txt" ]; then
     echo "Build failed!"
     exit 1
 fi
 
 # Delete any managed components and build directories before uploading.
 # The files *should* be excluded by default, so this is just local housekeeping.
-find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/managed_components
-find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/build
+echo "Removing managed_components and build directories:"
+find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/managed_components/
+find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/build/
 
 echo ""
 echo "Samples file to publish:"
@@ -104,6 +106,11 @@ echo ""
 find ./examples/
 echo ""
 
+echo "Ready to publish..."
+
+echo ""
+grep "version:" idf_component.yml
+echo ""
 
 # Confirm we actually want to proceed.
 COMPONENT_MANAGER_PUBLISH=
