@@ -97,8 +97,8 @@ fi
 # Delete any managed components and build directories before uploading.
 # The files *should* be excluded by default, so this is just local housekeeping.
 echo "Removing managed_components and build directories:"
-find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/managed_components/
-find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/build/
+find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} rm -r {}/managed_components/
+find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} rm -r {}/build/
 
 echo ""
 echo "Samples file to publish:"
@@ -111,6 +111,29 @@ echo "Ready to publish..."
 echo ""
 grep "version:" idf_component.yml
 echo ""
+
+# Ensure there's a comment in the README.md for this specific version being published!
+#
+# grep "version:" idf_component.yml
+#   will typically return a value such as:  version: "1.0.7-dev"
+#
+# we'll want to look for the 1.0.7-dev part in the README.md
+#
+THIS_VERSION=$(grep "version:" idf_component.yml | awk -F'"' '{print $2}')
+echo "Checking README.md for Version $THIS_VERSION"
+grep "$THIS_VERSION" README.md
+THIS_ERROR_CODE=$?
+
+if [ $THIS_ERROR_CODE -ne 0 ]; then
+    echo ""
+    echo "Version text not found in the README.md file. Please edit and try again."
+    exit 1
+else
+    echo ""
+    echo "Confirmed README.md contains the version text: $THIS_VERSION"
+    echo ""
+fi
+
 
 # Confirm we actually want to proceed.
 COMPONENT_MANAGER_PUBLISH=
@@ -125,10 +148,14 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo "Here we go!"
     echo ""
     echo "Creating files in .\dist\ then creating .tgz to upload. Please be patient..."
+    #
     # The component will be called "wolfssl__wolfssl". There's no way to change that at this time.
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
+    #
+
     # compote component upload --namespace wolfssl --name wolfssl
+
     echo ""
     echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
     echo ""
