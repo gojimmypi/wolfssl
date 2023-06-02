@@ -45,6 +45,41 @@ until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLI
     echo;
 done
 
+# copy all source files related to the ESP Component Registry
+# All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
+# directory that contain the text: __ESP_COMPONENT_SOURCE__
+# will be copied to the local ESP Registry ./examples/ directory
+echo "Copying __ESP_COMPONENT_SOURCE__ tagged files..."
+# grep -r --files-with-matches "__ESP_COMPONENT_SOURCE__" ../ESP-IDF/examples/ | xargs -I {} cp --parents ./new_examples/ {}
+
+# find ../ESP-IDF/examples/ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp --parents {} ./new_examples/
+
+# go to the root of the Espressif examples
+export PUB_CURRENT_PATH=$(pwd)
+echo Current Path saved: $PUB_CURRENT_PATH
+
+cd ../../Espressif/ESP-IDF/examples
+
+echo Copying example sample files tagged with __ESP_COMPONENT_SOURCE__ from:
+pwd
+echo ""
+
+echo Found files:
+find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} echo {}   ../../component-manager/examples/{}
+
+# The cp command seems to not like creating a directory struture, even with --parents
+# so we create the directory in advance:
+echo "Creating directories in destination..."
+find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} sh -c 'mkdir --parents ../../component-manager/examples/"$(dirname {})"'
+
+# this is the same as the "Found File" above, but copying instead os displaying:
+echo Copying files...
+find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
+
+cd "$PUB_CURRENT_PATH"
+echo Returned to path:
+pwd
+
 if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo;
     echo "Here we go!"
@@ -53,7 +88,7 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     # The component will be called "wolfssl__wolfssl". There's no way to change that at this time.
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
-    compote component upload --namespace wolfssl --name wolfssl
+    # compote component upload --namespace wolfssl --name wolfssl
     echo ""
     echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
     echo ""
