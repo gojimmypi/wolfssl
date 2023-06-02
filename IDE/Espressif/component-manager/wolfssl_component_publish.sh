@@ -33,6 +33,10 @@ echo "Current source directory:"
 echo ""
 pwd
 echo ""
+echo "Version to publish in local idf_component.yml (version numbers cannot be reused!)"
+echo ""
+grep "version:" idf_component.yml
+echo ""
 
 COMPONENT_MANAGER_PUBLISH=
 until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
