@@ -38,13 +38,6 @@ echo ""
 grep "version:" idf_component.yml
 echo ""
 
-COMPONENT_MANAGER_PUBLISH=
-until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
-    read -n1 -p "Proceed (Y/N) " COMPONENT_MANAGER_PUBLISH
-    COMPONENT_MANAGER_PUBLISH=${COMPONENT_MANAGER_PUBLISH^};
-    echo;
-done
-
 # copy all source files related to the ESP Component Registry
 # All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
 # directory that contain the text: __ESP_COMPONENT_SOURCE__
@@ -60,25 +53,65 @@ echo Current Path saved: $PUB_CURRENT_PATH
 
 cd ../../Espressif/ESP-IDF/examples
 
-echo Copying example sample files tagged with __ESP_COMPONENT_SOURCE__ from:
+echo "Copying example sample files tagged with __ESP_COMPONENT_SOURCE__ from:"
+echo ""
 pwd
 echo ""
 
-echo Found files:
+echo "Found example [source] files to copy to [destination]:"
+echo ""
 find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} echo {}   ../../component-manager/examples/{}
 
 # The cp command seems to not like creating a directory struture, even with --parents
 # so we create the directory in advance:
 echo "Creating directories in destination..."
 find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} sh -c 'mkdir --parents ../../component-manager/examples/"$(dirname {})"'
+find ../../component-manager/examples/ -type d
+
+# need to test build
+# need to purge build and managed components directories
+
 
 # this is the same as the "Found File" above, but copying instead os displaying:
 echo Copying files...
 find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
 
 cd "$PUB_CURRENT_PATH"
-echo Returned to path:
+echo "Returned to path:"
 pwd
+
+# find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && idf.py build'
+
+
+# build all the projects in ./examples/
+# if an error is encountered, create a semaphore file called build_failed.txt
+find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {}\n\n" && idf.py build || touch ../build_failed.txt'
+
+# is export.sh in the IDF path?
+if [ -e "build_failed.txt" ]; then
+    echo "Build failed!"
+    exit 1
+fi
+
+# Delete any managed components and build directories before uploading.
+# The files *should* be excluded by default, so this is just local housekeeping.
+find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/managed_components
+find  ./examples/ -maxdepth 1 -type d | xargs -I {} rm -r {}/build
+
+echo ""
+echo "Samples file to publish:"
+echo ""
+find ./examples/
+echo ""
+
+
+# Confirm we actually want to proceed.
+COMPONENT_MANAGER_PUBLISH=
+until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
+    read -n1 -p "Proceed (Y/N) " COMPONENT_MANAGER_PUBLISH
+    COMPONENT_MANAGER_PUBLISH=${COMPONENT_MANAGER_PUBLISH^};
+    echo;
+done
 
 if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo;
