@@ -147,14 +147,16 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo;
     echo "Here we go!"
     echo ""
+    pwd
+    echo ""
     echo "Creating files in .\dist\ then creating .tgz to upload. Please be patient..."
     #
     # The component will be called "wolfssl__wolfssl". There's no way to change that at this time.
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
     #
-
-    # compote component upload --namespace wolfssl --name wolfssl
+    echo "compote component upload --namespace wolfssl --name wolfssl"
+          compote component upload --namespace wolfssl --name wolfssl
 
     echo ""
     echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
