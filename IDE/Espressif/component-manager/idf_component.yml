@@ -1,4 +1,4 @@
-version: "1.0.7-dev"
+version: "1.0.8-dev"
 description: "wolfSSL Embedded SSL/TLS Library"
 url: "https://www.wolfssl.com" # URL of the component homepage
 repository: "https://github.com/wolfSSL/wolfssl.git" # URL of the public repository with component source code, i.e GitHub, GitLab, etc.
