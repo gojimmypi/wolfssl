@@ -10,22 +10,27 @@
 # A function to copy a given wolfSSL root: $1
 # for a given subdirectory: $2
 # for a file type specification: $3
+# optionally append files with: $4
 #
 # Example: copy wolfssl/src/*.c to the local ./src directory:
 #   copy_wolfssl_source /workspace/wolfssl  "src"  "*.c"
 #
 # Files in this local directory, typically called "component-manager"
 # will be published to the Espressif ESP Registry.
+#
+# Contents of $dst will be DELETED unless $4 == "APPEND"
 copy_wolfssl_source() {
   local src="$1"
   local dst="$2"
   local file_type="$3"
+  local append="$4"
 
   # uncomment for verbose output:
   # echo ""
   # echo "Copying files: $file_type"
 
-  if [ -d "$dst" ]; then
+#  if [[ -d "/path/to/directory" && "$ENV_VARIABLE" == *"specific_string"* ]]; then
+  if [[ -d "$dst" && "$append" != "APPEND" ]]; then
     # uncomment for verbose output:
     # echo "Deleting files in directory: $dst"
     find "$dst" -type f -delete
@@ -139,9 +144,10 @@ fi
 #
 # See also IDE/Espressif/ESP-IDF/user_settings.h
 
+
 # Copy C source files
 copy_wolfssl_source  $THIS_WOLFSSL  "src"                                "*.c"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/"                     "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src"                      "*.c"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.c"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/atmel"           "*.c"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/Espressif"       "*.c"
@@ -149,14 +155,21 @@ copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.c"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/src"          "*.c"
 
 # Copy C header files
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.h"  APPEND
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.h"  APPEND
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/include"      "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl"                            "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/openssl"                    "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
+
+# Note that for examples, the ESP Registry will append the these README files to
+# the main README.md at publish time, and generate achor text hyperlinks.
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
+
+exit 0
 
 # make sure the version found in ./wolfssl/version.h matches  that in ./idf_component.yml
 if [ -e "./wolfssl/version.h" ]; then
@@ -223,9 +236,14 @@ if [ -e "./build_failed.txt" ]; then
     rm ./build_failed.txt
 fi
 
-# build all the projects in ./examples/
+# Build all the projects in ./examples/
 # if an error is encountered, create a semaphore file called build_failed.txt
-find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {}\n\n" && idf.py build || touch ../../build_failed.txt'
+#
+# NOTE: this checks if the *current* examples build with the *CURRENT* (already published) ESP Registry version.
+# Run this script a second time (don't publish) to ensure the examples build with freshly-published wolfSSL code.
+# Reminder that there may be a delay of several minutes or more between the time of publish, and the time
+# when the files are actually available.
+find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {} for minimum component version: " && grep "wolfssl/wolfssl:" main/idf_component.yml && echo "\n\n" && idf.py build || touch ../../build_failed.txt'
 
 # Check to see if we failed on this build:
 if [ -e "./build_failed.txt" ]; then
@@ -275,8 +293,8 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
     #
-    echo "DISABLED: compote component upload --namespace wolfssl --name wolfssl"
-    #      compote component upload --namespace wolfssl --name wolfssl
+    echo "compote component upload --namespace wolfssl --name wolfssl"
+          compote component upload --namespace wolfssl --name wolfssl
 
     echo ""
     echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
