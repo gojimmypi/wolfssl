@@ -110,6 +110,28 @@ else
     echo "Warning: README_REGISTRY_PREPEND.md not found to prepend to README.md"
 fi
 
+# Ensure there's a comment in the README.md for this specific version being published!
+#
+# grep "version:" idf_component.yml
+#   will typically return a value such as:  version: "1.0.7-dev"
+#
+# we'll want to look for the 1.0.7-dev part in the README.md
+#
+THIS_VERSION=$(grep "version:" idf_component.yml | awk -F'"' '{print $2}')
+echo "Checking README.md for Version $THIS_VERSION"
+grep "$THIS_VERSION" README.md
+THIS_ERROR_CODE=$?
+
+if [ $THIS_ERROR_CODE -ne 0 ]; then
+    echo ""
+    echo "Version text not found in the README.md file. Please edit and try again."
+    exit 1
+else
+    echo ""
+    echo "Confirmed README.md contains the version text: $THIS_VERSION"
+    echo ""
+fi
+
 # We need a user_settings.h in the include directory,
 # However we'll keep a default Espressif locally, and *not* copy here:
 #
@@ -135,8 +157,26 @@ copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/openssl"                    "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
-exit 0
 
+# make sure the version found in ./wolfssl/version.h matches  that in ./idf_component.yml
+if [ -e "./wolfssl/version.h" ]; then
+    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" ./wolfssl/version.h | awk '{print $3}' | tr -d '"')
+    grep "$WOLFSSL_VERSION" ./idf_component.yml
+    THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        echo "Version text in idf_component.yml does not match ./wolfssl/version.h ($WOLFSSL_VERSION). Please edit and try again."
+        # optionally exit
+        # exit 1
+    else
+        echo ""
+        echo "Confirmed idf_component.yml matches ./wolfssl/version.h the version text: $WOLFSSL_VERSION"
+        echo ""
+    fi
+else
+    echo "ERROR: ./wolfssl/version.h not found"
+    exit 1
+fi
 
 # All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
 # directory that contain the text: __ESP_COMPONENT_SOURCE__
@@ -159,17 +199,17 @@ echo ""
 
 echo "Found example [source] files to copy to [destination]:"
 echo ""
-find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} echo {}   ../../component-manager/examples/{}
+find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} echo {}   ../../component-manager/examples/{}
 
 # The cp command seems to not like creating a directory struture, even with --parents
 # so we create the directory in advance:
 echo "Creating directories in destination..."
-find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} sh -c 'mkdir --parents ../../component-manager/examples/"$(dirname {})"'
+find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} sh -c 'mkdir --parents ../../component-manager/examples/"$(dirname {})"'
 find ../../component-manager/examples/ -type d
 
 # This is the same as the "Found example [source]" above, but copying instead just displaying:
 echo Copying files...
-find ./ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
+find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
 
 cd "$PUB_CURRENT_PATH"
 echo "Returned to path:"
@@ -212,30 +252,10 @@ echo ""
 grep "version:" idf_component.yml
 echo ""
 
-# Ensure there's a comment in the README.md for this specific version being published!
-#
-# grep "version:" idf_component.yml
-#   will typically return a value such as:  version: "1.0.7-dev"
-#
-# we'll want to look for the 1.0.7-dev part in the README.md
-#
-THIS_VERSION=$(grep "version:" idf_component.yml | awk -F'"' '{print $2}')
-echo "Checking README.md for Version $THIS_VERSION"
-grep "$THIS_VERSION" README.md
-THIS_ERROR_CODE=$?
 
-if [ $THIS_ERROR_CODE -ne 0 ]; then
-    echo ""
-    echo "Version text not found in the README.md file. Please edit and try again."
-    exit 1
-else
-    echo ""
-    echo "Confirmed README.md contains the version text: $THIS_VERSION"
-    echo ""
-fi
-
-
+#**************************************************************************************************
 # Confirm we actually want to proceed.
+#**************************************************************************************************
 COMPONENT_MANAGER_PUBLISH=
 until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
     read -n1 -p "Proceed (Y/N) " COMPONENT_MANAGER_PUBLISH
@@ -267,5 +287,3 @@ else
     echo;
     echo "No files published!"
 fi
-
-
