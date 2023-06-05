@@ -34,12 +34,6 @@ applications which have previously used the OpenSSL package. For a complete
 feature list, see [Chapter 4](https://www.wolfssl.com/docs/wolfssl-manual/ch4/)
 of the wolfSSL manual.
 
-<a href="https://repology.org/project/wolfssl/versions">
-    <img src="https://repology.org/badge/vertical-allrepos/wolfssl.svg" alt="Packaging status" align="right">
-</a>
-
-
-
 ## Notes, Please Read
 
 ### Note 1

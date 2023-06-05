@@ -98,6 +98,18 @@ echo "Copying source from " $THIS_WOLFSSL
 
 cp                  $THIS_WOLFSSL/README.md   ./README.md
 
+# strip any HTML anchor tags, that are irrelevant and don't look pretty
+echo "Removing HTML anchor tags from README..."
+sed -i '/<a href/,/<\/a>/d' ./README.md
+
+if [ -e "./README_REGISTRY_PREPEND.md" ]; then
+    echo "Pre-pending README_REGISTRY_PREPEND to README.md"
+    cat ./README_REGISTRY_PREPEND.md  ./README.md > NEW_README.md
+    mv  ./NEW_README.md  ./README.md
+else
+    echo "Warning: README_REGISTRY_PREPEND.md not found to prepend to README.md"
+fi
+
 # We need a user_settings.h in the include directory,
 # However we'll keep a default Espressif locally, and *not* copy here:
 #
