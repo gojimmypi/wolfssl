@@ -7,6 +7,7 @@
 #
 
 
+#**************************************************************************************************
 # A function to copy a given wolfSSL root: $1
 # for a given subdirectory: $2
 # for a file type specification: $3
@@ -29,7 +30,6 @@ copy_wolfssl_source() {
   # echo ""
   # echo "Copying files: $file_type"
 
-#  if [[ -d "/path/to/directory" && "$ENV_VARIABLE" == *"specific_string"* ]]; then
   if [[ -d "$dst" && "$append" != "APPEND" ]]; then
     # uncomment for verbose output:
     # echo "Deleting files in directory: $dst"
@@ -50,6 +50,11 @@ copy_wolfssl_source() {
   fi
 }
 
+#**************************************************************************************************
+#**************************************************************************************************
+# Begin script
+#**************************************************************************************************
+#**************************************************************************************************
 
 # check if IDF_PATH is set
 if [ -z "$IDF_PATH" ]; then
@@ -89,7 +94,9 @@ echo ""
 grep "version:" idf_component.yml
 echo ""
 
+#**************************************************************************************************
 # copy all source files related to the ESP Component Registry
+#**************************************************************************************************
 
 # This script is expecting to be in wolfssl\IDE\Espressif\component-manager
 # The root of wolfssl is 3 directories up:
@@ -169,9 +176,9 @@ copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
 
-exit 0
-
+#**************************************************************************************************
 # make sure the version found in ./wolfssl/version.h matches  that in ./idf_component.yml
+#**************************************************************************************************
 if [ -e "./wolfssl/version.h" ]; then
     WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" ./wolfssl/version.h | awk '{print $3}' | tr -d '"')
     grep "$WOLFSSL_VERSION" ./idf_component.yml
@@ -191,13 +198,11 @@ else
     exit 1
 fi
 
+#**************************************************************************************************
 # All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
 # directory that contain the text: __ESP_COMPONENT_SOURCE__
 # will be copied to the local ESP Registry ./examples/ directory
 echo "Copying __ESP_COMPONENT_SOURCE__ tagged files..."
-# grep -r --files-with-matches "__ESP_COMPONENT_SOURCE__" ../ESP-IDF/examples/ | xargs -I {} cp --parents ./new_examples/ {}
-
-# find ../ESP-IDF/examples/ -type f -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp --parents {} ./new_examples/
 
 # go to the root of the Espressif examples
 export PUB_CURRENT_PATH=$(pwd)
@@ -223,12 +228,12 @@ find ../../component-manager/examples/ -type d
 # This is the same as the "Found example [source]" above, but copying instead just displaying:
 echo Copying files...
 find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
+#
+#**************************************************************************************************
 
 cd "$PUB_CURRENT_PATH"
 echo "Returned to path:"
 pwd
-
-# find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && idf.py build'
 
 # Check to see if we failed to previously build:
 if [ -e "./build_failed.txt" ]; then
@@ -236,6 +241,7 @@ if [ -e "./build_failed.txt" ]; then
     rm ./build_failed.txt
 fi
 
+#**************************************************************************************************
 # Build all the projects in ./examples/
 # if an error is encountered, create a semaphore file called build_failed.txt
 #
@@ -250,6 +256,7 @@ if [ -e "./build_failed.txt" ]; then
     echo "Build failed!"
     exit 1
 fi
+#**************************************************************************************************
 
 # Delete any managed components and build directories before uploading.
 # The files *should* be excluded by default, so this is just local housekeeping.
@@ -269,7 +276,6 @@ echo "Ready to publish..."
 echo ""
 grep "version:" idf_component.yml
 echo ""
-
 
 #**************************************************************************************************
 # Confirm we actually want to proceed.
