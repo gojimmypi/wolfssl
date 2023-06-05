@@ -12,3 +12,26 @@ anchor tags that do not render well.
 The local [README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md) text is prepended to the 
 wolfSSL [README.md](https://github.com/wolfSSL/wolfssl/blob/master/README.md) before being published to the registry.
 
+A working Internet connection is required to build the samples.
+
+Any new examples should have a manifest file in the `[project]/main` directory:
+
+```
+## IDF Component Manager Manifest File
+dependencies:
+  wolfssl/wolfssl: "^1.0.4-dev"
+  ## Required IDF version
+  idf:
+    version: ">=4.1.0"
+  # # Put list of dependencies here
+  # # For components maintained by Espressif:
+  # component: "~1.0.0"
+  # # For 3rd party components:
+  # username/component: ">=1.0.0,<2.0.0"
+  # username2/component2:
+  #   version: "~1.0.0"
+  #   # For transient dependencies `public` flag can be set.
+  #   # `public` flag doesn't have an effect dependencies of the `main` component.
+  #   # All dependencies of `main` are public by default.
+  #   public: true
+  ```
