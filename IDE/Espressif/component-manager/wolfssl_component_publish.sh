@@ -1,4 +1,50 @@
 #!/bin/bash
+#
+# wolfssl_component_publish.sh
+#
+# Script to publish wolfSSL to Espressif ESP Registry.
+# This file is not needed by end users.
+#
+
+
+# A function to copy a given wolfSSL root: $1
+# for a given subdirectory: $2
+# for a file type specification: $3
+#
+# Example: copy wolfssl/src/*.c to the local ./src directory:
+#   copy_wolfssl_source /workspace/wolfssl  "src"  "*.c"
+#
+# Files in this local directory, typically called "component-manager"
+# will be published to the Espressif ESP Registry.
+copy_wolfssl_source() {
+  local src="$1"
+  local dst="$2"
+  local file_type="$3"
+
+  # uncomment for verbose output:
+  # echo ""
+  # echo "Copying files: $file_type"
+
+  if [ -d "$dst" ]; then
+    # uncomment for verbose output:
+    # echo "Deleting files in directory: $dst"
+    find "$dst" -type f -delete
+  fi
+
+  # uncomment for verbose output:
+  # echo "Copying files from $src/$dst to $(pwd)/$dst"
+  mkdir -p "$dst"
+
+  if find "$src"/"$dst" -type f -name "$file_type" -print -quit | grep -q '^'; then
+      # uncomment for verbose output:
+      # echo "cp -u $src/$dst/$file_type ./$dst/"
+              cp -u "$src"/"$dst"/$file_type "./$dst/"
+      echo "Copied $dst/$file_type"
+  else
+    echo "ERROR: Not Found: $dst"
+  fi
+}
+
 
 # check if IDF_PATH is set
 if [ -z "$IDF_PATH" ]; then
@@ -39,6 +85,47 @@ grep "version:" idf_component.yml
 echo ""
 
 # copy all source files related to the ESP Component Registry
+
+# This script is expecting to be in wolfssl\IDE\Espressif\component-manager
+# The root of wolfssl is 3 directories up:
+THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
+
+# Optionally specify an alternative source of wolfSSL to publish:
+THIS_WOLFSSL=/mnt/c/test/wolfssl-master
+
+# copy_wolfssl_source $THIS_WOLFSSL
+echo "Copying source from " $THIS_WOLFSSL
+
+cp                  $THIS_WOLFSSL/README.md   ./README.md
+
+# We need a user_settings.h in the include directory,
+# However we'll keep a default Espressif locally, and *not* copy here:
+#
+# copy_wolfssl_source $THIS_WOLFSSL  "include"                           "*.h"
+#
+# See also IDE/Espressif/ESP-IDF/user_settings.h
+
+# Copy C source files
+copy_wolfssl_source  $THIS_WOLFSSL  "src"                                "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/"                     "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/atmel"           "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/Espressif"       "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.c"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/src"          "*.c"
+
+# Copy C header files
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/include"      "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl"                            "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/openssl"                    "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
+copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
+exit 0
+
+
 # All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
 # directory that contain the text: __ESP_COMPONENT_SOURCE__
 # will be copied to the local ESP Registry ./examples/ directory
@@ -96,6 +183,7 @@ fi
 
 # Delete any managed components and build directories before uploading.
 # The files *should* be excluded by default, so this is just local housekeeping.
+# if not excluded, the upload will typically be 10x larger. Expected size = 10MB.
 echo "Removing managed_components and build directories:"
 find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} rm -r {}/managed_components/
 find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} rm -r {}/build/
@@ -155,8 +243,8 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
     #
-    echo "compote component upload --namespace wolfssl --name wolfssl"
-          compote component upload --namespace wolfssl --name wolfssl
+    echo "DISABLED: compote component upload --namespace wolfssl --name wolfssl"
+    #      compote component upload --namespace wolfssl --name wolfssl
 
     echo ""
     echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
