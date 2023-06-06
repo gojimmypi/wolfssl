@@ -80,6 +80,48 @@ if [ -z "IDF_COMPONENT_API_TOKEN" ]; then
     exit 1
 fi
 
+THIS_VERSION=$(grep "version:" ./idf_component.yml | awk -F'"' '{print $2}')
+if [ -z "$THIS_VERSION" ]; then
+    echo "Quoted version: value not found in ./idf_component.yml"
+    exit 1
+fi
+
+FOUND_LOCAL_DIST=
+if [ -f "./dist/wolfssl_$THIS_VERSION.tgz" ]; then
+    echo "Found file wolfssl_$THIS_VERSION.tgz"
+    echo "Duplicate versions cannot be published. By proceeding, you will overwrite the local source."
+    echo ""
+    FOUND_LOCAL_DIST=true
+fi
+
+if [ -d "./dist/wolfssl_$THIS_VERSION" ]; then
+    echo "Found directory: wolfssl_$THIS_VERSION"
+    echo "Duplicate versions cannot be published. By proceeding, you will overwrite the local source."
+    echo ""
+    FOUND_LOCAL_DIST=true
+fi
+
+if [ -z "$FOUND_LOCAL_DIST" ]; then
+    echo "Confirmed a prior local distribution file set does not exist for wolfssl_$THIS_VERSION."
+else
+    OK_TO_OVERWRITE_DIST=
+    until [ "${OK_TO_OVERWRITE_DIST^}" == "Y" ] || [ "${OK_TO_OVERWRITE_DIST^}" == "N" ]; do
+        read -n1 -p "Proceed? (Y/N) " OK_TO_OVERWRITE_DIST
+        OK_TO_OVERWRITE_DIST=${OK_TO_OVERWRITE_DIST^};
+        echo;
+    done
+
+    if [ "${OK_TO_OVERWRITE_DIST^}" == "Y" ]; then
+        echo ""
+        echo "Proceeding. Choosing to publish will OVERWRITE EXISTING DISTRIBUTION..."
+        echo ""
+    else
+        echo "Exiting..."
+        exit 1
+    fi
+fi
+
+
 echo ""
 echo "Publishing local wolfSSL source to ESP Registry: components.espressif.com"
 echo ""
@@ -122,6 +164,13 @@ until [ "${OK_TO_COPY^}" == "Y" ] || [ "${OK_TO_COPY^}" == "N" ]; do
     echo;
 done
 
+if [ "${OK_TO_COPY^}" == "Y" ]; then
+    echo "Proceeding to copy..."
+else
+    echo "Exiting..."
+    exit 1
+fi
+
 cp                  $THIS_WOLFSSL/README.md   ./README.md
 
 # strip any HTML anchor tags, that are irrelevant and don't look pretty
@@ -158,11 +207,6 @@ fi
 #
 # we'll want to look for the 1.0.7-dev part in the README.md
 #
-THIS_VERSION=$(grep "version:" ./idf_component.yml | awk -F'"' '{print $2}')
-if [ -z "$THIS_VERSION" ]; then
-    echo "Quoted version: value not found in ./idf_component.yml"
-    exit 1
-fi
 
 echo "Checking README.md for Version $THIS_VERSION"
 grep "$THIS_VERSION" README.md
@@ -315,6 +359,16 @@ find ./examples/
 echo ""
 
 echo "Ready to publish..."
+
+if [ "${OK_TO_OVERWRITE_DIST^}" == "Y" ]; then
+    echo ""
+    echo "  WARNING: The local distribution files have been updated."
+    echo ""
+    echo "  By proceeding, you confirm this version has not been previously published."
+    echo ""
+    echo "  If this version has been published, you will likely see an error when proceeding."
+    echo ""
+fi
 
 echo ""
 grep "version:" idf_component.yml
