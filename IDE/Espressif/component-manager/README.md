@@ -21,7 +21,7 @@ Typically you need only 4 lines to run an example from scratch in the EDP-IDF en
 
 ```
 . ~/esp/esp-idf/export.sh
-idf.py create-project-from-example "wolfssl/wolfssl^1.0.13-dev:wolfssl_benchmark"
+idf.py create-project-from-example "wolfssl/wolfssl^1.0.14-dev:wolfssl_benchmark"
 cd wolfssl_benchmark
 idf.py -b 115200 flash monitor
 ```

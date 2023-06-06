@@ -11,9 +11,9 @@ Check that there's a TCP/IP stack configured.
 
 ### Version of the component "wolfssl/wolfssl" satisfying the spec was not found
 ```
-$ idf.py create-project-from-example "wolfssl/wolfssl^1.0.13-dev:wolfssl_benchmark"
+$ idf.py create-project-from-example "wolfssl/wolfssl^1.0.14-dev:wolfssl_benchmark"
 Executing action: create-project-from-example
-ERROR: Version of the component "wolfssl/wolfssl" satisfying the spec "^1.0.13-dev" was not found.
+ERROR: Version of the component "wolfssl/wolfssl" satisfying the spec "^1.0.14-dev" was not found.
 ```
 
 This error will typically occur for a few minutes after the ESP Registry is updated. Wait a it and try again.
