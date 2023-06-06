@@ -41,7 +41,7 @@ cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_test
 . /mnt/c/SysGCC/esp32/esp-idf/v4.4.2/export.sh
 
 # build and flash, in this example to COM20
-idf.py build flash -p /dev/ttyS20 -b 921600 monitor
+idf.py build flash -p /dev/ttyS20 -b 115200 monitor
 ```
 
 ## Example Output
@@ -51,7 +51,7 @@ compatible across the widest ranges of targets. Contact wolfSSL at support@wolfs
 for help in optimizing for your particular application, or see the 
 [docs](https://www.wolfssl.com/documentation/manuals/wolfssl/index.html).
 
-Compiled and flashed with `idf.py build  flash -p /dev/ttyS7 -b 921600 monitor`:
+Compiled and flashed with `idf.py build  flash -p /dev/ttyS7 -b 115200 monitor`:
 
 ```
 ets Jun  8 2016 00:22:57

@@ -13,7 +13,7 @@ echo "Run export.sh from ${WRK_IDF_PATH}"
 
 echo "Build and flash project in ${WRK_PROJECT_DIR}"
 cd ${WRK_PROJECT_DIR}
-idf.py build flash -p /dev/ttyS9 -b 921600 monitor
+idf.py build flash -p /dev/ttyS9 -b 115200 monitor
 ```
 
 
