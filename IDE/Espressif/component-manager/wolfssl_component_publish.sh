@@ -98,7 +98,7 @@ echo ""
 # copy all source files related to the ESP Component Registry
 #**************************************************************************************************
 
-# This script is expecting to be in wolfssl\IDE\Espressif\component-manager
+# This script is expecting to be in wolfssl/IDE/Espressif/component-manager
 # The root of wolfssl is 3 directories up:
 THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
 
@@ -199,7 +199,7 @@ else
 fi
 
 #**************************************************************************************************
-# All files from the wolfssl-gojimmypi\IDE\Espressif\ESP-IDF\examples
+# All files from the wolfssl/IDE/Espressif/ESP-IDF/examples
 # directory that contain the text: __ESP_COMPONENT_SOURCE__
 # will be copied to the local ESP Registry ./examples/ directory
 echo "Copying __ESP_COMPONENT_SOURCE__ tagged files..."
@@ -293,7 +293,7 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     echo ""
     pwd
     echo ""
-    echo "Creating files in .\dist\ then creating .tgz to upload. Please be patient..."
+    echo "Creating files in ./dist/ then creating .tgz to upload. Please be patient..."
     #
     # The component will be called "wolfssl__wolfssl". There's no way to change that at this time.
     # Unfortunately, there is no way to change the build-system name of a dependency installed
