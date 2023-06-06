@@ -107,8 +107,20 @@ THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
 # TODO REMOVE
 THIS_WOLFSSL=/mnt/c/test/wolfssl-master
 
+# END TODO REMOVE
+
 # copy_wolfssl_source $THIS_WOLFSSL
-echo "Copying source from " $THIS_WOLFSSL
+echo "Copying source from $THIS_WOLFSSL"
+echo $(cd /mnt/c/test/wolfssl-master && git status)
+#**************************************************************************************************
+# Confirm we actually want to proceed to copy.
+#**************************************************************************************************
+OK_TO_COPY=
+until [ "${OK_TO_COPY^}" == "Y" ] || [ "${OK_TO_COPY^}" == "N" ]; do
+    read -n1 -p "Proceed? (Y/N) " OK_TO_COPY
+    OK_TO_COPY=${OK_TO_COPY^};
+    echo;
+done
 
 cp                  $THIS_WOLFSSL/README.md   ./README.md
 
@@ -135,7 +147,8 @@ if [ -e "./README_REGISTRY_PREPEND.md" ]; then
         echo ""
     fi
 else
-    echo "Warning: README_REGISTRY_PREPEND.md not found to prepend to README.md"
+    echo "ERROR: README_REGISTRY_PREPEND.md not found to prepend to README.md"
+    exit 1
 fi
 
 # Ensure there's a comment in the README.md for this specific version being published!
@@ -145,9 +158,9 @@ fi
 #
 # we'll want to look for the 1.0.7-dev part in the README.md
 #
-THIS_VERSION=$(grep "version:" idf_component.yml | awk -F'"' '{print $2}')
+THIS_VERSION=$(grep "version:" ./idf_component.yml | awk -F'"' '{print $2}')
 if [ -z "$THIS_VERSION" ]; then
-    echo "Quoted version: value not found in idf_component.yml"
+    echo "Quoted version: value not found in ./idf_component.yml"
     exit 1
 fi
 
@@ -262,6 +275,13 @@ if [ -e "./build_failed.txt" ]; then
     rm ./build_failed.txt
 fi
 
+# TODO remove
+# Files known to need attention
+cp ./lib/user_settings.h ./include/user_settings.h
+cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
+
+
+
 #**************************************************************************************************
 # Build all the projects in ./examples/
 # if an error is encountered, create a semaphore file called build_failed.txt
@@ -270,7 +290,9 @@ fi
 # Run this script a second time (don't publish) to ensure the examples build with freshly-published wolfSSL code.
 # Reminder that there may be a delay of several minutes or more between the time of publish, and the time
 # when the files are actually available.
-find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {} for minimum component version: " && grep "wolfssl/wolfssl:" main/idf_component.yml && echo "\n\n" && idf.py build || touch ../../build_failed.txt'
+
+# TODO this build is for the *prior* version
+# find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {} for minimum component version: " && grep "wolfssl/wolfssl:" main/idf_component.yml && echo "\n\n" && idf.py build || touch ../../build_failed.txt'
 
 # Check to see if we failed on this build:
 if [ -e "./build_failed.txt" ]; then
@@ -299,11 +321,11 @@ grep "version:" idf_component.yml
 echo ""
 
 #**************************************************************************************************
-# Confirm we actually want to proceed.
+# Confirm we actually want to proceed to publish.
 #**************************************************************************************************
 COMPONENT_MANAGER_PUBLISH=
 until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
-    read -n1 -p "Proceed (Y/N) " COMPONENT_MANAGER_PUBLISH
+    read -n1 -p "Proceed? (Y/N) " COMPONENT_MANAGER_PUBLISH
     COMPONENT_MANAGER_PUBLISH=${COMPONENT_MANAGER_PUBLISH^};
     echo;
 done
