@@ -9,6 +9,13 @@ When managing a component:
 
 * Do not edit files in the local `./[project]/managed_components/` directory. Those are files fetched from ESP Registry.
 
+Be sure to edit the [idf_component.yml](./idf_component.yml) version text, _and_ the 
+[README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md) version text. Versions must match between these files.
+Values are checked at publish time.
+
+Search for other instances of versions in the format `^1.0.`. Visual Studio File Types: `*.*;!*/dist/*;!*/managed_components/*;!*/.git/*`.
+Consider editing older examples.
+
 See the local [wolfssl_component_publish.sh script](./wolfssl_component_publish.sh) for the steps used to copy wolfSSL
 source files locally.
 
@@ -28,7 +35,7 @@ Any new examples should have a manifest file in the `[project]/main` directory:
 ```
 ## IDF Component Manager Manifest File
 dependencies:
-  wolfssl/wolfssl: "^1.0.14-dev"
+  wolfssl/wolfssl: "^1.0.15-dev"
   ## Required IDF version
   idf:
     version: ">=4.1.0"

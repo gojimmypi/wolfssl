@@ -18,6 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+#include <sdkconfig.h> /* essential to chip set detection */
+
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESPWROOM32
 #undef WOLFSSL_ESPWROOM32SE
