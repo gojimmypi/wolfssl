@@ -2,9 +2,29 @@ This is the Expressif Component Version 5.6 of wolfSSL, test #9 (v1.0.8-dev)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
-The wolfSSL embedded TLS library is a lightweight, portable, C-language-based SSL/TLS library targeted at IoT, embedded, and RTOS environments primarily because of its size, speed, and feature set. It works seamlessly in desktop, enterprise, and cloud environments as well. wolfSSL supports industry standards up to the current TLS 1.3 and DTLS 1.3, is up to 20 times smaller than OpenSSL, offers a simple API, an OpenSSL compatibility layer, OCSP and CRL support, is backed by the robust wolfCrypt cryptography library, and much more.
+The [wolfSSL embedded TLS library](https://www.wolfssl.com/products/wolfssl/) is a lightweight, portable, 
+C-language-based SSL/TLS library targeted at IoT, embedded, and RTOS environments primarily because of its size, 
+speed, and feature set. It works seamlessly in desktop, enterprise, and cloud environments as well. 
+wolfSSL supports industry standards up to the current [TLS 1.3](https://www.wolfssl.com/tls13) and DTLS 1.3, 
+is up to 20 times smaller than OpenSSL, offers a simple API, an OpenSSL compatibility layer,
+OCSP and CRL support, is backed by the robust [wolfCrypt cryptography library](https://github.com/gojimmypi/wolfssl/tree/master/wolfcrypt), 
+and much more.
 
-The CMVP has issued FIPS 140-2 Certificates #3389 and #2425 for the wolfCrypt Module developed by wolfSSL Inc.  For more information, see our FIPS FAQ.
+The CMVP has issued FIPS 140-2 Certificates #3389 and #2425 for the wolfCrypt Module developed by wolfSSL Inc.  
+For more information, see our [FIPS FAQ](https://www.wolfssl.com/license/fips/) or contact fips@wolfssl.com.
+
+# Getting Started
+
+Check out the Examples on the [left pane of the clomponent page](https://components.espressif.com/components/wolfssl/wolfssl/).
+
+Typically you need only 4 lines to run an example from scratch in the EDP-IDF environment:
+
+```
+. ~/esp/esp-idf/export.sh
+idf.py create-project-from-example "wolfssl/wolfssl^1.0.8-dev:wolfssl_benchmark"
+cd wolfssl_benchmark
+idf.py -b 115200 flash monitor
+```
 
 
 ### Espressif Component Notes
@@ -17,11 +37,8 @@ The naming convention of the build-system name of a dependency installed by the 
 is always `namespace__component`. The namespace for wolfSSL is `wolfssl`. The build-system name
 is thus `wolfssl__wolfssl`. We'll soon be publishing `wolfssl__wolfssh`, `wolfssl__wolfmqtt` and more.
 
-A project `cmakelists.txt` doesn't need to mention it at all:
+A project `cmakelists.txt` doesn't need to mention it at all when using wolfSSL as a managed component.
 
-```
-
-```
 
 #### Component Manager
 
