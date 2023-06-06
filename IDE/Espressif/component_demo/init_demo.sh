@@ -38,7 +38,8 @@ fi
 
 # Delete files not in GitHub to refresh a prevously-built project
 if [ -d "./build" ]; then
-    echo "Initializing local project..."
+    echo "Initializing local project. There will be a prompt to remove directories,"
+    echo "but other files such as sdkconfig will be quietly deleted without a prompt."
     echo "Removing ./build/ directory..."
     rm -rI ./build/
 
@@ -58,7 +59,7 @@ fi
 echo "Using MY_IDF_PORT = $MY_IDF_PORT"
 
 echo "Installing wolfSSL..."
-idf.py add-dependency "wolfssl/wolfssl^1.0.4-dev"
+idf.py add-dependency "wolfssl/wolfssl^1.0.13-dev"
 
 echo "Bulding project..."
 idf.py build

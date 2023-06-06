@@ -19,7 +19,7 @@ Any new examples should have a manifest file in the `[project]/main` directory:
 ```
 ## IDF Component Manager Manifest File
 dependencies:
-  wolfssl/wolfssl: "^1.0.4-dev"
+  wolfssl/wolfssl: "^1.0.13-dev"
   ## Required IDF version
   idf:
     version: ">=4.1.0"
