@@ -12,6 +12,9 @@ anchor tags that do not render well.
 The local [README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md) text is prepended to the 
 wolfSSL [README.md](https://github.com/wolfSSL/wolfssl/blob/master/README.md) before being published to the registry.
 
+Other README.md files for the examples are appended automatically by the ESP Registry at pubish time.
+As such example REAME files must _not_ contain any relative links.
+
 A working Internet connection is required to build the samples.
 
 Any new examples should have a manifest file in the `[project]/main` directory:
