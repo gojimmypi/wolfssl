@@ -1,6 +1,9 @@
 # wolfSSL Benchmark Example
 
-The Example contains of wolfSSL benchmark program.
+This is the ESP32 Version of the [wolfSSL wolfcrypt Benchmark Application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
+
+<!-- This file is included in the ESP Registry. There should be no relative URL links. -->
+
 
 ## VisualGDB
 

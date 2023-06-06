@@ -56,6 +56,10 @@ If unusual errors occur, exit Visual Studio and manually delete these directorie
 - `.\VisualGDB\.vs`
 
 
+[RSA peripheral 50% slower on ESP32-S3/C3 than S2](https://www.esp32.com/viewtopic.php?t=23830)
+
+[GPIO6,GPIO7,GPIO8,and GPIO9 changed for ESP32-WROOM-32E](https://esp32.com/viewtopic.php?t=29058)
+
 
 
 

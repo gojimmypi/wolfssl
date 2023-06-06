@@ -1,14 +1,24 @@
 # wolfSSL Crypt Test Example
 
-The Example contains of wolfSSL test program.
+This is the ESP32 Version of the [wolfSSL wolfcrypt test application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/test).
 
-[RSA peripheral 50% slower on ESP32-S3/C3 than S2](https://www.esp32.com/viewtopic.php?t=23830)
+<!-- This file is included in the ESP Registry. There should be no relative URL links. -->
 
-[ GPIO6,GPIO7,GPIO8,and GPIO9 changed for ESP32-WROOM-32E](https://esp32.com/viewtopic.php?t=29058)
+## ESP Registry
+
+The easiest way to get started with wolfSSL is by using the 
+[ESP Registry](https://components.espressif.com/components/wolfssl/wolfssl/) examples.
+
+```
+. ~/esp/esp-idf/export.sh
+idf.py create-project-from-example "wolfssl/wolfssl^1.0.13-dev:wolfssl_test"
+cd wolfssl_benchmark
+idf.py -b 115200 flash monitor
+```
 
 ## VisualGDB
 
-Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
+Open the VisualGDB Visual Studio Project file in the [VisualGDB directory]() and click the "Start" button.
 No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
 
 ## ESP-IDF Commandline
