@@ -15,7 +15,7 @@ For more information, see our [FIPS FAQ](https://www.wolfssl.com/license/fips/) 
 
 # Getting Started
 
-Check out the Examples on the [left pane of the component page](https://components.espressif.com/components/wolfssl/wolfssl/).
+Check out the Examples on the right pane of the [wolfssl component page](https://components.espressif.com/components/wolfssl/wolfssl/).
 
 Typically you need only 4 lines to run an example from scratch in the EDP-IDF environment:
 

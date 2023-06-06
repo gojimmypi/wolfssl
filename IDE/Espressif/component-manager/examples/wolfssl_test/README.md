@@ -162,5 +162,8 @@ I (136548) wolfcrypt_test: Exiting main with return code:  0
 I (136548) wolfssl_test: wolf_test_task complete success result code = 0
 ```
 
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
+<!--
+#### ESP Component Registry
+#### This tag is used to include this file in the ESP Component Registry:
+#### __ESP_COMPONENT_SOURCE__
+-->
