@@ -103,6 +103,8 @@ echo ""
 THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
 
 # Optionally specify an alternative source of wolfSSL to publish:
+
+# TODO REMOVE
 THIS_WOLFSSL=/mnt/c/test/wolfssl-master
 
 # copy_wolfssl_source $THIS_WOLFSSL
@@ -116,8 +118,22 @@ sed -i '/<a href/,/<\/a>/d' ./README.md
 
 if [ -e "./README_REGISTRY_PREPEND.md" ]; then
     echo "Pre-pending README_REGISTRY_PREPEND to README.md"
-    cat ./README_REGISTRY_PREPEND.md  ./README.md > NEW_README.md
-    mv  ./NEW_README.md  ./README.md
+    cat ./README_REGISTRY_PREPEND.md  ./README.md > ./NEW_README.md
+    THIS_ENCODING=$(file -b --mime-encoding ./NEW_README.md)
+    echo "Found encoding: $THIS_ENCODING"
+
+    iconv  --to-code=UTF-8//ignore  --output=./README.md  "./NEW_README.md"
+    THIS_ERROR_CODE=$?
+
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        echo "Warning! Bad encoding in README.md file. Removing bad chars and converting to UTF-8"
+        iconv  --to-code=UTF-8//ignore -c  --output=./README.md "./NEW_README.md"
+    else
+        echo ""
+        echo "Confirmed README.md contains no bad encoding chars."
+        echo ""
+    fi
 else
     echo "Warning: README_REGISTRY_PREPEND.md not found to prepend to README.md"
 fi
@@ -130,6 +146,11 @@ fi
 # we'll want to look for the 1.0.7-dev part in the README.md
 #
 THIS_VERSION=$(grep "version:" idf_component.yml | awk -F'"' '{print $2}')
+if [ -z "$THIS_VERSION" ]; then
+    echo "Quoted version: value not found in idf_component.yml"
+    exit 1
+fi
+
 echo "Checking README.md for Version $THIS_VERSION"
 grep "$THIS_VERSION" README.md
 THIS_ERROR_CODE=$?
