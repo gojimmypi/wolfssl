@@ -3,6 +3,12 @@
 This directory does not need to be included in any wolfSSL distributions. The files
 contained herein are used only to publish wolfSSL as a managed component to the [ESP Registry](https://components.espressif.com/).
 
+When managing a component:
+
+* Do not edit files in the local `./dist/` directory. Those are file sets previously published.
+
+* Do not edit files in the local `./[project]/managed_components/` directory. Those are files fetched from ESP Registry.
+
 See the local [wolfssl_component_publish.sh script](./wolfssl_component_publish.sh) for the steps used to copy wolfSSL
 source files locally.
 
