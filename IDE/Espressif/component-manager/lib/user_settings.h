@@ -116,5 +116,6 @@
 /* adjust wait-timeout count if you see timeout in rsa hw acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
-#define WOLFSSL_SHA224
-
+/* SHA512/224 and SHA512/256 were fixed for ESP32 after 5.6 release */ 
+#define WOLFSSL_NOSHA512_224
+#define WOLFSSL_NOSHA512_256
