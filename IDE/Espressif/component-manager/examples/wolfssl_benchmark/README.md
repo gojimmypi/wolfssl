@@ -199,9 +199,7 @@ A 'clean` may be needed after freshly installing a new component:
 idf.py clean build  flash -p /dev/ttyS7 -b 115200 monitor
 ```
 
+### ESP Component Registry
 
-<!--
-#### ESP Component Registry
-#### This tag is used to include this file in the ESP Component Registry:
-#### __ESP_COMPONENT_SOURCE__
--->
+This tag is used to include this file in the ESP Component Registry:
+ __ESP_COMPONENT_SOURCE__

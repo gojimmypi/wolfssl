@@ -7,7 +7,7 @@ C-language-based SSL/TLS library targeted at IoT, embedded, and RTOS environment
 speed, and feature set. It works seamlessly in desktop, enterprise, and cloud environments as well. 
 wolfSSL supports industry standards up to the current [TLS 1.3](https://www.wolfssl.com/tls13) and DTLS 1.3, 
 is up to 20 times smaller than OpenSSL, offers a simple API, an OpenSSL compatibility layer,
-OCSP and CRL support, is backed by the robust [wolfCrypt cryptography library](https://github.com/gojimmypi/wolfssl/tree/master/wolfcrypt), 
+OCSP and CRL support, is backed by the robust [wolfCrypt cryptography library](https://github.com/wolfssl/wolfssl/tree/master/wolfcrypt), 
 and much more.
 
 The CMVP has issued FIPS 140-2 Certificates #3389 and #2425 for the wolfCrypt Module developed by wolfSSL Inc.  

@@ -1,4 +1,4 @@
-This is the Expressif Managed Component Version 5.6 of wolfSSL, test #14 (version ^1.0.15-dev)
+This is the Expressif Component Version 5.6 of wolfSSL, test #14 (version ^1.0.15-dev)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
@@ -15,7 +15,7 @@ For more information, see our [FIPS FAQ](https://www.wolfssl.com/license/fips/) 
 
 # Getting Started
 
-Check out the Examples on the [left pane of the component page](https://components.espressif.com/components/wolfssl/wolfssl/).
+Check out the Examples on the right pane of the [wolfssl component page](https://components.espressif.com/components/wolfssl/wolfssl/).
 
 Typically you need only 4 lines to run an example from scratch in the EDP-IDF environment:
 
