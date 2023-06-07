@@ -1,4 +1,4 @@
-This is the Expressif Component Version 5.6 of wolfSSL, test #14 (version ^1.0.15-dev)
+This is the Expressif Component Version of wolfSSL 5.6, Release #1 (version ^5.6.0-dev)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
@@ -21,7 +21,7 @@ Typically you need only 4 lines to run an example from scratch in the EDP-IDF en
 
 ```
 . ~/esp/esp-idf/export.sh
-idf.py create-project-from-example "wolfssl/wolfssl^1.0.15-dev:wolfssl_benchmark"
+idf.py create-project-from-example "wolfssl/wolfssl^5.6.0-stable:wolfssl_benchmark"
 cd wolfssl_benchmark
 idf.py -b 115200 flash monitor
 ```

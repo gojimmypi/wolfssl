@@ -1,4 +1,4 @@
-This is the Expressif Component Version 5.6 of wolfSSL, test #14 (version ^1.0.15-dev)
+This is the Expressif Component Version of wolfSSL 5.6, Release #1 (version ^5.6.0-dev)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
@@ -7,7 +7,7 @@ C-language-based SSL/TLS library targeted at IoT, embedded, and RTOS environment
 speed, and feature set. It works seamlessly in desktop, enterprise, and cloud environments as well. 
 wolfSSL supports industry standards up to the current [TLS 1.3](https://www.wolfssl.com/tls13) and DTLS 1.3, 
 is up to 20 times smaller than OpenSSL, offers a simple API, an OpenSSL compatibility layer,
-OCSP and CRL support, is backed by the robust [wolfCrypt cryptography library](https://github.com/gojimmypi/wolfssl/tree/master/wolfcrypt), 
+OCSP and CRL support, is backed by the robust [wolfCrypt cryptography library](https://github.com/wolfssl/wolfssl/tree/master/wolfcrypt), 
 and much more.
 
 The CMVP has issued FIPS 140-2 Certificates #3389 and #2425 for the wolfCrypt Module developed by wolfSSL Inc.  
@@ -21,7 +21,7 @@ Typically you need only 4 lines to run an example from scratch in the EDP-IDF en
 
 ```
 . ~/esp/esp-idf/export.sh
-idf.py create-project-from-example "wolfssl/wolfssl^1.0.15-dev:wolfssl_benchmark"
+idf.py create-project-from-example "wolfssl/wolfssl^5.6.0-stable:wolfssl_benchmark"
 cd wolfssl_benchmark
 idf.py -b 115200 flash monitor
 ```

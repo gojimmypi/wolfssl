@@ -11,7 +11,7 @@ The easiest way to get started with wolfSSL is by using the
 
 ```
 . ~/esp/esp-idf/export.sh
-idf.py create-project-from-example "wolfssl/wolfssl^1.0.15-dev:wolfssl_test"
+idf.py create-project-from-example "wolfssl/wolfssl^5.6.0-stable:wolfssl_test"
 cd wolfssl_benchmark
 idf.py -b 115200 flash monitor
 ```

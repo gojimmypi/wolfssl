@@ -58,7 +58,7 @@ fi
 echo "Using MY_IDF_PORT = $MY_IDF_PORT"
 
 echo "Installing wolfSSL..."
-idf.py add-dependency "wolfssl/wolfssl^1.0.15-dev"
+idf.py add-dependency "wolfssl/wolfssl^5.6.0-stable"
 
 echo "Bulding project..."
 idf.py build
