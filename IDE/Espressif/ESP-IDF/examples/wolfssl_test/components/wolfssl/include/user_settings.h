@@ -233,3 +233,11 @@
 /* #define INCLUDE_ALT_HW_TEST */
 
 /* #define NO_HW_MATH_TEST */
+
+
+/* when turning on ECC508 / ECC608 support
+#define WOLFSSL_ESPWROOM32SE
+#define HAVE_PK_CALLBACKS
+#define WOLFSSL_ATECC508A
+#define ATCA_WOLFSSL
+*/

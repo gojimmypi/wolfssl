@@ -480,3 +480,4 @@ user_settings_asm.h
 # The only ESP Registry Files specific to this location
 !/IDE/Espressif/component-manager/examples/*/main/idf_component.yml
 !/IDE/Espressif/component-manager/examples/*/README.md
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/cryptoauthlib
