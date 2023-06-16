@@ -509,7 +509,8 @@ WOLFSSL_BIGNUM* wolfSSL_BN_bin2bn(const unsigned char* data, int len,
         }
         else {
             /* Decode into big number. */
-            if (mp_read_unsigned_bin((mp_int*)ret->internal, data, len) != 0) {
+            if (mp_read_unsigned_bin((mp_int*)ret->internal, data, (word32)len)
+                    != 0) {
                 WOLFSSL_MSG("mp_read_unsigned_bin failure");
                 /* Don't return anything on failure. bn will be freed if set. */
                 ret = NULL;
@@ -557,7 +558,7 @@ static char* wolfssl_bn_bn2radix(const WOLFSSL_BIGNUM* bn, int radix)
 
     if (!err) {
         /* Allocate string. */
-        str = (char*)XMALLOC(len, NULL, DYNAMIC_TYPE_OPENSSL);
+        str = (char*)XMALLOC((size_t)len, NULL, DYNAMIC_TYPE_OPENSSL);
         if (str == NULL) {
             WOLFSSL_MSG("BN_bn2hex malloc string failure");
             err = 1;
@@ -1777,7 +1778,7 @@ int wolfSSL_BN_mod_add(WOLFSSL_BIGNUM *r, const WOLFSSL_BIGNUM *a,
         ret = 0;
     }
 
-    /* Perfom operation with wolfCrypt. */
+    /* Perform operation with wolfCrypt. */
     if ((ret == 1) && (mp_addmod((mp_int*)a->internal, (mp_int*)b->internal,
             (mp_int*)m->internal, (mp_int*)r->internal) != MP_OKAY)) {
         WOLFSSL_MSG("mp_add_d error");
@@ -1973,7 +1974,7 @@ int wolfSSL_BN_gcd(WOLFSSL_BIGNUM* r, WOLFSSL_BIGNUM* a, WOLFSSL_BIGNUM* b,
  * @param [in]      top      Whether top bits must be set.
  *                           Valid values: WOLFSSL_BN_RAND_TOP_ANY,
  *                           WOLFSSL_BN_RAND_TOP_ONE, WOLFSSL_BN_RAND_TOP_TWO.
- * @param [in]      botttom  Whether bottom bit must be set.
+ * @param [in]      bottom   Whether bottom bit must be set.
  *                           Valid values: WOLFSSL_BN_RAND_BOTTOM_ANY,
                              WOLFSSL_BN_RAND_BOTTOM_ODD.
  * @return  1 on success.
@@ -1985,7 +1986,7 @@ int wolfSSL_BN_gcd(WOLFSSL_BIGNUM* r, WOLFSSL_BIGNUM* a, WOLFSSL_BIGNUM* b,
 int wolfSSL_BN_rand(WOLFSSL_BIGNUM* bn, int bits, int top, int bottom)
 {
     int ret = 1;
-    int len = (bits + 7) / 8;
+    word32 len = (word32)((bits + 7) / 8);
     WC_RNG* rng;
 
     WOLFSSL_ENTER("wolfSSL_BN_rand");
@@ -2081,7 +2082,7 @@ int wolfSSL_BN_rand(WOLFSSL_BIGNUM* bn, int bits, int top, int bottom)
  * @param [in]      top      Whether top bits must be set.
  *                           Valid values: WOLFSSL_BN_RAND_TOP_ANY,
  *                           WOLFSSL_BN_RAND_TOP_ONE, WOLFSSL_BN_RAND_TOP_TWO.
- * @param [in]      botttom  Whether bottom bit must be set.
+ * @param [in]      bottom   Whether bottom bit must be set.
  *                           Valid values: WOLFSSL_BN_RAND_BOTTOM_ANY,
                              WOLFSSL_BN_RAND_BOTTOM_ODD.
  * @return  1 on success.

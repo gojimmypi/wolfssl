@@ -196,10 +196,10 @@ static void wc_Stm32_Hash_GetDigest(byte* hash, int digestSize)
 
 #ifdef DEBUG_STM32_HASH
     {
-        word32 i;
+        word32 ii;
         printf("STM Digest %d\n", digestSize);
-        for (i=0; i<digestSize/sizeof(word32); i++) {
-            printf("\tDIG 0x%04x\n", digest[i]);
+        for (ii=0; ii<digestSize/sizeof(word32); ii++) {
+            printf("\tDIG 0x%04x\n", digest[ii]);
         }
     }
 #endif
@@ -318,7 +318,7 @@ int wc_Stm32_Hash_Update(STM32_HASH_Context* stmCtx, word32 algo,
         }
     #endif
 
-        if (len >= 0 && stmCtx->buffLen == chunkSz) {
+        if (stmCtx->buffLen == chunkSz) {
             wc_Stm32_Hash_Data(stmCtx, stmCtx->buffLen);
             wroteToFifo = 1;
         #ifdef STM32_HASH_FIFO_WORKAROUND
@@ -984,8 +984,21 @@ int stm32_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
     pka_ecc.pPubKeyCurvePtY = Qybin;
     pka_ecc.RSign =           Rbin;
     pka_ecc.SSign =           Sbin;
+
     XMEMSET(Hashbin, 0, STM32_MAX_ECC_SIZE);
-    XMEMCPY(Hashbin + (size - hashlen), hash, hashlen);
+    if (hashlen > STM32_MAX_ECC_SIZE) {
+        return ECC_BAD_ARG_E;
+    }
+    else if (hashlen > size) {
+        /* in the case that hashlen is larger than key size place hash at
+         * beginning of buffer */
+        XMEMCPY(Hashbin, hash, size);
+    }
+    else {
+        /* in all other cases where hashlen is equal to or less than the key
+         * size pad the Hashbin buffer with leading zero's */
+        XMEMCPY(Hashbin + (size - hashlen), hash, hashlen);
+    }
     pka_ecc.hash =            Hashbin;
 
     status = HAL_PKA_ECDSAVerif(&hpka, &pka_ecc, HAL_MAX_DELAY);
@@ -1059,7 +1072,19 @@ int stm32_ecc_sign_hash_ex(const byte* hash, word32 hashlen, WC_RNG* rng,
     pka_ecc.primeOrder =      order;
 
     XMEMSET(Hashbin, 0, STM32_MAX_ECC_SIZE);
-    XMEMCPY(Hashbin + (size - hashlen), hash, hashlen);
+    if (hashlen > STM32_MAX_ECC_SIZE) {
+        return ECC_BAD_ARG_E;
+    }
+    else if (hashlen > size) {
+        /* in the case that hashlen is larger than key size place hash at
+         * beginning of buffer */
+        XMEMCPY(Hashbin, hash, size);
+    }
+    else {
+        /* in all other cases where hashlen is equal to or less than the key
+         * size pad the Hashbin buffer with leading zero's */
+        XMEMCPY(Hashbin + (size - hashlen), hash, hashlen);
+    }
     pka_ecc.hash =            Hashbin;
     pka_ecc.integer =         Intbin;
     pka_ecc.privateKey =      Keybin;

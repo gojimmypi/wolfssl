@@ -301,6 +301,12 @@ static int Dtls13EncryptDecryptRecordNumber(WOLFSSL* ssl, byte* seq,
     byte mask[DTLS13_RN_MASK_SIZE];
     int ret;
 
+#ifdef HAVE_NULL_CIPHER
+    /* Do not encrypt record numbers with null cipher. See RFC 9150 Sec 9 */
+    if (ssl->specs.bulk_cipher_algorithm == wolfssl_cipher_null)
+        return 0;
+#endif /*HAVE_NULL_CIPHER */
+
     ret = Dtls13GetRnMask(ssl, ciphertext, mask, dir);
     if (ret != 0)
         return ret;
@@ -413,7 +419,7 @@ static int Dtls13SendFragFromBuffer(WOLFSSL* ssl, byte* output, word16 length)
     if (ret != 0)
         return ret;
 
-    buf = ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+    buf = GetOutputBuffer(ssl);
 
     XMEMCPY(buf, output, length);
 
@@ -918,8 +924,7 @@ static int Dtls13SendFragmentedInternal(WOLFSSL* ssl)
         if (ret != 0)
             return ret;
 
-        output =
-            ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+        output = GetOutputBuffer(ssl);
 
         ret = Dtls13HandshakeAddHeaderFrag(ssl, output + rlHeaderLength,
             (enum HandShakeType)ssl->dtls13FragHandshakeType,
@@ -1503,8 +1508,7 @@ static int Dtls13RtxSendBuffered(WOLFSSL* ssl)
         if (ret != 0)
             return ret;
 
-        output =
-            ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+        output = GetOutputBuffer(ssl);
 
         XMEMCPY(output + headerLength, r->data, r->length);
 
@@ -2266,6 +2270,15 @@ int Dtls13SetRecordNumberKeys(WOLFSSL* ssl, enum encrypt_side side)
     }
 #endif /* HAVE_CHACHA */
 
+#ifdef HAVE_NULL_CIPHER
+    if (ssl->specs.bulk_cipher_algorithm == wolfssl_cipher_null) {
+#ifdef WOLFSSL_DEBUG_TLS
+        WOLFSSL_MSG("Skipping Record Number key provisioning with null cipher");
+#endif /* WOLFSSL_DEBUG_TLS */
+        return 0;
+    }
+#endif /* HAVE_NULL_CIPHER */
+
     return NOT_COMPILED_IN;
 }
 
@@ -2327,8 +2340,7 @@ static int Dtls13WriteAckMessage(WOLFSSL* ssl,
     if (ret != 0)
         return ret;
 
-    output =
-        ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     ackMessage = output + headerLength;
 
@@ -2602,8 +2614,7 @@ int SendDtls13Ack(WOLFSSL* ssl)
         if (ret != 0)
             return ret;
 
-        output =
-            ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+        output = GetOutputBuffer(ssl);
 
         ret = Dtls13RlAddPlaintextHeader(ssl, output, ack, (word16)length);
         if (ret != 0)
@@ -2617,10 +2628,10 @@ int SendDtls13Ack(WOLFSSL* ssl)
         if (ret != 0)
             return ret;
 
-        output =
-            ssl->buffers.outputBuffer.buffer + ssl->buffers.outputBuffer.length;
+        output = GetOutputBuffer(ssl);
 
         outputSize = ssl->buffers.outputBuffer.bufferSize -
+                     ssl->buffers.outputBuffer.idx -
                      ssl->buffers.outputBuffer.length;
 
         headerSize = Dtls13GetRlHeaderLength(ssl, 1);

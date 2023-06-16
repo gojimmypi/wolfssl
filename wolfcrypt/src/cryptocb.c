@@ -49,8 +49,10 @@ typedef struct CryptoCb {
     void* ctx;
 } CryptoCb;
 static WOLFSSL_GLOBAL CryptoCb gCryptoDev[MAX_CRYPTO_DEVID_CALLBACKS];
-static CryptoDevCallbackFind CryptoCb_FindCb = NULL;
 
+#ifdef WOLF_CRYPTO_CB_FIND
+static CryptoDevCallbackFind CryptoCb_FindCb = NULL;
+#endif
 
 #ifdef DEBUG_CRYPTOCB
 static const char* GetAlgoTypeStr(int algo)
@@ -188,9 +190,12 @@ static CryptoCb* wc_CryptoCb_FindDevice(int devId, int algoType)
 {
     int localDevId = devId;
 
+#ifdef WOLF_CRYPTO_CB_FIND
     if (CryptoCb_FindCb != NULL) {
         localDevId = CryptoCb_FindCb(devId, algoType);
     }
+#endif /* WOLF_CRYPTO_CB_FIND */
+    (void)algoType;
     return wc_CryptoCb_GetDevice(localDevId);
 }
 
@@ -233,6 +238,7 @@ int wc_CryptoCb_GetDevIdAtIndex(int startIdx)
 }
 
 
+#ifdef WOLF_CRYPTO_CB_FIND
 /* Used to register a find device function. Useful for cases where the
  * device ID in the struct may not have been set but still wanting to use
  * a specific crypto callback device ID. The find callback is global and
@@ -241,6 +247,7 @@ void wc_CryptoCb_SetDeviceFindCb(CryptoDevCallbackFind cb)
 {
     CryptoCb_FindCb = cb;
 }
+#endif
 
 int wc_CryptoCb_RegisterDevice(int devId, CryptoDevCallbackFunc cb, void* ctx)
 {
@@ -346,6 +353,30 @@ int wc_CryptoCb_RsaCheckPrivKey(RsaKey* key, const byte* pubKey,
         cryptoInfo.pk.rsa_check.key = key;
         cryptoInfo.pk.rsa_check.pubKey = pubKey;
         cryptoInfo.pk.rsa_check.pubKeySz = pubKeySz;
+
+        ret = dev->cb(dev->devId, &cryptoInfo, dev->ctx);
+    }
+
+    return wc_CryptoCb_TranslateErrorCode(ret);
+}
+
+int wc_CryptoCb_RsaGetSize(const RsaKey* key, int* keySize)
+{
+    int ret = CRYPTOCB_UNAVAILABLE;
+    CryptoCb* dev;
+
+    if (key == NULL)
+        return ret;
+
+    /* locate registered callback */
+    dev = wc_CryptoCb_FindDevice(key->devId, WC_ALGO_TYPE_PK);
+    if (dev && dev->cb) {
+        wc_CryptoInfo cryptoInfo;
+        XMEMSET(&cryptoInfo, 0, sizeof(cryptoInfo));
+        cryptoInfo.algo_type = WC_ALGO_TYPE_PK;
+        cryptoInfo.pk.type = WC_PK_TYPE_RSA_GET_SIZE;
+        cryptoInfo.pk.rsa_get_size.key = key;
+        cryptoInfo.pk.rsa_get_size.keySize = keySize;
 
         ret = dev->cb(dev->devId, &cryptoInfo, dev->ctx);
     }

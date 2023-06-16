@@ -141,7 +141,7 @@ decouple library dependencies with standard string, memory and so on.
     #define WC_STRINGIFY(str) _WC_STRINGIFY_L2(str)
 
     /* try to set SIZEOF_LONG or SIZEOF_LONG_LONG if user didn't */
-    #if defined(_MSC_VER) || defined(HAVE_LIMITS_H)
+    #if defined(_WIN32) || defined(HAVE_LIMITS_H)
         /* make sure both SIZEOF_LONG_LONG and SIZEOF_LONG are set,
          * otherwise causes issues with CTC_SETTINGS */
         #if !defined(SIZEOF_LONG_LONG) || !defined(SIZEOF_LONG)
@@ -177,37 +177,45 @@ decouple library dependencies with standard string, memory and so on.
     #if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
         #define WORD64_AVAILABLE
         #define W64LIT(x) x##ui64
+        #define SW64LIT(x) x##i64
         typedef          __int64 sword64;
         typedef unsigned __int64 word64;
     #elif defined(__EMSCRIPTEN__)
         #define WORD64_AVAILABLE
         #define W64LIT(x) x##ull
+        #define SW64LIT(x) x##ll
         typedef          long long sword64;
         typedef unsigned long long word64;
     #elif defined(SIZEOF_LONG) && SIZEOF_LONG == 8
         #define WORD64_AVAILABLE
         #ifdef WOLF_C89
-            #define W64LIT(x) x##L
+            #define W64LIT(x) x##UL
+            #define SW64LIT(x) x##L
         #else
-            #define W64LIT(x) x##LL
+            #define W64LIT(x) x##ULL
+            #define SW64LIT(x) x##LL
         #endif
         typedef          long sword64;
         typedef unsigned long word64;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_LONG_LONG == 8
         #define WORD64_AVAILABLE
         #ifdef WOLF_C89
-            #define W64LIT(x) x##L
+            #define W64LIT(x) x##UL
+            #define SW64LIT(x) x##L
         #else
-            #define W64LIT(x) x##LL
+            #define W64LIT(x) x##ULL
+            #define SW64LIT(x) x##LL
         #endif
         typedef          long long sword64;
         typedef unsigned long long word64;
     #elif defined(__SIZEOF_LONG_LONG__) && __SIZEOF_LONG_LONG__ == 8
         #define WORD64_AVAILABLE
         #ifdef WOLF_C89
-            #define W64LIT(x) x##L
+            #define W64LIT(x) x##UL
+            #define SW64LIT(x) x##L
         #else
-            #define W64LIT(x) x##LL
+            #define W64LIT(x) x##ULL
+            #define SW64LIT(x) x##LL
         #endif
         typedef          long long sword64;
         typedef unsigned long long word64;
@@ -598,8 +606,8 @@ typedef struct w64wrapper {
         #define WC_DECLARE_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             VAR_TYPE VAR_NAME[VAR_ITEMS][VAR_SIZE]
         #define WC_INIT_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) do {} while(0)
-        #define WC_FREE_VAR(VAR_NAME, HEAP) /* nothing to free, its stack */
-        #define WC_FREE_ARRAY(VAR_NAME, VAR_ITEMS, HEAP)  /* nothing to free, its stack */
+        #define WC_FREE_VAR(VAR_NAME, HEAP) do {} while(0) /* nothing to free, its stack */
+        #define WC_FREE_ARRAY(VAR_NAME, VAR_ITEMS, HEAP) do {} while(0) /* nothing to free, its stack */
 
         #define WC_DECLARE_ARRAY_DYNAMIC_DEC(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
             VAR_TYPE* VAR_NAME[VAR_ITEMS]; \
@@ -1141,7 +1149,8 @@ typedef struct w64wrapper {
         WC_PK_TYPE_ED25519_VERIFY = 14,
         WC_PK_TYPE_ED25519_KEYGEN = 15,
         WC_PK_TYPE_CURVE25519_KEYGEN = 16,
-        WC_PK_TYPE_MAX = WC_PK_TYPE_CURVE25519_KEYGEN
+        WC_PK_TYPE_RSA_GET_SIZE = 17,
+        WC_PK_TYPE_MAX = WC_PK_TYPE_RSA_GET_SIZE
     };
 
 
@@ -1179,8 +1188,30 @@ typedef struct w64wrapper {
     /* invalid device id */
     #define INVALID_DEVID    (-2)
 
-    /* AESNI requires alignment and ARMASM gains some performance from it
-     * Xilinx RSA operations require alignment */
+    #if defined(HAVE_FIPS) && FIPS_VERSION_LT(5,3)
+        #ifdef XASM_LINK
+            #error User-supplied XASM_LINK is not compatible with this FIPS version.
+        #else
+            /* use version in FIPS <=5.2 aes.c */
+        #endif
+    #elif defined(XASM_LINK)
+        /* keep user-supplied definition */
+    #elif defined(WOLFSSL_NO_ASM)
+        #define XASM_LINK(f)
+    #elif defined(_MSC_VER)
+        #define XASM_LINK(f)
+    #elif defined(__APPLE__)
+        #define XASM_LINK(f) asm("_" f)
+    #elif defined(__GNUC__)
+        /* use alternate keyword for compatibility with -std=c99 */
+        #define XASM_LINK(f) __asm__(f)
+    #else
+        #define XASM_LINK(f) asm(f)
+    #endif
+
+    /* AESNI requires alignment and ARMASM gains some performance from it.
+     * Xilinx RSA operations require alignment.
+     */
     #if defined(WOLFSSL_AESNI) || defined(WOLFSSL_ARMASM) || \
         defined(USE_INTEL_SPEEDUP) || defined(WOLFSSL_AFALG_XILINX) || \
         defined(WOLFSSL_XILINX)
@@ -1327,6 +1358,10 @@ typedef struct w64wrapper {
         #define WOLFSSL_THREAD
         #define INFINITE      (-1)
         #define WAIT_OBJECT_0 0L
+    #elif defined(FREERTOS)
+        typedef unsigned int   THREAD_RETURN;
+        typedef TaskHandle_t   THREAD_TYPE;
+        #define WOLFSSL_THREAD
     #else
         typedef unsigned int  THREAD_RETURN;
         typedef size_t        THREAD_TYPE;
@@ -1374,6 +1409,9 @@ typedef struct w64wrapper {
         #define PRAGMA_GCC_DIAG_PUSH _Pragma("GCC diagnostic push")
         #define PRAGMA_GCC(str) _Pragma(str)
         #define PRAGMA_GCC_DIAG_POP _Pragma("GCC diagnostic pop")
+        #define PRAGMA_DIAG_PUSH PRAGMA_GCC_DIAG_PUSH
+        #define PRAGMA(str) PRAGMA_GCC(str)
+        #define PRAGMA_DIAG_POP PRAGMA_GCC_DIAG_POP
     #else
         #define PRAGMA_GCC_DIAG_PUSH
         #define PRAGMA_GCC(str)
@@ -1384,10 +1422,23 @@ typedef struct w64wrapper {
         #define PRAGMA_CLANG_DIAG_PUSH _Pragma("clang diagnostic push")
         #define PRAGMA_CLANG(str) _Pragma(str)
         #define PRAGMA_CLANG_DIAG_POP _Pragma("clang diagnostic pop")
+        #define PRAGMA_DIAG_PUSH PRAGMA_CLANG_DIAG_PUSH
+        #define PRAGMA(str) PRAGMA_CLANG(str)
+        #define PRAGMA_DIAG_POP PRAGMA_CLANG_DIAG_POP
     #else
         #define PRAGMA_CLANG_DIAG_PUSH
         #define PRAGMA_CLANG(str)
         #define PRAGMA_CLANG_DIAG_POP
+    #endif
+
+    #ifndef PRAGMA_DIAG_PUSH
+        #define PRAGMA_DIAG_PUSH
+    #endif
+    #ifndef PRAGMA
+        #define PRAGMA(str)
+    #endif
+    #ifndef PRAGMA_DIAG_POP
+        #define PRAGMA_DIAG_POP
     #endif
 
     #ifdef DEBUG_VECTOR_REGISTER_ACCESS

@@ -636,6 +636,10 @@ typedef THREAD_RETURN WOLFSSL_THREAD THREAD_FUNC(void*);
 void start_thread(THREAD_FUNC fun, func_args* args, THREAD_TYPE* thread);
 void join_thread(THREAD_TYPE thread);
 
+typedef int (*cbType)(WOLFSSL_CTX *ctx, WOLFSSL *ssl);
+
+void test_wolfSSL_client_server_nofail_ex(callback_functions* client_cb,
+    callback_functions* server_cb, cbType client_on_handshake);
 void test_wolfSSL_client_server_nofail(callback_functions* client_cb,
                                        callback_functions* server_cb);
 
@@ -1684,6 +1688,16 @@ static int wolfsentry_setup(
     {
         struct wolfsentry_route_table *table;
 
+#ifdef WOLFSENTRY_THREADSAFE
+        ret = WOLFSENTRY_SHARED_EX(*_wolfsentry);
+        if (ret < 0) {
+            fprintf(stderr, "wolfsentry shared lock op failed: "
+                    WOLFSENTRY_ERROR_FMT ".\n",
+                    WOLFSENTRY_ERROR_FMT_ARGS(ret));
+            return ret;
+        }
+#endif
+
         if ((ret = wolfsentry_route_get_main_table(
                  WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry),
                  &table)) < 0)
@@ -1691,6 +1705,11 @@ static int wolfsentry_setup(
             fprintf(stderr, "wolfsentry_route_get_main_table() returned "
                     WOLFSENTRY_ERROR_FMT "\n",
                     WOLFSENTRY_ERROR_FMT_ARGS(ret));
+#ifdef WOLFSENTRY_THREADSAFE
+            WOLFSENTRY_WARN_ON_FAILURE(
+                wolfsentry_context_unlock(
+                    WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
             return ret;
         }
 
@@ -1708,6 +1727,11 @@ static int wolfsentry_setup(
                         "wolfsentry_route_table_default_policy_set() returned "
                         WOLFSENTRY_ERROR_FMT "\n",
                         WOLFSENTRY_ERROR_FMT_ARGS(ret));
+#ifdef WOLFSENTRY_THREADSAFE
+                WOLFSENTRY_WARN_ON_FAILURE(
+                    wolfsentry_context_unlock(
+                        WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
                 return ret;
             }
 
@@ -1742,6 +1766,11 @@ static int wolfsentry_setup(
                 fprintf(stderr, "wolfsentry_route_insert() returned "
                         WOLFSENTRY_ERROR_FMT "\n",
                         WOLFSENTRY_ERROR_FMT_ARGS(ret));
+#ifdef WOLFSENTRY_THREADSAFE
+                WOLFSENTRY_WARN_ON_FAILURE(
+                    wolfsentry_context_unlock(
+                        WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
                 return ret;
             }
         } else if (WOLFSENTRY_MASKIN_BITS(route_flags, WOLFSENTRY_ROUTE_FLAG_DIRECTION_IN)) {
@@ -1757,6 +1786,11 @@ static int wolfsentry_setup(
                         "wolfsentry_route_table_default_policy_set() returned "
                         WOLFSENTRY_ERROR_FMT "\n",
                         WOLFSENTRY_ERROR_FMT_ARGS(ret));
+#ifdef WOLFSENTRY_THREADSAFE
+                WOLFSENTRY_WARN_ON_FAILURE(
+                    wolfsentry_context_unlock(
+                        WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
                 return ret;
             }
 
@@ -1791,9 +1825,19 @@ static int wolfsentry_setup(
                 fprintf(stderr, "wolfsentry_route_insert() returned "
                         WOLFSENTRY_ERROR_FMT "\n",
                         WOLFSENTRY_ERROR_FMT_ARGS(ret));
+#ifdef WOLFSENTRY_THREADSAFE
+                WOLFSENTRY_WARN_ON_FAILURE(
+                    wolfsentry_context_unlock(
+                        WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
                 return ret;
             }
         }
+#ifdef WOLFSENTRY_THREADSAFE
+        WOLFSENTRY_WARN_ON_FAILURE(
+            wolfsentry_context_unlock(
+                WOLFSENTRY_CONTEXT_ARGS_OUT_EX(*_wolfsentry)));
+#endif
     }
 
 #if defined(WOLFSENTRY_THREADSAFE) && defined(HAVE_WOLFSENTRY_API_0v8)
@@ -2884,14 +2928,16 @@ static WC_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store)
                                        wolfSSL_X509_get_issuer_name(peer), 0, 0);
         char* subject = wolfSSL_X509_NAME_oneline(
                                       wolfSSL_X509_get_subject_name(peer), 0, 0);
-        printf("\tPeer's cert info:\n issuer : %s\n subject: %s\n", issuer,
-                                                                  subject);
-
+        printf("\tPeer's cert info:\n issuer : %s\n subject: %s\n",
+               issuer ? issuer : "[none]",
+               subject ? subject : "[none]");
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
-        /* preverify needs to be self-signer error for Qt compat.
-         * Should be ASN_SELF_SIGNED_E */
-        if (XSTRCMP(issuer, subject) == 0 && preverify == ASN_NO_SIGNER_E)
-            return 0;
+        if (issuer != NULL && subject != NULL) {
+            /* preverify needs to be self-signer error for Qt compat.
+             * Should be ASN_SELF_SIGNED_E */
+            if (XSTRCMP(issuer, subject) == 0 && preverify == ASN_NO_SIGNER_E)
+                return 0;
+        }
 #endif
 
         XFREE(subject, 0, DYNAMIC_TYPE_OPENSSL);
@@ -3722,7 +3768,7 @@ static WC_INLINE int myEccSharedSecret(WOLFSSL* ssl, ecc_key* otherKey,
     #endif
         pubKey = otherKey;
 
-        /* TLS v1.2 and older we must generate a key here for the client ony.
+        /* TLS v1.2 and older we must generate a key here for the client only.
          * TLS v1.3 calls key gen early with key share */
         if (wolfSSL_GetVersion(ssl) < WOLFSSL_TLSV1_3) {
             ret = myEccKeyGen(ssl, privKey, 0, otherKey->dp->id, ctx);
@@ -5384,9 +5430,11 @@ static WC_INLINE int test_memio_setup(struct test_memio_ctx *ctx,
         *ctx_c = wolfSSL_CTX_new(method_c());
         if (*ctx_c == NULL)
             return -1;
+#ifndef NO_CERTS
         ret = wolfSSL_CTX_load_verify_locations(*ctx_c, caCertFile, 0);
         if (ret != WOLFSSL_SUCCESS)
             return -1;
+#endif /* NO_CERTS */
         wolfSSL_SetIORecv(*ctx_c, test_memio_read_cb);
         wolfSSL_SetIOSend(*ctx_c, test_memio_write_cb);
         if (ctx->c_ciphers != NULL) {
@@ -5400,6 +5448,7 @@ static WC_INLINE int test_memio_setup(struct test_memio_ctx *ctx,
         *ctx_s = wolfSSL_CTX_new(method_s());
         if (*ctx_s == NULL)
             return -1;
+#ifndef NO_CERTS
         ret = wolfSSL_CTX_use_PrivateKey_file(*ctx_s, svrKeyFile,
             WOLFSSL_FILETYPE_PEM);
         if (ret != WOLFSSL_SUCCESS)
@@ -5408,6 +5457,7 @@ static WC_INLINE int test_memio_setup(struct test_memio_ctx *ctx,
                                                WOLFSSL_FILETYPE_PEM);
         if (ret != WOLFSSL_SUCCESS)
             return -1;
+#endif
         wolfSSL_SetIORecv(*ctx_s, test_memio_read_cb);
         wolfSSL_SetIOSend(*ctx_s, test_memio_write_cb);
         if (ctx->s_ciphers != NULL) {

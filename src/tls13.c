@@ -885,8 +885,18 @@ int Tls13_Exporter(WOLFSSL* ssl, unsigned char *out, size_t outLen,
     const byte*         protocol = tls13ProtocolLabel;
     word32              protocolLen = TLS13_PROTOCOL_LABEL_SZ;
 
-    if (ssl->version.minor != TLSv1_3_MINOR)
+    if (ssl->options.dtls && ssl->version.minor != DTLSv1_3_MINOR)
         return VERSION_ERROR;
+
+    if (!ssl->options.dtls && ssl->version.minor != TLSv1_3_MINOR)
+        return VERSION_ERROR;
+
+#ifdef WOLFSSL_DTLS13
+    if (ssl->options.dtls) {
+        protocol = dtls13ProtocolLabel;
+        protocolLen = DTLS13_PROTOCOL_LABEL_SZ;
+    }
+#endif /* WOLFSSL_DTLS13 */
 
     switch (ssl->specs.mac_algorithm) {
         #ifndef NO_SHA256
@@ -1165,6 +1175,13 @@ int DeriveResumptionPSK(WOLFSSL* ssl, byte* nonce, byte nonceLen, byte* secret)
     int         ret;
 
     WOLFSSL_MSG("Derive Resumption PSK");
+
+#ifdef WOLFSSL_DTLS13
+    if (ssl->options.dtls) {
+        protocol = dtls13ProtocolLabel;
+        protocolLen = DTLS13_PROTOCOL_LABEL_SZ;
+    }
+#endif /* WOLFSSL_DTLS13 */
 
     switch (ssl->specs.mac_algorithm) {
         #ifndef NO_SHA256
@@ -2148,7 +2165,7 @@ static void AddTls13HandShakeHeader(byte* output, word32 length,
     (void)ssl;
 
 #ifdef WOLFSSL_DTLS13
-    /* message_hash type is used for a syntetic message that replaces the first
+    /* message_hash type is used for a synthetic message that replaces the first
        ClientHello in the hash transcript when using HelloRetryRequest. It will
        never be transmitted and, as the DTLS-only fields must not be considered
        when computing the hash transcript, we can avoid to use the DTLS
@@ -4193,8 +4210,7 @@ int SendTls13ClientHello(WOLFSSL* ssl)
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    args->output = ssl->buffers.outputBuffer.buffer +
-                   ssl->buffers.outputBuffer.length;
+    args->output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(args->output, args->length, client_hello, ssl);
@@ -5219,8 +5235,18 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         }
 #endif
 
+        /* sanity check on PSK / KSE */
+        if (
+    #if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
+            ssl->options.pskNegotiated == 0 &&
+    #endif
+            ssl->session->namedGroup == 0) {
+            return EXT_MISSING;
+        }
+
         ssl->keys.encryptionOn = 1;
         ssl->options.serverState = SERVER_HELLO_COMPLETE;
+
     }
     else {
         ssl->options.tls1_3 = 1;
@@ -6908,8 +6934,7 @@ int SendTls13ServerHello(WOLFSSL* ssl, byte extMsgType)
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(output, length, server_hello, ssl);
@@ -7151,8 +7176,7 @@ static int SendTls13EncryptedExtensions(WOLFSSL* ssl)
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(output, length, encrypted_extensions, ssl);
@@ -7273,8 +7297,7 @@ static int SendTls13CertificateRequest(WOLFSSL* ssl, byte* reqCtx,
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(output, reqSz, certificate_request, ssl);
@@ -7997,8 +8020,7 @@ static int SendTls13Certificate(WOLFSSL* ssl)
             return ret;
 
         /* Get position in output buffer to write new message to. */
-        output = ssl->buffers.outputBuffer.buffer +
-                 ssl->buffers.outputBuffer.length;
+        output = GetOutputBuffer(ssl);
 
         if (ssl->fragOffset == 0) {
             AddTls13FragHeaders(output, fragSz, 0, payloadSz, certificate, ssl);
@@ -8251,8 +8273,7 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
             }
 
             /* get output buffer */
-            args->output = ssl->buffers.outputBuffer.buffer +
-                           ssl->buffers.outputBuffer.length;
+            args->output = GetOutputBuffer(ssl);
 
             /* Advance state and proceed */
             ssl->options.asyncState = TLS_ASYNC_BUILD;
@@ -9464,8 +9485,7 @@ static int SendTls13Finished(WOLFSSL* ssl)
         return ret;
 
     /* get output buffer */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
     input = output + RECORD_HEADER_SZ;
 
 #ifdef WOLFSSL_DTLS13
@@ -9721,8 +9741,7 @@ static int SendTls13KeyUpdate(WOLFSSL* ssl)
         return ret;
 
     /* get output buffer */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
     input = output + RECORD_HEADER_SZ;
 
 #ifdef WOLFSSL_DTLS13
@@ -9914,8 +9933,7 @@ static int SendTls13EndOfEarlyData(WOLFSSL* ssl)
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(output, length, end_of_early_data, ssl);
@@ -10337,8 +10355,7 @@ static int SendTls13NewSessionTicket(WOLFSSL* ssl)
         return ret;
 
     /* Get position in output buffer to write new message to. */
-    output = ssl->buffers.outputBuffer.buffer +
-             ssl->buffers.outputBuffer.length;
+    output = GetOutputBuffer(ssl);
 
     /* Put the record and handshake headers on. */
     AddTls13Headers(output, length, session_ticket, ssl);
@@ -10946,7 +10963,7 @@ static int SanityCheckTls13MsgReceived(WOLFSSL* ssl, byte type)
 int DoTls13HandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                             byte type, word32 size, word32 totalSz)
 {
-    int ret = 0;
+    int ret = 0, tmp;
     word32 inIdx = *inOutIdx;
     int alertType = invalid_alert;
 #if defined(HAVE_ECH)
@@ -11186,7 +11203,11 @@ int DoTls13HandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
         if (type == client_hello && ssl->options.dtls)
             DtlsSetSeqNumForReply(ssl);
 #endif
-        SendAlert(ssl, alert_fatal, alertType);
+        tmp = SendAlert(ssl, alert_fatal, alertType);
+        /* propagate socket error instead of tls error to be sure the error is
+         * not ignored by DTLS code */
+        if (tmp == SOCKET_ERROR_E)
+            ret = SOCKET_ERROR_E;
     }
 
     if (ret == 0 && ssl->options.tls1_3) {

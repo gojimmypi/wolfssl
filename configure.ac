@@ -7,7 +7,7 @@
 #
 AC_COPYRIGHT([Copyright (C) 2006-2020 wolfSSL Inc.])
 AC_PREREQ([2.69])
-AC_INIT([wolfssl],[5.6.0],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
+AC_INIT([wolfssl],[5.6.3],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # The following sets CFLAGS to empty if unset on command line.  We do not
@@ -47,9 +47,9 @@ AC_SUBST([WOLFSSL_CONFIG_ARGS])
 # The three numbers in the libwolfssl.so.*.*.* file name. Unfortunately
 # these numbers don't always line up nicely with the library version.
 WOLFSSL_LIBRARY_VERSION_FIRST=35
-WOLFSSL_LIBRARY_VERSION_SECOND=4
-WOLFSSL_LIBRARY_VERSION_THIRD=0
-WOLFSSL_LIBRARY_VERSION=39:0:4
+WOLFSSL_LIBRARY_VERSION_SECOND=5
+WOLFSSL_LIBRARY_VERSION_THIRD=1
+WOLFSSL_LIBRARY_VERSION=40:1:5
 #                        | | |
 #                 +------+ | +---+
 #                 |        |     |
@@ -104,6 +104,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stddef.h tim
 AC_CHECK_LIB([network],[socket])
 AC_C_BIGENDIAN
 AC_C___ATOMIC
+AC_CHECK_HEADER(stdatomic.h, [AM_CPPFLAGS="$AM_CPPFLAGS -DWOLFSSL_HAVE_ATOMIC_H"],[])
 
 # check if functions of interest are linkable, but also check if
 # they're declared by the expected headers, and if not, supersede the
@@ -434,7 +435,6 @@ AS_CASE([$FIPS_VERSION],
     ]
 )
 
-
 # For reproducible build, gate out from the build anything that might
 # introduce semantically frivolous jitter, maximizing chance of
 # identical object files.
@@ -495,6 +495,16 @@ then
 fi
 AC_SUBST([ENABLED_LINUXKM_PIE])
 
+AC_ARG_ENABLE([linuxkm-benchmarks],
+    [AS_HELP_STRING([--enable-linuxkm-benchmarks],[Enable crypto benchmarking autorun at module load time for Linux kernel module (default: disabled)])],
+    [ENABLED_LINUXKM_BENCHMARKS=$enableval],
+    [ENABLED_LINUXKM_BENCHMARKS=no]
+    )
+if test "$ENABLED_LINUXKM_BENCHMARKS" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_LINUXKM_BENCHMARKS"
+fi
+AC_SUBST([ENABLED_LINUXKM_BENCHMARKS])
 
 if test "$ENABLED_LINUXKM_DEFAULTS" = "yes"
 then
@@ -1106,18 +1116,19 @@ done
 if test "$ENABLED_KYBER" != "no"
 then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HAVE_KYBER"
+
+    if test "$ENABLED_KYBER512" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER512"
+    fi
+    if test "$ENABLED_KYBER768" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER768"
+    fi
+    if test "$ENABLED_KYBER1024" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
+    fi
+
     if test "$ENABLED_WC_KYBER" = "yes"
     then
-        if test "$ENABLED_KYBER512" = ""; then
-            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER512"
-        fi
-        if test "$ENABLED_KYBER768" = ""; then
-            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER768"
-        fi
-        if test "$ENABLED_KYBER1024" = ""; then
-            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
-        fi
-
         test "$enable_sha3" = "" && enable_sha3=yes
         test "$enable_shake128" = "" && enable_shake128=yes
         test "$enable_shake256" = "" && enable_shake256=yes
@@ -3224,7 +3235,7 @@ else
 fi
 
 AC_ARG_ENABLE([brainpool],
-    [AS_HELP_STRING([--enable-brainpool],[Enable Brainpool ECC curves (default: ${BRAINPOOL_DEFAULT})])],
+    [AS_HELP_STRING([--enable-brainpool],[Enable Brainpool ECC curves (default: enabled with ECC custom curves)])],
     [ ENABLED_BRAINPOOL=$enableval ],
     [ ENABLED_BRAINPOOL="$BRAINPOOL_DEFAULT" ]
     )
@@ -4028,6 +4039,26 @@ then
     ENABLED_BIGNUM="no"
 else
     ENABLED_BIGNUM="yes"
+fi
+
+case $host_os in
+*linux* | *darwin* | *freebsd*)
+    DEF_ASN_PRINT="yes"
+    ;;
+*)
+    DEF_ASN_PRINT="no"
+    ;;
+esac
+
+AC_ARG_ENABLE([asn-print],
+    [AS_HELP_STRING([--enable-asn-print],[Enable ASN Print API (default: enabled)])],
+    [ ENABLED_ASN_PRINT=$enableval ],
+    [ ENABLED_ASN_PRINT=$DEF_ASN_PRINT ]
+    )
+
+if test "$ENABLED_ASN_PRINT" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ASN_PRINT"
 fi
 
 
@@ -7361,6 +7392,11 @@ fi
 
 if test "$ENABLED_ASYNCCRYPT" = "yes"
 then
+    if ! test -f ${srcdir}/wolfcrypt/src/async.c || ! test -f ${srcdir}/wolfssl/wolfcrypt/async.h
+    then
+        AC_MSG_ERROR([--enable-asynccrypt requested, but WOLFSSL_ASYNC_CRYPT source files are missing.])
+    fi
+
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ASYNC_CRYPT -DHAVE_WOLF_EVENT -DHAVE_WOLF_BIGINT -DWOLFSSL_NO_HASH_RAW"
 
     # If no async backend (hardware or software) has been explicitly enabled,
@@ -7694,7 +7730,7 @@ case $host_cpu in
     ;;
 esac
 
-if test "$ENABLED_LOWRESOURCE" = "yes" && test "$ENABLED_ECC" = "yes" && (test "$ENABLED_RSA" = "yes" || test "$ENABLED_DH" == "yes") && (test "$ENABLED_SP_MATH" = "yes" || test "$ENABLED_SP_MATH_ALL" = "yes")
+if test "$ENABLED_LOWRESOURCE" = "yes" && test "$ENABLED_ECC" = "yes" && (test "$ENABLED_RSA" = "yes" || test "$ENABLED_DH" = "yes") && (test "$ENABLED_SP_MATH" = "yes" || test "$ENABLED_SP_MATH_ALL" = "yes")
 then
     AM_CFLAGS="$AM_CFLAGS -DALT_ECC_SIZE"
 fi
@@ -8530,6 +8566,7 @@ AM_CONDITIONAL([BUILD_FASTMATH],[test "x$ENABLED_FASTMATH" = "xyes" || test "x$E
 AM_CONDITIONAL([BUILD_HEAPMATH],[test "x$ENABLED_HEAPMATH" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_EXAMPLE_SERVERS],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_LEANTLS" = "xno"])
 AM_CONDITIONAL([BUILD_EXAMPLE_CLIENTS],[test "x$ENABLED_EXAMPLES" = "xyes"])
+AM_CONDITIONAL([BUILD_EXAMPLE_ASN1],[test "x$ENABLED_EXAMPLES" = "xyes"] && [test "x$ENABLED_ASN_PRINT" = "xyes"] && [test "x$ENABLED_ASN" = "xyes"])
 AM_CONDITIONAL([BUILD_TESTS],[test "x$ENABLED_EXAMPLES" = "xyes"])
 AM_CONDITIONAL([BUILD_THREADED_EXAMPLES],[test "x$ENABLED_SINGLETHREADED" = "xno" && test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_LEANTLS" = "xno"])
 AM_CONDITIONAL([BUILD_WOLFCRYPT_TESTS],[test "x$ENABLED_CRYPT_TESTS" = "xyes"])
@@ -8805,9 +8842,9 @@ then
     for header in $openssl_headers
     do
         AC_CHECK_HEADER([$header], [], [
-                AC_MSG_ERROR([Error including $header. Possible circular dependency introduced or missing include.])
+                AC_MSG_ERROR([Header file inconsistency detected -- error including ${header}.])
             ], [
-            #include <wolfssl/options.h>
+            #include <${OPTION_FILE}>
             extern int dummy_int_to_make_compiler_happy;
         ])
     done
@@ -8847,6 +8884,7 @@ echo "   * FPU enable as flags:        $ASFLAGS_FPU_ENABLE_SIMD_DISABLE" && \
 echo "   * SIMD+FPU disable as flags:  $ASFLAGS_FPUSIMD_DISABLE" && \
 echo "   * SIMD+FPU enable as flags:   $ASFLAGS_FPUSIMD_ENABLE" && \
 echo "   * Linux kernel module PIE:    $ENABLED_LINUXKM_PIE"
+echo "   * Linux kernel module bench:  $ENABLED_LINUXKM_BENCHMARKS"
 
 echo "   * Debug enabled:              $ax_enable_debug"
 echo "   * Coverage enabled:           $ax_enable_coverage"

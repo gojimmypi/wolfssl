@@ -33,8 +33,8 @@ extern "C" {
 #endif
 #include <wolfssl/wolfcrypt/settings.h>
 
-#define LIBWOLFSSL_VERSION_STRING "5.6.0"
-#define LIBWOLFSSL_VERSION_HEX 0x05006000
+#define LIBWOLFSSL_VERSION_STRING "5.6.3"
+#define LIBWOLFSSL_VERSION_HEX 0x05006003
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
 WOLFSSL_API int ShowExtendedSystemInfo(void);

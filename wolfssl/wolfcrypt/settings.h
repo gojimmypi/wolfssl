@@ -808,6 +808,7 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef FREERTOS
     #include "FreeRTOS.h"
+    #include <task.h>
 
     #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY) && \
         !defined(WOLFSSL_STATIC_MEMORY) && !defined(WOLFSSL_TRACK_MEMORY)
@@ -1815,8 +1816,6 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef WOLFSSL_IMXRT1170_CAAM
     #define WOLFSSL_CAAM
-
-    #define WOLFSSL_NO_CAAM_BLOB
 #endif
 
 /* OS specific support so far */
@@ -1856,7 +1855,7 @@ extern void uITRON4_free(void *p) ;
         #define WOLFSSL_CAAM_HASH
     #endif
     #if defined(WOLFSSL_DEVCRYPTO_HMAC)
-        /* HMAC is throught the devcrypto calls */
+        /* HMAC is through the devcrypto calls */
         #define WOLFSSL_CAAM_HMAC
     #endif
 
@@ -2924,10 +2923,12 @@ extern void uITRON4_free(void *p) ;
 #define HAVE_FALCON
 #define HAVE_DILITHIUM
 #define HAVE_SPHINCS
-#define WOLFSSL_HAVE_KYBER
-#define WOLFSSL_KYBER512
-#define WOLFSSL_KYBER768
-#define WOLFSSL_KYBER1024
+#ifndef WOLFSSL_HAVE_KYBER
+    #define WOLFSSL_HAVE_KYBER
+    #define WOLFSSL_KYBER512
+    #define WOLFSSL_KYBER768
+    #define WOLFSSL_KYBER1024
+#endif
 #endif
 
 #ifdef HAVE_PQM4
