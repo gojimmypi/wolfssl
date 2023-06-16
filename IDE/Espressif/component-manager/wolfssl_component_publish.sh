@@ -58,7 +58,7 @@ copy_wolfssl_source() {
 
 # check if IDF_PATH is set
 if [ -z "$IDF_PATH" ]; then
-    echo "Please follows the instruction of ESP-IDF installation and set IDF_PATH."
+    echo "Please follow the instruction of ESP-IDF installation and set IDF_PATH."
     exit 1
 fi
 
