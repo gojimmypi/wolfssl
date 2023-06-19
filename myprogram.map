@@ -1,0 +1,469 @@
+
+Discarded input sections
+
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .note.GNU-stack
+                0x00000000        0x0 /tmp/cc06LCQR.o
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .note.GNU-stack
+                0x00000000        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+LOAD /tmp/cc06LCQR.o
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/libgcc.a
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/../../../../xtensa-esp32s3-linux-uclibcfdpic/lib/libgcc_s.so
+START GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/../../../../xtensa-esp32s3-linux-uclibcfdpic/lib/libgcc_s.so.1
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/libgcc.a
+END GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/libc.so
+START GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/lib/libc.so.1
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/uclibc_nonshared.a
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/libpthread_nonshared.a
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/lib/ld-uClibc.so.1
+END GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/libgcc.a
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/../../../../xtensa-esp32s3-linux-uclibcfdpic/lib/libgcc_s.so
+START GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/../../../../xtensa-esp32s3-linux-uclibcfdpic/lib/libgcc_s.so.1
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/libgcc.a
+END GROUP
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+LOAD /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+                [!provide]                        PROVIDE (__executable_start = 0x400000)
+                0x00400114                        . = (0x400000 + SIZEOF_HEADERS)
+
+.interp         0x00400114       0x14
+ *(.interp)
+ .interp        0x00400114       0x14 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.note.gnu.build-id
+ *(.note.gnu.build-id)
+
+.hash           0x00400128       0x4c
+ *(.hash)
+ .hash          0x00400128       0x4c /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.gnu.hash       0x00400174       0x34
+ *(.gnu.hash)
+ .gnu.hash      0x00400174       0x34 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.dynsym         0x004001a8       0xe0
+ *(.dynsym)
+ .dynsym        0x004001a8       0xe0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.dynstr         0x00400288       0xcb
+ *(.dynstr)
+ .dynstr        0x00400288       0xcb /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.gnu.version    0x00400354        0x0
+ *(.gnu.version)
+ .gnu.version   0x00400354        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.gnu.version_d  0x00400354        0x0
+ *(.gnu.version_d)
+ .gnu.version_d
+                0x00400354        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.gnu.version_r  0x00400354        0x0
+ *(.gnu.version_r)
+ .gnu.version_r
+                0x00400354        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.rela.dyn       0x00400354       0xc0
+ *(.rela.init)
+ *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+ *(.rela.fini)
+ *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+ *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+ *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+ *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+ *(.rela.ctors)
+ *(.rela.dtors)
+ *(.rela.got)
+ .rela.got      0x00400354       0xc0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+
+.rela.plt       0x00400414        0x0
+ *(.rela.plt)
+ .rela.plt      0x00400414        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.text           0x00400414      0x626
+ *(.init.literal)
+ .init.literal  0x00400414        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .init.literal  0x00400418        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ *(SORT_NONE(.init))
+ .literal       0x0040041c       0x5c /tmp/cc06LCQR.o
+ .fini.literal  0x00400478        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .init          0x0040047c        0x9 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+                0x0040047c                _init
+ .init          0x00400485        0xc /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .init          0x00400491        0xc /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .init          0x0040049d        0x9 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+ *(.literal .text .stub .literal.* .text.* .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
+ *fill*         0x004004a6        0x2 00000000
+ .text          0x004004a8       0x6c /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+                0x004004a8                _start
+ .text          0x00400514      0x16c /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .text          0x00400680      0x1f3 /tmp/cc06LCQR.o
+                0x00400680                peek
+                0x00400810                main
+ *fill*         0x00400873        0x1 00000000
+ .text          0x00400874       0x2d /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ *fill*         0x004008a1        0x3 00000000
+ .text          0x004008a4      0x177 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+                0x004008a4                __self_reloc
+ *fill*         0x00400a1b        0x1 00000000
+ .literal       0x00400a1c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .text          0x00400a1c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .literal       0x00400a1c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ *fill*         0x00400a1c        0x0 00000000
+ .literal       0x00400a1c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .text          0x00400a1c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+ *(.gnu.warning)
+ *(.fini.literal)
+ *fill*         0x00400a1c        0x0 00000000
+ *(SORT_NONE(.fini))
+ .fini          0x00400a1c        0x9 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+                0x00400a1c                _fini
+ .fini          0x00400a25        0xc /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .fini          0x00400a31        0x9 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+                [!provide]                        PROVIDE (__etext = .)
+                [!provide]                        PROVIDE (_etext = .)
+                [!provide]                        PROVIDE (etext = .)
+
+.plt            0x00400a3c        0x0
+ .plt           0x00400a3c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+
+.rodata         0x00400a3c       0xe1
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x00400a3c       0xe1 /tmp/cc06LCQR.o
+                0x00400a3c                my_const
+
+.rodata1
+ *(.rodata1)
+
+.xt_except_table
+ *(.xt_except_table .xt_except_table.* .gnu.linkonce.e.*)
+
+.rofixup        0x00400b20       0xa4
+                0x00400b20                        __ROFIXUP_LIST__ = .
+ *(.rofixup)
+ .rofixup       0x00400b20       0xa4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+                0x00400bc4                        __ROFIXUP_END__ = .
+
+.eh_frame_hdr
+ *(.eh_frame_hdr)
+
+.eh_frame       0x00400bc4        0x4
+ *(.eh_frame)
+ .eh_frame      0x00400bc4        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .eh_frame      0x00400bc4        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+                0x00400bc8                        . = (ALIGN (CONSTANT (MAXPAGESIZE)) - ((CONSTANT (MAXPAGESIZE) - .) & (CONSTANT (MAXPAGESIZE) - 0x1)))
+                0x00401f50                        . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE))
+
+.eh_frame
+ *(.eh_frame)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.tdata
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x00401f50        0x0
+                [!provide]                        PROVIDE (__preinit_array_start = .)
+ *(.preinit_array)
+                [!provide]                        PROVIDE (__preinit_array_end = .)
+
+.init_array     0x00401f50        0x0
+                [!provide]                        PROVIDE (__init_array_start = .)
+ *(SORT_BY_NAME(.init_array.*))
+ *(.init_array)
+                [!provide]                        PROVIDE (__init_array_end = .)
+
+.fini_array     0x00401f50        0x0
+                [!provide]                        PROVIDE (__fini_array_start = .)
+ *(SORT_BY_NAME(.fini_array.*))
+ *(.fini_array)
+                [!provide]                        PROVIDE (__fini_array_end = .)
+
+.ctors          0x00401f50        0x8
+ *crtbegin.o(.ctors)
+ .ctors         0x00401f50        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ *crtbegin?.o(.ctors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+ *(SORT_BY_NAME(.ctors.*))
+ *(.ctors)
+ .ctors         0x00401f54        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+
+.dtors          0x00401f58        0x8
+ *crtbegin.o(.dtors)
+ .dtors         0x00401f58        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ *crtbegin?.o(.dtors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+ *(SORT_BY_NAME(.dtors.*))
+ *(.dtors)
+ .dtors         0x00401f5c        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+                0x00401f5c                __DTOR_END__
+
+.jcr
+ *(.jcr)
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*)
+
+.xt_except_table
+ *(.xt_except_table .xt_except_table.* .gnu.linkonce.e.*)
+
+.dynamic        0x00401f60       0xa0
+ *(.dynamic)
+ .dynamic       0x00401f60       0xa0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+                0x00401f60                _DYNAMIC
+                0x00402000                        . = DATA_SEGMENT_RELRO_END (., 0x0)
+
+.got            0x00402000      0x10c
+ *(.got.plt)
+ *(.got)
+ .got           0x00402000      0x10c /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+                0x00402000                _GLOBAL_OFFSET_TABLE_
+
+.data           0x0040210c        0x4
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0040210c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ .data          0x0040210c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .data          0x0040210c        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .data          0x0040210c        0x4 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+                0x0040210c                __dso_handle
+ .data          0x00402110        0x0 /tmp/cc06LCQR.o
+ .data          0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .data          0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+
+.tm_clone_table
+                0x00402110        0x0
+ .tm_clone_table
+                0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .tm_clone_table
+                0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+
+.data1
+ *(.data1)
+
+.xt_except_desc
+ *(.xt_except_desc .xt_except_desc.* .gnu.linkonce.h.*)
+ *(.xt_except_desc_end)
+
+.lit4           0x00402110        0x0
+                [!provide]                        PROVIDE (_lit4_start = .)
+ *(.lit4 .lit4.* .gnu.linkonce.lit4.*)
+                [!provide]                        PROVIDE (_lit4_end = .)
+                0x00402110                        _edata = .
+                [!provide]                        PROVIDE (edata = .)
+                0x00402110                        __bss_start = .
+
+.bss            0x00402110       0x20
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ .bss           0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .bss           0x00402110        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .bss           0x00402110       0x20 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .bss           0x00402130        0x0 /tmp/cc06LCQR.o
+ .bss           0x00402130        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .bss           0x00402130        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+ *(COMMON)
+                0x00402130                        . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x00402130                        . = ALIGN (0x4)
+                0x00402130                        . = ALIGN (0x4)
+                0x00402130                        _end = .
+                [!provide]                        PROVIDE (end = .)
+                0x00402130                        . = DATA_SEGMENT_END (.)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x00000000       0x5e
+ *(.comment)
+ .comment       0x00000000       0x5e /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+                                 0x5f (size before relaxing)
+ .comment       0x0000005e       0x5f /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .comment       0x0000005e       0x5f /tmp/cc06LCQR.o
+ .comment       0x0000005e       0x5f /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+
+.xtensa.info    0x00000000       0x38
+ .xtensa.info   0x00000000       0x38 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ .xtensa.info   0x00000038        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .xtensa.info   0x00000038        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .xtensa.info   0x00000038        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .xtensa.info   0x00000038        0x0 /tmp/cc06LCQR.o
+ .xtensa.info   0x00000038        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .xtensa.info   0x00000038        0x0 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+
+.gnu.build.attributes
+ *(.gnu.build.attributes .gnu.build.attributes.*)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000       0x20
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x20 /tmp/cc06LCQR.o
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info     0x00000000      0x206
+ *(.debug_info .gnu.linkonce.wi.*)
+ .debug_info    0x00000000      0x206 /tmp/cc06LCQR.o
+
+.debug_abbrev   0x00000000      0x12d
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000      0x12d /tmp/cc06LCQR.o
+
+.debug_line     0x00000000       0xf5
+ *(.debug_line .debug_line.* .debug_line_end)
+ .debug_line    0x00000000       0xf5 /tmp/cc06LCQR.o
+
+.debug_frame    0x00000000       0x68
+ *(.debug_frame)
+ .debug_frame   0x00000000       0x68 /tmp/cc06LCQR.o
+
+.debug_str      0x00000000       0xea
+ *(.debug_str)
+ .debug_str     0x00000000       0xea /tmp/cc06LCQR.o
+                                0x12f (size before relaxing)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.debug_addr
+ *(.debug_addr)
+
+.debug_line_str
+                0x00000000       0xb5
+ *(.debug_line_str)
+ .debug_line_str
+                0x00000000       0xb5 /tmp/cc06LCQR.o
+                                 0xde (size before relaxing)
+
+.debug_loclists
+ *(.debug_loclists)
+
+.debug_macro
+ *(.debug_macro)
+
+.debug_names
+ *(.debug_names)
+
+.debug_rnglists
+ *(.debug_rnglists)
+
+.debug_str_offsets
+ *(.debug_str_offsets)
+
+.debug_sup
+ *(.debug_sup)
+
+.gnu.attributes
+ *(.gnu.attributes)
+
+.xt.lit         0x00000000       0x58
+ *(.xt.lit .xt.lit.* .gnu.linkonce.p.*)
+ .xt.lit        0x00000000        0x8 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .xt.lit        0x00000008       0x38 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+ .xt.lit        0x00000040        0x8 /tmp/cc06LCQR.o
+ .xt.lit        0x00000048       0x10 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+
+.xt.insn
+ *(.xt.insn .gnu.linkonce.x.*)
+
+.xt.prop        0x00000000      0x510
+ *(.xt.prop .xt.prop.* .gnu.linkonce.prop.*)
+ .xt.prop       0x00000000      0x1bc /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtreloc.o
+ .xt.prop       0x000001bc       0x30 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crt1.o
+ .xt.prop       0x000001ec       0x30 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crti.o
+ .xt.prop       0x0000021c      0x174 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtbegin.o
+                                0x1a4 (size before relaxing)
+ .xt.prop       0x00000390       0xcc /tmp/cc06LCQR.o
+                                0x120 (size before relaxing)
+ .xt.prop       0x0000045c       0x84 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/lib/gcc/xtensa-esp32s3-linux-uclibcfdpic/14.0.0/crtend.o
+ .xt.prop       0x000004e0       0x30 /mnt/s3linux/crosstool-NG/builds/xtensa-esp32s3-linux-uclibcfdpic/xtensa-esp32s3-linux-uclibcfdpic/sysroot/usr/lib/crtn.o
+
+/DISCARD/
+ *(.note.GNU-stack)
+ *(.gnu_debuglink)
+ *(.gnu.lto_*)
+OUTPUT(HelloWorld elf32-xtensa-le-fdpic)

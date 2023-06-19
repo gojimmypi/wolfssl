@@ -55,6 +55,10 @@
 #endif
 #endif
 
+/* The address of this array address is interesting when found on a
+** read-only embedded flash filesystem such as Xtensa linux on flash memory */
+const byte const_byte_array[] = "A+Gd\0\0\0";
+
 #ifdef WOLFSSL_TRACK_MEMORY_VERBOSE
 #ifdef WOLFSSL_TEST_MAX_RELATIVE_HEAP_ALLOCS
     static ssize_t max_relative_heap_allocs = WOLFSSL_TEST_MAX_RELATIVE_HEAP_ALLOCS;
@@ -13547,9 +13551,71 @@ static int simple_mem_test(int sz)
 }
 #endif
 
+/* If successful, returns the first letter of the array "in" (typically "A").
+**
+** This is an interesting test on devices when const values are in
+** flash memory such as embedded Linux. (note difference between NAND vs NOR)
+**
+** This test is expected to pass on all ordinary systems.
+**
+** Things are more interesting on a read-only embedded file system. If an error
+** occurs during this test, consider adding CFLAGS="-mfdpic -mforce-l32 .."
+** to wolfSSL ./configure or other compiler.
+**
+** This was observed to fail on the Xtensa ESP32S3 Linux environment without
+** the above-mentioned compiler options.
+*/
+static int const_byte_ptr_test(const byte* in, word32 *outJ)
+{
+    /* volatile vars to ensure we don't optimize away
+    ** the interesting memory pointer test. */
+    volatile word32 ret;
+    volatile byte curChar = ' ';
+    volatile word32 j = -1;
+
+    WOLFSSL_MSG("Testing const byte ptr reference...");
+
+    /*
+    ** The issue here is that a const pointer on an app running from a
+    ** R/O (e.g. flash) filesystem maintains the same address in memory
+    ** and is *not* part of the executable app. The [const byte*] in the
+    ** running app points to the only copy of the const on the filesystem.
+    **
+    ** This code is more complex that may appear to be needed, however it
+    ** is modeled after the Base64_Decode() that failed on a R/O system.
+    **
+    ** Some code is here simply to trick the compiler to not optimize
+    ** away things that are more interesting on the embedded environment.
+    **
+    ** Edit with caution.
+    */
+    ret = (word32)*in;    /* an interesting assignment. */
+    j = *outJ;            /* j should be zero. */
+
+    if (j == 0) {
+        curChar = in[j];  /* the first char of const_byte_array is 'A' */
+    }
+    else {
+        WOLFSSL_MSG("const byte ptr index problem.");
+        ret = -1;
+    }
+
+    /* this is only here to ensure compiler does not optimize away curChar
+    ** since it appears to be unused, but is actually the interesting test. */
+    if (curChar == 0) {
+        WOLFSSL_MSG("Expected first char of *in to be non-zero.");
+        ret = -1;
+    }
+    WOLFSSL_MSG("const byte ptr test success");
+    return ret;
+}
+
+
 WOLFSSL_TEST_SUBROUTINE int memory_test(void)
 {
     int ret = 0;
+    word32 j = 0; /* used in embedded const pointer test */
+
 #if defined(COMPLEX_MEM_TEST) || defined(WOLFSSL_STATIC_MEMORY)
     int i;
 #endif
@@ -13694,6 +13760,37 @@ WOLFSSL_TEST_SUBROUTINE int memory_test(void)
         }
     }
 #endif
+
+    /* Test byte array pointers. Only interesting on embedded flash-based apps */
+    if (ret == 0) {
+        /* The real test is whether the assignment can actually be
+        ** made in the function. We'll never expect a zero result.
+        **
+        ** The compare is only in place to ensure the function test does not get
+        ** optimized away, or some other problem.
+        **
+        ** Successful mapping, say on ESP-IDF Xtensa, will look like this:
+        **
+            0x400dfada  l32r a10, 0x400d1344 <_stext+4900>
+            0x400dfadd  call8 0x40113df8 <const_byte_ptr_test>
+            0x400dfae0  movi.n a3, 65
+            0x400dfae2  bne a10, a3, 0x400dfaee <memory_test+98>
+            0x400dfae5  j 0x400dfaf0 <memory_test+100>
+            0x400dfae8  l32r a2, 0x400d1340 <_stext+4896>
+            0x400dfaeb  j 0x400dfaf0 <memory_test+100>
+            0x400dfaee  movi.n a2, 1
+            0x400dfaf0  retw.n
+            0x400dfaf2  lsi f0, a0, 216
+            0x400dfaf5  l32r a12, 0x400a7ef8
+            0x400dfaf8  bnall a1, a9, 0x400dfabc <memory_test+48>
+            0x400dfafb  lsi f2, a0, 160
+            0x400dfafe  addi a0, a0, 32
+            0x400dfb01  lsi f0, a9, 0x3c4
+        */
+        if (const_byte_ptr_test(const_byte_array, &j) != const_byte_array[0]) {
+            ret = 1;
+        }
+    }
 
     return ret;
 }

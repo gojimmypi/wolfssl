@@ -1,5 +1,16 @@
 # wolfSSL Crypt Test Example
 
+## Setup
+
+These examples are presented using `COM9` in Windows. If you'd like to follow exactly along, but your
+board is on a different port, try the [change port](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/change-port) command, 
+for this example also using `COM23` as `COM9`:
+
+```
+change port com9=com23
+```
+
+
 The Example contains of wolfSSL test program.
 
 1. `idf.py menuconfig` to configure the program.  
