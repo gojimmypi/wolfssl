@@ -46,8 +46,7 @@ pwd
   RANLIB=xtensa-esp32s3-linux-uclibcfdpic-ranlib \
   --prefix=/mnt/s3linux/build-xtensa-2023.02-fdpic-esp32s3/target/opt \
   CFLAGS="-mfdpic -mforce-l32  -DNO_WRITEV -DWOLFSSL_USER_SETTINGS -DDEBUG_WOLFSSL -DTFM_NO_ASM -DALT_ECC_SIZE" \
-  --disable-filesystem --disable-all \
-  --disable-shared --enable-psk --enable-sha --disable-fpecc --disable-ecc --disable-rsa --disable-sp-asm --disable-sha384 --disable-sha512 --disable-sha224 --disable-md5
+  --disable-filesystem --disable-shared --enable-psk
 
 
 echo "Building wolfSSL ..."
