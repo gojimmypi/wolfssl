@@ -902,6 +902,42 @@ static int rng_crypto_cb(int thisDevId, wc_CryptoInfo* info, void* ctx)
 #ifdef HAVE_STACK_SIZE
 THREAD_RETURN WOLFSSL_THREAD wolfcrypt_test(void* args)
 #else
+
+const byte good[] = "A+Gd\0\0\0";
+
+int peek(const byte* in)
+{
+    printf("Start peek! \n");
+
+    printf("Step 1 \n");
+    printf("  good = 0x%08x \n", (unsigned int)good); /* ESP-IDF = 0x3f40f9c8 */
+
+    printf("Step 2 \n");
+    printf("   &in = 0x%08x \n", (unsigned int)&in);  /* ESP-IDF = 0x3ffc29cc */
+
+    printf("Step 3 \n");
+    printf("    in = 0x%08x \n", (unsigned int)in);   /* ESP-IDF = 0x3f40f9c8 */
+
+    word32 j = *in;
+
+    printf("Step 4 \n");
+    printf("     j = 0x%08x \n", (unsigned int)j);    /* ESP-IDF = 0x00000041 */
+
+    printf("Step 5 \n");
+    printf("    &j = 0x%08x \n", (unsigned int)&j);   /* ESP-IDF = 0x3ffc29dc */
+    return 0;
+}
+
+void main_mem()
+{
+    printf("Here we go! v1.0 ESP-IDF \n");
+
+    peek(good);
+
+    printf("done! \n");
+
+}
+
 int wolfcrypt_test(void* args)
 #endif
 {
@@ -924,7 +960,7 @@ int wolfcrypt_test(void* args)
     printf("------------------------------------------------------------------------------\n");
     printf(" wolfSSL version %s\n", LIBWOLFSSL_VERSION_STRING);
     printf("------------------------------------------------------------------------------\n");
-
+    main_mem();
     if (args) {
 #ifdef HAVE_WOLFCRYPT_TEST_OPTIONS
         int ch;
@@ -1056,6 +1092,20 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("MEMORY   test passed!\n");
 
+#ifndef NO_CODING
+    if ( (ret = base64_test()) != 0)
+        TEST_FAIL("base64   test failed!\n", ret);
+    else
+        TEST_PASS("base64   test passed!\n");
+#ifdef WOLFSSL_BASE16
+    if ( (ret = base16_test()) != 0)
+        TEST_FAIL("base16   test failed!\n", ret);
+    else
+        TEST_PASS("base16   test passed!\n");
+#endif
+#endif /* !NO_CODING */
+
+
 
 #if defined(HW_MATH_ENABLED) && !defined(NO_HW_MATH_TEST)
     if ((ret = hw_math_test()) != 0)
@@ -1080,20 +1130,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("ECC      test passed!\n");
     PRIVATE_KEY_LOCK();
-
-
-#ifndef NO_CODING
-    if ( (ret = base64_test()) != 0)
-        TEST_FAIL("base64   test failed!\n", ret);
-    else
-        TEST_PASS("base64   test passed!\n");
-#ifdef WOLFSSL_BASE16
-    if ( (ret = base16_test()) != 0)
-        TEST_FAIL("base16   test failed!\n", ret);
-    else
-        TEST_PASS("base16   test passed!\n");
-#endif
-#endif /* !NO_CODING */
 
 #ifndef NO_ASN
     if ( (ret = asn_test()) != 0)
