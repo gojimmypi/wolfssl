@@ -39,15 +39,23 @@ pwd
 
 # -mforce-l32
 ./configure \
+  --disable-shared \
   --host=xtensa-esp32s3-linux-uclibcfdpic \
   CC=xtensa-esp32s3-linux-uclibcfdpic-gcc \
   AR=xtensa-esp32s3-linux-uclibcfdpic-ar \
   STRIP=xtensa-esp32s3-linux-uclibcfdpic-strip \
   RANLIB=xtensa-esp32s3-linux-uclibcfdpic-ranlib \
-  --prefix=/mnt/s3linux/build-xtensa-2023.02-fdpic-esp32s3/target/opt \
-  CFLAGS="-mfdpic -mforce-l32  -DNO_WRITEV -DWOLFSSL_USER_SETTINGS -DDEBUG_WOLFSSL -DTFM_NO_ASM -DALT_ECC_SIZE" \
-  --disable-filesystem --disable-shared --enable-psk
+  --prefix=/mnt/s3linux/wolfssl-prefix \
+  --libdir=/mnt/s3linux/wolfssl-prefix/lib \
+  --includedir=/mnt/s3linux/wolfssl-prefix/include \
+  --oldincludedir=/mnt/s3linux/wolfssl-prefix/include \
+  CPPFLAGS="-I./" \
+  CFLAGS=" -mfdpic -mforce-l32  \
+           -DTIME_T_NOT_64BIT -DNO_WRITEV -DHAVE_PK_CALLBACKS  \
+           -DWOLFSSL_USER_IO -DWOLFSSL_USER_SETTINGS -DDEBUG_WOLFSSL  \
+           -DTFM_NO_ASM -DALT_ECC_SIZE"
 
+#  --prefix=/mnt/s3linux/build-xtensa-2023.02-fdpic-esp32s3/target/usr/opt \
 
 echo "Building wolfSSL ..."
 make
@@ -119,5 +127,10 @@ fi
 pwd
 parttool.py write_partition --partition-name rootfs --input build-xtensa-2023.02-fdpic-esp32s3/images/rootfs.cramfs
 echo $(date) | tee ./build-xtensa-2023.02-fdpic-esp32s3/target/opt/timestamp.txt
+echo ""
+echo "Interesting files:"
+echo ""
 ls ./build-xtensa-2023.02-fdpic-esp32s3/images/rootfs.cramfs -al
+echo ""
+ls /mnt/s3linux/build-xtensa-2023.02-fdpic-esp32s3/target/opt/ -al
 
