@@ -182,7 +182,9 @@
     #include <sys/ioctl.h>
     #include <sys/time.h>
     #include <sys/socket.h>
-    #include <pthread.h>
+    #ifdef HAVE_PTHREAD
+        #include <pthread.h>
+    #endif
     #include <fcntl.h>
     #ifdef TEST_IPV6
         #include <netdb.h>
@@ -2769,6 +2771,7 @@ static WC_INLINE void OCSPRespFreeCb(void* ioCtx, unsigned char* response)
         size_t sz = 0;
 
         if (load_file(fname, &buff, &sz) != 0) {
+            printf("load_buffer fname = %s\n", fname);
             err_sys("can't open file for buffer load "
                     "Please run from wolfSSL home directory if not");
         }
@@ -2809,6 +2812,7 @@ static WC_INLINE void OCSPRespFreeCb(void* ioCtx, unsigned char* response)
         size_t sz = 0;
 
         if (load_file(fname, &buff, &sz) != 0) {
+            printf("load_ssl_buffer fname = %s\n", fname);
             err_sys("can't open file for buffer load "
                     "Please run from wolfSSL home directory if not");
         }
