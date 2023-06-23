@@ -58,9 +58,9 @@
 /* #define WOLFSSL_SHA384 */
 #define WOLFSSL_SHA512
 #define HAVE_ECC
-#define HAVE_CURVE25519
-#define CURVE25519_SMALL
-#define HAVE_ED25519
+//#define HAVE_CURVE25519
+//#define CURVE25519_SMALL
+//#define HAVE_ED25519
 
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
@@ -108,10 +108,14 @@
 /* #define XTIME time */
 
 /* when you want not to use HW acceleration */
-/* #define NO_ESP32WROOM32_CRYPT */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH*/
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+#define NO_ESP32WROOM32_CRYPTS
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
 
 /* adjust wait-timeout count if you see timeout in rsa hw acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+
+#define HAVE_WC_INTROSPECTION
