@@ -15751,6 +15751,7 @@ WOLFSSL_TEST_SUBROUTINE int rsa_no_pad_test(void)
 #elif !defined(NO_FILESYSTEM)
     file = XFOPEN(clientKey, "rb");
     if (!file) {
+        printf("rsa_no_pad_test clientKey = %s\n", clientKey);
         err_sys("can't open clientKey, Please run from wolfSSL home dir",
                 WC_TEST_RET_ENC_ERRNO);
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, exit_rsa_nopadding);
@@ -15977,6 +15978,7 @@ static int rsa_even_mod_test(WC_RNG* rng, RsaKey* key)
 #elif !defined(NO_FILESYSTEM)
     file = XFOPEN(clientKey, "rb");
     if (!file) {
+        printf("rsa_even_mod_test clientKey = %s\n", clientKey);
         err_sys("can't open ./certs/client-key.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, exit_rsa_even_mod);
@@ -17188,6 +17190,7 @@ WOLFSSL_TEST_SUBROUTINE int rsa_test(void)
 #elif !defined(NO_FILESYSTEM)
     file = XFOPEN(clientKey, "rb");
     if (!file) {
+        printf("rsa_test clientKey = %s\n", clientKey);
         err_sys("can't open ./certs/client-key.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, exit_rsa);
@@ -17518,6 +17521,7 @@ WOLFSSL_TEST_SUBROUTINE int rsa_test(void)
 #else
     file = XFOPEN(clientKeyPub, "rb");
     if (!file) {
+        printf("rsa_test clientKeyPub = %s\n", clientKeyPub);
         err_sys("can't open ./certs/client-keyPub.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, exit_rsa);
@@ -21392,6 +21396,7 @@ WOLFSSL_TEST_SUBROUTINE int openssl_pkey0_test(void)
     if (!keyFile) {
         XFREE(prvTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
         XFREE(pubTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        printf("openssl_pkey0_test cliKey = %s\n", cliKey);
         err_sys("can't open ./certs/client-key.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         return WC_TEST_RET_ENC_ERRNO;
@@ -21407,6 +21412,7 @@ WOLFSSL_TEST_SUBROUTINE int openssl_pkey0_test(void)
     if (!keypubFile) {
         XFREE(prvTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
         XFREE(pubTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        printf("openssl_pkey0_test keypubFile = %s\n", keypubFile);
         err_sys("can't open ./certs/client-cert.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         return WC_TEST_RET_ENC_ERRNO;
@@ -21635,6 +21641,7 @@ WOLFSSL_TEST_SUBROUTINE int openssl_pkey1_test(void)
         f = XFOPEN(clientKey, "rb");
 
         if (!f) {
+            printf("openssl_pkey1_test clientKey = %s\n", clientKey);
             err_sys("can't open ./certs/client-key.der, "
                     "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
             ret = WC_TEST_RET_ENC_ERRNO;
@@ -21817,6 +21824,7 @@ WOLFSSL_TEST_SUBROUTINE int openssl_evpSig_test(void)
     if (!keyFile) {
         XFREE(pubTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
         XFREE(prvTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        printf("openssl_evpSig_test cliKey = %s\n", cliKey);
         err_sys("can't open ./certs/client-key.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         return WC_TEST_RET_ENC_ERRNO;
@@ -21832,6 +21840,7 @@ WOLFSSL_TEST_SUBROUTINE int openssl_evpSig_test(void)
     if (!keypubFile) {
         XFREE(pubTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
         XFREE(prvTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        printf("openssl_evpSig_test cliKeypub = %s\n", cliKeypub);
         err_sys("can't open ./certs/client-cert.der, "
                 "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
         return WC_TEST_RET_ENC_ERRNO;
@@ -44299,6 +44308,7 @@ static int rsa_onlycb_test(myCryptoDevCtx *ctx)
     file = XFOPEN(clientKey, "rb");
     if (!file) {
         ret = WC_TEST_RET_ENC_ERRNO;
+        printf("rsa_onlycb_test clientKey = %s\n", clientKey);
         err_sys("can't open ./certs/client-key.der, "
                 "Please run from wolfSSL home dir", ret);
         ERROR_OUT(ret, exit_onlycb);
