@@ -4536,6 +4536,7 @@ void bench_sha(int useDeviceID)
     wc_Sha hash[BENCH_MAX_PENDING];
     double start;
     int    ret = 0, i, count = 0, times, pending = 0;
+    WOLFSSL_MSG("Enter bench_sha");
     WC_DECLARE_ARRAY(digest, byte, BENCH_MAX_PENDING,
                      WC_SHA_DIGEST_SIZE, HEAP_HINT);
     WC_INIT_ARRAY(digest, byte, BENCH_MAX_PENDING,
