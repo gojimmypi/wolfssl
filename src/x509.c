@@ -541,6 +541,10 @@ int wolfSSL_X509_get_ext_by_OBJ(const WOLFSSL_X509 *x,
     return -1;
 }
 
+#endif /* OPENSSL_ALL || OPENSSL_EXTRA */
+
+#if defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA) || \
+    defined(WOLFSSL_WPAS_SMALL)
 /* Set a general name from the DNS entry data.
  *
  * @param [in]      dns  DNS entry.
@@ -650,7 +654,9 @@ static int wolfssl_dns_entry_othername_to_gn(DNS_entry* dns,
 err:
     return ret;
 }
+#endif /* OPENSSL_ALL || WOLFSSL_WPAS_SMALL */
 
+#if defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA)
 static int wolfssl_x509_alt_names_to_gn(WOLFSSL_X509* x509,
     WOLFSSL_X509_EXTENSION* ext)
 {
@@ -2118,7 +2124,7 @@ out:
     return found ? extCount : WOLFSSL_FATAL_ERROR;
 }
 
-#endif /* OPENSSL_ALL */
+#endif /* OPENSSL_ALL || OPENSSL_EXTRA */
 
 #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_WPAS_SMALL)
 /* Looks for the extension matching the passed in nid
@@ -13490,7 +13496,7 @@ int wolfSSL_X509_set_notBefore(WOLFSSL_X509* x509, const WOLFSSL_ASN1_TIME* t)
 int wolfSSL_X509_set_serialNumber(WOLFSSL_X509* x509, WOLFSSL_ASN1_INTEGER* s)
 {
     WOLFSSL_ENTER("wolfSSL_X509_set_serialNumber");
-    if (!x509 || !s || s->length >= EXTERNAL_SERIAL_SIZE)
+    if (x509 == NULL || s == NULL || s->length >= EXTERNAL_SERIAL_SIZE)
         return WOLFSSL_FAILURE;
 
     /* WOLFSSL_ASN1_INTEGER has type | size | data
@@ -13970,6 +13976,9 @@ int wolfSSL_X509_REQ_add1_attr_by_NID(WOLFSSL_X509 *req,
             }
         }
         ret = wolfSSL_sk_push(req->reqAttributes, attr);
+        if (ret != WOLFSSL_SUCCESS) {
+            wolfSSL_X509_ATTRIBUTE_free(attr);
+        }
     }
 
     return ret;
