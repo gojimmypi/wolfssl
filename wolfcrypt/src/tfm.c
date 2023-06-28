@@ -4690,10 +4690,10 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
-#ifndef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
-    return fp_mulmod(a, b, c, d);
-#else
     int ret = MP_OKAY;
+#ifndef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+    ret = fp_mulmod(a, b, c, d);
+#else
 
     int As; /* How many a bits? */
     int Bs; /* How many b bits? */
@@ -4717,7 +4717,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
                 ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. "
                               "Exit code = %d", ret);
             } /* esp_mp_mulmod exit check */
-            return ret;
+
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW.
             **
@@ -4735,8 +4735,11 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
               }
     /* depending on ESP_RSA_MULM_BITS setting, we may
      ** fall through to SW: */
+    if ((esp_hw_validation_active()) || (ret == MP_HW_FALLBACK)) {
+      ret = fp_mulmod(a, b, c, d);
+    }
 #endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
-    return fp_mulmod(a, b, c, d); /* TODO clean this up */
+    return ret;
 }
 
 /* d = a - b (mod c) */
