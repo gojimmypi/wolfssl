@@ -420,6 +420,7 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Wunused-function\"")
 PRAGMA_CLANG("clang diagnostic ignored \"-Wunused-function\"")
 
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  error_test(void);
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  hw_math_test(void);
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  base64_test(void);
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  base16_test(void);
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  asn_test(void);
@@ -3127,10 +3128,10 @@ static int hw_math_test_mp_mulmod_template(void)
 ******************************************************************************
 ******************************************************************************
 */
-WOLFSSL_TEST_SUBROUTINE int hw_math_test(void)
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 {
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* we'll inspect some interim functions */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* we'll inspect some interim functions */
 
     debug_message("Begin hw_math_test()");
 
