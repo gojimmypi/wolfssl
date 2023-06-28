@@ -1,0 +1,9 @@
+#!/bin/bash
+rm -rf /mnt/c/test/wolfssl-install/bin
+rm -rf /mnt/c/test/wolfssl-install/include
+rm -rf /mnt/c/test/wolfssl-install/lib
+rm -rf /mnt/c/test/wolfssl-install/share
+
+# ./configure --enable-wolfclu  --prefix=/mnt/c/test/wolfssl-install && make clean && make && make install
+
+make && make install && cd /mnt/c/test/wolfCLU-fix && make clean && make && cd /mnt/c/test/wolfssl-master
