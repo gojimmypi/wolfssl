@@ -304,15 +304,16 @@
 #define FP_NEG      1
 
 /* return codes */
-#define FP_OKAY      0
-#define FP_VAL      (-1)
-#define FP_MEM      (-2)
-#define FP_NOT_INF  (-3)
-#define FP_WOULDBLOCK (-4)
-#define FP_HW_BUSY    (-7) /* assigned -7 to match SP_HW_BUSY */
+#define FP_OKAY        ( 0)
+#define FP_VAL         (-1)
+#define FP_MEM         (-2)
+#define FP_NOT_INF     (-3)
+#define FP_WOULDBLOCK  (-4)
+#define FP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY */
+#define FP_HW_FALLBACK (-8) /* signal to caller to fall back to SW */
 
 /* typically used only during debugging, validation active
- * will prevent recusive calls to HW for SW validation check.*/
+ * will prevent recursive calls to HW for SW validation check.*/
 #define FP_HW_VALIDATION_ACTIVE (-8)
 
 /* equalities */
@@ -787,6 +788,7 @@ int  fp_sqr_comba64(fp_int *a, fp_int *b);
 #define MP_OKAY FP_OKAY /* ok result    */
 #define MP_HW_BUSY FP_HW_BUSY /* hardware is busy, need to fall back to SW */
 #define MP_HW_VALIDATION_ACTIVE FP_HW_VALIDATION_ACTIVE
+#define MP_HW_FALLBACK FP_HW_FALLBACK /* detected data that needs SW */
 #define MP_NO   FP_NO   /* yes/no result */
 #define MP_YES  FP_YES  /* yes/no result */
 #define MP_ZPOS FP_ZPOS
