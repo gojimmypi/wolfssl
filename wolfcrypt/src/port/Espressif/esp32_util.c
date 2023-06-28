@@ -388,6 +388,14 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     }
     else {
         words_to_show = X->used;
+        /* if too small, we'll show just 1 word */
+        if (words_to_show < 1) {
+            ESP_LOGI(MP_TAG, "Bad word count. Adjusting from %d to %d",
+                             words_to_show,
+                             1);
+            words_to_show = 1;
+        }
+        /* if too big, we'll show MAX_WORDS_ESP_SHOW_MP words */
         if (words_to_show > MAX_WORDS_ESP_SHOW_MP) {
             ESP_LOGI(MP_TAG, "Limiting word count from %d to %d",
                              words_to_show,
