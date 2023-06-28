@@ -1803,6 +1803,9 @@ int TLSX_ALPN_GetRequest(TLSX* extensions, void** data, word16 *dataSz)
     if (extensions == NULL || data == NULL || dataSz == NULL)
         return BAD_FUNC_ARG;
 
+    *data = NULL;
+    *dataSz = 0;
+
     extension = TLSX_Find(extensions, TLSX_APPLICATION_LAYER_PROTOCOL);
     if (extension == NULL) {
         WOLFSSL_MSG("TLS extension not found");
@@ -1813,8 +1816,6 @@ int TLSX_ALPN_GetRequest(TLSX* extensions, void** data, word16 *dataSz)
     alpn = (ALPN *)extension->data;
     if (alpn == NULL) {
         WOLFSSL_MSG("ALPN extension not found");
-        *data = NULL;
-        *dataSz = 0;
         WOLFSSL_ERROR_VERBOSE(WOLFSSL_FATAL_ERROR);
         return WOLFSSL_FATAL_ERROR;
     }
@@ -13203,15 +13204,16 @@ int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length, byte msgType,
             #endif
 
 #ifdef WOLFSSL_TLS13
+                /* RFC 8446 4.2.4 states trusted_ca_keys is not used
+                   in TLS 1.3. */
                 if (IsAtLeastTLSv1_3(ssl->version)) {
-                    if (msgType != client_hello &&
-                        msgType != encrypted_extensions)
-                        return EXT_NOT_ALLOWED;
+                    return EXT_NOT_ALLOWED;
                 }
                 else
 #endif
                 {
-                    if (msgType != client_hello)
+                    if (msgType != client_hello &&
+                        msgType != server_hello)
                         return EXT_NOT_ALLOWED;
                 }
                 ret = TCA_PARSE(ssl, input + offset, size, isRequest);

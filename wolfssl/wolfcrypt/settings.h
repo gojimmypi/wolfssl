@@ -275,6 +275,23 @@
 
 #include <wolfssl/wolfcrypt/visibility.h>
 
+/* AFTER user_settings.h is loaded,
+** determine if POSIX multi-threaded: HAVE_PTHREAD  */
+#if defined(SINGLE_THREADED) || defined(__MINGW32__)
+    /* Never HAVE_PTHREAD in single thread, or non-POSIX mode.
+    ** Reminder: MING32 is win32 threads, not POSIX threads */
+    #undef HAVE_PTHREAD
+#else
+    #ifdef _POSIX_THREADS
+        /* HAVE_PTHREAD == POSIX threads capable and enabled. */
+        #undef HAVE_PTHREAD
+        #define HAVE_PTHREAD 1
+    #else
+        /* Not manually disabled, but POSIX threads not found. */
+        #undef HAVE_PTHREAD
+    #endif
+#endif
+
 #define WOLFSSL_MAKE_FIPS_VERSION(major, minor) (((major) * 256) + (minor))
 #if !defined(HAVE_FIPS)
     #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(0,0)
@@ -918,7 +935,7 @@ extern void uITRON4_free(void *p) ;
         #define SINGLE_THREADED
     #endif
 
-    #if (RTPLATFORM)
+    #if (defined(RTPLATFORM) && (RTPLATFORM != 0))
         #if (!RTP_LITTLE_ENDIAN)
             #define BIG_ENDIAN_ORDER
         #endif
@@ -937,9 +954,13 @@ extern void uITRON4_free(void *p) ;
         #endif
     #endif
 
+    #if (WINMSP3)
+        #define strtok_r strtok_s
+    #endif
+
     #define XMALLOC(s, h, type) ((void *)rtp_malloc((s), SSL_PRO_MALLOC))
     #define XFREE(p, h, type) (rtp_free(p))
-    #define XREALLOC(p, n, h, t) (rtp_realloc((p), (n)))
+    #define XREALLOC(p, n, h, t) (rtp_realloc((p), (n), (t)))
 
     #if (WINMSP3)
         #define XSTRNCASECMP(s1,s2,n)  _strnicmp((s1),(s2),(n))
@@ -1876,11 +1897,13 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif
 
-#ifdef _MSC_VER
-    #ifndef HAVE_SSIZE_T
-        #include <BaseTsd.h>
-        typedef SSIZE_T ssize_t;
-    #endif
+#if defined(NO_WC_SSIZE_TYPE) || defined(ssize_t)
+    /* ssize_t comes from system headers or user_settings.h */
+#elif defined(WC_SSIZE_TYPE)
+    typedef WC_SSIZE_TYPE ssize_t;
+#elif defined(_MSC_VER)
+    #include <BaseTsd.h>
+    typedef SSIZE_T ssize_t;
 #endif
 
 /* If DCP is used without SINGLE_THREADED, enforce WOLFSSL_CRYPT_HW_MUTEX */
@@ -2602,6 +2625,11 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif
 
+/* Make sure setting OPENSSL_ALL also sets OPENSSL_EXTRA. */
+#if defined(OPENSSL_ALL) && !defined(OPENSSL_EXTRA)
+    #define OPENSSL_EXTRA
+#endif
+
 #ifdef HAVE_SNI
     #define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
 #endif
@@ -3092,6 +3120,7 @@ extern void uITRON4_free(void *p) ;
     #endif
     /* Ciphersuite check done in internal.h */
 #endif
+
 
 #ifdef __cplusplus
     }   /* extern "C" */

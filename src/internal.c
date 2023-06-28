@@ -2154,7 +2154,12 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
     XMEMSET(ctx, 0, sizeof(WOLFSSL_CTX));
 
     ctx->method   = method;
-    ctx->heap     = ctx;        /* defaults to self */
+    if (heap == NULL) {
+        ctx->heap = ctx;  /* defaults to self */
+    }
+    else {
+        ctx->heap = heap; /* wolfSSL_CTX_load_static_memory sets */
+    }
     ctx->timeout  = WOLFSSL_SESSION_TIMEOUT;
 
 #ifdef WOLFSSL_DTLS
@@ -9256,6 +9261,13 @@ ProtocolVersion MakeDTLSv1_3(void)
         return sys_now()/1000;
     }
 
+#elif defined(WOLFSSL_CMSIS_RTOS) || defined(WOLFSSL_CMSIS_RTOSv2)
+
+    word32 LowResTimer(void)
+    {
+        return (word32)osKernelGetTickCount() / 1000;
+    }
+
 #elif defined(WOLFSSL_TIRTOS)
 
     word32 LowResTimer(void)
@@ -13591,6 +13603,12 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                     if (ret == 0) {
                         ret = ProcessPeerCertCheckKey(ssl, args);
                     }
+                    else if (ret == ASN_PARSE_E || ret == BUFFER_E ||
+                             ret == MEMORY_E) {
+                        WOLFSSL_MSG(
+                            "Got Peer cert ASN PARSE_E, BUFFER E, MEMORY_E");
+                        ERROR_OUT(ret, exit_ppc);
+                    }
 
                     if (ret == 0 && args->dCert->isCA == 0) {
                         WOLFSSL_MSG("Chain cert is not a CA, not adding as one");
@@ -13875,8 +13893,9 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         args->fatal = 0;
                     }
                 }
-                else if (ret == ASN_PARSE_E || ret == BUFFER_E) {
-                    WOLFSSL_MSG("Got Peer cert ASN PARSE or BUFFER ERROR");
+                else if (ret == ASN_PARSE_E || ret == BUFFER_E ||
+                         ret == MEMORY_E) {
+                    WOLFSSL_MSG("Got Peer cert ASN PARSE_E, BUFFER E, MEMORY_E");
                 #if defined(WOLFSSL_EXTRA_ALERTS) || defined(OPENSSL_EXTRA) || \
                                                defined(OPENSSL_EXTRA_X509_SMALL)
                     DoCertFatalAlert(ssl, ret);
@@ -23100,12 +23119,11 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
 #else
 
     int error = (int)e;
-#ifdef OPENSSL_EXTRA
+
     /* OpenSSL uses positive error codes */
     if (error > 0) {
         error = -error;
     }
-#endif
 
     /* pass to wolfCrypt */
     if (error < MAX_CODE_E && error > MIN_CODE_E) {
@@ -23204,7 +23222,7 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "peer ip address mismatch";
 
     case WANT_READ :
-    case WOLFSSL_ERROR_WANT_READ :
+    case -WOLFSSL_ERROR_WANT_READ :
         return "non-blocking socket wants data to be read";
 
     case NOT_READY_ERROR :
@@ -23214,8 +23232,21 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "record layer version error";
 
     case WANT_WRITE :
-    case WOLFSSL_ERROR_WANT_WRITE :
+    case -WOLFSSL_ERROR_WANT_WRITE :
         return "non-blocking socket write buffer full";
+
+    case -WOLFSSL_ERROR_WANT_CONNECT:
+    case -WOLFSSL_ERROR_WANT_ACCEPT:
+        return "The underlying BIO was not yet connected";
+
+    case -WOLFSSL_ERROR_SYSCALL:
+        return "fatal I/O error in TLS layer";
+
+    case -WOLFSSL_ERROR_WANT_X509_LOOKUP:
+        return "application client cert callback asked to be called again";
+
+    case -WOLFSSL_ERROR_SSL:
+        return "fatal TLS protocol error";
 
     case BUFFER_ERROR :
         return "malformed buffer input error";
@@ -23254,7 +23285,7 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "can't decode peer key";
 
     case ZERO_RETURN:
-    case WOLFSSL_ERROR_ZERO_RETURN:
+    case -WOLFSSL_ERROR_ZERO_RETURN:
         return "peer sent close notify alert";
 
     case ECC_CURVETYPE_ERROR:

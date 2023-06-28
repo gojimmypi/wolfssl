@@ -8739,10 +8739,11 @@ echo "extern \"C\" {" >> $OPTION_FILE
 echo "#endif" >> $OPTION_FILE
 echo "" >> $OPTION_FILE
 
-# check for supported command to trim option with
+# Check for supported command to trim option with.
+# note: cut requires an argument to exit with success.
 if colrm >/dev/null 2>&1 </dev/null; then
     TRIM="colrm 3"
-elif cut >/dev/null 2>&1 </dev/null; then
+elif cut --version >/dev/null 2>&1 </dev/null; then
     TRIM="cut -c1-2"
 else
     AC_MSG_ERROR([Could not find colrm or cut to make options file])
@@ -8967,6 +8968,7 @@ echo "   * XCHACHA:                    $ENABLED_XCHACHA"
 echo "   * Hash DRBG:                  $ENABLED_HASHDRBG"
 echo "   * MmemUse Entropy:            $ENABLED_ENTROPY_MEMUSE"
 echo "   * PWDBASED:                   $ENABLED_PWDBASED"
+echo "   * Encrypted keys:             $ENABLED_ENCKEYS"
 echo "   * scrypt:                     $ENABLED_SCRYPT"
 echo "   * wolfCrypt Only:             $ENABLED_CRYPTONLY"
 echo "   * HKDF:                       $ENABLED_HKDF"

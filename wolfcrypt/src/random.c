@@ -874,8 +874,7 @@ static WC_INLINE word64 Entropy_TimeHiRes(void)
 
     return now.tv_nsec;
 }
-#elif !defined(SINGLE_THREADED) && defined(_POSIX_THREADS) && \
-      !defined(__MINGW32__)
+#elif defined(HAVE_PTHREAD)
 
 /* Start and stop thread that counts as a proxy for time counter. */
 #define ENTROPY_MEMUSE_THREADED
@@ -983,7 +982,7 @@ static void Entropy_StopThread(void)
         entropy_thread_started = 0;
     }
 }
-
+    /* end if defined(HAVE_PTHREAD) */
 #else
 
 #error "No high precision time available for MemUse Entropy."
@@ -2627,6 +2626,8 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 #elif defined(HAVE_RTP_SYS) || defined(EBSNET)
 
 #include "rtprand.h"   /* rtp_rand () */
+
+#if (defined(HAVE_RTP_SYS) || (defined(RTPLATFORM) && (RTPLATFORM != 0)))
 #include "rtptime.h"   /* rtp_get_system_msec() */
 
 int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
@@ -2640,6 +2641,19 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
     return 0;
 }
+#else
+int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
+{
+    word32 i;
+    KS_SEED(ks_get_ticks());
+
+    for (i = 0; i < sz; i++ ) {
+        output[i] = KS_RANDOM() % 256;
+    }
+
+    return 0;
+}
+#endif /* defined(HAVE_RTP_SYS) || (defined(RTPLATFORM) && (RTPLATFORM != 0)) */
 
 #elif (defined(WOLFSSL_ATMEL) || defined(WOLFSSL_ATECC_RNG)) && \
       !defined(WOLFSSL_PIC32MZ_RNG)

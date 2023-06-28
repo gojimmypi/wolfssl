@@ -1446,7 +1446,7 @@ static const char* client_usage_msg[][70] = {
 #ifdef HAVE_TRUSTED_CA
         "-5          信頼できる認証局の鍵表示を使用する\n",             /* 63 */
 #endif
-        "-6          WANT_WRITE エラーを全てのIO 送信でシュミレートします\n",
+        "-6          WANT_WRITE エラーを全てのIO 送信でシミュレートします\n",
 #ifdef HAVE_CURVE448
         "-8          鍵交換に X448 を使用する\n",                      /* 66 */
 #endif
@@ -1489,7 +1489,7 @@ static const char* client_usage_msg[][70] = {
         "--openssl-psk  Use TLS 1.3 PSK callback compatible with OpenSSL\n", /* 74 */
 #endif
         "\n"
-        "より簡単なwolfSSL TSL クライアントの例については"
+        "より簡単なwolfSSL TLS クライアントの例については"
                                          "下記にアクセスしてください\n"
         "https://github.com/wolfSSL/wolfssl-examples/tree/master/tls\n", /* 75 */
         NULL,
@@ -1740,7 +1740,7 @@ static int client_srtp_test(WOLFSSL *ssl, func_args *args)
     size_t srtp_secret_length;
     byte *srtp_secret, *p;
     int ret;
-#if !defined(SINGLE_THREADED) && defined(_POSIX_THREADS)
+#ifdef HAVE_PTHREAD
     srtp_test_helper *srtp_helper = args->srtp_helper;
     byte *other_secret = NULL;
     size_t other_size = 0;
@@ -1774,7 +1774,7 @@ static int client_srtp_test(WOLFSSL *ssl, func_args *args)
         printf("%02X", *p);
     printf("\n");
 
-#if !defined(SINGLE_THREADED) && defined(_POSIX_THREADS)
+#ifdef HAVE_PTHREAD
     if (srtp_helper != NULL) {
         srtp_helper_get_ekm(srtp_helper, &other_secret, &other_size);
 
@@ -1790,7 +1790,7 @@ static int client_srtp_test(WOLFSSL *ssl, func_args *args)
         /* we are delegated from server to free this buffer  */
         XFREE(other_secret, NULL, DYNAMIC_TYPE_TMP_BUFFER);
     }
-#endif
+#endif /* HAVE_PTHREAD */
 
     XFREE(srtp_secret, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 
@@ -4546,7 +4546,7 @@ exit:
 
         StartTCP();
 
-#if defined(WOLFSSL_SRTP) && !defined(SINGLE_THREADED) && defined(_POSIX_THREADS)
+#if defined(WOLFSSL_SRTP) && defined(HAVE_PTHREAD)
         args.srtp_helper = NULL;
 #endif
         args.argc = argc;

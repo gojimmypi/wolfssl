@@ -22,6 +22,26 @@
 
 /* wolfCrypt benchmark */
 
+/* Some common, optional build settings:
+ * these can also be set in wolfssl/options.h or user_settings.h
+ * -------------------------------------------------------------
+ * make the binary always use CSV format:
+ * WOLFSSL_BENCHMARK_FIXED_CSV
+ *
+ * choose to use the same units, regardless of scale. pick 1:
+ * WOLFSSL_BENCHMARK_FIXED_UNITS_GB
+ * WOLFSSL_BENCHMARK_FIXED_UNITS_MB
+ * WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+ * WOLFSSL_BENCHMARK_FIXED_UNITS_B
+ *
+ * when the output should be in machine-parseable format:
+ * GENERATE_MACHINE_PARSEABLE_REPORT
+ *
+ * Enable tracking of the stats into an allocated linked list:
+ * (use -print to display results):
+ * WC_BENCH_TRACK_STATS
+ */
+
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -60,11 +80,150 @@
     #include <wolfssl/options.h>
 #endif
 #include <wolfssl/wolfcrypt/settings.h> /* also picks up user_settings.h */
+
+/* Macro to disable benchmark */
+#ifndef NO_CRYPT_BENCHMARK
+
 #include <wolfssl/wolfcrypt/types.h>
-#include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
-#include <wolfssl/wolfcrypt/ecc.h>
 #include <wolfssl/wolfcrypt/wolfmath.h>
+#include <wolfssl/wolfcrypt/memory.h>
+#include <wolfssl/wolfcrypt/random.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/asn.h>
+#include <wolfssl/version.h>
+
+#ifdef HAVE_CHACHA
+    #include <wolfssl/wolfcrypt/chacha.h>
+#endif
+#ifdef HAVE_POLY1305
+    #include <wolfssl/wolfcrypt/poly1305.h>
+#endif
+#if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
+    #include <wolfssl/wolfcrypt/chacha20_poly1305.h>
+#endif
+#ifndef NO_AES
+    #include <wolfssl/wolfcrypt/aes.h>
+#endif
+#ifdef HAVE_CAMELLIA
+    #include <wolfssl/wolfcrypt/camellia.h>
+#endif
+#ifndef NO_MD5
+    #include <wolfssl/wolfcrypt/md5.h>
+#endif
+#ifndef NO_SHA
+    #include <wolfssl/wolfcrypt/sha.h>
+#endif
+#ifndef NO_SHA256
+    #include <wolfssl/wolfcrypt/sha256.h>
+#endif
+#if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
+    #include <wolfssl/wolfcrypt/sha512.h>
+#endif
+#ifdef WOLFSSL_SHA3
+    #include <wolfssl/wolfcrypt/sha3.h>
+#endif
+#ifndef NO_RSA
+    #include <wolfssl/wolfcrypt/rsa.h>
+#endif
+#ifdef WOLFSSL_RIPEMD
+    #include <wolfssl/wolfcrypt/ripemd.h>
+#endif
+#ifdef WOLFSSL_CMAC
+    #include <wolfssl/wolfcrypt/cmac.h>
+#endif
+#ifndef NO_DH
+    #include <wolfssl/wolfcrypt/dh.h>
+#endif
+#ifndef NO_DES3
+    #include <wolfssl/wolfcrypt/des3.h>
+#endif
+#ifndef NO_RC4
+    #include <wolfssl/wolfcrypt/arc4.h>
+#endif
+#ifndef NO_HMAC
+    #include <wolfssl/wolfcrypt/hmac.h>
+#endif
+#ifdef WOLFSSL_SIPHASH
+    #include <wolfssl/wolfcrypt/siphash.h>
+#endif
+#ifndef NO_PWDBASED
+    #include <wolfssl/wolfcrypt/pwdbased.h>
+#endif
+#ifdef HAVE_ECC
+    #include <wolfssl/wolfcrypt/ecc.h>
+#endif
+#ifdef HAVE_CURVE25519
+    #include <wolfssl/wolfcrypt/curve25519.h>
+#endif
+#ifdef HAVE_ED25519
+    #include <wolfssl/wolfcrypt/ed25519.h>
+#endif
+#ifdef HAVE_CURVE448
+    #include <wolfssl/wolfcrypt/curve448.h>
+#endif
+#ifdef HAVE_ED448
+    #include <wolfssl/wolfcrypt/ed448.h>
+#endif
+#ifdef WOLFSSL_HAVE_KYBER
+    #include <wolfssl/wolfcrypt/kyber.h>
+#ifdef WOLFSSL_WC_KYBER
+    #include <wolfssl/wolfcrypt/wc_kyber.h>
+#endif
+#if defined(HAVE_LIBOQS) || defined(HAVE_PQM4)
+    #include <wolfssl/wolfcrypt/ext_kyber.h>
+#endif
+#endif
+#ifdef WOLFCRYPT_HAVE_ECCSI
+    #include <wolfssl/wolfcrypt/eccsi.h>
+#endif
+#ifdef WOLFCRYPT_HAVE_SAKKE
+    #include <wolfssl/wolfcrypt/sakke.h>
+#endif
+
+#if defined(HAVE_PQC)
+    #if defined(HAVE_FALCON)
+        #include <wolfssl/wolfcrypt/falcon.h>
+    #endif
+    #if defined(HAVE_DILITHIUM)
+        #include <wolfssl/wolfcrypt/dilithium.h>
+    #endif
+    #if defined(HAVE_SPHINCS)
+        #include <wolfssl/wolfcrypt/sphincs.h>
+    #endif
+#endif
+
+#ifdef WOLF_CRYPTO_CB
+    #include <wolfssl/wolfcrypt/cryptocb.h>
+    #ifdef HAVE_INTEL_QA_SYNC
+        #include <wolfssl/wolfcrypt/port/intel/quickassist_sync.h>
+    #endif
+    #ifdef HAVE_CAVIUM_OCTEON_SYNC
+        #include <wolfssl/wolfcrypt/port/cavium/cavium_octeon_sync.h>
+    #endif
+    #ifdef HAVE_RENESAS_SYNC
+        #include <wolfssl/wolfcrypt/port/renesas/renesas_sync.h>
+    #endif
+#endif
+
+#ifdef WOLFSSL_ASYNC_CRYPT
+    #include <wolfssl/wolfcrypt/async.h>
+#endif
+
+#ifdef USE_FLAT_BENCHMARK_H
+    #include "benchmark.h"
+#else
+    #include "wolfcrypt/benchmark/benchmark.h"
+#endif
+
+
+/* define the max length for each string of metric reported */
+#ifndef WC_BENCH_MAX_LINE_LEN
+#define WC_BENCH_MAX_LINE_LEN 150
+#endif
+
+/* default units per second. See WOLFSSL_BENCHMARK_FIXED_UNITS_* to change */
+#define WOLFSSL_FIXED_UNITS_PER_SEC "MB/s" /* may be re-set by fixed units */
 
 #ifdef WOLFSSL_NO_FLOAT_FMT
     #define FLT_FMT "%0ld,%09lu"
@@ -93,7 +252,7 @@
     #define FLT_FMT_ARGS(x) x
     #define FLT_FMT_PREC_ARGS(p, x) p, x
     #define FLT_FMT_PREC2_ARGS(w, p, x) w, p, x
-#endif
+#endif /* WOLFSSL_NO_FLOAT_FMT */
 
 #ifdef WOLFSSL_ESPIDF
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -112,11 +271,12 @@
         #error "CONFIG_IDF_TARGET not implemented"
     #endif
     #include <esp_log.h>
-#endif
+#endif /* WOLFSSL_ESPIDF */
 
 #ifdef HAVE_PTHREAD
     #include <pthread.h>
 #endif
+
 #if defined(HAVE_PTHREAD) ||                                          \
     (!defined(NO_CRYPT_BENCHMARK) && !defined(NO_STDIO_FILESYSTEM) && \
      !defined(NO_ERROR_STRINGS) && !defined(NO_MAIN_DRIVER) &&        \
@@ -128,28 +288,21 @@
 #endif
 
 #if defined(WOLFSSL_ZEPHYR) || defined(NO_STDIO_FILESYSTEM) || !defined(XFFLUSH)
-/* fflush in Zephyr doesn't work on stdout and stderr. Use
- * CONFIG_LOG_MODE_IMMEDIATE compilation option instead. */
-#undef XFFLUSH
-#define XFFLUSH(...) do {} while (0)
+    /* fflush in Zephyr doesn't work on stdout and stderr. Use
+    * CONFIG_LOG_MODE_IMMEDIATE compilation option instead. */
+    #undef  XFFLUSH
+    #define XFFLUSH(...) do {} while (0)
 #endif
-
-/* Macro to disable benchmark */
-#ifndef NO_CRYPT_BENCHMARK
-
-#include <wolfssl/wolfcrypt/mem_track.h>
 
 /* only for stack size check */
-#if defined(WOLFSSL_ASYNC_CRYPT)
-    #ifndef WC_NO_ASYNC_THREADING
-        #define WC_ENABLE_BENCH_THREADING
-    #endif
-#endif
+#include <wolfssl/wolfcrypt/mem_track.h>
 
-#ifdef USE_FLAT_BENCHMARK_H
-    #include "benchmark.h"
-#else
-    #include "wolfcrypt/benchmark/benchmark.h"
+#if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_NO_ASYNC_THREADING)
+    #define WC_ENABLE_BENCH_THREADING
+#endif
+/* enable tracking of stats for threaded benchmark */
+#if defined(WC_ENABLE_BENCH_THREADING) && !defined(WC_BENCH_TRACK_STATS)
+    #define WC_BENCH_TRACK_STATS
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
@@ -190,7 +343,7 @@
     static int printfk(const char *fmt, ...)
     {
         int ret;
-        char line[__BENCHMARK_MAXIMUM_LINE_LENGTH];
+        char line[WC_BENCH_MAX_LINE_LEN];
         va_list ap;
 
         va_start(ap, fmt);
@@ -257,98 +410,6 @@
         #undef printf
         #define printf dc_log_printf
     #endif
-#endif
-
-#include <wolfssl/wolfcrypt/memory.h>
-#include <wolfssl/wolfcrypt/random.h>
-#include <wolfssl/wolfcrypt/des3.h>
-#include <wolfssl/wolfcrypt/arc4.h>
-#include <wolfssl/wolfcrypt/chacha.h>
-#include <wolfssl/wolfcrypt/chacha20_poly1305.h>
-#include <wolfssl/wolfcrypt/aes.h>
-#include <wolfssl/wolfcrypt/poly1305.h>
-#include <wolfssl/wolfcrypt/camellia.h>
-#include <wolfssl/wolfcrypt/md5.h>
-#include <wolfssl/wolfcrypt/sha.h>
-#include <wolfssl/wolfcrypt/sha256.h>
-#include <wolfssl/wolfcrypt/sha512.h>
-#include <wolfssl/wolfcrypt/sha3.h>
-#include <wolfssl/wolfcrypt/rsa.h>
-#include <wolfssl/wolfcrypt/asn.h>
-#include <wolfssl/wolfcrypt/ripemd.h>
-#include <wolfssl/wolfcrypt/cmac.h>
-#ifndef NO_HMAC
-    #include <wolfssl/wolfcrypt/hmac.h>
-#endif
-#ifdef WOLFSSL_SIPHASH
-    #include <wolfssl/wolfcrypt/siphash.h>
-#endif
-#ifndef NO_PWDBASED
-    #include <wolfssl/wolfcrypt/pwdbased.h>
-#endif
-#ifdef HAVE_ECC
-    #include <wolfssl/wolfcrypt/ecc.h>
-#endif
-#ifdef HAVE_CURVE25519
-    #include <wolfssl/wolfcrypt/curve25519.h>
-#endif
-#ifdef HAVE_ED25519
-    #include <wolfssl/wolfcrypt/ed25519.h>
-#endif
-#ifdef HAVE_CURVE448
-    #include <wolfssl/wolfcrypt/curve448.h>
-#endif
-#ifdef HAVE_ED448
-    #include <wolfssl/wolfcrypt/ed448.h>
-#endif
-#ifdef WOLFSSL_HAVE_KYBER
-    #include <wolfssl/wolfcrypt/kyber.h>
-#ifdef WOLFSSL_WC_KYBER
-    #include <wolfssl/wolfcrypt/wc_kyber.h>
-#endif
-#if defined(HAVE_LIBOQS) || defined(HAVE_PQM4)
-    #include <wolfssl/wolfcrypt/ext_kyber.h>
-#endif
-#endif
-#ifdef WOLFCRYPT_HAVE_ECCSI
-    #include <wolfssl/wolfcrypt/eccsi.h>
-#endif
-#ifdef WOLFCRYPT_HAVE_SAKKE
-    #include <wolfssl/wolfcrypt/sakke.h>
-#endif
-
-#if defined(HAVE_PQC)
-    #if defined(HAVE_FALCON)
-        #include <wolfssl/wolfcrypt/falcon.h>
-    #endif
-    #if defined(HAVE_DILITHIUM)
-        #include <wolfssl/wolfcrypt/dilithium.h>
-    #endif
-    #if defined(HAVE_SPHINCS)
-        #include <wolfssl/wolfcrypt/sphincs.h>
-    #endif
-#endif
-
-#include <wolfssl/wolfcrypt/dh.h>
-#include <wolfssl/wolfcrypt/random.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
-#include <wolfssl/wolfcrypt/types.h>
-
-#ifdef WOLF_CRYPTO_CB
-    #include <wolfssl/wolfcrypt/cryptocb.h>
-    #ifdef HAVE_INTEL_QA_SYNC
-        #include <wolfssl/wolfcrypt/port/intel/quickassist_sync.h>
-    #endif
-    #ifdef HAVE_CAVIUM_OCTEON_SYNC
-        #include <wolfssl/wolfcrypt/port/cavium/cavium_octeon_sync.h>
-    #endif
-    #ifdef HAVE_RENESAS_SYNC
-        #include <wolfssl/wolfcrypt/port/renesas/renesas_sync.h>
-    #endif
-#endif
-
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
 #endif
 
 #ifdef HAVE_FIPS
@@ -862,7 +923,8 @@ static int lng_index = 0;
 #ifndef MAIN_NO_ARGS
 static const char* bench_Usage_msg1[][21] = {
     /* 0 English  */
-    {   "-? <num>    Help, print this usage\n            0: English, 1: Japanese\n",
+    {   "-? <num>    Help, print this usage\n"
+        "            0: English, 1: Japanese\n",
         "-csv        Print terminal output in csv format\n",
         "-base10     Display bytes as power of 10 (eg 1 kB = 1000 Bytes)\n",
         "-no_aad     No additional authentication data passed.\n",
@@ -882,9 +944,11 @@ static const char* bench_Usage_msg1[][21] = {
         "-p521       Measure ECC using P-521 curve.\n",
         "-ecc-all    Bench all enabled ECC curves.\n",
         "-<alg>      Algorithm to benchmark. Available algorithms include:\n",
-        "-lng <num>  Display benchmark result by specified language.\n            0: English, 1: Japanese\n",
+        "-lng <num>  Display benchmark result by specified language.\n"
+        "            0: English, 1: Japanese\n",
         "<num>       Size of block in bytes\n",
-       ("-blocks <num>  Number of blocks. Can be used together with the 'Size of block'\n"
+       ("-blocks <num>  Number of blocks. Can be used together with the "
+        "'Size of block'\n"
         "            option, but must be used after that one.\n"
        ),
         "-threads <num> Number of threads to run\n",
@@ -892,7 +956,8 @@ static const char* bench_Usage_msg1[][21] = {
     },
 #ifndef NO_MULTIBYTE_PRINT
     /* 1 Japanese */
-    {   "-? <num>    ヘルプ, 使い方を表示します。\n            0: 英語、 1: 日本語\n",
+    {   "-? <num>    ヘルプ, 使い方を表示します。\n"
+        "            0: 英語、 1: 日本語\n",
         "-csv        csv 形式で端末に出力します。\n",
         "-base10     バイトを10のべき乗で表示します。(例 1 kB = 1000 Bytes)\n",
         "-no_aad     追加の認証データを使用しません.\n",
@@ -907,8 +972,10 @@ static const char* bench_Usage_msg1[][21] = {
         "-p384       Measure ECC using P-384 curve.\n",
         "-p521       Measure ECC using P-521 curve.\n",
         "-ecc-all    Bench all enabled ECC curves.\n",
-        "-<alg>      アルゴリズムのベンチマークを実施します。\n            利用可能なアルゴリズムは下記を含みます:\n",
-        "-lng <num>  指定された言語でベンチマーク結果を表示します。\n            0: 英語、 1: 日本語\n",
+        "-<alg>      アルゴリズムのベンチマークを実施します。\n"
+        "            利用可能なアルゴリズムは下記を含みます:\n",
+        "-lng <num>  指定された言語でベンチマーク結果を表示します。\n"
+        "            0: 英語、 1: 日本語\n",
         "<num>       ブロックサイズをバイト単位で指定します。\n",
         "-blocks <num>  TBD.\n",
         "-threads <num> 実行するスレッド数\n",
@@ -1243,7 +1310,8 @@ static const char* bench_result_words2[][5] = {
         /* if algo doesn't require calling again then use this flow */
         if (state == WOLF_EVENT_STATE_DONE) {
             if (callAgain) {
-                /* needs called again, so allow it and handle completion in bench_async_handle */
+                /* needs called again, so allow it and handle completion in
+                * bench_async_handle */
                 allowNext = 1;
             }
             else {
@@ -1370,7 +1438,9 @@ static const char* bench_result_words2[][5] = {
             #define AES_AAD_OPTIONS_DEFAULT 0x3U
         #endif
     #endif
-    #define AES_AAD_STRING(s)           (aesAuthAddSz == 0 ? (s "-no_AAD") : (aesAuthAddSz == AES_AUTH_ADD_SZ ? (s) : (s "-custom")))
+    #define AES_AAD_STRING(s) \
+        (aesAuthAddSz == 0 ? (s "-no_AAD") : \
+            (aesAuthAddSz == AES_AUTH_ADD_SZ ? (s) : (s "-custom")))
     enum en_aad_options {
         AAD_SIZE_DEFAULT = 0x1U,
         AAD_SIZE_ZERO = 0x2U,
@@ -1534,11 +1604,11 @@ typedef enum bench_stat_type {
     BENCH_STAT_IGNORE,
 } bench_stat_type_t;
 
-#ifdef WC_ENABLE_BENCH_THREADING
+#ifdef WC_BENCH_TRACK_STATS
     static int gPrintStats = 0;
-
-    static pthread_mutex_t bench_lock = PTHREAD_MUTEX_INITIALIZER;
-
+    #ifdef WC_ENABLE_BENCH_THREADING
+        static pthread_mutex_t bench_lock = PTHREAD_MUTEX_INITIALIZER;
+    #endif
     #ifndef BENCH_MAX_NAME_SZ
     #define BENCH_MAX_NAME_SZ 24
     #endif
@@ -1564,8 +1634,10 @@ typedef enum bench_stat_type {
     {
         bench_stats_t* bstat = NULL;
 
+    #ifdef WC_ENABLE_BENCH_THREADING
         /* protect bench_stats_head and bench_stats_tail access */
         PTHREAD_CHECK_RET(pthread_mutex_lock(&bench_lock));
+    #endif
 
         if (algo != NULL) {
             /* locate existing in list */
@@ -1612,8 +1684,9 @@ typedef enum bench_stat_type {
             if (bstat->lastRet > ret)
                 bstat->lastRet = ret; /* track last error */
         }
+    #ifdef WC_ENABLE_BENCH_THREADING
         PTHREAD_CHECK_RET(pthread_mutex_unlock(&bench_lock));
-
+    #endif
         return bstat;
     }
 
@@ -1621,8 +1694,10 @@ typedef enum bench_stat_type {
     {
         bench_stats_t* bstat;
 
+    #ifdef WC_ENABLE_BENCH_THREADING
         /* protect bench_stats_head and bench_stats_tail access */
         PTHREAD_CHECK_RET(pthread_mutex_lock(&bench_lock));
+    #endif
 
         for (bstat = bench_stats_head; bstat != NULL; ) {
             if (bstat->type == BENCH_STAT_SYM) {
@@ -1641,70 +1716,15 @@ typedef enum bench_stat_type {
             bstat = bstat->next;
         }
 
+    #ifdef WC_ENABLE_BENCH_THREADING
         PTHREAD_CHECK_RET(pthread_mutex_unlock(&bench_lock));
+    #endif
     }
-
-#else /* !WC_ENABLE_BENCH_THREADING */
-
-    typedef struct bench_stats {
-        const char* algo;
-        const char* desc;
-        double perfsec;
-        const char* perftype;
-        int strength;
-        bench_stat_type_t type;
-        int ret;
-    } bench_stats_t;
-    /* 16 threads and 8 different operations. */
-    #define MAX_BENCH_STATS (16 * 8)
-    static bench_stats_t gStats[MAX_BENCH_STATS];
-    static int gStatsCount;
-
-    static bench_stats_t* bench_stats_add(bench_stat_type_t type,
-            const char* algo, int strength, const char* desc, int useDeviceID,
-            double perfsec, const char* perftype, int ret)
-    {
-        bench_stats_t* bstat = NULL;
-        if (gStatsCount >= MAX_BENCH_STATS)
-            return bstat;
-
-        bstat = &gStats[gStatsCount++];
-        bstat->algo = algo;
-        bstat->desc = desc;
-        bstat->perfsec = perfsec;
-        bstat->perftype = perftype;
-        bstat->strength = strength;
-        bstat->type = type;
-        bstat->ret = ret;
-
-        (void)useDeviceID;
-
-        return bstat;
-    }
-
-    void bench_stats_print(void)
-    {
-        int i;
-
-        for (i=0; i<gStatsCount; i++) {
-            bench_stats_t* bstat = &gStats[i];
-            if (bstat->type == BENCH_STAT_SYM) {
-                printf("%-16s " FLT_FMT_PREC2 " %s/s\n", bstat->desc,
-                       FLT_FMT_PREC2_ARGS(8, 3, bstat->perfsec),
-                    base2 ? "MB" : "mB");
-            }
-            else if (bstat->type == BENCH_STAT_ASYM) {
-                printf("%-5s %4d %-9s " FLT_FMT_PREC " ops/sec\n",
-                    bstat->algo, bstat->strength, bstat->desc,
-                       FLT_FMT_PREC_ARGS(3, bstat->perfsec));
-            }
-        }
-    }
-#endif /* WC_ENABLE_BENCH_THREADING */
+#endif /* WC_BENCH_TRACK_STATS */
 
 static WC_INLINE void bench_stats_init(void)
 {
-#if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_NO_ASYNC_THREADING)
+#ifdef WC_BENCH_TRACK_STATS
     bench_stats_head = NULL;
     bench_stats_tail = NULL;
 #endif
@@ -1727,10 +1747,11 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
 }
 
 #ifdef WOLFSSL_LINUXKM_USE_SAVE_VECTOR_REGISTERS
-    #define bench_stats_start(count, start) do {                                         \
-        SAVE_VECTOR_REGISTERS(pr_err("SAVE_VECTOR_REGISTERS failed for benchmark run."); \
-                              return; );                                                 \
-        bench_stats_start(count, start);                                                 \
+    #define bench_stats_start(count, start) do {                               \
+        SAVE_VECTOR_REGISTERS(pr_err(                                          \
+            "SAVE_VECTOR_REGISTERS failed for benchmark run.");                \
+                              return; );                                       \
+        bench_stats_start(count, start);                                       \
     } while (0)
 #endif
 
@@ -1833,7 +1854,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
 {
     double total, persec = 0, blocks = (double)count;
     const char* blockType;
-    char msg[__BENCHMARK_MAXIMUM_LINE_LENGTH];
+    char msg[WC_BENCH_MAX_LINE_LEN];
     const char** word = bench_result_words1[lng_index];
     static int sym_header_printed = 0;
 
@@ -1923,9 +1944,11 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     /* note this codepath brings in all the fields from the non-CSV case. */
     #ifdef WOLFSSL_ESPIDF
         #ifdef HAVE_GET_CYCLES
-            (void)XSNPRINTF(msg, sizeof(msg), "sym,%s,%s,%lu," FLT_FMT "," FLT_FMT ",%lu,", desc,
+            (void)XSNPRINTF(msg, sizeof(msg),
+                            "sym,%s,%s,%lu," FLT_FMT "," FLT_FMT ",%lu,", desc,
                             BENCH_DEVID_GET_NAME(useDeviceID),
-                            bytes_processed, FLT_FMT_ARGS(total), FLT_FMT_ARGS(persec),
+                            bytes_processed, FLT_FMT_ARGS(total),
+                            FLT_FMT_ARGS(persec),
                             (long unsigned int) total_cycles);
         #else
             #warning "HAVE_GET_CYCLES should be defined for WOLFSSL_ESPIDF"
@@ -1950,9 +1973,10 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     #endif
 #elif defined(BENCH_DEVID)
         (void)XSNPRINTF(msg, sizeof(msg), "%s,%s," FLT_FMT ",", desc,
-                            BENCH_DEVID_GET_NAME(useDeviceID), FLT_FMT_ARGS(persec));
+                       BENCH_DEVID_GET_NAME(useDeviceID), FLT_FMT_ARGS(persec));
 #else
-        (void)XSNPRINTF(msg, sizeof(msg), "%s," FLT_FMT ",", desc, FLT_FMT_ARGS(persec));
+        (void)XSNPRINTF(msg, sizeof(msg), "%s," FLT_FMT ",", desc,
+            FLT_FMT_ARGS(persec));
 #endif
 
     #ifdef WOLFSSL_ESPIDF
@@ -2015,9 +2039,11 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     XFFLUSH(stdout);
 #endif
 
+#ifdef WC_BENCH_TRACK_STATS
     /* Add to thread stats */
     bench_stats_add(BENCH_STAT_SYM, desc, 0, desc, useDeviceID, persec,
         blockType, ret);
+#endif
 
     (void)useDeviceID;
     (void)ret;
@@ -2038,7 +2064,9 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 {
     double total, each = 0, opsSec, milliEach;
     const char **word = bench_result_words2[lng_index];
+#ifdef WC_BENCH_TRACK_STATS
     const char* kOpsSec = "Ops/Sec";
+#endif
     char msg[256];
     static int asym_header_printed = 0;
 
@@ -2099,22 +2127,27 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
     #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
-                        "asym,%s,%d,%s%s," FLT_FMT_PREC "," FLT_FMT_PREC ",%d," FLT_FMT
-                        ",%lu," FLT_FMT_PREC "\n",
-                        algo, strength, desc, desc_extra, FLT_FMT_PREC_ARGS(3, milliEach),
+                        "asym,%s,%d,%s%s," FLT_FMT_PREC "," FLT_FMT_PREC ",%d,"
+                        FLT_FMT ",%lu," FLT_FMT_PREC "\n",
+                        algo, strength, desc, desc_extra,
+                        FLT_FMT_PREC_ARGS(3, milliEach),
                         FLT_FMT_PREC_ARGS(3, opsSec),
-                        count, FLT_FMT_ARGS(total), (unsigned long) total_cycles,
-                        FLT_FMT_PREC_ARGS(6, (double)total_cycles / (double)count));
+                        count, FLT_FMT_ARGS(total), (unsigned long)total_cycles,
+                        FLT_FMT_PREC_ARGS(6,
+                            (double)total_cycles / (double)count));
     #else
         (void)XSNPRINTF(msg, sizeof(msg),
-                        "asym,%s,%d,%s%s," FLT_FMT_PREC "," FLT_FMT_PREC ",%d," FLT_FMT "\n",
-                        algo, strength, desc, desc_extra, FLT_FMT_PREC_ARGS(3, milliEach),
+                        "asym,%s,%d,%s%s," FLT_FMT_PREC "," FLT_FMT_PREC ",%d,"
+                        FLT_FMT "\n",
+                        algo, strength, desc, desc_extra,
+                        FLT_FMT_PREC_ARGS(3, milliEach),
                         FLT_FMT_PREC_ARGS(3, opsSec),
                         count, FLT_FMT_ARGS(total));
     #endif
 #else
-        (void)XSNPRINTF(msg, sizeof(msg), "%s,%d,%s%s," FLT_FMT_PREC "," FLT_FMT_PREC ",\n", algo,
-                        strength, desc, desc_extra, FLT_FMT_PREC_ARGS(3, milliEach),
+        (void)XSNPRINTF(msg, sizeof(msg), "%s,%d,%s%s," FLT_FMT_PREC ","
+                        FLT_FMT_PREC ",\n", algo, strength, desc, desc_extra,
+                        FLT_FMT_PREC_ARGS(3, milliEach),
                         FLT_FMT_PREC_ARGS(3, opsSec));
 #endif
     } /* if (csv_format == 1) */
@@ -2123,28 +2156,33 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
     #ifdef HAVE_GET_CYCLES
         (void)XSNPRINTF(msg, sizeof(msg),
-                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s " FLT_FMT_PREC2 " ms,"
-                        " " FLT_FMT_PREC " %s, %lu cycles\n", algo, strength, desc,
-                        desc_extra, BENCH_DEVID_GET_NAME(useDeviceID),
-                        count, word[0], FLT_FMT_PREC2_ARGS(5, 3, total), word[1], word[2],
+                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s "
+                        FLT_FMT_PREC2 " ms, " FLT_FMT_PREC " %s, %lu cycles\n",
+                        algo, strength, desc, desc_extra,
+                        BENCH_DEVID_GET_NAME(useDeviceID), count, word[0],
+                        FLT_FMT_PREC2_ARGS(5, 3, total), word[1], word[2],
                         FLT_FMT_PREC2_ARGS(5, 3, milliEach),
-                        FLT_FMT_PREC_ARGS(3, opsSec), word[3], (unsigned long) total_cycles);
+                        FLT_FMT_PREC_ARGS(3, opsSec), word[3],
+                        (unsigned long)total_cycles);
     #else
         (void)XSNPRINTF(msg, sizeof(msg),
-                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s " FLT_FMT_PREC2 " ms,"
-                        " " FLT_FMT_PREC " %s\n", algo, strength, desc,
-                        desc_extra, BENCH_DEVID_GET_NAME(useDeviceID),
-                        count, word[0], FLT_FMT_PREC2_ARGS(5, 3, total), word[1], word[2],
+                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s "
+                        FLT_FMT_PREC2 " ms, " FLT_FMT_PREC " %s\n",
+                        algo, strength, desc, desc_extra,
+                        BENCH_DEVID_GET_NAME(useDeviceID), count, word[0],
+                        FLT_FMT_PREC2_ARGS(5, 3, total), word[1], word[2],
                         FLT_FMT_PREC2_ARGS(5, 3, milliEach),
                         FLT_FMT_PREC_ARGS(3, opsSec), word[3]);
     #endif /* HAVE_GET_CYCLES */
 #else
         (void)XSNPRINTF(msg, sizeof(msg),
-                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s " FLT_FMT_PREC2 " ms,"
-                        " " FLT_FMT_PREC " %s\n", algo, strength, desc, desc_extra,
+                        "%-6s %5d %8s%-2s %s %6d %s " FLT_FMT_PREC2 " %s, %s "
+                        FLT_FMT_PREC2 " ms, " FLT_FMT_PREC " %s\n",
+                        algo, strength, desc, desc_extra,
                         BENCH_DEVID_GET_NAME(useDeviceID), count, word[0],
                         FLT_FMT_PREC2_ARGS(5, 3, total), word[1], word[2],
-                        FLT_FMT_PREC2_ARGS(5, 3, milliEach), FLT_FMT_PREC_ARGS(3, opsSec), word[3]);
+                        FLT_FMT_PREC2_ARGS(5, 3, milliEach),
+                        FLT_FMT_PREC_ARGS(3, opsSec), word[3]);
 #endif
     }
     printf("%s", msg);
@@ -2159,9 +2197,11 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
     XFFLUSH(stdout);
 #endif
 
+#ifdef WC_BENCH_TRACK_STATS
     /* Add to thread stats */
     bench_stats_add(BENCH_STAT_ASYM, algo, strength, desc, useDeviceID, opsSec,
                     kOpsSec, ret);
+#endif
 
     (void)useDeviceID;
     (void)ret;
@@ -2182,7 +2222,7 @@ static void bench_stats_asym_finish(const char* algo, int strength,
 
 static WC_INLINE void bench_stats_free(void)
 {
-#if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_NO_ASYNC_THREADING)
+#ifdef WC_BENCH_TRACK_STATS
     bench_stats_t* bstat;
     for (bstat = bench_stats_head; bstat != NULL; ) {
         bench_stats_t* next = bstat->next;
@@ -3005,7 +3045,7 @@ int benchmark_free(void)
 {
     int ret;
 
-#ifdef WC_ENABLE_BENCH_THREADING
+#ifdef WC_BENCH_TRACK_STATS
     if (gPrintStats || devId != INVALID_DEVID) {
         bench_stats_print();
     }
@@ -7302,7 +7342,8 @@ void bench_kyber(int type)
 
 #ifdef HAVE_ECC
 
-/* +8 for 'ECDSA [%s]' and null terminator */
+/* Maximum ECC name plus null terminator:
+ * "ECC   [%15s]" and "ECDHE [%15s]" and "ECDSA [%15s]" */
 #define BENCH_ECC_NAME_SZ (ECC_MAXNAME + 8)
 
 /* run all benchmarks on a curve */
@@ -7694,13 +7735,12 @@ void bench_eccEncrypt(int curveId)
     ecc_key *userA = NULL, *userB = NULL;
     byte    *msg = NULL;
     byte    *out = NULL;
-    char    *name = NULL;
 #else
     ecc_key userA[1], userB[1];
     byte    msg[BENCH_ECCENCRYPT_MSG_SIZE];
     byte    out[BENCH_ECCENCRYPT_OUT_SIZE];
-    char name[BENCH_ECC_NAME_SZ];
 #endif
+    char    name[BENCH_ECC_NAME_SZ];
     int     keySize;
     word32  bench_plainSz = bench_size;
     int     ret, i, count;
@@ -7716,9 +7756,7 @@ void bench_eccEncrypt(int curveId)
                           HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     out = (byte *)XMALLOC(outSz,
                           HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    name = (char *)XMALLOC(BENCH_ECC_NAME_SZ,
-                           HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if ((! userA) || (! userB) || (! msg) || (! out) || (! name)) {
+    if ((! userA) || (! userB) || (! msg) || (! out)) {
         printf("bench_eccEncrypt malloc failed\n");
         goto exit;
     }
@@ -7818,8 +7856,6 @@ exit:
         XFREE(msg, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (out)
         XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (name)
-        XFREE(name, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #else
     wc_ecc_free(userB);
     wc_ecc_free(userA);
@@ -9021,6 +9057,14 @@ void bench_sphincsKeySign(byte level, byte optim)
         return (double)OSA_TimeGetMsec() / 1000;
     }
 
+#elif defined(WOLFSSL_CMSIS_RTOS) || defined(WOLFSSL_CMSIS_RTOSv2)
+
+    double current_time(int reset)
+    {
+        (void)reset;
+        return (double)osKernelGetTickCount() / 1000.0;
+    }
+
 #elif defined(WOLFSSL_EMBOS)
 
     #include "RTOS.h"
@@ -9354,7 +9398,9 @@ static void Usage(void)
     printf("%s", bench_Usage_msg1[lng_index][e]);   /* option -threads <num> */
 #endif
     e++;
+#ifdef WC_BENCH_TRACK_STATS
     printf("%s", bench_Usage_msg1[lng_index][e]);   /* option -print */
+#endif
 }
 
 /* Match the command line argument with the string.
@@ -9520,6 +9566,8 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
                 }
             }
         }
+#endif
+#ifdef WC_BENCH_TRACK_STATS
         else if (string_matches(argv[1], "-print")) {
             gPrintStats = 1;
         }
