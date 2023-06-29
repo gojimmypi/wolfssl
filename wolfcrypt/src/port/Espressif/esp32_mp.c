@@ -1066,13 +1066,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 
     if ((M->dp[0] & 1) == 0) {
-#ifdef WOLFSSL_DEBUG
+#ifdef DEBUG_WOLFSSL
         ESP_LOGW(TAG, "esp_mp_mulmod does not support even numbers");
 #endif
         ret = FP_HW_FALLBACK;
     }
 
-#ifdef WOLFSSL_DEBUG
+#ifdef DEBUG_WOLFSSL
     /* we're only validating HW when in debug mode */
     if (esp_hw_validation_active()) {
         return MP_HW_VALIDATION_ACTIVE;
@@ -1319,7 +1319,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
          *  Write (N/512bits - 1) to MULT_MODE_REG
          *  512 bits => 16 words */
         DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
-        #ifdef WOLFSSL_DEBUG
+        #ifdef DEBUG_WOLFSSL
         ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (hwWords_sz >> 4) - 1);
         #endif // WOLFSSL_DEBUG
 
