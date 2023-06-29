@@ -4691,55 +4691,19 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
     int ret = MP_OKAY;
-#ifndef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
-    ret = fp_mulmod(a, b, c, d);
-#else
+#ifdef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+    ret = esp_mp_mulmod(a, b, c, d);
 
-    int As; /* How many a bits? */
-    int Bs; /* How many b bits? */
-    As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
-    Bs = fp_count_bits(b);
-
-    if ((As >= ESP_RSA_MULM_BITS || Bs >= ESP_RSA_MULM_BITS) && !mp_iseven(c)) {
-        ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
-                      "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
-                       As, Bs, ESP_RSA_MULM_BITS);
-        if (esp_hw_validation_active()) {
-            ESP_LOGV(TAG, "Skipping call to esp_mp_mulmod "
-                          "during active validation.");
-        }
-        else {
-            ret = esp_mp_mulmod(a, b, c, d);
-            if (ret == MP_OKAY) {
-                ESP_LOGV(TAG, "Call to esp_mp_mulmod was successful");
-            }
-            else {
-                ESP_LOGE(TAG, "Failed call to esp_mp_mulmod. "
-                              "Exit code = %d", ret);
-            } /* esp_mp_mulmod exit check */
-
-            /* If HW errors actually encountered,
-            ** we are NOT falling through to SW.
-            **
-            ** Any future implementation:
-            ** save operands that may be overwritten! */
-        }
-    } /* ESP_RSA_MULM_BITS check  */
-    else {
-        ret = MP_HW_FALLBACK;
-        if (mp_iseven(c)) {
-            ESP_LOGW(TAG, "esp_mp_mulmod has even modulus");
-        }
-            ESP_LOGW(TAG,
-                 "esp_mp_mulmod did not meet criteria, "
-                 "Falling back to SW.");
-              }
-    /* depending on ESP_RSA_MULM_BITS setting, we may
-     ** fall through to SW: */
-    if ((esp_hw_validation_active()) || (ret == MP_HW_FALLBACK)) {
-      ret = fp_mulmod(a, b, c, d);
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "mp_mulmod HW success");
     }
-#endif /* HW: WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD*/
+    else {
+        ESP_LOGI(TAG, "mp_mulmod SW fallback, reason = %d", ret);
+        ret = fp_mulmod(a, b, c, d);
+    }
+#else /* no HW */
+    ret = fp_mulmod(a, b, c, d);
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
     return ret;
 }
 
