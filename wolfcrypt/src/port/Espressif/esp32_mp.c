@@ -1091,14 +1091,15 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if ((M->dp[0] & 1) == 0) {
 #ifdef DEBUG_WOLFSSL
-        ESP_LOGW(TAG, "esp_mp_mulmod does not support even numbers");
 #endif
+        ESP_LOGW(TAG, "esp_mp_mulmod does not support even numbers");
         ret = FP_HW_FALLBACK;
     }
 
 #ifdef DEBUG_WOLFSSL
     /* we're only validating HW when in debug mode */
     if (esp_hw_validation_active()) {
+        ESP_LOGW(TAG, "MP_HW_VALIDATION_ACTIVE");
         return MP_HW_VALIDATION_ACTIVE;
     }
 #endif
@@ -1159,10 +1160,18 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     Ms = mp_count_bits(M);
     ESP_LOGV(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
 
-    if ((Xs <= 8) || (Ys <= 8)) {
+//    if ((Xs <= 8) || (Ys <= 8)) {
+//        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
+//        ret = FP_HW_FALLBACK;
+//    }
+//    if (Xs <= 8) {
+//        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d", Xs);
+//        ret = FP_HW_FALLBACK;
+//    }
+    if (Ys <= 8) {
+        ESP_LOGW(TAG, "FP_HW_FALLBACK Ys = %d", Ys);
         ret = FP_HW_FALLBACK;
     }
-
     if (ret == FP_OKAY) {
         /* maximum bits and words for writing to HW */
         maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
@@ -1409,11 +1418,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         if (mp_cmp(tmpZ, M) == MP_GT) {
             /*  Z -= M  */
             mp_sub(tmpZ, M, tmpZ);
-            ESP_LOGI(TAG, "Z is greater than M");
+            ESP_LOGV(TAG, "Z is greater than M");
         }
         if (negcheck) {
             mp_sub(M, tmpZ, tmpZ);
-            ESP_LOGI(TAG, "neg check adjustment");
+            ESP_LOGV(TAG, "neg check adjustment");
         }
 
         mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
