@@ -4700,7 +4700,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     As = fp_count_bits(a); /* We'll count bits to see if HW worthwhile. */
     Bs = fp_count_bits(b);
 
-    if (As >= ESP_RSA_MULM_BITS && Bs >= ESP_RSA_MULM_BITS && !mp_iseven(c)) {
+    if ((As >= ESP_RSA_MULM_BITS || Bs >= ESP_RSA_MULM_BITS) && !mp_iseven(c)) {
         ESP_LOGV(TAG, "Both A's = %d and B's = %d are greater than "
                       "ESP_RSA_MULM_BITS = %d; Calling esp_mp_mulmod...",
                        As, Bs, ESP_RSA_MULM_BITS);
@@ -4726,10 +4726,11 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
         }
     } /* ESP_RSA_MULM_BITS check  */
     else {
+        ret = MP_HW_FALLBACK;
         if (mp_iseven(c)) {
-            ESP_LOGI(TAG, "esp_mp_mulmod has even modulus");
+            ESP_LOGW(TAG, "esp_mp_mulmod has even modulus");
         }
-        ESP_LOGI(TAG,
+            ESP_LOGW(TAG,
                  "esp_mp_mulmod did not meet criteria, "
                  "Falling back to SW.");
               }

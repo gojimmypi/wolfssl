@@ -252,6 +252,22 @@ static int esp_mp_hw_unlock( void )
     return ret;
 }
 
+/*
+**
+*/
+static int esp_mp_hw_islocked(void)
+{
+    int ret = 0;
+    TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
+    if (mutexHolder == NULL) {
+        // Mutex is not in use
+        ESP_LOGV(TAG, "esp_mp_hw_islocked = false");
+    } else {
+        ESP_LOGV(TAG, "esp_mp_hw_islocked = true");
+        ret = 1;
+    }
+    return ret;
+}
 
 #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
    || !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
@@ -336,10 +352,10 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 {
     int ret = MP_OKAY;
-    int this_extra;
+    uint16_t this_extra;
 
 /* TODO remove this section if MP_SIZE accepted into sp_int.h */
-    int dp_length = 0; (void) dp_length;
+    uint16_t dp_length = 0; (void) dp_length;
 #ifdef USE_FAST_MATH
     dp_length = FP_SIZE;
 #else
@@ -348,6 +364,10 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 /* TODO end */
 
     this_extra = Z->used;
+    if (this_extra > MP_SIZE) {
+        ESP_LOGW(TAG, "Warning Z->used: %d > MP_SIZE: %d", Z->used, MP_SIZE);
+        this_extra = MP_SIZE;
+    }
 
     while (Z->dp[this_extra] > 0 && (this_extra < MP_SIZE)) {
         ESP_LOGV(TAG, "Adjust! %d", this_extra);
@@ -1052,18 +1072,22 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T* tmpZ = NULL;
 #else
 */
-    fp_digit mp2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T r_inv[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T tmpZ[1]; /* TODO WOLFSSL_SMALL_STACK */
+    fp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T r_inv[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
 
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T M2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
-#endif
+    MATH_INT_T X2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T M2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
 
+    /* we're only validating HW when in debug mode */
+//    if (esp_hw_validation_active()) {
+//        return MP_HW_VALIDATION_ACTIVE;
+//    }
+#endif
 
     if ((M->dp[0] & 1) == 0) {
 #ifdef DEBUG_WOLFSSL
@@ -1112,10 +1136,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         SET_HW_VALIDATION;
         reti = mp_mulmod(X2, Y2, M2, Z2);
         if (reti == 0) {
-            ESP_LOGV(TAG, "wolfSSL mp_mulmod success");
+            ESP_LOGV(TAG, "wolfSSL mp_mulmod during vaidation success");
         }
         else {
-            ESP_LOGE(TAG, "wolfSSL mp_mulmod failed");
+            ESP_LOGE(TAG, "wolfSSL mp_mulmod during vaidation failed");
         }
         CLR_HW_VALIDATION;
     }
@@ -1165,9 +1189,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (ret == FP_OKAY) {
 #if CONFIG_IDF_TARGET_ESP32S3
         Exponent = maxWords_sz * BITS_IN_ONE_WORD * 2;
-        #else
+#else
         Exponent = hwWords_sz << 6;
-        #endif
+#endif
 
         ret = mp_init_multi(tmpZ, r_inv, NULL, NULL, NULL, NULL);
         if (ret == 0 && (ret = esp_get_rinv(r_inv, M, Exponent)) != MP_OKAY) {
@@ -1201,9 +1225,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         }
     }
 
-
     /* lock HW for use, enable peripheral clock */
-    ret = esp_mp_hw_lock();
+    if (ret == FP_OKAY) {
+        ret = esp_mp_hw_lock();
+    }
 
 #if CONFIG_IDF_TARGET_ESP32S3
     if (ret == FP_OKAY) {
@@ -1373,9 +1398,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     } /* step 1 .. 12 */
 
         /* step.13 clear and release HW                   */
-     esp_mp_hw_unlock();
-#endif /* Classic ESP32, non-S3 Xtensa */
+    if (esp_mp_hw_islocked()) {
+       esp_mp_hw_unlock();
+    }
+    #endif /* Classic ESP32, non-S3 Xtensa */
 
+    if (ret == FP_OKAY) {
         /* additional steps                               */
         /* this is needed for known issue when Z is greater than M */
         if (mp_cmp(tmpZ, M) == MP_GT) {
@@ -1391,8 +1419,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
         esp_clean_result(Z, 0);
+    }
 
-    #ifdef DEBUG_WOLFSSL
+#ifdef DEBUG_WOLFSSL
+    if (ret == FP_HW_FALLBACK) {
+        ESP_LOGI(TAG, "HW Fallback");
+    }
+    else {
+
         esp_mp_mulmod_usage_ct++;
         if (fp_cmp(X, X2) != 0) {
             // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
@@ -1446,18 +1480,19 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGI(TAG, "");
 
 
-        #ifndef NO_RECOVER_SOFTWARE_CALC
+            #ifndef NO_RECOVER_SOFTWARE_CALC
             ESP_LOGW(TAG, "Recovering mp_mul error with software result");
             mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
-        #else
+            #else
             ret = FP_VAL; /* if we are not recovering, then we have an error */
-        #endif
+            #endif
         }
         else {
             ESP_LOGV(TAG, "esp_mp_mulmod success!");
         }
-    #endif /* DEBUG_WOLFSSL */
+    }
 
+#endif /* DEBUG_WOLFSSL */
 
     mp_clear(tmpZ);
     mp_clear(r_inv);
