@@ -905,10 +905,6 @@ static int rng_crypto_cb(int thisDevId, wc_CryptoInfo* info, void* ctx)
     #define TEST_FAIL(msg, retval) return err_sys(msg, retval)
 #endif
 
-#ifdef HAVE_STACK_SIZE
-THREAD_RETURN WOLFSSL_THREAD wolfcrypt_test(void* args)
-#else
-
 const byte good[] = "A+Gd\0\0\0";
 
 wc_test_ret_t peek(const byte* in)
@@ -944,8 +940,13 @@ void main_mem()
 
 }
 
-int wolfcrypt_test(void* args)
-#endif
+
+#ifdef HAVE_STACK_SIZE
+THREAD_RETURN WOLFSSL_THREAD wolfcrypt_test(void* args)
+#else
+wc_test_ret_t wolfcrypt_test(void* args)
+#endif /* HAVE_STACK_SIZE */
+
 {
     wc_test_ret_t ret;
 #ifdef WOLFSSL_TRACK_MEMORY_VERBOSE
@@ -1845,7 +1846,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
     EXIT_TEST(ret);
-}
+} /* end of wolfcrypt_test() */
 
 #ifndef NO_MAIN_DRIVER
 
@@ -2729,19 +2730,25 @@ static int hw_math_test_mp_mulmod_4(void)
 
     /* X: */
     a->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     a->sign = 0;
+#endif
     a->dp[0] = 0x00000087; /*  0 */
 
     /* Y: */
 
     b->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     b->sign = 0;
+#endif
     b->dp[0] = 0x00000087; /*  0 */
 
     /* M: */
 
     c->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     c->sign = 0;
+#endif
     c->dp[0] = 0x0000001b; /*  0 */
 
     retf = mp_mulmod(a, b, c, d);
@@ -2851,6 +2858,8 @@ static int hw_math_test_mp_mulmod_8_word()
     return ret;
 }
 
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+
 static int hw_math_test_mp_mulmod_32_word_neg()
 {
     /*
@@ -2859,18 +2868,16 @@ static int hw_math_test_mp_mulmod_32_word_neg()
     **************************************************************************
     */
     /* MATH_INT_T is an opaque type. See types.h  */
+    int ret = MP_OKAY; /* assume success until proven otherwise */
+    int retf = MP_OKAY; /* assume success until proven otherwise */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
-
     mp_init(a);
     mp_init(b);
     mp_init(c); /* note init is required for SP_INT result , to assign size */
 
-#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     mp_init(a);
     mp_init(b);
     mp_init(c);
@@ -3051,9 +3058,9 @@ static int hw_math_test_mp_mulmod_32_word_neg()
                             e);
         ret = MP_VAL;
     }
-#endif /* negative operand test */
     return ret;
 }
+#endif /* negative operand test */
 
 static int hw_math_test_mp_mul_1(void)
 {
@@ -3174,7 +3181,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 
     ret = hw_math_test_mp_mulmod_2_word();
     ret = hw_math_test_mp_mulmod_8_word();
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     ret = hw_math_test_mp_mulmod_32_word_neg();
+#endif
     ret = hw_math_test_mp_mulmod_4();
 
     /* The most challenging test: one known to fail in HW */
