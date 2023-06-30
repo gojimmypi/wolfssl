@@ -433,9 +433,11 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
         ESP_LOGV(TAG, "no z-trim needed");
     }
 
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (Z->sign != 0) {
         Z->sign = 1;
     }
+#endif
     return ret;
 }
 
@@ -538,11 +540,11 @@ int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
         if (0 != XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32))) {
             ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint "
                            "a second time. Giving up.");
-            ret = FP_VAL;
+            ret = MP_VAL;
         }
         else {
             ESP_LOGI(TAG, "Successfully re-read after Validation Failure.");
-            ret = FP_OKAY;
+            ret = MP_VAL;
         }
     }
 #endif
@@ -606,7 +608,7 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
     len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)hwords);
     if (len != 0) {
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 #endif
     return ret;
@@ -686,14 +688,14 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 /* during debug, we'll track some useage metrics */
 int esp_show_usage_metrics(void)
 {
-    int ret = FP_OKAY;
+    int ret = MP_OKAY;
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %d", esp_mp_mul_usage_ct);
     if (esp_mp_mul_error_ct == 0) {
         ESP_LOGI(TAG, "Success: no esp_mp_mul() errors.");
     }
     else {
         ESP_LOGW(TAG, "Number of esp_mp_mul failures: %d", esp_mp_mul_error_ct);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %d", esp_mp_mulmod_usage_ct);
@@ -702,7 +704,7 @@ int esp_show_usage_metrics(void)
     }
     else {
         ESP_LOGW(TAG, "Number of esp_mp_mul failures: %d", esp_mp_mulmod_error_ct);
-        ret = FP_VAL;
+        ret = MP_VAL;
     }
 
     return ret;
@@ -885,10 +887,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
 
-    if (Zs <= sizeof(fp_digit)) {
+    if (Zs <= sizeof(mp_digit)) {
         Z->dp[0] = X->dp[0] * Y->dp[0];
         Z->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
         Z->sign = neg;
+#endif
         return MP_OKAY;
     }
 
@@ -1049,7 +1053,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGW(TAG, "Recovering mp_mul error with software result");
         mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
     #else
-        ret = FP_VAL;
+        ret = MP_VAL;
     #endif
     }
 #endif
@@ -1058,7 +1062,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     esp_mp_hw_unlock();
 
 #ifdef WOLFSSL_HW_METRICS
-    if (ret != FP_OKAY) {
+    if (ret != MP_OKAY) {
         esp_mp_mul_error_ct++; /* includes fallback */
     }
 #endif
@@ -1079,7 +1083,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
     /* not working properly */
-    int ret = FP_OKAY;
+    int ret = MP_OKAY;
     int negcheck = 0;
 #ifdef DEBUG_WOLFSSL
     int reti = 0; /* interim return value used only during HW==SW validation */
@@ -1100,7 +1104,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T* tmpZ = NULL;
 #else
 */
-    fp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    mp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T r_inv[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
 
@@ -1117,7 +1121,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_mp_mulmod_even_mod_ct++;
 #endif
         ESP_LOGV(TAG, "esp_mp_mulmod does not support even numbers");
-        ret = FP_HW_FALLBACK;
+        ret = MP_HW_FALLBACK;
     }
 
 #ifdef DEBUG_WOLFSSL
@@ -1196,10 +1200,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_small_y_ct++;
 #endif
-        ESP_LOGV(TAG, "FP_HW_FALLBACK Ys = %d", Ys);
-        ret = FP_HW_FALLBACK;
+        ESP_LOGV(TAG, "MP_HW_FALLBACK Ys = %d", Ys);
+        ret = MP_HW_FALLBACK;
     }
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         /* maximum bits and words for writing to HW */
         maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
         zwords      = bits2words(min(Ms, Xs + Ys));
@@ -1222,7 +1226,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     *    accordingly R^2 = 2^(n*32*2)
     */
 
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
 #if CONFIG_IDF_TARGET_ESP32S3
         Exponent = maxWords_sz * BITS_IN_ONE_WORD * 2;
 #else
@@ -1250,10 +1254,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         }
     }
 
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         ret = mp_montgomery_setup(M, mp2);
         /* Calculate M' */
-        if (ret == FP_OKAY) {
+        if (ret == MP_OKAY) {
             ret = esp_calc_Mdash(M, 32/* bits */, &mp);
         }
         else {
@@ -1262,12 +1266,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* lock HW for use, enable peripheral clock */
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         ret = esp_mp_hw_lock();
     }
 
 #if CONFIG_IDF_TARGET_ESP32S3
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
@@ -1370,12 +1374,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     * refresh these registers or memory blocks if the values remain the same.
     */
 
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         /* Prep wait for the engine */
         ret = esp_mp_hw_wait_clean();
     }
 
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         /* step.1
          *  Write (N/512bits - 1) to MULT_MODE_REG
          *  512 bits => 16 words */
@@ -1439,7 +1443,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
     #endif /* Classic ESP32, non-S3 Xtensa */
 
-    if (ret == FP_OKAY) {
+    if (ret == MP_OKAY) {
         /* additional steps                               */
         /* this is needed for known issue when Z is greater than M */
         if (mp_cmp(tmpZ, M) == MP_GT) {
@@ -1459,13 +1463,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #ifdef WOLFSSL_HW_METRICS
     esp_mp_mulmod_usage_ct++;
-    if (ret == FP_HW_FALLBACK) {
+    if (ret == MP_HW_FALLBACK) {
         ESP_LOGV(TAG, "HW Fallback");
         esp_mp_mulmod_fallback_ct++;
     }
 #endif
 #ifdef DEBUG_WOLFSSL
-    if (ret == FP_HW_FALLBACK) {
+    if (ret == MP_HW_FALLBACK) {
         ESP_LOGI(TAG, "HW Fallback");
     }
     else {
@@ -1525,7 +1529,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGW(TAG, "Recovering mp_mul error with software result");
             mp_copy(Z2, Z); /* copy (src = Z2) to (dst = Z) */
             #else
-            ret = FP_VAL; /* if we are not recovering, then we have an error */
+            ret = MP_VAL; /* if we are not recovering, then we have an error */
             #endif
         }
         else {
@@ -1651,7 +1655,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
     }
 
 
-    fp_digit mp2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    mp_digit mp2[1]; /* TODO WOLFSSL_SMALL_STACK */
     ret = mp_montgomery_setup(M, mp2);
 
     /* calc M' */
