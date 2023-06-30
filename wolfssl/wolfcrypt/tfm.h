@@ -309,12 +309,13 @@
 #define FP_MEM         (-2)
 #define FP_NOT_INF     (-3)
 #define FP_WOULDBLOCK  (-4)
-#define FP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY */
-#define FP_HW_FALLBACK (-8) /* signal to caller to fall back to SW */
+#define FP_NOT_USED    (-5) /* not used, here for consistency only   */
+#define FP_HW_ERROR    (-6) /* hardware error, consider SW fallback  */
+#define FP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY       */
+#define FP_HW_FALLBACK (-8) /* signal to caller to fall back to SW   */
+#define FP_HW_VALIDATION_ACTIVE (-9) /* optional HW validation ative */
 
-/* typically used only during debugging, validation active
- * will prevent recursive calls to HW for SW validation check.*/
-#define FP_HW_VALIDATION_ACTIVE (-8)
+#define FP_RANGE       MP_HW_VALIDATION_ACTIVE /* range is last item */
 
 /* equalities */
 #define FP_LT        (-1)   /* less than */

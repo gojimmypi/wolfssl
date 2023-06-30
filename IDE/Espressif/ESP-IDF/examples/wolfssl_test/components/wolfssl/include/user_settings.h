@@ -242,3 +242,13 @@
 #define WOLFSSL_ATECC508A
 #define ATCA_WOLFSSL
 */
+
+/* USE_FAST_MAT is default */
+
+/* use SP_MATH */
+// #undef USE_FAST_MATH
+// #define WOLFSSL_SP_MATH_ALL
+
+/* use integer heap math */
+//#undef USE_FAST_MATH
+//#define USE_INTEGER_HEAP_MATH
