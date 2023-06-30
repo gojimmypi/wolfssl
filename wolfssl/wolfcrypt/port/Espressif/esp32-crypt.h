@@ -112,6 +112,9 @@
 **   When defined, will NOT recover software calculation result when not
 **   matched with hardware. Useful only during development. Needs DEBUG_WOLFSSL
 **
+** ESP_NO_ERRATA_MITIGATION
+**   Disable all errata mitigation code.
+**
 *******************************************************************************
 ** Settings used from <esp_idf_version.h>
 *******************************************************************************
@@ -358,7 +361,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     /* Y = (G ^ X) mod P   : wolfSSL DH reference notation */
     int esp_mp_exptmod(MATH_INT_T* X,    /* G  */
                        MATH_INT_T* Y,    /* X  */
-                       word32 Xbits, /* Ys   typically = mp_count_bits (X) */
+                       word32 Xbits, /* Xs   typically = mp_count_bits (X) */
                        MATH_INT_T* M,    /* P  */
                        MATH_INT_T* Z);   /* Y  */
     /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
@@ -389,6 +392,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
 #endif /* !NO_RSA || HAVE_ECC*/
 
+
 int esp_hw_validation_active(void);
 
 #ifdef DEBUG_WOLFSSL
@@ -397,6 +401,15 @@ int esp_hw_validation_active(void);
 
 #ifdef WOLFSSL_HW_METRICS
    int esp_hw_show_mp_metrics(void);
+#endif
+
+#define ESP_MP_HW_LOCK_MAX_DELAY ( TickType_t ) 0xffUL
+
+#ifndef ESP_NO_ERRATA_MITIGATION
+    #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {asm volatile("memw");}
+    #define ESP_EM__MP_HW_WAIT_CLEAN     {asm volatile("memw");}
+    #define ESP_EM__POST_SP_MP_HW_LOCK   {asm volatile("memw");}
+
 #endif
 
 /* end c++ wrapper */

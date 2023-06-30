@@ -81,6 +81,7 @@ static const char* const TAG = "wolfssl_esp32_mp";
     #define WOLFSSL_HW_METRICS /* metrics always on during debug */
 #endif
 
+/* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
     static uint32_t esp_mp_mul_usage_ct = 0;
     static uint32_t esp_mp_mulmod_usage_ct = 0;
@@ -132,17 +133,16 @@ static int esp_mp_hw_wait_clean(void)
       /*  wait. expected delay 1 to 2 uS  */
     }
 #else
-  /* RSA_CLEAN_REG is now called RSA_QUERY_CLEAN_REG.
-   * hwcrypto_reg.h maintains RSA_CLEAN_REG for backwards compatibility:
-   * so this block _might_ not be needed. */
-    asm volatile("memw");
+    /* RSA_CLEAN_REG is now called RSA_QUERY_CLEAN_REG.
+    ** hwcrypto_reg.h maintains RSA_CLEAN_REG for backwards compatibility:
+    ** so this block _might_ not be needed. */
+    ESP_EM__PRE_MP_HW_WAIT_CLEAN
 
     /* wait until ready,
-     * or timeout counter exceeds ESP_RSA_TIMEOUT_CNT in user_settings */
-
+    ** or timeout counter exceeds ESP_RSA_TIMEOUT_CNT in user_settings */
     while(!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_CLEAN_REG) == 0) {
         /*  wait. expected delay 1 to 2 uS  */
-        asm volatile("memw");
+        ESP_EM__MP_HW_WAIT_CLEAN
     }
 #endif
 
@@ -192,14 +192,13 @@ static int esp_mp_hw_lock()
         }
     }
     else {
-        /* ESP AES has already been initialized */
+        /* mp_mutex has already been initialized */
     }
 
     /* Set our mutex to indicate the HW is in use */
     if (ret == 0) {
         /* lock hardware */
-        /* we don't actually want to wait forever  TODO */
-        ret = esp_CryptHwMutexLock(&mp_mutex, portMAX_DELAY);
+        ret = esp_CryptHwMutexLock(&mp_mutex, ESP_MP_HW_LOCK_MAX_DELAY);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
             ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
@@ -223,13 +222,12 @@ static int esp_mp_hw_lock()
 
         /* clear bit to enable hardware operation; (set to disable) */
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
-        asm volatile("memw");
+        ESP_EM__POST_SP_MP_HW_LOCK
     }
 #endif
 
     /* reminder: wait until RSA_CLEAN_REG reads 1
-     *  see esp_mp_hw_wait_clean()
-     */
+    **   see esp_mp_hw_wait_clean() */
 
     ESP_LOGV(TAG, "leave esp_mp_hw_lock");
     return ret;
@@ -292,8 +290,9 @@ static int esp_mp_hw_islocked(void)
 }
 
 #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
-   || !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
-   /* M' only used for mulmod and mulexp_mod */
+      || \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+/* M' only used for mulmod and mulexp_mod */
 
 /* M' M-Prime Calculation for HW Accelerator */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
@@ -368,7 +367,7 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 
     return ret;
 }
-#endif /* ! xEXPTMOD || ! xMULMOD for M' */
+#endif /* !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_[MULMOD/EXPTMOD] for M' */
 
 /* the result may need to have extra bytes zeroed or used length adjusted */
 static int esp_clean_result(MATH_INT_T* Z, int used_padding)
