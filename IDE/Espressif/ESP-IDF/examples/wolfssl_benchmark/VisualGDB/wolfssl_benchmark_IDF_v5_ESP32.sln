@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{BDD0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E25A35EF-64B9-48AA-939B-49340C2A4B03}"
 	ProjectSection(SolutionItems) = preProject
+		..\benchmark_output_ESP32.txt = ..\benchmark_output_ESP32.txt
 		..\sdkconfig = ..\sdkconfig
 		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
 	EndProjectSection
