@@ -4695,10 +4695,15 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     ret = esp_mp_mulmod(a, b, c, d);
 
     if (ret == MP_OKAY) {
-        ESP_LOGV(TAG, "mp_mulmod HW success");
+        ESP_LOGV(TAG, "esp_mp_mulmod HW success");
     }
     else {
-        ESP_LOGI(TAG, "mp_mulmod SW fallback, reason = %d", ret);
+        if (ret == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", ret);
+        }
+        else {
+            ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", ret);
+        }
         ret = fp_mulmod(a, b, c, d);
     }
 #else /* no HW */
