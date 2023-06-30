@@ -69,15 +69,22 @@ static const char* const TAG = "wolfssl_esp32_mp";
 
 #ifdef DEBUG_WOLFSSL
     static int hw_validation = 0; /* are we validating HW and SW? (prevent call to HW) */
-    static int esp_mp_mul_usage_ct = 0; /* how many times as esp_mul() been called ? */
-    static int esp_mp_mulmod_usage_ct = 0; /* how many times as esp_mul() been called ? */
-    static int esp_mp_mul_error_ct = 0; /* how many esp_mul() validation failures have been encountered? */
-    static int esp_mp_mulmod_error_ct = 0; /* how many esp_mul() validation failures have been encountered? */
     #define SET_HW_VALIDATION {hw_validation = 1;}
     #define CLR_HW_VALIDATION {hw_validation = 0;}
     #define IS_HW_VALIDATION (hw_validation == 1)
+    #undef WOLFSSL_HW_METRICS
+    #define WOLFSSL_HW_METRICS /* metrics always on during debug */
 #endif
 
+#ifdef WOLFSSL_HW_METRICS
+    static uint32_t esp_mp_mul_usage_ct = 0;
+    static uint32_t esp_mp_mulmod_usage_ct = 0;
+    static uint32_t esp_mp_mulmod_fallback_ct = 0;
+    static uint32_t esp_mp_mulmod_even_mod_ct = 0;
+    static uint32_t esp_mp_mulmod_small_y_ct = 0;
+    static uint32_t esp_mp_mul_error_ct = 0;
+    static uint32_t esp_mp_mulmod_error_ct = 0;
+#endif
 
 /* mutex */
 static wolfSSL_Mutex mp_mutex;
@@ -774,7 +781,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
     }
     else {
-
         SET_HW_VALIDATION;
         mp_mul(X2, Y2, Z2);
         CLR_HW_VALIDATION;
@@ -996,8 +1002,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     // TODO confirm WOLFSSL_SP_INT_NEGATIVE Z->sign = X->sign ^ Y->sign;
     esp_clean_result(Z, 0);
 
-#ifdef DEBUG_WOLFSSL
+#ifdef WOLFSSL_HW_METRICS
     esp_mp_mul_usage_ct++;
+#endif
+#ifdef DEBUG_WOLFSSL
     if (fp_cmp(X, X2) != 0) {
         // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
     }
@@ -1006,7 +1014,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
     if (fp_cmp(Z, Z2) != 0) {
         int found_z_used = Z->used;
-        esp_mp_mul_error_ct++;
 
         ESP_LOGE(TAG, "mp_mul Z vs Z2 mismatch!");
         ESP_LOGI(TAG, "Xs            = %d", Xs);
@@ -1034,6 +1041,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* step.7 clear and release HW                    */
     esp_mp_hw_unlock();
+
+#ifdef WOLFSSL_HW_METRICS
+    if (ret != FP_OKAY) {
+        esp_mp_mul_error_ct++; /* includes fallback */
+    }
+#endif
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
@@ -1082,17 +1095,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T M2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T Z2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T PEEK[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-
-    /* we're only validating HW when in debug mode */
-//    if (esp_hw_validation_active()) {
-//        return MP_HW_VALIDATION_ACTIVE;
-//    }
 #endif
 
     if ((M->dp[0] & 1) == 0) {
-#ifdef DEBUG_WOLFSSL
+#ifdef WOLFSSL_HW_METRICS
+        esp_mp_mulmod_even_mod_ct++;
 #endif
-        ESP_LOGW(TAG, "esp_mp_mulmod does not support even numbers");
+        ESP_LOGV(TAG, "esp_mp_mulmod does not support even numbers");
         ret = FP_HW_FALLBACK;
     }
 
@@ -1169,7 +1178,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 //        ret = FP_HW_FALLBACK;
 //    }
     if (Ys <= 8) {
-        ESP_LOGW(TAG, "FP_HW_FALLBACK Ys = %d", Ys);
+        esp_mp_mulmod_small_y_ct++;
+        ESP_LOGV(TAG, "FP_HW_FALLBACK Ys = %d", Ys);
         ret = FP_HW_FALLBACK;
     }
     if (ret == FP_OKAY) {
@@ -1406,9 +1416,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, tmpZ, zwords);
     } /* step 1 .. 12 */
 
-        /* step.13 clear and release HW                   */
+    /* step.13 clear and release HW                   */
     if (esp_mp_hw_islocked()) {
-       esp_mp_hw_unlock();
+        esp_mp_hw_unlock();
     }
     #endif /* Classic ESP32, non-S3 Xtensa */
 
@@ -1430,13 +1440,18 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_clean_result(Z, 0);
     }
 
+#ifdef WOLFSSL_HW_METRICS
+    esp_mp_mulmod_usage_ct++;
+    if (ret == FP_HW_FALLBACK) {
+        ESP_LOGV(TAG, "HW Fallback");
+        esp_mp_mulmod_fallback_ct++;
+    }
+#endif
 #ifdef DEBUG_WOLFSSL
     if (ret == FP_HW_FALLBACK) {
         ESP_LOGI(TAG, "HW Fallback");
     }
     else {
-
-        esp_mp_mulmod_usage_ct++;
         if (fp_cmp(X, X2) != 0) {
             // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
         }
@@ -1778,3 +1793,26 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_
         * !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
 #endif /* !NO_RSA || HAVE_ECC */
+
+#ifdef WOLFSSL_HW_METRICS
+int esp_hw_show_mp_metrics(void)
+{
+    int ret = 0;
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
+                   esp_mp_mul_usage_ct);
+    ESP_LOGW(TAG, "Number of esp_mp_mul failures: %lu",
+                   esp_mp_mul_error_ct);
+
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %lu",
+                   esp_mp_mulmod_usage_ct);
+    ESP_LOGW(TAG, "Number of esp_mp_mulmod failures: %lu",
+                   esp_mp_mulmod_error_ct);
+    ESP_LOGW(TAG, "Number of esp_mp_mulmod even mod: %lu",
+                   esp_mp_mulmod_even_mod_ct);
+    ESP_LOGW(TAG, "Number of esp_mp_mulmod small y: %lu",
+                   esp_mp_mulmod_small_y_ct);
+
+    return ret;
+}
+#endif
+

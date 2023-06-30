@@ -1840,6 +1840,10 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
     TEST_PASS("Test complete\n");
 
+#ifdef WOLFSSL_HW_METRICS
+    esp_hw_show_mp_metrics();
+#endif
+
     EXIT_TEST(ret);
 }
 
@@ -2388,6 +2392,7 @@ static int hw_math_test_challenge_1(void)
                           "32 word test, positive operands: a * b mod c"
     /* check d == e; d = (a * b mod c) */
     if ((ret == 0) && (mp_cmp(d, e) == 0)) {
+        /* even modulus will not match! */
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {

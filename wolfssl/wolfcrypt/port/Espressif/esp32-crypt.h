@@ -88,8 +88,12 @@
 ** Optional Settings:
 *******************************************************************************
 **
+** WOLFSSL_HW_METRICS
+**   Enables metric counters for calls to HW, succes, fallback.
+**
 ** DEBUG_WOLFSSL
 **   Turns on development testing. Validates HW accelerated results to software
+**   - Automatically turns on WOLFSSL_HW_METRICS
 **
 ** LOG_LOCAL_LEVEL
 **   Debugging. Default value is ESP_LOG_DEBUG
@@ -388,6 +392,9 @@ int esp_hw_validation_active(void);
     int esp_show_usage_metrics(void);
 #endif /* DEBUG_WOLFSSL */
 
+#ifdef WOLFSSL_HW_METRICS
+   int esp_hw_show_mp_metrics(void);
+#endif
 
 /* end c++ wrapper */
 #ifdef __cplusplus
