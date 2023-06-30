@@ -99,7 +99,7 @@
 **   Debugging. Default value is ESP_LOG_DEBUG
 **
 ** ESP_VERIFY_MEMBLOCK
-**   Used to re-read data from registers in esp32_mp and verify written contents
+**   Used to re-read data from registers in esp32_mp & verify written contents
 **   actually match the source data.
 **
 ** WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
@@ -235,8 +235,10 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     } ESP32_AESPROCESS;
 
     struct Aes; /* see aes.h */
-    int wc_esp32AesCbcEncrypt(struct Aes* aes, byte* out, const byte* in, word32 sz);
-    int wc_esp32AesCbcDecrypt(struct Aes* aes, byte* out, const byte* in, word32 sz);
+    int wc_esp32AesCbcEncrypt(struct Aes* aes, byte* out,
+                              const byte* in, word32 sz);
+    int wc_esp32AesCbcDecrypt(struct Aes* aes, byte* out,
+                              const byte* in, word32 sz);
     int wc_esp32AesEncrypt(struct Aes *aes, const byte* in, byte* out);
     int wc_esp32AesDecrypt(struct Aes *aes, const byte* in, byte* out);
 
@@ -254,7 +256,8 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
      defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512) \
    )
 
-    /* RAW hash function APIs are not implemented with esp32 hardware acceleration*/
+    /* RAW hash function APIs are not implemented with
+     * esp32 hardware acceleration*/
     #define WOLFSSL_NO_HASH_RAW
     #define SHA_CTX ETS_SHAContext
 
@@ -390,7 +393,7 @@ int esp_hw_validation_active(void);
 
 #ifdef DEBUG_WOLFSSL
     int esp_show_usage_metrics(void);
-#endif /* DEBUG_WOLFSSL */
+#endif
 
 #ifdef WOLFSSL_HW_METRICS
    int esp_hw_show_mp_metrics(void);
