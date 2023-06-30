@@ -2052,8 +2052,7 @@ WOLFSSL_LOCAL int DoTls13Finished(WOLFSSL* ssl, const byte* input, word32* inOut
 WOLFSSL_LOCAL int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                                     int sniff);
 /* TLS v1.3 needs these */
-WOLFSSL_LOCAL int  HandleTlsResumption(WOLFSSL* ssl, int bogusID,
-                                       Suites* clSuites);
+WOLFSSL_LOCAL int  HandleTlsResumption(WOLFSSL* ssl, Suites* clSuites);
 #ifdef WOLFSSL_TLS13
 WOLFSSL_LOCAL byte SuiteMac(const byte* suite);
 #endif
@@ -5156,6 +5155,9 @@ typedef struct CIDInfo CIDInfo;
 /* wolfSSL ssl type */
 struct WOLFSSL {
     WOLFSSL_CTX*    ctx;
+#if defined(WOLFSSL_HAPROXY)
+    WOLFSSL_CTX*    initial_ctx; /* preserve session key materials */
+#endif
     Suites*         suites; /* Only need during handshake. Can be NULL when
                              * re-using the context's object. When WOLFSSL
                              * object needs separate instance of suites use
