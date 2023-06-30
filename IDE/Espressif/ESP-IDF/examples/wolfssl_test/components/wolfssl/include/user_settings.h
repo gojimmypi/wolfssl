@@ -118,7 +118,7 @@
     /* X bits of G^X mod P greater than                            */
     #define EPS_RSA_EXPT_XBTIS           32 /* NOTE HW unreliable for small values! */
     /* X and Y of X * Y mod P greater than                         */
-    #define ESP_RSA_MULM_BITS            0
+    #define ESP_RSA_MULM_BITS            9
 #endif
 
 
@@ -201,9 +201,10 @@
 
 /* debug options */
 #define ESP_VERIFY_MEMBLOCK
-#define DEBUG_WOLFSSL_VERBOSE
-#define DEBUG_WOLFSSL
-#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#define WOLFSSL_HW_METRICS
+//#define DEBUG_WOLFSSL_VERBOSE
+//#define DEBUG_WOLFSSL
+//#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
