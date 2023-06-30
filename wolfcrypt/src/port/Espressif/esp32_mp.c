@@ -54,6 +54,11 @@
 #endif
 #include <wolfssl/wolfcrypt/wolfmath.h>
 
+#ifndef SINGLE_THREADED
+    /* Espressif freeRTOS */
+    #include <freertos/semphr.h>
+#endif
+
 static const char* const TAG = "wolfssl_esp32_mp";
 
 #define ESP_HW_RSAMAX_BIT           4096
@@ -265,14 +270,24 @@ static int esp_mp_hw_unlock( void )
 static int esp_mp_hw_islocked(void)
 {
     int ret = 0;
+#ifdef SINGLE_THREADED
+    if (mp_mutex == 0) {
+        // Mutex is not in use
+        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
+    } else {
+        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = true");
+        ret = 1;
+    }
+#else
     TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
     if (mutexHolder == NULL) {
         // Mutex is not in use
-        ESP_LOGV(TAG, "esp_mp_hw_islocked = false");
+        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
     } else {
-        ESP_LOGV(TAG, "esp_mp_hw_islocked = true");
+        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
         ret = 1;
     }
+#endif
     return ret;
 }
 
@@ -704,6 +719,7 @@ int esp_hw_validation_active(void)
     return 0; /* we're never validating when not debugging */
 #endif
 }
+
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Multiplication
  *
@@ -1178,7 +1194,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 //        ret = FP_HW_FALLBACK;
 //    }
     if (Ys <= 8) {
+#ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_small_y_ct++;
+#endif
         ESP_LOGV(TAG, "FP_HW_FALLBACK Ys = %d", Ys);
         ret = FP_HW_FALLBACK;
     }
