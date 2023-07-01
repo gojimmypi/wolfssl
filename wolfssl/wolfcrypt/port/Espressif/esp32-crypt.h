@@ -410,6 +410,33 @@ int esp_hw_validation_active(void);
     #define ESP_EM__MP_HW_WAIT_CLEAN     {asm volatile("memw");}
     #define ESP_EM__POST_SP_MP_HW_LOCK   {asm volatile("memw");}
 
+    /* When the CPU frequency is 160 MHz, add six “nop” between two consecutive
+    ** FIFO reads. When the CPU frequency is 240 MHz, add seven “nop” between
+    ** two consecutive FIFO reads.  See 3.16 */
+    #if defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_80)
+        #define ESP_EM__POST_PROCESS_NOP_CT  (1)
+    #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160)
+        #define ESP_EM__POST_PROCESS_NOP_CT  (6)
+    #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240)
+        #define ESP_EM__POST_PROCESS_NOP_CT  (7)
+    #else
+        #define ESP_EM__POST_PROCESS_NOP_CT  (1)
+    #endif
+
+    #define ESP_EM__POST_PROCESS_START {                         \
+        asm volatile("memw");                                    \
+        for (int i = 0; i < ESP_EM__POST_PROCESS_NOP_CT; i++) {  \
+            asm volatile("nop"); /* wait */                      \
+        }                                                        \
+    }; /* end ESP_EM__POST_PROCESS_START */
+
+    #define ESP_EM__DPORT_FIFO_READ {                            \
+        asm volatile("memw");                                    \
+        for (int i = 0; i < ESP_EM__POST_PROCESS_NOP_CT; i++) {  \
+            asm volatile("nop"); /* wait */                      \
+        }                                                        \
+    }; /* end ESP_EM__DPORT_FIFO_READ */
+
 #endif
 
 /* end c++ wrapper */

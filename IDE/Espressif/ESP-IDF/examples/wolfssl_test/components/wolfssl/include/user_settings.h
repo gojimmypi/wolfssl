@@ -243,7 +243,7 @@
 #define ATCA_WOLFSSL
 */
 
-/* USE_FAST_MAT is default */
+/* USE_FAST_MATH is default */
 
 /* use SP_MATH */
 // #undef USE_FAST_MATH

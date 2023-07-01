@@ -78,7 +78,7 @@ static const char* const TAG = "wolfssl_esp32_mp";
     #define CLR_HW_VALIDATION {hw_validation = 0;}
     #define IS_HW_VALIDATION (hw_validation == 1)
     #undef WOLFSSL_HW_METRICS
-    #define WOLFSSL_HW_METRICS /* metrics always on during debug */
+    #define WOLFSSL_HW_METRICS /* usage metrics always on during debug */
 #endif
 
 /* usage metrics can be turned on independently of debugging */
@@ -234,7 +234,7 @@ static int esp_mp_hw_lock()
 }
 
 /*
-*   Release HW engine
+**  Release HW engine
 */
 static int esp_mp_hw_unlock( void )
 {
@@ -247,8 +247,7 @@ static int esp_mp_hw_unlock( void )
     periph_module_disable(PERIPH_RSA_MODULE);
 
 #else
-    /* set bit to disabled hardware operation; (clear to enable)
-     */
+    /* set bit to disabled hardware operation; (clear to enable) */
     DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
 
     /* Disable RSA hardware */
@@ -263,14 +262,17 @@ static int esp_mp_hw_unlock( void )
 }
 
 /*
+** esp_mp_hw_islocked() - detect if we've locked the HW for use.
 **
+** WARNING: this does *not* detect separate calls to the
+**          periph_module_disable() and periph_module_enable().
 */
 static int esp_mp_hw_islocked(void)
 {
     int ret = 0;
 #ifdef SINGLE_THREADED
     if (mp_mutex == 0) {
-        // Mutex is not in use
+        /* not in use */
         ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
     } else {
         ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = true");
@@ -279,7 +281,7 @@ static int esp_mp_hw_islocked(void)
 #else
     TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
     if (mutexHolder == NULL) {
-        // Mutex is not in use
+        /* Mutex is not in use */
         ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
     } else {
         ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
@@ -289,12 +291,11 @@ static int esp_mp_hw_islocked(void)
     return ret;
 }
 
+/* mulmod and mulexp_mod HW accelerator need mongomery math prep: M' */
 #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
       || \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
-/* M' only used for mulmod and mulexp_mod */
 
-/* M' M-Prime Calculation for HW Accelerator */
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
     int ret = MP_OKAY;
@@ -375,7 +376,8 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     int ret = MP_OKAY;
     uint16_t this_extra;
 
-/* TODO remove this section if MP_SIZE accepted into sp_int.h */
+/* TODO remove this section if MP_SIZE accepted into sp_int.h
+** See https://github.com/wolfSSL/wolfssl/pull/6565 */
     uint16_t dp_length = 0; (void) dp_length;
 #ifdef USE_FAST_MATH
     dp_length = FP_SIZE;
@@ -435,7 +437,7 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (Z->sign != 0) {
-        Z->sign = 1;
+        Z->sign = 1; /* any value other than zero is assumed negative */
     }
 #endif
     return ret;
@@ -444,16 +446,16 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 /* start HW process */
 static void process_start(word32 reg)
 {
+    /* see 3.16 "software needs to always use the "volatile"
+    ** attribute when accessing registers in these two address spaces. */
     DPORT_REG_WRITE(reg, 1);
-    asm volatile("memw");
-    for (int i = 0; i < 1000; i++) {
-        asm volatile("nop"); /* wait */
-    }
+    ESP_EM__POST_PROCESS_START
 }
 
 /* wait until done */
-static int wait_until_done(volatile u_int32_t reg)
+static int wait_until_done(volatile uint32_t reg)
 {
+    int ret = MP_OKAY;
     word32 timeout = 0;
     /* wait until done && not timeout */
     asm volatile("memw");
@@ -462,9 +464,10 @@ static int wait_until_done(volatile u_int32_t reg)
         asm volatile("nop"); /* wait */
     }
 
-    for (int i = 0; i < 1000; i++) {
-        asm volatile("nop"); /* wait */
-    }
+//    for (int i = 0; i < 1000; i++) {
+//        asm volatile("nop"); /* wait */
+//    }
+    ESP_EM__DPORT_FIFO_READ
 
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
@@ -472,19 +475,19 @@ static int wait_until_done(volatile u_int32_t reg)
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
-        return MP_NG;
+        ret = MP_HW_ERROR;
     }
 
-    for (int i = 0; i < 1000; i++) {
-        asm volatile("nop"); /* wait */
-    }
+//    for (int i = 0; i < 1000; i++) {
+//        asm volatile("nop"); /* wait */
+//    }
 
-    return MP_OKAY;
+    return ret;
 }
 
 /* read data from memory into mp_init          */
 static // __attribute__((optimize("O0")))
-int esp_memblock_to_mpint(volatile const u_int32_t mem_address,
+int esp_memblock_to_mpint(volatile const uint32_t mem_address,
                           volatile MATH_INT_T* mp,
                                  word32 numwords)
 {
