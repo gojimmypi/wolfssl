@@ -790,8 +790,10 @@ int  fp_sqr_comba64(fp_int *a, fp_int *b);
 #define MP_ERROR FP_ERROR /* generic math error */
 #define MP_HW_ERROR FP_HW_ERROR /* hardware failure */
 #define MP_HW_BUSY FP_HW_BUSY /* hardware is busy, need to fall back to SW */
-#define MP_HW_VALIDATION_ACTIVE FP_HW_VALIDATION_ACTIVE
 #define MP_HW_FALLBACK FP_HW_FALLBACK /* detected data that needs SW */
+#define MP_HW_VALIDATION_ACTIVE FP_HW_VALIDATION_ACTIVE
+#define MP_RANGE FP_RANGE /* range is last item */
+
 #define MP_NO   FP_NO   /* yes/no result */
 #define MP_YES  FP_YES  /* yes/no result */
 #define MP_ZPOS FP_ZPOS
