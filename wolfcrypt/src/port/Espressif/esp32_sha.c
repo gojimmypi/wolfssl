@@ -842,7 +842,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         /* ESP32-C3 RISC-V TODO */
-	#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
 
     /* Translate from Wolf SHA type to hardware algorithm. */
     HardwareAlgorithm = 0;

@@ -252,3 +252,5 @@
 /* use integer heap math */
 //#undef USE_FAST_MATH
 //#define USE_INTEGER_HEAP_MATH
+
+// #define USE_ESP_DPORT_ACCESS_READ_BUFFER

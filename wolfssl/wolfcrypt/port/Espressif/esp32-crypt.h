@@ -115,6 +115,9 @@
 ** ESP_NO_ERRATA_MITIGATION
 **   Disable all errata mitigation code.
 **
+** USE_ESP_DPORT_ACCESS_READ_BUFFER
+**   Sets ESP_NO_ERRATA_MITIGATION and uses esp_dport_access_read_buffer()
+**
 *******************************************************************************
 ** Settings used from <esp_idf_version.h>
 *******************************************************************************
@@ -182,66 +185,75 @@
 
 #endif
 
-
-#ifdef __cplusplus
-    extern "C" {
+#if defined(USE_ESP_DPORT_ACCESS_READ_BUFFER)
+    #define ESP_NO_ERRATA_MITIGATION
 #endif
 
-/*
-******************************************************************************
-** Some common esp utilities
-******************************************************************************
-*/
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-int esp_mp_exptmod_busy(void); /* TODO */
+    /*
+    ******************************************************************************
+    ** Some common esp utilities
+    ******************************************************************************
+    */
 
-int esp_ShowExtendedSystemInfo(void);
+    int esp_mp_exptmod_busy(void); /* TODO */
 
-/* Compare MATH_INT_T A to MATH_INT_T B
- * During debug, the strings name_A and name_B can help
- * identify variable name. */
-int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B,MATH_INT_T* B);
+    int esp_ShowExtendedSystemInfo(void);
 
-/* Show MATH_INT_T value attributes.  */
-int esp_show_mp_attributes(char* c, MATH_INT_T* X);
+    /* Compare MATH_INT_T A to MATH_INT_T B
+     * During debug, the strings name_A and name_B can help
+     * identify variable name. */
+    int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B);
 
-/* Show MATH_INT_T value.
- *
- * Calls esp_show_mp_attributes().
- *
- * During debug, the string name_A can help
- * identify variable name. */
-int esp_show_mp(char* name_X, MATH_INT_T* X);
+    /* Show MATH_INT_T value attributes.  */
+    int esp_show_mp_attributes(char* c, MATH_INT_T* X);
 
-/* To use a Mutex, if must first be initialized */
-int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
+    /* Show MATH_INT_T value.
+     *
+     * Calls esp_show_mp_attributes().
+     *
+     * During debug, the string name_A can help
+     * identify variable name. */
+    int esp_show_mp(char* name_X, MATH_INT_T* X);
 
-/* When the HW is in use, the mutex will be locked. */
-int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
+    /* To use a Mutex, if must first be initialized */
+    int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
 
-/* Release the mutex to indicate the HW is no longer in use. */
-int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
+    /* When the HW is in use, the mutex will be locked. */
+    int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
 
-#ifndef NO_AES
+    /* Release the mutex to indicate the HW is no longer in use. */
+    int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
-    #if ESP_IDF_VERSION_MAJOR >= 4
-        #include "esp32/rom/aes.h"
-    #else
-        #include "rom/aes.h"
-    #endif
+    #ifndef NO_AES
 
-    typedef enum tagES32_AES_PROCESS {
-        ESP32_AES_LOCKHW = 1,
+        #if ESP_IDF_VERSION_MAJOR >= 4
+            #include "esp32/rom/aes.h"
+        #else
+            #include "rom/aes.h"
+        #endif
+
+    typedef enum tagES32_AES_PROCESS
+    {
+        ESP32_AES_LOCKHW            = 1,
         ESP32_AES_UPDATEKEY_ENCRYPT = 2,
         ESP32_AES_UPDATEKEY_DECRYPT = 3,
         ESP32_AES_UNLOCKHW          = 4
     } ESP32_AESPROCESS;
 
     struct Aes; /* see aes.h */
-    int wc_esp32AesCbcEncrypt(struct Aes* aes, byte* out,
-                              const byte* in, word32 sz);
-    int wc_esp32AesCbcDecrypt(struct Aes* aes, byte* out,
-                              const byte* in, word32 sz);
+    int wc_esp32AesCbcEncrypt(struct Aes* aes,
+                              byte* out,
+                              const byte* in,
+                              word32 sz);
+    int wc_esp32AesCbcDecrypt(struct Aes* aes,
+                              byte* out,
+                              const byte* in,
+                              word32 sz);
     int wc_esp32AesEncrypt(struct Aes *aes, const byte* in, byte* out);
     int wc_esp32AesDecrypt(struct Aes *aes, const byte* in, byte* out);
 
@@ -304,11 +316,11 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
         ** actual enable/disable only occurs for ref_counts[periph] == 0
         **
         **  see ref_counts[periph] in periph_ctrl.c */
-        byte lockDepth:7;   /* 7 bits for a small number, pack with below. */
+        byte lockDepth : 7; /* 7 bits for a small number, pack with below. */
 
         /* 0 (false) this is NOT first block.
         ** 1 (true ) this is first block.  */
-        byte isfirstblock:1; /* 1 bit only for true / false */
+        byte isfirstblock : 1; /* 1 bit only for true / false */
     } WC_ESP32SHA;
 
     int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type);
@@ -322,22 +334,22 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
     int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
     #ifndef NO_SHA256
-        struct wc_Sha256;
-        int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
-        int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
-        int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess);
-        int esp_sha256_process(struct wc_Sha256* sha, const byte* data);
-        int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256, const byte* data);
-    #endif
+    struct wc_Sha256;
+    int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
+    int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
+    int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess);
+    int esp_sha256_process(struct wc_Sha256* sha, const byte* data);
+    int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256, const byte* data);
+#endif
 
     /* TODO do we really call esp_sha512_process for WOLFSSL_SHA384 ? */
     #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
-        struct wc_Sha512;
-        int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
-        int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
-        int esp_sha512_process(struct wc_Sha512* sha);
-        int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc);
-    #endif
+    struct wc_Sha512;
+    int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
+    int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
+    int esp_sha512_process(struct wc_Sha512* sha);
+    int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc);
+#endif
 
 #endif /* NO_SHA && */
 
@@ -363,10 +375,10 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
                        MATH_INT_T* Y,    /* X  */
                        word32 Xbits, /* Xs   typically = mp_count_bits (X) */
                        MATH_INT_T* M,    /* P  */
-                       MATH_INT_T* Z);   /* Y  */
-    /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
-    #undef  HW_MATH_ENABLED
-    #define HW_MATH_ENABLED
+                       MATH_INT_T* Z); /* Y  */
+/* HW_MATH_ENABLED is typically used in wolfcrypt tests */
+#undef  HW_MATH_ENABLED
+#define HW_MATH_ENABLED
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
@@ -393,49 +405,67 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 #endif /* !NO_RSA || HAVE_ECC*/
 
 
-int esp_hw_validation_active(void);
+    int esp_hw_validation_active(void);
 
-#ifdef DEBUG_WOLFSSL
+    #ifdef DEBUG_WOLFSSL
     int esp_show_usage_metrics(void);
 #endif
 
 #ifdef WOLFSSL_HW_METRICS
-   int esp_hw_show_mp_metrics(void);
+    int esp_hw_show_mp_metrics(void);
 #endif
 
 #define ESP_MP_HW_LOCK_MAX_DELAY ( TickType_t ) 0xffUL
 
 #ifndef ESP_NO_ERRATA_MITIGATION
-    #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {asm volatile("memw");}
-    #define ESP_EM__MP_HW_WAIT_CLEAN     {asm volatile("memw");}
-    #define ESP_EM__POST_SP_MP_HW_LOCK   {asm volatile("memw");}
+    #define ESP_EM__MP_HW_WAIT_CLEAN     {__asm__ __volatile__("memw");}
+    #define ESP_EM__POST_SP_MP_HW_LOCK   {__asm__ __volatile__("memw");}
+    #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {__asm__ __volatile__("memw");}
 
     /* When the CPU frequency is 160 MHz, add six “nop” between two consecutive
     ** FIFO reads. When the CPU frequency is 240 MHz, add seven “nop” between
     ** two consecutive FIFO reads.  See 3.16 */
     #if defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_80)
-        #define ESP_EM__POST_PROCESS_NOP_CT  (1)
+        #define ESP_EM__3_16 { \
+           __asm__ __volatile__("memw");              \
+           __asm__ __volatile__("nop"); /* 1 */       \
+           __asm__ __volatile__("nop"); /* 2 */       \
+           __asm__ __volatile__("nop"); /* 3 */       \
+           __asm__ __volatile__("nop"); /* 4 */       \
+        };
     #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160)
-        #define ESP_EM__POST_PROCESS_NOP_CT  (6)
+        #define ESP_EM__3_16 { \
+           __asm__ __volatile__("memw");              \
+           __asm__ __volatile__("nop"); /* 1 */       \
+           __asm__ __volatile__("nop"); /* 2 */       \
+           __asm__ __volatile__("nop"); /* 3 */       \
+           __asm__ __volatile__("nop"); /* 4 */       \
+           __asm__ __volatile__("nop"); /* 5 */       \
+           __asm__ __volatile__("nop"); /* 6 */       \
+        };
     #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240)
-        #define ESP_EM__POST_PROCESS_NOP_CT  (7)
+        #define ESP_EM__3_16 { \
+           __asm__ __volatile__("memw");              \
+           __asm__ __volatile__("nop"); /* 1 */       \
+           __asm__ __volatile__("nop"); /* 2 */       \
+           __asm__ __volatile__("nop"); /* 3 */       \
+           __asm__ __volatile__("nop"); /* 4 */       \
+           __asm__ __volatile__("nop"); /* 5 */       \
+           __asm__ __volatile__("nop"); /* 6 */       \
+           __asm__ __volatile__("nop"); /* 7 */       \
+        };
     #else
-        #define ESP_EM__POST_PROCESS_NOP_CT  (1)
+        #define ESP_EM__3_16  (1)
     #endif
 
-    #define ESP_EM__POST_PROCESS_START {                         \
-        asm volatile("memw");                                    \
-        for (int i = 0; i < ESP_EM__POST_PROCESS_NOP_CT; i++) {  \
-            asm volatile("nop"); /* wait */                      \
-        }                                                        \
-    }; /* end ESP_EM__POST_PROCESS_START */
-
-    #define ESP_EM__DPORT_FIFO_READ {                            \
-        asm volatile("memw");                                    \
-        for (int i = 0; i < ESP_EM__POST_PROCESS_NOP_CT; i++) {  \
-            asm volatile("nop"); /* wait */                      \
-        }                                                        \
-    }; /* end ESP_EM__DPORT_FIFO_READ */
+    #define ESP_EM__POST_PROCESS_START { ESP_EM__3_16 };
+    #define ESP_EM__DPORT_FIFO_READ    { ESP_EM__3_16 };
+#else
+    #define ESP_EM__MP_HW_WAIT_CLEAN     {};
+    #define ESP_EM__POST_SP_MP_HW_LOCK   {};
+    #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {};
+    #define ESP_EM__POST_PROCESS_START   {};
+    #define ESP_EM__DPORT_FIFO_READ      {};
 
 #endif
 

@@ -388,7 +388,8 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 
     this_extra = Z->used;
     if (this_extra > MP_SIZE) {
-        ESP_LOGW(TAG, "Warning Z->used: %d > MP_SIZE: %d", Z->used, MP_SIZE);
+        ESP_LOGW(TAG, "Warning (Z->used: %d) > (MP_SIZE: %d); adjusting...",
+                                Z->used,        MP_SIZE);
         this_extra = MP_SIZE;
     }
 
@@ -464,9 +465,6 @@ static int wait_until_done(volatile uint32_t reg)
         asm volatile("nop"); /* wait */
     }
 
-//    for (int i = 0; i < 1000; i++) {
-//        asm volatile("nop"); /* wait */
-//    }
     ESP_EM__DPORT_FIFO_READ
 
     /* clear interrupt */
@@ -478,17 +476,12 @@ static int wait_until_done(volatile uint32_t reg)
         ret = MP_HW_ERROR;
     }
 
-//    for (int i = 0; i < 1000; i++) {
-//        asm volatile("nop"); /* wait */
-//    }
-
     return ret;
 }
 
 /* read data from memory into mp_init          */
-static // __attribute__((optimize("O0")))
-int esp_memblock_to_mpint(volatile const uint32_t mem_address,
-                          volatile MATH_INT_T* mp,
+static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
+                                 volatile MATH_INT_T* mp,
                                  word32 numwords)
 {
     int ret = MP_OKAY;
@@ -498,31 +491,14 @@ int esp_memblock_to_mpint(volatile const uint32_t mem_address,
     int try_ct = 18;
 
     __asm__ volatile ("memw");
-    do {
-        try_ct--;
-        mp->dp[0] = DPORT_SEQUENCE_REG_READ(mem_address);
-    } while (try_ct > 0 && (mp->dp[0] == 0));
 
-        __asm__ __volatile__ ("memw"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-    for (volatile uint32_t i = 1;  i < numwords; ++i) {
-        __asm__ __volatile__ ("memw");
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        __asm__ __volatile__ ("nop"); /* wait */
-        DPORT_SEQUENCE_REG_READ(0x3FF40078);
+    DPORT_INTERRUPT_DISABLE();
+    for (volatile uint32_t i = 0;  i < numwords; ++i) {
+        ESP_EM__3_16
+        // DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
+    DPORT_INTERRUPT_RESTORE();
 
     if (try_ct < 1) {
        // ESP_LOGW(TAG, "esp_memblock_to_mpint timeout exceeded during read");
@@ -537,7 +513,7 @@ int esp_memblock_to_mpint(volatile const uint32_t mem_address,
                       "Reading %u Words at Address =  0x%08x",
                        (int)(numwords * sizeof(word32)),
                        (unsigned int)mem_address);
-        ESP_LOGI(TAG, "Trying again... %d ", try_ct);
+        ESP_LOGI(TAG, "Trying again... ");
         esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
         mp->used = numwords;
         if (0 != XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32))) {
