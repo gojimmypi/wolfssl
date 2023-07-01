@@ -162,7 +162,7 @@ extern "C" {
 #define MP_NEG        1   /* negative */
 
 #define MP_OKAY          0  /* ok result */
-#define MR_ERROR       (-1) /* generic math error */
+#define MP_ERROR       (-1) /* generic math error */
 #define MP_MEM         (-2) /* out of mem */
 #define MP_VAL         (-3) /* invalid input */
 #define MP_NOT_INF     (-4) /* point not at infinity */
