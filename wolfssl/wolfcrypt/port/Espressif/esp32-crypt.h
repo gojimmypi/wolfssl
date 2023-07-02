@@ -89,7 +89,7 @@
 *******************************************************************************
 **
 ** WOLFSSL_HW_METRICS
-**   Enables metric counters for calls to HW, succes, fallback.
+**   Enables metric counters for calls to HW, success, fall back, oddities.
 **
 ** DEBUG_WOLFSSL
 **   Turns on development testing. Validates HW accelerated results to software
@@ -406,10 +406,6 @@ extern "C"
 
 
     int esp_hw_validation_active(void);
-
-    #ifdef DEBUG_WOLFSSL
-    int esp_show_usage_metrics(void);
-#endif
 
 #ifdef WOLFSSL_HW_METRICS
     int esp_hw_show_mp_metrics(void);
