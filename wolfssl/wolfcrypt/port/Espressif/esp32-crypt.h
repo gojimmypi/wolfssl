@@ -373,7 +373,6 @@ extern "C"
     /* Y = (G ^ X) mod P   : wolfSSL DH reference notation */
     int esp_mp_exptmod(MATH_INT_T* X,    /* G  */
                        MATH_INT_T* Y,    /* X  */
-                       word32 Xbits, /* Xs   typically = mp_count_bits (X) */
                        MATH_INT_T* M,    /* P  */
                        MATH_INT_T* Z); /* Y  */
 /* HW_MATH_ENABLED is typically used in wolfcrypt tests */

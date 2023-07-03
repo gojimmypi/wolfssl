@@ -1568,7 +1568,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 .*
  * Z = (X ^ Y) mod M   : Espressif generic notation
  * Y = (G ^ X) mod P   : wolfSSL DH reference notation */
-int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, word32 Ys, MATH_INT_T* M, MATH_INT_T* Z)
+int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
      /* Danger! Do not initialize any function parameters, not even the result Z.
       * Some operations such as (rnd = rnd^e) will wipe out the rnd operand
