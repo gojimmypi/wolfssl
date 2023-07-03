@@ -689,6 +689,67 @@ int esp_hw_validation_active(void)
 #endif
 }
 
+
+int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
+                           struct esp_mp_helper* mph)
+{
+    int ret = MP_OKAY;
+    mph->Xs = mp_count_bits(X);
+    mph->Ys = mp_count_bits(Y);
+    mph->Ms = mp_count_bits(M);
+    /* maximum bits and words for writing to HW */
+    mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
+    mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
+
+    ESP_LOGV(TAG, "hwWords_sz = %d", mph->hwWords_sz);
+
+    if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
+        ESP_LOGE(TAG, "exceeds HW maximum bits");
+        ret = MP_VAL; /*  Error: value is not able to be used. */
+    }
+
+    /* calculate r_inv = R^2 mode M
+    *    where: R = b^n, and b = 2^32
+    *    accordingly R^2 = 2^(n*32*2)
+    */
+    if (ret == MP_OKAY) {
+        ret = mp_init(&(mph->r_inv));
+        if ( (ret == 0) &&
+         ((ret = esp_get_rinv(&(mph->r_inv), M, (mph->hwWords_sz << 6))) != MP_OKAY) ) {
+            ESP_LOGE(TAG, "calculate r_inv failed.");
+            return MP_VAL;
+        }
+    }
+    mph->Rs = mp_count_bits(&(mph->r_inv));
+
+    ret = mp_montgomery_setup(M, &(mph->mp2) );
+
+    /* calc M' */
+    /* if Pm is odd, uses mp_montgomery_setup() */
+    if ( (ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp) )) != MP_OKAY ) {
+        ESP_LOGE(TAG, "failed to calculate M dash");
+    }
+
+    if (mph->mp == mph->mp2) {
+        ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
+    }
+    else {
+        ESP_LOGW(TAG,
+                 "\n\n"
+                 "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
+                 "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
+                 mph->mp,
+                 mph->mp,
+                 mph->mp2,
+                 mph->mp2);
+        mph->mp = mph->mp2;
+    }
+
+    return ret;
+}
+
+
+
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Multiplication
  *
@@ -1050,20 +1111,21 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
  * Z = X × Y mod M */
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
+    struct esp_mp_helper mph[1];
     int ret = MP_OKAY;
     int negcheck = 0;
 #ifdef DEBUG_WOLFSSL
     int reti = 0; /* interim return value used only during HW==SW validation */
 #endif
-    word32 Xs = 0;
-    word32 Ys = 0;
-    word32 Ms = 0;
-    word32 Rs = 0;
-    word32 maxWords_sz = 0;
-    word32 hwWords_sz = 0;
+//    word32 Xs = 0;
+//    word32 Ys = 0;
+//    word32 Ms = 0;
+//    word32 Rs = 0;
+//    word32 maxWords_sz = 0;
+//    word32 hwWords_sz = 0;
     word32 zwords = 0;
-    uint32_t Exponent = 0;
-    mp_digit mp = 0;
+    //uint32_t Exponent = 0;
+//    mp_digit mp = 0;
 
 /*
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
@@ -1071,8 +1133,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T* tmpZ = NULL;
 #else
 */
-    mp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T r_inv[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+//    mp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+//    MATH_INT_T r_inv[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
 
 #ifdef DEBUG_WOLFSSL
@@ -1091,6 +1153,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
         ESP_LOGV(TAG, "esp_mp_mulmod does not support even numbers");
         ret = MP_HW_FALLBACK;
+        return ret;
     }
 
 #ifdef DEBUG_WOLFSSL
@@ -1148,71 +1211,83 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int WordsForOperand;
 # endif
 
-    if (ret == MP_OKAY) {
+//    if (ret == MP_OKAY) {
         /* neg check - X*Y becomes negative */
         negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
-
-        /* determine number of bits for HW parameter */
-        Xs = mp_count_bits(X);
-        Ys = mp_count_bits(Y);
-        Ms = mp_count_bits(M);
-        ESP_LOGV(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
-
-        //    if ((Xs <= 8) || (Ys <= 8)) {
-        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
-        //        ret = FP_HW_FALLBACK;
-        //    }
-        //    if (Xs <= 8) {
-        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d", Xs);
-        //        ret = FP_HW_FALLBACK;
-        //    }
-        if (Ys <= 8) {
-    #ifdef WOLFSSL_HW_METRICS
-            esp_mp_mulmod_small_y_ct++;
-    #endif
-            ESP_LOGV(TAG, "MP_HW_FALLBACK Ys = %d", Ys);
-            ret = MP_HW_FALLBACK;
-        }
-    } /* sign & operand bit count check*/
-
-    if (ret == MP_OKAY) {
-        /* maximum bits and words for writing to HW */
-        maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
-        zwords      = bits2words(min(Ms, Xs + Ys));
-        hwWords_sz  = words2hwords(maxWords_sz);
-
-        ESP_LOGV(TAG,
-                 "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
-                 maxWords_sz,
-                 zwords,
-                 hwWords_sz);
-
-        if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-            ESP_LOGE(TAG, "exceeds HW maximum bits = %d", ESP_HW_RSAMAX_BIT);
-            ret = MP_VAL; /*  Error: value is not able to be used. */
-        }
-    }
+//
+//        /* determine number of bits for HW parameter */
+//        Xs = mp_count_bits(X);
+//        Ys = mp_count_bits(Y);
+//        Ms = mp_count_bits(M);
+//        ESP_LOGV(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
+//
+//        //    if ((Xs <= 8) || (Ys <= 8)) {
+//        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
+//        //        ret = FP_HW_FALLBACK;
+//        //    }
+//        //    if (Xs <= 8) {
+//        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d", Xs);
+//        //        ret = FP_HW_FALLBACK;
+//        //    }
+//        if (Ys <= 8) {
+//    #ifdef WOLFSSL_HW_METRICS
+//            esp_mp_mulmod_small_y_ct++;
+//    #endif
+//            ESP_LOGV(TAG, "MP_HW_FALLBACK Ys = %d", Ys);
+//            ret = MP_HW_FALLBACK;
+//        }
+//    } /* sign & operand bit count check*/
+//
+//    if (ret == MP_OKAY) {
+//        /* maximum bits and words for writing to HW */
+//        maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
+//          zwords      = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
+//        hwWords_sz  = words2hwords(maxWords_sz);
+//
+//        ESP_LOGV(TAG,
+//                 "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
+//                 maxWords_sz,
+//                 zwords,
+//                 hwWords_sz);
+//
+//        if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
+//            ESP_LOGE(TAG, "exceeds HW maximum bits = %d", ESP_HW_RSAMAX_BIT);
+//            ret = MP_VAL; /*  Error: value is not able to be used. */
+//        }
+//    }
 
     /* calculate r_inv = R^2 mod M
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
-
+    ret = esp_mp_montgomery_init(X, Y, M, mph);
+    if (mph->Ys <= 8) {
+    #ifdef WOLFSSL_HW_METRICS
+        esp_mp_mulmod_small_y_ct++;
+    #endif
+        ESP_LOGW(TAG, "MP_HW_FALLBACK Ys = %d", mph->Ys);
+        ret = MP_HW_FALLBACK;
+    }
+    zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
+    if (ret != MP_OKAY) {
+        return ret;
+    }
     if (ret == MP_OKAY) {
-#if CONFIG_IDF_TARGET_ESP32S3
-        Exponent = maxWords_sz * BITS_IN_ONE_WORD * 2;
-#else
-        Exponent = hwWords_sz << 6;
-#endif
+    }
 
-        ret = mp_init_multi(tmpZ, r_inv, NULL, NULL, NULL, NULL);
-        if (ret == 0 && (ret = esp_get_rinv(r_inv, M, Exponent)) != MP_OKAY) {
-            ESP_LOGE(TAG, "calculate r_inv failed.");
-            mp_clear(tmpZ);
-            mp_clear(r_inv);
-        }
-        else {
-            Rs = mp_count_bits(r_inv);
+//#if CONFIG_IDF_TARGET_ESP32S3
+//        Exponent = maxWords_sz * BITS_IN_ONE_WORD * 2;
+//#else
+//        Exponent = mph->hwWords_sz << 6;
+//#endif
+
+//        ret = mp_init_multi(tmpZ, mph->r_inv, NULL, NULL, NULL, NULL);
+//        if (ret == 0 && (ret = esp_get_rinv(r_inv, M, Exponent)) != MP_OKAY) {
+//            ESP_LOGE(TAG, "calculate r_inv failed.");
+//            mp_clear(tmpZ);
+//        }
+//        else {
+            //Rs = mp_count_bits(r_inv);
             /* success, show details if debugging*/
             #ifdef DEBUG_WOLFSSL
             //        esp_show_mp("r_inv", r_inv);
@@ -1223,19 +1298,19 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
                        esp_show_mp("r_inv", r_inv);
                */
                #endif
-        }
-    }
+//        }
+//    }
 
-    if (ret == MP_OKAY) {
-        ret = mp_montgomery_setup(M, mp2);
-        /* Calculate M' */
-        if (ret == MP_OKAY) {
-            ret = esp_calc_Mdash(M, 32/* bits */, &mp);
-        }
-        else {
-            ESP_LOGE(TAG, "failed to calculate M dash");
-        }
-    }
+//    if (ret == MP_OKAY) {
+//        ret = mp_montgomery_setup(M, mp2);
+//        /* Calculate M' */
+//        if (ret == MP_OKAY) {
+//            ret = esp_calc_Mdash(M, 32/* bits */, &mp);
+//        }
+//        else {
+//            ESP_LOGE(TAG, "failed to calculate M dash");
+//        }
+//    }
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
@@ -1355,7 +1430,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* step.1
          *  Write (N/512bits - 1) to MULT_MODE_REG
          *  512 bits => 16 words */
-        DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 4) - 1);
+        DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
         #ifdef DEBUG_WOLFSSL
         ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (hwWords_sz >> 4) - 1);
         #endif // WOLFSSL_DEBUG
@@ -1364,15 +1439,16 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
          * The capacity of each memory block is 128 words.
          * The memory blocks use the little endian format for storage,
          * i.e. the least significant digit of each number is in lowest address.*/
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, Xs, hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, Ms, hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE, r_inv, Rs, hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                              &(mph->r_inv), mph->Rs, mph->hwWords_sz);
 
         /* step.3 write M' into memory                   */
         /* confirmed with Sean that mp2 does not support even modulus
          * indeed we see a failure, but we can predict when modules is odd
          * or when mp != mp2[0] */
-        DPORT_REG_WRITE(RSA_M_DASH_REG, mp);
+        DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
         asm volatile("memw");
         asm volatile("nop");
         asm volatile("nop");
@@ -1389,7 +1465,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         wait_until_done(RSA_INTERRUPT_REG);
 
         /* step.7 Y to MEM_X                              */
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, Y, Ys, hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, Y, mph->Ys, mph->hwWords_sz);
 
         #ifdef DEBUG_WOLFSSL
         /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
@@ -1512,7 +1588,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif /* DEBUG_WOLFSSL */
 
     mp_clear(tmpZ);
-    mp_clear(r_inv);
+    mp_clear(&(mph->r_inv));
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
     return ret;
@@ -1520,65 +1596,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 }
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
 
-
-
-int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
-                           struct esp_mp_helper* mph)
-{
-    int ret = MP_OKAY;
-    mph->Xs = mp_count_bits(X);
-    mph->Ys = mp_count_bits(Y);
-    mph->Ms = mp_count_bits(M);
-    /* maximum bits and words for writing to HW */
-    mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
-    mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
-
-    ESP_LOGV(TAG, "hwWords_sz = %d", mph->hwWords_sz);
-
-    if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGE(TAG, "exceeds HW maximum bits");
-        ret = MP_VAL; /*  Error: value is not able to be used. */
-    }
-
-    /* calculate r_inv = R^2 mode M
-    *    where: R = b^n, and b = 2^32
-    *    accordingly R^2 = 2^(n*32*2)
-    */
-    if (ret == MP_OKAY) {
-        ret = mp_init(&(mph->r_inv));
-        if ( (ret == 0) &&
-         ((ret = esp_get_rinv(&(mph->r_inv), M, (mph->hwWords_sz << 6))) != MP_OKAY) ) {
-            ESP_LOGE(TAG, "calculate r_inv failed.");
-            return MP_VAL;
-        }
-    }
-    mph->Rs = mp_count_bits(&(mph->r_inv));
-
-    ret = mp_montgomery_setup(M, &(mph->mp2) );
-
-    /* calc M' */
-    /* if Pm is odd, uses mp_montgomery_setup() */
-    if ( (ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp) )) != MP_OKAY ) {
-        ESP_LOGE(TAG, "failed to calculate M dash");
-    }
-
-    if (mph->mp == mph->mp2) {
-        ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
-    }
-    else {
-        ESP_LOGW(TAG,
-                 "\n\n"
-                 "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
-                 "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
-                 mph->mp,
-                 mph->mp,
-                 mph->mp2,
-                 mph->mp2);
-        mph->mp = mph->mp2;
-    }
-
-    return ret;
-}
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
 /* Large Number Modular Exponentiation
