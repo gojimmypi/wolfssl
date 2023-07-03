@@ -102,6 +102,7 @@ static const char* const TAG = "wolfssl_esp32_mp";
     static uint32_t esp_mp_mulmod_usage_ct = 0;
     static uint32_t esp_mp_mulmod_fallback_ct = 0;
     static uint32_t esp_mp_mulmod_even_mod_ct = 0;
+    static uint32_t esp_mp_mulmod_small_x_ct = 0;
     static uint32_t esp_mp_mulmod_small_y_ct = 0;
     static uint32_t esp_mp_mul_error_ct = 0;
     static uint32_t esp_mp_mulmod_error_ct = 0;
@@ -695,18 +696,39 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 {
     int ret = MP_OKAY;
     mph->Xs = mp_count_bits(X);
-    mph->Ys = mp_count_bits(Y);
-    mph->Ms = mp_count_bits(M);
-    /* maximum bits and words for writing to HW */
-    mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
-    mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
+
+    if (mph->Xs <= 8) {
+    #ifdef WOLFSSL_HW_METRICS
+        esp_mp_mulmod_small_x_ct++;
+    #endif
+        ESP_LOGV(TAG, "MP_HW_FALLBACK Xs = %d", mph->Xs);
+        ret = MP_HW_FALLBACK;
+    }
+
+    if (ret == MP_OKAY) {
+        mph->Ys = mp_count_bits(Y);
+        if (mph->Ys <= 8) {
+    #ifdef WOLFSSL_HW_METRICS
+            esp_mp_mulmod_small_y_ct++;
+    #endif
+            ESP_LOGW(TAG, "MP_HW_FALLBACK Ys = %d", mph->Ys);
+            ret = MP_HW_FALLBACK;
+        }
+        else {
+            mph->Ms = mp_count_bits(M);
+            /* maximum bits and words for writing to HW */
+            mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
+            mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
+
+            if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
+                ESP_LOGE(TAG, "exceeds HW maximum bits");
+                ret = MP_VAL; /*  Error: value is not able to be used. */
+            }
+        }
+    }
 
     ESP_LOGV(TAG, "hwWords_sz = %d", mph->hwWords_sz);
 
-    if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGE(TAG, "exceeds HW maximum bits");
-        ret = MP_VAL; /*  Error: value is not able to be used. */
-    }
 
     /* calculate r_inv = R^2 mode M
     *    where: R = b^n, and b = 2^32
@@ -719,30 +741,36 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
             ESP_LOGE(TAG, "calculate r_inv failed.");
             return MP_VAL;
         }
-    }
-    mph->Rs = mp_count_bits(&(mph->r_inv));
+        mph->Rs = mp_count_bits(&(mph->r_inv));
 
-    ret = mp_montgomery_setup(M, &(mph->mp2) );
-
-    /* calc M' */
-    /* if Pm is odd, uses mp_montgomery_setup() */
-    if ( (ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp) )) != MP_OKAY ) {
-        ESP_LOGE(TAG, "failed to calculate M dash");
     }
 
-    if (mph->mp == mph->mp2) {
-        ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
+
+    if (ret == MP_OKAY) {
+        ret = mp_montgomery_setup(M, &(mph->mp2) );
+        /* calc M' */
+        /* if Pm is odd, uses mp_montgomery_setup() */
+        if ((ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp))) != MP_OKAY) {
+            ESP_LOGE(TAG, "failed to calculate M dash");
+        }
     }
-    else {
-        ESP_LOGW(TAG,
-                 "\n\n"
-                 "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
-                 "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
-                 mph->mp,
-                 mph->mp,
-                 mph->mp2,
-                 mph->mp2);
-        mph->mp = mph->mp2;
+
+    if (ret == MP_OKAY) {
+
+        if (mph->mp == mph->mp2) {
+            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
+        }
+        else {
+            ESP_LOGW(TAG,
+                     "\n\n"
+                     "M' MISMATCH esp_calc_Mdash = 0x%08x = %d \n"
+                     "vs mp_montgomery_setup     = 0x%08x = %d \n\n",
+                     mph->mp,
+                     mph->mp,
+                     mph->mp2,
+                     mph->mp2);
+            mph->mp = mph->mp2;
+        }
     }
 
     return ret;
@@ -1211,16 +1239,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int WordsForOperand;
 # endif
 
-//    if (ret == MP_OKAY) {
         /* neg check - X*Y becomes negative */
         negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
-//
-//        /* determine number of bits for HW parameter */
-//        Xs = mp_count_bits(X);
-//        Ys = mp_count_bits(Y);
-//        Ms = mp_count_bits(M);
-//        ESP_LOGV(TAG, "Bits: Xs = %d, Ys = %d, Ms = %d", Xs, Ys, Ms);
-//
 //        //    if ((Xs <= 8) || (Ys <= 8)) {
 //        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
 //        //        ret = FP_HW_FALLBACK;
@@ -1229,45 +1249,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 //        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d", Xs);
 //        //        ret = FP_HW_FALLBACK;
 //        //    }
-//        if (Ys <= 8) {
-//    #ifdef WOLFSSL_HW_METRICS
-//            esp_mp_mulmod_small_y_ct++;
-//    #endif
-//            ESP_LOGV(TAG, "MP_HW_FALLBACK Ys = %d", Ys);
-//            ret = MP_HW_FALLBACK;
-//        }
-//    } /* sign & operand bit count check*/
-//
-//    if (ret == MP_OKAY) {
-//        /* maximum bits and words for writing to HW */
-//        maxWords_sz = bits2words(max(Xs, max(Ys, Ms)));
-//          zwords      = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
-//        hwWords_sz  = words2hwords(maxWords_sz);
-//
-//        ESP_LOGV(TAG,
-//                 "Words:, maxWords_sz = %d, zwords = %d, hwWords_sz = %d",
-//                 maxWords_sz,
-//                 zwords,
-//                 hwWords_sz);
-//
-//        if ((hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-//            ESP_LOGE(TAG, "exceeds HW maximum bits = %d", ESP_HW_RSAMAX_BIT);
-//            ret = MP_VAL; /*  Error: value is not able to be used. */
-//        }
-//    }
 
     /* calculate r_inv = R^2 mod M
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
     ret = esp_mp_montgomery_init(X, Y, M, mph);
-    if (mph->Ys <= 8) {
-    #ifdef WOLFSSL_HW_METRICS
-        esp_mp_mulmod_small_y_ct++;
-    #endif
-        ESP_LOGW(TAG, "MP_HW_FALLBACK Ys = %d", mph->Ys);
-        ret = MP_HW_FALLBACK;
-    }
     zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
     if (ret != MP_OKAY) {
         return ret;
@@ -1275,42 +1262,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (ret == MP_OKAY) {
     }
 
-//#if CONFIG_IDF_TARGET_ESP32S3
-//        Exponent = maxWords_sz * BITS_IN_ONE_WORD * 2;
-//#else
-//        Exponent = mph->hwWords_sz << 6;
-//#endif
-
-//        ret = mp_init_multi(tmpZ, mph->r_inv, NULL, NULL, NULL, NULL);
-//        if (ret == 0 && (ret = esp_get_rinv(r_inv, M, Exponent)) != MP_OKAY) {
-//            ESP_LOGE(TAG, "calculate r_inv failed.");
-//            mp_clear(tmpZ);
-//        }
-//        else {
-            //Rs = mp_count_bits(r_inv);
-            /* success, show details if debugging*/
-            #ifdef DEBUG_WOLFSSL
-            //        esp_show_mp("r_inv", r_inv);
-            //        ESP_LOGI(TAG, "r_inv bits    = %d", Rs);
-            //        ESP_LOGI(TAG, "Exponent      = %lu (0x%08x)", Exponent, (unsigned int)Exponent);
-                    /* optionally show M and R inv
-                       esp_show_mp("    M", M);
-                       esp_show_mp("r_inv", r_inv);
-               */
-               #endif
-//        }
-//    }
-
-//    if (ret == MP_OKAY) {
-//        ret = mp_montgomery_setup(M, mp2);
-//        /* Calculate M' */
-//        if (ret == MP_OKAY) {
-//            ret = esp_calc_Mdash(M, 32/* bits */, &mp);
-//        }
-//        else {
-//            ESP_LOGE(TAG, "failed to calculate M dash");
-//        }
-//    }
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
@@ -1854,9 +1805,13 @@ int esp_hw_show_mp_metrics(void)
     }
 
     if (esp_mp_mulmod_error_ct == 0) {
-        ESP_LOGI(TAG, "Success: no esp_mp_mulmod small y.");
+        ESP_LOGI(TAG, "Success: no esp_mp_mulmod small x or y.");
     }
     else {
+        ESP_LOGW(TAG, "Number of esp_mp_mulmod small x: %lu",
+                       esp_mp_mulmod_small_x_ct);
+        ret = MP_VAL;
+
         ESP_LOGW(TAG, "Number of esp_mp_mulmod small y: %lu",
                        esp_mp_mulmod_small_y_ct);
         ret = MP_VAL;
