@@ -1586,12 +1586,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (mp_iszero(M)) {
         ESP_LOGW(TAG, "esp_mp_exptmod M is zero!");
-        return MP_VAL;
+        return MP_HW_FALLBACK; /* fall back and let SW decide how to handle */
     }
 
     if (mp_isone(M)) {
         mp_clear(Z);
-        return MP_OKAY;
+        return MP_OKAY; /* mod zero is zero */
     }
 
     ret = esp_mp_montgomery_init(X, Y, M, mph);
