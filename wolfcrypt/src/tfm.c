@@ -2086,24 +2086,30 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
   int      err, bitcnt, digidx, y;
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    int Xbits = 0;
+    int Xbits = 0; /* TODO remove */
 
     /* any timing resistance should be performed in HW calc when enabled */
     if (mp_iszero(P)) {
         ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_exptmod, P is zero");
     }
     else {
-        Xbits = fp_count_bits(X);
-        if (Xbits >= EPS_RSA_EXPT_XBTIS) {
+        Xbits = fp_count_bits(X); /* TODO remove */
+        if (Xbits >= EPS_RSA_EXPT_XBTIS) { /* TODO remove */
             /* esp_mp_exptmod: Y = (G ^ X) mod P */
             err = esp_mp_exptmod(G, X, Xbits, P, Y); /* _fp_exptmod_ct */
             if (err == FP_OKAY) {
                 ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
             }
             else {
-                ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed.");
+                if (err == MP_HW_FALLBACK) {
+                    ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", err);
+                }
+                else {
+                    ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", err);
+                    return err;
+                }
+                //ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", err);
             }
-            return err;
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW at this time.
             **
@@ -2475,7 +2481,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #endif
 
   /* find window size */
-  x = fp_count_bits (X);
+  x = fp_count_bits (X); /* TODO remove */
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     if (mp_iszero(P)) {
@@ -2488,9 +2494,15 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
                 ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_exptmod success.");
             }
             else {
-                ESP_LOGE(TAG, "_fp_exptmod_nct esp_mp_exptmod failed.");
+                if (err == MP_HW_FALLBACK) {
+                    ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", err);
+                }
+                else {
+                    ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", err);
+                    return err;
+                }
+                // ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", err);
             }
-            return err;
             /* If HW errors actually encountered,
             ** we are NOT falling through to SW.
             **
@@ -3182,11 +3194,21 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    x = fp_count_bits(X);
+    x = fp_count_bits(X); /* TODO remove */
     if ((x > EPS_RSA_EXPT_XBTIS) ) {
       retHW = esp_mp_exptmod(G, X, x, P, Y); /* fp_exptmod */
       if (retHW == FP_OKAY) {
          return retHW;
+      }
+      else {
+         if (retHW == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", retHW);
+         }
+         else {
+            ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", retHW);
+            return retHW;
+         }
+         // ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", retHW);
       }
    }
    else {
@@ -3283,7 +3305,19 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
          return retHW;
       }
       else {
-         ESP_LOGE(TAG, "fp_exptmod_ex failed");
+          if (retHW == FP_OKAY) {
+              ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
+          }
+          else {
+              if (retHW == MP_HW_FALLBACK) {
+                  ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", retHW);
+              }
+              else {
+                  ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", retHW);
+                  return retHW;
+              }
+              // ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", retHW);
+          }
       }
    }
    else{
@@ -3371,6 +3405,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       if (retHW == FP_OKAY) {
           return retHW;
       }
+
    }
    else {
       ESP_LOGV(TAG, "x <= EPS_RSA_EXPT_XBTIS, skipping esp_mp_exptmod");
