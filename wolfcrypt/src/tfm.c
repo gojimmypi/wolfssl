@@ -312,12 +312,11 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
     if (esp_hw_validation_active()) {
-        ESP_LOGV(TAG, "Skipping call to fp_mul "
+        ESP_LOGV(TAG, "Skipping call to esp_mp_mul "
                       "during active validation.");
     }
     else {
-        /* TODO check for min bits */
-        ret = esp_mp_mul(A, B, C); /* HW */
+        ret = esp_mp_mul(A, B, C); /* HW accelerated multiply  */
         if (ret == MP_OKAY) {
             goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
         }
@@ -2085,35 +2084,25 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
   fp_digit buf, mp;
   int      err, bitcnt, digidx, y;
 
+/* TODO - does this really ned to be here and not just fp_exptmod ? */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     /* any timing resistance should be performed in HW calc when enabled */
-    if (mp_iszero(P)) {
-        ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_exptmod, P is zero");
+    /* esp_mp_exptmod: Y = (G ^ X) mod P in hardware */
+    err = esp_mp_exptmod(G, X, P, Y);
+    if (err == FP_OKAY) {
+        ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
+        return err;
     }
     else {
-        /* esp_mp_exptmod: Y = (G ^ X) mod P */
-        err = esp_mp_exptmod(G, X, P, Y); /* _fp_exptmod_ct */
-        if (err == FP_OKAY) {
-            ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
-            return err;
+        if (err == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_mulmod SW fallback, reason = %d", err);
         }
         else {
-            if (err == MP_HW_FALLBACK) {
-                ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_mulmod SW fallback, reason = %d", err);
-            }
-            else {
-                ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_mulmod fail, reason = %d", err);
-                return err;
-            }
-            //ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", err);
+            ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_mulmod fail, reason = %d", err);
+            return err;
         }
-        /* If HW errors actually encountered,
-        ** we are NOT falling through to SW at this time.
-        **
-        ** Note to ny future falling through implementation:
-        ** save operands that may be overwritten! */
     }
-    /* else fall through to SW calc  TODO */
+    /* else fall through to software calc */
 #endif
 
     /* now setup montgomery  */
@@ -2278,6 +2267,7 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
 #endif
 
 #if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESPIDF)
+    /* TODO consider moving / removing this */
     /* a value of 1 is interesting in HW; check for padding */
     if (Y->used > 1 && (Y->dp[0] == 1 || (Y->dp[1] == 0))) {
         ESP_LOGW("TFM Y", "Y=1 length mismatch; Y = %d", (int)Y->dp[0]);
@@ -2470,31 +2460,23 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   fp_int   M[(1 << 6) + 1];
 #endif
 
+/* TODO - does this really ned to be here and not just fp_exptmod ? */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    if (mp_iszero(P)) {
-        ESP_LOGW(TAG, "_fp_exptmod_nct esp_mp_exptmod, P is zero");
+    err = esp_mp_exptmod(G, X, P, Y); /* _fp_exptmod_nct */
+    if (err == FP_OKAY) {
+        ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_exptmod success.");
+        return err;
     }
     else {
-        err = esp_mp_exptmod(G, X, P, Y); /* _fp_exptmod_nct */
-        if (err == FP_OKAY) {
-            ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_exptmod success.");
-            return err;
+        if (err == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_mulmod SW fallback, reason = %d", err);
         }
         else {
-            if (err == MP_HW_FALLBACK) {
-                ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_mulmod SW fallback, reason = %d", err);
-            }
-            else {
-                ESP_LOGW(TAG, "_fp_exptmod_nct esp_mp_mulmod fail, reason = %d", err);
-                return err;
-            }
+            ESP_LOGW(TAG, "_fp_exptmod_nct esp_mp_mulmod fail, reason = %d", err);
+            return err;
         }
-     }
-        /* If HW errors actually encountered,
-        ** we are falling through to SW.
-        **
-        ** Any future falling through implementation:
-        ** save operands that may be overwritten! */
+    }
+    /* fall through to software calcs */
 #endif
   x = fp_count_bits(X);
 
@@ -3185,6 +3167,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
          return retHW;
       }
    }
+   /* fall through to software calcs */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
@@ -3242,9 +3225,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
 int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
-
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   int x = 0;
    int retHW = FP_OKAY;
 #endif
 
@@ -3265,32 +3246,23 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
+/* TODO - does this really ned to be here and not just fp_exptmod ? */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-      ESP_LOGV(TAG, "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod");
-      ESP_LOGI(TAG, "fp_exptmod_ex, TFM marker 5 fp_count_bits = %d", x);
-      retHW = esp_mp_exptmod(G, X, P, Y); /* fp_exptmod_ex */
-      if (retHW == FP_OKAY) {
-         return retHW;
-      }
-      else {
-          if (retHW == FP_OKAY) {
-              ESP_LOGV(TAG, "fp_exptmod_ex _fp_exptmod_ct esp_mp_exptmod success.");
-              return retHW;
-          }
-          else {
-              if (retHW == MP_HW_FALLBACK) {
-                  ESP_LOGV(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback, reason = %d", retHW);
-              }
-              else {
-                  ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail, reason = %d", retHW);
-                  return retHW;
-              }
-              // ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", retHW);
-          }
-      }
-
-   /* As we didn't return from HW based on XBITS,
-   ** we are falling through to SW: */
+    retHW = esp_mp_exptmod(G, X, P, Y); /* fp_exptmod_ex */
+    if (retHW == FP_OKAY) {
+        ESP_LOGV(TAG, "fp_exptmod_ex _fp_exptmod_ct esp_mp_exptmod success.");
+        return retHW;
+    }
+    else {
+        if (retHW == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback, reason = %d", retHW);
+        }
+        else {
+            ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail, reason = %d", retHW);
+            return retHW;
+        }
+    }
+    /* falling through to SW: */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
@@ -3363,25 +3335,19 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-      ESP_LOGV(TAG, "x > EPS_RSA_EXPT_XBTIS, calling esp_mp_exptmod marker 10");
-      retHW = esp_mp_exptmod(G, X, P, Y); /* fp_exptmod_nct */
-      if (retHW == FP_OKAY) {
-          return retHW;
-      }
-        else {
-            if (retHW == MP_HW_FALLBACK) {
-                ESP_LOGV(TAG, "esp_mp_exptmod SW fallback, reason = %d", retHW);
-            }
-            else {
-                ESP_LOGW(TAG, "esp_mp_exptmod fail, reason = %d", retHW);
-                return retHW;
-            }
-            //ESP_LOGE(TAG, "_fp_exptmod_ct esp_mp_exptmod failed. %d", err);
+    retHW = esp_mp_exptmod(G, X, P, Y);
+    if (retHW == FP_OKAY) {
+        return retHW;
+    }
+    else {
+        if (retHW == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "esp_mp_exptmod SW fallback, reason = %d", retHW);
         }
-   /* As we didn't return from HW, we are falling through to SW: */
-   /* TODO - if we contonue on, we need to have saved params!
-    * current pointers may get clobbered
-    * e.g. when parameter is also result*/
+        else {
+            ESP_LOGW(TAG, "esp_mp_exptmod fail, reason = %d", retHW);
+            return retHW;
+        }
+    }
 #endif
 
    if (X->sign == FP_NEG) {
