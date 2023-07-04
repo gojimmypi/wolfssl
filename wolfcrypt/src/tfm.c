@@ -2084,27 +2084,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
   fp_digit buf, mp;
   int      err, bitcnt, digidx, y;
 
-/* TODO - does this really ned to be here and not just fp_exptmod ? */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    /* any timing resistance should be performed in HW calc when enabled */
-    /* esp_mp_exptmod: Y = (G ^ X) mod P in hardware */
-    err = esp_mp_exptmod(G, X, P, Y);
-    if (err == FP_OKAY) {
-        ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_exptmod success.");
-        return err;
-    }
-    else {
-        if (err == MP_HW_FALLBACK) {
-            ESP_LOGV(TAG, "_fp_exptmod_ct esp_mp_mulmod SW fallback, reason = %d", err);
-        }
-        else {
-            ESP_LOGW(TAG, "_fp_exptmod_ct esp_mp_mulmod fail, reason = %d", err);
-            return err;
-        }
-    }
-    /* else fall through to software calc */
-#endif
-
     /* now setup montgomery  */
   if ((err = fp_montgomery_setup (P, &mp)) != FP_OKAY) {
      return err;
@@ -2460,24 +2439,6 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   fp_int   M[(1 << 6) + 1];
 #endif
 
-/* TODO - does this really ned to be here and not just fp_exptmod ? */
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    err = esp_mp_exptmod(G, X, P, Y); /* _fp_exptmod_nct */
-    if (err == FP_OKAY) {
-        ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_exptmod success.");
-        return err;
-    }
-    else {
-        if (err == MP_HW_FALLBACK) {
-            ESP_LOGV(TAG, "_fp_exptmod_nct esp_mp_mulmod SW fallback, reason = %d", err);
-        }
-        else {
-            ESP_LOGW(TAG, "_fp_exptmod_nct esp_mp_mulmod fail, reason = %d", err);
-            return err;
-        }
-    }
-    /* fall through to software calcs */
-#endif
   x = fp_count_bits(X);
 
   if (x <= 21) {
@@ -3154,7 +3115,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   retHW = esp_mp_exptmod(G, X, P, Y); /* fp_exptmod */
+   retHW = esp_mp_exptmod(G, X, P, Y);
    if (retHW == FP_OKAY) {
       return retHW;
    }
@@ -3246,9 +3207,8 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-/* TODO - does this really ned to be here and not just fp_exptmod ? */
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    retHW = esp_mp_exptmod(G, X, P, Y); /* fp_exptmod_ex */
+    retHW = esp_mp_exptmod(G, X, P, Y); /* see also */
     if (retHW == FP_OKAY) {
         ESP_LOGV(TAG, "fp_exptmod_ex _fp_exptmod_ct esp_mp_exptmod success.");
         return retHW;
@@ -3335,13 +3295,13 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    retHW = esp_mp_exptmod(G, X, P, Y);
+    retHW = esp_mp_exptmod(G, X, P, Y); /* see fp_exptmod_nct() in tfm.h */
     if (retHW == FP_OKAY) {
         return retHW;
     }
     else {
         if (retHW == MP_HW_FALLBACK) {
-            ESP_LOGV(TAG, "esp_mp_exptmod SW fallback, reason = %d", retHW);
+            ESP_LOGI(TAG, "esp_mp_exptmod SW fallback, reason = %d", retHW);
         }
         else {
             ESP_LOGW(TAG, "esp_mp_exptmod fail, reason = %d", retHW);
