@@ -3121,7 +3121,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
    else {
       if (retHW == MP_HW_FALLBACK) {
-         ESP_LOGV(TAG, "fp_exptmod esp_mp_exptmod SW fallback, reason = %d", retHW);
+         ESP_LOGI(TAG, "fp_exptmod esp_mp_exptmod SW fallback, reason = %d", retHW);
       }
       else {
          ESP_LOGW(TAG, "fp_exptmod esp_mp_exptmod fail, reason = %d", retHW);
@@ -3210,12 +3210,12 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
     retHW = esp_mp_exptmod(G, X, P, Y); /* see also */
     if (retHW == FP_OKAY) {
-        ESP_LOGV(TAG, "fp_exptmod_ex _fp_exptmod_ct esp_mp_exptmod success.");
+        ESP_LOGV(TAG, "fp_exptmod_ex esp_mp_exptmod success.");
         return retHW;
     }
     else {
         if (retHW == MP_HW_FALLBACK) {
-            ESP_LOGV(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback, reason = %d", retHW);
+            ESP_LOGI(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback, reason = %d", retHW);
         }
         else {
             ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail, reason = %d", retHW);
@@ -3301,10 +3301,10 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     }
     else {
         if (retHW == MP_HW_FALLBACK) {
-            ESP_LOGI(TAG, "esp_mp_exptmod SW fallback, reason = %d", retHW);
+            ESP_LOGI(TAG, "esp_mp_exptmod nct fallback, reason = %d", retHW);
         }
         else {
-            ESP_LOGW(TAG, "esp_mp_exptmod fail, reason = %d", retHW);
+            ESP_LOGW(TAG, "esp_mp_exptmod nct fail, reason = %d", retHW);
             return retHW;
         }
     }
