@@ -83,15 +83,15 @@
 ** values to properly setup the hardware. see esp_mp_montgomery_init() */
 struct esp_mp_helper
 {
-    word32 Xs;
-    word32 Ys;
-    word32 Ms;
-    word32 Rs;
-    word32 maxWords_sz;
+    word32 Xs; /* how many bits in X operand */
+    word32 Ys;  /* how many bits in Y operand */
+    word32 Ms;  /* how many bits in M operand */
+    word32 Rs;  /* how many bits in R_inv calc */
+    word32 maxWords_sz; /* maximum words expected */
     word32 hwWords_sz;
-    MATH_INT_T r_inv;
-    mp_digit mp;
-    mp_digit mp2;
+    MATH_INT_T r_inv; /* result of calculated montgomery helper */
+    mp_digit mp; /* result of calculated montgomery M' helper */
+    mp_digit mp2; /* optional compare to alternate mongomery calc */
 };
 
 static const char* const TAG = "wolfssl_esp32_mp";
@@ -631,8 +631,9 @@ static word32 bits2words(word32 bits)
     return ((bits + (d - 1)) / d);
 }
 
-#if      !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
-      || !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+      ||  \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
 /* rinv and M' only used for mulmod and mulexp_mod */
 
 /* get rinv */
@@ -808,8 +809,17 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
  * Z = X * Y;  */
 int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 {
-    int ret;
-    ret = MP_OKAY; /* assume success until proven wrong */
+/* During debug, we may be validating against SW result. */
+#ifdef DEBUG_WOLFSSL
+    /* create a place to store copies to perform duplicate operations.
+    ** copies needed as some operations overwrite operands: e.g. X = X * Y */
+    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
+#endif
+
+    int ret = MP_OKAY; /* assume success until proven wrong */
 
     word32 Xs;
     word32 Ys;
@@ -818,9 +828,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 hwWords_sz;
 
 #ifdef WOLFSSL_HW_METRICS
-    esp_mp_max_used = esp_mp_max_used < X->used ? X->used :esp_mp_max_used;
-    esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used :esp_mp_max_used;
-    esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used :esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < X->used ? X->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used : esp_mp_max_used;
 #endif
 
     /* if either operand is zero, there's nothing to do.
@@ -831,18 +841,20 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         return MP_OKAY;
     }
 
-/* During debug, we may be validating against SW result. */
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
-
     /* The caller should have checked if the call was for a SW validation.
      * During debug, we'll return an error. */
     if (esp_hw_validation_active()) {
         return MP_HW_VALIDATION_ACTIVE;
     }
+
+    if (X == Z) {
+        ESP_LOGW(TAG, "mp_mul X == Z");
+    }
+    if (Y == Z) {
+        ESP_LOGW(TAG, "mp_mul Y == Z");
+    }
+
     mp_init(X2);
     mp_init(Y2);
     mp_init(Z2);
@@ -850,16 +862,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
     mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
     mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
-
 #endif
-
-//    ESP_LOGV(TAG, "\nBegin esp_mp_mul \n");
-//    if (X == Z) {
-//        ESP_LOGW(TAG, "mp_mul X == Z");
-//    }
-//    if (Y == Z) {
-//        ESP_LOGW(TAG, "mp_mul Y == Z");
-//    }
 
 /* if we are supporting negative numbers, check that first since operands
  * may be later modified (e.g. Z = Z * X) */
@@ -876,7 +879,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                        mp_isneg(X),      mp_isneg(Y),           neg);
     }
 #endif
-
 
 #ifdef DEBUG_WOLFSSL
     if (IS_HW_VALIDATION) {
@@ -1074,7 +1076,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
                           PEEK,
                           128);
-
 #endif
 
     /* step.3 start process                           */
@@ -1168,6 +1169,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     struct esp_mp_helper mph[1];
+    MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+#ifdef DEBUG_WOLFSSL
+    MATH_INT_T X2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T M2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+#endif
+
     int ret = MP_OKAY;
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
@@ -1177,33 +1187,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
     int reti = 0; /* interim return value used only during HW==SW validation */
 #endif
-//    word32 Xs = 0;
-//    word32 Ys = 0;
-//    word32 Ms = 0;
-//    word32 Rs = 0;
-//    word32 maxWords_sz = 0;
-//    word32 hwWords_sz = 0;
     word32 zwords = 0;
-    //uint32_t Exponent = 0;
-//    mp_digit mp = 0;
-
-/*
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    MATH_INT_T* r_inv = NULL;
-    MATH_INT_T* tmpZ = NULL;
-#else
-*/
-//    mp_digit mp2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-//    MATH_INT_T r_inv[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-
-#ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T M2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-#endif
 
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
 
@@ -1214,13 +1198,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used : esp_mp_max_used;
 #endif
 
-
     if ((M->dp[0] & 1) == 0) {
 #ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_even_mod_ct++;
 #endif
         ESP_LOGV(TAG, "esp_mp_mulmod does not support even numbers");
-        ret = MP_HW_FALLBACK;
+        ret = MP_HW_FALLBACK; /* let the software figure out what to do */
         return ret;
     }
 
@@ -1283,15 +1266,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
 #endif
-
-//        //    if ((Xs <= 8) || (Ys <= 8)) {
-//        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
-//        //        ret = FP_HW_FALLBACK;
-//        //    }
-//        //    if (Xs <= 8) {
-//        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d", Xs);
-//        //        ret = FP_HW_FALLBACK;
-//        //    }
 
     /* calculate r_inv = R^2 mod M
     *    where: R = b^n, and b = 2^32
