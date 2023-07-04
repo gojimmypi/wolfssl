@@ -2649,11 +2649,6 @@ static int hw_math_test_mp_mulmod_2(void)
     /* check d == e; d = (a * b mod c) */
     if ((retf == 0) && (mp_cmp(d, e) == 0)) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    #ifdef WOLFSSL_ESPIDF
-        esp_show_mp_attributes("Operand a", a);
-        esp_show_mp_attributes("Operand b", a);
-        esp_show_mp_attributes("Operand b", a);
-    #endif
     }
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
