@@ -99,13 +99,18 @@ static const char* const TAG = "wolfssl_esp32_mp";
 /* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
     static uint32_t esp_mp_mul_usage_ct = 0;
+    static uint32_t esp_mp_mul_error_ct = 0;
+
     static uint32_t esp_mp_mulmod_usage_ct = 0;
     static uint32_t esp_mp_mulmod_fallback_ct = 0;
     static uint32_t esp_mp_mulmod_even_mod_ct = 0;
     static uint32_t esp_mp_mulmod_small_x_ct = 0;
     static uint32_t esp_mp_mulmod_small_y_ct = 0;
-    static uint32_t esp_mp_mul_error_ct = 0;
     static uint32_t esp_mp_mulmod_error_ct = 0;
+
+    static uint32_t esp_mp_exptmod_usage_ct = 0;
+    static uint32_t esp_mp_exptmod_error_ct = 0;
+    static uint32_t esp_mp_exptmod_fallback_ct = 0;
     static uint32_t esp_mp_max_used = 0;
 #endif
 
@@ -641,15 +646,16 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
     /* todo */
 //     return mp_montgomery_calc_normalization(rinv, M);
-    ESP_LOGV(TAG, "\nBegin esp_get_rinv \n");
 
-    int ret = 0;
 #ifdef DEBUG_WOLFSSL
     MATH_INT_T rinv2[1]; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T M2[1];    /* TODO WOLFSSL_SMALL_STACK */
     mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
     mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
+    int ret2 = MP_OKAY
 #endif
+    int ret = MP_OKAY;
+    ESP_LOGV(TAG, "\nBegin esp_get_rinv \n");
 
     /* 2^(exp)
      *
@@ -658,23 +664,29 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
      * this is the 65'th element (zero based)
      * Value for used = 0x41 = 65
      **/
-    if ((ret = mp_2expt(rinv, exp)) != MP_OKAY) {
+    ret = mp_2expt(rinv, exp);
+    if (ret == MP_OKAY) {
+        ret = mp_mod(rinv, M, rinv);
+    }
+    else {
         ESP_LOGE(TAG, "failed to calculate mp_2expt()");
-        return ret;
     }
 
     /* r_inv = R^2 mod M(=P) */
-    if (ret == 0 && (ret = mp_mod(rinv, M, rinv)) != MP_OKAY) {
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "esp_get_rinv compute success");
+    }
+    else {
         ESP_LOGE(TAG, "failed to calculate mp_mod()");
-        return ret;
     }
 
 #ifdef DEBUG_WOLFSSL
-    int ret2; (void)ret2;
-    /* computes a = B**n mod b without division or multiplication useful for
-    * normalizing numbers in a Montgomery system. */
-    ret2 = mp_montgomery_calc_normalization(rinv2, M2);
-
+    if (ret == MP_OKAY) {
+        int ret2; (void)ret2;
+        /* computes a = B**n mod b without division or multiplication useful for
+        * normalizing numbers in a Montgomery system. */
+        ret2 = mp_montgomery_calc_normalization(rinv2, M2);
+    }
 #endif
 
     ESP_LOGV(TAG, "\nEnd esp_get_rinv \n");
@@ -692,12 +704,36 @@ int esp_hw_validation_active(void)
 #endif
 }
 
+int esp_show_mph(struct esp_mp_helper* mph)
+{
+    int ret = MP_OKAY;
+    if (mph->Xs != 0)
+        ESP_LOGI(TAG, "Xs %d", mph->Xs);
+    if (mph->Ys != 0)
+        ESP_LOGI(TAG, "Ys %d", mph->Ys);
+    if (mph->Ms != 0)
+        ESP_LOGI(TAG, "Ms %d", mph->Ms);
+    if (mph->Rs != 0)
+        ESP_LOGI(TAG, "Rs %d", mph->Rs);
+    if (mph->maxWords_sz != 0)
+        ESP_LOGI(TAG, "maxWords_sz %d", mph->maxWords_sz);
+    if (mph->hwWords_sz != 0)
+        ESP_LOGI(TAG, "hwWords_sz %d", mph->hwWords_sz);
+    if (mph->mp != 0)
+        ESP_LOGI(TAG, "mp %d", mph->mp);
+    if (mph->mp2 != 0)
+        ESP_LOGI(TAG, "mp2 %d", mph->mp2);
+    if (mph->r_inv.used != 0)
+        esp_show_mp("r_inv", &(mph->r_inv));
+    return ret;
+}
+
 /* given X, Y, M - setup mp hardware and other helper values.*/
 int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
     int ret = MP_OKAY;
-
+    XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
     mph->Xs = mp_count_bits(X);
 
 #if 0
@@ -750,14 +786,21 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     *    accordingly R^2 = 2^(n*32*2)
     */
     if (ret == MP_OKAY) {
-        ret = mp_init(&(mph->r_inv));
-        if ( (ret == 0) &&
-         ((ret = esp_get_rinv(&(mph->r_inv), M, (mph->hwWords_sz << 6))) != MP_OKAY) ) {
-            ESP_LOGE(TAG, "calculate r_inv failed.");
-            return MP_VAL;
+        ret = mp_init((mp_int *)&(mph->r_inv));
+        if (ret == MP_OKAY) {
+            ret = esp_get_rinv((mp_int *)&(mph->r_inv), M, (mph->hwWords_sz << 6));
+            if (ret == MP_OKAY) {
+                mph->Rs = mp_count_bits((mp_int *)&(mph->r_inv));
+            }
+            else {
+                ESP_LOGE(TAG, "calculate r_inv failed.");
+                ret = MP_VAL;
+            }
         }
-        mph->Rs = mp_count_bits(&(mph->r_inv));
-
+        else {
+            ESP_LOGE(TAG, "calculate r_inv failed mp_init.");
+            ret = MP_MEM;
+        }
     }
 
 
@@ -787,8 +830,15 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
         }
     }
     else {
+#if 0
+        esp_show_mp("X", X);
+        esp_show_mp("Y", Y);
+        esp_show_mp("M", M);
+        esp_show_mph(mph);
+#endif
         if (ret == MP_HW_FALLBACK) {
             ESP_LOGW(TAG, "esp_mp_montgomery_init exit falling back.");
+
         }
         else {
             ESP_LOGE(TAG, "esp_mp_montgomery_init failed: return code = %d",
@@ -1606,8 +1656,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     ESP_LOGV(TAG, "\nBegin esp_mp_exptmod \n");
-
 #ifdef WOLFSSL_HW_METRICS
+    esp_mp_exptmod_usage_ct++;
     esp_mp_max_used = esp_mp_max_used < X->used ? X->used : esp_mp_max_used;
     esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used : esp_mp_max_used;
     esp_mp_max_used = esp_mp_max_used < M->used ? M->used : esp_mp_max_used;
@@ -1616,6 +1666,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (mp_iszero(M)) {
         ESP_LOGW(TAG, "esp_mp_exptmod M is zero!");
+#ifdef WOLFSSL_HW_METRICS
+        esp_mp_exptmod_fallback_ct++;
+#endif
         return MP_HW_FALLBACK; /* fall back and let SW decide how to handle */
     }
 
@@ -1626,7 +1679,19 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     ret = esp_mp_montgomery_init(X, Y, M, mph);
-    if (ret != MP_OKAY) {
+
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "esp_mp_exptmod esp_mp_montgomery_init success.");
+    }
+    else {
+#ifdef WOLFSSL_HW_METRICS
+        if (ret == MP_HW_FALLBACK) {
+            esp_mp_exptmod_fallback_ct++;
+        }
+        else {
+            esp_mp_exptmod_error_ct++;
+        }
+#endif
         return ret;
     }
 
@@ -1735,8 +1800,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     * 6. Read the result Z(=Y) from Z_MEM
     * 7. Write 1 to INTERRUPT_REG to clear the interrupt.
     */
-    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_wait_clean failed!");
+    ret = esp_mp_hw_wait_clean();
+    if (ret != MP_OKAY) {
+#ifdef WOLFSSL_HW_METRICS
+        esp_mp_exptmod_error_ct++;
+#endif
         return ret;
     }
 
@@ -1814,6 +1882,8 @@ int esp_hw_show_mp_metrics(void)
         ret = MP_VAL;
     }
 
+    ESP_LOGI(TAG, ""); /* mulmod follows */
+
     /* Metrics: esp_mp_mulmod() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %lu",
                    esp_mp_mulmod_usage_ct);
@@ -1833,7 +1903,6 @@ int esp_hw_show_mp_metrics(void)
     else {
         ESP_LOGW(TAG, "Number of esp_mp_mulmod even mod: %lu",
                        esp_mp_mulmod_even_mod_ct);
-        ret = MP_VAL;
     }
 
     if (esp_mp_mulmod_error_ct == 0) {
@@ -1842,13 +1911,24 @@ int esp_hw_show_mp_metrics(void)
     else {
         ESP_LOGW(TAG, "Number of esp_mp_mulmod small x: %lu",
                        esp_mp_mulmod_small_x_ct);
-        ret = MP_VAL;
-
         ESP_LOGW(TAG, "Number of esp_mp_mulmod small y: %lu",
                        esp_mp_mulmod_small_y_ct);
-        ret = MP_VAL;
     }
 
+    ESP_LOGI(TAG, ""); /* exptmod follows */
+
+    ESP_LOGI(TAG, "Number of calls to esp_mp_exptmod: %lu",
+                   esp_mp_exptmod_usage_ct);
+    ESP_LOGI(TAG, "Number of fallback esp_mp_exptmod: %lu",
+                   esp_mp_exptmod_fallback_ct);
+    if (esp_mp_exptmod_error_ct == 0) {
+        ESP_LOGI(TAG, "Success: no esp_mp_exptmod errors.");
+    }
+    else {
+        ESP_LOGW(TAG, "Number of esp_mp_exptmod errors: %lu",
+                       esp_mp_exptmod_error_ct);
+        ret = MP_VAL;
+    }
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
 
     return ret;
