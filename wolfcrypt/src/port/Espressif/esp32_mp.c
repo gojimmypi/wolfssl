@@ -106,6 +106,7 @@ static const char* const TAG = "wolfssl_esp32_mp";
     static uint32_t esp_mp_mulmod_small_y_ct = 0;
     static uint32_t esp_mp_mul_error_ct = 0;
     static uint32_t esp_mp_mulmod_error_ct = 0;
+    static uint32_t esp_mp_max_used = 0;
 #endif
 
 /* mutex */
@@ -690,29 +691,37 @@ int esp_hw_validation_active(void)
 #endif
 }
 
-
+/* given X, Y, M - setup mp hardware and other helper values.*/
 int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
     int ret = MP_OKAY;
+
     mph->Xs = mp_count_bits(X);
 
+#if 0
+    /* optionally prohibit small X.
+    ** note this is very common in ECC: [1] * [Y] mod [M] */
     if (mph->Xs <= 8) {
     #ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_small_x_ct++;
     #endif
-        ESP_LOGV(TAG, "MP_HW_FALLBACK Xs = %d", mph->Xs);
+        ESP_LOGW(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Xs = %d",
+                       mph->Xs);
         ret = MP_HW_FALLBACK;
     }
+#endif
 
     if (ret == MP_OKAY) {
-        mph->Ys = mp_count_bits(Y);
+        mph->Ys = mp_count_bits(Y); /* init Ys to pass to montgomery init */
+
         if (mph->Ys <= 8) {
     #ifdef WOLFSSL_HW_METRICS
             esp_mp_mulmod_small_y_ct++;
     #endif
-            ESP_LOGW(TAG, "MP_HW_FALLBACK Ys = %d", mph->Ys);
-            ret = MP_HW_FALLBACK;
+            ESP_LOGW(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
+                          mph->Ys);
+            ret = MP_HW_FALLBACK; /* fall back to software calc at exit */
         }
         else {
             mph->Ms = mp_count_bits(M);
@@ -721,8 +730,13 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
             mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
 
             if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-                ESP_LOGE(TAG, "exceeds HW maximum bits");
-                ret = MP_VAL; /*  Error: value is not able to be used. */
+                ESP_LOGW(TAG, "Warning: hwWords_sz = %d (%d bits)"
+                              " exceeds HW maximum bits (%d), "
+                              " falling back to SW.",
+                              mph->hwWords_sz,
+                              mph->hwWords_sz << 5,
+                              ESP_HW_RSAMAX_BIT);
+                ret = MP_HW_FALLBACK;
             }
         }
     }
@@ -756,7 +770,6 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     }
 
     if (ret == MP_OKAY) {
-
         if (mph->mp == mph->mp2) {
             ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
         }
@@ -770,6 +783,15 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                      mph->mp2,
                      mph->mp2);
             mph->mp = mph->mp2;
+        }
+    }
+    else {
+        if (ret == MP_HW_FALLBACK) {
+            ESP_LOGW(TAG, "esp_mp_montgomery_init exit falling back.");
+        }
+        else {
+            ESP_LOGE(TAG, "esp_mp_montgomery_init failed: return code = %d",
+                           ret);
         }
     }
 
@@ -794,6 +816,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 Zs;
     word32 maxWords_sz;
     word32 hwWords_sz;
+
+#ifdef WOLFSSL_HW_METRICS
+    esp_mp_max_used = esp_mp_max_used < X->used ? X->used :esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used :esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used :esp_mp_max_used;
+#endif
 
     /* if either operand is zero, there's nothing to do.
      * Y checked first, as it was observed to be zero during
@@ -1141,7 +1169,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     struct esp_mp_helper mph[1];
     int ret = MP_OKAY;
+
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     int negcheck = 0;
+#endif
+
 #ifdef DEBUG_WOLFSSL
     int reti = 0; /* interim return value used only during HW==SW validation */
 #endif
@@ -1174,6 +1206,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
+
+#ifdef WOLFSSL_HW_METRICS
+    esp_mp_max_used = esp_mp_max_used < X->used ? X->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < M->used ? M->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used : esp_mp_max_used;
+#endif
+
 
     if ((M->dp[0] & 1) == 0) {
 #ifdef WOLFSSL_HW_METRICS
@@ -1240,7 +1280,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 # endif
 
         /* neg check - X*Y becomes negative */
-        negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
+#endif
+
 //        //    if ((Xs <= 8) || (Ys <= 8)) {
 //        //        ESP_LOGW(TAG, "FP_HW_FALLBACK Xs = %d, Ys = %d", Xs, Ys);
 //        //        ret = FP_HW_FALLBACK;
@@ -1255,13 +1298,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     *    accordingly R^2 = 2^(n*32*2)
     */
     ret = esp_mp_montgomery_init(X, Y, M, mph);
-    zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
     if (ret != MP_OKAY) {
         return ret;
     }
-    if (ret == MP_OKAY) {
-    }
-
+    zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
@@ -1332,10 +1372,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* 8. clear and release HW                    */
     esp_mp_hw_unlock();
 
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (negcheck) {
         mp_sub(M, tmpZ, tmpZ);
     }
-
+#endif
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
     }
@@ -1450,11 +1491,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             mp_sub(tmpZ, M, tmpZ);
             ESP_LOGV(TAG, "Z is greater than M");
         }
+    #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
         if (negcheck) {
             mp_sub(M, tmpZ, tmpZ);
             ESP_LOGV(TAG, "neg check adjustment");
         }
-
+    #endif
         mp_copy(tmpZ, Z); /* copy tmpZ to result Z */
 
         esp_clean_result(Z, 0);
@@ -1463,10 +1505,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
     esp_mp_mulmod_usage_ct++;
     if (ret == MP_HW_FALLBACK) {
-        ESP_LOGV(TAG, "HW Fallback");
+        ESP_LOGV(TAG, "esp_mp_mulmod HW Fallback tick");
         esp_mp_mulmod_fallback_ct++;
     }
 #endif
+
 #ifdef DEBUG_WOLFSSL
     if (ret == MP_HW_FALLBACK) {
         ESP_LOGI(TAG, "HW Fallback");
@@ -1542,6 +1585,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     mp_clear(&(mph->r_inv));
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
+    if (ret == MP_OKAY) {
+        ESP_LOGV(TAG, "esp_mp_mulmod exit success ");
+    }
+    else {
+        ESP_LOGW(TAG, "esp_mp_mulmod exit failed = %d", ret);
+    }
     return ret;
 
 }
@@ -1584,12 +1633,20 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     ESP_LOGV(TAG, "\nBegin esp_mp_exptmod \n");
 
+#ifdef WOLFSSL_HW_METRICS
+    esp_mp_max_used = esp_mp_max_used < X->used ? X->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Y->used ? Y->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < M->used ? M->used : esp_mp_max_used;
+    esp_mp_max_used = esp_mp_max_used < Z->used ? Z->used : esp_mp_max_used;
+#endif
+
     if (mp_iszero(M)) {
         ESP_LOGW(TAG, "esp_mp_exptmod M is zero!");
         return MP_HW_FALLBACK; /* fall back and let SW decide how to handle */
     }
 
     if (mp_isone(M)) {
+        ESP_LOGW(TAG, "esp_mp_exptmod M is one!");
         mp_clear(Z);
         return MP_OKAY; /* mod zero is zero */
     }
@@ -1705,6 +1762,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     * 7. Write 1 to INTERRUPT_REG to clear the interrupt.
     */
     if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
+        ESP_LOGW(TAG, "esp_mp_hw_wait_clean failed!");
         return ret;
     }
 
@@ -1816,6 +1874,8 @@ int esp_hw_show_mp_metrics(void)
                        esp_mp_mulmod_small_y_ct);
         ret = MP_VAL;
     }
+
+    ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
 
     return ret;
 }
