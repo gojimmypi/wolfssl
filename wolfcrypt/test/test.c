@@ -2298,9 +2298,9 @@ WOLFSSL_SMALL_STACK_STATIC const mp_digit RESULT_E_08_1[] =
  * Returns MP_OKAY if successful.
  *
  */
-static int mp_init_load(MATH_INT_T* T, mp_digit dp[], int word_len)
+static wc_test_ret_t mp_init_load(MATH_INT_T* T, mp_digit dp[], int word_len)
 {
-    int ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
 
     if (T == NULL) {
         ret = MP_VAL;
@@ -2322,9 +2322,9 @@ static int mp_init_load(MATH_INT_T* T, mp_digit dp[], int word_len)
 }
 
 /* byte order check; do the bytes end up in the right order in memory? */
-static int hw_math_test_byte_order_check(void)
+static wc_test_ret_t hw_math_test_byte_order_check(void)
 {
-    int ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1]; /* operands */
 
@@ -2368,14 +2368,15 @@ static int hw_math_test_byte_order_check(void)
 }
 
 /* Math test 1 is a known case where HW fails to return same value as SW. */
-static int hw_math_test_challenge_1(void)
+static wc_test_ret_t hw_math_test_challenge_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+
     debug_message("\n\nBegin math_test_challenge_1()");
     /* 32-operand parameters for math test #1 */
     mp_init_load(a, (mp_digit *)&OPERAND_A_32_1, COUNT_OF(OPERAND_A_32_1) );
@@ -2420,15 +2421,15 @@ static int hw_math_test_challenge_1(void)
 
 /* math_test_mp_mulmod_1() is a simple Large Number Modular Multiplication
  * test using small numbers and it expected to always pass HW & SW */
-static int hw_math_test_mp_mulmod_1(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     /*
     **************************************************************************
@@ -2470,15 +2471,15 @@ static int hw_math_test_mp_mulmod_1(void)
 
 /* math_test_mp_mulmod_2() is a simple Large Number Modular Multiplication
  * test using small numbers and it expected to always pass HW & SW */
-static int hw_math_test_mp_mulmod_2(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_2(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     /*
     **************************************************************************
@@ -2671,15 +2672,15 @@ static int hw_math_test_mp_mulmod_2(void)
     return ret;
 }
 
-static int hw_math_test_mp_mulmod_3(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_3(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     /*
     ** two-word multiplication result mp_mulmod test
@@ -2711,15 +2712,15 @@ static int hw_math_test_mp_mulmod_3(void)
 }
 
 /* */
-static int hw_math_test_mp_mulmod_4(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_4(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     mp_init(a);
     mp_init(b);
@@ -2775,15 +2776,15 @@ static int hw_math_test_mp_mulmod_4(void)
 /*
 ** simple two-word operand mp_mulmod test
 */
-static int hw_math_test_mp_mulmod_2_word(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_2_word(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     mp_init(a);
     mp_init(b);
@@ -2810,15 +2811,15 @@ static int hw_math_test_mp_mulmod_2_word(void)
     return ret;
 }
 
-static int hw_math_test_mp_mulmod_8_word()
+static wc_test_ret_t hw_math_test_mp_mulmod_8_word()
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
 
     /*
     ** eight-word x two-word operand mp_mulmod test
@@ -2858,7 +2859,7 @@ static int hw_math_test_mp_mulmod_8_word()
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
 
-static int hw_math_test_mp_mulmod_32_word_neg()
+static wc_test_ret_t hw_math_test_mp_mulmod_32_word_neg()
 {
     /*
     **************************************************************************
@@ -2866,8 +2867,8 @@ static int hw_math_test_mp_mulmod_32_word_neg()
     **************************************************************************
     */
     /* MATH_INT_T is an opaque type. See types.h  */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
-    int retf = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t retf = MP_OKAY; /* assume success until proven otherwise */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
@@ -3060,14 +3061,14 @@ static int hw_math_test_mp_mulmod_32_word_neg()
 }
 #endif /* negative operand test */
 
-static int hw_math_test_mp_mul_1(void)
+static wc_test_ret_t hw_math_test_mp_mul_1(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
     /* int retf = MP_OKAY*/ ; /* assume success until proven otherwise */
 
     mp_init(a);
@@ -3111,14 +3112,14 @@ static int hw_math_test_mp_mul_1(void)
 }
 
 /* test template */
-static int hw_math_test_mp_mulmod_template(void)
+static wc_test_ret_t hw_math_test_mp_mulmod_template(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
-    int ret = MP_OKAY; /* assume success until proven otherwise */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
     /* int retf = MP_OKAY*/ ; /* assume success until proven otherwise */
 
     mp_init(a);
