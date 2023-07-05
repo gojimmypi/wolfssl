@@ -460,14 +460,14 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (Z->sign != 0) {
-        Z->sign = 1; /* any value other than zero is assumed negative */
+        mp_setneg(Z); /* any value other than zero is assumed negative */
     }
 #endif
     return ret;
 }
 
 /* start HW process */
-static void process_start(word32 reg)
+static void process_start(uint32_t reg)
 {
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
@@ -475,15 +475,14 @@ static void process_start(word32 reg)
     ESP_EM__POST_PROCESS_START
 }
 
-/* wait until done */
-static int wait_until_done(volatile uint32_t reg)
+/* wait until RSA math register indicates operation completed */
+static int wait_until_done(uint32_t reg)
 {
     int ret = MP_OKAY;
     word32 timeout = 0;
     /* wait until done && not timeout */
     asm volatile("memw");
-    while (!ESP_TIMEOUT(++timeout) &&
-                DPORT_REG_READ(reg) != 1) {
+    while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(reg) != 1) {
         asm volatile("nop"); /* wait */
     }
 
@@ -510,21 +509,16 @@ static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
-    int try_ct = 18;
-
     __asm__ volatile ("memw");
 
     DPORT_INTERRUPT_DISABLE();
+    ESP_EM__READ_NON_FIFO_REG;
     for (volatile uint32_t i = 0;  i < numwords; ++i) {
         ESP_EM__3_16
         // DPORT_SEQUENCE_REG_READ(0x3FF40078);
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
     DPORT_INTERRUPT_RESTORE();
-
-    if (try_ct < 1) {
-       // ESP_LOGW(TAG, "esp_memblock_to_mpint timeout exceeded during read");
-    }
 #endif
     mp->used = numwords;
 
@@ -551,25 +545,27 @@ static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
 #endif
     return ret;
 }
-
-/* Write 0x00 to [wordSz] of register memory starting at mem_address */
-static int esp_zero_memblock(volatile const u_int32_t* mem_address,
-                            int wordSz)
+#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+/* Write 0x00 to [wordSz] words of register memory starting at mem_address */
+static int esp_zero_memblock(u_int32_t mem_address, int wordSz)
 {
     int ret = MP_OKAY;
+    DPORT_INTERRUPT_DISABLE();
     for (int i=0; i < wordSz; i++) {
         __asm__ volatile ("memw");
-        DPORT_REG_WRITE((volatile void *)mem_address + (i * sizeof(word32)), 0);
+        DPORT_REG_WRITE((volatile u_int32_t *)mem_address + (i * sizeof(word32)), 0);
         __asm__ volatile ("nop");
         __asm__ volatile ("nop");
         __asm__ volatile ("nop");
     }
+    DPORT_INTERRUPT_RESTORE();
     return ret;
 }
+#endif
 
 /* write MATH_INT_T mp value (dp[]) into memory block
  */
-static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
+static int esp_mpint_to_memblock(u_int32_t mem_address,
                                  const MATH_INT_T* mp,
                                  const word32 bits,
                                  const word32 hwords)
@@ -577,33 +573,45 @@ static int esp_mpint_to_memblock(volatile u_int32_t mem_address,
     int ret = MP_OKAY;
 
     /* init */
-    word32 i;
-    word32 len = (bits / 8 + ((bits & 7) != 0 ? 1 : 0));
+    word32 i; /* memory offset counter */
+    word32 len; /* actual number of words to write to register */
 
+    len = (bits / 8 + ((bits & 7) != 0 ? 1 : 0));
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
+    DPORT_INTERRUPT_DISABLE();
     for (i=0; i < hwords; i++) {
         if (i < len) {
+            /* write our data */
             ESP_LOGV(TAG, "Write i = %d value.", i);
             __asm__ volatile ("memw");
-            DPORT_REG_WRITE((volatile void *)mem_address + (i * sizeof(word32)), mp->dp[i]);
+            DPORT_REG_WRITE(
+                (volatile u_int32_t*)(mem_address + (i * sizeof(word32))),
+                mp->dp[i]
+            ); /* DPORT_REG_WRITE */
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
         }
         else {
+            /* write zeros */
+            /* TODO we may be able to skip zero in certain circumstances */
             if (i == 0) {
                 ESP_LOGV(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
             __asm__ volatile ("memw");
-            /* TODO we may be able to skip zero in certain circumstances */
-            DPORT_REG_WRITE(mem_address + (i * sizeof(word32)), 0);
+            DPORT_REG_WRITE(
+                (volatile u_int32_t*)(mem_address + (i * sizeof(word32))),
+                0
+            ); /* DPORT_REG_WRITE */
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
             __asm__ volatile ("nop");
         }
     }
+    DPORT_INTERRUPT_RESTORE();
+
 
 #if defined(ESP_VERIFY_MEMBLOCK)
     len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)hwords);
@@ -754,9 +762,9 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
         if (mph->Ys <= 8) {
     #ifdef WOLFSSL_HW_METRICS
-            esp_mp_mulmod_small_y_ct++;
+            esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
     #endif
-            ESP_LOGW(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
+            ESP_LOGV(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
                           mph->Ys);
             ret = MP_HW_FALLBACK; /* fall back to software calc at exit */
         }
@@ -780,30 +788,32 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
     ESP_LOGV(TAG, "hwWords_sz = %d", mph->hwWords_sz);
 
-
     /* calculate r_inv = R^2 mode M
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
     if (ret == MP_OKAY) {
-        ret = mp_init((mp_int *)&(mph->r_inv));
+        ret = mp_init((mp_int*)&(mph->r_inv));
         if (ret == MP_OKAY) {
-            ret = esp_get_rinv((mp_int *)&(mph->r_inv), M, (mph->hwWords_sz << 6));
+            ret = esp_get_rinv( (mp_int*)&(mph->r_inv),
+                                M,
+                                (mph->hwWords_sz << 6)
+                              );
             if (ret == MP_OKAY) {
-                mph->Rs = mp_count_bits((mp_int *)&(mph->r_inv));
+                mph->Rs = mp_count_bits((mp_int*)&(mph->r_inv));
             }
             else {
                 ESP_LOGE(TAG, "calculate r_inv failed.");
                 ret = MP_VAL;
-            }
-        }
+            } /* esp_get_rinv check */
+        } /* mp_init success */
         else {
             ESP_LOGE(TAG, "calculate r_inv failed mp_init.");
             ret = MP_MEM;
-        }
-    }
+        } /* mp_init check */
+    } /* calculate r_inv */
 
-
+    /* if we were successful in r_inv, next get M' */
     if (ret == MP_OKAY) {
         ret = mp_montgomery_setup(M, &(mph->mp2) );
         /* calc M' */
@@ -813,6 +823,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
         }
     }
 
+#ifdef DEBUG_WOLFSSL
     if (ret == MP_OKAY) {
         if (mph->mp == mph->mp2) {
             ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
@@ -830,14 +841,15 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
         }
     }
     else {
-#if 0
+    #if 0
         esp_show_mp("X", X);
         esp_show_mp("Y", Y);
         esp_show_mp("M", M);
         esp_show_mph(mph);
-#endif
+    #endif
+
         if (ret == MP_HW_FALLBACK) {
-            ESP_LOGW(TAG, "esp_mp_montgomery_init exit falling back.");
+            ESP_LOGV(TAG, "esp_mp_montgomery_init exit falling back.");
 
         }
         else {
@@ -845,6 +857,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            ret);
         }
     }
+#endif
 
     return ret;
 }
@@ -1024,11 +1037,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
 
-    if (Zs <= sizeof(mp_digit)) {
+    if (Zs <= sizeof(mp_digit)*8) {
         Z->dp[0] = X->dp[0] * Y->dp[0];
         Z->used = 1;
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-        Z->sign = neg;
+        Z->sign = neg; /* see above mp_isneg() for negative result detection */
 #endif
         return MP_OKAY;
     }
@@ -1110,13 +1123,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                           Xs,
                           hwWords_sz);
 
-
-
     /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
-    esp_zero_memblock((volatile void * )RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int));
+    esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int) );
 
     /* write the left-padded Y value into Z */
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset), /* hwWords_sz<<2 */
+    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset),
                           Y,
                           Ys,
                           hwWords_sz);
@@ -1312,7 +1323,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int WordsForOperand;
 # endif
 
-        /* neg check - X*Y becomes negative */
+    /* neg check - X*Y becomes negative, we'll need adjustment  */
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
 #endif
