@@ -375,13 +375,13 @@ extern "C"
                        MATH_INT_T* Y,    /* X  */
                        MATH_INT_T* M,    /* P  */
                        MATH_INT_T* Z); /* Y  */
-/* HW_MATH_ENABLED is typically used in wolfcrypt tests */
-#undef  HW_MATH_ENABLED
-#define HW_MATH_ENABLED
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+    /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
+    #undef  HW_MATH_ENABLED
+    #define HW_MATH_ENABLED
+    #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-    /* Z = X * Y */
+    #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+        /* Z = X * Y */
     int esp_mp_mul(MATH_INT_T* X,
                    MATH_INT_T* Y,
                    MATH_INT_T* Z);
@@ -417,6 +417,9 @@ extern "C"
     #define ESP_EM__POST_SP_MP_HW_LOCK   {__asm__ __volatile__("memw");}
     #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {__asm__ __volatile__("memw");}
 
+    /* Non-FIFO read may not be needed in chip revision v3.0. */
+    #define ESP_EM__READ_NON_FIFO_REG    {DPORT_SEQUENCE_REG_READ(0x3FF40078);}
+
     /* When the CPU frequency is 160 MHz, add six “nop” between two consecutive
     ** FIFO reads. When the CPU frequency is 240 MHz, add seven “nop” between
     ** two consecutive FIFO reads.  See 3.16 */
@@ -450,7 +453,7 @@ extern "C"
            __asm__ __volatile__("nop"); /* 7 */       \
         };
     #else
-        #define ESP_EM__3_16  (1)
+        #define ESP_EM__3_16  {};
     #endif
 
     #define ESP_EM__POST_PROCESS_START { ESP_EM__3_16 };
@@ -461,6 +464,7 @@ extern "C"
     #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {};
     #define ESP_EM__POST_PROCESS_START   {};
     #define ESP_EM__DPORT_FIFO_READ      {};
+    #define ESP_EM__READ_NON_FIFO_REG    {};
 
 #endif
 
