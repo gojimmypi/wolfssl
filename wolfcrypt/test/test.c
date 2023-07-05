@@ -646,18 +646,18 @@ static wc_test_ret_t debug_message(const char* msg)
 
 #ifdef DEBUG_WOLFSSL
     #ifdef WOLFSSL_ESPIDF
-    if (0 == XMEMCMP(msg, "Fail", 4)) {
-        ESP_LOGE(TAG, "%s", msg);
-    }
-    else {
-        ESP_LOGI(TAG, "%s", msg);
-    }
+        if (0 == XMEMCMP(msg, "Fail", 4)) {
+            ESP_LOGE(TAG, "%s", msg);
+        }
+        else {
+            ESP_LOGI(TAG, "%s", msg);
+        }
     #else
         print("%s", msg);
     #endif // WOLFSSL_ESPIDF
 #else
     /* no message */
-#endif // #if defined(DEBUG_WOLFSSL)
+#endif /* #if defined(DEBUG_WOLFSSL) */
     return ret;
 }
 
@@ -1115,8 +1115,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 #endif /* !NO_CODING */
 
-
-
 #if defined(HW_MATH_ENABLED) && !defined(NO_HW_MATH_TEST)
     if ((ret = hw_math_test()) != 0)
         TEST_FAIL("hw_math_test test failed!\n", ret);
@@ -1127,7 +1125,16 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 /* relocated only during development */
 #if defined(WOLFSSL_PUBLIC_MP) && \
     (defined(WOLFSSL_SP_MATH_ALL) || defined(USE_FAST_MATH))
-    if ( (ret = mp_test()) != 0)
+    int ct = 10;
+    while (ret == MP_OKAY && (ct > 0)) {
+        ret = mp_test();
+#ifdef WOLFSSL_HW_METRICS
+        esp_hw_show_mp_metrics();
+#endif
+        ct--;
+        ESP_LOGI(TAG, "\n\nmp_test loops = %d\n\n", ct);
+    }
+    if ( (ret = MP_OKAY) != 0)
         TEST_FAIL("mp       test failed!\n", ret);
     else
         TEST_PASS("mp       test passed!\n");
@@ -3061,7 +3068,140 @@ static wc_test_ret_t hw_math_test_mp_mulmod_32_word_neg()
 }
 #endif /* negative operand test */
 
-static wc_test_ret_t hw_math_test_mp_mul_1(void)
+/* test 1-word multiplication */
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_test_1word(int a_sign, int b_sign)
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T d[1]; /* result */
+    MATH_INT_T e[1]; /* expected result */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(d);
+    mp_init(e);
+
+    debug_message("Begin mp_mul_test_1word()");
+    a->dp[0] = 0xFFFF;
+    a->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    a->sign = a_sign;
+#endif
+
+    b->dp[0] = 0xFFFF;
+    b->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    b->sign = b_sign;
+#endif
+
+    /* the result will be in d */
+    mp_init(d);
+
+    /* our expected result is in e */
+    e->dp[0] = 0xfffe0001;
+    e->used = 1;
+
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (a_sign == b_sign) {
+        e->sign = MP_ZPOS;
+    }
+    else {
+        mp_setneg(e);
+    }
+#endif
+
+    /* call the interesting TFM: d = a * b */
+    ret = mp_mul(a, b, d);
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mul() : challenge:\n" \
+                          "0xFFFF * 0xFFFF e: a * b"
+    /* check d == e; d = (a * b) */
+    if ((ret == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            ret,
+                            a,
+                            b,
+                            NULL,
+                            d,
+                            e);
+        ret = MP_VAL;
+    }
+    return ret;
+}
+
+/* test 2-word multiplication */
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_test_2word(int a_sign, int b_sign)
+{
+    /* MATH_INT_T is an opaque type. See types.h  */
+    MATH_INT_T a[1], b[1]; /* operands */
+    MATH_INT_T d[1]; /* result */
+    MATH_INT_T e[1]; /* expected result */
+    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
+
+    mp_init(a);
+    mp_init(b);
+    mp_init(d);
+    mp_init(e);
+
+    debug_message("Begin math_test_mp_mul_2()");
+    a->dp[0] = 0xFFFFFFFF;
+    a->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    a->sign = a_sign;
+#endif
+
+    b->dp[0] = 0xFFFFFFFF;
+    b->used = 1;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    b->sign = b_sign;
+#endif
+
+    /* the result will be in d */
+    mp_init(d);
+
+    /* our expected result is in e */
+    e->dp[0] = 0x00000001;
+    e->dp[1] = 0xfffffffe;
+    e->used = 2;
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (a_sign == b_sign) {
+        e->sign = MP_ZPOS;
+    }
+    else {
+        mp_setneg(e);
+    }
+#endif
+
+    /* call the interesting TFM: d = a * b */
+    ret = mp_mul(a, b, d);
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "mp_mul() : challenge:\n" \
+                          "0xFFFFFFFF * 0xFFFFFFFF e: a * b"
+    /* check d == e; d = (a * b) */
+    if ((ret == 0) && (mp_cmp(d, e) == 0)) {
+        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+    }
+    else {
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
+                            ret,
+                            a,
+                            b,
+                            NULL,
+                            d,
+                            e);
+        ret = MP_VAL;
+    }
+    return ret;
+}
+
+/* test 8-word multiplication */
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_test_8word(int a_sign, int b_sign)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
@@ -3081,14 +3221,26 @@ static wc_test_ret_t hw_math_test_mp_mul_1(void)
     /* 32-operand parameters for math test #1 */
     mp_init_load(a, (mp_digit *)&OPERAND_A_08_1, COUNT_OF(OPERAND_A_08_1) );
     mp_init_load(b, (mp_digit *)&OPERAND_B_08_1, COUNT_OF(OPERAND_B_08_1) );
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    a->sign = a_sign;
+    b->sign = b_sign;
+#endif
 
     /* the result will be in d */
     mp_init(d);
 
     /* our expected result is in e */
     mp_init_load(e, (mp_digit *)&RESULT_E_08_1,  COUNT_OF(RESULT_E_08_1)  );
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (a_sign == b_sign) {
+        e->sign = MP_ZPOS;
+    }
+    else {
+        mp_setneg(e);
+    }
+#endif
 
-    /* call the interesting TFM: d = a * b */
+/* call the interesting TFM: d = a * b */
     ret = mp_mul(a, b, d);
 
 #undef  THIS_TEST_MESSAGE
@@ -3111,7 +3263,51 @@ static wc_test_ret_t hw_math_test_mp_mul_1(void)
     return ret;
 }
 
-/* test template */
+/* test mp_mul results (with sign as appropriate) */
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_basic_test()
+{
+    wc_test_ret_t ret = MP_OKAY;
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_1word(MP_ZPOS, MP_ZPOS);
+
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_1word(MP_ZPOS, MP_NEG);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_1word(MP_NEG, MP_ZPOS);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_1word(MP_NEG, MP_NEG);
+#endif
+
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_2word(MP_ZPOS, MP_ZPOS);
+
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_2word(MP_ZPOS, MP_NEG);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_2word(MP_NEG, MP_ZPOS);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_2word(MP_NEG, MP_NEG);
+#endif
+
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_8word(MP_ZPOS, MP_ZPOS);
+
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_8word(MP_ZPOS, MP_NEG);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_8word(MP_NEG, MP_ZPOS);
+    if (ret == MP_OKAY)
+        ret = mp_mul_test_8word(MP_NEG, MP_NEG);
+#endif
+
+    return ret;
+}
+
+
+/* TODO remove before PR test template */
 static wc_test_ret_t hw_math_test_mp_mulmod_template(void)
 {
     /* MATH_INT_T is an opaque type. See types.h  */
@@ -3142,8 +3338,8 @@ static wc_test_ret_t hw_math_test_mp_mulmod_template(void)
 */
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 {
-    wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
-    wc_test_ret_t retf = MP_OKAY; /* we'll inspect some interim functions */
+    wc_test_ret_t ret = MP_OKAY;
+    wc_test_ret_t reti = MP_OKAY; /* some tests with interim result */
 
     debug_message("Begin hw_math_test()");
 
@@ -3164,8 +3360,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
                          NULL, NULL, NULL, NULL, NULL);
 #endif /* DEBUG_WOLFSSL */
 
-    /* math_test_mp_mul_1 */
-    ret = hw_math_test_mp_mul_1();
+    /*
+    **************************************************************************
+    ** Large Number Multiplication
+    ** Z = X * Y
+    ** mp_mul() tests
+    **************************************************************************
+    */
+
+    if (ret == MP_OKAY)
+        ret = mp_mul_basic_test();
 
     /*
     **************************************************************************
@@ -3174,43 +3378,63 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
     ** mp_mulmod() tests
     **************************************************************************
     */
-    ret = hw_math_test_mp_mulmod_1();
-    ret = hw_math_test_mp_mulmod_2();
-    ret = hw_math_test_mp_mulmod_3();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_1();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_2();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_3();
 
-    ret = hw_math_test_mp_mulmod_2_word();
-    ret = hw_math_test_mp_mulmod_8_word();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_2_word();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_8_word();
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-    ret = hw_math_test_mp_mulmod_32_word_neg();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_32_word_neg();
 #endif
-    ret = hw_math_test_mp_mulmod_4();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_mp_mulmod_4();
 
     /* The most challenging test: one known to fail in HW */
-    retf = hw_math_test_challenge_1();
-    if (retf != MP_OKAY) {
-        ret = retf;
+    if (ret == MP_OKAY)
+        reti = hw_math_test_challenge_1();
+    if (reti != MP_OKAY) {
+        ret = reti;
         /* if it fails, does it fail a second time? */
         debug_message("\nFAILED!"
                       "Retrying math_test_challenge_1()");
-        retf = hw_math_test_challenge_1();
-        if (retf != MP_OKAY) {
-            ret = retf;
+        reti = hw_math_test_challenge_1();
+        if (reti != MP_OKAY) {
+            ret = reti;
         }
     }
 
 
 
 #if defined(USE_FAST_MATH) || defined (SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
-    int oldused;  (void)oldused;
+
     /* MATH_INT_T is an opaque type. See types.h  */
     MATH_INT_T a[1], b[1]; /* operands */
     MATH_INT_T c[1]; /* optional 3rd operand */
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
 
-    const unsigned char* val = 0; (void)val;
-
+    a->used = BADVAL; /* we have an uninitialized result variable */
+    b->used = 0; /* we have an uninitialized result variable */
     c->used = BADVAL; /* we have an uninitialized result variable */
+
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero."
+    if (ret == MP_OKAY) {
+        if (mp_cmp(a, b) != 0) {
+            debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+        }
+        else {
+            debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+            ret = MP_VAL;
+        }
+    }
 
     mp_init(a);
     mp_init(b);
@@ -3218,10 +3442,21 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
     mp_init(d);
     mp_init(e);
 
+#undef  THIS_TEST_MESSAGE
+#define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero."
+    if (ret == MP_OKAY) {
+        if (mp_cmp(a, b) == 0) {
+            debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+        }
+        else {
+            debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+            ret = MP_VAL;
+        }
+    }
+
     memset(a, 0, sizeof(MATH_INT_T));
     memset(b, 0, sizeof(MATH_INT_T));
     memset(c, 0, sizeof(MATH_INT_T));
-
 
     /*
     **************************************************************************
@@ -3229,18 +3464,21 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
     **************************************************************************
     */
     /* the values are both 0, both [a] and [b] claim to use the
-    ** same umber of words. the values should still be equal */
+    ** same number of words. the values should still be equal */
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE "fp_cmp on 0 == 0; used length zero."
-    if (mp_cmp(a, b) == 0) {
-        debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
-    }
-    else {
-        debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
-        ret = MP_VAL;
+    if (ret == MP_OKAY) {
+        if (mp_cmp(a, b) == 0) {
+            debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
+        }
+        else {
+            debug_message(MP_FAILURE_MSG THIS_TEST_MESSAGE);
+            ret = MP_VAL;
+        }
     }
 
-    ret = hw_math_test_byte_order_check();
+    if (ret == MP_OKAY)
+        ret = hw_math_test_byte_order_check();
     if (ret != MP_OKAY) {
         return ret;
     }
@@ -3439,14 +3677,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
     b[0].used = 1; b[0].dp[0] = 1;
 
     /* check mp_add */
-    retf = mp_add(a, b, c);
+    reti = mp_add(a, b, c);
     #undef  THIS_TEST_MESSAGE
     #define THIS_TEST_MESSAGE "mp_add on standard 1 + 1 check"
-    if (retf == 0) {
+    if (reti == 0) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
-        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, retf,
+        debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE, reti,
                             NULL, NULL, NULL, NULL, NULL);
         ret = MP_VAL;
     }
@@ -3625,7 +3863,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
      * expected: e[0].dp[ 0] = 0x6dbbd8d1 */
 
     /* call the interesting TFM */
-    retf = mp_mulmod(a, b, c, d);
+    reti = mp_mulmod(a, b, c, d);
 
     /* call ESP directly (same result) */
     // retf = esp_mp_mulmod(a, b, c, d);
@@ -3633,12 +3871,12 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE "mp_mulmod() : 32 Word HW Challenge: a * b mod c"
     /* check d == e; d = (a * b mod c) */
-    if ((retf == 0) && (mp_cmp(d, e) == 0)) {
+    if ((reti == 0) && (mp_cmp(d, e) == 0)) {
         debug_message(MP_SUCCESS_MSG THIS_TEST_MESSAGE);
     }
     else {
         debug_message_value(MP_FAILURE_MSG THIS_TEST_MESSAGE,
-                            retf,
+                            reti,
                             NULL,
                             NULL,
                             NULL,
