@@ -13,6 +13,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfSSL", "wolfSSL", "{20662F9E-D386-4839-B855-857D7F922C99}"
 	ProjectSection(SolutionItems) = preProject
 		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{89279333-68BD-4E6A-B970-E645967CE5FA}"
