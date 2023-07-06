@@ -3215,10 +3215,14 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
     }
     else {
         if (retHW == MP_HW_FALLBACK) {
-            ESP_LOGI(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback, reason = %d", retHW);
+    #ifdef DEBUG_WOLFSSL
+            ESP_LOGI(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback,"
+                          "reason = %d", retHW);
+    #endif
         }
         else {
-            ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail, reason = %d", retHW);
+            ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail,"
+                           "reason = %d", retHW);
             return retHW;
         }
     }
@@ -3301,7 +3305,9 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     }
     else {
         if (retHW == MP_HW_FALLBACK) {
+    #ifdef DEBUG_WOLFSSL
             ESP_LOGI(TAG, "esp_mp_exptmod nct fallback, reason = %d", retHW);
+    #endif
         }
         else {
             ESP_LOGW(TAG, "esp_mp_exptmod nct fail, reason = %d", retHW);
