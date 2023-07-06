@@ -2478,7 +2478,7 @@ static wc_test_ret_t hw_math_test_mp_mulmod_1(void)
     b[0].used = 1; b[0].dp[0] = 2;
     c[0].used = 1; c[0].dp[0] = 5;
     retf = mp_mulmod(a, b, c, d);
-    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 2 = 4 */
+    e[0].used = 1; e[0].dp[0] = 4; /* 40004 mod 5 = 4 */
 #undef  THIS_TEST_MESSAGE
 #define THIS_TEST_MESSAGE "mp_mulmod() : a * b mod c check: 4"
     /* check d == e; d = (a * b mod c) */
@@ -3343,7 +3343,6 @@ static wc_test_ret_t hw_math_test_mp_mulmod_template(void)
     MATH_INT_T d[1]; /* result */
     MATH_INT_T e[1]; /* expected result */
     wc_test_ret_t ret = MP_OKAY; /* assume success until proven otherwise */
-    /* int retf = MP_OKAY*/ ; /* assume success until proven otherwise */
 
     mp_init(a);
     mp_init(b);
@@ -3372,8 +3371,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 
     /* print some math info */
 #if defined(DEBUG_WOLFSSL)
-    retf = CheckRunTimeFastMath();
-    debug_message_value("CheckRunTimeFastMath() = ", retf,
+    reti = CheckRunTimeFastMath();
+    debug_message_value("CheckRunTimeFastMath() = ", reti,
                          NULL, NULL, NULL, NULL, NULL);
 
     #ifdef USE_FAST_MATH
