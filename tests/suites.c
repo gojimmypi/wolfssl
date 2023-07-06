@@ -61,7 +61,8 @@
 #include "examples/client/client.h"
 #include "examples/server/server.h"
 
-#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT)
+#if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT) && \
+    !defined(SINGLE_THREADED)
 static WOLFSSL_CTX* cipherSuiteCtx = NULL;
 static char nonblockFlag[] = "-N";
 static char noVerifyFlag[] = "-d";
@@ -791,7 +792,8 @@ static void test_harness(void* vargs)
 int SuiteTest(int argc, char** argv)
 {
 #if !defined(NO_WOLFSSL_SERVER) && !defined(NO_WOLFSSL_CLIENT) && \
-    !defined(WOLF_CRYPTO_CB_ONLY_RSA) && !defined(WOLF_CRYPTO_CB_ONLY_ECC)
+    !defined(WOLF_CRYPTO_CB_ONLY_RSA) && !defined(WOLF_CRYPTO_CB_ONLY_ECC) && \
+    !defined(SINGLE_THREADED)
     func_args args;
     char argv0[3][80];
     char* myArgv[3];
@@ -1275,6 +1277,18 @@ int SuiteTest(int argc, char** argv)
     }
 #endif /* HAVE_RSA and HAVE_ECC */
 #endif /* !WC_STRICT_SIG */
+#if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3) && \
+    (defined(WOLFSSL_SM4_GCM) || defined(WOLFSSL_SM4_CCM))
+    /* add SM2/SM3/SM4 test suites */
+    XSTRLCPY(argv0[1], "tests/test-sm2.conf", sizeof(argv0[1]));
+    printf("starting SM2/SM3/SM4 cipher suite tests\n");
+    test_harness(&args);
+    if (args.return_code != 0) {
+        printf("error from script %d\n", args.return_code);
+        args.return_code = EXIT_FAILURE;
+        goto exit;
+    }
+#endif
 #ifndef NO_PSK
     #ifndef WOLFSSL_NO_TLS12
         #if !defined(NO_RSA) || defined(HAVE_ECC)

@@ -449,6 +449,9 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
     {XSTR_SIZEOF("P521_KYBER_LEVEL5"), "P521_KYBER_LEVEL5", WOLFSSL_P521_KYBER_LEVEL5},
 #endif
 #endif
+#ifdef WOLFSSL_SM2
+    {XSTR_SIZEOF("SM2"),     "SM2",     NID_sm2},
+#endif
     {0, NULL, 0},
 };
 #endif
@@ -2648,6 +2651,9 @@ int wolfSSL_GetObjectSize(void)
 #ifdef HAVE_CHACHA
     printf("\tsizeof chacha       = %lu\n", (unsigned long)sizeof(ChaCha));
 #endif
+#ifdef WOLFSSL_SM4
+    printf("\tsizeof sm4          = %lu\n", (unsigned long)sizeof(Sm4));
+#endif
     printf("sizeof cipher specs     = %lu\n", (unsigned long)sizeof(CipherSpecs));
     printf("sizeof keys             = %lu\n", (unsigned long)sizeof(Keys));
     printf("sizeof Hashes(2)        = %lu\n", (unsigned long)sizeof(Hashes));
@@ -2668,6 +2674,9 @@ int wolfSSL_GetObjectSize(void)
 #endif
 #ifdef WOLFSSL_SHA384
     printf("\tsizeof SHA512       = %lu\n", (unsigned long)sizeof(wc_Sha512));
+#endif
+#ifdef WOLFSSL_SM3
+    printf("\tsizeof sm3          = %lu\n", (unsigned long)sizeof(Sm3));
 #endif
     printf("sizeof Buffers          = %lu\n", (unsigned long)sizeof(Buffers));
     printf("sizeof Options          = %lu\n", (unsigned long)sizeof(Options));
@@ -3692,6 +3701,7 @@ static int isValidCurveGroup(word16 name)
         case WOLFSSL_ECC_BRAINPOOLP256R1:
         case WOLFSSL_ECC_BRAINPOOLP384R1:
         case WOLFSSL_ECC_BRAINPOOLP512R1:
+        case WOLFSSL_ECC_SM2P256V1:
         case WOLFSSL_ECC_X25519:
         case WOLFSSL_ECC_X448:
 
@@ -6127,8 +6137,7 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
         XMEMCPY(signer->subjectNameHash, cert->subjectHash,
                 SIGNER_DIGEST_SIZE);
     #ifdef HAVE_OCSP
-        XMEMCPY(signer->subjectKeyHash, cert->subjectKeyHash,
-                KEYID_SIZE);
+        XMEMCPY(signer->subjectKeyHash, cert->subjectKeyHash, KEYID_SIZE);
     #endif
         signer->keyUsage = cert->extKeyUsageSet ? cert->extKeyUsage
                                                 : 0xFFFF;
@@ -6874,11 +6883,23 @@ static int ProcessBufferTryDecodeEcc(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
             if (ssl) {
                 ssl->options.haveStaticECC = 1;
                 ssl->buffers.keyType = ecc_dsa_sa_algo;
+            #ifdef WOLFSSL_SM2
+                if (key->dp->id == ECC_SM2P256V1)
+                    ssl->buffers.keyType = sm2_sa_algo;
+                else
+            #endif
+                    ssl->buffers.keyType = ecc_dsa_sa_algo;
                 ssl->buffers.keySz = *keySz;
             }
             else {
                 ctx->haveStaticECC = 1;
                 ctx->privateKeyType = ecc_dsa_sa_algo;
+            #ifdef WOLFSSL_SM2
+                if (key->dp->id == ECC_SM2P256V1)
+                    ctx->privateKeyType = sm2_sa_algo;
+                else
+            #endif
+                    ctx->privateKeyType = ecc_dsa_sa_algo;
                 ctx->privateKeySz = *keySz;
             }
 
@@ -7233,7 +7254,11 @@ static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     }
 #endif
 #ifdef HAVE_ECC
-    if ((*keyFormat == 0 || *keyFormat == ECDSAk)) {
+    if ((*keyFormat == 0) || (*keyFormat == ECDSAk)
+    #ifdef WOLFSSL_SM2
+        || (*keyFormat == SM2k)
+    #endif
+        ) {
         ret = ProcessBufferTryDecodeEcc(ctx, ssl, der, keySz, idx, resetSuites,
             keyFormat, heap, devId);
         if (ret != 0)
@@ -7441,8 +7466,10 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
         /* add trusted peer cert. der is freed within */
         if (ctx != NULL)
             ret = AddTrustedPeer(ctx->cm, &der, !ctx->verifyNone);
-        else
+        else {
+            SSL_CM_WARNING(ssl);
             ret = AddTrustedPeer(SSL_CM(ssl), &der, !ssl->options.verifyNone);
+        }
         if (ret != WOLFSSL_SUCCESS) {
             WOLFSSL_MSG("Error adding trusted peer");
         }
@@ -7628,6 +7655,9 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
             case CTC_SHA512wECDSA:
             case CTC_ED25519:
             case CTC_ED448:
+        #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
+            case CTC_SM3wSM2:
+        #endif
                 WOLFSSL_MSG("ECDSA/ED25519/ED448 cert signature");
                 if (ssl)
                     ssl->options.haveECDSAsig = 1;
@@ -7677,6 +7707,11 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
             }
             #endif
             #endif
+            #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
+                else if (cert->keyOID == SM2k) {
+                    ssl->options.haveECC = 1;
+                }
+            #endif
             #ifdef HAVE_ED25519
                 else if (cert->keyOID == ED25519k) {
                     ssl->options.haveECC = 1;
@@ -7723,6 +7758,11 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
                 ctx->haveRSA = 1;
             }
             #endif
+            #endif
+            #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
+            else if (cert->keyOID == SM2k) {
+                ctx->haveECC = 1;
+            }
             #endif
             #ifdef HAVE_ED25519
                 else if (cert->keyOID == ED25519k) {
@@ -7815,6 +7855,30 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
                 }
                 break;
         #endif /* HAVE_ECC */
+        #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
+            case SM2k:
+            #ifdef WOLF_PRIVATE_KEY_ID
+                keyType = sm2_sa_algo;
+            #endif
+                /* Determine ECC key size based on curve */
+                keySz = wc_ecc_get_curve_size_from_id(
+                    wc_ecc_get_oid(cert->pkCurveOID, NULL, NULL));
+                if (ssl && !ssl->options.verifyNone) {
+                    if (ssl->options.minEccKeySz < 0 ||
+                          keySz < (int)ssl->options.minEccKeySz) {
+                        ret = ECC_KEY_SIZE_E;
+                        WOLFSSL_MSG("Certificate Ed key size error");
+                    }
+                }
+                else if (ctx && !ctx->verifyNone) {
+                    if (ctx->minEccKeySz < 0 ||
+                                  keySz < (int)ctx->minEccKeySz) {
+                        ret = ECC_KEY_SIZE_E;
+                        WOLFSSL_MSG("Certificate ECC key size error");
+                    }
+                }
+                break;
+        #endif /* HAVE_ED25519 */
         #ifdef HAVE_ED25519
             case ED25519k:
             #ifdef WOLF_PRIVATE_KEY_ID
@@ -8198,6 +8262,7 @@ int wolfSSL_LoadCRLBuffer(WOLFSSL* ssl, const unsigned char* buff,
     if (ssl == NULL || ssl->ctx == NULL)
         return BAD_FUNC_ARG;
 
+    SSL_CM_WARNING(ssl);
     return wolfSSL_CertManagerLoadCRLBuffer(SSL_CM(ssl), buff, sz, type);
 }
 
@@ -8648,6 +8713,7 @@ int wolfSSL_CertManagerSetOCSP_Cb(WOLFSSL_CERT_MANAGER* cm,
 int wolfSSL_EnableOCSP(WOLFSSL* ssl, int options)
 {
     WOLFSSL_ENTER("wolfSSL_EnableOCSP");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerEnableOCSP(SSL_CM(ssl), options);
     else
@@ -8657,6 +8723,7 @@ int wolfSSL_EnableOCSP(WOLFSSL* ssl, int options)
 int wolfSSL_DisableOCSP(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_DisableOCSP");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerDisableOCSP(SSL_CM(ssl));
     else
@@ -8667,6 +8734,7 @@ int wolfSSL_DisableOCSP(WOLFSSL* ssl)
 int wolfSSL_EnableOCSPStapling(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_EnableOCSPStapling");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerEnableOCSPStapling(SSL_CM(ssl));
     else
@@ -8676,6 +8744,7 @@ int wolfSSL_EnableOCSPStapling(WOLFSSL* ssl)
 int wolfSSL_DisableOCSPStapling(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_DisableOCSPStapling");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerDisableOCSPStapling(SSL_CM(ssl));
     else
@@ -8685,6 +8754,7 @@ int wolfSSL_DisableOCSPStapling(WOLFSSL* ssl)
 int wolfSSL_SetOCSP_OverrideURL(WOLFSSL* ssl, const char* url)
 {
     WOLFSSL_ENTER("wolfSSL_SetOCSP_OverrideURL");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerSetOCSPOverrideURL(SSL_CM(ssl), url);
     else
@@ -8696,6 +8766,7 @@ int wolfSSL_SetOCSP_Cb(WOLFSSL* ssl,
                         CbOCSPIO ioCb, CbOCSPRespFree respFreeCb, void* ioCbCtx)
 {
     WOLFSSL_ENTER("wolfSSL_SetOCSP_Cb");
+    SSL_CM_WARNING(ssl);
     if (ssl) {
         ssl->ocspIOCtx = ioCbCtx; /* use SSL specific ioCbCtx */
         return wolfSSL_CertManagerSetOCSP_Cb(SSL_CM(ssl),
@@ -9484,6 +9555,7 @@ int wolfSSL_CertManagerLoadCRLFile(WOLFSSL_CERT_MANAGER* cm, const char* file,
 int wolfSSL_EnableCRL(WOLFSSL* ssl, int options)
 {
     WOLFSSL_ENTER("wolfSSL_EnableCRL");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerEnableCRL(SSL_CM(ssl), options);
     else
@@ -9494,6 +9566,7 @@ int wolfSSL_EnableCRL(WOLFSSL* ssl, int options)
 int wolfSSL_DisableCRL(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_DisableCRL");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerDisableCRL(SSL_CM(ssl));
     else
@@ -9504,6 +9577,7 @@ int wolfSSL_DisableCRL(WOLFSSL* ssl)
 int wolfSSL_LoadCRL(WOLFSSL* ssl, const char* path, int type, int monitor)
 {
     WOLFSSL_ENTER("wolfSSL_LoadCRL");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerLoadCRL(SSL_CM(ssl), path, type, monitor);
     else
@@ -9513,6 +9587,7 @@ int wolfSSL_LoadCRL(WOLFSSL* ssl, const char* path, int type, int monitor)
 int wolfSSL_LoadCRLFile(WOLFSSL* ssl, const char* file, int type)
 {
     WOLFSSL_ENTER("wolfSSL_LoadCRL");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerLoadCRLFile(SSL_CM(ssl), file, type);
     else
@@ -9524,6 +9599,7 @@ int wolfSSL_LoadCRLFile(WOLFSSL* ssl, const char* file, int type)
 int wolfSSL_SetCRL_Cb(WOLFSSL* ssl, CbMissingCRL cb)
 {
     WOLFSSL_ENTER("wolfSSL_SetCRL_Cb");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerSetCRL_Cb(SSL_CM(ssl), cb);
     else
@@ -9534,6 +9610,7 @@ int wolfSSL_SetCRL_Cb(WOLFSSL* ssl, CbMissingCRL cb)
 int wolfSSL_SetCRL_IOCb(WOLFSSL* ssl, CbCrlIO cb)
 {
     WOLFSSL_ENTER("wolfSSL_SetCRL_Cb");
+    SSL_CM_WARNING(ssl);
     if (ssl)
         return wolfSSL_CertManagerSetCRL_IOCb(SSL_CM(ssl), cb);
     else
@@ -10003,6 +10080,11 @@ WOLFSSL_EVP_PKEY* wolfSSL_CTX_get0_privatekey(const WOLFSSL_CTX* ctx)
 #endif
 #ifdef HAVE_ECC
         case ecc_dsa_sa_algo:
+            type = EVP_PKEY_EC;
+            break;
+#endif
+#ifdef WOLFSSL_SM2
+        case sm2_sa_algo:
             type = EVP_PKEY_EC;
             break;
 #endif
@@ -17117,6 +17199,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
         if (ssl == NULL)
             return BAD_FUNC_ARG;
 
+        SSL_CM_WARNING(ssl);
         return wolfSSL_CertManagerUnload_trust_peers(SSL_CM(ssl));
     }
 #endif /* WOLFSSL_LOCAL_X509_STORE */
@@ -20773,6 +20856,7 @@ WOLF_STACK_OF(WOLFSSL_X509)* wolfSSL_set_peer_cert_chain(WOLFSSL* ssl)
         if (ret == 0 && i == ssl->session->chain.count-1) {
             /* On the last element in the chain try to add the CA chain
              * first if we have one for this cert */
+            SSL_CM_WARNING(ssl);
             if (PushCAx509Chain(SSL_CM(ssl), x509, sk)
                     == WOLFSSL_FATAL_ERROR) {
                 ret = WOLFSSL_FATAL_ERROR;
@@ -22526,6 +22610,11 @@ static WC_INLINE const char* wolfssl_sigalg_to_string(int sig_algo)
 #ifdef HAVE_ECC
         case ecc_dsa_sa_algo:
             authStr = "ECDSA";
+            break;
+#endif
+#ifdef WOLFSSL_SM2
+        case sm2_sa_algo:
+            authStr = "SM2";
             break;
 #endif
 #ifdef HAVE_ED25519
@@ -26218,6 +26307,9 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
         { NID_sha3_512, SHA3_512h, oidHashType, "SHA3-512", "sha3-512"},
         #endif
     #endif /* WOLFSSL_SHA3 */
+    #ifdef WOLFSSL_SM3
+        { NID_sm3, SM3h, oidHashType, "SM3", "sm3"},
+    #endif
         /* oidSigType */
     #ifndef NO_DSA
         #ifndef NO_SHA
@@ -26390,6 +26482,10 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
         { NID_brainpoolP320r1, ECC_BRAINPOOLP320R1_OID,  oidCurveType, "brainpoolP320r1", "brainpoolP320r1"},
         { NID_brainpoolP384r1, ECC_BRAINPOOLP384R1_OID,  oidCurveType, "brainpoolP384r1", "brainpoolP384r1"},
         { NID_brainpoolP512r1, ECC_BRAINPOOLP512R1_OID,  oidCurveType, "brainpoolP512r1", "brainpoolP512r1"},
+
+    #ifdef WOLFSSL_SM2
+        { NID_sm2, ECC_SM2P256V1_OID, oidCurveType, "sm2", "sm2"},
+    #endif
     #endif /* HAVE_ECC */
 
         /* oidBlkType */
@@ -27661,6 +27757,9 @@ struct WOLFSSL_HashSigInfo {
     #ifndef NO_SHA
         { sha_mac,    ecc_dsa_sa_algo, CTC_SHAwECDSA },
     #endif
+#endif
+#if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
+    { sm3_mac, sm2_sa_algo, CTC_SM3wSM2 },
 #endif
 #ifdef HAVE_ED25519
     { no_mac, ed25519_sa_algo, CTC_ED25519 },
@@ -33594,6 +33693,13 @@ static int set_curves_list(WOLFSSL* ssl, WOLFSSL_CTX *ctx, const char* names)
         {
             curve = WOLFSSL_ECC_SECP521R1;
         }
+    #ifdef WOLFSSL_SM2
+        else if ((XSTRNCMP(name, "sm2p256v1", len) == 0) ||
+                 (XSTRNCMP(name, "SM2", len) == 0))
+        {
+            curve = WOLFSSL_ECC_SECP521R1;
+        }
+    #endif
     #ifdef HAVE_CURVE25519
         else if (XSTRNCMP(name, "X25519", len) == 0)
         {
@@ -36530,6 +36636,35 @@ int wolfSSL_RAND_poll(void)
                 break;
 #endif
 
+#ifdef WOLFSSL_SM4_ECB
+            case SM4_ECB_TYPE:
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CBC
+            case SM4_CBC_TYPE:
+                WOLFSSL_MSG("SM4 CBC");
+                XMEMCPY(&ctx->cipher.sm4.iv, ctx->iv, SM4_BLOCK_SIZE);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CTR
+            case SM4_CTR_TYPE:
+                WOLFSSL_MSG("SM4 CTR");
+                XMEMCPY(&ctx->cipher.sm4.iv, ctx->iv, SM4_BLOCK_SIZE);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_GCM
+            case SM4_GCM_TYPE:
+                WOLFSSL_MSG("SM4 GCM");
+                XMEMCPY(&ctx->cipher.sm4.iv, ctx->iv, SM4_BLOCK_SIZE);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CCM
+            case SM4_CCM_TYPE:
+                WOLFSSL_MSG("SM4 CCM");
+                XMEMCPY(&ctx->cipher.sm4.iv, ctx->iv, SM4_BLOCK_SIZE);
+                break;
+#endif
+
             case NULL_CIPHER_TYPE :
                 WOLFSSL_MSG("NULL");
                 break;
@@ -36621,6 +36756,35 @@ int wolfSSL_RAND_poll(void)
 
 #ifdef HAVE_CHACHA
             case CHACHA20_TYPE:
+                break;
+#endif
+
+#ifdef WOLFSSL_SM4_ECB
+            case SM4_ECB_TYPE:
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CBC
+            case SM4_CBC_TYPE:
+                WOLFSSL_MSG("SM4 CBC");
+                XMEMCPY(ctx->iv, &ctx->cipher.sm4.iv, ctx->ivSz);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CTR
+            case SM4_CTR_TYPE:
+                WOLFSSL_MSG("SM4 CTR");
+                XMEMCPY(ctx->iv, &ctx->cipher.sm4.iv, ctx->ivSz);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_GCM
+            case SM4_GCM_TYPE:
+                WOLFSSL_MSG("SM4 GCM");
+                XMEMCPY(ctx->iv, &ctx->cipher.sm4.iv, ctx->ivSz);
+                break;
+#endif
+#ifdef WOLFSSL_SM4_CCM
+            case SM4_CCM_TYPE:
+                WOLFSSL_MSG("SM4 CCM");
+                XMEMCPY(ctx->iv, &ctx->cipher.sm4.iv, ctx->ivSz);
                 break;
 #endif
 

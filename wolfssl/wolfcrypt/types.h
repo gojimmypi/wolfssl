@@ -1009,6 +1009,7 @@ typedef struct w64wrapper {
         DYNAMIC_TYPE_SESSION      = 96,
         DYNAMIC_TYPE_DILITHIUM    = 97,
         DYNAMIC_TYPE_SPHINCS      = 98,
+        DYNAMIC_TYPE_SM4_BUFFER   = 99,
         DYNAMIC_TYPE_SNIFFER_SERVER     = 1000,
         DYNAMIC_TYPE_SNIFFER_SESSION    = 1001,
         DYNAMIC_TYPE_SNIFFER_PB         = 1002,
@@ -1067,7 +1068,7 @@ typedef struct w64wrapper {
         WC_HASH_TYPE_SHA3_512 = 13,
         WC_HASH_TYPE_BLAKE2B = 14,
         WC_HASH_TYPE_BLAKE2S = 19,
-        WC_HASH_TYPE_MAX = WC_HASH_TYPE_BLAKE2S
+        WC_HASH_TYPE_MAX = WC_HASH_TYPE_BLAKE2S,
         #ifndef WOLFSSL_NOSHA512_224
             #define WOLFSSL_NOSHA512_224
         #endif
@@ -1104,11 +1105,18 @@ typedef struct w64wrapper {
         #endif
         #ifdef WOLFSSL_SHAKE128
             WC_HASH_TYPE_SHAKE128 = 18,
+            #undef _WC_HASH_TYPE_MAX
+            #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHAKE128
         #endif
         #ifdef WOLFSSL_SHAKE256
             WC_HASH_TYPE_SHAKE256 = 19,
             #undef _WC_HASH_TYPE_MAX
             #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SHAKE256
+        #endif
+        #ifdef WOLFSSL_SM3
+            WC_HASH_TYPE_SM3     = 20,
+            #undef _WC_HASH_TYPE_MAX
+            #define _WC_HASH_TYPE_MAX WC_HASH_TYPE_SM3
         #endif
         WC_HASH_TYPE_MAX = _WC_HASH_TYPE_MAX
         #undef _WC_HASH_TYPE_MAX
@@ -1359,18 +1367,56 @@ typedef struct w64wrapper {
         !defined(__MINGW32__)
         typedef void*         THREAD_RETURN;
         typedef pthread_t     THREAD_TYPE;
+        typedef pthread_cond_t COND_TYPE;
+        #define WOLFSSL_COND
         #define WOLFSSL_THREAD
-        #define INFINITE      (-1)
-        #define WAIT_OBJECT_0 0L
     #elif defined(FREERTOS)
         typedef unsigned int   THREAD_RETURN;
         typedef TaskHandle_t   THREAD_TYPE;
         #define WOLFSSL_THREAD
+    #elif defined(_MSC_VER)
+        typedef unsigned      THREAD_RETURN;
+        typedef uintptr_t     THREAD_TYPE;
+        typedef HANDLE        COND_TYPE;
+        #define WOLFSSL_COND
+        #define INVALID_THREAD_VAL ((THREAD_TYPE)(INVALID_HANDLE_VALUE))
+        #define COND_NO_REQUIRE_LOCKED_MUTEX
+        #define WOLFSSL_THREAD __stdcall
     #else
         typedef unsigned int  THREAD_RETURN;
         typedef size_t        THREAD_TYPE;
         #define WOLFSSL_THREAD __stdcall
     #endif
+
+
+    #ifndef SINGLE_THREADED
+        /* Necessary headers should already be included. */
+
+        /* We don't support returns from threads */
+        typedef THREAD_RETURN (WOLFSSL_THREAD *THREAD_CB)(void* arg);
+
+        #ifndef INVALID_THREAD_VAL
+            #define INVALID_THREAD_VAL ((THREAD_TYPE)(-1))
+        #endif
+
+        /* Internal wolfSSL threading interface. It does NOT need to be ported
+         * during initial porting efforts.
+         *
+         * It is currently used for:
+         * - CRL monitor */
+
+        WOLFSSL_LOCAL int wolfSSL_NewThread(THREAD_TYPE* thread,
+            THREAD_CB cb, void* arg);
+        WOLFSSL_LOCAL int wolfSSL_JoinThread(THREAD_TYPE thread);
+
+        #ifdef WOLFSSL_COND
+            WOLFSSL_LOCAL int wolfSSL_CondInit(COND_TYPE* cond);
+            WOLFSSL_LOCAL int wolfSSL_CondFree(COND_TYPE* cond);
+            WOLFSSL_LOCAL int wolfSSL_CondSignal(COND_TYPE* cond);
+            WOLFSSL_LOCAL int wolfSSL_CondWait(COND_TYPE* cond,
+                wolfSSL_Mutex* mutex);
+        #endif
+    #endif /* SINGLE_THREADED */
 
     #if defined(HAVE_STACK_SIZE)
         #define EXIT_TEST(ret) return (THREAD_RETURN)((size_t)(ret))
