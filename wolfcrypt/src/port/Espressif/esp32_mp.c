@@ -32,6 +32,10 @@
  * numbers in a calculation must be of the same length.
  *
  * The bit length of M′ is always 32.
+ *
+ * Also, beware: "we have uint32_t == unsigned long for both Xtensa and RISC-V"
+ * see https://github.com/espressif/esp-idf/issues/9511#issuecomment-1207342464
+ * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/release-5.x/5.0/gcc.html
  */
 
 #ifdef HAVE_CONFIG_H
@@ -474,12 +478,12 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 }
 
 /* start HW process */
-static void process_start(uint32_t reg)
+static void process_start(u_int32_t reg)
 {
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
-    DPORT_REG_WRITE((volatile uint32_t *)reg, 1);
-    ESP_EM__POST_PROCESS_START
+    DPORT_REG_WRITE((volatile uint32_t*)reg, 1);
+    ESP_EM__POST_PROCESS_START;
 }
 
 /* wait until RSA math register indicates operation completed */
@@ -487,17 +491,16 @@ static int wait_until_done(uint32_t reg)
 {
     int ret = MP_OKAY;
     word32 timeout = 0;
+
     /* wait until done && not timeout */
-    asm volatile("memw");
+    ESP_EM__MP_HW_WAIT_DONE;
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(reg) != 1) {
         asm volatile("nop"); /* wait */
     }
-
-    ESP_EM__DPORT_FIFO_READ
+    ESP_EM__DPORT_FIFO_READ;
 
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
-    asm volatile("memw");
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
@@ -516,13 +519,11 @@ static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
     esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
 #else
-    __asm__ volatile ("memw");
-
+    ESP_EM__PRE_DPORT_READ;
     DPORT_INTERRUPT_DISABLE();
     ESP_EM__READ_NON_FIFO_REG;
     for (volatile uint32_t i = 0;  i < numwords; ++i) {
-        ESP_EM__3_16
-        // DPORT_SEQUENCE_REG_READ(0x3FF40078);
+        ESP_EM__3_16;
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
     }
     DPORT_INTERRUPT_RESTORE();
@@ -557,13 +558,11 @@ static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
 static int esp_zero_memblock(u_int32_t mem_address, int wordSz)
 {
     int ret = MP_OKAY;
+
+    ESP_EM__PRE_DPORT_WRITE;
     DPORT_INTERRUPT_DISABLE();
     for (int i=0; i < wordSz; i++) {
-        __asm__ volatile ("memw");
         DPORT_REG_WRITE((volatile u_int32_t *)mem_address + (i * sizeof(word32)), 0);
-        __asm__ volatile ("nop");
-        __asm__ volatile ("nop");
-        __asm__ volatile ("nop");
     }
     DPORT_INTERRUPT_RESTORE();
     return ret;
@@ -587,19 +586,16 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
     /* write */
+    ESP_EM__PRE_DPORT_WRITE;
     DPORT_INTERRUPT_DISABLE();
     for (i=0; i < hwords; i++) {
         if (i < len) {
             /* write our data */
             ESP_LOGV(TAG, "Write i = %d value.", i);
-            __asm__ volatile ("memw");
             DPORT_REG_WRITE(
                 (volatile u_int32_t*)(mem_address + (i * sizeof(word32))),
                 mp->dp[i]
             ); /* DPORT_REG_WRITE */
-            __asm__ volatile ("nop");
-            __asm__ volatile ("nop");
-            __asm__ volatile ("nop");
         }
         else {
             /* write zeros */
@@ -608,14 +604,10 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
                 ESP_LOGV(TAG, "esp_mpint_to_memblock zero?");
             }
             ESP_LOGV(TAG, "Write i = %d value = zero.", i);
-            __asm__ volatile ("memw");
             DPORT_REG_WRITE(
                 (volatile u_int32_t*)(mem_address + (i * sizeof(word32))),
                 0
             ); /* DPORT_REG_WRITE */
-            __asm__ volatile ("nop");
-            __asm__ volatile ("nop");
-            __asm__ volatile ("nop");
         }
     }
     DPORT_INTERRUPT_RESTORE();

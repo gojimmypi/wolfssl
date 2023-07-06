@@ -414,8 +414,11 @@ extern "C"
 
 #ifndef ESP_NO_ERRATA_MITIGATION
     #define ESP_EM__MP_HW_WAIT_CLEAN     {__asm__ __volatile__("memw");}
+    #define ESP_EM__MP_HW_WAIT_DONE      {__asm__ __volatile__("memw");}
     #define ESP_EM__POST_SP_MP_HW_LOCK   {__asm__ __volatile__("memw");}
     #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {__asm__ __volatile__("memw");}
+    #define ESP_EM__PRE_DPORT_READ       {__asm__ __volatile__("memw");}
+    #define ESP_EM__PRE_DPORT_WRITE      {__asm__ __volatile__("memw");}
 
     /* Non-FIFO read may not be needed in chip revision v3.0. */
     #define ESP_EM__READ_NON_FIFO_REG    {DPORT_SEQUENCE_REG_READ(0x3FF40078);}
@@ -460,12 +463,13 @@ extern "C"
     #define ESP_EM__DPORT_FIFO_READ    { ESP_EM__3_16 };
 #else
     #define ESP_EM__MP_HW_WAIT_CLEAN     {};
+    #define ESP_EM__MP_HW_WAIT_DONE      {};}
     #define ESP_EM__POST_SP_MP_HW_LOCK   {};
     #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {};
     #define ESP_EM__POST_PROCESS_START   {};
     #define ESP_EM__DPORT_FIFO_READ      {};
     #define ESP_EM__READ_NON_FIFO_REG    {};
-
+    #define ESP_EM__PRE_DPORT_READ       {};
 #endif
 
 /* end c++ wrapper */
