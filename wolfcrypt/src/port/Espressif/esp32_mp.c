@@ -66,8 +66,6 @@
 #define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
 #define BITS_IN_ONE_WORD            32
 
-#define MP_NG   -1
-
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
 
 #ifdef DEBUG_WOLFSSL
@@ -91,7 +89,9 @@ struct esp_mp_helper
     word32 hwWords_sz;
     MATH_INT_T r_inv; /* result of calculated montgomery helper */
     mp_digit mp; /* result of calculated montgomery M' helper */
+#ifdef DEBUG_WOLFSSL
     mp_digit mp2; /* optional compare to alternate mongomery calc */
+#endif
 };
 
 static const char* const TAG = "wolfssl_esp32_mp";
@@ -176,6 +176,36 @@ static int esp_mp_hw_wait_clean(void)
 }
 
 /*
+** esp_mp_hw_islocked() - detect if we've locked the HW for use.
+**
+** WARNING: this does *not* detect separate calls to the
+**          periph_module_disable() and periph_module_enable().
+*/
+static int esp_mp_hw_islocked(void)
+{
+    int ret = 0;
+#ifdef SINGLE_THREADED
+    if (mp_mutex == 0) {
+        /* not in use */
+        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
+    } else {
+        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = true");
+        ret = 1;
+    }
+#else
+    TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
+    if (mutexHolder == NULL) {
+        /* Mutex is not in use */
+        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
+    } else {
+        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
+        ret = 1;
+    }
+#endif
+    return ret;
+}
+
+/*
 * esp_mp_hw_lock()
 *
 * Lock HW engine.
@@ -256,62 +286,38 @@ static int esp_mp_hw_lock()
 }
 
 /*
-**  Release HW engine
+**  Release RSA HW engine
 */
 static int esp_mp_hw_unlock( void )
 {
     int ret = MP_OKAY;
+    if (esp_mp_hw_islocked()) {
 #if CONFIG_IDF_TARGET_ESP32S3
-    /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
-     * periph_module_enable doesn't seem to be documented and in private folder
-     * with v5 release. Maybe it will be deprecated? */
-    DPORT_REG_SET_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
-    periph_module_disable(PERIPH_RSA_MODULE);
+        /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
+         * periph_module_enable doesn't seem to be documented and in private folder
+         * with v5 release. Maybe it will be deprecated? */
+        DPORT_REG_SET_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
+        periph_module_disable(PERIPH_RSA_MODULE);
 
 #else
-    /* set bit to disabled hardware operation; (clear to enable) */
-    DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+        /* set bit to disabled hardware operation; (clear to enable) */
+        DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
 
-    /* Disable RSA hardware */
-    periph_module_disable(PERIPH_RSA_MODULE);
+        /* Disable RSA hardware */
+        periph_module_disable(PERIPH_RSA_MODULE);
 #endif
 
-    /* unlock */
-    esp_CryptHwMutexUnLock(&mp_mutex);
+        /* unlock */
+        esp_CryptHwMutexUnLock(&mp_mutex);
 
-    ESP_LOGV(TAG, "unlock");
+        ESP_LOGV(TAG, "esp_mp_hw_unlock");
+    }
+    else {
+        ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called when not locked.");
+    }
     return ret;
 }
 
-/*
-** esp_mp_hw_islocked() - detect if we've locked the HW for use.
-**
-** WARNING: this does *not* detect separate calls to the
-**          periph_module_disable() and periph_module_enable().
-*/
-static int esp_mp_hw_islocked(void)
-{
-    int ret = 0;
-#ifdef SINGLE_THREADED
-    if (mp_mutex == 0) {
-        /* not in use */
-        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
-    } else {
-        ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = true");
-        ret = 1;
-    }
-#else
-    TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
-    if (mutexHolder == NULL) {
-        /* Mutex is not in use */
-        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
-    } else {
-        ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
-        ret = 1;
-    }
-#endif
-    return ret;
-}
 
 /* mulmod and mulexp_mod HW accelerator need mongomery math prep: M' */
 #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
@@ -421,25 +427,6 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
         this_extra++;
     }
 
-    /* a result of 1 is interesting */
-    if (Z->dp[0] == 1) {
-        /*
-         * When the exponent is 0: In this case, the result of the modular
-         * exponentiation operation will always be 1, regardless of the value
-         * of the base.
-         *
-         * When the base is 1: If the base is equal to 1, then the result of
-         * the modular exponentiation operation will always be 1, regardless
-         * of the value of the exponent.
-         *
-         * When the exponent is equal to the totient of the modulus: If the
-         * exponent is equal to the totient of the modulus, and the base is
-         * relatively prime to the modulus, then the result of the modular
-         * exponentiation operation will be 1.
-         */
-        ESP_LOGV(TAG, "Z->dp[0] == 1");
-    }
-
     /* trim any trailing zeros and adjust z.used size */
     if (Z->used > 1) {
         ESP_LOGV(TAG, "ZTrim: Z->used = %d", Z->used);
@@ -463,6 +450,26 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
         mp_setneg(Z); /* any value other than zero is assumed negative */
     }
 #endif
+
+    /* a result of 1 is interesting */
+    if ((Z->dp[0] == 1) && (Z->used == 1)) {
+        /*
+         * When the exponent is 0: In this case, the result of the modular
+         * exponentiation operation will always be 1, regardless of the value
+         * of the base.
+         *
+         * When the base is 1: If the base is equal to 1, then the result of
+         * the modular exponentiation operation will always be 1, regardless
+         * of the value of the exponent.
+         *
+         * When the exponent is equal to the totient of the modulus: If the
+         * exponent is equal to the totient of the modulus, and the base is
+         * relatively prime to the modulus, then the result of the modular
+         * exponentiation operation will be 1.
+         */
+        ESP_LOGV(TAG, "Z->dp[0] == 1");
+    }
+
     return ret;
 }
 
@@ -471,7 +478,7 @@ static void process_start(uint32_t reg)
 {
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
-    DPORT_REG_WRITE(reg, 1);
+    DPORT_REG_WRITE((volatile uint32_t *)reg, 1);
     ESP_EM__POST_PROCESS_START
 }
 
@@ -579,6 +586,7 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
     len = (bits / 8 + ((bits & 7) != 0 ? 1 : 0));
     len = (len + sizeof(word32)-1) / sizeof(word32);
 
+    /* write */
     DPORT_INTERRUPT_DISABLE();
     for (i=0; i < hwords; i++) {
         if (i < len) {
@@ -612,7 +620,7 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
     }
     DPORT_INTERRUPT_RESTORE();
 
-
+    /* optional re-read verify */
 #if defined(ESP_VERIFY_MEMBLOCK)
     len = XMEMCMP((const void *)mem_address, (const void*)mp->dp, (int)hwords);
     if (len != 0) {
@@ -729,8 +737,10 @@ int esp_show_mph(struct esp_mp_helper* mph)
         ESP_LOGI(TAG, "hwWords_sz %d", mph->hwWords_sz);
     if (mph->mp != 0)
         ESP_LOGI(TAG, "mp %d", mph->mp);
+#ifdef DEBUG_WOLFSSL
     if (mph->mp2 != 0)
         ESP_LOGI(TAG, "mp2 %d", mph->mp2);
+#endif
     if (mph->r_inv.used != 0)
         esp_show_mp("r_inv", &(mph->r_inv));
     return ret;
@@ -815,11 +825,14 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
     /* if we were successful in r_inv, next get M' */
     if (ret == MP_OKAY) {
+#ifdef DEBUG_WOLFSSL
         ret = mp_montgomery_setup(M, &(mph->mp2) );
+#endif
         /* calc M' */
         /* if Pm is odd, uses mp_montgomery_setup() */
-        if ((ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp))) != MP_OKAY) {
-            ESP_LOGE(TAG, "failed to calculate M dash");
+        ret = esp_calc_Mdash(M, 32/* bits */, &(mph->mp));
+        if (ret != MP_OKAY) {
+            ESP_LOGE(TAG, "failed esp_calc_Mdash()");
         }
     }
 
@@ -1030,8 +1043,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 
 #else /* not CONFIG_IDF_TARGET_ESP32S3 */
-    /* assumed to be regular Xtensa here */
+    /* assumed to be regular ESP32 Xtensa here */
 
+    if (ret == MP_OKAY) {
+
+    }
     /* determine count of bits. Used as HW parameter.   */
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
@@ -1046,6 +1062,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         return MP_OKAY;
     }
 
+    if (ret == MP_OKAY) {
+
+    }
     /* maximum bits and words for writing to HW */
     maxWords_sz = bits2words(max(Xs, Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
@@ -1099,59 +1118,56 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
     }
 
-    /* lock HW for use */
-    ret = esp_mp_hw_lock(); /* enables HW clock */
-    if (ret != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_lock fail");
-        return ret;
+    if (ret == MP_OKAY) {
+        /* lock HW for use */
+        ret = esp_mp_hw_lock(); /* enables HW clock */
     }
 
-    if((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_wait_clean");
-        return ret;
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
     }
 
-    /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
-    /* Write 2*N/512 - 1 + 8  */
-    // DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
+    if (ret == MP_OKAY) {
+        /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
+        /* Write 2*N/512 - 1 + 8  */
+        // DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
 
-    DPORT_REG_WRITE(RSA_MULT_MODE_REG, (2 * left_pad_offset * 8/512) - 1 + 8);
+        DPORT_REG_WRITE(RSA_MULT_MODE_REG, (2 * left_pad_offset * 8 / 512) - 1 + 8);
 
-    /* step.2 write X into memory */
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
-                          X,
-                          Xs,
-                          hwWords_sz);
+        /* step.2 write X into memory */
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                              X,
+                              Xs,
+                              hwWords_sz);
 
-    /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
-    esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset -1)/sizeof(int) );
+        /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
+        esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset - 1) / sizeof(int));
 
-    /* write the left-padded Y value into Z */
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset),
-                          Y,
-                          Ys,
-                          hwWords_sz);
+        /* write the left-padded Y value into Z */
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset),
+                              Y,
+                              Ys,
+                              hwWords_sz);
 
-#ifdef DEBUG_WOLFSSLx
-    /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
-                          PEEK,
-                          128);
-#endif
+    #ifdef DEBUG_WOLFSSL
+        /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
+        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE,
+                              PEEK,
+                              128);
+    #endif
 
-    /* step.3 start process                           */
-    process_start(RSA_MULT_START_REG);
+        /* step.3 start process                           */
+        process_start(RSA_MULT_START_REG);
 
-    /* step.4,5 wait until done                       */
-    ret = wait_until_done(RSA_INTERRUPT_REG);
-    if (ret != MP_OKAY) {
-        ESP_LOGE(TAG, "wait_until_done failed.");
-        return ret;
+        /* step.4,5 wait until done                       */
+        ret = wait_until_done(RSA_INTERRUPT_REG);
+
+        /* step.6 read the result form MEM_Z              */
+        if (ret == MP_OKAY) {
+            esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(Zs));
+        }
+    #endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
     }
-    /* step.6 read the result form MEM_Z              */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(Zs));
-
-#endif /* CONFIG_IDF_TARGET_ESP32S3 or not */
 
     /* common exit for all chipset types */
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
@@ -1218,7 +1234,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
     return ret;
-}
+} /* esp_mp_mul() */
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL*/
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
@@ -1472,7 +1488,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
                               &(mph->r_inv), mph->Rs, mph->hwWords_sz);
 
         /* step.3 write M' into memory                   */
-        /* confirmed with Sean that mp2 does not support even modulus
+        /* confirmed that mp2 does not support even modulus.
          * indeed we see a failure, but we can predict when modules is odd
          * or when mp != mp2[0] */
         DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
@@ -1513,9 +1529,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     } /* step 1 .. 12 */
 
     /* step.13 clear and release HW                   */
-    if (esp_mp_hw_islocked()) {
-        esp_mp_hw_unlock();
-    }
+    esp_mp_hw_unlock();
+
     #endif /* Classic ESP32, non-S3 Xtensa */
 
     if (ret == MP_OKAY) {
@@ -1628,7 +1643,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
     return ret;
 
-}
+} /* esp_mp_mulmod */
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
 
 
@@ -1676,7 +1691,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     if (mp_iszero(M)) {
-        ESP_LOGW(TAG, "esp_mp_exptmod M is zero!");
+#ifdef DEBUG_WOLFSSL
+        ESP_LOGI(TAG, "esp_mp_exptmod M is zero!");
+#endif
 #ifdef WOLFSSL_HW_METRICS
         esp_mp_exptmod_fallback_ct++;
 #endif
@@ -1684,7 +1701,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     if (mp_isone(M)) {
-        ESP_LOGW(TAG, "esp_mp_exptmod M is one!");
+#ifdef DEBUG_WOLFSSL
+        ESP_LOGI(TAG, "esp_mp_exptmod M is one!");
+#endif
         mp_clear(Z);
         return MP_OKAY; /* mod zero is zero */
     }
@@ -1723,6 +1742,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 1024 / 8 = 128 bytes
  128 / 4 = 32 words (0x20)
  */
+
+    if (ret == MP_OKAY) {
+    }
 
     /* lock and init the HW                           */
     if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
@@ -1811,49 +1833,58 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     * 6. Read the result Z(=Y) from Z_MEM
     * 7. Write 1 to INTERRUPT_REG to clear the interrupt.
     */
-    ret = esp_mp_hw_wait_clean();
-    if (ret != MP_OKAY) {
-#ifdef WOLFSSL_HW_METRICS
-        esp_mp_exptmod_error_ct++;
-#endif
-        return ret;
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
+    #ifdef WOLFSSL_HW_METRICS
+        if (ret != MP_OKAY) {
+            esp_mp_exptmod_error_ct++;
+        }
+    #endif
     }
 
-    /* step.1                                         */
-    ESP_LOGV(TAG, "hwWords_sz = %d, num = %d",
-                   mph->hwWords_sz, (mph->hwWords_sz >> 4) - 1);
 
-    DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (mph->hwWords_sz >> 4) - 1);
-    /* step.2 write G, X, P, r_inv and M' into memory */
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, mph->Ys, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
-                          &(mph->r_inv),
-                          mph->Rs,
-                          mph->hwWords_sz);
+    if (ret == MP_OKAY) {
+        /* step.1                                         */
+        ESP_LOGV(TAG,
+                 "hwWords_sz = %d, num = %d",
+                 mph->hwWords_sz,
+                 (mph->hwWords_sz >> 4) - 1
+                );
 
-    /* step.3 write M' into memory                    */
-    ESP_LOGV(TAG, "M' = %d", mph->mp);
-    DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
-    asm volatile("memw");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
+        DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (mph->hwWords_sz >> 4) - 1);
+        /* step.2 write G, X, P, r_inv and M' into memory */
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, mph->Ys, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                              &(mph->r_inv),
+                              mph->Rs,
+                              mph->hwWords_sz);
 
-    /* step.4 start process                           */
-    process_start(RSA_MODEXP_START_REG); /* was RSA_START_MODEXP_REG;
-                                          * RSA_MODEXP_START_REG as in docs? */
+        /* step.3 write M' into memory                    */
+        ESP_LOGV(TAG, "M' = %d", mph->mp);
+        DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
+        asm volatile("memw");
+        asm volatile("nop");
+        asm volatile("nop");
+        asm volatile("nop");
+        asm volatile("nop");
+        asm volatile("nop");
+        asm volatile("nop");
 
-    /* step.5 wait until done                         */
-    wait_until_done(RSA_INTERRUPT_REG);
-    /* step.6 read a result form memory               */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+        /* step.4 start process                           */
+        process_start(RSA_MODEXP_START_REG); /* was RSA_START_MODEXP_REG;
+                                              * RSA_MODEXP_START_REG as in docs? */
+
+        /* step.5 wait until done                         */
+        wait_until_done(RSA_INTERRUPT_REG);
+        /* step.6 read a result form memory               */
+        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+    }
+
     /* step.7 clear and release HW                    */
     esp_mp_hw_unlock();
+
 
 #endif /* regular ESP32 */
 
@@ -1864,10 +1895,10 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_exptmod_depth_counter--;
 #endif
 
-     esp_clean_result(Z, 0);
+    esp_clean_result(Z, 0);
 
     return ret;
-}
+} /* esp_mp_exptmod */
 #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) &&
