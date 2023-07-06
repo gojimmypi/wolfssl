@@ -240,7 +240,7 @@ void app_main(void)
     }
 
 #ifdef DEBUG_WOLFSSL
-    esp_show_usage_metrics();
+    esp_hw_show_mp_metrics();
 #endif
 
     /* after the test, we'll just wait */
