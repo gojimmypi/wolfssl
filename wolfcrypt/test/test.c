@@ -16288,6 +16288,7 @@ static wc_test_ret_t const_byte_ptr_test(const byte* in, word32 *outJ)
     volatile word32 j = -1; /* must be volatile to properly detect error */
 
     ret = (wc_test_ret_t)*in; /* accessed *in value. */
+    (void)ret;
     j = *outJ; /* Found index to use in const array. */
 
     if (j == 0) {
@@ -29093,7 +29094,7 @@ static wc_test_ret_t ecc_test_custom_curves(WC_RNG* rng)
         #define ecc_oid_sm2p256v1_sz CODED_SM2P256V1_SZ
     #endif /* WOLFSSL_SM2 */
     #define ECC_SM2P256V1_TEST 102
-static int test_sm2_verify_caseA2()
+static int test_sm2_verify_caseA2(void)
 {
     ecc_key key;
     int ret, res;
@@ -29177,7 +29178,7 @@ done:
 }
 #endif /* WOLFSSL_PUBLIC_MP && WOLFSSL_CUSTOM_CURVES */
 
-static int test_sm2_verify_case()
+static int test_sm2_verify_case(void)
 {
     ecc_key key;
     int ret, res;
@@ -29541,7 +29542,7 @@ done:
 }
 #endif /* HAVE_ECC_VERIFY */
 
-static int test_sm2_create_digest()
+static int test_sm2_create_digest(void)
 {
     const byte msg[] = "message to sign";
     const byte id[] = "0123456789";
@@ -29595,7 +29596,7 @@ done:
     return ret;
 }
 
-static int test_sm2_verify()
+static int test_sm2_verify(void)
 {
     int ret = 0;
 
@@ -30467,7 +30468,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
 #if !defined(NO_ECC_SECP) || defined(WOLFSSL_CUSTOM_CURVES)
     ret = ecc_def_curve_test(&rng);
     if (ret < 0) {
-        fprintf(stderr, "Default\n");
+        printf("Default\n");
         goto done;
     }
 #endif
@@ -30503,7 +30504,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
 #ifdef WOLFSSL_SM2
     ret = ecc_test_curve(&rng, 32, ECC_SM2P256V1);
     if (ret < 0) {
-        fprintf(stderr, "SM2\n");
+        printf("SM2\n");
         goto done;
     }
 #endif
@@ -30511,7 +30512,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
 #if defined(WOLFSSL_CUSTOM_CURVES)
     ret = ecc_test_custom_curves(&rng);
     if (ret != 0) {
-        fprintf(stderr, "Custom\n");
+        printf("Custom\n");
         goto done;
     }
 #endif
@@ -30519,12 +30520,12 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
 #if defined(WOLFSSL_SM2)
     ret = test_sm2_verify();
     if (ret != 0) {
-        fprintf(stderr, "SM2 Verify\n");
+        printf("SM2 Verify\n");
         goto done;
     }
     ret = ecc_sm2_test_curve(&rng, ECC_TEST_VERIFY_COUNT);
     if (ret != 0) {
-        fprintf(stderr, "SM2 test\n");
+        printf("SM2 test\n");
         goto done;
     }
 #endif
