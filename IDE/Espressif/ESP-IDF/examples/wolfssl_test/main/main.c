@@ -179,9 +179,8 @@ void app_main(void)
     ESP_LOGI(TAG, "NO_ESP32WROOM32_CRYPT defined! HW acceleration DISABLED.");
 #else
     #if defined(CONFIG_IDF_TARGET_ESP32C3)
-        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-C3"
+
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-        #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S2"
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         /* #error "ESP32WROOM32_CRYPT not yet supported on ESP32-S3" */
         ESP_LOGI(TAG, "ESP32WROOM32_CRYPT is enabled for  ESP32-S3.");

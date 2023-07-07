@@ -55,10 +55,10 @@
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-    static const char* TAG = "TFM"; /* esp log breadcrumb */
 #endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+    static const char* TAG = "TFM"; /* esp log breadcrumb */
     #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
         /* Each individual math HW can be turned on or off.
          * Listed in order of complexity and historical difficulty. */

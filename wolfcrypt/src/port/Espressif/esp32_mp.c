@@ -26,7 +26,7 @@
  * esp_mp_mulmod()   Large Number Modular Multiplication Z = X × Y mod M
  * esp_mp_mul()      Large Number Multiplication         Z = X × Y
  *
- * The RSA Accelerator supports operand lengths of:
+ * The ESP32 RSA Accelerator supports operand lengths of:
  * N ∈ {512,1024 , 1536, 2048, 2560, 3072, 3584, 4096} bits. The bit length
  * of arguments Z, X, Y , M, and r can be any one from the N set, but all
  * numbers in a calculation must be of the same length.
@@ -1976,6 +1976,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
 int esp_hw_show_mp_metrics(void)
 {
+#ifdef HW_MATH_ENABLED
     int ret = MP_OKAY;
 
     /* Metrics: esp_mp_mul() */
@@ -2038,8 +2039,9 @@ int esp_hw_show_mp_metrics(void)
         ret = MP_VAL;
     }
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
-
-    return ret;
+#else
+    return 0;
+#endif /* HW_MATH_ENABLED */
 }
 #endif
 

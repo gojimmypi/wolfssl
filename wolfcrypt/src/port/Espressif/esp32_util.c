@@ -395,6 +395,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
                              1);
             words_to_show = 1;
         }
+    #ifdef MAX_WORDS_ESP_SHOW_MP
         /* if too big, we'll show MAX_WORDS_ESP_SHOW_MP words */
         if (words_to_show > MAX_WORDS_ESP_SHOW_MP) {
             ESP_LOGI(MP_TAG, "Limiting word count from %d to %d",
@@ -402,6 +403,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
                              MAX_WORDS_ESP_SHOW_MP);
             words_to_show = MAX_WORDS_ESP_SHOW_MP;
         }
+    #endif
         ESP_LOGI(MP_TAG, "%s:",c);
         esp_show_mp_attributes(c, X);
         for (size_t i = 0; i < words_to_show; i++) {
