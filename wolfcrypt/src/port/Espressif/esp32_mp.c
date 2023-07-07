@@ -85,13 +85,14 @@
 ** values to properly setup the hardware. see esp_mp_montgomery_init() */
 struct esp_mp_helper
 {
+    MATH_INT_T r_inv; /* result of calculated montgomery helper */
+    word32 exp;
     word32 Xs; /* how many bits in X operand */
     word32 Ys;  /* how many bits in Y operand */
     word32 Ms;  /* how many bits in M operand */
     word32 Rs;  /* how many bits in R_inv calc */
     word32 maxWords_sz; /* maximum words expected */
     word32 hwWords_sz;
-    MATH_INT_T r_inv; /* result of calculated montgomery helper */
     mp_digit mp; /* result of calculated montgomery M' helper */
 #ifdef DEBUG_WOLFSSL
     mp_digit mp2; /* optional compare to alternate mongomery calc */
@@ -750,6 +751,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
     int ret = MP_OKAY;
+    int exp;
     XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
     mph->Xs = mp_count_bits(X);
 
@@ -801,20 +803,16 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     *    where: R = b^n, and b = 2^32
     *    accordingly R^2 = 2^(n*32*2)
     */
-    int exp;
 #if CONFIG_IDF_TARGET_ESP32S3
-    int maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
-    exp = maxWords_sz * BITS_IN_ONE_WORD * 2;
+    exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
 #else
     exp = mph->hwWords_sz << 6;
 #endif
+
     if (ret == MP_OKAY) {
         ret = mp_init((mp_int*)&(mph->r_inv));
         if (ret == MP_OKAY) {
-            ret = esp_get_rinv( (mp_int*)&(mph->r_inv),
-                                M,
-                                exp
-                              );
+            ret = esp_get_rinv( (mp_int*)&(mph->r_inv), M, exp);
             if (ret == MP_OKAY) {
                 mph->Rs = mp_count_bits((mp_int*)&(mph->r_inv));
             }
@@ -908,6 +906,23 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 Zs;
     word32 maxWords_sz;
     word32 hwWords_sz;
+    word32 resultWords_sz;
+
+/* if we are supporting negative numbers, check that first since operands
+ * may be later modified (e.g. Z = Z * X) */
+#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    /* neg check: X*Y becomes negative */
+    int neg;
+
+    /* aka (X->sign == Y->sign) ? MP_ZPOS : MP_NEG; , but with mp_isneg(): */
+    neg = (mp_isneg(X) == mp_isneg(Y)) ? MP_ZPOS : MP_NEG;
+    if (neg) {
+        /* Negative numbers are relatively infrequent.
+         * May be interesting during verbose debugging: */
+        ESP_LOGV(TAG, "mp_isneg(X) = %d; mp_isneg(Y) = %d; neg = %d ",
+                       mp_isneg(X),      mp_isneg(Y),           neg);
+    }
+#endif
 
 #ifdef WOLFSSL_HW_METRICS
     esp_mp_max_used = esp_mp_max_used < X->used ? X->used : esp_mp_max_used;
@@ -944,25 +959,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     mp_copy(X, X2); /* copy (src = X) to (dst = X2) */
     mp_copy(Y, Y2); /* copy (src = Y) to (dst = Y2) */
     mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
-#endif
 
-/* if we are supporting negative numbers, check that first since operands
- * may be later modified (e.g. Z = Z * X) */
-#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-    /* neg check: X*Y becomes negative */
-    int neg;
-
-    /* aka (X->sign == Y->sign) ? MP_ZPOS : MP_NEG; , but with mp_isneg(): */
-    neg = (mp_isneg(X) == mp_isneg(Y)) ? MP_ZPOS : MP_NEG;
-    if (neg) {
-        /* Negative numbers are relatively infrequent.
-         * May be interesting during verbose debugging: */
-        ESP_LOGV(TAG, "mp_isneg(X) = %d; mp_isneg(Y) = %d; neg = %d ",
-                       mp_isneg(X),      mp_isneg(Y),           neg);
-    }
-#endif
-
-#ifdef DEBUG_WOLFSSL
     if (IS_HW_VALIDATION) {
         ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
     }
@@ -973,12 +970,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif /* DEBUG_WOLFSSL */
 
-
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
-
-
+    
     if (Zs <= sizeof(mp_digit)*8) {
         Z->dp[0] = X->dp[0] * Y->dp[0];
         Z->used = 1;
@@ -995,6 +990,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     maxWords_sz = bits2words(max(Xs, Ys));
     hwWords_sz  = words2hwords(maxWords_sz);
 
+    resultWords_sz = bits2words(Xs + Ys);
     /* sanity check */
     if((hwWords_sz<<5) > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
@@ -1003,19 +999,26 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
 #if CONFIG_IDF_TARGET_ESP32S3
 
-
-    /* X & Y must be represented by the same number of bits. Must be
+    /* Unlike the ESP32 that is limited to only four operand lengths,
+     * the ESP32-S3 The RSA Accelerator supports large-number modular
+     * multiplication with operands of 128 different lengths.
+     *
+     * X & Y must be represented by the same number of bits. Must be
      * enough to represent the larger one. */
-    int MinXYBits = max(Xs, Ys);
+    // int MinXYBits = max(Xs, Ys); /* used only for WordsForOperand */
 
     /* Figure out how many words we need to
      * represent each operand & the result. */
-    int WordsForOperand = bits2words(MinXYBits);
-    int WordsForResult = bits2words(Xs + Ys);
+    // int WordsForOperand = bits2words(MinXYBits); /* aka hwWords_sz */
+    // int WordsForResult = bits2words(Xs + Ys);
 
     /* Make sure we are within capabilities of hardware. */
-    if ( (WordsForOperand * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS ) {
-        ESP_LOGW(TAG, "exceeds max bit length(2048)");
+    if ( (hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS ) {
+        ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
+        return MP_VAL; /*  Error: value is not able to be used. */
+    }
+    if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
+        ESP_LOGW(TAG, "result exceeds max bit length(%d)",ESP_HW_RSAMAX_BIT );
         return MP_VAL; /*  Error: value is not able to be used. */
     }
 
@@ -1051,22 +1054,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0);
 
         /* 3. Write number of words required for result. */
-        if ((WordsForOperand * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
-            return MP_VAL; /*  Error: value is not able to be used. */
-        }
-        DPORT_REG_WRITE(RSA_LENGTH_REG, (WordsForOperand * 2 - 1));
+        DPORT_REG_WRITE(RSA_LENGTH_REG, (hwWords_sz * 2 - 1));
 
         /* 4. Load X, Y operands. Maximum is 64 words (64*8*4 = 2048 bits) */
         esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
                               X,
                               Xs,
-                              WordsForOperand);
-        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + WordsForOperand * 4,
+                              hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + hwWords_sz * 4,
                               Y,
                               Ys,
-                              WordsForOperand);
-
+                              hwWords_sz);
 
         /* 5. Start operation and wait until it completes. */
         process_start(RSA_MULT_START_REG);
@@ -1074,11 +1072,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
     if (ret == MP_OKAY) {
         /* 6. read the result form MEM_Z              */
-        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, WordsForResult);
+        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, resultWords_sz);
     }
 
-
-    /* end if CONFIG_IDF_TARGET_ESP32S3 */
+    /*
+    ** end if CONFIG_IDF_TARGET_ESP32S3
+    */
 
 #else /* not CONFIG_IDF_TARGET_ESP32S3 */
     /* assumed to be regular ESP32 Xtensa here */
