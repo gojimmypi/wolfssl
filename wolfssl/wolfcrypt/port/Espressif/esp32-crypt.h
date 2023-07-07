@@ -153,17 +153,8 @@
 #endif
 
 #include <freertos/FreeRTOS.h>
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* no includes for ESP32C3 at this time (no HW implemented yet) */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    #include "soc/dport_reg.h"
-    #include "soc/hwcrypto_reg.h"
-    #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
-        #include "esp_private/periph_ctrl.h"
-    #else
-        #include "driver/periph_ctrl.h"
-    #endif
-#else
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
 
@@ -182,7 +173,18 @@
     #else
         #include <rom/ets_sys.h>
     #endif
-
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #include "soc/dport_reg.h"
+    #include "soc/hwcrypto_reg.h"
+    #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+        #include "esp_private/periph_ctrl.h"
+    #else
+        #include "driver/periph_ctrl.h"
+    #endif
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* no includes for ESP32C3 at this time (no HW implemented yet) */
+#else
+    /* not yet supported. no HW */
 #endif
 
 #if defined(USE_ESP_DPORT_ACCESS_READ_BUFFER)
@@ -199,8 +201,6 @@ extern "C"
     ** Some common esp utilities
     ******************************************************************************
     */
-
-    int esp_mp_exptmod_busy(void); /* TODO */
 
     int esp_ShowExtendedSystemInfo(void);
 
@@ -224,18 +224,18 @@ extern "C"
     int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex);
 
     /* When the HW is in use, the mutex will be locked. */
-    int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBloxkTime);
+    int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time);
 
     /* Release the mutex to indicate the HW is no longer in use. */
     int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex);
 
-    #ifndef NO_AES
+#ifndef NO_AES
 
-        #if ESP_IDF_VERSION_MAJOR >= 4
-            #include "esp32/rom/aes.h"
-        #else
-            #include "rom/aes.h"
-        #endif
+    #if ESP_IDF_VERSION_MAJOR >= 4
+        #include "esp32/rom/aes.h"
+    #else
+        #include "rom/aes.h"
+    #endif
 
     typedef enum tagES32_AES_PROCESS
     {
@@ -257,7 +257,7 @@ extern "C"
     int wc_esp32AesEncrypt(struct Aes *aes, const byte* in, byte* out);
     int wc_esp32AesDecrypt(struct Aes *aes, const byte* in, byte* out);
 
-#endif
+#endif /* ! NO_AES */
 
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 
@@ -277,9 +277,28 @@ extern "C"
     #define SHA_CTX ETS_SHAContext
 
     #if ESP_IDF_VERSION_MAJOR >= 4
-        #include "esp32/rom/sha.h"
-    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-         #include "esp32s3/rom/sha.h"
+        #if defined(CONFIG_IDF_TARGET_ESP32)
+            #include "esp32/rom/sha.h"
+            #define WC_ESP_SHA_TYPE enum SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2)
+            #include "esp32c2/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+            #include "esp32c3/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+            #include "esp32h2/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+            #include "esp32s2/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+            #include "esp32s3/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #else
+            #include "rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #endif
     #else
         #include "rom/sha.h"
     #endif
@@ -310,7 +329,8 @@ extern "C"
         **
         **  the Espressif type: SHA1, SHA256, etc.
         */
-        enum SHA_TYPE sha_type;
+
+        WC_ESP_SHA_TYPE sha_type;
 
         /* we'll keep track of our own locks.
         ** actual enable/disable only occurs for ref_counts[periph] == 0
@@ -351,7 +371,7 @@ extern "C"
     int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc);
 #endif
 
-#endif /* NO_SHA && */
+#endif /* NO_SHA && etc */
 
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
@@ -412,7 +432,14 @@ extern "C"
 
 #define ESP_MP_HW_LOCK_MAX_DELAY ( TickType_t ) 0xffUL
 
-#ifndef ESP_NO_ERRATA_MITIGATION
+/*
+ * Errata Mitigation. See
+ * https://www.espressif.com/sites/default/files/documentation/esp32_errata_en.pdf
+ * https://www.espressif.com/sites/default/files/documentation/esp32-c3_errata_en.pdf
+ * https://www.espressif.com/sites/default/files/documentation/esp32-s3_errata_en.pdf
+ */
+#if defined(CONFIG_IDF_TARGET_ESP32) && !defined(ESP_NO_ERRATA_MITIGATION)
+    /* some of these may be tuned for specific silicon versions */
     #define ESP_EM__MP_HW_WAIT_CLEAN     {__asm__ __volatile__("memw");}
     #define ESP_EM__MP_HW_WAIT_DONE      {__asm__ __volatile__("memw");}
     #define ESP_EM__POST_SP_MP_HW_LOCK   {__asm__ __volatile__("memw");}
@@ -428,32 +455,32 @@ extern "C"
     ** two consecutive FIFO reads.  See 3.16 */
     #if defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_80)
         #define ESP_EM__3_16 { \
-           __asm__ __volatile__("memw");              \
-           __asm__ __volatile__("nop"); /* 1 */       \
-           __asm__ __volatile__("nop"); /* 2 */       \
-           __asm__ __volatile__("nop"); /* 3 */       \
-           __asm__ __volatile__("nop"); /* 4 */       \
+            __asm__ __volatile__("memw");              \
+            __asm__ __volatile__("nop"); /* 1 */       \
+            __asm__ __volatile__("nop"); /* 2 */       \
+            __asm__ __volatile__("nop"); /* 3 */       \
+            __asm__ __volatile__("nop"); /* 4 */       \
         };
     #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160)
         #define ESP_EM__3_16 { \
-           __asm__ __volatile__("memw");              \
-           __asm__ __volatile__("nop"); /* 1 */       \
-           __asm__ __volatile__("nop"); /* 2 */       \
-           __asm__ __volatile__("nop"); /* 3 */       \
-           __asm__ __volatile__("nop"); /* 4 */       \
-           __asm__ __volatile__("nop"); /* 5 */       \
-           __asm__ __volatile__("nop"); /* 6 */       \
+            __asm__ __volatile__("memw");              \
+            __asm__ __volatile__("nop"); /* 1 */       \
+            __asm__ __volatile__("nop"); /* 2 */       \
+            __asm__ __volatile__("nop"); /* 3 */       \
+            __asm__ __volatile__("nop"); /* 4 */       \
+            __asm__ __volatile__("nop"); /* 5 */       \
+            __asm__ __volatile__("nop"); /* 6 */       \
         };
     #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240)
         #define ESP_EM__3_16 { \
-           __asm__ __volatile__("memw");              \
-           __asm__ __volatile__("nop"); /* 1 */       \
-           __asm__ __volatile__("nop"); /* 2 */       \
-           __asm__ __volatile__("nop"); /* 3 */       \
-           __asm__ __volatile__("nop"); /* 4 */       \
-           __asm__ __volatile__("nop"); /* 5 */       \
-           __asm__ __volatile__("nop"); /* 6 */       \
-           __asm__ __volatile__("nop"); /* 7 */       \
+            __asm__ __volatile__("memw");              \
+            __asm__ __volatile__("nop"); /* 1 */       \
+            __asm__ __volatile__("nop"); /* 2 */       \
+            __asm__ __volatile__("nop"); /* 3 */       \
+            __asm__ __volatile__("nop"); /* 4 */       \
+            __asm__ __volatile__("nop"); /* 5 */       \
+            __asm__ __volatile__("nop"); /* 6 */       \
+            __asm__ __volatile__("nop"); /* 7 */       \
         };
     #else
         #define ESP_EM__3_16  {};
@@ -462,14 +489,16 @@ extern "C"
     #define ESP_EM__POST_PROCESS_START { ESP_EM__3_16 };
     #define ESP_EM__DPORT_FIFO_READ    { ESP_EM__3_16 };
 #else
+    #define ESP_EM__3_16                 {};
     #define ESP_EM__MP_HW_WAIT_CLEAN     {};
-    #define ESP_EM__MP_HW_WAIT_DONE      {};}
+    #define ESP_EM__MP_HW_WAIT_DONE      {};
     #define ESP_EM__POST_SP_MP_HW_LOCK   {};
     #define ESP_EM__PRE_MP_HW_WAIT_CLEAN {};
     #define ESP_EM__POST_PROCESS_START   {};
     #define ESP_EM__DPORT_FIFO_READ      {};
     #define ESP_EM__READ_NON_FIFO_REG    {};
     #define ESP_EM__PRE_DPORT_READ       {};
+    #define ESP_EM__PRE_DPORT_WRITE      {};
 #endif
 
 /* end c++ wrapper */

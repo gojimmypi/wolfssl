@@ -502,7 +502,7 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 ** Returns zero for bad digest size type request.
 **
 */
-static word32 wc_esp_sha_digest_size(enum SHA_TYPE type)
+static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
 {
     int ret = 0;
     ESP_LOGV(TAG, "  esp_sha_digest_size");

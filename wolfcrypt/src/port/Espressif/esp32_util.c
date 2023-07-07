@@ -54,7 +54,7 @@ int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex) {
  * call the ESP-IDF mutex lock; xSemaphoreTake
  *
  */
-int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBlockTime) {
+int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     if (mutex == NULL) {
         WOLFSSL_ERROR_MSG("esp_CryptHwMutexLock called with null mutex");
         return BAD_MUTEX_E;
@@ -63,7 +63,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t xBlockTime) {
 #ifdef SINGLE_THREADED
     return wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
 #else
-    return ((xSemaphoreTake( *mutex, xBlockTime ) == pdTRUE) ? 0 : BAD_MUTEX_E);
+    return ((xSemaphoreTake( *mutex, block_time ) == pdTRUE) ? 0 : BAD_MUTEX_E);
 #endif
 }
 
