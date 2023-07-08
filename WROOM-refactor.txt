@@ -1,0 +1,13 @@
+
+
+| Replace | With |
+
+| -------- | ----|
+| `WOLFSSL_ESPWROOM32SE` | `$$KEEP__ESP32SE$$` |
+| `WOLFSSL_ESPWROOM32`   | `WOLFSSL_ESP32` |
+| `ESP32WROOM32`         | `ESP32` |
+| `$$KEEP__ESP32SE$$`    | `WOLFSSL_ESPWROOM32SE` |
+
+```
+*.md;*.c;*.h;!*/dist/*;!*/managed_components/*;!*/component-manager/*;!*/.git/*;!*/XXX-fips-test/*;
+```
