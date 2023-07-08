@@ -120,8 +120,12 @@ static const char* const TAG = "wolfssl_esp32_mp";
 #endif
 
 /* mutex */
-static wolfSSL_Mutex mp_mutex;
-static int espmp_CryptHwMutexInit = 0;
+#ifdef SINGLE_THREADED
+    int single_thread_locked = 0;
+#else
+    static wolfSSL_Mutex mp_mutex;
+    static int espmp_CryptHwMutexInit = 0;
+#endif
 
 #ifdef DEBUG_WOLFSSL
     /* when debugging, we'll double-check the mutex with call depth */
@@ -194,7 +198,7 @@ static int esp_mp_hw_islocked(void)
 {
     int ret = 0;
 #ifdef SINGLE_THREADED
-    if (mp_mutex == 0) {
+    if (single_thread_locked == 0) {
         /* not in use */
         ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
     }
@@ -243,7 +247,9 @@ static int esp_mp_hw_lock()
     int ret = 0;
 
     ESP_LOGV(TAG, "enter esp_mp_hw_lock");
-
+#ifdef SINGLE_THREADED
+    single_thread_locked = 1;
+#else
     if (espmp_CryptHwMutexInit == 0) {
         ret = esp_CryptHwMutexInit(&mp_mutex);
         if (ret == 0) {
@@ -267,6 +273,7 @@ static int esp_mp_hw_lock()
             ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
         }
    }
+#endif /* not SINGLE_THREADED */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* Enable RSA hardware */
@@ -291,6 +298,7 @@ static int esp_mp_hw_lock()
     /* when unknown or not implmemted, assume there's no HW to lock */
 #endif
 
+
     /* reminder: wait until RSA_CLEAN_REG reads 1
     **   see esp_mp_hw_wait_clean() */
     ESP_LOGV(TAG, "leave esp_mp_hw_lock");
@@ -304,6 +312,7 @@ static int esp_mp_hw_unlock( void )
 {
     int ret = MP_OKAY;
     if (esp_mp_hw_islocked()) {
+
 #if defined(CONFIG_IDF_TARGET_ESP32)
         /* set bit to disabled hardware operation; (clear to enable) */
         DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
@@ -320,15 +329,17 @@ static int esp_mp_hw_unlock( void )
         /* unknown platform, assume no HW to unlock  */
 #endif
         /* unlock */
+#if defined(SINGLE_THREADED)
+        single_thread_locked = 0;
+#else
         esp_CryptHwMutexUnLock(&mp_mutex);
+#endif // SINGLE_THREADED
 
         ESP_LOGV(TAG, "esp_mp_hw_unlock");
     }
-#ifndef SINGLE_THREADED
     else {
         ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called when not locked.");
     }
-#endif // ! SINGLE_THREADED
 
     return ret;
 }
@@ -753,7 +764,10 @@ int esp_show_mph(struct esp_mp_helper* mph)
     return ret;
 }
 
-/* given X, Y, M - setup mp hardware and other helper values.*/
+
+#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+      ||  \
+    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)/* given X, Y, M - setup mp hardware and other helper values.*/
 int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
@@ -888,7 +902,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     return ret;
 }
 
-
+#endif
 
 #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Multiplication
@@ -1012,7 +1026,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     }
     /* determine count of bits. Used as HW parameter.   */
-    Xs = mp_count_bits(X);
+    Xs = mp_count_bits(X); /* TODO don't need to count twice */
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
     ESP_LOGV(TAG, "resultWords_sz = %d", resultWords_sz);
@@ -1217,7 +1231,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* common exit for all chipset types */
     if (ret == MP_OKAY) {
-        esp_clean_result(Z, 0);
+        esp_clean_result(Z, 0); /* TODO move closer to exit */
     }
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
