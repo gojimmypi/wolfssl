@@ -157,18 +157,18 @@ void app_main(void)
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* not available for C3 at this time */
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
+            );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
              );
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
 #else
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
-            );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+    /* not available for other platformas at this time */
 #endif
 
     /* all platforms: stack high water mark check */

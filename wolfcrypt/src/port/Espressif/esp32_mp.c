@@ -1976,8 +1976,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
 int esp_hw_show_mp_metrics(void)
 {
+    int ret;
 #ifdef HW_MATH_ENABLED
-    int ret = MP_OKAY;
+    ret = MP_OKAY;
 
     /* Metrics: esp_mp_mul() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
@@ -2040,8 +2041,9 @@ int esp_hw_show_mp_metrics(void)
     }
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
 #else
-    return 0;
+    ret = 0;
 #endif /* HW_MATH_ENABLED */
+    return ret;
 }
 #endif
 
