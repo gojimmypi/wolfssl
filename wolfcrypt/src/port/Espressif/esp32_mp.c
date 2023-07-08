@@ -103,20 +103,20 @@ static const char* const TAG = "wolfssl_esp32_mp";
 
 /* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
-    static uint32_t esp_mp_mul_usage_ct = 0;
-    static uint32_t esp_mp_mul_error_ct = 0;
+    static unsigned long esp_mp_mul_usage_ct = 0;
+    static unsigned long esp_mp_mul_error_ct = 0;
 
-    static uint32_t esp_mp_mulmod_usage_ct = 0;
-    static uint32_t esp_mp_mulmod_fallback_ct = 0;
-    static uint32_t esp_mp_mulmod_even_mod_ct = 0;
-    static uint32_t esp_mp_mulmod_small_x_ct = 0;
-    static uint32_t esp_mp_mulmod_small_y_ct = 0;
-    static uint32_t esp_mp_mulmod_error_ct = 0;
+    static unsigned long esp_mp_mulmod_usage_ct = 0;
+    static unsigned long esp_mp_mulmod_fallback_ct = 0;
+    static unsigned long esp_mp_mulmod_even_mod_ct = 0;
+    static unsigned long esp_mp_mulmod_small_x_ct = 0;
+    static unsigned long esp_mp_mulmod_small_y_ct = 0;
+    static unsigned long esp_mp_mulmod_error_ct = 0;
 
-    static uint32_t esp_mp_exptmod_usage_ct = 0;
-    static uint32_t esp_mp_exptmod_error_ct = 0;
-    static uint32_t esp_mp_exptmod_fallback_ct = 0;
-    static uint32_t esp_mp_max_used = 0;
+    static unsigned long esp_mp_exptmod_usage_ct = 0;
+    static unsigned long esp_mp_exptmod_error_ct = 0;
+    static unsigned long esp_mp_exptmod_fallback_ct = 0;
+    static unsigned long esp_mp_max_used = 0;
 #endif
 
 /* mutex */
@@ -324,9 +324,12 @@ static int esp_mp_hw_unlock( void )
 
         ESP_LOGV(TAG, "esp_mp_hw_unlock");
     }
+#ifndef SINGLE_THREADED
     else {
         ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called when not locked.");
     }
+#endif // ! SINGLE_THREADED
+
     return ret;
 }
 
@@ -517,8 +520,8 @@ static int wait_until_done(uint32_t reg)
 }
 
 /* read data from memory into mp_init          */
-static int esp_memblock_to_mpint(volatile const uint32_t mem_address,
-                                 volatile MATH_INT_T* mp,
+static int esp_memblock_to_mpint(const uint32_t mem_address,
+                                 MATH_INT_T* mp,
                                  word32 numwords)
 {
     int ret = MP_OKAY;
@@ -1012,6 +1015,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
+    ESP_LOGV(TAG, "resultWords_sz = %d", resultWords_sz);
 
     if (Zs <= sizeof(mp_digit)*8) {
         Z->dp[0] = X->dp[0] * Y->dp[0];
@@ -1800,17 +1804,17 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
  128 / 4 = 32 words (0x20)
  */
 
+    /* lock and init the HW                           */
     if (ret == MP_OKAY) {
+        ret = esp_mp_hw_lock();
+        if (ret != MP_OKAY) {
+            ESP_LOGE(TAG, "esp_mp_hw_lock failed");
+    #ifdef DEBUG_WOLFSSL
+            esp_mp_exptmod_depth_counter--;
+    #endif
+        }
     }
 
-    /* lock and init the HW                           */
-    if ( (ret = esp_mp_hw_lock()) != MP_OKAY ) {
-        ESP_LOGE(TAG, "esp_mp_hw_lock failed");
-#ifdef DEBUG_WOLFSSL
-        esp_mp_exptmod_depth_counter--;
-#endif
-        return ret;
-    }
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* non-ESP32S3 Xtensa (regular ESP32) */
 

@@ -70,7 +70,7 @@
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 /* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/*  #define SINGLE_THREADED */
 
 #define NO_FILESYSTEM
 
@@ -128,7 +128,7 @@
 
 /* debug options */
 /* #define DEBUG_WOLFSSL */
-#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+// #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -165,7 +165,10 @@
 #define ALLOW_BINARY_MISMATCH_INTROSPECTION
 
 #define HAVE_SESSION_TICKET
-#define WOLFSSL_RSA_KEY_SIZE 2048
+
+#ifndef SINGLE_THREADED
+    #define WOLFSSL_RSA_KEY_SIZE 2048
+#endif
 
 /* #define WOLFSSL_HAVE_SP_RSA */
 
@@ -238,7 +241,7 @@
 #endif
 
 /* debug options */
-#define ESP_VERIFY_MEMBLOCK
+// #define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
 /* #define DEBUG_WOLFSSL_VERBOSE            */
 /* #define DEBUG_WOLFSSL                    */

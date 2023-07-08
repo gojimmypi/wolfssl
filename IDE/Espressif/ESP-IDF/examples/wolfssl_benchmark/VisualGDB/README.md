@@ -9,11 +9,11 @@ The naming convention for project files is: `[project name]_IDF_[Version]_[chips
 -------- |------------- |------------- |
 ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.0 |
 -------- |------------- |------------- |
-ESP32    |      x       |              |
-ESP32-S2 |              |              |
+ESP32    |      x       |      x       |
+ESP32-S2 |              |      x       |
 ESP32-S3 |      x       |      x       |
 ESP32-C3 |      x       |      x       |
-ESP32-C6 |              |              |
+ESP32-C6 |              |      x       |
 
 
 The default directories are:
