@@ -1,14 +1,59 @@
 # wolfSSL Benchmark Example
 
-This is the ESP32 Version of the [wolfSSL wolfcrypt Benchmark Application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
-
 <!-- This file is included in the ESP Registry. There should be no relative URL links. -->
 
+This ESP32 example uses the [wolfSSL wolfcrypt Benchmark Application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
+
+For general information on wolfSSL examples for Espressif, see the
+[README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
+
+## Espressif ESP Component Registry
+
+See the wolfSSL namespace at [components.espressif.com](https://components.espressif.com/components?q=wolfssl)
+
+
+## Windows COM Port
+
+All of these examples use COM20 on Windows. The DOS `change port` command can be use to assign any
+other local port to `COM20` as needed:
+
+```
+change port com20=com23
+```
 
 ## VisualGDB
 
 Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
 No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
+
+Include in the respective project `./VisualGDB` directory are [VisualGDB](https://visualgdb.com/) project files.
+Individual project files are included for convenience to new users,
+as there are [difficulties switching between ESP-IDF Versions or Chipsets](https://sysprogs.com/w/forums/topic/difficulties-switching-espressif-esp-idf-version-or-chipset/)
+using the VisualGDB extension.
+
+The naming convention for project files is: `[project name]_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
+
+
+-------- |------------- |------------- |
+ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.0 |
+-------- |------------- |------------- |
+ESP32    |      x       |              |
+ESP32-S2 |              |              |
+ESP32-S3 |      x       |      x       |
+ESP32-C3 |      x       |      x       |
+ESP32-C6 |              |              |
+
+
+The default directories are:
+
+- `C:\SysGCC` - The root directory install of VisualGDB
+- `C:\SysGCC\esp32` - The default for ESP-IDF v5.x
+- `C:\SysGCC\esp32-8.4` - Many need to manually select this name for ESP-IDF v4.x install
+- `C:\SysGCC\esp8266`- The default for ESP8266
+
+Windows ports assigned with the `change port` command may not appear in the VisualGDB dropdowns but can still
+be used when manually typed.
+See the [feature request](https://sysprogs.com/w/forums/topic/feature-request-show-windows-change-port-results-in-com-port-dropdown-lists/).
 
 ## ESP-IDF Commandline
 
