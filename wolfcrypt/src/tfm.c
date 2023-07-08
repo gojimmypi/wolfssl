@@ -317,18 +317,24 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
     }
     else {
         ret = esp_mp_mul(A, B, C); /* HW accelerated multiply  */
-        if (ret == MP_OKAY) {
-            goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
+        switch (ret) {
+            case MP_OKAY:
+                goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
+                break;
+
+            case MP_HW_BUSY:
+            case MP_HW_FALLBACK:
+            case MP_HW_VALIDATION_ACTIVE:
+                break;
+
+            default:
+                /* Once we've failed, exit without trying to continue.
+                 * We may have mangled operands: (e.g. Z = X * Z)
+                 * Future implementation may consider saving operands,
+                 * but errors should never occur. */
+                return ret;
+                break;
         }
-        else {
-            ESP_LOGE(TAG, "esp_mp_mul failure in tfm = %d", ret);
-            return ret; /* failure */
-        }
-        /* If HW errors actually encountered,
-        ** we are NOT falling through to SW.
-        **
-        ** Any future fall-through implementation:
-        ** save operands that may be overwritten! (e.g. C = A * C) */
     }
 #endif
 
