@@ -190,6 +190,7 @@ int construct_argv()
 /* entry point */
 void app_main(void)
 {
+    int stack_start = 0;
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
@@ -223,7 +224,13 @@ void app_main(void)
     /* although wolfCrypt_Init() may be explicitly called above,
     ** note it is still always called in wolf_benchmark_task.
     */
-    wolf_benchmark_task();
+    stack_start = uxTaskGetStackHighWaterMark(NULL);
+    while(1)
+    {
+        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        wolf_benchmark_task();
+        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+    }
     /* wolfCrypt_Cleanup should always be called at completion,
     ** and is called in wolf_benchmark_task().
     */
