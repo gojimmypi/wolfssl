@@ -147,9 +147,7 @@
 #define USE_FAST_MATH
 
 /* optionally use SP_MATH */
-/*
-#define SP_MATH
-*/
+/* #define SP_MATH */
 
 #define WOLFSSL_SMALL_STACK
 

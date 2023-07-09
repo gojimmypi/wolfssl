@@ -290,7 +290,7 @@
 #define FP_MASK    (fp_digit)(-1)
 #define FP_DIGIT_MAX FP_MASK
 #define FP_SIZE    (FP_MAX_SIZE/DIGIT_BIT)
-#define MP_SIZE    (FP_MAX_SIZE/DIGIT_BIT) /* for clmpatibility with SP_INT */
+#define MP_SIZE    (FP_MAX_SIZE/DIGIT_BIT) /* for compatibility with SP_INT */
 
 
 #define FP_MAX_PRIME_SIZE (FP_MAX_BITS/(2*CHAR_BIT))
@@ -309,13 +309,13 @@
 #define FP_MEM         (-2)
 #define FP_NOT_INF     (-3)
 #define FP_WOULDBLOCK  (-4)
-#define FP_NOT_USED    (-5) /* not used, here for consistency only   */
-#define FP_HW_ERROR    (-6) /* hardware error, consider SW fallback  */
-#define FP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY       */
-#define FP_HW_FALLBACK (-8) /* signal to caller to fall back to SW   */
-#define FP_HW_VALIDATION_ACTIVE (-9) /* optional HW validation ative */
+#define FP_NOT_USED    (-5) /* not used, here for consistency only    */
+#define FP_HW_ERROR    (-6) /* hardware error, consider SW fallback   */
+#define FP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY        */
+#define FP_HW_FALLBACK (-8) /* signal to caller to fall back to SW    */
+#define FP_HW_VALIDATION_ACTIVE (-9) /* optional HW validation active */
 
-#define FP_RANGE       MP_HW_VALIDATION_ACTIVE /* range is last item */
+#define FP_RANGE       FP_HW_VALIDATION_ACTIVE /* range is last item  */
 
 /* equalities */
 #define FP_LT        (-1)   /* less than */
@@ -371,7 +371,7 @@ while (0)
 /* Initialize an mp_int. */
 #define INIT_MP_INT_SIZE(name, bits) \
     mp_init(name)
-/* Type to cast to when using size marcos. */
+/* Type to cast to when using size macro. */
 #define MP_INT_SIZE     mp_int
 
 
