@@ -990,7 +990,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
 
     if (IS_HW_VALIDATION) {
-        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
+        ESP_LOGE(TAG, "Caller must not try HW when validation active.");
     }
     else {
         SET_HW_VALIDATION;
@@ -1234,12 +1234,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     */
 #else
     ret = MP_HW_FALLBACK;
-#endif
+#endif /* target HW calcs*/
 
     /* common exit for all chipset types */
-    if (ret == MP_OKAY) {
-        esp_clean_result(Z, 0); /* TODO move closer to exit */
-    }
+
+    /* step.7 clear and release HW                    */
+    esp_mp_hw_unlock();
+
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (!mp_iszero(Z) && neg) {
@@ -1253,9 +1254,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif
 
-#ifdef WOLFSSL_HW_METRICS
-    esp_mp_mul_usage_ct++;
-#endif
 #ifdef DEBUG_WOLFSSL
     if (fp_cmp(X, X2) != 0) {
         // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
@@ -1290,15 +1288,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 #endif
 
-    /* step.7 clear and release HW                    */
-    esp_mp_hw_unlock();
-
 #ifdef WOLFSSL_HW_METRICS
+    esp_mp_mul_usage_ct++;
     esp_mp_max_used = (Z->used > esp_mp_max_used) ? Z->used : esp_mp_max_used;
     if (ret != MP_OKAY) {
         esp_mp_mul_error_ct++; /* includes fallback */
     }
 #endif
+
+    if (ret == MP_OKAY) {
+        esp_clean_result(Z, 0);
+    }
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
@@ -1335,6 +1335,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     word32 zwords = 0;
 
+#if defined(CONFIG_IDF_TARGET_ESP32)
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    uint32_t OperandBits; /* TODO remove */
+    int WordsForOperand;
+#else
+    ret = MP_HW_FALLBACK;
+#endif
+
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
 
 #ifdef WOLFSSL_HW_METRICS
@@ -1344,13 +1352,24 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     if ((M->dp[0] & 1) == 0) {
-#ifdef WOLFSSL_HW_METRICS
+#ifndef NO_ESP_MP_MUL_EVEN_ALT_CALC
+        /*  Z = X × Y mod M in mixed HW & SW*/
+        ret = esp_mp_mul(X, Y, tmpZ); /* HW X * Y */
+        if (ret == MP_OKAY) {
+            /* z = tmpZ mod M, 0 <= Z < M */
+            ret = mp_mod(tmpZ, M, Z); /* SW mod M */
+        }
+        ESP_LOGV(TAG, "alternate mp_mul calc!");
+        return ret;
+#else
+    #ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_even_mod_ct++;
-#endif
+    #endif
         ESP_LOGV(TAG, "esp_mp_mulmod does not support even numbers");
         ret = MP_HW_FALLBACK; /* let the software figure out what to do */
         return ret;
-    }
+#endif /* NO_ESP_MP_MUL_EVEN_ALTERNATE */
+    } /* even moduli check */
 
 #ifdef DEBUG_WOLFSSL
     /* we're only validating HW when in debug mode */
@@ -1376,7 +1395,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #ifdef DEBUG_WOLFSSL
     if (IS_HW_VALIDATION) {
-        ESP_LOGE(TAG, "Caller must not try HW when validation active."); /* TODO handle with semaphore  */
+        ESP_LOGE(TAG, "Caller must not try HW when validation active.");
     }
     else {
         /* when validating, save SW in [V]2 for later comparison to HW */
@@ -1401,14 +1420,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         CLR_HW_VALIDATION;
     }
 #endif /* DEBUG_WOLFSSL */
-
-#if defined(CONFIG_IDF_TARGET_ESP32)
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    uint32_t OperandBits; /* TODO move */
-    int WordsForOperand;
-#else
-    ret = MP_HW_FALLBACK;
-#endif
 
     if (ret == MP_OKAY) {
 

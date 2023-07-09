@@ -127,7 +127,7 @@
 #endif
 
 /* debug options */
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 

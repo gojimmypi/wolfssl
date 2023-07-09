@@ -108,6 +108,11 @@
 ** NO_HW_MATH_TEST
 **   Even if HW is enabled, do not run HW math tests. See HW_MATH_ENABLED.
 **
+** NO_ESP_MP_MUL_EVEN_ALT_CALC
+**   Used during Z = X × Y mod M
+**   By default, even moduli use a two step HW esp_mp_mul with SW mp_mod.
+**   Enable this to instead fall back to pure software mp_mulmod.
+**
 ** NO_RECOVER_SOFTWARE_CALC
 **   When defined, will NOT recover software calculation result when not
 **   matched with hardware. Useful only during development. Needs DEBUG_WOLFSSL
