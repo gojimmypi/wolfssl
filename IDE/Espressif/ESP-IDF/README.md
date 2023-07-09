@@ -6,6 +6,7 @@ and have not yet been upgraded to the master branch V5.
 See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
 
 ## Overview
+
  ESP-IDF development framework with wolfSSL by setting *WOLFSSL_ESPIDF* definition
 
 Including the following examples:
@@ -17,14 +18,17 @@ Including the following examples:
  The *user_settings.h* file enables some of the hardened settings.
 
 ## Requirements
+
  1. [ESP-IDF development framework](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/)
 
 ## Setup for Linux
+
  1. Run `setup.sh` at _/path/to_`/wolfssl/IDE/Espressif/ESP-IDF/` to deploy files into ESP-IDF tree  
  2. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
  3. Find [Example Programs](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples) under _/path/to/esp_`/esp-idf/examples/protocols/wolfssl_xxx` (where xxx is the project name)
 
 ## Setup for Windows
+
  1. Run ESP-IDF Command Prompt (cmd.exe) or Run ESP-IDF PowerShell Environment
  2. Run `setup_win.bat` at `.\IDE\Espressif\ESP-IDF\`
  3. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
@@ -39,12 +43,15 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
 ```
 
 ## Configuration
+
  1. The `user_settings.h` can be found in _/path/to/esp_`/esp-idf/components/wolfssl/include/user_settings.h`
 
 ## Build examples
+
  1. See README in each example folder
 
 ## Support
+
  For question please email [support@wolfssl.com]
 
  Note: This is tested with :  
