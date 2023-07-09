@@ -70,7 +70,7 @@
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 /* when you want to use SINGLE THREAD */
-/*  #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 #define NO_FILESYSTEM
 
@@ -166,9 +166,6 @@
 
 #define HAVE_SESSION_TICKET
 
-#ifndef SINGLE_THREADED
-    #define WOLFSSL_RSA_KEY_SIZE 2048
-#endif
 
 /* #define WOLFSSL_HAVE_SP_RSA */
 
