@@ -220,11 +220,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-<<<<<<<< HEAD:IDE/Espressif/ESP-IDF5/examples/wolfssl_client/VisualGDB/wolfssl_client_ESP32S3.vgdbproj
-        <CommandLine>-f interface/tigard.cfg -c "adapter_khz 3000" -f target/esp32.cfg</CommandLine>
-========
         <CommandLine>-f interface/ftdi/tigard.cfg -c "adapter_khz 15000" -f target/esp32.cfg</CommandLine>
->>>>>>>> 574d8c3f63644e850156f0386f09f8a9cb9a4271:IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_test-IDF_v5_ESP32.vgdbproj
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />

@@ -34,6 +34,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfcrypt", "wolfcrypt", "{
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\README.md = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif", "Espressif", "{B620FEBA-AD11-414F-9844-C93305F7CFA5}"
+	ProjectSection(SolutionItems) = preProject
+		..\sdkconfig = ..\sdkconfig
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -57,6 +64,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{BDD063E3-67C1-437F-9F9B-7175E36EE6EE} = {E25A35EF-64B9-48AA-939B-49340C2A4B03}
 		{68571B42-6509-475F-A79D-FB5F6188753B} = {E25A35EF-64B9-48AA-939B-49340C2A4B03}
+		{B620FEBA-AD11-414F-9844-C93305F7CFA5} = {E25A35EF-64B9-48AA-939B-49340C2A4B03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DED328BF-3A3C-47F4-A536-4554945B865B}
