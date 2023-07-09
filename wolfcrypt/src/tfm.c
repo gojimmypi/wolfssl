@@ -319,12 +319,13 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         ret = esp_mp_mul(A, B, C); /* HW accelerated multiply  */
         switch (ret) {
             case MP_OKAY:
-                goto clean; /* TODO: can we exit without clean, since we are known to be clean? */
+                goto clean; /* success */
                 break;
 
             case MP_HW_BUSY:
             case MP_HW_FALLBACK:
             case MP_HW_VALIDATION_ACTIVE:
+                /* fall back to software, below */
                 break;
 
             default:
@@ -332,11 +333,12 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
                  * We may have mangled operands: (e.g. Z = X * Z)
                  * Future implementation may consider saving operands,
                  * but errors should never occur. */
-                return ret;
+                goto clean;  /* error */
                 break;
         }
     }
-#endif
+    /* fall through to software calcs */
+#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL */
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
        of the largest input.  We also want to avoid doing excess mults if the
@@ -3121,19 +3123,34 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-   retHW = esp_mp_exptmod(G, X, P, Y);
-   if (retHW == FP_OKAY) {
-      return retHW;
+   if (esp_hw_validation_active()) {
+      ESP_LOGV(TAG, "Skipping call to esp_mp_exptmod "
+                    "during active validation.");
    }
    else {
-      if (retHW == MP_HW_FALLBACK) {
-         ESP_LOGI(TAG, "fp_exptmod esp_mp_exptmod SW fallback, reason = %d", retHW);
-      }
-      else {
-         ESP_LOGW(TAG, "fp_exptmod esp_mp_exptmod fail, reason = %d", retHW);
-         return retHW;
-      }
-   }
+      /* HW accelerated exptmod  */
+      retHW = esp_mp_exptmod(G, X, P, Y);
+      switch (retHW) {
+         case MP_OKAY:
+            /* successfully computed in HW */
+            return retHW;
+            break;
+
+         case MP_HW_BUSY:
+         case MP_HW_FALLBACK:
+         case MP_HW_VALIDATION_ACTIVE:
+            /* use software calc */
+            break;
+
+         default:
+            /* Once we've failed, exit without trying to continue.
+             * We may have mangled operands: (e.g. Z = X * Z)
+             * Future implementation may consider saving operands,
+             * but hard errors should never actually occur. */
+            return retHW; /* error */
+            break;
+      } /* switch */
+   } /* if validation check */
    /* fall through to software calcs */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
@@ -3214,25 +3231,28 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    retHW = esp_mp_exptmod(G, X, P, Y); /* see also */
-    if (retHW == FP_OKAY) {
-        ESP_LOGV(TAG, "fp_exptmod_ex esp_mp_exptmod success.");
-        return retHW;
-    }
-    else {
-        if (retHW == MP_HW_FALLBACK) {
-    #ifdef DEBUG_WOLFSSL
-            ESP_LOGI(TAG, "fp_exptmod_ex esp_mp_exptmod SW fallback,"
-                          "reason = %d", retHW);
-    #endif
-        }
-        else {
-            ESP_LOGW(TAG, "fp_exptmod_ex esp_mp_exptmod fail,"
-                           "reason = %d", retHW);
-            return retHW;
-        }
-    }
-    /* falling through to SW: */
+   retHW = esp_mp_exptmod(G, X, P, Y);
+   switch (retHW) {
+      case MP_OKAY:
+         /* successfully computed in HW */
+         return retHW;
+         break;
+
+      case MP_HW_BUSY:
+      case MP_HW_FALLBACK:
+      case MP_HW_VALIDATION_ACTIVE:
+         /* use software calc */
+         break;
+
+      default:
+         /* Once we've failed, exit without trying to continue.
+          * We may have mangled operands: (e.g. Z = X * Z)
+          * Future implementation may consider saving operands,
+          * but hard errors should never actually occur. */
+         return retHW;
+         break;
+   } /* HW result switch */
+   /* falling through to SW: */
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
@@ -3305,21 +3325,28 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-    retHW = esp_mp_exptmod(G, X, P, Y); /* see fp_exptmod_nct() in tfm.h */
-    if (retHW == FP_OKAY) {
-        return retHW;
-    }
-    else {
-        if (retHW == MP_HW_FALLBACK) {
-    #ifdef DEBUG_WOLFSSL
-            ESP_LOGI(TAG, "esp_mp_exptmod nct fallback, reason = %d", retHW);
-    #endif
-        }
-        else {
-            ESP_LOGW(TAG, "esp_mp_exptmod nct fail, reason = %d", retHW);
-            return retHW;
-        }
-    }
+   retHW = esp_mp_exptmod(G, X, P, Y);
+   switch (retHW) {
+      case MP_OKAY:
+         /* successfully computed in HW */
+         return retHW;
+         break;
+
+      case MP_HW_BUSY:
+      case MP_HW_FALLBACK:
+      case MP_HW_VALIDATION_ACTIVE:
+         /* use software calc */
+         break;
+
+      default:
+         /* Once we've failed, exit without trying to continue.
+          * We may have mangled operands: (e.g. Z = X * Z)
+          * Future implementation may consider saving operands,
+          * but hard errors should never actually occur. */
+         return retHW;
+         break;
+   }
+   /* falling through to SW: */
 #endif
 
    if (X->sign == FP_NEG) {
@@ -4632,26 +4659,32 @@ int wolfcrypt_mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
-    int ret = MP_OKAY;
+   int ret = MP_OKAY;
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
-    ret = esp_mp_mulmod(a, b, c, d);
+   ret = esp_mp_mulmod(a, b, c, d);
+   switch (ret) {
+      case MP_OKAY:
+         /* successfully computed in HW */
+         break;
 
-    if (ret == MP_OKAY) {
-        ESP_LOGV(TAG, "esp_mp_mulmod HW success");
-    }
-    else {
-        if (ret == MP_HW_FALLBACK) {
-            ESP_LOGV(TAG, "esp_mp_mulmod SW fallback, reason = %d", ret);
-        }
-        else {
-            ESP_LOGW(TAG, "esp_mp_mulmod fail, reason = %d", ret);
-        }
-        ret = fp_mulmod(a, b, c, d);
-    }
+      case MP_HW_BUSY:
+      case MP_HW_FALLBACK:
+      case MP_HW_VALIDATION_ACTIVE:
+         /* use software calc */
+         ret = fp_mulmod(a, b, c, d);
+         break;
+
+      default:
+         /* Once we've failed, exit without trying to continue.
+          * We may have mangled operands: (e.g. Z = X * Z)
+          * Future implementation may consider saving operands,
+          * but hard errors should never actually occur. */
+         break;
+   }
 #else /* no HW */
-    ret = fp_mulmod(a, b, c, d);
+   ret = fp_mulmod(a, b, c, d);
 #endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
-    return ret;
+   return ret;
 }
 
 /* d = a - b (mod c) */

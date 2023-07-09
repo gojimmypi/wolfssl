@@ -65,11 +65,11 @@ static const char* TAG = "wolf_hw_sha";
     static int InUse = 0;
 #else
     static wolfSSL_Mutex sha_mutex = NULL;
+#endif
 
-    #if defined(DEBUG_WOLFSSL)
-        /* Only when debugging, we'll keep tracking of block numbers. */
-        static int this_block_num = 0;
-    #endif
+#if defined(DEBUG_WOLFSSL)
+    /* Only when debugging, we'll keep tracking of block numbers. */
+    static int this_block_num = 0;
 #endif
 
 /* esp_sha_init

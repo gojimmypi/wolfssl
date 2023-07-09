@@ -127,8 +127,8 @@
 #endif
 
 /* debug options */
-/* #define DEBUG_WOLFSSL */
-// #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#define DEBUG_WOLFSSL
+/* #define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -209,7 +209,6 @@
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
-
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* #define NO_ESP32WROOM32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH    */

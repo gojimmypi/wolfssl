@@ -685,7 +685,7 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
     MATH_INT_T M2[1];    /* TODO WOLFSSL_SMALL_STACK */
     mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
     mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
-    //int ret2 = MP_OKAY;
+    int reti = MP_OKAY;
 #endif
 
     int ret = MP_OKAY;
@@ -716,10 +716,16 @@ static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 
 #ifdef DEBUG_WOLFSSL
     if (ret == MP_OKAY) {
-        int ret2; (void)ret2; /* TODO */
+
         /* computes a = B**n mod b without division or multiplication useful for
         * normalizing numbers in a Montgomery system. */
-        ret2 = mp_montgomery_calc_normalization(rinv2, M2);
+        reti = mp_montgomery_calc_normalization(rinv2, M2);
+        if (reti == MP_OKAY) {
+            ESP_LOGV(TAG, "mp_montgomery_calc_normalization = %d", reti);
+        }
+        else {
+            ESP_LOGW(TAG, "Error montgomery calc M2 result = %d", reti);
+        }
     }
 #endif
 
@@ -967,11 +973,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         return MP_HW_VALIDATION_ACTIVE;
     }
 
+    /* these occur many times during RSA calcs */
     if (X == Z) {
-        ESP_LOGW(TAG, "mp_mul X == Z");
+        ESP_LOGV(TAG, "mp_mul X == Z");
     }
     if (Y == Z) {
-        ESP_LOGW(TAG, "mp_mul Y == Z");
+        ESP_LOGV(TAG, "mp_mul Y == Z");
     }
 
     mp_init(X2);
@@ -1469,9 +1476,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
          *  Write (N/512bits - 1) to MULT_MODE_REG
          *  512 bits => 16 words */
         DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
-        #ifdef DEBUG_WOLFSSL
-        ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (hwWords_sz >> 4) - 1);
-        #endif // WOLFSSL_DEBUG
+#if defined(DEBUG_WOLFSSL)
+        ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (mph->hwWords_sz >> 4) - 1);
+#endif /* WOLFSSL_DEBUG */
 
         /* step.2 write X, M, and r_inv into memory.
          * The capacity of each memory block is 128 words.
