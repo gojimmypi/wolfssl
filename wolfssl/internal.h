@@ -2603,7 +2603,7 @@ WOLFSSL_LOCAL int CM_MemRestoreCertCache(WOLFSSL_CERT_MANAGER* cm,
                                          const void* mem, int sz);
 WOLFSSL_LOCAL int CM_GetCertCacheMemSize(WOLFSSL_CERT_MANAGER* cm);
 WOLFSSL_LOCAL int CM_VerifyBuffer_ex(WOLFSSL_CERT_MANAGER* cm, const byte* buff,
-                                    long sz, int format, int err_val);
+                                     long sz, int format, int prev_err);
 
 
 #ifndef NO_CERTS
@@ -4541,6 +4541,9 @@ struct Options {
     word16            failNoCertxPSK:1;   /* fail for no cert except with PSK */
     word16            downgrade:1;        /* allow downgrade of versions */
     word16            resuming:1;
+#ifdef HAVE_SECURE_RENEGOTIATION
+    word16            resumed:1;          /* resuming may be reset on SCR */
+#endif
     word16            isPSK:1;
     word16            haveSessionId:1;    /* server may not send */
     word16            tls:1;              /* using TLS ? */
@@ -5801,10 +5804,14 @@ struct WOLFSSL {
  * Always use SSL specific objects when available and revert to CTX otherwise.
  */
 #ifdef WOLFSSL_LOCAL_X509_STORE
-#define SSL_CM(ssl) ((ssl)->x509_store_pt ? (ssl)->x509_store_pt->cm : (ssl)->ctx->cm)
+#define SSL_CM(ssl) ((ssl)->x509_store_pt ? (ssl)->x509_store_pt->cm : \
+                     ((ssl)->ctx->x509_store_pt ? (ssl)->ctx->x509_store_pt->cm : \
+                                            (ssl)->ctx->cm))
 #define SSL_STORE(ssl) ((ssl)->x509_store_pt ? (ssl)->x509_store_pt : \
                   ((ssl)->ctx->x509_store_pt ? (ssl)->ctx->x509_store_pt : \
                                             &(ssl)->ctx->x509_store))
+#define CTX_STORE(ctx) ((ctx)->x509_store_pt ? (ctx)->x509_store_pt : \
+                                            &(ctx)->x509_store)
 #else
 #define SSL_CM(ssl) (ssl)->ctx->cm
 #endif

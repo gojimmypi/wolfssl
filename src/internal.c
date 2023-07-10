@@ -3286,14 +3286,23 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    /* OpenSSL enables ECDHE when using ECDHE aliases without RSA */
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384;
     }
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256;
     }
@@ -3405,7 +3414,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = CHACHA_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256;
     }
@@ -3429,7 +3442,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256;
     }
@@ -3457,7 +3474,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384;
     }
@@ -3541,7 +3562,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+    #ifdef OPENSSL_EXTRA
+    if ((tls && haveRSA) || (tls && haveECDSAsig)) {
+    #else
     if (tls && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA;
     }
@@ -3555,7 +3580,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+    #ifdef OPENSSL_EXTRA
+    if ((tls && haveRSA) || (tls && haveECDSAsig)) {
+    #else
     if (tls && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA;
     }
@@ -3583,7 +3612,11 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
+    #ifdef OPENSSL_EXTRA
+    if ((tls && haveRSA) || (tls && haveECDSAsig)) {
+    #else
     if (tls && haveRSA) {
+    #endif
         suites->suites[idx++] = ECC_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA;
     }
@@ -3726,14 +3759,22 @@ void InitSuites(Suites* suites, ProtocolVersion pv, int keySz, word16 haveRSA,
 #endif
 
 #ifdef BUILD_TLS_ECDHE_RSA_WITH_CHACHA20_OLD_POLY1305_SHA256
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = CHACHA_BYTE;
         suites->suites[idx++] = TLS_ECDHE_RSA_WITH_CHACHA20_OLD_POLY1305_SHA256;
     }
 #endif
 
 #ifdef BUILD_TLS_DHE_RSA_WITH_CHACHA20_OLD_POLY1305_SHA256
+    #ifdef OPENSSL_EXTRA
+    if ((tls1_2 && haveRSA) || (tls1_2 && haveECDSAsig)) {
+    #else
     if (tls1_2 && haveRSA) {
+    #endif
         suites->suites[idx++] = CHACHA_BYTE;
         suites->suites[idx++] = TLS_DHE_RSA_WITH_CHACHA20_OLD_POLY1305_SHA256;
     }
@@ -7387,7 +7428,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
             ret = wolfSSL_UseSecureRenegotiation(ssl);
             if (ret != WOLFSSL_SUCCESS)
                 return ret;
-            }
+        }
     }
 #endif /* HAVE_SECURE_RENEGOTIATION */
 
@@ -15410,6 +15451,9 @@ int DoFinished(WOLFSSL* ssl, const byte* input, word32* inOutIdx, word32 size,
 #endif
             ssl->options.handShakeState = HANDSHAKE_DONE;
             ssl->options.handShakeDone  = 1;
+#ifdef HAVE_SECURE_RENEGOTIATION
+            ssl->options.resumed = ssl->options.resuming;
+#endif
         }
     }
     else {
@@ -15426,6 +15470,9 @@ int DoFinished(WOLFSSL* ssl, const byte* input, word32* inOutIdx, word32 size,
 #endif
             ssl->options.handShakeState = HANDSHAKE_DONE;
             ssl->options.handShakeDone  = 1;
+#ifdef HAVE_SECURE_RENEGOTIATION
+            ssl->options.resumed = ssl->options.resuming;
+#endif
         }
     }
 #ifdef WOLFSSL_DTLS
@@ -15975,8 +16022,10 @@ static int DoHandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
     }
 
     if (ssl->options.side == WOLFSSL_CLIENT_END && ssl->options.dtls == 0 &&
-               ssl->options.serverState == NULL_STATE && type != server_hello) {
-        WOLFSSL_MSG("First server message not server hello");
+               ssl->options.serverState == NULL_STATE && type != server_hello &&
+               type != hello_request) {
+        WOLFSSL_MSG("First server message not server hello or "
+                    "hello request");
         SendAlert(ssl, alert_fatal, unexpected_message);
         WOLFSSL_ERROR_VERBOSE(OUT_OF_ORDER_E);
         return OUT_OF_ORDER_E;
@@ -21927,6 +21976,9 @@ int SendFinished(WOLFSSL* ssl)
         #endif
             ssl->options.handShakeState = HANDSHAKE_DONE;
             ssl->options.handShakeDone  = 1;
+#ifdef HAVE_SECURE_RENEGOTIATION
+            ssl->options.resumed = ssl->options.resuming;
+#endif
         }
     }
     else {
@@ -21939,6 +21991,9 @@ int SendFinished(WOLFSSL* ssl)
         #endif
             ssl->options.handShakeState = HANDSHAKE_DONE;
             ssl->options.handShakeDone  = 1;
+#ifdef HAVE_SECURE_RENEGOTIATION
+            ssl->options.resumed = ssl->options.resuming;
+#endif
         }
     }
 
@@ -25396,17 +25451,24 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
         }
 
         if (XSTRCMP(name, "kDH") == 0) {
-            haveStaticECC = allowing;
             if (allowing) {
-                haveECC = 1;
-                haveSig |= SIG_ECDSA;
+                haveDH = 1;
                 callInitSuites = 1;
                 ret = 1;
             }
             continue;
         }
 
-        if (XSTRCMP(name, "ECDHE") == 0) {
+        if (XSTRCMP(name, "DHE") == 0 || XSTRCMP(name, "EDH") == 0) {
+            if (allowing) {
+                haveDH = 1;
+                callInitSuites = 1;
+                ret = 1;
+            }
+            continue;
+        }
+
+        if (XSTRCMP(name, "ECDHE") == 0 || XSTRCMP(name, "EECDH") == 0) {
             if (allowing) {
                 haveECC = 1;
                 haveSig |= SIG_ECDSA;
@@ -27143,12 +27205,19 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
             return BAD_FUNC_ARG;
         }
 
-        idSz = ssl->options.resuming ? ssl->session->sessionIDSz : 0;
-
 #ifdef WOLFSSL_TLS13
         if (IsAtLeastTLSv1_3(ssl->version))
             return SendTls13ClientHello(ssl);
 #endif
+
+#ifdef HAVE_SECURE_RENEGOTIATION
+        /* We don't want to resume in SCR */
+        if (IsSCR(ssl))
+            ssl->options.resuming = 0;
+#endif
+
+        idSz = ssl->options.resuming ? ssl->session->sessionIDSz : 0;
+
 
         WOLFSSL_START(WC_FUNC_CLIENT_HELLO_SEND);
         WOLFSSL_ENTER("SendClientHello");
@@ -34310,6 +34379,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         ssl->options.dtlsStateful = 1;
 #endif /* WOLFSSL_DTLS */
 
+        /* Reset to sane value for SCR */
+        ssl->options.resuming = 0;
+        ssl->arrays->sessionIDSz = 0;
+
         /* protocol version, random and session id length check */
         if (OPAQUE16_LEN + RAN_LEN + OPAQUE8_LEN > helloSz)
             return BUFFER_ERROR;
@@ -34445,6 +34518,9 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                 WOLFSSL_OP_NO_SSLv3) {
                 WOLFSSL_MSG("\tError, option set to not allow SSLv3");
                 ret = VERSION_ERROR;
+#ifdef WOLFSSL_EXTRA_ALERTS
+                SendAlert(ssl, alert_fatal, wolfssl_alert_protocol_version);
+#endif
                 goto out;
             }
 
@@ -34503,7 +34579,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             ret = BUFFER_ERROR; /* session ID greater than 32 bytes long */
             goto out;
         }
-        else if (b > 0) {
+        else if (b > 0 && !IsSCR(ssl)) {
             if ((i - begin) + b > helloSz) {
                 ret = BUFFER_ERROR;
                 goto out;
@@ -34516,8 +34592,8 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             if (b == ID_LEN)
                 ssl->options.resuming = 1; /* client wants to resume */
             WOLFSSL_MSG("Client wants to resume session");
-            i += b;
         }
+        i += b;
 
 #ifdef WOLFSSL_DTLS
             /* cookie */
@@ -38279,6 +38355,13 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
         int ad = 0;
         int sniRet = 0;
         int ret = 0;
+
+        /* OpenSSL defaults alert to SSL_AD_UNRECOGNIZED_NAME, use this if
+           WOLFSSL_EXTRA_ALERTS is defined, indicating user is OK with
+           potential information disclosure from alerts. */
+#if defined(OPENSSL_EXTRA) && defined(WOLFSSL_EXTRA_ALERTS)
+        ad = SSL_AD_UNRECOGNIZED_NAME;
+#endif
         /* Stunnel supports a custom sni callback to switch an SSL's ctx
         * when SNI is received. Call it now if exists */
         if(ssl && ssl->ctx && ssl->ctx->sniRecvCb) {
