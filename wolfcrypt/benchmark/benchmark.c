@@ -276,6 +276,7 @@
           defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
         #include <xtensa/hal.h>
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     #else
         #error "CONFIG_IDF_TARGET not implemented"
     #endif
@@ -1161,6 +1162,8 @@ static const char* bench_desc_words[][15] = {
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         uint64_t thisVal = 0;
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer, &thisVal));
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+        uint64_t thisVal = 0;
     #else
         /* reminder unsupported CONFIG_IDF_TARGET captured above */
         uint64_t thisVal = xthal_get_ccount();
@@ -1194,6 +1197,8 @@ static const char* bench_desc_words[][15] = {
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer,
                                               &_xthal_get_ccount_last));
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+        _xthal_get_ccount_last = 0;
     #else
          _xthal_get_ccount_last = xthal_get_ccount();
     #endif
