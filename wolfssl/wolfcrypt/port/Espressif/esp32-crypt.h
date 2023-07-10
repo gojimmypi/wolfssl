@@ -33,6 +33,12 @@
 #include <esp_types.h>
 #include <esp_log.h>
 
+/* exit codes to be used in tfm.c, sp_int.c, integer.c, etc. */
+#define MP_HW_ERROR    (-106) /* hardware error, consider SW fallback  */
+#define MP_HW_BUSY     (-107) /* assigned -7 to match SP_HW_BUSY       */
+#define MP_HW_FALLBACK (-108) /* signal to caller to fall back to SW   */
+#define MP_HW_VALIDATION_ACTIVE (-109) /* optional HW validation active */
+
 /*
 *******************************************************************************
 *******************************************************************************

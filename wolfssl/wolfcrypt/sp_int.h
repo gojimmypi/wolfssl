@@ -745,15 +745,7 @@ typedef struct sp_ecc_ctx {
 /* Unused error. Defined for backward compatibility. */
 #define MP_NOT_INF      (-5)
 /* hardware error, consider falling back to SW */
-#define MP_HW_ERROR     (-6)
-/* hardware busy; wait or fall back to SW */
-#define MP_HW_BUSY      (-7)
-/* signal to caller to fall back to SW (e.g unsupported, etc) */
-#define MP_HW_FALLBACK  (-8)
-/* typically used only during debugging, validation active
- * will prevent recursive calls to HW for SW validation check.*/
-#define MP_HW_VALIDATION_ACTIVE (-9)
-#define MP_RANGE MP_HW_VALIDATION_ACTIVE /* last item is range */
+#define MP_RANGE MP_NOT_INF /* last item is range */
 
 #define MP_SIZE SP_INT_DIGITS
 

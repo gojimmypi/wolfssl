@@ -167,11 +167,7 @@ extern "C" {
 #define MP_VAL         (-3) /* invalid input */
 #define MP_NOT_INF     (-4) /* point not at infinity */
 #define MP_NOT_USED    (-5) /* not used, here for consistency only   */
-#define MP_HW_ERROR    (-6) /* hardware error, consider SW fallback  */
-#define MP_HW_BUSY     (-7) /* assigned -7 to match SP_HW_BUSY       */
-#define MP_HW_FALLBACK (-8) /* signal to caller to fall back to SW   */
-#define MP_HW_VALIDATION_ACTIVE (-9) /* optional HW validation ative */
-#define MP_RANGE       MP_HW_VALIDATION_ACTIVE /* range is last item */
+#define MP_RANGE       MP_NOT_USED /* range is last item */
 
 #define MP_YES        1   /* yes response */
 #define MP_NO         0   /* no response */
