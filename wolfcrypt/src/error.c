@@ -595,6 +595,18 @@ const char* wc_GetErrorString(int error)
     case SM4_CCM_AUTH_E:
         return "SM4-CCM Authentication check fail";
 
+    case RSA_HW_ERROR:
+        return "Hardware math acceleration error";
+
+    case RSA_HW_BUSY:
+        return "Hardware math accelerator busy, can fall back to SW";
+
+    case RSA_HW_FALLBACK:
+        return "Hardware math issue: not supported, always fall back to SW";
+
+    case RSA_HW_VALIDATION_ACTIVE:
+        return "Hardware acceleration will call into SW to validate result";
+
     default:
         return "unknown error number";
 
