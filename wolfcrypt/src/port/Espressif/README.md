@@ -11,19 +11,19 @@ For detail about ESP32 HW Acceleration, you can find in [Technical Reference Man
 To enable hw acceleration :
 
 * Uncomment out `#define WOLFSSL_ESPIDF` in `/path/to/wolfssl/wolfssl/wolfcrypt/settings.h`
-* Uncomment out `#define WOLFSSL_ESPWROOM32` in `/path/to/wolfssl/wolfssl/wolfcrypt/settings.h`
+* Uncomment out `#define WOLFSSL_ESP32` in `/path/to/wolfssl/wolfssl/wolfcrypt/settings.h`
 
 To disable portions of the hardware acceleration you can optionally define:
 
 ```c
 /* Disabled SHA, AES and RSA acceleration */
-#define NO_ESP32WROOM32_CRYPT
+#define NO_ESP32_CRYPT
 /* Disabled AES acceleration */
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+#define NO_WOLFSSL_ESP32_CRYPT_AES
 /* Disabled SHA acceleration */
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+#define NO_WOLFSSL_ESP32_CRYPT_HASH
 /* Disabled RSA Primitive acceleration */
-#define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+#define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 ```
 
 ### Coding

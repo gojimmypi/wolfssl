@@ -47,8 +47,8 @@
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && \
+   !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
 
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
@@ -129,9 +129,9 @@ static const char* const TAG = "wolfssl_esp32_mp";
 
 #ifdef DEBUG_WOLFSSL
     /* when debugging, we'll double-check the mutex with call depth */
-    #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         static int esp_mp_exptmod_depth_counter = 0;
-    #endif /* NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+    #endif /* NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 #endif /* DEBUG_WOLFSSL */
 
 /*
@@ -333,7 +333,7 @@ static int esp_mp_hw_unlock( void )
         single_thread_locked = 0;
 #else
         esp_CryptHwMutexUnLock(&mp_mutex);
-#endif // SINGLE_THREADED
+#endif /* SINGLE_THREADED */
 
         ESP_LOGV(TAG, "esp_mp_hw_unlock");
     }
@@ -346,9 +346,9 @@ static int esp_mp_hw_unlock( void )
 
 
 /* mulmod and mulexp_mod HW accelerator need mongomery math prep: M' */
-#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+#if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
       || \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+    !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
 
 static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
 {
@@ -420,7 +420,7 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     ESP_LOGV(TAG, "\nEnd esp_calc_Mdash \n");
     return ret;
 }
-#endif /* !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_[MULMOD/EXPTMOD] for M' */
+#endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_[MULMOD/EXPTMOD] for M' */
 
 /* the result may need to have extra bytes zeroed or used length adjusted */
 static int esp_clean_result(MATH_INT_T* Z, int used_padding)
@@ -573,7 +573,7 @@ static int esp_memblock_to_mpint(const uint32_t mem_address,
 #endif
     return ret;
 }
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
 /* Write 0x00 to [wordSz] words of register memory starting at mem_address */
 #if defined(CONFIG_IDF_TARGET_ESP32)
 static int esp_zero_memblock(u_int32_t mem_address, int wordSz)
@@ -669,9 +669,9 @@ static word32 bits2words(word32 bits)
     return ((bits + (d - 1)) / d);
 }
 
-#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+#if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
       ||  \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
+    !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
 /* rinv and M' only used for mulmod and mulexp_mod */
 
 /* get rinv */
@@ -771,9 +771,9 @@ int esp_show_mph(struct esp_mp_helper* mph)
 }
 
 
-#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD) \
+#if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
       ||  \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)/* given X, Y, M - setup mp hardware and other helper values.*/
+    !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)/* given X, Y, M - setup mp hardware and other helper values.*/
 int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
@@ -910,7 +910,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
 #endif
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
 /* Large Number Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -1304,9 +1304,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     return ret;
 } /* esp_mp_mul() */
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL*/
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL*/
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 /* Large Number Modular Multiplication
  *
  * See 24.3.3 of the ESP32 Technical Reference Manual
@@ -1736,10 +1736,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     return ret;
 } /* esp_mp_mulmod */
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 /* Large Number Modular Exponentiation
  *
  *    Z = X^Y mod M
@@ -2000,11 +2000,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     return ret;
 } /* esp_mp_exptmod */
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         * (turns on/off mp_exptmod) */
 
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) &&
-        * !NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI) &&
+        * !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 #endif /* !NO_RSA || HAVE_ECC */
 

@@ -39,14 +39,14 @@
 **
 ** Primary Settings:
 **
-** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+** WOLFSSL_ESP32_CRYPT_RSA_PRI
 **   Defined in wolfSSL settings.h: this turns on or off esp32_mp math library.
 **   Unless turned off, this is enabled by default for the ESP32
 **
-** NO_ESP32WROOM32_CRYPT
+** NO_ESP32_CRYPT
 **   When defined, disables all hardware acceleration on the ESP32
 **
-** NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
+** NO_WOLFSSL_ESP32_CRYPT_HASH
 **   Used to disabled only hash hardware algorithms: SHA2, etc.
 **
 **   WOLFSSL_NOSHA512_224
@@ -55,16 +55,16 @@
 **   WOLFSSL_NOSHA512_256
 **     Define to disable SHA-512/512
 **
-** NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
+** NO_WOLFSSL_ESP32_CRYPT_AES
 **   Used to disable only AES hardware algorithms. Software used instead.
 **
-** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+** NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
 **   Turns off hardware acceleration esp_mp_mul()
 **
-** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+** NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 **   Turns off hardware acceleration esp_mp_exptmod()
 **
-** NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+** NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 **   Turns off hardware acceleration esp_mp_mulmod()
 **
 *******************************************************************************
@@ -72,15 +72,15 @@
 *******************************************************************************
 ** Listed in increasing order of complexity:
 **
-** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+** WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
 **   When defined, use hardware acceleration esp_mp_mul()
 **   for Large Number Multiplication: Z = X * Y
 **
-** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+** WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 **   When defined, use hardware acceleration esp_mp_exptmod()
 **   for Large Number Modular Exponentiation Z = X^Y mod M
 **
-** WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+** WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 **   When defined, use hardware acceleration esp_mp_mulmod()
 **   for Large Number Modular Multiplication: Z = X * Y mod M
 **
@@ -102,7 +102,7 @@
 **   Used to re-read data from registers in esp32_mp & verify written contents
 **   actually match the source data.
 **
-** WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+** WOLFSSL_ESP32_CRYPT_DEBUG
 **   When defined, enables hardware cryptography debugging
 **
 ** NO_HW_MATH_TEST
@@ -149,7 +149,7 @@
 **
 *******************************************************************************
 */
-#ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#ifdef WOLFSSL_ESP32_CRYPT_DEBUG
     #undef LOG_LOCAL_LEVEL
     #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #else
@@ -272,14 +272,14 @@ extern "C"
 
 #endif /* ! NO_AES */
 
-#ifdef WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+#ifdef WOLFSSL_ESP32_CRYPT_DEBUG
 
     void wc_esp32TimerStart(void);
     uint64_t  wc_esp32elapsedTime(void);
 
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_DEBUG */
+#endif /* WOLFSSL_ESP32_CRYPT_DEBUG */
 
-#if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) &&     \
+#if !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) &&     \
    (!defined(NO_SHA) || !defined(NO_SHA256) ||          \
      defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512) \
    )
@@ -393,7 +393,7 @@ extern "C"
         #define ESP_RSA_TIMEOUT_CNT     0x249F00
     #endif
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /*
      * The parameter names in the Espressif implementation are arbitrary.
      *
@@ -411,9 +411,9 @@ extern "C"
     /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
     #undef  HW_MATH_ENABLED
     #define HW_MATH_ENABLED
-    #endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+    #endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-    #ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         /* Z = X * Y */
     int esp_mp_mul(MATH_INT_T* X,
                    MATH_INT_T* Y,
@@ -421,9 +421,9 @@ extern "C"
     /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
     #undef  HW_MATH_ENABLED
     #define HW_MATH_ENABLED
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL */
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
-#ifndef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     /* Z = X * Y (mod M) */
     int esp_mp_mulmod(MATH_INT_T* X,
                       MATH_INT_T* Y,
@@ -432,7 +432,7 @@ extern "C"
     /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
     #undef  HW_MATH_ENABLED
     #define HW_MATH_ENABLED
-#endif /* ! NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
 #endif /* !NO_RSA || HAVE_ECC*/
 

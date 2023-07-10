@@ -191,7 +191,7 @@ int CertDemo() {
     strncpy(request.subject.locality, "Hamilton\0", CTC_NAME_SIZE);
     strncpy(request.subject.org, "Blue Leaf Software, Ltd\0", CTC_NAME_SIZE);
 
-#if defined(NO_ESP32WROOM32_CRYPT)
+#if defined(NO_ESP32_CRYPT)
     strncpy(request.subject.commonName, "Lumos SW, SN = BLS-001\0", CTC_NAME_SIZE);
 #else
     strncpy(request.subject.commonName, "Lumos HW, SN = BLS-002\0", CTC_NAME_SIZE);
@@ -288,35 +288,35 @@ openssl x509 -req -in "./output/test_request.crt" -days 10     \
     */
 
     /* check to see if we are using hardware encryption */
-#if defined(NO_ESP32WROOM32_CRYPT)
-    WOLFSSL_VERSION_PRINTF("NO_ESP32WROOM32_CRYPT defined! "
+#if defined(NO_ESP32_CRYPT)
+    WOLFSSL_VERSION_PRINTF("NO_ESP32_CRYPT defined! "
                            "HW acceleration DISABLED.");
 #else
     /* first show what platform hardware acceleration is enabled
     ** (some new platforms may not be supported yet) */
     #if defined(CONFIG_IDF_TARGET_ESP32)
-        WOLFSSL_VERSION_PRINTF("ESP32WROOM32_CRYPT is enabled for ESP32.");
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32.");
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-        WOLFSSL_VERSION_PRINTF("ESP32WROOM32_CRYPT is enabled for ESP32-S2.");
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S2.");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-        WOLFSSL_VERSION_PRINTF("ESP32WROOM32_CRYPT is enabled for ESP32-S3.");
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
     #else
-        #error "ESP32WROOM32_CRYPT not yet supported on this IDF TARGET"
+        #error "ESP32_CRYPT not yet supported on this IDF TARGET"
     #endif
 
     /* Even though enabled, some specifics may be disabled */
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
-        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH is defined!"
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_HASH is defined!"
                                "(disabled HW SHA).");
     #endif
 
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
-        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32WROOM32_CRYPT_AES is defined!"
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_AES is defined!"
                                "(disabled HW AES).");
     #endif
 
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI defined!"
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_RSA_PRI defined!"
                                "(disabled HW RSA)");
     #endif
 #endif

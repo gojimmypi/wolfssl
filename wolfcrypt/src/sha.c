@@ -54,15 +54,15 @@
     #include <wolfssl/wolfcrypt/cryptocb.h>
 #endif
 
-#undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
+#if defined(WOLFSSL_ESP32_CRYPT) && \
+    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
     /* define a single keyword for simplicity & readability
      *
      * by default the HW acceleration is on for ESP32-WROOM32
      * but individual components can be turned off.
      */
-    #define WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    #define WOLFSSL_USE_ESP32_CRYPT_HASH_HW
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
 
     /* Although we have hardware acceleration,
@@ -73,18 +73,18 @@
     /* The ESP32C3 is different; HW crypto here. Not yet implemented.
     ** We'll be using software for RISC-V at this time */
 #else
-    #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    #undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
 #endif
 
-#undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+#undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
+#if defined(WOLFSSL_ESP32_CRYPT) && \
+    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
     /* define a single keyword for simplicity & readability
      *
      * by default the HW acceleration is on for ESP32-WROOM32
      * but individual components can be turned off.
      */
-    #define WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    #define WOLFSSL_USE_ESP32_CRYPT_HASH_HW
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
 
     /* Although we have hardware acceleration,
@@ -96,7 +96,7 @@
     ** We'll be using software for RISC-V at this time */
     static const char* TAG = "wc_sha-c3";
 #else
-    #undef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+    #undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
 #endif
 
 /* fips wrapper calls, user can call direct */
@@ -339,7 +339,7 @@
     !defined(WOLFSSL_QNX_CAAM)
     /* wolfcrypt/src/port/caam/caam_sha.c */
 
-#elif defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW) || \
+#elif defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) || \
       defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
 
     /* This function initializes SHA.
@@ -585,7 +585,7 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
     sha->devCtx = NULL;
 #endif
 
-#ifdef WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW
+#ifdef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
     if (sha->ctx.mode != ESP32_SHA_INIT) {
         /* it may be interesting to see old values during debugging */
         ESP_LOGV(TAG, "Set ctx mode from prior value: %d", sha->ctx.mode);
@@ -669,7 +669,7 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
             ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
         #endif
 
-        #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+        #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
             if (sha->ctx.mode == ESP32_SHA_INIT) {
                 ESP_LOGV(TAG, "wc_ShaUpdate try hardware");
                 esp_sha_try_hw_lock(&sha->ctx);
@@ -730,7 +730,7 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
         ByteReverseWords(local32, local32, WC_SHA_BLOCK_SIZE);
     #endif
 
-    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
         if (sha->ctx.mode == ESP32_SHA_INIT){
             esp_sha_try_hw_lock(&sha->ctx);
         }
@@ -824,7 +824,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
     #endif
 
-    #if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
         /* For a fresh sha.ctx, try to use hardware acceleration */
         if (sha->ctx.mode == ESP32_SHA_INIT) {
             esp_sha_try_hw_lock(&sha->ctx);
@@ -876,7 +876,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
                      2 * sizeof(word32));
 #endif
 
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
     if (sha->ctx.mode == ESP32_SHA_INIT) {
         esp_sha_try_hw_lock(&sha->ctx);
     }
@@ -1034,7 +1034,7 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
     ret = se050_hash_copy(&src->se050Ctx, &dst->se050Ctx);
 #endif
 
-#if defined(WOLFSSL_USE_ESP32WROOM32_CRYPT_HASH_HW)
+#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
     esp_sha_ctx_copy(src, dst);
 #endif
 

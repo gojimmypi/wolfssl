@@ -21,9 +21,9 @@
 #include "sdkconfig.h"
 
 #undef WOLFSSL_ESPIDF
-#undef WOLFSSL_ESPWROOM32
+#undef WOLFSSL_ESP32
 #undef WOLFSSL_ESPWROOM32SE
-#undef WOLFSSL_ESPWROOM32
+#undef WOLFSSL_ESP32
 #undef WOLFSSL_ESP8266
 
 /* The Espressif sdkconfig will have chipset info.
@@ -43,12 +43,12 @@
 /*
  * choose ONE of these Espressif chips to define:
  *
- * WOLFSSL_ESPWROOM32
+ * WOLFSSL_ESP32
  * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
  */
 
-#define WOLFSSL_ESPWROOM32
+#define WOLFSSL_ESP32
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
@@ -112,7 +112,7 @@
 #endif
 
 /* rsa primitive specific definition */
-#if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
+#if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
     /* threshold for performance adjustment for HW primitive use   */
@@ -138,11 +138,11 @@
 /* #define HASH_SIZE_LIMIT */ /* for test.c */
 
 #define USE_FAST_MATH
-// #define SP_MATH
+#define SP_MATH
 
 #define WOLFSSL_SMALL_STACK
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
     /* AES192 is not supported on the ESP32-S3 HW at this time */
     #define NO_AES_192
 #endif
@@ -194,40 +194,40 @@
 ** Uncomment these lines for SW: */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
-    /* #define NO_ESP32WROOM32_CRYPT                 */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH    */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES     */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+    /* #define NO_ESP32_CRYPT                 */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    #define NO_ESP32WROOM32_CRYPT
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    /* #define NO_ESP32WROOM32_CRYPT                 */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH    */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES     */
-    /* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+    /* #define NO_ESP32_CRYPT                 */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    #define NO_ESP32WROOM32_CRYPT
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    #define NO_ESP32WROOM32_CRYPT
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    #define NO_ESP32WROOM32_CRYPT
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #else
-    #define NO_ESP32WROOM32_CRYPT
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif
 
 /* debug options */
@@ -235,22 +235,22 @@
 #define WOLFSSL_HW_METRICS
 //#define DEBUG_WOLFSSL_VERBOSE
 //#define DEBUG_WOLFSSL
-//#define WOLFSSL_ESP32WROOM32_CRYPT_DEBUG
+//#define WOLFSSL_ESP32_CRYPT_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
 
 /* Turn off Large Number Multiplication:
 ** [Z = X * Y] in esp_mp_mul()                                  */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL         */
 
 /* Turn off Large Number Modular Exponentiation:
 ** [Z = X^Y mod M] in esp_mp_exptmod()                          */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD        */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
 
 /* Turn off Large Number Modular Multiplication
 ** [Z = X × Y mod M] in esp_mp_mulmod()                         */
-/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
 
 
 // #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */

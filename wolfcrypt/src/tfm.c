@@ -57,33 +57,33 @@
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #endif
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     static const char* TAG = "TFM"; /* esp log breadcrumb */
-    #if !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
+    #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
         /* Each individual math HW can be turned on or off.
          * Listed in order of complexity and historical difficulty. */
-        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
-        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
-        #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+        #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+        #define WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+        #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #endif
 
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
-        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     #endif
 
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
-        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     #endif
 
-    #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD)
-        #undef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #endif
 
     /* Note with HW there's a EPS_RSA_EXPT_XBTIS setting
      * as for some small numbers, SW may be faster.
      * See ESP_LOGV messages for EPS_RSA_EXPT_XBTIS values. */
 
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 #if defined(FREESCALE_LTC_TFM)
     #include <wolfssl/wolfcrypt/port/nxp/ksdk_port.h>
@@ -310,7 +310,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
        goto clean;
     }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
     if (esp_hw_validation_active()) {
         ESP_LOGV(TAG, "Skipping call to esp_mp_mul "
                       "during active validation.");
@@ -338,7 +338,7 @@ int fp_mul(fp_int *A, fp_int *B, fp_int *C)
         }
     }
     /* fall through to software calcs */
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MP_MUL */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
     /* pick a comba (unrolled 4/8/16/32 x or rolled) based on the size
        of the largest input.  We also want to avoid doing excess mults if the
@@ -3101,9 +3101,9 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 
 int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
     int retHW = FP_OKAY;
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
@@ -3122,7 +3122,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    if (esp_hw_validation_active()) {
       ESP_LOGV(TAG, "Skipping call to esp_mp_exptmod "
                     "during active validation.");
@@ -3152,7 +3152,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       } /* switch */
    } /* if validation check */
    /* fall through to software calcs */
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
 #ifndef POSITIVE_EXP_ONLY  /* reduce stack if assume no negatives */
@@ -3209,7 +3209,7 @@ int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
 int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 {
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    int retHW = FP_OKAY;
 #endif
 
@@ -3230,7 +3230,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
       return FP_OKAY;
    }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    retHW = esp_mp_exptmod(G, X, P, Y);
    switch (retHW) {
       case MP_OKAY:
@@ -3253,7 +3253,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
          break;
    } /* HW result switch */
    /* falling through to SW: */
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
    if (X->sign == FP_NEG) {
 #ifndef POSITIVE_EXP_ONLY  /* reduce stack if assume no negatives */
@@ -3310,7 +3310,7 @@ int fp_exptmod_ex(fp_int * G, fp_int * X, int digits, fp_int * P, fp_int * Y)
 
 int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    int retHW = FP_OKAY;
 #endif
 
@@ -3324,7 +3324,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       return FP_VAL;
    }
 
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_EXPTMOD)
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    retHW = esp_mp_exptmod(G, X, P, Y);
    switch (retHW) {
       case MP_OKAY:
@@ -4660,7 +4660,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
 #endif
 {
    int ret = MP_OKAY;
-#ifdef WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD
+#ifdef WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
    ret = esp_mp_mulmod(a, b, c, d);
    switch (ret) {
       case MP_OKAY:
@@ -4683,7 +4683,7 @@ int mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
    }
 #else /* no HW */
    ret = fp_mulmod(a, b, c, d);
-#endif /* WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI_MULMOD */
+#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
    return ret;
 }
 
