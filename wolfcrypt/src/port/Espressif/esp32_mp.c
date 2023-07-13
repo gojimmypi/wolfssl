@@ -1419,6 +1419,20 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         *    accordingly R^2 = 2^(n*32*2)
         */
         ret = esp_mp_montgomery_init(X, Y, M, mph);
+        if (ret == MP_OKAY) {
+            ESP_LOGV(TAG, "esp_mp_exptmod esp_mp_montgomery_init success.");
+        }
+        else {
+        #ifdef WOLFSSL_HW_METRICS
+            if (ret == MP_HW_FALLBACK) {
+                esp_mp_mulmod_fallback_ct++;
+            }
+            else {
+                esp_mp_mulmod_error_ct++;
+            }
+            #endif
+            return ret;
+        }
         zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
     }
 
@@ -2044,6 +2058,8 @@ int esp_hw_show_mp_metrics(void)
     /* Metrics: esp_mp_mulmod() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %lu",
                    esp_mp_mulmod_usage_ct);
+    ESP_LOGI(TAG, "Number of fallback to SW mp_mulmod: %lu",
+                   esp_mp_mulmod_fallback_ct);
 
     if (esp_mp_mulmod_error_ct == 0) {
         ESP_LOGI(TAG, "Success: no esp_mp_mulmod errors.");
@@ -2076,7 +2092,7 @@ int esp_hw_show_mp_metrics(void)
 
     ESP_LOGI(TAG, "Number of calls to esp_mp_exptmod: %lu",
                    esp_mp_exptmod_usage_ct);
-    ESP_LOGI(TAG, "Number of fallback esp_mp_exptmod: %lu",
+    ESP_LOGI(TAG, "Number of fallback to SW mp_exptmod: %lu",
                    esp_mp_exptmod_fallback_ct);
     if (esp_mp_exptmod_error_ct == 0) {
         ESP_LOGI(TAG, "Success: no esp_mp_exptmod errors.");
