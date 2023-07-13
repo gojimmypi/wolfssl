@@ -34,6 +34,7 @@
 #include <esp_log.h>
 
 /* exit codes to be used in tfm.c, sp_int.c, integer.c, etc. */
+/* TODO what numbers do we really want to use? */
 #define MP_HW_ERROR    (-106) /* hardware error, consider SW fallback  */
 #define MP_HW_BUSY     (-107) /* assigned -7 to match SP_HW_BUSY       */
 #define MP_HW_FALLBACK (-108) /* signal to caller to fall back to SW   */
