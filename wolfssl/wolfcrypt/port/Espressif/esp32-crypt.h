@@ -124,6 +124,9 @@
 **   When defined, will NOT recover software calculation result when not
 **   matched with hardware. Useful only during development. Needs DEBUG_WOLFSSL
 **
+** ESP_PROHIBIT_SMALL_X
+**   When set to 1 X operands less than 8 bits will fall back to SW
+**
 ** ESP_NO_ERRATA_MITIGATION
 **   Disable all errata mitigation code.
 **
@@ -185,6 +188,7 @@
     #else
         #include <rom/ets_sys.h>
     #endif
+    #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
@@ -193,6 +197,7 @@
     #else
         #include "driver/periph_ctrl.h"
     #endif
+    #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
@@ -201,6 +206,7 @@
     #else
         #include "driver/periph_ctrl.h"
     #endif
+    #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* no includes for ESP32C3 at this time (no HW implemented yet) */
 #else

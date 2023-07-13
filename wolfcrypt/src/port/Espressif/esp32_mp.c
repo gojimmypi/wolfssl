@@ -543,14 +543,17 @@ static int esp_memblock_to_mpint(const uint32_t mem_address,
     ESP_EM__READ_NON_FIFO_REG;
     for (volatile uint32_t i = 0;  i < numwords; ++i) {
         ESP_EM__3_16;
-        mp->dp[i] = DPORT_SEQUENCE_REG_READ(mem_address + i * 4);
+        mp->dp[i] = DPORT_SEQUENCE_REG_READ((uint32_t*)(mem_address + i * 4));
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
     mp->used = numwords;
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    ret = XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32));
+    ret = XMEMCMP((const void *)mem_address, /* HW reg memory */
+                  (const void *)&mp->dp,     /* our dp value  */
+                  numwords * sizeof(word32));
+
     if (ret != 0 ) {
         ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
                       "Reading %u Words at Address =  0x%08x",
@@ -748,6 +751,8 @@ int esp_hw_validation_active(void)
 #endif
 }
 
+/* useful during debugging and error display,
+ * we can show all the mp helper calc values */
 int esp_show_mph(struct esp_mp_helper* mph)
 {
     int ret = MP_OKAY;
@@ -776,7 +781,10 @@ int esp_show_mph(struct esp_mp_helper* mph)
 
 #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
       ||  \
-    !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)/* given X, Y, M - setup mp hardware and other helper values.*/
+    !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
+/* only when using exptmod or mulmod, we have some helper functions. */
+
+/* given X, Y, M - setup mp hardware and other helper values.*/
 int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                            struct esp_mp_helper* mph)
 {
@@ -785,10 +793,10 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
     mph->Xs = mp_count_bits(X);
 
-#if 0
+#if ESP_PROHIBIT_SMALL_X
     /* optionally prohibit small X.
     ** note this is very common in ECC: [1] * [Y] mod [M] */
-    if (mph->Xs <= 8) {
+    if ((X->used == 1) && (X->dp[1] < (1 << 8))) {
     #ifdef WOLFSSL_HW_METRICS
         esp_mp_mulmod_small_x_ct++;
     #endif
@@ -802,7 +810,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     if (ret == MP_OKAY) {
         mph->Ys = mp_count_bits(Y); /* init Ys to pass to montgomery init */
 
-        if (mph->Ys <= 8) {
+        if ((Y->used == 1) && (Y->dp[1] < (1 << 8))) {
     #ifdef WOLFSSL_HW_METRICS
             esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
     #endif
@@ -945,15 +953,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
  * may be later modified (e.g. Z = Z * X) */
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     /* neg check: X*Y becomes negative */
-    int neg;
+    int res_sign;
 
     /* aka (X->sign == Y->sign) ? MP_ZPOS : MP_NEG; , but with mp_isneg(): */
-    neg = (mp_isneg(X) == mp_isneg(Y)) ? MP_ZPOS : MP_NEG;
-    if (neg) {
+    res_sign = (mp_isneg(X) == mp_isneg(Y)) ? MP_ZPOS : MP_NEG;
+    if (res_sign) {
         /* Negative numbers are relatively infrequent.
          * May be interesting during verbose debugging: */
         ESP_LOGV(TAG, "mp_isneg(X) = %d; mp_isneg(Y) = %d; neg = %d ",
-                       mp_isneg(X),      mp_isneg(Y),           neg);
+                       mp_isneg(X),      mp_isneg(Y),           res_sign);
     }
 #endif
 
@@ -1011,7 +1019,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         Z->dp[0] = X->dp[0] * Y->dp[0];
         Z->used = 1;
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-        Z->sign = neg; /* see above mp_isneg() for negative result detection */
+        Z->sign = res_sign; /* see above mp_isneg() for negative result detection */
 #endif
         return MP_OKAY;
     }
@@ -1132,15 +1140,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      *
      * X & Y must be represented by the same number of bits. Must be
      * enough to represent the larger one. */
-    // int MinXYBits = max(Xs, Ys); /* used only for WordsForOperand */
 
     /* Figure out how many words we need to
      * represent each operand & the result. */
-    // int WordsForOperand = bits2words(MinXYBits); /* aka hwWords_sz */
-    // int WordsForResult = bits2words(Xs + Ys);
 
     /* Make sure we are within capabilities of hardware. */
-    if ( (hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS ) {
+    if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
@@ -1216,14 +1221,14 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
-    if (!mp_iszero(Z) && neg) {
+    if (!mp_iszero(Z) && res_sign) {
         /* for non-zero negative numbers, set negative flag for our result:
          *   Z->sign = FP_NEG */
         ESP_LOGV(TAG, "Setting Z to negative result!");
         mp_setneg(Z);
     }
     else {
-        Z->sign = 0;
+        Z->sign = MP_ZPOS;
     }
 #endif
 
@@ -1302,6 +1307,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY;
+    word32 zwords = 0;
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     int negcheck = 0;
@@ -1310,7 +1316,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
     int reti = 0; /* interim return value used only during HW==SW validation */
 #endif
-    word32 zwords = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1328,6 +1333,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_max_used = (M->used > esp_mp_max_used) ? M->used : esp_mp_max_used;
 #endif
 
+    /* do we have an even moduli? */
     if ((M->dp[0] & 1) == 0) {
 #ifndef NO_ESP_MP_MUL_EVEN_ALT_CALC
         /*  Z = X × Y mod M in mixed HW & SW*/
@@ -1699,6 +1705,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #endif /* DEBUG_WOLFSSL */
 
+    /* cleanup and exit */
     mp_clear(tmpZ);
     mp_clear(&(mph->r_inv));
 
