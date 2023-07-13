@@ -1528,6 +1528,7 @@ extern void uITRON4_free(void *p) ;
 #ifdef MICRIUM
     #include <stdlib.h>
     #include <os.h>
+    #include <app_cfg.h>
     #if defined(RTOS_MODULE_NET_AVAIL) || (APP_CFG_TCPIP_EN == DEF_ENABLED)
         #include <net_cfg.h>
         #include <net_sock.h>
@@ -2033,17 +2034,22 @@ extern void uITRON4_free(void *p) ;
          *      Constant time: Always
          *      Enable:        WOLFSSL_SP_MATH_ALL
          */
+        #undef USE_FAST_MATH
+        #undef USE_INTEGER_HEAP_MATH
     #elif defined(WOLFSSL_SP_MATH)
         /*  2) SP Math with restricted key sizes: wolfSSL proprietary math
          *         implementation (sp_*.c).
          *      Constant time: Always
          *      Enable:        WOLFSSL_SP_MATH
          */
+        #undef USE_FAST_MATH
+        #undef USE_INTEGER_HEAP_MATH
     #elif defined(USE_FAST_MATH)
         /*  3) Tom's Fast Math: Stack based (tfm.c)
          *      Constant time: Only with TFM_TIMING_RESISTANT
          *      Enable:        USE_FAST_MATH
          */
+        #undef USE_INTEGER_HEAP_MATH
     #elif defined(USE_INTEGER_HEAP_MATH)
         /*  4) Integer Heap Math:  Heap based (integer.c)
          *      Constant time: Not supported
@@ -2857,6 +2863,12 @@ extern void uITRON4_free(void *p) ;
 #if defined(WOLFSSL_NO_MALLOC) && \
     (defined(WOLFSSL_SMALL_STACK) || defined(WOLFSSL_SMALL_STACK_CACHE))
     #error Small stack cannot be used with no malloc (WOLFSSL_NO_MALLOC)
+#endif
+
+/* If malloc is disabled make sure it is also disabled in SP math */
+#if defined(WOLFSSL_NO_MALLOC) && !defined(WOLFSSL_SP_NO_MALLOC) && \
+    (defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL))
+    #define WOLFSSL_SP_NO_MALLOC
 #endif
 
 /* Enable DH Extra for QT, openssl all, openssh and static ephemeral */

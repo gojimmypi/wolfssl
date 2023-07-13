@@ -1447,7 +1447,8 @@ static int test_wolfSSL_CTX_load_verify_locations(void)
     /* Get cert cache size */
     ExpectIntGT(cacheSz = wolfSSL_CTX_get_cert_cache_memsize(ctx), 0);
 
-    ExpectNotNull(cache = XMALLOC(cacheSz, NULL, DYNAMIC_TYPE_TMP_BUFFER));
+    ExpectNotNull(cache = (byte*)XMALLOC(cacheSz, NULL,
+                            DYNAMIC_TYPE_TMP_BUFFER));
 
     ExpectIntEQ(wolfSSL_CTX_memsave_cert_cache(NULL, NULL, -1, NULL),
         BAD_FUNC_ARG);
@@ -34642,6 +34643,8 @@ static int test_wolfSSL_Tls12_Key_Logging_test(void)
     }
     /* a log starting with "CLIENT_RANDOM " should exit in the file */
     ExpectIntEQ(found, 1);
+    /* clean up */
+    ExpectIntEQ(rem_file("./MyKeyLog.txt"), 0);
 #endif /* OPENSSL_EXTRA && HAVE_SECRET_CALLBACK */
     return EXPECT_RESULT();
 }
@@ -34726,7 +34729,8 @@ static int test_wolfSSL_Tls13_Key_Logging_test(void)
 #endif /* OPENSSL_EXTRA && HAVE_SECRET_CALLBACK && WOLFSSL_TLS13 */
     return EXPECT_RESULT();
 }
-#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
+#if defined(WOLFSSL_TLS13) && defined(HAVE_ECH) && \
+    defined(HAVE_IO_TESTS_DEPENDENCIES)
 static int test_wolfSSL_Tls13_ECH_params(void)
 {
     EXPECT_DECLS;
@@ -40229,12 +40233,15 @@ static int test_wolfSSL_BIO_gets(void)
     ExpectNotNull(emp_bm = BUF_MEM_new());
     ExpectNotNull(msg_bm = BUF_MEM_new());
     ExpectIntEQ(BUF_MEM_grow(msg_bm, sizeof(msg)), sizeof(msg));
-    XFREE(msg_bm->data, NULL, DYNAMIC_TYPE_OPENSSL);
+    if (EXPECT_SUCCESS())
+        XFREE(msg_bm->data, NULL, DYNAMIC_TYPE_OPENSSL);
     /* emp size is 1 for terminator */
     ExpectIntEQ(BUF_MEM_grow(emp_bm, sizeof(emp)), sizeof(emp));
-    XFREE(emp_bm->data, NULL, DYNAMIC_TYPE_OPENSSL);
-    emp_bm->data = emp;
-    msg_bm->data = msg;
+    if (EXPECT_SUCCESS()) {
+        XFREE(emp_bm->data, NULL, DYNAMIC_TYPE_OPENSSL);
+        emp_bm->data = emp;
+        msg_bm->data = msg;
+    }
     ExpectIntEQ(BIO_set_mem_buf(bio, emp_bm, BIO_CLOSE), WOLFSSL_SUCCESS);
 
     /* check reading an empty string */
@@ -40252,9 +40259,11 @@ static int test_wolfSSL_BIO_gets(void)
     ExpectIntEQ(BIO_gets(bio, bio_buffer, bufferSz), 8);
     ExpectIntEQ(BIO_gets(bio, bio_buffer, -1), 0);
 
-    emp_bm->data = NULL;
+    if (EXPECT_SUCCESS())
+        emp_bm->data = NULL;
     BUF_MEM_free(emp_bm);
-    msg_bm->data = NULL;
+    if (EXPECT_SUCCESS())
+        msg_bm->data = NULL;
     BUF_MEM_free(msg_bm);
 #endif
 
@@ -46246,6 +46255,7 @@ static int test_wolfSSL_X509V3_EXT_nconf(void)
         "authorityKeyIdentifier",
         "subjectAltName",
         "keyUsage",
+        "extendedKeyUsage",
     };
     size_t ext_names_count = sizeof(ext_names)/sizeof(*ext_names);
     int ext_nids[] = {
@@ -46253,19 +46263,42 @@ static int test_wolfSSL_X509V3_EXT_nconf(void)
         NID_authority_key_identifier,
         NID_subject_alt_name,
         NID_key_usage,
+        NID_ext_key_usage,
     };
     size_t ext_nids_count = sizeof(ext_nids)/sizeof(*ext_nids);
     const char *ext_values[] = {
         "hash",
         "hash",
         "DNS:example.com, IP:127.0.0.1",
-        "digitalSignature,keyEncipherment,dataEncipherment",
+        "digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,"
+            "keyAgreement,keyCertSign,cRLSign,encipherOnly,decipherOnly",
+        "serverAuth,clientAuth,codeSigning,emailProtection,timeStamping,"
+            "OCSPSigning",
     };
     size_t i;
     X509_EXTENSION* ext = NULL;
     X509* x509 = NULL;
+    unsigned int keyUsageFlags;
+    unsigned int extKeyUsageFlags;
 
     ExpectNotNull(x509 = X509_new());
+
+    /* keyUsage / extKeyUsage should match string above */
+    keyUsageFlags = KU_DIGITAL_SIGNATURE
+                  | KU_NON_REPUDIATION
+                  | KU_KEY_ENCIPHERMENT
+                  | KU_DATA_ENCIPHERMENT
+                  | KU_KEY_AGREEMENT
+                  | KU_KEY_CERT_SIGN
+                  | KU_CRL_SIGN
+                  | KU_ENCIPHER_ONLY
+                  | KU_DECIPHER_ONLY;
+    extKeyUsageFlags = XKU_SSL_CLIENT
+                     | XKU_SSL_SERVER
+                     | XKU_CODE_SIGN
+                     | XKU_SMIME
+                     | XKU_TIMESTAMP
+                     | XKU_OCSP_SIGN;
 
     for (i = 0; i < ext_names_count; i++) {
         ExpectNotNull(ext = X509V3_EXT_nconf(NULL, NULL, ext_names[i],
@@ -46286,6 +46319,13 @@ static int test_wolfSSL_X509V3_EXT_nconf(void)
         ExpectNotNull(ext = X509V3_EXT_nconf(NULL, NULL, ext_names[i],
             ext_values[i]));
         ExpectIntEQ(X509_add_ext(x509, ext, -1), WOLFSSL_SUCCESS);
+
+        if (ext_nids[i] == NID_key_usage) {
+            ExpectIntEQ(X509_get_key_usage(x509), keyUsageFlags);
+        }
+        else if (ext_nids[i] == NID_ext_key_usage) {
+            ExpectIntEQ(X509_get_extended_key_usage(x509), extKeyUsageFlags);
+        }
         X509_EXTENSION_free(ext);
         ext = NULL;
     }
@@ -51864,6 +51904,141 @@ static int test_wolfssl_EVP_aes_gcm(void)
     }
 #endif /* OPENSSL_EXTRA && !NO_AES && HAVE_AESGCM */
     return EXPECT_RESULT();
+}
+
+static int test_wolfssl_EVP_aria_gcm(void)
+{
+    int res = TEST_SKIPPED;
+#if defined(OPENSSL_EXTRA) && defined(HAVE_ARIA) && \
+    !defined(HAVE_SELFTEST) && !defined(HAVE_FIPS)
+
+    /* A 256 bit key, AES_128 will use the first 128 bit*/
+    byte *key = (byte*)"01234567890123456789012345678901";
+    /* A 128 bit IV */
+    byte *iv = (byte*)"0123456789012345";
+    int ivSz = ARIA_BLOCK_SIZE;
+    /* Message to be encrypted */
+    const int plaintxtSz = 40;
+    byte plaintxt[WC_ARIA_GCM_GET_CIPHERTEXT_SIZE(plaintxtSz)];
+    XMEMCPY(plaintxt,"for things to change you have to change",plaintxtSz);
+    /* Additional non-confidential data */
+    byte *aad = (byte*)"Don't spend major time on minor things.";
+
+    unsigned char tag[ARIA_BLOCK_SIZE] = {0};
+    int aadSz = (int)XSTRLEN((char*)aad);
+    byte ciphertxt[WC_ARIA_GCM_GET_CIPHERTEXT_SIZE(plaintxtSz)];
+    byte decryptedtxt[plaintxtSz];
+    int ciphertxtSz = 0;
+    int decryptedtxtSz = 0;
+    int len = 0;
+    int i = 0;
+    #define TEST_ARIA_GCM_COUNT 6
+    EVP_CIPHER_CTX en[TEST_ARIA_GCM_COUNT];
+    EVP_CIPHER_CTX de[TEST_ARIA_GCM_COUNT];
+
+    for (i = 0; i < TEST_ARIA_GCM_COUNT; i++) {
+
+        EVP_CIPHER_CTX_init(&en[i]);
+        switch (i) {
+            case 0:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_128_gcm(), NULL, key, iv));
+                break;
+            case 1:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_192_gcm(), NULL, key, iv));
+                break;
+            case 2:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_256_gcm(), NULL, key, iv));
+                break;
+            case 3:
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_128_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&en[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], NULL, NULL, key, iv));
+                break;
+            case 4:
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_192_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&en[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], NULL, NULL, key, iv));
+                break;
+            case 5:
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], EVP_aria_256_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&en[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_EncryptInit_ex(&en[i], NULL, NULL, key, iv));
+                break;
+        }
+        XMEMSET(ciphertxt,0,sizeof(ciphertxt));
+        AssertIntEQ(1, EVP_EncryptUpdate(&en[i], NULL, &len, aad, aadSz));
+        AssertIntEQ(1, EVP_EncryptUpdate(&en[i], ciphertxt, &len, plaintxt, plaintxtSz));
+        ciphertxtSz = len;
+        AssertIntEQ(1, EVP_EncryptFinal_ex(&en[i], ciphertxt, &len));
+        AssertIntNE(0, XMEMCMP(plaintxt, ciphertxt, plaintxtSz));
+        ciphertxtSz += len;
+        AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&en[i], EVP_CTRL_GCM_GET_TAG, ARIA_BLOCK_SIZE, tag));
+        AssertIntEQ(wolfSSL_EVP_CIPHER_CTX_cleanup(&en[i]), 1);
+
+        EVP_CIPHER_CTX_init(&de[i]);
+        switch (i) {
+            case 0:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_128_gcm(), NULL, key, iv));
+                break;
+            case 1:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_192_gcm(), NULL, key, iv));
+                break;
+            case 2:
+                /* Default uses 96-bits IV length */
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_256_gcm(), NULL, key, iv));
+                break;
+            case 3:
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_128_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&de[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], NULL, NULL, key, iv));
+                break;
+            case 4:
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_192_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&de[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], NULL, NULL, key, iv));
+                break;
+            case 5:
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], EVP_aria_256_gcm(), NULL, NULL, NULL));
+                /* non-default must to set the IV length first */
+                AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&de[i], EVP_CTRL_GCM_SET_IVLEN, ivSz, NULL));
+                AssertIntEQ(1, EVP_DecryptInit_ex(&de[i], NULL, NULL, key, iv));
+                break;
+        }
+        XMEMSET(decryptedtxt,0,sizeof(decryptedtxt));
+        AssertIntEQ(1, EVP_DecryptUpdate(&de[i], NULL, &len, aad, aadSz));
+        AssertIntEQ(1, EVP_DecryptUpdate(&de[i], decryptedtxt, &len, ciphertxt, ciphertxtSz));
+        decryptedtxtSz = len;
+        AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&de[i], EVP_CTRL_GCM_SET_TAG, ARIA_BLOCK_SIZE, tag));
+        AssertIntEQ(1, EVP_DecryptFinal_ex(&de[i], decryptedtxt, &len));
+        decryptedtxtSz += len;
+        AssertIntEQ(plaintxtSz, decryptedtxtSz);
+        AssertIntEQ(0, XMEMCMP(plaintxt, decryptedtxt, decryptedtxtSz));
+
+        XMEMSET(decryptedtxt,0,sizeof(decryptedtxt));
+        /* modify tag*/
+        tag[AES_BLOCK_SIZE-1]+=0xBB;
+        AssertIntEQ(1, EVP_DecryptUpdate(&de[i], NULL, &len, aad, aadSz));
+        AssertIntEQ(1, EVP_CIPHER_CTX_ctrl(&de[i], EVP_CTRL_GCM_SET_TAG, ARIA_BLOCK_SIZE, tag));
+        /* fail due to wrong tag */
+        AssertIntEQ(1, EVP_DecryptUpdate(&de[i], decryptedtxt, &len, ciphertxt, ciphertxtSz));
+        AssertIntEQ(0, EVP_DecryptFinal_ex(&de[i], decryptedtxt, &len));
+        AssertIntEQ(0, len);
+        AssertIntEQ(wolfSSL_EVP_CIPHER_CTX_cleanup(&de[i]), 1);
+    }
+
+    res = TEST_RES_CHECK(1);
+#endif /* OPENSSL_EXTRA && !NO_AES && HAVE_AESGCM */
+    return res;
 }
 
 static int test_wolfssl_EVP_aes_ccm_zeroLen(void)
@@ -63496,7 +63671,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_AES_ecb_encrypt),
     TEST_DECL(test_wolfSSL_AES_cbc_encrypt),
     TEST_DECL(test_wolfSSL_CRYPTO_cts128),
-
+    TEST_DECL(test_wolfssl_EVP_aria_gcm),
     TEST_DECL(test_wolfSSL_OCSP_id_get0_info),
     TEST_DECL(test_wolfSSL_i2d_OCSP_CERTID),
     TEST_DECL(test_wolfSSL_d2i_OCSP_CERTID),

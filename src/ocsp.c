@@ -549,8 +549,6 @@ int CheckOcspRequest(WOLFSSL_OCSP* ocsp, OcspRequest* ocspRequest,
     return ret;
 }
 
-#ifdef HAVE_OCSP
-
 #ifndef WOLFSSL_NO_OCSP_ISSUER_CHAIN_CHECK
 static int CheckOcspResponderChain(OcspEntry* single, DecodedCert *cert,
         void* vp) {
@@ -646,7 +644,6 @@ int CheckOcspResponder(OcspResponse *bs, DecodedCert *cert, void* vp)
     }
     return ret;
 }
-#endif /* HAVE_OCSP */
 
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
     defined(WOLFSSL_APACHE_HTTPD) || defined(HAVE_LIGHTY)
@@ -1137,7 +1134,7 @@ WOLFSSL_OCSP_ONEREQ* wolfSSL_OCSP_request_add0_id(OcspRequest *req,
         return NULL;
 
     if (req->cid != NULL)
-        wolfSSL_OCSP_CERTID_free(req->cid);
+        wolfSSL_OCSP_CERTID_free((WOLFSSL_OCSP_CERTID*)req->cid);
     /* Keep to free */
     req->cid = (void*)cid;
 

@@ -508,6 +508,9 @@ AC_SUBST([ENABLED_LINUXKM_BENCHMARKS])
 if test "$ENABLED_LINUXKM_DEFAULTS" = "yes"
 then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DH_CONST -DWOLFSSL_SP_MOD_WORD_RP -DWOLFSSL_SP_DIV_64 -DWOLFSSL_SP_DIV_WORD_HALF -DWOLFSSL_SMALL_STACK_STATIC -DWOLFSSL_TEST_SUBROUTINE=static"
+    if test "$ENABLED_LINUXKM_PIE" = "yes"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_OCSP_ISSUER_CHECK"
+    fi
     if test "$ENABLED_FIPS" = "no"; then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_OLD_PRIME_CHECK"
     fi
@@ -1726,7 +1729,8 @@ AC_ARG_ENABLE([error-queue-per-thread],
 
 if test "$ENABLED_ERRORQUEUEPERTHREAD" = "check"
 then
-    AS_IF([test "$thread_ls_on" = "no"],
+    AS_IF([test "$thread_ls_on" = "no" ||
+           test "$ENABLED_SINGLETHREADED" = "yes"],
         [ENABLED_ERRORQUEUEPERTHREAD=no],
         [ENABLED_ERRORQUEUEPERTHREAD=yes])
 fi
@@ -2519,6 +2523,31 @@ if test "x$withval" != "xno" ; then
 fi
 ]
 )
+
+AC_ARG_ENABLE([aria],
+    [AS_HELP_STRING([--enable-aria],[Enable wolfSSL support for ARIA (default: disabled)])],
+    [ ENABLED_ARIA=$enableval ],
+    [ ENABLED_ARIA=no ]
+    )
+if test "$ENABLED_ARIA" = "yes"
+then
+    ARIA_DIR=MagicCrypto
+    # Enable dependency
+    ENABLED_OPENSSLEXTRA="yes"
+    CFLAGS="$CFLAGS -I$ARIA_DIR/include"
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_ARIA -DOPENSSL_EXTRA"
+    AM_LDFLAGS="$AM_LDFLAGS -L$ARIA_DIR/lib -lMagicCrypto"
+    build_pwd="$(pwd)"
+    headers="mcapi_error.h mcapi_type.h mcapi.h"
+    for header in $headers
+    do
+        AC_CHECK_HEADER([$header], [], [
+                AC_MSG_ERROR([Error including $header. Please put the MagicCrypto library in $build_pwd.])
+            ], [
+            extern int dummy_int_to_make_compiler_happy;
+        ])
+    done
+fi
 
 AC_ARG_ENABLE([caam],
     [AS_HELP_STRING([--enable-caam],[Enable wolfSSL support for CAAM (default: disabled)])],
@@ -4365,6 +4394,14 @@ then
 fi
 
 
+# MD4
+AC_ARG_ENABLE([md4],
+    [AS_HELP_STRING([--enable-md4],[Enable MD4 (default: disabled)])],
+    [ ENABLED_MD4=$enableval ],
+    [ ENABLED_MD4=no ]
+    )
+
+
 # DES3
 AC_ARG_ENABLE([des3],
     [AS_HELP_STRING([--enable-des3],[Enable DES3 (default: disabled)])],
@@ -4675,7 +4712,7 @@ AS_CASE([$FIPS_VERSION],
         AS_IF([test "x$ENABLED_DES3" = "xno"],[ENABLED_DES3="yes"])
     ])
 
-AS_IF([test "x$ENABLED_FIPS" = "xyes" && test "x$thread_ls_on" = "xno"],
+AS_IF([test "x$ENABLED_FIPS" = "xyes" && test "x$thread_ls_on" = "xno" && test "$ENABLE_LINUXKM" = "no"],
     [AC_MSG_ERROR([FIPS requires Thread Local Storage])])
 
 
@@ -5813,6 +5850,9 @@ then
         ENABLED_ALPN="yes"
         AM_CFLAGS="$AM_CFLAGS -DHAVE_ALPN"
     fi
+
+    # cert gen requires alt names
+    ENABLED_ALTNAMES="yes"
 fi
 
 if test "$ENABLED_LIGHTY" = "yes"
@@ -6273,6 +6313,11 @@ AC_ARG_ENABLE([curl],
 # curl support requires all the features enabled within this conditional.
 if test "$ENABLED_CURL" = "yes"
 then
+    if test "$ENABLED_MD4" = "no"
+    then
+        ENABLED_MD4="yes"
+    fi
+
     if test "x$ENABLED_DES3" = "xno"
     then
         ENABLED_DES3="yes"
@@ -6486,14 +6531,6 @@ then
         AC_MSG_WARN([Enabling DSA with --enable-dsa is recommended for libest])
     fi
 fi
-
-# MD4
-AC_ARG_ENABLE([md4],
-    [AS_HELP_STRING([--enable-md4],[Enable MD4 (default: disabled)])],
-    [ ENABLED_MD4=$enableval ],
-    [ ENABLED_MD4=no ]
-    )
-
 
 if test "$ENABLED_MD4" = "no"
 then
@@ -7755,13 +7792,13 @@ then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HASH_FLAGS"
 fi
 
-# Support for enabling setting default DH parameters in
+# Support for enabling setting default DH parameters in TLS
 AC_ARG_ENABLE([defaultdhparams],
-    [AS_HELP_STRING([--enable-dhdefaultparams],[Enables option for default dh parameters (default: disabled)])],
+    [AS_HELP_STRING([--enable-defaultdhparams],[Enables option for default dh parameters (default: disabled)])],
     [ ENABLED_DHDEFAULTPARAMS=$enableval ],
-    [ ENABLED_DHDEFAULTPARAMS=no ]
+    [ ENABLED_DHDEFAULTPARAMS=yes ]
     )
-if test "$ENABLED_DHDEFAULTPARAMS" = "yes" || test "$ENABLED_QT" = "no"
+if test "x$ENABLED_DH" = "xyes" && test "x$ENABLED_DHDEFAULTPARAMS" = "xyes" && test "x$ENABLED_QT" != "xyes"
 then
     ENABLED_DHDEFAULTPARAMS=yes
     AM_CFLAGS="$AM_CFLAGS -DHAVE_DH_DEFAULT_PARAMS"
@@ -8845,7 +8882,7 @@ AM_CONDITIONAL([BUILD_DTLS_CID],[test "x$ENABLED_DTLS_CID" = "xyes"])
 AM_CONDITIONAL([BUILD_HPKE],[test "x$ENABLED_HPKE" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_DTLS],[test "x$ENABLED_DTLS" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_MAXQ10XX],[test "x$ENABLED_MAXQ10XX" = "xyes"])
-AM_CONDITIONAL([BUILD_VERSION_EXTENDED_INFO],[test "x$VERSION_EXTENDED_INFO" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
+AM_CONDITIONAL([BUILD_ARIA],[test "x$ENABLED_ARIA" = "xyes"])
 
 if test "$ENABLED_REPRODUCIBLE_BUILD" != "yes" &&
    (test "$ax_enable_debug" = "yes" ||
@@ -8922,14 +8959,10 @@ fi
 
 if test "$ENABLED_REPRODUCIBLE_BUILD" != "yes"
 then
-    ESCAPED_ARGS="$ac_configure_args"
-    ESCAPED_ARGS=$(echo "$ESCAPED_ARGS" | sed 's/\\/\\\\/g')
-    ESCAPED_ARGS=$(echo "$ESCAPED_ARGS" | sed 's/\"/\\\"/g')
-    ESCAPED_GLOBAL_ARGS="$CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS"
-    ESCAPED_GLOBAL_ARGS=$(echo "$ESCAPED_GLOBAL_ARGS" | sed 's/\\/\\\\/g')
-    ESCAPED_GLOBAL_ARGS=$(echo "$ESCAPED_GLOBAL_ARGS" | sed 's/\"/\\\"/g')
+    ESCAPED_ARGS=$(echo "$ac_configure_args" | sed 's/\\/\\\\/g;s/\"/\\\"/g')
+    ESCAPED_GLOBAL_CFLAGS=$(echo "$CPPFLAGS $AM_CPPFLAGS $CFLAGS $AM_CFLAGS" | sed 's/\\/\\\\/g;s/\"/\\\"/g')
     echo "#define LIBWOLFSSL_CONFIGURE_ARGS \"$ESCAPED_ARGS\"" > "${output_objdir}/.build_params" &&
-        echo "#define LIBWOLFSSL_GLOBAL_CFLAGS \"$ESCAPED_GLOBAL_ARGS\" LIBWOLFSSL_GLOBAL_EXTRA_CFLAGS" >> "${output_objdir}/.build_params" ||
+        echo "#define LIBWOLFSSL_GLOBAL_CFLAGS \"$ESCAPED_GLOBAL_CFLAGS\" LIBWOLFSSL_GLOBAL_EXTRA_CFLAGS" >> "${output_objdir}/.build_params" ||
         AC_MSG_ERROR([Couldn't create ${output_objdir}/.build_params.])
 else
     rm -f "${output_objdir}/.build_params"
@@ -9162,6 +9195,7 @@ echo "   * AES-CTR:                    $ENABLED_AESCTR"
 echo "   * AES-CFB:                    $ENABLED_AESCFB"
 echo "   * AES-OFB:                    $ENABLED_AESOFB"
 echo "   * AES-SIV:                    $ENABLED_AESSIV"
+echo "   * ARIA:                       $ENABLED_ARIA"
 echo "   * DES3:                       $ENABLED_DES3"
 echo "   * Camellia:                   $ENABLED_CAMELLIA"
 echo "   * SM4-ECB:                    $ENABLED_SM4_ECB"
