@@ -1919,55 +1919,68 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      *  x. Clear the interrupt flag, if you used it (we don't). */
 
     /* 1. Wait until hardware is ready. */
-    if ((ret = esp_mp_hw_wait_clean()) != MP_OKAY) {
-        ESP_LOGW(TAG, "esp_mp_hw_wait_clean failed!");
-        return ret;
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
     }
 
-    /* 2. Disable completion interrupt signal; we don't use.
-    **    0 => no interrupt; 1 => interrupt on completion. */
-    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0);
-
-    /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
-    OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-    if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "result exceeds max bit length");
-        return MP_VAL; /*  Error: value is not able to be used. */
-    }
-    WordsForOperand = bits2words(OperandBits);
-    DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1);
-
-    /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
-    DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
-
-    /* 5. Load X, Y, M, r' operands. */
-    esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, mph->Ys, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
-    esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,  &(mph->r_inv),
-                          mph->Rs, mph->hwWords_sz);
-
-    /* 6. Start operation and wait until it completes. */
-    process_start(RSA_MODEXP_START_REG);
-    ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
-    if (MP_OKAY != ret) {
-        ESP_LOGW(TAG, "wait_until_done failed");
-        return ret;
+    if (ret == MP_OKAY) {
+        OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
+        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+            ESP_LOGW(TAG, "result exceeds max bit length");
+            ret = MP_VAL; /*  Error: value is not able to be used. */
+        }
+        else {
+            WordsForOperand = bits2words(OperandBits);
+        }
     }
 
-    /* 7. read the result form MEM_Z              */
-    esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+    if (ret == MP_OKAY) {
+        /* 2. Disable completion interrupt signal; we don't use.
+        **    0 => no interrupt; 1 => interrupt on completion. */
+        DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0);
+
+        /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
+        DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1);
+
+        /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
+        DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
+
+        /* 5. Load X, Y, M, r' operands. */
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                              X,
+                              mph->Xs,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE,
+                              Y,
+                              mph->Ys,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE,
+                              M,
+                              mph->Ms,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                              &(mph->r_inv),
+                              mph->Rs,
+                              mph->hwWords_sz);
+
+        /* 6. Start operation and wait until it completes. */
+        process_start(RSA_MODEXP_START_REG);
+        ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
+    }
+
+    if (MP_OKAY == ret) {
+        /* 7. read the result form MEM_Z              */
+        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+    }
 
     /* 8. clear and release HW                    */
     esp_mp_hw_unlock();
-
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
     /* unknown or unsupported targets fall back to SW */
     ret = MP_HW_FALLBACK;
 #endif
-
 
 #ifdef DEBUG_WOLFSSL
     if (esp_mp_exptmod_depth_counter != 1) {
