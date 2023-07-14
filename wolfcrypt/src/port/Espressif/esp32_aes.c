@@ -160,6 +160,7 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
 
 #if CONFIG_IDF_TARGET_ESP32S3
     if (mode_ == 1 || mode_ == 5 || mode_ == 7) {
+        /* this should have been detected in aes.c and fall back to SW */
         ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
         ret = BAD_FUNC_ARG;
     }
@@ -168,7 +169,9 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
     if (ret == 0) {
         /* update key */
         for (i = 0; i < (ctx->keylen) / sizeof(word32); i++) {
-            DPORT_REG_WRITE(AES_KEY_BASE + (i * 4), *(((word32*)ctx->key) + i));
+            DPORT_REG_WRITE((volatile uint32_t*)(AES_KEY_BASE + (i * 4)),
+                            *(((word32*)ctx->key) + i)
+                           );
         }
 
         if (ret == 0) {
