@@ -142,10 +142,6 @@
 
 #define WOLFSSL_SMALL_STACK
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-    /* AES192 is not supported on the ESP32-S3 HW at this time */
-    #define NO_AES_192
-#endif
 
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
@@ -193,6 +189,11 @@
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
 
+#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
+    /* AES192 is not supported on the ESP32-S3 HW at this time */
+   // #define NO_AES_192
+#endif
+
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
@@ -208,6 +209,10 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+//    #define NO_ESP32_CRYPT
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+//    #define NO_WOLFSSL_ESP32_CRYPT_AES
+//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH

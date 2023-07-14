@@ -272,6 +272,7 @@ extern "C"
     } ESP32_AESPROCESS;
 
     struct Aes; /* see aes.h */
+    int wc_esp32AesSupportedKeyLen(struct Aes* aes);
     int wc_esp32AesCbcEncrypt(struct Aes* aes,
                               byte* out,
                               const byte* in,

@@ -1140,6 +1140,20 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("hw_math_test test passed!\n");
 #endif
 
+#ifndef NO_AES
+    if ( (ret = aes_test()) != 0)
+        TEST_FAIL("AES      test failed!\n", ret);
+    else
+        TEST_PASS("AES      test passed!\n");
+    #endif
+
+#ifdef WOLFSSL_AES_192
+    if ( (ret = aes192_test()) != 0)
+        TEST_FAIL("AES192   test failed!\n", ret);
+    else
+        TEST_PASS("AES192   test passed!\n");
+#endif
+
 /* relocated only during development */
 #if defined(WOLFSSL_PUBLIC_MP) && \
     (defined(WOLFSSL_SP_MATH_ALL) || defined(USE_FAST_MATH))
@@ -13202,6 +13216,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes192_test(void)
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (XMEMCMP(plain, msg, (int) sizeof(plain))) {
+        ESP_LOGE(TAG, "oops");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif
