@@ -6739,9 +6739,11 @@ static int ProcessBufferTryDecodeEd25519(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 
                 *keyFormat = ED25519k;
                 if (ssl != NULL) {
+#if !defined(WOLFSSL_NO_CLIENT_AUTH) && !defined(NO_ED25519_CLIENT_AUTH)
                     /* ED25519 requires caching enabled for tracking message
                      * hash used in EdDSA_Update for signing */
                     ssl->options.cacheMessages = 1;
+#endif
                     if (ssl->options.side == WOLFSSL_SERVER_END) {
                         *resetSuites = 1;
                     }
@@ -10296,7 +10298,11 @@ int wolfSSL_CTX_SetTmpEC_DHE_Sz(WOLFSSL_CTX* ctx, word16 sz)
     }
 
     /* check size */
-    if (sz < ECC_MINSIZE || sz > ECC_MAXSIZE)
+#if ECC_MIN_KEY_SZ > 0
+    if (sz < ECC_MINSIZE)
+        return BAD_FUNC_ARG;
+#endif
+    if (sz > ECC_MAXSIZE)
         return BAD_FUNC_ARG;
 
     ctx->eccTempKeySz = sz;
@@ -10312,7 +10318,11 @@ int wolfSSL_SetTmpEC_DHE_Sz(WOLFSSL* ssl, word16 sz)
         return BAD_FUNC_ARG;
 
     /* check size */
-    if (sz < ECC_MINSIZE || sz > ECC_MAXSIZE)
+#if ECC_MIN_KEY_SZ > 0
+    if (sz < ECC_MINSIZE)
+        return BAD_FUNC_ARG;
+#endif
+    if (sz > ECC_MAXSIZE)
         return BAD_FUNC_ARG;
 
     ssl->eccTempKeySz = sz;
