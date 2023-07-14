@@ -2447,8 +2447,8 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   fp_int   M[(1 << 6) + 1];
 #endif
 
-  x = fp_count_bits(X);
-
+  /* find window size */
+  x = fp_count_bits (X);
   if (x <= 21) {
     winsize = 1;
   } else if (x <= 36) {
@@ -3098,16 +3098,11 @@ static int _fp_exptmod_base_2(fp_int * X, int digits, fp_int * P,
 #undef WINSIZE
 #endif
 
-
+/* Y = (G * X) mod P */
 int fp_exptmod(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 {
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
     int retHW = FP_OKAY;
-#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
-
-#if defined(WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI) && \
-   !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
-   int x = fp_count_bits (X);
 #endif
 
    /* handle modulus of zero and prevent overflows */
