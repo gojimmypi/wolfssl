@@ -721,11 +721,11 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         int ret = 0;
         /* Thread mutex protection handled in esp_aes_hw_InUse */
     #ifdef NEED_AES_HW_FALLBACK
-        if (aes->keylen == 24) {
-            ret = wc_AesDecrypt_SW(aes, inBlock, outBlock);
+        if (wc_esp32AesSupportedKeyLen(aes)) {
+            ret = wc_esp32AesDecrypt(aes, inBlock, outBlock);
         }
         else {
-            ret = wc_esp32AesDecrypt(aes, inBlock, outBlock);
+            ret = wc_AesDecrypt_SW(aes, inBlock, outBlock);
         }
     #else
         /* if we don't need fallback, always use HW */
@@ -2928,10 +2928,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             return BAD_FUNC_ARG;
         }
 
-        if (keylen == 24) {
-            return wc_AesSetKey_SW(aes, userKey, keylen, iv, dir);
-        }
-
 
     #if !defined(WOLFSSL_AES_128)
         if (keylen == 16) {
@@ -2954,11 +2950,16 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         aes->keylen = keylen;
         aes->rounds = keylen/4 + 6;
 
+    #ifdef NEED_AES_HW_FALLBACK
+        if (!wc_esp32AesSupportedKeyLen(aes)) {
+            return wc_AesSetKey_SW(aes, userKey, keylen, iv, dir);
+        }
+     #endif
         XMEMCPY(aes->key, userKey, keylen);
         #if defined(WOLFSSL_AES_COUNTER)
             aes->left = 0;
         #endif
-        return wc_AesSetIV(aes, iv);
+        return wc_AesSetIV(aes, iv); /* really? TODO */
     }
 
     int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
@@ -3457,7 +3458,8 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     /* we'll need both HW and SW, so rename default SW function */
     int wc_AesSetKey_SW(Aes* aes, const byte* userKey, word32 keylen,
         const byte* iv, int dir)
-#else    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
+#else
+    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
         const byte* iv, int dir)
 #endif
     {
@@ -4244,16 +4246,17 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         #endif
     #endif
 
-
+    /*  ESP32 implementation of wc_AesCbcEncrypt */
     int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     {
         int ret = 0;
     #ifdef NEED_AESCBC_HW_FALLBACK
-        if (aes->keylen == 24) {
-            ret = wc_AesCbcEncrypt_SW(aes, out, in, sz);
+        if (wc_esp32AesSupportedKeyLen(aes)) {
+            ret = wc_esp32AesCbcEncrypt(aes, out, in, sz);
         }
         else {
-            ret = wc_esp32AesCbcEncrypt(aes, out, in, sz);
+            /* fall back to default SW implementation */
+            ret = wc_AesCbcEncrypt_SW(aes, out, in, sz);
         }
     #else
         /* if we don't need fallback, always use HW */
@@ -4273,7 +4276,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         }
     #else
         /* if we don't need fallback, always use HW */
-        ret = wc_AesCbcDecrypt_SW(aes, out, in, sz);
+        ret = wc_esp32AesCbcDecrypt(aes, out, in, sz);
     #endif
         return ret;
     }
