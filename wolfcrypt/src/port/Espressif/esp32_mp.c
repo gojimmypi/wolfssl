@@ -543,15 +543,15 @@ static int esp_memblock_to_mpint(const uint32_t mem_address,
     ESP_EM__READ_NON_FIFO_REG;
     for (volatile uint32_t i = 0;  i < numwords; ++i) {
         ESP_EM__3_16;
-        mp->dp[i] = DPORT_SEQUENCE_REG_READ((uint32_t*)(mem_address + i * 4));
+        mp->dp[i] = DPORT_SEQUENCE_REG_READ((uint32_t)(mem_address + i * 4));
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
     mp->used = numwords;
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    ret = XMEMCMP((const void *)mem_address, /* HW reg memory */
-                  (const void *)&mp->dp,     /* our dp value  */
+    ret = XMEMCMP((const uint32_t *)mem_address, /* HW reg memory */
+                  (const uint32_t *)&mp->dp,     /* our dp value  */
                   numwords * sizeof(word32));
 
     if (ret != 0 ) {
@@ -595,11 +595,10 @@ static int esp_zero_memblock(u_int32_t mem_address, int wordSz)
     DPORT_INTERRUPT_RESTORE();
     return ret;
 }
-#endif
-#endif
+#endif /* CONFIG_IDF_TARGET_ESP32 */
+#endif /* not NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
-/* write MATH_INT_T mp value (dp[]) into memory block
- */
+/* write MATH_INT_T mp value (dp[]) into memory block */
 static int esp_mpint_to_memblock(u_int32_t mem_address,
                                  const MATH_INT_T* mp,
                                  const word32 bits,
@@ -679,6 +678,7 @@ static word32 bits2words(word32 bits)
     return ((bits + (d - 1)) / d);
 }
 
+/* exptmod and mulmod helpers as needed */
 #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
       ||  \
     !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
@@ -791,7 +791,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     int ret = MP_OKAY;
     int exp;
     XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
-    mph->Xs = mp_count_bits(X);
+    mph->Xs = mp_count_bits(X); /* X's = the number of bits needed */
 
 #if ESP_PROHIBIT_SMALL_X
     /* optionally prohibit small X.
@@ -808,9 +808,9 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
     /* prohibit small Y */
     if (ret == MP_OKAY) {
-        mph->Ys = mp_count_bits(Y); /* init Ys to pass to montgomery init */
+        mph->Ys = mp_count_bits(Y); /* init Y's to pass to montgomery init */
 
-        if ((Y->used == 1) && (Y->dp[1] < (1 << 8))) {
+        if (mph->Ys <= 8) { /* hard floor 8 bits, problematic in some ESP32 */
     #ifdef WOLFSSL_HW_METRICS
             esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
     #endif
@@ -1060,8 +1060,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* Y (left-extend)
      * Accelerator supports large-number multiplication with only
      * four operand lengths of N ∈ {512, 1024, 1536, 2048} */
-    int left_pad_offset = maxWords_sz << 2; /* e.g. 32 words * 4 bytes = 128 bytes */
-
+    int left_pad_offset = maxWords_sz << 2;
     if (left_pad_offset <= 512 >> 3) {
         left_pad_offset = 512 >> 3; /* 64 bytes (16 words) */
     }
@@ -1097,9 +1096,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     if (ret == MP_OKAY) {
         /* step.1  (2*N/512) => N/256. 512 bits => 16 words */
         /* Write 2*N/512 - 1 + 8  */
-        // DPORT_REG_WRITE(RSA_MULT_MODE_REG, (hwWords_sz >> 3) - 1 + 8);
 
-        DPORT_REG_WRITE(RSA_MULT_MODE_REG, (2 * left_pad_offset * 8 / 512) - 1 + 8);
+        DPORT_REG_WRITE(RSA_MULT_MODE_REG,
+                        (2 * left_pad_offset * 8 / 512) - 1 + 8);
 
         /* step.2 write X into memory */
         esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
@@ -1108,7 +1107,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                               hwWords_sz);
 
         /* write zeros from RSA_MEM_Z_BLOCK_BASE to left_pad_offset - 1 */
-        esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE, (left_pad_offset - 1) / sizeof(int));
+        esp_zero_memblock(RSA_MEM_Z_BLOCK_BASE,
+                          (left_pad_offset - 1) / sizeof(int));
 
         /* write the left-padded Y value into Z */
         esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE + (left_pad_offset),
@@ -1131,7 +1131,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
         /* step.6 read the result form MEM_Z              */
         if (ret == MP_OKAY) {
-            esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(Zs));
+            esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, resultWords_sz);
         }
     } /* end of processing */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1219,7 +1219,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* step.7 clear and release HW                    */
     esp_mp_hw_unlock();
 
-
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (ret == MP_OKAY) {
         if (!mp_iszero(Z) && res_sign) {
@@ -1237,7 +1236,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
     if (fp_cmp(X, X2) != 0) {
         /* this may be interesting when operands change (e.g. z=x*z mode m) */
-        // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
+        /* ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!"); */
     }
     if (fp_cmp(Y, Y2) != 0) {
         /* this may be interesting when operands change (e.g. z=y*z mode m) */
@@ -1254,7 +1253,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGI(TAG, "z.used        = %d", Z->used);
         ESP_LOGI(TAG, "hwWords_sz    = %d", hwWords_sz);
         ESP_LOGI(TAG, "maxWords_sz   = %d", maxWords_sz);
-//        ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
+#if defined(CONFIG_IDF_TARGET_ESP32)
+        ESP_LOGI(TAG, "left_pad_offset = %d", left_pad_offset);
+#endif
         ESP_LOGI(TAG, "hwWords_sz<<2   = %d", hwWords_sz << 2);
         esp_show_mp("X", X2);  /* show the copy in X2, as X may have been clobbered */
         esp_show_mp("Y", Y2);  /* show the copy in Y2, as Y may have been clobbered */
@@ -1502,17 +1503,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
          * indeed we see a failure, but we can predict when modules is odd
          * or when mp != mp2[0] */
         DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
-        asm volatile("memw"); /* TODO */
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
+        ESP_EM__3_16;
 
         /* step.4 start process                           */
         process_start(RSA_MULT_START_REG);
-        asm volatile("memw"); /* TODO */
 
         /* step.5,6 wait until done                       */
         wait_until_done(RSA_INTERRUPT_REG);
@@ -1883,7 +1877,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     #endif
     }
 
-
     if (ret == MP_OKAY) {
         /* step.1                                         */
         ESP_LOGV(TAG,
@@ -1894,9 +1887,17 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
         DPORT_REG_WRITE(RSA_MODEXP_MODE_REG, (mph->hwWords_sz >> 4) - 1);
         /* step.2 write G, X, P, r_inv and M' into memory */
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE, Y, mph->Ys, mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                              X,
+                              mph->Xs,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE,
+                              Y, mph->Ys,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE,
+                              M,
+                              mph->Ms,
+                              mph->hwWords_sz);
         esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
                               &(mph->r_inv),
                               mph->Rs,
@@ -1905,17 +1906,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* step.3 write M' into memory                    */
         ESP_LOGV(TAG, "M' = %d", mph->mp);
         DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
-        asm volatile("memw"); /* TODO */
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
+        ESP_EM__3_16;
 
         /* step.4 start process                           */
         process_start(RSA_MODEXP_START_REG); /* was RSA_START_MODEXP_REG;
-                                              * RSA_MODEXP_START_REG as in docs? */
+                                             * RSA_MODEXP_START_REG in docs? */
 
         /* step.5 wait until done                         */
         wait_until_done(RSA_INTERRUPT_REG);
@@ -1923,7 +1918,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
     }
 
-    /* step.7 clear and release HW                    */
+    /* step.7 clear and release HW                        */
     esp_mp_hw_unlock();
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -2032,7 +2027,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         * !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 #endif /* !NO_RSA || HAVE_ECC */
-
 
 #ifdef WOLFSSL_HW_METRICS
 int esp_hw_show_mp_metrics(void)
