@@ -7133,9 +7133,6 @@ int wc_CreatePKCS8Key(byte* out, word32* outSz, byte* key, word32 keySz,
     }
 
     FREE_ASNSETDATA(dataASN, NULL);
-
-    WOLFSSL_LEAVE("wc_CreatePKCS8Key", ret);
-
     return ret;
 #endif /* WOLFSSL_ASN_TEMPLATE */
 }
@@ -15513,20 +15510,8 @@ word32 wc_EncodeSignature(byte* out, const byte* digest, word32 digSz,
     word32 encDigSz, algoSz, seqSz;
 
     encDigSz = SetDigest(digest, digSz, digArray);
-    if (encDigSz <= 0) {
-        printf("SetDigest error");
-        return 0;
-    }
     algoSz   = SetAlgoID(hashOID, algoArray, oidHashType, 0);
-    if (algoSz <= 0) {
-        printf("SetAlgoID error");
-        return 0;
-    }
     seqSz    = SetSequence(encDigSz + algoSz, seqArray);
-    if (seqSz <= 0) {
-        printf("SetSequence error");
-        return 0;
-    }
 
     XMEMCPY(out, seqArray, seqSz);
     XMEMCPY(out + seqSz, algoArray, algoSz);
@@ -30113,7 +30098,7 @@ static int SignCert(int requestSz, int sType, byte* buf, word32 buffSz,
     }
 
     if (certSignCtx->sig == NULL) {
-         certSignCtx->sig = (byte*)XMALLOC(MAX_ENCODED_SIG_SZ, heap,
+        certSignCtx->sig = (byte*)XMALLOC(MAX_ENCODED_SIG_SZ, heap,
             DYNAMIC_TYPE_TMP_BUFFER);
         if (certSignCtx->sig == NULL)
             return MEMORY_E;
