@@ -97,7 +97,7 @@ struct esp_mp_helper
     word32 hwWords_sz;
     mp_digit mp; /* result of calculated montgomery M' helper */
 #ifdef DEBUG_WOLFSSL
-    mp_digit mp2; /* optional compare to alternate mongomery calc */
+    mp_digit mp2; /* optional compare to alternate montgomery calc */
 #endif
 };
 
@@ -431,8 +431,12 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
 ** See https://github.com/wolfSSL/wolfssl/pull/6565 */
     uint16_t dp_length = 0; (void) dp_length;
 #ifdef USE_FAST_MATH
+    #undef MP_SIZE
+    #define MP_SIZE FP_SIZE
     dp_length = FP_SIZE;
 #else
+    #undef MP_SIZE
+    #define MP_SIZE 128
     dp_length = SP_INT_DIGITS;
 #endif
 /* TODO end */
@@ -1234,15 +1238,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif
 
 #ifdef DEBUG_WOLFSSL
-    if (fp_cmp(X, X2) != 0) {
+    if (mp_cmp(X, X2) != 0) {
         /* this may be interesting when operands change (e.g. z=x*z mode m) */
         /* ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!"); */
     }
-    if (fp_cmp(Y, Y2) != 0) {
+    if (mp_cmp(Y, Y2) != 0) {
         /* this may be interesting when operands change (e.g. z=y*z mode m) */
         /* ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!"); */
     }
-    if (fp_cmp(Z, Z2) != 0) {
+    if (mp_cmp(Z, Z2) != 0) {
         int found_z_used = Z->used;
 
         ESP_LOGE(TAG, "mp_mul Z vs Z2 mismatch!");
@@ -1300,13 +1304,14 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     struct esp_mp_helper mph[1]; /* we'll save some values in this mp helper */
-    MATH_INT_T tmpZ[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+   MATH_INT_T tmpZ[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T M2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1] = {0}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T X2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Y2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T M2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T Z2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T PEEK[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+#    (void) PEEK;
 #endif
 
     int ret = MP_OKAY;
@@ -1658,14 +1663,14 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ESP_LOGI(TAG, "HW Fallback");
     }
     else {
-        if (fp_cmp(X, X2) != 0) {
-            // ESP_LOGE(TAG, "mp_mul X vs X2 mismatch!");
+        if (mp_cmp(X, X2) != 0) {
+            ESP_LOGV(TAG, "mp_mul X vs X2 mismatch!");
         }
-        if (fp_cmp(Y, Y2) != 0) {
-            // ESP_LOGE(TAG, "mp_mul Y vs Y2 mismatch!");
+        if (mp_cmp(Y, Y2) != 0) {
+            ESP_LOGV(TAG, "mp_mul Y vs Y2 mismatch!");
         }
 
-        if (fp_cmp(Z, Z2) != 0) {
+        if (mp_cmp(Z, Z2) != 0) {
             ESP_LOGE(TAG, "esp_mp_mulmod Z vs Z2 mismatch!");
 
             esp_mp_mulmod_error_ct++;
