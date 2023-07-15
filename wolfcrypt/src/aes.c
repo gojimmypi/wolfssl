@@ -685,6 +685,8 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             #define NEED_AES_TABLES
             #define NEED_AES_HW_FALLBACK
             #define NEED_SOFTWARE_AES_SETKEY
+            #undef  WOLFSSL_AES_DIRECT
+            #define WOLFSSL_AES_DIRECT
         int wc_AesSetKey_SW(Aes* aes, const byte* userKey, word32 keylen,
             const byte* iv, int dir);
         static WARN_UNUSED_RESULT int wc_AesEncrypt_SW(
