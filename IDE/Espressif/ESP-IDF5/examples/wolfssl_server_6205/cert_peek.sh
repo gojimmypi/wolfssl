@@ -18,7 +18,7 @@ fi
 if [ "$3" == "ESP32-S3" ] || [ "$3" == "ESP32" ] || [ "$3" == "ESP32-C3" ]; then
     echo Espressif chip: $3
 else
-    echo "No a valid Espressif chip ESP32/ESP32-S3/ESP32-C3 value: $3"
+    echo "Not a valid Espressif chip ESP32/ESP32-S3/ESP32-C3 value: $3"
     echo "example:  ./cert_peek.sh HW 2048 ESP32"
     exit 1
 fi
