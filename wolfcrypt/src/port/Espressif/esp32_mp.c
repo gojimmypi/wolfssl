@@ -1311,7 +1311,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     MATH_INT_T M2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T Z2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T PEEK[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
-#    (void) PEEK;
+    (void) PEEK;
 #endif
 
     int ret = MP_OKAY;
