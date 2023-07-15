@@ -54,6 +54,10 @@
     #include <wolfssl/wolfcrypt/cryptocb.h>
 #endif
 
+#ifdef WOLFSSL_IMXRT1170_CAAM
+#include <wolfssl/wolfcrypt/port/caam/wolfcaam_fsl_nxp.h>
+#endif
+
 #undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
 #if defined(WOLFSSL_ESP32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
@@ -1006,7 +1010,6 @@ int wc_ShaGetHash(wc_Sha* sha, byte* hash)
 
     return ret;
 }
-
 
 int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 {
