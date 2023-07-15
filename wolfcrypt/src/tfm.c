@@ -1367,7 +1367,7 @@ int fp_invmod(fp_int *a, fp_int *b, fp_int *c)
   }
 
   /* [modified] sanity check on "a" */
-  if (fp_iszero(a) == FP_YES) {
+  if (fp_iszero(a) == FP_YES) { /* TODO a.used is checked, not actual values :/ */
     return FP_VAL; /* can not divide by 0 here */
   }
 
