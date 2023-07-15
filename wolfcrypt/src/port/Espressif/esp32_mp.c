@@ -63,8 +63,8 @@
     #include <freertos/semphr.h>
 #endif
 
-#define ESP_HW_RSAMAX_BIT           4096
-#define ESP_HW_MULTI_RSAMAX_BITS    2048
+#define ESP_HW_RSAMAX_BIT           8192
+#define ESP_HW_MULTI_RSAMAX_BITS    4096
 #define ESP_HW_RSAMIN_BIT           512
 #define BYTE_TO_WORDS(s)            (((s+3)>>2))         /* (s+(4-1))/ 4    */
 #define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
@@ -1019,6 +1019,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Xs = mp_count_bits(X);
     Ys = mp_count_bits(Y);
     Zs = Xs + Ys;
+
+    /* RSA Accelerator only supports Large Number Multiplication
+     * with operand length N = 32 × x,
+     * where x ∈ {1, 2, 3, . . . , 64} */
+    if (Xs > 64 || Ys > 64) {
+        return MP_HW_FALLBACK;
+    }
 
     if (Zs <= sizeof(mp_digit)*8) {
         Z->dp[0] = X->dp[0] * Y->dp[0];

@@ -123,8 +123,8 @@
 #endif
 
 /* debug options */
-#define DEBUG_WOLFSSL
-#define WOLFSSL_ESP32_CRYPT_DEBUG
+// #define DEBUG_WOLFSSL
+// #define WOLFSSL_ESP32_CRYPT_DEBUG
 
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -143,7 +143,7 @@
 //#define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x249F00
+#define ESP_RSA_TIMEOUT_CNT    0xF49F00
 
 // #define HASH_SIZE_LIMIT /* for test.c */
 
@@ -172,15 +172,16 @@
 #define WOLFSSL_CERT_EXT
 #define WOLFSSL_SYS_CA_CERTS
 #define WOLFSSL_ASN_TEMPLATE
+#define FP_MAX_BITS 8192
 
-// #define WOLFSSL_RSA_KEY_SIZE 512  /* HW Success */
-//#define WOLFSSL_RSA_KEY_SIZE 1024 /* HW Success */
-//#define WOLFSSL_RSA_KEY_SIZE 1536 /* HW Success */
-#define WOLFSSL_RSA_KEY_SIZE 2048
-//#define WOLFSSL_RSA_KEY_SIZE 2560 /* wc_MakeRsaKey error -173, adjust FP_MAX_BITS */
+//#define WOLFSSL_RSA_KEY_SIZE 512  /* HW Success */
+// #define WOLFSSL_RSA_KEY_SIZE 1024 /* HW Success */
+// #define WOLFSSL_RSA_KEY_SIZE 1536 /* HW Success */
+//#define WOLFSSL_RSA_KEY_SIZE 2048
+// #define WOLFSSL_RSA_KEY_SIZE 2560 /* wc_MakeRsaKey error -173, adjust FP_MAX_BITS */
 //#define WOLFSSL_RSA_KEY_SIZE 3072
 //#define WOLFSSL_RSA_KEY_SIZE 3584
-//#define WOLFSSL_RSA_KEY_SIZE 4096
+#define WOLFSSL_RSA_KEY_SIZE 4096
 
 
 
