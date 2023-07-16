@@ -3478,7 +3478,7 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     #if defined(WOLFSSL_AES_DIRECT) || defined(WOLFSSL_AES_COUNTER)
         /* AES-CTR and AES-DIRECT need to use this for key setup */
         /* This function allows key sizes that are not 128/192/256 bits */
-        #if  1
+        #if defined(WOLFSSL_ESP32_CRYPT) && defined(NEED_AESCBC_HW_FALLBACK)
         int wc_AesSetKeyDirect_SW(Aes* aes, const byte* userKey, word32 keylen,
                             const byte* iv, int dir)
         #else
