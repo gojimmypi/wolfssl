@@ -1094,7 +1094,8 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 #ifdef NEED_AES_TABLES
 
-#ifdef NEED_AES_HW_FALLBACK
+#if !defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) \
+   || (defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(NEED_AES_HW_FALLBACK))
 static const FLASH_QUALIFIER word32 rcon[] = {
     0x01000000, 0x02000000, 0x04000000, 0x08000000,
     0x10000000, 0x20000000, 0x40000000, 0x80000000,
@@ -3478,7 +3479,7 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     #if defined(WOLFSSL_AES_DIRECT) || defined(WOLFSSL_AES_COUNTER)
         /* AES-CTR and AES-DIRECT need to use this for key setup */
         /* This function allows key sizes that are not 128/192/256 bits */
-        #if defined(WOLFSSL_ESP32_CRYPT) && defined(NEED_AESCBC_HW_FALLBACK)
+        #if defined(WOLFSSL_ESP32_CRYPT) && defined(NEED_AES_HW_FALLBACK)
         int wc_AesSetKeyDirect_SW(Aes* aes, const byte* userKey, word32 keylen,
                             const byte* iv, int dir)
         #else
