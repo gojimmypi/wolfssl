@@ -23,7 +23,6 @@ EXTRA_DIST += src/ssl_asn1.c
 EXTRA_DIST += src/ssl_bn.c
 EXTRA_DIST += src/ssl_certman.c
 EXTRA_DIST += src/ssl_misc.c
-EXTRA_DIST += src/version.c
 EXTRA_DIST += src/x509.c
 EXTRA_DIST += src/x509_str.c
 
@@ -794,10 +793,6 @@ endif
 
 if BUILD_DTLS
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/dtls.c
-endif
-
-if BUILD_VERSION_EXTENDED_INFO
-src_libwolfssl@LIBSUFFIX@_la_SOURCES += src/version.c
 endif
 
 endif !BUILD_CRYPTONLY
