@@ -90,7 +90,7 @@
 #define CURVE25519_SMALL
 #define HAVE_ED25519
 
-#define OPENSSL_EXTRA
+// #define OPENSSL_EXTRA
 
 /* when you want to use pkcs7 */
 #define HAVE_PKCS7
@@ -125,6 +125,7 @@
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            9
 #endif
+#define RSA_LOW_MEM
 
 /* debug options */
 /* #define DEBUG_WOLFSSL */
@@ -172,7 +173,7 @@
 /* Shared configuration in same directory */
 /* #include "Wolf_Features.h" */
 
-#define WOLFSSL_KEY_GEN
+// #define WOLFSSL_KEY_GEN
 #define WOLFSSL_CERT_REQ
 #define WOLFSSL_CERT_GEN
 #define WOLFSSL_CERT_EXT
