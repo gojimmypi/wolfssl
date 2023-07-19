@@ -3342,6 +3342,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_test_8word(int a_sign, int b_sign)
     return ret;
 }
 
+#ifndef MP_ZPOS
+    #define MP_ZPOS 0
+#endif
+
+#ifndef MP_NEG
+    #define MP_NEG 1
+#endif
+
 /* test mp_mul results (with sign as appropriate) */
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_mul_basic_test()
 {
