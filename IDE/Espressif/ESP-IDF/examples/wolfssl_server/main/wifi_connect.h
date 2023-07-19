@@ -23,9 +23,9 @@
 
 #include "esp_idf_version.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
+//#include "esp_wifi.h"
 #if ESP_IDF_VERSION_MAJOR >= 4
-#include "esp_event.h"
+//#include "esp_event.h"
 #else
 #include "esp_event_loop.h"
 #endif
@@ -39,6 +39,42 @@
 #define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
 #define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
 
-static void tls_smp_server_init();
+/**
+ ******************************************************************************
+ ******************************************************************************
+ ** USER APPLICATION SETTINGS BEGIN
+ ******************************************************************************
+ ******************************************************************************
+ **/
 
+/* when using a private config with plain text passwords, not my_private_config.h should be excluded from git updates */
+#define  USE_MY_PRIVATE_CONFIG
+
+#ifdef  USE_MY_PRIVATE_CONFIG
+    #include "/workspace/my_private_config.h"
+#else
+    /*
+    ** The examples use WiFi configuration that you can set via project
+    ** configuration menu
+    **
+    ** If you'd rather not, just change the below entries to strings with
+    ** the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
+    */
+    #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
+    #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+#endif
+
+/* ESP lwip */
+#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
+
+#define DEFAULT_PORT                     11111
+
+#define TLS_SMP_CLIENT_TASK_NAME         "tls_client_example"
+#define TLS_SMP_CLIENT_TASK_WORDS        10240
+#define TLS_SMP_CLIENT_TASK_PRIORITY     8
+
+#define TLS_SMP_TARGET_HOST              "192.168.25.114"
+
+int tls_smp_server_init();
+int wifi_init_sta(void);
 #endif

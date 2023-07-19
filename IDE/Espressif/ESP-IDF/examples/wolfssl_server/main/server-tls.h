@@ -21,6 +21,6 @@
 #ifndef _APP_MAIN_
 #define _APP_MAIN_
 
-static void tls_smp_server_task();
+void tls_smp_server_task();
 
 #endif /* _APP_MAIN_ */

@@ -34,9 +34,12 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 #include <wolfssl/certs_test.h>
+#include "time_helper.h"
 
 /* ESP specific */
 #include "wifi_connect.h"
+
+#include "nvs_flash.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -210,7 +213,7 @@ void tls_smp_server_task()
     atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
     #endif
 #endif
-
+    ESP_LOGI(TAG, "accept clients...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
          WOLFSSL_MSG("Waiting for a connection...");
@@ -269,6 +272,20 @@ void tls_smp_server_task()
 /* for FreeRTOS */
 void app_main(void)
 {
+    //Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+    wifi_init_sta();
+    set_time();
     tls_smp_server_init();
-    tls_smp_server_task();
+    while (1) {
+        tls_smp_server_task();
+        ESP_LOGI(TAG, "Loop...");
+    }
 }
