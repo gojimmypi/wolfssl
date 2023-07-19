@@ -40,10 +40,14 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfcrypt/benchmark/benchmark.h>
 
+/* set to 0 for one benchmark,
+** set to 1 for continous benchmark loop */
+#define BENCHMARK_LOOP 1
+
 /* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
 #ifdef CONFIG_BENCH_ARGV
-#define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
-#define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
+    #define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
+    #define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
 #endif
 
 /*
@@ -225,12 +229,16 @@ void app_main(void)
     ** note it is still always called in wolf_benchmark_task.
     */
     stack_start = uxTaskGetStackHighWaterMark(NULL);
-    while(1)
-    {
+
+    do {
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
         wolf_benchmark_task();
         ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
-    }
+
+#ifdef WOLFSSL_HW_METRICS
+        esp_hw_show_mp_metrics();
+#endif
+    } while (BENCHMARK_LOOP);
     /* wolfCrypt_Cleanup should always be called at completion,
     ** and is called in wolf_benchmark_task().
     */
