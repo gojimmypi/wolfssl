@@ -902,10 +902,10 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     ByteReverseWords(sha->digest, sha->digest, WC_SHA_DIGEST_SIZE);
 #endif
 
-    XMEMCPY(hash, (byte *)&sha->digest[0], WC_SHA_DIGEST_SIZE);
-
-    ret = InitSha(sha); /* reset state */
-
+    /* we'll always reset state upon exit and return the error code from above,
+     * which may cause fall back to SW if HW is busy. we do not return result
+     * of initSha here */
+    (void)InitSha(sha); /* reset state */
     return ret;
 }
 
