@@ -316,32 +316,39 @@ static int ShowExtendedSystemInfo_platform()
 */
 
 int ShowExtendedSystemInfo(void)
-    {
-        WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
+{
+    WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
 
 #if defined(LIBWOLFSSL_VERSION_STRING)
-        WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_STRING = %s",
-                               LIBWOLFSSL_VERSION_STRING);
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_STRING = %s",
+                            LIBWOLFSSL_VERSION_STRING);
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_HEX)
-        WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_HEX = %x",
-                               LIBWOLFSSL_VERSION_HEX);
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_HEX = %x",
+                            LIBWOLFSSL_VERSION_HEX);
 #endif
+
+#ifdef RSA_LOW_MEM
+    ESP_LOGI(TAG, "RSA_LOW_MEM is enabled");
+#else
+    ESP_LOGI(TAG, "RSA_LOW_MEM is NOT enabled");
+#endif
+
 
 #if defined(WOLFSSL_MULTI_INSTALL_WARNING)
-        /* CMake may have detected undesired multiple installs, so give warning. */
-        WOLFSSL_VERSION_PRINTF("");
-        WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
-        WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
-        WOLFSSL_VERSION_PRINTF("");
-#endif
+    /* CMake may have detected undesired multiple installs, so give warning. */
+    WOLFSSL_VERSION_PRINTF("");
+    WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
+    WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
+    WOLFSSL_VERSION_PRINTF("");
+    #endif
 
-        ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
-        ShowExtendedSystemInfo_platform();
-        ShowExtendedSystemInfo_thread();
-        return 0;
-    }
+    ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
+    ShowExtendedSystemInfo_platform();
+    ShowExtendedSystemInfo_thread();
+    return 0;
+}
 
 int esp_ShowExtendedSystemInfo()
 {
