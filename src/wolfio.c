@@ -337,7 +337,9 @@ int EmbedSend(WOLFSSL* ssl, char *buf, int sz, void *ctx)
     if (sz > WOLFSSL_MAX_SEND_SZ)
         sz = WOLFSSL_MAX_SEND_SZ;
 #endif
-
+    ESP_LOGW("wolfio", "ssl->wflags = %d", ssl->wflags);
+    ESP_LOG_BUFFER_HEX("wolfio", buf, sz);
+    ESP_LOGW("wolfio", "sz          = %d", sz);
     sent = wolfIO_Send(sd, buf, sz, ssl->wflags);
     if (sent < 0) {
         WOLFSSL_MSG("Embed Send error");
