@@ -164,9 +164,67 @@ void tls_smp_server_task()
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#else
     if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
+#endif
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    ESP_LOGI(TAG, "Start SM2\n");
+    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3\0");
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+    }
+
+    ShowCiphers();
+
+    WOLFSSL_MSG("Loading certificate...");
+    /* -c Load server certificates into WOLFSSL_CTX */
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             server_sm2,
+                                             sizeof_server_sm2,
+                                             WOLFSSL_FILETYPE_PEM);
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Loaded server_sm2\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to load cert\n");
+    }
+
+    WOLFSSL_MSG("Loading key info...");
+    /* -k Load server key into WOLFSSL_CTX */
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            server_sm2_priv,
+                                            sizeof_server_sm2_priv,
+                                            WOLFSSL_FILETYPE_PEM);
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Loaded PrivateKey_buffer server_sm2_priv\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to load PrivateKey_buffer server_sm2_priv\n");
+    }
+
+    /* -A load authority */
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+                                         client_sm2,
+                                         sizeof_client_sm2,
+                                         WOLFSSL_FILETYPE_PEM);
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Success: load verify buffer\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to load verify buffer\n");
+    }
+    ESP_LOGI(TAG, "Finish SM2\n");
+#else
     WOLFSSL_MSG("Loading certificate...");
     /* Load server certificates into WOLFSSL_CTX */
 
@@ -183,6 +241,9 @@ void tls_smp_server_task()
                             WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load privatekey");
     }
+
+#endif
+
 
     /* TO DO when using ECDSA, it loads the provisioned certificate and present it.*/
     /* TO DO when using ECDSA, it uses the generated key instead of loading key    */
@@ -285,7 +346,10 @@ void app_main(void)
     set_time();
     tls_smp_server_init();
     while (1) {
-        tls_smp_server_task();
-        ESP_LOGI(TAG, "Loop...");
+        //tls_smp_server_task();
+        //ESP_LOGI(TAG, "\n\nLoop...\n\n");
+#ifndef SINGLE_THREADED
+        vTaskDelay(1000);
+#endif
     }
 }
