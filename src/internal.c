@@ -10345,16 +10345,20 @@ int SendBuffered(WOLFSSL* ssl)
                                       (int)ssl->buffers.outputBuffer.length,
                                       ssl->IOCB_WriteCtx);
         if (sent < 0) {
+            ESP_LOGI("int", "Sent = %d", sent);
             switch (sent) {
 
                 case WOLFSSL_CBIO_ERR_WANT_WRITE:        /* would block */
+                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_WANT_WRITE");
                     return WANT_WRITE;
 
                 case WOLFSSL_CBIO_ERR_CONN_RST:          /* connection reset */
+                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_RST");
                     ssl->options.connReset = 1;
                     break;
 
                 case WOLFSSL_CBIO_ERR_ISR:               /* interrupt */
+                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_ISR");
                     /* see if we got our timeout */
                     #ifdef WOLFSSL_CALLBACKS
                         if (ssl->toInfoOn) {
@@ -10375,14 +10379,17 @@ int SendBuffered(WOLFSSL* ssl)
                     continue;
 
                 case WOLFSSL_CBIO_ERR_CONN_CLOSE: /* epipe / conn closed */
+                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_CLOSE");
                     ssl->options.connReset = 1;  /* treat same as reset */
                     break;
 
                 default:
+                    ESP_LOGE("int", "SOCKET_ERROR_E");
                     return SOCKET_ERROR_E;
             }
 
-            return SOCKET_ERROR_E;
+             ESP_LOGE("int", "SOCKET_ERROR_E 2");
+             return SOCKET_ERROR_E;
         }
 
         if (sent > (int)ssl->buffers.outputBuffer.length) {
@@ -10437,8 +10444,13 @@ static WC_INLINE int GrowOutputBuffer(WOLFSSL* ssl, int size)
     tmp = (byte*)XMALLOC(newSz + align, ssl->heap, DYNAMIC_TYPE_OUT_BUFFER);
     WOLFSSL_MSG("growing output buffer");
 
-    if (tmp == NULL)
+    if (tmp == NULL) {
+        ESP_LOGE("oops", "out of memory");
         return MEMORY_E;
+    }
+    else {
+        ESP_LOGI("internal.c", "GrowOutputBuffer ok");
+    }
 
 #if WOLFSSL_GENERAL_ALIGNMENT > 0
     if (align)
@@ -19740,7 +19752,8 @@ static int GetInputData(WOLFSSL *ssl, word32 size)
             return WANT_READ;
 
         if (in < 0) {
-            WOLFSSL_ERROR_VERBOSE(SOCKET_ERROR_E);
+             ESP_LOGE("int", "SOCKET_ERROR_E 3");
+             WOLFSSL_ERROR_VERBOSE(SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
         }
 
@@ -20715,7 +20728,8 @@ default:
                                             ssl->buffers.inputBuffer.length);
                         if (ret != 0) {
                             if (SendFatalAlertOnly(ssl, ret) == SOCKET_ERROR_E)
-                                ret = SOCKET_ERROR_E;
+                                 ESP_LOGE("int", "SendFatalAlertOnly");
+                                 ret = SOCKET_ERROR_E;
                         }
 #else
                         ret = BUFFER_ERROR;
