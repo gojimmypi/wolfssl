@@ -11,7 +11,7 @@ be the same as the Linux server files.
 | server | -c ./certs/sm2/server-sm2.pem      | -k ./certs/sm2/server-sm2-priv.pem  | -A ./certs/sm2/client-sm2.pem -V  |                      
 | client | -c ./certs/sm2/client-sm2.pem      | -k ./certs/sm2/client-sm2-priv.pem  | -A ./certs/sm2/root-sm2.pem -C    |
 | emdedded:
-| server | wolfSSL_CTX_use_certificate_buffer server_sm2 | wolfSSL_CTX_use_PrivateKey_buffer server_sm2_priv | wolfSSL_CTX_load_verify_buffer   client-sm2  |
+| server | wolfSSL_CTX_use_certificate_buffer<br/> server_sm2 | wolfSSL_CTX_use_PrivateKey_buffer<br/> server_sm2_priv | wolfSSL_CTX_load_verify_buffer<br/> client-sm2  |
 
 ### Code
 
