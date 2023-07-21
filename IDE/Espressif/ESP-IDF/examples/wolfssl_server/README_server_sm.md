@@ -5,7 +5,6 @@ Tried both PEM and DER format.
 The latest server is PEM format, triple-checked to have the embedded server
 be the same as the Linux server files.
 
-See
 
 |  Usage |            Certificate             |        Key                          |   Certificate Authority file, default ./certs/client-cert.pem |
 | -----  | ---------------------------------- | ----------------------------------- | --------------------------------- |
@@ -14,7 +13,11 @@ See
 | emdedded:
 | server | wolfSSL_CTX_use_certificate_buffer server_sm2 | wolfSSL_CTX_use_PrivateKey_buffer server_sm2_priv | wolfSSL_CTX_load_verify_buffer   client-sm2  |
 
-# 
+### Code
+
+See [source code](https://github.com/gojimmypi/wolfssl/blob/2c4f443aec7b151f945cb9dfe2dad6ee30449cf0/IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/server-tls.c#L187):
+
+![code](./code.png)
 
 
 ### Linux client talking to embedded server:
