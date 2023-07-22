@@ -14968,10 +14968,10 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
            /* myBuffer may not be initialized fully, but the span up to the
             * sending length will be.
             */
-            PRAGMA_GCC_DIAG_PUSH;
-            PRAGMA_GCC("GCC diagnostic ignored \"-Wmaybe-uninitialized\"");
+            PRAGMA_GCC_DIAG_PUSH
+            PRAGMA_GCC("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
             ret = wolfSSL_write(ssl, myBuffer, sending);
-            PRAGMA_GCC_DIAG_POP;
+            PRAGMA_GCC_DIAG_POP
 
             if (dynamic)
                 XFREE(myBuffer, ssl->heap, DYNAMIC_TYPE_WRITEV);
@@ -24923,7 +24923,9 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
 
     /* oidCertNameType */
     { NID_commonName, NID_commonName, oidCertNameType, "CN", "commonName"},
+#if !defined(WOLFSSL_CERT_REQ)
     { NID_surname, NID_surname, oidCertNameType, "SN", "surname"},
+#endif
     { NID_serialNumber, NID_serialNumber, oidCertNameType, "serialNumber",
                                                             "serialNumber"},
     { NID_userId, NID_userId, oidCertNameType, "UID", "userid"},
@@ -26698,8 +26700,8 @@ WOLFSSL_EVP_PKEY *wolfSSL_PEM_read_PUBKEY(XFILE fp, WOLFSSL_EVP_PKEY **key,
 
     WOLFSSL_ENTER("wolfSSL_PEM_read_PUBKEY");
 
-    if (pem_read_file_key(fp, cb, pass, PUBLICKEY_TYPE, &keyFormat, &der)
-            >= 0) {
+    if ((pem_read_file_key(fp, cb, pass, PUBLICKEY_TYPE, &keyFormat, &der)
+            >= 0) && (der != NULL)) {
         const unsigned char* ptr = der->buffer;
 
         /* handle case where reuse is attempted */
@@ -33114,6 +33116,24 @@ word32 nid2oid(int nid, int grp)
             }
             break;
 
+        /* oidCmsKeyAgreeType */
+    #ifdef WOLFSSL_CERT_REQ
+        case oidCsrAttrType:
+            switch (nid) {
+                case NID_pkcs9_contentType:
+                    return PKCS9_CONTENT_TYPE_OID;
+                case NID_pkcs9_challengePassword:
+                    return CHALLENGE_PASSWORD_OID;
+                case NID_serialNumber:
+                    return SERIAL_NUMBER_OID;
+                case NID_userId:
+                    return USER_ID_OID;
+                case NID_surname:
+                    return SURNAME_OID;
+            }
+            break;
+    #endif
+
         default:
             WOLFSSL_MSG("NID not in table");
             /* MSVC warns without the cast */
@@ -33492,7 +33512,7 @@ int oid2nid(word32 oid, int grp)
 #endif
 
         default:
-            WOLFSSL_MSG("NID not in table");
+            WOLFSSL_MSG("OID not in table");
     }
     /* If not found in above switch then try the table */
     for (i = 0; i < WOLFSSL_OBJECT_INFO_SZ; i++) {
@@ -36139,7 +36159,7 @@ static int wolfSSL_BIO_to_MIME_crlf(WOLFSSL_BIO* in, WOLFSSL_BIO* out)
             }
 
             /* remove trailing null */
-            if (canonLine[canonLineLen] == '\0') {
+            if (canonLineLen >= 1 && canonLine[canonLineLen-1] == '\0') {
                 canonLineLen--;
             }
 

@@ -670,7 +670,7 @@ enum {
         #endif
         #define ecc_oid_brainpoolp256r1_sz CODED_BRAINPOOLP256R1_SZ
     #endif /* HAVE_ECC_BRAINPOOL */
-    #ifdef WOLFSSL_SM2
+    #if defined(WOLFSSL_SM2) && !defined(WOLFSSL_SP_MATH)
         #ifdef HAVE_OID_ENCODING
             #define CODED_SM2P256V1    {1,2,156,10197,1,301}
             #define CODED_SM2P256V1_SZ 6
@@ -684,7 +684,7 @@ enum {
             #define ecc_oid_sm2p256v1 CODED_SM2P256V1
         #endif
         #define ecc_oid_sm2p256v1_sz CODED_SM2P256V1_SZ
-    #endif /* WOLFSSL_SM2 */
+    #endif /* WOLFSSL_SM2 && !WOLFSSL_SP_MATH */
 #endif /* ECC256 */
 #ifdef ECC320
     #ifdef HAVE_ECC_BRAINPOOL
@@ -1165,7 +1165,7 @@ const ecc_set_type ecc_sets[] = {
         1,                                                                  /* cofactor   */
     },
     #endif /* HAVE_ECC_BRAINPOOL */
-    #ifdef WOLFSSL_SM2
+    #if defined(WOLFSSL_SM2) && !defined(WOLFSSL_SP_MATH)
     {
         32,                                                     /* size/bytes */
         ECC_SM2P256V1,                                          /* ID         */
@@ -1183,7 +1183,7 @@ const ecc_set_type ecc_sets[] = {
         ECC_SM2P256V1_OID,                                      /* oid sum    */
         1,                                                      /* cofactor   */
     },
-    #endif /* WOLFSSL_SM2 */
+    #endif /* WOLFSSL_SM2 && !WOLFSSL_SP_MATH */
 #endif /* ECC256 */
 #ifdef ECC320
     #ifdef HAVE_ECC_BRAINPOOL
@@ -1458,8 +1458,8 @@ static int xil_mpi_import(mp_int *mpi,
     #endif
 
     #define DECLARE_CURVE_SPECS(intcount) ecc_curve_spec* curve = NULL
-    #define ALLOC_CURVE_SPECS(intcount, err)
-    #define FREE_CURVE_SPECS()
+    #define ALLOC_CURVE_SPECS(intcount, err) WC_DO_NOTHING
+    #define FREE_CURVE_SPECS() WC_DO_NOTHING
 #elif defined(WOLFSSL_SMALL_STACK)
 #ifdef WOLFSSL_SP_MATH_ALL
     #define DECLARE_CURVE_SPECS(intcount)                               \
@@ -1514,8 +1514,8 @@ static int xil_mpi_import(mp_int *mpi,
         curve->spec_ints = spec_ints;                                   \
         curve->spec_count = (intcount)
 #endif
-    #define ALLOC_CURVE_SPECS(intcount, err)
-    #define FREE_CURVE_SPECS()
+    #define ALLOC_CURVE_SPECS(intcount, err) WC_DO_NOTHING
+    #define FREE_CURVE_SPECS() WC_DO_NOTHING
 #endif /* ECC_CACHE_CURVE */
 
 static void wc_ecc_curve_cache_free_spec_item(ecc_curve_spec* curve, mp_int* item,

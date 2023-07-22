@@ -2733,6 +2733,7 @@ then
             esac
         fi
         AS_IF([test "x$ENABLED_AESGCM" != "xno"],[AM_CCASFLAGS="$AM_CCASFLAGS -DHAVE_AESGCM"])
+        AS_IF([test "x$ENABLED_SM3" != "xno"],[AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SM3"])
     fi
 
     if test "$ENABLED_INTELASM" = "yes"
@@ -3460,6 +3461,10 @@ AC_ARG_ENABLE([sm2],
     [ ENABLED_SM2=no ]
     )
 
+if test "$ENABLED_SP_MATH" = "yes"
+then
+    ENABLED_SM2="no"
+fi
 if test "$ENABLED_SM2" = "yes"
 then
     if test "$ENABLED_ECC" = "no"
@@ -8180,6 +8185,9 @@ then
 
     # Uses alt name
     ENABLED_ALTNAMES="yes"
+
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_OID_ENCODING -DWOLFSSL_NO_ASN_STRICT"
+
 fi
 
 if test "$ENABLED_STRONGSWAN" = "yes"; then
@@ -9356,6 +9364,7 @@ echo "   * ECC Minimum Bits:           $ENABLED_ECCMINSZ"
 echo "   * FPECC:                      $ENABLED_FPECC"
 echo "   * ECC_ENCRYPT:                $ENABLED_ECC_ENCRYPT"
 echo "   * Brainpool:                  $ENABLED_BRAINPOOL"
+echo "   * SM2:                        $ENABLED_SM2"
 echo "   * CURVE25519:                 $ENABLED_CURVE25519"
 echo "   * ED25519:                    $ENABLED_ED25519"
 echo "   * ED25519 streaming:          $ENABLED_ED25519_STREAM"

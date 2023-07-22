@@ -3314,14 +3314,21 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    int retHW = FP_OKAY;
 #endif
 
-   if (fp_iszero(G)) {
-      fp_set(G, 0);
+   /* handle modulus of zero and prevent overflows */
+   if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
+      return FP_VAL;
+   }
+   if (fp_isone(P)) {
+      fp_set(Y, 0);
       return FP_OKAY;
    }
-
-   /* prevent overflows */
-   if (P->used > (FP_SIZE/2)) {
-      return FP_VAL;
+   if (fp_iszero(X)) {
+      fp_set(Y, 1);
+      return FP_OKAY;
+   }
+   if (fp_iszero(G)) {
+      fp_set(Y, 0);
+      return FP_OKAY;
    }
 
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
