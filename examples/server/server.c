@@ -2632,8 +2632,9 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     if ((!usePsk || usePskPlus) && !useAnon && !(loadCertKeyIntoSSLObj == 1)) {
     #if defined(NO_FILESYSTEM) && defined(USE_CERT_BUFFERS_2048)
         if (wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                server_cert_der_2048, sizeof_server_cert_der_2048,
-                WOLFSSL_FILETYPE_ASN1) != WOLFSSL_SUCCESS)
+                //server_cert_der_2048, sizeof_server_cert_der_2048,
+                server_sm2, sizeof_server_sm2,
+                WOLFSSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
             err_sys_ex(catastrophic, "can't load server cert buffer");
     #elif !defined(TEST_LOAD_BUFFER)
         if (SSL_CTX_use_certificate_chain_file(ctx, ourCert)
@@ -2675,8 +2676,10 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
     #endif /* HAVE_PK_CALLBACKS && TEST_PK_PRIVKEY */
     ) {
     #ifdef NO_FILESYSTEM
-        if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, server_key_der_2048,
-            sizeof_server_key_der_2048, SSL_FILETYPE_ASN1) != WOLFSSL_SUCCESS)
+        if (wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+            //server_key_der_2048, sizeof_server_key_der_2048,
+            server_sm2_priv, sizeof_server_sm2_priv,
+            SSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
             err_sys_ex(catastrophic, "can't load server private key buffer");
     #elif !defined(TEST_LOAD_BUFFER)
         if (SSL_CTX_use_PrivateKey_file(ctx, ourKey, WOLFSSL_FILETYPE_PEM)
