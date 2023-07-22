@@ -60,7 +60,7 @@
 #define HAVE_SUPPORTED_CURVES
 
 /* when you want to use SINGLE THREAD */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
@@ -181,6 +181,24 @@
 
 #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
     // #define WOLFSSL_SM3_SMALL
+    #define HAVE_DH
+
+#define USE_WOLFSSL_IO
+#define HAVE_AESGCM
+#define WOLFSSL_TLS13
+#define HAVE_HKDF
+#define HAVE_FFDHE_4096
+#define WC_RSA_PSS
+#define WOLFSSL_SEND_HRR_COOKIE
+
+        #define OPENSSL_EXTRA
+        #define NO_PSK
+    #define WC_RSA_BLINDING
+    #define NO_MULTIBYTE_PRINT
+
+    #define HAVE_CRL
+    #define HAVE_CRL_MONITOR
+
     #undef  WOLFSSL_SM4_ECB
     #define WOLFSSL_SM4_ECB
 

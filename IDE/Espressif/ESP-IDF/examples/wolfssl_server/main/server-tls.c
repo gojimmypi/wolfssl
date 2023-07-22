@@ -46,6 +46,7 @@
 #endif
 
 static const char* const TAG = "tls_server";
+int stack_start = -1;
 
 #if defined(DEBUG_WOLFSSL)
 
@@ -176,7 +177,7 @@ void tls_smp_server_task()
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM2\n");
-    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3\0");
+    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3");
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
     }
@@ -185,38 +186,62 @@ void tls_smp_server_task()
     }
 
     ShowCiphers();
+    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 
     WOLFSSL_MSG("Loading certificate...");
     /* -c Load server certificates into WOLFSSL_CTX */
-    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                             server_sm2,
-                                             sizeof_server_sm2,
-                                             WOLFSSL_FILETYPE_PEM);
+    ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+                //server_cert_der_2048, sizeof_server_cert_der_2048,
+                server_sm2, sizeof_server_sm2,
+                WOLFSSL_FILETYPE_PEM);
+//    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+//                                             server_sm2,
+//                                             sizeof_server_sm2,
+//                                             WOLFSSL_FILETYPE_PEM);
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Loaded server_sm2\n");
     }
     else {
         ESP_LOGE(TAG, "ERROR: failed to load cert\n");
     }
+    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+
+#ifndef NO_DH
+    #define DEFAULT_MIN_DHKEY_BITS 1024
+    #define DEFAULT_MAX_DHKEY_BITS 2048
+    int    minDhKeyBits  = DEFAULT_MIN_DHKEY_BITS;
+    ret = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
+#endif
+#ifndef NO_RSA
+    #define DEFAULT_MIN_RSAKEY_BITS 1024
+    short  minRsaKeyBits = DEFAULT_MIN_RSAKEY_BITS;
+    ret = wolfSSL_CTX_SetMinRsaKey_Sz(ctx, minRsaKeyBits);
+#endif
 
     WOLFSSL_MSG("Loading key info...");
     /* -k Load server key into WOLFSSL_CTX */
+//    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+//                                            server_sm2_priv,
+//                                            sizeof_server_sm2_priv,
+//                                            WOLFSSL_FILETYPE_PEM);
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            //server_key_der_2048, sizeof_server_key_der_2048,
                                             server_sm2_priv,
                                             sizeof_server_sm2_priv,
-                                            WOLFSSL_FILETYPE_PEM);
+                                            SSL_FILETYPE_PEM);
+
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Loaded PrivateKey_buffer server_sm2_priv\n");
     }
     else {
         ESP_LOGE(TAG, "ERROR: failed to load PrivateKey_buffer server_sm2_priv\n");
     }
-
-    /* -A load authority */
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         client_sm2,
-                                         sizeof_client_sm2,
-                                         WOLFSSL_FILETYPE_PEM);
+    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+//    /* -A load authority */
+//    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+//                                         client_sm2,
+//                                         sizeof_client_sm2,
+//                                         WOLFSSL_FILETYPE_PEM);
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Success: load verify buffer\n");
     }
@@ -277,7 +302,8 @@ void tls_smp_server_task()
     ESP_LOGI(TAG, "accept clients...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-         WOLFSSL_MSG("Waiting for a connection...");
+        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+        WOLFSSL_MSG("Waiting for a connection...");
         /* Accept client connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
@@ -295,12 +321,15 @@ void tls_smp_server_task()
             ESP_LOGE(TAG, "wolfSSL_accept error %d", wolfSSL_get_error(ssl, ret));
         }
         WOLFSSL_MSG("Client connected successfully");
+        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+
         /* Read the client data into our buff array */
         memset(buff, 0, sizeof(buff));
         if (wolfSSL_read(ssl, buff, sizeof(buff)-1) == -1) {
             ESP_LOGE(TAG, "ERROR: failed to read");
         }
         /* Print to stdout any data the client sends */
+        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
         WOLFSSL_MSG("Client sends:");
         WOLFSSL_MSG(buff);
         /* Check for server shutdown command */
@@ -333,6 +362,8 @@ void tls_smp_server_task()
 /* for FreeRTOS */
 void app_main(void)
 {
+    stack_start = uxTaskGetStackHighWaterMark(NULL);
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -340,14 +371,21 @@ void app_main(void)
       ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-
+    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
     set_time();
+
+#ifndef SINGLE_THREADED
+    /* start a thread with the task */
     tls_smp_server_init();
+#else
+    /* just call the task */
+    tls_smp_server_task();
+#endif
     while (1) {
-        //tls_smp_server_task();
-        //ESP_LOGI(TAG, "\n\nLoop...\n\n");
+        ESP_LOGV(TAG, "\n\nLoop...\n\n");
+        ESP_LOGV(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 #ifndef SINGLE_THREADED
         vTaskDelay(1000);
 #endif
