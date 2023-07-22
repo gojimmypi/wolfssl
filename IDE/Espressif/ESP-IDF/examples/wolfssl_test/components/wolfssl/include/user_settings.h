@@ -209,10 +209,6 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-//    #define NO_ESP32_CRYPT
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-//    #define NO_WOLFSSL_ESP32_CRYPT_AES
-//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
@@ -236,8 +232,8 @@
 #endif
 
 /* debug options */
-#define ESP_VERIFY_MEMBLOCK
-#define WOLFSSL_HW_METRICS
+//#define ESP_VERIFY_MEMBLOCK
+//#define WOLFSSL_HW_METRICS
 //#define DEBUG_WOLFSSL_VERBOSE
 //#define DEBUG_WOLFSSL
 //#define WOLFSSL_ESP32_CRYPT_DEBUG
@@ -258,8 +254,8 @@
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
 
 
-// #define HONOR_MATH_USED_LENGTH /* this is known to fail in TFM */
-// #define CHECK_MP_READ_UNSIGNED_BIN /* this is known to fail in TFM */
+/* #define HONOR_MATH_USED_LENGTH     */ /* this is known to fail in TFM */
+/* #define CHECK_MP_READ_UNSIGNED_BIN */ /* this is known to fail in TFM */
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
 
@@ -292,3 +288,7 @@
 // #define USE_ESP_DPORT_ACCESS_READ_BUFFER
 
 
+// #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+// #define WOLFSSL_SM2
+// #define WOLFSSL_SM3
+// #define WOLFSSL_SM4
