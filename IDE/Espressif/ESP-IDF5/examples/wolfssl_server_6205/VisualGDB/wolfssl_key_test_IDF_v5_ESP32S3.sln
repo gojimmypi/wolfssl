@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{E877
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c
 		..\..\..\..\..\..\wolfcrypt\src\tfm.c = ..\..\..\..\..\..\wolfcrypt\src\tfm.c
+		..\..\..\..\..\..\wolfssl\wolfcrypt\tfm.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\tfm.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
