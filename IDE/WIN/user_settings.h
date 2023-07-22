@@ -105,4 +105,41 @@
     #endif
 #endif /* HAVE_FIPS */
 
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+
+#define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+    #define NO_FILESYSTEM
+
+    #undef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
+    #define BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
+
+    #undef  WOLFSSL_SM4_ECB
+    #define WOLFSSL_SM4_ECB
+
+    #undef  WOLFSSL_SM4_CBC
+    #define WOLFSSL_SM4_CBC
+
+    #undef  WOLFSSL_SM4_CTR
+    #define WOLFSSL_SM4_CTR
+
+    #undef  WOLFSSL_SM4_GCM
+    #define WOLFSSL_SM4_GCM
+
+    #undef  WOLFSSL_SM4_CCM
+    #define WOLFSSL_SM4_CCM
+
+    #define HAVE_POLY1305
+    #define HAVE_CHACHA
+
+    #undef  HAVE_AESGCM
+    #define HAVE_AESGCM
+
+#else
+    #define USE_CERT_BUFFERS_2048
+#endif
+
 #endif /* _WIN_USER_SETTINGS_H_ */
