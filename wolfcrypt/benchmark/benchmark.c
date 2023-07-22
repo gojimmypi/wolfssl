@@ -7334,7 +7334,7 @@ void bench_dh(int useDeviceID)
     word32 agreeSz[BENCH_MAX_PENDING];
 #if defined(HAVE_FFDHE_2048) || defined(HAVE_FFDHE_3072) || defined(HAVE_FFDHE_4096)
 #ifdef HAVE_PUBLIC_FFDHE
-    const DhParams *params = NULL;
+    const DhParams *params = NULL; (void)params;
 #else
     int paramName = 0;
 #endif
