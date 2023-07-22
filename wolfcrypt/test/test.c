@@ -934,41 +934,42 @@ static int rng_crypto_cb(int thisDevId, wc_CryptoInfo* info, void* ctx)
 #elif !defined(TEST_FAIL)
     #define TEST_FAIL(msg, retval) return err_sys(msg, retval)
 #endif
+//
+//const byte good[] = "A+Gd\0\0\0";
+//wc_test_ret_t peek(const byte* in);
+//wc_test_ret_t peek(const byte* in)
+//{
+//    printf("Start peek! \n");
+//
+//    printf("Step 1 \n");
+//    printf("  good = 0x%08x \n", (unsigned int)good); /* ESP-IDF = 0x3f40f9c8 */
+//
+//    printf("Step 2 \n");
+//    printf("   &in = 0x%08x \n", (unsigned int)&in);  /* ESP-IDF = 0x3ffc29cc */
+//
+//    printf("Step 3 \n");
+//    printf("    in = 0x%08x \n", (unsigned int)in);   /* ESP-IDF = 0x3f40f9c8 */
+//
+//    word32 j = *in;
+//
+//    printf("Step 4 \n");
+//    printf("     j = 0x%08x \n", (unsigned int)j);    /* ESP-IDF = 0x00000041 */
+//
+//    printf("Step 5 \n");
+//    printf("    &j = 0x%08x \n", (unsigned int)&j);   /* ESP-IDF = 0x3ffc29dc */
+//    return 0;
+//}
 
-const byte good[] = "A+Gd\0\0\0";
-
-wc_test_ret_t peek(const byte* in)
-{
-    printf("Start peek! \n");
-
-    printf("Step 1 \n");
-    printf("  good = 0x%08x \n", (unsigned int)good); /* ESP-IDF = 0x3f40f9c8 */
-
-    printf("Step 2 \n");
-    printf("   &in = 0x%08x \n", (unsigned int)&in);  /* ESP-IDF = 0x3ffc29cc */
-
-    printf("Step 3 \n");
-    printf("    in = 0x%08x \n", (unsigned int)in);   /* ESP-IDF = 0x3f40f9c8 */
-
-    word32 j = *in;
-
-    printf("Step 4 \n");
-    printf("     j = 0x%08x \n", (unsigned int)j);    /* ESP-IDF = 0x00000041 */
-
-    printf("Step 5 \n");
-    printf("    &j = 0x%08x \n", (unsigned int)&j);   /* ESP-IDF = 0x3ffc29dc */
-    return 0;
-}
-
-void main_mem()
-{
-    printf("Here we go! v1.0 ESP-IDF \n");
-
-    peek(good);
-
-    printf("done! \n");
-
-}
+//void main_mem();
+//void main_mem()
+//{
+//    printf("Here we go! v1.0 ESP-IDF \n");
+//
+//    //peek(good);
+//
+//    printf("done! \n");
+//
+//}
 
 
 #ifdef HAVE_STACK_SIZE
@@ -997,7 +998,6 @@ wc_test_ret_t wolfcrypt_test(void* args)
     printf("------------------------------------------------------------------------------\n");
     printf(" wolfSSL version %s\n", LIBWOLFSSL_VERSION_STRING);
     printf("------------------------------------------------------------------------------\n");
-    main_mem();
     if (args) {
 #ifdef HAVE_WOLFCRYPT_TEST_OPTIONS
         int ch;
@@ -13240,7 +13240,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes192_test(void)
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (XMEMCMP(plain, msg, (int) sizeof(plain))) {
-        ESP_LOGE(TAG, "oops");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif
