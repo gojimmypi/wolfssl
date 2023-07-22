@@ -303,7 +303,8 @@ extern "C"
     #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
         /* hmac->macType not implemented for SM at this time.
          * Do not use WOLFSSL_NO_HASH_RAW see tls.c Hmac_UpdateFinal() */
-    #else        #define WOLFSSL_NO_HASH_RAW
+    #else
+        #define WOLFSSL_NO_HASH_RAW
     #endif
     #define SHA_CTX ETS_SHAContext
 
