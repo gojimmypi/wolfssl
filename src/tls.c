@@ -1052,7 +1052,7 @@ static int Hmac_UpdateFinal(Hmac* hmac, byte* digest, const byte* in,
                             word32 sz, byte* header)
 {
     byte       dummy[WC_MAX_BLOCK_SIZE] = {0};
-    int        ret;
+    int        ret = 0;
     word32     msgSz, blockSz, macSz, padSz, maxSz, realSz;
     word32     offset = 0;
     int        msgBlocks, blocks, blockBits;
@@ -1105,6 +1105,7 @@ static int Hmac_UpdateFinal(Hmac* hmac, byte* digest, const byte* in,
     #endif /* HAVE_BLAKE2 */
 
         default:
+            WOLFSSL_MSG("ERROR: Hmac_UpdateFinal failed, no hmac->macType");
             return BAD_FUNC_ARG;
     }
 

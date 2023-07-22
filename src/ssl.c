@@ -11389,11 +11389,16 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
     }
 
     /* list contains ciphers either only for TLS 1.3 or <= TLS 1.2 */
-
+    if (suites->suiteSz == 0) {
+        WOLFSSL_MSG("Warning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
+        suites->suiteSz = WOLFSSL_MAX_SUITE_SZ;
+    }
 #ifdef WOLFSSL_SMALL_STACK
     suitesCpy = (byte*)XMALLOC(suites->suiteSz, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (suitesCpy == NULL)
+    if (suitesCpy == NULL) {
+        WOLFSSL_MSG("XMALLOC failed");
         return WOLFSSL_FAILURE;
+    }
 #endif
 
     XMEMCPY(suitesCpy, suites->suites, suites->suiteSz);
@@ -32346,7 +32351,7 @@ static int set_curves_list(WOLFSSL* ssl, WOLFSSL_CTX *ctx, const char* names)
     char name[MAX_CURVE_NAME_SZ];
     byte groups_len = 0;
 #ifdef WOLFSSL_SMALL_STACK
-    void *heap = ssl? ssl->heap : ctx ? ctx->heap : NULL;
+    void *heap = ssl? ssl->heap : ctx ? ctx->heap : NULL; (void)heap;
     int *groups;
 #else
     int groups[WOLFSSL_MAX_GROUP_COUNT];

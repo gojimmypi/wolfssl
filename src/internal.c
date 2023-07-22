@@ -10345,20 +10345,28 @@ int SendBuffered(WOLFSSL* ssl)
                                       (int)ssl->buffers.outputBuffer.length,
                                       ssl->IOCB_WriteCtx);
         if (sent < 0) {
+            #ifdef WOLFSSL_ESPIDF
             ESP_LOGI("int", "Sent = %d", sent);
+            #endif
             switch (sent) {
 
                 case WOLFSSL_CBIO_ERR_WANT_WRITE:        /* would block */
+                    #ifdef WOLFSSL_ESPIDF
                     ESP_LOGW("int", "WOLFSSL_CBIO_ERR_WANT_WRITE");
+                    #endif
                     return WANT_WRITE;
 
                 case WOLFSSL_CBIO_ERR_CONN_RST:          /* connection reset */
+                    #ifdef WOLFSSL_ESPIDF
                     ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_RST");
+                    #endif
                     ssl->options.connReset = 1;
                     break;
 
                 case WOLFSSL_CBIO_ERR_ISR:               /* interrupt */
+                    #ifdef WOLFSSL_ESPIDF
                     ESP_LOGW("int", "WOLFSSL_CBIO_ERR_ISR");
+                    #endif
                     /* see if we got our timeout */
                     #ifdef WOLFSSL_CALLBACKS
                         if (ssl->toInfoOn) {
@@ -10379,16 +10387,22 @@ int SendBuffered(WOLFSSL* ssl)
                     continue;
 
                 case WOLFSSL_CBIO_ERR_CONN_CLOSE: /* epipe / conn closed */
+                    #ifdef WOLFSSL_ESPIDF
                     ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_CLOSE");
+                    #endif
                     ssl->options.connReset = 1;  /* treat same as reset */
                     break;
 
                 default:
+                    #ifdef WOLFSSL_ESPIDF
                     ESP_LOGE("int", "SOCKET_ERROR_E");
+                    #endif
                     return SOCKET_ERROR_E;
             }
 
+             #ifdef WOLFSSL_ESPIDF
              ESP_LOGE("int", "SOCKET_ERROR_E 2");
+             #endif
              return SOCKET_ERROR_E;
         }
 
@@ -10445,11 +10459,15 @@ static WC_INLINE int GrowOutputBuffer(WOLFSSL* ssl, int size)
     WOLFSSL_MSG("growing output buffer");
 
     if (tmp == NULL) {
+        #ifdef WOLFSSL_ESPIDF
         ESP_LOGE("oops", "out of memory");
+        #endif
         return MEMORY_E;
     }
     else {
+        #ifdef WOLFSSL_ESPIDF
         ESP_LOGI("internal.c", "GrowOutputBuffer ok");
+        #endif
     }
 
 #if WOLFSSL_GENERAL_ALIGNMENT > 0
@@ -19242,6 +19260,8 @@ int TimingPadVerify(WOLFSSL* ssl, const byte* input, int padLen, int macSz,
      * the size to make sure is valid. */
     ret = ssl->hmac(ssl, verify, input, pLen - macSz - padLen - 1, padLen,
                                                         content, 1, PEER_ORDER);
+
+    /* stuck here */
     good |= MaskMac(input, pLen, ssl->specs.hash_size, verify);
 
     /* Non-zero on failure. */
@@ -19752,7 +19772,9 @@ static int GetInputData(WOLFSSL *ssl, word32 size)
             return WANT_READ;
 
         if (in < 0) {
+             #ifdef WOLFSSL_ESPIDF
              ESP_LOGE("int", "SOCKET_ERROR_E 3");
+             #endif
              WOLFSSL_ERROR_VERBOSE(SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
         }
@@ -19848,8 +19870,13 @@ static WC_INLINE int VerifyMac(WOLFSSL* ssl, const byte* input, word32 msgSz,
 #endif
             ret = TimingPadVerify(ssl, input, pad, digestSz, msgSz - ivExtra,
                                   content);
-            if (ret != 0)
+            if (ret != 0) {
+                WOLFSSL_MSG("ERROR: TimingPadVerify failed");
                 return ret;
+            }
+            else {
+                WOLFSSL_MSG("TimingPadVerify success");
+            }
         }
         else {  /* sslv3, some implementations have bad padding, but don't
                  * allow bad read */
@@ -20545,6 +20572,9 @@ default:
                         WOLFSSL_ERROR_VERBOSE(DECRYPT_ERROR);
                         return DECRYPT_ERROR;
                     }
+                    else{
+                        WOLFSSL_MSG("VerifyMac completed successfully");
+                    }
                 }
 
                 ssl->keys.encryptSz    = ssl->curSize;
@@ -20727,9 +20757,12 @@ default:
                                             &ssl->buffers.inputBuffer.idx,
                                             ssl->buffers.inputBuffer.length);
                         if (ret != 0) {
-                            if (SendFatalAlertOnly(ssl, ret) == SOCKET_ERROR_E)
-                                 ESP_LOGE("int", "SendFatalAlertOnly");
-                                 ret = SOCKET_ERROR_E;
+                            if (SendFatalAlertOnly(ssl, ret) == SOCKET_ERROR_E) {
+                                #ifdef WOLFSSL_ESPIDF
+                                ESP_LOGE("int", "SendFatalAlertOnly");
+                                #endif
+                                ret = SOCKET_ERROR_E;
+                            }
                         }
 #else
                         ret = BUFFER_ERROR;
@@ -24949,6 +24982,8 @@ static const CipherSuiteInfo cipher_names[] =
 
 #ifdef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
     SUITE_INFO("ECDHE-ECDSA-SM4-CBC-SM3","TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3",SM_BYTE,TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3, TLSv1_2_MINOR, SSLv3_MAJOR),
+#else
+    #warning "SM3 missing"
 #endif
 
 #ifdef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_GCM_SM3
