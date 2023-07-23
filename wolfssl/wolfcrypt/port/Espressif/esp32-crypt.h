@@ -306,6 +306,7 @@ extern "C"
     #else
         #define WOLFSSL_NO_HASH_RAW
     #endif
+
     #define SHA_CTX ETS_SHAContext
 
     #if ESP_IDF_VERSION_MAJOR >= 4
