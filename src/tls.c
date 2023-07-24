@@ -61,6 +61,10 @@
     #include <wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h>
 #endif
 
+#if defined(WOLFSSL_SM3)
+    #include <sm3.h>
+#endif
+
 #include <wolfssl/wolfcrypt/hpke.h>
 
 #ifndef NO_TLS
@@ -1103,6 +1107,15 @@ static int Hmac_UpdateFinal(Hmac* hmac, byte* digest, const byte* in,
             padSz = 0;
             break;
     #endif /* HAVE_BLAKE2 */
+
+    #ifdef WOLFSSL_SM3
+        case WC_SM3:
+            blockSz = WC_SM3_BLOCK_SIZE;
+            blockBits = 6;
+            macSz = WC_SM3_DIGEST_SIZE;
+            padSz = WC_SM3_BLOCK_SIZE - WC_SM3_PAD_SIZE + 1;
+            break;
+    #endif
 
         default:
             WOLFSSL_MSG("ERROR: Hmac_UpdateFinal failed, no hmac->macType");
