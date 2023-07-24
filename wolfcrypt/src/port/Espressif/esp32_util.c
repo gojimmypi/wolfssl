@@ -317,6 +317,16 @@ static int ShowExtendedSystemInfo_platform()
 
 int ShowExtendedSystemInfo(void)
 {
+#if defined(SHOW_SSID_AND_PASSWORD)
+    ESP_LOGW(TAG, "WARNING: SSID and plain text WiFi "
+                  "password displayed in startup logs. ");
+    ESP_LOGW(TAG, "Remove SHOW_SSID_AND_PASSWORD from user_settings.h "
+                  "to disable.");
+#else
+    ESP_LOGI(TAG, "SSID and plain text WiFi "
+                  "password not displayed in startup logs."
+                  "Define SHOW_SSID_AND_PASSWORD to enable.");
+#endif
     WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
 
 #if defined(LIBWOLFSSL_VERSION_STRING)
@@ -342,11 +352,35 @@ int ShowExtendedSystemInfo(void)
     WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
     WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
     WOLFSSL_VERSION_PRINTF("");
-    #endif
+#else
+    ESP_LOGI(TAG, "Using wolfSSL user_settings.h in %s", "tbd");
+#endif
+
+    /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* not available for C3 at this time */
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+             );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#else
+    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
+            );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#endif
+
+    /* all platforms: stack high water mark check */
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "");
+    ESP_LOGI(TAG, "");
+
 
     ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
+
     return 0;
 }
 

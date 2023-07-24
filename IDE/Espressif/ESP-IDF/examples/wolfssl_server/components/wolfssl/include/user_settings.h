@@ -18,6 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+#define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
+
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESP32
 #undef WOLFSSL_ESPWROOM32SE
@@ -29,11 +32,12 @@
 ** Possible values:
 **
 **   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S2
 **   CONFIG_IDF_TARGET_ESP32S3
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
-#include <sdkconfig.h>
+#include <sdkconfig.h> /* essemtial for target chip detection */
 
 #define WOLFSSL_ESPIDF
 
@@ -44,7 +48,6 @@
  * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
  */
-
 #define WOLFSSL_ESP32
 
 /* #define DEBUG_WOLFSSL_VERBOSE */
@@ -64,8 +67,10 @@
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
+
 /* when you want to use SHA384 */
 /* #define WOLFSSL_SHA384 */
+
 #define WOLFSSL_SHA512
 #define HAVE_ECC
 #define HAVE_CURVE25519
@@ -128,51 +133,58 @@
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
     /* AES192 is not supported on the ESP32-S3 HW at this time */
-//    #define NO_AES_192
+    #define NO_AES_192
+    /* TODO remove upon merge of https://github.com/wolfSSL/wolfssl/pull/6624 */
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    /* HW Enabled by default for ESP32. To disable: */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* HW Disabled by default for ESP32-S2.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* HW Enabled by default for ESP32. To disable: */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* HW Disabled by default for ESP32-C6.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    /* HW Disabled by default for ESP32-H2.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #else
+    /* HW Disabled by default for all other ESP32-[?].  */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif
 
-//#define BUILD_TLS_SM4_GCM_SM3
-//#define BUILD_TLS_SM4_CCM_SM3
-//#define BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CCM_SM3
-//#define BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
+/* see esp_ShowExtendedSystemInfo in esp32-crypt.h for startup log info */
+#define HAVE_VERSION_EXTENDED_INFO
 
+/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4

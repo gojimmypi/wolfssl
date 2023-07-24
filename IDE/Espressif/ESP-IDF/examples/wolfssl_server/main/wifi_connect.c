@@ -106,28 +106,6 @@ static void set_time()
     /* now we start client tasks. */
 }
 
-/* create task */
- int tls_smp_server_init(void)
-{
-    int ret;
-#if ESP_IDF_VERSION_MAJOR >= 4
-        TaskHandle_t _handle;
-#else
-        xTaskHandle _handle;
-#endif
-    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
-    ret = xTaskCreate(tls_smp_server_task,
-                      TLS_SMP_SERVER_TASK_NAME,
-                      TLS_SMP_SERVER_TASK_WORDS,
-                      NULL,
-                      TLS_SMP_SERVER_TASK_PRIORITY,
-                      &_handle);
-
-    if (ret != pdPASS) {
-        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
-    }
-    return ret;
-}
 #if ESP_IDF_VERSION_MAJOR < 4
 /* event handler for wifi events */
 static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
@@ -255,11 +233,12 @@ int wifi_init_sta(void)
         .sta = {
             .ssid = EXAMPLE_ESP_WIFI_SSID,
             .password = EXAMPLE_ESP_WIFI_PASS,
-            /* Authmode threshold resets to WPA2 as default if password matches WPA2 standards (pasword len => 8).
-             * If you want to connect the device to deprecated WEP/WPA networks, Please set the threshold value
-             * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
-	     * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
-             */
+            /* Authmode threshold resets to WPA2 as default if password matches
+             * WPA2 standards (pasword len => 8). If you want to connect the
+             * device to deprecated WEP/WPA networks, Please set the threshold
+             * value WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with
+             * length and format matching to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK
+             * standards. */
             .threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
         },
@@ -270,16 +249,19 @@ int wifi_init_sta(void)
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
-    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
+     * or connection failed for the maximum number of re-tries (WIFI_FAIL_BIT).
+     * The bits are set by event_handler() (see above) */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
             WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
             pdFALSE,
             pdFALSE,
             portMAX_DELAY);
 
-    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
-     * happened. */
+    /* xEventGroupWaitBits() returns the bits before the call returned,
+     * hence we can test which event actually happened. */
+#if defined(SHOW_SSID_AND_PASSWORD)
+    ESP_LOGW(TAG, "Undefine SHOW_SSID_AND_PASSWORD to not show SSID/password");
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
                  EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
@@ -289,11 +271,20 @@ int wifi_init_sta(void)
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
+#else
+    if (bits & WIFI_CONNECTED_BIT) {
+        ESP_LOGI(TAG, "Connected to AP");
+    } else if (bits & WIFI_FAIL_BIT) {
+        ESP_LOGI(TAG, "Failed to connect to AP");
+    } else {
+        ESP_LOGE(TAG, "Connect to AP UNEXPECTED EVENT");
+    }
+#endif
     return 0;
 }
 
 #endif
-/* entry point */
+/* entry point TODO remove */
 void app_main_na(void)
 {
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -301,48 +292,6 @@ void app_main_na(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
-
-#if defined(WOLFSSL_MULTI_INSTALL_WARNING)
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "WARNING: Multiple wolfSSL installs found.");
-    ESP_LOGI(TAG, "Check ESP-IDF and local project [components] directory.");
-    ESP_LOGI(TAG, "");
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_HASH)
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH = %s", LIBWOLFSSL_VERSION_GIT_HASH);
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s", LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
-#endif
-
-
-    /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* not available for C3 at this time */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
-             );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#else
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
-            );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#endif
-
-    /* all platforms: stack high water mark check */
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-//    ESP_ERROR_CHECK(nvs_flash_init());
 
     ESP_LOGI(TAG, "Initialize wifi");
     /* TCP/IP adapter initialization */

@@ -18,11 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-/* the usual suspects */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+
+#include "server-tls.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
 
 /* socket includes */
 #include <sys/socket.h>
@@ -38,95 +39,34 @@
 
 /* ESP specific */
 #include "wifi_connect.h"
-
 #include "nvs_flash.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
-static const char* const TAG = "tls_server";
+static const char* const TAG = "server-tls";
 int stack_start = -1;
 
-#if defined(DEBUG_WOLFSSL)
-
-static void ShowCiphers(void)
+int ShowCiphers(void)
 {
     char ciphers[4096];
 
-    int ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
+    int ret = 0;
+    ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
 
-    if (ret == WOLFSSL_SUCCESS)
+    if (ret == WOLFSSL_SUCCESS) {
         printf("%s\n", ciphers);
-}
-
-#endif
-
-#if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
-                                  && defined(WOLFSSL_ATECC508A)
-
-#include "wolfssl/wolfcrypt/port/atmel/atmel.h"
-
-/* when you want to use a custom slot allocation */
-/* enable the definition CUSTOM_SLOT_ALLOCATION. */
-
-#if defined(CUSTOM_SLOT_ALLOCATION)
-
-static byte mSlotList[ATECC_MAX_SLOT];
-
-int atmel_set_slot_allocator(atmel_slot_alloc_cb alloc, atmel_slot_dealloc_cb dealloc);
-
-/* initialize slot array */
-void my_atmel_slotInit()
-{
-    int i;
-
-    for(i=0;i<ATECC_MAX_SLOT; i++) {
-        mSlotList[i] = ATECC_INVALID_SLOT;
     }
-}
+    else {
+        ESP_LOGE(TAG, "FAiled to call wolfSSL_get_ciphers. Error: %d", ret);
 
-/* allocate slot depending on slotType */
-int my_atmel_alloc(int slotType)
-{
-    int i, slot = -1;
-
-    switch(slotType){
-        case ATMEL_SLOT_ENCKEY:
-            slot = 4;
-            break;
-        case ATMEL_SLOT_DEVICE:
-            slot = 0;
-            break;
-        case ATMEL_SLOT_ECDHE:
-            slot = 0;
-            break;
-        case ATMEL_SLOT_ECDHE_ENC:
-            slot = 4;
-            break;
-        case ATMEL_SLOT_ANY:
-            for(i=0;i<ATECC_MAX_SLOT;i++){
-                if(mSlotList[i] == ATECC_INVALID_SLOT){
-                    slot = i;
-                    break;
-                }
-            }
     }
+    return ret;
 
-    return slot;
 }
 
-/* free slot array       */
-void my_atmel_free(int slotId)
-{
-    if(slotId >= 0 && slotId < ATECC_MAX_SLOT){
-        mSlotList[slotId] = ATECC_INVALID_SLOT;
-    }
-}
-#endif /* CUSTOM_SLOT_ALLOCATION                                       */
-#endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
-
-void tls_smp_server_task()
+WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 {
     int                sockfd;
     int                connd;
@@ -186,7 +126,8 @@ void tls_smp_server_task()
     }
 
     ShowCiphers();
-    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                      - uxTaskGetStackHighWaterMark(NULL));
 
     WOLFSSL_MSG("Loading certificate...");
     /* -c Load server certificates into WOLFSSL_CTX */
@@ -204,7 +145,8 @@ void tls_smp_server_task()
     else {
         ESP_LOGE(TAG, "ERROR: failed to load cert\n");
     }
-    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                      - uxTaskGetStackHighWaterMark(NULL));
 
 #ifndef NO_DH
     #define DEFAULT_MIN_DHKEY_BITS 1024
@@ -220,10 +162,6 @@ void tls_smp_server_task()
 
     WOLFSSL_MSG("Loading key info...");
     /* -k Load server key into WOLFSSL_CTX */
-//    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-//                                            server_sm2_priv,
-//                                            sizeof_server_sm2_priv,
-//                                            WOLFSSL_FILETYPE_PEM);
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                             //server_key_der_2048, sizeof_server_key_der_2048,
                                             server_sm2_priv,
@@ -236,7 +174,8 @@ void tls_smp_server_task()
     else {
         ESP_LOGE(TAG, "ERROR: failed to load PrivateKey_buffer server_sm2_priv\n");
     }
-    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                      - uxTaskGetStackHighWaterMark(NULL));
 //    /* -A load authority */
 //    ret = wolfSSL_CTX_load_verify_buffer(ctx,
 //                                         client_sm2,
@@ -302,7 +241,8 @@ void tls_smp_server_task()
     ESP_LOGI(TAG, "accept clients...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                          - uxTaskGetStackHighWaterMark(NULL));
         WOLFSSL_MSG("Waiting for a connection...");
         /* Accept client connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
@@ -321,7 +261,8 @@ void tls_smp_server_task()
             ESP_LOGE(TAG, "wolfSSL_accept error %d", wolfSSL_get_error(ssl, ret));
         }
         WOLFSSL_MSG("Client connected successfully");
-        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                          - uxTaskGetStackHighWaterMark(NULL));
 
         /* Read the client data into our buff array */
         memset(buff, 0, sizeof(buff));
@@ -329,7 +270,8 @@ void tls_smp_server_task()
             ESP_LOGE(TAG, "ERROR: failed to read");
         }
         /* Print to stdout any data the client sends */
-        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                          - uxTaskGetStackHighWaterMark(NULL));
         WOLFSSL_MSG("Client sends:");
         WOLFSSL_MSG(buff);
         /* Check for server shutdown command */
@@ -356,38 +298,38 @@ void tls_smp_server_task()
 
     vTaskDelete(NULL);
 
-    return;                 /* Return reporting a success               */
-}
-
-/* for FreeRTOS */
-void app_main(void)
-{
-    stack_start = uxTaskGetStackHighWaterMark(NULL);
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-    //Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-    ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
-    set_time();
-
-#ifndef SINGLE_THREADED
-    /* start a thread with the task */
-    tls_smp_server_init();
+#if defined(SINGLE_THREADED)
+    return ret;             /* Return reporting a success               */
 #else
-    /* just call the task */
-    tls_smp_server_task();
+    /* no RTOS return */
+    return;                 /* Return reporting a success               */
 #endif
-    while (1) {
-        ESP_LOGV(TAG, "\n\nLoop...\n\n");
-        ESP_LOGV(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
-#ifndef SINGLE_THREADED
-        vTaskDelay(1000);
-#endif
-    }
 }
+
+#if defined(SINGLE_THREADED)
+    /* we don't initialize a thread */
+#else
+/* create task */
+int tls_smp_server_init(void)
+{
+    int ret;
+#if ESP_IDF_VERSION_MAJOR >= 4
+    TaskHandle_t _handle;
+#else
+    xTaskHandle _handle;
+#endif
+    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    ret = xTaskCreate(tls_smp_server_task,
+                      TLS_SMP_SERVER_TASK_NAME,
+                      TLS_SMP_SERVER_TASK_WORDS,
+                      NULL,
+                      TLS_SMP_SERVER_TASK_PRIORITY,
+                      &_handle);
+
+    if (ret != pdPASS) {
+        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
+    }
+    return ret;
+}
+#endif
+
