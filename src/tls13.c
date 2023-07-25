@@ -4180,7 +4180,6 @@ int SendTls13ClientHello(WOLFSSL* ssl)
         tls12minor = DTLSv1_2_MINOR;
     }
 #endif /* WOLFSSL_DTLS */
-
 #ifdef HAVE_SESSION_TICKET
     if (ssl->options.resuming &&
             (ssl->session->version.major != ssl->version.major ||
@@ -4345,7 +4344,6 @@ int SendTls13ClientHello(WOLFSSL* ssl)
         args->length = args->preXLength;
     }
 #endif
-
     /* Include length of TLS extensions. */
     ret = TLSX_GetRequestSize(ssl, client_hello, &args->length);
     if (ret != 0)
@@ -4532,10 +4530,12 @@ int SendTls13ClientHello(WOLFSSL* ssl)
                 ret = EchHashHelloInner(ssl, args->ech);
             }
 #endif
+  printf("Client hello %d\n", __LINE__);
 
             /* compute the outer hash */
             if (ret == 0)
                 ret = HashOutput(ssl, args->output, args->idx, 0);
+  printf("Client hello %d\n", __LINE__);
         }
     }
     if (ret != 0)

@@ -644,6 +644,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ** periph_module_disable() or threading not working properly.
             **/
             ESP_LOGW(TAG, "warning lockDepth mismatch.");
+          printf("Bad lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
@@ -752,12 +753,13 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 ESP_LOGW(TAG, "WARNING: Hardware Mode "
                               "interesting lock depth = %d,  %x",
                               ctx->lockDepth, (int)ctx->initializer);
-            }
+           printf("Bad lock depth @ %d: %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+           }
         }
         else {
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
-            ESP_LOGI(TAG, "\nHardware in use; Mode REVERT to ESP32_SHA_SW\n");
+            ESP_LOGI(TAG, "\nHardware in use for WC_ESP32SHA @ 0x%0xd; Mode REVERT to ESP32_SHA_SW\n", (unsigned)ctx);
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
@@ -774,6 +776,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
+          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
         periph_module_enable(PERIPH_SHA_MODULE);
         ctx->mode = ESP32_SHA_HW;
     }
@@ -805,12 +808,14 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      * and periph_module_disable() need to be unwound.
      *
      * see ref_counts[periph] in file: periph_ctrl.c */
+          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
     if (ctx->lockDepth > 0) {
         ctx->lockDepth--;
     }
     else {
         ctx->lockDepth = 0;
     }
+          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
 
 #if defined(SINGLE_THREADED)
     InUse = 0;
