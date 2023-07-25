@@ -1,11 +1,10 @@
+# This tag is used to include this file in the ESP Component Registry:
+# __ESP_COMPONENT_SOURCE__
 
 #
 # wolfssl client test
 #
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
-
-set(COMPONENT_SRCS "client-tls.c" "wifi_connect.c")
-set(COMPONENT_ADD_INCLUDEDIRS "." "./include")
 
 set (git_cmd "git")
 
@@ -19,7 +18,13 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_MULTI_INSTALL_WARNING")
 endif()
 
-register_component()
+## register_component()
+idf_component_register(SRCS main.c
+                            wifi_connect.c
+                            time_helper.c
+                            client-tls.c
+                       INCLUDE_DIRS "." "./include")
+#
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)

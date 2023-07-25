@@ -172,10 +172,27 @@ void tls_smp_client_task()
     if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
         ESP_LOGE(TAG,"ERROR: failed to create WOLFSSL_CTX\n");
     }
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    ESP_LOGI(TAG, "Start SM2\n");
+    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3");
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+    }
+#endif
+    ShowCiphers();
+    ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                      - uxTaskGetStackHighWaterMark(NULL));
+
     WOLFSSL_MSG("Loading...cert");
     /* Load client certificates into WOLFSSL_CTX */
-    if ((ret = wolfSSL_CTX_load_verify_buffer(ctx, ca_cert_der_2048,
-        sizeof_ca_cert_der_2048, WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+    if ((ret = wolfSSL_CTX_load_verify_buffer(ctx,
+        // ca_cert_der_2048, sizeof_ca_cert_der_2048,
+        root_sm2, sizeof_root_sm2,
+        WOLFSSL_FILETYPE_PEM)) != SSL_SUCCESS) {
         ESP_LOGE(TAG,"ERROR: failed to load %d, please check the file.\n",ret);
     }
     /* not peer check */
@@ -184,13 +201,17 @@ void tls_smp_client_task()
     } else {
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
-   	    if ((ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx, client_cert_der_2048,
-            sizeof_client_cert_der_2048, WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+   	    if ((ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+   	        // client_cert_der_2048, sizeof_client_cert_der_2048,
+   	        client_sm2, sizeof_client_sm2,
+   	        WOLFSSL_FILETYPE_PEM)) != SSL_SUCCESS) {
             ESP_LOGE(TAG,"ERROR: failed to load chain %d, please check the file.\n",ret);
         }
 
-        if ((ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key_der_2048,
-            sizeof_client_key_der_2048, WOLFSSL_FILETYPE_ASN1))  != SSL_SUCCESS) {
+        if ((ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+            // client_key_der_2048, sizeof_client_key_der_2048,
+            client_sm2_priv, sizeof_client_sm2_priv,
+            SSL_FILETYPE_PEM))  != SSL_SUCCESS) {
             wolfSSL_CTX_free(ctx); ctx = NULL;
             ESP_LOGE(TAG,"ERROR: failed to load key %d, please check the file.\n", ret);
         }

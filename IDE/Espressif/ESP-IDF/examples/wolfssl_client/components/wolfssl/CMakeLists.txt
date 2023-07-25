@@ -27,7 +27,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
-# set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
 
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
@@ -47,7 +47,9 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "wolfssl component CMAKE_BUILD_EARLY_EXPANSION:")
     idf_component_register(
                             REQUIRES "${COMPONENT_REQUIRES}"
-                            PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
+                            PRIV_REQUIRES # esp_hw_support
+                                          esp_timer
+                                          driver # this will typically only be needed for wolfSSL benchmark
                            )
 
 else()
@@ -354,9 +356,10 @@ else()
         "\"${WOLFSSL_ROOT}/src/conf.c\""
         "\"${WOLFSSL_ROOT}/src/misc.c\""
         "\"${WOLFSSL_ROOT}/src/pk.c\""
-        "\"${WOLFSSL_ROOT}/src/ssl_asn1.c\"" # included by ssl.c
-        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\""   # included by ssl.c
-        "\"${WOLFSSL_ROOT}/src/ssl_misc.c\"" # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_asn1.c\""    # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_bn.c\""      # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_certman.c\"" # included by ssl.c
+        "\"${WOLFSSL_ROOT}/src/ssl_misc.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
