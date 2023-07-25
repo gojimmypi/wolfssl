@@ -8,6 +8,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{F6A6A0B5-00FC-4324-9671-59E0B1C4E050}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\wolfssl\certs_test.h = ..\..\..\..\..\..\wolfssl\certs_test.h
+		..\..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\..\wolfssl\error-ssl.h
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c

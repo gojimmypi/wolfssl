@@ -139,7 +139,7 @@ void tls_smp_client_task()
 
     WOLFSSL_ENTER("tls_smp_client_task");
 
-    doPeerCheck = 0;
+    doPeerCheck = 1;
     sendGet = 0;
 
 #ifdef DEBUG_WOLFSSL
@@ -169,9 +169,11 @@ void tls_smp_client_task()
          ESP_LOGI(TAG, IPSTR, IP2STR(ip4_addr));
     }
     /* Create and initialize WOLFSSL_CTX */
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method())) == NULL) {
         ESP_LOGE(TAG,"ERROR: failed to create WOLFSSL_CTX\n");
     }
+        if (wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_2) != WOLFSSL_SUCCESS)
+            ESP_LOGE(TAG,"can't set minimum downgrade version");
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM2\n");
@@ -187,6 +189,13 @@ void tls_smp_client_task()
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
 
+#ifndef NO_DH
+    if (wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits)
+            != WOLFSSL_SUCCESS) {
+        err_sys("Error setting minimum DH key size");
+    }
+#endif
+
     WOLFSSL_MSG("Loading...cert");
     /* Load client certificates into WOLFSSL_CTX */
     if ((ret = wolfSSL_CTX_load_verify_buffer(ctx,
@@ -197,8 +206,10 @@ void tls_smp_client_task()
     }
     /* not peer check */
     if( doPeerCheck == 0 ){
+        ESP_LOGW(TAG, "doPeerCheck == 0");
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_NONE, 0);
     } else {
+        ESP_LOGW(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
    	    if ((ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
@@ -216,7 +227,7 @@ void tls_smp_client_task()
             ESP_LOGE(TAG,"ERROR: failed to load key %d, please check the file.\n", ret);
         }
 
-        wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
+        //wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
     }
 
     /* Initialize the server address struct with zeros */

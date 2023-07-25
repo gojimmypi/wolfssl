@@ -73,7 +73,7 @@
 #define TLS_SMP_CLIENT_TASK_WORDS        10240
 #define TLS_SMP_CLIENT_TASK_PRIORITY     8
 
-#define TLS_SMP_TARGET_HOST              "192.168.25.114"
+#define TLS_SMP_TARGET_HOST              "192.168.1.109"
 
 int tls_smp_client_init();
 int wifi_init_sta(void);
