@@ -145,7 +145,9 @@
 #define HASH_SIZE_LIMIT /* for test.c */
 
 /* only FAST_MATH has HW acceleration at this time */
-#define USE_FAST_MATH
+// #define USE_FAST_MATH
+#define WOLFSSL_SP_MATH_ALL
+#define WOLFSSL_SP_RISCV32
 
 /* optionally use SP_MATH */
 /* #define SP_MATH */

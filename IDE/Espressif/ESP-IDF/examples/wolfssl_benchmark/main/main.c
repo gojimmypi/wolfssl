@@ -232,6 +232,17 @@ void app_main(void)
 
     do {
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        #ifdef USE_FAST_MATH
+            ESP_LOGI(TAG, "USE_FAST_MATH");
+        #endif /* USE_FAST_MATH */
+
+        #ifdef WOLFSSL_SP_MATH_ALL
+            #ifdef WOLFSSL_SP_RISCV32
+                ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL + WOLFSSL_SP_RISCV32");
+            #else
+                ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL");
+            #endif
+        #endif /* WOLFSSL_SP_MATH_ALL */
         wolf_benchmark_task();
         ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 

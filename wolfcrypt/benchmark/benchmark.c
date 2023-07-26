@@ -10448,7 +10448,7 @@ static int string_matches(const char* arg, const char* str)
 
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
-        ESP_LOGI(TAG, "Enable ESP32-C3 timer ");
+        ESP_LOGI(TAG, "Enable ESP32-C6 timer ");
         ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));
         ESP_ERROR_CHECK(gptimer_start(esp_gptimer));
     #endif
