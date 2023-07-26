@@ -13689,7 +13689,8 @@ int wolfSSL_GetSessionFromCache(WOLFSSL* ssl, WOLFSSL_SESSION* output)
 #endif
         if (output->ticketLenAlloc)
             XFREE(output->ticket, output->heap, DYNAMIC_TYPE_SESSION_TICK);
-        output->ticket = tmpTicket;
+        output->ticket = tmpTicket; /* cppcheck-suppress autoVariables
+                                     */
         output->ticketLenAlloc = PREALLOC_SESSION_TICKET_LEN;
         output->ticketLen = 0;
         tmpBufSet = 1;
@@ -13776,6 +13777,10 @@ int wolfSSL_GetSessionFromCache(WOLFSSL* ssl, WOLFSSL_SESSION* output)
         }
 #endif /* HAVE_SESSION_TICKET && WOLFSSL_TLS13 */
     }
+
+    /* mollify confused cppcheck nullPointer warning. */
+    if (sess == NULL)
+        error = WOLFSSL_FAILURE;
 
     if (error == WOLFSSL_SUCCESS) {
 #if defined(HAVE_SESSION_TICKET) && defined(WOLFSSL_TLS13)
@@ -23752,12 +23757,14 @@ size_t wolfSSL_CRYPTO_cts128_encrypt(const unsigned char *in,
     if (lastBlkLen == 0)
         lastBlkLen = WOLFSSL_CTS128_BLOCK_SZ;
 
-    /* Encrypt data up to last block */
-    (*cbc)(in, out, len - lastBlkLen, key, iv, AES_ENCRYPT);
+    if (len - lastBlkLen != 0) {
+        /* Encrypt data up to last block */
+        (*cbc)(in, out, len - lastBlkLen, key, iv, AES_ENCRYPT);
 
-    /* Move to last block */
-    in += len - lastBlkLen;
-    out += len - lastBlkLen;
+        /* Move to last block */
+        in += len - lastBlkLen;
+        out += len - lastBlkLen;
+    }
 
     /* RFC2040: Pad Pn with zeros at the end to create P of length BB. */
     XMEMCPY(lastBlk, in, lastBlkLen);
@@ -23788,13 +23795,15 @@ size_t wolfSSL_CRYPTO_cts128_decrypt(const unsigned char *in,
     if (lastBlkLen == 0)
         lastBlkLen = WOLFSSL_CTS128_BLOCK_SZ;
 
-    /* Decrypt up to last two blocks */
-    (*cbc)(in, out, len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ, key, iv,
-            AES_DECRYPTION);
+    if (len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ != 0) {
+        /* Decrypt up to last two blocks */
+        (*cbc)(in, out, len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ, key, iv,
+                AES_DECRYPTION);
 
-    /* Move to last two blocks */
-    in += len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ;
-    out += len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ;
+        /* Move to last two blocks */
+        in += len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ;
+        out += len - lastBlkLen - WOLFSSL_CTS128_BLOCK_SZ;
+    }
 
     /* RFC2040: Decrypt Cn-1 to create Dn.
      * Use 0 buffer as IV to do straight decryption.

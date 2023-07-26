@@ -5608,7 +5608,7 @@ static const word16 R[32] = {
  * H: hash key = encrypt(key, 0)
  * x = x * H in field
  *
- * x: cumlative result
+ * x: cumulative result
  * m: 4-bit table
  *    [0..15] * H
  */
@@ -6459,7 +6459,7 @@ static void GHASH_INIT(Aes* aes) {
     /* Reset counts of AAD and cipher text. */
     aes->aOver = 0;
     aes->cOver = 0;
-    /* Extra initialization baed on implementation. */
+    /* Extra initialization based on implementation. */
     GHASH_INIT_EXTRA(aes);
 }
 
@@ -6538,7 +6538,7 @@ static void GHASH_UPDATE(Aes* aes, const byte* a, word32 aSz, const byte* c,
                 sz = (byte)cSz;
             }
             XMEMCPY(AES_LASTGBLOCK(aes) + aes->cOver, c, sz);
-            /* Update count of unsed encrypted counter. */
+            /* Update count of unused encrypted counter. */
             aes->cOver += sz;
             if (aes->cOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
@@ -6715,7 +6715,7 @@ static WARN_UNUSED_RESULT int wc_AesGcmEncrypt_STM32(
     /* if IV is not 12 calculate GHASH using software */
     if (ivSz != GCM_NONCE_MID_SZ
     #ifndef CRYP_HEADERWIDTHUNIT_BYTE
-        /* or harware that does not support partial block */
+        /* or hardware that does not support partial block */
         || sz == 0 || partial != 0
     #endif
     #if !defined(CRYP_HEADERWIDTHUNIT_BYTE) && !defined(STM32_AESGCM_PARTIAL)
@@ -7218,7 +7218,7 @@ static WARN_UNUSED_RESULT int wc_AesGcmDecrypt_STM32(
     /* if IV is not 12 calculate GHASH using software */
     if (ivSz != GCM_NONCE_MID_SZ
     #ifndef CRYP_HEADERWIDTHUNIT_BYTE
-        /* or harware that does not support partial block */
+        /* or hardware that does not support partial block */
         || sz == 0 || partial != 0
     #endif
     #if !defined(CRYP_HEADERWIDTHUNIT_BYTE) && !defined(STM32_AESGCM_PARTIAL)
@@ -8107,7 +8107,7 @@ static WARN_UNUSED_RESULT int AesGcmEncryptUpdate_aesni(
             /* Encrypt some of the plaintext. */
             xorbuf(AES_LASTGBLOCK(aes) + aes->cOver, p, sz);
             XMEMCPY(c, AES_LASTGBLOCK(aes) + aes->cOver, sz);
-            /* Update count of unsed encrypted counter. */
+            /* Update count of unused encrypted counter. */
             aes->cOver += sz;
             if (aes->cOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
@@ -8306,7 +8306,7 @@ extern void AES_GCM_decrypt_final_aesni(unsigned char* tag,
  *
  * @param [in, out] aes  AES object.
  * @param [out]     p    Buffer to hold plaintext.
- * @param [in]      c    Buffer holding ciper text.
+ * @param [in]      c    Buffer holding cipher text.
  * @param [in]      cSz  Length of cipher text/plaintext in bytes.
  * @param [in]      a    Buffer holding authentication data.
  * @param [in]      aSz  Length of authentication data in bytes.
@@ -8339,7 +8339,7 @@ static WARN_UNUSED_RESULT int AesGcmDecryptUpdate_aesni(
             /* Decrypt some of the cipher text. */
             xorbuf(AES_LASTGBLOCK(aes) + aes->cOver, c, sz);
             XMEMCPY(p, AES_LASTGBLOCK(aes) + aes->cOver, sz);
-            /* Update count of unsed encrypted counter. */
+            /* Update count of unused encrypted counter. */
             aes->cOver += sz;
             if (aes->cOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
@@ -8715,7 +8715,7 @@ int wc_AesGcmEncryptUpdate(Aes* aes, byte* out, const byte* in, word32 sz,
             ret = AesGcmCryptUpdate_C(aes, out, in, sz);
             if (ret != 0)
                 return ret;
-            /* Update the authenication tag with any authentication data and the
+            /* Update the authentication tag with any authentication data and the
              * new cipher text. */
             GHASH_UPDATE(aes, authIn, authInSz, out, sz);
         }
@@ -8857,7 +8857,7 @@ int wc_AesGcmDecryptUpdate(Aes* aes, byte* out, const byte* in, word32 sz,
         else
     #endif
         {
-            /* Update the authenication tag with any authentication data and
+            /* Update the authentication tag with any authentication data and
              * cipher text. */
             GHASH_UPDATE(aes, authIn, authInSz, in, sz);
             /* Decrypt the cipher text. */

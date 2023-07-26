@@ -16515,6 +16515,9 @@ int SendFatalAlertOnly(WOLFSSL *ssl, int error)
     case WANT_WRITE:
     case WANT_READ:
     case ZERO_RETURN:
+#ifdef WOLFSSL_NONBLOCK_OCSP
+    case OCSP_WANT_READ:
+#endif
 #ifdef WOLFSSL_ASYNC_CRYPT
     case WC_PENDING_E:
 #endif
@@ -16834,7 +16837,7 @@ int wolfSSL_DtlsUpdateWindow(word16 cur_hi, word32 cur_lo,
         diff %= DTLS_WORD_BITS;
 
         if (idx < WOLFSSL_DTLS_WINDOW_WORDS)
-            window[idx] |= (1 << diff);
+            window[idx] |= (1U << diff);
     }
     else {
         _DtlsUpdateWindowGTSeq(diff + 1, window);

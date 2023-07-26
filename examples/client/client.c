@@ -223,6 +223,9 @@ static int NonBlockingSSL_Connect(WOLFSSL* ssl)
         #ifdef WOLFSSL_ASYNC_CRYPT
             || error == WC_PENDING_E
         #endif
+        #ifdef WOLFSSL_NONBLOCK_OCSP
+            || error == OCSP_WANT_READ
+        #endif
         ) {
         #ifndef WOLFSSL_CALLBACKS
             ret = wolfSSL_connect(ssl);
@@ -294,7 +297,7 @@ static void ShowVersions(void)
 #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EITHER_SIDE)
     XSTRNCAT(verStr, "e(either):", 11);
 #endif
-    /* print all stings at same time on stdout to avoid any flush issues */
+    /* print all strings at same time on stdout to avoid any flush issues */
     printf("%s\n", verStr);
 }
 
