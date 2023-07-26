@@ -19,6 +19,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{AC5ADB76-109B-40C8-A4E3-42A80DA29714}"
 	ProjectSection(SolutionItems) = preProject
 		..\components\wolfssl\include\config.h = ..\components\wolfssl\include\config.h
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject

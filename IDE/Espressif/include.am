@@ -64,11 +64,17 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/sdkconfig.defaults
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/VisualGDB/VisualGDB_wolfssl_server.vgdbproj
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/component.mk
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/main.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/server-tls.c
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/time_helper.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/wifi_connect.c
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/server-tls.h
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/time_helper.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/wifi_connect.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/component.mk
+
+
 
 #  wolfSSL Test
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/CMakeLists.txt

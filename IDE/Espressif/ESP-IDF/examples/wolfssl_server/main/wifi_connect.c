@@ -67,7 +67,7 @@
     static EventGroupHandle_t wifi_event_group;
 #endif
 
-/* prefix for logging */
+/* breadcrumb prefix for logging */
 const static char *TAG = "tls_server";
 /* proto-type definition */
 // extern void tls_smp_server_task();

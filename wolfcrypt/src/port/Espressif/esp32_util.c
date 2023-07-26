@@ -184,31 +184,52 @@ static int ShowExtendedSystemInfo_platform_espressif()
 #else
     /* first show what platform hardware acceleration is enabled
     ** (some new platforms may not be supported yet) */
-#if defined(CONFIG_IDF_TARGET_ESP32)
-    WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32.");
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S2.");
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
-#else
-#error "ESP32_CRYPT not yet supported on this IDF TARGET"
+    #if defined(CONFIG_IDF_TARGET_ESP32)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S2.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
+    #else
+    #error "ESP32_CRYPT not yet supported on this IDF TARGET"
+    #endif
+
+        /* Even though enabled, some specifics may be disabled */
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_HASH is defined!"
+                               "(disabled HW SHA).");
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_AES is defined!"
+                               "(disabled HW AES).");
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_RSA_PRI defined!"
+                               "(disabled HW RSA)");
+    #endif
 #endif
 
-    /* Even though enabled, some specifics may be disabled */
-#if defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
-    WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_HASH is defined!"
-                           "(disabled HW SHA).");
-#endif
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    WOLFSSL_VERSION_PRINTF("SM Ciphers endabled");
+    #if defined(WOLFSSL_SM2)
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM2 enabled");
+    #else
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM2 NOT enabled");
+    #endif
 
-#if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-    WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_AES is defined!"
-                           "(disabled HW AES).");
-#endif
+    #if defined(WOLFSSL_SM3)
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM3 enabled");
+    #else
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM3 NOT enabled");
+    #endif
 
-#if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
-    WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_RSA_PRI defined!"
-                           "(disabled HW RSA)");
-#endif
+    #if defined(WOLFSSL_SM4)
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM4 enabled");
+    #else
+        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM4 NOT enabled");
+    #endif
 #endif
 
     return 0;

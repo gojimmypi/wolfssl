@@ -349,10 +349,10 @@ void tls_smp_client_task()
     printf("Server:");
     printf("%s", buff);
     /* Cleanup and return */
-    wolfSSL_free(ssl); /* Free the wolfSSL object                  */
+    wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */
-    wolfSSL_Cleanup(); /* Cleanup the wolfSSL environment          */
-    close(sockfd); /* Close the connection to the server       */
+    wolfSSL_Cleanup();     /* Cleanup the wolfSSL environment          */
+    close(sockfd);         /* Close the connection to the server       */
 
     vTaskDelete(NULL);
 

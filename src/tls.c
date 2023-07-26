@@ -61,10 +61,6 @@
     #include <wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h>
 #endif
 
-#if defined(WOLFSSL_SM3)
-    #include <sm3.h>
-#endif
-
 #include <wolfssl/wolfcrypt/hpke.h>
 
 #ifndef NO_TLS
