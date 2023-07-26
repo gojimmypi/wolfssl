@@ -351,15 +351,44 @@
     #define WC_RSA_BLINDING
 
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
-   #ifndef NO_ESP32_CRYPT
+    #ifndef NO_ESP32_CRYPT
         #define WOLFSSL_ESP32_CRYPT
         #if defined(ESP32_USE_RSA_PRIMITIVE) && \
             !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
             #define WOLFSSL_ESP32_CRYPT_RSA_PRI
             #define WOLFSSL_SMALL_STACK
         #endif
-   #endif
-#endif
+    #endif
+    #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+        /* SM settings */
+        #undef  WOLFSSL_BASE16
+        #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+
+        #undef  WOLFSSL_SM4_ECB
+        #define WOLFSSL_SM4_ECB
+
+        #undef  WOLFSSL_SM4_CBC
+        #define WOLFSSL_SM4_CBC
+
+        #undef  WOLFSSL_SM4_CTR
+        #define WOLFSSL_SM4_CTR
+
+        #undef  WOLFSSL_SM4_GCM
+        #define WOLFSSL_SM4_GCM
+
+        #undef  WOLFSSL_SM4_CCM
+        #define WOLFSSL_SM4_CCM
+
+        #undef  HAVE_POLY1305
+        #define HAVE_POLY1305
+
+        #undef  HAVE_CHACHA
+        #define HAVE_CHACHA
+
+        #undef  HAVE_AESGCM
+        #define HAVE_AESGCM
+    #endif /* SM */
+#endif /* defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE) */
 #endif /* WOLFSSL_ESPIDF */
 
 #if defined(WOLFCRYPT_ONLY)
