@@ -10345,28 +10345,20 @@ int SendBuffered(WOLFSSL* ssl)
                                       (int)ssl->buffers.outputBuffer.length,
                                       ssl->IOCB_WriteCtx);
         if (sent < 0) {
-            #ifdef WOLFSSL_ESPIDF
-            ESP_LOGI("int", "Sent = %d", sent);
-            #endif
+            WOLFSSL_MSG("WARNING: Sent < 0%d");
             switch (sent) {
 
                 case WOLFSSL_CBIO_ERR_WANT_WRITE:        /* would block */
-                    #ifdef WOLFSSL_ESPIDF
-                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_WANT_WRITE");
-                    #endif
+                    WOLFSSL_MSG("WOLFSSL_CBIO_ERR_WANT_WRITE");
                     return WANT_WRITE;
 
                 case WOLFSSL_CBIO_ERR_CONN_RST:          /* connection reset */
-                    #ifdef WOLFSSL_ESPIDF
-                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_RST");
-                    #endif
+                    WOLFSSL_MSG("WOLFSSL_CBIO_ERR_CONN_RST");
                     ssl->options.connReset = 1;
                     break;
 
                 case WOLFSSL_CBIO_ERR_ISR:               /* interrupt */
-                    #ifdef WOLFSSL_ESPIDF
-                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_ISR");
-                    #endif
+                    WOLFSSL_MSG("WOLFSSL_CBIO_ERR_ISR");
                     /* see if we got our timeout */
                     #ifdef WOLFSSL_CALLBACKS
                         if (ssl->toInfoOn) {
@@ -10387,22 +10379,16 @@ int SendBuffered(WOLFSSL* ssl)
                     continue;
 
                 case WOLFSSL_CBIO_ERR_CONN_CLOSE: /* epipe / conn closed */
-                    #ifdef WOLFSSL_ESPIDF
-                    ESP_LOGW("int", "WOLFSSL_CBIO_ERR_CONN_CLOSE");
-                    #endif
+                    WOLFSSL_MSG("WOLFSSL_CBIO_ERR_CONN_CLOSE");
                     ssl->options.connReset = 1;  /* treat same as reset */
                     break;
 
                 default:
-                    #ifdef WOLFSSL_ESPIDF
-                    ESP_LOGE("int", "SOCKET_ERROR_E");
-                    #endif
+                    WOLFSSL_MSG("SOCKET_ERROR_E");
                     return SOCKET_ERROR_E;
             }
 
-             #ifdef WOLFSSL_ESPIDF
-             ESP_LOGE("int", "SOCKET_ERROR_E 2");
-             #endif
+             WOLFSSL_MSG("Unknown error, returning SOCKET_ERROR_E");
              return SOCKET_ERROR_E;
         }
 
@@ -10459,15 +10445,13 @@ static WC_INLINE int GrowOutputBuffer(WOLFSSL* ssl, int size)
     WOLFSSL_MSG("growing output buffer");
 
     if (tmp == NULL) {
-        #ifdef WOLFSSL_ESPIDF
-        ESP_LOGE("oops", "out of memory");
-        #endif
+        WOLFSSL_MSG("out of memory");
+
+
         return MEMORY_E;
     }
     else {
-        #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI("internal.c", "GrowOutputBuffer ok");
-        #endif
+        WOLFSSL_MSG("GrowOutputBuffer ok");
     }
 
 #if WOLFSSL_GENERAL_ALIGNMENT > 0
@@ -19772,10 +19756,8 @@ static int GetInputData(WOLFSSL *ssl, word32 size)
             return WANT_READ;
 
         if (in < 0) {
-             #ifdef WOLFSSL_ESPIDF
-             ESP_LOGE("int", "SOCKET_ERROR_E 3");
-             #endif
-             WOLFSSL_ERROR_VERBOSE(SOCKET_ERROR_E);
+            WOLFSSL_MSG("SOCKET_ERROR_E, in < 0");
+            WOLFSSL_ERROR_VERBOSE(SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
         }
 
@@ -20758,9 +20740,7 @@ default:
                                             ssl->buffers.inputBuffer.length);
                         if (ret != 0) {
                             if (SendFatalAlertOnly(ssl, ret) == SOCKET_ERROR_E) {
-                                #ifdef WOLFSSL_ESPIDF
-                                ESP_LOGE("int", "SendFatalAlertOnly");
-                                #endif
+                                WOLFSSL_MSG("SendFatalAlertOnly");
                                 ret = SOCKET_ERROR_E;
                             }
                         }
@@ -24982,8 +24962,6 @@ static const CipherSuiteInfo cipher_names[] =
 
 #ifdef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
     SUITE_INFO("ECDHE-ECDSA-SM4-CBC-SM3","TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3",SM_BYTE,TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3, TLSv1_2_MINOR, SSLv3_MAJOR),
-#else
-    #warning "SM3 missing"
 #endif
 
 #ifdef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_GCM_SM3
