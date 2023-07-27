@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
+/* #define SHOW_SSID_AND_PASSWORD */ /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESP32
@@ -63,7 +63,7 @@
 #define HAVE_SUPPORTED_CURVES
 
 /* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/* #define SINGLE_THREADED */
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM

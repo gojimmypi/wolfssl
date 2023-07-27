@@ -21,29 +21,58 @@
 
 #include "server-tls.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
+/* Espressif FreeRTOS */
+#ifndef SINGLE_THREADED
+    #include <freertos/FreeRTOS.h>
+    #include <freertos/task.h>
+    #include <freertos/event_groups.h>
+#endif
 
-/* socket includes */
+/* Espressif socket */
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
 
+/* Espressif flash */
+#include <nvs_flash.h>
+
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
-#include <wolfssl/certs_test.h>
-#include "time_helper.h"
-
-/* ESP specific */
-#include "wifi_connect.h"
-#include "nvs_flash.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+    #define CTX_CA_CERT          root_sm2
+    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
+    #define CTX_SERVER_CERT      server_sm2
+    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+    #define CTX_SERVER_KEY       server_sm2_priv
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+#else
+    #include <wolfssl/certs_test.h>
+    #define CTX_CA_CERT          ca_cert_der_2048
+    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_CERT      server_cert_der_2048
+    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_KEY       server_key_der_2048
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+#endif
+
+/* project */
+#include "wifi_connect.h"
+#include "time_helper.h"
+#include "server-tls.h"
 
 static const char* const TAG = "server-tls";
 int stack_start = -1;
@@ -133,8 +162,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* -c Load server certificates into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                 //server_cert_der_2048, sizeof_server_cert_der_2048,
-                server_sm2, sizeof_server_sm2,
-                WOLFSSL_FILETYPE_PEM);
+                CTX_SERVER_CERT, CTX_SERVER_CERT_SIZE,
+                CTX_SERVER_CERT_TYPE);
+
 //    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
 //                                             server_sm2,
 //                                             sizeof_server_sm2,
@@ -164,9 +194,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* -k Load server key into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                             //server_key_der_2048, sizeof_server_key_der_2048,
-                                            server_sm2_priv,
-                                            sizeof_server_sm2_priv,
-                                            SSL_FILETYPE_PEM);
+                                            CTX_SERVER_KEY,
+                                            CTX_SERVER_KEY_SIZE,
+                                            CTX_SERVER_KEY_TYPE);
 
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Loaded PrivateKey_buffer server_sm2_priv\n");
@@ -244,6 +274,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                           - uxTaskGetStackHighWaterMark(NULL));
         WOLFSSL_MSG("Waiting for a connection...");
+        wifi_show_ip();
+
         /* Accept client connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
@@ -310,25 +342,36 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* we don't initialize a thread */
 #else
 /* create task */
-int tls_smp_server_init(void)
+int tls_smp_server_init(int port)
 {
     int ret;
+    int thisPort;
+    thisPort = port;
+    if (thisPort == 0) {
+        thisPort = DEFAULT_PORT;
+    }
+
+
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
 #else
     xTaskHandle _handle;
 #endif
     /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
+                   TLS_SMP_SERVER_TASK_WORDS);
     ret = xTaskCreate(tls_smp_server_task,
                       TLS_SMP_SERVER_TASK_NAME,
                       TLS_SMP_SERVER_TASK_WORDS,
-                      NULL,
+                      (void*)&thisPort,
                       TLS_SMP_SERVER_TASK_PRIORITY,
                       &_handle);
 
     if (ret != pdPASS) {
         ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
     }
+
+    /* vTaskStartScheduler(); // called automatically in ESP-IDF */
     return ret;
 }
 #endif

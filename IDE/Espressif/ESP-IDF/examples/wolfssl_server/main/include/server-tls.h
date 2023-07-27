@@ -21,6 +21,15 @@
 #ifndef _SERVER_TLS_
 #define _SERVER_TLS_
 
+#define DEFAULT_PORT                     11111
+
+#define TLS_SMP_CLIENT_TASK_NAME         "tls_client_example"
+#define TLS_SMP_CLIENT_TASK_WORDS        10240
+#define TLS_SMP_CLIENT_TASK_PRIORITY     8
+
+#define TLS_SMP_TARGET_HOST              "192.168.25.109"
+
+
 #include "user_settings.h"
 
 #if defined(SINGLE_THREADED)
@@ -29,6 +38,7 @@
     #include "freertos/FreeRTOS.h"
     #define WOLFSSL_ESP_TASK void
 #endif
+
 
 /* Function to show the ciphers available. */
 int ShowCiphers(void);
@@ -40,6 +50,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args);
 #if defined(SINGLE_THREADED)
     /* no init neded */
 #else
-    int tls_smp_server_init(void);
+    int tls_smp_server_init(int port);
 #endif
 #endif /* _SERVER_TLS_ */

@@ -18,16 +18,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef _TLS_WIFI_H_
-#define _TLS_WIFI_H_
+#ifndef _WIFI_CONNECT_H_
+#define _WIFI_CONNECT_H_
 
-#include "esp_idf_version.h"
-#include "esp_log.h"
-//#include "esp_wifi.h"
+#include <esp_idf_version.h>
+#include <esp_log.h>
+
+
 #if ESP_IDF_VERSION_MAJOR >= 4
-//#include "esp_event.h"
+    //#include "esp_wifi.h"
+    //#include "esp_event.h"
 #else
-#include "esp_event_loop.h"
+    #include "esp_event_loop.h"
 #endif
 
 #define DEFAULT_PORT                     11111
@@ -51,7 +53,18 @@
 #define  USE_MY_PRIVATE_CONFIG
 
 #ifdef  USE_MY_PRIVATE_CONFIG
-    #include "/workspace/my_private_config.h"
+    #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
+        #include "/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_WSL)
+        #include "/mnt/c/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_LINUX)
+        #include "~/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
+        #include "~/Documents/my_private_config.h"
+    #else
+        #include "/workspace/my_private_config.h"
+//        #warning "did not detect environment"
+	#endif
 #else
     /*
     ** The examples use WiFi configuration that you can set via project
@@ -67,14 +80,8 @@
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
 
-#define DEFAULT_PORT                     11111
-
-#define TLS_SMP_CLIENT_TASK_NAME         "tls_client_example"
-#define TLS_SMP_CLIENT_TASK_WORDS        10240
-#define TLS_SMP_CLIENT_TASK_PRIORITY     8
-
-#define TLS_SMP_TARGET_HOST              "192.168.25.114"
-
-int tls_smp_server_init();
 int wifi_init_sta(void);
-#endif
+
+int wifi_show_ip(void);
+
+#endif /* _WIFI_CONNECT_H_ */

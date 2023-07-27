@@ -140,7 +140,7 @@ void app_main(void)
     tls_smp_server_task((void*)NULL);
 #else
     /* start a thread with the task */
-    tls_smp_server_init();
+    tls_smp_server_init((int)NULL); /* NULL will use the DEFAULT_PORT value */
 #endif
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
