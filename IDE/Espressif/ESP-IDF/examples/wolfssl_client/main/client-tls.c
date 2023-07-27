@@ -29,13 +29,13 @@
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
-#include <wolfssl/certs_test.h>
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
     #define CTX_CA_CERT_SIZE     sizeof_root_sm2
     #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
@@ -46,6 +46,7 @@
     #define CTX_CLIENT_KEY_SIZE  sizeof_client_sm2_priv
     #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_PEM
 #else
+    #include <wolfssl/certs_test.h>
     #define CTX_CA_CERT          ca_cert_der_2048
     #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
     #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
@@ -358,3 +359,30 @@ void tls_smp_client_task()
 
     return;                /* Return reporting a success               */
 }
+
+#if defined(SINGLE_THREADED)
+    /* we don't initialize a thread */
+#else
+/* create task */
+int tls_smp_client_init(int port)
+{
+    int ret;
+#if ESP_IDF_VERSION_MAJOR >= 4
+    TaskHandle_t _handle;
+#else
+    xTaskHandle _handle;
+#endif
+    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    ret = xTaskCreate(tls_smp_client_task,
+                      TLS_SMP_CLIENT_TASK_NAME,
+                      TLS_SMP_CLIENT_TASK_WORDS,
+                      NULL,
+                      TLS_SMP_CLIENT_TASK_PRIORITY,
+                      &_handle);
+
+    if (ret != pdPASS) {
+        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_CLIENT_TASK_NAME);
+    }
+    return ret;
+}
+#endif

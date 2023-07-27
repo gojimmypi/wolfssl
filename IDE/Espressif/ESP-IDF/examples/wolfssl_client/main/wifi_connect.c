@@ -46,64 +46,6 @@
 /* breadcrumb prefix for logging */
 const static char *TAG = "tls_client";
 
-/* proto-type definition */
-
-
-static void set_time()
-{
-    /* set dummy wallclock time. */
-    struct timeval utctime;
-    struct timezone tz;
-    struct strftime_buf;
-    time_t now;
-    struct tm timeinfo;
-    char strftime_buf[64];
-    /* please update the time if seeing unknown failure when loading cert.  */
-    /* this could cause TLS communication failure due to time expiration    */
-    /* incleasing 31536000 seconds is close to spend 356 days.              */
-    utctime.tv_sec = 1645797600; /* dummy time: Fri 25 Feb 2022 02:00:00 2022 */
-    utctime.tv_usec = 0;
-    tz.tz_minuteswest = 0;
-    tz.tz_dsttime = 0;
-
-    settimeofday(&utctime, &tz);
-
-    time(&now);
-    localtime_r(&now, &timeinfo);
-
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
-
-#if ESP_IDF_VERSION_MAJOR < 4
-    /* wait until wifi connect */
-    xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-                                            false, true, portMAX_DELAY);
-#endif
-    /* now we start client tasks. */
-    tls_smp_client_init();
-}
-
-/* create task */
-void tls_smp_client_init_old(void)
-{
-    int ret = 0;
-//#if ESP_IDF_VERSION_MAJOR >= 4
-//        TaskHandle_t _handle;
-//#else
-//        xTaskHandle _handle;
-//#endif
-    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
-//    ret = xTaskCreate(tls_smp_client_task,
-//                      TLS_SMP_CLIENT_TASK_NAME,
-//                      TLS_SMP_CLIENT_TASK_WORDS,
-//                      NULL,
-//                      TLS_SMP_CLIENT_TASK_PRIORITY,
-//                      &_handle);
-
-    if (ret != pdPASS) {
-        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_CLIENT_TASK_NAME);
-    }
-}
 #if ESP_IDF_VERSION_MAJOR < 4
 /* event handler for wifi events */
 static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
@@ -178,6 +120,7 @@ static EventGroupHandle_t s_wifi_event_group;
 
 
 static int s_retry_num = 0;
+ip_event_got_ip_t* event;
 
 
 static void event_handler(void* arg, esp_event_base_t event_base,
@@ -195,8 +138,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         }
         ESP_LOGI(TAG,"connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        event = (ip_event_got_ip_t*) event_data;
+        wifi_show_ip();
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -280,8 +223,14 @@ int wifi_init_sta(void)
 #endif
     return 0;
 }
+
+int wifi_show_ip(void)
+{
+    ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+    return 0;
+}
 #endif
-/* entry point */
+/* entry point TODO remove */
 void app_main_old(void)
 {
     ESP_LOGI(TAG, "Start app_main...");
@@ -373,6 +322,5 @@ void app_main_old(void)
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
                                         TLS_SMP_WIFI_SSID, TLS_SMP_WIFI_PASS);
 #endif
-    ESP_LOGI(TAG, "Set dummy time...");
-    set_time();
+
 }

@@ -63,7 +63,7 @@
 #define HAVE_SUPPORTED_CURVES
 
 /* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/* #define SINGLE_THREADED */
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM

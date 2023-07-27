@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef _TLS_WIFI_H_
-#define _TLS_WIFI_H_
+#ifndef _WIFI_CONNECT_H
+#define _WIFI_CONNECT_H
 
 #include "esp_idf_version.h"
 #include "esp_log.h"
@@ -51,7 +51,18 @@
 #define  USE_MY_PRIVATE_CONFIG
 
 #ifdef  USE_MY_PRIVATE_CONFIG
-    #include "/workspace/my_private_config.h"
+    #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
+        #include "/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_WSL)
+        #include "/mnt/c/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_LINUX)
+        #include "~/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
+        #include "~/Documents/my_private_config.h"
+    #else
+        #include "/workspace/my_private_config.h"
+//        #warning "did not detect environment"
+	#endif
 #else
     /*
     ** The examples use WiFi configuration that you can set via project
@@ -75,6 +86,8 @@
 
 #define TLS_SMP_TARGET_HOST              "192.168.1.109"
 
-int tls_smp_client_init();
 int wifi_init_sta(void);
-#endif
+
+int wifi_show_ip(void);
+
+#endif /* _WIFI_CONNECT_H_ */
