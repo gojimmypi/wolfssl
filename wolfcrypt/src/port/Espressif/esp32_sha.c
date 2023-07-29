@@ -60,11 +60,16 @@ static const char* TAG = "wolf_hw_sha";
     #define WC_SHA_DIGEST_SIZE 20
 #endif
 
+#define DEBUG_WOLFSSL_SHA_MUTEX
 /* RTOS mutex or just InUse variable  */
 #if defined(SINGLE_THREADED)
     static int InUse = 0;
 #else
     static wolfSSL_Mutex sha_mutex = NULL;
+#endif
+
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+    static int mutex_ctx_owner = NULL;
 #endif
 
 #if defined(DEBUG_WOLFSSL)
@@ -257,6 +262,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             ** If there's a problem, likely some undesired operation
             ** outside of wolfSSL.
             */
+/* TODO check if HW actually locked;  */
             esp_sha_hw_unlock(ctx);
             ctx->mode = ESP32_SHA_INIT;
             break;
@@ -660,6 +666,25 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     return ret;
 } /* esp_unroll_sha_module_enable */
 
+
+/*
+**
+*/
+int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
+{
+    int ret = 0;
+    ESP_LOGV(TAG, "enter esp_sha_hw_islocked %x", (int)ctx->initializer);
+
+    if (ctx == NULL) {
+        ret = BAD_FUNC_ARG;
+    }
+
+    if (ret == 0) {
+
+    }
+    return ret;
+}
+
 /*
 ** lock HW engine.
 ** this should be called before using engine.
@@ -668,8 +693,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
 
-    ESP_LOGV(TAG, "enter esp_sha_hw_lock %x", (int)ctx->initializer);
-
+    ESP_LOGI(TAG, "enter esp_sha_hw_lock for %x", (int)ctx->initializer);
+/* TODO remove test code */
+    if ((int)ctx->initializer == 0x3fcc8198) {
+        ESP_LOGW(TAG, "Found 0x3fcc8198!");
+    }
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
         return BAD_FUNC_ARG;
@@ -720,13 +748,21 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /* created, but not yet locked */
         ret = esp_CryptHwMutexInit(&sha_mutex);
         if (ret == 0) {
-            ESP_LOGV(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
+            ESP_LOGI(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            mutex_ctx_owner = 0;
+        #endif
         }
         else {
             ESP_LOGE(TAG, "esp_CryptHwMutexInit sha_mutex failed.");
             sha_mutex = 0;
 
             ESP_LOGI(TAG, "Revert to ctx->mode = ESP32_SHA_SW.");
+
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            ESP_LOGI(TAG, "Current mutext owner = %x", mutex_ctx_owner);
+        #endif
+
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, just not using HW */
         }
@@ -735,7 +771,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {
         /* try to lock the HW engine */
-        ESP_LOGV(TAG, "ESP32_SHA_INIT\n");
+        ESP_LOGI(TAG, "ESP32_SHA_INIT for %x\n", (int)ctx->initializer);
 
         /* we don't wait:
         ** either the engine is free, or we fall back to SW
@@ -743,14 +779,17 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
             ret = esp_unroll_sha_module_enable(ctx);
-            ESP_LOGV(TAG, "Hardware Mode, lock depth = %d,  %x",
+            ESP_LOGI(TAG, "Hardware Mode Active, lock depth = %d, for %x",
                           ctx->lockDepth, (int)ctx->initializer);
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            mutex_ctx_owner = (int)ctx->initializer;
+        #endif
 
             if (ctx->lockDepth > 0) {
                 /* it is unlikely that this would ever occur,
                 ** as the mutex should be gate keeping */
                 ESP_LOGW(TAG, "WARNING: Hardware Mode "
-                              "interesting lock depth = %d,  %x",
+                              "interesting lock depth = %d, for %x",
                               ctx->lockDepth, (int)ctx->initializer);
             }
         }
@@ -758,6 +797,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
             ESP_LOGI(TAG, "\nHardware in use; Mode REVERT to ESP32_SHA_SW\n");
+            ESP_LOGI(TAG, "Software Mode, lock depth = %d, for %x",
+                          ctx->lockDepth, (int)ctx->initializer);
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            ESP_LOGI(TAG, "Current mutext owner = %x", mutex_ctx_owner);
+        #endif
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
@@ -818,7 +862,11 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* unlock HW engine for next use */
     esp_CryptHwMutexUnLock(&sha_mutex);
 #endif
-    ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
+
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+    mutex_ctx_owner = 0;
+#endif
+    ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
     return 0;
 } /* esp_sha_hw_unlock */
 
