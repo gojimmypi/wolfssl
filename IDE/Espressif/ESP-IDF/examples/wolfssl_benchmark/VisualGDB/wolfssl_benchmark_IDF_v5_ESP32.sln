@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{BDD0
 		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
 		..\components\wolfssl\include\config.h = ..\components\wolfssl\include\config.h
 		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject

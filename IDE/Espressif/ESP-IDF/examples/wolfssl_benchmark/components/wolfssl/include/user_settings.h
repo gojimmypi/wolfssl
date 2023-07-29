@@ -147,7 +147,7 @@
 /* only FAST_MATH has HW acceleration at this time */
 // #define USE_FAST_MATH
 #define WOLFSSL_SP_MATH_ALL
-#define WOLFSSL_SP_RISCV32
+// #define WOLFSSL_SP_RISCV32 /* only valid on RISC-V chips */
 
 /* optionally use SP_MATH */
 /* #define SP_MATH */
@@ -225,6 +225,11 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH

@@ -77,15 +77,19 @@ Reminder than when building on WSL in `/mnt/c` there will be a noticeable perfor
 Example build on WSL:
 
 ```
-Optionally install wolfSSL component
-# cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF
-./setup.sh
+Optionally update toolchain
+
+cd /mnt/c/SysGCC/esp32/esp-idf/master
+git fetch
+git pull
+git submodule update --init --recursive
 
 cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 
-# Pick ESP-IDF install directory, this one for v4.4.2 in VisualGDB
-. /mnt/c/SysGCC/esp32/esp-idf/v4.4.2/export.sh
+# Pick ESP-IDF install directory, this one for v5.0 in VisualGDB
+. /mnt/c/SysGCC/esp32/esp-idf/v5.0/export.sh
 
+idf.py set-target ESP32C3
 
 idf.py build flash -p /dev/ttyS20 -b 115200 monitor
 ```
