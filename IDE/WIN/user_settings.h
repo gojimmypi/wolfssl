@@ -114,9 +114,6 @@
 #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
     #define NO_FILESYSTEM
 
-    #undef BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
-    #define BUILD_TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
-
     #undef  WOLFSSL_SM4_ECB
     #define WOLFSSL_SM4_ECB
 
