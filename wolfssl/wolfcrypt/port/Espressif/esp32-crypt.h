@@ -383,6 +383,7 @@ extern "C"
     int esp_sha_init_ctx(WC_ESP32SHA* ctx);
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
+    int esp_sha_hw_islocked(WC_ESP32SHA* ctx); /* 1 = locked, 0 = not locked */
 
     struct wc_Sha;
     int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
@@ -430,13 +431,14 @@ extern "C"
     int esp_mp_exptmod(MATH_INT_T* X,    /* G  */
                        MATH_INT_T* Y,    /* X  */
                        MATH_INT_T* M,    /* P  */
-                       MATH_INT_T* Z); /* Y  */
+                       MATH_INT_T* Z);   /* Y  */
+
     /* HW_MATH_ENABLED is typically used in wolfcrypt tests */
     #undef  HW_MATH_ENABLED
     #define HW_MATH_ENABLED
-    #endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         /* Z = X * Y */
     int esp_mp_mul(MATH_INT_T* X,
                    MATH_INT_T* Y,
