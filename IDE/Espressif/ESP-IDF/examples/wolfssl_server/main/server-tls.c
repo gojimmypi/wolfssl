@@ -95,18 +95,26 @@ int ShowCiphers(void)
 
 }
 
+/* FreeRTOS */
+/* server task */
 WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 {
-    int                sockfd;
-    int                connd;
+#if defined(SINGLE_THREADED)
+    #define TLS_SMP_SERVER_TASK_RET ret
+#else
+    #define TLS_SMP_SERVER_TASK_RET
+#endif
+    char               buff[256];
+    const char msg[] = "I hear you fa shizzle!";
+
     struct sockaddr_in servAddr;
     struct sockaddr_in clientAddr;
-    socklen_t          size = sizeof(clientAddr);
-    char               buff[256];
-    size_t             len;
+    int                sockfd;
+    int                connd;
     int                shutdown = 0;
     int                ret;
-    const char msg[] = "I hear you fa shizzle!";
+    socklen_t          size = sizeof(clientAddr);
+    size_t             len;
 
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
@@ -330,12 +338,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     vTaskDelete(NULL);
 
-#if defined(SINGLE_THREADED)
-    return ret;             /* Return reporting a success               */
-#else
-    /* no RTOS return */
-    return;                 /* Return reporting a success               */
-#endif
+	return TLS_SMP_SERVER_TASK_RET;
 }
 
 #if defined(SINGLE_THREADED)

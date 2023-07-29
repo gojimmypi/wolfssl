@@ -112,7 +112,7 @@
 #endif
 
 /* debug options */
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -185,34 +185,35 @@
 #define HAVE_VERSION_EXTENDED_INFO
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
+//#define WOLFSSL_SM2
+//#define WOLFSSL_SM3
+//#define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* SM settings */
-    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
-
-    #undef  WOLFSSL_SM4_ECB
-    #define WOLFSSL_SM4_ECB
-
-    #undef  WOLFSSL_SM4_CBC
-    #define WOLFSSL_SM4_CBC
-
-    #undef  WOLFSSL_SM4_CTR
-    #define WOLFSSL_SM4_CTR
-
-    #undef  WOLFSSL_SM4_GCM
-    #define WOLFSSL_SM4_GCM
-
-    #undef  WOLFSSL_SM4_CCM
-    #define WOLFSSL_SM4_CCM
-
-    #define HAVE_POLY1305
-    #define HAVE_CHACHA
-
-    #undef  HAVE_AESGCM
-    #define HAVE_AESGCM
+/* moved to settings.h */
+//    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+//
+//    #undef  WOLFSSL_SM4_ECB
+//    #define WOLFSSL_SM4_ECB
+//
+//    #undef  WOLFSSL_SM4_CBC
+//    #define WOLFSSL_SM4_CBC
+//
+//    #undef  WOLFSSL_SM4_CTR
+//    #define WOLFSSL_SM4_CTR
+//
+//    #undef  WOLFSSL_SM4_GCM
+//    #define WOLFSSL_SM4_GCM
+//
+//    #undef  WOLFSSL_SM4_CCM
+//    #define WOLFSSL_SM4_CCM
+//
+//    #define HAVE_POLY1305
+//    #define HAVE_CHACHA
+//
+//    #undef  HAVE_AESGCM
+//    #define HAVE_AESGCM
 #else
     /* default settings */
     #define USE_CERT_BUFFERS_2048

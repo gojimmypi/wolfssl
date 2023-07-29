@@ -151,6 +151,7 @@ void app_main(void)
         while (1);
 #else
         vTaskDelay(60000);
+
 #endif
     }
 }

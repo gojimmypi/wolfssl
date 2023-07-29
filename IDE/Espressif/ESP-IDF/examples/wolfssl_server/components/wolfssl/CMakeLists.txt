@@ -58,6 +58,34 @@ else()
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
 
+    # TODO
+    if(WIN32)
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")
+        message("Detected Windows")
+    endif()
+    if(CMAKE_HOST_UNIX)
+        message("Detected UNIX")
+    endif()
+    if(APPLE)
+        message("Detected APPLE")
+    endif()
+    if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WSL")
+        message("Detected WSL")
+    endif()
+    if(CMAKE_HOST_UNIX AND (NOT APPLE) AND (NOT WIN32))
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_LINUX")
+        message("Detected Linux")
+    endif()
+    if(APPLE)
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_APPLE")
+        message("Detected Apple")
+    endif()
+
     # Check to see if we're already in wolfssl, and only if WOLFSSL_ROOT not specified
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # wolfssl examples are 7 directories deep from wolfssl repo root
