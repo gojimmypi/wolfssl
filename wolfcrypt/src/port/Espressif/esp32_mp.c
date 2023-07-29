@@ -63,8 +63,8 @@
     #include <freertos/semphr.h>
 #endif
 
-#define ESP_HW_RSAMAX_BIT           8192
-#define ESP_HW_MULTI_RSAMAX_BITS    4096
+#define ESP_HW_RSAMAX_BIT           4096
+#define ESP_HW_MULTI_RSAMAX_BITS    2048
 #define ESP_HW_RSAMIN_BIT           512
 #define BYTE_TO_WORDS(s)            (((s+3)>>2))         /* (s+(4-1))/ 4    */
 #define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
@@ -814,7 +814,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     if (ret == MP_OKAY) {
         mph->Ys = mp_count_bits(Y); /* init Y's to pass to montgomery init */
 
-        if (mph->Ys <= 8) { /* hard floor 8 bits, problematic in some ESP32 */
+        if (mph->Ys <= EPS_RSA_EXPT_XBTIS || mph->Ys <= 8) { /* hard floor 8 bits, problematic in some ESP32 */
     #ifdef WOLFSSL_HW_METRICS
             esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
     #endif
