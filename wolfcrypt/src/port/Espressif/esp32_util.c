@@ -31,6 +31,7 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 
+/* big nums can be very long, perhaps unitialized, so limit displayed words */
 #define MAX_WORDS_ESP_SHOW_MP 32
 
 /*
@@ -52,7 +53,8 @@ int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex) {
 
 /*
  * call the ESP-IDF mutex lock; xSemaphoreTake
- *
+ * this is a general mutex locker, used for different mutex objects for
+ * different HW acclerators or other single-use HW features.
  */
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     if (mutex == NULL) {
@@ -212,21 +214,21 @@ static int ShowExtendedSystemInfo_platform_espressif()
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    WOLFSSL_VERSION_PRINTF("SM Ciphers endabled");
+    WOLFSSL_VERSION_PRINTF("SM Ciphers enabled");
     #if defined(WOLFSSL_SM2)
-        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM2 enabled");
+        WOLFSSL_VERSION_PRINTF("  WOLFSSL_SM2 enabled");
     #else
         WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM2 NOT enabled");
     #endif
 
     #if defined(WOLFSSL_SM3)
-        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM3 enabled");
+        WOLFSSL_VERSION_PRINTF("  WOLFSSL_SM3 enabled");
     #else
         WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM3 NOT enabled");
     #endif
 
     #if defined(WOLFSSL_SM4)
-        WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM4 enabled");
+        WOLFSSL_VERSION_PRINTF("  WOLFSSL_SM4 enabled");
     #else
         WOLFSSL_VERSION_PRINTF(" WOLFSSL_SM4 NOT enabled");
     #endif
