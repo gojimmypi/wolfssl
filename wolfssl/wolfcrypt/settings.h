@@ -359,6 +359,16 @@
             #define WOLFSSL_SMALL_STACK
         #endif
     #endif
+
+    #if defined(WOLFSSL_SP_RISCV32)
+        #if defined(CONFIG_IDF_TARGET_ESP32C2) \
+         || defined(CONFIG_IDF_TARGET_ESP32C3) \
+         || defined(CONFIG_IDF_TARGET_ESP32C6)
+            /* ok, only the know C@, C3, C6 chips allowed */
+        #else
+            #error "WOLFSSL_SP_RISCV32 can only be used on RISC-V architecture"
+        #endif
+    #endif
     #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
         /* SM settings */
         #undef  WOLFSSL_BASE16
