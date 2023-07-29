@@ -61,9 +61,9 @@ static const char* TAG = "wolf_hw_sha";
 #endif
 
 static int InUse = 0;
-/* If not single threaded, protect InUse with mutex */
+/* If not single threaded, protect InUse with a critical section */
 #if !defined(SINGLE_THREADED)
-    static wolfSSL_Mutex sha_mutex = NULL;
+    static portMUX_TYPE sha_crit_sect = portMUX_INITIALIZER_UNLOCKED;
 #endif
 
 #if defined(DEBUG_WOLFSSL)
@@ -664,43 +664,23 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 ** lock HW engine.
 ** this should be called before using engine.
 */
-int InitMutex()
-{
-    int ret;
-    ESP_LOGV(TAG, "Initializing sha_mutex");
-
-    /* created, but not yet locked */
-    ret = esp_CryptHwMutexInit(&sha_mutex);
-    if (ret == 0) {
-        ESP_LOGV(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
-    }
-    else {
-        ESP_LOGE(TAG, "esp_CryptHwMutexInit sha_mutex failed.");
-        sha_mutex = 0;
-    }
-    return ret;
-}
-
 bool TryAcquireHardware()
 {
-    bool bCanUseHardware = false; 
-    if (0 == esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0))
-    {
+    bool bCanUseHardware = false;
+    taskENTER_CRITICAL(&sha_crit_sect);
         if (!InUse)
         {
             InUse = 1;
             bCanUseHardware = true; 
         }
-        esp_CryptHwMutexUnLock(&sha_mutex);
-    }
+    taskEXIT_CRITICAL(&sha_crit_sect);
 
     return bCanUseHardware;
 }
 
 void ReleaseHardware()
 {
-    if (0 == esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0))
-    {
+    taskENTER_CRITICAL(&sha_crit_sect);
         if (InUse)
         {
             InUse = 0;
@@ -709,8 +689,7 @@ void ReleaseHardware()
         {
             assert(false); // bug: releasing hardware when not in use!!
         }
-        esp_CryptHwMutexUnLock(&sha_mutex);
-    }
+    taskEXIT_CRITICAL(&sha_crit_sect);
 }
 
 int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
@@ -762,12 +741,6 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
     **
     */
-
-    if (sha_mutex == NULL && 0 != InitMutex()) {
-        ESP_LOGI(TAG, "Revert to ctx->mode = ESP32_SHA_SW.");
-        ctx->mode = ESP32_SHA_SW;
-        return 0; /* success, just not using HW */
-    }
 
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {
