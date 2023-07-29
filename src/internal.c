@@ -7829,6 +7829,29 @@ static int ReuseKey(WOLFSSL* ssl, int type, void* pKey)
 #ifdef WOLFSSL_ASYNC_IO
 void FreeAsyncCtx(WOLFSSL* ssl, byte freeAsync)
 {
+    /* TODO consider session resumption */
+#ifdef WOLFSSL_ESP32x
+    /* init ctx to clear any HW hash (if this works, we can be more efficient) */
+        ESP_LOGI("internal", "FreeAsyncCtx = %x", (int)&ssl->ctx);
+    #ifndef NO_OLD_TLS
+        #ifndef NO_SHA
+            ESP_LOGI("internal", "ssl->hsHashes->hashSha = %x", (int)&(ssl->hsHashes->hashSha.ctx)); /* SHA item #1 in process */
+            esp_sha_init_ctx((WC_ESP32SHA*)&ssl->hsHashes->hashSha.ctx);
+        #endif
+    #endif /* NO_OLD_TLS */
+    #ifndef NO_SHA256
+        ESP_LOGI("internal", "ssl->hsHashes->hashSha256 = %x", (int)&(ssl->hsHashes->hashSha256.ctx)); /* SHA item #1 in process */
+        esp_sha_init_ctx((WC_ESP32SHA*)&ssl->hsHashes->hashSha256.ctx);
+    #endif
+    #ifdef WOLFSSL_SHA384
+        ESP_LOGI("internal", "ssl->hsHashes->hashSha512 = %x", (int)&(ssl->hsHashes->hashSha384.ctx)); /* SHA item #1 in process */
+        esp_sha_init_ctx((WC_ESP32SHA*)&ssl->hsHashes->hashSha384.ctx);
+    #endif
+    #ifdef WOLFSSL_SHA512
+        ESP_LOGI("internal", "ssl->hsHashes->hashSha512 = %x", (int)&(ssl->hsHashes->hashSha512.ctx)); /* SHA item #1 in process */
+        esp_sha_init_ctx((WC_ESP32SHA*)&ssl->hsHashes->hashSha512.ctx);
+    #endif
+#endif /* WOLFSSL_ESP32  */
     if (ssl->async != NULL) {
         if (ssl->async->freeArgs != NULL) {
             ssl->async->freeArgs(ssl, ssl->async->args);
@@ -9737,7 +9760,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
 
 #ifndef NO_OLD_TLS
     #ifndef NO_SHA
-        wc_ShaUpdate(&ssl->hsHashes->hashSha, data, sz);
+        wc_ShaUpdate(&ssl->hsHashes->hashSha, data, sz); /* TODO SHA item #1 in process */
     #endif
     #ifndef NO_MD5
         wc_Md5Update(&ssl->hsHashes->hashMd5, data, sz);
@@ -9746,7 +9769,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
 
     if (IsAtLeastTLSv1_2(ssl)) {
     #ifndef NO_SHA256
-        ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz);
+        ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz); /* TODO SHA item #2 in process */
         if (ret != 0)
             return ret;
     #ifdef WOLFSSL_DEBUG_TLS
