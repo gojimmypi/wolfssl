@@ -62,7 +62,7 @@
     #else
         #include "/workspace/my_private_config.h"
 //        #warning "did not detect environment"
-	#endif
+    #endif
 #else
     /*
     ** The examples use WiFi configuration that you can set via project
