@@ -9760,6 +9760,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
 
 #ifndef NO_OLD_TLS
     #ifndef NO_SHA
+        printf("TODO hashSha starting");
         wc_ShaUpdate(&ssl->hsHashes->hashSha, data, sz); /* TODO SHA item #1 in process */
     #endif
     #ifndef NO_MD5
@@ -9770,7 +9771,8 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
     if (IsAtLeastTLSv1_2(ssl)) {
     #ifndef NO_SHA256
       /* TODO remove */
-      printf("%s, %d: wc_Sha256Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha256.ctx);
+      printf("%s, %d: wc_Sha256Update of WC_ESP32SHA @ %0x\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha256.ctx);
+        printf("TODO wc_Sha256Update starting");
         ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz); /* TODO SHA item #2 in process */
         if (ret != 0)
             return ret;
@@ -9792,7 +9794,8 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
     #endif
     #ifdef WOLFSSL_SHA512
       /* TODO remove */
-      printf("%s, %d: wc_Sha512Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha512.ctx);
+        printf("TODO wc_Sha512Update starting");
+      printf("%s, %d: wc_Sha512Update of WC_ESP32SHA @ %0x\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha512.ctx);
         ret = wc_Sha512Update(&ssl->hsHashes->hashSha512, data, sz);
         if (ret != 0)
             return ret;
