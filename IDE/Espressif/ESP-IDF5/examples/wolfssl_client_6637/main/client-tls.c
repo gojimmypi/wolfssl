@@ -329,7 +329,7 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
     int ret = -1;
 
     while (true) {
-        ret = esp_sha_hw_islocked(); /* if locked, the address of the owner */
+        ret = esp_sha_hw_islocked(0); /* if locked, the address of the owner */
 
         if (ret == last_ret) {
             current_delay = 10;
