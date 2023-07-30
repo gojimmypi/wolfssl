@@ -266,7 +266,10 @@ static int esp_mp_hw_lock()
 
     /* Set our mutex to indicate the HW is in use */
     if (ret == 0) {
-        /* lock hardware */
+        /* lock hardware; there should be exactly one instance
+         * of esp_CryptHwMutexLock(&mp_mutex ...) in code  */
+        /* TODO - do we really want to wait?
+         *    probably not */
         ret = esp_CryptHwMutexLock(&mp_mutex, ESP_MP_HW_LOCK_MAX_DELAY);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
