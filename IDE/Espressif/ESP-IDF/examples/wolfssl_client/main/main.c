@@ -139,8 +139,18 @@ void app_main(void)
     /* just call the task */
     tls_smp_client_task((void*)NULL);
 #else
+    tls_args args[1];
     /* start a thread with the task */
-    tls_smp_client_init();
+    args[0].loops = 10;
+    args[0].port = 11111;
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
 #endif
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");

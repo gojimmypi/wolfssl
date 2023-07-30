@@ -136,6 +136,12 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                       */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
+typedef struct {
+    int port;
+    int loops;
+} tls_args;
+
+
 /* client task */
 void tls_smp_client_task()
 {
@@ -364,7 +370,7 @@ void tls_smp_client_task()
     /* we don't initialize a thread */
 #else
 /* create task */
-int tls_smp_client_init(int port)
+int tls_smp_client_init(tls_args* args)
 {
     int ret;
 #if ESP_IDF_VERSION_MAJOR >= 4

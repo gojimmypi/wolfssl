@@ -30,6 +30,11 @@
     #define WOLFSSL_ESP_TASK void
 #endif
 
+typedef struct {
+    int port;
+    int loops;
+} tls_args;
+
 /* Function to show the ciphers available. */
 int ShowCiphers(void);
 
@@ -40,6 +45,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args);
 #if defined(SINGLE_THREADED)
     /* no init neded */
 #else
-    int tls_smp_client_init(void);
+    int tls_smp_client_init(tls_args* args);
 #endif
 #endif /* _SERVER_TLS_ */
