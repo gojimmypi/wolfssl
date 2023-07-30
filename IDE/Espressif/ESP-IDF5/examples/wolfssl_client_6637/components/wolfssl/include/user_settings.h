@@ -218,3 +218,7 @@
     /* default settings */
     #define USE_CERT_BUFFERS_2048
 #endif
+
+
+// #define NO_OLD_TLS
+// #define NO_SHA512
