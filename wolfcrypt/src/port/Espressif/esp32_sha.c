@@ -812,8 +812,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         else {
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
-            ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW\n",
-                           mutex_ctx_owner);
+            ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW for %x\n",
+                           mutex_ctx_owner,  (int)ctx->initializer);
             ESP_LOGI(TAG, "Software Mode, lock depth = %d, for this %x",
                           ctx->lockDepth, (int)ctx->initializer);
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
