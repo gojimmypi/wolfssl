@@ -1488,7 +1488,7 @@ void wolfSSL_free(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_free");
       /* TODO remove */
-  printf("Free SSL: %0xd\n", (unsigned)ssl);
+  printf("Free SSL: %0x\n", (unsigned)ssl);
     if (ssl)
         FreeSSL(ssl, ssl->ctx->heap);
     WOLFSSL_LEAVE("wolfSSL_free", 0);
