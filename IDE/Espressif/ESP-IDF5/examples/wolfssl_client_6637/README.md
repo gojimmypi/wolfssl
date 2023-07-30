@@ -1,0 +1,45 @@
+#wolfSSL Example
+
+The Example contains of wolfSSL tls client demo.
+
+## VisualGDB
+
+Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
+No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
+
+## ESP-IDF Commandline
+
+
+1. `idf.py menuconfig` to config the project
+
+      1-1. Example Configuration ->  
+
+          Target host ip address : the host that you want to connect to.(default is 127.0.0.1)
+
+     1-2. Example Connection Configuration ->
+     
+          WIFI SSID: your own WIFI, which is connected to the Internet.(default is "myssid")  
+          WIFI Password: WIFI password, and default is "mypassword"
+    
+    
+    Note: the example program uses 11111 port. If you want to use different port  
+        , you need to modify DEFAULT_PORT definition in the code.
+
+When you want to test the wolfSSL client
+
+1. `idf.py -p <PORT> flash` and then `idf.py monitor` to load the firmware and see the context  
+2. You can use <wolfssl>/examples/server/server program for test.  
+
+         e.g. Launch ./examples/server/server -v 4 -b -i -d
+
+## SM Ciphers
+
+```
+./examples/client/client  -h 127.0.0.1 -v 4 -l ECDHE-ECDSA-SM4-CBC-SM3     -c ./certs/sm2/client-sm2.pe
+m -k ./certs/sm2/client-sm2-priv.pem     -A ./certs/sm2/root-sm2.pem -C
+
+./examples/server/server                   -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3     -c ./certs/sm2/server-sm2.pem -k ./certs/sm2/server-sm2-priv.pem     -A ./certs/sm2/client-sm2.pem -V
+```
+
+See the README.md file in the upper level 'examples' directory for more information about examples.
+
