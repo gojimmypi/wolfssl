@@ -383,7 +383,8 @@ extern "C"
     int esp_sha_init_ctx(WC_ESP32SHA* ctx);
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
-    int esp_sha_hw_islocked(WC_ESP32SHA* ctx); /* 1 = locked, 0 = not locked */
+    int esp_sha_hw_islocked(void); /* 0 = not locked, otherwise mutex_ctx_owner */
+    int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
 
     struct wc_Sha;
     int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
