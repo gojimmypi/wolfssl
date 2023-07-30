@@ -323,16 +323,32 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 
 WOLFSSL_ESP_TASK tls_peek(void *args)
 {
+    ulong counter = 0;
+    int current_delay = 200;
+    int last_ret = -1;
     int ret = -1;
+
     while (true) {
-        ret = esp_sha_hw_islocked();
-        if (ret) {
-            ESP_LOGE("peek", "  >> LOCKED esp_sha_hw_islocked for %x", ret);
+        ret = esp_sha_hw_islocked(); /* if locked, the address of the owner */
+
+        if (ret == last_ret) {
+            current_delay = 10;
         }
         else {
-            ESP_LOGW("peek", "  >> NOT LOCKED esp_sha_hw_islocked");
+            if (ret) {
+                ESP_LOGE("peek", "  >> LOCKED esp_sha_hw_islocked for %x", ret);
+                current_delay = 200;
+            }
+            else {
+                if (current_delay > 10) {
+                    ESP_LOGI("peek", "  >> NOT LOCKED esp_sha_hw_islocked");
+                }
+            }
         }
-         vTaskDelay(1000);
+
+        last_ret = ret;
+        counter++;
+        vTaskDelay(current_delay);
     }
 }
 
