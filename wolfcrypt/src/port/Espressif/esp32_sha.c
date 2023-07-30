@@ -62,11 +62,10 @@ static const char* TAG = "wolf_hw_sha";
 
 #define DEBUG_WOLFSSL_SHA_MUTEX /* TODO */
 /* RTOS mutex or just InUse variable  */
-
-static int InUse = 0;
-/* If not single threaded, protect InUse with a critical section */
-#if !defined(SINGLE_THREADED) /* the wolfSSL setting */
-    static portMUX_TYPE sha_crit_sect = portMUX_INITIALIZER_UNLOCKED;
+#if defined(SINGLE_THREADED)
+    static int InUse = 0;
+#else
+    static wolfSSL_Mutex sha_mutex = NULL;
 #endif
 
 #ifdef DEBUG_WOLFSSL_SHA_MUTEX
@@ -651,7 +650,6 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ** periph_module_disable() or threading not working properly.
             **/
             ESP_LOGW(TAG, "warning lockDepth mismatch.");
-          printf("Bad lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
@@ -668,53 +666,35 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     return ret;
 } /* esp_unroll_sha_module_enable */
 
+
 /*
-** lock HW engine.
-** this should be called before using engine.
+**
 */
-bool TryAcquireHardware()
-{
-    bool bCanUseHardware = false;
-    taskENTER_CRITICAL(&sha_crit_sect);
-        if (!InUse)
-        {
-            InUse = 1;
-            bCanUseHardware = true;
-        }
-    taskEXIT_CRITICAL(&sha_crit_sect);
-
-    return bCanUseHardware;
-}
-
-void ReleaseHardware()
-{
-    taskENTER_CRITICAL(&sha_crit_sect);
-        if (InUse)
-        {
-            InUse = 0;
-        }
-        else
-        {
-            assert(false); // bug: releasing hardware when not in use!!
-        }
-    taskEXIT_CRITICAL(&sha_crit_sect);
-}
-
-int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
+int esp_sha_hw_islocked(void)
 {
     int ret = 0;
-    ESP_LOGV(TAG, "enter esp_sha_hw_islocked %x", (int)ctx->initializer);
 
-    if (ctx == NULL) {
-        ret = BAD_FUNC_ARG;
-    }
+    ret = mutex_ctx_owner;
 
     if (ret == 0) {
-
+        ESP_LOGV(TAG, ">> NOT LOCKED esp_sha_hw_islocked");
+    }
+    else {
+        ESP_LOGI(TAG, ">> LOCKED esp_sha_hw_islocked for %x", mutex_ctx_owner);
     }
     return ret;
 }
 
+int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
+{
+    int ret = 0;
+    ret = esp_sha_hw_islocked();
+    if (ret == (int)ctx) {
+        ESP_LOGE(TAG, "\n>>>> esp_sha_release_unfinished_lock %x\n", ret);
+        ret = esp_sha_hw_unlock(ctx);
+    }
+    return ret;
+}
 /*
 ** lock HW engine.
 ** this should be called before using engine.
@@ -725,8 +705,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
     ESP_LOGI(TAG, "enter esp_sha_hw_lock for %x", (int)ctx->initializer);
 /* TODO remove test code */
-    if ((int)ctx->initializer == 0x3fcc8198) {
-        ESP_LOGW(TAG, "Found 0x3fcc8198!");
+    if ((int)ctx->initializer == 0x3fcc9f50) {
+        ESP_LOGW(TAG, "Found 0x3fcc9f50!");
     }
     if (ctx == NULL) {
         ESP_LOGE(TAG, " esp_sha_try_hw_lock called with NULL ctx");
@@ -772,18 +752,48 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     **
     */
 
+    if (sha_mutex == NULL) {
+        ESP_LOGV(TAG, "Initializing sha_mutex");
+
+        /* created, but not yet locked */
+        ret = esp_CryptHwMutexInit(&sha_mutex);
+        if (ret == 0) {
+            ESP_LOGI(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            mutex_ctx_owner = 0;
+        #endif
+        }
+        else {
+            ESP_LOGE(TAG, "esp_CryptHwMutexInit sha_mutex failed.");
+            sha_mutex = 0;
+
+            ESP_LOGI(TAG, "Revert to ctx->mode = ESP32_SHA_SW.");
+
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            ESP_LOGI(TAG, "Current mutext owner = %x", mutex_ctx_owner);
+        #endif
+
+            ctx->mode = ESP32_SHA_SW;
+            return 0; /* success, just not using HW */
+        }
+    }
+
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {
         /* try to lock the HW engine */
         ESP_LOGI(TAG, "ESP32_SHA_INIT for %x\n", (int)ctx->initializer);
 
-        /* we don't wait:
-        ** either the engine is free, or we fall back to SW
-        **/
-        if (TryAcquireHardware()) {
-            ctx->mode = ESP32_SHA_HW; // present in single threaded, but not here. not sure why?
-
+        /* lock hardware; there should be exactly one instance
+         * of esp_CryptHwMutexLock(&sha_mutex ...) in code.
+         *
+         * we don't wait:
+         * either the engine is free, or we fall back to SW.
+         *
+         * TODO: allow for SHA interleave on chips that support it.
+         */
+        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* check to see if we had a prior fail and need to unroll enables */
+            ESP_LOGW(TAG, "Locking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x", mutex_ctx_owner, (int)ctx, (int)&ctx, mutex_ctx_owner);
             ret = esp_unroll_sha_module_enable(ctx);
             ESP_LOGI(TAG, "Hardware Mode Active, lock depth = %d, for %x",
                           ctx->lockDepth, (int)ctx->initializer);
@@ -795,16 +805,16 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 /* it is unlikely that this would ever occur,
                 ** as the mutex should be gate keeping */
                 ESP_LOGW(TAG, "WARNING: Hardware Mode "
-                              "interesting lock depth = %d, for %x",
+                              "interesting lock depth = %d, for this %x",
                               ctx->lockDepth, (int)ctx->initializer);
-           printf("Bad lock depth @ %d: %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
-           }
+            }
         }
         else {
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
-            ESP_LOGI(TAG, "\nHardware in use; Mode REVERT to ESP32_SHA_SW\n");
-            ESP_LOGI(TAG, "Software Mode, lock depth = %d, for %x",
+            ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW\n",
+                           mutex_ctx_owner);
+            ESP_LOGI(TAG, "Software Mode, lock depth = %d, for this %x",
                           ctx->lockDepth, (int)ctx->initializer);
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             ESP_LOGI(TAG, "Current mutext owner = %x", mutex_ctx_owner);
@@ -825,7 +835,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
-          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+          printf("1) Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
         periph_module_enable(PERIPH_SHA_MODULE);
         ctx->mode = ESP32_SHA_HW;
     }
@@ -844,13 +854,15 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 */
 int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
+    int ret;
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
+    ret = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
 #else
     /* Disable AES hardware */
-    // Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
+    // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
     // a power saving feature that could be handled at a different level than per-calculation.
     periph_module_disable(PERIPH_SHA_MODULE);
 #endif
@@ -859,26 +871,37 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      * and periph_module_disable() need to be unwound.
      *
      * see ref_counts[periph] in file: periph_ctrl.c */
-          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+          printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
     if (ctx->lockDepth > 0) {
         ctx->lockDepth--;
     }
     else {
         ctx->lockDepth = 0;
     }
-          printf("Lock depth @ %d = %d for WC_ESP32SHA @ %0xd\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+          printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+          printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
 
     if (0 == ctx->lockDepth) // should we only unlock if depth is 0?
     {
-#if defined(SINGLE_THREADED)
+    #if defined(SINGLE_THREADED)
         InUse = 0;
-#else
+    #else
         /* unlock HW engine for next use */
-        ReleaseHardware();
-#endif
+        ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x", mutex_ctx_owner, (int)ctx, (int)&ctx, mutex_ctx_owner);
+        esp_CryptHwMutexUnLock(&sha_mutex);
+    #endif
+
+    #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+        mutex_ctx_owner = 0;
+    #endif
     }
-    ESP_LOGV(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
-    return 0;
+    else
+    {
+        ESP_LOGE(TAG, "ERROR unlock lockDepth not zero");
+        ret = -1; /* TODO macro value ? */
+    }
+    ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
+    return ret;
 } /* esp_sha_hw_unlock */
 
 /*
