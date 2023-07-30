@@ -76,7 +76,10 @@ static int esp_aes_hw_InUse()
     }
 
     if (ret == 0) {
-        /* lock hardware */
+        /* lock hardware; there should be exactly one instance
+         * of esp_CryptHwMutexLock(&aes_mutex ...) in code  */
+        /* TODO - do we really want to wait?
+         *    probably not */
         ret = esp_CryptHwMutexLock(&aes_mutex, portMAX_DELAY);
     }
     else {
