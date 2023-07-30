@@ -942,6 +942,10 @@ void wc_ShaFree(wc_Sha* sha)
     if (sha == NULL)
         return;
 
+#ifdef WOLFSSL_ESP32
+    esp_sha_release_unfinished_lock(&sha->ctx);
+#endif
+
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
     wolfAsync_DevCtxFree(&sha->asyncDev, WOLFSSL_ASYNC_MARKER_SHA);
 #endif /* WOLFSSL_ASYNC_CRYPT */

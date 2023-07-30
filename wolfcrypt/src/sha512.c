@@ -1214,6 +1214,10 @@ void wc_Sha512Free(wc_Sha512* sha512)
     if (sha512 == NULL)
         return;
 
+#ifdef WOLFSSL_ESP32
+    esp_sha_release_unfinished_lock(&sha512->ctx);
+#endif
+
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     if (sha512->W != NULL) {
         XFREE(sha512->W, sha512->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -1533,6 +1537,10 @@ void wc_Sha384Free(wc_Sha384* sha384)
 {
     if (sha384 == NULL)
         return;
+
+#ifdef WOLFSSL_ESP32
+    esp_sha_release_unfinished_lock(&sha384->ctx);
+#endif
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     if (sha384->W != NULL) {

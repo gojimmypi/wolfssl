@@ -1115,11 +1115,11 @@ static int InitSha256(wc_Sha256* sha256)
                 }
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGV(TAG, "Sha256Update process software");
+                    ESP_LOGI(TAG, "Sha256Update process software");
                     ret = XTRANSFORM(sha256, (const byte*)local);
                 }
                 else {
-                    ESP_LOGV(TAG, "Sha256Update process hardware");
+                    ESP_LOGI(TAG, "Sha256Update process hardware");
                     esp_sha256_process(sha256, (const byte*)local);
                 }
             #else
@@ -1782,6 +1782,11 @@ void wc_Sha256Free(wc_Sha256* sha256)
 {
     if (sha256 == NULL)
         return;
+
+#ifdef WOLFSSL_ESP32
+    esp_sha_release_unfinished_lock(&sha256->ctx);
+#endif
+
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     if (sha256->W != NULL) {
