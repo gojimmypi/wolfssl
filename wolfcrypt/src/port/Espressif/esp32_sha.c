@@ -721,7 +721,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
         ESP_LOGV(TAG, ">> NOT LOCKED esp_sha_hw_islocked");
     }
     else {
-        ESP_LOGI(TAG, ">> LOCKED esp_sha_hw_islocked for %x", esp_sha_mutex_ctx_owner());
+        ESP_LOGV(TAG, ">> LOCKED esp_sha_hw_islocked for %x", esp_sha_mutex_ctx_owner());
     }
 #endif
     return ret;
