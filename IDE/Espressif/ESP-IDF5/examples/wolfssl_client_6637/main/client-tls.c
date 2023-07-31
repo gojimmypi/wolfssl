@@ -558,21 +558,23 @@ WOLFSSL_ESP_TASK tls_smp_client_task_send_data(void *args)
             len = strnlen(buff, sizeof(buff));
         }
         /* Send the message to the server */
+        ESP_LOGI(TAG, "Writing...");
         if (wolfSSL_write(global_ssl, buff, len) != len) {
             ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to write\n");
         }
 
         /* Read the server data into our buff array */
         memset(buff, 0, sizeof(buff));
+        ESP_LOGI(TAG, "Reading...");
         if (wolfSSL_read(global_ssl, buff, sizeof(buff) - 1) == -1) {
             ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to read\n");
         }
 
         /* Print to stdout any data the server sends */
-        printf("Server:");
-        printf("%s", buff);
+        ESP_LOGI(TAG, "\n\nServer Response:");
+        ESP_LOGI(TAG, "%s", buff);
 
-        vTaskDelay(50000);
+        vTaskDelay(5000);
     }
 
     /* Cleanup and return */
@@ -622,7 +624,7 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
 int tls_smp_client_init(tls_args* args)
 {
     int ret;
-    int test_separate_tasks = 0;
+    int test_separate_tasks = 1;
     int run_peek_task = 0;
 
 #if ESP_IDF_VERSION_MAJOR >= 4
