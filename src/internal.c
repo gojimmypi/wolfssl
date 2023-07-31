@@ -6949,6 +6949,7 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
     /* arrays */
     if (!writeDup && ssl->arrays == NULL) {
+        ESP_LOGI("internal", "arrays");
         ssl->arrays = (Arrays*)XMALLOC(sizeof(Arrays), ssl->heap,
                                                            DYNAMIC_TYPE_ARRAYS);
         if (ssl->arrays == NULL) {
@@ -6979,6 +6980,7 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         ssl->rng = ctx->rng; /* CTX may have one, if so use it */
     }
 #endif
+    ESP_LOGI("internal", "rng...");
     if (ssl->rng == NULL) {
         ssl->rng = (WC_RNG*)XMALLOC(sizeof(WC_RNG), ssl->heap,DYNAMIC_TYPE_RNG);
         if (ssl->rng == NULL) {
@@ -7006,7 +7008,7 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->options.shutdownDone = 0;
     if (ssl->session != NULL)
         ssl->session->side = (byte)ssl->options.side;
-
+    ESP_LOGI("internal", "ReinitSSL exit...");
     return ret;
 }
 
