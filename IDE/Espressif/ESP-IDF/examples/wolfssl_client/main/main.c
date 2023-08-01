@@ -34,7 +34,7 @@
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
-static const char* const TAG = "TLS Server";
+static const char* const TAG = "TLS Client";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -133,7 +133,7 @@ void app_main(void)
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - uxTaskGetStackHighWaterMark(NULL)
             );
-    ESP_LOGI(TAG, "Starting TLS Server...\n");
+    ESP_LOGI(TAG, "Starting TLS Client task ...\n");
 
 #if defined(SINGLE_THREADED)
     /* just call the task */
@@ -144,13 +144,13 @@ void app_main(void)
     args[0].loops = 10;
     args[0].port = 11111;
     tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
-    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
+//    tls_smp_client_init(args);
 #endif
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");

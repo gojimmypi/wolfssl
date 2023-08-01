@@ -29,7 +29,8 @@
 
 #define TLS_SMP_TARGET_HOST              "192.168.25.109"
 
-
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
 #include "user_settings.h"
 
 #if defined(SINGLE_THREADED)
@@ -40,8 +41,8 @@
 #endif
 
 
-/* Function to show the ciphers available. */
-int ShowCiphers(void);
+/* Function to show the ciphers available / in use. */
+int ShowCiphers(WOLFSSL* ssl);
 
 /* This is the TLS Server function, possibly in an RTOS thread. */
 WOLFSSL_ESP_TASK tls_smp_server_task(void *args);

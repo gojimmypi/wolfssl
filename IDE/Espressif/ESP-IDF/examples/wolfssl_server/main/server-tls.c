@@ -77,9 +77,10 @@
 static const char* const TAG = "server-tls";
 int stack_start = -1;
 
-int ShowCiphers(void)
+int ShowCiphers(WOLFSSL* ssl)
 {
     char ciphers[4096];
+    const char* cipher_used;
 
     int ret = 0;
     ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
@@ -88,9 +89,18 @@ int ShowCiphers(void)
         printf("%s\n", ciphers);
     }
     else {
-        ESP_LOGE(TAG, "FAiled to call wolfSSL_get_ciphers. Error: %d", ret);
+        ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
 
     }
+
+    if (ssl == NULL) {
+        ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
+    }
+    else {
+        cipher_used = wolfSSL_get_cipher_name(ssl);
+        ESP_LOGI(TAG, "WOLFSSL* ssl using %s", cipher_used);
+    }
+
     return ret;
 
 }
@@ -153,16 +163,16 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    ESP_LOGI(TAG, "Start SM2\n");
-    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3");
+    ESP_LOGI(TAG, "Start SM3\n");
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
     if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
     }
 
-    ShowCiphers();
+    ShowCiphers(NULL);
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
 
@@ -291,7 +301,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         }
         /* Create a WOLFSSL object */
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
-             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object");
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object");
+        }
+        else {
+            ShowCiphers(ssl);
         }
         /* Attach wolfSSL to the socket */
         wolfSSL_set_fd(ssl, connd);

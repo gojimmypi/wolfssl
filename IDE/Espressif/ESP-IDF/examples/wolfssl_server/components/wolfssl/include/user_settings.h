@@ -188,12 +188,27 @@
 #define HAVE_VERSION_EXTENDED_INFO
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-//#define WOLFSSL_SM2
-//#define WOLFSSL_SM3
-//#define WOLFSSL_SM4
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+
+
+/*
+TLS13-SM4-GCM-SM3
+TLS13-SM4-CCM-SM3
+ECDHE-ECDSA-SM4-CBC-SM3
+*/
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    /* SM settings */
+    /* see https://github.com/wolfSSL/wolfssl/pull/6537
+     *
+     * see settings.h for other features turned on with SM4 ciphers.
+     */
+
+    // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3"
+    // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
+
 /* moved to settings.h */
 //    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
 //

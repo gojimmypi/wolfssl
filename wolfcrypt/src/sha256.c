@@ -1783,7 +1783,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
     if (sha256 == NULL)
         return;
 
-#ifdef WOLFSSL_ESP32
+#if defined(WOLFSSL_ESP32) &&  !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
     esp_sha_release_unfinished_lock(&sha256->ctx);
 #endif
 

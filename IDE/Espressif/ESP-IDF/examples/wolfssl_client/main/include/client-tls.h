@@ -21,6 +21,8 @@
 #ifndef _SERVER_TLS_
 #define _SERVER_TLS_
 
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
 #include "user_settings.h"
 
 #if defined(SINGLE_THREADED)
@@ -35,8 +37,10 @@ typedef struct {
     int loops;
 } tls_args;
 
-/* Function to show the ciphers available. */
-int ShowCiphers(void);
+/* Function to show the ciphers available / in use. */
+#if defined(DEBUG_WOLFSSL)
+    int ShowCiphers(WOLFSSL* ssl);
+#endif
 
 /* This is the TLS Server function, possibly in an RTOS thread. */
 WOLFSSL_ESP_TASK tls_smp_client_task(void *args);

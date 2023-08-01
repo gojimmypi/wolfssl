@@ -112,7 +112,7 @@
 #endif
 
 /* debug options */
-/* #define DEBUG_WOLFSSL */
+#define DEBUG_WOLFSSL
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -155,6 +155,10 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
@@ -189,8 +193,14 @@
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* SM settings */
+    // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3"
+    // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
+
+
 //    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
 //
 //    #undef  WOLFSSL_SM4_ECB

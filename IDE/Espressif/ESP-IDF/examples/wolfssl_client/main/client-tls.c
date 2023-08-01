@@ -62,14 +62,35 @@ static const char* const TAG = "tls_client";
 
 #if defined(DEBUG_WOLFSSL)
 
-static void ShowCiphers(void)
+int ShowCiphers(WOLFSSL* ssl)
 {
-    char ciphers[4096];
+    #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
+    char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
+    const char* cipher_used;
 
     int ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
+    for (int i = 0; i < CLIENT_TLS_MAX_CIPHER_LENGTH; i++) {
+        if (ciphers[i] == ':') {
+            ciphers[i] = '\n';
+        }
+    }
 
-    if (ret == WOLFSSL_SUCCESS)
-        printf("%s\n", ciphers);
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
+    }
+    else {
+        ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
+    }
+
+    if (ssl == NULL) {
+        ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
+    }
+    else {
+        cipher_used = wolfSSL_get_cipher_name(ssl);
+        ESP_LOGI(TAG, "WOLFSSL* ssl using %s", cipher_used);
+    }
+
+    return ret;
 }
 
 #endif
@@ -169,7 +190,7 @@ void tls_smp_client_task()
 #ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
     wolfSSL_Debugging_ON();
-    ShowCiphers();
+    ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
     wolfSSL_Init();
@@ -211,7 +232,7 @@ void tls_smp_client_task()
 #endif
 
 #ifdef DEBUG_WOLFSSL
-    ShowCiphers();
+    ShowCiphers(NULL);
     ESP_LOGI(TAG,
              "Stack used: %d\n",
              CONFIG_ESP_MAIN_TASK_STACK_SIZE
@@ -306,7 +327,6 @@ void tls_smp_client_task()
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
     }
-
     /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -325,6 +345,9 @@ void tls_smp_client_task()
     /* Connect to wolfSSL on the server side */
     if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
+    }
+    else {
+        ShowCiphers(ssl);
     }
 
     /* Get a message for the server from stdin */
@@ -353,8 +376,8 @@ void tls_smp_client_task()
     }
 
     /* Print to stdout any data the server sends */
-    printf("Server:");
-    printf("%s", buff);
+    printf("Server: ");
+    printf("%s\n", buff);
     /* Cleanup and return */
     wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */
