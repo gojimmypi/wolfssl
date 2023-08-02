@@ -35,7 +35,7 @@
 #define DEFAULT_PORT                     11111
 
 #define TLS_SMP_SERVER_TASK_NAME         "tls_sever_example"
-#define TLS_SMP_SERVER_TASK_WORDS        10240
+#define TLS_SMP_SERVER_TASK_WORDS        12240
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
 
 #define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
@@ -62,8 +62,8 @@
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
         #include "~/Documents/my_private_config.h"
     #else
-        #include "/workspace/my_private_config.h"
-//        #warning "did not detect environment"
+        #include "~/my_private_config.h"
+        #warning "did not detect environment"
 	#endif
 #else
     /*

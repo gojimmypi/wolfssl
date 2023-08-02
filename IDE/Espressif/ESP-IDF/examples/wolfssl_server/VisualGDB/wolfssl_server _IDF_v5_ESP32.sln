@@ -7,6 +7,7 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_server _IDF_v5_ESP3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB8B8879-ED7D-4466-BCAD-725F49E79C18}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\..\wolfssl\error-ssl.h
 		..\..\..\..\include.am = ..\..\..\..\include.am
 		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
 	EndProjectSection

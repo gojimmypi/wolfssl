@@ -79,22 +79,25 @@ int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
 {
-    char ciphers[4096];
+    #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
+    char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
     const char* cipher_used;
-
     int ret = 0;
-    ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
-
-    if (ret == WOLFSSL_SUCCESS) {
-        printf("%s\n", ciphers);
-    }
-    else {
-        ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
-
-    }
 
     if (ssl == NULL) {
         ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
+        ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
+        if (ret == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
+            for (int i = 0; i < CLIENT_TLS_MAX_CIPHER_LENGTH; i++) {
+                if (ciphers[i] == ':') {
+                    ciphers[i] = '\n';
+                }
+            }
+        }
+        else {
+            ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
+        }
     }
     else {
         cipher_used = wolfSSL_get_cipher_name(ssl);
@@ -102,8 +105,8 @@ int ShowCiphers(WOLFSSL* ssl)
     }
 
     return ret;
-
 }
+
 
 /* FreeRTOS */
 /* server task */
@@ -303,9 +306,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object");
         }
-        else {
-            ShowCiphers(ssl);
-        }
+
         /* Attach wolfSSL to the socket */
         wolfSSL_set_fd(ssl, connd);
         /* Establish TLS connection */

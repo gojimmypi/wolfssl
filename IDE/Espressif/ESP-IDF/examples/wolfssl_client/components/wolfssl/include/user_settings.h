@@ -200,7 +200,6 @@
     // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
     #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
 
-
 //    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
 //
 //    #undef  WOLFSSL_SM4_ECB
