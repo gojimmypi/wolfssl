@@ -4,7 +4,7 @@ Quick start
 ```
 
 WORKSPACE=/mnt/c/workspace
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v4.4.2
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
 WRK_WOLFSSL_PATH=${WORKSPACE}/wolfssl-gojimmypi
 WRK_PROJECT_DIR=${WRK_WOLFSSL_PATH}/IDE/Espressif/ESP-IDF/examples/wolfssl_test
 
