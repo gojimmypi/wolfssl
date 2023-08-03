@@ -276,40 +276,45 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     /* Attach wolfSSL to the socket */
     wolfSSL_set_fd(ssl, sockfd);
 
-    WOLFSSL_MSG("Connect to wolfSSL on the server side");
-    /* Connect to wolfSSL on the server side */
-    if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
-        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
+
+    while (true) {
+        WOLFSSL_MSG("Connect to wolfSSL on the server side");
+        /* Connect to wolfSSL on the server side */
+        if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
+            ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
+        }
+
+        /* Get a message for the server from stdin */
+        WOLFSSL_MSG("Message for server: ");
+        memset(buff, 0, sizeof(buff));
+
+        if (sendGet) {
+            printf("SSL connect ok, sending GET...\n");
+            len = XSTRLEN(sndMsg);
+            strncpy(buff, sndMsg, len);
+            buff[len] = '\0';
+        }
+        else {
+            sprintf(buff, "message from esp32 tls client\n");
+            len = strnlen(buff, sizeof(buff));
+        }
+        /* Send the message to the server */
+        if (wolfSSL_write(ssl, buff, len) != len) {
+            ESP_LOGE(TAG, "ERROR: failed to write\n");
+        }
+
+        /* Read the server data into our buff array */
+        memset(buff, 0, sizeof(buff));
+        if (wolfSSL_read(ssl, buff, sizeof(buff) - 1) == -1) {
+            ESP_LOGE(TAG, "ERROR: failed to read\n");
+        }
+
+        /* Print to stdout any data the server sends */
+        printf("Server:");
+        printf("%s", buff);
+        vTaskDelay(10000);
     }
 
-    /* Get a message for the server from stdin */
-    WOLFSSL_MSG("Message for server: ");
-    memset(buff, 0, sizeof(buff));
-
-    if (sendGet) {
-        printf("SSL connect ok, sending GET...\n");
-        len = XSTRLEN(sndMsg);
-        strncpy(buff, sndMsg, len);
-        buff[len] = '\0';
-    }
-    else {
-        sprintf(buff, "message from esp32 tls client\n");
-        len = strnlen(buff, sizeof(buff));
-    }
-    /* Send the message to the server */
-    if (wolfSSL_write(ssl, buff, len) != len) {
-        ESP_LOGE(TAG, "ERROR: failed to write\n");
-    }
-
-    /* Read the server data into our buff array */
-    memset(buff, 0, sizeof(buff));
-    if (wolfSSL_read(ssl, buff, sizeof(buff) - 1) == -1) {
-        ESP_LOGE(TAG, "ERROR: failed to read\n");
-    }
-
-    /* Print to stdout any data the server sends */
-    printf("Server:");
-    printf("%s", buff);
     /* Cleanup and return */
     wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */
@@ -624,7 +629,7 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
 int tls_smp_client_init(tls_args* args)
 {
     int ret;
-    int test_separate_tasks = 1;
+    int test_separate_tasks = 0;
     int run_peek_task = 0;
 
 #if ESP_IDF_VERSION_MAJOR >= 4
