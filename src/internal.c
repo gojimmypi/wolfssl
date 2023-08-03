@@ -6313,7 +6313,7 @@ static void InitSuites_EitherSide(Suites* suites, ProtocolVersion pv, int keySz,
         word16 haveFalconSig, word16 haveDilithiumSig, word16 haveAnon,
         int side)
 {
-    /* make sure server has DH parms, and add PSK if there */
+    /* make sure server has DH params, and add PSK if there */
     if (side == WOLFSSL_SERVER_END) {
         InitSuites(suites, pv, keySz, haveRSA, havePSK, haveDH, haveECDSAsig,
                    haveECC, TRUE, haveStaticECC, haveFalconSig,
@@ -6943,7 +6943,7 @@ int InitHandshakeHashesAndCopy(WOLFSSL* ssl, HS_Hashes* source,
     return ret;
 }
 
-/* called if user attempts to re-use WOLFSSL object for a new session.
+/* called if user attempts to reuse WOLFSSL object for a new session.
  * For example wolfSSL_clear() is called then wolfSSL_connect or accept */
 int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 {
@@ -16169,7 +16169,23 @@ static int DoHandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
         case certificate_request:
         case server_hello_done:
             if (ssl->options.resuming) {
-#ifdef WOLFSSL_WPAS
+                /* https://www.rfc-editor.org/rfc/rfc5077.html#section-3.4
+                 *   Alternatively, the client MAY include an empty Session ID
+                 *   in the ClientHello.  In this case, the client ignores the
+                 *   Session ID sent in the ServerHello and determines if the
+                 *   server is resuming a session by the subsequent handshake
+                 *   messages.
+                 */
+#ifndef WOLFSSL_WPAS
+                if (ssl->session->sessionIDSz != 0) {
+                    /* Fatal error. Only try to send an alert. RFC 5246 does not
+                     * allow for reverting back to a full handshake after the
+                     * server has indicated the intention to do a resumption. */
+                    (void)SendAlert(ssl, alert_fatal, unexpected_message);
+                    WOLFSSL_ERROR_VERBOSE(OUT_OF_ORDER_E);
+                    return OUT_OF_ORDER_E;
+                }
+#endif
                 /* This can occur when ssl->sessionSecretCb is set. EAP-FAST
                  * (RFC 4851) allows for detecting server session resumption
                  * based on the msg received after the ServerHello. */
@@ -16177,14 +16193,6 @@ static int DoHandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                 ssl->options.resuming = 0;
                 /* No longer resuming, reset peer authentication state. */
                 ssl->options.peerAuthGood = 0;
-#else
-                /* Fatal error. Only try to send an alert. RFC 5246 does not
-                 * allow for reverting back to a full handshake after the
-                 * server has indicated the intention to do a resumption. */
-                (void)SendAlert(ssl, alert_fatal, unexpected_message);
-                WOLFSSL_ERROR_VERBOSE(OUT_OF_ORDER_E);
-                return OUT_OF_ORDER_E;
-#endif
             }
         }
     }
@@ -26498,7 +26506,7 @@ int PickHashSigAlgo(WOLFSSL* ssl, const byte* hashSigAlgo, word32 hashSigAlgoSz)
                 if (hashAlgo < ssl->options.hashAlgo)
                     break;
             #else
-                /* Is hash algorithm stonger than last chosen? */
+                /* Is hash algorithm stronger than last chosen? */
                 if (ret == 0 && hashAlgo > ssl->options.hashAlgo)
                     break;
             #endif
@@ -27320,7 +27328,7 @@ exit_dpk:
  *
  * @param [in] sigAlgo  Signature algorithm.
  * @return  1 when caching required.
- * @return  0 when cacheing not required.
+ * @return  0 when caching not required.
  */
 static int SigAlgoCachesMsgs(int sigAlgo)
 {
@@ -27768,9 +27776,11 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
 #if defined(WOLFSSL_DTLS13) && defined(WOLFSSL_TLS13)
         if (IsAtLeastTLSv1_3(ssl->version) && ssl->options.dtls) {
             /* we sent a TLSv1.3 ClientHello but received a
-             * HELLO_VERIFY_REQUEST */
+             * HELLO_VERIFY_REQUEST. We only check if DTLSv1_3_MINOR is the
+             * min downgrade option as per the server_version field comments in
+             * https://www.rfc-editor.org/rfc/rfc6347#section-4.2.1 */
             if (!ssl->options.downgrade ||
-                    ssl->options.minDowngrade < pv.minor)
+                    ssl->options.minDowngrade <= DTLSv1_3_MINOR)
                 return VERSION_ERROR;
         }
 #endif /* defined(WOLFSSL_DTLS13) && defined(WOLFSSL_TLS13) */

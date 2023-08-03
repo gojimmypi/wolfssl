@@ -7746,7 +7746,7 @@ static int test_wolfSSL_reuse_WOLFSSLobj(void)
 #if defined(OPENSSL_EXTRA) && !defined(NO_SESSION_CACHE) && \
     !defined(WOLFSSL_NO_TLS12)
     /* The unit test for session resumption by re-using WOLFSSL object.
-     * WOLFSSL object is not cleared after first session. It re-use the object
+     * WOLFSSL object is not cleared after first session. It reuse the object
      * for second connection.
     */
     tcp_ready ready;
@@ -51728,7 +51728,7 @@ static int test_wolfssl_EVP_aes_gcm_AAD_2_parts(void)
 
     ExpectIntEQ(XMEMCMP(decryptBuf, cleartext, len), 0);
 
-    /* Test AAD re-use */
+    /* Test AAD reuse */
     EVP_CIPHER_CTX_free(ctx);
 #endif
     return EXPECT_RESULT();
@@ -57425,7 +57425,7 @@ static int test_openssl_generate_key_and_cert(void)
 
 #if !defined(NO_CERTS) && defined(WOLFSSL_CERT_GEN) && \
         defined(WOLFSSL_CERT_REQ) && !defined(NO_ASN_TIME)
-    expectedDerSz = 345;
+    expectedDerSz = 344;
     ExpectIntEQ(test_openssl_make_self_signed_certificate(pkey, expectedDerSz),
                 TEST_SUCCESS);
 #endif
@@ -62888,7 +62888,7 @@ static int test_dtls_ipv6_check(void)
 
     ExpectIntEQ(wolfSSL_dtls_set_peer(ssl_s, &fake_addr6, sizeof(fake_addr6)),
         WOLFSSL_SUCCESS);
-    /* re-use the socket */
+    /* reuse the socket */
     ExpectIntEQ(wolfSSL_set_fd(ssl_c, sockfd), WOLFSSL_SUCCESS);
     wolfSSL_dtls_set_using_nonblock(ssl_s, 1);
     ExpectIntNE(wolfSSL_accept(ssl_s), WOLFSSL_SUCCESS);
@@ -63085,6 +63085,162 @@ static int test_dtls_no_extensions(void)
 #endif
     return EXPECT_RESULT();
 }
+
+static int test_TLSX_CA_NAMES_bad_extension(void)
+{
+    EXPECT_DECLS;
+#if defined(HAVE_MANUAL_MEMIO_TESTS_DEPENDENCIES) && defined(WOLFSSL_TLS13) && \
+    !defined(NO_CERTS) && !defined(WOLFSSL_NO_CA_NAMES) && \
+    defined(OPENSSL_EXTRA) && defined(WOLFSSL_SHA384) && \
+    defined(HAVE_NULL_CIPHER)
+    /* This test should only fail (with BUFFER_ERROR) when we actually try to
+     * parse the CA Names extension. Otherwise it will return other non-related
+     * errors. If CA Names will be parsed in more configurations, that should
+     * be reflected in the macro guard above. */
+    WOLFSSL *ssl_c = NULL;
+    WOLFSSL_CTX *ctx_c = NULL;
+    struct test_memio_ctx test_ctx;
+    /* HRR + SH using TLS_DHE_PSK_WITH_NULL_SHA384 */
+    const byte shBadCaNamesExt[] = {
+        0x16, 0x03, 0x04, 0x00, 0x3f, 0x02, 0x00, 0x00, 0x3b, 0x03, 0x03, 0xcf,
+        0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11, 0xbe, 0x1d, 0x8c, 0x02, 0x1e,
+        0x65, 0xb8, 0x91, 0xc2, 0xa2, 0x11, 0x16, 0x7a, 0xbb, 0x8c, 0x5e, 0x07,
+        0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c, 0x00, 0x13, 0x03, 0x00, 0x00,
+        0x13, 0x94, 0x7e, 0x00, 0x03, 0x0b, 0xf7, 0x03, 0x00, 0x2b, 0x00, 0x02,
+        0x03, 0x04, 0x00, 0x33, 0x00, 0x02, 0x00, 0x19, 0x16, 0x03, 0x03, 0x00,
+        0x5c, 0x02, 0x00, 0x00, 0x3b, 0x03, 0x03, 0x03, 0xcf, 0x21, 0xad, 0x74,
+        0x00, 0x00, 0x83, 0x3f, 0x3b, 0x80, 0x01, 0xac, 0x65, 0x8c, 0x19, 0x2a,
+        0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x02, 0x00, 0x9e, 0x09, 0x1c, 0xe8,
+        0xa8, 0x09, 0x9c, 0x00, 0xc0, 0xb5, 0x00, 0x00, 0x11, 0x8f, 0x00, 0x00,
+        0x03, 0x3f, 0x00, 0x0c, 0x00, 0x2b, 0x00, 0x02, 0x03, 0x04, 0x13, 0x05,
+        0x00, 0x00, 0x08, 0x00, 0x00, 0x06, 0x00, 0x04, 0x00, 0x09, 0x00, 0x00,
+        0x0d, 0x00, 0x00, 0x11, 0x00, 0x00, 0x0d, 0x00, 0x2f, 0x00, 0x01, 0xff,
+        0xff, 0xff, 0xff, 0xfa, 0x0d, 0x00, 0x00, 0x00, 0xad, 0x02
+    };
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+
+    ExpectIntEQ(test_memio_setup(&test_ctx, &ctx_c, NULL, &ssl_c, NULL,
+        wolfTLSv1_3_client_method, NULL), 0);
+
+    XMEMCPY(test_ctx.c_buff, shBadCaNamesExt, sizeof(shBadCaNamesExt));
+    test_ctx.c_len = sizeof(shBadCaNamesExt);
+
+    ExpectIntEQ(wolfSSL_connect(ssl_c), -1);
+    ExpectIntEQ(wolfSSL_get_error(ssl_c, -1), BUFFER_ERROR);
+
+    wolfSSL_free(ssl_c);
+    wolfSSL_CTX_free(ctx_c);
+#endif
+    return EXPECT_RESULT();
+}
+
+#if defined(WOLFSSL_DTLS) && !defined(WOLFSSL_NO_TLS12) && \
+    defined(HAVE_IO_TESTS_DEPENDENCIES)
+static void test_dtls_1_0_hvr_downgrade_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    AssertIntEQ(wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_DTLSV1_2),
+                WOLFSSL_SUCCESS);
+}
+
+static int test_dtls_1_0_hvr_downgrade(void)
+{
+    EXPECT_DECLS;
+    callback_functions func_cb_client;
+    callback_functions func_cb_server;
+
+    XMEMSET(&func_cb_client, 0, sizeof(callback_functions));
+    XMEMSET(&func_cb_server, 0, sizeof(callback_functions));
+
+    func_cb_client.doUdp = func_cb_server.doUdp = 1;
+    func_cb_server.method = wolfDTLSv1_2_server_method;
+    func_cb_client.method = wolfDTLS_client_method;
+    func_cb_client.ctx_ready = test_dtls_1_0_hvr_downgrade_ctx_ready;
+
+    test_wolfSSL_client_server_nofail(&func_cb_client, &func_cb_server);
+
+    ExpectIntEQ(func_cb_client.return_code, TEST_SUCCESS);
+    ExpectIntEQ(func_cb_server.return_code, TEST_SUCCESS);
+
+    return EXPECT_RESULT();
+}
+#else
+static int test_dtls_1_0_hvr_downgrade(void)
+{
+    EXPECT_DECLS;
+    return EXPECT_RESULT();
+}
+#endif
+
+#if defined(HAVE_IO_TESTS_DEPENDENCIES) && !defined(WOLFSSL_NO_TLS12) && \
+        defined(HAVE_SESSION_TICKET)
+
+static WOLFSSL_SESSION* test_session_ticket_no_id_session = NULL;
+
+static void test_session_ticket_no_id_on_result(WOLFSSL* ssl)
+{
+    test_session_ticket_no_id_session = wolfSSL_get1_session(ssl);
+    AssertNotNull(test_session_ticket_no_id_session);
+}
+
+static void test_session_ticket_no_id_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    AssertIntEQ(wolfSSL_CTX_UseSessionTicket(ctx), WOLFSSL_SUCCESS);
+}
+
+static void test_session_ticket_no_id_ssl_ready(WOLFSSL* ssl)
+{
+    test_session_ticket_no_id_session->sessionIDSz = 0;
+    AssertIntEQ(WOLFSSL_SUCCESS,
+           wolfSSL_set_session(ssl, test_session_ticket_no_id_session));
+}
+
+static int test_session_ticket_no_id(void)
+{
+    /* We are testing an expired (invalid crypto context in out case since the
+     * ctx changes) session ticket being sent with the session ID being 0
+     * length. */
+    EXPECT_DECLS;
+    callback_functions func_cb_client;
+    callback_functions func_cb_server;
+
+    XMEMSET(&func_cb_client, 0, sizeof(func_cb_client));
+    XMEMSET(&func_cb_server, 0, sizeof(func_cb_server));
+    func_cb_client.method = wolfTLSv1_2_client_method;
+    func_cb_client.ctx_ready = test_session_ticket_no_id_ctx_ready;
+    func_cb_client.on_result = test_session_ticket_no_id_on_result;
+    func_cb_server.method = wolfTLSv1_2_server_method;
+    func_cb_server.ctx_ready = test_session_ticket_no_id_ctx_ready;
+
+    test_wolfSSL_client_server_nofail(&func_cb_client, &func_cb_server);
+
+    ExpectIntEQ(func_cb_client.return_code, TEST_SUCCESS);
+    ExpectIntEQ(func_cb_server.return_code, TEST_SUCCESS);
+
+    XMEMSET(&func_cb_client, 0, sizeof(func_cb_client));
+    XMEMSET(&func_cb_server, 0, sizeof(func_cb_server));
+    func_cb_client.method = wolfTLSv1_2_client_method;
+    func_cb_client.ctx_ready = test_session_ticket_no_id_ctx_ready;
+    func_cb_client.ssl_ready = test_session_ticket_no_id_ssl_ready;
+    func_cb_server.method = wolfTLSv1_2_server_method;
+    func_cb_server.ctx_ready = test_session_ticket_no_id_ctx_ready;
+
+    test_wolfSSL_client_server_nofail(&func_cb_client, &func_cb_server);
+
+    ExpectIntEQ(func_cb_client.return_code, TEST_SUCCESS);
+    ExpectIntEQ(func_cb_server.return_code, TEST_SUCCESS);
+
+    wolfSSL_SESSION_free(test_session_ticket_no_id_session);
+
+    return EXPECT_RESULT();
+}
+#else
+static int test_session_ticket_no_id(void)
+{
+    EXPECT_DECLS;
+    return EXPECT_RESULT();
+}
+#endif
 
 /*----------------------------------------------------------------------------*
  | Main
@@ -64337,6 +64493,9 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_dtls_ipv6_check),
     TEST_DECL(test_wolfSSL_SCR_after_resumption),
     TEST_DECL(test_dtls_no_extensions),
+    TEST_DECL(test_TLSX_CA_NAMES_bad_extension),
+    TEST_DECL(test_dtls_1_0_hvr_downgrade),
+    TEST_DECL(test_session_ticket_no_id),
     /* This test needs to stay at the end to clean up any caches allocated. */
     TEST_DECL(test_wolfSSL_Cleanup)
 };

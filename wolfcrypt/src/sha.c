@@ -369,7 +369,8 @@
         return ret;
     }
 
-#elif defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
+#elif (defined(WOLFSSL_RENESAS_TSIP_TLS) || \
+    defined(WOLFSSL_RENESAS_TSIP_CRYPTONLY)) && \
     !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH)
 
     /* implemented in wolfcrypt/src/port/Renesas/renesas_tsip_sha.c */
@@ -956,8 +957,9 @@ void wc_ShaFree(wc_Sha* sha)
 #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
     se050_hash_free(&sha->se050Ctx);
 #endif
-#if (defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
-    !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH)) || \
+#if (defined(WOLFSSL_RENESAS_TSIP_TLS) || \
+     defined(WOLFSSL_RENESAS_TSIP_CRYPTONLY)) && \
+    !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH) || \
     defined(WOLFSSL_RENESAS_RX64_HASH)
     if (sha->msg != NULL) {
         XFREE(sha->msg, sha->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -975,7 +977,8 @@ void wc_ShaFree(wc_Sha* sha)
 
 #if !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP)
 
-#if !defined(WOLFSSL_RENESAS_TSIP_CRYPT) || \
+#if (!defined(WOLFSSL_RENESAS_TSIP_TLS) && \
+     !defined(WOLFSSL_RENESAS_TSIP_CRYPTONLY)) || \
     defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH)
 #if !defined(WOLFSSL_RENESAS_RX64_HASH)
 
@@ -1052,7 +1055,8 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 }
 #endif /* WOLFSSL_RENESAS_RX64_HASH */
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
-#endif /* !defined(WOLFSSL_RENESAS_TSIP_CRYPT) ||
+#endif /* !defined(WOLFSSL_RENESAS_TSIP_TLS) && \
+          !defined(WOLFSSL_RENESAS_TSIP_CRYPTONLY) ||
           defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH) */
 #endif /* !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP) */
 
