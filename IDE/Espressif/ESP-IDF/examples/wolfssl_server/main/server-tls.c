@@ -166,14 +166,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    ESP_LOGI(TAG, "Start SM3\n");
-    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-    if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-    }
-    else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-    }
+//    ESP_LOGI(TAG, "Start SM3\n");
+//    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+//    if (ret == SSL_SUCCESS) {
+//        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+//    }
+//    else {
+//        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+//    }
 
     ShowCiphers(NULL);
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
@@ -227,11 +227,11 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     }
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
-//    /* -A load authority */
-//    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-//                                         client_sm2,
-//                                         sizeof_client_sm2,
-//                                         WOLFSSL_FILETYPE_PEM);
+    /* -A load authority */
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+                                         client_sm2,
+                                         sizeof_client_sm2,
+                                         WOLFSSL_FILETYPE_PEM);
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Success: load verify buffer\n");
     }
@@ -297,7 +297,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         WOLFSSL_MSG("Waiting for a connection...");
         wifi_show_ip();
 
-        /* Accept client connections */
+        /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
              ESP_LOGE(TAG, "ERROR: failed to accept the connection");
@@ -307,11 +307,17 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object");
         }
 
+        /* show what cipher connected for this WOLFSSL* object */
+        ShowCiphers(ssl);
+
         /* Attach wolfSSL to the socket */
         wolfSSL_set_fd(ssl, connd);
         /* Establish TLS connection */
         ret = wolfSSL_accept(ssl);
-        if (ret != SSL_SUCCESS) {
+        if (ret == SSL_SUCCESS) {
+            ShowCiphers(ssl);
+        }
+        else {
             ESP_LOGE(TAG, "wolfSSL_accept error %d", wolfSSL_get_error(ssl, ret));
         }
         WOLFSSL_MSG("Client connected successfully");

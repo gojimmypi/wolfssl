@@ -35,7 +35,7 @@
 #define DEFAULT_PORT                     11111
 
 #define TLS_SMP_SERVER_TASK_NAME         "tls_sever_example"
-#define TLS_SMP_SERVER_TASK_WORDS        12240
+#define TLS_SMP_SERVER_TASK_WORDS        22240
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
 
 #define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID

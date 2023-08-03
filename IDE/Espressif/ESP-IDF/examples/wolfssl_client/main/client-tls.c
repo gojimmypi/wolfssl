@@ -30,6 +30,8 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 
+#include "client-tls.h"
+
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
@@ -157,14 +159,8 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                       */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
-typedef struct {
-    int port;
-    int loops;
-} tls_args;
-
-
 /* client task */
-void tls_smp_client_task()
+void tls_smp_client_task(void *args)
 {
     char buff[256];
     const char sndMsg[] = "GET /index.html HTTP/1.0\r\n\r\n";
@@ -184,7 +180,7 @@ void tls_smp_client_task()
 
     WOLFSSL_ENTER("tls_smp_client_task");
 
-    doPeerCheck = 0;
+    doPeerCheck = 1;
     sendGet = 0;
 
 #ifdef DEBUG_WOLFSSL

@@ -30,13 +30,6 @@
     #include "esp_event_loop.h"
 #endif
 
-#define TLS_SMP_TARGET_HOST             "192.168.1.108"
-#define DEFAULT_PORT                    11111
-
-#define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
-#define TLS_SMP_CLIENT_TASK_WORDS       12240
-#define TLS_SMP_CLIENT_TASK_PRIORITY    8
-
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
