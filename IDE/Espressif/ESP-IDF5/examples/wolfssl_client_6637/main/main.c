@@ -141,7 +141,7 @@ void app_main(void)
 #else
     tls_args args[1];
     /* start a thread with the task */
-    args[0].loops = 10;
+    args[0].loops = 1;
     args[0].port = 11111;
     tls_smp_client_init(args);
 //    tls_smp_client_init(args);

@@ -384,14 +384,21 @@ extern "C"
     int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
     int esp_sha_hw_islocked(WC_ESP32SHA* ctx); /* 0 = not locked, or owner */
+    int esp_sha_call_count();
+    int esp_sha_lock_count();
     int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
+    int esp_sha_set_stray(WC_ESP32SHA* ctx);
 
     struct wc_Sha;
     int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
     int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess);
     int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
-    #ifndef NO_SHA256
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+    extern WC_ESP32SHA* stray_ctx; /* testing HW release in task that did not lock */
+#endif
+
+#ifndef NO_SHA256
     struct wc_Sha256;
     int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
     int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);

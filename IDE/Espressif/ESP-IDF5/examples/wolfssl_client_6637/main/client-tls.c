@@ -277,7 +277,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     wolfSSL_set_fd(ssl, sockfd);
 
 
-    while (true) {
         WOLFSSL_MSG("Connect to wolfSSL on the server side");
         /* Connect to wolfSSL on the server side */
         if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
@@ -313,7 +312,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
         printf("Server:");
         printf("%s", buff);
         vTaskDelay(10000);
-    }
 
     /* Cleanup and return */
     wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
@@ -591,6 +589,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task_send_data(void *args)
     return TLS_SMP_CLIENT_TASK_RET;
 }
 
+WC_ESP32SHA my_stray[1] = {};
+
 WOLFSSL_ESP_TASK tls_peek(void *args)
 {
     ulong counter = 0;
@@ -598,9 +598,30 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
     int last_ret = -1;
     int ret = -1;
 
-    while (true) {
-        ret = esp_sha_hw_islocked(0); /* if locked, the address of the owner */
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+    int this_count = 0;
+    int last_count = 0;
+    int esp_sha_test_pending = WOLFSSL_TEST_STRAY;
+    ret = esp_sha_set_stray((WC_ESP32SHA*)&my_stray);
+    ESP_LOGI(TAG, "stray_ctx->initializer = %x ret = %x", (int)stray_ctx->initializer, ret);
+#endif
 
+    while (true) {
+
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+        ret = esp_sha_hw_islocked(0); /* if locked, the address of the owner */
+        this_count =  esp_sha_call_count();
+        if (last_count != this_count) {
+            ESP_LOGI("peek", "  >> this count = %d", this_count );
+            last_count = this_count;
+        }
+
+        if ((this_count >= 7) && (esp_sha_test_pending)) {
+            ESP_LOGW("peek", "\n\n>>>> RELEASE STRAY %x %x\n\n", (int)&stray_ctx, (int)stray_ctx->initializer);
+            esp_sha_test_pending = 0;
+            esp_sha_release_unfinished_lock(stray_ctx);
+        }
+#endif
         if (ret == last_ret) {
             current_delay = 10;
         }
@@ -630,7 +651,7 @@ int tls_smp_client_init(tls_args* args)
 {
     int ret;
     int test_separate_tasks = 0;
-    int run_peek_task = 0;
+    int run_peek_task = 1;
 
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
