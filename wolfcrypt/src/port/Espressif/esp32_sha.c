@@ -189,6 +189,12 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
         /* we'll keep track of who initialized this */
         ctx->initializer = ctx; /* save our address in the initializer */
+        #ifndef SINGLE_THREADED
+        {
+            /* Keep track of which freeRTOS task actually locks HW */
+            ctx->task_owner = xTaskGetCurrentTaskHandle();
+        }
+        #endif
         ctx->mode = ESP32_SHA_INIT;
     }
     else {
@@ -203,6 +209,22 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
             /* we should never have an unexpected mode in a known ctx */
             switch (ctx->mode) {
+                case ESP32_SHA_FREE_PENDING:
+                    ESP_LOGW(TAG, "Warning: ESP32_SHA_FREE_PENDING status");
+
+                #ifdef SINGLE_THREADED
+                    esp_sha_hw_unlock(ctx);
+                #else
+                    if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
+                        esp_sha_hw_unlock(ctx);
+                    }
+                    else {
+                        ESP_LOGW(TAG, "Warning: unable to unlock ctx mutex ");
+                    }
+                #endif
+                    ctx->mode = ESP32_SHA_INIT;
+                    /* fall through to init */
+
                 case ESP32_SHA_INIT:
                 case ESP32_SHA_SW:
                     /* nothing interesting here */
@@ -238,9 +260,20 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             **
             ** In either case, initialize: */
             ctx->initializer = ctx; /* set a new address */
+        #ifndef SINGLE_THREADED
+        {
+            /* not HW mode, so we are not interested in task owner */
+            ctx->task_owner = 0;
+        }
+        #endif
 
             /* Always set to ESP32_SHA_INIT, but give debug info as to why: */
             switch (ctx->mode) {
+                case ESP32_SHA_FREE_PENDING:
+                    ESP_LOGE(TAG, "ERROR: unexpected ESP32_SHA_FREE_PENDING");
+                    ctx->mode = ESP32_SHA_INIT;
+                    break;
+
                 case ESP32_SHA_INIT:
                     /* if we are already in init mode, nothing to do. */
                     break;
@@ -376,6 +409,11 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer breadcrumb: */
         dst->ctx.initializer = &(dst->ctx); /* assign new breadcrumb to dst */
+    #ifndef SINGLE_THREADED
+        /* not HW mode, so we are not interested in task owner */
+        dst->ctx.task_owner = 0;
+    #endif
+
         ret = 0;
     }
 
@@ -389,6 +427,10 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware on ESP32 */
     dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
+#ifndef SINGLE_THREADED
+    /* not HW mode, so we are not interested in task owner */
+    dst->ctx.task_owner = 0;
+#endif
 
     /* always set to SW, as there's no ESP32 HW for SHA224.
     ** TODO: add support for ESP32-S2. ESP32-S3, ESP32-C3 here.
@@ -430,6 +472,12 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer: */
         dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
+        #ifndef SINGLE_THREADED
+        {
+            /* not HW mode, so we are not interested in task owner */
+            dst->ctx.task_owner = 0;
+        }
+        #endif
     } /* not (src->ctx.mode == ESP32_SHA_HW) */
 
     return ret;
@@ -474,6 +522,12 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer: */
         dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
+        #ifndef SINGLE_THREADED
+        {
+            /* not HW mode, so we are not interested in task owner */
+            dst->ctx.task_owner = 0;
+        }
+        #endif
     } /* not (src->ctx.mode == ESP32_SHA_HW) */
 
     return ret;
@@ -514,6 +568,12 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
         dst->ctx.initializer = &dst->ctx; /*breadcrumb is this ctx address */
+        #ifndef SINGLE_THREADED
+        {
+            /* not HW mode, so we are not interested in task owner */
+            dst->ctx.task_owner = 0;
+        }
+        #endif
     }
 
     return ret;
@@ -780,7 +840,23 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
             ESP_LOGE(TAG, "\n>>>> esp_sha_release_unfinished_lock %x\n", ret);
         #endif
             /* unlock only if this ctx is the intializer of the lock */
+        #ifdef SINGLE_THREADED
+        {
             ret = esp_sha_hw_unlock(ctx);
+        }
+        #else
+        {
+            if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
+                ret = esp_sha_hw_unlock(ctx);
+            }
+            else {
+                /* We cannot free a SHA onbject locks from a different task.
+                 * So give the ctx a hint for the other task to clean it up. */
+                ctx->mode = ESP32_SHA_FREE_PENDING;
+            }
+        }
+        #endif
+
         }
     }
     return ret;
