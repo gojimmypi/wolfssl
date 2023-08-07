@@ -347,6 +347,7 @@ extern "C"
         ESP32_SHA_HW               = 1,
         ESP32_SHA_SW               = 2,
         ESP32_SHA_HW_COPY          = 3,
+        ESP32_SHA_FREED            = 4,
         ESP32_SHA_FAIL_NEED_UNROLL = -1
     } ESP32_MODE;
 
@@ -354,6 +355,9 @@ extern "C"
     {
         /* pointer to object the initialized HW; to track copies */
         void* initializer;
+#ifndef SINGLE_THREADED
+        void* task_owner;
+#endif
 
         /* an ESP32_MODE value; typically:
         **   0 init,

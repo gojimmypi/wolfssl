@@ -75,7 +75,8 @@ static const char* TAG = "wolf_hw_sha";
         WC_ESP32SHA* stray_ctx;
         /* each ctx keeps track of the intializer for HW. when debugging
          * we'll have a global variable to indicate which has the lock. */
-        static int mutex_ctx_owner = 0;
+        static void * mutex_ctx_owner = 0;
+        static TaskHandle_t mutex_ctx_task = 0;
         static int _sha_lock_count = 0;
         static int _sha_call_count = 0;
 
@@ -89,9 +90,9 @@ static const char* TAG = "wolf_hw_sha";
             return _sha_lock_count;
         }
 
-        int esp_sha_mutex_ctx_owner()
+        void* esp_sha_mutex_ctx_owner()
         {
-            int ret = 0;
+            void* ret = 0;
             taskENTER_CRITICAL(&sha_crit_sect);
             {
                 ret = mutex_ctx_owner;
@@ -209,8 +210,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
             /* we should never have an unexpected mode in a known ctx */
             switch (ctx->mode) {
-                case ESP32_SHA_FREE_PENDING:
-                    ESP_LOGW(TAG, "Warning: ESP32_SHA_FREE_PENDING status");
+                case ESP32_SHA_FREED:
+                    ESP_LOGW(TAG, "Warning: ESP32_SHA_FREED status");
 
                 #ifdef SINGLE_THREADED
                     esp_sha_hw_unlock(ctx);
@@ -269,8 +270,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
             /* Always set to ESP32_SHA_INIT, but give debug info as to why: */
             switch (ctx->mode) {
-                case ESP32_SHA_FREE_PENDING:
-                    ESP_LOGE(TAG, "ERROR: unexpected ESP32_SHA_FREE_PENDING");
+                case ESP32_SHA_FREED:
+                    ESP_LOGE(TAG, "ERROR: unexpected ESP32_SHA_FREED");
                     ctx->mode = ESP32_SHA_INIT;
                     break;
 
@@ -774,7 +775,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 #ifdef DEBUG_WOLFSSL_SHA_MUTEX
     taskENTER_CRITICAL(&sha_crit_sect);
     {
-        ret = mutex_ctx_owner;
+        ret = (int)mutex_ctx_owner;
         if (ctx == 0) {
             /* we are not checking if a given ctx has the lock */
         }
@@ -807,7 +808,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
         ESP_LOGV(TAG, ">> NOT LOCKED esp_sha_hw_islocked");
     }
     else {
-        ESP_LOGV(TAG, ">> LOCKED esp_sha_hw_islocked for %x", esp_sha_mutex_ctx_owner());
+        ESP_LOGV(TAG, ">> LOCKED esp_sha_hw_islocked for %x", (int)esp_sha_mutex_ctx_owner());
     }
 #endif
     return ret;
@@ -852,7 +853,7 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
             else {
                 /* We cannot free a SHA onbject locks from a different task.
                  * So give the ctx a hint for the other task to clean it up. */
-                ctx->mode = ESP32_SHA_FREE_PENDING;
+                ctx->mode = ESP32_SHA_FREED;
             }
         }
         #endif
@@ -946,13 +947,43 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             ESP_LOGI(TAG, "Revert to ctx->mode = ESP32_SHA_SW.");
 
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
-            ESP_LOGI(TAG, "Current mutext owner = %x", esp_sha_mutex_ctx_owner());
+            ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
         #endif
 
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, just not using HW */
         }
     }
+
+    if (mutex_ctx_task == 0 || mutex_ctx_owner == 0) {
+        /* no known stray mutex task owner */
+    }
+    else {
+        if (mutex_ctx_task ==  xTaskGetCurrentTaskHandle()) {
+            ESP_LOGI(TAG, "Found mutex_ctx_task");
+            if (((WC_ESP32SHA*)mutex_ctx_owner)->mode == ESP32_SHA_FREED) {
+                ESP_LOGW(TAG, "ESP32_SHA_FREED unlocking mutex_ctx_task = %x"
+                              " for mutex_ctx_owner = %x",
+                              (int)mutex_ctx_task, (int)mutex_ctx_owner );
+                esp_CryptHwMutexUnLock(&sha_mutex);
+                ((WC_ESP32SHA*)mutex_ctx_owner)->mode = ESP32_SHA_INIT;
+                mutex_ctx_task = 0; /* TODO really needed init ? */
+                mutex_ctx_owner = 0;
+            }
+            else {
+                if (ctx->mode == ESP32_SHA_FREED) {
+                    ESP_LOGW(TAG, "ESP32_SHA_FREED unlocking ctx = %x"
+                              " for ctx.initializer = %x",
+                              (int)ctx, (int)ctx->initializer );
+                    esp_CryptHwMutexUnLock(&sha_mutex);
+                    ctx->mode = ESP32_SHA_INIT;
+                    mutex_ctx_task = 0; /* TODO really needed init ? */
+                    mutex_ctx_owner = 0;
+                }
+            }
+        }
+    }
+
 
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {
@@ -968,9 +999,10 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
          * TODO: allow for SHA interleave on chips that support it.
          */
 
-
         if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
             /* we've successfully locked */
+            mutex_ctx_task = xTaskGetCurrentTaskHandle();
+
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             if (esp_sha_call_count() == 8 && WOLFSSL_TEST_STRAY) {
                 /* once we've locked 10 times here, we'll force a fallback to SW until other thread unlocks */
@@ -978,13 +1010,14 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 {
                     (void)stray_ctx;
                     stray_ctx->initializer = stray_ctx;
-                    mutex_ctx_owner = (int)stray_ctx->initializer;
+                    mutex_ctx_owner = (void*)stray_ctx->initializer;
                 }
                 taskEXIT_CRITICAL(&sha_crit_sect);
                 ESP_LOGI(TAG, "%x", (int)stray_ctx->initializer);
                 ESP_LOGI(TAG, "%x", (int)&stray_ctx);
                 ESP_LOGW(TAG, "\n\nLocking with stray\n\n"
                               "DEBUG_WOLFSSL_SHA_MUTEX call count 8, ctx->mode = ESP32_SHA_SW %x\n\n", (int)mutex_ctx_owner);
+                ctx->task_owner = xTaskGetCurrentTaskHandle();
                 ctx->mode = ESP32_SHA_SW;
                 return 0; /* success, but revert to SW */
             }
@@ -992,14 +1025,14 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
             /* check to see if we had a prior fail and need to unroll enables */
             ESP_LOGW(TAG, "Locking for ctx %x, current mutex_ctx_owner = %x",
-                                        (int)&ctx, esp_sha_mutex_ctx_owner());
+                                        (int)&ctx, (int)esp_sha_mutex_ctx_owner());
             ret = esp_unroll_sha_module_enable(ctx);
             ESP_LOGI(TAG, "Hardware Mode Active, lock depth = %d, for %x",
                           ctx->lockDepth, (int)ctx->initializer);
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             taskENTER_CRITICAL(&sha_crit_sect);
             {
-                mutex_ctx_owner = (int)ctx->initializer;
+                mutex_ctx_owner = (void*)ctx->initializer;
                 _sha_lock_count++; /* let's keep track of how many times we lock this */
             }
             taskEXIT_CRITICAL(&sha_crit_sect);
@@ -1017,11 +1050,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
             ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW for %x\n",
-                           esp_sha_mutex_ctx_owner(),  (int)ctx->initializer);
+                           (int)esp_sha_mutex_ctx_owner(),  (int)ctx->initializer);
             ESP_LOGI(TAG, "Software Mode, lock depth = %d, for this %x",
                           ctx->lockDepth, (int)ctx->initializer);
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
-            ESP_LOGI(TAG, "Current mutext owner = %x", esp_sha_mutex_ctx_owner());
+            ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
         #endif
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
@@ -1096,9 +1129,13 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     #else
         /* unlock HW engine for next use */
         ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x",
-                 esp_sha_mutex_ctx_owner(), (int)ctx, (int)&ctx, esp_sha_mutex_ctx_owner());
+                       (int)esp_sha_mutex_ctx_owner(),
+                       (int)ctx,
+                       (int)&ctx,
+                       (int)esp_sha_mutex_ctx_owner());
         ESP_LOGW(TAG, "&sha_mutex = %x", (int)&sha_mutex);
         esp_CryptHwMutexUnLock(&sha_mutex);
+        mutex_ctx_task = 0;
     #endif
 
     #ifdef DEBUG_WOLFSSL_SHA_MUTEX

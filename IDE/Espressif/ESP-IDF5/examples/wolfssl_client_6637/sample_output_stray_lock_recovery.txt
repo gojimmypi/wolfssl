@@ -1,0 +1,1605 @@
+ets Jun  8 2016 00:22:57
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:7100
+ho 0 tail 12 room 4
+load:0x40078000,len:15604
+load:0x40080400,len:4
+load:0x40080404,len:3876
+entry 0x4008064c
+I (30) boot: ESP-IDF v5.1-231-ga7b62bbcaf-dirty 2nd stage bootloader
+I (30) boot: compile time Aug  4 2023 14:45:06
+I (32) boot: Multicore bootloader
+I (36) boot: chip revision: v1.0
+I (40) boot.esp32: SPI Speed      : 80MHz
+I (44) boot.esp32: SPI Mode       : DIO
+I (49) boot.esp32: SPI Flash Size : 2MB
+I (54) boot: Enabling RNG early entropy source...
+I (59) boot: Partition Table:
+I (63) boot: ## Label            Usage          Type ST Offset   Length
+I (70) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (77) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (85) boot:  2 factory          factory app      00 00 00010000 00177000
+I (92) boot: End of partition table
+I (96) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=34924h (215332) map
+I (170) esp_image: segment 1: paddr=0004494c vaddr=3ffb0000 size=038c4h ( 14532) load
+I (175) esp_image: segment 2: paddr=00048218 vaddr=40080000 size=07e00h ( 32256) load
+I (187) esp_image: segment 3: paddr=00050020 vaddr=400d0020 size=c4fd8h (806872) map
+I (430) esp_image: segment 4: paddr=00115000 vaddr=40087e00 size=0d940h ( 55616) load
+I (461) boot: Loaded app from partition at offset 0x10000
+I (461) boot: Disabling RNG early entropy source...
+I (473) cpu_start: Multicore app
+I (473) cpu_start: Pro cpu up.
+I (473) cpu_start: Starting app cpu, entry point is 0x40081374
+I (463) cpu_start: App cpu up.
+I (493) cpu_start: Pro cpu start user code
+I (493) cpu_start: cpu freq: 160000000 Hz
+I (493) cpu_start: Application information:
+I (498) cpu_start: Project name:     wolfssl_client_6637
+I (504) cpu_start: App version:      v5.6.3-stable-1286-g390d148d3-d
+I (511) cpu_start: Compile time:     Aug  6 2023 11:54:47
+I (517) cpu_start: ELF file SHA256:  d7b112f2...
+I (523) cpu_start: ESP-IDF:          v5.1-231-ga7b62bbcaf-dirty
+I (529) cpu_start: Min chip rev:     v0.0
+I (534) cpu_start: Max chip rev:     v3.99
+I (539) cpu_start: Chip rev:         v1.0
+I (544) heap_init: Initializing. RAM available for dynamic allocation:
+I (551) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (557) heap_init: At 3FFBE060 len 00021FA0 (135 KiB): DRAM
+I (563) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (569) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (576) heap_init: At 40095740 len 0000A8C0 (42 KiB): IRAM
+I (583) spi_flash: detected chip: generic
+I (587) spi_flash: flash io: dio
+W (590) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary imag
+e header.
+I (604) sleep: Configure to isolate all GPIO pins in sleep state
+I (611) sleep: Enable automatic switching of GPIO sleep configuration
+I (618) app_start: Starting scheduler on CPU0
+I (622) app_start: Starting scheduler on CPU1
+I (622) main_task: Started on CPU0
+I (632) main_task: Calling app_main()
+I (635) TLS Client: ---------------- wolfSSL TLS Client Example ------------
+I (643) TLS Client: --------------------------------------------------------
+I (650) TLS Client: --------------------------------------------------------
+I (658) TLS Client: ---------------------- BEGIN MAIN ----------------------
+I (666) TLS Client: --------------------------------------------------------
+I (674) TLS Client: --------------------------------------------------------
+I (681) esp32_util: SSID and plain text WiFi password not displayed in startup logs.Define SHOW_SSID_AND_PASSWORD to enable.
+I (693) esp32_util: Extended Version and Platform Information.
+I (700) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.3
+I (705) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006003
+I (711) esp32_util: RSA_LOW_MEM is NOT enabled
+I (716) esp32_util: Using wolfSSL user_settings.h in tbd
+I (722) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = 160 MHz
+I (729) esp32_util: Xthal_have_ccount = 1
+I (734) esp32_util: Stack HWM: 14152
+
+I (738) esp32_util:
+I (741) esp32_util:
+I (744) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (753) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (760) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 390d148d394f76c0a28adabffebf0e01bc0199e7
+I (769) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 390d148d3
+I (776) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Sun Aug 6 11:45:15 2023 -0700'
+I (784) esp32_util: CONFIG_IDF_TARGET = esp32
+I (789) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 160 MHz
+I (796) esp32_util: Xthal_have_ccount: 1
+I (800) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 15500
+I (806) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 15500
+I (812) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (818) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (824) esp32_util: Stack HWM: 14088
+I (828) esp32_util: ESP32_CRYPT is enabled for ESP32.
+I (834) esp32_util: NOT SINGLE_THREADED
+I (874) TLS Client: ESP_WIFI_MODE_STA
+I (878) wifi:wifi driver task: 3ffc90f4, prio:23, stack:6656, core=0
+I (900) wifi:wifi firmware version: 6a2a12b
+I (900) wifi:wifi certification version: v7.0
+I (900) wifi:config NVS flash: enabled
+I (900) wifi:config nano formating: disabled
+I (904) wifi:Init data frame dynamic rx buffer num: 32
+I (909) wifi:Init management frame dynamic rx buffer num: 32
+I (915) wifi:Init management short buffer num: 32
+I (919) wifi:Init dynamic tx buffer num: 32
+I (923) wifi:Init static rx buffer size: 1600
+I (927) wifi:Init static rx buffer num: 10
+I (931) wifi:Init dynamic rx buffer num: 32
+I (935) wifi_init: rx ba win: 6
+I (938) wifi_init: tcpip mbox: 32
+I (942) wifi_init: udp mbox: 6
+I (946) wifi_init: tcp mbox: 6
+I (950) wifi_init: tcp tx win: 5744
+I (954) wifi_init: tcp rx win: 5744
+I (958) wifi_init: tcp mss: 1440
+I (962) wifi_init: WiFi IRAM OP enabled
+I (967) wifi_init: WiFi RX IRAM OP enabled
+I (974) phy_init: phy_version 4670,719f9f6,Feb 18 2021,17:07:07
+I (1075) wifi:mode : sta (c4:4f:33:17:1a:fd)
+I (1076) wifi:enable tsf
+I (1078) tls_client: wifi_init_sta finished.
+I (1153) wifi:new:<4,0>, old:<1,0>, ap:<255,255>, sta:<4,0>, prof:1
+I (1154) wifi:state: init -> auth (b0)
+I (1157) wifi:state: auth -> assoc (0)
+I (1161) wifi:state: assoc -> run (10)
+I (1166) wifi:<ba-add>idx:0 (ifx:0, c8:d7:19:cd:00:17), tid:0, ssn:0, winSize:64
+I (1179) wifi:connected with testbench, aid = 2, channel 4, BW20, bssid = c8:d7:19:cd:00:17
+I (1180) wifi:security: WPA2-PSK, phy: bgn, rssi: -49
+I (1186) wifi:pm start, type: 1
+
+I (1253) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (2190) esp_netif_handlers: sta ip: 192.168.1.113, mask: 255.255.255.0, gw: 192.168.1.10
+I (2191) tls_client: got ip:192.168.1.113
+I (2193) tls_client: Connected to AP
+I (2198) Time Helper: sntp_setservername:
+I (2202) Time Helper: pool.ntp.org
+I (2206) Time Helper: time.nist.gov
+I (2210) Time Helper: utcnist.colorado.edu
+I (2215) Time Helper: sntp_init done.
+I (2219) TLS Client: Initial Stack Used (before wolfSSL Server): 2020 bytes
+I (2227) TLS Client: Starting TLS Client...
+
+I (2232) tls_client: stray_ctx->initializer = 0 ret = 3ffb4044
+I (2239) peek:   >> NOT LOCKED esp_sha_hw_islocked
+I (2241) wolfssl: wolfSSL Entering tls_client_example
+I (2250) wolfssl: Debug ON
+TLS13-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-DES-CBC
+3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES1
+28-SHA256:ECDHE-PSK-AES128-CBC-SHA256:ECDHE-PSK-AES128-GCM-SHA256
+I (2282) wolfssl: wolfSSL Entering wolfSSL_Init
+I (2287) wolfssl: wolfSSL Entering wolfCrypt_Init
+I (2292) tls_client: get target IP address
+I (2297) tls_client: 192.168.1.109
+I (2301) wolfssl: wolfSSL Entering TLSv1_2_client_method_ex
+I (2307) wolfssl: wolfSSL Entering wolfSSL_CTX_new_ex
+I (2313) wolfssl: wolfSSL Entering wolfSSL_CertManagerNew
+I (2319) wolfssl: wolfSSL Leaving wolfSSL_CTX_new_ex, return 0
+TLS13-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-DES-CBC
+3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES1
+28-SHA256:ECDHE-PSK-AES128-CBC-SHA256:ECDHE-PSK-AES128-GCM-SHA256
+I (2354) tls_client: Stack used: 10592
+
+I (2358) wolfssl: Loading...cert
+I (2362) wolfssl: wolfSSL Entering wolfSSL_CTX_load_verify_buffer_ex
+I (2369) wolfssl: Adding a CA
+I (2373) wolfssl: wolfSSL Entering GetExplicitVersion
+I (2379) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (2384) wolfssl: Got Cert Header
+I (2388) wolfssl: wolfSSL Entering GetObjectId
+I (2393) wolfssl: Got Algo ID
+I (2397) wolfssl: Getting Name
+I (2401) wolfssl: Getting Cert Name
+I (2405) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd3c20
+I (2411) wolf_hw_sha: esp_CryptHwMutexInit sha_mutex init success.
+I (2418) wolf_hw_sha: ESP32_SHA_INIT for 3ffd3c20
+
+W (2423) wolf_hw_sha: Locking for ctx 3ffd237c, current mutex_ctx_owner = 0
+I (2431) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd3c20
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd3c20
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd3c20
+I (2444) peek:   >> this count = 1
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd3c20
+E (2453) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd3c20
+W (2459) wolf_hw_sha: Unlocking for 3ffd3c20, from ctx 3ffd3c20, & = 3ffd231c, mutex_ctx_owner = 3ffd3c20
+W (2476) wolf_hw_sha: &sha_mutex = 3ffba090
+I (2481) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd3c20
+I (2487) wolfssl: Getting Name
+I (2490) wolfssl: Getting Cert Name
+I (2494) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd3cf4
+I (2500) wolf_hw_sha: ESP32_SHA_INIT for 3ffd3cf4
+
+W (2506) wolf_hw_sha: Locking for ctx 3ffd237c, current mutex_ctx_owner = 0
+I (2514) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd3cf4
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd3cf4
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd3cf4
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd3cf4
+W (2538) wolf_hw_sha: Unlocking for 3ffd3cf4, from ctx 3ffd3cf4, & = 3ffd231c, mutex_ctx_owner = 3ffd3cf4
+W (2548) wolf_hw_sha: &sha_mutex = 3ffba090
+I (2553) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd3cf4
+I (2559) wolfssl: Got Subject Name
+I (2563) wolfssl: wolfSSL Entering GetAlgoId
+I (2568) wolfssl: wolfSSL Entering GetObjectId
+I (2573) wolfssl: Got Key
+I (2576) wolfssl: Parsed Past Key
+I (2580) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (2586) wolfssl: wolfSSL Entering GetObjectId
+I (2591) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (2597) wolfssl: wolfSSL Entering GetObjectId
+I (2602) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (2607) wolfssl: wolfSSL Entering GetObjectId
+I (2613) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
+I (2619) wolfssl: wolfSSL Entering GetObjectId
+I (2624) wolfssl: wolfSSL Entering DecodeAltNames
+I (2629) wolfssl:       Unsupported name type, skipping
+I (2635) wolfssl: wolfSSL Entering GetObjectId
+I (2640) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (2646) wolfssl: wolfSSL Entering GetObjectId
+I (2651) wolfssl: wolfSSL Entering GetObjectId
+I (2656) wolfssl: wolfSSL Entering GetObjectId
+I (2661) wolfssl:       Parsed new CA
+I (2665) wolfssl:       Freeing Parsed CA
+I (2666) peek:   >> this count = 2
+I (2669) wolfssl:       Freeing der CA
+I (2673) peek:   >> NOT LOCKED esp_sha_hw_islocked
+I (2677) wolfssl:               OK Freeing der CA
+I (2687) wolfssl: wolfSSL Leaving AddCA, return 0
+I (2692) wolfssl: wolfSSL Leaving wolfSSL_CTX_load_verify_buffer_ex, return 1
+W (2700) tls_client: doPeerCheck != 0
+I (2704) wolfssl: Loading... our cert
+I (2709) wolfssl: wolfSSL Entering wolfSSL_CTX_use_certificate_chain_buffer_format
+I (2717) wolfssl: Checking cert signature type
+I (2722) wolfssl: wolfSSL Entering GetExplicitVersion
+I (2728) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (2734) wolfssl: Got Cert Header
+I (2738) wolfssl: wolfSSL Entering GetObjectId
+I (2743) wolfssl: Got Algo ID
+I (2746) wolfssl: Getting Name
+I (2750) wolfssl: Getting Cert Name
+I (2754) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd38c8
+I (2760) wolf_hw_sha: ESP32_SHA_INIT for 3ffd38c8
+
+W (2766) wolf_hw_sha: Locking for ctx 3ffd244c, current mutex_ctx_owner = 0
+I (2773) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd38c8
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd38c8
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd38c8
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd38c8
+W (2798) wolf_hw_sha: Unlocking for 3ffd38c8, from ctx 3ffd38c8, & = 3ffd23ec, mutex_ctx_owner = 3ffd38c8
+W (2808) wolf_hw_sha: &sha_mutex = 3ffba090
+I (2813) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd38c8
+I (2819) wolfssl: Getting Name
+I (2822) wolfssl: Getting Cert Name
+I (2827) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd38c8
+I (2833) wolf_hw_sha: ESP32_SHA_INIT for 3ffd38c8
+
+W (2838) wolf_hw_sha: Locking for ctx 3ffd244c, current mutex_ctx_owner = 0
+I (2846) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd38c8
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd38c8
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd38c8
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd38c8
+W (2870) wolf_hw_sha: Unlocking for 3ffd38c8, from ctx 3ffd38c8, & = 3ffd23ec, mutex_ctx_owner = 3ffd38c8
+W (2880) wolf_hw_sha: &sha_mutex = 3ffba090
+I (2883) peek:   >> this count = 4
+I (2885) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd38c8
+E (2889) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd38c8
+I (2895) wolfssl: Got Subject Name
+I (2906) wolfssl: wolfSSL Entering GetAlgoId
+I (2911) wolfssl: wolfSSL Entering GetObjectId
+I (2916) wolfssl: Got Key
+I (2919) wolfssl: Not ECDSA cert signature
+I (2924) wolfssl: wolfSSL Entering wolfSSL_CTX_use_PrivateKey_buffer
+I (2931) wolfssl: wolfSSL Entering GetAlgoId
+I (2936) wolfssl: wolfSSL Entering GetAlgoId
+I (2941) wolfssl: wolfSSL Leaving wolfSSL_CTX_use_PrivateKey_buffer, return 1
+I (2948) wolfssl: wolfSSL Entering wolfSSL_CTX_set_verify
+I (2955) wolfssl: inet_pton
+I (2958) wolfssl: Connecting to server....192.168.1.109(port:11111)
+Connecting to server....192.168.1.109(port:11111)
+I (3006) wolfssl: Create a WOLFSSL object
+I (3007) wolfssl: wolfSSL Entering wolfSSL_new
+I (3007) wolfssl: wolfSSL Entering ReinitSSL
+I (3010) internal: arrays
+I (3014) internal: rng...
+I (3017) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd249c
+I (3023) wolf_hw_sha: ESP32_SHA_INIT for 3ffd249c
+
+W (3029) wolf_hw_sha: Locking for ctx 3ffd23ac, current mutex_ctx_owner = 0
+I (3036) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd249c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd249c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd249c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd249c
+W (3060) wolf_hw_sha: Unlocking for 3ffd249c, from ctx 3ffd249c, & = 3ffd236c, mutex_ctx_owner = 3ffd249c
+W (3071) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3076) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd249c
+I (3081) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd249c
+I (3087) wolf_hw_sha: ESP32_SHA_INIT for 3ffd249c
+
+W (3093) wolf_hw_sha: Locking for ctx 3ffd23ac, current mutex_ctx_owner = 0
+I (3101) peek:   >> this count = 6
+I (3101) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd249c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd249c
+I (3105) peek:   >> NOT LOCKED esp_sha_hw_islocked
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd249c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd249c
+W (3134) wolf_hw_sha: Unlocking for 3ffd249c, from ctx 3ffd249c, & = 3ffd236c, mutex_ctx_owner = 3ffd249c
+W (3145) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3150) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd249c
+I (3156) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd249c
+I (3161) wolf_hw_sha: ESP32_SHA_INIT for 3ffd249c
+
+W (3167) wolf_hw_sha: Locking for ctx 3ffd23ac, current mutex_ctx_owner = 0
+I (3175) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd249c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd249c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd249c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd249c
+W (3199) wolf_hw_sha: Unlocking for 3ffd249c, from ctx 3ffd249c, & = 3ffd236c, mutex_ctx_owner = 3ffd249c
+W (3209) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3214) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd249c
+I (3220) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd249c
+I (3226) wolf_hw_sha: ESP32_SHA_INIT for 3ffd249c
+
+I (3232) wolf_hw_sha: 3ffb4044
+I (3235) wolf_hw_sha: 3ffba08c
+W (3239) wolf_hw_sha:
+
+Locking with stray
+
+DEBUG_WOLFSSL_SHA_MUTEX call count 8, ctx->mode = ESP32_SHA_SW 3ffb4044
+
+
+I (3251) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3257) wolf_hw_sha: Found mutex_ctx_task
+I (3262) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+I (3267) wolf_hw_sha:
+Hardware in use by 3ffb4044; Mode REVERT to ESP32_SHA_SW for 3ffd241c
+
+I (3276) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd241c
+I (3284) wolf_hw_sha: Current mutext owner = 3ffb4044
+I (3290) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3295) wolf_hw_sha: Found mutex_ctx_task
+I (3300) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+I (3306) wolf_hw_sha:
+Hardware in use by 3ffb4044; Mode REVERT to ESP32_SHA_SW for 3ffd241c
+
+I (3315) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd241c
+I (3322) peek:   >> this count = 10
+I (3322) wolf_hw_sha: Current mutext owner = 3ffb4044
+W (3327) peek:
+
+>>>> RELEASE STRAY 3ffba08c 3ffb4044
+
+
+I (3332) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+E (3338) wolf_hw_sha:
+>>>> esp_sha_release_unfinished_lock 3ffb4044
+
+I (3344) wolf_hw_sha: Found mutex_ctx_task
+E (3352) peek:   >> LOCKED esp_sha_hw_islocked for 3ffb4044
+W (3357) wolf_hw_sha: ESP32_SHA_FREED unlocking mutex_ctx_task = 3ffcf028 for mutex_ctx_owner = 3ffb4044
+I (3373) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+W (3378) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3386) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3410) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3421) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3426) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3431) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3437) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+W (3443) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3451) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3475) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3485) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3490) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3496) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24cc
+I (3502) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24cc
+
+W (3507) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (3515) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24cc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24cc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24cc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24cc
+W (3539) wolf_hw_sha: Unlocking for 3ffd24cc, from ctx 3ffd24cc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24cc
+W (3550) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3555) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24cc
+I (3561) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3563) peek:   >> this count = 13
+I (3566) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+I (3571) peek:   >> NOT LOCKED esp_sha_hw_islocked
+W (3576) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3589) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3614) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3624) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3629) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3635) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3641) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+W (3646) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3654) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3678) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3688) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3693) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3699) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3705) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+W (3711) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3718) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3743) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3753) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3758) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3764) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd241c
+I (3770) wolf_hw_sha: ESP32_SHA_INIT for 3ffd241c
+
+W (3775) wolf_hw_sha: Locking for ctx 3ffd232c, current mutex_ctx_owner = 0
+I (3782) peek:   >> this count = 17
+I (3783) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd241c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd241c
+E (3797) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd241c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd241c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd241c
+W (3817) wolf_hw_sha: Unlocking for 3ffd241c, from ctx 3ffd241c, & = 3ffd22ec, mutex_ctx_owner = 3ffd241c
+W (3828) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3833) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd241c
+I (3838) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24cc
+I (3844) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24cc
+
+W (3850) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (3858) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24cc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24cc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24cc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24cc
+W (3882) wolf_hw_sha: Unlocking for 3ffd24cc, from ctx 3ffd24cc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24cc
+W (3892) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3897) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24cc
+I (3903) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24dc
+I (3909) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24dc
+
+W (3915) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (3922) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24dc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24dc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24dc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24dc
+W (3946) wolf_hw_sha: Unlocking for 3ffd24dc, from ctx 3ffd24dc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24dc
+W (3957) wolf_hw_sha: &sha_mutex = 3ffba090
+I (3962) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24dc
+I (3967) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24dc
+I (3973) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24dc
+
+W (3979) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (3987) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24dc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24dc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24dc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24dc
+I (4005) peek:   >> this count = 20
+W (4011) wolf_hw_sha: Unlocking for 3ffd24dc, from ctx 3ffd24dc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24dc
+E (4015) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd24dc
+W (4025) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4036) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24dc
+I (4042) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24dc
+I (4048) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24dc
+
+W (4054) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (4062) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24dc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24dc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24dc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24dc
+W (4086) wolf_hw_sha: Unlocking for 3ffd24dc, from ctx 3ffd24dc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24dc
+W (4096) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4101) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24dc
+I (4107) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24dc
+I (4113) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24dc
+
+W (4118) wolf_hw_sha: Locking for ctx 3ffd23ec, current mutex_ctx_owner = 0
+I (4126) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd24dc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd24dc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd24dc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd24dc
+W (4150) wolf_hw_sha: Unlocking for 3ffd24dc, from ctx 3ffd24dc, & = 3ffd23ac, mutex_ctx_owner = 3ffd24dc
+W (4161) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4165) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd24dc
+I (4171) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4177) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4183) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4191) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4215) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4225) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4230) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4232) peek:   >> this count = 23
+I (4236) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4240) peek:   >> NOT LOCKED esp_sha_hw_islocked
+I (4246) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4257) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4265) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4289) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4299) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4304) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4310) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4316) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4322) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4329) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4353) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4364) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4369) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4375) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4380) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4386) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4394) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4418) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4428) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4433) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4439) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd250c
+I (4445) wolf_hw_sha: ESP32_SHA_INIT for 3ffd250c
+
+W (4451) wolf_hw_sha: Locking for ctx 3ffd242c, current mutex_ctx_owner = 0
+I (4451) peek:   >> this count = 27
+I (4458) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd250c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd250c
+E (4472) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd250c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd250c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd250c
+W (4493) wolf_hw_sha: Unlocking for 3ffd250c, from ctx 3ffd250c, & = 3ffd23ec, mutex_ctx_owner = 3ffd250c
+W (4503) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4508) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd250c
+I (4514) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4520) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4525) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4533) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4557) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4568) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4572) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4578) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4584) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4590) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4598) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4622) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4632) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4637) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4643) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4649) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4654) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4662) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+I (4681) peek:   >> this count = 30
+W (4686) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+E (4691) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd245c
+W (4701) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4712) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4718) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd245c
+I (4724) wolf_hw_sha: ESP32_SHA_INIT for 3ffd245c
+
+W (4729) wolf_hw_sha: Locking for ctx 3ffd236c, current mutex_ctx_owner = 0
+I (4737) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd245c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd245c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd245c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd245c
+W (4761) wolf_hw_sha: Unlocking for 3ffd245c, from ctx 3ffd245c, & = 3ffd232c, mutex_ctx_owner = 3ffd245c
+W (4772) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4776) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd245c
+I (4782) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd250c
+I (4788) wolf_hw_sha: ESP32_SHA_INIT for 3ffd250c
+
+W (4794) wolf_hw_sha: Locking for ctx 3ffd242c, current mutex_ctx_owner = 0
+I (4801) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd250c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd250c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd250c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd250c
+W (4826) wolf_hw_sha: Unlocking for 3ffd250c, from ctx 3ffd250c, & = 3ffd23ec, mutex_ctx_owner = 3ffd250c
+W (4836) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4841) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd250c
+I (4847) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd255c
+I (4853) wolf_hw_sha: ESP32_SHA_INIT for 3ffd255c
+
+W (4858) wolf_hw_sha: Locking for ctx 3ffd246c, current mutex_ctx_owner = 0
+I (4866) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd255c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd255c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd255c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd255c
+W (4890) wolf_hw_sha: Unlocking for 3ffd255c, from ctx 3ffd255c, & = 3ffd242c, mutex_ctx_owner = 3ffd255c
+W (4901) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4905) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd255c
+I (4907) peek:   >> this count = 33
+I (4911) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd255c
+I (4915) peek:   >> NOT LOCKED esp_sha_hw_islocked
+I (4921) wolf_hw_sha: ESP32_SHA_INIT for 3ffd255c
+
+W (4932) wolf_hw_sha: Locking for ctx 3ffd246c, current mutex_ctx_owner = 0
+I (4940) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd255c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd255c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd255c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd255c
+W (4964) wolf_hw_sha: Unlocking for 3ffd255c, from ctx 3ffd255c, & = 3ffd242c, mutex_ctx_owner = 3ffd255c
+W (4975) wolf_hw_sha: &sha_mutex = 3ffba090
+I (4980) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd255c
+I (4985) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd255c
+I (4991) wolf_hw_sha: ESP32_SHA_INIT for 3ffd255c
+
+W (4997) wolf_hw_sha: Locking for ctx 3ffd246c, current mutex_ctx_owner = 0
+I (5005) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd255c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd255c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd255c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd255c
+W (5029) wolf_hw_sha: Unlocking for 3ffd255c, from ctx 3ffd255c, & = 3ffd242c, mutex_ctx_owner = 3ffd255c
+W (5039) wolf_hw_sha: &sha_mutex = 3ffba090
+I (5044) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd255c
+I (5050) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd255c
+I (5056) wolf_hw_sha: ESP32_SHA_INIT for 3ffd255c
+
+W (5061) wolf_hw_sha: Locking for ctx 3ffd246c, current mutex_ctx_owner = 0
+I (5069) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd255c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd255c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd255c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd255c
+W (5093) wolf_hw_sha: Unlocking for 3ffd255c, from ctx 3ffd255c, & = 3ffd242c, mutex_ctx_owner = 3ffd255c
+W (5104) wolf_hw_sha: &sha_mutex = 3ffba090
+I (5109) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd255c
+I (5114) internal: ReinitSSL exit...
+I (5119) wolfssl: wolfSSL Entering SetSSL_CTX
+I (5124) wolfssl: wolfSSL Entering wolfSSL_NewSession
+I (5127) peek:   >> this count = 36
+I (5130) wolfssl: wolfSSL Leaving wolfSSL_new, return 0
+I (5139) wolfssl: wolfSSL Entering wolfSSL_set_fd
+I (5145) wolfssl: wolfSSL Entering wolfSSL_set_read_fd
+I (5151) wolfssl: wolfSSL Leaving wolfSSL_set_read_fd, return 1
+I (5157) wolfssl: wolfSSL Entering wolfSSL_set_write_fd
+I (5163) wolfssl: wolfSSL Leaving wolfSSL_set_write_fd, return 1
+I (5170) wolfssl: Connect to wolfSSL on the server side
+I (5176) wolfssl: wolfSSL Entering wolfSSL_connect
+I (5181) wolfssl: wolfSSL Entering ReinitSSL
+I (5186) internal: rng...
+I (5189) internal: ReinitSSL exit...
+I (5194) wolfssl: wolfSSL Entering SendClientHello
+I (5199) wolfssl: Adding signature algorithms extension
+I (5205) wolfssl: growing output buffer
+I (5210) wolfssl: GrowOutputBuffer ok
+I (5214) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd250c
+I (5220) wolf_hw_sha: ESP32_SHA_INIT for 3ffd250c
+
+I (5224) peek:   >> this count = 37
+W (5226) wolf_hw_sha: Locking for ctx 3ffd241c, current mutex_ctx_owner = 0
+I (5237) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd250c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd250c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd250c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd250c
+E (5250) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd250c
+W (5262) wolf_hw_sha: Unlocking for 3ffd250c, from ctx 3ffd250c, & = 3ffd23dc, mutex_ctx_owner = 3ffd250c
+W (5278) wolf_hw_sha: &sha_mutex = 3ffba090
+I (5283) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd250c
+I (5289) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd25bc
+I (5295) wolf_hw_sha: ESP32_SHA_INIT for 3ffd25bc
+
+W (5300) wolf_hw_sha: Locking for ctx 3ffd24dc, current mutex_ctx_owner = 0
+I (5308) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd25bc
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd25bc
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd25bc
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd25bc
+W (5332) wolf_hw_sha: Unlocking for 3ffd25bc, from ctx 3ffd25bc, & = 3ffd249c, mutex_ctx_owner = 3ffd25bc
+W (5343) wolf_hw_sha: &sha_mutex = 3ffba090
+I (5347) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd25bc
+I (5353) wolfssl: Signature Algorithms extension to write
+I (5359) wolfssl: Point Formats extension to write
+I (5365) wolfssl: Supported Groups extension to write
+TODO hashSha startingI (5371) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5c5c
+I (5378) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5c5c
+
+W (5384) wolf_hw_sha: Locking for ctx 3ffd258c, current mutex_ctx_owner = 0
+I (5392) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd5c5c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd5c5c
+I (5404) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5d40
+I (5410) wolf_hw_sha: Found mutex_ctx_task
+I (5414) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5d40
+
+I (5420) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5d40
+
+I (5429) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5d40
+I (5437) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+HashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (5447) wolfssl: Shrinking output buffer
+I (5451) wolfssl: wolfSSL Leaving SendClientHello, return 0
+I (5457) wolfssl: connect state: CLIENT_HELLO_SENT
+I (5468) peek:   >> this count = 40
+E (5468) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd5c5c
+I (5659) wolfssl: growing input buffer
+I (5660) wolfssl: received record layer msg
+I (5660) wolfssl: got HANDSHAKE
+I (5662) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (5667) wolfssl: wolfSSL Entering DoHandShakeMsgType
+TODO hashSha startingI (5673) wc_sha: wc_ShaUpdate process hardware
+I (5680) wc_sha256: Sha256Update process software
+I (5685) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5e34
+I (5691) wolf_hw_sha: Found mutex_ctx_task
+I (5693) peek:   >> this count = 41
+I (5696) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5e34
+
+I (5705) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5e34
+
+I (5715) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5e34
+I (5722) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+HashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (5732) wolfssl: processing server hello
+I (5736) wolfssl: wolfSSL Entering DoServerHello
+I (5742) wolfssl: Point Formats extension received
+I (5747) wolfssl: wolfSSL Entering wolfSSL_get_options
+I (5753) wolfssl: wolfSSL Entering wolfSSL_get_options
+I (5759) wolfssl: wolfSSL Entering VerifyClientSuite
+I (5764) wolfssl: wolfSSL Leaving DoServerHello, return 0
+I (5771) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (5777) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (5783) wolfssl: Shrinking input buffer
+I (5788) wolfssl: growing input buffer
+I (5793) wolfssl: received record layer msg
+I (5797) wolfssl: got HANDSHAKE
+I (5801) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (5807) wolfssl: wolfSSL Entering DoHandShakeMsgType
+TODO hashSha startingI (5812) wc_sha: wc_ShaUpdate process hardware
+I (5820) wc_sha256: Sha256Update process software
+HashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (5828) wolfssl: processing certificate
+I (5833) wolfssl: wolfSSL Entering DoCertificate
+I (5838) wolfssl: wolfSSL Entering ProcessPeerCerts
+I (5844) wolfssl: Loading peer's cert chain
+I (5849) wolfssl:       Put another cert into chain
+I (5854) wolfssl: Verifying Peer's cert
+I (5858) wolfssl: wolfSSL Entering GetExplicitVersion
+I (5864) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (5870) wolfssl: Got Cert Header
+I (5874) wolfssl: wolfSSL Entering GetObjectId
+I (5879) wolfssl: Got Algo ID
+I (5883) wolfssl: Getting Name
+I (5886) wolfssl: Getting Cert Name
+I (5890) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd636c
+I (5896) wolf_hw_sha: Found mutex_ctx_task
+I (5901) peek:   >> this count = 42
+I (5901) wolf_hw_sha: ESP32_SHA_INIT for 3ffd636c
+
+I (5911) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd636c
+
+I (5920) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd636c
+I (5927) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (5934) wolfssl: Getting Name
+I (5937) wolfssl: Getting Cert Name
+I (5941) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd636c
+I (5947) wolf_hw_sha: Found mutex_ctx_task
+I (5952) wolf_hw_sha: ESP32_SHA_INIT for 3ffd636c
+
+I (5955) peek:   >> this count = 43
+I (5957) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd636c
+
+I (5971) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd636c
+I (5978) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (5984) wolfssl: Got Subject Name
+I (5988) wolfssl: wolfSSL Entering GetAlgoId
+I (5993) wolfssl: wolfSSL Entering GetObjectId
+I (5998) wolfssl: Got Key
+I (6001) wolfssl: Parsed Past Key
+I (6005) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (6011) wolfssl: wolfSSL Entering GetObjectId
+I (6016) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (6022) wolfssl: wolfSSL Entering GetObjectId
+I (6027) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (6032) wolfssl: wolfSSL Entering GetObjectId
+I (6038) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
+I (6044) wolfssl: wolfSSL Entering GetObjectId
+I (6049) wolfssl: wolfSSL Entering DecodeAltNames
+I (6054) wolfssl:       Unsupported name type, skipping
+I (6060) wolfssl: wolfSSL Entering GetObjectId
+I (6065) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (6070) wolfssl: wolfSSL Entering GetObjectId
+I (6076) wolfssl: wolfSSL Entering GetObjectId
+I (6081) wolfssl: wolfSSL Entering GetObjectId
+I (6086) wolfssl: CA found
+I (6089) wolfssl: wolfSSL Entering ConfirmSignature
+I (6095) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd63cc
+I (6101) wolf_hw_sha: Found mutex_ctx_task
+I (6102) peek:   >> this count = 44
+I (6106) wolf_hw_sha: ESP32_SHA_INIT for 3ffd63cc
+
+I (6115) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd63cc
+
+I (6125) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd63cc
+I (6132) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (6170) wolfssl: wolfSSL Leaving ConfirmSignature, return 0
+I (6170) wolfssl: Verified Peer's cert
+I (6170) wolfssl: wolfSSL Leaving ProcessPeerCerts, return 0
+I (6176) wolfssl: wolfSSL Leaving DoCertificate, return 0
+I (6182) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (6189) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (6195) wolfssl: Shrinking input buffer
+I (7809) wolfssl: growing input buffer
+I (7810) wolfssl: received record layer msg
+I (7811) wolfssl: got HANDSHAKE
+I (7811) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (7817) wolfssl: wolfSSL Entering DoHandShakeMsgType
+TODO hashSha startingI (7823) wc_sha: wc_ShaUpdate process hardware
+I (7830) wc_sha256: Sha256Update process software
+HashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (7839) wolfssl: processing server key exchange
+I (7844) wolfssl: wolfSSL Entering DoServerKeyExchange
+I (7850) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd6050
+I (7856) wolf_hw_sha: Found mutex_ctx_task
+I (7860) peek:   >> this count = 45
+I (7860) wolf_hw_sha: ESP32_SHA_INIT for 3ffd6050
+
+I (7870) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd6050
+
+I (7880) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd6050
+I (7887) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (7893) wolfssl: wolfSSL Entering RsaVerify
+I (7928) wolfssl: wolfSSL Using RSA PSS un-padding
+I (7929) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (7929) wolf_hw_sha: Found mutex_ctx_task
+I (7934) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (7936) peek:   >> this count = 46
+I (7939) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (7953) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (7960) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (7966) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (7972) wolf_hw_sha: Found mutex_ctx_task
+I (7973) peek:   >> this count = 47
+I (7976) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (7986) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (7995) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8003) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8009) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8014) wolf_hw_sha: Found mutex_ctx_task
+I (8019) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8022) peek:   >> this count = 48
+I (8025) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8038) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8046) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8051) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8057) wolf_hw_sha: Found mutex_ctx_task
+I (8059) peek:   >> this count = 49
+I (8062) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8072) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8081) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8088) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8094) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8100) wolf_hw_sha: Found mutex_ctx_task
+I (8105) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8107) peek:   >> this count = 50
+I (8110) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8124) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8131) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8137) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8143) wolf_hw_sha: Found mutex_ctx_task
+I (8145) peek:   >> this count = 51
+I (8148) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8157) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8167) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8174) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8180) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8186) wolf_hw_sha: Found mutex_ctx_task
+I (8190) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8193) peek:   >> this count = 52
+I (8196) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8209) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8217) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8223) wolfssl: wolfSSL Leaving RsaVerify, return 64
+I (8228) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd5fa0
+I (8234) wolf_hw_sha: Found mutex_ctx_task
+I (8239) wolf_hw_sha: ESP32_SHA_INIT for 3ffd5fa0
+
+I (8240) peek:   >> this count = 53
+I (8245) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd5fa0
+
+I (8258) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd5fa0
+I (8265) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8271) wolfssl: wolfSSL Leaving DoServerKeyExchange, return 0
+I (8278) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (8284) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (8291) wolfssl: Shrinking input buffer
+I (8296) wolfssl: received record layer msg
+I (8300) wolfssl: got HANDSHAKE
+I (8304) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (8309) wolfssl: wolfSSL Entering DoHandShakeMsgType
+TODO hashSha startingHashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (8321) wolfssl: processing server hello done
+I (8326) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (8332) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (8339) wolfssl: connect state: HELLO_AGAIN
+I (8344) wolfssl: connect state: HELLO_AGAIN_REPLY
+I (8349) wolfssl: connect state: FIRST_REPLY_DONE
+I (8355) wolfssl: connect state: FIRST_REPLY_FIRST
+I (8360) wolfssl: wolfSSL Entering SendClientKeyExchange
+I (8366) wolfssl: wolfSSL Entering EccMakeKey
+I (8371) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd240c
+I (8377) wolf_hw_sha: Found mutex_ctx_task
+I (8379) peek:   >> this count = 54
+I (8382) wolf_hw_sha: ESP32_SHA_INIT for 3ffd240c
+
+I (8392) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd240c
+
+I (8401) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd240c
+I (8408) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8414) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd240c
+I (8420) wolf_hw_sha: Found mutex_ctx_task
+I (8425) wolf_hw_sha: ESP32_SHA_INIT for 3ffd240c
+
+I (8427) peek:   >> this count = 55
+I (8430) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd240c
+
+I (8444) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd240c
+I (8451) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8457) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24bc
+I (8463) wolf_hw_sha: Found mutex_ctx_task
+I (8464) peek:   >> this count = 56
+I (8467) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24bc
+
+I (8477) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd24bc
+
+I (8487) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd24bc
+I (8494) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8500) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22dc
+I (8505) wolf_hw_sha: Found mutex_ctx_task
+I (8510) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22dc
+
+I (8512) peek:   >> this count = 57
+I (8516) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22dc
+
+I (8529) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22dc
+I (8537) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8542) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22dc
+I (8548) wolf_hw_sha: Found mutex_ctx_task
+I (8551) peek:   >> this count = 58
+I (8553) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22dc
+
+I (8563) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22dc
+
+I (8572) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22dc
+I (8579) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8585) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd238c
+I (8591) wolf_hw_sha: Found mutex_ctx_task
+I (8596) wolf_hw_sha: ESP32_SHA_INIT for 3ffd238c
+
+I (8597) peek:   >> this count = 59
+I (8601) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd238c
+
+I (8615) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd238c
+I (8622) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8629) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22dc
+I (8634) wolf_hw_sha: Found mutex_ctx_task
+I (8637) peek:   >> this count = 60
+I (8639) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22dc
+
+I (8648) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22dc
+
+I (8658) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22dc
+I (8665) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8671) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22dc
+I (8677) wolf_hw_sha: Found mutex_ctx_task
+I (8681) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22dc
+
+I (8683) peek:   >> this count = 61
+I (8687) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22dc
+
+I (8701) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22dc
+I (8708) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (8714) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd238c
+I (8719) wolf_hw_sha: Found mutex_ctx_task
+I (8722) peek:   >> this count = 62
+I (8724) wolf_hw_sha: ESP32_SHA_INIT for 3ffd238c
+
+I (8734) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd238c
+
+I (8743) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd238c
+I (8751) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9123) wolfssl: wolfSSL Leaving EccMakeKey, return 0
+I (9124) wolfssl: wolfSSL Entering EccSharedSecret
+I (9124) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22ec
+I (9130) wolf_hw_sha: Found mutex_ctx_task
+I (9134) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22ec
+
+I (9139) peek:   >> this count = 63
+I (9140) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22ec
+
+I (9153) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22ec
+I (9161) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9167) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22ec
+I (9172) wolf_hw_sha: Found mutex_ctx_task
+I (9174) peek:   >> this count = 64
+I (9177) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22ec
+
+I (9187) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22ec
+
+I (9196) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22ec
+I (9203) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9209) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd239c
+I (9215) wolf_hw_sha: Found mutex_ctx_task
+I (9220) wolf_hw_sha: ESP32_SHA_INIT for 3ffd239c
+
+I (9222) peek:   >> this count = 65
+I (9225) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd239c
+
+I (9239) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd239c
+I (9246) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9253) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22ec
+I (9258) wolf_hw_sha: Found mutex_ctx_task
+I (9260) peek:   >> this count = 66
+I (9263) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22ec
+
+I (9272) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22ec
+
+I (9282) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22ec
+I (9289) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9295) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd22ec
+I (9301) wolf_hw_sha: Found mutex_ctx_task
+I (9306) wolf_hw_sha: ESP32_SHA_INIT for 3ffd22ec
+
+I (9307) peek:   >> this count = 67
+I (9311) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd22ec
+
+I (9325) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd22ec
+I (9332) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9338) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd239c
+I (9344) wolf_hw_sha: Found mutex_ctx_task
+I (9346) peek:   >> this count = 68
+I (9348) wolf_hw_sha: ESP32_SHA_INIT for 3ffd239c
+
+I (9358) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd239c
+
+I (9367) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd239c
+I (9375) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9748) wolfssl: wolfSSL Leaving EccSharedSecret, return 0
+I (9749) wolfssl: growing output buffer
+I (9749) wolfssl: GrowOutputBuffer ok
+TODO hashSha startingI (9752) wc_sha: wc_ShaUpdate process hardware
+I (9759) wc_sha256: Sha256Update process software
+HashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (9770) wolfssl: Shrinking output buffer
+I (9773) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9779) wolf_hw_sha: Found mutex_ctx_task
+I (9782) peek:   >> this count = 69
+I (9784) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (9794) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (9803) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (9810) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9816) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9822) wolf_hw_sha: Found mutex_ctx_task
+I (9827) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (9828) peek:   >> this count = 70
+I (9832) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (9846) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (9853) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9859) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9865) wolf_hw_sha: Found mutex_ctx_task
+I (9866) peek:   >> this count = 71
+I (9869) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (9879) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (9889) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (9896) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9902) wc_sha256: Sha256Update process software
+I (9907) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9913) wolf_hw_sha: Found mutex_ctx_task
+I (9914) peek:   >> this count = 72
+I (9918) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (9927) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (9937) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (9944) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9950) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9956) wolf_hw_sha: Found mutex_ctx_task
+I (9960) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (9963) peek:   >> this count = 73
+I (9966) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (9980) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (9987) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (9993) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (9998) wolf_hw_sha: Found mutex_ctx_task
+I (10000) peek:   >> this count = 74
+I (10003) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (10013) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (10023) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (10030) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10036) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (10042) wolf_hw_sha: Found mutex_ctx_task
+I (10047) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (10048) peek:   >> this count = 75
+I (10052) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (10066) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (10073) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10079) wc_sha256: Sha256Update process software
+I (10085) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd7ae8
+I (10091) wolf_hw_sha: Found mutex_ctx_task
+I (10096) wolf_hw_sha: ESP32_SHA_INIT for 3ffd7ae8
+
+I (10098) peek:   >> this count = 76
+I (10101) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd7ae8
+
+I (10115) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd7ae8
+I (10122) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10128) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10134) wolf_hw_sha: Found mutex_ctx_task
+I (10135) peek:   >> this count = 77
+I (10139) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10149) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10158) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10166) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10172) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10177) wolf_hw_sha: Found mutex_ctx_task
+I (10182) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10183) peek:   >> this count = 78
+I (10188) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10202) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10209) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10215) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10221) wolf_hw_sha: Found mutex_ctx_task
+I (10222) peek:   >> this count = 79
+I (10226) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10236) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10245) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10252) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10258) wc_sha256: Sha256Update process software
+I (10264) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10270) wolf_hw_sha: Found mutex_ctx_task
+I (10271) peek:   >> this count = 80
+I (10275) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10285) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10294) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10301) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10307) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10313) wolf_hw_sha: Found mutex_ctx_task
+I (10318) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10319) peek:   >> this count = 81
+I (10324) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10337) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10345) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10351) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10357) wolf_hw_sha: Found mutex_ctx_task
+I (10359) peek:   >> this count = 82
+I (10361) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10371) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10381) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10388) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10394) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10400) wolf_hw_sha: Found mutex_ctx_task
+I (10405) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10406) peek:   >> this count = 83
+I (10410) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10424) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10431) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10437) wc_sha256: Sha256Update process software
+I (10443) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10449) wolf_hw_sha: Found mutex_ctx_task
+I (10454) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10456) peek:   >> this count = 84
+I (10459) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10473) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10480) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10486) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10492) wolf_hw_sha: Found mutex_ctx_task
+I (10494) peek:   >> this count = 85
+I (10497) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10507) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10516) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10524) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10530) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10536) wolf_hw_sha: Found mutex_ctx_task
+I (10540) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10541) peek:   >> this count = 86
+I (10546) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10560) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10567) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10573) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10579) wolf_hw_sha: Found mutex_ctx_task
+I (10581) peek:   >> this count = 87
+I (10584) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10594) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10603) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10611) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10616) wc_sha256: Sha256Update process software
+I (10622) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10628) wolf_hw_sha: Found mutex_ctx_task
+I (10628) peek:   >> this count = 88
+I (10633) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10643) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10652) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10659) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10665) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10671) wolf_hw_sha: Found mutex_ctx_task
+I (10676) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10678) peek:   >> this count = 89
+I (10682) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10696) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10703) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10709) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10715) wolf_hw_sha: Found mutex_ctx_task
+I (10716) peek:   >> this count = 90
+I (10720) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10729) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10739) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10746) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10752) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10758) wolf_hw_sha: Found mutex_ctx_task
+I (10763) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10765) peek:   >> this count = 91
+I (10769) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10782) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10790) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10796) wc_sha256: Sha256Update process software
+I (10801) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd75cc
+I (10807) wolf_hw_sha: Found mutex_ctx_task
+I (10812) wolf_hw_sha: ESP32_SHA_INIT for 3ffd75cc
+
+I (10814) peek:   >> this count = 92
+I (10817) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd75cc
+
+I (10831) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd75cc
+I (10838) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10845) wolfssl: wolfSSL Leaving SendClientKeyExchange, return 0
+I (10851) wolfssl: sent: client key exchange
+I (10856) wolfssl: connect state: FIRST_REPLY_SECOND
+I (10862) wolfssl: connect state: FIRST_REPLY_THIRD
+I (10867) wolfssl: growing output buffer
+I (10872) wolfssl: GrowOutputBuffer ok
+I (10877) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd24ac
+I (10882) wolf_hw_sha: Found mutex_ctx_task
+I (10887) wolf_hw_sha: ESP32_SHA_INIT for 3ffd24ac
+
+I (10892) peek:   >> this count = 93
+I (10893) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd24ac
+
+I (10907) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd24ac
+I (10914) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10920) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd255c
+I (10926) wolf_hw_sha: Found mutex_ctx_task
+I (10927) peek:   >> this count = 94
+I (10931) wolf_hw_sha: ESP32_SHA_INIT for 3ffd255c
+
+I (10941) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd255c
+
+I (10950) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd255c
+I (10957) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (10964) wolfssl: Shrinking output buffer
+I (10968) wolfssl: sent: change cipher spec
+I (10973) wolfssl: connect state: FIRST_REPLY_FOURTH
+I (10979) wolfssl: wolfSSL Entering SendFinished
+I (10984) wolfssl: growing output buffer
+I (10988) wolfssl: GrowOutputBuffer ok
+I (10994) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd6988
+I (10999) wolf_hw_sha: Found mutex_ctx_task
+I (11004) wolf_hw_sha: ESP32_SHA_INIT for 3ffd6988
+
+I (11006) peek:   >> this count = 95
+I (11009) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd6988
+
+I (11023) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd6988
+I (11030) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11036) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd6988
+I (11042) wolf_hw_sha: Found mutex_ctx_task
+I (11044) peek:   >> this count = 96
+I (11047) wolf_hw_sha: ESP32_SHA_INIT for 3ffd6988
+
+I (11057) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd6988
+
+I (11066) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd6988
+I (11074) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11080) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd6988
+I (11086) wolf_hw_sha: Found mutex_ctx_task
+I (11090) wolf_hw_sha: ESP32_SHA_INIT for 3ffd6988
+
+I (11091) peek:   >> this count = 97
+I (11096) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd6988
+
+I (11110) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd6988
+I (11117) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11123) wc_sha256: Sha256Update process software
+I (11129) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd6988
+I (11135) wolf_hw_sha: Found mutex_ctx_task
+I (11139) wolf_hw_sha: ESP32_SHA_INIT for 3ffd6988
+
+I (11140) peek:   >> this count = 98
+I (11145) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd6988
+
+I (11159) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd6988
+I (11166) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11172) wolfssl: wolfSSL Entering BuildMessage
+I (11177) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd246c
+I (11183) wolf_hw_sha: Found mutex_ctx_task
+I (11188) wolf_hw_sha: ESP32_SHA_INIT for 3ffd246c
+
+I (11190) peek:   >> this count = 99
+I (11194) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd246c
+
+I (11207) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd246c
+I (11215) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11221) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd251c
+I (11227) wolf_hw_sha: Found mutex_ctx_task
+I (11228) peek:   >> this count = 100
+I (11231) wolf_hw_sha: ESP32_SHA_INIT for 3ffd251c
+
+I (11241) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd251c
+
+I (11251) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd251c
+I (11258) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+TODO hashSha startingHashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (11270) wolfssl: wolfSSL Leaving BuildMessage, return 0
+I (11276) wolfssl: wolfSSL Entering SetupSession
+I (11281) wolfssl: wolfSSL Entering AddSession
+I (11286) wolfssl: wolfSSL Entering AddSessionToCache
+I (11292) wolfssl: wolfSSL Entering ClientSessionToSession
+I (11298) wolfssl: wolfSSL Entering ClientSessionToSession
+I (11304) wolfssl: wolfSSL Entering ClientSessionToSession
+I (11310) wolfssl: Trying to add client cache entry
+I (11316) wolfssl: Adding client cache entry
+I (11321) wolfssl: Shrinking output buffer
+I (11326) wolfssl: wolfSSL Leaving SendFinished, return 0
+I (11332) wolfssl: sent: finished
+I (11336) wolfssl: connect state: FINISHED_DONE
+I (11599) wolfssl: received record layer msg
+I (11599) wolfssl: got CHANGE CIPHER SPEC
+I (11601) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd63cc
+I (11604) wolf_hw_sha: Found mutex_ctx_task
+I (11607) peek:   >> this count = 101
+I (11609) wolf_hw_sha: ESP32_SHA_INIT for 3ffd63cc
+
+I (11619) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd63cc
+
+I (11628) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd63cc
+I (11636) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11642) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd63cc
+I (11647) wolf_hw_sha: Found mutex_ctx_task
+I (11652) wolf_hw_sha: ESP32_SHA_INIT for 3ffd63cc
+
+I (11653) peek:   >> this count = 102
+I (11658) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd63cc
+
+I (11672) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd63cc
+I (11679) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11685) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd63cc
+I (11691) wolf_hw_sha: Found mutex_ctx_task
+I (11692) peek:   >> this count = 103
+I (11696) wolf_hw_sha: ESP32_SHA_INIT for 3ffd63cc
+
+I (11706) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd63cc
+
+I (11715) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd63cc
+I (11722) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11728) wc_sha256: Sha256Update process software
+I (11734) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd63cc
+I (11740) wolf_hw_sha: Found mutex_ctx_task
+I (11741) peek:   >> this count = 104
+I (11745) wolf_hw_sha: ESP32_SHA_INIT for 3ffd63cc
+
+I (11755) wolf_hw_sha:
+Hardware in use by 3ffd5c5c; Mode REVERT to ESP32_SHA_SW for 3ffd63cc
+
+I (11764) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffd63cc
+I (11771) wolf_hw_sha: Current mutext owner = 3ffd5c5c
+I (11907) wolfssl: growing input buffer
+I (11908) wolfssl: VerifyMac completed successfully
+I (11908) wolfssl: received record layer msg
+I (11911) wolfssl: got HANDSHAKE
+I (11915) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (11920) wolfssl: wolfSSL Entering DoHandShakeMsgType
+TODO hashSha startingHashRaw, 9830: EdDSA_Update
+HashRaw, 9837
+I (11932) wolfssl: processing finished
+I (11936) wolfssl: wolfSSL Entering DoFinished
+I (11941) wolfssl: wolfSSL Leaving DoFinished, return 0
+I (11947) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (11954) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (11960) wolfssl: Shrinking input buffer
+I (11965) wolfssl: connect state: SECOND_REPLY_DONE
+I (11970) wolfssl: wolfSSL Entering FreeHandshakeResources
+E (11977) wolf_hw_sha:
+>>>> esp_sha_release_unfinished_lock 3ffd5c5c
+
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd5c5c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd5c5c
+W (11996) wolf_hw_sha: Unlocking for 3ffd5c5c, from ctx 3ffd5c5c, & = 3ffd25ac, mutex_ctx_owner = 3ffd5c5c
+W (12007) wolf_hw_sha: &sha_mutex = 3ffba090
+I (12012) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd5c5c
+I (12018) wolfssl: wolfSSL Leaving wolfSSL_connect, return 1
+I (12024) wolfssl: Message for server:
+I (12028) wolfssl: wolfSSL Entering wolfSSL_write
+I (12034) wolfssl: growing output buffer
+I (12038) wolfssl: GrowOutputBuffer ok
+I (12043) wolfssl: wolfSSL Entering BuildMessage
+I (12048) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd249c
+I (12054) wolf_hw_sha: ESP32_SHA_INIT for 3ffd249c
+
+I (12059) peek:   >> this count = 105
+W (12060) wolf_hw_sha: Locking for ctx 3ffd23ac, current mutex_ctx_owner = 0
+I (12072) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd249c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd249c
+E (12084) peek:   >> LOCKED esp_sha_hw_islocked for 3ffd249c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd249c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd249c
+W (12103) wolf_hw_sha: Unlocking for 3ffd249c, from ctx 3ffd249c, & = 3ffd236c, mutex_ctx_owner = 3ffd249c
+W (12113) wolf_hw_sha: &sha_mutex = 3ffba090
+I (12118) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd249c
+I (12124) wolf_hw_sha: enter esp_sha_hw_lock for 3ffd254c
+I (12130) wolf_hw_sha: ESP32_SHA_INIT for 3ffd254c
+
+W (12136) wolf_hw_sha: Locking for ctx 3ffd246c, current mutex_ctx_owner = 0
+I (12143) wolf_hw_sha: Hardware Mode Active, lock depth = 0, for 3ffd254c
+1) Lock depth @ 1075 = 1 for WC_ESP32SHA @ 3ffd254c
+2) esp_sha_hw_unlock Lock depth @ 1113 = 1 for WC_ESP32SHA @ 3ffd254c
+3) esp_sha_hw_unlock Lock depth @ 1123 = 0 for WC_ESP32SHA @ 3ffd254c
+W (12168) wolf_hw_sha: Unlocking for 3ffd254c, from ctx 3ffd254c, & = 3ffd242c, mutex_ctx_owner = 3ffd254c
+W (12178) wolf_hw_sha: &sha_mutex = 3ffba090
+I (12183) wolf_hw_sha: leave esp_sha_hw_unlock, 3ffd254c
+I (12190) wolfssl: wolfSSL Leaving BuildMessage, return 0
+I (12196) wolfssl: Shrinking output buffer
+I (12200) wolfssl: wolfSSL Leaving wolfSSL_write, return 30
+I (12206) wolfssl: wolfSSL Entering wolfSSL_read
+I (12211) wolfssl: wolfSSL Entering wolfSSL_read_internal
+I (12217) wolfssl: wolfSSL Entering ReceiveData
+I (12224) wolfssl: growing input buffer
+I (12228) wolfssl: VerifyMac completed successfully
+I (12233) wolfssl: received record layer msg
+I (12238) wolfssl: got app DATA
+I (12242) wolfssl: Shrinking input buffer
+I (12246) wolfssl: wolfSSL Leaving ReceiveData(), return 22
+I (12252) wolfssl: wolfSSL Leaving wolfSSL_read_internal, return 22
+Server:I hear you fa shizzle!I (12290) peek:   >> this count = 106
+I (12290) peek:   >> NOT LOCKED esp_sha_hw_islocked
+I (22260) wolfssl: wolfSSL Entering wolfSSL_free
+Free SSL: 3ffd42b4
+I (22260) wolfssl: Free'ing client ssl
+I (22260) wolfssl: wolfSSL Entering ClientSessionToSession
+I (22266) wolfssl: wolfSSL Entering wolfSSL_FreeSession
+I (22272) wolfssl: wolfSSL_FreeSession full free
+I (22277) wolfssl: CTX ref count not 0 yet, no free
+I (22283) wolfssl: wolfSSL Leaving wolfSSL_free, return 0
+I (22289) wolfssl: wolfSSL Entering wolfSSL_CTX_free
+I (22295) wolfssl: CTX ref count down to 0, doing full free
+I (22301) wolfssl: wolfSSL Entering wolfSSL_CertManagerFree
+I (22307) wolfssl: wolfSSL Leaving wolfSSL_CTX_free, return 0
+I (22313) wolfssl: wolfSSL Entering wolfSSL_Cleanup
+I (22319) wolfssl: wolfSSL Entering wolfCrypt_Cleanup

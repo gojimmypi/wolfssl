@@ -226,4 +226,4 @@
 // #define NO_OLD_TLS
 // #define NO_SHA512
 
-#define WOLFSSL_TEST_STRAY 0
+#define WOLFSSL_TEST_STRAY 1
