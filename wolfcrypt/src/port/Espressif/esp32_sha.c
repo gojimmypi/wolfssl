@@ -70,13 +70,13 @@ static const char* TAG = "wolf_hw_sha";
     static int InUse = 0;
 #else
     static wolfSSL_Mutex sha_mutex = NULL;
+    static void * mutex_ctx_owner = 0;
+    static TaskHandle_t mutex_ctx_task = 0;
     #ifdef DEBUG_WOLFSSL_SHA_MUTEX
         static portMUX_TYPE sha_crit_sect = portMUX_INITIALIZER_UNLOCKED;
         WC_ESP32SHA* stray_ctx;
         /* each ctx keeps track of the intializer for HW. when debugging
          * we'll have a global variable to indicate which has the lock. */
-        static void * mutex_ctx_owner = 0;
-        static TaskHandle_t mutex_ctx_task = 0;
         static int _sha_lock_count = 0;
         static int _sha_call_count = 0;
 
@@ -760,8 +760,12 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 
 int esp_sha_set_stray(WC_ESP32SHA* ctx)
 {
+    int ret = 0;
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
     stray_ctx = ctx;
-    return (int)stray_ctx;
+    ret= (int)stray_ctx;
+#endif
+    return ret;
 }
 /*
 ** return HW lock owner, otherwise zero if not locked.
