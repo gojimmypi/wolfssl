@@ -531,6 +531,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
 WOLFSSL_ESP_TASK tls_smp_client_task_send_data(void *args)
 {
 #if defined(SINGLE_THREADED)
+    int ret = 0;
     #define TLS_SMP_CLIENT_TASK_RET ret
 #else
     #define TLS_SMP_CLIENT_TASK_RET
@@ -650,8 +651,8 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
 int tls_smp_client_init(tls_args* args)
 {
     int ret;
-    int test_separate_tasks = 0;
-    int run_peek_task = 1;
+    int test_separate_tasks = 1;
+    int run_peek_task = 0;
 
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
