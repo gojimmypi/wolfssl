@@ -86,7 +86,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     return 0;
 #endif
 }
-#endif
+#endif /* SHA HW enabled */
 
 /* esp_ShowExtendedSystemInfo
 ** available regardless if HW acceleration is turned on or not.
