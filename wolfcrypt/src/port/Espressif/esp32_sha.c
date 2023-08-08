@@ -1009,17 +1009,29 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 taskENTER_CRITICAL(&sha_crit_sect);
                 {
                     (void)stray_ctx;
-                    stray_ctx->initializer = stray_ctx;
-                    mutex_ctx_owner = (void*)stray_ctx->initializer;
+                    if (stray_ctx == NULL) {
+                        /* no peek task */
+                    }
+                    else {
+                        stray_ctx->initializer = stray_ctx;
+                        mutex_ctx_owner = (void*)stray_ctx->initializer;
+                    }
                 }
                 taskEXIT_CRITICAL(&sha_crit_sect);
-                ESP_LOGI(TAG, "%x", (int)stray_ctx->initializer);
-                ESP_LOGI(TAG, "%x", (int)&stray_ctx);
-                ESP_LOGW(TAG, "\n\nLocking with stray\n\n"
-                              "DEBUG_WOLFSSL_SHA_MUTEX call count 8, ctx->mode = ESP32_SHA_SW %x\n\n", (int)mutex_ctx_owner);
-                ctx->task_owner = xTaskGetCurrentTaskHandle();
-                ctx->mode = ESP32_SHA_SW;
-                return 0; /* success, but revert to SW */
+                if (stray_ctx == NULL) {
+                    ESP_LOGW(TAG, "DEBUG_WOLFSSL_SHA_MUTEX on, but stray_ctx is NULL; are you running the peek task to set the stay test?");
+                }
+                else {
+                    ESP_LOGI(TAG, "%x", (int)stray_ctx->initializer);
+                    ESP_LOGI(TAG, "%x", (int)&stray_ctx);
+                    ESP_LOGW(TAG,
+                             "\n\nLocking with stray\n\n"
+                             "DEBUG_WOLFSSL_SHA_MUTEX call count 8, ctx->mode = ESP32_SHA_SW %x\n\n",
+                             (int)mutex_ctx_owner);
+                    ctx->task_owner = xTaskGetCurrentTaskHandle();
+                    ctx->mode = ESP32_SHA_SW;
+                    return 0; /* success, but revert to SW */
+                }
             }
         #endif
 
