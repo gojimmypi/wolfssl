@@ -4530,12 +4530,12 @@ int SendTls13ClientHello(WOLFSSL* ssl)
                 ret = EchHashHelloInner(ssl, args->ech);
             }
 #endif
-  printf("Client hello %d\n", __LINE__);
+  //printf("PJM - Client hello %d\n", __LINE__);
 
             /* compute the outer hash */
             if (ret == 0)
                 ret = HashOutput(ssl, args->output, args->idx, 0);
-  printf("Client hello %d\n", __LINE__);
+  //printf("PJM - Client hello %d\n", __LINE__);
         }
     }
     if (ret != 0)

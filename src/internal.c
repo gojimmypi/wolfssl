@@ -9746,7 +9746,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
 
     if (IsAtLeastTLSv1_2(ssl)) {
     #ifndef NO_SHA256
-      printf("%s, %d: wc_Sha256Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha256.ctx);
+      //printf("PJM - %s, %d: wc_Sha256Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha256.ctx);
         ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz);
         if (ret != 0)
             return ret;
@@ -9767,7 +9767,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
     #endif
     #endif
     #ifdef WOLFSSL_SHA512
-      printf("%s, %d: wc_Sha512Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha512.ctx);
+      //printf("PJM - %s, %d: wc_Sha512Update of WC_ESP32SHA @ %0xd\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha512.ctx);
         ret = wc_Sha512Update(&ssl->hsHashes->hashSha512, data, sz);
         if (ret != 0)
             return ret;
@@ -9791,13 +9791,13 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
                ((defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)) || \
                 (defined(HAVE_ED25519) && !defined(NO_ED25519_CLIENT_AUTH)) || \
                 (defined(HAVE_ED448) && !defined(NO_ED448_CLIENT_AUTH)))
-      printf("%s, %d: EdDSA_Update\n", __FUNCTION__, __LINE__);
+      //printf("PJM - %s, %d: EdDSA_Update\n", __FUNCTION__, __LINE__);
         ret = EdDSA_Update(ssl, data, sz);
         if (ret != 0)
             return ret;
     #endif
     }
-      printf("%s, %d\n", __FUNCTION__, __LINE__);
+      //printf("PJM - %s, %d\n", __FUNCTION__, __LINE__);
 
     return ret;
 }

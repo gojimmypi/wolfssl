@@ -1487,7 +1487,7 @@ WOLFSSL_ABI
 void wolfSSL_free(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_free");
-  printf("Free SSL: %0xd\n", (unsigned)ssl);
+
     if (ssl)
         FreeSSL(ssl, ssl->ctx->heap);
   
