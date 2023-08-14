@@ -433,6 +433,8 @@ user_settings_asm.h
 **/CMakeLists.txt.old
 /IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/oqs
 
+/IDE/Espressif/**/sdkconfig.old
+
 # any installed /include/user_settings.h is specific to an install, so exclude:
 /include/user_settings.h
 
