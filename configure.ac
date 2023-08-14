@@ -417,16 +417,11 @@ fi
 AS_CASE([$FIPS_VERSION],
     [none],
     [
-      AS_IF([ test -s $srcdir/wolfcrypt/src/fips.c -o -s $srcdir/ctaocrypt/src/fips.c ],
+      AS_IF([ test -s $srcdir/wolfcrypt/src/fips.c ],
             [AC_MSG_ERROR([FIPS source tree is incompatible with non-FIPS build (requires --enable-fips)])])
     ],
     [disabled],
     [],
-    [v1],
-    [
-      AS_IF([ ! test -s $srcdir/ctaocrypt/src/fips.c],
-            [AC_MSG_ERROR([non-FIPS-v1 source tree is incompatible with --enable-fips=$enableval])])
-    ],
     [
       AS_IF([ ! test -s $srcdir/wolfcrypt/src/fips.c],
             [AC_MSG_ERROR([non-FIPS source tree is incompatible with --enable-fips=$enableval])])
@@ -2419,7 +2414,7 @@ then
 fi
 
 AC_ARG_ENABLE([sm4-gcm],
-    [AS_HELP_STRING([--enable-sm4-gcm],[Enable wolfSSL SM4-GCM support (default: enabled)])],
+    [AS_HELP_STRING([--enable-sm4-gcm],[Enable wolfSSL SM4-GCM support (default: disabled)])],
     [ ENABLED_SM4_GCM=$enableval ],
     [ ENABLED_SM4_GCM=no ]
     )
@@ -2435,7 +2430,7 @@ then
 fi
 
 AC_ARG_ENABLE([sm4-ccm],
-    [AS_HELP_STRING([--enable-sm4-ccm],[Enable wolfSSL SM4-CCM support (default: enabled)])],
+    [AS_HELP_STRING([--enable-sm4-ccm],[Enable wolfSSL SM4-CCM support (default: disabled)])],
     [ ENABLED_SM4_CCM=$enableval ],
     [ ENABLED_SM4_CCM=no ]
     )
@@ -5677,6 +5672,9 @@ then
         ENABLED_AESCFB="yes"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_AES_CFB"
     fi
+
+    # Requires public mp_
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PUBLIC_MP"
 fi
 
 if test "x$ENABLED_SMIME" = "xyes"
@@ -8425,18 +8423,13 @@ fi
 
 if test "$ENABLED_OPENSSLEXTRA" = "yes" && test "x$ENABLED_OPENSSLCOEXIST" = "xno"
 then
-  AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA -DWOLFSSL_ALWAYS_VERIFY_CB"
-  AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_VERIFY_CB_ALL_CERTS -DWOLFSSL_EXTRA_ALERTS"
-  AM_CFLAGS="$AM_CFLAGS -DHAVE_EXT_CACHE -DWOLFSSL_FORCE_CACHE_ON_TICKET"
-  AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_AKID_NAME -DHAVE_CTS"
+  AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA"
 fi
 
 if test "$ENABLED_OPENSSLEXTRA" = "x509small"
 then
   AC_MSG_NOTICE([Enabling only a subset of X509 opensslextra])
   AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA_X509_SMALL"
-  AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_EKU_OID -DWOLFSSL_MULTI_ATTRIB"
-  AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_OPENSSL_RAND_CB"
 fi
 
 if test "$ENABLED_WOLFSCEP" = "yes"
@@ -9030,7 +9023,6 @@ AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_CONFIG_FILES([Makefile
         wolfssl/version.h
         wolfssl/options.h
-        cyassl/options.h
         support/wolfssl.pc
         rpm/spec
         wolfcrypt/test/test_paths.h
@@ -9173,28 +9165,6 @@ echo "" >> $OPTION_FILE
 echo "" >> $OPTION_FILE
 echo "#endif /* WOLFSSL_OPTIONS_H */" >> $OPTION_FILE
 echo "" >> $OPTION_FILE
-
-#backwards compatibility for those who have included options or version
-touch cyassl/options.h
-echo "/* cyassl options.h" > cyassl/options.h
-echo " * generated from wolfssl/options.h" >> cyassl/options.h
-echo " */" >> cyassl/options.h
-
-while read -r line
-do
-    echo "$line" >> cyassl/options.h
-done < $OPTION_FILE
-
-# switch ifdef protection in cyassl/option.h to CYASSL_OPTONS_H, remove bak
-sed -i.bak 's/WOLFSSL_OPTIONS_H/CYASSL_OPTIONS_H/g' cyassl/options.h
-
-# workaround for mingw sed that may get "Permission denied" trying to preserve permissions
-case $host_os in
-    mingw*)
-        chmod u+w cyassl/options.h ;;
-esac
-
-rm cyassl/options.h.bak
 
 if test "$ENABLED_OPENSSLEXTRA" = "yes" && test "$ENABLED_LINUXKM" = "no"
 then

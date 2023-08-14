@@ -11907,8 +11907,11 @@ int MatchDomainName(const char* pattern, int len, const char* str)
         if (p == '*') {
             char s;
 
-            while (--len > 0 &&
-                (p = (char)XTOLOWER((unsigned char)*pattern++)) == '*') {
+            while (--len > 0) {
+                p = (char)XTOLOWER((unsigned char)*pattern);
+                pattern++;
+                if (p != '*')
+                    break;
             }
 
             if (len == 0)
@@ -20011,7 +20014,7 @@ static int DtlsShouldDrop(WOLFSSL* ssl, int retcode)
 
 #ifndef NO_WOLFSSL_SERVER
     if (ssl->options.side == WOLFSSL_SERVER_END
-            && ssl->curRL.type != handshake) {
+            && ssl->curRL.type != handshake && !IsSCR(ssl)) {
         int beforeCookieVerified = 0;
         if (!IsAtLeastTLSv1_3(ssl->version)) {
             beforeCookieVerified =
@@ -24030,8 +24033,6 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
 #ifdef OPENSSL_EXTRA
     case 0 :
         return "ok";
-    case -WOLFSSL_X509_V_ERR_CERT_REVOKED :
-        return "certificate revoked";
 #endif
 
     case UNSUPPORTED_SUITE :
@@ -24478,10 +24479,36 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
     case HTTP_APPSTR_ERR:
         return "HTTP Application string error";
 #endif
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
+    /* TODO: -WOLFSSL_X509_V_ERR_CERT_SIGNATURE_FAILURE. Conflicts with
+     *       -WOLFSSL_ERROR_WANT_CONNECT. */
+    case -WOLFSSL_X509_V_ERR_CERT_NOT_YET_VALID:
+        return "certificate not yet valid";
+    case -WOLFSSL_X509_V_ERR_CERT_HAS_EXPIRED:
+        return "certificate has expired";
+    case -WOLFSSL_X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
+        return "certificate signature failure";
+    case -WOLFSSL_X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+        return "format error in certificate's notAfter field";
+    case -WOLFSSL_X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+        return "self-signed certificate in certificate chain";
     case -WOLFSSL_X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
         return "unable to get local issuer certificate";
-#endif
+    case -WOLFSSL_X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
+        return "unable to verify the first certificate";
+    case -WOLFSSL_X509_V_ERR_CERT_CHAIN_TOO_LONG:
+        return "certificate chain too long";
+    case -WOLFSSL_X509_V_ERR_CERT_REVOKED:
+        return "certificate revoked";
+    case -WOLFSSL_X509_V_ERR_INVALID_CA:
+        return "invalid CA certificate";
+    case -WOLFSSL_X509_V_ERR_PATH_LENGTH_EXCEEDED:
+        return "path length constraint exceeded";
+    case -WOLFSSL_X509_V_ERR_CERT_REJECTED:
+        return "certificate rejected";
+    case -WOLFSSL_X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
+        return "subject issuer mismatch";
+#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL || HAVE_WEBSERVER */
     case UNSUPPORTED_PROTO_VERSION:
         #ifdef OPENSSL_EXTRA
         return "WRONG_SSL_VERSION";
@@ -34479,14 +34506,13 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
             ssl->options.resuming = 0;
             return ret;
         }
-#if defined(HAVE_SESSION_TICKET) && !defined(WOLFSSL_NO_TICKET_EXPIRE) && \
-                                    !defined(NO_ASN_TIME)
+#if !defined(WOLFSSL_NO_TICKET_EXPIRE) && !defined(NO_ASN_TIME)
         /* check if the ticket is valid */
         if (LowResTimer() > session->bornOn + ssl->timeout) {
-            WOLFSSL_MSG("Expired session ticket, fall back to full handshake.");
+            WOLFSSL_MSG("Expired session, fall back to full handshake.");
             ssl->options.resuming = 0;
         }
-#endif /* HAVE_SESSION_TICKET && !WOLFSSL_NO_TICKET_EXPIRE && !NO_ASN_TIME */
+#endif /* !WOLFSSL_NO_TICKET_EXPIRE && !NO_ASN_TIME */
 
         else if (session->haveEMS != ssl->options.haveEMS) {
             /* RFC 7627, 5.3, server-side */
