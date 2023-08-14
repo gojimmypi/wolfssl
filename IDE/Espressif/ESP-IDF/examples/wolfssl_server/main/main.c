@@ -128,10 +128,13 @@ void app_main(void)
 
     /* set time for cert validation */
     set_time();
+    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
+                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
 
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - uxTaskGetStackHighWaterMark(NULL)
+                   - (uxTaskGetStackHighWaterMark(NULL) * 4)
             );
     ESP_LOGI(TAG, "Starting TLS Server...\n");
 
@@ -144,8 +147,12 @@ void app_main(void)
 #endif
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        ESP_LOGI(TAG, "Stack remaining: %d", uxTaskGetStackHighWaterMark(NULL));
+
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                         - uxTaskGetStackHighWaterMark(NULL));
+#endif
 #if defined(SINGLE_THREADED)
         ESP_LOGV(TAG, "\n\nDone!\n\n");
         while (1);

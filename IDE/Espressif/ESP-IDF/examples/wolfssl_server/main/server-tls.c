@@ -385,7 +385,7 @@ int tls_smp_server_init(int port)
                    TLS_SMP_SERVER_TASK_WORDS);
     ret = xTaskCreate(tls_smp_server_task,
                       TLS_SMP_SERVER_TASK_NAME,
-                      TLS_SMP_SERVER_TASK_WORDS,
+                      TLS_SMP_SERVER_TASK_WORDS, /* not bytes! */
                       (void*)&thisPort,
                       TLS_SMP_SERVER_TASK_PRIORITY,
                       &_handle);

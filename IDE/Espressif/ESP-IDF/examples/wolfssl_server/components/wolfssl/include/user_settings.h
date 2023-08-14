@@ -103,6 +103,8 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
+// #define USE_FAST_MATH
+// #define SMALL_STACK
 /* RSA primitive specific definition */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
