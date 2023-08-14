@@ -1,3 +1,18 @@
+### unable to open ftdi device with description
+
+```
+Warn : Interface already configured, ignoring
+none separate
+VisualGDB_OpenOCD_Ready
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 53641 for telnet connections
+Error: libusb_open() failed with LIBUSB_ERROR_NOT_FOUND
+Error: unable to open ftdi device with description 'Tigard V1.1', serial '*' at bus location '*'
+target/esp_common.cfg:4: Error: 
+at file "target/esp_common.cfg", line 4
+```
+
+Run Zadig to set drivers to `libusbK`. See [JTAG Single Step Debugging ESP32 with Tigard](https://gojimmypi.github.io/Tigard-JTAG-SingleStep-Debugging-ESP32/)
 
 ### Panic: assert failed: tcpip_send_msg_wait_sem
 
