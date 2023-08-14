@@ -133,7 +133,7 @@ void app_main(void)
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - uxTaskGetStackHighWaterMark(NULL)
             );
-    ESP_LOGI(TAG, "Starting TLS Client...\n");
+    ESP_LOGI(TAG, "Starting TLS Client task ...\n");
 
 #if defined(SINGLE_THREADED)
     /* just call the task */

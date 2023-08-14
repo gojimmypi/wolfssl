@@ -57,7 +57,7 @@ else()
     message(STATUS "************************************************************************************************")
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
-    message(STATUS "WOLFSSL_ROOT2 = ${WOLFSSL_ROOT2}")
+
     # Check to see if we're already in wolfssl, and only if WOLFSSL_ROOT not specified
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # wolfssl examples are 7 directories deep from wolfssl repo root

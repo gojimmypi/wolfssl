@@ -70,26 +70,101 @@ static const char* const TAG = "tls_client";
 
 #if defined(DEBUG_WOLFSSL)
 
-int ShowCiphers(void)
+int ShowCiphers(WOLFSSL* ssl)
 {
-    char ciphers[4096];
-
+    #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
+    char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
+    const char* cipher_used;
     int ret = 0;
 
-    ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
+    if (ssl == NULL) {
+        ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
+        ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
+        if (ret == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
+            for (int i = 0; i < CLIENT_TLS_MAX_CIPHER_LENGTH; i++) {
+                if (ciphers[i] == ':') {
+                    ciphers[i] = '\n';
+                }
+            }
+        }
+        else {
+            ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
+        }
 
-    if (ret == WOLFSSL_SUCCESS) {
-        printf("%s\n", ciphers);
     }
     else {
-        ESP_LOGE(TAG, "FAiled to call wolfSSL_get_ciphers. Error: %d", ret);
-
+        cipher_used = wolfSSL_get_cipher_name(ssl);
+        ESP_LOGI(TAG, "WOLFSSL* ssl using %s", cipher_used);
     }
+
     return ret;
 }
+
 #endif
 
-/* FreeRTOS */
+#if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
+                                  && defined(WOLFSSL_ATECC508A)
+
+#include "wolfssl/wolfcrypt/port/atmel/atmel.h"
+
+/* when you want to use custom slot allocation */
+/* enable the definition CUSTOM_SLOT_ALLOCATION.*/
+
+#if defined(CUSTOM_SLOT_ALLOCATION)
+
+static byte mSlotList[ATECC_MAX_SLOT];
+
+int atmel_set_slot_allocator(atmel_slot_alloc_cb alloc,
+                             atmel_slot_dealloc_cb dealloc);
+/* initialize slot array */
+void my_atmel_slotInit()
+{
+    int i;
+
+    for (i = 0; i < ATECC_MAX_SLOT; i++) {
+        mSlotList[i] = ATECC_INVALID_SLOT;
+    }
+}
+/* allocate slot depending on slotType */
+int my_atmel_alloc(int slotType)
+{
+    int i, slot = -1;
+
+    switch (slotType) {
+        case ATMEL_SLOT_ENCKEY:
+            slot = 2;
+            break;
+        case ATMEL_SLOT_DEVICE:
+            slot = 0;
+            break;
+        case ATMEL_SLOT_ECDHE:
+            slot = 0;
+            break;
+        case ATMEL_SLOT_ECDHE_ENC:
+            slot = 4;
+            break;
+        case ATMEL_SLOT_ANY:
+            for (i = 0; i < ATECC_MAX_SLOT; i++) {
+                if (mSlotList[i] == ATECC_INVALID_SLOT) {
+                    slot = i;
+                    break;
+                }
+            }
+    }
+
+    return slot;
+}
+/* free slot array       */
+void my_atmel_free(int slotId)
+{
+    if (slotId >= 0 && slotId < ATECC_MAX_SLOT) {
+        mSlotList[slotId] = ATECC_INVALID_SLOT;
+    }
+}
+#endif /* CUSTOM_SLOT_ALLOCATION                                       */
+#endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
+
 /* client task */
 WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 {
@@ -124,7 +199,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 #ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
     wolfSSL_Debugging_ON();
-    ShowCiphers();
+    ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
     wolfSSL_Init();
@@ -149,7 +224,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     }
 
     /* Create and initialize WOLFSSL_CTX */
-    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
+    // wolfSSL_CTX_NoTicketTLSv12();
+    // wolfSSL_NoTicketTLSv12();
+    // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* only TLS 1.2 */
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); /* only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
     }
@@ -166,7 +245,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 #endif
 
 #ifdef DEBUG_WOLFSSL
-    ShowCiphers();
+    ShowCiphers(NULL);
     ESP_LOGI(TAG,
              "Stack used: %d\n",
              CONFIG_ESP_MAIN_TASK_STACK_SIZE
@@ -261,7 +340,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
     }
-
     /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -276,12 +354,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     /* Attach wolfSSL to the socket */
     wolfSSL_set_fd(ssl, sockfd);
 
-
-        WOLFSSL_MSG("Connect to wolfSSL on the server side");
-        /* Connect to wolfSSL on the server side */
-        if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
-        }
+    WOLFSSL_MSG("Connect to wolfSSL on the server side");
+    /* Connect to wolfSSL on the server side */
+    if (wolfSSL_connect(ssl) == SSL_SUCCESS) {
+        ShowCiphers(ssl);
+    }
 
         /* Get a message for the server from stdin */
         WOLFSSL_MSG("Message for server: ");
@@ -354,7 +431,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
 #ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
     wolfSSL_Debugging_ON();
-    ShowCiphers();
+    ShowCiphers(global_ssl);
 #endif
     /* Initialize wolfSSL */
     wolfSSL_Init();
@@ -398,7 +475,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
 #endif
 
 #ifdef DEBUG_WOLFSSL
-    ShowCiphers();
+    ShowCiphers(global_ssl);
     ESP_LOGI(TAG,
              "Stack used: %d\n",
              CONFIG_ESP_MAIN_TASK_STACK_SIZE
@@ -648,7 +725,7 @@ WOLFSSL_ESP_TASK tls_peek(void *args)
     /* we don't initialize a thread */
 #else
 /* create task */
-int tls_smp_client_init(tls_args* args)
+WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 {
     int ret;
     int test_separate_tasks = 1;
@@ -718,6 +795,6 @@ int tls_smp_client_init(tls_args* args)
     if (ret != pdPASS) {
         ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_CLIENT_TASK_NAME);
     }
-    return ret;
+    return TLS_SMP_CLIENT_TASK_RET;
 }
 #endif

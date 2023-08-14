@@ -37,7 +37,7 @@
 #endif
 
 #if ESP_IDF_VERSION_MAJOR >= 4
-    #include "protocol_examples_common.h"
+//    #include "protocol_examples_common.h"
 #else
     const static int CONNECTED_BIT = BIT0;
     static EventGroupHandle_t wifi_event_group;
@@ -230,97 +230,3 @@ int wifi_show_ip(void)
     return 0;
 }
 #endif
-/* entry point TODO remove */
-void app_main_old(void)
-{
-    ESP_LOGI(TAG, "Start app_main...");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_STRING = %s", LIBWOLFSSL_VERSION_STRING);
-
-#if defined(WOLFSSL_MULTI_INSTALL_WARNING)
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "WARNING: Multiple wolfSSL installs found.");
-    ESP_LOGI(TAG, "Check ESP-IDF and local project [components] directory.");
-    ESP_LOGI(TAG, "");
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_HASH)
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH = %s", LIBWOLFSSL_VERSION_GIT_HASH);
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s", LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
-#endif
-
-#if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
-    ESP_LOGI(TAG, "LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s", LIBWOLFSSL_VERSION_GIT_HASH_DATE);
-#endif
-
-
-    /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* not available for C3 at this time */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
-             );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#else
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
-            );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#endif
-
-    /* all platforms: stack high water mark check */
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-
-    ESP_ERROR_CHECK(nvs_flash_init());
-
-    ESP_LOGI(TAG, "Initialize wifi");
-#if (ESP_IDF_VERSION_MAJOR == 4 && ESP_IDF_VERSION_MINOR >= 1) || \
-    (ESP_IDF_VERSION_MAJOR >= 5)
-    esp_netif_init();
-#else
-    tcpip_adapter_init();
-#endif
-
-    /* */
-#if ESP_IDF_VERSION_MAJOR >= 4
-   ESP_ERROR_CHECK(esp_event_loop_create_default());
-   /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-   * Read "Establishing Wi-Fi or Ethernet Connection" section in
-   * examples/protocols/README.md for more information about this function.
-   */
-    ESP_ERROR_CHECK(example_connect());
-#else
-    wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_event_loop_init(wifi_event_handler, NULL));
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = TLS_SMP_WIFI_SSID,
-            .password = TLS_SMP_WIFI_PASS,
-        },
-    };
-    /* WiFi station mode */
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    /* Wifi Set the configuration of the ESP32 STA or AP */
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-    /* Start Wifi */
-    ESP_ERROR_CHECK(esp_wifi_start() );
-
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
-    ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
-                                        TLS_SMP_WIFI_SSID, TLS_SMP_WIFI_PASS);
-#endif
-
-}

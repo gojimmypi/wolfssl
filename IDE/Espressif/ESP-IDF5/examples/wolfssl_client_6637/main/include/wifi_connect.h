@@ -30,14 +30,8 @@
     #include "esp_event_loop.h"
 #endif
 
-#define DEFAULT_PORT                     11111
-
-#define TLS_SMP_CLIENT_TASK_NAME         "tls_client_example"
-#define TLS_SMP_CLIENT_TASK_WORDS        10240
-#define TLS_SMP_CLIENT_TASK_PRIORITY     8
-
-#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
-#define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
+/* ESP lwip */
+#define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
 /**
  ******************************************************************************
@@ -60,10 +54,11 @@
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
         #include "~/Documents/my_private_config.h"
     #else
-        #include "/workspace/my_private_config.h"
-//        #warning "did not detect environment"
+        #warning "did not detect environment. using ~/my_private_config.h"
+        #include "~/my_private_config.h"
     #endif
 #else
+
     /*
     ** The examples use WiFi configuration that you can set via project
     ** configuration menu
@@ -74,17 +69,6 @@
     #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
     #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
 #endif
-
-/* ESP lwip */
-#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-
-#define DEFAULT_PORT                     11111
-
-#define TLS_SMP_CLIENT_TASK_NAME         "tls_client_example"
-#define TLS_SMP_CLIENT_TASK_WORDS        10240
-#define TLS_SMP_CLIENT_TASK_PRIORITY     8
-
-#define TLS_SMP_TARGET_HOST              "192.168.1.109"
 
 int wifi_init_sta(void);
 
