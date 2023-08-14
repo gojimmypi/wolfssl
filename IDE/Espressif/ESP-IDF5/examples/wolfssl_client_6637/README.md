@@ -39,6 +39,15 @@ When you want to test the wolfSSL client
 Command:
 
 ```
+cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_server
+. /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
+idf.py flash -p /dev/ttyS19 -b 115200 monitor
+
+```
+
+```
+cd /mnt/c/workspace/wolfssl-gojimmypi
+
 ./examples/client/client  -h 192.168.1.108 -v 4 -l TLS_SM4_GCM_SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem     -A ./certs/sm2/root-sm2.pem -C
 ```
 
