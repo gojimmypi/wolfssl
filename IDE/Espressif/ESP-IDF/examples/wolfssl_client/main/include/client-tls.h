@@ -49,7 +49,7 @@ typedef struct {
     int ShowCiphers(WOLFSSL* ssl);
 #endif
 
-/* This is the TLS Server function, possibly in an RTOS thread. */
+/* This is the TLS Client function, possibly in an RTOS thread. */
 WOLFSSL_ESP_TASK tls_smp_client_task(void *args);
 
 /* init will create an RTOS task, otherwise server is simply function call. */

@@ -19,6 +19,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include "client-tls.h"
+
+/* Espressif FreeRTOS */
+#ifndef SINGLE_THREADED
+    #include <freertos/FreeRTOS.h>
+    #include <freertos/task.h>
+    #include <freertos/event_groups.h>
+#endif
 /* socket includes */
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
@@ -29,8 +37,6 @@
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
-
-#include "client-tls.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -160,12 +166,18 @@ void my_atmel_free(int slotId)
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
 /* client task */
-void tls_smp_client_task(void *args)
+WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 {
+#if defined(SINGLE_THREADED)
+    #define TLS_SMP_CLIENT_TASK_RET ret
+#else
+    #define TLS_SMP_CLIENT_TASK_RET
+#endif
     char buff[256];
     const char sndMsg[] = "GET /index.html HTTP/1.0\r\n\r\n";
-    const char* ch = TLS_SMP_TARGET_HOST;
+    const char* ch = TLS_SMP_TARGET_HOST; /* see wifi_connect.h */
     struct sockaddr_in servAddr;
+
     struct hostent *hp;
     struct ip4_addr *ip4_addr;
     int ret;
@@ -175,10 +187,11 @@ void tls_smp_client_task(void *args)
     size_t len;
 
     /* declare wolfSSL objects */
-    WOLFSSL_CTX *ctx;
-    WOLFSSL *ssl;
+    WOLFSSL_CTX* ctx;
+    WOLFSSL*     ssl;
 
-    WOLFSSL_ENTER("tls_smp_client_task");
+    wolfSSL_Debugging_ON();
+    WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
     doPeerCheck = 1;
     sendGet = 0;
@@ -191,7 +204,7 @@ void tls_smp_client_task(void *args)
     /* Initialize wolfSSL */
     wolfSSL_Init();
 
-    /* Create a socket that uses an internet IPv4 address,
+    /* Create a socket that uses an Internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {

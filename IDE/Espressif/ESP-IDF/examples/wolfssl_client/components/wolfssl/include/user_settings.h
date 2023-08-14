@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
+// #define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESP32
@@ -155,10 +155,6 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
@@ -189,9 +185,9 @@
 #define HAVE_VERSION_EXTENDED_INFO
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
+//#define WOLFSSL_SM2
+//#define WOLFSSL_SM3
+//#define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* SM settings */
