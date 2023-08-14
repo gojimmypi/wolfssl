@@ -6953,7 +6953,9 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
     /* arrays */
     if (!writeDup && ssl->arrays == NULL) {
+#ifdef WOLFSSL_ESP32
         ESP_LOGI("internal", "arrays");
+#endif
         ssl->arrays = (Arrays*)XMALLOC(sizeof(Arrays), ssl->heap,
                                                            DYNAMIC_TYPE_ARRAYS);
         if (ssl->arrays == NULL) {
@@ -6984,7 +6986,9 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         ssl->rng = ctx->rng; /* CTX may have one, if so use it */
     }
 #endif
+#ifdef WOLFSSL_ESP32
     ESP_LOGI("internal", "rng...");
+#endif
     if (ssl->rng == NULL) {
         ssl->rng = (WC_RNG*)XMALLOC(sizeof(WC_RNG), ssl->heap,DYNAMIC_TYPE_RNG);
         if (ssl->rng == NULL) {
@@ -7012,7 +7016,9 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->options.shutdownDone = 0;
     if (ssl->session != NULL)
         ssl->session->side = (byte)ssl->options.side;
+#ifdef WOLFSSL_ESP32
     ESP_LOGI("internal", "ReinitSSL exit...");
+#endif
     return ret;
 }
 
@@ -9776,9 +9782,6 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
 
     if (IsAtLeastTLSv1_2(ssl)) {
     #ifndef NO_SHA256
-      /* TODO remove */
-//      printf("%s, %d: wc_Sha256Update of WC_ESP32SHA @ %0x\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha256.ctx);
-//        printf("TODO wc_Sha256Update starting");
         ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz); /* TODO SHA item #2 in process */
         if (ret != 0)
             return ret;
@@ -9799,10 +9802,6 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
     #endif
     #endif
     #ifdef WOLFSSL_SHA512
-      /* TODO remove */
-//        printf("TODO wc_Sha512Update starting");
-        /* TODO why is ctx only when HW enabled: &ssl->hsHashes->hashSha512.ctx */
-//      printf("%s, %d: wc_Sha512Update of WC_ESP32SHA @ %0x\n", __FUNCTION__, __LINE__, (unsigned)&ssl->hsHashes->hashSha512.ctx);
         ret = wc_Sha512Update(&ssl->hsHashes->hashSha512, data, sz);
         if (ret != 0)
             return ret;
