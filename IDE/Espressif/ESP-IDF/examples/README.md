@@ -10,6 +10,38 @@ These are the core examples for wolfSSL:
 
 - [TLS Server](./wolfssl_server/README.md)
 
+
+TLS1.3 Linux Server
+```
+./examples/server/server -v 4 -b -d -p 11111 -c ./certs/server-cert.pem -k ./certs/server-key.pem
+```
+
+TLS1.3 Linux Client to Linux Server: `TLS_AES_128_GCM_SHA256` (default)
+```
+./examples/client/client -v 4 -h 127.0.0.1 -p 11111 -A ./certs/ca-cert.pem
+```
+
+TLS1.2 Linux Server 
+```
+./examples/server/server -v 3 -b -d -p 11111 -c ./certs/server-cert.pem -k ./certs/server-key.pem
+```
+
+TLS1.2 Linux Client to Linux Server: `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384` (default)
+```
+./examples/client/client -v 3 -h 127.0.0.1 -p 11111 -A ./certs/ca-cert.pem
+```
+
+TLS1.2 Linux Client to ESP32 Server: `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`
+```
+./examples/client/client -v 3 -h 192.168.1.109 -p 11111 -A ./certs/ca-cert.pem
+```
+
+TLS1.3 Linux Client to ESP32 Server: `TLS_AES_128_GCM_SHA256`
+```
+./examples/client/client -v 4 -h 192.168.1.109 -p 11111 -A ./certs/ca-cert.pem
+```
+
+
 There's an additional example that uses wolfSSL installed as a component to the shared ESP-IDF:
 
 - [Test IDF](./wolfssl_test_idf/README.md)

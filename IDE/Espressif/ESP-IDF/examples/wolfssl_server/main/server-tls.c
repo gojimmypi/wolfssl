@@ -156,7 +156,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
+    // ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());  /* only TLS 1.3 */
+    if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else

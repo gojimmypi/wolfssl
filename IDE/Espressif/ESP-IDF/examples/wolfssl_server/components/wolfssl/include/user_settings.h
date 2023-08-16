@@ -65,6 +65,8 @@
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
 
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
 /* when you want to use SINGLE THREAD */
 /* #define SINGLE_THREADED */
 #define NO_FILESYSTEM
@@ -148,10 +150,10 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+//    #define NO_ESP32_CRYPT
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+//    #define NO_WOLFSSL_ESP32_CRYPT_AES
+//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     /* HW Disabled by default for ESP32-S2.   */
     #define NO_ESP32_CRYPT
@@ -194,9 +196,9 @@
 #define HAVE_VERSION_EXTENDED_INFO
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-//#define WOLFSSL_SM2
-//#define WOLFSSL_SM3
-//#define WOLFSSL_SM4
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* see https://github.com/wolfSSL/wolfssl/pull/6537
@@ -210,8 +212,8 @@
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CCM-SM3"
     #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
                                        "TLS13-SM4-CCM-SM3:" \
-                                       "TLS-SM4-GCM-SM3:" \
-                                       "TLS-SM4-CCM-SM3:" \
+                                       "TLS-SM4-GCM-SM3:" /* not a valid command-line cipher */ \
+                                       "TLS-SM4-CCM-SM3:" /* not a valid command-line cipher */ \
                                        "ECDHE-ECDSA-SM4-CBC-SM3:" \
                                        "ECDHE-ECDSA-SM4-GCM-SM3:" \
                                        "ECDHE-ECDSA-SM4-CCM-SM3"

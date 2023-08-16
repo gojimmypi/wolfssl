@@ -1,5 +1,63 @@
 # SM Cipher Notes
 
+
+### Install SM
+```
+cd /mnt/c/workspace/wolfsm-$USER
+./install.sh ../wolfssl-$USER
+```
+
+
+### Build Linux SM Examples
+```
+./autogen.sh
+./configure --enable-sm3 --enable-sm4-gcm --enable-sm2         \
+            --enable-sm4-ecb --enable-sm4-cbc --enable-sm4-ctr \
+            --enable-sm4-gcm --enable-sm4-ccm
+make clean && make
+```
+
+
+```
+./examples/client/client  -h 127.0.0.1 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  \
+                      -c ./certs/sm2/client-sm2.pem                 \
+                      -k ./certs/sm2/client-sm2-priv.pem            \
+                      -A ./certs/sm2/root-sm2.pem -C
+```
+
+```
+./examples/client/client  -h 192.168.1.109 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  \
+                      -c ./certs/sm2/client-sm2.pem                 \
+                      -k ./certs/sm2/client-sm2-priv.pem            \
+                      -A ./certs/sm2/root-sm2.pem -C
+```
+
+
+```
+# Success: Linux Client to ESP32 Server TLS1.2 
+./examples/client/client  -h 192.168.1.113 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+./examples/client/client  -h 192.168.1.113 -v 3 -l ECDHE-ECDSA-SM4-GCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+./examples/client/client  -h 192.168.1.113 -v 3 -l ECDHE-ECDSA-SM4-CCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+# Success: Linux Client to ESP32 Server TLS1.3
+
+# Reported as TLS_SM4_GCM_SM3, but parameter is TLS13-SM4-GCM-SM3
+./examples/client/client  -h 192.168.1.113 -v 4 -l TLS13-SM4-GCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+# Reported as TLS-SM4-CCM-SM3, but parameter is TLS13-SM4-CCM-SM3
+./examples/client/client  -h 192.168.1.113 -v 4 -l TLS13-SM4-CCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+./examples/client/client  -h 192.168.1.113 -v 4 -l TLS13-SM4-CBC-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+```
+
+```
+ESP32-to-ESP32
+TLS_ECDHE_ECDSA_WITH_SM4_CBC_SM3
+TLS_ECDHE_ECDSA_WITH_SM4_GCM_SM3
+TLS_ECDHE_ECDSA_WITH_SM4_CCM_SM3
+```
+
 Tried both PEM and DER format.
 
 The latest server is PEM format, triple-checked to have the embedded server
