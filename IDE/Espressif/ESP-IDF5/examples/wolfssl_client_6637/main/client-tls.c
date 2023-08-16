@@ -67,6 +67,7 @@
 #endif
 
 static const char* const TAG = "tls_client";
+static int connection_ready = 0;
 
 #if defined(DEBUG_WOLFSSL)
 
@@ -235,12 +236,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM2\n");
-    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3");
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
     if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGI(TAG, "Set cipher list: %s\n",  WOLFSSL_ESP32_CIPHER_SUITE);
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+                      WOLFSSL_ESP32_CIPHER_SUITE);
     }
 #endif
 
@@ -457,7 +459,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
 
     /* Create and initialize WOLFSSL_CTX */
     ESP_LOGI(TAG, "wolfSSL_CTX_new...");
-    global_ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
+    // global_ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());  /* only TLS 1.2 */
+    global_ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());  /* only TLS 1.3 */
     if (global_ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
     }
@@ -465,12 +468,14 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM2\n");
-    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-SM4-CBC-SM3");
+    ret = wolfSSL_CTX_set_cipher_list(global_ctx, WOLFSSL_ESP32_CIPHER_SUITE);
     if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGI(TAG, "client_task_open_connection Set cipher list: %s\n",
+                      WOLFSSL_ESP32_CIPHER_SUITE);
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: ECDHE-ECDSA-SM4-CBC-SM3\n");
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+                       WOLFSSL_ESP32_CIPHER_SUITE);
     }
 #endif
 
@@ -510,7 +515,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
         ESP_LOGW(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
-    ESP_LOGI(TAG, "wolfSSL_CTX_use_certificate_chain_buffer_format...");
+        ESP_LOGI(TAG, "wolfSSL_CTX_use_certificate_chain_buffer_format...");
         ret = wolfSSL_CTX_use_certificate_chain_buffer_format(global_ctx,
                                                               // client_cert_der_2048, sizeof_client_cert_der_2048,
                                                               CTX_CLIENT_CERT,
@@ -591,6 +596,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
     WOLFSSL_MSG("Connect to wolfSSL on the server side");
     /* Connect to wolfSSL on the server side */
     ESP_LOGI(TAG, "wolfSSL_connect...");
+    connection_ready = 1;
     if (wolfSSL_connect(global_ssl) != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
     }
@@ -599,7 +605,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task_open_connection(void *args)
     ESP_LOGI(TAG,"                    Connected!");
     ESP_LOGI(TAG,"=========================================================");
     ESP_LOGI(TAG,"=========================================================");
-
     while(true) {
         vTaskDelay(60000);
     }
@@ -623,39 +628,52 @@ WOLFSSL_ESP_TASK tls_smp_client_task_send_data(void *args)
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME" send data");
 
     while (true) {
+        if (connection_ready == 0) {
+            ESP_LOGI(TAG, "Connection not ready...");
+            vTaskDelay(5000);
 
-        /* Get a message for the server from stdin */
-        WOLFSSL_MSG("Message for server: ");
-        memset(buff, 0, sizeof(buff));
-
-        if (sendGet) {
-            printf("SSL connect ok, sending GET...\n");
-            len = XSTRLEN(sndMsg);
-            strncpy(buff, sndMsg, len);
-            buff[len] = '\0';
         }
         else {
-            sprintf(buff, "message from esp32 tls client\n");
-            len = strnlen(buff, sizeof(buff));
-        }
-        /* Send the message to the server */
-        ESP_LOGI(TAG, "Writing...");
-        if (wolfSSL_write(global_ssl, buff, len) != len) {
-            ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to write\n");
+            /* Get a message for the server from stdin */
+            WOLFSSL_MSG("Message for server: ");
+            memset(buff, 0, sizeof(buff));
+
+            if (sendGet) {
+                printf("SSL connect ok, sending GET...\n");
+                len = XSTRLEN(sndMsg);
+                strncpy(buff, sndMsg, len);
+                buff[len] = '\0';
+            }
+            else {
+                sprintf(buff, "message from esp32 tls client\n");
+                len = strnlen(buff, sizeof(buff));
+            }
+            /* Send the message to the server */
+            ESP_LOGI(TAG, "Writing...");
+            if (wolfSSL_write(global_ssl, buff, len) != len) {
+                ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to write\n");
+            }
+
+            /* Read the server data into our buff array */
+            memset(buff, 0, sizeof(buff));
+            ESP_LOGI(TAG, "Reading...");
+            if (wolfSSL_read(global_ssl, buff, sizeof(buff) - 1) == -1) {
+                ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to read\n");
+            }
+    WOLFSSL_CIPHER* cipher;
+    cipher = wolfSSL_get_current_cipher(global_ssl);
+    ESP_LOGI(TAG, "Current Cipher: %s\n", wolfSSL_CIPHER_get_name(cipher));
+//    showPeerEx(global_ssl, 1);
+//    showPeerPEM(ssl);
+
+            /* Print to stdout any data the server sends */
+            ESP_LOGI(TAG, "\n\nServer Response:");
+            ESP_LOGI(TAG, "%s", buff);
+            connection_ready = 0;
+
+            vTaskDelay(5000);
         }
 
-        /* Read the server data into our buff array */
-        memset(buff, 0, sizeof(buff));
-        ESP_LOGI(TAG, "Reading...");
-        if (wolfSSL_read(global_ssl, buff, sizeof(buff) - 1) == -1) {
-            ESP_LOGE(TAG, "ERROR: tls_smp_client_task_send_data failed to read\n");
-        }
-
-        /* Print to stdout any data the server sends */
-        ESP_LOGI(TAG, "\n\nServer Response:");
-        ESP_LOGI(TAG, "%s", buff);
-
-        vTaskDelay(5000);
     }
 
     /* Cleanup and return */
