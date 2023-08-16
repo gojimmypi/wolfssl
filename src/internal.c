@@ -9770,18 +9770,21 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
     }
 #endif /* WOLFSSL_RENESAS_TSIP_TLS */
 
+        printf("TODO hashSha starting\n");
 #ifndef NO_OLD_TLS
     #ifndef NO_SHA
-        printf("TODO hashSha starting");
+        printf("TLS wc_ShaUpdate\n");
         wc_ShaUpdate(&ssl->hsHashes->hashSha, data, sz); /* TODO SHA item #1 in process */
     #endif
     #ifndef NO_MD5
+        printf("TLS wc_Md5Update\n");
         wc_Md5Update(&ssl->hsHashes->hashMd5, data, sz);
     #endif
 #endif /* NO_OLD_TLS */
 
     if (IsAtLeastTLSv1_2(ssl)) {
     #ifndef NO_SHA256
+        printf("TLS wc_Sha256Update\n");
         ret = wc_Sha256Update(&ssl->hsHashes->hashSha256, data, sz); /* TODO SHA item #2 in process */
         if (ret != 0)
             return ret;
@@ -9790,8 +9793,9 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         wc_Sha256GetHash(&ssl->hsHashes->hashSha256, digest);
         WOLFSSL_BUFFER(digest, WC_SHA256_DIGEST_SIZE);
     #endif
-    #endif
+    #endif /* ndef NO_SHA256 */
     #ifdef WOLFSSL_SHA384
+        printf("TLS wc_Sha384Update\n");
         ret = wc_Sha384Update(&ssl->hsHashes->hashSha384, data, sz);
         if (ret != 0)
             return ret;
@@ -9800,8 +9804,9 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         wc_Sha384GetHash(&ssl->hsHashes->hashSha384, digest);
         WOLFSSL_BUFFER(digest, WC_SHA384_DIGEST_SIZE);
     #endif
-    #endif
+    #endif /* WOLFSSL_SHA384 */
     #ifdef WOLFSSL_SHA512
+        printf("TLS wc_Sha512Update\n");
         ret = wc_Sha512Update(&ssl->hsHashes->hashSha512, data, sz);
         if (ret != 0)
             return ret;
@@ -9810,8 +9815,9 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         wc_Sha512GetHash(&ssl->hsHashes->hashSha512, digest);
         WOLFSSL_BUFFER(digest, WC_SHA512_DIGEST_SIZE);
     #endif
-    #endif
+    #endif /* WOLFSSL_SHA512 */
     #ifdef WOLFSSL_SM3
+        printf("TLS wc_Sm3Update\n");
         ret = wc_Sm3Update(&ssl->hsHashes->hashSm3, data, sz);
         if (ret != 0)
             return ret;
@@ -9820,7 +9826,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         wc_Sm3GetHash(&ssl->hsHashes->hashSm3, digest);
         WOLFSSL_BUFFER(digest, WC_SM3_DIGEST_SIZE);
     #endif
-    #endif
+    #endif /* WOLFSSL_SM3 */
     #if !defined(WOLFSSL_NO_CLIENT_AUTH) && \
                ((defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)) || \
                 (defined(HAVE_ED25519) && !defined(NO_ED25519_CLIENT_AUTH)) || \
