@@ -114,6 +114,7 @@
 /* debug options */
 #define DEBUG_WOLFSSL
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
+/* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -189,14 +190,22 @@
 //#define WOLFSSL_SM3
 //#define WOLFSSL_SM4
 
+#define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256"
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    /* SM settings */
+    /* SM settings
+TLS13-AES128-GCM-SHA256
+TLS13-CHACHA20-POLY1305-SHA256
+TLS13-SM4-GCM-SM3
+TLS13-SM4-CCM-SM3
+     **/
+
  // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-GCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CCM-SM3"
-    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
+    #define WOLFSSL_ESP32_CIPHER_SUITEx "TLS13-SM4-GCM-SM3:" \
                                        "TLS13-SM4-CCM-SM3:" \
                                        "TLS-SM4-GCM-SM3:" \
                                        "TLS-SM4-CCM-SM3:" \

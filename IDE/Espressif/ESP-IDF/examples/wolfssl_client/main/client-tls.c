@@ -1,4 +1,4 @@
-/* client-tls-callback.c
+/* client-tls.c
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -37,6 +37,7 @@
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
+#include "user_settings.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -81,12 +82,12 @@ int ShowCiphers(WOLFSSL* ssl)
         ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
         ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
         if (ret == WOLFSSL_SUCCESS) {
-            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
             for (int i = 0; i < CLIENT_TLS_MAX_CIPHER_LENGTH; i++) {
                 if (ciphers[i] == ':') {
                     ciphers[i] = '\n';
                 }
             }
+            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
         }
         else {
             ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
@@ -225,13 +226,19 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 
     /* Create and initialize WOLFSSL_CTX */
     // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
-    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
+    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
+    // wolfSSL_CTX_NoTicketTLSv12();
+    // wolfSSL_NoTicketTLSv12();
+    // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* only TLS 1.2 */
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); /* only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
     }
 
-#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+#if defined(WOLFSSL_ESP32_CIPHER_SUITE)
     ESP_LOGI(TAG, "Start SM2\n");
+
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
@@ -337,6 +344,12 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
     }
+    else {
+#ifdef DEBUG_WOLFSSL
+        ESP_LOGI(TAG, "\nCreated WOLFSSL object:");
+        ShowCiphers(ssl);
+#endif
+    }
     /* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -384,6 +397,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
         /* Print to stdout any data the server sends */
         printf("Server: ");
         printf("%s\n", buff);
+        ShowCiphers(ssl);
         }
     else {
         ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
@@ -405,7 +419,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     /* we don't initialize a thread */
 #else
 /* create task */
-int tls_smp_client_init(tls_args* args)
+WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 {
     int ret;
 #if ESP_IDF_VERSION_MAJOR >= 4
@@ -424,6 +438,6 @@ int tls_smp_client_init(tls_args* args)
     if (ret != pdPASS) {
         ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_CLIENT_TASK_NAME);
     }
-    return ret;
+    return TLS_SMP_CLIENT_TASK_RET;
 }
 #endif

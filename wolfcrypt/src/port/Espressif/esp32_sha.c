@@ -874,7 +874,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
 
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     ESP_LOGI(TAG, "enter esp_sha_hw_lock for %x", (int)ctx->initializer);
+#endif
 /* TODO remove test code */
     if ((int)ctx->initializer == 0x3fcc9f50) {
         ESP_LOGW(TAG, "Found 0x3fcc9f50!");
@@ -992,8 +994,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {
         /* try to lock the HW engine */
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGI(TAG, "ESP32_SHA_INIT for %x\n", (int)ctx->initializer);
-
+#endif
         /* lock hardware; there should be exactly one instance
          * of esp_CryptHwMutexLock(&sha_mutex ...) in code.
          *
@@ -1040,11 +1043,15 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         #endif
 
             /* check to see if we had a prior fail and need to unroll enables */
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGW(TAG, "Locking for ctx %x, current mutex_ctx_owner = %x",
                                         (int)&ctx, (int)esp_sha_mutex_ctx_owner());
+        #endif
             ret = esp_unroll_sha_module_enable(ctx);
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGI(TAG, "Hardware Mode Active, lock depth = %d, for %x",
                           ctx->lockDepth, (int)ctx->initializer);
+        #endif
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             taskENTER_CRITICAL(&sha_crit_sect);
             {
@@ -1088,7 +1095,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
-        printf("1) Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+        {
+            printf("1) Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+        }
+        #endif
         periph_module_enable(PERIPH_SHA_MODULE);
         ctx->mode = ESP32_SHA_HW;
     }
@@ -1108,7 +1119,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
     int ret;
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
+#endif
     ret = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -1126,8 +1139,9 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      * see ref_counts[periph] in file: periph_ctrl.c */
 
     /* TODO */
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
-
+#endif
     if (ctx->lockDepth > 0) {
         ctx->lockDepth--;
     }
@@ -1136,20 +1150,25 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     }
 
     /* TODO */
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
-
+#endif
     if (0 == ctx->lockDepth) // should we only unlock if depth is 0?
     {
     #if defined(SINGLE_THREADED)
         InUse = 0;
     #else
         /* unlock HW engine for next use */
-        ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x",
-                       (int)esp_sha_mutex_ctx_owner(),
-                       (int)ctx,
-                       (int)&ctx,
-                       (int)esp_sha_mutex_ctx_owner());
-        ESP_LOGW(TAG, "&sha_mutex = %x", (int)&sha_mutex);
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+        {
+            ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x",
+                           (int)esp_sha_mutex_ctx_owner(),
+                           (int)ctx,
+                           (int)&ctx,
+                           (int)esp_sha_mutex_ctx_owner());
+            ESP_LOGW(TAG, "&sha_mutex = %x", (int)&sha_mutex);
+        }
+        #endif /* WOLFSSL_ESP32_HW_LOCK_DEBUG */
         esp_CryptHwMutexUnLock(&sha_mutex);
         mutex_ctx_task = 0;
     #endif
@@ -1167,7 +1186,9 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
         ESP_LOGE(TAG, "ERROR unlock lockDepth not zero");
         ret = -1; /* TODO macro value ? */
     }
-    ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+        ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
+#endif
     return ret;
 } /* esp_sha_hw_unlock */
 

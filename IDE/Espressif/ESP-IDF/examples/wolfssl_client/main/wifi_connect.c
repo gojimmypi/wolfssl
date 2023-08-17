@@ -147,6 +147,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
 int wifi_init_sta(void)
 {
+    int ret = 0;
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -217,11 +218,13 @@ int wifi_init_sta(void)
         ESP_LOGI(TAG, "Connected to AP");
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to AP");
+        ret = -1;
     } else {
         ESP_LOGE(TAG, "Connect to AP UNEXPECTED EVENT");
+        ret = -2;
     }
 #endif
-    return 0;
+    return ret;
 }
 
 int wifi_show_ip(void)

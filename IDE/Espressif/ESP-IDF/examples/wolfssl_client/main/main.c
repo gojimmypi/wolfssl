@@ -124,7 +124,16 @@ void app_main(void)
 
     /* Initialize WiFi */
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
+    ret = wifi_init_sta();
+    if (ret != 0) {
+        ESP_LOGV(TAG, "\n\nFailed to connect to WiFi. Halt.\n\n");
+#if defined(SINGLE_THREADED)
+        // yield;
+        while (1);
+#else
+        vTaskDelay(60000);
+#endif
+    }
 
     /* set time for cert validation */
     set_time();

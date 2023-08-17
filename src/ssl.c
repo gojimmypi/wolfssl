@@ -12088,10 +12088,13 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
         return wolfSSL_connect_TLSv13(ssl);
     #else
         #ifdef WOLFSSL_TLS13
-        if (ssl->options.tls1_3)
+        if (ssl->options.tls1_3) {
+            printf("TLS 1.3!\n");
             return wolfSSL_connect_TLSv13(ssl);
+        }
         #endif
 
+        printf(">> NOT TLS 1.3!\n");
         WOLFSSL_ENTER("wolfSSL_connect");
 
         /* make sure this wolfSSL object has arrays and rng setup. Protects

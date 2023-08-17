@@ -25,7 +25,7 @@
 #include <wolfssl/ssl.h>
 #include "user_settings.h"
 
-#define TLS_SMP_TARGET_HOST             "192.168.1.108"
+#define TLS_SMP_TARGET_HOST             "192.168.1.128"
 #define DEFAULT_PORT                    11111
 
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
@@ -50,12 +50,12 @@ typedef struct {
 #endif
 
 /* This is the TLS Client function, possibly in an RTOS thread. */
-WOLFSSL_ESP_TASK tls_smp_client_task(void *args);
+WOLFSSL_ESP_TASK tls_smp_client_task(void* args);
 
 /* init will create an RTOS task, otherwise server is simply function call. */
 #if defined(SINGLE_THREADED)
     /* no init neded */
 #else
-    int tls_smp_client_init(tls_args* args);
+    WOLFSSL_ESP_TASK tls_smp_client_init(void* args);
 #endif
 #endif /* _SERVER_TLS_ */

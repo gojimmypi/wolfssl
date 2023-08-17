@@ -88,12 +88,12 @@ int ShowCiphers(WOLFSSL* ssl)
         ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
         ret = wolfSSL_get_ciphers(ciphers, (int)sizeof(ciphers));
         if (ret == WOLFSSL_SUCCESS) {
-            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
             for (int i = 0; i < CLIENT_TLS_MAX_CIPHER_LENGTH; i++) {
                 if (ciphers[i] == ':') {
                     ciphers[i] = '\n';
                 }
             }
+            ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
         }
         else {
             ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);

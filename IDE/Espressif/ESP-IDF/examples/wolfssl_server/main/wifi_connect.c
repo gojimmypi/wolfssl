@@ -20,9 +20,6 @@
  */
  #include "wifi_connect.h"
 
-
-
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -39,9 +36,6 @@
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
-#include <wolfssl/version.h>
-#include "server-tls.h"
-
 
 #ifndef WOLFSSL_ESPIDF
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
@@ -242,52 +236,3 @@ int wifi_show_ip(void)
     return 0;
 }
 #endif
-/* entry point TODO remove */
-void app_main_na(void)
-{
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-
-    ESP_LOGI(TAG, "Initialize wifi");
-    /* TCP/IP adapter initialization */
-#if (ESP_IDF_VERSION_MAJOR == 4 && ESP_IDF_VERSION_MINOR >= 1) || \
-    (ESP_IDF_VERSION_MAJOR >= 5)
-    esp_netif_init();
-#else
-    tcpip_adapter_init();
-#endif
-    /* */
-#if ESP_IDF_VERSION_MAJOR >= 4
-   // ESP_ERROR_CHECK(esp_event_loop_create_default());
-   /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-   * Read "Establishing Wi-Fi or Ethernet Connection" section in
-   * examples/protocols/README.md for more information about this function.
-   */
-   //  ESP_ERROR_CHECK(example_connect());
-#else
-    wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_event_loop_init(wifi_event_handler, NULL));
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = TLS_SMP_WIFI_SSID,
-            .password = TLS_SMP_WIFI_PASS,
-        },
-    };
-    /* WiFi station mode */
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    /* Wifi Set the configuration of the ESP32 STA or AP */
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-    /* Start Wifi */
-    ESP_ERROR_CHECK(esp_wifi_start() );
-
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
-    ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
-                                        TLS_SMP_WIFI_SSID, TLS_SMP_WIFI_PASS);
-#endif
-}
