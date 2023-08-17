@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<VisualGDBProjectSettings2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<VisualGDBProjectSettings2 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Project xsi:type="com.visualgdb.project.external.esp-idf">
     <CustomSourceDirectories>
       <Directories />
@@ -18,9 +18,9 @@
     <ToolchainID>
       <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
-        <GCC>11.2.0</GCC>
-        <GDB>9.2.90</GDB>
-        <Revision>2</Revision>
+        <GCC>12.2.0</GCC>
+        <GDB>12.1</GDB>
+        <Revision>1</Revision>
       </Version>
     </ToolchainID>
     <RelativeSourceDirectory>..</RelativeSourceDirectory>
@@ -67,11 +67,11 @@
       <EnableFastUpToDateCheck>true</EnableFastUpToDateCheck>
       <ESPIDFExtension>
         <IDFCheckout>
-          <Version>release/v5.0</Version>
-          <Subdirectory>esp-idf/v5.0</Subdirectory>
+          <Version>release/v5.1</Version>
+          <Subdirectory>esp-idf/v5.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM23</COMPort>
+        <COMPort>COM35</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32C3</DeviceID>
@@ -90,10 +90,18 @@
     <PostDebugActions />
     <DebugStopActions />
     <BreakMode>Default</BreakMode>
+    <CustomBreakCommand>
+      <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>BuildMachine</HostName>
+        <Transport>BuiltinShortcut</Transport>
+      </RemoteHost>
+      <BackgroundMode xsi:nil="true" />
+    </CustomBreakCommand>
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM24</ComPortName>
+      <ComPortName>COM35</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -159,15 +167,65 @@
   <UserDefinedVariables />
   <ImportedPropertySheets />
   <CodeSense>
-    <Enabled>Unknown</Enabled>
+    <Enabled>True</Enabled>
     <ExtraSettings>
       <HideErrorsInSystemHeaders>true</HideErrorsInSystemHeaders>
       <SupportLightweightReferenceAnalysis>true</SupportLightweightReferenceAnalysis>
+      <DiscoverySettings>
+        <Mode>Enabled</Mode>
+        <SearchInProjectDir>true</SearchInProjectDir>
+        <SearchInSourceDirs>true</SearchInSourceDirs>
+        <SearchInIncludeSubdirs>true</SearchInIncludeSubdirs>
+      </DiscoverySettings>
       <CheckForClangFormatFiles>true</CheckForClangFormatFiles>
       <FormattingEngine xsi:nil="true" />
     </ExtraSettings>
     <CodeAnalyzerSettings>
       <Enabled>false</Enabled>
+      <SelectedAnalyzers>
+        <string>apiModeling.google.GTest</string>
+        <string>core.builtin.BuiltinFunctions</string>
+        <string>core.builtin.NoReturnFunctions</string>
+        <string>core.CallAndMessage</string>
+        <string>core.DivideZero</string>
+        <string>core.DynamicTypePropagation</string>
+        <string>core.NonnilStringConstants</string>
+        <string>core.NonNullParamChecker</string>
+        <string>core.NullDereference</string>
+        <string>core.StackAddressEscape</string>
+        <string>core.UndefinedBinaryOperatorResult</string>
+        <string>core.uninitialized.ArraySubscript</string>
+        <string>core.uninitialized.Assign</string>
+        <string>core.uninitialized.Branch</string>
+        <string>core.uninitialized.CapturedBlockVariable</string>
+        <string>core.uninitialized.UndefReturn</string>
+        <string>core.VLASize</string>
+        <string>cplusplus.NewDelete</string>
+        <string>cplusplus.NewDeleteLeaks</string>
+        <string>cplusplus.SelfAssignment</string>
+        <string>deadcode.DeadStores</string>
+        <string>nullability.NullPassedToNonnull</string>
+        <string>nullability.NullReturnedFromNonnull</string>
+        <string>security.insecureAPI.getpw</string>
+        <string>security.insecureAPI.gets</string>
+        <string>security.insecureAPI.mkstemp</string>
+        <string>security.insecureAPI.mktemp</string>
+        <string>security.insecureAPI.UncheckedReturn</string>
+        <string>security.insecureAPI.vfork</string>
+        <string>unix.API</string>
+        <string>unix.cstring.BadSizeArg</string>
+        <string>unix.cstring.NullArg</string>
+        <string>unix.Malloc</string>
+        <string>unix.MallocSizeof</string>
+        <string>unix.MismatchedDeallocator</string>
+        <string>unix.StdCLibraryFunctions</string>
+        <string>unix.Vfork</string>
+      </SelectedAnalyzers>
+      <ExtraArguments>
+        <string>-analyzer-store=region</string>
+        <string>-analyzer-opt-analyze-nested-blocks</string>
+        <string>-analyzer-eagerly-assume</string>
+      </ExtraArguments>
     </CodeAnalyzerSettings>
   </CodeSense>
   <Configurations>
@@ -182,7 +240,11 @@
   </Configurations>
   <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
-    <AdditionalStartupCommands />
+    <AdditionalStartupCommands>
+      <GDBPreStartupCommands />
+      <GDBStartupCommands />
+      <GDBFinalizationCommands />
+    </AdditionalStartupCommands>
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>
@@ -218,39 +280,21 @@
       <EnablePrettyPrinters>false</EnablePrettyPrinters>
     </AdditionalGDBSettings>
     <DebugMethod>
-      <ID>openocd</ID>
-      <InterfaceID>esp_usb_jtag</InterfaceID>
-      <InterfaceSerialNumber>60:55:F9:BC:29:94</InterfaceSerialNumber>
-      <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 3000" -f target/esp32c3.cfg</CommandLine>
-        <ExtraParameters>
-          <Frequency xsi:nil="true" />
-          <BoostedFrequency xsi:nil="true" />
-          <ConnectUnderReset>false</ConnectUnderReset>
-        </ExtraParameters>
-        <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
+      <ID>gdbstub</ID>
+      <Configuration xsi:type="com.visualgdb.edp.espxx.settings.gdbstub.esp32">
+        <COMPort>COM6</COMPort>
+        <StubBaudRate>74880</StubBaudRate>
+        <BootloaderBaudRate>115200</BootloaderBaudRate>
+        <BootloaderResetDelay>50</BootloaderResetDelay>
+        <BootloaderActivationSequence>!DTR;RTS;SLEEP;DTR;!RTS;SLEEP;!DTR;SLEEP</BootloaderActivationSequence>
         <ProgramMode>Enabled</ProgramMode>
-        <StartupCommands>
-          <string>set remotetimeout 60</string>
-          <string>target remote :$$SYS:GDB_PORT$$</string>
-          <string>mon gdb_breakpoint_override hard</string>
-          <string>mon reset halt</string>
-          <string>load</string>
-        </StartupCommands>
-        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
-        <PreferredGDBPort>0</PreferredGDBPort>
-        <PreferredTelnetPort>0</PreferredTelnetPort>
-        <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
-        <SelectedCoreIndex xsi:nil="true" />
-        <LiveMemoryTimeout>5000</LiveMemoryTimeout>
-        <SuggestionLogicRevision>1</SuggestionLogicRevision>
-        <CheckFLASHSize>true</CheckFLASHSize>
+        <SuppressResetConfirmation>false</SuppressResetConfirmation>
+        <PatchBootloader>true</PatchBootloader>
         <FLASHSettings>
           <Size>size2MB</Size>
           <Frequency>freq40M</Frequency>
           <Mode>DIO</Mode>
         </FLASHSettings>
-        <PatchBootloader>true</PatchBootloader>
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
