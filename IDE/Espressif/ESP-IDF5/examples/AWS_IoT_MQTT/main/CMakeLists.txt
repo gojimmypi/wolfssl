@@ -20,7 +20,15 @@ endif()
 
 ## register_component()
 idf_component_register(
-                       SRCS main.c awsiot.c examples/ examples/mqttexample.c examples/mqttnet.c examples/mqttport.c
+                       SRCS
+                       	main.c
+                       	awsiot.c
+                       	examples/
+                       	examples/mqttexample.c
+                       	examples/mqttnet.c
+                       	examples/mqttport.c
+                       	wifi_connect.c
+                       	time_helper.c
                        INCLUDE_DIRS "." "./include")
 #
 
