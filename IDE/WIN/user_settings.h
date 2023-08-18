@@ -111,8 +111,10 @@
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
 
-#define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
-    #define NO_FILESYSTEM
+    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+    #ifndef _WIN32
+        #define NO_FILESYSTEM
+    #endif
 
     #undef  WOLFSSL_SM4_ECB
     #define WOLFSSL_SM4_ECB
@@ -135,8 +137,17 @@
     #undef  HAVE_AESGCM
     #define HAVE_AESGCM
 
+    #undef  HAVE_ECC
+    #define HAVE_ECC
+
+    #undef  HAVE_SUPPORTED_CURVES
+    #define HAVE_SUPPORTED_CURVES
+
+    /* may be needed for SM */
+    //#undef  HAVE_ENCRYPT_THEN_MAC
+    //#define HAVE_ENCRYPT_THEN_MAC
 #else
     #define USE_CERT_BUFFERS_2048
-#endif
+#endif /* SM check */
 
 #endif /* _WIN_USER_SETTINGS_H_ */

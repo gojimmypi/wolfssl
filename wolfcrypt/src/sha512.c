@@ -1453,7 +1453,7 @@ void wc_Sha384Free(wc_Sha384* sha384)
         return;
 
 #ifdef WOLFSSL_ESP32
-    esp_sha_release_unfinished_lock(&sha384->ctx);
+//    esp_sha_release_unfinished_lock(&sha384->ctx);
 #endif
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE
