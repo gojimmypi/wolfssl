@@ -138,7 +138,6 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #include <wolfcrypt/test/alt_hw_test.h>
 #endif
 
-    static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
 
@@ -675,6 +674,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_siv_test(void);
 
 /* General big buffer size for many tests. */
 #define FOURK_BUF 4096
+
+#if defined(WOLFSSL_ESPIDF) && defined(DEBUG_WOLFSSL)
+    static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
+#endif
 
 
 #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
