@@ -675,7 +675,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_siv_test(void);
 /* General big buffer size for many tests. */
 #define FOURK_BUF 4096
 
-#if defined(WOLFSSL_ESPIDF) && defined(DEBUG_WOLFSSL)
+#if defined(WOLFSSL_ESPIDF)
     static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #endif
 
@@ -697,9 +697,10 @@ static wc_test_ret_t debug_message(const char* msg)
         }
     #else
         print("%s", msg);
-    #endif // WOLFSSL_ESPIDF
+    #endif /* WOLFSSL_ESPIDF */
 #else
     /* no message */
+    (void)TAG;
 #endif /* #if defined(DEBUG_WOLFSSL) */
     return ret;
 }
