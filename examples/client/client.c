@@ -2935,6 +2935,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
         #endif
 
         case 2:
+            printf("\nmethod = wolfTLSv1_1_client_method_ex\n\n");
             method = wolfTLSv1_1_client_method_ex;
             break;
     #endif /* !NO_TLS */
@@ -2943,22 +2944,26 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #ifndef NO_TLS
     #ifndef WOLFSSL_NO_TLS12
         case 3:
+            printf("\nmethod = wolfTLSv1_2_client_method_ex\n\n");
             method = wolfTLSv1_2_client_method_ex;
             break;
     #endif
 
     #ifdef WOLFSSL_TLS13
         case 4:
+            printf("\nmethod = wolfTLSv1_3_client_method_ex\n\n");
             method = wolfTLSv1_3_client_method_ex;
             break;
     #endif
 
         case CLIENT_DOWNGRADE_VERSION:
             if (!doDTLS) {
+                printf("\nmethod = wolfSSLv23_client_method_ex\n\n");
                 method = wolfSSLv23_client_method_ex;
             }
             else {
 #ifdef WOLFSSL_DTLS
+                printf("\nmethod = wolfDTLS_client_method_ex\n\n");
                 method = wolfDTLS_client_method_ex;
 #else
                 err_sys("version not supported");
@@ -2967,6 +2972,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
             break;
     #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EITHER_SIDE)
         case EITHER_DOWNGRADE_VERSION:
+            printf("\nmethod = wolfSSLv23_method_ex\n\n");
             method = wolfSSLv23_method_ex;
             break;
     #endif
@@ -2975,22 +2981,26 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
 #ifdef WOLFSSL_DTLS
         #ifndef NO_OLD_TLS
         case -1:
+            printf("\nmethod = wolfDTLSv1_client_method_ex\n\n");
             method = wolfDTLSv1_client_method_ex;
             break;
         #endif
 
     #ifndef WOLFSSL_NO_TLS12
         case -2:
+            printf("\nmethod = wolfDTLSv1_2_client_method_ex\n\n");
             method = wolfDTLSv1_2_client_method_ex;
             break;
     #endif
 #ifdef WOLFSSL_DTLS13
         case -4:
+            printf("\nmethod = wolfDTLSv1_3_client_method_ex\n\n");
             method = wolfDTLSv1_3_client_method_ex;
             break;
 #endif /* WOLFSSL_DTLS13 */
     #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EITHER_SIDE)
         case -3:
+            printf("\nmethod = wolfDTLSv1_2_method_ex\n\n");
             method = wolfDTLSv1_2_method_ex;
             break;
     #endif
@@ -3035,6 +3045,7 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     }
 #else
     if (method != NULL) {
+        printf("Setting wolfSSL_CTX_new");
         ctx = wolfSSL_CTX_new(method(NULL));
         if (ctx == NULL)
             err_sys("unable to get ctx");
