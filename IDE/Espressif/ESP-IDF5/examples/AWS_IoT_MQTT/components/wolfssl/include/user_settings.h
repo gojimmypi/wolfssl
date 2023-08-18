@@ -126,7 +126,7 @@
 #define RSA_LOW_MEM
 
 /* debug options */
-/* #define DEBUG_WOLFSSL */
+#define DEBUG_WOLFSSL
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
