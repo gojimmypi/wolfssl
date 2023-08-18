@@ -1,6 +1,6 @@
 /* mqtt_client.h
  *
- * Copyright (C) 2006-2022 wolfSSL Inc.
+ * Copyright (C) 2006-2023 wolfSSL Inc.
  *
  * This file is part of wolfMQTT.
  *
@@ -30,6 +30,11 @@
 #ifdef __cplusplus
     extern "C" {
 #endif
+
+#ifndef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/options.h>
+#endif
+#include <wolfssl/wolfcrypt/settings.h>
 
 /* Windows uses the vs_settings.h file included vis mqtt_types.h */
 #if !defined(WOLFMQTT_USER_SETTINGS) && \
@@ -97,13 +102,13 @@ typedef int (*MqttPublishCb)(MqttPublish* publish);
 /* Client flags */
 enum MqttClientFlags {
     MQTT_CLIENT_FLAG_IS_CONNECTED = 0x01,
-    MQTT_CLIENT_FLAG_IS_TLS = 0x02,
+    MQTT_CLIENT_FLAG_IS_TLS = 0x02
 };
 
 typedef enum _MqttPkStat {
     MQTT_PK_BEGIN,
     MQTT_PK_READ_HEAD,
-    MQTT_PK_READ,
+    MQTT_PK_READ
 } MqttPkStat;
 
 typedef struct _MqttPkRead {
@@ -287,7 +292,7 @@ WOLFMQTT_API int MqttClient_Connect(
                             with message data
  *                          Note: MqttPublish and MqttMessage are same
                             structure.
- *  \return     MQTT_CODE_SUCCESS, MQTT_CODE_CONTINUE (for non-blocking) or 
+ *  \return     MQTT_CODE_SUCCESS, MQTT_CODE_CONTINUE (for non-blocking) or
                 MQTT_CODE_ERROR_* (see enum MqttPacketResponseCodes)
     \sa         MqttClient_Publish_WriteOnly
     \sa         MqttClient_Publish_ex
@@ -321,7 +326,7 @@ WOLFMQTT_API int MqttClient_Publish_ex(
 
 
 #ifdef WOLFMQTT_MULTITHREAD
-/*! \brief      Same as MqttClient_Publish_ex, however this API will only 
+/*! \brief      Same as MqttClient_Publish_ex, however this API will only
                 perform writes and requires another thread to handle the read
                 ACK processing using MqttClient_WaitMessage_ex
  *  \note       This function that will wait for MqttNet.read to complete,
@@ -334,7 +339,7 @@ WOLFMQTT_API int MqttClient_Publish_ex(
                             with message data
  *                          Note: MqttPublish and MqttMessage are same
                             structure.
- *  \return     MQTT_CODE_SUCCESS, MQTT_CODE_CONTINUE (for non-blocking) or 
+ *  \return     MQTT_CODE_SUCCESS, MQTT_CODE_CONTINUE (for non-blocking) or
                 MQTT_CODE_ERROR_* (see enum MqttPacketResponseCodes)
     \sa         MqttClient_Publish
     \sa         MqttClient_Publish_ex
@@ -474,9 +479,10 @@ WOLFMQTT_API int MqttClient_WaitMessage(
  */
 WOLFMQTT_API int MqttClient_WaitMessage_ex(
     MqttClient *client,
-    MqttObject* msg,
+    MqttObject *msg,
     int timeout_ms);
 
+#if defined(WOLFMQTT_MULTITHREAD) || defined(WOLFMQTT_NONBLOCK)
 /*! \brief      In a multi-threaded and non-blocking mode this allows you to
                 cancel an MQTT object that was previously submitted.
  *  \note This is a blocking function that will wait for MqttNet.read
@@ -487,7 +493,22 @@ WOLFMQTT_API int MqttClient_WaitMessage_ex(
  */
 WOLFMQTT_API int MqttClient_CancelMessage(
     MqttClient *client,
-    MqttObject* msg);
+    MqttObject *msg);
+#endif
+
+#ifdef WOLFMQTT_NONBLOCK
+/*! \brief      In a non-blocking mode this checks if the message has a read
+                or write pending (state is not MQTT_MSG_BEGIN).
+ *  \note This function assumes caller owns the object
+ *  \param      client      Pointer to MqttClient structure
+ *  \param      msg         Pointer to MqttObject structure
+ *  \return     MQTT_CODE_SUCCESS or MQTT_CODE_ERROR_*
+                (see enum MqttPacketResponseCodes)
+ */
+WOLFMQTT_API int MqttClient_IsMessageActive(
+    MqttClient *client,
+    MqttObject *msg);
+#endif /* WOLFMQTT_NONBLOCK */
 
 /*! \brief      Performs network connect with TLS (if use_tls is non-zero value)
  *  Will perform the MqttTlsCb callback if use_tls is non-zero value

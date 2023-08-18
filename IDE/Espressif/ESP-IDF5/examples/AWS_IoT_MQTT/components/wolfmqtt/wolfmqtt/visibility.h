@@ -1,6 +1,6 @@
 /* visibility.h
  *
- * Copyright (C) 2006-2022 wolfSSL Inc.
+ * Copyright (C) 2006-2023 wolfSSL Inc.
  *
  * This file is part of wolfMQTT.
  *
@@ -29,7 +29,10 @@
 
    WOLFMQTT_LOCAL is used for non-API symbols (private).
 */
-
+#ifndef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/options.h>
+#endif
+#include <wolfssl/wolfcrypt/settings.h>
 #if defined(BUILDING_WOLFMQTT)
     #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
         #ifdef _WINDLL

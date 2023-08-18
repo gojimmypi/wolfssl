@@ -1,6 +1,6 @@
 /* mqtt_socket.h
  *
- * Copyright (C) 2006-2022 wolfSSL Inc.
+ * Copyright (C) 2006-2023 wolfSSL Inc.
  *
  * This file is part of wolfMQTT.
  *
@@ -30,7 +30,10 @@
 #ifdef __cplusplus
     extern "C" {
 #endif
-
+#ifndef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/options.h>
+#endif
+#include <wolfssl/wolfcrypt/settings.h>
 #include "wolfmqtt/mqtt_types.h"
 #ifdef ENABLE_MQTT_TLS
     #ifndef WOLF_TLS_DHKEY_BITS_MIN /* allow define to be overridden */
@@ -69,7 +72,8 @@ typedef int (*MqttNetDisconnectCb)(void *context);
 typedef struct _MqttTls {
     WOLFSSL_CTX         *ctx;
     WOLFSSL             *ssl;
-    int                 sockRc;
+    int                 sockRcRead;
+    int                 sockRcWrite;
     int                 timeout_ms;
 } MqttTls;
 #endif
