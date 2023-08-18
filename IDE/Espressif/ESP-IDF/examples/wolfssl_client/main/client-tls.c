@@ -66,7 +66,15 @@
     #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
     #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
-
+/* working TLS 1.2 VS client app commandline param:
+ *
+ *  -h 192.168.1.128 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+ *
+ * working Linux, non-working VS c app
+ *
+ *  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3        -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+ *
+ **/
 static const char* const TAG = "tls_client";
 
 #if defined(DEBUG_WOLFSSL)
@@ -167,7 +175,7 @@ void my_atmel_free(int slotId)
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
 /* client task */
-WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
+WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 {
 #if defined(SINGLE_THREADED)
     #define TLS_SMP_CLIENT_TASK_RET ret
@@ -229,9 +237,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
     // wolfSSL_CTX_NoTicketTLSv12();
     // wolfSSL_NoTicketTLSv12();
-    // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
     // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* only TLS 1.2 */
-    ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); /* only TLS 1.3 */
+    // ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); /* only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
     }
@@ -239,12 +247,41 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
 #if defined(WOLFSSL_ESP32_CIPHER_SUITE)
     ESP_LOGI(TAG, "Start SM2\n");
 
+/*
+ *
+ * reference code:
+ *
+        #if defined(HAVE_AESGCM) && !defined(NO_DH)
+            #ifdef WOLFSSL_TLS13
+                defaultCipherList = "TLS13-AES128-GCM-SHA256"
+                #ifndef WOLFSSL_NO_TLS12
+                                    ":DHE-PSK-AES128-GCM-SHA256"
+                #endif
+                ;
+            #else
+                defaultCipherList = "DHE-PSK-AES128-GCM-SHA256";
+            #endif
+        #elif defined(HAVE_AESGCM) && defined(WOLFSSL_TLS13)
+                defaultCipherList = "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
+                #ifndef WOLFSSL_NO_TLS12
+                                    ":PSK-AES128-GCM-SHA256"
+                #endif
+                ;
+        #elif defined(HAVE_NULL_CIPHER)
+                defaultCipherList = "PSK-NULL-SHA256";
+        #elif !defined(NO_AES_CBC)
+                defaultCipherList = "PSK-AES128-CBC-SHA256";
+        #else
+                defaultCipherList = "PSK-AES128-GCM-SHA256";
+        #endif
+*/
+
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-    if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
     }
 #endif
 
@@ -263,13 +300,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     }
 #endif
 
-    WOLFSSL_MSG("Loading...cert");
-    /* Load client certificates into WOLFSSL_CTX */
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         // ca_cert_der_2048, sizeof_ca_cert_der_2048,
-                                         CTX_CA_CERT,
-                                         CTX_CA_CERT_SIZE,
-                                         CTX_CA_CERT_TYPE);
 
     if (ret != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load %d, please check the file.\n", ret);
@@ -292,6 +322,14 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
         if (ret != SSL_SUCCESS) {
             ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret);
         }
+
+    WOLFSSL_MSG("Loading...cert");
+    /* Load client certificates into WOLFSSL_CTX */
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+                                         // ca_cert_der_2048, sizeof_ca_cert_der_2048,
+                                         CTX_CA_CERT,
+                                         CTX_CA_CERT_SIZE,
+                                         CTX_CA_CERT_TYPE);
 
         ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                                 // client_key_der_2048, sizeof_client_key_der_2048,
@@ -397,11 +435,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
         /* Print to stdout any data the server sends */
         printf("Server: ");
         printf("%s\n", buff);
-        ShowCiphers(ssl);
         }
     else {
         ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
     }
+    ShowCiphers(ssl);
 
 
     /* Cleanup and return */

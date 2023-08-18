@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_client_IDF_v5_ESP32", "wolfssl_client_IDF_v5_ESP32.vgdbproj", "{E903E9CC-1A23-4B00-8914-7E45EC21E351}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{5D78034B-FAE6-4B8D-8003-EC2B0993F286}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\..\wolfssl\error-ssl.h
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{53267705-B3FE-418C-975D-CD898BAF1F46}"
 	ProjectSection(SolutionItems) = preProject
