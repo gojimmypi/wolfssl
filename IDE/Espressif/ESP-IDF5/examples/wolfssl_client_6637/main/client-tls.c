@@ -205,7 +205,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     /* Initialize wolfSSL */
     wolfSSL_Init();
 
-    /* Create a socket that uses an internet IPv4 address,
+    /* Create a socket that uses an Internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -224,6 +224,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
         ESP_LOGI(TAG, IPSTR, IP2STR(ip4_addr));
     }
 
+
+
     /* Create and initialize WOLFSSL_CTX */
     // wolfSSL_CTX_NoTicketTLSv12();
     // wolfSSL_NoTicketTLSv12();
@@ -238,7 +240,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void *args)
     ESP_LOGI(TAG, "Start SM2\n");
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
     if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: %s\n",  WOLFSSL_ESP32_CIPHER_SUITE);
+        ESP_LOGI(TAG, "Set cipher list: %s\n",  WOLFSSL_ESP32_CIPER_SUITE);
     }
     else {
         ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
