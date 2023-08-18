@@ -9,8 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\..\wolfssl\error-ssl.h
 		..\..\..\..\include.am = ..\..\..\..\include.am
+		..\README.md = ..\README.md
 		..\README_server_sm.md = ..\README_server_sm.md
 		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
+		..\success_example.txt = ..\success_example.txt
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{CF6D5348-2BDF-4133-AD1F-4F05FA91E53F}"
