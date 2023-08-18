@@ -22,6 +22,9 @@
 #ifndef WOLFMQTT_EXAMPLE_H
 #define WOLFMQTT_EXAMPLE_H
 
+#include "user_settings.h"
+#include <wolfssl/ssl.h>
+
 #include "wolfmqtt/mqtt_client.h"
 
 #ifdef __cplusplus
