@@ -196,9 +196,9 @@
 #define HAVE_VERSION_EXTENDED_INFO
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-//#define WOLFSSL_SM2
-//#define WOLFSSL_SM3
-//#define WOLFSSL_SM4
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* see https://github.com/wolfSSL/wolfssl/pull/6537
@@ -223,3 +223,8 @@
     #define USE_CERT_BUFFERS_2048
 #endif
 
+    #undef  HAVE_ECC
+    #define HAVE_ECC
+
+    #undef  HAVE_SUPPORTED_CURVES
+    #define HAVE_SUPPORTED_CURVES

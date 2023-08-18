@@ -1,0 +1,478 @@
+./examples/client/client  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+ESP32 Server:
+------------------------------------------------------------------------------------------
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 188777542, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:7100
+ho 0 tail 12 room 4
+load:0x40078000,len:15584
+load:0x40080400,len:4
+load:0x40080404,len:3876
+entry 0x4008064c
+I (32) boot: ESP-IDF v5.1-231-ga7b62bbcaf-dirty 2nd stage bootloader
+I (32) boot: compile time Aug 17 2023 03:03:56
+I (34) boot: Multicore bootloader
+I (38) boot: chip revision: v3.0
+I (42) boot.esp32: SPI Speed      : 40MHz
+I (46) boot.esp32: SPI Mode       : DIO
+I (51) boot.esp32: SPI Flash Size : 2MB
+I (55) boot: Enabling RNG early entropy source...
+I (61) boot: Partition Table:
+I (64) boot: ## Label            Usage          Type ST Offset   Length
+I (72) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (79) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (87) boot:  2 factory          factory app      00 00 00010000 00177000
+I (94) boot: End of partition table
+I (98) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=30334h (197428) map
+I (178) esp_image: segment 1: paddr=0004035c vaddr=3ffb0000 size=03780h ( 14208) load
+I (184) esp_image: segment 2: paddr=00043ae4 vaddr=40080000 size=0c534h ( 50484) load
+I (205) esp_image: segment 3: paddr=00050020 vaddr=400d0020 size=c9948h (825672) map
+I (503) esp_image: segment 4: paddr=00119970 vaddr=4008c534 size=09180h ( 37248) load
+I (530) boot: Loaded app from partition at offset 0x10000
+I (530) boot: Disabling RNG early entropy source...
+I (542) cpu_start: Multicore app
+I (542) cpu_start: Pro cpu up.
+I (542) cpu_start: Starting app cpu, entry point is 0x40081378
+I (0) cpu_start: App cpu up.
+I (562) cpu_start: Pro cpu start user code
+I (562) cpu_start: cpu freq: 240000000 Hz
+I (562) cpu_start: Application information:
+I (567) cpu_start: Project name:     wolfssl_server
+I (572) cpu_start: App version:      v5.6.3-stable-1424-g6af755193-d
+I (579) cpu_start: Compile time:     Aug 18 2023 14:05:13
+I (585) cpu_start: ELF file SHA256:  97e75accaebe83ab...
+I (591) cpu_start: ESP-IDF:          v5.1-231-ga7b62bbcaf-dirty
+I (598) cpu_start: Min chip rev:     v0.0
+I (603) cpu_start: Max chip rev:     v3.99
+I (608) cpu_start: Chip rev:         v3.0
+I (613) heap_init: Initializing. RAM available for dynamic allocation:
+I (620) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (626) heap_init: At 3FFBDDB0 len 00022250 (136 KiB): DRAM
+I (632) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (638) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (645) heap_init: At 400956B4 len 0000A94C (42 KiB): IRAM
+I (652) spi_flash: detected chip: generic
+I (655) spi_flash: flash io: dio
+W (659) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (673) app_start: Starting scheduler on CPU0
+I (678) app_start: Starting scheduler on CPU1
+I (678) main_task: Started on CPU0
+I (688) main_task: Calling app_main()
+I (691) TLS Server: ---------------- wolfSSL TLS Server Example ------------
+I (699) TLS Server: --------------------------------------------------------
+I (706) TLS Server: --------------------------------------------------------
+I (714) TLS Server: ---------------------- BEGIN MAIN ----------------------
+I (722) TLS Server: --------------------------------------------------------
+I (730) TLS Server: --------------------------------------------------------
+I (737) esp32_util: SSID and plain text WiFi password not displayed in startup logs.Define SHOW_SSID_AND_PASSWORD to enable.
+I (749) esp32_util: Extended Version and Platform Information.
+I (756) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.3
+I (761) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006003
+I (767) esp32_util: RSA_LOW_MEM is NOT enabled
+I (772) esp32_util: Using wolfSSL user_settings.h in tbd
+I (778) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = 240 MHz
+I (785) esp32_util: Xthal_have_ccount = 1
+I (790) esp32_util: Stack HWM: 54152
+
+I (794) esp32_util:
+I (797) esp32_util:
+I (800) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (809) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (816) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 6af755193f7f5d253d5d933085364277a92ea06a
+I (825) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 6af755193
+I (832) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri Aug 18 13:58:51 2023 -0700'
+I (840) esp32_util: CONFIG_IDF_TARGET = esp32
+I (845) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 240 MHz
+I (852) esp32_util: Xthal_have_ccount: 1
+I (856) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55500
+I (862) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55500
+I (868) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (874) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (880) esp32_util: Stack HWM: 54088
+I (884) esp32_util: ESP32_CRYPT is enabled for ESP32.
+I (890) esp32_util: SM Ciphers enabled
+I (894) esp32_util:   WOLFSSL_SM2 enabled
+I (899) esp32_util:   WOLFSSL_SM3 enabled
+I (904) esp32_util:   WOLFSSL_SM4 enabled
+I (909) esp32_util: NOT SINGLE_THREADED
+I (936) TLS Server: ESP_WIFI_MODE_STA
+I (941) wifi:wifi driver task: 3ffd2874, prio:23, stack:6656, core=0
+I (954) wifi:wifi firmware version: 6a2a12b
+I (955) wifi:wifi certification version: v7.0
+I (955) wifi:config NVS flash: enabled
+I (955) wifi:config nano formating: disabled
+I (959) wifi:Init data frame dynamic rx buffer num: 32
+I (964) wifi:Init management frame dynamic rx buffer num: 32
+I (969) wifi:Init management short buffer num: 32
+I (974) wifi:Init dynamic tx buffer num: 32
+I (978) wifi:Init static rx buffer size: 1600
+I (982) wifi:Init static rx buffer num: 10
+I (985) wifi:Init dynamic rx buffer num: 32
+I (990) wifi_init: rx ba win: 6
+I (993) wifi_init: tcpip mbox: 32
+I (997) wifi_init: udp mbox: 6
+I (1001) wifi_init: tcp mbox: 6
+I (1005) wifi_init: tcp tx win: 5744
+I (1009) wifi_init: tcp rx win: 5744
+I (1013) wifi_init: tcp mss: 1440
+I (1017) wifi_init: WiFi IRAM OP enabled
+I (1022) wifi_init: WiFi RX IRAM OP enabled
+I (1029) phy_init: phy_version 4670,719f9f6,Feb 18 2021,17:07:07
+I (1123) wifi:mode : sta (c8:f0:9e:47:f8:50)
+I (1124) wifi:enable tsf
+I (1126) tls_server: wifi_init_sta finished.
+I (1137) wifi:new:<4,0>, old:<1,0>, ap:<255,255>, sta:<4,0>, prof:1
+I (1139) wifi:state: init -> auth (b0)
+I (1142) wifi:state: auth -> assoc (0)
+I (1149) wifi:state: assoc -> run (10)
+I (1152) wifi:<ba-add>idx:0 (ifx:0, c8:d7:19:cd:00:17), tid:0, ssn:0, winSize:64
+I (1178) wifi:connected with testbench, aid = 1, channel 4, BW20, bssid = c8:d7:19:cd:00:17
+I (1179) wifi:security: WPA2-PSK, phy: bgn, rssi: -63
+I (1184) wifi:pm start, type: 1
+
+I (1200) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (2689) esp_netif_handlers: sta ip: 192.168.1.128, mask: 255.255.255.0, gw: 192.168.1.10
+I (2691) tls_server: got ip:192.168.1.128
+I (2693) tls_server: Connected to AP
+I (2698) Time Helper: sntp_setservername:
+I (2702) Time Helper: pool.ntp.org
+I (2706) Time Helper: time.nist.gov
+I (2710) Time Helper: utcnist.colorado.edu
+I (2715) Time Helper: sntp_init done.
+I (2719) TLS Server: CONFIG_ESP_MAIN_TASK_STACK_SIZE = 55500 bytes (13875 words)
+I (2727) TLS Server: Initial Stack Used (before wolfSSL Server): -158420 bytes
+I (2735) TLS Server: Starting TLS Server...
+
+I (2740) server-tls: Creating tls_smp_server_task with stack size = 22240
+I (2749) server-tls: WOLFSSL* ssl is NULL, so no cipher in use
+I (2755) server-tls: Available Ciphers:
+TLS13-AES128-GCM-SHA256
+TLS13-CHACHA20-POLY1305-SHA256
+TLS13-SM4-GCM-SM3
+TLS13-SM4-CCM-SM3
+ECDHE-RSA-AES128-SHA
+ECDHE-RSA-AES256-SHA
+ECDHE-ECDSA-AES128-SHA
+ECDHE-ECDSA-AES256-SHA
+ECDHE-RSA-DES-CBC3-SHA
+ECDHE-ECDSA-DES-CBC3-SHA
+ECDHE-RSA-AES128-GCM-SHA256
+ECDHE-ECDSA-AES128-GCM-SHA256
+ECDHE-RSA-AES128-SHA256
+ECDHE-ECDSA-AES128-SHA256
+ECDHE-RSA-CHACHA20-POLY1305
+ECDHE-ECDSA-CHACHA20-POLY1305
+ECDHE-RSA-CHACHA20-POLY1305-OLD
+ECDHE-ECDSA-CHACHA20-POLY1305-OLD
+ECDHE-ECDSA-SM4-CBC-SM3
+ECDHE-ECDSA-SM4-GCM-SM3
+ECDHE-ECDSA-SM4-CCM-SM3
+ECDHE-PSK-AES128-CBC-SHA256
+ECDHE-PSK-AES128-GCM-SHA256
+PSK-CHACHA20-POLY1305
+ECDHE-PSK-CHACHA20-POLY1305
+
+I (2816) server-tls: Stack used: 39460
+
+I (2826) server-tls: Loaded server_sm2
+
+I (2827) server-tls: Stack used: 39460
+
+I (2831) server-tls: Loaded PrivateKey_buffer server_sm2_priv
+
+I (2834) TLS Server: Stack remaining: 53480
+I (2837) server-tls: Stack used: 39460
+
+I (2851) server-tls: Success: load verify buffer
+
+I (2852) server-tls: Finish SM2
+
+I (2856) server-tls: accept clients...
+I (2860) server-tls: Stack used: 39460
+
+I (2865) tls_server: got ip:0.0.0.0
+I (2869) TLS Server: Stack used: 2020
+I (11149) internal: arrays
+I (11150) wolf_hw_sha: esp_CryptHwMutexInit sha_mutex init success.
+I (11152) server-tls: WOLFSSL* ssl using None
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+I (11161) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffe1d1c
+
+I (11170) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffe1d1c
+TLS wc_Sha512Update
+I (11179) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffe1e10
+
+I (11189) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffe1e10
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+I (11202) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddfc
+
+I (11211) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddfc
+I (11218) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddfc
+
+I (11227) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddfc
+I (11235) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddeac
+
+I (11244) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddeac
+I (11253) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddccc
+
+I (11261) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddccc
+I (11268) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddccc
+
+I (11278) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddccc
+I (11285) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd7c
+
+I (11294) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd7c
+I (11302) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddccc
+
+I (11311) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddccc
+I (11319) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddccc
+
+I (11328) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddccc
+I (11335) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd7c
+
+I (11345) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd7c
+I (11642) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffde06c
+
+I (11643) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffde06c
+I (11649) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffde11c
+
+I (11658) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffde11c
+TODO hashSha starting
+TLS wc_ShaUpdate
+I (11669) wc_sha: wc_ShaUpdate process hardware
+TLS wc_Md5Update
+TLS wc_Sha256Update
+I (11677) wc_sha256: Sha256Update process software
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+I (11694) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddec
+
+I (11700) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddec
+I (11707) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddec
+
+I (11716) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddec
+I (11724) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdde9c
+
+I (11733) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdde9c
+I (11741) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddec
+
+I (11750) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddec
+I (11757) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdddec
+
+I (11767) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdddec
+I (11774) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdde9c
+
+I (11783) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdde9c
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+I (12051) wc_sha: wc_ShaUpdate process hardware
+TLS wc_Md5Update
+TLS wc_Sha256Update
+I (12059) wc_sha256: Sha256Update process software
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+I (12079) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddeec
+
+I (12081) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddeec
+I (12089) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddeec
+
+I (12098) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddeec
+I (12105) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddf9c
+
+I (12115) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddf9c
+I (12123) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdde5c
+
+I (12131) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdde5c
+I (12139) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffdde5c
+
+I (12148) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffdde5c
+I (12156) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddf0c
+
+I (12165) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddf0c
+I (12173) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd2c
+
+I (12182) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd2c
+I (12189) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd2c
+
+I (12198) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd2c
+I (12206) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddddc
+
+I (12215) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddddc
+I (12223) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd2c
+
+I (12232) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd2c
+I (12239) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddd2c
+
+I (12249) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddd2c
+I (12256) wolf_hw_sha:
+Hardware in use by 3ffdf5c8; Mode REVERT to ESP32_SHA_SW for 3ffddddc
+
+I (12265) wolf_hw_sha: Software Mode, lock depth = 0, for this 3ffddddc
+TODO hashSha starting
+TLS wc_ShaUpdate
+I (12563) wc_sha: wc_ShaUpdate process hardware
+TLS wc_Md5Update
+TLS wc_Sha256Update
+I (12564) wc_sha256: Sha256Update process software
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+I (12647) wc_sha: wc_ShaUpdate process hardware
+TLS wc_Md5Update
+TLS wc_Sha256Update
+I (12648) wc_sha256: Sha256Update process software
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+I (12662) server-tls: WOLFSSL* ssl using TLS13-SM4-CCM-SM3
+I (12667) server-tls: Stack used: 39492
+
+I (12674) server-tls: Stack used: 39492
+
+Free SSL: 3ffdf21c
+I (12682) server-tls: Stack used: 39492
+
+I (12683) tls_server: got ip:0.0.0.0
+
+
+
+Ubuntu Client
+------------------------------------------------
+$ ./examples/client/client  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+
+method = wolfTLSv1_3_client_method_ex
+
+Setting wolfSSL_CTX_new>> NOT TLS 1.3!
+Client hello 4536
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+Client hello 4542
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+TODO hashSha starting
+TLS wc_ShaUpdate
+TLS wc_Md5Update
+TLS wc_Sha256Update
+TLS wc_Sha384Update
+TLS wc_Sha512Update
+TLS wc_Sm3Update
+HashRaw, 9835: EdDSA_Update
+HashRaw, 9842
+SSL version is TLSv1.3
+SSL cipher suite is TLS_SM4_CCM_SM3
+SSL curve name is SM2P256V1
+I hear you fa shizzle!

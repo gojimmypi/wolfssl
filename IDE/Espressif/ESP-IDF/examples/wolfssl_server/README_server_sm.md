@@ -17,6 +17,19 @@ cd /mnt/c/workspace/wolfsm-$USER
 make clean && make
 ```
 
+### TLS 1.3 Server
+
+```
+./examples/server/server -v 4 -b -d -p 11111 -c ./certs/sm2/server-sm2.pem -k ./certs/sm2/server-sm2-priv.pem -A ./certs/sm2/client-sm2.pem -V
+```
+
+### TLS 1.3 Client
+
+```
+./examples/client/client  -h 127.0.0.1 -v 4 -l TLS13-SM4-CCM-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
+```
+
+### TLS 1.2 Client to Local Linux Server
 
 ```
 ./examples/client/client  -h 127.0.0.1 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  \
@@ -25,13 +38,15 @@ make clean && make
                       -A ./certs/sm2/root-sm2.pem -C
 ```
 
+###  TLS 1.2 Client to ESP32 Server
+
 ```
 ./examples/client/client  -h 192.168.1.109 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  \
                       -c ./certs/sm2/client-sm2.pem                 \
                       -k ./certs/sm2/client-sm2-priv.pem            \
                       -A ./certs/sm2/root-sm2.pem -C
 ```
-
+### Others...
 
 ```
 # Success: Linux Client to ESP32 Server TLS1.2 

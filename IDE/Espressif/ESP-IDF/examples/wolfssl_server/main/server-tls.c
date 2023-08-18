@@ -162,6 +162,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
+    /* TODO remove duplicate */
     if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
