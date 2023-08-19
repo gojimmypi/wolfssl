@@ -5,6 +5,13 @@ VisualStudioVersion = 17.6.33927.249
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_mqtt_aws_iot_IDF_v5.1_ESP32", "wolfssl_mqtt_aws_iot_IDF_v5.1_ESP32.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfmqtt", "wolfmqtt", "{36E20B72-864F-499D-9189-7B950DDFA192}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfmqtt\CMakeLists.txt = ..\components\wolfmqtt\CMakeLists.txt
+		..\components\wolfmqtt\install_wolfMQTT.cmd = ..\components\wolfmqtt\install_wolfMQTT.cmd
+		..\components\wolfmqtt\README.md = ..\components\wolfmqtt\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
