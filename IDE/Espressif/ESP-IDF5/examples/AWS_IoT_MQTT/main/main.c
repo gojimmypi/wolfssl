@@ -80,4 +80,17 @@ void app_main(void)
     awsiot_main((int)NULL, (char**)NULL);
     ESP_LOGI(TAG, "\n\nDone!"
                   "If running from idf.py monitor, press twice: Ctrl+]");
+
+    ESP_LOGV(TAG, "\n\nLoop...\n\n");
+    ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                    - uxTaskGetStackHighWaterMark(NULL));
+
+    while (1) {
+#if defined(SINGLE_THREADED)
+        ESP_LOGV(TAG, "\n\nSINGLE_THREADED end loop.\n\n");
+        while (1);
+#else
+        vTaskDelay(60000);
+#endif
+    }
 }
