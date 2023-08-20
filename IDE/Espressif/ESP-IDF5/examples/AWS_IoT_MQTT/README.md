@@ -1,6 +1,6 @@
-# wolfSSL Template Project
+# wolfSSL Example Project: wolfMQTT for AWS IoT
 
-This is an example minimally viable wolfSSL template to get started with your own project.
+This is an example based on the [AWS IoT Example](https://github.com/wolfSSL/wolfMQTT/tree/master/examples/aws).
 
 ### Prerequisites
 
