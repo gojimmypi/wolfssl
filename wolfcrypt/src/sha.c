@@ -631,15 +631,27 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
 
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
             if (sha->ctx.mode == ESP32_SHA_INIT) {
-                ESP_LOGI(TAG, "wc_ShaUpdate try hardware");
+                #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                {
+                    ESP_LOGI(TAG, "wc_ShaUpdate try hardware");
+                }
+                #endif
                 esp_sha_try_hw_lock(&sha->ctx);
             }
             if (sha->ctx.mode == ESP32_SHA_SW) {
-                ESP_LOGI(TAG, "wc_ShaUpdate process software");
+                #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                {
+                    ESP_LOGI(TAG, "wc_ShaUpdate process software");
+                }
+                #endif
                 ret = XTRANSFORM(sha, (const byte*)local);
             }
             else {
-                ESP_LOGI(TAG, "wc_ShaUpdate process hardware");
+                #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                {
+                    ESP_LOGI(TAG, "wc_ShaUpdate process hardware");
+                }
+                #endif
                 esp_sha_process(sha, (const byte*)local);
             }
         #elif defined (WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)

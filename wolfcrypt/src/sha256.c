@@ -1069,11 +1069,19 @@ static int InitSha256(wc_Sha256* sha256)
                 }
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGI(TAG, "Sha256Update process software");
+                    #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                    {
+                        ESP_LOGI(TAG, "Sha256Update process software");
+                    }
+                    #endif
                     ret = XTRANSFORM(sha256, (const byte*)local);
                 }
                 else {
-                    ESP_LOGI(TAG, "Sha256Update process hardware");
+                    #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                    {
+                        ESP_LOGI(TAG, "Sha256Update process hardware");
+                    }
+                    #endif
                     esp_sha256_process(sha256, (const byte*)local);
                 }
             #else

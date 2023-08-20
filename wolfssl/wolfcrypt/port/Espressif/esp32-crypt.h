@@ -102,6 +102,10 @@
 **   Turns on development testing. Validates HW accelerated results to software
 **   - Automatically turns on WOLFSSL_HW_METRICS
 **
+** DEBUG_WOLFSSL_SHA_MUTEX
+**   Turns on diagnostic messages for SHA mutex. Note that given verbosity, there
+**   may be TLS timing issues encountered. Use with caution.
+**
 ** LOG_LOCAL_LEVEL
 **   Debugging. Default value is ESP_LOG_DEBUG
 **

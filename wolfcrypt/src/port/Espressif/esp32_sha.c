@@ -448,7 +448,11 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     int ret;
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* Get a copy of the HW digest, but don't process it. */
-        ESP_LOGI(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+        {
+            ESP_LOGV(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
+        }
+        #endif
         ret = esp_sha256_digest_process(dst, 0);
 
         if (ret == 0) {
@@ -1072,11 +1076,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         else {
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
+        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW for %x\n",
                            (int)esp_sha_mutex_ctx_owner(),  (int)ctx->initializer);
             ESP_LOGI(TAG, "Software Mode, lock depth = %d, for this %x",
                           ctx->lockDepth, (int)ctx->initializer);
-        #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
         #endif
             ctx->mode = ESP32_SHA_SW;

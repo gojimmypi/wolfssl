@@ -1128,7 +1128,7 @@ void wc_Sha512Free(wc_Sha512* sha512)
     if (sha512 == NULL)
         return;
 
-#if defined(WOLFSSL_ESP32) &&  !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+#if defined(WOLFSSL_ESP32) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
     esp_sha_release_unfinished_lock(&sha512->ctx);
 #endif
 
@@ -1452,8 +1452,8 @@ void wc_Sha384Free(wc_Sha384* sha384)
     if (sha384 == NULL)
         return;
 
-#ifdef WOLFSSL_ESP32
-//    esp_sha_release_unfinished_lock(&sha384->ctx);
+#if defined(WOLFSSL_ESP32) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+    esp_sha_release_unfinished_lock(&sha384->ctx);
 #endif
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE
