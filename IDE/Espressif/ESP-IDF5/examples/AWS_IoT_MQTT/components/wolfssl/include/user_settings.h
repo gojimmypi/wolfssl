@@ -20,8 +20,17 @@
  */
 
 #include <sdkconfig.h> /* essential to chip set detection */
-#define ENABLE_MQTT_TLS
-#define WOLFMQTT_USER_SETTINGS
+
+/* ENABLE_MQTT_TLS is needed but may already be defined in CMake */
+#ifndef ENABLE_MQTT_TLS
+    #define ENABLE_MQTT_TLS
+#endif
+
+/* WOLFMQTT_USER_SETTINGS is needed may already be defined in CMake */
+#ifndef WOLFMQTT_USER_SETTINGS
+    #define WOLFMQTT_USER_SETTINGS
+#endif
+
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESP32
 #undef WOLFSSL_ESPWROOM32SE
@@ -68,8 +77,8 @@
 
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
-/* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/* when you want to use SINGLE THREAD; ESP-IDF is freeRTOS */
+/* #define SINGLE_THREADED */
 
 #define NO_FILESYSTEM
 
@@ -77,13 +86,17 @@
 
 #define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
-// #define WOLFSSL_SHA224
+/* #define WOLFSSL_SHA224 */
+
 #define NO_OLD_TLS
+#define WOLFSSL_SHA3
+
 /* when you want to use SHA384 */
-//#define WOLFSSL_SHA3
-//
-//#define WOLFSSL_SHA384
-//#define NO_SHA256
+/* #define WOLFSSL_SHA384 */
+
+/* when you DOD NOT want to use SHA256 */
+/* #define NO_SHA256 */
+
 #define WOLFSSL_SHA512
 #define HAVE_ECC
 #define HAVE_CURVE25519
@@ -126,7 +139,7 @@
 #define RSA_LOW_MEM
 
 /* debug options */
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -197,11 +210,80 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif
-//#define WOLFSSL_SHA384
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-//#define WOLFSSL_SM2
-//#define WOLFSSL_SM3
-//#define WOLFSSL_SM4
+/*
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+*/
 
 /* this is for example code */
 #define NO_MAIN_DRIVER
+
+/* VS include follows: */
+#ifndef _WOLFMQTT_VS_SETTINGS_
+#define _WOLFMQTT_VS_SETTINGS_
+
+/* Don't include this if using autoconf cross-compile */
+#if defined(HAVE_CONFIG_H)
+    #warning  "Unexpected use of config.h"
+#else
+/* TLS Support */
+#undef  ENABLE_MQTT_TLS
+#define ENABLE_MQTT_TLS
+
+/* MQTT-SN Support */
+#undef  WOLFMQTT_SN
+#define WOLFMQTT_SN
+
+/* MQTT v5.0 support */
+#undef  WOLFMQTT_V5
+#define WOLFMQTT_V5
+
+/* Enable property callback support */
+#ifdef WOLFMQTT_V5
+    #undef  WOLFMQTT_PROPERTY_CB
+    #define WOLFMQTT_PROPERTY_CB
+#endif
+
+/* Non-blocking support */
+#undef  WOLFMQTT_NONBLOCK
+#define WOLFMQTT_NONBLOCK
+
+/* Disable socket timeout code */
+//#undef  WOLFMQTT_NO_TIMEOUT
+//#define WOLFMQTT_NO_TIMEOUT
+
+/* Disconnect callback support */
+#undef  WOLFMQTT_DISCONNECT_CB
+#define WOLFMQTT_DISCONNECT_CB
+
+/* Multi-threading */
+#undef  WOLFMQTT_MULTITHREAD
+#define WOLFMQTT_MULTITHREAD
+
+/* Debugging */
+/*
+#undef  DEBUG_WOLFMQTT
+#define DEBUG_WOLFMQTT
+
+#undef  WOLFMQTT_DEBUG_CLIENT
+#define WOLFMQTT_DEBUG_CLIENT
+
+#undef  WOLFMQTT_DEBUG_SOCKET
+#define WOLFMQTT_DEBUG_SOCKET
+
+#undef  WOLFMQTT_DEBUG_THREAD
+#define WOLFMQTT_DEBUG_THREAD
+*/
+
+/* Disable error strings */
+/*
+#undef  WOLFMQTT_NO_ERROR_STRINGS
+#define WOLFMQTT_NO_ERROR_STRINGS
+*/
+
+#endif /* !HAVE_CONFIG_H */
+
+#endif /* _WOLFMQTT_VS_SETTINGS_ */
+

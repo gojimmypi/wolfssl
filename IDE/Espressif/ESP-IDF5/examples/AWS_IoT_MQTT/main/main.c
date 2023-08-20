@@ -88,7 +88,9 @@ void app_main(void)
     while (1) {
 #if defined(SINGLE_THREADED)
         ESP_LOGV(TAG, "\n\nSINGLE_THREADED end loop.\n\n");
-        while (1);
+        while (1) {
+            vTaskDelay(1000);
+        }
 #else
         vTaskDelay(60000);
 #endif

@@ -12,6 +12,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfmqtt", "wolfmqtt", "{36
 		..\components\wolfmqtt\README.md = ..\components\wolfmqtt\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{9D9C7505-51DD-4FD9-ADD7-904213E3C844}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\include\config.h = ..\components\wolfssl\include\config.h
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{F8CBF6BB-D253-4834-B587-58BA6F6C18D1}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\include\config.h = ..\components\wolfssl\include\config.h
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -31,6 +43,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F8CBF6BB-D253-4834-B587-58BA6F6C18D1} = {9D9C7505-51DD-4FD9-ADD7-904213E3C844}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9E35A5E5-D3ED-4ED8-8721-F0EE87EA56AB}

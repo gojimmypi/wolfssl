@@ -3,6 +3,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # set(WOLFSSL_ROOT "~/workspace/wolfssl-other-source")
+# set(WOLFMQTT_ROOT "~/workspace/wolfmqtt-other-source")
 
 # This tag is used to include this file in the ESP Component Registry:
 # __ESP_COMPONENT_SOURCE__
