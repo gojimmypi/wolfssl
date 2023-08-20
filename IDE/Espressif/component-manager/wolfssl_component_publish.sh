@@ -41,7 +41,7 @@ copy_wolfssl_source() {
   mkdir -p "$dst"
 
   if find "$src"/"$dst" -type f -name "$file_type" -print -quit | grep -q '^'; then
-      # this gives a shellcjeck warning:
+      # this gives a shellcheck warning:
       # cp -u "$src"/"$dst"/$file_type "./$dst/"
       #
       # this does not work: (gives cp: cannot stat .. No such file or directory)
@@ -264,7 +264,7 @@ copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
 
 # Note that for examples, the ESP Registry will append the these README files to
-# the main README.md at publish time, and generate achor text hyperlinks.
+# the main README.md at publish time, and generate anchor text hyperlinks.
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
 
