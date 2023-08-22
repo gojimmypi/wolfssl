@@ -30,6 +30,9 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
+/* experimental DTLS 1.3 */
+#define SOCKADDR_S struct sockaddr
+
 #ifndef WOLFCRYPT_ONLY
 
 #ifdef _WIN32_WCE
