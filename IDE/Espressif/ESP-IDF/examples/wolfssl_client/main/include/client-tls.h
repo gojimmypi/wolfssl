@@ -25,7 +25,7 @@
 #include <wolfssl/ssl.h>
 #include "user_settings.h"
 
-#define TLS_SMP_TARGET_HOST             "192.168.1.128"
+#define TLS_SMP_TARGET_HOST             "192.168.1.39"
 #define DEFAULT_PORT                    11111
 
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"

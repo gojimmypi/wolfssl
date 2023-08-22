@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/* This is the user_settings.h file for the wolfssl_client TLS example.
+ * For application-specific settings, please see client-tls.h file */
+
 // #define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
@@ -112,7 +115,7 @@
 #endif
 
 /* debug options */
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
@@ -219,12 +222,7 @@ TLS13-SM4-CCM-SM3
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-GCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CCM-SM3"
     #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
-                                       "TLS13-SM4-CCM-SM3:" \
-                                       "TLS-SM4-GCM-SM3:" \
-                                       "TLS-SM4-CCM-SM3:" \
-                                       "ECDHE-ECDSA-SM4-CBC-SM3:" \
-                                       "ECDHE-ECDSA-SM4-GCM-SM3:" \
-                                       "ECDHE-ECDSA-SM4-CCM-SM3"
+                                       "TLS13-SM4-CCM-SM3:"
 
 //    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
 //
@@ -285,7 +283,7 @@ TLS13-SM4-CCM-SM3
 
 /* added for TFM test */
 #define USE_FAST_MATH
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 
 #define WC_RSA_BLINDING
 #define NO_MULTIBYTE_PRINT
@@ -493,7 +491,7 @@ TLS13-SM4-CCM-SM3
 
 /* added for TFM test */
 #define USE_FAST_MATH
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 
 #define WOLFSSL_LIB /* used below */
 /* Configurations */
@@ -583,7 +581,7 @@ TLS13-SM4-CCM-SM3
 /* end experimental WIN user_seetings.h */
 
 
-/* SM Cipher */    
+/* SM Cipher */
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4

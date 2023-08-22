@@ -199,7 +199,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
 
-    wolfSSL_Debugging_ON();
+//     wolfSSL_Debugging_ON();
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
     doPeerCheck = 1;
@@ -207,7 +207,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
 #ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
-    wolfSSL_Debugging_ON();
+    // wolfSSL_Debugging_ON();
     ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
@@ -301,9 +301,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 #endif
 
 
-    if (ret != SSL_SUCCESS) {
-        ESP_LOGE(TAG, "ERROR: failed to load %d, please check the file.\n", ret);
-    }
+//    if (ret != SSL_SUCCESS) {
+//        ESP_LOGE(TAG, "ERROR: failed to load %d, please check the file.\n", ret);
+//    }
 
     /* not peer check */
     if (doPeerCheck == 0) {
@@ -371,6 +371,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             DEFAULT_PORT);
     WOLFSSL_MSG(buff);
     printf("%s\n", buff);
+
     if ((ret = connect(sockfd,
                        (struct sockaddr *)&servAddr,
                        sizeof(servAddr))) == -1) {
@@ -388,7 +389,19 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ShowCiphers(ssl);
 #endif
     }
-    /* when using atecc608a on esp32-wroom-32se */
+
+#if defined(WOLFSSL_SM2)
+    /* SM TLS1.3 Cipher needs to have key share explicitly set. */
+    ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
+    }
+    else {
+        ESP_LOGE(TAG, "FAILED to set WOLFSSL_ECC_SM2P256V1");
+    }
+#endif
+        /* when using atecc608a on esp32-wroom-32se */
+
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
     atcatls_set_callbacks(ctx);
@@ -405,8 +418,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     WOLFSSL_MSG("Connect to wolfSSL on the server side");
     /* Connect to wolfSSL on the server side */
     if (wolfSSL_connect(ssl) == SSL_SUCCESS) {
+#ifdef DEBUG_WOLFSSL
         ShowCiphers(ssl);
-
+#endif
         /* Get a message for the server from stdin */
         WOLFSSL_MSG("Message for server: ");
         memset(buff, 0, sizeof(buff));
@@ -439,8 +453,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     else {
         ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
     }
+#ifdef DEBUG_WOLFSSL
     ShowCiphers(ssl);
-
+#endif
 
     /* Cleanup and return */
     wolfSSL_free(ssl);     /* Free the wolfSSL object                  */

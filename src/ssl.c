@@ -11401,7 +11401,7 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
               /* TODO remove / review */
 
         WOLFSSL_MSG("\n\nWarning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
-        ESP_LOGW("ssl","WOLFSSL_MAX_SUITE_SZ");
+//        ESP_LOGW("ssl","WOLFSSL_MAX_SUITE_SZ");
         suites->suiteSz = WOLFSSL_MAX_SUITE_SZ;
     }
 #ifdef WOLFSSL_SMALL_STACK
@@ -12094,7 +12094,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
         }
         #endif
 
-        printf(">> NOT TLS 1.3!\n");
+        // printf(">> NOT TLS 1.3!\n");
         WOLFSSL_ENTER("wolfSSL_connect");
 
         /* make sure this wolfSSL object has arrays and rng setup. Protects

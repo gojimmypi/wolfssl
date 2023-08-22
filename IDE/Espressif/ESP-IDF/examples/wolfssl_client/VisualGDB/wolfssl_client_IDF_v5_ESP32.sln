@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{5326
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A51226B3-88A7-4463-B443-0E321C4A3D53}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\my_private_config.h = ..\..\..\..\..\..\..\my_private_config.h
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
