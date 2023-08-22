@@ -2759,10 +2759,9 @@ typedef struct Keys {
     tsip_hmac_sha_key_index_t tsip_server_write_MAC_secret;
 
 #endif
-#ifdef WOLFSSL_RENESAS_SCEPROTECT
-
-    sce_hmac_sha_wrapped_key_t sce_client_write_MAC_secret;
-    sce_hmac_sha_wrapped_key_t sce_server_write_MAC_secret;
+#ifdef WOLFSSL_RENESAS_FSPSM_TLS
+    FSPSM_HMAC_WKEY fspsm_client_write_MAC_secret;
+    FSPSM_HMAC_WKEY fspsm_server_write_MAC_secret;
 #endif
 } Keys;
 
@@ -2791,6 +2790,10 @@ typedef enum {
 #endif
     TLSX_APPLICATION_LAYER_PROTOCOL = 0x0010, /* a.k.a. ALPN */
     TLSX_STATUS_REQUEST_V2          = 0x0011, /* a.k.a. OCSP stapling v2 */
+#ifdef HAVE_RPK
+    TLSX_CLIENT_CERTIFICATE_TYPE    = 0x0013, /* RFC8446 */
+    TLSX_SERVER_CERTIFICATE_TYPE    = 0x0014, /* RFC8446 */
+#endif
 #if defined(HAVE_ENCRYPT_THEN_MAC) && !defined(WOLFSSL_AEAD_ONLY)
     TLSX_ENCRYPT_THEN_MAC           = 0x0016, /* RFC 7366 */
 #endif
@@ -2835,6 +2838,36 @@ typedef enum {
     TLSX_ECH                        = 0xfe0d, /* from draft-ietf-tls-esni-13 */
 #endif
 } TLSX_Type;
+
+/* TLS Certificate type defined RFC7250
+ * https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-3
+ */
+#if defined(HAVE_RPK)
+typedef struct RpkConfig {
+    /* user's preference */
+    byte preferred_ClientCertTypeCnt;
+    byte preferred_ClientCertTypes[MAX_CLIENT_CERT_TYPE_CNT];
+    byte preferred_ServerCertTypeCnt;
+    byte preferred_ServerCertTypes[MAX_CLIENT_CERT_TYPE_CNT];
+    /* reflect to client_certificate_type extension in xxxHello */
+} RpkConfig;
+
+typedef struct RpkState {
+    byte sending_ClientCertTypeCnt;
+    byte sending_ClientCertTypes[MAX_CLIENT_CERT_TYPE_CNT];
+    /* reflect to server_certificate_type extension in xxxHello */
+    byte sending_ServerCertTypeCnt;
+    byte sending_ServerCertTypes[MAX_SERVER_CERT_TYPE_CNT];
+    /* client_certificate_type extension in received yyyHello  */
+    byte received_ClientCertTypeCnt;
+    byte received_ClientCertTypes[MAX_CLIENT_CERT_TYPE_CNT];
+    /* server_certificate_type extension in received yyyHello  */
+    byte received_ServerCertTypeCnt;
+    byte received_ServerCertTypes[MAX_SERVER_CERT_TYPE_CNT];
+    /* set if Raw-public-key cert is loaded as own certificate */
+    int  isRPKLoaded;
+} RpkState;
+#endif /* HAVE_RPK */
 
 #if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
 
@@ -3586,7 +3619,10 @@ struct WOLFSSL_CTX {
 #endif
     word16      minProto:1; /* sets min to min available */
     word16      maxProto:1; /* sets max to max available */
-
+#if defined(HAVE_RPK)
+    RpkConfig   rpkConfig;
+    RpkState    rpkState;
+#endif /* HAVE_RPK */
 #ifdef WOLFSSL_SRTP
     word16      dtlsSrtpProfiles;  /* DTLS-with-SRTP mode
                                     * (list of selected profiles - up to 16) */
@@ -4690,6 +4726,13 @@ struct Options {
 #ifdef WOLFSSL_SEND_HRR_COOKIE
     word16            cookieGood:1;
 #endif
+#if defined(HAVE_DANE)
+    word16            useDANE:1;
+#endif /* HAVE_DANE */
+#if defined(HAVE_RPK)
+    RpkConfig         rpkConfig;
+    RpkState          rpkState;
+#endif /* HAVE_RPK */
 
     /* need full byte values for this section */
     byte            processReply;           /* nonblocking resume */
@@ -4767,8 +4810,8 @@ typedef struct Arrays {
    !defined(NO_WOLFSSL_RENESAS_TSIP_TLS_SESSION)
     byte            tsip_masterSecret[TSIP_TLS_MASTERSECRET_SIZE];
 #endif
-#if defined(WOLFSSL_RENESAS_SCEPROTECT)
-    byte            sce_masterSecret[SCE_TLS_MASTERSECRET_SIZE];
+#if defined(WOLFSSL_RENESAS_FSPSM_TLS)
+    byte            fspsm_masterSecret[FSPSM_TLS_MASTERSECRET_SIZE];
 #endif
 #ifdef WOLFSSL_DTLS
     byte            cookie[MAX_COOKIE_LEN];
@@ -5431,7 +5474,7 @@ struct WOLFSSL {
 #endif /* OPENSSL_EXTRA */
 #ifndef NO_RSA
     RsaKey*         peerRsaKey;
-#if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_SCEPROTECT)
+#if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_FSPSM_TLS)
     void*           RenesasUserCtx;
     byte*           peerSceTsipEncRsaKeyIndex;
 #endif
