@@ -30,6 +30,23 @@ endif()
 
 project(wolfssl VERSION 5.6.3 LANGUAGES C ASM)
 
+
+# TODO REMOVE:
+    #set(HAVE_ARIA 1)
+    #set(WOLFSSL_ARIA 1)
+
+
+# Set WOLFSSL_ROOT if not already defined
+if ("${WOLFSSL_ROOT}" STREQUAL "")
+    # we'll assume this CMakeLists.txt is in the root of wolfSSL
+    if (EXISTS "${CMAKE_SOURCE_DIR}/wolfcrypt/src/")
+        get_filename_component(WOLFSSL_ROOT "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+        message(STATUS "Found WOLFSSL_ROOT = ${WOLFSSL_ROOT}")
+    endif()
+else()
+    message(STATUS "Using predefined WOLFSSL_ROOT = ${WOLFSSL_ROOT}")
+endif()
+
 # shared library versioning
 # increment if interfaces have been added, removed or changed
 set(LIBTOOL_CURRENT 40)
@@ -530,6 +547,11 @@ if(WOLFSSL_AESCTR AND NOT WOLFSSL_FORTRESS)
         "-DWOLFSSL_AES_COUNTER"
         "-DWOLFSSL_AES_DIRECT")
 endif()
+
+# ARIA
+add_option("WOLFSSL_ARIA"
+    "Enable wolfSSL ARIA support (default: disabled)"
+    "no" "yes;no")
 
 # AES-CCM
 add_option("WOLFSSL_AESCCM"
@@ -1877,6 +1899,9 @@ if (WOLFSSL_CAAM)
    list(APPEND WOLFSSL_DEFINITIONS  "-DWOLFSSL_CAAM")
 endif()
 
+if (WOLFSSL_ARIA)
+   list(APPEND WOLFSSL_DEFINITIONS  "-DHAVE_ARIA")
+endif()
 
 # Generates the BUILD_* flags. These control what source files are included in
 # the library. A series of AM_CONDITIONALs handle this in configure.ac.
@@ -2001,12 +2026,79 @@ set(LIB_SOURCES "")
 # in the *.am files.
 generate_lib_src_list("${LIB_SOURCES}")
 if(BUILD_SHARED_LIBS)
+    message(STATUS "BUILD_SHARED_LIBS enabled: ${LIB_SOURCES}")
     add_library(wolfssl SHARED ${LIB_SOURCES})
 else()
+    message(STATUS "Static Libs: ${LIB_SOURCES}")
     add_library(wolfssl STATIC ${LIB_SOURCES})
 endif()
 
 add_library(wolfssl::wolfssl ALIAS wolfssl)
+
+if (NOT "$ENV{ARIA_DIR}" STREQUAL "")
+    message(STATUS "Found Environment variable ARIA_DIR=$ENV{ARIA_DIR}")
+    if(WOLFSSL_ARIA)
+        message(STATUS "wolfSSL WOLFSSL_ARIA is enabled")
+    else()
+        message(STATUS "wolfSSL WOLFSSL_ARIA is not enabled. To enable, specify a user_settings.h file or run: cmake .. -DWOLFSSL_ARIA=yes")
+        message(STATUS "Clear the ARIA_DIR environment variable to otherwise suppress this message when not using ARIA ciphers.")
+    endif()
+endif()
+
+# if we find an ARIA_DIR turn on ARIA support
+#if ("$ENV{ARIA_DIR}" STREQUAL "")
+    #set(HAVE_ARIA 0)
+    #set(WOLFSSL_ARIA 0)
+#else()
+    #message(STATUS "Found ARIA_DIR = $ENV{ARIA_DIR}")
+    #message(STATUS "Setting HAVE_ARIA, WOLFSSL_ARIA")
+    #set(HAVE_ARIA 1)
+    #set(WOLFSSL_ARIA 1)
+#endif()
+
+
+if(WOLFSSL_ARIA)
+    message(STATUS "WOLFSSL_ARIA is enabled")
+
+    find_package(ARIA)
+
+    if(ARIA_FOUND)
+        message(STATUS "ARIA find_package() success.")
+    else()
+        message(ERROR "WOLFSSL_ARIA is enabled, but find_package() did not find ARIA MagicCrypto.\n"
+                      "Check ARIA_DIR environment variable and/or copy MagicCrypto directory locally")
+    endif()
+
+    list(APPEND WOLFSSL_LINK_LIBS "${ARIA_LIB_FILE}")
+
+    # The cmake target_include_directories() will complain about local directories,
+    # so we'll handle MagicCrypto differently when found in wolfssl.
+    # see below to use include_directories() instead.
+    if(ARIA_IS_LOCAL)
+        # there's also a wolfssl port API to include, plus local ARIA include
+        include_directories("wolfssl/wolfcrypt/port/aria" "MagicCrypto/include")
+    else()
+        # see below for target_include_directories() instead
+        include_directories("wolfssl/wolfcrypt/port/aria")
+        message(STATUS "ARIA_IS_LOCAL is false, appending ${ARIA_INCLUDE_DIR} to WOLFSSL_INCLUDE_DIRS")
+        list(APPEND WOLFSSL_INCLUDE_DIRS "${ARIA_INCLUDE_DIR}")
+    endif()
+
+    add_library(MagicCrypto_lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/wolfcrypt/src/port/aria/aria-crypt.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/wolfcrypt/src/port/aria/aria-cryptocb.c
+    )
+
+    set_target_properties(MagicCrypto_lib PROPERTIES OUTPUT_NAME "MagicCrypto")
+    target_link_libraries(MagicCrypto_lib wolfssl)
+    target_compile_options(MagicCrypto_lib PRIVATE "-DHAVE_ARIA")
+
+    set(HAVE_ARIA 1)
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_ARIA")
+
+    message("ARIA Check: WOLFSSL_LINK_LIBS    = ${WOLFSSL_LINK_LIBS}")
+    message("ARIA Check: WOLFSSL_INCLUDE_DIRS = ${WOLFSSL_INCLUDE_DIRS}")
+endif()
 
 set_target_properties(wolfssl
     PROPERTIES
@@ -2024,6 +2116,7 @@ target_compile_definitions(wolfssl PUBLIC ${WOLFSSL_DEFINITIONS})
 # Include Directories
 ####################################################
 
+message(STATUS "WOLFSSL_INCLUDE_DIRS = ${WOLFSSL_INCLUDE_DIRS}")
 target_include_directories(wolfssl
     PUBLIC
         $<INSTALL_INTERFACE:include>
@@ -2340,6 +2433,12 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/wolfssl/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/wolfssl
         FILES_MATCHING PATTERN "*.h"
         REGEX ${EXCLUDED_HEADERS_REGEX} EXCLUDE)
+
+# install magic crypto
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/MagicCrypto/
+        #DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/MagicCrypto
+        #FILES_MATCHING PATTERN "*.h"
+        #REGEX ${EXCLUDED_HEADERS_REGEX} EXCLUDE)
 
 # Install the examples
 install(FILES ${INSTALLED_EXAMPLES}
