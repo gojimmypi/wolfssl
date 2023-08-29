@@ -26,34 +26,70 @@
  * Define USE_DTLS12 to use DTLS 1.2 instead of DTLS 1.3
  */
 
+#include <stdio.h>
+#include <signal.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+/* Espressif FreeRTOS */
+#ifndef SINGLE_THREADED
+//    #include <freertos/FreeRTOS.h>
+//    #include <freertos/task.h>
+    #include <freertos/event_groups.h>
+#endif
+
+/* Espressif socket */
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
+
 // #include <wolfssl/options.h>
+#include <signal.h>
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 #include <stdio.h>                  /* standard in/out procedures */
 #include <stdlib.h>                 /* defines system calls */
 #include <string.h>                 /* necessary for memset */
-// #include <netdb.h>
-// #include <sys/socket.h>             /* used for all socket calls */
-#include <netinet/in.h>             /* used for sockaddr_in */
-#include <arpa/inet.h>
+
+
 #include <wolfssl/ssl.h>
 #include <errno.h>
-#include <signal.h>
-#include <unistd.h>
 
 #include "dtls-common.h"
+#include <wolfssl/certs_test.h>
+
+#include "server-dtls13.h"
+
+#if defined(SINGLE_THREADED)
+    #define WOLFSSL_ESP_TASK int
+#else
+    #include "freertos/FreeRTOS.h"
+    #define WOLFSSL_ESP_TASK void
+#endif
+
+static const char* const TAG = "server-dtls13";
 
 WOLFSSL_CTX*  ctx = NULL;
 WOLFSSL*      ssl = NULL;
 int           listenfd = INVALID_SOCKET;   /* Initialize our socket */
 
-static void sig_handler(const int sig);
+// static void sig_handler(const int sig);
 static void free_resources(void);
 
+#if 0
 int main(int argc, char** argv)
+#else
+WOLFSSL_ESP_TASK dtls13_smp_server_task(void *args)
+#endif
 {
     /* Loc short for "location" */
-    int           exitVal = 1;
+#if defined(SINGLE_THREADED)
+    #define TLS_SMP_SERVER_TASK_RET exitVal
+#else
+    #define TLS_SMP_SERVER_TASK_RET
+#endif
+    int           exitVal = 0;
     struct sockaddr_in servAddr;        /* our server's address */
     struct sockaddr_in cliaddr;         /* the client's address */
     int           ret;
@@ -62,11 +98,11 @@ int main(int argc, char** argv)
     socklen_t     cliLen;
     char          buff[MAXLINE];   /* the incoming message */
     char          ack[] = "I hear you fashizzle!\n";
-
+    exitVal = 1;
     /* Initialize wolfSSL before assigning ctx */
     if (wolfSSL_Init() != WOLFSSL_SUCCESS) {
         fprintf(stderr, "wolfSSL_Init error.\n");
-        return exitVal;
+        return TLS_SMP_SERVER_TASK_RET;
     }
 
     /* No-op when debugging is not compiled in */
@@ -85,7 +121,38 @@ int main(int argc, char** argv)
     }
 
 #ifdef NO_FILESYSTEM
-    //#warning "missing implementation"
+    /* Load CA certificates */
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+                                         CTX_CA_CERT,
+                                         CTX_CA_CERT_SIZE,
+                                         CTX_SERVER_CERT_TYPE);
+
+//    if (wolfSSL_CTX_load_verify_locations(ctx,caCertLoc,0) !=
+//            SSL_SUCCESS) {
+//        fprintf(stderr, "Error loading %s, please check the file.\n", caCertLoc);
+//        goto cleanup;
+//    }
+    /* Load server certificates */
+    ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+                //server_cert_der_2048, sizeof_server_cert_der_2048,
+                CTX_SERVER_CERT, CTX_SERVER_CERT_SIZE,
+                CTX_SERVER_CERT_TYPE);
+//    if (wolfSSL_CTX_use_certificate_buffer(ctx, servCertLoc, SSL_FILETYPE_PEM) !=
+//                                                                 SSL_SUCCESS) {
+//        fprintf(stderr, "Error loading %s, please check the file.\n", servCertLoc);
+//        goto cleanup;
+//    }
+    /* Load server Keys */
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            //server_key_der_2048, sizeof_server_key_der_2048,
+                                            CTX_SERVER_KEY,
+                                            CTX_SERVER_KEY_SIZE,
+                                            CTX_SERVER_KEY_TYPE);
+//    if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, servKeyLoc,
+//                SSL_FILETYPE_PEM) != SSL_SUCCESS) {
+//        fprintf(stderr, "Error loading %s, please check the file.\n", servKeyLoc);
+//        goto cleanup;
+//    }
 #else
     /* Load CA certificates */
     if (wolfSSL_CTX_load_verify_locations(ctx,caCertLoc,0) !=
@@ -126,7 +193,7 @@ int main(int argc, char** argv)
         goto cleanup;
     }
 
-    signal(SIGINT, sig_handler);
+    // signal(SIGINT, sig_handler);
 
     while (1) {
         printf("Awaiting client connection on port %d\n", SERV_PORT);
@@ -208,21 +275,22 @@ int main(int argc, char** argv)
         printf("Awaiting new connection\n");
     }
 
+    ESP_LOGI(TAG, "Exit %d", exitVal);
     exitVal = 0;
 cleanup:
     free_resources();
     wolfSSL_Cleanup();
 
-    return exitVal;
+    return TLS_SMP_SERVER_TASK_RET;
 }
 
 
-static void sig_handler(const int sig)
-{
-    (void)sig;
-    free_resources();
-    wolfSSL_Cleanup();
-}
+//static void sig_handler(const int sig)
+//{
+//    (void)sig;
+//    free_resources();
+//    wolfSSL_Cleanup();
+//}
 
 static void free_resources(void)
 {
@@ -240,3 +308,41 @@ static void free_resources(void)
         listenfd = INVALID_SOCKET;
     }
 }
+
+#if defined(SINGLE_THREADED)
+    /* we don't initialize a thread */
+#else
+/* create task */
+int dtls13_smp_server_init(int port)
+{
+    int ret;
+    int thisPort;
+    thisPort = port;
+    if (thisPort == 0) {
+        thisPort = DEFAULT_PORT;
+    }
+
+
+#if ESP_IDF_VERSION_MAJOR >= 4
+    TaskHandle_t _handle;
+#else
+    xTaskHandle _handle;
+#endif
+    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
+                   TLS_SMP_SERVER_TASK_WORDS);
+    ret = xTaskCreate(dtls13_smp_server_task,
+                      TLS_SMP_SERVER_TASK_NAME,
+                      TLS_SMP_SERVER_TASK_WORDS, /* not bytes! */
+                      (void*)&thisPort,
+                      TLS_SMP_SERVER_TASK_PRIORITY,
+                      &_handle);
+
+    if (ret != pdPASS) {
+        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
+    }
+
+    /* vTaskStartScheduler(); // called automatically in ESP-IDF */
+    return ret;
+}
+#endif

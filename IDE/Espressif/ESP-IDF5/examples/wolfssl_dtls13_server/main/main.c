@@ -19,25 +19,82 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* Espressif */
+/* ESP specific */
+#include <nvs_flash.h>
 #include <esp_log.h>
 
 /* wolfSSL  */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-
+#include <wolfssl/certs_test.h>
 /* project */
 #include "main.h"
+#include "wifi_connect.h"
+#include "time_helper.h"
+#include "server-dtls13.h"
 
 static const char* const TAG = "My Project";
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "Hello wolfSSL!");
-
+    ESP_LOGI(TAG, "-------------- wolfSSL DTLS 1.3 Server Example ---------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
 
-    ESP_LOGI(TAG, "\n\nDone!"
-                  "If running from idf.py monitor, press twice: Ctrl+]");
-}
+    /* Initialize NVS */
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    /* Initialize WiFi */
+    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+    wifi_init_sta();
+
+    /* set time for cert validation */
+    set_time();
+    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
+                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
+
+    ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                   - (uxTaskGetStackHighWaterMark(NULL) * 4)
+            );
+    ESP_LOGI(TAG, "Starting TLS Server...\n");
+
+#if defined(SINGLE_THREADED)
+    /* just call the task */
+    dtls13_smp_server_task((void*)NULL);
+#else
+    /* start a thread with the task */
+    dtls13_smp_server_init((int)NULL); /* NULL will use the DEFAULT_PORT value */
+#endif
+
+    /* done */
+    while (1) {
+        ESP_LOGV(TAG, "\n\nLoop...\n\n");
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        ESP_LOGI(TAG, "Stack remaining: %d", uxTaskGetStackHighWaterMark(NULL));
+
+        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                        - uxTaskGetStackHighWaterMark(NULL));
+#endif
+
+#if defined(SINGLE_THREADED)
+        ESP_LOGV(TAG, "\n\nDone!\n\n");
+        while (1);
+#else
+        vTaskDelay(60000);
+#endif
+    } /* done whle */
+
+} /* app_main */
