@@ -83,6 +83,10 @@ int main(int argc, char** argv)
         fprintf(stderr, "wolfSSL_CTX_new error.\n");
         goto cleanup;
     }
+
+#ifdef NO_FILESYSTEM
+    //#warning "missing implementation"
+#else
     /* Load CA certificates */
     if (wolfSSL_CTX_load_verify_locations(ctx,caCertLoc,0) !=
             SSL_SUCCESS) {
@@ -101,6 +105,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Error loading %s, please check the file.\n", servKeyLoc);
         goto cleanup;
     }
+#endif
 
     /* Create a UDP/IP socket */
     if ((listenfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
