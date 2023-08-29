@@ -31,7 +31,14 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 /* experimental DTLS 1.3 */
-#define SOCKADDR_S struct sockaddr
+#ifdef WOLFSSL_ESPIDF
+    #include <lwip/sockets.h>
+    #define SOCKADDR struct sockaddr
+    #define SOCKADDR_S struct sockaddr_storage
+    #define SOCKADDR_IN struct sockaddr_in
+#else
+    #define SOCKADDR_S struct sockaddr
+#endif
 
 #ifndef WOLFCRYPT_ONLY
 
