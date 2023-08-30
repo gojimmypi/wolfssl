@@ -193,6 +193,18 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *args)
         goto cleanup;
     }
 
+    struct timeval timeout;
+    timeout.tv_sec = 2; // 1 seconds
+    timeout.tv_usec = 0;
+
+//    if (setsockopt(listenfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+//         ESP_LOGE(TAG, "setsockopt for receive timeout");
+//    }
+//
+//    if (setsockopt(listenfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
+//         ESP_LOGE(TAG, "setsockopt for send timeout");
+//    }
+
 #ifndef WOLFSSL_ESPIDF
     /* Signals and signal handling are not implemented in esp-idf.
      * Calling raise() will abort the program.
@@ -205,9 +217,14 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *args)
         ESP_LOGI(TAG, "Awaiting client connection on port %d\n", SERV_PORT);
 
         cliLen = sizeof(cliaddr);
-        ret = (int)recvfrom(listenfd, (char *)&buff, sizeof(buff), MSG_PEEK,
-                (struct sockaddr*)&cliaddr, &cliLen);
 
+        ret = 0;
+        while (ret <= 0) {
+            ret = (int)recvfrom(listenfd, (char *)&buff, sizeof(buff) -1 , 0,
+                    (struct sockaddr*)&cliaddr, &cliLen);
+            ESP_LOGI(TAG, " ret %d", ret);
+            vTaskDelay(10);
+        }
         if (ret < 0) {
             ESP_LOGE(TAG, "recvfrom()");
             goto cleanup;
@@ -287,6 +304,8 @@ cleanup:
     free_resources();
     wolfSSL_Cleanup();
 
+    vTaskDelete(NULL);
+
     return TLS_SMP_SERVER_TASK_RET;
 }
 
@@ -337,7 +356,7 @@ int dtls13_smp_server_init(int port)
     xTaskHandle _handle;
 #endif
     /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
-    ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
+    ESP_LOGI(TAG, "Creating dtls13_smp_server_task with stack size = %d",
                    TLS_SMP_SERVER_TASK_WORDS);
     ret = xTaskCreate(dtls13_smp_server_task,
                       TLS_SMP_SERVER_TASK_NAME,

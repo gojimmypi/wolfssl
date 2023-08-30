@@ -252,3 +252,5 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+#define LWIP_DEBUG

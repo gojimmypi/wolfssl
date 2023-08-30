@@ -58,16 +58,17 @@ void app_main(void)
     /* Initialize WiFi */
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
-
+vTaskDelay(10000);
     /* set time for cert validation */
     set_time();
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE,
                    (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
 
+    /* HWM is maximum amount of stack space that has been unused, in words. */
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - (uxTaskGetStackHighWaterMark(NULL) * 4)
+                   - (uxTaskGetStackHighWaterMark(NULL) / 4)
             );
     ESP_LOGI(TAG, "Starting TLS Server...\n");
 

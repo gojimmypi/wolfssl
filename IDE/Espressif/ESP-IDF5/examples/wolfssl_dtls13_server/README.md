@@ -32,6 +32,8 @@ Here's an example using the command-line [idf.py](https://docs.espressif.com/pro
 Edit your `WRK_IDF_PATH`to point to your ESP-IDF install directory.
 
 ```
+cd /mnt/C/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_dtls13_server
+
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
 
 echo "Run export.sh from ${WRK_IDF_PATH}"
@@ -45,6 +47,12 @@ idf.py flash -p /dev/ttyS19 -b 115200
 
 # build, flash, and view UART output with one command:
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
+
+# erase 
+idf.py erase-flash -p /dev/ttyS9 -b 115200
+
+# save defaults
+idf.py sdkconfig_defaults ./sdkconfig.defaults
 ```
 
 Press `Ctrl+]` to exit `idf.py monitor`. See [additional monitor keyboard commands](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-monitor.html).

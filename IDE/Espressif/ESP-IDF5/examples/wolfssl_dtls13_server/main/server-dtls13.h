@@ -24,7 +24,7 @@
 #define DEFAULT_PORT                     11111
 
 #define TLS_SMP_SERVER_TASK_NAME         "dtls13_client_example"
-#define TLS_SMP_SERVER_TASK_WORDS        22240
+#define TLS_SMP_SERVER_TASK_WORDS        32240/4
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
 
 #define TLS_SMP_TARGET_HOST              "192.168.25.109"
