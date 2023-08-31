@@ -36,8 +36,6 @@
     #define SOCKADDR struct sockaddr
     #define SOCKADDR_S struct sockaddr_storage
     #define SOCKADDR_IN struct sockaddr_in
-#else
-    #define SOCKADDR_S struct sockaddr
 #endif
 
 #ifndef WOLFCRYPT_ONLY
