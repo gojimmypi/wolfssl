@@ -492,3 +492,10 @@ user_settings_asm.h
 # ignroe the local copy of DTLS source
 /dtls
 /examples/dtls
+# MagicCrypto (ARIA Cipher)
+MagicCrypto
+
+# debian packaging
+debian/changelog
+debian/control
+*.deb

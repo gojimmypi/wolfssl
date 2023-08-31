@@ -279,6 +279,10 @@
 
 #include <wolfssl/wolfcrypt/hpke.h>
 
+#if defined(WOLFSSL_SNIFFER) && defined(WOLFSSL_SNIFFER_KEYLOGFILE)
+#include <wolfssl/sniffer.h>
+#endif /* WOLFSSL_SNIFFER && WOLFSSL_SNIFFER_KEYLOGFILE */
+
 #ifdef __cplusplus
     extern "C" {
 #endif
@@ -2131,6 +2135,9 @@ WOLFSSL_LOCAL void InitSSL_CTX_Suites(WOLFSSL_CTX* ctx);
 WOLFSSL_LOCAL int InitSSL_Suites(WOLFSSL* ssl);
 WOLFSSL_LOCAL int InitSSL_Side(WOLFSSL* ssl, word16 side);
 
+
+WOLFSSL_LOCAL int DoHandShakeMsgType(WOLFSSL* ssl, byte* input,
+        word32* inOutIdx, byte type, word32 size, word32 totalSz);
 /* for sniffer */
 WOLFSSL_LOCAL int DoFinished(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                             word32 size, word32 totalSz, int sniff);
@@ -2203,6 +2210,8 @@ WOLFSSL_LOCAL int ALPN_Select(WOLFSSL* ssl);
 #endif
 
 WOLFSSL_LOCAL int ChachaAEADEncrypt(WOLFSSL* ssl, byte* out, const byte* input,
+                              word16 sz); /* needed by sniffer */
+WOLFSSL_LOCAL int ChachaAEADDecrypt(WOLFSSL* ssl, byte* plain, const byte* input,
                               word16 sz); /* needed by sniffer */
 
 #ifdef WOLFSSL_TLS13
@@ -2455,7 +2464,16 @@ typedef struct CRL_Entry CRL_Entry;
 #endif
 /* Complete CRL */
 struct CRL_Entry {
+    byte*   toBeSigned;
+    byte*   signature;
+#if defined(OPENSSL_EXTRA)
+    WOLFSSL_X509_NAME*    issuer;     /* X509_NAME type issuer */
+#endif
     CRL_Entry* next;                      /* next entry */
+    wolfSSL_Mutex verifyMutex;
+    /* DupCRL_Entry copies data after the `verifyMutex` member. Using the mutex
+     * as the marker because clang-tidy doesn't like taking the sizeof a
+     * pointer. */
     byte    issuerHash[CRL_DIGEST_SIZE];  /* issuer hash                 */
     /* byte    crlHash[CRL_DIGEST_SIZE];      raw crl data hash           */
     /* restore the hash here if needed for optimized comparisons */
@@ -2475,9 +2493,7 @@ struct CRL_Entry {
     int     totalCerts;             /* number on list     */
     int     version;                /* version of certificate */
     int     verified;
-    byte*   toBeSigned;
     word32  tbsSz;
-    byte*   signature;
     word32  signatureSz;
     word32  signatureOID;
 #if !defined(NO_SKID) && !defined(NO_ASN)
@@ -2485,9 +2501,6 @@ struct CRL_Entry {
     byte    extAuthKeyId[KEYID_SIZE];
 #endif
     int                   crlNumber;  /* CRL number extension */
-#if defined(OPENSSL_EXTRA)
-    WOLFSSL_X509_NAME*    issuer;     /* X509_NAME type issuer */
-#endif
 };
 
 
@@ -2525,7 +2538,7 @@ struct WOLFSSL_CRL {
 #ifdef HAVE_CRL_IO
     CbCrlIO               crlIOCb;
 #endif
-    wolfSSL_Mutex         crlLock;       /* CRL list lock */
+    wolfSSL_RwLock        crlLock;       /* CRL list lock */
     CRL_Monitor           monitors[WOLFSSL_CRL_MONITORS_LEN];
 #ifdef HAVE_CRL_MONITOR
     COND_TYPE             cond;          /* condition to signal setup */
@@ -4601,6 +4614,7 @@ struct Options {
     word16            tls:1;              /* using TLS ? */
     word16            tls1_1:1;           /* using TLSv1.1+ ? */
     word16            tls1_3:1;           /* using TLSv1.3+ ? */
+    word16            seenUnifiedHdr:1;   /* received msg with unified header */
     word16            dtls:1;             /* using datagrams ? */
     word16            dtlsStateful:1;     /* allow stateful processing ? */
     word16            connReset:1;        /* has the peer reset */
@@ -5839,6 +5853,11 @@ struct WOLFSSL {
 #if defined(WOLFSSL_TLS13) && defined(HAVE_ECH)
     WOLFSSL_EchConfig* echConfigs;
 #endif
+
+#if defined(WOLFSSL_SNIFFER) && defined(WOLFSSL_SNIFFER_KEYLOGFILE)
+    SSLSnifferSecretCb snifferSecretCb;
+#endif /* WOLFSSL_SNIFFER && WOLFSSL_SNIFFER_KEYLOGFILE */
+
 };
 
 /*
@@ -6198,6 +6217,7 @@ WOLFSSL_LOCAL void DoCertFatalAlert(WOLFSSL* ssl, int ret);
 WOLFSSL_LOCAL int cipherExtraData(WOLFSSL* ssl);
 
 #ifndef NO_WOLFSSL_CLIENT
+    WOLFSSL_LOCAL int HaveUniqueSessionObj(WOLFSSL* ssl);
     WOLFSSL_LOCAL int SendClientHello(WOLFSSL* ssl);
     WOLFSSL_LOCAL int DoHelloVerifyRequest(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         word32 size);
@@ -6520,6 +6540,8 @@ WOLFSSL_LOCAL int Dtls13HashHandshake(WOLFSSL* ssl, const byte* input,
 WOLFSSL_LOCAL int Dtls13HashClientHello(const WOLFSSL* ssl, byte* hash,
         int* hashSz, const byte* body, word32 length, CipherSpecs* specs);
 WOLFSSL_LOCAL void Dtls13FreeFsmResources(WOLFSSL* ssl);
+WOLFSSL_LOCAL void Dtls13RtxFlushBuffered(WOLFSSL* ssl,
+        byte keepNewSessionTicket);
 WOLFSSL_LOCAL int Dtls13RtxTimeout(WOLFSSL* ssl);
 WOLFSSL_LOCAL int Dtls13ProcessBufferedMessages(WOLFSSL* ssl);
 WOLFSSL_LOCAL int Dtls13CheckAEADFailLimit(WOLFSSL* ssl);

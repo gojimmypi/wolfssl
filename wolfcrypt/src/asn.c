@@ -639,13 +639,13 @@ static word32 SizeASN_Num(word32 n, int bits, byte tag)
  * @param [in]      idx    Index of item working on.
  */
 static void SizeASN_CalcDataLength(const ASNItem* asn, ASNSetData *data,
-                                   int idx, int max)
+                                   int idx, int maxIdx)
 {
     int j;
 
     data[idx].data.buffer.length = 0;
     /* Sum the item length of all items underneath. */
-    for (j = idx + 1; j < max; j++) {
+    for (j = idx + 1; j < maxIdx; j++) {
         /* Stop looking if the next ASN.1 is same level or higher. */
         if (asn[j].depth <= asn[idx].depth)
             break;
@@ -3283,8 +3283,21 @@ static int GetIntPositive(mp_int* mpi, const byte* input, word32* inOutIdx,
     if (ret != 0)
         return ret;
 
-    if (((input[idx] & 0x80) == 0x80) && (input[idx - 1] != 0x00))
+    /* should not be hit but adding in an additional sanity check */
+    if (idx + length > maxIdx) {
         return MP_INIT_E;
+    }
+
+    if ((input[idx] & 0x80) == 0x80) {
+        if (idx < 1) {
+            /* needs at least one byte for length value */
+            return MP_INIT_E;
+        }
+
+        if (input[idx - 1] != 0x00) {
+            return MP_INIT_E;
+        }
+    }
 
     if (initNum) {
         if (mp_init(mpi) != MP_OKAY)
@@ -19247,14 +19260,24 @@ static int DecodeKeyUsage(const byte* input, word32 sz, DecodedCert* cert)
 #else
     ASNGetData dataASN[keyUsageASN_Length];
     word32 idx = 0;
+    byte keyUsage[2];
+    word32 keyUsageSz = sizeof(keyUsage);
+    int ret;
     WOLFSSL_ENTER("DecodeKeyUsage");
 
     /* Clear dynamic data and set where to store extended key usage. */
     XMEMSET(dataASN, 0, sizeof(dataASN));
-    GetASN_Int16Bit(&dataASN[KEYUSAGEASN_IDX_STR], &cert->extKeyUsage);
+    GetASN_Buffer(&dataASN[KEYUSAGEASN_IDX_STR], keyUsage, &keyUsageSz);
     /* Parse key usage. */
-    return GetASN_Items(keyUsageASN, dataASN, keyUsageASN_Length, 0, input,
+    ret = GetASN_Items(keyUsageASN, dataASN, keyUsageASN_Length, 0, input,
                         &idx, sz);
+    if (ret == 0) {
+        /* Decode the bit string number as LE */
+        cert->extKeyUsage = (word16)(keyUsage[0]);
+        if (keyUsageSz == 2)
+            cert->extKeyUsage |= (word16)(keyUsage[1] << 8);
+    }
+    return ret;
 #endif /* WOLFSSL_ASN_TEMPLATE */
 }
 

@@ -7514,7 +7514,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 #endif
 
 #if defined(HAVE_SECRET_CALLBACK) && defined(SHOW_SECRETS) && \
-    defined(WOLFSSL_SSLKEYLOGFILE)
+    defined(WOLFSSL_SSLKEYLOGFILE) && defined(WOLFSSL_TLS13)
     (void)wolfSSL_set_tls13_secret_cb(ssl, tls13ShowSecrets, NULL);
 #endif
 
@@ -9220,6 +9220,10 @@ void DtlsMsgPoolReset(WOLFSSL* ssl)
         ssl->dtls_tx_msg = NULL;
         ssl->dtls_tx_msg_list_sz = 0;
     }
+#ifdef WOLFSSL_DTLS13
+    /* Clear DTLS 1.3 buffer too */
+    Dtls13RtxFlushBuffered(ssl, 1);
+#endif
 }
 
 
@@ -9230,13 +9234,21 @@ int VerifyForDtlsMsgPoolSend(WOLFSSL* ssl, byte type, word32 fragOffset)
      * to be used for triggering retransmission of whole DtlsMsgPool.
      * change cipher suite type is not verified here
      */
-    return ((fragOffset == 0) &&
-           (((ssl->options.side == WOLFSSL_SERVER_END) &&
-             ((type == client_hello) ||
-             ((ssl->options.verifyPeer) && (type == certificate)) ||
-             ((!ssl->options.verifyPeer) && (type == client_key_exchange)))) ||
-            ((ssl->options.side == WOLFSSL_CLIENT_END) &&
-             (type == hello_request || type == server_hello))));
+    if (fragOffset == 0) {
+        if (ssl->options.side == WOLFSSL_SERVER_END) {
+            if (type == client_hello)
+                return 1;
+            else if (ssl->options.verifyPeer && type == certificate)
+                return 1;
+            else if (!ssl->options.verifyPeer && type == client_key_exchange)
+                return 1;
+        }
+        else {
+            if (type == hello_request || type == server_hello)
+                return 1;
+        }
+    }
+    return 0;
 }
 
 
@@ -10800,6 +10812,7 @@ static int GetDtlsRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
     int ret;
 
     if (Dtls13IsUnifiedHeader(*(ssl->buffers.inputBuffer.buffer + *inOutIdx))) {
+        ssl->options.seenUnifiedHdr = 1; /* We can send ACKs to the peer */
 
         /* version 1.3 already negotiated */
         if (ssl->options.tls1_3) {
@@ -15738,6 +15751,12 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
                 WOLFSSL_ERROR_VERBOSE(DUPLICATE_MSG_E);
                 return DUPLICATE_MSG_E;
             }
+            if (ssl->msgsReceived.got_hello_retry_request) {
+                WOLFSSL_MSG("Received HelloVerifyRequest after a "
+                            "HelloRetryRequest");
+                WOLFSSL_ERROR_VERBOSE(VERSION_ERROR);
+                return VERSION_ERROR;
+            }
             ssl->msgsReceived.got_hello_verify_request = 1;
 
             break;
@@ -16110,7 +16129,7 @@ static int SanityCheckMsgReceived(WOLFSSL* ssl, byte type)
 }
 
 
-static int DoHandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
+int DoHandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                           byte type, word32 size, word32 totalSz)
 {
     int ret = 0;
@@ -17711,7 +17730,7 @@ int ChachaAEADEncrypt(WOLFSSL* ssl, byte* out, const byte* input,
  *
  * Return 0 on success negative values in error case
  */
-static int ChachaAEADDecrypt(WOLFSSL* ssl, byte* plain, const byte* input,
+int ChachaAEADDecrypt(WOLFSSL* ssl, byte* plain, const byte* input,
                            word16 sz)
 {
     byte add[AEAD_AUTH_DATA_SZ];
@@ -20060,9 +20079,10 @@ static int HandleDTLSDecryptFailed(WOLFSSL* ssl)
 
 static int DtlsShouldDrop(WOLFSSL* ssl, int retcode)
 {
-    if (ssl->options.handShakeDone && !IsEncryptionOn(ssl, 0)) {
+    if (ssl->options.handShakeDone && !IsEncryptionOn(ssl, 0) &&
+            !ssl->options.dtlsHsRetain) {
         WOLFSSL_MSG("Silently dropping plaintext DTLS message "
-                    "on established connection.");
+                    "on established connection when we have nothing to send.");
         return 1;
     }
 
@@ -25968,7 +25988,7 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
             #endif
             #if defined(HAVE_ECC) || defined(HAVE_ED25519) || \
                                                              defined(HAVE_ED448)
-                if (((haveSig && SIG_ECDSA) == 0) && XSTRSTR(name, "ECDSA"))
+                if (XSTRSTR(name, "ECDSA"))
                     haveSig |= SIG_ECDSA;
                 else
             #endif
@@ -25977,11 +25997,11 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
                     haveSig |= SIG_ANON;
                 else
             #endif
-                if (((haveSig & SIG_RSA) == 0)
-                    #ifndef NO_PSK
-                        && (XSTRSTR(name, "PSK") == NULL)
-                    #endif
-                   ) {
+            #ifndef NO_PSK
+                if (XSTRSTR(name, "PSK") == NULL)
+            #endif
+                {
+                    /* Fall back to RSA */
                     haveSig |= SIG_RSA;
                 }
 
@@ -27529,6 +27549,20 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
 /* client only parts */
 #ifndef NO_WOLFSSL_CLIENT
 
+    int HaveUniqueSessionObj(WOLFSSL* ssl)
+    {
+        if (ssl->session->ref.count > 1) {
+            WOLFSSL_SESSION* newSession = wolfSSL_SESSION_dup(ssl->session);
+            if (newSession == NULL) {
+                WOLFSSL_MSG("Session duplicate failed");
+                return 0;
+            }
+            wolfSSL_FreeSession(ssl->ctx, ssl->session);
+            ssl->session = newSession;
+        }
+        return 1;
+    }
+
 #ifndef WOLFSSL_NO_TLS12
 
     /* handle generation of client_hello (1) */
@@ -28368,6 +28402,11 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
         else {
             if (DSH_CheckSessionId(ssl)) {
                 if (SetCipherSpecs(ssl) == 0) {
+                    if (!HaveUniqueSessionObj(ssl)) {
+                        WOLFSSL_MSG("Unable to have unique session object");
+                        WOLFSSL_ERROR_VERBOSE(MEMORY_ERROR);
+                        return MEMORY_ERROR;
+                    }
 
                     XMEMCPY(ssl->arrays->masterSecret,
                             ssl->session->masterSecret, SECRET_LEN);
@@ -31883,6 +31922,9 @@ exit_scv:
 #ifdef HAVE_SESSION_TICKET
 int SetTicket(WOLFSSL* ssl, const byte* ticket, word32 length)
 {
+    if (!HaveUniqueSessionObj(ssl))
+        return MEMORY_ERROR;
+
     /* Free old dynamic ticket if we already had one */
     if (ssl->session->ticketLenAlloc > 0) {
         XFREE(ssl->session->ticket, ssl->heap, DYNAMIC_TYPE_SESSION_TICK);

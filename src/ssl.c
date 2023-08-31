@@ -8304,7 +8304,7 @@ int wolfSSL_CTX_load_verify_locations_ex(WOLFSSL_CTX* ctx, const char* file,
         /* pass directory read failure to response code */
         if (fileRet != WC_READDIR_NOFILE) {
             ret = fileRet;
-    #if defined(WOLFSSL_QT)
+    #if defined(WOLFSSL_QT) || defined(WOLFSSL_IGNORE_BAD_CERT_PATH)
             if (ret == BAD_PATH_ERROR &&
                 flags & WOLFSSL_LOAD_FLAG_IGNORE_BAD_PATH_ERR) {
                /* QSslSocket always loads certs in system folder
@@ -12462,7 +12462,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                     return WOLFSSL_FATAL_ERROR;
                 }
                 /* if resumption failed, reset needed state */
-                else if (neededState == SERVER_FINISHED_COMPLETE)
+                else if (neededState == SERVER_FINISHED_COMPLETE) {
                     if (!ssl->options.resuming) {
                     #ifdef WOLFSSL_DTLS
                         if (IsDtlsNotSctpMode(ssl))
@@ -12471,17 +12471,19 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                     #endif
                             neededState = SERVER_HELLODONE_COMPLETE;
                     }
-#ifdef WOLFSSL_DTLS13
+                }
 
+#ifdef WOLFSSL_DTLS13
                 if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)
-                    && ssl->dtls13Rtx.sendAcks == 1) {
-                    ssl->dtls13Rtx.sendAcks = 0;
+                    && ssl->dtls13Rtx.sendAcks == 1
+                    && ssl->options.seenUnifiedHdr) {
                     /* we aren't negotiated the version yet, so we aren't sure
                      * the other end can speak v1.3. On the other side we have
                      * received a unified records, assuming that the
                      * ServerHello got lost, we will send an empty ACK. In case
                      * the server is a DTLS with version less than 1.3, it
                      * should just ignore the message */
+                    ssl->dtls13Rtx.sendAcks = 0;
                     if ((ssl->error = SendDtls13Ack(ssl)) < 0) {
                         if (ssl->error == WANT_WRITE)
                             ssl->dtls13SendingAckOrRtx = 1;
@@ -12489,8 +12491,6 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                         return WOLFSSL_FATAL_ERROR;
                     }
                 }
-
-
 #endif /* WOLFSSL_DTLS13 */
             }
 
@@ -14188,11 +14188,7 @@ int wolfSSL_SetSession(WOLFSSL* ssl, WOLFSSL_SESSION* session)
         if (ssl->session == session) {
             WOLFSSL_MSG("ssl->session and session same");
         }
-        else
-#ifdef HAVE_STUNNEL
-        /* stunnel depends on the ex_data not being duplicated. Copy OpenSSL
-         * behaviour for now. */
-        if (session->type != WOLFSSL_SESSION_TYPE_CACHE) {
+        else if (session->type != WOLFSSL_SESSION_TYPE_CACHE) {
             if (wolfSSL_SESSION_up_ref(session) == WOLFSSL_SUCCESS) {
                 wolfSSL_FreeSession(ssl->ctx, ssl->session);
                 ssl->session = session;
@@ -14200,9 +14196,7 @@ int wolfSSL_SetSession(WOLFSSL* ssl, WOLFSSL_SESSION* session)
             else
                 ret = WOLFSSL_FAILURE;
         }
-        else
-#endif
-        {
+        else {
             ret = wolfSSL_DupSession(session, ssl->session, 0);
             if (ret != WOLFSSL_SUCCESS)
                 WOLFSSL_MSG("Session duplicate failed");
@@ -20622,7 +20616,6 @@ int wolfSSL_DupSession(const WOLFSSL_SESSION* input, WOLFSSL_SESSION* output,
 
 WOLFSSL_SESSION* wolfSSL_SESSION_dup(WOLFSSL_SESSION* session)
 {
-#ifdef HAVE_EXT_CACHE
     WOLFSSL_SESSION* copy;
 
     WOLFSSL_ENTER("wolfSSL_SESSION_dup");
@@ -20645,11 +20638,6 @@ WOLFSSL_SESSION* wolfSSL_SESSION_dup(WOLFSSL_SESSION* session)
         copy = NULL;
     }
     return copy;
-#else
-    WOLFSSL_MSG("wolfSSL_SESSION_dup feature not compiled in");
-    (void)session;
-    return NULL;
-#endif /* HAVE_EXT_CACHE */
 }
 
 void wolfSSL_FreeSession(WOLFSSL_CTX* ctx, WOLFSSL_SESSION* session)
