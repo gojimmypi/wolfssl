@@ -34,6 +34,12 @@
 /* big nums can be very long, perhaps unitialized, so limit displayed words */
 #define MAX_WORDS_ESP_SHOW_MP 32
 
+/* Variable holding number of times ESP32 restarted since first boot.
+ * It is placed into RTC memory using RTC_DATA_ATTR and
+ * maintains its value when ESP32 wakes from deep sleep.
+ */
+RTC_DATA_ATTR static int _boot_count = 0;
+
 /*
  * initialize our mutex used to lock hardware access
  *
@@ -332,6 +338,16 @@ static int ShowExtendedSystemInfo_platform()
     return 0;
 }
 
+int esp_increment_boot_count()
+{
+    return ++_boot_count;
+}
+
+int esp_current_boot_count()
+{
+    return _boot_count;
+}
+
 /*
 *******************************************************************************
 ** The public ShowExtendedSystemInfo()
@@ -391,7 +407,7 @@ int ShowExtendedSystemInfo(void)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );
-//    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+/*  ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount); */
 #else
     ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
@@ -408,6 +424,10 @@ int ShowExtendedSystemInfo(void)
     ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
+
+    /* show number of RTC sleep boots */
+    esp_increment_boot_count();
+    ESP_LOGI(TAG, "Boot count: %d", esp_current_boot_count());
 
     return 0;
 }
