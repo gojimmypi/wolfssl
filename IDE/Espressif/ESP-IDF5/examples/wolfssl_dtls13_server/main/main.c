@@ -32,7 +32,7 @@
 #include "wifi_connect.h"
 #include "time_helper.h"
 #include "server-dtls13.h"
-static const char* const TAG = "My Project";
+static const char* const TAG = "main task";
 
 void app_main(void)
 {
@@ -50,19 +50,28 @@ void app_main(void)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
     /* Initialize WiFi */
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
+    ret = wifi_init_sta();
+    while (ret != 0) {
+        ESP_LOGI(TAG, "Waiting...");
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Tring WiFi again...");
+        ret = wifi_init_sta();
+    }
 
     /* set time for cert validation */
-    set_time();
-    ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
-    vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+    ret = set_time();
+    if (ret < -1) {
+        /* a value of -1 means there was no NTP server, so no need to wait */
+        ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+    }
 
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE,
