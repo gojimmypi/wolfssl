@@ -27,19 +27,10 @@
 #define TLS_SMP_SERVER_TASK_WORDS        10240*2
 #define TLS_SMP_SERVER_TASK_PRIORITY     5
 
-// #define TLS_SMP_TARGET_HOST              "192.168.25.109"
-
 #include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/ssl.h>
 #include "user_settings.h"
 
-#if defined(SINGLE_THREADED)
-    #define WOLFSSL_ESP_TASK int
-#else
-    #include "freertos/FreeRTOS.h"
-    #include "freertos/task.h"
-    #define WOLFSSL_ESP_TASK void
-#endif
+#include <wolfssl/ssl.h>
 
 /* Function to show the ciphers available / in use. */
 int ShowCiphers(WOLFSSL* ssl);
