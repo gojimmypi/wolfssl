@@ -2,7 +2,7 @@
 # __ESP_COMPONENT_SOURCE__
 
 #
-# wolfssl client test
+# wolfssl dtls 1.3 demo
 #
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 

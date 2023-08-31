@@ -23,11 +23,11 @@
 
 #define DEFAULT_PORT                     11111
 
-#define TLS_SMP_SERVER_TASK_NAME         "dtls13_client_example"
-#define TLS_SMP_SERVER_TASK_WORDS        32240/4
-#define TLS_SMP_SERVER_TASK_PRIORITY     8
+#define TLS_SMP_SERVER_TASK_NAME         "dtls13"
+#define TLS_SMP_SERVER_TASK_WORDS        10240*2
+#define TLS_SMP_SERVER_TASK_PRIORITY     5
 
-#define TLS_SMP_TARGET_HOST              "192.168.25.109"
+// #define TLS_SMP_TARGET_HOST              "192.168.25.109"
 
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
@@ -41,12 +41,11 @@
     #define WOLFSSL_ESP_TASK void
 #endif
 
-
 /* Function to show the ciphers available / in use. */
 int ShowCiphers(WOLFSSL* ssl);
 
 /* This is the TLS Server function, possibly in an RTOS thread. */
-WOLFSSL_ESP_TASK dtls13_smp_server_task(void *args);
+//WOLFSSL_ESP_TASK udp_server_task(void *pvParameters);
 
 /* init will create an RTOS task, otherwise server is simply function call. */
 #if defined(SINGLE_THREADED)

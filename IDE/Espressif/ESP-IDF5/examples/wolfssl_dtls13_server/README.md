@@ -52,7 +52,7 @@ idf.py flash -p /dev/ttyS19 -b 115200 monitor
 idf.py erase-flash -p /dev/ttyS9 -b 115200
 
 # save defaults
-idf.py sdkconfig_defaults ./sdkconfig.defaults
+idf.py save-defconfig
 ```
 
 Press `Ctrl+]` to exit `idf.py monitor`. See [additional monitor keyboard commands](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-monitor.html).

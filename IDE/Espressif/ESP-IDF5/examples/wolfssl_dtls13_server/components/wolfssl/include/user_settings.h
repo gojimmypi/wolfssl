@@ -118,7 +118,7 @@
     #define ESP32_USE_RSA_PRIMITIVE
     /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
-    #define EPS_RSA_EXPT_XBTIS           32
+    #define EPS_RSA_EXPT_XBTIS           32 /* NOTE HW unreliable for small values! */
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            9
 #endif
@@ -140,7 +140,10 @@
 
 #define HASH_SIZE_LIMIT /* for test.c */
 
+/* only FAST_MATH has HW acceleration at this time */
 #define USE_FAST_MATH
+// #define WOLFSSL_SP_MATH_ALL
+// #define WOLFSSL_SP_RISCV32 /* only valid on RISC-V chips */
 
 /* optionally use SP_MATH */
 /* #define SP_MATH */
@@ -150,7 +153,7 @@
 #define HAVE_VERSION_EXTENDED_INFO
 #define HAVE_WC_INTROSPECTION
 
-/* allows for all version info, even that suppressed with introspection */
+/* allows for all version info, even that suppressed with intospection */
 #define ALLOW_BINARY_MISMATCH_INTROSPECTION
 
 /* Default is HW enabled unless turned off.
@@ -202,32 +205,36 @@
 //#define WOLFSSL_SM3
 //#define WOLFSSL_SM4
 
+/* debug options */
+// #define ESP_VERIFY_MEMBLOCK
+#define WOLFSSL_HW_METRICS
+/* #define DEBUG_WOLFSSL_VERBOSE            */
+/* #define DEBUG_WOLFSSL                    */
+/* #define WOLFSSL_ESP32_CRYPT_DEBUG */
+#define NO_RECOVER_SOFTWARE_CALC
 
-#define WOLFSSL_DTLS 1
-#define WOLFSSL_DTLS13
-#define WOLFSSL_SEND_HRR_COOKIE
-#define WOLFSSL_ENCRYPTED_KEYS
-// #define WOLFSSL_IPV6
+/* optionally turn off individual math HW acceleration features */
 
-       #define OPENSSL_EXTRA
-        #define WOLFSSL_RIPEMD
-        #define NO_PSK
-        #define HAVE_EXTENDED_MASTER
-        #define WOLFSSL_SNIFFER
-        #define HAVE_SECURE_RENEGOTIATION
+/* Turn off Large Number Multiplication:
+** [Z = X * Y] in esp_mp_mul()                                  */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL         */
 
-        #define HAVE_AESGCM
-        #define WOLFSSL_AESGCM_STREAM
-        #define WOLFSSL_SHA384
-        #define WOLFSSL_SHA512
+/* Turn off Large Number Modular Exponentiation:
+** [Z = X^Y mod M] in esp_mp_exptmod()                          */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
 
-        #define HAVE_SUPPORTED_CURVES
-        #define HAVE_TLS_EXTENSIONS
+/* Turn off Large Number Modular Multiplication
+** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
 
-        #define HAVE_ECC
-        #define ECC_SHAMIR
-        #define ECC_TIMING_RESISTANT
 
+/* this is known to fail in TFM: */
+/* #define HONOR_MATH_USED_LENGTH */
+
+/* this is known to fail in TFM */
+/* #define CHECK_MP_READ_UNSIGNED_BIN */
+
+#define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
@@ -252,5 +259,45 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+#define USE_CERT_BUFFERS_2048
+#define USE_CERT_BUFFERS_256
 
-#define LWIP_DEBUG
+/* Optionally include alternate HW test library: alt_hw_test.h */
+/* When enabling, the ./components/wolfssl/CMakeLists.txt file
+ * will need the name of the library in the idf_component_register
+ * for the PRIV_REQUIRES list. */
+/* #define INCLUDE_ALT_HW_TEST */
+
+/* #define NO_HW_MATH_TEST */
+
+
+/* when turning on ECC508 / ECC608 support
+#define WOLFSSL_ESPWROOM32SE
+#define HAVE_PK_CALLBACKS
+#define WOLFSSL_ATECC508A
+#define ATCA_WOLFSSL
+*/
+
+/* USE_FAST_MATH is default */
+
+/* use SP_MATH */
+/*
+#undef USE_FAST_MATH
+#define WOLFSSL_SP_MATH_ALL
+*/
+
+/* use integer heap math */
+/*
+#undef USE_FAST_MATH
+#define USE_INTEGER_HEAP_MATH
+*/
+
+/* optionally use DPORT_ACCESS_READ_BUFFER */
+/*
+#define USE_ESP_DPORT_ACCESS_READ_BUFFER
+*/
+
+#define WOLFSSL_DTLS 1
+#define WOLFSSL_DTLS13
+#define WOLFSSL_SEND_HRR_COOKIE
+#define WOLFSSL_ENCRYPTED_KEYS

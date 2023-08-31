@@ -26,12 +26,12 @@
 /* wolfSSL  */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/certs_test.h>
+
 /* project */
 #include "main.h"
 #include "wifi_connect.h"
 #include "time_helper.h"
 #include "server-dtls13.h"
-
 static const char* const TAG = "My Project";
 
 void app_main(void)
@@ -58,9 +58,12 @@ void app_main(void)
     /* Initialize WiFi */
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
-vTaskDelay(10000);
+
     /* set time for cert validation */
     set_time();
+    ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+    vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE,
                    (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
@@ -84,10 +87,10 @@ vTaskDelay(10000);
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        ESP_LOGI(TAG, "Stack remaining: %d", uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - uxTaskGetStackHighWaterMark(NULL));
+                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
 #endif
 
 #if defined(SINGLE_THREADED)
