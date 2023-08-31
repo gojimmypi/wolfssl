@@ -219,7 +219,7 @@ int wifi_init_sta(void)
         ESP_LOGI(TAG, "Failed to connect to AP");
         ret = -1;
     } else {
-        ESP_LOGE(TAG, "Connect to AP UNEXPECTED EVENT");
+        ESP_LOGE(TAG, "AP UNEXPECTED EVENT");
         ret = -2;
     }
 #endif
