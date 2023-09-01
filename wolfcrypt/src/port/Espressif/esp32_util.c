@@ -163,8 +163,13 @@ static int ShowExtendedSystemInfo_platform_espressif()
     char thisHWM = 0;
     WOLFSSL_VERSION_PRINTF("Stack HWM: %x", (size_t) &thisHWM);
 #else
-    WOLFSSL_VERSION_PRINTF("Stack HWM: %d",
-                           uxTaskGetStackHighWaterMark(NULL));
+    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    {
+        WOLFSSL_VERSION_PRINTF("Stack HWM: %d",
+                               uxTaskGetStackHighWaterMark(NULL));
+    }
+    #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
+
 #endif
 
 #elif CONFIG_IDF_TARGET_ESP32S2
@@ -416,7 +421,9 @@ int ShowExtendedSystemInfo(void)
 #endif
 
     /* all platforms: stack high water mark check */
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+#endif
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "");
 
