@@ -61,7 +61,7 @@ void app_main(void)
     while (ret != 0) {
         ESP_LOGI(TAG, "Waiting...");
         vTaskDelay(60000 / portTICK_PERIOD_MS);
-        ESP_LOGI(TAG, "Tring WiFi again...");
+        ESP_LOGI(TAG, "Trying WiFi again...");
         ret = wifi_init_sta();
     }
 

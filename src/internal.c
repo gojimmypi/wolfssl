@@ -19890,6 +19890,8 @@ static int GetInputData(WOLFSSL *ssl, word32 size)
 
     /* read data from network */
     do {
+        printf("GetInputData DTLS do loop\n");
+
         int in = wolfSSLReceive(ssl,
                      ssl->buffers.inputBuffer.buffer +
                      ssl->buffers.inputBuffer.length,
@@ -20144,7 +20146,8 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
 #if defined(WOLFSSL_DTLS)
     int    used;
 #endif
-
+        WOLFSSL_MSG("ProcessReplyEx");
+    printf("ProcessReplyEx\n");
 #ifdef ATOMIC_USER
     if (ssl->ctx->DecryptVerifyCb)
         atomicUser = 1;
@@ -20205,12 +20208,16 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     if (ret != 0)
         return ret;
 
+     wolfSSL_Debugging_ON();
     for (;;) {
+        printf("ProcessReplyEx loop v1\n");
+        printf("\n");
         switch (ssl->options.processReply) {
 
         /* in the WOLFSSL_SERVER case, get the first byte for detecting
          * old client hello */
         case doProcessInit:
+            printf("dp\n");
 
             readSz = RECORD_HEADER_SZ;
 
@@ -20228,6 +20235,7 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
 
             /* get header or return error */
             if (!ssl->options.dtls) {
+                printf("GetInputData\n");
                 if ((ret = GetInputData(ssl, readSz)) < 0)
                     return ret;
             } else {
@@ -20236,12 +20244,16 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < readSz) {
-                    if ((ret = GetInputData(ssl, readSz)) < 0)
+                    printf("GetInputData DTLS\n");
+                    if ((ret = GetInputData(ssl, readSz)) < 0) {
+                        printf("GetInputData DTLS return \n");
                         return ret;
+                    }
+                    printf("GetInputData DTLS done\n");
                 }
             #endif
             }
-
+            printf("GetInputData c\n");
 #ifdef OLD_HELLO_ALLOWED
 
             /* see if sending SSLv2 client hello */
@@ -20320,6 +20332,7 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
 
         /* get the record layer header */
         case getRecordLayerHeader:
+            printf("gh\n");
 
             /* DTLSv1.3 record numbers in the header are encrypted, and AAD
              * uses the unecrypted form. Because of this we need to modify the
@@ -20383,6 +20396,7 @@ default:
 
         /* retrieve record layer data */
         case getData:
+            printf("gd\n");
 
             /* get sz bytes or return error */
             if (!ssl->options.dtls) {
@@ -20437,6 +20451,8 @@ default:
 
         /* verify digest of encrypted message */
         case verifyEncryptedMessage:
+        printf("ve\n");
+
 #if defined(HAVE_ENCRYPT_THEN_MAC) && !defined(WOLFSSL_AEAD_ONLY)
             if (IsEncryptionOn(ssl, 0) && ssl->keys.decryptedCur == 0 &&
                                    !atomicUser && ssl->options.startedETMRead) {
@@ -20474,6 +20490,7 @@ default:
 
         /* decrypt message */
         case decryptMessage:
+        printf("dm\n");
 
             if (IsEncryptionOn(ssl, 0) && ssl->keys.decryptedCur == 0 &&
                                         (!IsAtLeastTLSv1_3(ssl->version) ||
@@ -20660,6 +20677,7 @@ default:
 
         /* verify digest of message */
         case verifyMessage:
+        printf("vm2\n");
 
             if (IsEncryptionOn(ssl, 0) && ssl->keys.decryptedCur == 0 &&
                                         (!IsAtLeastTLSv1_3(ssl->version) ||
@@ -20735,6 +20753,7 @@ default:
 
         /* the record layer is here */
         case runProcessingOneRecord:
+        printf("rpo\n");
 #ifdef WOLFSSL_DTLS13
             if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)) {
 
@@ -21249,6 +21268,7 @@ default:
                 ShrinkInputBuffer(ssl, NO_FORCED_FREE);
             continue;
         default:
+            printf("default\n");
             WOLFSSL_MSG("Bad process input state, programming error");
             WOLFSSL_ERROR_VERBOSE(INPUT_CASE_ERROR);
             return INPUT_CASE_ERROR;
@@ -23804,9 +23824,11 @@ startScr:
 #endif
 
     while (ssl->buffers.clearOutputBuffer.length == 0) {
+        printf("wolf loop\n");
         if ( (ssl->error = ProcessReply(ssl)) < 0) {
             if (ssl->error == ZERO_RETURN) {
                 WOLFSSL_MSG("Zero return, no more data coming");
+                printf("wolf loop return 1\n");
                 return 0; /* no more data coming */
             }
             if (ssl->error == SOCKET_ERROR_E) {
@@ -23814,13 +23836,15 @@ startScr:
                     WOLFSSL_MSG("Peer reset or closed, connection done");
                     ssl->error = SOCKET_PEER_CLOSED_E;
                     WOLFSSL_ERROR(ssl->error);
+                    printf("wolf loop return 2\n");
                     return 0; /* peer reset or closed */
                 }
             }
             WOLFSSL_ERROR(ssl->error);
+            printf("wolf loop error\n");
             return ssl->error;
         }
-
+        printf("wolf loop step 1\n");
 #ifdef WOLFSSL_DTLS13
         if (ssl->options.dtls) {
             /* Dtls13DoScheduledWork(ssl) may return WANT_WRITE */
@@ -23829,6 +23853,7 @@ startScr:
                 return ssl->error;
             }
         }
+        printf("wolf loop step 2\n");
 #endif /* WOLFSSL_DTLS13 */
         #ifdef HAVE_SECURE_RENEGOTIATION
             if (ssl->secure_renegotiation &&
@@ -23862,6 +23887,7 @@ startScr:
                 - ssl->buffers.inputBuffer.length  == 0) {
                 return 0;
             }
+        WOLFSSL_MSG("wolf loop step 3");
 #endif /* WOLFSSL_DTLS13 */
 
 #ifndef WOLFSSL_TLS13_NO_PEEK_HANDSHAKE_DONE

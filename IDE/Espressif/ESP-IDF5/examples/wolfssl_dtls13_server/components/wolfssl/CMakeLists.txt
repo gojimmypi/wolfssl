@@ -22,6 +22,8 @@
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
 
+# allows /include/user_settings.h (ignores it)
+
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
@@ -260,9 +262,9 @@ else()
                     #
                     # first check if there's a [root]/include/user_settings.h
                     if( EXISTS "${WOLFSSL_ROOT}/include/user_settings.h" )
-                        message(FATAL_ERROR "Found stray wolfSSL user_settings.h in "
+                        message(STATUS "Found wolfSSL EXCLUDED user_settings.h in "
                                             "${WOLFSSL_ROOT}/include/user_settings.h "
-                                            " (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h )")
+                                            " (using ${WOLFSSL_PROJECT_DIR}/include/user_settings.h )")
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/user_settings.h" )
@@ -348,6 +350,7 @@ else()
 
 
     set(COMPONENT_SRCEXCLUDE
+        "\"${WOLFSSL_ROOT}/include/user_settings.h\"" # use local file only
         "\"${WOLFSSL_ROOT}/src/bio.c\""
         "\"${WOLFSSL_ROOT}/src/conf.c\""
         "\"${WOLFSSL_ROOT}/src/misc.c\""

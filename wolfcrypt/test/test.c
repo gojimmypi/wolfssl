@@ -705,7 +705,9 @@ static wc_test_ret_t debug_message(const char* msg)
     #endif /* WOLFSSL_ESPIDF */
 #else
     /* no message */
-    (void)TAG;
+    #ifdef WOLFSSL_ESPIDF
+        (void)TAG;
+    #endif
 #endif /* #if defined(DEBUG_WOLFSSL) */
     return ret;
 }
