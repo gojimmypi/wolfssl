@@ -27,7 +27,7 @@
 #define TLS_SMP_CLIENT_TASK_WORDS        10240*2
 #define TLS_SMP_CLIENT_TASK_PRIORITY     5
 
-#define TLS_SMP_SERVER_ADDRESS           "192.168.25.100"
+#define TLS_SMP_SERVER_ADDRESS           "192.168.25.109"
 
 #include <wolfssl/wolfcrypt/settings.h>
 #include "user_settings.h"
