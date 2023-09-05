@@ -24,7 +24,7 @@
 #define DEFAULT_PORT                     11111
 
 #define TLS_SMP_SERVER_TASK_NAME         "dtls13"
-#define TLS_SMP_SERVER_TASK_WORDS        10240*2
+#define TLS_SMP_SERVER_TASK_WORDS        8192 /* 32K bytes */
 #define TLS_SMP_SERVER_TASK_PRIORITY     5
 
 #include <wolfssl/wolfcrypt/settings.h>
