@@ -1,17 +1,18 @@
 # vim:ft=automake
+# included from Top Level Makefile.am
 # All paths should be given relative to the root
 
 if BUILD_EXAMPLE_CLIENTS
-noinst_PROGRAMS += examples/client/client
-noinst_HEADERS += examples/client/client.h
-examples_client_client_SOURCES      = examples/client/client.c
-examples_client_client_LDADD        = src/libwolfssl@LIBSUFFIX@.la $(LIB_STATIC_ADD) $(WOLFSENTRY_LIB)
-examples_client_client_DEPENDENCIES = src/libwolfssl@LIBSUFFIX@.la
-examples_client_client_CFLAGS = $(WOLFSENTRY_INCLUDE) $(AM_CFLAGS)
+noinst_PROGRAMS += examples/dtls13client/client
+noinst_HEADERS += examples/dtls13client/client.h
+examples_dtls13client_client_SOURCES      = examples/dtls13client/client.c
+examples_dtls13client_client_LDADD        = src/libwolfssl@LIBSUFFIX@.la $(LIB_STATIC_ADD) $(WOLFSENTRY_LIB)
+examples_dtls13client_client_DEPENDENCIES = src/libwolfssl@LIBSUFFIX@.la
+examples_dtls13client_client_CFLAGS = $(WOLFSENTRY_INCLUDE) $(AM_CFLAGS)
 endif
-EXTRA_DIST += examples/client/client.sln
-EXTRA_DIST += examples/client/client.vcproj
-EXTRA_DIST += examples/client/client.vcxproj
+EXTRA_DIST += examples/dtls13client/client.sln
+EXTRA_DIST += examples/dtls13client/client.vcproj
+EXTRA_DIST += examples/dtls13client/client.vcxproj
 
-dist_example_DATA+= examples/client/client.c
-DISTCLEANFILES+= examples/client/.libs/client
+dist_example_DATA+= examples/dtls13client/client.c
+DISTCLEANFILES+= examples/dtls13client/.libs/client
