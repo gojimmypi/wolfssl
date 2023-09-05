@@ -286,7 +286,7 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
                                         - (uxTaskGetStackHighWaterMark(NULL)));
     ShowStackInfo("While Stack");
     while (1) {
-        printf("Awaiting client connection on port %d\n", SERV_PORT);
+        ESP_LOGI(TAG, "Awaiting client connection on port %d\n", SERV_PORT);
 
         cliLen = sizeof(cliaddr);
         ret = (int)recvfrom(listenfd, (char *)&buff, sizeof(buff), MSG_PEEK,
@@ -297,58 +297,58 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
             goto cleanup;
         }
         else if (ret == 0) {
-            fprintf(stderr, "recvfrom zero return\n");
+            ESP_LOGE(TAG, "recvfrom zero return\n");
             goto cleanup;
         }
 
         /* Create the WOLFSSL Object */
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
-            fprintf(stderr, "wolfSSL_new error.\n");
+            ESP_LOGE(TAG, "wolfSSL_new error.\n");
             goto cleanup;
         }
 
         if (wolfSSL_dtls_set_peer(ssl, &cliaddr, cliLen) != WOLFSSL_SUCCESS) {
-            fprintf(stderr, "wolfSSL_dtls_set_peer error.\n");
+            ESP_LOGE(TAG, "wolfSSL_dtls_set_peer error.\n");
             goto cleanup;
         }
 
         if (wolfSSL_set_fd(ssl, listenfd) != WOLFSSL_SUCCESS) {
-            fprintf(stderr, "wolfSSL_set_fd error.\n");
+            ESP_LOGE(TAG, "wolfSSL_set_fd error.\n");
             break;
         }
 
         if (wolfSSL_accept(ssl) != SSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "SSL_accept failed.\n");
+            ESP_LOGE(TAG, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "SSL_accept failed.\n");
             goto cleanup;
         }
         showConnInfo(ssl);
         while (1) {
             if ((recvLen = wolfSSL_read(ssl, buff, sizeof(buff)-1)) > 0) {
-                printf("heard %d bytes\n", recvLen);
+                ESP_LOGI(TAG, "heard %d bytes\n", recvLen);
 
                 buff[recvLen] = '\0';
-                printf("I heard this: \"%s\"\n", buff);
+                ESP_LOGI(TAG, "I heard this: \"%s\"\n", buff);
             }
             else if (recvLen <= 0) {
                 err = wolfSSL_get_error(ssl, 0);
                 if (err == WOLFSSL_ERROR_ZERO_RETURN) /* Received shutdown */
                     break;
-                fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-                fprintf(stderr, "SSL_read failed.\n");
+                ESP_LOGE(TAG, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+                ESP_LOGE(TAG, "SSL_read failed.\n");
                 goto cleanup;
             }
-            printf("Sending reply.\n");
+            ESP_LOGI(TAG, "Sending reply.\n");
             if (wolfSSL_write(ssl, ack, sizeof(ack)) < 0) {
                 err = wolfSSL_get_error(ssl, 0);
-                fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-                fprintf(stderr, "wolfSSL_write failed.\n");
+                ESP_LOGE(TAG, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+                ESP_LOGE(TAG, "wolfSSL_write failed.\n");
                 goto cleanup;
             }
         }
 
-        printf("reply sent \"%s\"\n", ack);
+        ESP_LOGI(TAG, "reply sent \"%s\"\n", ack);
 
         /* Attempt a full shutdown */
         ret = wolfSSL_shutdown(ssl);
@@ -356,13 +356,13 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
             ret = wolfSSL_shutdown(ssl);
         if (ret != WOLFSSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "wolfSSL_shutdown failed\n");
+            ESP_LOGE(TAG, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "wolfSSL_shutdown failed\n");
         }
         wolfSSL_free(ssl);
         ssl = NULL;
 
-        printf("Awaiting new connection\n");
+        ESP_LOGI(TAG, "Awaiting new connection\n");
     }
     ESP_LOGI(TAG, "Exit %d", exitVal);
     exitVal = 0;
