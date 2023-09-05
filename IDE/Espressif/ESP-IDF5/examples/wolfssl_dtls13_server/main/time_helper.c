@@ -51,6 +51,7 @@ const static char* TAG = "time_helper";
  *
  *  (int)(sizeof(NTP_SERVER_LIST) / sizeof(NTP_SERVER_LIST[0]))
  */
+#define USE_NTP
 #define NTP_SERVER_COUNT NELEMS(NTP_SERVER_LIST)
 char* ntpServerList[NTP_SERVER_COUNT] = NTP_SERVER_LIST;
 
@@ -66,10 +67,10 @@ int set_fixed_default_time()
      * but let's set a default time, just in case */
     struct tm timeinfo = {
         .tm_year = 2023 - 1900,
-        .tm_mon = 7,
-        .tm_mday = 18,
-        .tm_hour = 9,
-        .tm_min = 49,
+        .tm_mon = 9,
+        .tm_mday = 4,
+        .tm_hour = 19,
+        .tm_min = 4,
         .tm_sec = 0
     };
     struct timeval now;
@@ -146,6 +147,9 @@ int set_time_from_string(char* time_buffer)
 /* set time; returns 0 if succecssfully confirmed NTP update */
 int set_time(void)
 {
+    set_fixed_default_time();
+    return 0;
+
     /* we'll also return a result code of zero */
     int res = 0;
     int i = 0; /* counter for time servers */
@@ -154,11 +158,12 @@ int set_time(void)
     /* initialy set a default approximate time from recent git commit */
     ESP_LOGI(TAG, "Found git hash date, attempting to set system date.");
     set_time_from_string(LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+
     res = -4;
 #else
     /* otherwise set a fixed time that was hard coded */
     set_fixed_default_time();
-    restrict = -3;
+    res = -3;
 #endif
 
 #ifndef NTP_SERVER_COUNT
@@ -170,6 +175,8 @@ int set_time(void)
 #ifndef TIME_ZONE
     #define TIME_ZONE "PST-8"
 #endif /* not defined: TIME_ZONE */
+    return 0;
+
 
     /* set timezone */
     setenv("TZ", TIME_ZONE, 1);
