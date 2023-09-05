@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef _SERVER_DTLS13_
-#define _SERVER_DTLS13_
+#ifndef CLIENT_TLS
+#define CLIENT_TLS
 
 #define DEFAULT_PORT                     11111
 
@@ -55,4 +55,4 @@ int ShowCiphers(WOLFSSL* ssl);
 } /* extern "C" */
 #endif
 
-#endif /* _SERVER_TLS_ */
+#endif /* CLIENT_TLS */

@@ -1,4 +1,3 @@
-#ifndef _TIME_HELPER_H
 /*
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -24,6 +23,8 @@
 # __ESP_COMPONENT_SOURCE__
 */
 
+#ifndef _TIME_HELPER_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,7 +36,7 @@ int set_fixed_default_time();
 int set_time_from_string(char* time_buffer);
 
 /* set time from NTP servers,
-    * also intitially calls set_fixed_default_time or set_time_from_string */
+ * also intitially calls set_fixed_default_time or set_time_from_string */
 int set_time(void);
 
 #ifdef __cplusplus

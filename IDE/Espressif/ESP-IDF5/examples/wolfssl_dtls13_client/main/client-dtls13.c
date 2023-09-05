@@ -51,13 +51,10 @@
 /* #include <signal.h> not fully implemented in ESP-IDF */
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
-#include <stdio.h>                  /* standard in/out procedures */
-#include <stdlib.h>                 /* defines system calls */
-#include <string.h>                 /* necessary for memset */
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include "user_settings.h"
+#include "user_settings.h" /* always before other wolfssl files */
 
 #include <wolfssl/ssl.h>
 #include <errno.h>
@@ -114,7 +111,7 @@ WOLFSSL_ESP_TASK dtls13_smp_client_task(void *pvParameters)
     ShowStackInfo("dtls13_smp_client_task startup");
     /* Initialize wolfSSL before assigning ctx */
     if (wolfSSL_Init() != WOLFSSL_SUCCESS) {
-        fprintf(stderr, "wolfSSL_CTX_new error.\n");
+        ESP_LOGE(TAG, "wolfSSL_CTX_new error.\n");
         goto cleanup;
     }
 
@@ -128,27 +125,28 @@ WOLFSSL_ESP_TASK dtls13_smp_client_task(void *pvParameters)
             wolfDTLSv1_2_client_method()
 #endif
             )) == NULL) {
-        fprintf(stderr, "wolfSSL_CTX_new error.\n");
+        ESP_LOGE(TAG, "wolfSSL_CTX_new error.\n");
         goto cleanup;
     }
 
     /* Load certificates into ctx variable */
 #ifdef NO_FILESYSTEM
     if (wolfSSL_CTX_load_verify_buffer(ctx, CTX_CA_CERT, CTX_CA_CERT_SIZE, CTX_CA_CERT_TYPE) != SSL_SUCCESS) {
-        fprintf(stderr, "Error loading %s, please check the file.\n", caCertLoc);
+        ESP_LOGE(TAG, "Error loading CTX_CA_CERT, please check the file.\n");
         goto cleanup;
     }
 #else
     if (wolfSSL_CTX_load_verify_locations(ctx, caCertLoc, 0)
 	    != SSL_SUCCESS) {
-        fprintf(stderr, "Error loading %s, please check the file.\n", caCertLoc);
+        ESP_LOGE(TAG, "Error loading %s, please check the file.\n", caCertLoc);
         goto cleanup;
     }
 #endif
+
     /* Assign ssl variable */
     ssl = wolfSSL_new(ctx);
     if (ssl == NULL) {
-        fprintf(stderr, "unable to get ssl object\n");
+        ESP_LOGE(TAG, "unable to get ssl object\n");
         goto cleanup;
     }
 
@@ -157,32 +155,32 @@ WOLFSSL_ESP_TASK dtls13_smp_client_task(void *pvParameters)
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = htons(SERV_PORT);
     if (inet_pton(AF_INET, TLS_SMP_SERVER_ADDRESS, &servAddr.sin_addr) < 1) {
-        perror("inet_pton()");
+        ESP_LOGE(TAG, "inet_pton()");
         goto cleanup;
     }
 
     if (wolfSSL_dtls_set_peer(ssl, &servAddr, sizeof(servAddr))
             != WOLFSSL_SUCCESS) {
-        fprintf(stderr, "wolfSSL_dtls_set_peer failed\n");
+        ESP_LOGE(TAG, "wolfSSL_dtls_set_peer failed\n");
         goto cleanup;
     }
 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-       perror("socket()");
+       ESP_LOGE(TAG, "socket()");
        goto cleanup;
     }
 
     /* Set the file descriptor for ssl */
     if (wolfSSL_set_fd(ssl, sockfd) != WOLFSSL_SUCCESS) {
-        fprintf(stderr, "cannot set socket file descriptor\n");
+        ESP_LOGE(TAG, "cannot set socket file descriptor\n");
         goto cleanup;
     }
 
     /* Perform SSL connection */
     if (wolfSSL_connect(ssl) != SSL_SUCCESS) {
         err = wolfSSL_get_error(ssl, 0);
-        fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-        fprintf(stderr, "wolfSSL_connect failed\n");
+        ESP_LOGE(TAG, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+        ESP_LOGE(TAG, "wolfSSL_connect failed\n");
         goto cleanup;
     }
 
@@ -191,32 +189,32 @@ WOLFSSL_ESP_TASK dtls13_smp_client_task(void *pvParameters)
 /*****************************************************************************/
 /*                  Code for sending datagram to server                      */
     while (1) {
-        if (fgets(sendLine, MAXLINE, stdin) == NULL)
-            break;
 
-        if (strncmp(sendLine, "end", 3) == 0)
-            break;
+        ESP_LOGI(TAG, "Sending message");
+
+        strcpy(sendLine, "Hello World.");
 
         /* Send sendLine to the server */
         if (wolfSSL_write(ssl, sendLine, strlen(sendLine)) != strlen(sendLine)) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "wolfSSL_write failed\n");
+            ESP_LOGE(TAG, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "wolfSSL_write failed\n");
             goto cleanup;
         }
 
+        ESP_LOGI(TAG, "Reading reply");
         /* n is the # of bytes received */
         n = wolfSSL_read(ssl, recvLine, sizeof(recvLine)-1);
 
         if (n > 0) {
             /* Add a terminating character to the generic server message */
             recvLine[n] = '\0';
-            printf("%s\n", recvLine);
+            ESP_LOGI(TAG, "%s\n", recvLine);
         }
         else {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "wolfSSL_read failed\n");
+            ESP_LOGE(TAG, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "wolfSSL_read failed\n");
             goto cleanup;
         }
     }
@@ -231,8 +229,8 @@ cleanup:
             ret = wolfSSL_shutdown(ssl);
         if (ret != WOLFSSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "wolfSSL_shutdown failed\n");
+            ESP_LOGE(TAG, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "wolfSSL_shutdown failed\n");
         }
         wolfSSL_free(ssl);
     }

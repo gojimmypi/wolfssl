@@ -25,24 +25,29 @@
  *
  */
 
-#ifndef DTLS_COMMON_H_
-#define DTLS_COMMON_H_
+#ifndef DTLS_COMMON_H
+#define DTLS_COMMON_H
+
+#include <esp_log.h>
 
 #define INVALID_SOCKET -1
-#define MAXLINE   4096
-#define SERV_PORT 11111
-#define LOOP_LIMIT 5
-#define SFD_TIMEOUT 1
+#define MAXLINE        4096
+#define SERV_PORT      11111
+#define LOOP_LIMIT     5
+#define SFD_TIMEOUT    1
 
 /* Loc short for "location" */
-const char caCertLoc[] = "../certs/ca-cert.pem";
-const char servCertLoc[] = "../certs/server-cert.pem";
-const char servKeyLoc[] = "../certs/server-key.pem";
+#ifndef  NO_FILESYSTEM
+    const char caCertLoc[] = "../certs/ca-cert.pem";
+    const char servCertLoc[] = "../certs/server-cert.pem";
+    const char servKeyLoc[] = "../certs/server-key.pem";
+#else
+   /* see user_settings.h for CTX_ array macros */
+#endif
 
 static inline void showConnInfo(WOLFSSL* ssl) {
-    printf("New connection established using %s %s\n",
+   ESP_LOGI("DTLS", "New connection established using %s %s\n",
             wolfSSL_get_version(ssl), wolfSSL_get_cipher(ssl));
 }
 
-
-#endif /* DTLS_COMMON_H_ */
+#endif /* DTLS_COMMON_H */
