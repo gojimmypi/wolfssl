@@ -6,6 +6,22 @@ This is an example minimally viable wolfSSL template to get started with your ow
 
 It is assumed the [ESP-IDF environment](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/) has been installed.
 
+```
+gcc -o client-dtls13 client-dtls13.c -L/mnt/c/workspace/wolfssl-gojimmypi/src/.libs -I/mnt/c/workspace/wolfssl-gojimmypi/ -I/mnt/c/workspace/wolfssl-gojimmypi/include -DWOLFSSL_TLS13 -DWOLFSSL_DTLS -DWOLFSSL_DTLS13 -DWOLFSSL_USER_SETTINGS -lwolfssl -ldl -lm
+```
+
+Connect with Linux command line example:
+
+```bash
+# assuming wolfssl is in /workspace/wolfssl-$USER
+cd /mnt/c/workspace/wolfssl-$USER
+./autogen.sh
+./configure --enable-dtls --enable-dtls13 --enable-tls13
+make
+./examples/dtls13client/client 192.168.1.37
+```
+
+
 ### Files Included
 
 - [main.c](./main/main.c) with a simple call to an Espressif library (`ESP_LOGI`) and a call to a wolfSSL library (`esp_ShowExtendedSystemInfo`) . 
