@@ -73,8 +73,8 @@
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
-
-#define WOLFSSL_RIPEMD
+//
+//#define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
 // #define WOLFSSL_SHA224
 #define NO_OLD_TLS
@@ -85,9 +85,9 @@
 //#define NO_SHA256
 #define WOLFSSL_SHA512
 #define HAVE_ECC
-#define HAVE_CURVE25519
-#define CURVE25519_SMALL
-#define HAVE_ED25519
+//#define HAVE_CURVE25519
+//#define CURVE25519_SMALL
+//#define HAVE_ED25519
 
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
@@ -122,7 +122,7 @@
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            9
 #endif
-#define RSA_LOW_MEM
+// #define RSA_LOW_MEM
 
 /* debug options */
 /* #define DEBUG_WOLFSSL */
@@ -301,4 +301,7 @@
 #define WOLFSSL_DTLS13
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_ENCRYPTED_KEYS
-#define WOLFSSL_TLS13
+//#define WOLFSSL_TLS13
+
+#define DEBUG_WOLFSSL_VERBOSE
+#define DEBUG_WOLFSSL
