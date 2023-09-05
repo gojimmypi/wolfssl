@@ -80,15 +80,21 @@ static void free_resources(void);
 /* show stack space for this task */
 static int ShowStackInfo(char* msg)
 {
-    int ret;
+    int ret = 0;
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
     ret = uxTaskGetStackHighWaterMark(NULL);
-    ESP_LOGI(TAG, "%s used: %d of %d words", msg,
+    ESP_LOGI(TAG, "%s used: %d of %d words. %d free.", msg,
                    TLS_SMP_SERVER_TASK_WORDS - ret,
-                   TLS_SMP_SERVER_TASK_WORDS);
+                   TLS_SMP_SERVER_TASK_WORDS,
+                   ret);
+#else
+    ESP_LOGW(TAG, "Warning: uxTaskGetStackHighWaterMark() "
+                  "not available");
+#endif
     return ret;
 }
 
-#if 0
+#ifdef DTSL13_SERVER_IS_MAIN
 int main(int argc, char** argv)
 #else
 WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
@@ -105,12 +111,10 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
     struct sockaddr_in servAddr = { 0 };  /* our server's address */
     struct sockaddr_in cliaddr  = { 0 };  /* the client's address */
     socklen_t     cliLen;
-    int           ret;
     int           err;
     int           recvLen = 0;    /* length of message */
-    int           exitVal = 0;
     int           ip_protocol = 0;
-    exitVal = 1;
+    int           ret;
 
     ESP_LOGI(TAG, "Init Stack: %d words", TLS_SMP_SERVER_TASK_WORDS);
     ShowStackInfo("Begin Stack");
@@ -248,6 +252,7 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
     lwip_setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
 #endif
 
+#ifdef USE_SOCKET_TIMEOUT
     /* init socket options */
     if (ret == WOLFSSL_SUCCESS) {
         ESP_LOGI(TAG, "setsockopt timeout ");
@@ -266,6 +271,7 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
             ret = WOLFSSL_FATAL_ERROR;
         }
     } /* soctet options */
+#endif
 
     /* Bind Socket */
     if (ret == WOLFSSL_SUCCESS) {
@@ -376,13 +382,24 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
 
         ESP_LOGI(TAG, "Awaiting new connection\n");
     }
-    ESP_LOGI(TAG, "Exit %d", exitVal);
-    exitVal = 0;
+
 cleanup:
     free_resources();
     wolfSSL_Cleanup();
 
-    vTaskDelete(NULL);
+#if defined(SINGLE_THREADED)
+        ESP_LOGV(TAG, "\n\nDone!\n\n");
+        return TLS_SMP_SERVER_TASK_RET;
+#else
+        ESP_LOGI(TAG, "\n\nvTaskDelete dtls13_smp_server_task...\n\n");
+        vTaskDelay(1000);
+        vTaskDelete(NULL);
+
+        /* if successful vTaskDelete, we should never get here: */
+        ESP_LOGI(TAG, "\n\nvTaskDelete Complete, but failed?...\n\n");
+
+        vTaskDelay(60000);
+#endif
 
     return TLS_SMP_SERVER_TASK_RET;
 }
@@ -425,7 +442,6 @@ int dtls13_smp_server_init(int port)
     if (thisPort == 0) {
         thisPort = DEFAULT_PORT;
     }
-
 
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
