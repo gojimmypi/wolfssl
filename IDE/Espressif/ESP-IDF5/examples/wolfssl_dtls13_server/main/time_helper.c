@@ -143,7 +143,7 @@ int set_time_from_string(char* time_buffer)
     return ret;
 }
 
-/* set time; returns 0 if succecssfully confirmed NTP update */
+/* set time; returns 0 if succecssfully configured with NTP */
 int set_time(void)
 {
     /* we'll also return a result code of zero */
@@ -176,6 +176,22 @@ int set_time(void)
     setenv("TZ", TIME_ZONE, 1);
     tzset();
 
+#if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
+    /* This demonstrates configuring more than one server
+     */
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2,
+                               ESP_SNTP_SERVER_LIST(CONFIG_SNTP_TIME_SERVER, "pool.ntp.org" ) );
+#else
+    /*
+     * This is the basic default config with one server and starting the service
+     */
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+#endif
+
+#ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
+    config.smooth_sync = true;
+#endif
+
     if (NTP_SERVER_COUNT) {
         /* next, let's setup NTP time servers
          *
@@ -193,10 +209,14 @@ int set_time(void)
             ESP_LOGI(TAG, "%s", thisServer);
             sntp_setservername(i, thisServer);
         }
+        esp_netif_sntp_init(&config);
         sntp_init();
-        if (esp_netif_sntp_sync_wait(pdMS_TO_TICKS(200000)) != ESP_OK) {
-            ESP_LOGW(TAG, "Failed to update system time within 10s timeout using NTP.");
-            res = -2;
+        esp_netif_sntp_start();
+        switch (res) {
+            case ESP_ERR_INVALID_STATE:
+                break;
+            default:
+                break;
         }
         ESP_LOGI(TAG, "sntp_init done.");
     }
@@ -207,3 +227,21 @@ int set_time(void)
     return res;
 }
 
+/* wait for NTP to actually set the time */
+int set_time_wait_for_ntp(void)
+{
+    int ret = 0;
+    int ntp_retry = 0;
+    const int ntp_retry_count = 10;
+    ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+
+    while (ret == ESP_ERR_TIMEOUT && ntp_retry++ < ntp_retry_count) {
+        ret = esp_netif_sntp_sync_wait(2500 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Waiting for NTP to sync time... (%d/%d)",
+                       ntp_retry,
+                       ntp_retry_count);
+    }
+    ESP_LOGI(TAG, "set_time_wait_for_ntp result = 0x%0x: %s",
+                   ret, esp_err_to_name(ret));
+    return ret;
+}

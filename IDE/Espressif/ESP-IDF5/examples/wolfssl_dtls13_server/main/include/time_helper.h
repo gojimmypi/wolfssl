@@ -35,8 +35,10 @@ int set_fixed_default_time();
 int set_time_from_string(char* time_buffer);
 
 /* set time from NTP servers,
-    * also intitially calls set_fixed_default_time or set_time_from_string */
+ * also intitially calls set_fixed_default_time or set_time_from_string */
 int set_time(void);
+
+int set_time_wait_for_ntp(void);
 
 #ifdef __cplusplus
 } /* extern "C" */
