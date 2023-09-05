@@ -51,7 +51,6 @@ const static char* TAG = "time_helper";
  *
  *  (int)(sizeof(NTP_SERVER_LIST) / sizeof(NTP_SERVER_LIST[0]))
  */
-#define USE_NTP
 #define NTP_SERVER_COUNT NELEMS(NTP_SERVER_LIST)
 char* ntpServerList[NTP_SERVER_COUNT] = NTP_SERVER_LIST;
 
@@ -147,9 +146,6 @@ int set_time_from_string(char* time_buffer)
 /* set time; returns 0 if succecssfully confirmed NTP update */
 int set_time(void)
 {
-    set_fixed_default_time();
-    return 0;
-
     /* we'll also return a result code of zero */
     int res = 0;
     int i = 0; /* counter for time servers */
@@ -175,8 +171,6 @@ int set_time(void)
 #ifndef TIME_ZONE
     #define TIME_ZONE "PST-8"
 #endif /* not defined: TIME_ZONE */
-    return 0;
-
 
     /* set timezone */
     setenv("TZ", TIME_ZONE, 1);
