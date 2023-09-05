@@ -41,7 +41,6 @@ static const char* const TAG = "main task";
 #else
     #include "wifi_connect.h"
 #endif
-
 void app_main(void)
 {
     esp_err_t ret;
@@ -61,7 +60,10 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    ret = set_time(); /* need to setup NTP before WiFi */
     ESP_ERROR_CHECK(example_connect());
+    ret = set_time_wait_for_ntp();
 #else
     ESP_ERROR_CHECK(nvs_flash_init());
 
@@ -86,7 +88,6 @@ void app_main(void)
 #endif
 
     /* set time for cert validation */
-    ret = set_time();
     if (ret < -1) {
         /* a value of -1 means there was no NTP server, so no need to wait */
         ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
@@ -109,26 +110,31 @@ void app_main(void)
     dtls13_smp_server_task((void*)NULL);
 #else
     /* start a thread with the task */
-    dtls13_smp_server_init((int)NULL); /* NULL will use the DEFAULT_PORT value */
+    dtls13_smp_server_init((int)NULL); /* NULL uses the DEFAULT_PORT value */
 #endif
 
- //   ESP_LOGI(TAG, "\n\nvTaskDelete...\n\n");
-    vTaskDelay(1000);
-//    vTaskDelete(NULL);
-    /* done */
-    while (1) {
-        ESP_LOGV(TAG, "\n\nLoop...\n\n");
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
+                                        - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
+
+    /* done */
+    while (1) {
+        ESP_LOGV(TAG, "\n\nLoop...\n\n");
 
 #if defined(SINGLE_THREADED)
         ESP_LOGV(TAG, "\n\nDone!\n\n");
         while (1);
 #else
+        ESP_LOGI(TAG, "\n\nvTaskDelete main...\n\n");
+        vTaskDelay(1000);
+        vTaskDelete(NULL);
+
+        /* if successful vTaskDelete, we should never get here: */
+        ESP_LOGI(TAG, "\n\nvTaskDelete Complete, but failed?...\n\n");
+
         vTaskDelay(60000);
 #endif
     } /* done whle */
