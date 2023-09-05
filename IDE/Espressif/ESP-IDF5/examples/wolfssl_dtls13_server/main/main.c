@@ -22,6 +22,7 @@
 /* ESP specific */
 #include <nvs_flash.h>
 #include <esp_log.h>
+#include "esp_event.h"
 
 /* wolfSSL  */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
@@ -29,13 +30,21 @@
 
 /* project */
 #include "main.h"
-#include "wifi_connect.h"
 #include "time_helper.h"
 #include "server-dtls13.h"
 static const char* const TAG = "main task";
 
+#define USE_WIFI_EXAMPLE
+#ifdef USE_WIFI_EXAMPLE
+#include "esp_netif.h"
+    #include "protocol_examples_common.h" /* see project CMakeLists.txt */
+#else
+    #include "wifi_connect.h"
+#endif
+
 void app_main(void)
 {
+    esp_err_t ret;
     ESP_LOGI(TAG, "-------------- wolfSSL DTLS 1.3 Server Example ---------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -46,8 +55,18 @@ void app_main(void)
     esp_ShowExtendedSystemInfo();
 #endif
 
+    /* see project CMakeLists.txt for detection of sample code in ESP-IDF */
+#ifdef FOUND_PROTOCOL_EXAMPLES_DIR
+    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(example_connect());
+#else
+    ESP_ERROR_CHECK(nvs_flash_init());
+
     /* Initialize NVS */
-    esp_err_t ret = nvs_flash_init();
+    ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -64,6 +83,7 @@ void app_main(void)
         ESP_LOGI(TAG, "Trying WiFi again...");
         ret = wifi_init_sta();
     }
+#endif
 
     /* set time for cert validation */
     ret = set_time();
@@ -92,6 +112,9 @@ void app_main(void)
     dtls13_smp_server_init((int)NULL); /* NULL will use the DEFAULT_PORT value */
 #endif
 
+ //   ESP_LOGI(TAG, "\n\nvTaskDelete...\n\n");
+    vTaskDelay(1000);
+//    vTaskDelete(NULL);
     /* done */
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
