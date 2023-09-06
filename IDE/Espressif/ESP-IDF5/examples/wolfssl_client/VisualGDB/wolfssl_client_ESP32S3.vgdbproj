@@ -18,9 +18,9 @@
     <ToolchainID>
       <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
-        <GCC>11.2.0</GCC>
-        <GDB>9.2.90</GDB>
-        <Revision>2</Revision>
+        <GCC>12.2.0</GCC>
+        <GDB>12.1</GDB>
+        <Revision>1</Revision>
       </Version>
     </ToolchainID>
     <RelativeSourceDirectory>..</RelativeSourceDirectory>
