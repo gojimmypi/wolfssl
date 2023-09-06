@@ -382,7 +382,11 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #define ENABLE_ECC384_CERT_GEN_TEST
 #endif
 
-#include <wolfssl/certs_test.h>
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+#else
+    #include <wolfssl/certs_test.h>
+#endif
 
 #ifdef DEVKITPRO
     #include <wiiuse/wpad.h>
