@@ -232,7 +232,7 @@ int set_time_wait_for_ntp(void)
 {
     int ret = 0;
     int ntp_retry = 0;
-    const int ntp_retry_count = 10;
+    const int ntp_retry_count = 2;
     ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
 
     while (ret == ESP_ERR_TIMEOUT && ntp_retry++ < ntp_retry_count) {
