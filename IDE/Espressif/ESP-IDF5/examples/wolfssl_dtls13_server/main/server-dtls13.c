@@ -58,8 +58,12 @@
 
 #include <wolfssl/ssl.h>
 #include <errno.h>
-#include <wolfssl/certs_test.h>
 
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+#else
+    #include <wolfssl/certs_test.h>
+#endif
 /* this app */
 #include "dtls-common.h"
 
@@ -152,6 +156,18 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
         (void)ctx;
         ShowStackInfo("Init ctx Stack");
     } /* new ctx */
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
+                                       "TLS13-SM4-CCM-SM3:"
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == WOLFSSL_SUCCESS) {
+        printf("Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+    else {
+       printf("ERROR: failed to set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+#endif
 
 #ifdef NO_FILESYSTEM
     /* Load CA certificates */
@@ -321,11 +337,25 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
             goto cleanup;
         }
 
+    #if defined(WOLFSSL_SM2)
+        /* SM TLS1.3 Cipher needs to have key share explicitly set. */
+        ESP_LOGI(TAG, "Setting WOLFSSL_ECC_SM2P256V1");
+        ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+        if (ret == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
+        }
+        else {
+            ESP_LOGE(TAG, "FAILED to set WOLFSSL_ECC_SM2P256V1");
+        }
+    #endif
+
+        ESP_LOGI(TAG, "Listen...");
         if (wolfSSL_set_fd(ssl, listenfd) != WOLFSSL_SUCCESS) {
             ESP_LOGE(TAG, "wolfSSL_set_fd error.\n");
             break;
         }
 
+        ESP_LOGI(TAG, "Accept..");
         if (wolfSSL_accept(ssl) != SSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
             ESP_LOGE(TAG, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));

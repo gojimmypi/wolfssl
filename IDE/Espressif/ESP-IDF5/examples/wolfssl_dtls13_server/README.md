@@ -21,6 +21,23 @@ make
 ./examples/dtls13client/client 192.168.1.37
 ```
 
+```
+./configure --enable-dtls --enable-dtls13 --enable-tls13 --enable-sm3 --enable-sm4-gcm --enable-sm2
+make
+./examples/dtls13client/client 192.168.1.37
+```
+
+Testing TLS 1.3 SM:
+
+```
+./examples/server/server -v 4 -l TLS13-SM4-GCM-SM3 \
+    -c ./certs/sm2/server-sm2.pem -k ./certs/sm2/server-sm2-priv.pem \
+    -A ./certs/sm2/client-sm2.pem -V &
+./examples/client/client -v 4 -l TLS13-SM4-GCM-SM3 \
+    -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem \
+    -A ./certs/sm2/root-sm2.pem -C
+```
+
 
 ### Files Included
 

@@ -34,6 +34,10 @@
 #define LOOP_LIMIT 5
 #define SFD_TIMEOUT 1
 
+/* wolfSSL */
+#include <wolfssl/wolfcrypt/settings.h>
+#include "user_settings.h" /* include before other wolfssl files */
+
 /* Loc short for "location" */
 const char caCertLoc[] = "../certs/ca-cert.pem";
 const char servCertLoc[] = "../certs/server-cert.pem";
