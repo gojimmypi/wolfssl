@@ -26,7 +26,6 @@
 
 /* wolfSSL  */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-#include <wolfssl/certs_test.h>
 
 /* project */
 #include "main.h"
