@@ -92,7 +92,7 @@ int main(int argc, char** argv)
         goto cleanup;
     }
 
-
+#ifdef WOLFSSL_SM2_disable
     #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
                                        "TLS13-SM4-CCM-SM3:"
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     else {
        printf("ERROR: failed to set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
     }
-
+#endif
 
     /* Load certificates into ctx variable */
     printf("wolfSSL_CTX_load_verify_locations(ctx, %s)", caCertLoc);
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
         goto cleanup;
     }
 
-//#if defined(WOLFSSL_SM2)
+#if defined(WOLFSSL_SM2_disable)
     /* SM TLS1.3 Cipher needs to have key share explicitly set. */
     printf("Calling wolfSSL_UseKeyShare WOLFSSL_ECC_SM2P256V1\n");
     ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     else {
          printf("FAILED to set WOLFSSL_ECC_SM2P256V1, error = %d\n", ret);
     }
-//#endif
+#endif
 
 
     /* servAddr setup */

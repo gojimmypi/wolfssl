@@ -36,7 +36,7 @@
 
 /* Loc short for "location" */
 // #define SM2
-#ifdef WOLFSSL_SM2
+#ifdef WOLFSSL_SM2_disable
 const char caCertLoc[] = "./certs/sm2/root-sm2.pem";
 const char servCertLoc[] = "./certs/sm2/server-sm2-cert.pem";
 const char servKeyLoc[] = "./certs/sm2/server-sm2-key.pem";

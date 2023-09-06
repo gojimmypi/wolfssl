@@ -128,7 +128,7 @@
 /* #define RSA_LOW_MEM */
 
 /* debug options */
-#define DEBUG_WOLFSSL
+/* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
@@ -235,9 +235,9 @@
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
+//#define WOLFSSL_SM2
+//#define WOLFSSL_SM3
+//#define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
