@@ -35,9 +35,16 @@
 #define SFD_TIMEOUT 1
 
 /* Loc short for "location" */
+// #define SM2
+#ifdef WOLFSSL_SM2
+const char caCertLoc[] = "./certs/sm2/root-sm2.pem";
+const char servCertLoc[] = "./certs/sm2/server-sm2-cert.pem";
+const char servKeyLoc[] = "./certs/sm2/server-sm2-key.pem";
+#else
 const char caCertLoc[] = "./certs/ca-cert.pem";
 const char servCertLoc[] = "./certs/server-cert.pem";
 const char servKeyLoc[] = "./certs/server-key.pem";
+#endif
 
 static inline void showConnInfo(WOLFSSL* ssl) {
     printf("New connection established using %s %s\n",
