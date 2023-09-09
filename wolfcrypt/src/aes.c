@@ -472,16 +472,15 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #include <esp_log.h>
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
     const char* TAG = "aes";
-    #if defined(CONFIG_IDF_TARGET_ESP32S3)
-        #ifndef NO_AES_192
-            /* No AES 192 available on ESP32-S3 */
-            #define NEED_AES_TABLES
-            #define NEED_AES_HW_FALLBACK
-            #define NEED_SOFTWARE_AES_SETKEY
-            #undef  WOLFSSL_AES_DIRECT
-            #define WOLFSSL_AES_DIRECT
-        #endif
-    #endif
+
+    /* We'll use SW for fallback:
+     *   unsupported key lengths
+     *   hardware busy */
+    #define NEED_AES_TABLES
+    #define NEED_AES_HW_FALLBACK
+    #define NEED_SOFTWARE_AES_SETKEY
+    #undef  WOLFSSL_AES_DIRECT
+    #define WOLFSSL_AES_DIRECT
 
 /* TODO is this still needed? */
     #if !defined(NEED_AES_HW_FALLBACK) && (defined(HAVE_AESGCM) || defined(WOLFSSL_AES_DIRECT))
@@ -506,7 +505,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 /* TODO: really? we only need wc_AesDecrypt when both HAVE_AES_DECRYPT and WOLFSSL_AES_DIRECT ? */
     #if !defined(NEED_AES_HW_FALLBACK) && (defined(HAVE_AES_DECRYPT) && defined(WOLFSSL_AES_DIRECT))
-    static WARN_UNUSED_RESULT int wc_AesDecrypt_alt(
+    static WARN_UNUSED_RESULT int wc_AesDecrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
         int ret = 0;
@@ -4060,15 +4059,14 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 #elif defined(WOLFSSL_ESP32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
 
-    #if defined(CONFIG_IDF_TARGET_ESP32S3)
-        #ifndef NO_AES_192
-            #define NEED_SW_AESCBC
-            #define NEED_AESCBC_HW_FALLBACK
-        #endif
-    #endif
+    /* We'll use SW for fall back:
+     *   unsupported key lengths
+     *   hardware busy */
+    #define NEED_SW_AESCBC
+    #define NEED_AESCBC_HW_FALLBACK
 
     /*  TODO: still needed? ESP32 implementation of wc_AesCbcEncrypt */
-    int wc_AesCbcEncrypt_HW(Aes* aes, byte* out, const byte* in, word32 sz)
+    int wc_AesCbcEncrypt_HW_delete(Aes* aes, byte* out, const byte* in, word32 sz)
     {
         int ret = 0;
         ESP_LOGI(TAG, "ESP32 implementation of wc_AesCbcEncrypt 4063");
@@ -4091,7 +4089,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     }
 
     /*  TODO: still needed? ESP32 implementation of wc_AesCbcDecrypt_HW */
-    int wc_AesCbcDecrypt_HW(Aes* aes, byte* out, const byte* in, word32 sz)
+    int wc_AesCbcDecrypt_HW_delete(Aes* aes, byte* out, const byte* in, word32 sz)
     {
         int ret = 0;
         ESP_LOGI(TAG, "ESP32 implementation of wc_AesCbcDecrypt");
