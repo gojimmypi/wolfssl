@@ -128,7 +128,7 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
     word32 i;
     word32 mode_ = 0;
 
-    ESP_LOGV(TAG, "  enter esp_aes_hw_Set_KeyMode");
+    ESP_LOGV(TAG, "  enter esp_aes_hw_Set_KeyMode %d", mode);
 
     /* check mode */
     if (mode == ESP32_AES_UPDATEKEY_ENCRYPT) {
@@ -251,17 +251,54 @@ static void esp_aes_bk(const byte* in, byte* out)
 /*
 * wc_esp32AesSupportedKeyLen
 * @brief: returns 1 if AES key length supported in HW, 0 if not
+* @param aes:a value of a ley length */
+int wc_esp32AesSupportedKeyLenValue(int keylen)
+{
+    int ret = 0;
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    if (keylen == 16 || keylen == 24 || keylen == 32) {
+        ret = 1;
+    }
+    else {
+        ret = 0; /* keylen 24 (192 bit) not supported */
+    }
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    ret = 0; /* not supported */
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    if (keylen == 16 || keylen == 32) {
+        ret = 1;
+    }
+    else {
+        ret = 0; /* keylen 24 (192 bit) not supported */
+    }
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    ret = 0; /* not supported */
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    ret = 0; /* not supported */
+#elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    ret = 0; /* not supported */
+#else
+    ret = 0; /* if we don't know, then it is not supported */
+#endif
+    return ret;
+}
+
+/*
+* wc_esp32AesSupportedKeyLen
+* @brief: returns 1 if AES key length supported in HW, 0 if not
 * @param aes: a pointer of the AES object used to encrypt data */
 int wc_esp32AesSupportedKeyLen(struct Aes* aes)
 {
-    int ret = 1;
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-    if (aes->keylen == 24) {
-        ret = 0;
+    int ret;
+    if (aes == NULL) {
+        ret = 0; /* we need a valid aes object to get its keylength */
     }
-#else
-    /* return default true value, a supported key length */
-#endif
+    else {
+        ret = wc_esp32AesSupportedKeyLenValue(aes->keylen);
+    }
     return ret;
 }
 

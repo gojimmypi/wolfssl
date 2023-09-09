@@ -1541,6 +1541,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("AES      test passed!\n");
 
 #ifdef WOLFSSL_AES_192
+    printf("starting AES192\n");
     if ( (ret = aes192_test()) != 0)
         TEST_FAIL("AES192   test failed!\n", ret);
     else
@@ -12820,14 +12821,21 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
 #if defined(WOLFSSL_ASYNC_CRYPT)
     ret = wc_AsyncWait(ret, &dec->asyncDev, WC_ASYNC_FLAG_NONE);
 #endif
-    if (ret != 0)
+    if (ret != 0) {
+        ESP_LOGI("aes", "failed wc_AesCbcDecrypt");
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+    }
 
-    if (XMEMCMP(plain, msg, AES_BLOCK_SIZE))
+    if (XMEMCMP(plain, msg, AES_BLOCK_SIZE)) {
+        ESP_LOGI("aes", "failed plain");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
+    }
 #endif /* HAVE_AES_DECRYPT */
-    if (XMEMCMP(cipher, verify, AES_BLOCK_SIZE))
+    if (XMEMCMP(cipher, verify, AES_BLOCK_SIZE)) {
+        ESP_LOGI("aes", "failed cipher");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
+    }
+    ESP_LOGI("aes", "breakpoint; wc_AesCbcEncrypt / wc_AesCbcDecrypt success!");
 #endif /* WOLFSSL_AES_128 */
 
 #if defined(WOLFSSL_AESNI) && defined(HAVE_AES_DECRYPT)
@@ -13001,7 +13009,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
         if (XMEMCMP(cipher, verify2, AES_BLOCK_SIZE))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
 
-        ret = wc_AesCbcEncrypt(enc, cipher + AES_BLOCK_SIZE,
+        ret = wc_AesCbcEncrypt(enc, cipher + AES_BLOCK_SIZE, /* TODO what's up with this? encrypt zero? */
                 msg2 + AES_BLOCK_SIZE, AES_BLOCK_SIZE);
     #if defined(WOLFSSL_ASYNC_CRYPT)
         ret = wc_AsyncWait(ret, &enc->asyncDev, WC_ASYNC_FLAG_NONE);
@@ -13034,9 +13042,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
         if (XMEMCMP(plain + AES_BLOCK_SIZE, msg2 + AES_BLOCK_SIZE,
-                    AES_BLOCK_SIZE))
+                    AES_BLOCK_SIZE)) {
+            ESP_LOGI("aes_test", "oops 11007");
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
-
+        }
         #endif /* HAVE_AES_DECRYPT */
     }
 #endif /* WOLFSSL_AES_128 */
@@ -13278,15 +13287,19 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes192_test(void)
 #if defined(WOLFSSL_ASYNC_CRYPT)
     ret = wc_AsyncWait(ret, &dec->asyncDev, WC_ASYNC_FLAG_NONE);
 #endif
-    if (ret != 0)
+    if (ret != 0) {
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+    }
     if (XMEMCMP(plain, msg, (int) sizeof(plain))) {
+        ESP_LOGE("test", "plain wc_AesCbcDecrypt compare fail");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif
 
-    if (XMEMCMP(cipher, verify, (int) sizeof(cipher)))
+    if (XMEMCMP(cipher, verify, (int) sizeof(cipher))) {
+        ESP_LOGE("test", "verify wc_AesCbcDecrypt compare fail");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
+    }
 
     wc_AesFree(enc);
 #ifdef HAVE_AES_DECRYPT
@@ -28207,6 +28220,7 @@ done:
     (void)keySize;
     (void)curve_id;
     (void)rng;
+
     return ret;
 }
 
