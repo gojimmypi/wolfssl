@@ -153,7 +153,7 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
-    ShowExtendedSystemInfo();
+    esp_ShowExtendedSystemInfo();
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
