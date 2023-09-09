@@ -31,7 +31,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-#include <esp_log.h>
 
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
@@ -470,8 +469,9 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 #elif defined(WOLFSSL_ESP32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-
+    #include <esp_log.h>
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+    const char* TAG = "aes";
     #if defined(CONFIG_IDF_TARGET_ESP32S3)
         #ifndef NO_AES_192
             #define NEED_AES_TABLES
@@ -4061,15 +4061,15 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         #ifndef NO_AES_192
             #define NEED_SW_AESCBC
             #define NEED_AESCBC_HW_FALLBACK
-            int wc_AesCbcEncrypt_SW(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
+//            int wc_AesCbcEncrypt_SW(Aes* aes, byte* out,
+//                                    const byte* in, word32 sz);
             int wc_AesCbcDecrypt_SW(Aes* aes, byte* out,
                                     const byte* in, word32 sz);
         #endif
     #endif
 
     /*  ESP32 implementation of wc_AesCbcEncrypt */
-    int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+    int wc_AesCbcEncrypt_HW(Aes* aes, byte* out, const byte* in, word32 sz)
     {
         int ret = 0;
         ESP_LOGI("aes", "ESP32 implementation of wc_AesCbcEncrypt 4063");
@@ -4081,7 +4081,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         else {
             /* fall back to default SW implementation */
             ESP_LOGI("aes", "ESP32 fallback implementation of wc_AesCbcEncrypt wc_AesCbcEncrypt_SW");
-            ret = wc_AesCbcEncrypt_SW(aes, out, in, sz);
+            ret = wc_AesCbcEncrypt(aes, out, in, sz);
         }
     #else
         ESP_LOGI("aes", "ESP32 regular implementation of wc_AesCbcEncrypt");
@@ -4139,17 +4139,15 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     /* implemented in wolfcrypt/src/port/psa/psa_aes.c */
 
 #else
+    /* Reminder: Some HW implementation may also define this as needed.
+     * (e.g. for unsupported key lengths)  */
     #define NEED_SW_AESCBC
 #endif
 
 #ifdef NEED_SW_AESCBC
     /* Software AES - CBC Encrypt */
 
-#ifdef NEED_AESCBC_HW_FALLBACK
-    int wc_AesCbcEncrypt_SW(Aes* aes, byte* out, const byte* in, word32 sz)
-#else
-    int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
-#endif
+int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     {
         word32 blocks;
 
@@ -4264,6 +4262,17 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             XMEMCPY(aes->reg, out + sz - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
 
             return 0;
+        }
+    #endif
+
+    #if defined(WOLFSSL_ESPIDF) && defined(NEED_AESCBC_HW_FALLBACK)
+        if (wc_esp32AesSupportedKeyLen(aes)) {
+            ESP_LOGW("aes", "ESP32 fallback implementation of wc_AesCbcEncrypt wc_esp32AesCbcEncrypt");
+            return wc_esp32AesCbcEncrypt(aes, out, in, sz);
+        }
+        else {
+            ESP_LOGW(TAG, "wc_AesCbcEncrypt unsupported keylen = %d, falling back to SW.",
+                          aes->keylen);
         }
     #endif
 
