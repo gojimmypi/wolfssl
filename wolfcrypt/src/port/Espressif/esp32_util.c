@@ -23,6 +23,12 @@
 
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
+/* Variable holding number of times ESP32 restarted since first boot.
+ * It is placed into RTC memory using RTC_DATA_ATTR and
+ * maintains its value when ESP32 wakes from deep sleep.
+ */
+RTC_DATA_ATTR static int _boot_count = 0;
+
 #if defined(WOLFSSL_ESP32_CRYPT) && \
   (!defined(NO_AES)        || !defined(NO_SHA) || !defined(NO_SHA256) ||\
    defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512))
@@ -33,12 +39,6 @@
 
 /* big nums can be very long, perhaps unitialized, so limit displayed words */
 #define MAX_WORDS_ESP_SHOW_MP 32
-
-/* Variable holding number of times ESP32 restarted since first boot.
- * It is placed into RTC memory using RTC_DATA_ATTR and
- * maintains its value when ESP32 wakes from deep sleep.
- */
-RTC_DATA_ATTR static int _boot_count = 0;
 
 /*
  * initialize our mutex used to lock hardware access
