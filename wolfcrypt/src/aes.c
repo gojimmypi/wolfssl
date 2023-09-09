@@ -2872,9 +2872,9 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     #define NEED_SOFTWARE_AES_SETKEY
 #endif
 
-/* either we fell though with no HW support at all,
- * or perhaps there's HW support for *some* keylens
- * and we need  both HW and SW */
+/* Either we fell though with no HW support at all,
+ * or perhaps there's HW support for *some* keylengths
+ * and we need both HW and SW. */
 #ifdef NEED_SOFTWARE_AES_SETKEY
     /* Software AES - SetKey */
     static WARN_UNUSED_RESULT int wc_AesSetKeyLocal(
@@ -3274,8 +3274,8 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         return ret;
     } /* wc_AesSetKeyLocal */
 
-int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen, /* 192? see line 2720 */
-        const byte* iv, int dir)
+    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
+            const byte* iv, int dir)
     {
         ESP_LOGI("aes", "enter wc_AesSetKey 3281");
         if (aes == NULL) {
@@ -3284,49 +3284,37 @@ int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen, /* 192? see line 
         if (keylen > sizeof(aes->key)) {
             return BAD_FUNC_ARG;
         }
-#ifdef NEED_AES_HW_FALLBACK
-        ESP_LOGW("AES", "wc_AesSetKey fallback check 3290 %d", keylen);
-      if (wc_esp32AesSupportedKeyLenValue(keylen)) {
-        ESP_LOGW("AES", "wc_AesSetKey fallback check 3290 calling wc_AesSetKey_for_ESP32");
-        return wc_AesSetKey_for_ESP32(aes, userKey, keylen, iv, dir);
-    }
-    else {
-        ESP_LOGW("AES", "wc_AesSetKey fallback check 3290 calling wc_AesSetKeyLocal");
-        return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 1);
-    }
-#endif
 
-//        return wc_AesSetKey_for_ESP32(aes, userKey, keylen, iv, dir);
-#ifndef theoldcode
-        ESP_LOGI("aes", "call wc_AesSetKeyLocal 3289");
+    /* sometimes hardware may not support all keylengths (e.g. ESP32-S3) */
+    #if defined(WOLFSSL_ESPIDF) && defined(NEED_AES_HW_FALLBACK)
+        ESP_LOGV("AES", "wc_AesSetKey fallback check 3290 %d", keylen);
+        if (wc_esp32AesSupportedKeyLenValue(keylen)) {
+            ESP_LOGV("AES", "wc_AesSetKey calling wc_AesSetKey_for_ESP32");
+            return wc_AesSetKey_for_ESP32(aes, userKey, keylen, iv, dir);
+        }
+        else {
+            ESP_LOGW("AES", "wc_AesSetKey fallback length = %d not supported",
+                             keylen);
+        }
+    #endif
         return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 1);
-#else
-        aes->keylen = keylen;
-        aes->rounds = keylen/4 + 6;
-
-        XMEMCPY(aes->key, userKey, keylen);
-        #if defined(WOLFSSL_AES_COUNTER)
-            aes->left = 0;
-        #endif
-        return wc_AesSetIV(aes, iv);
-#endif
-    } /* wc_AesSetKey[_SW]() */
+    } /* wc_AesSetKey() */
 
     #if defined(WOLFSSL_AES_DIRECT) || defined(WOLFSSL_AES_COUNTER)
         /* AES-CTR and AES-DIRECT need to use this for key setup */
         /* This function allows key sizes that are not 128/192/256 bits */
-        int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
-                            const byte* iv, int dir)
-        {
-            if (aes == NULL) {
-                return BAD_FUNC_ARG;
-            }
-            if (keylen > sizeof(aes->key)) {
-                return BAD_FUNC_ARG;
-            }
-
-            return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 0);
+    int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
+                           const byte* iv, int dir)
+    {
+        if (aes == NULL) {
+            return BAD_FUNC_ARG;
         }
+        if (keylen > sizeof(aes->key)) {
+            return BAD_FUNC_ARG;
+        }
+
+        return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 0);
+    }
     #endif /* WOLFSSL_AES_DIRECT || WOLFSSL_AES_COUNTER */
 #endif /* wc_AesSetKey block */
 
