@@ -43,7 +43,7 @@
 #endif
 #include <wolfssl/wolfcrypt/settings.h>
 
-#include "wolfssl/wolfcrypt/logging.h"
+#include <wolfssl/wolfcrypt/logging.h>
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
 
@@ -183,7 +183,7 @@ static int esp_mp_hw_wait_clean(void)
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean waiting HW ready timed out.");
-        ret = MP_HW_BUSY;
+        ret = WC_HW_WAIT_E; /* hardware is busy, MP_HW_BUSY; */
     }
     return ret;
 }
@@ -273,7 +273,7 @@ static int esp_mp_hw_lock()
         ret = esp_CryptHwMutexLock(&mp_mutex, ESP_MP_HW_LOCK_MAX_DELAY);
         if (ret != 0) {
             ESP_LOGE(TAG, "mp engine lock failed.");
-            ret = MP_HW_BUSY; /* caller is expected to fall back to SW */
+            ret = WC_HW_WAIT_E; /* caller is expected to fall back to SW */
         }
    }
 #endif /* not SINGLE_THREADED */
@@ -372,6 +372,9 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     MATH_INT_T P[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T Y[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
     word32 Xs;
+
+    ESP_LOGV(TAG, "\nBegin esp_calc_Mdash USE_ALT_MPRIME\n");
+
     mp_init(X);
     mp_init(P);
     mp_init(Y);
@@ -402,6 +405,7 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
     int bi;
     word32  N = 0;
     word32  x;
+    ESP_LOGV(TAG, "\nBegin esp_calc_Mdash\n");
 
     N = M->dp[0];
     bi = b0;
@@ -530,7 +534,7 @@ static int wait_until_done(uint32_t reg)
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
-        ret = MP_HW_ERROR;
+        ret = WC_HW_E; /* MP_HW_ERROR; */
     }
 
     return ret;
@@ -763,6 +767,13 @@ int esp_hw_validation_active(void)
 int esp_show_mph(struct esp_mp_helper* mph)
 {
     int ret = MP_OKAY;
+
+    if (mph == NULL) {
+        /* if a bad mp helper passed, we cannot use HW */
+        ESP_LOGE(TAG, "ERROR: Bad esp_mp_helper for esp_show_mph");
+        return MP_VAL;
+    }
+
     if (mph->Xs != 0)
         ESP_LOGI(TAG, "Xs %d", mph->Xs);
     if (mph->Ys != 0)
@@ -797,6 +808,17 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 {
     int ret = MP_OKAY;
     int exp;
+
+    if (mph == NULL) {
+        /* if a bad mp helper passed, we cannot use HW */
+        ESP_LOGE(TAG, "ERROR: Bad esp_mp_helper, falling back to SW");
+        return MP_HW_FALLBACK;
+    }
+    if ((X == NULL) || (Y == NULL) || (M == NULL) ) {
+        /* if a bad oprand passed, we cannot use HW */
+        ESP_LOGE(TAG, "ERROR: Bad montgomery operand, falling back to SW");
+        return MP_HW_FALLBACK;
+    }
     XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
     mph->Xs = mp_count_bits(X); /* X's = the number of bits needed */
 
@@ -1147,6 +1169,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         if (ret == MP_OKAY) {
             esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, resultWords_sz);
         }
+#ifndef DEBUG_WOLFSSL
+        else {
+            ESP_LOGE(TAG, "ERROR: wait_until_done failed in esp32_mp");
+        }
+#endif
     } /* end of processing */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Unlike the ESP32 that is limited to only four operand lengths,
