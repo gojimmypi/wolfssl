@@ -6,6 +6,7 @@
 # This file is not needed by end users.
 #
 
+export SEARCH_STRING="__ESP_COMPONENT_SOURCE__"
 
 #**************************************************************************************************
 # A function to copy a given wolfSSL root: $1
@@ -329,10 +330,11 @@ for word in "${exclude_words[@]}"; do
     exclude_paths+=" -o -path *\/$word\/*"
 done
 exclude_paths=${exclude_paths# -o}  # Remove the leading -o
-echo exclude_paths=$exclude_paths
+echo "exclude_paths=$exclude_paths"
 # Find command with exclusions
 
 # find "$search_dir" -type d \( -path "${exclude_words[0]}" -o -path "${exclude_words[1]}" -o -path "${exclude_words[2]}" \) -prune -o -type f -exec grep -l "$search_string" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
+# find "$search_dir" \( "$exclude_paths" \) -prune -o -type f -exec grep -l "$SEARCH_STRING" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
 find "$search_dir" \( $exclude_paths \) -prune -o -type f -exec grep -l "$search_string" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
     # Create the directory structure if not already created
     TARGET_DIR_PATH="$(dirname "$COMPONENT_SOURCE_FILE")"
@@ -347,8 +349,9 @@ done
 
 find ../../component-manager/examples/ -type d
 
-# This is the same as the "Found example [source]" above, but copying instead just displaying:
+# This is the same as the "Found example [source]" above, but copying instead of just displaying:
 echo Copying files...
+# find "$search_dir" \( "$exclude_paths" \) -prune -o -type f -exec grep -l "$SEARCH_STRING" {} + | xargs -0 -I {} cp   "{}"   "../../component-manager/examples/{}"
 find "$search_dir" \( $exclude_paths \) -prune -o -type f -exec grep -l "$search_string" {} + | xargs -0 -I {} cp   {}   ../../component-manager/examples/{}
 
 # find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
