@@ -6,7 +6,6 @@
 # This file is not needed by end users.
 #
 
-export SEARCH_STRING="__ESP_COMPONENT_SOURCE__"
 
 #**************************************************************************************************
 # A function to copy a given wolfSSL root: $1
@@ -156,6 +155,7 @@ THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
 # Optionally specify an alternative source of wolfSSL to publish:
 
 # TODO REMOVE this line if not using /test/wolfssl-master
+
 THIS_WOLFSSL=/mnt/c/test/wolfssl-master
 
 # END TODO REMOVE
@@ -184,6 +184,9 @@ else
     exit 1
 fi
 
+#**************************************************************************************************
+# Copy root README.md file, clean it, and prepend README_REGISTRY_PREPEND.md text
+#**************************************************************************************************
 cp                  $THIS_WOLFSSL/README.md   ./README.md
 
 # strip any HTML anchor tags, that are irrelevant and don't look pretty
@@ -279,7 +282,7 @@ if [ -e "./wolfssl/version.h" ]; then
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""
         echo "Version text in idf_component.yml does not match ./wolfssl/version.h ($WOLFSSL_VERSION). Please edit and try again."
-        # optionally exit
+        # optionally exit TODO?
 
         # exit 1
     else
@@ -294,69 +297,86 @@ fi
 
 #**************************************************************************************************
 # All files from the wolfssl/IDE/Espressif/ESP-IDF/examples
-# directory that contain the text: __ESP_COMPONENT_SOURCE__
 # will be copied to the local ESP Registry ./examples/ directory
-echo "Copying __ESP_COMPONENT_SOURCE__ tagged files..."
 
-# go to the root of the Espressif examples
-pushd ../../Espressif/ESP-IDF/examples || exit 1
-search_dir="./"
 
-echo "Copying example sample files tagged with __ESP_COMPONENT_SOURCE__ from:"
-echo ""
-pwd
-echo ""
 
-echo "Found example [source] files to copy to [destination]:"
-echo ""
 
-# find ./ -type f       -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs    -I {} echo {}   ../../component-manager/examples/{}
-# find "$search_dir" -not \( -path "*/build/*" -o -path "*/.visualgdb/*" -o -path "*/managed_components*" \) -type f -print0  -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -0 -I {} echo {}   ../../component-manager/examples/{}
-#
-# The cp command seems to not like creating a directory structure, even with --parents
-# so we create the directory in advance:
-echo "Creating directories in destination..."
+# Define the source directory and destination directory.
+# We start in           IDE/Espressif/component-manager
+# We want examples from IDE/Espressif/ESP-IDF/examples
+source_dir="../ESP-IDF/examples"
 
-# Define the exclude words from the environment variable
-#exclude_words=("*\/VisualGDB\/*" "*\/build\/*" "*\/component-manager\/*")
-exclude_words=( ".visualgdb" "build" "component-manager" ".vs" )
-echo "${exclude_words[0]}"
-echo "${exclude_words[1]}"
-echo "${exclude_words[2]}"
+# We'll copy examples to publish into our local examples
+# We start in           IDE/Espressif/component-manager
+# Copy example files to IDE/Espressif/component-manager/examples
+destination_dir="examples"
 
-# Construct the exclude patterns
-exclude_paths=""
-for word in "${exclude_words[@]}"; do
-    exclude_paths+=" -o -path *\/$word\/*"
-done
-exclude_paths=${exclude_paths# -o}  # Remove the leading -o
-echo "exclude_paths=$exclude_paths"
-# Find command with exclusions
+# Check if the destination directory exists, and create it if it doesn't
+if [ ! -d "$destination_dir" ]; then
+    mkdir -p "$destination_dir"
+fi
 
-# find "$search_dir" -type d \( -path "${exclude_words[0]}" -o -path "${exclude_words[1]}" -o -path "${exclude_words[2]}" \) -prune -o -type f -exec grep -l "$search_string" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
-# find "$search_dir" \( "$exclude_paths" \) -prune -o -type f -exec grep -l "$SEARCH_STRING" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
-find "$search_dir" \( $exclude_paths \) -prune -o -type f -exec grep -l "$search_string" {} + | while IFS= read -r COMPONENT_SOURCE_FILE; do
-    # Create the directory structure if not already created
-    TARGET_DIR_PATH="$(dirname "$COMPONENT_SOURCE_FILE")"
-    THIS_NEEDED_PATH="../../component-manager/examples/${TARGET_DIR_PATH}"
-    if [ ! -d "${THIS_NEEDED_PATH}" ]; then
-        mkdir -p "${THIS_NEEDED_PATH}"
+MISSING_FILES=N
+# Read the list of files from component_manifest.txt and copy them
+while IFS= read -r file_path; do
+
+    if [[ "$file_path" == "#"* ]]; then
+        echo "$file_path"
     else
-        echo "Found ${THIS_NEEDED_PATH}"
+        # Remove leading and trailing whitespace from the file path
+        file_path=$(echo "$file_path" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+        # Check if the file path is empty (blank line)
+        if [ -z "$file_path" ]; then
+            continue
+        fi
+
+        # Construct the full source and destination paths
+        full_source_path="$source_dir/$file_path"
+        full_destination_path="$destination_dir/$file_path"
+
+        # Create the directory structure in the destination if it doesn't exist
+        mkdir -p "$(dirname "$full_destination_path")"
+
+        # Copy the file to the destination
+        cp "$full_source_path" "$full_destination_path"
+        THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -eq 0 ]; then
+        echo "Copied: $full_source_path -> $full_destination_path"
+    else
+        MISSING_FILES=Y
+        # echo "WARNING: File not copied:  $full_source_path"
     fi
-done
 
 
-find ../../component-manager/examples/ -type d
+    fi
+done < "component_manifest.txt"
 
-# This is the same as the "Found example [source]" above, but copying instead of just displaying:
-echo Copying files...
-# find "$search_dir" \( "$exclude_paths" \) -prune -o -type f -exec grep -l "$SEARCH_STRING" {} + | xargs -0 -I {} cp   "{}"   "../../component-manager/examples/{}"
-find "$search_dir" \( $exclude_paths \) -prune -o -type f -exec grep -l "$search_string" {} + | xargs -0 -I {} cp   {}   ../../component-manager/examples/{}
-
-# find ./ -type f -not -path "*/build/*" -exec grep -l "__ESP_COMPONENT_SOURCE__" {} + | xargs -I {} cp   {}   ../../component-manager/examples/{}
-#
 #**************************************************************************************************
+# Check if we detected any missing example files that did not successfully copy.
+#**************************************************************************************************
+if [ "${MISSING_FILES^}" == "Y" ]; then
+    echo "Some example files not copied. Continue?"
+    #**************************************************************************************************
+    # Confirm we actually want to proceed to publish if there were missing example source files.
+    #**************************************************************************************************
+    COMPONENT_MANAGER_CONTINUE=
+    until [ "${COMPONENT_MANAGER_CONTINUE^}" == "Y" ] || [ "${COMPONENT_MANAGER_CONTINUE^}" == "N" ]; do
+        read -r -n1 -p "Proceed? (Y/N) " COMPONENT_MANAGER_CONTINUE
+        COMPONENT_MANAGER_CONTINUE=${COMPONENT_MANAGER_CONTINUE^};
+        echo;
+    done
+
+    if [ "${COMPONENT_MANAGER_CONTINUE}" == "Y" ]; then
+        echo "Continuing with missing files"
+    else
+        echo "Exiting..."
+        exit 1
+    fi
+fi
+
+echo "Copy operation completed for examples."
 
 popd || exit 1
 echo "Returned to path:"
@@ -371,6 +391,7 @@ fi
 # TODO remove
 # Files known to need attention
 # The current examples expect user_settings in the root include directory
+# this can be removed once subsequent PR updates are accepted for examples
 cp ./lib/user_settings.h ./include/user_settings.h
 
 # The component registry needs a newer version of esp32-crypt.h
@@ -389,6 +410,10 @@ cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
 
 # TODO this build is for the *prior* version
 # find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {} for minimum component version: " && grep "wolfssl/wolfssl:" main/idf_component.yml && echo "\n\n" && idf.py build || touch ../../build_failed.txt'
+
+echo ""
+echo "Warning: build check for examples not yet in place."
+echo ""
 
 # Check to see if we failed on this build:
 if [ -e "./build_failed.txt" ]; then
@@ -449,6 +474,8 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     # by the component manager. It's always `namespace__component`.
     #
     echo "compote component upload --namespace wolfssl --name wolfssl"
+
+    # upload command is currently disabled during testing:
 ## disabled          compote component upload --namespace wolfssl --name wolfssl
 
     echo ""
