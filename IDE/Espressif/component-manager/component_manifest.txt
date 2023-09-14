@@ -5,6 +5,7 @@
 
 template/README.md
 template/main/main.c
+template/main/include/main.h
 template/CMakeLists.txt
 template/main/CMakeLists.txt
 

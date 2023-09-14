@@ -267,7 +267,7 @@ copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
 
-# Note that for examples, the ESP Registry will append the these README files to
+# Note that for example apps, the ESP Registry will append the these README files to
 # the main README.md at publish time, and generate anchor text hyperlinks.
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
 copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
@@ -377,10 +377,6 @@ if [ "${MISSING_FILES^}" == "Y" ]; then
 fi
 
 echo "Copy operation completed for examples."
-
-popd || exit 1
-echo "Returned to path:"
-pwd
 
 # Check to see if we failed to previously build:
 if [ -e "./build_failed.txt" ]; then
