@@ -130,10 +130,28 @@ else
 fi
 
 
+#**************************************************************************************************
+# Ready Summary before step that will copy all source files related to the ESP Component Registry
+#**************************************************************************************************
 echo ""
-echo "Publishing local wolfSSL source to ESP Registry: components.espressif.com"
-echo ""
-echo "WARNING: The live wolfSSL will be replaced upon completion."
+
+echo "--------------------------------------------------------------------------------------------"
+if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
+    echo "Publishing local wolfSSL source to ESP Registry: components.espressif.com"
+    echo ""
+    echo "WARNING: The live wolfSSL will be replaced upon completion."
+else
+    if [ "$IDF_COMPONENT_REGISTRY_URL" == "https://components-staging.espressif.com/" ]; then
+        echo "Publishing local wolfSSL source to staging ESP Registry: $IDF_COMPONENT_REGISTRY_URL"
+    else
+        echo ""
+        echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
+        echo "Expected blank or https://components-staging.espressif.com/"
+    fi
+    echo ""
+    echo "WARNING: The specified wolfSSL component will be replaced upon completion."
+fi
+echo "--------------------------------------------------------------------------------------------"
 echo ""
 echo "Current source directory:"
 echo ""
@@ -161,8 +179,11 @@ THIS_WOLFSSL=/mnt/c/test/wolfssl-master
 # END TODO REMOVE
 
 # copy_wolfssl_source $THIS_WOLFSSL
-echo "Copying source from $THIS_WOLFSSL"
-
+echo "------------------------------------------------------------------------"
+echo "Copying source to publish from $THIS_WOLFSSL"
+echo "------------------------------------------------------------------------"
+echo ""
+echo "git status:"
 pushd "$THIS_WOLFSSL" || exit 1
 git status
 popd || exit 1
@@ -404,8 +425,19 @@ cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
 # Reminder that there may be a delay of several minutes or more between the time of publish, and the time
 # when the files are actually available.
 
-# TODO this build is for the *prior* version
+# This build is for the *prior* version of ESP Component (the one *already* published)
 # find  ./examples/ -maxdepth 1 -mindepth 1 -type d | xargs -I {} sh -c 'cd {} && echo "\n\nBuilding {} for minimum component version: " && grep "wolfssl/wolfssl:" main/idf_component.yml && echo "\n\n" && idf.py build || touch ../../build_failed.txt'
+
+# we'll do a test build of the current to-be-published version of wolfSSL
+#
+# get a list of all directory names ---------------------| (SC2038 Use -print0/-0 or -exec + to allow for non-alphanumeric filenames.)
+# send to xargs -----------------------------------------|-----------|
+# use each directory name found as a parameter "{}" -----|-----------|-|
+# run each as a shell script command --------------------|-----------|----|
+# print a progress message for each example being built -|-----------|------------|
+# send each directory found as a parameter to wolfssl_build_example.sh to build the project -------------------------------------------|
+# The build_failed.txt will exist when one or more of the builds has failed -----------------------------------------------------------|------|
+find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "\n\nBuilding {} " && ./wolfssl_build_example.sh {} || touch ../../build_failed.txt'
 
 echo ""
 echo "Warning: build check for examples not yet in place."
@@ -431,6 +463,16 @@ echo ""
 find ./examples/ -print
 echo ""
 
+# Check to see if we failed on this build:
+if [ -e "./build_failed.txt" ]; then
+    echo "Build of 1 or more examples failed!"
+else
+    echo "Build success for examples!"
+fi
+
+echo ""
+echo "Important: Review the list of files above to confirm they should ALL be published with the component."
+echo ""
 echo "Ready to publish..."
 
 if [ "${OK_TO_OVERWRITE_DIST^}" == "Y" ]; then
@@ -450,6 +492,16 @@ echo ""
 #**************************************************************************************************
 # Confirm we actually want to proceed to publish.
 #**************************************************************************************************
+if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
+    echo "Publishing local wolfSSL source to ESP Registry: components.espressif.com"
+    echo ""
+    echo "WARNING: The live wolfSSL will be replaced upon completion."
+else
+    echo "Publishing local wolfSSL source to ALTERNATE ESP Registry: $IDF_COMPONENT_REGISTRY_URL"
+    echo ""
+    echo "WARNING: The specified wolfSSL component will be replaced upon completion."
+fi
+
 COMPONENT_MANAGER_PUBLISH=
 until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
     read -r -n1 -p "Proceed? (Y/N) " COMPONENT_MANAGER_PUBLISH
@@ -475,7 +527,11 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
 ## disabled          compote component upload --namespace wolfssl --name wolfssl
 
     echo ""
-    echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
+    if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
+        echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
+    else
+        echo "View the new component at $IDF_COMPONENT_REGISTRY_URL/wolfssl/wolfssl"
+    fi
     echo ""
     echo "Done!"
     echo ""
