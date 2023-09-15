@@ -6,6 +6,7 @@
 # This file is not needed by end users.
 #
 
+# the first parameter is expected to be a examples/project-name
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <examples/directory_name>"
     exit 1
@@ -13,8 +14,14 @@ else
     THIS_EXAMPLE="$1"
 fi
 
-if [ ! -e "$THIS_EXAMPLE" ]; then
-    echo "Directory not found: $THIS_EXAMPLE."
+# make sure the provided parameter directory exists
+if [ ! -d "$THIS_EXAMPLE" ]; then
+    echo "Directory not found: $THIS_EXAMPLE"
+    exit 1
+fi
+# we impose a requirement to have a sdkconfig.defaults file
+if [ ! -e "$THIS_EXAMPLE/sdkconfig.defaults" ]; then
+    echo "File not found: $THIS_EXAMPLE/sdkconfig.defaults"
     exit 1
 fi
 
@@ -36,6 +43,7 @@ if [ ! -e "$IDF_PATH/export.sh" ]; then
     exit 1
 fi
 
+# Ready to build; prep.
 pushd "$THIS_EXAMPLE"
 
 export NEED_YML_RESTORE=
@@ -52,12 +60,11 @@ if [ -e "./managed_components" ]; then
     export NEED_DIR_RESTORE=Y
 fi
 
-
 #**************************************************************************************************
 # Build
 #**************************************************************************************************
+# put in a woldSSL component directory to act like the managed component published version
 cp -r ../../lib/components ./
-
 
 idf.py build
 THIS_ERROR_CODE=$?
