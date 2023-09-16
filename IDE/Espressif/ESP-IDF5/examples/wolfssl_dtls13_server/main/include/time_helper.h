@@ -19,11 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/*
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
-*/
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,8 +30,10 @@ int set_fixed_default_time();
 int set_time_from_string(char* time_buffer);
 
 /* set time from NTP servers,
-    * also intitially calls set_fixed_default_time or set_time_from_string */
+ * also intitially calls set_fixed_default_time or set_time_from_string */
 int set_time(void);
+
+int set_time_wait_for_ntp(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -39,30 +39,31 @@
     #include <freertos/FreeRTOS.h>
     #include <freertos/task.h>
     #include <freertos/event_groups.h>
-    #define WOLFSSL_ESP_TASK void
+    #define WOLFSSL_ESP_TASK static void
 #endif
 
 /* Espressif socket */
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#include <esp_log.h>
+#include <esp_netif.h>
 
-/* #include <signal.h> not fully implemented in ESP-IDF */
-#include <lwip/netdb.h>
+#include <lwip/err.h>
 #include <lwip/sockets.h>
-#include <stdio.h>                  /* standard in/out procedures */
-#include <stdlib.h>                 /* defines system calls */
-#include <string.h>                 /* necessary for memset */
+#include <lwip/sys.h>
+#include <lwip/netdb.h>
+/* #include <signal.h> not fully implemented in ESP-IDF */
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include "user_settings.h"
+#include "user_settings.h" /* include before other wolfssl files */
 
 #include <wolfssl/ssl.h>
 #include <errno.h>
-#include <wolfssl/certs_test.h>
 
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+#else
+    #include <wolfssl/certs_test.h>
+#endif
 /* this app */
 #include "dtls-common.h"
 
@@ -83,13 +84,21 @@ static void free_resources(void);
 /* show stack space for this task */
 static int ShowStackInfo(char* msg)
 {
-    int ret;
-    ret = TLS_SMP_SERVER_TASK_WORDS - (uxTaskGetStackHighWaterMark(NULL));
-    ESP_LOGI(TAG, "%s: %d words", msg, ret);
+    int ret = 0;
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    ret = uxTaskGetStackHighWaterMark(NULL);
+    ESP_LOGI(TAG, "%s used: %d of %d words. %d free.", msg,
+                   TLS_SMP_SERVER_TASK_WORDS - ret,
+                   TLS_SMP_SERVER_TASK_WORDS,
+                   ret);
+#else
+    ESP_LOGW(TAG, "Warning: uxTaskGetStackHighWaterMark() "
+                  "not available");
+#endif
     return ret;
 }
 
-#if 0
+#ifdef DTSL13_SERVER_IS_MAIN
 int main(int argc, char** argv)
 #else
 WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
@@ -106,15 +115,13 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
     struct sockaddr_in servAddr = { 0 };  /* our server's address */
     struct sockaddr_in cliaddr  = { 0 };  /* the client's address */
     socklen_t     cliLen;
-    int           ret;
     int           err;
     int           recvLen = 0;    /* length of message */
-    int           exitVal = 0;
     int           ip_protocol = 0;
-    exitVal = 1;
+    int           ret;
 
     ESP_LOGI(TAG, "Init Stack: %d words", TLS_SMP_SERVER_TASK_WORDS);
-    ShowStackInfo("Begin Stack used");
+    ShowStackInfo("Begin Stack");
 
     /* Initialize wolfSSL before assigning ctx */
     ret = wolfSSL_Init();
@@ -122,13 +129,13 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
         ESP_LOGI(TAG, "wolfSSL_Init success.");
     }
     else {
-        ESP_LOGE(TAG, "wolfSSL_Init error  %d.\n", ret);
+        ESP_LOGE(TAG, "wolfSSL_Init error %d.\n", ret);
         return TLS_SMP_SERVER_TASK_RET;
     }
 
     /* Create new conext ctx & show some diagnostics */
     if (ret == WOLFSSL_SUCCESS) {
-        ShowStackInfo("Init Stack used");
+        ShowStackInfo("Init Stack");
 
         /* No-op when debugging is not compiled in */
         wolfSSL_Debugging_ON();
@@ -147,8 +154,20 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
         }
 
         (void)ctx;
-        ShowStackInfo("Init ctx Stack used");
+        ShowStackInfo("Init ctx Stack");
     } /* new ctx */
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
+                                       "TLS13-SM4-CCM-SM3:"
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == WOLFSSL_SUCCESS) {
+        printf("Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+    else {
+       printf("ERROR: failed to set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+#endif
 
 #ifdef NO_FILESYSTEM
     /* Load CA certificates */
@@ -249,30 +268,32 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
     lwip_setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
 #endif
 
-//    /* init socket options */
-//    if (ret == WOLFSSL_SUCCESS) {
-//        struct timeval timeout;
-//        timeout.tv_sec = 1000; // 10 seconds
-//        timeout.tv_usec = 0;
-//
-//        if (setsockopt(listenfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
-//             ESP_LOGE(TAG, "setsockopt for receive timeout");
-//             ret = WOLFSSL_FATAL_ERROR;
-//        }
-//        if (setsockopt(listenfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
-//            ESP_LOGE(TAG, "setsockopt for send timeout");
-//            ret = WOLFSSL_FATAL_ERROR;
-//        }
-//    } /* soctet options */
+#ifdef USE_SOCKET_TIMEOUT
+    /* init socket options */
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "setsockopt timeout ");
+        struct timeval timeout;
+        timeout.tv_sec = 1000; // 10 seconds
+        timeout.tv_usec = 0;
+
+        ESP_LOGI(TAG, "setsockopt timeout %d seconds", (int)timeout.tv_sec);
+
+        if (setsockopt(listenfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+             ESP_LOGE(TAG, "setsockopt for receive timeout");
+             ret = WOLFSSL_FATAL_ERROR;
+        }
+        if (setsockopt(listenfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
+            ESP_LOGE(TAG, "setsockopt for send timeout");
+            ret = WOLFSSL_FATAL_ERROR;
+        }
+    } /* soctet options */
+#endif
 
     /* Bind Socket */
     if (ret == WOLFSSL_SUCCESS) {
         if (bind(listenfd, (struct sockaddr*)&servAddr, sizeof(servAddr)) < 0) {
-            ESP_LOGE(TAG, "bind() error");
+            ESP_LOGE(TAG, "bind()");
             ret = WOLFSSL_FATAL_ERROR;
-        }
-        else {
-            ESP_LOGI(TAG, "bind() success: listenfd = %d", listenfd);
         }
     } /* bind socket */
 
@@ -285,104 +306,133 @@ WOLFSSL_ESP_TASK dtls13_smp_server_task(void *pvParameters)
 
     ESP_LOGI(TAG, "While Stack used: %d words", TLS_SMP_SERVER_TASK_WORDS
                                         - (uxTaskGetStackHighWaterMark(NULL)));
+    ShowStackInfo("While Stack");
     while (1) {
-        printf("Awaiting client connection on port %d\n", SERV_PORT);
+        ESP_LOGI(TAG, "\n\nAwaiting client connection on port %d\n", SERV_PORT);
 
         cliLen = sizeof(cliaddr);
-        ret = (int)recvfrom(listenfd, (char *)&buff, sizeof(buff), MSG_PEEK,
-                (struct sockaddr*)&cliaddr, &cliLen);
+        ret = (int)recvfrom(listenfd,
+                            (char *)&buff, sizeof(buff),
+                            MSG_PEEK,
+                            (struct sockaddr*)&cliaddr, &cliLen
+                           );
 
         if (ret < 0) {
-            perror("recvfrom()");
+            ESP_LOGE(TAG, "ERROR during recvfrom()");
             goto cleanup;
         }
         else if (ret == 0) {
-            fprintf(stderr, "recvfrom zero return\n");
+            ESP_LOGE(TAG, "recvfrom zero return\n");
             goto cleanup;
         }
 
         /* Create the WOLFSSL Object */
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
-            fprintf(stderr, "wolfSSL_new error.\n");
+            ESP_LOGE(TAG, "wolfSSL_new error.\n");
             goto cleanup;
         }
 
         if (wolfSSL_dtls_set_peer(ssl, &cliaddr, cliLen) != WOLFSSL_SUCCESS) {
-            fprintf(stderr, "wolfSSL_dtls_set_peer error.\n");
+            ESP_LOGE(TAG, "wolfSSL_dtls_set_peer error.\n");
             goto cleanup;
         }
 
+    #if defined(WOLFSSL_SM2)
+        /* SM TLS1.3 Cipher needs to have key share explicitly set. */
+        ESP_LOGI(TAG, "Setting WOLFSSL_ECC_SM2P256V1");
+        ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+        if (ret == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
+        }
+        else {
+            ESP_LOGE(TAG, "FAILED to set WOLFSSL_ECC_SM2P256V1");
+        }
+    #endif
+
+        ESP_LOGI(TAG, "Listen...");
         if (wolfSSL_set_fd(ssl, listenfd) != WOLFSSL_SUCCESS) {
-            fprintf(stderr, "wolfSSL_set_fd error.\n");
+            ESP_LOGE(TAG, "wolfSSL_set_fd error.\n");
             break;
         }
 
+        ESP_LOGI(TAG, "Accept..");
         if (wolfSSL_accept(ssl) != SSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "SSL_accept failed.\n");
+            ESP_LOGE(TAG, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "SSL_accept failed.\n");
             goto cleanup;
         }
-        ESP_LOGI(TAG, "showConnInfo:");
         showConnInfo(ssl);
-        ESP_LOGI(TAG, "while...");
         while (1) {
-            ESP_LOGI(TAG, "loop...");
             if ((recvLen = wolfSSL_read(ssl, buff, sizeof(buff)-1)) > 0) {
-                printf("heard %d bytes\n", recvLen);
+                ESP_LOGI(TAG, "wolfSSL_read heard %d bytes:\n\n"
+                              "%s", recvLen, buff);
 
                 buff[recvLen] = '\0';
-                printf("I heard this: \"%s\"\n", buff);
             }
             else if (recvLen <= 0) {
-                ESP_LOGI(TAG, "err...");
                 err = wolfSSL_get_error(ssl, 0);
-                if (err == WOLFSSL_ERROR_ZERO_RETURN) /* Received shutdown */ {
-                    ESP_LOGI(TAG, "Shutdown...");
+                if (err == WOLFSSL_ERROR_ZERO_RETURN) { /* Received shutdown */
                     break;
                 }
-                fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-                fprintf(stderr, "SSL_read failed.\n");
+                ESP_LOGE(TAG, "error = %d, %s\n",
+                               err, wolfSSL_ERR_reason_error_string(err));
+                ESP_LOGE(TAG, "SSL_read failed.\n");
                 goto cleanup;
             }
-            printf("Sending reply.\n");
+            ESP_LOGI(TAG, "Sending reply (check client for this text): %s",
+                           ack);
             if (wolfSSL_write(ssl, ack, sizeof(ack)) < 0) {
                 err = wolfSSL_get_error(ssl, 0);
-                fprintf(stderr, "error = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-                fprintf(stderr, "wolfSSL_write failed.\n");
+                ESP_LOGE(TAG, "error = %d, %s\n",
+                               err, wolfSSL_ERR_reason_error_string(err));
+                ESP_LOGE(TAG, "wolfSSL_write failed.\n");
                 goto cleanup;
             }
-            ESP_LOGI(TAG, "Send complete!");
+            ESP_LOGI(TAG, "Sending complete. Waiting for next message...");
         }
 
-        printf("reply sent \"%s\"\n", ack);
+        ESP_LOGI(TAG, "reply sent \"%s\"\n", ack);
 
         /* Attempt a full shutdown */
         ret = wolfSSL_shutdown(ssl);
-        if (ret == WOLFSSL_SHUTDOWN_NOT_DONE)
+        if (ret == WOLFSSL_SHUTDOWN_NOT_DONE) {
+            ESP_LOGW(TAG, "WARNING: wolfSSL_shutdown not done the first "
+                          "time. Trying again...");
             ret = wolfSSL_shutdown(ssl);
+        }
         if (ret != WOLFSSL_SUCCESS) {
             err = wolfSSL_get_error(ssl, 0);
-            fprintf(stderr, "err = %d, %s\n", err, wolfSSL_ERR_reason_error_string(err));
-            fprintf(stderr, "wolfSSL_shutdown failed\n");
+            ESP_LOGE(TAG, "err = %d, %s\n",
+                           err, wolfSSL_ERR_reason_error_string(err));
+            ESP_LOGE(TAG, "wolfSSL_shutdown failed\n");
         }
         wolfSSL_free(ssl);
         ssl = NULL;
 
-        printf("Awaiting new connection\n");
+        ESP_LOGI(TAG, "Awaiting new connection\n");
     }
 
-    exitVal = 0;
 cleanup:
-    ESP_LOGE(TAG, "Cleanup and exit!");
     free_resources();
     wolfSSL_Cleanup();
 
-    vTaskDelete(NULL);
+#if defined(SINGLE_THREADED)
+        ESP_LOGV(TAG, "\n\nDone!\n\n");
+        return TLS_SMP_SERVER_TASK_RET;
+#else
+        ESP_LOGI(TAG, "\n\nvTaskDelete dtls13_smp_server_task...\n\n");
+        vTaskDelay(1000);
+        vTaskDelete(NULL);
+
+        /* if successful vTaskDelete, we should never get here: */
+        ESP_LOGI(TAG, "\n\nvTaskDelete Complete, but failed?...\n\n");
+
+        vTaskDelay(60000);
+#endif
 
     return TLS_SMP_SERVER_TASK_RET;
 }
-
 
 #ifndef WOLFSSL_ESPIDF
 static void sig_handler(const int sig)
@@ -423,14 +473,13 @@ int dtls13_smp_server_init(int port)
         thisPort = DEFAULT_PORT;
     }
 
-
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
 #else
     xTaskHandle _handle;
 #endif
 
-    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    /* see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html */
     ESP_LOGI(TAG, "Creating dtls13_smp_server_task with stack size = %d words",
                    TLS_SMP_SERVER_TASK_WORDS);
     ret = xTaskCreate(dtls13_smp_server_task,
@@ -447,7 +496,7 @@ int dtls13_smp_server_init(int port)
         ESP_LOGE(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
     }
 
-    /* vTaskStartScheduler(); // called automatically in ESP-IDF */
+    /* vTaskStartScheduler(); note needed; called automatically in ESP-IDF */
     return ret;
 }
 #endif

@@ -1,4 +1,4 @@
-/* user_settings.h
+/* wifi_connect.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *

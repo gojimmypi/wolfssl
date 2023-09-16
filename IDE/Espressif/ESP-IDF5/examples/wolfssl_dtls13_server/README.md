@@ -6,6 +6,39 @@ This is an example minimally viable wolfSSL template to get started with your ow
 
 It is assumed the [ESP-IDF environment](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/) has been installed.
 
+```
+gcc -o client-dtls13 client-dtls13.c -L/mnt/c/workspace/wolfssl-gojimmypi/src/.libs -I/mnt/c/workspace/wolfssl-gojimmypi/ -I/mnt/c/workspace/wolfssl-gojimmypi/include -DWOLFSSL_TLS13 -DWOLFSSL_DTLS -DWOLFSSL_DTLS13 -DWOLFSSL_USER_SETTINGS -lwolfssl -ldl -lm
+```
+
+Connect with Linux command line example:
+
+```bash
+# assuming wolfssl is in /workspace/wolfssl-$USER
+cd /mnt/c/workspace/wolfssl-$USER
+./autogen.sh
+./configure --enable-dtls --enable-dtls13 --enable-tls13
+make
+./examples/dtls13client/client 192.168.1.37
+```
+
+```
+./configure --enable-dtls --enable-dtls13 --enable-tls13 --enable-sm3 --enable-sm4-gcm --enable-sm2
+make
+./examples/dtls13client/client 192.168.1.37
+```
+
+Testing TLS 1.3 SM:
+
+```
+./examples/server/server -v 4 -l TLS13-SM4-GCM-SM3 \
+    -c ./certs/sm2/server-sm2.pem -k ./certs/sm2/server-sm2-priv.pem \
+    -A ./certs/sm2/client-sm2.pem -V &
+./examples/client/client -v 4 -l TLS13-SM4-GCM-SM3 \
+    -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem \
+    -A ./certs/sm2/root-sm2.pem -C
+```
+
+
 ### Files Included
 
 - [main.c](./main/main.c) with a simple call to an Espressif library (`ESP_LOGI`) and a call to a wolfSSL library (`esp_ShowExtendedSystemInfo`) . 

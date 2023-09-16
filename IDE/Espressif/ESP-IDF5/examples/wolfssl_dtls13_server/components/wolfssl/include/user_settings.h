@@ -74,20 +74,22 @@
 
 #define HAVE_AESGCM
 
-#define WOLFSSL_RIPEMD
+/* #define WOLFSSL_RIPEMD */
 /* when you want to use SHA224 */
-// #define WOLFSSL_SHA224
+/* #define WOLFSSL_SHA224 */
 #define NO_OLD_TLS
 /* when you want to use SHA384 */
-//#define WOLFSSL_SHA3
-//
-//#define WOLFSSL_SHA384
-//#define NO_SHA256
+/* #define WOLFSSL_SHA3 */
+
+/* #define WOLFSSL_SHA384*/
+/* #define NO_SHA256*/
+/* #define WOLFSSL_SHA384*/
 #define WOLFSSL_SHA512
 #define HAVE_ECC
-#define HAVE_CURVE25519
-#define CURVE25519_SMALL
-#define HAVE_ED25519
+
+/* #define HAVE_CURVE25519 */
+/* #define CURVE25519_SMALL */
+/* #define HAVE_ED25519 */
 
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
@@ -122,7 +124,8 @@
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            9
 #endif
-#define RSA_LOW_MEM
+
+/* #define RSA_LOW_MEM */
 
 /* debug options */
 /* #define DEBUG_WOLFSSL */
@@ -142,8 +145,8 @@
 
 /* only FAST_MATH has HW acceleration at this time */
 #define USE_FAST_MATH
-// #define WOLFSSL_SP_MATH_ALL
-// #define WOLFSSL_SP_RISCV32 /* only valid on RISC-V chips */
+/* #define WOLFSSL_SP_MATH_ALL */
+/* #define WOLFSSL_SP_RISCV32  */ /* only valid on RISC-V chips */
 
 /* optionally use SP_MATH */
 /* #define SP_MATH */
@@ -199,18 +202,13 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif
-//#define WOLFSSL_SHA384
-/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-//#define WOLFSSL_SM2
-//#define WOLFSSL_SM3
-//#define WOLFSSL_SM4
 
 /* debug options */
-// #define ESP_VERIFY_MEMBLOCK
+/* #define ESP_VERIFY_MEMBLOCK              */
 #define WOLFSSL_HW_METRICS
 /* #define DEBUG_WOLFSSL_VERBOSE            */
 /* #define DEBUG_WOLFSSL                    */
-/* #define WOLFSSL_ESP32_CRYPT_DEBUG */
+/* #define WOLFSSL_ESP32_CRYPT_DEBUG        */
 #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
@@ -235,6 +233,12 @@
 /* #define CHECK_MP_READ_UNSIGNED_BIN */
 
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
+
+/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
+//#define WOLFSSL_SM2
+//#define WOLFSSL_SM3
+//#define WOLFSSL_SM4
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
@@ -259,8 +263,6 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
-#define USE_CERT_BUFFERS_2048
-#define USE_CERT_BUFFERS_256
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -301,4 +303,4 @@
 #define WOLFSSL_DTLS13
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_ENCRYPTED_KEYS
-#define WOLFSSL_TLS13
+

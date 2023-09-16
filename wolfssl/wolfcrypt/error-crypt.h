@@ -259,6 +259,7 @@ enum {
     SM4_GCM_AUTH_E      = -298,  /* SM4-GCM Authentication check failure */
     SM4_CCM_AUTH_E      = -299,  /* SM4-CCM Authentication check failure */
 
+/* TODO revisit */
     RSA_HW_ERROR         = -300, /* hardware math error                     */
     RSA_HW_BUSY          = -301, /* hardware math busy, may fall back to SW */
     RSA_HW_FALLBACK      = -302, /* signal to caller to fall back to SW     */

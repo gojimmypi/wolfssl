@@ -1,0 +1,19 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+if BUILD_EXAMPLE_SERVERS
+noinst_PROGRAMS += examples/dtls13server/server
+noinst_HEADERS += examples/dtls13server/server.h
+examples_dtls13server_server_SOURCES      = examples/dtls13server/server.c
+examples_dtls13server_server_LDADD        = src/libwolfssl@LIBSUFFIX@.la $(LIB_STATIC_ADD) $(WOLFSENTRY_LIB)
+examples_dtls13server_server_DEPENDENCIES = src/libwolfssl@LIBSUFFIX@.la
+examples_dtls13server_server_CFLAGS = $(WOLFSENTRY_INCLUDE) $(AM_CFLAGS)
+endif
+EXTRA_DIST += examples/dtls13server/server.sln
+EXTRA_DIST += examples/dtls13server/server.vcproj
+EXTRA_DIST += examples/dtls13server/server.vcxproj
+
+dist_example_DATA+= examples/dtls13server/server.c
+DISTCLEANFILES+= examples/dtls13server/.libs/server
+

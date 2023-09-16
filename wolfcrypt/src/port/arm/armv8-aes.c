@@ -21,7 +21,7 @@
 
 
 /*
- * There are two versions one for 64 (Aarch64)  and one for 32 bit (Aarch32).
+ * There are two versions one for 64 (Aarch64) and one for 32 bit (Aarch32).
  * If changing one check the other.
  */
 
@@ -1450,6 +1450,13 @@ int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
         }
     }
     return 0;
+}
+
+int wc_AesCtrSetKey(Aes* aes, const byte* key, word32 len,
+        const byte* iv, int dir)
+{
+    (void)dir;
+    return wc_AesSetKey(aes, key, len, iv, AES_ENCRYPTION);
 }
 
 #endif /* WOLFSSL_AES_COUNTER */
@@ -4212,6 +4219,13 @@ int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     return 0;
 }
 
+int wc_AesCtrSetKey(Aes* aes, const byte* key, word32 len,
+        const byte* iv, int dir)
+{
+    (void)dir;
+    return wc_AesSetKey(aes, key, len, iv, AES_ENCRYPTION);
+}
+
 #endif /* WOLFSSL_AES_COUNTER */
 
 #ifdef HAVE_AESGCM
@@ -5718,6 +5732,13 @@ int wc_AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
         }
     }
     return 0;
+}
+
+int wc_AesCtrSetKey(Aes* aes, const byte* key, word32 len,
+        const byte* iv, int dir)
+{
+    (void)dir;
+    return wc_AesSetKey(aes, key, len, iv, AES_ENCRYPTION);
 }
 #endif /* WOLFSSL_AES_COUNTER */
 

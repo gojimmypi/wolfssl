@@ -19,11 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/*
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
-*/
-
 /* ESP-IDF */
 #include <esp_log.h>
 #include "sdkconfig.h"
@@ -153,7 +148,7 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
-    ShowExtendedSystemInfo();
+    esp_ShowExtendedSystemInfo();
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
