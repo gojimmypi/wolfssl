@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.007 for wolfssl 6205 spaces in path and cleanup
+# Version 5.6.0.008 for wolfssl 6205 spaces in path and cleanup
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -28,6 +28,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
 
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
@@ -43,6 +44,73 @@ set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl 
 # We are typically in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
 # The root of wolfSSL is 7 directories up from here:
 
+function(IS_WOLFSSL_SOURCE DIRECTORY_PARAMETER RESULT)
+    if (EXISTS "${DIRECTORY_PARAMETER}/wolfcrypt/src")
+        set("${RESULT}" 1)
+    else()
+        set("${RESULT}" 0)
+    endif()
+endfunction()
+
+function(FIND_WOLFSSL_DIRECTORY USERNAME OUTPUT_VARIABLEX)
+    message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+    get_filename_component(CURRENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
+    message(STATUS "CURRENT_DIR = ${CURRENT_DIR}")
+    while(NOT CURRENT_DIR STREQUAL "/" AND NOT CURRENT_DIR STREQUAL "")
+        IS_WOLFSSL_SOURCE("${CURRENT_DIR}" FOUND_WOLFSSL)
+        if("${FOUND_WOLFSSL}")
+            message(STATUS "Found wolfssl in CURRENT_DIR = ${CURRENT_DIR}")
+            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+            return()
+        endif()
+
+        # Check for "wolfssl-[username]" directory
+        set(WOLFSSL_DIR ${CURRENT_DIR}/wolfssl-${USERNAME})
+        message(STATUS "Looking in ${WOLFSSL_DIR}")
+
+        if(EXISTS ${WOLFSSL_DIR} AND IS_DIRECTORY ${WOLFSSL_DIR} AND EXISTS "${WOLFSSL_DIR}/wolfcrypt/src")
+            message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR = ${CURRENT_DIR}")
+            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+            return()
+        endif()
+
+        # Check for "wolfssl" directory
+        set(WOLFSSL_DIR ${CURRENT_DIR}/wolfssl)
+        if(EXISTS ${WOLFSSL_DIR} AND IS_DIRECTORY ${WOLFSSL_DIR} AND EXISTS "${WOLFSSL_DIR}/wolfcrypt/src")
+            message(STATUS "Found wolfssl in CURRENT_SEARCH_DIR = ${CURRENT_DIR}")
+            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+            return()
+        endif()
+
+        # Move up one directory level
+        get_filename_component(CURRENT_DIR "${CURRENT_DIR}" DIRECTORY)
+        message(status "Next CURRENT_DIR = ${CURRENT_DIR}")
+    endwhile()
+
+    # If not found, set the output variable to empty
+    set(${OUTPUT_VARIABLEX} "" PARENT_SCOPE)
+endfunction()
+
+            # find the user name to search for possible "wolfssl-username"
+            message(STATUS "USERNAME = $ENV{USERNAME}")
+            if(  "$ENV{USER}" STREQUAL "" ) # the bash user
+                if(  "$ENV{USERNAME}" STREQUAL "" ) # the Windows user
+                    message(STATUS "could not find USER or USERNAME")
+                else()
+                    # the bash user is not blank, so we'll use it.
+                    set(THIS_USER "$ENV{USERNAME}")
+                endif()
+            else()
+                # the bash user is not blank, so we'll use it.
+               set(THIS_USER "$ENV{USER}")
+            endif()
+            message(STATUS "THIS_USER = ${THIS_USER}")
+
+# Example usage:
+
+
+
+
 if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "wolfssl component CMAKE_BUILD_EARLY_EXPANSION:")
     idf_component_register(
@@ -53,6 +121,13 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
                            )
 
 else()
+    FIND_WOLFSSL_DIRECTORY(${THIS_USER} WOLFSSL_DIR)
+    if(WOLFSSL_DIR)
+        message(STATUS "NEW Found wolfssl directory at: ${WOLFSSL_DIR}")
+    else()
+        message(STATUS "NEW wolfssl directory not found.")
+    endif()
+
     # not CMAKE_BUILD_EARLY_EXPANSION
     message(STATUS "************************************************************************************************")
     message(STATUS "wolfssl component config:")
