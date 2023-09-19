@@ -1010,7 +1010,7 @@ static int test_wolfSSL_CTX_set_cipher_list_bytes(void)
     EXPECT_DECLS;
 #if (defined(OPENSSL_EXTRA) || defined(WOLFSSL_SET_CIPHER_BYTES)) && \
     (!defined(NO_WOLFSSL_CLIENT) || !defined(NO_WOLFSSL_SERVER)) && \
-    (!defined(NO_RSA) || defined(HAVE_ECC))
+    (!defined(NO_RSA) || defined(HAVE_ECC)) && !defined(NO_FILESYSTEM)
     const char* testCertFile;
     const char* testKeyFile;
     WOLFSSL_CTX* ctx = NULL;
@@ -1433,6 +1433,11 @@ static int test_wolfSSL_CTX_load_verify_locations(void)
     /* invalid path */
     ExpectIntEQ(wolfSSL_CTX_load_verify_locations(ctx, NULL, bogusFile),
         WS_RETURN_CODE(BAD_PATH_ERROR,WOLFSSL_FAILURE));
+#endif
+#if defined(WOLFSSL_QT) || defined(WOLFSSL_IGNORE_BAD_CERT_PATH)
+    /* test ignoring the invalid path */
+    ExpectIntEQ(wolfSSL_CTX_load_verify_locations_ex(ctx, NULL, bogusFile,
+        WOLFSSL_LOAD_FLAG_IGNORE_BAD_PATH_ERR), WOLFSSL_SUCCESS);
 #endif
 
     /* load ca cert */
@@ -23883,7 +23888,7 @@ static int test_ToTraditional(void)
     EXPECT_DECLS;
 #if !defined(NO_ASN) && (defined(HAVE_PKCS8) || defined(HAVE_PKCS12)) && \
     (defined(WOLFSSL_TEST_CERT) || defined(OPENSSL_EXTRA) || \
-     defined(OPENSSL_EXTRA_X509_SMALL))
+     defined(OPENSSL_EXTRA_X509_SMALL)) && !defined(NO_FILESYSTEM)
     XFILE  f = XBADFILE;
     byte   input[TWOK_BUF];
     word32 sz;
@@ -66295,11 +66300,13 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_dtls_stateless),
     TEST_DECL(test_generate_cookie),
 
+#ifndef NO_BIO
     /* Can't memory test as server hangs. */
     TEST_DECL(test_wolfSSL_BIO_connect),
     /* Can't memory test as server Asserts in thread. */
     TEST_DECL(test_wolfSSL_BIO_accept),
     TEST_DECL(test_wolfSSL_BIO_tls),
+#endif
 
 #if defined(HAVE_PK_CALLBACKS) && !defined(WOLFSSL_NO_TLS12)
     TEST_DECL(test_DhCallbacks),

@@ -8991,6 +8991,10 @@ static int server_generate_pqc_ciphertext(WOLFSSL* ssl,
         keyShareEntry->pubKey = ciphertext;
         keyShareEntry->pubKeyLen = (word32)(ecc_kse->pubKeyLen + ctSz);
         ciphertext = NULL;
+
+        /* Set namedGroup so wolfSSL_get_curve_name() can function properly on
+         * the server side. */
+        ssl->namedGroup = keyShareEntry->group;
     }
 
     TLSX_KeyShare_FreeAll(ecc_kse, ssl->heap);
@@ -9665,7 +9669,7 @@ int TLSX_KeyShare_DeriveSecret(WOLFSSL *ssl)
 #ifdef WOLFSSL_ASYNC_CRYPT
     ret = wolfSSL_AsyncPop(ssl, NULL);
     /* Check for error */
-    if (ret != WC_NOT_PENDING_E && ret < 0) {
+    if (ret != WC_NO_PENDING_E && ret < 0) {
         return ret;
     }
 #endif

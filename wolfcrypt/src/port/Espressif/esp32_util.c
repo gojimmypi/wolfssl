@@ -18,9 +18,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+/*
+** Version / Platform info.
+**
+** This could evolve into a wolfSSL-wide feature. For now, here only. See:
+** https://github.com/wolfSSL/wolfssl/pull/6149
+*/
+
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/version.h>
 
+#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
+
+#if defined(WOLFSSL_ESPIDF)
+    #include <esp_log.h>
+    #include "sdkconfig.h"
+    #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
+#else
+    #include <stdio.h>
+    #define WOLFSSL_VERSION_PRINTF(...) { printf(__VA_ARGS__); printf("\n"); }
+#endif
+
+static const char* TAG = "esp32_util";
+
+/* some functions are only applicable when hardware encryption is enabled */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
 /* Variable holding number of times ESP32 restarted since first boot.
@@ -92,27 +114,13 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     return 0;
 #endif
 }
-#endif /* SHA HW enabled */
+#endif /* WOLFSSL_ESP32_CRYPT, etc. */
 
-/* esp_ShowExtendedSystemInfo
+
+/* esp_ShowExtendedSystemInfo and supporting info.
+**
 ** available regardless if HW acceleration is turned on or not.
 */
-
-/*
-** Version / Platform info.
-**
-** This could evolve into a wolfSSL-wide feature. For now, here only. See:
-** https://github.com/wolfSSL/wolfssl/pull/6149
-*/
-#if defined(WOLFSSL_ESPIDF)
-    #include <esp_log.h>
-    #include "sdkconfig.h"
-    static const char* TAG = "esp32_util";
-    #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
-#else
-    #include <stdio.h>
-    #define WOLFSSL_VERSION_PRINTF(...) { printf(__VA_ARGS__); printf("\n"); }
-#endif
 
 /*
 *******************************************************************************
@@ -203,8 +211,15 @@ static int ShowExtendedSystemInfo_platform_espressif()
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S2.");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C6.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-H2.");
     #else
-    #error "ESP32_CRYPT not yet supported on this IDF TARGET"
+        /* this should have been detected & disabled in user_settins.h */
+        #error "ESP32_CRYPT not yet supported on this IDF TARGET"
     #endif
 
         /* Even though enabled, some specifics may be disabled */
@@ -355,10 +370,9 @@ int esp_current_boot_count()
 
 /*
 *******************************************************************************
-** The public ShowExtendedSystemInfo()
+** The internal, portable, but currently private ShowExtendedSystemInfo()
 *******************************************************************************
 */
-
 int ShowExtendedSystemInfo(void)
 {
 #if defined(SHOW_SSID_AND_PASSWORD)

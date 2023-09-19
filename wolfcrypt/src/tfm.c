@@ -193,7 +193,6 @@ int s_fp_add(fp_int *a, fp_int *b, fp_int *c)
               else {
                   /* we should never get here, as a.used cannot be greater
                    * than b.used, while b.used is greater than a.used! */
-                  ESP_LOGI("ER", "oops");
                /* t += 0 + 0 */
               }
           }
@@ -1896,7 +1895,7 @@ int fp_exptmod_nb(exptModNb_t* nb, fp_int* G, fp_int* X, fp_int* P, fp_int* Y)
 
   switch (nb->state) {
   case TFM_EXPTMOD_NB_INIT:
-    /* now setup montgomery */
+    /* now setup montgomery  */
     if ((err = fp_montgomery_setup(P, &nb->mp)) != FP_OKAY) {
       nb->state = TFM_EXPTMOD_NB_INIT;
       return err;
@@ -2253,16 +2252,6 @@ static int _fp_exptmod_ct(fp_int * G, fp_int * X, int digits, fp_int * P,
    XFREE(R, NULL, DYNAMIC_TYPE_BIGINT);
 #endif
 
-#if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESPIDF)
-    /* TODO consider moving / removing this */
-    /* a value of 1 is interesting in HW; check for padding */
-    if (Y->used > 1 && (Y->dp[0] == 1 || (Y->dp[1] == 0))) {
-        ESP_LOGW("TFM Y", "Y=1 length mismatch; Y = %d", (int)Y->dp[0]);
-    }
-    else {
-        ESP_LOGV("TFM Y", "Y=1 ok");
-    }
-#endif
    return err;
 }
 

@@ -2945,7 +2945,7 @@ int DecryptTls13(WOLFSSL* ssl, byte* output, const byte* input, word16 sz,
 
 #ifdef WOLFSSL_ASYNC_CRYPT
     ret = wolfSSL_AsyncPop(ssl, &ssl->decrypt.state);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* check for still pending */
         if (ret == WC_PENDING_E)
             return ret;
@@ -3208,7 +3208,7 @@ int BuildTls13Message(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
     WOLFSSL_ENTER("BuildTls13Message");
 
 #ifdef WOLFSSL_ASYNC_CRYPT
-    ret = WC_NOT_PENDING_E;
+    ret = WC_NO_PENDING_E;
     if (asyncOkay) {
         WOLFSSL_ASSERT_SIZEOF_GE(ssl->async->args, *args);
 
@@ -3222,7 +3222,7 @@ int BuildTls13Message(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
         args = (BuildMsg13Args*)ssl->async->args;
 
         ret = wolfSSL_AsyncPop(ssl, &ssl->options.buildMsgState);
-        if (ret != WC_NOT_PENDING_E) {
+        if (ret != WC_NO_PENDING_E) {
             /* Check for error */
             if (ret < 0)
                 goto exit_buildmsg;
@@ -3236,7 +3236,7 @@ int BuildTls13Message(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
 
     /* Reset state */
 #ifdef WOLFSSL_ASYNC_CRYPT
-    if (ret == WC_NOT_PENDING_E)
+    if (ret == WC_NO_PENDING_E)
 #endif
     {
         ret = 0;
@@ -4285,7 +4285,7 @@ int SendTls13ClientHello(WOLFSSL* ssl)
     args = (Sch13Args*)ssl->async->args;
 
     ret = wolfSSL_AsyncPop(ssl, &ssl->options.asyncState);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0)
             return ret;
@@ -4999,7 +4999,7 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     args = (Dsh13Args*)ssl->async->args;
 
     ret = wolfSSL_AsyncPop(ssl, &ssl->options.asyncState);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0) {
             if (ret == WC_PENDING_E) {
@@ -6612,7 +6612,7 @@ int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     args = (Dch13Args*)ssl->async->args;
 
     ret = wolfSSL_AsyncPop(ssl, &ssl->options.asyncState);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0) {
             goto exit_dch;
@@ -8516,7 +8516,7 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
     args = (Scv13Args*)ssl->async->args;
 
     ret = wolfSSL_AsyncPop(ssl, &ssl->options.asyncState);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0)
             goto exit_scv;
@@ -8669,19 +8669,21 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
             }
             EncodeSigAlg(ssl->options.hashAlgo, args->sigAlgo, args->verify);
 
-            if (ssl->hsType == DYNAMIC_TYPE_RSA) {
-                int sigLen = MAX_SIG_DATA_SZ;
-                if (args->length > MAX_SIG_DATA_SZ)
-                    sigLen = args->length;
-                args->sigData = (byte*)XMALLOC(sigLen, ssl->heap,
-                                                        DYNAMIC_TYPE_SIGNATURE);
-            }
-            else {
-                args->sigData = (byte*)XMALLOC(MAX_SIG_DATA_SZ, ssl->heap,
-                                                        DYNAMIC_TYPE_SIGNATURE);
-            }
             if (args->sigData == NULL) {
-                ERROR_OUT(MEMORY_E, exit_scv);
+                if (ssl->hsType == DYNAMIC_TYPE_RSA) {
+                    int sigLen = MAX_SIG_DATA_SZ;
+                    if (args->length > MAX_SIG_DATA_SZ)
+                        sigLen = args->length;
+                    args->sigData = (byte*)XMALLOC(sigLen, ssl->heap,
+                                                            DYNAMIC_TYPE_SIGNATURE);
+                }
+                else {
+                    args->sigData = (byte*)XMALLOC(MAX_SIG_DATA_SZ, ssl->heap,
+                                                            DYNAMIC_TYPE_SIGNATURE);
+                }
+                if (args->sigData == NULL) {
+                    ERROR_OUT(MEMORY_E, exit_scv);
+                }
             }
 
             /* Create the data to be signed. */
@@ -9143,7 +9145,7 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
     args = (Dcv13Args*)ssl->async->args;
 
     ret = wolfSSL_AsyncPop(ssl, &ssl->options.asyncState);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0)
             goto exit_dcv;
@@ -12343,7 +12345,7 @@ int wolfSSL_UseKeyShare(WOLFSSL* ssl, word16 group)
 
 #ifdef WOLFSSL_ASYNC_CRYPT
     ret = wolfSSL_AsyncPop(ssl, NULL);
-    if (ret != WC_NOT_PENDING_E) {
+    if (ret != WC_NO_PENDING_E) {
         /* Check for error */
         if (ret < 0)
             return ret;

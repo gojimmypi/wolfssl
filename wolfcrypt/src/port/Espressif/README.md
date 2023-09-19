@@ -35,6 +35,8 @@ If building the sources directly we recommend defining `WOLFSSL_USER_SETTINGS` a
 
 To view disassembly, add `__attribute__((section(".iram1")))` decorator. Foe example:
 
+To view disassembly, add `__attribute__((section(".iram1")))` decorator. Foe example:
+
 ```
 static int __attribute__((section(".iram1"))) memblock_peek(volatile u_int32_t mem_address)
 ```

@@ -699,15 +699,17 @@ static word32 bits2words(word32 bits)
 static int esp_get_rinv(MATH_INT_T *rinv, MATH_INT_T *M, word32 exp)
 {
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T rinv2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T M2[1];    /* TODO WOLFSSL_SMALL_STACK */
-    mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
-    mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
+    MATH_INT_T rinv2[1];
+    MATH_INT_T M2[1];
     int reti = MP_OKAY;
 #endif
-
     int ret = MP_OKAY;
+
     ESP_LOGV(TAG, "\nBegin esp_get_rinv \n");
+#ifdef DEBUG_WOLFSSL
+    mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
+    mp_copy(rinv, rinv2); /* copy (src = M) to (dst = M2) */
+#endif
 
     /* 2^(exp)
      *
@@ -913,7 +915,8 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 #ifdef DEBUG_WOLFSSL
     if (ret == MP_OKAY) {
         if (mph->mp == mph->mp2) {
-            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %ul  !", mph->mp);
+            ESP_LOGV(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup "
+                          "= %ul  !", mph->mp);
         }
         else {
             ESP_LOGW(TAG,
@@ -978,6 +981,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     word32 maxWords_sz;
     word32 hwWords_sz;
     word32 resultWords_sz;
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    word32 left_pad_offset = 0;
+#endif
 
 /* if we are supporting negative numbers, check that first since operands
  * may be later modified (e.g. Z = Z * X) */
@@ -1096,7 +1103,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* Y (left-extend)
      * Accelerator supports large-number multiplication with only
      * four operand lengths of N ∈ {512, 1024, 1536, 2048} */
-    int left_pad_offset = maxWords_sz << 2;
+    left_pad_offset = maxWords_sz << 2;
     if (left_pad_offset <= 512 >> 3) {
         left_pad_offset = 512 >> 3; /* 64 bytes (16 words) */
     }
@@ -1114,7 +1121,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                 }
                 else {
                     ret = MP_VAL;
-                    ESP_LOGE(TAG, "Unsupported operand length: %d", hwWords_sz);
+                    ESP_LOGE(TAG, "Unsupported operand length: %d",
+                                   hwWords_sz);
                 }
             }
         }
@@ -1402,7 +1410,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
     /* we're only validating HW when in debug mode */
     if (esp_hw_validation_active()) {
-        ESP_LOGW(TAG, "MP_HW_VALIDATION_ACTIVE");
+        ESP_LOGV(TAG, "MP_HW_VALIDATION_ACTIVE");
         return MP_HW_VALIDATION_ACTIVE;
     }
 #endif
@@ -1528,15 +1536,17 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
          *  512 bits => 16 words */
         DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
 #if defined(DEBUG_WOLFSSL)
-        ESP_LOGI(TAG, "RSA_MULT_MODE_REG = %d", (mph->hwWords_sz >> 4) - 1);
+        ESP_LOGV(TAG, "RSA_MULT_MODE_REG = %d", (mph->hwWords_sz >> 4) - 1);
 #endif /* WOLFSSL_DEBUG */
 
         /* step.2 write X, M, and r_inv into memory.
          * The capacity of each memory block is 128 words.
          * The memory blocks use the little endian format for storage,
          * i.e. the least significant digit of each number is in lowest address.*/
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE, X, mph->Xs, mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE, M, mph->Ms, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                              X, mph->Xs, mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE,
+                              M, mph->Ms, mph->hwWords_sz);
         esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
                               &(mph->r_inv), mph->Rs, mph->hwWords_sz);
 
@@ -1715,6 +1725,19 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
             ESP_LOGI(TAG, "Xs            = %d", mph->Xs);
             ESP_LOGI(TAG, "Ys            = %d", mph->Ys);
+            ESP_LOGI(TAG, "found_z_used  = %d", found_z_used);
+            ESP_LOGI(TAG, "z.used        = %d", Z->used);
+            ESP_LOGI(TAG, "hwWords_sz    = %d", mph->hwWords_sz);
+            ESP_LOGI(TAG, "maxWords_sz   = %d", mph->maxWords_sz);
+            ESP_LOGI(TAG, "hwWords_sz<<2   = %d", mph->hwWords_sz << 2);
+
+            /* parameters may have been collbered; Show cpied values */
+            esp_show_mp("X", X2);
+            esp_show_mp("Y", Y2);
+            esp_show_mp("M", M2);
+
+            ESP_LOGI(TAG, "Xs            = %d", mph->Xs);
+            ESP_LOGI(TAG, "Ys            = %d", mph->Ys);
             // ESP_LOGI(TAG, "Zs            = %d", Zs);
             ESP_LOGI(TAG, "found_z_used  = %d", found_z_used);
             ESP_LOGI(TAG, "z.used        = %d", Z->used);
@@ -1729,7 +1752,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGI(TAG, "mp            = 0x%08x = %u", mph->mp, mph->mp);
 
             if (mph->mp == mph->mp2) {
-                ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup = %d  !", mph->mp);
+                ESP_LOGI(TAG, "M' match esp_calc_Mdash vs mp_montgomery_setup"
+                              " = %d  !", mph->mp);
             }
             else {
                 ESP_LOGW(TAG,
@@ -1744,6 +1768,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             }
 
 
+            esp_show_mp("HW Z", Z); /* this is the HW result */
+            esp_show_mp("SW Z2", Z2); /* this is the SW result */
+            ESP_LOGI(TAG, "esp_mp_mulmod_usage_ct = %lu tries",
+                           esp_mp_mulmod_usage_ct);
+            ESP_LOGI(TAG, "esp_mp_mulmod_error_ct = %lu failures",
+                           esp_mp_mulmod_error_ct);
+            ESP_LOGI(TAG, "");
             // esp_show_mp("Peek X", PEEK); /* this is the X before second start */
             esp_show_mp("HW Z", Z); /* this is the HW result */
             esp_show_mp("SW Z2", Z2); /* this is the SW result */

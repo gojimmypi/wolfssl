@@ -3,7 +3,7 @@
 # Usage:
 #   find_package(ARIA [REQUIRED] [QUIET])
 #
-# Once done this will define:
+# Once complete this will define:
 #   ARIA_FOUND       - system has ARIA MagicCrypto
 #   ARIA_INCLUDE_DIR - the include directory containing ARIA
 #   ARIA_LIBRARY     - the path to the libARIA library
@@ -14,6 +14,7 @@ set(ARIA_LIB_FILE)
 set(ARIA_IS_LOCAL)
 
 # when debugging cmake, ARIA_DIR environment variable can be manually set here:
+# set(ENV{ARIA_DIR} "~/MagicCrypto")
 # set(ENV{ARIA_DIR} "/mnt/c/workspace/MagicCrypto")
 # set(ENV{ARIA_DIR} "c:\\workspace\\MagicCrypto")
 
@@ -34,22 +35,40 @@ else()
     set(ARIA_IS_LOCAL)
     set(ARIA_INCLUDE_DIR "$ENV{ARIA_DIR}/include")
     message(STATUS "FindARIA.cmake found ARIA_INCLUDE_DIR = $ENV{ARIA_DIR}")
-    # set(ARIA_LIBRARY "$ENV{ARIA_INCLUDE_DIR}/lib")
+
+    message(STATUS "Checking environment location: ${ARIA_INCLUDE_DIR} and wolfSSL: ${WOLFSSL_ROOT}")
+    get_filename_component(dir1 "${ARIA_INCLUDE_DIR}" REALPATH)
+    get_filename_component(dir2 "${WOLFSSL_ROOT}/MagicCrypto/include" REALPATH)
+    message(STATUS "Found location dir: ${dir1} and ${dir2}")
+    if("${dir1}" STREQUAL "${dir2}")
+        message(STATUS "${ARIA_INCLUDE_DIR} exists within ${WOLFSSL_ROOT}.")
+        message(STATUS "Setting ARIA_IS_LOCAL flag and using wolfSSL path.")
+        set(ARIA_IS_LOCAL 1)
+        set(ARIA_INCLUDE_DIR "${WOLFSSL_ROOT}/MagicCrypto/include")
+    else()
+        if(EXISTS "${ARIA_INCLUDE_DIR}")
+            message(STATUS "Confirmed directory exists: ${ARIA_INCLUDE_DIR}")
+        else()
+            message(FATAL_ERROR "Directory not found: ${ARIA_INCLUDE_DIR}")
+        endif()
+
+        message(STATUS "Confirmed ${ARIA_INCLUDE_DIR} is not in local wolfSSL root.")
+    endif()
 endif()
 
 # Check that the appropriate files exist
 find_path(ARIA_INCLUDE_DIR NAMES "mcapi.h" )
 
 if (NOT EXISTS "${ARIA_INCLUDE_DIR}/mcapi.h")
-    message(ERROR "File does not exist at ${ARIA_INCLUDE_DIR}/mcapi.h")
+    message(FATAL_ERROR "File does not exist at ${ARIA_INCLUDE_DIR}/mcapi.h")
 endif()
 
 if(NOT EXISTS "${ARIA_INCLUDE_DIR}/mcapi_error.h")
-    message(ERROR "File does not exist at ${ARIA_INCLUDE_DIR}/mcapi_error.h")
+    message(FATAL_ERROR "File does not exist at ${ARIA_INCLUDE_DIR}/mcapi_error.h")
 endif()
 
 if(NOT EXISTS "${ARIA_INCLUDE_DIR}/mcapi_type.h")
-    message(ERROR "File does not exist at $ARIA_INCLUDE_DIR/mcapi_type.h")
+    message(FATAL_ERROR "File does not exist at $ARIA_INCLUDE_DIR/mcapi_type.h")
 endif()
 
 # find_library(ARIA_LIBRARY
@@ -82,7 +101,7 @@ mark_as_advanced(ARIA_INCLUDE_DIR ARIA_LIBRARY)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ARIA DEFAULT_MSG ARIA_INCLUDE_DIR ARIA_LIBRARY)
 
-# Some additional optional debugging messages
+# Some additional optional debugging messages, set to (1) to enable
 if(0)
     message(STATUS "")
     message(STATUS "ARIA Check: FindARIA.cmake")

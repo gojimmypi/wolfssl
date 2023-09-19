@@ -74,6 +74,28 @@
     /* Although we have hardware acceleration,
     ** we may need to fall back to software */
     #define USE_SHA_SOFTWARE_IMPL
+
+#elif defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
+    /* The ESP32C3 is different; HW crypto here. Not yet implemented.
+    ** We'll be using software for RISC-V at this time */
+#else
+    #undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
+#endif
+
+#undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
+#if defined(WOLFSSL_ESP32_CRYPT) && \
+    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+    /* define a single keyword for simplicity & readability
+     *
+     * by default the HW acceleration is on for ESP32-WROOM32
+     * but individual components can be turned off.
+     */
+    #define WOLFSSL_USE_ESP32_CRYPT_HASH_HW
+    #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+
+    /* Although we have hardware acceleration,
+    ** we may need to fall back to software */
+    #define USE_SHA_SOFTWARE_IMPL
     static const char* TAG = "wc_sha";
 #elif defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
     /* The ESP32C3 is different; HW crypto here. Not yet implemented.
