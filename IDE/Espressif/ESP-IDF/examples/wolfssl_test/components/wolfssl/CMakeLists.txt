@@ -72,8 +72,9 @@ function(IS_WOLFSSL_SOURCE DIRECTORY_PARAMETER RESULT)
 endfunction()
 
 # function: FIND_WOLFSSL_DIRECTORY
-#  parameter: USERNAME - optional suffix to search for (e.g. wolfssl-username)
-function(FIND_WOLFSSL_DIRECTORY USERNAME OUTPUT_FOUND_WOLFSSL_DIRECTORY)
+#  parameter: OUTPUT_FOUND_WOLFSSL_DIRECTORY contains root of source code, otherwise blank
+#
+function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
     set(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}")
     if( "${CURRENT_SEARCH_DIR}" STREQUAL "" )
         message(STATUS "The WOLFSSL_ROOT environment variable is not set. Searching...")
@@ -105,16 +106,18 @@ function(FIND_WOLFSSL_DIRECTORY USERNAME OUTPUT_FOUND_WOLFSSL_DIRECTORY)
             return()
         endif()
 
-        # Check for "wolfssl-[username]" subdirectory as we recurse up the directory tree
-        set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl-${USERNAME})
-        message(STATUS "Looking in ${CURRENT_SEARCH_DIR}")
+        if( THIS_USER )
+            # Check for "wolfssl-[username]" subdirectory as we recurse up the directory tree
+            set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl-${THIS_USER})
+            message(STATUS "Looking in ${CURRENT_SEARCH_DIR}")
 
-        #if(EXISTS ${CURRENT_SEARCH_DIR_ALT} AND IS_DIRECTORY ${CURRENT_SEARCH_DIR_ALT} AND EXISTS "${CURRENT_SEARCH_DIR_ALT}/wolfcrypt/src")
-        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
-        if ( FOUND_WOLFSSL )
-           message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
-            set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR_ALT} PARENT_SCOPE)
-            return()
+            #if(EXISTS ${CURRENT_SEARCH_DIR_ALT} AND IS_DIRECTORY ${CURRENT_SEARCH_DIR_ALT} AND EXISTS "${CURRENT_SEARCH_DIR_ALT}/wolfcrypt/src")
+            IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
+            if ( FOUND_WOLFSSL )
+               message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
+                set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR_ALT} PARENT_SCOPE)
+                return()
+            endif()
         endif()
 
         # Next check for no user suffix "wolfssl" subdirectory as we recurse up the directory tree
@@ -163,7 +166,7 @@ else()
     message(STATUS "************************************************************************************************")
 
     # search for wolfSSL
-    FIND_WOLFSSL_DIRECTORY(${THIS_USER} WOLFSSL_ROOT)
+    FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
     if(WOLFSSL_ROOT)
         message(STATUS "NEW Found wolfssl directory at: ${WOLFSSL_ROOT}")
     else()
