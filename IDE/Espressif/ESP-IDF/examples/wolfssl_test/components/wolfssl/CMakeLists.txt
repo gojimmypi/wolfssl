@@ -30,6 +30,22 @@ set(CMAKE_CURRENT_SOURCE_DIR ".")
 set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
 set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
 
+# find the user name to search for possible "wolfssl-username"
+message(STATUS "USERNAME = $ENV{USERNAME}")
+if(  "$ENV{USER}" STREQUAL "" ) # the bash user
+    if(  "$ENV{USERNAME}" STREQUAL "" ) # the Windows user
+        message(STATUS "could not find USER or USERNAME")
+    else()
+        # the bash user is not blank, so we'll use it.
+        set(THIS_USER "$ENV{USERNAME}")
+    endif()
+else()
+    # the bash user is not blank, so we'll use it.
+    set(THIS_USER "$ENV{USER}")
+endif()
+message(STATUS "THIS_USER = ${THIS_USER}")
+
+
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
 # See https://github.com/espressif/esp-idf/issues/8978#issuecomment-1129892685
@@ -44,67 +60,87 @@ set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
 # We are typically in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
 # The root of wolfSSL is 7 directories up from here:
 
+# function: IS_WOLFSSL_SOURCE
+#  parameter: DIRECTORY_PARAMETER - the directory to test
+#  output:    RESULT = contains contents of DIRECTORY_PARAMETER for wolfssl directory, otherwise blank.
 function(IS_WOLFSSL_SOURCE DIRECTORY_PARAMETER RESULT)
     if (EXISTS "${DIRECTORY_PARAMETER}/wolfcrypt/src")
-        set("${RESULT}" 1)
+        set(${RESULT} "${DIRECTORY_PARAMETER}" PARENT_SCOPE)
     else()
-        set("${RESULT}" 0)
+        set(${RESULT} "" PARENT_SCOPE)
     endif()
 endfunction()
 
-function(FIND_WOLFSSL_DIRECTORY USERNAME OUTPUT_VARIABLEX)
-    message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
-    get_filename_component(CURRENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
-    message(STATUS "CURRENT_DIR = ${CURRENT_DIR}")
-    while(NOT CURRENT_DIR STREQUAL "/" AND NOT CURRENT_DIR STREQUAL "")
-        IS_WOLFSSL_SOURCE("${CURRENT_DIR}" FOUND_WOLFSSL)
+# function: FIND_WOLFSSL_DIRECTORY
+#  parameter: USERNAME - optional suffix to search for (e.g. wolfssl-username)
+function(FIND_WOLFSSL_DIRECTORY USERNAME OUTPUT_FOUND_WOLFSSL_DIRECTORY)
+    set(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}")
+    if( "${CURRENT_SEARCH_DIR}" STREQUAL "" )
+        message(STATUS "The WOLFSSL_ROOT environment variable is not set. Searching...")
+    else()
+        get_filename_component(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}" ABSOLUTE)
+        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
         if("${FOUND_WOLFSSL}")
-            message(STATUS "Found wolfssl in CURRENT_DIR = ${CURRENT_DIR}")
-            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+            message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
+        else()
+            message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found:")
+            message(STATUS "$ENV{WOLFSSL_ROOT}")
+        endif()
+    endif()
+
+    # we'll start in the CMAKE_CURRENT_SOURCE_DIR, typically [something]/projectname/components/wolfssl
+    message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+    get_filename_component(CURRENT_SEARCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
+    message(STATUS "CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
+    string(LENGTH ${CURRENT_SEARCH_DIR} CURRENT_SEARCH_DIR_LENGTH)
+
+    # loop through all the parents, looking for wolfssl
+    while(NOT CURRENT_SEARCH_DIR STREQUAL "/" AND NOT CURRENT_SEARCH_DIR STREQUAL "" )
+        string(LENGTH ${CURRENT_SEARCH_DIR} CURRENT_SEARCH_DIR_LENGTH)
+        # wolfSSL may simply be in a parent directory, such as for local examples in wolfssl repo
+        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
+        if( FOUND_WOLFSSL )
+            message(STATUS "Found wolfssl in CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
+            set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
             return()
         endif()
 
-        # Check for "wolfssl-[username]" directory
-        set(WOLFSSL_DIR ${CURRENT_DIR}/wolfssl-${USERNAME})
-        message(STATUS "Looking in ${WOLFSSL_DIR}")
+        # Check for "wolfssl-[username]" subdirectory as we recurse up the directory tree
+        set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl-${USERNAME})
+        message(STATUS "Looking in ${CURRENT_SEARCH_DIR}")
 
-        if(EXISTS ${WOLFSSL_DIR} AND IS_DIRECTORY ${WOLFSSL_DIR} AND EXISTS "${WOLFSSL_DIR}/wolfcrypt/src")
-            message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR = ${CURRENT_DIR}")
-            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+        #if(EXISTS ${CURRENT_SEARCH_DIR_ALT} AND IS_DIRECTORY ${CURRENT_SEARCH_DIR_ALT} AND EXISTS "${CURRENT_SEARCH_DIR_ALT}/wolfcrypt/src")
+        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
+        if ( FOUND_WOLFSSL )
+           message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
+            set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR_ALT} PARENT_SCOPE)
             return()
         endif()
 
-        # Check for "wolfssl" directory
-        set(WOLFSSL_DIR ${CURRENT_DIR}/wolfssl)
-        if(EXISTS ${WOLFSSL_DIR} AND IS_DIRECTORY ${WOLFSSL_DIR} AND EXISTS "${WOLFSSL_DIR}/wolfcrypt/src")
-            message(STATUS "Found wolfssl in CURRENT_SEARCH_DIR = ${CURRENT_DIR}")
-            set(${OUTPUT_VARIABLEX} ${WOLFSSL_DIR} PARENT_SCOPE)
+        # Next check for no user suffix "wolfssl" subdirectory as we recurse up the directory tree
+        set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl)
+        # if(EXISTS ${CURRENT_SEARCH_DIR} AND IS_DIRECTORY ${CURRENT_SEARCH_DIR} AND EXISTS "${CURRENT_SEARCH_DIR}/wolfcrypt/src")
+        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
+        if ( FOUND_WOLFSSL )
+            message(STATUS "Found wolfssl in CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
+            set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
             return()
         endif()
 
         # Move up one directory level
-        get_filename_component(CURRENT_DIR "${CURRENT_DIR}" DIRECTORY)
-        message(status "Next CURRENT_DIR = ${CURRENT_DIR}")
+        set(PRIOR_SEARCH_DIR "${CURRENT_SEARCH_DIR}")
+        get_filename_component(CURRENT_SEARCH_DIR "${CURRENT_SEARCH_DIR}" DIRECTORY)
+        message(STATUS "Next CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
+        if( "${PRIOR_SEARCH_DIR}" STREQUAL "${CURRENT_SEARCH_DIR}" )
+            # when the search directory is empty, we'll give up
+            set(CURRENT_SEARCH_DIR "")
+        endif()
     endwhile()
 
-    # If not found, set the output variable to empty
-    set(${OUTPUT_VARIABLEX} "" PARENT_SCOPE)
+    # If not found, set the output variable to empty before exiting
+    set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} "" PARENT_SCOPE)
 endfunction()
 
-            # find the user name to search for possible "wolfssl-username"
-            message(STATUS "USERNAME = $ENV{USERNAME}")
-            if(  "$ENV{USER}" STREQUAL "" ) # the bash user
-                if(  "$ENV{USERNAME}" STREQUAL "" ) # the Windows user
-                    message(STATUS "could not find USER or USERNAME")
-                else()
-                    # the bash user is not blank, so we'll use it.
-                    set(THIS_USER "$ENV{USERNAME}")
-                endif()
-            else()
-                # the bash user is not blank, so we'll use it.
-               set(THIS_USER "$ENV{USER}")
-            endif()
-            message(STATUS "THIS_USER = ${THIS_USER}")
 
 # Example usage:
 
@@ -121,18 +157,23 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
                            )
 
 else()
-    FIND_WOLFSSL_DIRECTORY(${THIS_USER} WOLFSSL_DIR)
-    if(WOLFSSL_DIR)
-        message(STATUS "NEW Found wolfssl directory at: ${WOLFSSL_DIR}")
-    else()
-        message(STATUS "NEW wolfssl directory not found.")
-    endif()
-
     # not CMAKE_BUILD_EARLY_EXPANSION
     message(STATUS "************************************************************************************************")
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
 
+    # search for wolfSSL
+    FIND_WOLFSSL_DIRECTORY(${THIS_USER} WOLFSSL_ROOT)
+    if(WOLFSSL_ROOT)
+        message(STATUS "NEW Found wolfssl directory at: ${WOLFSSL_ROOT}")
+    else()
+        message(STATUS "NEW wolfssl directory not found.")
+        # Abort. We need wolfssl _somewhere_.
+        message(FATAL_ERROR "Could not find wolfssl in ${WOLFSSL_ROOT}.\n"
+                            "Try setting WOLFSSL_ROOT environment variable or git clone.")
+    endif()
+
+if( 0 )
     # Check to see if we're already in wolfssl, and only if WOLFSSL_ROOT not specified
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # wolfssl examples are 7 directories deep from wolfssl repo root
@@ -245,6 +286,9 @@ else()
         # Abort. We need wolfssl _somewhere_.
         message(FATAL_ERROR "Could not find wolfssl in ${WOLFSSL_ROOT}. Try setting environment variable or git clone.")
     endif()
+endif()
+
+
 
 
     set(INCLUDE_PATH ${WOLFSSL_ROOT})
