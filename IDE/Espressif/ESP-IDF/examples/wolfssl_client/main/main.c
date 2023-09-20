@@ -21,14 +21,24 @@
 
 /* ESP specific */
 #include <nvs_flash.h>
+#include <esp_log.h>
+#include "esp_event.h"
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
-/* this project */
-#include "wifi_connect.h"
+/* project */
+#include "main.h"
 #include "client-tls.h"
 #include "time_helper.h"
+
+#define USE_WIFI_EXAMPLE
+#ifdef USE_WIFI_EXAMPLE
+    #include "esp_netif.h"
+    #include "protocol_examples_common.h" /* see project CMakeLists.txt */
+#else
+    #include "wifi_connect.h"
+#endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -117,30 +127,70 @@ void app_main(void)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    /* Initialize WiFi */
+//    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+//    ret = wifi_init_sta();
+//    while (ret != 0) {
+//        ESP_LOGI(TAG, "Waiting...");
+//        vTaskDelay(60000 / portTICK_PERIOD_MS);
+//        ESP_LOGI(TAG, "Trying WiFi again...");
+//        ret = wifi_init_sta();
+//    }
+
+#ifdef FOUND_PROTOCOL_EXAMPLES_DIR
+    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+//    ret = set_time(); /* need to setup NTP before WiFi */
+    ESP_ERROR_CHECK(example_connect());
+//    ret = set_time_wait_for_ntp();
+#else
+    ESP_ERROR_CHECK(nvs_flash_init());
+
+    /* Initialize NVS */
+    ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
     /* Initialize WiFi */
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     ret = wifi_init_sta();
-    if (ret != 0) {
-        ESP_LOGV(TAG, "\n\nFailed to connect to WiFi. Halt.\n\n");
-#if defined(SINGLE_THREADED)
-        // yield;
-        while (1);
-#else
-        vTaskDelay(60000);
-#endif
+    while (ret != 0) {
+        ESP_LOGI(TAG, "Waiting...");
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Trying WiFi again...");
+        ret = wifi_init_sta();
     }
+#endif
+
 
     /* set time for cert validation */
-    set_time();
+    ret = set_time();
+    if (ret < -1) {
+        /* a value of -1 means there was no NTP server, so no need to wait */
+        ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+    }
 
+    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
+                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
+
+    /* HWM is maximum amount of stack space that has been unused, in words. */
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - uxTaskGetStackHighWaterMark(NULL)
+                   - (uxTaskGetStackHighWaterMark(NULL) / 4)
             );
     ESP_LOGI(TAG, "Starting TLS Client task ...\n");
 
@@ -161,15 +211,25 @@ void app_main(void)
 //    tls_smp_client_init(args);
 //    tls_smp_client_init(args);
 #endif
+
+    ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
+    vTaskDelete(NULL);
+    /* done */
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
+
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - uxTaskGetStackHighWaterMark(NULL));
+                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
+#endif
+
 #if defined(SINGLE_THREADED)
         ESP_LOGV(TAG, "\n\nDone!\n\n");
         while (1);
 #else
         vTaskDelay(60000);
 #endif
-    }
-}
+    } /* done whle */
+
+} /* app_main */

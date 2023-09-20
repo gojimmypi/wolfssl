@@ -20,6 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\my_private_config.h = ..\..\..\..\..\..\..\my_private_config.h
 		..\README.md = ..\README.md
+		..\sdkconfig = ..\sdkconfig
+		..\build\VisualGDB\Debug\config\sdkconfig.cmake = ..\build\VisualGDB\Debug\config\sdkconfig.cmake
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h
 	EndProjectSection
 EndProject
 Global

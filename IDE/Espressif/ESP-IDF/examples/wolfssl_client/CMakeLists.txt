@@ -59,6 +59,18 @@ else()
     message(STATUS "No conflicting wolfSSL components found.")
 endif()
 
+
+# This example uses an extra component for common functions such as Wi-Fi and Ethernet connection.
+set (PROTOCOL_EXAMPLES_DIR $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
+
+if (EXISTS "${PROTOCOL_EXAMPLES_DIR}")
+    message("Found PROTOCOL_EXAMPLES_DIR=${PROTOCOL_EXAMPLES_DIR}")
+    set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFOUND_PROTOCOL_EXAMPLES_DIR")
+else()
+    message("NOT FOUND: PROTOCOL_EXAMPLES_DIR=${PROTOCOL_EXAMPLES_DIR}")
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project(wolfssl_client)

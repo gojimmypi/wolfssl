@@ -1,4 +1,4 @@
-/* user_settings.h
+/* wifi_connect.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -18,20 +18,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef _WIFI_CONNECT_H
-#define _WIFI_CONNECT_H
+#ifndef WIFI_CONNECT_H
+#define WIFI_CONNECT_H
 
-#include "esp_idf_version.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#if ESP_IDF_VERSION_MAJOR >= 4
-    #include "esp_event.h"
-#else
-    #include "esp_event_loop.h"
-#endif
+#include <esp_idf_version.h>
+#include <esp_log.h>
 
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
+
+#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
+#define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
 
 /**
  ******************************************************************************
@@ -56,7 +53,7 @@
     #else
         #warning "did not detect environment. using ~/my_private_config.h"
         #include "~/my_private_config.h"
-    #endif
+	#endif
 #else
 
     /*

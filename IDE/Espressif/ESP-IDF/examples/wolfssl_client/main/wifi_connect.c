@@ -18,15 +18,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-/*ESP specific */
+ #include "wifi_connect.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "wifi_connect.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/apps/sntp.h"
-#include "nvs_flash.h"
+#include <esp_wifi.h>
+#include <esp_log.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -36,15 +34,16 @@
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
 #endif
 
-#if ESP_IDF_VERSION_MAJOR >= 4
-//    #include "protocol_examples_common.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+#elif ESP_IDF_VERSION_MAJOR >= 4
+    #include "protocol_examples_common.h"
 #else
     const static int CONNECTED_BIT = BIT0;
     static EventGroupHandle_t wifi_event_group;
 #endif
 
 /* breadcrumb prefix for logging */
-const static char *TAG = "tls_client";
+const static char *TAG = "wifi_connect";
 
 #if ESP_IDF_VERSION_MAJOR < 4
 /* event handler for wifi events */
@@ -220,7 +219,7 @@ int wifi_init_sta(void)
         ESP_LOGI(TAG, "Failed to connect to AP");
         ret = -1;
     } else {
-        ESP_LOGE(TAG, "Connect to AP UNEXPECTED EVENT");
+        ESP_LOGE(TAG, "AP UNEXPECTED EVENT");
         ret = -2;
     }
 #endif

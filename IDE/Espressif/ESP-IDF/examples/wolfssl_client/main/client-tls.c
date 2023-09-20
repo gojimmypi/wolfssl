@@ -229,7 +229,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
     else {
         ip4_addr = (struct ip4_addr *)hp->h_addr;
-        ESP_LOGI(TAG, IPSTR, IP2STR(ip4_addr));
+        // ESP_LOGI(TAG, IPSTR, IP2STR(ip4_addr));
     }
 
     /* Create and initialize WOLFSSL_CTX */
