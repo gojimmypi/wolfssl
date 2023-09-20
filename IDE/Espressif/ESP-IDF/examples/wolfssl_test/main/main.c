@@ -218,11 +218,21 @@ void app_main(void)
 
     if (rc == 0) {
         ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
+
+        /* exit keyword for wolfssl_monitor.py */
+        ESP_LOGI(TAG, "WOLFSSL_COMPLETE\n");
     }
     else {
         ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
         /* see wolfssl/wolfcrypt/error-crypt.h */
+
+        /* exit keyword for wolfssl_monitor.py */
+        ESP_LOGE(TAG, "WOLFSSL_FAIL\n");
     }
+
+    ESP_LOGI(TAG, "\n\nDone!"
+                  "If running from idf.py monitor, press twice: Ctrl+]\n\n"
+            );
 
     /* after the test, we'll just wait */
     while (1) {

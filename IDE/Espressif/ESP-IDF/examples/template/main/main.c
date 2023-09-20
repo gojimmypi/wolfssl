@@ -39,5 +39,7 @@ void app_main(void)
 #endif
 
     ESP_LOGI(TAG, "\n\nDone!"
-                  "If running from idf.py monitor, press twice: Ctrl+]");
+                  "If running from idf.py monitor, press twice: Ctrl+]\n\n"
+                  "WOLFSSL_COMPLETE\n" /* exit keyword for wolfssl_monitor.py */
+            );
 }

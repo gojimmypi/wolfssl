@@ -7,6 +7,7 @@ issues: https://github.com/wolfSSL/wolfssl/issues
 discussion: https://www.wolfssl.com/forums
 files:
   exclude:
+  - 'INSTALL.md'
   - '*.py'
   - '**/*.list'
   - '**/.vs/**/*'
