@@ -25,6 +25,14 @@
 extern "C" {
 #endif
 
+/* worst case, if GitHub time not available, used fixed time */
+int set_fixed_default_time();
+
+/* set time from string (e.g. GitHub commit time) */
+int set_time_from_string(char* time_buffer);
+
+/* set time from NTP servers,
+ * also intitially calls set_fixed_default_time or set_time_from_string */
 int set_time(void);
 
 #ifdef __cplusplus
