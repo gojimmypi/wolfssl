@@ -32,6 +32,9 @@
     #include "esp_event_loop.h"
 #endif
 
+/* ESP lwip */
+#define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
+
 #define DEFAULT_PORT                     11111
 
 #define TLS_SMP_SERVER_TASK_NAME         "tls_sever_example"
@@ -66,6 +69,7 @@
         #warning "did not detect environment"
 	#endif
 #else
+
     /*
     ** The examples use WiFi configuration that you can set via project
     ** configuration menu

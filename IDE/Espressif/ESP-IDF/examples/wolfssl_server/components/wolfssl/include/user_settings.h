@@ -22,6 +22,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <sdkconfig.h> /* essential to chip set detection */
+
 /* #define SHOW_SSID_AND_PASSWORD */ /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
@@ -40,7 +42,6 @@
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
-#include <sdkconfig.h> /* essemtial for target chip detection */
 
 #define WOLFSSL_ESPIDF
 
@@ -51,6 +52,7 @@
  * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
  */
+
 #define WOLFSSL_ESP32
 
 /* #define DEBUG_WOLFSSL_VERBOSE */
@@ -129,12 +131,6 @@
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
 
-/* when you want not to use HW acceleration */
-/* #define NO_ESP32_CRYPT */
-/* #define NO_WOLFSSL_ESP32_CRYPT_HASH*/
-/* #define NO_WOLFSSL_ESP32_CRYPT_AES */
-/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
@@ -150,10 +146,6 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-//    #define NO_ESP32_CRYPT
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-//    #define NO_WOLFSSL_ESP32_CRYPT_AES
-//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     /* HW Disabled by default for ESP32-S2.   */
     #define NO_ESP32_CRYPT
@@ -166,6 +158,11 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
@@ -195,6 +192,38 @@
 /* see esp_ShowExtendedSystemInfo in esp32-crypt.h for startup log info */
 #define HAVE_VERSION_EXTENDED_INFO
 
+
+/* debug options */
+/* #define ESP_VERIFY_MEMBLOCK              */
+#define WOLFSSL_HW_METRICS
+/* #define DEBUG_WOLFSSL_VERBOSE            */
+/* #define DEBUG_WOLFSSL                    */
+/* #define WOLFSSL_ESP32_CRYPT_DEBUG        */
+#define NO_RECOVER_SOFTWARE_CALC
+
+/* optionally turn off individual math HW acceleration features */
+
+/* Turn off Large Number Multiplication:
+** [Z = X * Y] in esp_mp_mul()                                  */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL         */
+
+/* Turn off Large Number Modular Exponentiation:
+** [Z = X^Y mod M] in esp_mp_exptmod()                          */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
+
+/* Turn off Large Number Modular Multiplication
+** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
+
+
+/* this is known to fail in TFM: */
+/* #define HONOR_MATH_USED_LENGTH */
+
+/* this is known to fail in TFM */
+/* #define CHECK_MP_READ_UNSIGNED_BIN */
+
+#define WOLFSSL_PUBLIC_MP /* used by benchmark */
+
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
 //#define WOLFSSL_SM2
 //#define WOLFSSL_SM3
@@ -205,6 +234,17 @@
      *
      * see settings.h for other features turned on with SM4 ciphers.
      */
+    #include <wolfssl/certs_test_sm.h>
+    #define CTX_CA_CERT          root_sm2
+    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
+    #define CTX_SERVER_CERT      server_sm2
+    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+    #define CTX_SERVER_KEY       server_sm2_priv
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+
  // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
  // #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
@@ -221,6 +261,16 @@
 #else
     /* default settings */
     #define USE_CERT_BUFFERS_2048
+    #define USE_CERT_BUFFERS_256
+    #define CTX_CA_CERT          ca_cert_der_2048
+    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_CERT      server_cert_der_2048
+    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_KEY       server_key_der_2048
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
 
     #undef  HAVE_ECC
@@ -228,3 +278,38 @@
 
     #undef  HAVE_SUPPORTED_CURVES
     #define HAVE_SUPPORTED_CURVES
+
+/* Optionally include alternate HW test library: alt_hw_test.h */
+/* When enabling, the ./components/wolfssl/CMakeLists.txt file
+ * will need the name of the library in the idf_component_register
+ * for the PRIV_REQUIRES list. */
+/* #define INCLUDE_ALT_HW_TEST */
+
+/* #define NO_HW_MATH_TEST */
+
+
+/* when turning on ECC508 / ECC608 support
+#define WOLFSSL_ESPWROOM32SE
+#define HAVE_PK_CALLBACKS
+#define WOLFSSL_ATECC508A
+#define ATCA_WOLFSSL
+*/
+
+/* USE_FAST_MATH is default */
+
+/* use SP_MATH */
+/*
+#undef USE_FAST_MATH
+#define WOLFSSL_SP_MATH_ALL
+*/
+
+/* use integer heap math */
+/*
+#undef USE_FAST_MATH
+#define USE_INTEGER_HEAP_MATH
+*/
+
+/* optionally use DPORT_ACCESS_READ_BUFFER */
+/*
+#define USE_ESP_DPORT_ACCESS_READ_BUFFER
+*/
