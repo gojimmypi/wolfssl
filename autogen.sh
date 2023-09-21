@@ -24,12 +24,15 @@ if [ -d .git ]; then
 
     if [ -n "$no_links" ]; then
         echo "Linux ln does not work on shared Windows file system in WSL."
-        echo "Copying pre-commit.sh and pre-push.sh instead of linking."
         if [ ! -e .git/hooks/pre-commit ]; then
-            cp ./pre-commit.sh .git/hooks/pre-commit || exit $?
+            echo "The pre-commit.sh file will not be copied to .git/hooks/pre-commit"
+            # shell scripts do not work on Windows; TODO create equivalent batch file
+            # cp ./pre-commit.sh .git/hooks/pre-commit || exit $?
         fi
         if [ ! -e .git/hooks/pre-push ]; then
-            cp ./pre-push.sh .git/hooks/pre-push || exit $?
+            echo "The pre-push.sh file will not be copied to .git/hooks/pre-commit"
+            # shell scripts do not work on Windows; TODO create equivalent batch file
+            # cp ./pre-push.sh .git/hooks/pre-push || exit $?
         fi
     else
         if [ ! -e .git/hooks/pre-commit ]; then
