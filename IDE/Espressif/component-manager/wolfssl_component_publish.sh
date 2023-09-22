@@ -11,6 +11,7 @@
 # set our known production and staging links. Trailing "/" expected. Edit with caution:
 export PRODUCTION_URL="https://components.espressif.com"
 export STAGING_URL="https://components-staging.espressif.com"
+export THIS_COMPONENT="wolfssl"
 
 #**************************************************************************************************
 # A function to copy a given wolfSSL root: $1
@@ -193,9 +194,16 @@ THIS_WOLFSSL=$(dirname "$(dirname "$(dirname "$PWD")")")
 # Optionally specify an alternative source of wolfSSL to publish:
 
 # TODO REMOVE this line if not using /test/wolfssl-master
-
-THIS_WOLFSSL=/mnt/c/test/wolfssl-master
-
+if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
+    THIS_WOLFSSL=/mnt/c/workspace/wolfMQTT-master
+else
+    if [ "wolfssl" == "$THIS_COMPONENT" ]; then
+        THIS_WOLFSSL=/mnt/c/workspace/wolfssl-master
+    else
+        echo "Error: not a supported component: $THIS_COMPONENT"
+        exit 1
+    fi
+fi
 # END TODO REMOVE
 
 # copy_wolfssl_source $THIS_WOLFSSL
@@ -272,6 +280,7 @@ THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then
     echo ""
     echo "Version text not found in the README.md file. Please edit and try again."
+    echo "  See file: README_REGISTRY_PREPEND.md that is used to create README.md"
     exit 1
 else
     echo ""
@@ -288,51 +297,74 @@ fi
 
 
 # Copy C source files
-echo "Copying C Source files... $THIS_WOLFSSL"
-copy_wolfssl_source  $THIS_WOLFSSL  "src"                                '*.c'
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src"                      '*.c'
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                '*.c'
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/atmel"           "*.c"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/Espressif"       "*.c"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.c"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/src"          "*.c"
+if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
 
-# Copy C header files
-echo "Copying C Header files..."
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.h"  APPEND
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.h"  APPEND
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/include"      "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl"                            "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/openssl"                    "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
+    echo "Copying wolfMQTT C Source files... $THIS_WOLFSSL"
+    copy_wolfssl_source  $THIS_WOLFSSL  "src"                                "*.c"
 
-# Note that for example apps, the ESP Registry will append the these README files to
-# the main README.md at publish time, and generate anchor text hyperlinks.
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
-copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
+    # Copy C header files
+    echo "Copying wolfMQTT C Header files..."
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfmqtt"                           "*.h"
+fi
+
+if [ "wolfssl" == "$THIS_COMPONENT" ]; then
+
+    echo "Copying wolfSSL C Source files... $THIS_WOLFSSL"
+    copy_wolfssl_source  $THIS_WOLFSSL  "src"                                "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src"                      "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/atmel"           "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/src/port/Espressif"       "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.c"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/src"          "*.c"
+
+    # Copy C header files
+    echo "Copying wolfSSL C Header files..."
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "*.h"  APPEND
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "*.h"  APPEND
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/user-crypto/include"      "*.h"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl"                            "*.h"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/openssl"                    "*.h"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt"                  "*.h"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/atmel"       "*.h"
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
+
+    # Note that for example apps, the ESP Registry will append the these README files to
+    # the main README.md at publish time, and generate anchor text hyperlinks.
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
+
+    # TODO remove
+    # Files known to need attention
+    # The current examples expect user_settings in the root include directory
+    # this can be removed once subsequent PR updates are accepted for examples
+    cp ./lib/user_settings.h ./include/user_settings.h
+
+    # The component registry needs a newer version of esp32-crypt.h
+    cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
+    # End TODO
+fi
 
 #**************************************************************************************************
-# make sure the version found in ./wolfssl/version.h matches  that in ./idf_component.yml
+# make sure the version found in ./$THIS_COMPONENT/version.h matches  that in ./idf_component.yml
 #**************************************************************************************************
-if [ -e "./wolfssl/version.h" ]; then
-    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" ./wolfssl/version.h | awk '{print $3}' | tr -d '"')
+if [ -e "./$THIS_COMPONENT/version.h" ]; then
+    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" ./$THIS_COMPONENT/version.h | awk '{print $3}' | tr -d '"')
     grep "$WOLFSSL_VERSION" ./idf_component.yml
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""
-        echo "Version text in idf_component.yml does not match ./wolfssl/version.h ($WOLFSSL_VERSION). Please edit and try again."
+        echo "Version text in idf_component.yml does not match ./$THIS_COMPONENT/version.h ($WOLFSSL_VERSION). Please edit and try again."
         # optionally exit TODO?
 
         # exit 1
     else
         echo ""
-        echo "Confirmed idf_component.yml matches ./wolfssl/version.h the version text: $WOLFSSL_VERSION"
+        echo "Confirmed idf_component.yml matches ./$THIS_COMPONENT/version.h the version text: $WOLFSSL_VERSION"
         echo ""
     fi
 else
-    echo "ERROR: ./wolfssl/version.h not found"
+    echo "ERROR: ./$THIS_COMPONENT/version.h not found"
     exit 1
 fi
 
@@ -425,15 +457,7 @@ if [ -e "./build_failed.txt" ]; then
     rm ./build_failed.txt
 fi
 
-# TODO remove
-# Files known to need attention
-# The current examples expect user_settings in the root include directory
-# this can be removed once subsequent PR updates are accepted for examples
-cp ./lib/user_settings.h ./include/user_settings.h
 
-# The component registry needs a newer version of esp32-crypt.h
-cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
-# End TODO
 
 
 #**************************************************************************************************
@@ -545,14 +569,14 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
 
     if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
         echo "DISABLED: "
-        echo "compote component upload --namespace wolfssl --name wolfssl"
+        echo "compote component upload --namespace wolfssl --name $THIS_COMPONENT"
 
         # echo "WARNING: The live wolfSSL will be replaced upon completion."
     else
         if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
-            echo "Running: compote component upload --namespace gojimmypi --name wolfssl"
+            echo "Running: compote component upload --namespace gojimmypi --name my$THIS_COMPONENT"
             echo ""
-            compote component upload --namespace gojimmypi --name wolfssl
+            compote component upload --namespace gojimmypi --name my$THIS_COMPONENT
         else
             echo ""
             echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
