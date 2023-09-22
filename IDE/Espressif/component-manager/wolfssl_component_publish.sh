@@ -430,16 +430,23 @@ while IFS= read -r file_path; do
         # Copy the file to the destination
         cp "$full_source_path" "$full_destination_path"
         THIS_ERROR_CODE=$?
-    if [ $THIS_ERROR_CODE -eq 0 ]; then
-        echo "Copied: $full_source_path -> $full_destination_path"
-    else
-        MISSING_FILES=Y
-        # echo "WARNING: File not copied:  $full_source_path"
-    fi
+        if [ $THIS_ERROR_CODE -eq 0 ]; then
+            echo "Copied: $full_source_path -> $full_destination_path"
+        else
+            MISSING_FILES=Y
+            # echo "WARNING: File not copied:  $full_source_path"
+        fi
+    fi # comment or file check
+done < "component_manifest.txt" # loop through each of the lines in component_manifest.txt
 
-
-    fi
-done < "component_manifest.txt"
+#**************************************************************************************************
+# each example needs a idf_component.yml from  ./lib copied into [example]/name/
+#**************************************************************************************************
+echo "------------------------------------------------------------------------"
+echo "Initialize projects with idf_component.yml"
+echo "------------------------------------------------------------------------"
+find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "Copying ./lib/idf_component.yml to {}/main " && cp ./lib/idf_component.yml {}/main/idf_component.yml ' || exit 1
+echo ""
 
 #**************************************************************************************************
 # Check if we detected any missing example files that did not successfully copy.
