@@ -23,20 +23,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "esp_system.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "nvs_flash.h"
-
-#include "lwip/err.h"
-#include "lwip/sys.h"
-
+#include <esp_wifi.h>
+#include <esp_log.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
-
+#include <wolfssl/version.h>
 #ifndef WOLFSSL_ESPIDF
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
 #endif
@@ -62,13 +55,13 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
         esp_wifi_connect();
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
-#if ESP_IDF_VERSION_MAJOR >= 4
+    #if ESP_IDF_VERSION_MAJOR >= 4
         ESP_LOGI(TAG, "got ip:" IPSTR "\n",
                  IP2STR(&event->event_info.got_ip.ip_info.ip));
-#else
+    #else
         ESP_LOGI(TAG, "got ip:%s",
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
-#endif
+    #endif
         /* see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html */
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         break;
@@ -153,11 +146,13 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
 int wifi_init_sta(void)
 {
-    s_wifi_event_group = xEventGroupCreate();
+    int ret = 0;
 
     ESP_ERROR_CHECK(esp_netif_init());
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    s_wifi_event_group = xEventGroupCreate();
+
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -223,11 +218,13 @@ int wifi_init_sta(void)
         ESP_LOGI(TAG, "Connected to AP");
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to AP");
+        ret = -1;
     } else {
-        ESP_LOGE(TAG, "Connect to AP UNEXPECTED EVENT");
+        ESP_LOGE(TAG, "AP UNEXPECTED EVENT");
+        ret = -2;
     }
 #endif
-    return 0;
+    return ret;
 }
 
 int wifi_show_ip(void)
