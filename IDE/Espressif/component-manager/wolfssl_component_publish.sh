@@ -584,14 +584,14 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
 
     if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
         echo "DISABLED: "
-        echo "compote component upload --namespace wolfssl --name $THIS_COMPONENT"
+        echo "compote component upload --namespace wolfssl --name $THIS_COMPONENT" || exit 1
 
         # echo "WARNING: The live wolfSSL will be replaced upon completion."
     else
         if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
             echo "Running: compote component upload --namespace gojimmypi --name my$THIS_COMPONENT"
             echo ""
-            compote component upload --namespace gojimmypi --name my$THIS_COMPONENT
+            compote component upload --namespace gojimmypi --name my$THIS_COMPONENT || exit 1
         else
             echo ""
             echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"

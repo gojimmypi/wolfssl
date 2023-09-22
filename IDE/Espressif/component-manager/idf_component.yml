@@ -1,4 +1,4 @@
-version: "5.6.2-stable"
+version: "5.6.2-dev1"
 description: wolfSSL Embedded SSL/TLS Library
 url: https://www.wolfssl.com
 repository: https://github.com/wolfSSL/wolfssl.git
