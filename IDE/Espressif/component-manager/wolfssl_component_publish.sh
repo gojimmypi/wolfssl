@@ -11,7 +11,6 @@
 # set our known production and staging links. Trailing "/" expected. Edit with caution:
 export PRODUCTION_URL="https://components.espressif.com"
 export STAGING_URL="https://components-staging.espressif.com"
-export THIS_COMPONENT="wolfssl"
 
 #**************************************************************************************************
 # A function to copy a given wolfSSL root: $1
@@ -69,6 +68,18 @@ copy_wolfssl_source() {
 # Begin script
 #**************************************************************************************************
 #**************************************************************************************************
+
+echo "Searching for component name (this script must run github repo directory)"
+export THIS_COMPONENT=$(basename -s .git $(git config --get remote.origin.url)) || exit 1
+
+# check if IDF_PATH is set
+if [ -z "$THIS_COMPONENT" ]; then
+    echo "Could not find component name."
+    echo "Please run this script from a github repo directory."
+    exit 1
+else
+    echo "Found component to publish: $THIS_COMPONENT"
+fi
 
 if [ -e "./idf_component_manager.yml" ]; then
     # There may be contradictory settings in idf_component_manager.yml vs environment variables,
@@ -219,6 +230,7 @@ popd || exit 1
 #**************************************************************************************************
 # Confirm we actually want to proceed to copy.
 #**************************************************************************************************
+echo "Existing component-manager/examples files will be deleted and copied from ../ESP-IDF/examples"
 OK_TO_COPY=
 until [ "${OK_TO_COPY^}" == "Y" ] || [ "${OK_TO_COPY^}" == "N" ]; do
     read -r -n1 -p "Proceed? (Y/N) " OK_TO_COPY
@@ -387,6 +399,9 @@ destination_dir="examples"
 
 # Check if the destination directory exists, and create it if it doesn't
 if [ ! -d "$destination_dir" ]; then
+    mkdir -p "$destination_dir"
+else
+    rm -rf ../component-manager/examples
     mkdir -p "$destination_dir"
 fi
 

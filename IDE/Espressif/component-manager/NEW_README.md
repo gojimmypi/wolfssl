@@ -1,4 +1,4 @@
-This is the Espressif Component Version of wolfSSL 5.6, Release #1 (version ^5.6.0-stable-PRtest)
+This is the Espressif Component Version of wolfSSL v5.6.2-stable, Release #1 (version ^5.6.2-stable)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
@@ -165,18 +165,6 @@ single call hash function. Instead the name `WC_SHA`, `WC_SHA256`, `WC_SHA384` a
 `WC_SHA512` should be used for the enum name.
 
 
-# wolfSSL Release 5.6.3 (Jun 20, 2023)
-
-Release 5.6.3 has been developed according to wolfSSL's development and QA process (see link below) and successfully passed the quality criteria.
-
-Release 5.6.3 of wolfSSL embedded TLS has 4 bug fixes:
-
-* Fix for setting the atomic macro options introduced in release 5.6.2. This issue affects GNU gcc autoconf builds. The fix resolves a potential mismatch of the generated macros defined in options.h file and the macros used when the wolfSSL library is compiled. In version 5.6.2 this mismatch could result in unstable runtime behavior.
-* Fix for invalid suffix error with Windows build using the macro GCM_TABLE_4BIT.
-* Improvements to Encrypted Memory support (WC_PROTECT_ENCRYPTED_MEM) implementations for modular exponentiation in SP math-all (sp_int.c) and TFM (tfm.c).
-* Improvements to SendAlert for getting output buffer.
-
-
 # wolfSSL Release 5.6.2 (Jun 09, 2023)
 
 Release 5.6.2 has been developed according to wolfSSL's development and QA process (see link below) and successfully passed the quality criteria.
@@ -187,8 +175,8 @@ NOTE: * --enable-heapmath is being deprecated and will be removed by 2024
 Release 5.6.2 of wolfSSL embedded TLS has bug fixes and new features including:
 
 ## Vulnerabilities
-* [Low] In cases where a malicious agent could analyze cache timing at a very detailed level, information about the AES key used could be leaked during T/S Box lookups. One such case was shown on RISC-V hardware using the MicroWalk tool (https://github.com/microwalk-project/Microwalk). A hardened version of T/S Box lookups was added in wolfSSL to help mitigate this potential attack and is now on by default with RISC-V builds and can be enabled on other builds if desired by compiling wolfSSL with the macro WOLFSSL_AES_TOUCH_LINES. Thanks to Jan Wichelmann, Christopher Peredy, Florian Sieck, Anna Pätschke, Thomas Eisenbarth (University of Lübeck): MAMBO-V: Dynamic Side-Channel Leakage Analysis on RISC-V. Fixed in the following GitHub pull request https://github.com/wolfSSL/wolfssl/pull/6309
-* [High] In previous versions of wolfSSL if a TLS 1.3 client gets neither a PSK (pre shared key) extension nor a KSE (key share extension) when connecting to a malicious server, a default predictable buffer gets used for the IKM value when generating the session master secret. Using a potentially known IKM value when generating the session master secret key compromises the key generated, allowing an eavesdropper to reconstruct it and potentially allowing surreptitious access to or meddling with message contents in the session. This issue does not affect client validation of connected servers, nor expose private key information, but could result in an insecure TLS 1.3 session when not controlling both sides of the connection. We recommend that TLS 1.3 client side users update the version of wolfSSL used. Thanks to Johannes from Sectra Communications and Linköping University for the report. Fixed in the following GitHub pull request https://github.com/wolfSSL/wolfssl/pull/6412
+* [Low] In cases where a malicious agent could analyze cache timing at a very detailed level, information about the AES key used could be leaked during T/S Box lookups. One such case was shown on RISC-V hardware using the MicroWalk tool (https://github.com/microwalk-project/Microwalk). A hardened version of T/S Box lookups was added in wolfSSL to help mitigate this potential attack and is now on by default with RISC-V builds and can be enabled on other builds if desired by compiling wolfSSL with the macro WOLFSSL_AES_TOUCH_LINES. Thanks to Jan Wichelmann, Christopher Peredy, Florian Sieck, Anna PÃ¤tschke, Thomas Eisenbarth (University of LÃ¼beck): MAMBO-V: Dynamic Side-Channel Leakage Analysis on RISC-V. Fixed in the following GitHub pull request https://github.com/wolfSSL/wolfssl/pull/6309
+* [High] In previous versions of wolfSSL if a TLS 1.3 client gets neither a PSK (pre shared key) extension nor a KSE (key share extension) when connecting to a malicious server, a default predictable buffer gets used for the IKM value when generating the session master secret. Using a potentially known IKM value when generating the session master secret key compromises the key generated, allowing an eavesdropper to reconstruct it and potentially allowing surreptitious access to or meddling with message contents in the session. This issue does not affect client validation of connected servers, nor expose private key information, but could result in an insecure TLS 1.3 session when not controlling both sides of the connection. We recommend that TLS 1.3 client side users update the version of wolfSSL used. Thanks to Johannes from Sectra Communications and LinkÃ¶ping University for the report. Fixed in the following GitHub pull request https://github.com/wolfSSL/wolfssl/pull/6412
 
 ## New Feature Additions
 
