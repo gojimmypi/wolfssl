@@ -346,6 +346,11 @@ if [ "wolfssl" == "$THIS_COMPONENT" ]; then
     copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/benchmark"                "README.md"  APPEND
     copy_wolfssl_source  $THIS_WOLFSSL  "wolfcrypt/test"                     "README.md"  APPEND
 
+    # Define the source directory and destination directory.
+    # We start in           IDE/Espressif/component-manager
+    # We want examples from IDE/Espressif/ESP-IDF/examples
+    EXAMPLE_SOURCE_DIR="$THIS_WOLFSSL/IDE/Espressif/ESP-IDF/examples"
+
     # TODO remove
     # Files known to need attention
     # The current examples expect user_settings in the root include directory
@@ -387,11 +392,6 @@ fi
 
 
 
-# Define the source directory and destination directory.
-# We start in           IDE/Espressif/component-manager
-# We want examples from IDE/Espressif/ESP-IDF/examples
-source_dir="../ESP-IDF/examples"
-
 # We'll copy examples to publish into our local examples
 # We start in           IDE/Espressif/component-manager
 # Copy example files to IDE/Espressif/component-manager/examples
@@ -421,7 +421,7 @@ while IFS= read -r file_path; do
         fi
 
         # Construct the full source and destination paths
-        full_source_path="$source_dir/$file_path"
+        full_source_path="$EXAMPLE_SOURCE_DIR/$file_path"
         full_destination_path="$destination_dir/$file_path"
 
         # Create the directory structure in the destination if it doesn't exist

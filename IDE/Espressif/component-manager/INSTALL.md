@@ -117,6 +117,12 @@ Managed components are distinguished by the `idf_component.yml` file in the `pro
 
 The wolfSSL component must be either managed or non-managed. Not both.
 
+```
+idf.py create-project-from-example "gojimmypi/mywolfssl^5.6.3-f9082c5.5:wolfssl_benchmark"
+cd wolfssl_benchmark
+idf.py -b 115200 flash monitor
+```
+
 ## Non-ESP Component Example
 
 For a wolfSSL getting started example, see the basic [wolfSSL Template Project](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template)
@@ -164,3 +170,15 @@ To resolve, either:
 
 * Remove the `idf_component.yml` file and remove wolfssl directory from `projectname/managed__components`
 * Remove the wolfssl directory from `projectname/components`
+
+
+```
+```
+
+While holding the `boot` button down, tap the `en` button, then release the `boot` button. Try again.
+
+If that didn't work, try the same sequence _after_ you've press `enter` for the `idf.py flash` command
+while the is attempting the upload.
+
+For a robust programing experience that does not depend on bootloader mode, consider a JTAG
+programmer such as the [Tigard](https://github.com/tigard-tools/tigard).

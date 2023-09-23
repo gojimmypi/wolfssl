@@ -34,6 +34,7 @@ wolfssl_client/main/CMakeLists.txt
 wolfssl_client/main/client-tls.c
 wolfssl_client/main/time_helper.c
 wolfssl_client/main/wifi_connect.c
+wolfssl_client/main/Kconfig.projbuild
 wolfssl_client/main/include/wifi_connect.h
 wolfssl_client/main/include/time_helper.h
 
@@ -49,6 +50,7 @@ wolfssl_server/main/CMakeLists.txt
 wolfssl_server/main/server-tls.c
 wolfssl_server/main/time_helper.c
 wolfssl_server/main/wifi_connect.c
+wolfssl_client/main/Kconfig.projbuild
 wolfssl_server/main/include/time_helper.h
 wolfssl_server/main/include/wifi_connect.h
 
