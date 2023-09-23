@@ -353,7 +353,7 @@ if [ "wolfssl" == "$THIS_COMPONENT" ]; then
     cp ./lib/user_settings.h ./include/user_settings.h
 
     # The component registry needs a newer version of esp32-crypt.h
-    cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
+    # cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
     # End TODO
 fi
 
@@ -440,13 +440,39 @@ while IFS= read -r file_path; do
 done < "component_manifest.txt" # loop through each of the lines in component_manifest.txt
 
 #**************************************************************************************************
-# each example needs a idf_component.yml from  ./lib copied into [example]/name/
+# Each project will be initialized with idf_component.yml in the project directory.
 #**************************************************************************************************
 echo "------------------------------------------------------------------------"
 echo "Initialize projects with idf_component.yml"
 echo "------------------------------------------------------------------------"
-find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "Copying ./lib/idf_component.yml to {}/main " && cp ./lib/idf_component.yml {}/main/idf_component.yml ' || exit 1
+if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
+    export IDF_EXAMPLE_SOURCE="./lib/idf_component.yml"
+else
+    if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
+        export IDF_EXAMPLE_SOURCE="./lib/idf_component-staging-$USER.yml"
+    else
+        echo ""
+        echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
+        echo "Expected blank or $STAGING_URL or $PRODUCTION_URL"
+        exit 1
+    fi
+fi
 echo ""
+
+#**************************************************************************************************
+# make sure the idf_component.yml (or idf_component-staging-[user name].yml) file exists
+#**************************************************************************************************
+if [ -f "$IDF_EXAMPLE_SOURCE" ]; then
+    echo "Examples will use: $IDF_EXAMPLE_SOURCE"
+else
+    echo "Error: staging environment found, but required manifest file does not exist: $IDF_EXAMPLE_SOURCE"
+    exit -1
+fi
+
+#**************************************************************************************************
+# each example needs a idf_component.yml from  ./lib copied into [example]/name/
+#**************************************************************************************************
+find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "Copying $IDF_EXAMPLE_SOURCE to {}/main/idf_component.yml " && cp $IDF_EXAMPLE_SOURCE {}/main/idf_component.yml ' || exit 1
 
 #**************************************************************************************************
 # Check if we detected any missing example files that did not successfully copy.

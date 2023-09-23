@@ -1,4 +1,4 @@
-This is the Espressif Component Version of wolfSSL v5.6.2-dev1, Release #1 (version ^5.6.2-dev1)
+This is the Espressif Component Version of wolfSSL v5.6.3-f9082c5.3, Release #1 (version ^5.6.3-f9082c5.3)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
@@ -163,6 +163,18 @@ wolfSSL is built with `--enable-opensslextra` (`OPENSSL_EXTRA`) or with the
 macro `NO_OLD_SHA_NAMES`. These names get mapped to the OpenSSL API for a
 single call hash function. Instead the name `WC_SHA`, `WC_SHA256`, `WC_SHA384` and
 `WC_SHA512` should be used for the enum name.
+
+
+# wolfSSL Release 5.6.3 (Jun 20, 2023)
+
+Release 5.6.3 has been developed according to wolfSSL's development and QA process (see link below) and successfully passed the quality criteria.
+
+Release 5.6.3 of wolfSSL embedded TLS has 4 bug fixes:
+
+* Fix for setting the atomic macro options introduced in release 5.6.2. This issue affects GNU gcc autoconf builds. The fix resolves a potential mismatch of the generated macros defined in options.h file and the macros used when the wolfSSL library is compiled. In version 5.6.2 this mismatch could result in unstable runtime behavior.
+* Fix for invalid suffix error with Windows build using the macro GCM_TABLE_4BIT.
+* Improvements to Encrypted Memory support (WC_PROTECT_ENCRYPTED_MEM) implementations for modular exponentiation in SP math-all (sp_int.c) and TFM (tfm.c).
+* Improvements to SendAlert for getting output buffer.
 
 
 # wolfSSL Release 5.6.2 (Jun 09, 2023)

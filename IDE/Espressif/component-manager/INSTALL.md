@@ -13,6 +13,17 @@ Edit version in:
 - [README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md)
 Version numbers must exactly match between these files.
 
+Note that when using the staging environment, the staging user namespace and component name
+will be used. There should be a `./lib/idf_component-staging-[user name].yml` file.
+For example, for the `gojimmypi` user, the [./lib/idf_component-staging-gojimmypi.yml](./lib/idf_component-staging-gojimmypi.yml)
+should contain the alternate namespace (typically the username) and component name (typically with "my" prefix):
+
+```yml
+## IDF Component Manager Manifest File
+dependencies:
+  gojimmypi/mywolfssl: "^5.6.3-f9082c5.2"
+```
+
 See the `wolfssl_component_publish.sh` bash script. Set private `IDF_COMPONENT_API_TOKEN`
 environment variable as appropriate. Optionally set the `IDF_COMPONENT_REGISTRY_URL`.
 Typically there's only one valid option. See [Staging](./INSTALL.md#Staging), below.
@@ -86,6 +97,8 @@ To use this, set the `IDF_COMPONENT_REGISTRY_URL` environment variable:
 ```
 export IDF_COMPONENT_REGISTRY_URL=https://components-staging.espressif.com/ 
 ```
+
+This setting is needed for _both_ deployment and client testing of staging-site components.
 
 The default when not set is the production site at https://components.espressif.com
 
