@@ -123,6 +123,16 @@ cd wolfssl_benchmark
 idf.py -b 115200 flash monitor
 ```
 
+## Coponent Configuration
+
+EXamples such as the wolfssl_server and wolfssl_client need specific parameters set, in particular
+the target server IP address, SSID, and SSID password. The `idf.py menuconfig` command is needed.
+Set values in `Example Configuration` and `Example Connection Configuration`:
+
+```bash
+idf.py menuconfig
+```
+
 ## Non-ESP Component Example
 
 For a wolfSSL getting started example, see the basic [wolfSSL Template Project](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template)
@@ -171,8 +181,22 @@ To resolve, either:
 * Remove the `idf_component.yml` file and remove wolfssl directory from `projectname/managed__components`
 * Remove the wolfssl directory from `projectname/components`
 
+Cannot program, _The chip needs to be in download mode_:
 
 ```
+Serial port /dev/ttyS9
+Connecting......................................
+
+A fatal error occurred: Failed to connect to ESP32: Wrong boot mode detected (0x13)! The chip needs to be in download mode.
+For troubleshooting steps visit: https://docs.espressif.com/projects/esptool/en/latest/troubleshooting.html
+CMake Error at run_serial_tool.cmake:66 (message):
+
+  /home/gojimmypi/.espressif/python_env/idf5.1_py3.10_env/bin/python;;/mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esptool_py/esptool/esptool.py;--chip;esp32
+  failed.
+
+
+
+FAILED: CMakeFiles/flash
 ```
 
 While holding the `boot` button down, tap the `en` button, then release the `boot` button. Try again.
@@ -182,3 +206,12 @@ while the is attempting the upload.
 
 For a robust programing experience that does not depend on bootloader mode, consider a JTAG
 programmer such as the [Tigard](https://github.com/tigard-tools/tigard).
+
+Cannot find source:
+
+```text
+Executing action: create-project-from-example
+ERROR: Version of the component "gojimmypi/mywolfssl" satisfying the spec "^5.6.3-f9082c5.7" was not found.
+```
+
+Check the `IDF_COMPONENT_REGISTRY_URL` setting. Blank defaults to production. See above for staging.

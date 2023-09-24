@@ -1,4 +1,4 @@
-This is the Espressif Component Version of wolfSSL v5.6.3-f9082c5.6, Release #6 (version ^5.6.3-f9082c5.6)
+This is the Espressif Component Version of wolfSSL v5.6.3-f9082c5.7, Release #7 (version ^5.6.3-f9082c5.7)
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 
