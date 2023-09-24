@@ -70,7 +70,9 @@ copy_wolfssl_source() {
 #**************************************************************************************************
 
 echo "Searching for component name (this script must run github repo directory)"
-export THIS_COMPONENT=$(basename -s .git $(git config --get remote.origin.url)) || exit 1
+THIS_COMPONENT_CONFIG="$(git config --get remote.origin.url)"
+export THIS_COMPONENT
+THIS_COMPONENT="$(basename -s .git "$THIS_COMPONENT_CONFIG")" || exit 1
 
 # check if IDF_PATH is set
 if [ -z "$THIS_COMPONENT" ]; then
@@ -84,7 +86,7 @@ fi
 if [ -e "./idf_component_manager.yml" ]; then
     # There may be contradictory settings in idf_component_manager.yml vs environment variables,
     # Which takes priority? Check not performed at this time,
-    echo "ERROR: This script does not yet support df_component_manager.yml."
+    echo "ERROR: This script does not yet support idf_component_manager.yml."
     exit 1
 fi
 
@@ -366,7 +368,7 @@ fi
 # make sure the version found in ./$THIS_COMPONENT/version.h matches  that in ./idf_component.yml
 #**************************************************************************************************
 if [ -e "./$THIS_COMPONENT/version.h" ]; then
-    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" ./$THIS_COMPONENT/version.h | awk '{print $3}' | tr -d '"')
+    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" "./$THIS_COMPONENT/version.h" | awk '{print $3}' | tr -d '"')
     grep "$WOLFSSL_VERSION" ./idf_component.yml
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
@@ -466,13 +468,13 @@ if [ -f "$IDF_EXAMPLE_SOURCE" ]; then
     echo "Examples will use: $IDF_EXAMPLE_SOURCE"
 else
     echo "Error: staging environment found, but required manifest file does not exist: $IDF_EXAMPLE_SOURCE"
-    exit -1
+    exit 1
 fi
 
 #**************************************************************************************************
 # each example needs a idf_component.yml from  ./lib copied into [example]/name/
 #**************************************************************************************************
-find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "Copying $IDF_EXAMPLE_SOURCE to {}/main/idf_component.yml " && cp $IDF_EXAMPLE_SOURCE {}/main/idf_component.yml ' || exit 1
+find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c "echo 'Copying $IDF_EXAMPLE_SOURCE to {}/main/idf_component.yml ' && cp $IDF_EXAMPLE_SOURCE {}/main/idf_component.yml" || exit 1
 
 #**************************************************************************************************
 # Check if we detected any missing example files that did not successfully copy.
@@ -624,7 +626,7 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
         if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
             echo "Running: compote component upload --namespace gojimmypi --name my$THIS_COMPONENT"
             echo ""
-            compote component upload --namespace gojimmypi --name my$THIS_COMPONENT || exit 1
+            compote component upload --namespace gojimmypi --name my"$THIS_COMPONENT" || exit 1
         else
             echo ""
             echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
