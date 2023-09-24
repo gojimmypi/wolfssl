@@ -7,12 +7,14 @@
 #
 # TODO: config file settings not yet supported here. See:
 # https://docs.espressif.com/projects/idf-component-manager/en/latest/guides/packaging_components.html#authentication-with-a-config-file
-
+#
 # set our known production and staging links. Trailing "/" expected. Edit with caution:
 export PRODUCTION_URL="https://components.espressif.com"
 export STAGING_URL="https://components-staging.espressif.com"
 
 #**************************************************************************************************
+# copy_wolfssl_source()
+#
 # A function to copy a given wolfSSL root: $1
 # for a given subdirectory: $2
 # for a file type specification: $3
@@ -61,7 +63,7 @@ copy_wolfssl_source() {
   else
     echo "ERROR: Not Found: $dst"
   fi
-}
+} # copy_wolfssl_source()
 
 #**************************************************************************************************
 #**************************************************************************************************
@@ -138,6 +140,7 @@ if [ -d "./dist/wolfssl_$THIS_VERSION" ]; then
     FOUND_LOCAL_DIST=true
 fi
 
+# check if this version distribution already exists, and if so, if it should be overwritten
 if [ -z "$FOUND_LOCAL_DIST" ]; then
     echo "Confirmed a prior local distribution file set does not exist for wolfssl_$THIS_VERSION."
 else
@@ -160,7 +163,7 @@ fi
 
 
 #**************************************************************************************************
-# Ready Summary before step that will copy all source files related to the ESP Component Registry
+# Show Ready Summary before step that will copy all source files related to the ESP Component Registry
 #**************************************************************************************************
 echo ""
 
@@ -175,6 +178,11 @@ if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
     echo "WARNING: The live wolfSSL will be replaced upon completion."
 else
     if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
+        # check if USER is set
+        if [ -z "$USER" ]; then
+            echo "Could not detect USER environment variable needed for staging"
+            exit 1
+        fi
         echo ""
         echo "WARNING: The staging wolfSSL component will be replaced upon completion."
     else
@@ -310,7 +318,11 @@ fi
 # See also IDE/Espressif/ESP-IDF/user_settings.h
 
 
+#**************************************************************************************************
 # Copy C source files
+#**************************************************************************************************
+
+# wolfMQTT Files
 if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
 
     echo "Copying wolfMQTT C Source files... $THIS_WOLFSSL"
@@ -321,6 +333,14 @@ if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
     copy_wolfssl_source  $THIS_WOLFSSL  "wolfmqtt"                           "*.h"
 fi
 
+# wolfSSH Files
+if [ "wolfssh" == "$THIS_COMPONENT" ]; then
+    echo "Copying wolfSSH C Source files... $THIS_WOLFSSL"
+    echo "wolfSSH not yet implemented"
+    exit 1
+fi
+
+# wolfSSL Files
 if [ "wolfssl" == "$THIS_COMPONENT" ]; then
 
     echo "Copying wolfSSL C Source files... $THIS_WOLFSSL"
@@ -390,10 +410,8 @@ fi
 #**************************************************************************************************
 # All files from the wolfssl/IDE/Espressif/ESP-IDF/examples
 # will be copied to the local ESP Registry ./examples/ directory
-
-
-
-
+#
+#
 # We'll copy examples to publish into our local examples
 # We start in           IDE/Espressif/component-manager
 # Copy example files to IDE/Espressif/component-manager/examples
@@ -492,7 +510,7 @@ if [ "${MISSING_FILES^}" == "Y" ]; then
     done
 
     if [ "${COMPONENT_MANAGER_CONTINUE}" == "Y" ]; then
-        echo "Continuing with missing files"
+        echo "Continuing with missing files..."
     else
         echo "Exiting..."
         exit 1
@@ -506,8 +524,6 @@ if [ -e "./build_failed.txt" ]; then
     echo "Removing semaphore file: build_failed.txt"
     rm ./build_failed.txt
 fi
-
-
 
 
 #**************************************************************************************************
@@ -531,6 +547,7 @@ fi
 # print a progress message for each example being built -|-----------|------------|
 # send each directory found as a parameter to wolfssl_build_example.sh to build the project -------------------------------------------|
 # The build_failed.txt will exist when one or more of the builds has failed -----------------------------------------------------------|------|
+#
 # TODO build disabled
 #find ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} sh -c 'echo "\n\nBuilding {} " && ./wolfssl_build_example.sh {} || touch ../../build_failed.txt'
 
@@ -553,7 +570,7 @@ find  ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} rm -r
 find  ./examples/ -maxdepth 1 -mindepth 1 -type d -print0 | xargs -0 -I {} rm -r {}/build/
 
 echo ""
-echo "Samples file to publish:"
+echo "Samples files to publish:"
 echo ""
 find ./examples/ -print
 echo ""
@@ -616,17 +633,18 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     # Unfortunately, there is no way to change the build-system name of a dependency installed
     # by the component manager. It's always `namespace__component`.
     #
+    # In the case of staging, the component will be called "[username]__mywolfssl"
+    #
 
     if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
+        # echo "WARNING: The live wolfSSL will be replaced upon completion."
         echo "DISABLED: "
         echo "compote component upload --namespace wolfssl --name $THIS_COMPONENT" || exit 1
-
-        # echo "WARNING: The live wolfSSL will be replaced upon completion."
     else
         if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
-            echo "Running: compote component upload --namespace gojimmypi --name my$THIS_COMPONENT"
+            echo "Running: compote component upload --namespace $USER --name my$THIS_COMPONENT"
             echo ""
-            compote component upload --namespace gojimmypi --name my"$THIS_COMPONENT" || exit 1
+            compote component upload --namespace $USER --name my"$THIS_COMPONENT" || exit 1
         else
             echo ""
             echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
@@ -634,8 +652,6 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
             exit 1
         fi
     fi
-
-
 
     echo ""
     if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
