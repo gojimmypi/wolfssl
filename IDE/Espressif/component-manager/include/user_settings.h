@@ -22,7 +22,7 @@
 #include <sdkconfig.h> /* essential to chip set detection */
 
 #undef WOLFSSL_ESPIDF
-#undef WOLFSSL_ESP32
+#undef WOLFSSL_ESPWROOM32
 #undef WOLFSSL_ESPWROOM32SE
 #undef WOLFSSL_ESP32
 #undef WOLFSSL_ESP8266
@@ -70,30 +70,28 @@
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 /* when you want to use SINGLE THREAD */
-#define SINGLE_THREADED
+/* #define SINGLE_THREADED */
 
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
 
-#define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
-#define WOLFSSL_SHA224
+/* #define WOLFSSL_SHA224 */
 
 /* when you want to use SHA384 */
-#define WOLFSSL_SHA3
+/* #define WOLFSSL_SHA3 */
 
-#define WOLFSSL_SHA384
+/* #define WOLFSSL_SHA384 */
 #define WOLFSSL_SHA512
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 #define HAVE_ED25519
 
-// #define OPENSSL_EXTRA
 
 /* when you want to use pkcs7 */
-#define HAVE_PKCS7
+/* #define HAVE_PKCS7 */
 
 #if defined(HAVE_PKCS7)
     #define HAVE_AES_KEYWRAP
@@ -125,7 +123,8 @@
     /* X and Y of X * Y mod P greater than                         */
     #define ESP_RSA_MULM_BITS            9
 #endif
-#define RSA_LOW_MEM
+/* optional RSA low memory */
+/* #define RSA_LOW_MEM */
 
 /* debug options */
 /* #define DEBUG_WOLFSSL */
@@ -145,19 +144,15 @@
 #define HASH_SIZE_LIMIT /* for test.c */
 
 /* only FAST_MATH has HW acceleration at this time */
-// #define USE_FAST_MATH
-#define WOLFSSL_SP_MATH_ALL
-// #define WOLFSSL_SP_RISCV32 /* only valid on RISC-V chips */
+#define USE_FAST_MATH
+
+/* only valid on RISC-V chips such as ESP32-C3: */
+/* #define WOLFSSL_SP_RISCV32 */
 
 /* optionally use SP_MATH */
 /* #define SP_MATH */
 
-#define WOLFSSL_SMALL_STACK
-
-#if defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-    /* AES192 is not supported on the ESP32-S3 HW at this time */
-    #define NO_AES_192
-#endif
+/* #define WOLFSSL_SMALL_STACK */
 
 #define HAVE_VERSION_EXTENDED_INFO
 #define HAVE_WC_INTROSPECTION
@@ -174,39 +169,6 @@
 
 /* Shared configuration in same directory */
 /* #include "Wolf_Features.h" */
-
-// #define WOLFSSL_KEY_GEN
-#define WOLFSSL_CERT_REQ
-#define WOLFSSL_CERT_GEN
-#define WOLFSSL_CERT_EXT
-#define WOLFSSL_SYS_CA_CERTS
-
-
-#define WOLFSSL_CERT_TEXT
-
-#define WOLFSSL_ASN_TEMPLATE
-
-/*
-#undef  WOLFSSL_KEY_GEN
-
-#undef  WOLFSSL_CERT_REQ
-
-#undef  WOLFSSL_CERT_GEN
-
-#undef  WOLFSSL_CERT_EXT
-
-#undef  WOLFSSL_SYS_CA_CERTS
-*/
-
-/*
---enable-keygen
---enable-certgen
---enable-certreq
---enable-certext
---enable-asn-template
-*/
-
-
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
@@ -253,7 +215,7 @@
 #endif
 
 /* debug options */
-// #define ESP_VERIFY_MEMBLOCK
+/* #define ESP_VERIFY_MEMBLOCK */
 #define WOLFSSL_HW_METRICS
 /* #define DEBUG_WOLFSSL_VERBOSE            */
 /* #define DEBUG_WOLFSSL                    */
