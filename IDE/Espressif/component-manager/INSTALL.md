@@ -125,7 +125,7 @@ idf.py -b 115200 flash monitor
 
 ## Coponent Configuration
 
-EXamples such as the wolfssl_server and wolfssl_client need specific parameters set, in particular
+Examples such as the wolfssl_server and wolfssl_client need specific parameters set, in particular
 the target server IP address, SSID, and SSID password. The `idf.py menuconfig` command is needed.
 Set values in `Example Configuration` and `Example Connection Configuration`:
 

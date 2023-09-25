@@ -76,6 +76,9 @@ THIS_COMPONENT_CONFIG="$(git config --get remote.origin.url)"
 export THIS_COMPONENT
 THIS_COMPONENT="$(basename -s .git "$THIS_COMPONENT_CONFIG")" || exit 1
 
+# Our component names are all lower case, regardless of repo name:
+THIS_COMPONENT="${THIS_COMPONENT,,}"
+
 # check if IDF_PATH is set
 if [ -z "$THIS_COMPONENT" ]; then
     echo "Could not find component name."
@@ -320,7 +323,9 @@ fi
 
 #**************************************************************************************************
 # Copy C source files
+# Reminder: each component must specify a value for EXAMPLE_SOURCE_DIR
 #**************************************************************************************************
+EXAMPLE_SOURCE_DIR="missing"
 
 # wolfMQTT Files
 if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
@@ -331,12 +336,20 @@ if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
     # Copy C header files
     echo "Copying wolfMQTT C Header files..."
     copy_wolfssl_source  $THIS_WOLFSSL  "wolfmqtt"                           "*.h"
+
+    # wolfMQTT looks for an options.h file
+    echo "Copying wolfMQTT options.h"
+    cp ./lib/options.h "./wolfmqtt/options.h"
+
+    EXAMPLE_SOURCE_DIR="$THIS_WOLFSSL/IDE/Espressif/ESP-IDF/examples"
 fi
 
 # wolfSSH Files
 if [ "wolfssh" == "$THIS_COMPONENT" ]; then
     echo "Copying wolfSSH C Source files... $THIS_WOLFSSL"
     echo "wolfSSH not yet implemented"
+
+    EXAMPLE_SOURCE_DIR="$THIS_WOLFSSL/ide/Espressif/ESP-IDF/examples"
     exit 1
 fi
 
@@ -383,6 +396,7 @@ if [ "wolfssl" == "$THIS_COMPONENT" ]; then
     # cp ./lib/esp32-crypt.h   ./wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h
     # End TODO
 fi
+echo ""
 
 #**************************************************************************************************
 # make sure the version found in ./$THIS_COMPONENT/version.h matches  that in ./idf_component.yml
@@ -425,6 +439,14 @@ else
     mkdir -p "$destination_dir"
 fi
 
+# Check that we have a manifest for examples.
+if [ -f "component_manifest.txt" ]; then
+    echo "Using manifest file: component_manifest.txt"
+else
+    echo "Error: component_manifest.txt not found and is needed for examples."
+    exit 1
+fi
+
 MISSING_FILES=N
 # Read the list of files from component_manifest.txt and copy them
 while IFS= read -r file_path; do
@@ -458,6 +480,7 @@ while IFS= read -r file_path; do
         fi
     fi # comment or file check
 done < "component_manifest.txt" # loop through each of the lines in component_manifest.txt
+echo ""
 
 #**************************************************************************************************
 # Each project will be initialized with idf_component.yml in the project directory.
@@ -616,7 +639,7 @@ fi
 
 COMPONENT_MANAGER_PUBLISH=
 until [ "${COMPONENT_MANAGER_PUBLISH^}" == "Y" ] || [ "${COMPONENT_MANAGER_PUBLISH^}" == "N" ]; do
-    read -r -n1 -p "Proceed? (Y/N) " COMPONENT_MANAGER_PUBLISH
+    read -r -n1 -p "Proceed to publish $THIS_COMPONENT? (Y/N) " COMPONENT_MANAGER_PUBLISH
     COMPONENT_MANAGER_PUBLISH=${COMPONENT_MANAGER_PUBLISH^};
     echo;
 done
