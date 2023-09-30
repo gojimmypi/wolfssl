@@ -2,8 +2,12 @@
 #
 # wolfssl_component_publish.sh
 #
-# Script to publish wolfSSL to Espressif ESP Registry.
-# This file is not needed by end users.
+# Script to publish wolfSSL, wolfMQTT, and wolfSSH to Espressif ESP Registry.
+# This file is duplicated across repositories. It is not needed by end users.
+#
+# Version:  1.0
+#
+# For usage, see INSTALL.md
 #
 # TODO: config file settings not yet supported here. See:
 # https://docs.espressif.com/projects/idf-component-manager/en/latest/guides/packaging_components.html#authentication-with-a-config-file
@@ -64,12 +68,37 @@ copy_wolfssl_source() {
     echo "ERROR: Not Found: $dst"
   fi
 } # copy_wolfssl_source()
+#**************************************************************************************************
+
 
 #**************************************************************************************************
 #**************************************************************************************************
 # Begin script
 #**************************************************************************************************
 #**************************************************************************************************
+# Check if at least one argument is provided
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <value>"
+  exit 1
+fi
+
+# Set THIS_COMPONENT to the value of the first parameter
+THIS_COMPONENT="$1"
+
+case "$THIS_COMPONENT" in
+  "wolfssl")
+    echo "publish wolfssl"
+    ;;
+  "wolfssh")
+    echo "publish wolfssh"
+    ;;
+  "wolfmqtt")
+    echo "publish wolfmqtt"
+    ;;
+  *)
+    echo "Not a supported component: $THIS_COMPONENT"
+    ;;
+esac
 
 echo "Searching for component name (this script must run github repo directory)"
 THIS_COMPONENT_CONFIG="$(git config --get remote.origin.url)"
@@ -128,16 +157,16 @@ fi
 
 # check if prior version tgz file already published
 FOUND_LOCAL_DIST=
-if [ -f "./dist/wolfssl_$THIS_VERSION.tgz" ]; then
-    echo "Found file wolfssl_$THIS_VERSION.tgz"
+if [ -f "./dist/${THIS_COMPONENT}_${THIS_VERSION}.tgz" ]; then
+    echo "Found file ${THIS_COMPONENT}_${THIS_VERSION}.tgz"
     echo "Duplicate versions cannot be published. By proceeding, you will overwrite the local source."
     echo ""
     FOUND_LOCAL_DIST=true
 fi
 
 # check if prior version directory already published
-if [ -d "./dist/wolfssl_$THIS_VERSION" ]; then
-    echo "Found directory: wolfssl_$THIS_VERSION"
+if [ -d "./dist/${THIS_COMPONENT}_${THIS_VERSION}" ]; then
+    echo "Found directory: ${THIS_COMPONENT}_${THIS_VERSION}"
     echo "Duplicate versions cannot be published. By proceeding, you will overwrite the local source."
     echo ""
     FOUND_LOCAL_DIST=true
@@ -145,7 +174,7 @@ fi
 
 # check if this version distribution already exists, and if so, if it should be overwritten
 if [ -z "$FOUND_LOCAL_DIST" ]; then
-    echo "Confirmed a prior local distribution file set does not exist for wolfssl_$THIS_VERSION."
+    echo "Confirmed a prior local distribution file set does not exist for ${THIS_COMPONENT}_${THIS_VERSION}."
 else
     OK_TO_OVERWRITE_DIST=
     until [ "${OK_TO_OVERWRITE_DIST^}" == "Y" ] || [ "${OK_TO_OVERWRITE_DIST^}" == "N" ]; do
@@ -178,7 +207,8 @@ if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
 fi
 
 if [ "$IDF_COMPONENT_REGISTRY_URL" == "$PRODUCTION_URL" ]; then
-    echo "WARNING: The live wolfSSL will be replaced upon completion."
+    echo "WARNING: The live $THIS_COMPONENT will be replaced upon completion."
+    export THIS_NAMESPACE=wolfssl
 else
     if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
         # check if USER is set
@@ -186,8 +216,11 @@ else
             echo "Could not detect USER environment variable needed for staging"
             exit 1
         fi
+        export THIS_NAMESPACE="$USER"
         echo ""
-        echo "WARNING: The staging wolfSSL component will be replaced upon completion."
+        echo "WARNING: The staging $THIS_COMPONENT component will be replaced upon completion:"
+        echo ""
+        echo "   $IDF_COMPONENT_REGISTRY_URL/components/$THIS_NAMESPACE/mywolfssh"
     else
         echo ""
         echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
@@ -224,8 +257,12 @@ else
     if [ "wolfssl" == "$THIS_COMPONENT" ]; then
         THIS_WOLFSSL=/mnt/c/workspace/wolfssl-master
     else
-        echo "Error: not a supported component: $THIS_COMPONENT"
-        exit 1
+        if [ "wolfssh" == "$THIS_COMPONENT" ]; then
+            THIS_WOLFSSL=/mnt/c/workspace/wolfssh-master
+        else
+            echo "Error: not a supported component: $THIS_COMPONENT"
+            exit 1
+        fi
     fi
 fi
 # END TODO REMOVE
@@ -251,6 +288,8 @@ until [ "${OK_TO_COPY^}" == "Y" ] || [ "${OK_TO_COPY^}" == "N" ]; do
     echo;
 done
 
+echo ""
+
 if [ "${OK_TO_COPY^}" == "Y" ]; then
     echo "Proceeding to copy..."
 else
@@ -259,17 +298,24 @@ else
 fi
 
 #**************************************************************************************************
-# Copy root README.md file, clean it, and prepend README_REGISTRY_PREPEND.md text
+# Copy root README.md file, clean it, and prepend README_REGISTRY_PREPEND.md text.
+# Also prepend a staging note as appropriate.
 #**************************************************************************************************
-cp                  $THIS_WOLFSSL/README.md   ./README.md
+# Copy a fresh repository source README.md
+cp                                       $THIS_WOLFSSL/README.md      ./README.md
 
 # strip any HTML anchor tags, that are irrelevant and don't look pretty
 echo "Removing HTML anchor tags from README..."
 sed -i '/<a href/,/<\/a>/d' ./README.md
 
 if [ -e "./README_REGISTRY_PREPEND.md" ]; then
-    echo "Pre-pending README_REGISTRY_PREPEND to README.md"
-    cat ./README_REGISTRY_PREPEND.md  ./README.md > ./NEW_README.md
+    if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
+        echo "Prepend README_STAGING_PREPEND.md and README_REGISTRY_PREPEND.md to README.md"
+        cat ./README_STAGING_PREPEND.md ./README_REGISTRY_PREPEND.md  ./README.md  >  ./NEW_README.md
+    else
+    echo "Prepend README_REGISTRY_PREPEND.md to README.md"
+        cat                             ./README_REGISTRY_PREPEND.md  ./README.md  >  ./NEW_README.md
+    fi
     THIS_ENCODING=$(file -b --mime-encoding ./NEW_README.md)
     echo "Found encoding: $THIS_ENCODING"
 
@@ -319,8 +365,7 @@ fi
 # copy_wolfssl_source $THIS_WOLFSSL  "include"                           "*.h"
 #
 # See also IDE/Espressif/ESP-IDF/user_settings.h
-
-
+#
 #**************************************************************************************************
 # Copy C source files
 # Reminder: each component must specify a value for EXAMPLE_SOURCE_DIR
@@ -347,10 +392,13 @@ fi
 # wolfSSH Files
 if [ "wolfssh" == "$THIS_COMPONENT" ]; then
     echo "Copying wolfSSH C Source files... $THIS_WOLFSSL"
-    echo "wolfSSH not yet implemented"
+    copy_wolfssl_source  $THIS_WOLFSSL  "src"                                "*.c"
+
+    # Copy C header files
+    echo "Copying wolfSSH C Header files..."
+    copy_wolfssl_source  $THIS_WOLFSSL  "wolfssh"                           "*.h"
 
     EXAMPLE_SOURCE_DIR="$THIS_WOLFSSL/ide/Espressif/ESP-IDF/examples"
-    exit 1
 fi
 
 # wolfSSL Files
@@ -402,7 +450,7 @@ echo ""
 # make sure the version found in ./$THIS_COMPONENT/version.h matches  that in ./idf_component.yml
 #**************************************************************************************************
 if [ -e "./$THIS_COMPONENT/version.h" ]; then
-    WOLFSSL_VERSION=$(grep "LIBWOLFSSL_VERSION_STRING" "./$THIS_COMPONENT/version.h" | awk '{print $3}' | tr -d '"')
+    WOLFSSL_VERSION=$(grep "${COMPONENT_VERSION_STRING}" ./"${THIS_COMPONENT}"/version.h | awk '{print $3}' | tr -d '"')
     grep "$WOLFSSL_VERSION" ./idf_component.yml
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
@@ -425,6 +473,9 @@ fi
 # All files from the wolfssl/IDE/Espressif/ESP-IDF/examples
 # will be copied to the local ESP Registry ./examples/ directory
 #
+# Define the source directory and destination directory.
+# We start in           IDE/Espressif/component-manager
+# We want examples from IDE/Espressif/ESP-IDF/examples
 #
 # We'll copy examples to publish into our local examples
 # We start in           IDE/Espressif/component-manager
@@ -508,7 +559,7 @@ echo ""
 if [ -f "$IDF_EXAMPLE_SOURCE" ]; then
     echo "Examples will use: $IDF_EXAMPLE_SOURCE"
 else
-    echo "Error: staging environment found, but required manifest file does not exist: $IDF_EXAMPLE_SOURCE"
+    echo "Error: staging environment found, but required example component yml file does not exist: $IDF_EXAMPLE_SOURCE"
     exit 1
 fi
 
@@ -547,7 +598,7 @@ if [ -e "./build_failed.txt" ]; then
     echo "Removing semaphore file: build_failed.txt"
     rm ./build_failed.txt
 fi
-
+# end of prep
 
 #**************************************************************************************************
 # Build all the projects in ./examples/
@@ -632,9 +683,9 @@ if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
     echo ""
     exit 1
 else
-    echo "Publishing local wolfSSL source to ESP Registry: $IDF_COMPONENT_REGISTRY_URL"
+    echo "Publishing local $THIS_COMPONENT source to ESP Registry: $IDF_COMPONENT_REGISTRY_URL"
     echo ""
-    echo "WARNING: The specified wolfSSL component will be replaced upon completion."
+    echo "WARNING: The specified $THIS_COMPONENT component will be replaced upon completion."
 fi
 
 COMPONENT_MANAGER_PUBLISH=
@@ -667,7 +718,7 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
         if [ "$IDF_COMPONENT_REGISTRY_URL" == "$STAGING_URL" ]; then
             echo "Running: compote component upload --namespace $USER --name my$THIS_COMPONENT"
             echo ""
-            compote component upload --namespace $USER --name my"$THIS_COMPONENT" || exit 1
+            compote component upload --namespace "$THIS_NAMESPACE" --name my"$THIS_COMPONENT" || exit 1
         else
             echo ""
             echo "WARNING: unexpected IDF_COMPONENT_REGISTRY_URL value = $IDF_COMPONENT_REGISTRY_URL"
@@ -680,7 +731,7 @@ if [ "${COMPONENT_MANAGER_PUBLISH}" == "Y" ]; then
     if [ -z "$IDF_COMPONENT_REGISTRY_URL" ]; then
         echo "View the new component at https://components.espressif.com/components/wolfssl/wolfssl"
     else
-        echo "View the new component at $IDF_COMPONENT_REGISTRY_URL/wolfssl/wolfssl"
+        echo "View the new component at $IDF_COMPONENT_REGISTRY_URL/$THIS_NAMESPACE/$THIS_COMPONENT"
     fi
     echo ""
     echo "Done!"
