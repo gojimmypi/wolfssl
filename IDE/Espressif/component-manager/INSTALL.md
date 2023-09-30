@@ -12,6 +12,7 @@ Note that this is *different* from the same-name files in the example projects.
 Edit version in:
 - Component configuration [idf_component.yml](./idf_component.yml) 
 - Example application [lib/idf_component.yml](./lib/idf_component.yml) 
+- Example staging application [lib/idf_component.yml](./lib/idf_component-staging-gojimmypi.yml) 
 - [README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md)
 Version numbers must exactly match between these files.
 

@@ -1,4 +1,17 @@
-This is the Espressif Component Version of wolfSSL v5.6.3-Staging01-237d10a.2, Staging Release #10 (version ^5.6.3-Staging01-237d10a.2)
+This is a staging experimental version!
+
+When testing staging components, be sure to set `IDF_COMPONENT_REGISTRY_URL`:
+
+```
+export IDF_COMPONENT_REGISTRY_URL=https://components-staging.espressif.com
+```
+
+Set the value when not testing:
+
+```
+export IDF_COMPONENT_REGISTRY_URL=https://components.espressif.com
+```
+This is the Espressif Component Version of wolfSSL v5.6.3-Staging01-237d10a.3, Staging Release #11 (version ^5.6.3-Staging01-237d10a.3)
 When testing staging components:
 
 ```
@@ -9,6 +22,8 @@ For questions or beta test of this library, please send a message to support@wol
 
 For details on how wolfSSL is published to the ESP Component Registry, see the
 [INSTALL.md](https://github.com/wolfssl/wolfssl/tree/master/IDE/Espressif/component-manager/INSTALL.md) file.
+
+See the [wolfSSL Manual](https://www.wolfssl.com/documentation/manuals/wolfssl/index.html).
 
 The [wolfSSL embedded TLS library](https://www.wolfssl.com/products/wolfssl/) is a lightweight, portable, 
 C-language-based SSL/TLS library targeted at IoT, embedded, and RTOS environments primarily because of its size, 

@@ -1,4 +1,4 @@
-This is the Espressif Component Version of wolfSSL v5.6.3-Staging01-237d10a.2, Staging Release #10 (version ^5.6.3-Staging01-237d10a.2)
+This is the Espressif Component Version of wolfSSL v5.6.3-Staging01-237d10a.3, Staging Release #11 (version ^5.6.3-Staging01-237d10a.3)
 When testing staging components:
 
 ```
