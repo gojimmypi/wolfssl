@@ -78,25 +78,28 @@ copy_wolfssl_source() {
 #**************************************************************************************************
 # Check if at least one argument is provided
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <value>"
+  echo "Usage: $0 <componentname>"
   exit 1
 fi
 
 # Set THIS_COMPONENT to the value of the first parameter
-THIS_COMPONENT="$1"
-
+export THIS_COMPONENT="$1"
+export THIS_COMPONENT="${THIS_COMPONENT,,}"
+echo $THIS_COMPONENT
 case "$THIS_COMPONENT" in
   "wolfssl")
-    echo "publish wolfssl"
+    export COMPONENT_VERSION_STRING="LIBWOLFSSL_VERSION_STRING"
     ;;
   "wolfssh")
-    echo "publish wolfssh"
+    export COMPONENT_VERSION_STRING="LIBWOLFSSH_VERSION_STRING"
     ;;
   "wolfmqtt")
-    echo "publish wolfmqtt"
+    export COMPONENT_VERSION_STRING="LIBWOLFMQTT_VERSION_STRING"
     ;;
   *)
+    export COMPONENT_VERSION_STRING=""
     echo "Not a supported component: $THIS_COMPONENT"
+    exit 1
     ;;
 esac
 
