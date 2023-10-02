@@ -89,6 +89,13 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
+/* optional DH */
+/* #define PROJECT_DH */
+#ifdef PROJECT_DH
+    #define HAVE_DH
+    #define HAVE_FFDHE_2048
+#endif
+
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */

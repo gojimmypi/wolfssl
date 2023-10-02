@@ -112,7 +112,7 @@ int ShowCiphers(WOLFSSL* ssl)
             ESP_LOGI(TAG, "Available Ciphers:\n%s\n", ciphers);
         }
         else {
-            ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
+            ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error %d", ret);
         }
     }
     else {
@@ -184,7 +184,7 @@ void my_atmel_free(int slotId)
         mSlotList[slotId] = ATECC_INVALID_SLOT;
     }
 }
-#endif /* CUSTOM_SLOT_ALLOCATION                                       */
+#endif /* CUSTOM_SLOT_ALLOCATION */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
 /* client task */
@@ -262,7 +262,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
 /*
  *
- * reference code:
+ * reference code for SM Ciphers:
  *
         #if defined(HAVE_AESGCM) && !defined(NO_DH)
             #ifdef WOLFSSL_TLS13
@@ -306,6 +306,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
              - uxTaskGetStackHighWaterMark(NULL));
 #endif
 
+/* see user_settings PROJECT_DH for HAVE_DH and HAVE_FFDHE_2048 */
 #ifndef NO_DH
     ret = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
      if (ret != SSL_SUCCESS) {
@@ -323,9 +324,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
         ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                                                              CTX_CLIENT_CERT,
-                                                              CTX_CLIENT_CERT_SIZE,
-                                                              CTX_CLIENT_CERT_TYPE);
+                                         CTX_CLIENT_CERT,
+                                         CTX_CLIENT_CERT_SIZE,
+                                         CTX_CLIENT_CERT_TYPE);
         if (ret != SSL_SUCCESS) {
             ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret);
         }
@@ -338,12 +339,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
                                          CTX_CA_CERT_TYPE);
 
         ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                                CTX_CLIENT_KEY,
-                                                CTX_CLIENT_KEY_SIZE,
-                                                CTX_CLIENT_KEY_TYPE);
+                                         CTX_CLIENT_KEY,
+                                         CTX_CLIENT_KEY_SIZE,
+                                         CTX_CLIENT_KEY_TYPE);
         if(ret  != SSL_SUCCESS) {
             wolfSSL_CTX_free(ctx) ; ctx = NULL ;
-            ESP_LOGE(TAG, "ERROR: failed to load key %d, please check the file.\n", ret) ;
+            ESP_LOGE(TAG, "ERROR: failed to load key %d, "
+                          "please check the file.\n", ret) ;
         }
 
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);

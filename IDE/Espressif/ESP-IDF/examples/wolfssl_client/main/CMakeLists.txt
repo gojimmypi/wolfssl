@@ -1,6 +1,5 @@
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
-
+# wolfSSL Espressif Example Project/main CMakeLists.txt
+#   v1.0
 #
 # wolfssl client test
 #
