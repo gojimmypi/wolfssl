@@ -375,6 +375,8 @@ int esp_current_boot_count()
 */
 int ShowExtendedSystemInfo(void)
 {
+    WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
+
 #if defined(SHOW_SSID_AND_PASSWORD)
     ESP_LOGW(TAG, "WARNING: SSID and plain text WiFi "
                   "password displayed in startup logs. ");
@@ -385,7 +387,25 @@ int ShowExtendedSystemInfo(void)
                   "password not displayed in startup logs."
                   "Define SHOW_SSID_AND_PASSWORD to enable.");
 #endif
-    WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
+
+#if defined(WOLFSSL_MULTI_INSTALL_WARNING)
+    /* CMake may have detected undesired multiple installs, so give warning. */
+    WOLFSSL_VERSION_PRINTF("");
+    WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
+    WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
+    WOLFSSL_VERSION_PRINTF("");
+#else
+    #ifdef WOLFSSL_USER_SETTINGS_DIR
+    {
+        ESP_LOGI(TAG, "Using wolfSSL user_settings.h in %s",
+                       WOLFSSL_USER_SETTINGS_DIR);
+    }
+    #else
+    {
+        ESP_LOGW(TAG, "Warning: old cmake, user_settings.h location unknown.");
+    }
+    #endif
+#endif
 
 #if defined(LIBWOLFSSL_VERSION_STRING)
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_STRING = %s",
@@ -401,17 +421,6 @@ int ShowExtendedSystemInfo(void)
     ESP_LOGI(TAG, "RSA_LOW_MEM is enabled");
 #else
     ESP_LOGI(TAG, "RSA_LOW_MEM is NOT enabled");
-#endif
-
-
-#if defined(WOLFSSL_MULTI_INSTALL_WARNING)
-    /* CMake may have detected undesired multiple installs, so give warning. */
-    WOLFSSL_VERSION_PRINTF("");
-    WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
-    WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
-    WOLFSSL_VERSION_PRINTF("");
-#else
-    ESP_LOGI(TAG, "Using wolfSSL user_settings.h in %s", "tbd");
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
@@ -436,11 +445,9 @@ int ShowExtendedSystemInfo(void)
 
     /* all platforms: stack high water mark check */
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 #endif
     ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "");
-
 
     ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
@@ -455,6 +462,8 @@ int ShowExtendedSystemInfo(void)
 
 int esp_ShowExtendedSystemInfo()
 {
+    /* Someday the ShowExtendedSystemInfo may be global.
+     * See https://github.com/wolfSSL/wolfssl/pull/6149 */
     return ShowExtendedSystemInfo();
 }
 

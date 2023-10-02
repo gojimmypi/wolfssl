@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.007 for wolfssl 6205 spaces in path and cleanup
+# Version 5.6.3.001
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -184,6 +184,8 @@ else()
     message(STATUS "This COMPONENT_SRCDIRS = ${COMPONENT_SRCDIRS}")
 
     set(WOLFSSL_PROJECT_DIR "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
+    add_definitions(-DWOLFSSL_USER_SETTINGS_DIR="${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+
 
     # Espressif may take several passes through this makefile. Check to see if we found IDF
     string(COMPARE EQUAL "${PROJECT_SOURCE_DIR}" "" WOLFSSL_FOUND_IDF)
