@@ -130,17 +130,20 @@ void app_main(void)
     esp_ShowExtendedSystemInfo();
 #endif
 
+    /* Set time for cert validation.
+     * Some lwIP APIs, including SNTP functions, are not thread safe. */
+    ret = set_time(); /* need to setup NTP before WiFi */
 
-ESP_ERROR_CHECK(nvs_flash_erase());
+    /* Optionally erase flash */
+    /* ESP_ERROR_CHECK(nvs_flash_erase()); */
+
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
     ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    ret = set_time(); /* need to setup NTP before WiFi */
     ESP_ERROR_CHECK(example_connect());
-    ret = set_time_wait_for_ntp();
 #else
     ESP_ERROR_CHECK(nvs_flash_init());
 
@@ -164,12 +167,13 @@ ESP_ERROR_CHECK(nvs_flash_erase());
     }
 #endif
 
-    /* set time for cert validation */
-    ret = set_time();
+    /* Once we are connected to the network, start & wait for NTP time */
+    ret = set_time_wait_for_ntp();
+
     if (ret < -1) {
         /* a value of -1 means there was no NTP server, so no need to wait */
-        //ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
-        //vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+        ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
     }
 
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",

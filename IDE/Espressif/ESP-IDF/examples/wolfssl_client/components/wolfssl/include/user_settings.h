@@ -22,6 +22,9 @@
 /* This is the user_settings.h file for the wolfssl_client TLS example.
  * For application-specific settings, please see client-tls.h file */
 
+/* optional timezone used when setting time */
+#define TIME_ZONE "PST+8PDT,M3.2.0,M11.1.0"
+
 // #define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
