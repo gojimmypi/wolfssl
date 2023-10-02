@@ -392,6 +392,12 @@ else()
                             EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                             PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
                            )
+
+    # Include the custom configuration file if it exists
+    if(EXISTS /workspace/my_private_config_cmake.txt)
+        include(/workspace/my_private_config_cmake.txt)
+    endif()
+
     # some optional diagnostics
     if (1)
         get_cmake_property(_variableNames VARIABLES)

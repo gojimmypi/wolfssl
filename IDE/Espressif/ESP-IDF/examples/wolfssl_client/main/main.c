@@ -18,6 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#include "sdkconfig.h"
+#include "main.h"
 
 /* ESP specific */
 #include <nvs_flash.h>
@@ -25,10 +27,14 @@
 #include "esp_event.h"
 
 /* wolfSSL */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <user_settings.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#ifndef WOLFSSL_ESPIDF
+    #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
+#endif
 
 /* project */
-#include "main.h"
 #include "client-tls.h"
 #include "time_helper.h"
 
@@ -64,8 +70,7 @@ int atmel_set_slot_allocator(atmel_slot_alloc_cb alloc, atmel_slot_dealloc_cb de
 void my_atmel_slotInit()
 {
     int i;
-
-    for(i=0;i<ATECC_MAX_SLOT; i++) {
+    for(i = 0;i < ATECC_MAX_SLOT;i++) {
         mSlotList[i] = ATECC_INVALID_SLOT;
     }
 }
@@ -89,7 +94,7 @@ int my_atmel_alloc(int slotType)
             slot = 4;
             break;
         case ATMEL_SLOT_ANY:
-            for(i=0;i<ATECC_MAX_SLOT;i++){
+            for(i = 0;i < ATECC_MAX_SLOT;i++){
                 if(mSlotList[i] == ATECC_INVALID_SLOT){
                     slot = i;
                     break;
@@ -113,6 +118,8 @@ void my_atmel_free(int slotId)
 /* for FreeRTOS */
 void app_main(void)
 {
+    int stack_start = 0;
+    esp_err_t ret = 0;
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Client Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -123,34 +130,17 @@ void app_main(void)
     esp_ShowExtendedSystemInfo();
 #endif
 
-    /* Initialize NVS */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
 
-    /* Initialize WiFi */
-//    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-//    ret = wifi_init_sta();
-//    while (ret != 0) {
-//        ESP_LOGI(TAG, "Waiting...");
-//        vTaskDelay(60000 / portTICK_PERIOD_MS);
-//        ESP_LOGI(TAG, "Trying WiFi again...");
-//        ret = wifi_init_sta();
-//    }
-
+ESP_ERROR_CHECK(nvs_flash_erase());
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
     ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-//    ret = set_time(); /* need to setup NTP before WiFi */
+    ret = set_time(); /* need to setup NTP before WiFi */
     ESP_ERROR_CHECK(example_connect());
-//    ret = set_time_wait_for_ntp();
+    ret = set_time_wait_for_ntp();
 #else
     ESP_ERROR_CHECK(nvs_flash_init());
 
@@ -174,13 +164,12 @@ void app_main(void)
     }
 #endif
 
-
     /* set time for cert validation */
     ret = set_time();
     if (ret < -1) {
         /* a value of -1 means there was no NTP server, so no need to wait */
-        ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
-        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+        //ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+        //vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
     }
 
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
@@ -203,13 +192,15 @@ void app_main(void)
     args[0].loops = 10;
     args[0].port = 11111;
     tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
-//    tls_smp_client_init(args);
+/* optional additional client threads
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+    tls_smp_client_init(args);
+*/
 #endif
 
     ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");

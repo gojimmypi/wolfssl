@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef WIFI_CONNECT_H
-#define WIFI_CONNECT_H
+#ifndef _WIFI_CONNECT_H_
+#define _WIFI_CONNECT_H_
 
 #include <esp_idf_version.h>
 #include <esp_log.h>
@@ -66,6 +66,9 @@
     #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
     #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
 #endif
+
+/* ESP lwip */
+#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
 
 int wifi_init_sta(void);
 

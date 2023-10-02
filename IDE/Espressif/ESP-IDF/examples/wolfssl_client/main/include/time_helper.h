@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-
 #ifndef _TIME_HELPER_H
 #define _TIME_HELPER_H
 
@@ -26,13 +25,13 @@ extern "C" {
 #endif
 
 /* worst case, if GitHub time not available, used fixed time */
-int set_fixed_default_time();
+int set_fixed_default_time(void);
 
 /* set time from string (e.g. GitHub commit time) */
 int set_time_from_string(char* time_buffer);
 
 /* set time from NTP servers,
- * also intitially calls set_fixed_default_time or set_time_from_string */
+ * also initially calls set_fixed_default_time or set_time_from_string */
 int set_time(void);
 
 int set_time_wait_for_ntp(void);

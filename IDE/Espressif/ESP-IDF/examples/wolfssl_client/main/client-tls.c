@@ -27,17 +27,17 @@
     #include <freertos/task.h>
     #include <freertos/event_groups.h>
 #endif
+
 /* socket includes */
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
 /* ESP specific */
-#include "wifi_connect.h"
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/ssl.h>
 #include "user_settings.h"
+#include <wolfssl/ssl.h>
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -66,6 +66,11 @@
     #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
     #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+/* Project */
+#include "wifi_connect.h"
+#include "time_helper.h"
+
 /* working TLS 1.2 VS client app commandline param:
  *
  *  -h 192.168.1.128 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
@@ -100,7 +105,6 @@ int ShowCiphers(WOLFSSL* ssl)
         else {
             ESP_LOGE(TAG, "Failed to call wolfSSL_get_ciphers. Error: %d", ret);
         }
-
     }
     else {
         cipher_used = wolfSSL_get_cipher_name(ssl);
@@ -199,7 +203,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
 
-//     wolfSSL_Debugging_ON();
+    wolfSSL_Debugging_ON();
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
     doPeerCheck = 1;
@@ -207,7 +211,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
 #ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
-    // wolfSSL_Debugging_ON();
     ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
