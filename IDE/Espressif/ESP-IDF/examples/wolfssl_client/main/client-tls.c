@@ -43,6 +43,15 @@
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
+#ifndef NO_DH
+    /* see also wolfssl/test.h */
+    #undef  DEFAULT_MIN_DHKEY_BITS
+    #define DEFAULT_MIN_DHKEY_BITS 1024
+
+    #undef  DEFAULT_MAX_DHKEY_BITS
+    #define DEFAULT_MAX_DHKEY_BITS 2048
+#endif
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
@@ -197,6 +206,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     int sockfd;
     int doPeerCheck;
     int sendGet;
+#ifndef NO_DH
+    int minDhKeyBits = DEFAULT_MIN_DHKEY_BITS;
+#endif
     size_t len;
 
     /* declare wolfSSL objects */
@@ -232,17 +244,15 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
     else {
         ip4_addr = (struct ip4_addr *)hp->h_addr;
-        // ESP_LOGI(TAG, IPSTR, IP2STR(ip4_addr));
     }
 
     /* Create and initialize WOLFSSL_CTX */
-    // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
-    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
-    // wolfSSL_CTX_NoTicketTLSv12();
-    // wolfSSL_NoTicketTLSv12();
     ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
-    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* only TLS 1.2 */
-    // ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); /* only TLS 1.3 */
+    /*   options:   */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());      only TLS 1.2 */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());      only TLS 1.3 */
+    /* wolfSSL_CTX_NoTicketTLSv12(); */
+    /* wolfSSL_NoTicketTLSv12();     */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
     }
@@ -297,18 +307,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 #endif
 
 #ifndef NO_DH
-    if (wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits)
-            != WOLFSSL_SUCCESS) {
-        err_sys("Error setting minimum DH key size");
+    ret = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
+     if (ret != SSL_SUCCESS) {
+        ESP_LOGE(TAG, "Error setting minimum DH key size");
     }
 #endif
 
-
-//    if (ret != SSL_SUCCESS) {
-//        ESP_LOGE(TAG, "ERROR: failed to load %d, please check the file.\n", ret);
-//    }
-
-    /* not peer check */
+    /* no peer check */
     if (doPeerCheck == 0) {
         ESP_LOGW(TAG, "doPeerCheck == 0");
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_NONE, 0);
@@ -318,7 +323,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
         ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                                                              // client_cert_der_2048, sizeof_client_cert_der_2048,
                                                               CTX_CLIENT_CERT,
                                                               CTX_CLIENT_CERT_SIZE,
                                                               CTX_CLIENT_CERT_TYPE);
@@ -326,16 +330,14 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret);
         }
 
-    WOLFSSL_MSG("Loading...cert");
     /* Load client certificates into WOLFSSL_CTX */
+    WOLFSSL_MSG("Loading...cert");
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         // ca_cert_der_2048, sizeof_ca_cert_der_2048,
                                          CTX_CA_CERT,
                                          CTX_CA_CERT_SIZE,
                                          CTX_CA_CERT_TYPE);
 
         ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                                // client_key_der_2048, sizeof_client_key_der_2048,
                                                 CTX_CLIENT_KEY,
                                                 CTX_CLIENT_KEY_SIZE,
                                                 CTX_CLIENT_KEY_TYPE);
