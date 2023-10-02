@@ -58,6 +58,34 @@ else()
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
 
+    # TODO
+    if(WIN32)
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")
+        message("Detected Windows")
+    endif()
+    if(CMAKE_HOST_UNIX)
+        message("Detected UNIX")
+    endif()
+    if(APPLE)
+        message("Detected APPLE")
+    endif()
+    if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WSL")
+        message("Detected WSL")
+    endif()
+    if(CMAKE_HOST_UNIX AND (NOT APPLE) AND (NOT WIN32))
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_LINUX")
+        message("Detected Linux")
+    endif()
+    if(APPLE)
+        # Windows-specific configuration here
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_APPLE")
+        message("Detected Apple")
+    endif()
+
     # Check to see if we're already in wolfssl, and only if WOLFSSL_ROOT not specified
     if ("${WOLFSSL_ROOT}" STREQUAL "")
         # wolfssl examples are 7 directories deep from wolfssl repo root
@@ -394,12 +422,6 @@ else()
                             EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                             PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
                            )
-
-    # Include the custom configuration file if it exists
-    if(EXISTS /workspace/my_private_config_cmake.txt)
-        include(/workspace/my_private_config_cmake.txt)
-    endif()
-
     # some optional diagnostics
     if (1)
         get_cmake_property(_variableNames VARIABLES)

@@ -22,10 +22,12 @@
 /* This is the user_settings.h file for the wolfssl_client TLS example.
  * For application-specific settings, please see client-tls.h file */
 
+#include <sdkconfig.h> /* essential to chip set detection */
+
 /* optional timezone used when setting time */
 #define TIME_ZONE "PST+8PDT,M3.2.0,M11.1.0"
 
-// #define SHOW_SSID_AND_PASSWORD /* remove this to not show in startup log */
+/* #define SHOW_SSID_AND_PASSWORD */ /* remove this to not show in startup log */
 
 #undef WOLFSSL_ESPIDF
 #undef WOLFSSL_ESP32
@@ -43,7 +45,6 @@
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
-#include <sdkconfig.h> /* essemtial for target chip detection */
 
 #define WOLFSSL_ESPIDF
 
@@ -54,6 +55,7 @@
  * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
  */
+
 #define WOLFSSL_ESP32
 
 /* #define DEBUG_WOLFSSL_VERBOSE */
@@ -67,6 +69,8 @@
 #define HAVE_HKDF
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
+
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 /* when you want to use SINGLE THREAD */
 /* #define SINGLE_THREADED */
@@ -169,6 +173,11 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
@@ -197,6 +206,38 @@
 
 /* see esp_ShowExtendedSystemInfo in esp32-crypt.h for startup log info */
 #define HAVE_VERSION_EXTENDED_INFO
+
+
+/* debug options */
+/* #define ESP_VERIFY_MEMBLOCK              */
+#define WOLFSSL_HW_METRICS
+/* #define DEBUG_WOLFSSL_VERBOSE            */
+/* #define DEBUG_WOLFSSL                    */
+/* #define WOLFSSL_ESP32_CRYPT_DEBUG        */
+#define NO_RECOVER_SOFTWARE_CALC
+
+/* optionally turn off individual math HW acceleration features */
+
+/* Turn off Large Number Multiplication:
+** [Z = X * Y] in esp_mp_mul()                                  */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL         */
+
+/* Turn off Large Number Modular Exponentiation:
+** [Z = X^Y mod M] in esp_mp_exptmod()                          */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
+
+/* Turn off Large Number Modular Multiplication
+** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
+
+
+/* this is known to fail in TFM: */
+/* #define HONOR_MATH_USED_LENGTH */
+
+/* this is known to fail in TFM */
+/* #define CHECK_MP_READ_UNSIGNED_BIN */
+
+#define WOLFSSL_PUBLIC_MP /* used by benchmark */
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
 //#define WOLFSSL_SM2
