@@ -92,6 +92,7 @@
 static const char* const TAG = "tls_client";
 
 #if defined(DEBUG_WOLFSSL)
+int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
 {
@@ -202,7 +203,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     struct hostent *hp;
     struct ip4_addr *ip4_addr;
-    int ret;
+    int ret_i; /* interim return values */
     int sockfd;
     int doPeerCheck;
     int sendGet;
@@ -323,29 +324,29 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ESP_LOGW(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
-        ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+        ret_i = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                          CTX_CLIENT_CERT,
                                          CTX_CLIENT_CERT_SIZE,
                                          CTX_CLIENT_CERT_TYPE);
-        if (ret != SSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret);
+        if (ret_i != SSL_SUCCESS) {
+            ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret_i);
         }
 
     /* Load client certificates into WOLFSSL_CTX */
     WOLFSSL_MSG("Loading...cert");
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+    ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CA_CERT,
                                          CTX_CA_CERT_SIZE,
                                          CTX_CA_CERT_TYPE);
 
-        ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+        ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                          CTX_CLIENT_KEY,
                                          CTX_CLIENT_KEY_SIZE,
                                          CTX_CLIENT_KEY_TYPE);
-        if(ret  != SSL_SUCCESS) {
+        if(ret_i  != SSL_SUCCESS) {
             wolfSSL_CTX_free(ctx) ; ctx = NULL ;
             ESP_LOGE(TAG, "ERROR: failed to load key %d, "
-                          "please check the file.\n", ret) ;
+                          "please check the file.\n", ret_i) ;
         }
 
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
@@ -361,10 +362,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     if (*ch >= '1' && *ch <= '9') {
         /* Get the server IPv4 address from the command line call */
         WOLFSSL_MSG("inet_pton");
-        if ((ret = inet_pton(AF_INET,
+        if ((ret_i = inet_pton(AF_INET,
                              TLS_SMP_TARGET_HOST,
                              &servAddr.sin_addr)) != 1) {
-            ESP_LOGE(TAG, "ERROR: invalid address ret=%d\n", ret);
+            ESP_LOGE(TAG, "ERROR: invalid address ret=%d\n", ret_i);
         }
     }
     else {
@@ -379,10 +380,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     WOLFSSL_MSG(buff);
     printf("%s\n", buff);
 
-    if ((ret = connect(sockfd,
+    if ((ret_i = connect(sockfd,
                        (struct sockaddr *)&servAddr,
                        sizeof(servAddr))) == -1) {
-        ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret);
+        ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
     }
 
     WOLFSSL_MSG("Create a WOLFSSL object");
@@ -472,11 +473,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     vTaskDelete(NULL);
 
-    return;                /* Return reporting a success               */
+    return TLS_SMP_CLIENT_TASK_RET;
 }
 
 #if defined(SINGLE_THREADED)
-    /* we don't initialize a thread */
+    /* we don't initialize a single thread, so no init function here */
 #else
 /* create task */
 WOLFSSL_ESP_TASK tls_smp_client_init(void* args)

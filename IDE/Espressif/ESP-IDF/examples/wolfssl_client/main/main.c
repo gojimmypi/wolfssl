@@ -24,7 +24,7 @@
 /* ESP specific */
 #include <nvs_flash.h>
 #include <esp_log.h>
-#include "esp_event.h"
+#include <esp_event.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -34,7 +34,7 @@
     #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
 #endif
 
-/* project */
+/* this project */
 #include "client-tls.h"
 #include "time_helper.h"
 
