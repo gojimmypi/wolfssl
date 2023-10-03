@@ -122,7 +122,7 @@ COMPONENT_NAME_GUESS=$(basename "$THIS_DIRECTORY_PARAMETER")
 IFS="-"
 
 # Read the directory name into an array. We only want the first part (e.g. wolfssl)
-read -a COMPONENT_GUESS_PARTS <<< "$COMPONENT_NAME_GUESS"
+read -r -a COMPONENT_GUESS_PARTS <<< "$COMPONENT_NAME_GUESS"
 
 # Get just the wolfssl part if "wolfssl-username"
 export THIS_DIRECTORY_COMPONENT="${COMPONENT_GUESS_PARTS[0]}"
@@ -381,7 +381,7 @@ fi
 # Also prepend a staging note as appropriate.
 #**************************************************************************************************
 # Copy a fresh repository source README.md
-cp                                       $THIS_SOURCE/README.md      ./README.md
+cp  "$THIS_SOURCE/README.md"  ./README.md
 
 # strip any HTML anchor tags, that are irrelevant and don't look pretty
 echo "Removing HTML anchor tags from README..."
@@ -454,11 +454,11 @@ fi
 if [ "wolfmqtt" == "$THIS_COMPONENT" ]; then
 
     echo "Copying wolfMQTT C Source files... $THIS_SOURCE"
-    copy_wolfssl_source  $THIS_SOURCE  "src"                                "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "src"                                "*.c"
 
     # Copy C header files
     echo "Copying wolfMQTT C Header files..."
-    copy_wolfssl_source  $THIS_SOURCE  "wolfmqtt"                           "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfmqtt"                           "*.h"
 
     # wolfMQTT looks for an options.h file
     echo "Copying wolfMQTT options.h"
@@ -468,40 +468,40 @@ fi
 # wolfSSH Files
 if [ "wolfssh" == "$THIS_COMPONENT" ]; then
     echo "Copying wolfSSH C Source files... $THIS_SOURCE"
-    copy_wolfssl_source  $THIS_SOURCE  "src"                                "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "src"                                "*.c"
 
     # Copy C header files
     echo "Copying wolfSSH C Header files..."
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssh"                           "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssh"                           "*.h"
 fi
 
 # wolfSSL Files
 if [ "wolfssl" == "$THIS_COMPONENT" ]; then
 
     echo "Copying wolfSSL C Source files... $THIS_SOURCE"
-    copy_wolfssl_source  $THIS_SOURCE  "src"                                "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/src"                      "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/benchmark"                "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/src/port/atmel"           "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/src/port/Espressif"       "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/test"                     "*.c"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/user-crypto/src"          "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "src"                                "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/src"                      "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/benchmark"                "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/src/port/atmel"           "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/src/port/Espressif"       "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/test"                     "*.c"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/user-crypto/src"          "*.c"
 
     # Copy C header files
     echo "Copying wolfSSL C Header files..."
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/benchmark"                "*.h"  APPEND
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/test"                     "*.h"  APPEND
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/user-crypto/include"      "*.h"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssl"                            "*.h"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssl/openssl"                    "*.h"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssl/wolfcrypt"                  "*.h"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssl/wolfcrypt/port/atmel"       "*.h"
-    copy_wolfssl_source  $THIS_SOURCE  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/benchmark"                "*.h"  APPEND
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/test"                     "*.h"  APPEND
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/user-crypto/include"      "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssl"                            "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssl/openssl"                    "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssl/wolfcrypt"                  "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssl/wolfcrypt/port/atmel"       "*.h"
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfssl/wolfcrypt/port/Espressif"   "*.h"
 
     # Note that for example apps, the ESP Registry will append the these README files to
     # the main README.md at publish time, and generate anchor text hyperlinks.
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/benchmark"                "README.md"  APPEND
-    copy_wolfssl_source  $THIS_SOURCE  "wolfcrypt/test"                     "README.md"  APPEND
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/benchmark"                "README.md"  APPEND
+    copy_wolfssl_source  "$THIS_SOURCE"  "wolfcrypt/test"                     "README.md"  APPEND
 
     # TODO remove
     # Files known to need attention
