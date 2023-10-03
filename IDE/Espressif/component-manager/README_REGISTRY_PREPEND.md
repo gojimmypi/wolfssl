@@ -1,9 +1,4 @@
 This is the Espressif Component Version of wolfSSL v5.6.3-Staging01-237d10a.3, Staging Release #11 (version ^5.6.3-Staging01-237d10a.3)
-When testing staging components:
-
-```
-export IDF_COMPONENT_REGISTRY_URL=https://components-staging.espressif.com
-```
 
 For questions or beta test of this library, please send a message to support@wolfssl.com
 

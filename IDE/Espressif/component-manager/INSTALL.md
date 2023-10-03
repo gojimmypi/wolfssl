@@ -4,7 +4,7 @@ This is the documentation for the wolfSSL install / publish to [components.espre
 When using a managed component, all of the respective source code is in the local project `managed_components` directory.
 The wolfssl component `CMakeFiles.txt` from the examples is _not_ used. The managed component is manged entirely by `idf.py`.
 
-See the [Espressif idf-component-manager docs](https://docs.espressif.com/projects/idf-component-manager/en/latest/).
+See the [Espressif IDF Component Manager Docs](https://docs.espressif.com/projects/idf-component-manager/en/latest/).
 
 Configuration for the component is in the top-level [idf_component.yml](./idf_component.yml) file.
 Note that this is *different* from the same-name files in the example projects.
@@ -14,7 +14,7 @@ Edit version in:
 - Example application [lib/idf_component.yml](./lib/idf_component.yml) 
 - Example staging application [lib/idf_component.yml](./lib/idf_component-staging-gojimmypi.yml) 
 - [README_REGISTRY_PREPEND.md](./README_REGISTRY_PREPEND.md)
-Version numbers must exactly match between these files.
+Version numbers must exactly match between these files and follow the [Semantic Versioning Specification](https://semver.org/#spec-item-11).
 
 Note that when using the staging environment, the staging user namespace and component name
 will be used. There should be a `./lib/idf_component-staging-[user name].yml` file.

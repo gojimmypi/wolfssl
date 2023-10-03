@@ -55,6 +55,7 @@
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
+/* #define DEBUG_WOLFSSL_VERBOSE */
 
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
@@ -71,7 +72,6 @@
 
 /* when you want to use SINGLE THREAD */
 /* #define SINGLE_THREADED */
-
 #define NO_FILESYSTEM
 
 #define HAVE_AESGCM
@@ -88,7 +88,6 @@
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 #define HAVE_ED25519
-
 
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
@@ -137,6 +136,11 @@
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
 
+/* when you want not to use HW acceleration */
+/* #define NO_ESP32WROOM32_CRYPT */
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH*/
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_AES */
+/* #define NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI */
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
