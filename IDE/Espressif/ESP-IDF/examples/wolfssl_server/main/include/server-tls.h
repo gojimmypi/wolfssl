@@ -40,9 +40,15 @@
     #define WOLFSSL_ESP_TASK void
 #endif
 
+typedef struct {
+    int port;
+    int loops;
+} tls_args;
 
 /* Function to show the ciphers available / in use. */
-int ShowCiphers(WOLFSSL* ssl);
+#if defined(DEBUG_WOLFSSL)
+    int ShowCiphers(WOLFSSL* ssl);
+#endif
 
 /* This is the TLS Server function, possibly in an RTOS thread. */
 WOLFSSL_ESP_TASK tls_smp_server_task(void *args);
@@ -51,6 +57,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args);
 #if defined(SINGLE_THREADED)
     /* no init neded */
 #else
-    int tls_smp_server_init(int port);
+    WOLFSSL_ESP_TASK tls_smp_server_init(void* args);
 #endif
 #endif /* _SERVER_TLS_ */

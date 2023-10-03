@@ -1,6 +1,3 @@
-/* current working 6637 example */
-
-
 /* user_settings.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
@@ -22,7 +19,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/* This is the user_settings.h file for the wolfssl_server TLS example.
+ * For application-specific settings, please see server-tls.h file */
+
 #include <sdkconfig.h> /* essential to chip set detection */
+
+/* optional timezone used when setting time */
+#define TIME_ZONE "PST+8PDT,M3.2.0,M11.1.0"
 
 /* #define SHOW_SSID_AND_PASSWORD */ /* remove this to not show in startup log */
 
@@ -93,6 +96,13 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
+/* optional DH */
+/* #define PROJECT_DH */
+#ifdef PROJECT_DH
+    #define HAVE_DH
+    #define HAVE_FFDHE_2048
+#endif
+
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
@@ -107,8 +117,6 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-// #define USE_FAST_MATH
-// #define SMALL_STACK
 /* RSA primitive specific definition */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
@@ -123,6 +131,7 @@
 /* debug options */
 /* #define DEBUG_WOLFSSL */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
+/* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -130,6 +139,12 @@
 /* enable macro below                      */
 /* #define NO_ASN_TIME */
 /* #define XTIME time */
+
+/* when you want not to use HW acceleration */
+/* #define NO_ESP32_CRYPT */
+/* #define NO_WOLFSSL_ESP32_CRYPT_HASH*/
+/* #define NO_WOLFSSL_ESP32_CRYPT_AES */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
@@ -228,6 +243,21 @@
 //#define WOLFSSL_SM2
 //#define WOLFSSL_SM3
 //#define WOLFSSL_SM4
+
+
+// nothing defined, default used = "TLS13-AES128-GCM-SHA256"
+// #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3" /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3:" /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256" /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:"  /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:DHE-PSK-AES128-GCM-SHA256"
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256:"
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES128-GCM-SHA256:TLS13-AES256-GCM-SHA384:"
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-CHACHA20-POLY1305-SHA256" /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS_CHACHA20_POLY1305_SHA256" /* fails */
+// #define WOLFSSL_ESP32_CIPHER_SUITE "TLS_SM4_CCM_SM3"  /* fails */
+
+// "ECDHE-ECDSA-SM4-CBC-SM3"
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* see https://github.com/wolfSSL/wolfssl/pull/6537

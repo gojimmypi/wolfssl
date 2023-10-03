@@ -19,23 +19,44 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#include <string.h>
-#include <lwip/apps/sntp.h>
-#include <esp_netif_sntp.h>
-#include "sdkconfig.h"
-#include "esp_log.h"
+/* common Espressif time_helper v5.6.3.001 */
 
+#include "sdkconfig.h"
 #include "time_helper.h"
 
+#include <esp_log.h>
+#include <lwip/apps/sntp.h>
+#include <esp_netif_sntp.h>
+
+/* ESP-IDF uses a 64-bit signed integer to represent time_t starting from release v5.0
+ * See: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html#year-2036-and-2038-overflow-issues
+ */
 const static char* TAG = "time_helper";
 
-#define TIME_ZONE "PST-8"
+/* see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html */
+#ifndef TIME_ZONE
+/*
+ * PST represents Pacific Standard Time.
+ * +8 specifies the offset from UTC (Coordinated Universal Time), indicating
+ *   that Pacific Time is UTC-8 during standard time.
+ * PDT represents Pacific Daylight Time.
+ * M3.2.0 indicates that Daylight Saving Time (DST) starts on the
+ *   second (2) Sunday (0) of March (3).
+ * M11.1.0 indicates that DST ends on the first (1) Sunday (0) of November (11)
+ */
+    #define TIME_ZONE "PST+8PDT,M3.2.0,M11.1.0"
+#endif /* not defined: TIME_ZONE, so we are setting our own */
+
+#define NTP_RETRY_COUNT 10
+
 /* NELEMS(x) number of elements
- * To determine the number of elements in the array, we can divide the total size of
- * the array by the size of the array element
+ * To determine the number of elements in the array, we can divide the total
+ * size of the array by the size of the array element.
  * See https://stackoverflow.com/questions/37538/how-do-i-determine-the-size-of-my-array-in-c
  **/
 #define NELEMS(x)  ( (int)(sizeof(x) / sizeof((x)[0])) )
+
+/* See also CONFIG_LWIP_SNTP_MAX_SERVERS in sdkconfig */
 #define NTP_SERVER_LIST ( (char*[]) {                        \
                                      "pool.ntp.org",         \
                                      "time.nist.gov",        \
@@ -47,36 +68,62 @@ const static char* TAG = "time_helper";
  *  (int)(sizeof(NTP_SERVER_LIST) / sizeof(NTP_SERVER_LIST[0]))
  */
 #define NTP_SERVER_COUNT NELEMS(NTP_SERVER_LIST)
+
+#ifndef CONFIG_LWIP_SNTP_MAX_SERVERS
+    /* We should find max value in sdkconfig, if not set it to our count:*/
+    #define CONFIG_LWIP_SNTP_MAX_SERVERS NTP_SERVER_COUNT
+#endif
+
 char* ntpServerList[NTP_SERVER_COUNT] = NTP_SERVER_LIST;
 
 /* our NTP server list is global info */
 extern char* ntpServerList[NTP_SERVER_COUNT];
 
+/* Show the current date and time */
+int esp_show_current_datetime()
+{
+    time_t now;
+    char strftime_buf[64];
+    struct tm timeinfo;
+
+    time(&now);
+    setenv("TZ", TIME_ZONE, 1);
+    tzset();
+
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
+    return 0;
+}
+
 /* the worst-case scenario is a hard-coded date/time */
 int set_fixed_default_time(void)
 {
-    time_t interim_time;
-
     /* ideally, we'd like to set time from network,
      * but let's set a default time, just in case */
     struct tm timeinfo = {
         .tm_year = 2023 - 1900,
-        .tm_mon = 9,
-        .tm_mday = 4,
-        .tm_hour = 19,
-        .tm_min = 4,
-        .tm_sec = 0
+        .tm_mon  = 10,
+        .tm_mday = 02,
+        .tm_hour = 13,
+        .tm_min  = 01,
+        .tm_sec  = 05
     };
     struct timeval now;
+    time_t interim_time;
+    int ret = -1;
+
     /* set interim static time */
     interim_time = mktime(&timeinfo);
-    now = (struct timeval){ .tv_sec = interim_time };
-    settimeofday(&now, NULL);
 
-    return 0;
+    ESP_LOGI(TAG, "Adjusting time from fixed value");
+    now = (struct timeval){ .tv_sec = interim_time };
+    ret = settimeofday(&now, NULL);
+
+    return ret;
 }
 
-/* set_time_from_string
+/* set_time_from_string(s)
  *
  * returns 0 = success if able to set the time from the provided string
  * error for any other value, typically -1 */
@@ -87,9 +134,9 @@ int set_time_from_string(char* time_buffer)
     struct tm this_timeinfo;
     struct timeval now;
     time_t interim_time;
+    char offset[6]; /* expecting trailing single quote, not used */
     char day_str[4];
     char month_str[4];
-    char offset[6]; /* expecting trailing single quote, not used */
     int day, year, hour, minute, second;
     int quote_offset = 0;
     int ret = 0;
@@ -125,15 +172,14 @@ int set_time_from_string(char* time_buffer)
 
         interim_time = mktime(&this_timeinfo);
         now = (struct timeval){ .tv_sec = interim_time };
-        settimeofday(&now, NULL);
+        ret = settimeofday(&now, NULL);
         ESP_LOGI(TAG, "Time updated to %s", time_buffer);
-        ret = 0; /* success */
     }
     else {
-        ret = -1;
         ESP_LOGE(TAG, "Failed to convert \"%s\" to a tm date.", time_buffer);
         ESP_LOGI(TAG, "Trying fixed date that was hard-coded.");
         set_fixed_default_time();
+        ret = -1;
     }
     return ret;
 }
@@ -141,46 +187,39 @@ int set_time_from_string(char* time_buffer)
 /* set time; returns 0 if succecssfully configured with NTP */
 int set_time(void)
 {
-    /* we'll also return a result code of zero */
-    int res = 0;
+#ifndef NTP_SERVER_COUNT
+    ESP_LOGW(TAG, "Warning: no sntp server names defined. "
+                  "Setting to empty list");
+    #define NTP_SERVER_COUNT 0
+    #warning "NTP not properly configured"
+#endif /* not defined: NTP_SERVER_COUNT */
+
+#if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(
+                                   NTP_SERVER_COUNT,
+                                   ESP_SNTP_SERVER_LIST(ntpServerList[0])
+                               );
+#else
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+#endif
+
+    int ret = 0;
     int i = 0; /* counter for time servers */
+
+    ESP_LOGI(TAG, "Setting the time. Startup time:");
+    esp_show_current_datetime();
 
 #ifdef LIBWOLFSSL_VERSION_GIT_HASH_DATE
     /* initialy set a default approximate time from recent git commit */
     ESP_LOGI(TAG, "Found git hash date, attempting to set system date.");
     set_time_from_string(LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+    esp_show_current_datetime();
 
-    res = -4;
+    ret = -4;
 #else
     /* otherwise set a fixed time that was hard coded */
     set_fixed_default_time();
-    res = -3;
-#endif
-
-#ifndef NTP_SERVER_COUNT
-    ESP_LOGW(TAG, "Warning: no sntp server names defined. Setting to empty list");
-    #define NTP_SERVER_COUNT 0
-    char* ntpServerList[NTP_SERVER_COUNT];
-#endif /* not defined: NTP_SERVER_COUNT */
-
-#ifndef TIME_ZONE
-    #define TIME_ZONE "PST-8"
-#endif /* not defined: TIME_ZONE */
-
-    /* set timezone */
-    setenv("TZ", TIME_ZONE, 1);
-    tzset();
-
-#if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
-    /* This demonstrates configuring more than one server
-     */
-    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(2,
-                               ESP_SNTP_SERVER_LIST(CONFIG_SNTP_TIME_SERVER, "pool.ntp.org" ) );
-#else
-    /*
-     * This is the basic default config with one server and starting the service
-     */
-    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+    ret = -3;
 #endif
 
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
@@ -191,11 +230,17 @@ int set_time(void)
         /* next, let's setup NTP time servers
          *
          * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html#sntp-time-synchronization
+         *
+         * WARNING: do not set operating mode while SNTP client is running!
          */
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
-
+        if (NTP_SERVER_COUNT > CONFIG_LWIP_SNTP_MAX_SERVERS) {
+            ESP_LOGW(TAG, "WARNING: %d NTP Servers defined, but "
+                          "CONFIG_LWIP_SNTP_MAX_SERVERS = %d",
+                           NTP_SERVER_COUNT,CONFIG_LWIP_SNTP_MAX_SERVERS);
+        }
         ESP_LOGI(TAG, "sntp_setservername:");
-        for (i = 0; i < NTP_SERVER_COUNT; i++) {
+        for (i = 0; i < CONFIG_LWIP_SNTP_MAX_SERVERS; i++) {
             const char* thisServer = ntpServerList[i];
             if (strncmp(thisServer, "\x00", 1) == 0) {
                 /* just in case we run out of NTP servers */
@@ -204,10 +249,16 @@ int set_time(void)
             ESP_LOGI(TAG, "%s", thisServer);
             sntp_setservername(i, thisServer);
         }
-        esp_netif_sntp_init(&config);
+        ret = esp_netif_sntp_init(&config);
+        if (ret == ESP_OK) {
+            ESP_LOGV(TAG, "Successfully called esp_netif_sntp_init");
+        }
+        else {
+            ESP_LOGE(TAG, "ERROR: esp_netif_sntp_init return = %d", ret);
+        }
+
         sntp_init();
-        esp_netif_sntp_start();
-        switch (res) {
+        switch (ret) {
             case ESP_ERR_INVALID_STATE:
                 break;
             default:
@@ -217,9 +268,9 @@ int set_time(void)
     }
     else {
         ESP_LOGW(TAG, "No sntp time servers found.");
-        res = -1;
+        ret = -1;
     }
-    return res;
+    return ret;
 }
 
 /* wait for NTP to actually set the time */
@@ -227,16 +278,33 @@ int set_time_wait_for_ntp(void)
 {
     int ret = 0;
     int ntp_retry = 0;
-    const int ntp_retry_count = 2;
-    ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+    const int ntp_retry_count = NTP_RETRY_COUNT;
 
-    while (ret == ESP_ERR_TIMEOUT && ntp_retry++ < ntp_retry_count) {
-        ret = esp_netif_sntp_sync_wait(2500 / portTICK_PERIOD_MS);
+    ret = esp_netif_sntp_start();
+
+    ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+    esp_show_current_datetime();
+
+    while (ret == ESP_ERR_TIMEOUT && (ntp_retry++ < ntp_retry_count)) {
+        ret = esp_netif_sntp_sync_wait(1000 / portTICK_PERIOD_MS);
         ESP_LOGI(TAG, "Waiting for NTP to sync time... (%d/%d)",
                        ntp_retry,
                        ntp_retry_count);
+        esp_show_current_datetime();
     }
-    ESP_LOGI(TAG, "set_time_wait_for_ntp result = 0x%0x: %s",
-                   ret, esp_err_to_name(ret));
+
+#ifdef TIME_ZONE
+    setenv("TZ", TIME_ZONE, 1);
+    tzset();
+#endif
+
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "Successfuly set time via NTP servers.");
+        }
+    else {
+        ESP_LOGW(TAG, "Warning: Failed to set time with NTP: "
+                      "result = 0x%0x: %s",
+                       ret, esp_err_to_name(ret));
+    }
     return ret;
 }

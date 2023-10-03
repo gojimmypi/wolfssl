@@ -1,4 +1,4 @@
-/* server-tls-callback.c
+/* server-tls.c
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -28,21 +28,29 @@
     #include <freertos/event_groups.h>
 #endif
 
-/* Espressif socket */
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <unistd.h>
+/* socket includes */
+#include <lwip/netdb.h>
+#include <lwip/sockets.h>
 
 /* Espressif flash */
 #include <nvs_flash.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
+#include "user_settings.h"
 #include <wolfssl/ssl.h>
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
+#endif
+
+#ifndef NO_DH
+    /* see also wolfssl/test.h */
+    #undef  DEFAULT_MIN_DHKEY_BITS
+    #define DEFAULT_MIN_DHKEY_BITS 1024
+
+    #undef  DEFAULT_MAX_DHKEY_BITS
+    #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
@@ -69,10 +77,10 @@
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
 
-/* project */
+/* Project */
 #include "wifi_connect.h"
 #include "time_helper.h"
-#include "server-tls.h"
+
 
 static const char* const TAG = "server-tls";
 int stack_start = -1;
@@ -136,9 +144,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_ENTER("tls_smp_server_task");
 
 #ifdef DEBUG_WOLFSSL
-    WOLFSSL_MSG("Debug ON");
     wolfSSL_Debugging_ON();
-    ShowCiphers();
+    ShowCiphers(NULL);
 #endif
 
     /* Initialize wolfSSL */
@@ -355,6 +362,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         close(connd);           /* Close the connection to the client   */
     }
     /* Cleanup and return */
+    wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx);  /* Free the wolfSSL context object          */
     wolfSSL_Cleanup();      /* Cleanup the wolfSSL environment          */
     close(sockfd);          /* Close the socket listening for clients   */
@@ -368,15 +376,18 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* we don't initialize a thread */
 #else
 /* create task */
-int tls_smp_server_init(int port)
+WOLFSSL_ESP_TASK tls_smp_server_init(void* args)
 {
-    int ret;
-    int thisPort;
-    thisPort = port;
+#if defined(SINGLE_THREADED)
+    #define TLS_SMP_CLIENT_TASK_RET ret
+#else
+    #define TLS_SMP_CLIENT_TASK_RET
+#endif
+    int thisPort = 0;
+    int ret_i = 0; /* interim return result */
     if (thisPort == 0) {
         thisPort = DEFAULT_PORT;
     }
-
 
 #if ESP_IDF_VERSION_MAJOR >= 4
     TaskHandle_t _handle;
@@ -386,19 +397,19 @@ int tls_smp_server_init(int port)
     /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
     ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
                    TLS_SMP_SERVER_TASK_WORDS);
-    ret = xTaskCreate(tls_smp_server_task,
+    ret_i = xTaskCreate(tls_smp_server_task,
                       TLS_SMP_SERVER_TASK_NAME,
                       TLS_SMP_SERVER_TASK_WORDS, /* not bytes! */
                       (void*)&thisPort,
                       TLS_SMP_SERVER_TASK_PRIORITY,
                       &_handle);
 
-    if (ret != pdPASS) {
+    if (ret_i != pdPASS) {
         ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_SERVER_TASK_NAME);
     }
 
     /* vTaskStartScheduler(); // called automatically in ESP-IDF */
-    return ret;
+    return TLS_SMP_CLIENT_TASK_RET;
 }
 #endif
 

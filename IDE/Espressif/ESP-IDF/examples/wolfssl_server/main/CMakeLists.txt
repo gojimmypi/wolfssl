@@ -1,6 +1,5 @@
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
-
+# wolfSSL Espressif Example Project/main CMakeLists.txt
+#   v1.0
 #
 # wolfssl server test
 #
@@ -51,6 +50,8 @@ idf_component_register(SRCS main.c
                             server-tls.c
                        INCLUDE_DIRS "." "./include")
 #
+
+#
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
 #
 # Save the THIS_VAR as a string in a macro called VAR_OUPUT
@@ -100,4 +101,5 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
 endif()
 
+message(STATUS "")
 

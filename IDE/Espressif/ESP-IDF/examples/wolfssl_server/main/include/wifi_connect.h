@@ -24,14 +24,6 @@
 #include <esp_idf_version.h>
 #include <esp_log.h>
 
-
-#if ESP_IDF_VERSION_MAJOR >= 4
-    //#include "esp_wifi.h"
-    //#include "esp_event.h"
-#else
-    #include "esp_event_loop.h"
-#endif
-
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
@@ -65,8 +57,8 @@
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
         #include "~/Documents/my_private_config.h"
     #else
+        #warning "did not detect environment. using ~/my_private_config.h"
         #include "~/my_private_config.h"
-        #warning "did not detect environment"
 	#endif
 #else
 
