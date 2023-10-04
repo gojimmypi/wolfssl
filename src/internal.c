@@ -8210,7 +8210,7 @@ void SSL_ResourceFree(WOLFSSL* ssl)
         if (FreeFixedIO(ctx_heap, &(ssl_hint->inBuf)) != 1) {
             WOLFSSL_MSG("Error freeing fixed output buffer");
         }
-        if (ssl_hint->haFlag) { /* check if handshake count has been decreased*/
+        if (ssl_hint->haFlag && ctx_heap->curHa > 0) { /* check if handshake count has been decreased*/
             ctx_heap->curHa--;
         }
         wc_UnLockMutex(&(ctx_heap->memory_mutex));
@@ -8464,7 +8464,9 @@ void FreeHandshakeResources(WOLFSSL* ssl)
         if (wc_LockMutex(&(ctx_heap->memory_mutex)) != 0) {
             WOLFSSL_MSG("Bad memory_mutex lock");
         }
-        ctx_heap->curHa--;
+        if (ctx_heap->curHa > 0) {
+            ctx_heap->curHa--;
+        }
         ssl_hint->haFlag = 0; /* set to zero since handshake has been dec */
         wc_UnLockMutex(&(ctx_heap->memory_mutex));
     #ifdef WOLFSSL_HEAP_TEST
@@ -38220,6 +38222,7 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
                     case rsa_kea:
                     {
                         RsaKey* key = (RsaKey*)ssl->hsKey;
+                        int lenErrMask;
 
                         ret = RsaDec(ssl,
                             input + args->idx,
@@ -38245,7 +38248,9 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
                         if (ret == BAD_FUNC_ARG)
                             goto exit_dcke;
 
-                        args->lastErr = ret - (SECRET_LEN - args->sigSz);
+                        lenErrMask = 0 - (SECRET_LEN != args->sigSz);
+                        args->lastErr = (ret & (~lenErrMask)) |
+                            (RSA_PAD_E & lenErrMask);
                         ret = 0;
                         break;
                     } /* rsa_kea */
@@ -38733,18 +38738,24 @@ int wolfSSL_AsyncPop(WOLFSSL* ssl, byte* state)
 
         ret = wolfAsync_EventPop(event, WOLF_EVENT_TYPE_ASYNC_WOLFSSL);
         if (ret != WC_NO_PENDING_E && ret != WC_PENDING_E) {
-
             /* advance key share state if doesn't need called again */
             if (state && (asyncDev->event.flags & WC_ASYNC_FLAG_CALL_AGAIN) == 0) {
                 (*state)++;
             }
-
-            /* clear event */
+            /* clear event and async device */
             XMEMSET(&asyncDev->event, 0, sizeof(WOLF_EVENT));
-
-            /* clear async dev */
             ssl->asyncDev = NULL;
         }
+    #if !defined(WOLFSSL_ASYNC_CRYPT_SW) && \
+        (defined(WOLF_CRYPTO_CB) || defined(HAVE_PK_CALLBACKS))
+        else if (ret == WC_PENDING_E) {
+            /* Allow the underlying crypto API to be called again to trigger the
+             * crypto or PK callback. The actual callback must be called, since
+             * the completion is not detected in the poll like Intel QAT or
+             * Nitrox */
+            ret = wolfEventQueue_Remove(&ssl->ctx->event_queue, event);
+        }
+    #endif
     }
     else {
         ret = WC_NO_PENDING_E;

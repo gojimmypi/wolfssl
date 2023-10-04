@@ -1083,6 +1083,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                           ctx->lockDepth, (int)ctx->initializer);
             ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
         #endif
+        #endif
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
