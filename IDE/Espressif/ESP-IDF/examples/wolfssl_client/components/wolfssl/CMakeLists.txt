@@ -206,8 +206,10 @@ else()
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel\""
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/benchmark\"" # the benchmark application
-                          "\"${WOLFSSL_ROOT}/wolfcrypt/test\"" # the test application
+                          # TODO: Make this a univeral makefile that detects if bechmark / test needed
+                          # Sometimes problematic with SM; consider gating detection.
+                          #"\"${WOLFSSL_ROOT}/wolfcrypt/benchmark\"" # the benchmark application
+                          #"\"${WOLFSSL_ROOT}/wolfcrypt/test\"" # the test application
        ) # COMPONENT_SRCDIRS
     message(STATUS "This COMPONENT_SRCDIRS = ${COMPONENT_SRCDIRS}")
 
