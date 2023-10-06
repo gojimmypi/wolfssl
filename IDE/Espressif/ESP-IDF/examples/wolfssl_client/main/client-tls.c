@@ -32,8 +32,6 @@
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
-/* ESP specific */
-
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include "user_settings.h"

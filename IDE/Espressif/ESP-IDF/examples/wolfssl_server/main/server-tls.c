@@ -32,9 +32,6 @@
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
-/* Espressif flash */
-#include <nvs_flash.h>
-
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include "user_settings.h"
@@ -176,15 +173,17 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-//    ESP_LOGI(TAG, "Start SM3\n");
-//    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-//    if (ret == SSL_SUCCESS) {
-//        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-//    }
-//    else {
-//        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-//    }
+    ESP_LOGI(TAG, "Start SM3\n");
 
+    /* Optional set explicit ciphers
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    }
+    */
     ShowCiphers(NULL);
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
@@ -192,14 +191,17 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_MSG("Loading certificate...");
     /* -c Load server certificates into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                //server_cert_der_2048, sizeof_server_cert_der_2048,
-                CTX_SERVER_CERT, CTX_SERVER_CERT_SIZE,
-                CTX_SERVER_CERT_TYPE);
+                                                          CTX_SERVER_CERT,
+                                                          CTX_SERVER_CERT_SIZE,
+                                                          CTX_SERVER_CERT_TYPE
+                                                         );
 
-//    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
-//                                             server_sm2,
-//                                             sizeof_server_sm2,
-//                                             WOLFSSL_FILETYPE_PEM);
+/* optional wolfSSL_CTX_use_certificate_buffer
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             server_sm2,
+                                             sizeof_server_sm2,
+                                             WOLFSSL_FILETYPE_PEM);
+*/
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Loaded server_sm2\n");
     }
@@ -224,7 +226,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_MSG("Loading key info...");
     /* -k Load server key into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                            //server_key_der_2048, sizeof_server_key_der_2048,
                                             CTX_SERVER_KEY,
                                             CTX_SERVER_KEY_SIZE,
                                             CTX_SERVER_KEY_TYPE);
@@ -233,7 +234,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Loaded PrivateKey_buffer server_sm2_priv\n");
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to load PrivateKey_buffer server_sm2_priv\n");
+        ESP_LOGE(TAG, "ERROR: failed to load "
+                      "PrivateKey_buffer server_sm2_priv\n");
     }
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
@@ -270,8 +272,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 
-    /* TO DO when using ECDSA, it loads the provisioned certificate and present it.*/
-    /* TO DO when using ECDSA, it uses the generated key instead of loading key    */
+    /* TODO when using ECDSA,it loads the provisioned certificate and present it.
+       TODO when using ECDSA,it uses the generated key instead of loading key  */
 
     /* Initialize the server address struct with zeros */
     memset(&servAddr, 0, sizeof(servAddr));
@@ -328,7 +330,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             ShowCiphers(ssl);
         }
         else {
-            ESP_LOGE(TAG, "wolfSSL_accept error %d", wolfSSL_get_error(ssl, ret));
+            ESP_LOGE(TAG, "wolfSSL_accept error %d",
+                           wolfSSL_get_error(ssl, ret));
         }
         WOLFSSL_MSG("Client connected successfully");
         ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
@@ -362,7 +365,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         close(connd);           /* Close the connection to the client   */
     }
     /* Cleanup and return */
-    wolfSSL_free(ssl);     /* Free the wolfSSL object                  */
+    wolfSSL_free(ssl);      /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx);  /* Free the wolfSSL context object          */
     wolfSSL_Cleanup();      /* Cleanup the wolfSSL environment          */
     close(sockfd);          /* Close the socket listening for clients   */

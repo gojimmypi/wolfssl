@@ -1083,7 +1083,6 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                           ctx->lockDepth, (int)ctx->initializer);
             ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
         #endif
-        #endif
             ctx->mode = ESP32_SHA_SW;
             return 0; /* success, but revert to SW */
         }
@@ -1265,7 +1264,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     #endif
     } /* not first block */
 
-#else /* not ESP32S3 */
+    #else /* not ESP32S3 */
     if (sha->isfirstblock) {
         /* start registers for first message block
          * we don't make any relational memory position assumptions.

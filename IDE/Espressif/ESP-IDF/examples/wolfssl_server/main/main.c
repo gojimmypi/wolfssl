@@ -24,7 +24,7 @@
 /* ESP specific */
 #include <nvs_flash.h>
 #include <esp_log.h>
-#include "esp_event.h"
+#include <esp_event.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -126,6 +126,27 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+#ifdef ESP_TASK_MAIN_STACK
+     ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
+#endif
+#ifdef TASK_EXTRA_STACK_SIZE
+     ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
+#endif
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
+                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
+
+    /* Returns the high water mark of the stack associated with xTask. That is,
+     * the minimum free stack space there has been (in bytes not words, unlike
+     * vanilla FreeRTOS) since the task started. The smaller the returned
+     * number the closer the task has come to overflowing its stack.
+     * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+     */
+    stack_start = uxTaskGetStackHighWaterMark(NULL);
+    ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
+#endif
+
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
@@ -172,18 +193,16 @@ void app_main(void)
 
     if (ret < -1) {
         /* a value of -1 means there was no NTP server, so no need to wait */
-        ESP_LOGI(TAG, "Waiting 10 seconds for NTP to complete." );
+        ESP_LOGI(TAG, "Waiting 10 more seconds for NTP to complete." );
         vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+        esp_show_current_datetime();
     }
 
-    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
-                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
-                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
-
-    /* HWM is maximum amount of stack space that has been unused, in words. */
+    /* HWM is maximum amount of stack space that has been unused, in bytes
+     * not words (unlike vanilla freeRTOS). */
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - (uxTaskGetStackHighWaterMark(NULL) / 4)
+                   - (uxTaskGetStackHighWaterMark(NULL))
             );
     ESP_LOGI(TAG, "Starting TLS Server...\n");
 
@@ -196,8 +215,6 @@ void app_main(void)
     tls_smp_server_init(args); /* NULL will use the DEFAULT_PORT value */
 #endif
 
-    ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
-    vTaskDelete(NULL);
     /* done */
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
@@ -205,7 +222,9 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
+                                     - uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack delta: %d\n", stack_start
+                                     - uxTaskGetStackHighWaterMark(NULL));
 #endif
 
 #if defined(SINGLE_THREADED)
@@ -213,6 +232,8 @@ void app_main(void)
         while (1);
 #else
         vTaskDelay(60000);
+        ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
+        vTaskDelete(NULL);
 #endif
     } /* done whle */
 

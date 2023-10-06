@@ -37,7 +37,12 @@
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
-#include <wolfssl/certs_test.h>
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+#else
+    #include <wolfssl/certs_test.h>
+#endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>

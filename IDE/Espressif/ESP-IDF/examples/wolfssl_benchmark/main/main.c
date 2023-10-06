@@ -73,6 +73,8 @@ static const char* const TAG = "wolfssl_benchmark";
 
 static byte mSlotList[ATECC_MAX_SLOT];
 
+int atmel_set_slot_allocator(atmel_slot_alloc_cb alloc, atmel_slot_dealloc_cb dealloc);
+
 /* initialize slot array */
 void my_atmel_slotInit()
 {
@@ -190,6 +192,8 @@ int construct_argv()
 void app_main(void)
 {
     int stack_start = 0;
+    esp_err_t ret = 0;
+    ESP_LOGI(TAG, "---------------- wolfSSL Benchmark Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");

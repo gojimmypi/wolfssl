@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\..\wolfssl\error-ssl.h
 		..\..\..\..\include.am = ..\..\..\..\include.am
 		..\..\..\..\..\..\..\my_private_config.h = ..\..\..\..\..\..\..\my_private_config.h
+		..\partitions_singleapp_large.csv = ..\partitions_singleapp_large.csv
 		..\README.md = ..\README.md
 		..\README_server_sm.md = ..\README_server_sm.md
 		..\build\VisualGDB\Debug\config\sdkconfig.h = ..\build\VisualGDB\Debug\config\sdkconfig.h

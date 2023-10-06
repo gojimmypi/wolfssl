@@ -140,7 +140,9 @@ void my_atmel_free(int slotId)
 /* entry point */
 void app_main(void)
 {
-    int rc = 0;
+    int stack_start = 0;
+    esp_err_t ret = 0;
+    ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");

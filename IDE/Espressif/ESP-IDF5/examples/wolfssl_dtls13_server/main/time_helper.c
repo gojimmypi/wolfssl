@@ -53,7 +53,7 @@ char* ntpServerList[NTP_SERVER_COUNT] = NTP_SERVER_LIST;
 extern char* ntpServerList[NTP_SERVER_COUNT];
 
 /* the worst-case scenario is a hard-coded date/time */
-int set_fixed_default_time()
+int set_fixed_default_time(void)
 {
     time_t interim_time;
 
@@ -158,7 +158,7 @@ int set_time(void)
 #endif
 
 #ifndef NTP_SERVER_COUNT
-    ESP_LOGW(TAG, "WArning: no sntp server names defined. Setting to empty list");
+    ESP_LOGW(TAG, "Warning: no sntp server names defined. Setting to empty list");
     #define NTP_SERVER_COUNT 0
     char* ntpServerList[NTP_SERVER_COUNT];
 #endif /* not defined: NTP_SERVER_COUNT */

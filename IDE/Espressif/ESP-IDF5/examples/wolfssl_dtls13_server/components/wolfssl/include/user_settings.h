@@ -162,16 +162,19 @@
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines for SW: */
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    /* HW Enabled by default for ESP32. To disable: */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* HW Disabled by default for ESP32-S2.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* HW Enabled by default for ESP32. To disable: */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
@@ -182,26 +185,34 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* HW Disabled by default for ESP32-C3.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* HW Disabled by default for ESP32-C6.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    /* HW Disabled by default for ESP32-H2.   */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #else
+    /* HW Disabled by default for all other ESP32-[?].  */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif
+
+/* see esp_ShowExtendedSystemInfo in esp32-crypt.h for startup log info */
+#define HAVE_VERSION_EXTENDED_INFO
+
 
 /* debug options */
 /* #define ESP_VERIFY_MEMBLOCK              */
@@ -251,6 +262,7 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
 #else
+    /* default settings */
     #define USE_CERT_BUFFERS_2048
     #define USE_CERT_BUFFERS_256
     #define CTX_CA_CERT          ca_cert_der_2048
@@ -263,6 +275,10 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+
+
+
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file

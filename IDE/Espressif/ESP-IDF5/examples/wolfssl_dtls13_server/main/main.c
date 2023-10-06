@@ -55,7 +55,7 @@ void app_main(void)
 
     /* see project CMakeLists.txt for detection of sample code in ESP-IDF */
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
-    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
+    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
