@@ -212,12 +212,12 @@ void app_main(void)
     */
     int loops = 0;
     do {
-        rc = wolf_test_task();
+        ret = wolf_test_task();
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         loops++;
     }
-    while (rc == 0);
+    while (ret == 0);
     ESP_LOGI(TAG, "loops = %d", loops);
 
 
@@ -225,11 +225,11 @@ void app_main(void)
     ** This is called at the end of wolf_test_task();
     */
 
-    if (rc == 0) {
-        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", ret);
     }
     else {
-        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
+        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", ret);
         /* see wolfssl/wolfcrypt/error-crypt.h */
     }
 
