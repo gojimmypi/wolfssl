@@ -13163,7 +13163,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
     #ifndef HAVE_RENESAS_SYNC
         if (XMEMCMP(cipher, verify2, AES_BLOCK_SIZE))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
-
+    #endif
         ret = wc_AesCbcEncrypt(enc, cipher + AES_BLOCK_SIZE, /* TODO what's up with this? encrypt zero? */
                 msg2 + AES_BLOCK_SIZE, AES_BLOCK_SIZE);
     #if defined(WOLFSSL_ASYNC_CRYPT)
