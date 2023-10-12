@@ -38,6 +38,11 @@
 */
 #include "sdkconfig.h"
 
+/* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
+/* #define SINGLE_THREADED */
+
+/* #define ESP_DISABLE_HW_TASK_LOCK */
+
 #define WOLFSSL_ESPIDF
 
 /*
@@ -64,9 +69,6 @@
 #define HAVE_SUPPORTED_CURVES
 
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
-
-/* when you want to use SINGLE THREAD */
-/* #define SINGLE_THREADED */
 
 #define NO_FILESYSTEM
 

@@ -154,6 +154,10 @@
 ** USE_ESP_DPORT_ACCESS_READ_BUFFER
 **   Sets ESP_NO_ERRATA_MITIGATION and uses esp_dport_access_read_buffer()
 **
+** ESP_MONITOR_HW_TASK_LOCK
+**   Although wolfSSL is in general not fully thread safe, this option enables
+**   some features that can be useful in a multi-threaded environment
+**
 *******************************************************************************
 ** Settings used from <esp_idf_version.h>
 *******************************************************************************
@@ -236,6 +240,14 @@
 
 #if defined(USE_ESP_DPORT_ACCESS_READ_BUFFER)
     #define ESP_NO_ERRATA_MITIGATION
+#endif
+
+#ifdef SINGLE_THREADED
+    #undef ESP_MONITOR_HW_TASK_LOCK
+#else
+    #ifndef ESP_DISABLE_HW_TASK_LOCK
+        #define ESP_MONITOR_HW_TASK_LOCK
+    #endif
 #endif
 
 #ifdef __cplusplus
