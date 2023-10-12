@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+/*
+ * ESP32-C3: https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
+ *  see page 335: no SHA-512
+ *
+ */
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
@@ -37,9 +43,14 @@
 #if defined(WOLFSSL_ESP32_CRYPT) && \
    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 
-/* TODO this may be chip type dependent: add support for others */
-#include <hal/clk_gate_ll.h> /* ESP32-WROOM */
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #include <hal/sha_hal.h>
 
+    #include <hal/sha_ll.h>
+    #include <hal/clk_gate_ll.h>
+#else
+    #include <hal/clk_gate_ll.h> /* ESP32-WROOM */
+#endif
 #include <wolfssl/wolfcrypt/sha.h>
 #include <wolfssl/wolfcrypt/sha256.h>
 #include <wolfssl/wolfcrypt/sha512.h>
@@ -52,6 +63,10 @@
 #else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
+#endif
+
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    const static word32 ** _active_digest_address = 0; /* keep track of the currently active SHA hash object for interleaving */
 #endif
 
 static const char* TAG = "wolf_hw_sha";
@@ -490,6 +505,7 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     return ret;
 } /* esp_sha256_ctx_copy */
 
+#if defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512)
 /*
 ** internal sha384 ctx copy for ESP HW
 */
@@ -539,7 +555,9 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 
     return ret;
 } /* esp_sha384_ctx_copy */
+#endif
 
+#if defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512)
 /*
 ** Internal sha512 ctx copy for ESP HW.
 ** If HW already active, fall back to SW for this ctx.
@@ -585,6 +603,7 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 
     return ret;
 } /* esp_sha512_ctx_copy */
+#endif
 
 /*
 ** Determine the digest size, depending on SHA type.
@@ -616,7 +635,7 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
         case SHA1: /* typically 20 bytes */
             ret = WC_SHA_DIGEST_SIZE;
             break;
-#endif
+    #endif
     #ifdef WOLFSSL_SHA224
     /*
         no SHA224 HW at this time.
@@ -629,17 +648,17 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
         case SHA2_256: /* typically 32 bytes */
             ret = WC_SHA256_DIGEST_SIZE;
             break;
-#endif
+    #endif
     #ifdef WOLFSSL_SHA384
         case SHA2_384:
             ret =  WC_SHA384_DIGEST_SIZE;
             break;
-#endif
+    #endif
     #ifdef WOLFSSL_SHA512
         case SHA2_512: /* typically 64 bytes */
             ret = WC_SHA512_DIGEST_SIZE;
             break;
-#endif
+    #endif
         default:
             ESP_LOGE(TAG, "Bad SHA type in wc_esp_sha_digest_size");
             ret = 0;
@@ -707,6 +726,8 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /*  RISC-V Architecture: TODO */
+    (void)max_unroll_count;
+    (void)_active_digest_address;
 #else
     /* Xtensa Architecture */
 
@@ -1103,6 +1124,21 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
+        // DPORT_REG_WRITE(SYSTEM_CRYPTO_SHA_CLK_EN, 4); /* this gets stuck, causes panic */
+        // (*(volatile uint32_t *)(0x0014)) = (*(volatile uint32_t *)(0x0014)) | 0x100 | 4;
+        // (*(uint32_t *)(0x0014)) = 0x100 | 4;
+        // DPORT_REG_WRITE(SYSTEM_CRYPTO_SHA_CLK_EN, 4);
+        // SYSTEM_PERIP_CLK_EN1_REG + 0x0014
+        // DR_REG_SHA_BASE = 0x6003b000 see https://github.com/espressif/esp-idf/blob/master/components/soc/esp32c3/include/soc/reg_base.h
+        /*  (DR_REG_SYSTEM_BASE + 0x014) */
+        // DPORT_REG_WRITE(SYSTEM_PERIP_CLK_EN1_REG, 4);
+        /* TODO - do we need to enable on C3? */
+        ESP_LOGI(TAG, "ets_sha_enable");
+        ets_sha_enable();
+        ctx->mode = ESP32_SHA_HW;
+        // periph_ll_enable_clk_clear_rst((periph_module_t) PERIPH_SHA_MODULE);
+        // DPORT_REG_WRITE(SHA_MODE_REG, SHA2_256); /* 2 = SHA-256; see page 336 */
+
 #else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
@@ -1225,6 +1261,11 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         /* ESP32-C3 RISC-V TODO */
+            // DPORT_REG_WRITE(SHA_START_REG, 1);
+            // DPORT_REG_WRITE(SHA_MODE_REG, 0); /* 0 = SHA-1; see page 336  */
+            ESP_LOGV(TAG, "SHA1 SHA_START_REG");
+            sha_ll_start_block(SHA1);   // SHA1 TODO confirm & change to macro name
+
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
 
     /* Translate from Wolf SHA type to hardware algorithm. */

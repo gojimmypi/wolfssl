@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.008 for wolfssl 6205 spaces in path and cleanup
+# Version 5.6.0.009 for FIND_WOLFSSL_DIRECTORY
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -75,6 +75,7 @@ endfunction()
 #  parameter: OUTPUT_FOUND_WOLFSSL_DIRECTORY contains root of source code, otherwise blank
 #
 function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
+    message(STATUS "Starting FIND_WOLFSSL_DIRECTORY")
     set(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}")
     if( "${CURRENT_SEARCH_DIR}" STREQUAL "" )
         message(STATUS "The WOLFSSL_ROOT environment variable is not set. Searching...")

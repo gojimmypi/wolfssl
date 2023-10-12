@@ -149,6 +149,27 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
+#ifdef ESP_TASK_MAIN_STACK
+     ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
+#endif
+#ifdef TASK_EXTRA_STACK_SIZE
+     ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
+#endif
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
+                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
+
+    /* Returns the high water mark of the stack associated with xTask. That is,
+     * the minimum free stack space there has been (in bytes not words, unlike
+     * vanilla FreeRTOS) since the task started. The smaller the returned
+     * number the closer the task has come to overflowing its stack.
+     * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+     */
+    stack_start = uxTaskGetStackHighWaterMark(NULL);
+    ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
+#endif
+
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
