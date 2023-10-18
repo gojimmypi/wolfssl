@@ -192,8 +192,34 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
            ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
            break;
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
+        case WC_HASH_TYPE_SHA:
+            ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+        case WC_HASH_TYPE_SHA224:
+            ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+        case WC_HASH_TYPE_SHA256:
+            ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
+
+        default:
+            ctx->mode = ESP32_SHA_SW;
+            ret = esp_sha_init_ctx(ctx);
+            ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
+            break;
+    }
+
 #else
     /* other chipsets will be implemented here */
+    ESP_LOGW(TAG, "SW Fallback; CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
+    ctx->mode = ESP32_SHA_SW;
 #endif /* defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3) */
 
     return ret;
@@ -630,6 +656,35 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
     int ret = 0;
     ESP_LOGV(TAG, "  esp_sha_digest_size");
 
+#if CONFIG_IDF_TARGET_ARCH_RISCV
+/*
+ *   SHA1 = 0,
+ *   SHA2_224,
+ *   SHA2_256,
+ */
+    switch (type) {
+    #ifndef NO_SHA
+        case SHA1: /* typically 20 bytes */
+            ret = WC_SHA_DIGEST_SIZE;
+            break;
+    #endif
+    #ifdef WOLFSSL_SHA224
+        case SHA2_224:
+            ret = WC_SHA224_DIGEST_SIZE;
+            break;
+    #endif
+    #ifndef NO_SHA256
+        case SHA2_256: /* typically 32 bytes */
+            ret = WC_SHA256_DIGEST_SIZE;
+            break;
+    #endif
+        default:
+            ESP_LOGE(TAG, "Bad SHA type in wc_esp_sha_digest_size");
+            ret = 0;
+            break;
+    }
+#else
+    /* Xtnsa */
     switch (type) {
     #ifndef NO_SHA
         case SHA1: /* typically 20 bytes */
@@ -664,6 +719,7 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
             ret = 0;
             break;
     }
+#endif
 
     return ret; /* Return value is a size, not an error code. */
 } /* wc_esp_sha_digest_size */
@@ -674,9 +730,14 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
 static int wc_esp_wait_until_idle(void)
 {
     int ret = 0; /* assume success */
+	int loop_ct = 10000;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
+    while ((sha_ll_busy() == true) && (loop_ct > 0)) {
+        loop_ct--;
+        /* do nothing while waiting. */
+    }
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     while (REG_READ(SHA_BUSY_REG)) {
       /* do nothing while waiting. */
@@ -689,7 +750,10 @@ static int wc_esp_wait_until_idle(void)
         /* do nothing while waiting. */
     }
 #endif
-
+    if (loop_ct <= 0)
+    {
+        ESP_LOGI(TAG, "too long to exit wc_esp_wait_until_idle");
+    }
     return ret;
 } /* wc_esp_wait_until_idle */
 
@@ -1133,7 +1197,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /*  (DR_REG_SYSTEM_BASE + 0x014) */
         // DPORT_REG_WRITE(SYSTEM_PERIP_CLK_EN1_REG, 4);
         /* TODO - do we need to enable on C3? */
-        ESP_LOGI(TAG, "ets_sha_enable");
+        ESP_LOGI(TAG, "ets_sha_enable for RISC-V");
         ets_sha_enable();
         ctx->mode = ESP32_SHA_HW;
         // periph_ll_enable_clk_clear_rst((periph_module_t) PERIPH_SHA_MODULE);
@@ -1259,13 +1323,30 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-        /* ESP32-C3 RISC-V TODO */
-            // DPORT_REG_WRITE(SHA_START_REG, 1);
-            // DPORT_REG_WRITE(SHA_MODE_REG, 0); /* 0 = SHA-1; see page 336  */
-            ESP_LOGV(TAG, "SHA1 SHA_START_REG");
-            sha_ll_start_block(SHA1);   // SHA1 TODO confirm & change to macro name
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) /* || defined(CONFIG_IDF_TARGET_ESP32C6) */
+    /* ESP32-C3 RISC-V TODO */
+        // DPORT_REG_WRITE(SHA_START_REG, 1);
+        // DPORT_REG_WRITE(SHA_MODE_REG, 0); /* 0 = SHA-1; see page 336  */
+    ESP_LOGV(TAG, "SHA1 SHA_START_REG");
+    if (sha->isfirstblock) {
+        sha_ll_start_block(SHA2_256); //  TODO confirm & change to macro name
+        sha->isfirstblock = false;
 
+        ESP_LOGV(TAG, "      set sha->isfirstblock = 0");
+
+    #if defined(DEBUG_WOLFSSL)
+        this_block_num = 1; /* one-based counter, just for debug info */
+    #endif
+    } /* first block */
+    else {
+        sha_ll_continue_block(SHA2_256);
+
+    #if defined(DEBUG_WOLFSSL)
+        this_block_num++; /* one-based counter */
+        ESP_LOGV(TAG, "      continue block #%d", this_block_num);
+    #endif
+    } /* not first block */
+    /* end CONFIG_IDF_TARGET_ESP32C3 */
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
 
     /* Translate from Wolf SHA type to hardware algorithm. */
@@ -1314,7 +1395,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     #endif
     } /* not first block */
 
-    #else /* not ESP32S3 */
+    /* end ESP32S3 */
+
+    #elif defined(CONFIG_IDF_TARGET_ESP32S3) /* not ESP32S3 */
     if (sha->isfirstblock) {
         /* start registers for first message block
          * we don't make any relational memory position assumptions.
@@ -1388,6 +1471,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
                 break;
         }
     }
+    /* end standard ESP32 */
+    #else
+        ESP_LOGE(TAG, "Unsupported hardware")
     #endif
 
         #if defined(DEBUG_WOLFSSL)
@@ -1424,7 +1510,36 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     /* wait until the engine is available */
     ret = wc_esp_wait_until_idle();
 
-#if CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+   /*  SHA_M_1_REG is not a macro:
+    *  DPORT_REG_WRITE(SHA_M_1_REG + (i*sizeof(word32)), *(data + i));
+    *
+    * but we have this HAL: sha_ll_fill_text_block
+    *
+    * Note that unlike the plain ESP32 that has only 1 register, we can write
+    * the entire block.
+    * SHA_TEXT_BASE = 0x6003b080
+    * SHA_H_BASE    = 0x6003b040
+    * see hash: (word32[08])  (*(volatile uint32_t *)(SHA_H_BASE))
+    *  message: (word32[16])  (*(volatile uint32_t *)(SHA_TEXT_BASE))
+    *  ((word32[16])  (*(volatile uint32_t *)(SHA_TEXT_BASE)))
+    */
+    if (&data != _active_digest_address)
+    {
+        ESP_LOGI(TAG, "TODO Moving alternate ctx->for_digest");
+        /* move last known digest into HW reg during interleave */
+        // sha_ll_write_digest(ctx->sha_type, ctx->for_digest, WC_SHA256_BLOCK_SIZE);
+        _active_digest_address = &data;
+    }
+    if (ctx->isfirstblock)
+    {
+    //  ets_sha_disable(); /* the act of disable and enable */
+        ets_sha_enable();  /* will clear initial digest     */
+    }
+    /* call Espressif HAL for this hash*/
+    sha_hal_hash_block(ctx->sha_type, (void *)(data), word32_to_save, ctx->isfirstblock);
+    ctx->isfirstblock = 0; /* once we hash a block, we're no longer at the first */
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
     MessageSource = (uint32_t*)data;
     AcceleratorMessage = (uint32_t*)(SHA_TEXT_BASE);
     while (word32_to_save--) {
@@ -1436,7 +1551,11 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
       ++AcceleratorMessage;
       ++MessageSource;
     } /*  (word32_to_save--) */
-
+    /* notify HW to start process
+     * see ctx->sha_type
+     * reg data does not change until we are ready to read */
+    ret = esp_sha_start_process(ctx);
+    /* end of ESP32-S3 */
 #else
     /* load [len] words of message data into HW */
     for (i = 0; i < word32_to_save; i++) {
@@ -1450,17 +1569,18 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
          */
     #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         /* ESP32-C3 RISC-V TODO */
+        DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
     #else
         DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
     #endif
         /* memw confirmed auto inserted by compiler here */
     }
-#endif
-
     /* notify HW to start process
      * see ctx->sha_type
      * reg data does not change until we are ready to read */
     ret = esp_sha_start_process(ctx);
+
+#endif
 
     ESP_LOGV(TAG, "  leave esp_process_block");
     return ret;
@@ -1487,6 +1607,17 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     }
 
     /* sanity check */
+    /* TODO S3 */
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    if (ctx->sha_type == SHA_INVALID) {
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    if (ctx->sha_type == SHA_TYPE_MAX) {
+#endif // CONFIG_IDF_TARGET_ESP32)
+        ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
+        ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
+        return -1;
+    }
+
     digestSz = wc_esp_sha_digest_size(ctx->sha_type);
     if (digestSz == 0) {
         ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
@@ -1525,6 +1656,8 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     } /* not (ctx->sha_type == SHA2_512) */
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    sha_ll_read_digest(ctx->sha_type, (void *)hash, wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
 #else
     /* not CONFIG_IDF_TARGET_ESP32S3 */
     /* wait until idle */
