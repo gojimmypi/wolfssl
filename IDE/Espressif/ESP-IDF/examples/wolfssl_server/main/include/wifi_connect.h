@@ -36,6 +36,12 @@
 #define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
 #define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
 
+#define USE_WIFI_EXAMPLE
+#ifdef USE_WIFI_EXAMPLE
+    #include "esp_netif.h"
+    #include "protocol_examples_common.h" /* see project CMakeLists.txt */
+#endif
+
 /**
  ******************************************************************************
  ******************************************************************************
@@ -44,8 +50,9 @@
  ******************************************************************************
  **/
 
-/* when using a private config with plain text passwords, not my_private_config.h should be excluded from git updates */
-#define  USE_MY_PRIVATE_CONFIG
+/* when using a private config with plain text passwords,
+ * file my_private_config.h should be excluded from git updates */
+/* #define  USE_MY_PRIVATE_CONFIG */
 
 #ifdef  USE_MY_PRIVATE_CONFIG
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
@@ -69,8 +76,17 @@
     ** If you'd rather not, just change the below entries to strings with
     ** the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
     */
-    #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-    #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+    #ifdef CONFIG_ESP_WIFI_SSID
+        #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
+    #else
+        #define EXAMPLE_ESP_WIFI_SSID "MYSSID_WIFI_CONNECT"
+    #endif
+
+    #ifdef CONFIG_ESP_WIFI_PASSWORD
+        #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
+    #else
+        #define EXAMPLE_ESP_WIFI_PASS "MYPASSWORD_WIFI_CONNECT"
+    #endif
 #endif
 
 /* ESP lwip */

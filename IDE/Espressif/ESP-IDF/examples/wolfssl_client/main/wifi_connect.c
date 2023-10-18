@@ -42,6 +42,23 @@
     static EventGroupHandle_t wifi_event_group;
 #endif
 
+#if defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION_MINOR)
+    #if ESP_IDF_VERSION_MAJOR >= 4
+        /* likely using examples, see wifi_connect.h */
+    #else
+        /* TODO - still supporting pre V4 ? */
+        const static int CONNECTED_BIT = BIT0;
+        static EventGroupHandle_t wifi_event_group;
+    #endif
+    #if (ESP_IDF_VERSION_MAJOR == 5)
+        #define HAS_WPA3_FEATURES
+    #else
+        #undef HAS_WPA3_FEATURES
+    #endif
+#else
+    /* TODO Consider pre IDF v5? */
+#endif
+
 /* breadcrumb prefix for logging */
 const static char *TAG = "wifi_connect";
 
@@ -75,15 +92,12 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 #else
-#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
 
 #ifdef CONFIG_ESP_MAXIMUM_RETRY
     #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
 #else
     #define CONFIG_ESP_MAXIMUM_RETRY 5
 #endif
-
 
 #if CONFIG_ESP_WIFI_AUTH_OPEN
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN
@@ -122,21 +136,27 @@ static int s_retry_num = 0;
 ip_event_got_ip_t* event;
 
 
-static void event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data)
+static void event_handler(void* arg,
+                          esp_event_base_t event_base,
+                          int32_t event_id,
+                          void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+    }
+    else if (event_base == WIFI_EVENT &&
+             event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
-        } else {
+        }
+        else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
-        ESP_LOGI(TAG,"connect to the AP fail");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ESP_LOGI(TAG, "connect to the AP fail");
+    }
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         event = (ip_event_got_ip_t*) event_data;
         wifi_show_ip();
         s_retry_num = 0;
@@ -181,7 +201,9 @@ int wifi_init_sta(void)
              * length and format matching to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK
              * standards. */
             .threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD,
+        #ifdef HAS_WPA3_FEATURES
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+        #endif
         },
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
@@ -205,20 +227,26 @@ int wifi_init_sta(void)
     ESP_LOGW(TAG, "Undefine SHOW_SSID_AND_PASSWORD to not show SSID/password");
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-    } else if (bits & WIFI_FAIL_BIT) {
+                       EXAMPLE_ESP_WIFI_SSID,
+                       EXAMPLE_ESP_WIFI_PASS);
+    }
+    else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-    } else {
+                       EXAMPLE_ESP_WIFI_SSID,
+                       EXAMPLE_ESP_WIFI_PASS);
+    }
+    else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
 #else
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "Connected to AP");
-    } else if (bits & WIFI_FAIL_BIT) {
+    }
+    else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to AP");
         ret = -1;
-    } else {
+    }
+    else {
         ESP_LOGE(TAG, "AP UNEXPECTED EVENT");
         ret = -2;
     }
@@ -228,7 +256,7 @@ int wifi_init_sta(void)
 
 int wifi_show_ip(void)
 {
-    ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+    /* ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip)); */
     return 0;
 }
 #endif

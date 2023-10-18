@@ -296,9 +296,12 @@ else()
                     #
                     # first check if there's a [root]/include/user_settings.h
                     if( EXISTS "${WOLFSSL_ROOT}/include/user_settings.h" )
-                        message(FATAL_ERROR "Found stray wolfSSL user_settings.h in "
-                                            "${WOLFSSL_ROOT}/include/user_settings.h "
-                                            " (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h )")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "Found stray wolfSSL user_settings.h in ${WOLFSSL_ROOT}/include/user_settings.h")
+                        message(STATUS "  please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h"            )
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/user_settings.h" )
@@ -314,7 +317,12 @@ else()
 
                     # next check if there's a [root]/include/config.h
                     if( EXISTS "${WOLFSSL_ROOT}/include/config.h" )
-                        message(FATAL_ERROR "Found stray wolfSSL config.h in        ${WOLFSSL_ROOT}/include/config.h (please move it to ${WOLFSSL_PROJECT_DIR}/include/config.h")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "Found stray wolfSSL config.h in ${WOLFSSL_ROOT}/include/config.h"              )
+                        message(STATUS "  Please move it to ${WOLFSSL_PROJECT_DIR}/include/config.h"                   )
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/config.h" )

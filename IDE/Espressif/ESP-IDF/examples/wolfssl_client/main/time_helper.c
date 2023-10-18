@@ -19,14 +19,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* common Espressif time_helper v5.6.3.001 */
-
+/* common Espressif time_helper v5.6.3.002 */
+#include "esp_idf_version.h"
 #include "sdkconfig.h"
 #include "time_helper.h"
 
 #include <esp_log.h>
-#include <lwip/apps/sntp.h>
-#include <esp_netif_sntp.h>
+
+#if defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION_MINOR)
+    #if (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR >= 1)
+        #define HAS_ESP_NETIF_SNTP 1
+        #include <lwip/apps/sntp.h>
+        #include <esp_netif_sntp.h>
+    #else
+        #include <string.h>
+        #include <esp_sntp.h>
+    #endif
+#else
+    /* TODO Consider pre IDF v5? */
+#endif
 
 /* ESP-IDF uses a 64-bit signed integer to represent time_t starting from release v5.0
  * See: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html#year-2036-and-2038-overflow-issues
@@ -194,14 +205,16 @@ int set_time(void)
     #warning "NTP not properly configured"
 #endif /* not defined: NTP_SERVER_COUNT */
 
-#if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
-    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(
-                                   NTP_SERVER_COUNT,
-                                   ESP_SNTP_SERVER_LIST(ntpServerList[0])
-                               );
-#else
-    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
-#endif
+#ifdef HAS_ESP_NETIF_SNTP
+    #if CONFIG_LWIP_SNTP_MAX_SERVERS > 1
+        esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(
+                                       NTP_SERVER_COUNT,
+                                       ESP_SNTP_SERVER_LIST(ntpServerList[0])
+                                   );
+    #else
+        esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+    #endif /* CONFIG_LWIP_SNTP_MAX_SERVERS > 1 */
+#endif /* HAS_ESP_NETIF_SNTP */
 
     int ret = 0;
     int i = 0; /* counter for time servers */
@@ -233,6 +246,7 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
+        /* TODO Connsider esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);  */
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
         if (NTP_SERVER_COUNT > CONFIG_LWIP_SNTP_MAX_SERVERS) {
             ESP_LOGW(TAG, "WARNING: %d NTP Servers defined, but "
@@ -249,7 +263,12 @@ int set_time(void)
             ESP_LOGI(TAG, "%s", thisServer);
             sntp_setservername(i, thisServer);
         }
+    #ifdef HAS_ESP_NETIF_SNTP
         ret = esp_netif_sntp_init(&config);
+    #else
+        ESP_LOGW(TAG,"Warning: Consider upgrading ESP-IDF to take advantage "
+                     "of updated SNTP libraries");
+    #endif
         if (ret == ESP_OK) {
             ESP_LOGV(TAG, "Successfully called esp_netif_sntp_init");
         }
@@ -277,14 +296,17 @@ int set_time(void)
 int set_time_wait_for_ntp(void)
 {
     int ret = 0;
+#ifdef HAS_ESP_NETIF_SNTP
     int ntp_retry = 0;
     const int ntp_retry_count = NTP_RETRY_COUNT;
 
     ret = esp_netif_sntp_start();
 
     ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+#endif /* HAS_ESP_NETIF_SNTP */
     esp_show_current_datetime();
 
+#ifdef HAS_ESP_NETIF_SNTP
     while (ret == ESP_ERR_TIMEOUT && (ntp_retry++ < ntp_retry_count)) {
         ret = esp_netif_sntp_sync_wait(1000 / portTICK_PERIOD_MS);
         ESP_LOGI(TAG, "Waiting for NTP to sync time... (%d/%d)",
@@ -292,6 +314,7 @@ int set_time_wait_for_ntp(void)
                        ntp_retry_count);
         esp_show_current_datetime();
     }
+#endif /* HAS_ESP_NETIF_SNTP */
 
 #ifdef TIME_ZONE
     setenv("TZ", TIME_ZONE, 1);

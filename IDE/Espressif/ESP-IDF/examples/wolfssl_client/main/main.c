@@ -37,14 +37,7 @@
 /* this project */
 #include "client-tls.h"
 #include "time_helper.h"
-
-#define USE_WIFI_EXAMPLE
-#ifdef USE_WIFI_EXAMPLE
-    #include "esp_netif.h"
-    #include "protocol_examples_common.h" /* see project CMakeLists.txt */
-#else
-    #include "wifi_connect.h"
-#endif
+#include "wifi_connect.h"
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -127,10 +120,10 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
 #ifdef ESP_TASK_MAIN_STACK
-     ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
+    ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
 #endif
 #ifdef TASK_EXTRA_STACK_SIZE
-     ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
+    ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
 #endif
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",

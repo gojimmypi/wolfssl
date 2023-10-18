@@ -37,13 +37,11 @@
 /* this project */
 #include "server-tls.h"
 #include "time_helper.h"
+#include "wifi_connect.h"
 
-#define USE_WIFI_EXAMPLE
 #ifdef USE_WIFI_EXAMPLE
     #include "esp_netif.h"
     #include "protocol_examples_common.h" /* see project CMakeLists.txt */
-#else
-    #include "wifi_connect.h"
 #endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
