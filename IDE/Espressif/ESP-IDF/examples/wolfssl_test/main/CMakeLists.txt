@@ -1,6 +1,3 @@
-# This tag is used to include this file in the ESP Component Registry:
-# __ESP_COMPONENT_SOURCE__
-
 #
 # wolfssl crypt test
 #

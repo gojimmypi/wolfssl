@@ -83,9 +83,9 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C3
     /* TODO there's no 384/512 HW, but allow fallback to SW */
-    #undef WOLFSSL_SHA384
-    #undef WOLFSSL_SHA512
-    #undef HAVE_ED25519 /* ED25519 requires SHA512 */
+    #define WOLFSSL_SHA384
+    #define WOLFSSL_SHA512
+    #define HAVE_ED25519 /* ED25519 requires SHA512 */
 #else
     #define WOLFSSL_SHA384
     #define WOLFSSL_SHA512
@@ -222,9 +222,6 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* #define NO_ESP32_CRYPT */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
-    #ifdef WOLFSSL_SHA384
-        #error "SHA384 not supported on ESP32-C3"
-    #endif
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
