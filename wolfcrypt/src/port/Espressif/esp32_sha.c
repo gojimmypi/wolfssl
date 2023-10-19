@@ -792,6 +792,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     /*  RISC-V Architecture: TODO */
     (void)max_unroll_count;
     (void)_active_digest_address;
+    ets_sha_disable();
 #else
     /* Xtensa Architecture */
 
@@ -1237,6 +1238,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
+    ets_sha_disable(); /* disable also resets active, ongoing hash */
+    ESP_LOGW(TAG, "disable");
 #else
     /* Disable AES hardware */
     // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like

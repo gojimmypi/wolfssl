@@ -714,6 +714,37 @@ static int InitSha256(wc_Sha256* sha256)
     }
 
     /*
+     * we'll set the digest at the last minute,
+     *  just before computing hash.
+     *
+     * Reminder that ESP32-C3 does NOT need initial digest.
+     *
+     *  see page 337 of C3 spec: 16.4.1.3 Setting the Initial Hash Value
+     *
+     * "Before hash task begins for any secure hash algorithms, the initial
+     * Hash value H(0) must be set based on different algorithms. However,
+     * the SHA accelerator uses the initial Hash values (constant C) stored
+     * in the hardware for hash tasks"
+     */
+    static int set_default_digest256(wc_Sha256* sha256)
+    {
+        if (sha256->ctx.isfirstblock == 1)
+        {
+            XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
+            if (sha256->ctx.mode == ESP32_SHA_SW) {
+                sha256->digest[0] = 0x6A09E667L;
+                sha256->digest[1] = 0xBB67AE85L;
+                sha256->digest[2] = 0x3C6EF372L;
+                sha256->digest[3] = 0xA54FF53AL;
+                sha256->digest[4] = 0x510E527FL;
+                sha256->digest[5] = 0x9B05688CL;
+                sha256->digest[6] = 0x1F83D9ABL;
+                sha256->digest[7] = 0x5BE0CD19L;
+            }
+        }
+        return 0;
+    }
+    /*
     ** soft SHA needs initialization digest, but HW does not.
     */
     static int InitSha256(wc_Sha256* sha256)
@@ -724,6 +755,10 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
         }
 
+        /* we may or may not need initial digest.
+         * always needed for SW-only.
+         *  See set_default_digest256() for HW/SW */
+    #if defined( NO_WOLFSSL_ESP32_CRYPT_HASH) /* TODO check name */
         sha256->digest[0] = 0x6A09E667L;
         sha256->digest[1] = 0xBB67AE85L;
         sha256->digest[2] = 0x3C6EF372L;
@@ -732,6 +767,7 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->digest[5] = 0x9B05688CL;
         sha256->digest[6] = 0x1F83D9ABL;
         sha256->digest[7] = 0x5BE0CD19L;
+    #endif /* !NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) */
 
         sha256->buffLen = 0;
         sha256->loLen   = 0;
@@ -1091,6 +1127,7 @@ static int InitSha256(wc_Sha256* sha256)
 //                    ESP_LOGV(TAG, "Sha256Update try hardware");
 //                    esp_sha_try_hw_lock(&sha256->ctx);
 //                }
+				set_default_digest256(sha256);
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
                     #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
                     {
@@ -1192,6 +1229,7 @@ static int InitSha256(wc_Sha256* sha256)
 //                    ESP_LOGV(TAG, "Sha256Update try hardware loop");
 //                    esp_sha_try_hw_lock(&sha256->ctx);
 //                }
+                set_default_digest256(sha256);
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
                     ESP_LOGI(TAG, "Sha256Update process software loop");
                     ret = XTRANSFORM(sha256, (const byte*)local32);
@@ -1307,6 +1345,7 @@ static int InitSha256(wc_Sha256* sha256)
 //            if (sha256->ctx.mode == ESP32_SHA_INIT) {
 //                esp_sha_try_hw_lock(&sha256->ctx);
 //            }
+			set_default_digest256(sha256);
             if (sha256->ctx.mode == ESP32_SHA_SW) {
                 ret = XTRANSFORM(sha256, (const byte*)local);
             }
@@ -1354,6 +1393,23 @@ static int InitSha256(wc_Sha256* sha256)
         XMEMCPY(&local[WC_SHA256_PAD_SIZE + sizeof(word32)], &sha256->loLen,
                 sizeof(word32));
 
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+        if (sha256->ctx.mode == ESP32_SHA_HW) {
+            /* TODO is this the proper way to reverse endianness for the 64bit Espressif value?
+             * see also ByteReverseWord64() */
+        #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+            ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
+        #endif
+            ByteReverseWords((word32*)&local[WC_SHA256_PAD_SIZE], /* out */
+                             (word32*)&local[WC_SHA256_PAD_SIZE], /* in  */
+                             2 * sizeof(word32) /* byte count to reverse */
+                            );
+        #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+            ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
+        #endif
+        } /* end if (sha256->ctx.mode == ESP32_SHA_HW) */
+        #endif
+
     #if defined(FREESCALE_MMCAU_SHA) || \
         (defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
                          (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2)))
@@ -1374,6 +1430,9 @@ static int InitSha256(wc_Sha256* sha256)
 //        if (sha256->ctx.mode == ESP32_SHA_INIT) {
 //            esp_sha_try_hw_lock(&sha256->ctx);
 //        }
+        /* depending on architecture and ctx.mode value
+         * we may or may not need default digest */
+        set_default_digest256(sha256);
         if (sha256->ctx.mode == ESP32_SHA_SW) {
             ret = XTRANSFORM(sha256, (const byte*)local);
         }
@@ -1631,7 +1690,7 @@ static int InitSha256(wc_Sha256* sha256)
     #endif
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
-        /* not to be confused with HAS512_224 */
+        /* not to be confused with SHAS512_224 */
         sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
@@ -1799,8 +1858,8 @@ static int InitSha256(wc_Sha256* sha256)
     #endif
         ForceZero(sha224, sizeof(*sha224));
     }
-#endif /* WOLFSSL_SHA224 */
-#endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
+#endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH)  */
+#endif /*  WOLFSSL_SHA224 */
 
 
 int wc_InitSha256(wc_Sha256* sha256)
@@ -1907,7 +1966,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
     }
 #endif
     ForceZero(sha256, sizeof(*sha256));
-}
+} /* wc_Sha256Free */
 
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
 #ifdef WOLFSSL_HASH_KEEP
