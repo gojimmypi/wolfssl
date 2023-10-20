@@ -800,7 +800,12 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         sha->buffLen += WC_SHA_BLOCK_SIZE - sha->buffLen;
 
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
+        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+            if (esp_sha_need_byte_reversal(&sha->ctx))
+        #endif
+        {
+            ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
+        }
     #endif
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
@@ -836,7 +841,12 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     XMEMSET(&local[sha->buffLen], 0, WC_SHA_PAD_SIZE - sha->buffLen);
 
 #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-    ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        if (esp_sha_need_byte_reversal(&sha->ctx))
+    #endif
+    {
+        ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
+    }
 #endif
 
     /* store lengths */
@@ -853,6 +863,17 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)],
                      &sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)],
                      2 * sizeof(word32));
+#endif
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* ESP32-C3 (HW only) requires only these bytes reversed */
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        if (esp_sha_need_byte_reversal(&sha->ctx))
+    #endif
+    {
+        ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE / sizeof(word32)],
+                         &sha->buffer[WC_SHA_PAD_SIZE / sizeof(word32)],
+                         2 * sizeof(word32));
+    }
 #endif
 
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
@@ -874,7 +895,12 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #endif
 
 #ifdef LITTLE_ENDIAN_ORDER
-    ByteReverseWords(sha->digest, sha->digest, WC_SHA_DIGEST_SIZE);
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        if (esp_sha_need_byte_reversal(&sha->ctx))
+    #endif
+    {
+        ByteReverseWords(sha->digest, sha->digest, WC_SHA_DIGEST_SIZE);
+    }
 #endif
 
     XMEMCPY(hash, (byte *)&sha->digest[0], WC_SHA_DIGEST_SIZE);

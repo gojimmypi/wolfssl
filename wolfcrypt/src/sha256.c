@@ -728,10 +728,18 @@ static int InitSha256(wc_Sha256* sha256)
      */
     static int set_default_digest256(wc_Sha256* sha256)
     {
-        if (sha256->ctx.isfirstblock == 1)
-        {
+        return 0;
+        int ret = 0;
+        if (sha256->ctx.mode == ESP32_SHA_SW) {
+            ret = 1;
+        }
+    /* when not ESP32-C3, we'll need digest for SW or HW */
+    #ifndef CONFIG_IDF_TARGET_ESP32C3
+        ret = 1;
+    #endif
+        if ((ret == 1) && (sha256->ctx.isfirstblock == 1)) {
             XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
-            if (sha256->ctx.mode == ESP32_SHA_SW) {
+           // if (sha256->ctx.mode == ESP32_SHA_SW) {
                 sha256->digest[0] = 0x6A09E667L;
                 sha256->digest[1] = 0xBB67AE85L;
                 sha256->digest[2] = 0x3C6EF372L;
@@ -740,9 +748,9 @@ static int InitSha256(wc_Sha256* sha256)
                 sha256->digest[5] = 0x9B05688CL;
                 sha256->digest[6] = 0x1F83D9ABL;
                 sha256->digest[7] = 0x5BE0CD19L;
-            }
+           // }
         }
-        return 0;
+        return ret;
     }
     /*
     ** soft SHA needs initialization digest, but HW does not.
@@ -758,7 +766,7 @@ static int InitSha256(wc_Sha256* sha256)
         /* we may or may not need initial digest.
          * always needed for SW-only.
          *  See set_default_digest256() for HW/SW */
-    #if defined( NO_WOLFSSL_ESP32_CRYPT_HASH) /* TODO check name */
+  //  #if defined( NO_WOLFSSL_ESP32_CRYPT_HASH) /* TODO check name */
         sha256->digest[0] = 0x6A09E667L;
         sha256->digest[1] = 0xBB67AE85L;
         sha256->digest[2] = 0x3C6EF372L;
@@ -767,7 +775,7 @@ static int InitSha256(wc_Sha256* sha256)
         sha256->digest[5] = 0x9B05688CL;
         sha256->digest[6] = 0x1F83D9ABL;
         sha256->digest[7] = 0x5BE0CD19L;
-    #endif /* !NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) */
+  //  #endif /* !NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH) */
 
         sha256->buffLen = 0;
         sha256->loLen   = 0;
@@ -1105,7 +1113,9 @@ static int InitSha256(wc_Sha256* sha256)
                     ESP_LOGV(TAG, "Sha256Update try hardware");
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
+                set_default_digest256(sha256);
             #endif
+
 
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
                 #if defined(WOLFSSL_X86_64_BUILD) && \
@@ -1127,7 +1137,7 @@ static int InitSha256(wc_Sha256* sha256)
 //                    ESP_LOGV(TAG, "Sha256Update try hardware");
 //                    esp_sha_try_hw_lock(&sha256->ctx);
 //                }
-				set_default_digest256(sha256);
+
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
                     #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
                     {
@@ -1229,9 +1239,8 @@ static int InitSha256(wc_Sha256* sha256)
 //                    ESP_LOGV(TAG, "Sha256Update try hardware loop");
 //                    esp_sha_try_hw_lock(&sha256->ctx);
 //                }
-                set_default_digest256(sha256);
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGI(TAG, "Sha256Update process software loop");
+                    ESP_LOGV(TAG, "Sha256Update process software loop");
                     ret = XTRANSFORM(sha256, (const byte*)local32);
                 }
                 else {
@@ -1345,7 +1354,6 @@ static int InitSha256(wc_Sha256* sha256)
 //            if (sha256->ctx.mode == ESP32_SHA_INIT) {
 //                esp_sha_try_hw_lock(&sha256->ctx);
 //            }
-			set_default_digest256(sha256);
             if (sha256->ctx.mode == ESP32_SHA_SW) {
                 ret = XTRANSFORM(sha256, (const byte*)local);
             }
