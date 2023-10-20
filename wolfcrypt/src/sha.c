@@ -866,7 +866,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #endif
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     /* ESP32-C3 (HW only) requires only these bytes reversed */
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
     {
