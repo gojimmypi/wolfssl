@@ -126,6 +126,34 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
+/*
+** The wolfCrypt functions for LITTLE_ENDIAN_ORDER typically
+** reverse the byte order. Except when the hardware doesn't expect it.
+*/
+int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
+{
+    int ret = 1;
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+    if (ctx == NULL) {
+        ESP_LOGE(TAG, " ctx is null");
+        /* return true for bad params */
+    }
+    else {
+        if (ctx->mode == ESP32_SHA_HW) {
+            ESP_LOGV(TAG, " No reversal, ESP32_SHA_HW");
+            ret = 0;
+        }
+        else {
+            /* return true; only HW C3 skips reversal at this time. */
+            ESP_LOGV(TAG, " Need byte reversal, %d", ctx->mode);
+        }
+    }
+#else
+    /* other platforms return true */
+#endif
+    return ret;
+}
+
 /* esp_sha_init
 **
 **   ctx: any wolfSSL ctx from any hash algo
@@ -1400,7 +1428,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     /* end ESP32S3 */
 
-    #elif defined(CONFIG_IDF_TARGET_ESP32S3) /* not ESP32S3 */
+    #elif defined(CONFIG_IDF_TARGET_ESP32)
     if (sha->isfirstblock) {
         /* start registers for first message block
          * we don't make any relational memory position assumptions.
@@ -1476,7 +1504,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     }
     /* end standard ESP32 */
     #else
-        ESP_LOGE(TAG, "Unsupported hardware")
+        ESP_LOGE(TAG, "Unsupported hardware");
     #endif
 
         #if defined(DEBUG_WOLFSSL)

@@ -302,3 +302,4 @@
 // #define WOLFSSL_SM2
 // #define WOLFSSL_SM3
 // #define WOLFSSL_SM4
+#define WOLFSSL_ESP32_HW_LOCK_DEBUG

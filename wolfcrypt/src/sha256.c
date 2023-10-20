@@ -700,18 +700,18 @@ static int InitSha256(wc_Sha256* sha256)
     /* HW may fail since there's only one, so we still need SW */
     #define NEED_SOFT_SHA256
 
-    static int NeedByteReversal(WC_ESP32SHA* ctx) {
-        if (ctx == NULL) {
-            ESP_LOGE(TAG, " ctx is null");
-            return 1;
-        }
-        if (ctx->mode == ESP32_SHA_HW) {
-            ESP_LOGW(TAG, " No reversal, ESP32_SHA_HW");
-            return 0;
-        }
-        ESP_LOGW(TAG, " Need byte reversal, %d", ctx->mode);
-        return 1;
-    }
+//    static int NeedByteReversal(WC_ESP32SHA* ctx) {
+//        if (ctx == NULL) {
+//            ESP_LOGE(TAG, " ctx is null");
+//            return 1;
+//        }
+//        if (ctx->mode == ESP32_SHA_HW) {
+//            ESP_LOGW(TAG, " No reversal, ESP32_SHA_HW");
+//            return 0;
+//        }
+//        ESP_LOGW(TAG, " Need byte reversal, %d", ctx->mode);
+//        return 1;
+//    }
 
     /*
      * we'll set the digest at the last minute,
@@ -1114,7 +1114,7 @@ static int InitSha256(wc_Sha256* sha256)
                 if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
                 #endif
                 #if defined(CONFIG_IDF_TARGET_ESP32C3)
-                    if (NeedByteReversal(&sha256->ctx))
+                    if (esp_sha_need_byte_reversal(&sha256->ctx))
                 #endif
                 {
                     ByteReverseWords(sha256->buffer, sha256->buffer,
@@ -1212,7 +1212,7 @@ static int InitSha256(wc_Sha256* sha256)
 
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
                 #if defined(CONFIG_IDF_TARGET_ESP32C3)
-                    if (NeedByteReversal(&sha256->ctx))
+                    if (esp_sha_need_byte_reversal(&sha256->ctx))
                 #endif
                 #if defined(WOLFSSL_X86_64_BUILD) && \
                           defined(USE_INTEL_SPEEDUP) && \
@@ -1329,7 +1329,7 @@ static int InitSha256(wc_Sha256* sha256)
 
         #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
             #if defined(CONFIG_IDF_TARGET_ESP32C3)
-                if (NeedByteReversal(&sha256->ctx))
+                if (esp_sha_need_byte_reversal(&sha256->ctx))
             #endif
             #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
                           (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
@@ -1377,7 +1377,7 @@ static int InitSha256(wc_Sha256* sha256)
         /* store lengths */
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
         #if defined(CONFIG_IDF_TARGET_ESP32C3)
-            if (NeedByteReversal(&sha256->ctx))
+            if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
         #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
                           (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
@@ -1460,7 +1460,7 @@ static int InitSha256(wc_Sha256* sha256)
 
     #ifdef LITTLE_ENDIAN_ORDER
         #if defined(CONFIG_IDF_TARGET_ESP32C3)
-            if (NeedByteReversal(&sha256->ctx))
+            if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
             {
                 ByteReverseWords((word32*)digest,
@@ -1511,7 +1511,7 @@ static int InitSha256(wc_Sha256* sha256)
 
     #if defined(LITTLE_ENDIAN_ORDER)
         #if defined(CONFIG_IDF_TARGET_ESP32C3)
-            if (NeedByteReversal(&sha256->ctx))
+            if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
             {
                 ByteReverseWords(sha256->digest, sha256->digest,
@@ -1801,7 +1801,7 @@ static int InitSha256(wc_Sha256* sha256)
 
     #if defined(LITTLE_ENDIAN_ORDER)
         #if defined(CONFIG_IDF_TARGET_ESP32C3)
-            if (NeedByteReversal(&sha224->ctx))
+            if (esp_sha_need_byte_reversal(&sha224->ctx))
         #endif
         {
             ByteReverseWords(sha224->digest, sha224->digest, WC_SHA224_DIGEST_SIZE);

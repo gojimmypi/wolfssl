@@ -417,6 +417,7 @@ extern "C"
         byte isfirstblock : 1; /* 1 bit only for true / false */
     } WC_ESP32SHA;
 
+    WOLFSSL_LOCAL int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type);
     WOLFSSL_LOCAL int esp_sha_init_ctx(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
