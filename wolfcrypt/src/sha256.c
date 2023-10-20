@@ -1123,7 +1123,7 @@ static int InitSha256(wc_Sha256* sha256)
                           (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
                 if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
                 #endif
-                #if defined(CONFIG_IDF_TARGET_ESP32C3)
+                #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
                     if (esp_sha_need_byte_reversal(&sha256->ctx))
                 #endif
                 {
@@ -1221,7 +1221,7 @@ static int InitSha256(wc_Sha256* sha256)
             #endif
 
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-                #if defined(CONFIG_IDF_TARGET_ESP32C3)
+                #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
                     if (esp_sha_need_byte_reversal(&sha256->ctx))
                 #endif
                 #if defined(WOLFSSL_X86_64_BUILD) && \
@@ -1337,7 +1337,7 @@ static int InitSha256(wc_Sha256* sha256)
         #endif
 
         #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-            #if defined(CONFIG_IDF_TARGET_ESP32C3)
+            #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
                 if (esp_sha_need_byte_reversal(&sha256->ctx))
             #endif
             #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
@@ -1384,7 +1384,7 @@ static int InitSha256(wc_Sha256* sha256)
 
         /* store lengths */
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
         #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
@@ -1401,7 +1401,7 @@ static int InitSha256(wc_Sha256* sha256)
         XMEMCPY(&local[WC_SHA256_PAD_SIZE + sizeof(word32)], &sha256->loLen,
                 sizeof(word32));
 
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (sha256->ctx.mode == ESP32_SHA_HW) {
             /* TODO is this the proper way to reverse endianness for the 64bit Espressif value?
              * see also ByteReverseWord64() */
@@ -1467,7 +1467,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #ifdef LITTLE_ENDIAN_ORDER
-        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
             {
@@ -1518,7 +1518,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha256->ctx))
         #endif
             {
@@ -1808,7 +1808,7 @@ static int InitSha256(wc_Sha256* sha256)
             return ret;
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha224->ctx))
         #endif
         {
