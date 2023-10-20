@@ -1267,7 +1267,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
     ets_sha_disable(); /* disable also resets active, ongoing hash */
-    ESP_LOGW(TAG, "disable");
+    ESP_LOGW(TAG, "ets_sha_disable in esp_sha_hw_unlock()");
 #else
     /* Disable AES hardware */
     // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
@@ -1557,7 +1557,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     */
     if (&data != _active_digest_address)
     {
-        ESP_LOGI(TAG, "TODO Moving alternate ctx->for_digest");
+        ESP_LOGV(TAG, "TODO Moving alternate ctx->for_digest");
         /* move last known digest into HW reg during interleave */
         // sha_ll_write_digest(ctx->sha_type, ctx->for_digest, WC_SHA256_BLOCK_SIZE);
         _active_digest_address = &data;
@@ -1642,10 +1642,10 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (ctx->sha_type == SHA_INVALID) {
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    if (ctx->sha_type == SHA_TYPE_MAX) {
+    if (ctx->sha_type >= SHA_TYPE_MAX) {
 #endif // CONFIG_IDF_TARGET_ESP32)
         ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
-        ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
+        ESP_LOGE(TAG, "error. sha_type %d is invalid.", ctx->sha_type);
         return -1;
     }
 

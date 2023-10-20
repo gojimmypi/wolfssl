@@ -632,10 +632,6 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
         len          -= blocksLen;
 
         if (sha->buffLen == WC_SHA_BLOCK_SIZE) {
-        #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-            ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
-        #endif
-
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
             if (sha->ctx.mode == ESP32_SHA_INIT) {
                 #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
@@ -645,6 +641,18 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
                 #endif
                 esp_sha_try_hw_lock(&sha->ctx);
             }
+        #endif
+
+        #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
+            #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+                if (esp_sha_need_byte_reversal(&sha->ctx))
+            #endif
+            {
+                ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
+            }
+        #endif
+
+        #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
             if (sha->ctx.mode == ESP32_SHA_SW) {
                 #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
                 {
@@ -705,14 +713,22 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
         data += WC_SHA_BLOCK_SIZE;
         len  -= WC_SHA_BLOCK_SIZE;
 
-    #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        ByteReverseWords(local32, local32, WC_SHA_BLOCK_SIZE);
-    #endif
-
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
         if (sha->ctx.mode == ESP32_SHA_INIT){
             esp_sha_try_hw_lock(&sha->ctx);
         }
+    #endif
+
+    #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+            if (esp_sha_need_byte_reversal(&sha->ctx))
+        #endif
+        {
+            ByteReverseWords(local32, local32, WC_SHA_BLOCK_SIZE);
+        }
+    #endif
+
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
         if (sha->ctx.mode == ESP32_SHA_SW){
             ret = XTRANSFORM(sha, (const byte*)local32);
         }
@@ -799,6 +815,13 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         XMEMSET(&local[sha->buffLen], 0, WC_SHA_BLOCK_SIZE - sha->buffLen);
         sha->buffLen += WC_SHA_BLOCK_SIZE - sha->buffLen;
 
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
+        /* For a fresh sha.ctx, try to use hardware acceleration */
+        if (sha->ctx.mode == ESP32_SHA_INIT) {
+            esp_sha_try_hw_lock(&sha->ctx);
+        }
+    #endif
+
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
         #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha->ctx))
@@ -809,11 +832,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     #endif
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
-        /* For a fresh sha.ctx, try to use hardware acceleration */
-        if (sha->ctx.mode == ESP32_SHA_INIT) {
-            esp_sha_try_hw_lock(&sha->ctx);
-        }
-
         /* if HW was busy, we may need to fall back to SW. */
         if (sha->ctx.mode == ESP32_SHA_SW) {
             ret = XTRANSFORM(sha, (const byte*)local);
@@ -821,9 +839,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         else {
             ret = esp_sha_process(sha, (const byte*)local);
         }
-    #elif defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW)
-        /* The ESP32C3 is different; SW crypto here. Not yet implemented  */
-        ret = XTRANSFORM(sha, (const byte*)local);
     #else
         /*
         ** The #if defined(WOLFSSL_USE_ESP32C3_CRYPT_HASH_HW) also falls
@@ -836,7 +851,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         }
 
         sha->buffLen = 0;
-    } /*  (sha->buffLen > WC_SHA_PAD_SIZE) */
+    } /* (sha->buffLen > WC_SHA_PAD_SIZE) */
 
     XMEMSET(&local[sha->buffLen], 0, WC_SHA_PAD_SIZE - sha->buffLen);
 
@@ -844,7 +859,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
-    {
+    { /* reminder local points to sha->buffer  */
         ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
     }
 #endif
@@ -864,22 +879,31 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
                      &sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)],
                      2 * sizeof(word32));
 #endif
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* ESP32-C3 (HW only) requires only these bytes reversed */
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
-        if (esp_sha_need_byte_reversal(&sha->ctx))
-    #endif
-    {
-        ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE / sizeof(word32)],
-                         &sha->buffer[WC_SHA_PAD_SIZE / sizeof(word32)],
-                         2 * sizeof(word32));
-    }
-#endif
 
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
     if (sha->ctx.mode == ESP32_SHA_INIT) {
         esp_sha_try_hw_lock(&sha->ctx);
     }
+#endif
+
+#if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+if (sha->ctx.mode == ESP32_SHA_HW) {
+    /* TODO is this the proper way to reverse endianness for the 64bit Espressif value?
+        * see also ByteReverseWord64() */
+#if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+    ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
+#endif
+    ByteReverseWords((word32*)&local[WC_SHA256_PAD_SIZE], /* out */
+                     (word32*)&local[WC_SHA256_PAD_SIZE], /* in  */
+                     2 * sizeof(word32) /* byte count to reverse */
+                    );
+#if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+    ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
+#endif
+} /* end if (sha256->ctx.mode == ESP32_SHA_HW) */
+#endif
+
+#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
     if (sha->ctx.mode == ESP32_SHA_SW) {
         ret = XTRANSFORM(sha, (const byte*)local);
     }
