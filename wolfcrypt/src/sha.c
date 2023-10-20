@@ -571,7 +571,7 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
                                                             sha->heap, devId);
 #else
     (void)devId;
-# endif /* WOLFSSL_ASYNC_CRYPT */
+#endif /* WOLFSSL_ASYNC_CRYPT */
 #ifdef WOLFSSL_IMXRT1170_CAAM
    ret = wc_CAAM_HashInit(&sha->hndl, &sha->ctx, WC_HASH_TYPE_SHA);
 #endif
@@ -800,7 +800,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         sha->buffLen += WC_SHA_BLOCK_SIZE - sha->buffLen;
 
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
             if (esp_sha_need_byte_reversal(&sha->ctx))
         #endif
         {
@@ -841,7 +841,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     XMEMSET(&local[sha->buffLen], 0, WC_SHA_PAD_SIZE - sha->buffLen);
 
 #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
     {
@@ -866,7 +866,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #endif
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     /* ESP32-C3 (HW only) requires only these bytes reversed */
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
     {
@@ -895,7 +895,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #endif
 
 #ifdef LITTLE_ENDIAN_ORDER
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
     {
