@@ -728,7 +728,7 @@ static int InitSha256(wc_Sha256* sha256)
      */
     static int set_default_digest256(wc_Sha256* sha256)
     {
-        return 0;
+        return 0; /* TODO */
         int ret = 0;
         if (sha256->ctx.mode == ESP32_SHA_SW) {
             ret = 1;
@@ -1371,7 +1371,7 @@ static int InitSha256(wc_Sha256* sha256)
         XMEMSET(&local[sha256->buffLen], 0,
             WC_SHA256_PAD_SIZE - sha256->buffLen);
 
-        /* put lengths in bits */
+        /* put 64 bit length in separate 32 bit parts */
         sha256->hiLen = (sha256->loLen >> (8 * sizeof(sha256->loLen) - 3)) +
                                                          (sha256->hiLen << 3);
         sha256->loLen = sha256->loLen << 3;
@@ -1396,12 +1396,12 @@ static int InitSha256(wc_Sha256* sha256)
                 WC_SHA256_BLOCK_SIZE);
         }
     #endif
-        /* ! length ordering dependent on digest endian type ! */
+        /* ! 64-bit length ordering dependent on digest endian type ! */
         XMEMCPY(&local[WC_SHA256_PAD_SIZE], &sha256->hiLen, sizeof(word32));
         XMEMCPY(&local[WC_SHA256_PAD_SIZE + sizeof(word32)], &sha256->loLen,
                 sizeof(word32));
 
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (sha256->ctx.mode == ESP32_SHA_HW) {
             /* TODO is this the proper way to reverse endianness for the 64bit Espressif value?
              * see also ByteReverseWord64() */
@@ -1411,12 +1411,12 @@ static int InitSha256(wc_Sha256* sha256)
             ByteReverseWords((word32*)&local[WC_SHA256_PAD_SIZE], /* out */
                              (word32*)&local[WC_SHA256_PAD_SIZE], /* in  */
                              2 * sizeof(word32) /* byte count to reverse */
-                            );
+                            ); /* TODO is this a 32 or 64 bit reversal? */
         #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
             ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
         #endif
         } /* end if (sha256->ctx.mode == ESP32_SHA_HW) */
-        #endif
+    #endif
 
     #if defined(FREESCALE_MMCAU_SHA) || \
         (defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \

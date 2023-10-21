@@ -132,7 +132,7 @@ static const char* TAG = "wolf_hw_sha";
 */
 int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 {
-    int ret = 1;
+    int ret = 1; /* assume we'll need reversal, look for exceptions */
 #ifdef CONFIG_IDF_TARGET_ESP32C3
     if (ctx == NULL) {
         ESP_LOGE(TAG, " ctx is null");
@@ -146,10 +146,14 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
         else {
             /* return true; only HW C3 skips reversal at this time. */
             ESP_LOGV(TAG, " Need byte reversal, %d", ctx->mode);
+            if (ctx->mode == ESP32_SHA_INIT) {
+                ESP_LOGW(TAG, "esp_sha_need_byte_reversal during init?");
+                ESP_LOGW(TAG, "forgot to try HW lock first?");
+            }
         }
     }
 #else
-    /* other platforms return true */
+    /* other platforms always return true */
 #endif
     return ret;
 }
@@ -222,10 +226,12 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
+    #ifndef NO_SHA
         case WC_HASH_TYPE_SHA:
             ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
             break;
+    #endif
 
         case WC_HASH_TYPE_SHA224:
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
@@ -239,7 +245,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 
         default:
             ctx->mode = ESP32_SHA_SW;
-            ret = esp_sha_init_ctx(ctx);
+            ret = -1;
             ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
             break;
     }
@@ -253,6 +259,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     return ret;
 }
 
+#ifndef NO_SHAx /* TODO cannot currently turn off SHA */
 /* we'll call a separate init as there's only 1 HW acceleration */
 int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
@@ -491,6 +498,8 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 
     return ret;
 } /* esp_sha_ctx_copy */
+#endif
+
 
 /*
 ** internal sha224 ctx copy (no ESP HW)
@@ -1639,11 +1648,14 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     /* sanity check */
     /* TODO S3 */
-#if defined(CONFIG_IDF_TARGET_ESP32)
-    if (ctx->sha_type == SHA_INVALID) {
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    if (ctx->sha_type >= SHA_INVALID) {
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     if (ctx->sha_type >= SHA_TYPE_MAX) {
-#endif // CONFIG_IDF_TARGET_ESP32)
+#else
+    ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");
+    {
+#endif /* conditional sanity check on she_type */
         ctx->mode = ESP32_SHA_FAIL_NEED_UNROLL;
         ESP_LOGE(TAG, "error. sha_type %d is invalid.", ctx->sha_type);
         return -1;
