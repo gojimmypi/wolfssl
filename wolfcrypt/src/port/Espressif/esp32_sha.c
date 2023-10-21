@@ -245,7 +245,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 
         default:
             ctx->mode = ESP32_SHA_SW;
-            ret = -1;
+        ret = -1; // esp_sha_init_ctx(ctx);
             ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
             break;
     }
@@ -1649,9 +1649,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     /* sanity check */
     /* TODO S3 */
 #if defined(CONFIG_IDF_TARGET_ESP32)
-    if (ctx->sha_type >= SHA_INVALID) {
+    if (ctx->sha_type == SHA_INVALID) {
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    if (ctx->sha_type >= SHA_TYPE_MAX) {
+    if (ctx->sha_type == SHA_TYPE_MAX) {
 #else
     ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");
     {
