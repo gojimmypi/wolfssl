@@ -145,7 +145,7 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
         }
         else {
             /* return true; only HW C3 skips reversal at this time. */
-            ESP_LOGV(TAG, " Need byte reversal, %d", ctx->mode);
+            ESP_LOGE(TAG, " Need byte reversal, %d", ctx->mode);
             if (ctx->mode == ESP32_SHA_INIT) {
                 ESP_LOGW(TAG, "esp_sha_need_byte_reversal during init?");
                 ESP_LOGW(TAG, "forgot to try HW lock first?");
@@ -1648,9 +1648,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     /* sanity check */
     /* TODO S3 */
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32)
     if (ctx->sha_type >= SHA_INVALID) {
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (ctx->sha_type >= SHA_TYPE_MAX) {
 #else
     ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");

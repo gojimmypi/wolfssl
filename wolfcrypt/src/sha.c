@@ -535,9 +535,9 @@ static WC_INLINE void AddLength(wc_Sha* sha, word32 len)
 
 
 /*
-** wolfCrypt InitSha256 external wrapper.
+** wolfCrypt InitSha external wrapper.
 **
-** we'll assume this is ALWAYS for a new, uninitialized sha256
+** we'll assume this is ALWAYS for a new, uninitialized sha
 */
 int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
 {
@@ -761,7 +761,12 @@ int wc_ShaFinalRaw(wc_Sha* sha, byte* hash)
     }
 
 #ifdef LITTLE_ENDIAN_ORDER
-    ByteReverseWords((word32*)digest, (word32*)sha->digest, WC_SHA_DIGEST_SIZE);
+    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+        if (esp_sha_need_byte_reversal(&sha->ctx))
+    #endif
+    {
+        ByteReverseWords((word32*)digest, (word32*)sha->digest, WC_SHA_DIGEST_SIZE);
+    }
     XMEMCPY(hash, (byte *)&digest[0], WC_SHA_DIGEST_SIZE);
 #else
     XMEMCPY(hash, sha->digest, WC_SHA_DIGEST_SIZE);
@@ -855,11 +860,18 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 
     XMEMSET(&local[sha->buffLen], 0, WC_SHA_PAD_SIZE - sha->buffLen);
 
+#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
+    if (sha->ctx.mode == ESP32_SHA_INIT) {
+        esp_sha_try_hw_lock(&sha->ctx);
+    }
+#endif
+
 #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
     #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
-    { /* reminder local points to sha->buffer  */
+    { /* reminder local also points to sha->buffer  */
+      //  ESP_LOGW(TAG, "SHA REVERSE!");
         ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
     }
 #endif
@@ -880,11 +892,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
                      2 * sizeof(word32));
 #endif
 
-#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
-    if (sha->ctx.mode == ESP32_SHA_INIT) {
-        esp_sha_try_hw_lock(&sha->ctx);
-    }
-#endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 if (sha->ctx.mode == ESP32_SHA_HW) {
@@ -893,14 +900,14 @@ if (sha->ctx.mode == ESP32_SHA_HW) {
 #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
     ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
 #endif
-    ByteReverseWords((word32*)&local[WC_SHA256_PAD_SIZE], /* out */
-                     (word32*)&local[WC_SHA256_PAD_SIZE], /* in  */
+    ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* out */
+                     &sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* in  */
                      2 * sizeof(word32) /* byte count to reverse */
                     );
 #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
     ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
 #endif
-} /* end if (sha256->ctx.mode == ESP32_SHA_HW) */
+} /* end if (sha->ctx.mode == ESP32_SHA_HW) */
 #endif
 
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)

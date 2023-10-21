@@ -4766,15 +4766,15 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha_test(void)
 
     for (i = 0; i < times; ++i) {
         ESP_LOGI("test", " iteration %d\n\n", i);
-        ESP_LOG_BUFFER_HEXDUMP("hash n/i", hash, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
-        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("hash n/i", hash, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
 
         ret = wc_ShaUpdate(&sha, (byte*)test_sha[i].input,
             (word32)test_sha[i].inLen);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         ret = wc_ShaGetHash(&sha, hashcopy);
-        ESP_LOG_BUFFER_HEXDUMP("hashcopy", hashcopy, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("hashcopy", hashcopy, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
 
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
@@ -4787,8 +4787,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha_test(void)
         wc_ShaFree(&shaCopy);
 
         ESP_LOGI("test", "\nhash, test_sha[i].output");
-        ESP_LOG_BUFFER_HEXDUMP("hash    ", hash, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
-        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("hash    ", hash, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA_DIGEST_SIZE) != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);

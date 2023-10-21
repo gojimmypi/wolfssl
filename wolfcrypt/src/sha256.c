@@ -1408,8 +1408,8 @@ static int InitSha256(wc_Sha256* sha256)
         #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
             ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
         #endif
-            ByteReverseWords((word32*)&local[WC_SHA256_PAD_SIZE], /* out */
-                             (word32*)&local[WC_SHA256_PAD_SIZE], /* in  */
+            ByteReverseWords(&sha256->buffer[WC_SHA256_PAD_SIZE / sizeof(word32)], /* out */
+                             &sha256->buffer[WC_SHA256_PAD_SIZE / sizeof(word32)], /* in  */
                              2 * sizeof(word32) /* byte count to reverse */
                             ); /* TODO is this a 32 or 64 bit reversal? */
         #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
