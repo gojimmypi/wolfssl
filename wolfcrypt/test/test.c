@@ -5129,8 +5129,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
     byte      hashcopy[WC_SHA256_DIGEST_SIZE];
     wc_test_ret_t ret = 0;
 
-    testVector a, b, c;
-    testVector test_sha[3];
+    testVector a, b, c, d;
+    testVector test_sha[4];
     int times = sizeof(test_sha) / sizeof(struct testVector), i;
 
     a.input  = "";
@@ -5154,9 +5154,18 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
     c.inLen  = XSTRLEN(c.input);
     c.outLen = WC_SHA256_DIGEST_SIZE;
 
+    d.input  = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+               "aaaaaa"; /* this is BLOCKSIZE length */
+    d.output = "\xFF\xE0\x54\xFE\x7A\xE0\xCB\x6D\xC6\x5C\x3A\xF9\xB6\x1D\x52"
+               "\x09\xF4\x39\x85\x1D\xB4\x3D\x0B\xA5\x99\x73\x37\xDF\x15\x46"
+               "\x68\xEB";
+    d.inLen  = XSTRLEN(d.input);
+    d.outLen = WC_SHA256_DIGEST_SIZE;
+
     test_sha[0] = a;
     test_sha[1] = b;
     test_sha[2] = c;
+    test_sha[3] = d;
 
     ret = wc_InitSha256_ex(&sha, HEAP_HINT, devId);
     if (ret != 0)
