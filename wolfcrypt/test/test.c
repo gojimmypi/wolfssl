@@ -1220,6 +1220,13 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("SHA      test passed!\n");
 #endif
 
+#ifdef HAVE_ED25519
+    if ( (ret = ed25519_test()) != 0)
+        TEST_FAIL("ED25519  test failed!\n", ret);
+    else
+        TEST_PASS("ED25519  test passed!\n");
+#endif
+
 #ifdef WOLFSSL_SHA224
     if ( (ret = sha224_test()) != 0)
         TEST_FAIL("SHA-224  test failed!\n", ret);
@@ -4787,8 +4794,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha_test(void)
         wc_ShaFree(&shaCopy);
 
         ESP_LOGI("test", "\nhash, test_sha[i].output");
-        ESP_LOG_BUFFER_HEXDUMP("hash    ", hash, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
-        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("hash   ", hash,               WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("h copy ", hashcopy,           WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("output ", test_sha[i].output, WC_SHA_DIGEST_SIZE, ESP_LOG_INFO);
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA_DIGEST_SIZE) != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
