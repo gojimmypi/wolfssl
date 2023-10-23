@@ -513,6 +513,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 /*
 ** internal sha224 ctx copy (no ESP HW)
 */
+#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224x
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware on ESP32 */
@@ -529,7 +530,9 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     dst->ctx.mode = ESP32_SHA_SW;
     return 0;
 } /* esp_sha224_ctx_copy */
+#endif
 
+#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
 /*
 ** internal sha256 ctx copy for ESP HW
 */
@@ -581,6 +584,7 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 
     return ret;
 } /* esp_sha256_ctx_copy */
+#endif
 
 #if defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512)
 /*
@@ -1369,6 +1373,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 * Assumes register already loaded.
 * Returns a negative value error code upon failure.
 */
+#ifndef CONFIG_IDF_TARGET_ESP32C3
+/* the ESP32-C3 HAL has built-in process start, everything else uses: */
 static int esp_sha_start_process(WC_ESP32SHA* sha)
 {
     int ret = 0;
@@ -1544,6 +1550,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
    return ret;
 }
+#endif /* esp_sha_start_process !CONFIG_IDF_TARGET_ESP32C3  */
 
 /*
 ** process message block
@@ -1557,8 +1564,10 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
 #ifdef CONFIG_IDF_TARGET_ESP32S3
     uint32_t* MessageSource;
     uint32_t* AcceleratorMessage;
-#else
+#elif CONFIG_IDF_TARGET_ESP32
     int i;
+#else
+    /* not used */
 #endif
     ESP_LOGV(TAG, "  enter esp_process_block");
     if (word32_to_save > 0x31) {
@@ -1848,7 +1857,7 @@ int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
 #endif /* NO_SHA */
 
 
-#ifndef NO_SHA256
+#if !defined(NO_SHA256) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
 /*
 ** sha256 process
 **
@@ -1889,12 +1898,13 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 
     ESP_LOGV(TAG, "enter esp_sha256_digest_process");
 
+#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
     if (blockprocess) {
         wc_esp_process_block(&sha->ctx, sha->buffer, WC_SHA256_BLOCK_SIZE);
     }
 
     wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
-
+#endif
     ESP_LOGV(TAG, "leave esp_sha256_digest_process");
     return ret;
 } /* esp_sha256_digest_process */

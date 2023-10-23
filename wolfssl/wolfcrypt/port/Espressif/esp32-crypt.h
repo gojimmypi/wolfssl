@@ -195,6 +195,8 @@
 #include <freertos/FreeRTOS.h>
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
 
@@ -215,6 +217,8 @@
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
     #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
@@ -224,6 +228,8 @@
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
     #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
@@ -233,7 +239,11 @@
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* no includes for ESP32C3 at this time (no HW implemented yet) */
+    /* TODO The ESP32-C3 *does* have SHA-224 HW */
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+
+    /* no includes for ESP32C3 at this time */
 #else
     /* not yet supported. no HW */
 #endif

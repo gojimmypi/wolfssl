@@ -86,7 +86,7 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C3
     /* TODO there's no 384/512 HW, but allow fallback to SW */
- //   #define WOLFSSL_SHA384
+    #define WOLFSSL_SHA384
     #define WOLFSSL_SHA512
     #define HAVE_ED25519 /* ED25519 requires SHA512 */
 #else
@@ -151,7 +151,7 @@
 /* #define HASH_SIZE_LIMIT */ /* for test.c */
 
 #define USE_FAST_MATH
-#define SP_MATH
+// #define SP_MATH
 
 #define WOLFSSL_SMALL_STACK
 
@@ -223,13 +223,13 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    #define ESP_DISABLE_HW_TASK_LOCK
-    /* #define NO_ESP32_CRYPT                 */
-    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    // #define ESP_DISABLE_HW_TASK_LOCK
+//    #define NO_ESP32_CRYPT
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no HW on C3*/
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3*/
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3*/
 
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
@@ -252,10 +252,10 @@
 
 /* debug options */
 //#define ESP_VERIFY_MEMBLOCK
-//#define WOLFSSL_HW_METRICS
+#define WOLFSSL_HW_METRICS
 //#define DEBUG_WOLFSSL_VERBOSE
 //#define DEBUG_WOLFSSL
-//#define WOLFSSL_ESP32_CRYPT_DEBUG
+#define WOLFSSL_ESP32_CRYPT_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
