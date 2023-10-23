@@ -225,7 +225,7 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     // #define ESP_DISABLE_HW_TASK_LOCK
 //    #define NO_ESP32_CRYPT
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH /* to disable all SHA HW */
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3*/
