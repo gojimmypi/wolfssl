@@ -87,6 +87,13 @@ static const char* TAG = "wolf_hw_sha";
     static wolfSSL_Mutex sha_mutex = NULL;
 #endif
 
+#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+    #ifndef WOLFSSL_TEST_STRAY
+        /* unless turned on, we won't be testing for strays */
+        #define WOLFSSL_TEST_STRAY 0
+    #endif
+#endif
+
 #if defined(ESP_MONITOR_HW_TASK_LOCK)
     static void * mutex_ctx_owner = 0;
     static TaskHandle_t mutex_ctx_task = 0;
@@ -543,7 +550,7 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         /* Get a copy of the HW digest, but don't process it. */
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
         {
-            ESP_LOGV(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
+            ESP_LOGI(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
         }
         #endif
         ret = esp_sha256_digest_process(dst, 0);
