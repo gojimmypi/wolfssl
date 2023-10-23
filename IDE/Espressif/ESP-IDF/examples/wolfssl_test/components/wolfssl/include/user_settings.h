@@ -86,7 +86,7 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C3
     /* TODO there's no 384/512 HW, but allow fallback to SW */
-    #define WOLFSSL_SHA384
+ //   #define WOLFSSL_SHA384
     #define WOLFSSL_SHA512
     #define HAVE_ED25519 /* ED25519 requires SHA512 */
 #else
@@ -226,6 +226,10 @@
     #define ESP_DISABLE_HW_TASK_LOCK
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no HW on C3*/
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
 
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
