@@ -171,6 +171,8 @@ static int esp_mp_hw_wait_clean(void)
         /*  wait. expected delay 1 to 2 uS  */
         ESP_EM__MP_HW_WAIT_CLEAN
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     ESP_EM__PRE_MP_HW_WAIT_CLEAN
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_QUERY_CLEAN_REG) != 1)
@@ -288,6 +290,8 @@ static int esp_mp_hw_lock()
         DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
         ESP_EM__POST_SP_MP_HW_LOCK
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Activate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
@@ -322,6 +326,8 @@ static int esp_mp_hw_unlock( void )
 
         /* Disable RSA hardware */
         periph_module_disable(PERIPH_RSA_MODULE);
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
          * periph_module_enable doesn't seem to be documented and in private folder
@@ -876,6 +882,8 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     exp = mph->hwWords_sz << 6;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
 #else
@@ -1184,6 +1192,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
 #endif
     } /* end of processing */
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-S3 The RSA Accelerator supports large-number modular
@@ -1372,6 +1382,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     uint32_t OperandBits; /* TODO remove */
     int WordsForOperand;
@@ -1587,6 +1599,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.13 clear and release HW                   */
     esp_mp_hw_unlock();
+
+    /* end of ESP32 */
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
@@ -1849,6 +1866,8 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int ret = MP_OKAY;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     uint32_t OperandBits;
     uint32_t WordsForOperand; /* TODO cleanup */
@@ -1994,6 +2013,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* step.7 clear and release HW                        */
     esp_mp_hw_unlock();
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* TODO */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
