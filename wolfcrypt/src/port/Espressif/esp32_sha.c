@@ -520,7 +520,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 /*
 ** internal sha224 ctx copy (no ESP HW)
 */
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224x
+#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware on ESP32 */
@@ -1876,17 +1876,26 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
 
     ESP_LOGV(TAG, "  enter esp_sha256_process");
 
-    if ((&sha->ctx)->sha_type == SHA2_256) {
+    switch ((&sha->ctx)->sha_type) {
+    case SHA2_256:
 #if defined(DEBUG_WOLFSSL_VERBOSE)
-        ESP_LOGV(TAG, "    confirmed SHA type call match");
+        ESP_LOGV(TAG, "    confirmed SHA256 type call match");
 #endif
-    }
-    else {
+        wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA256_BLOCK_SIZE);
+        break;
+
+    case SHA2_224:
+#if defined(DEBUG_WOLFSSL_VERBOSE)
+        ESP_LOGV(TAG, "    confirmed SHA224 type call match");
+#endif
+        wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA224_BLOCK_SIZE);
+        break;
+    default:
         ret = -1;
         ESP_LOGE(TAG, "    ERROR SHA type call mismatch");
+        break;
     }
 
-    wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA256_BLOCK_SIZE);
 
     ESP_LOGV(TAG, "  leave esp_sha256_process");
 

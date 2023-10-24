@@ -240,8 +240,8 @@
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* TODO The ESP32-C3 *does* have SHA-224 HW */
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    // #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    //#define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
 
     /* no includes for ESP32C3 at this time */
 #else

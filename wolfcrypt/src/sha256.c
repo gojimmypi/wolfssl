@@ -1743,7 +1743,8 @@ static int InitSha256(wc_Sha256* sha256)
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
         /* not to be confused with SHAS512_224 */
-        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+        ret = esp_sha_init(&(sha224->ctx), WC_HASH_TYPE_SHA224);
+//        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
         return ret;
@@ -1773,7 +1774,9 @@ static int InitSha256(wc_Sha256* sha256)
                           "Prior value: %d", sha224->ctx.mode);
         }
         /* no sha224 HW support is available, set to SW */
-        sha224->ctx.mode = ESP32_SHA_SW;
+//        sha224->ctx.mode = ESP32_SHA_SW;
+        /* We know this is a fresh, uninitialized item, so set to INIT */
+        sha224->ctx.mode = ESP32_SHA_INIT;
     #endif
 
         ret = InitSha224(sha224);
@@ -1822,9 +1825,9 @@ static int InitSha256(wc_Sha256* sha256)
     #endif /* WOLFSSL_ASYNC_CRYPT */
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
-       (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
-        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+       (defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
+        defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
+//        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
         ret = Sha256Update((wc_Sha256*)sha224, data, len);
@@ -1852,7 +1855,9 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+        // ret = esp_sha_init(&(sha224->ctx), WC_HASH_TYPE_SHA224);
+
+        // sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
         ret = Sha256Final((wc_Sha256*)sha224);

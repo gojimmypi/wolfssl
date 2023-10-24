@@ -1210,7 +1210,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("SHA-256  test passed!\n");
 #endif
-
+#ifdef WOLFSSL_SHA224
+    if ( (ret = sha224_test()) != 0)
+        TEST_FAIL("SHA-224  test failed!\n", ret);
+    else
+        TEST_PASS("SHA-224  test passed!\n");
+#endif
 
 /* temp SHA early test*/
 #ifndef NO_SHA
@@ -5099,11 +5104,17 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha224_test(void)
     }
 
     for (i = 0; i < times; ++i) {
+        ESP_LOGI("test", " iteration %d\n\n", i);
+        ESP_LOG_BUFFER_HEXDUMP("hash n/i", hash, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+
         ret = wc_Sha224Update(&sha, (byte*)test_sha[i].input,
             (word32)test_sha[i].inLen);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         ret = wc_Sha224GetHash(&sha, hashcopy);
+        ESP_LOG_BUFFER_HEXDUMP("hashcopy", hashcopy, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         ret = wc_Sha224Copy(&sha, &shaCopy);
@@ -5113,6 +5124,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha224_test(void)
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         wc_Sha224Free(&shaCopy);
+
+        ESP_LOGI("test", "\nhash, test_sha[i].output");
+        ESP_LOG_BUFFER_HEXDUMP("hash    ", hash, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP("output  ", test_sha[i].output, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA224_DIGEST_SIZE) != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
