@@ -145,8 +145,8 @@
 #define HASH_SIZE_LIMIT /* for test.c */
 
 /* only FAST_MATH has HW acceleration at this time */
-// #define USE_FAST_MATH
-#define WOLFSSL_SP_MATH_ALL
+#define USE_FAST_MATH
+// #define WOLFSSL_SP_MATH_ALL
 // #define WOLFSSL_SP_RISCV32 /* only valid on RISC-V chips */
 
 /* optionally use SP_MATH */
@@ -162,7 +162,7 @@
 #define HAVE_VERSION_EXTENDED_INFO
 #define HAVE_WC_INTROSPECTION
 
-/* allows for all version info, even that supporessed with intospection */
+/* allows for all version info, even that suppressed with intospection */
 #define ALLOW_BINARY_MISMATCH_INTROSPECTION
 
 #define HAVE_SESSION_TICKET
@@ -254,7 +254,7 @@
 
 /* debug options */
 // #define ESP_VERIFY_MEMBLOCK
-#define WOLFSSL_HW_METRICS
+// #define WOLFSSL_HW_METRICS
 /* #define DEBUG_WOLFSSL_VERBOSE            */
 /* #define DEBUG_WOLFSSL                    */
 /* #define WOLFSSL_ESP32_CRYPT_DEBUG */
