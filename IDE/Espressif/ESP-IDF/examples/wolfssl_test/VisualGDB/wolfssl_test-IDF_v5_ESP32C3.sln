@@ -8,7 +8,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{6789AE30-A5A9-43B9-8058-B2BB4C6DF48C}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c
 		..\..\..\..\..\..\wolfcrypt\src\sha.c = ..\..\..\..\..\..\wolfcrypt\src\sha.c
 		..\..\..\..\..\..\wolfssl\wolfcrypt\sha.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\sha.h
 		..\..\..\..\..\..\wolfcrypt\src\sha256.c = ..\..\..\..\..\..\wolfcrypt\src\sha256.c

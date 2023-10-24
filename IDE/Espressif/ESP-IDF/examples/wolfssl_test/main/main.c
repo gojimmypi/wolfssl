@@ -233,6 +233,7 @@ void app_main(void)
     */
     int loops = 0;
     do {
+        esp_hw_show_metrics();
         ret = wolf_test_task();
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 

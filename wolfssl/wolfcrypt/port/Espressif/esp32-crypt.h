@@ -239,13 +239,32 @@
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* TODO The ESP32-C3 *does* have SHA-224 HW */
-    // #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    //#define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+/* If for some reason there's a desire to disable specific HW on the C3: */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA                              */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA     there is SHA HW on C3    */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224                           */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224  there is SHA224 HW on C3 */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                           */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there is SHA225 HW on C3 */
 
-    /* no includes for ESP32C3 at this time */
+    /* Code will fall back to SW with warning if these are removed:      */
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3 */
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3 */
+    /* no other includes for ESP32C3 at this time */
 #else
     /* not yet supported. no HW */
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 #endif
 
 #if defined(USE_ESP_DPORT_ACCESS_READ_BUFFER)
@@ -521,8 +540,19 @@ extern "C"
 
     WOLFSSL_LOCAL int esp_hw_validation_active(void);
 
+/* Optionally enable some metrics to count interesting usage */
 #ifdef WOLFSSL_HW_METRICS
-    int esp_hw_show_mp_metrics(void);
+    /* Allow sha256 code to keep track of SW fallback during active HW */
+    WOLFSSL_LOCAL int esp_sw_sha256_count_add();
+
+    /* show MP HW Metrics*/
+    WOLFSSL_LOCAL int esp_hw_show_mp_metrics(void);
+
+    /* show SHA HW Metrics*/
+    WOLFSSL_LOCAL int esp_hw_show_sha_metrics(void);
+
+    /* show all HW Metrics*/
+    WOLFSSL_LOCAL int esp_hw_show_metrics(void);
 #endif
 
 #define ESP_MP_HW_LOCK_MAX_DELAY ( TickType_t ) 0xffUL

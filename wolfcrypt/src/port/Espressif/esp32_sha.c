@@ -94,6 +94,19 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
+/* usage metrics can be turned on independently of debugging */
+#ifdef WOLFSSL_HW_METRICS
+    static unsigned long esp_sha_hw_copy_ct = 0;
+    static unsigned long esp_sha1_hw_usage_ct = 0;
+    static unsigned long esp_sha1_sw_fallback_usage_ct = 0;
+    static unsigned long esp_sha_reverse_words_ct = 0;
+    static unsigned long esp_sha1_hw_hash_usage_ct = 0;
+    static unsigned long esp_sha2_224_hw_hash_usage_ct = 0;
+    static unsigned long esp_sha2_256_hw_hash_usage_ct = 0;
+    static unsigned long esp_byte_reversal_checks_ct = 0;
+    static unsigned long esp_byte_reversal_needed_ct = 0;
+#endif
+
 #if defined(ESP_MONITOR_HW_TASK_LOCK)
     static void * mutex_ctx_owner = 0;
     static TaskHandle_t mutex_ctx_task = 0;
@@ -146,14 +159,24 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
         /* return true for bad params */
     }
     else {
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            esp_byte_reversal_checks_ct++;
+        }
+        #endif
         if (ctx->mode == ESP32_SHA_HW) {
             ESP_LOGV(TAG, " No reversal, ESP32_SHA_HW");
             ret = 0;
         }
         else {
-            /* return true for SW; only HW C3 skips reversal at this time. */
             ret = 1;
-            ESP_LOGE(TAG, " Need byte reversal, %d", ctx->mode);
+            ESP_LOGV(TAG, " Need byte reversal, %d", ctx->mode);
+            /* return true for SW; only HW C3 skips reversal at this time. */
+            #ifdef WOLFSSL_HW_METRICS
+            {
+                esp_byte_reversal_needed_ct++;
+            }
+            #endif
             if (ctx->mode == ESP32_SHA_INIT) {
                 ESP_LOGW(TAG, "esp_sha_need_byte_reversal during init?");
                 ESP_LOGW(TAG, "forgot to try HW lock first?");
@@ -252,9 +275,11 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             break;
 
         default:
+            /* We fall through to SW when there's no enabled HW, above. */
             ctx->mode = ESP32_SHA_SW;
             ret = 0;
-            /* TODO if there's no HW, the ctx reference should cause error: */
+            /* If there's no HW, the ctx reference should cause build error.
+            ** The type should be gated away when there's no HW at all! */
             ctx->isfirstblock = true;
             ctx->sha_type = hash_type;
             ESP_LOGW(TAG, "Unsupported hash_type = %d in esp_sha_init, "
@@ -467,7 +492,11 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* this is an interesting situation to copy HW digest to SW */
         ESP_LOGV(TAG, "esp_sha_ctx_copy esp_sha_digest_process");
-
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            esp_sha_hw_copy_ct++;
+        }
+        #endif
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
         if (ret == 0) {
@@ -488,6 +517,9 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         #ifdef CONFIG_IDF_TARGET_ESP32C3
             /* Reverse digest for C3 when HW enabled but fallback to SW. */
             ByteReverseWords(dst->digest, dst->digest, WC_SHA_DIGEST_SIZE);
+            #ifdef WOLFSSL_HW_METRICS
+                esp_sha_reverse_words_ct++;
+            #endif
         #endif
             /* The normal revert to SW in copy is expected */
             ESP_LOGV(TAG, "Confirmed SHA Copy set to SW");
@@ -504,10 +536,12 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer breadcrumb: */
         dst->ctx.initializer = &(dst->ctx); /* assign new breadcrumb to dst */
-    #ifdef ESP_MONITOR_HW_TASK_LOCK
-        /* not HW mode for copy, so we are not interested in task owner */
-        dst->ctx.task_owner = 0;
-    #endif
+        #ifdef ESP_MONITOR_HW_TASK_LOCK
+        {
+            /* not HW mode for copy, so we are not interested in task owner */
+            dst->ctx.task_owner = 0;
+        }
+        #endif
 
         ret = 0;
     }
@@ -526,10 +560,12 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     /* There's no 224 hardware on ESP32 */
     /* TODO but there is on ESP32-C3 */
     dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
-#ifdef ESP_MONITOR_HW_TASK_LOCK
-    /* not HW mode for copy, so we are not interested in task owner */
-    dst->ctx.task_owner = 0;
-#endif
+    #ifdef ESP_MONITOR_HW_TASK_LOCK
+    {
+        /* not HW mode for copy, so we are not interested in task owner */
+        dst->ctx.task_owner = 0;
+    }
+    #endif
 
     /* always set to SW, as there's no ESP32 HW for SHA224.
     ** TODO: add support for ESP32-S2. ESP32-S3, ESP32-C3 here.
@@ -564,10 +600,14 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         }
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
-        #ifdef CONFIG_IDF_TARGET_ESP32C3
-            /* REferve digest byte order for C3 with HW but fallback to SW */
-            ByteReverseWords(dst->digest, dst->digest, WC_SHA256_DIGEST_SIZE);
-        #endif
+            #ifdef CONFIG_IDF_TARGET_ESP32C3
+            {
+                /* Reverse digest byte order for C3 fallback to SW. */
+                ByteReverseWords(dst->digest,
+                                 dst->digest,
+                                 WC_SHA256_DIGEST_SIZE);
+            }
+            #endif
             ESP_LOGV(TAG, "Confirmed wc_Sha256 Copy set to SW");
         }
         else {
@@ -600,7 +640,10 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 {
     int ret = 0;
-#if !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    ESP_LOGW(TAG, "Warning: esp_sha384_ctx_copy() called for ESP32-C3!");
+    ESP_LOGW(TAG, "There's no SHA384 HW for the ESP32-C3");
+#else
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* Get a copy of the HW digest, but don't process it. */
         ESP_LOGI(TAG, "esp_sha384_ctx_copy esp_sha512_digest_process");
@@ -682,7 +725,7 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         /* reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
-   #if !defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if !defined(CONFIG_IDF_TARGET_ESP32C3)
         dst->ctx.initializer = &dst->ctx; /*breadcrumb is this ctx address */
     #endif
     #ifdef ESP_MONITOR_HW_TASK_LOCK
@@ -1657,6 +1700,25 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
 
 #endif
 
+#ifdef WOLFSSL_HW_METRICS
+    switch (ctx->sha_type) {
+        case SHA1:
+            esp_sha1_hw_hash_usage_ct++;
+        break;
+
+        case SHA2_224:
+            esp_sha2_224_hw_hash_usage_ct++;
+        break;
+
+        case SHA2_256:
+            esp_sha2_256_hw_hash_usage_ct++;
+        break;
+
+    default:
+        break;
+    }
+#endif
+
     ESP_LOGV(TAG, "  leave esp_process_block");
     return ret;
 } /* wc_esp_process_block */
@@ -1993,7 +2055,9 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 {
     int ret = 0;
     ESP_LOGV(TAG, "enter esp_sha512_digest_process");
-#if !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    ESP_LOGW(TAG, "Warning: no SHA512 HW to digest on ESP32-C3");
+#else
     if (blockproc) {
         word32* data = (word32*)sha->buffer;
 
@@ -2013,3 +2077,36 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 #endif /* WOLFSSL_SHA512 || WOLFSSL_SHA384 */
 #endif /* WOLFSSL_ESP32_CRYPT */
 #endif /* !defined(NO_SHA) ||... */
+
+#ifdef WOLFSSL_HW_METRICS
+int esp_sw_sha256_count_add() {
+    esp_sha1_sw_fallback_usage_ct++;
+    return esp_sha1_sw_fallback_usage_ct;
+}
+
+int esp_hw_show_sha_metrics(void)
+{
+    int ret = 0;
+#ifdef WOLFSSL_ESP32_CRYPT
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "------------- wolfSSL ESP HW SHA Metrics----------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "esp_sha_hw_copy_ct            = %lu", esp_sha_hw_copy_ct);
+    ESP_LOGI(TAG, "esp_sha1_hw_usage_ct          = %lu", esp_sha1_hw_usage_ct);
+    ESP_LOGI(TAG, "esp_sha1_sw_fallback_usage_ct = %lu", esp_sha1_sw_fallback_usage_ct);
+    ESP_LOGI(TAG, "esp_sha_reverse_words_ct      = %lu", esp_sha_reverse_words_ct);
+    ESP_LOGI(TAG, "esp_sha1_hw_hash_usage_ct     = %lu", esp_sha1_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_sha2_224_hw_hash_usage_ct = %lu", esp_sha2_224_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_sha2_256_hw_hash_usage_ct = %lu", esp_sha2_256_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_byte_reversal_checks_ct   = %lu", esp_byte_reversal_checks_ct);
+    ESP_LOGI(TAG, "esp_byte_reversal_needed_ct   = %lu", esp_byte_reversal_needed_ct);
+
+#else
+    /* no HW math, no HW math metrics */
+    ret = 0;
+#endif /* HW_MATH_ENABLED */
+
+
+    return ret;
+}
+#endif /* WOLFSSL_HW_METRICS */

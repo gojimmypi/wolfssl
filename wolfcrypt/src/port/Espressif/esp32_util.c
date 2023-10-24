@@ -595,5 +595,10 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
     return ret;
 }
 
-
+int esp_hw_show_metrics(void)
+{
+    esp_hw_show_sha_metrics();
+    esp_hw_show_mp_metrics();
+    return 0;
+}
 
