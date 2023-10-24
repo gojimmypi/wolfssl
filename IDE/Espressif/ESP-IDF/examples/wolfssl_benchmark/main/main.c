@@ -242,10 +242,11 @@ void app_main(void)
                 ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL");
             #endif
         #endif /* WOLFSSL_SP_MATH_ALL */
+
         wolf_benchmark_task();
         ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 
-#ifdef WOLFSSL_HW_METRICS
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
         esp_hw_show_mp_metrics();
 #endif
     } while (BENCHMARK_LOOP);

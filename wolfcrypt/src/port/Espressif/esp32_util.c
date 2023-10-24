@@ -597,8 +597,12 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
 
 int esp_hw_show_metrics(void)
 {
-    esp_hw_show_sha_metrics();
+#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
+        esp_hw_show_sha_metrics();
+#endif
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
     esp_hw_show_mp_metrics();
+#endif
     return 0;
 }
 

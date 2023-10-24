@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 /*
  * ESP32-C3: https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
@@ -2078,7 +2079,7 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 #endif /* WOLFSSL_ESP32_CRYPT */
 #endif /* !defined(NO_SHA) ||... */
 
-#ifdef WOLFSSL_HW_METRICS
+#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
 int esp_sw_sha256_count_add() {
     esp_sha1_sw_fallback_usage_ct++;
     return esp_sha1_sw_fallback_usage_ct;

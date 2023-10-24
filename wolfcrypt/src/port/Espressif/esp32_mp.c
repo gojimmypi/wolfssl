@@ -37,6 +37,7 @@
  * see https://github.com/espressif/esp-idf/issues/9511#issuecomment-1207342464
  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/release-5.x/5.0/gcc.html
  */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -2101,11 +2102,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #endif /* !NO_RSA || HAVE_ECC */
 
-#ifdef WOLFSSL_HW_METRICS
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
 int esp_hw_show_mp_metrics(void)
 {
     int ret;
-#ifdef HW_MATH_ENABLED
+#if !defined(NO_ESP32_CRYPT)  &&  defined(HW_MATH_ENABLED)
     ret = MP_OKAY;
 
     /* Metrics: esp_mp_mul() */
@@ -2174,6 +2175,8 @@ int esp_hw_show_mp_metrics(void)
     /* no HW math, no HW math metrics */
     ret = 0;
 #endif /* HW_MATH_ENABLED */
+
+
     return ret;
 }
-#endif
+#endif /* WOLFSSL_HW_METRICS */
