@@ -1292,7 +1292,9 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     while (ret == MP_OKAY && (ct > 0)) {
         ret = mp_test();
 #ifdef WOLFSSL_HW_METRICS
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
         esp_hw_show_mp_metrics();
+#endif
 #endif
         ct--;
         ESP_LOGI(TAG, "\n\nmp_test loops = %d\n\n", ct);
@@ -2065,7 +2067,9 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     TEST_PASS("Test complete\n");
 
 #ifdef WOLFSSL_HW_METRICS
+#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
     esp_hw_show_mp_metrics();
+#endif
 #endif
 
     EXIT_TEST(ret);
