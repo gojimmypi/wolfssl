@@ -91,11 +91,20 @@ static int esp_aes_hw_InUse()
         /* Enable AES hardware */
         periph_module_enable(PERIPH_AES_MODULE);
 
-        #if CONFIG_IDF_TARGET_ESP32S3
-        /* Select working mode. Can be typical or DMA.
-         * 0 => typical
-         * 1 => DMA */
-        DPORT_REG_WRITE(AES_DMA_ENABLE_REG, 0);
+        #if defined(CONFIG_IDF_TARGET_ESP32S3)
+        {
+            /* Select working mode. Can be typical or DMA.
+             * 0 => typical
+             * 1 => DMA */
+            DPORT_REG_WRITE(AES_DMA_ENABLE_REG, 0);
+        }
+        #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+        {
+            /* Select working mode. Can be typical or DMA.
+             * 0 => typical
+             * 1 => DMA */
+            DPORT_REG_WRITE(AES_DMA_ENABLE_REG, 0);
+        }
         #endif
     }
 
@@ -147,13 +156,13 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
     /*
     ** ESP32: see table 22-1 in ESP32 Technical Reference
     ** ESP32S3: see table 19-2 in ESP32S3 Technical Reference
-    ** mode     Algorithm             ESP32   ESP32S3
-    **   0       AES-128 Encryption     y        y
-    **   1       AES-192 Encryption     y        n
-    **   2       AES-256 Encryption     y        y
-    **   4       AES-128 Decryption     y        y
-    **   5       AES-192 Decryption     y        n
-    **   6       AES-256 Decryption     y        y
+    ** mode     Algorithm             ESP32   ESP32S3  ESP32C3
+    **   0       AES-128 Encryption     y        y        y
+    **   1       AES-192 Encryption     y        n        n
+    **   2       AES-256 Encryption     y        y        y
+    **   4       AES-128 Decryption     y        y        y
+    **   5       AES-192 Decryption     y        n        n
+    **   6       AES-256 Decryption     y        y        y
     */
     switch(ctx->keylen){
         case 24: mode_ += 1; break;
@@ -161,7 +170,13 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
         default: break;
     }
 
-#if CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+    if (mode_ == 1 || mode_ == 5 || mode_ == 7) {
+        /* this should have been detected in aes.c and fall back to SW */
+        ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
+        ret = BAD_FUNC_ARG;
+    }
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
     if (mode_ == 1 || mode_ == 5 || mode_ == 7) {
         /* this should have been detected in aes.c and fall back to SW */
         ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
@@ -203,7 +218,7 @@ static void esp_aes_bk(const byte* in, byte* out)
 #endif
 
     ESP_LOGV(TAG, "enter esp_aes_bk");
-#if CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
     /* See esp32 - s3 technical reference manual:
     ** 19.4.3 Operation process using CPU working mode.
     ** The ESP32-S3 also supports a DMA mode.
@@ -224,7 +239,29 @@ static void esp_aes_bk(const byte* in, byte* out)
 
     /* read-out blocks */
     esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* See ESP32-C3 technical reference manual:
+    ** 19.4.3 Operation process using CPU working mode.
+    ** The ESP32-C3 also supports a DMA mode. (not ywt implemented)
+    **
+    ** Copy text for encrypting/decrypting blocks: */
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE, inwords[0]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 4, inwords[1]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 8, inwords[2]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 12, inwords[3]);
+
+    /* start engine */
+    DPORT_REG_WRITE(AES_TRIGGER_REG, 1);
+
+    /* wait until finishing the process */
+    while (DPORT_REG_READ(AES_STATE_REG) != 0) {
+        /* waiting for the hardware accelerator to complete operation. */
+    }
+
+    /* read-out blocks */
+    esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
 #else
+    /* ESP32 */
     /* copy text for encrypting/decrypting blocks */
     DPORT_REG_WRITE(AES_TEXT_BASE, inwords[0]);
     DPORT_REG_WRITE(AES_TEXT_BASE + 4, inwords[1]);
@@ -275,7 +312,13 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
     }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    ret = 0; /* not yet implemented */
+    if (keylen == 16 || keylen == 32) {
+        ret = 1;
+    }
+    else {
+        ret = 0; /* keylen 24 (192 bit) not supported */
+    }
+    ret = 0;
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     ret = 0; /* not yet implemented */
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
