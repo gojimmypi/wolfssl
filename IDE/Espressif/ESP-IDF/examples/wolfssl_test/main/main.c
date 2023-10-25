@@ -255,7 +255,7 @@ void app_main(void)
         /* see wolfssl/wolfcrypt/error-crypt.h */
     }
 
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) && !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
     esp_hw_show_mp_metrics();
 #endif
 

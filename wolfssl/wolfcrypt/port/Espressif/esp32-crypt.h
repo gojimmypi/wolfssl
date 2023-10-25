@@ -195,6 +195,7 @@
 #include <freertos/FreeRTOS.h>
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    /* there's no SHA-224 HW on the ESP32 */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
@@ -216,6 +217,25 @@
         #include <rom/ets_sys.h>
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #include "soc/dport_access.h"
+    #include "soc/hwcrypto_reg.h"
+
+    #if ESP_IDF_VERSION_MAJOR < 5
+        #include "soc/cpu.h"
+    #endif
+
+    #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+        #include "esp_private/periph_ctrl.h"
+    #else
+        #include "driver/periph_ctrl.h"
+    #endif
+
+    #if ESP_IDF_VERSION_MAJOR >= 4
+   //     #include <esp32/rom/ets_sys.h>
+    #else
+        #include <rom/ets_sys.h>
+    #endif
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
@@ -228,8 +248,8 @@
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+//    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
     #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
@@ -266,6 +286,17 @@
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 #endif
+
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL) && \
+        defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD) && \
+        defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
+        #warning "MP_MUL, MULMOD, EXPTMOD all turned off. " && \
+                 "Define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI to disable all math HW"
+        #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #endif
+#endif // !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+
 
 #if defined(USE_ESP_DPORT_ACCESS_READ_BUFFER)
     #define ESP_NO_ERRATA_MITIGATION

@@ -64,18 +64,18 @@
 #define BENCH_EMBEDDED
 
 /* TLS 1.3                                 */
-#define WOLFSSL_TLS13
-#define HAVE_TLS_EXTENSIONS
-#define WC_RSA_PSS
-#define HAVE_HKDF
-#define HAVE_AEAD
-#define HAVE_SUPPORTED_CURVES
+//#define WOLFSSL_TLS13
+//#define HAVE_TLS_EXTENSIONS
+//#define WC_RSA_PSS
+//#define HAVE_HKDF
+//#define HAVE_AEAD
+//#define HAVE_SUPPORTED_CURVES
 
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
 
-#define HAVE_AESGCM
+// #define HAVE_AESGCM
 
 #define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
@@ -102,13 +102,13 @@
 // #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 
-#define HAVE_PKCS7
+//#define HAVE_PKCS7
 
-#if defined(HAVE_PKCS7)
-    #define HAVE_AES_KEYWRAP
-    #define HAVE_X963_KDF
-    #define WOLFSSL_AES_DIRECT
-#endif
+//#if defined(HAVE_PKCS7)
+//    #define HAVE_AES_KEYWRAP
+//    #define HAVE_X963_KDF
+//    #define WOLFSSL_AES_DIRECT
+//#endif
 
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
@@ -159,7 +159,7 @@
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
 
-#define  HAVE_SESSION_TICKET
+//#define  HAVE_SESSION_TICKET
 
 /* #define HAVE_HASHDRBG */
 
@@ -234,8 +234,13 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3 */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3 */
 
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+
+    #define NO_AES /* even soft AES not working */
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
@@ -254,10 +259,10 @@
 #endif
 
 /* debug options */
-//#define ESP_VERIFY_MEMBLOCK
+#define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
 #define DEBUG_WOLFSSL_VERBOSE
-//#define DEBUG_WOLFSSL
+#define DEBUG_WOLFSSL
 #define WOLFSSL_ESP32_CRYPT_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 
