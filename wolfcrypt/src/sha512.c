@@ -1615,7 +1615,7 @@ int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst)
     if (ret == 0) {
         ret = esp_sha512_ctx_copy(src, dst);
     }
-    #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_LOGV(TAG, "No SHA-512 HW on the ESP32-C3");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     if (ret == 0) {
@@ -1625,7 +1625,7 @@ int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst)
         ESP_LOGW(TAG, "No SHA384 HW or not yet implemented for %s",
                        CONFIG_IDF_TARGET);
     #endif
-   
+
 #endif
 
 #ifdef WOLFSSL_HASH_FLAGS
@@ -1893,7 +1893,7 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
     #if defined(CONFIG_IDF_TARGET_ESP32)
         esp_sha384_ctx_copy(src, dst);
-    #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_LOGV(TAG, "No SHA-384 HW on the ESP32-C3");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         esp_sha384_ctx_copy(src, dst);
