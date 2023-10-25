@@ -725,7 +725,7 @@ static int InitSha256(wc_Sha256* sha256)
 #endif // !NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
 
     /* when not ESP32-C3, we'll need digest for SW or HW */
-    #ifndef CONFIG_IDF_TARGET_ESP32C3
+    #if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
         ret = 1;
     #endif
 
@@ -1120,7 +1120,7 @@ static int InitSha256(wc_Sha256* sha256)
                           (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
                 if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
                 #endif
-                #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+                #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
                     defined(WOLFSSL_ESP32_CRYPT) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1225,7 +1225,7 @@ static int InitSha256(wc_Sha256* sha256)
             #endif
 
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-                #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+                #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
                     defined(WOLFSSL_ESP32_CRYPT) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1346,7 +1346,7 @@ static int InitSha256(wc_Sha256* sha256)
         #endif
 
         #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-            #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+            #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6))  && \
                 defined(WOLFSSL_ESP32_CRYPT) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1398,7 +1398,8 @@ static int InitSha256(wc_Sha256* sha256)
 
         /* store lengths */
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
+            defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
             if (esp_sha_need_byte_reversal(&sha256->ctx))
@@ -1419,7 +1420,8 @@ static int InitSha256(wc_Sha256* sha256)
 
     /* Only the ESP32-C3 with HW enabled may need pad size byte order reversal
      * depending on HW or SW mode */
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) && defined(WOLFSSL_ESP32_CRYPT) && \
+    #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
+         defined(WOLFSSL_ESP32_CRYPT) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_HW) {
@@ -1488,7 +1490,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #ifdef LITTLE_ENDIAN_ORDER
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
             defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1542,7 +1544,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6))  && \
             defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1850,7 +1852,7 @@ static int InitSha256(wc_Sha256* sha256)
             return ret;
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) && \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6))  && \
             defined(WOLFSSL_ESP32_CRYPT) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))

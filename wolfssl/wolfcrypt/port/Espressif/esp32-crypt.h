@@ -217,7 +217,7 @@
         #include <rom/ets_sys.h>
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     #include "soc/dport_access.h"
     #include "soc/hwcrypto_reg.h"
 
