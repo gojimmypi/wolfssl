@@ -191,16 +191,17 @@ void app_main(void)
     /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
-    /* check to see if we are using hardware encryption */
+    /* check to see if we are using hardware encryption
+     * TODO: move this to esp_util.c  */
 #if defined(NO_ESP32_CRYPT)
     ESP_LOGI(TAG, "NO_ESP32_CRYPT defined! HW acceleration DISABLED.");
 #else
     #if defined(CONFIG_IDF_TARGET_ESP32C3)
 
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        /* #error "ESP32_CRYPT not yet supported on ESP32-S2" */
+        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for  ESP32-S2.");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-        /* #error "ESP32_CRYPT not yet supported on ESP32-S3" */
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for  ESP32-S3.");
     #else
         ESP_LOGI(TAG, "ESP32_CRYPT is enabled.");
     #endif

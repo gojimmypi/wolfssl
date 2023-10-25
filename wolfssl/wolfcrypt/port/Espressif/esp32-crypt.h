@@ -258,7 +258,7 @@
         #include "driver/periph_ctrl.h"
     #endif
     #define ESP_PROHIBIT_SMALL_X 0
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
 /* If for some reason there's a desire to disable specific HW on the C3: */
 /*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA                              */
 /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA     there is SHA HW on C3    */
@@ -415,6 +415,9 @@ extern "C"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32C3)
             #include "esp32c3/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+            #include "esp32c6/rom/sha.h"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32H2)
             #include "esp32h2/rom/sha.h"

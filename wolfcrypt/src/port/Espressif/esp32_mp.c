@@ -77,7 +77,10 @@
 //    #include <bigint.h>
     #include <soc/system_reg.h>
     #include <soc/hwcrypto_reg.h>
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #include <soc/pcr_reg.h>
 #endif
+
 static const char* const TAG = "wolfssl_esp32_mp";
 
 #ifdef DEBUG_WOLFSSL
@@ -183,7 +186,7 @@ static int esp_mp_hw_wait_clean(void)
         /*  wait. expected delay 1 to 2 uS  */
         ESP_EM__MP_HW_WAIT_CLEAN
     }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     ESP_EM__PRE_MP_HW_WAIT_CLEAN
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_QUERY_CLEAN_REG) != 1)
@@ -321,14 +324,30 @@ static int esp_mp_hw_lock()
      * This releases the RSA Accelerator from reset.*/
     if (ret == 0) {
         periph_module_enable(PERIPH_RSA_MODULE);
-#warning "update, disabled:"
-        /* clear bit to enable hardware operation; (set to disable) */
-       // DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
-
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
             DPORT_REG_SET_BIT((volatile void *)(SYSTEM_PERIP_CLK_EN1_REG), SYSTEM_CRYPTO_RSA_CLK_EN );
             DPORT_REG_CLR_BIT((volatile void *)(SYSTEM_RSA_PD_CTRL_REG),  SYSTEM_RSA_MEM_PD );
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
+    }
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* See: 21.3 Functional Description
+     *
+     * The RSA accelerator is activated on the ESP32-C6 by:
+     *   setting  the PCR_RSA_CLK_EN bit
+     *      and
+     *   clearing the PCR_RSA_RST_EN bit
+     * in the PCR_RSA_CONF_REG register.
+     *
+     * Additionally, users also need to clear PCR_DS_RST_EN bit to
+     * reset Digital Signature (DS).*/
+    if (ret == 0) {
+        periph_module_enable(PERIPH_RSA_MODULE);
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            DPORT_REG_SET_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN );
+            DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_RST_EN );
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
@@ -389,7 +408,13 @@ static int esp_mp_hw_unlock( void )
             DPORT_REG_SET_BIT((volatile void *)(DR_REG_RSA_BASE + SYSTEM_RSA_MEM_PD), SYSTEM_RSA_PD_CTRL_REG);
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
-
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN);
+            DPORT_REG_SET_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_RST_EN);
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
@@ -599,8 +624,17 @@ static int wait_until_done(uint32_t reg)
     }
     ESP_EM__DPORT_FIFO_READ;
 
+#ifdef CONFIG_IDF_TARGET_ESP32C6
+    /* Write 1 or 0 to the RSA_INT_ENA_REG register to
+     * enable or disable the interrupt function. */
+    DPORT_REG_WRITE(RSA_INT_CLR_REG, 1); /* write 1 to clear */
+    DPORT_REG_WRITE(RSA_INT_ENA_REG, 0); /* disable */
+#else
+    /* TODO what to do for CONFIG_IDF_TARGET_ESP32C6 ?*/
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+#endif
+
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
@@ -728,8 +762,11 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
                   hwords * sizeof(word32)
                  );
     if (len != 0) {
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        /* TODO remove this C3 peek */
         u_int32_t peek =  (volatile u_int32_t*)(SYSTEM_PERIP_CLK_EN1_REG);
         ESP_LOGE(TAG, "peek = 0x%0lux", peek);
+    #endif
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
     #ifdef DEBUG_WOLFSSL
         esp_show_mp("mp", (MATH_INT_T*)mp);
@@ -947,7 +984,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     exp = mph->hwWords_sz << 6;
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1258,7 +1295,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
 #endif
     } /* end of processing */
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-S3 The RSA Accelerator supports large-number modular
@@ -1519,7 +1556,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     uint32_t OperandBits; /* TODO remove */
     int WordsForOperand;
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -1597,13 +1634,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         mp_copy(M, M2); /* copy (src = M) to (dst = M2) */
         mp_copy(Z, Z2); /* copy (src = Z) to (dst = Z2) */
 
-        SET_HW_VALIDATION;
+        SET_HW_VALIDATION; /* for the next mulmod to be SW for HW validation */
         reti = mp_mulmod(X2, Y2, M2, Z2);
         if (reti == 0) {
-            ESP_LOGV(TAG, "wolfSSL mp_mulmod during vaidation success");
+            ESP_LOGV(TAG, "wolfSSL mp_mulmod during validation success");
         }
         else {
-            ESP_LOGE(TAG, "wolfSSL mp_mulmod during vaidation failed");
+            ESP_LOGE(TAG, "wolfSSL mp_mulmod during validation failed");
         }
         CLR_HW_VALIDATION;
     }
@@ -1625,7 +1662,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGV(TAG, "esp_mp_exptmod esp_mp_montgomery_init success.");
         }
         else {
-        #ifdef WOLFSSL_HW_METRICS
+            #ifdef WOLFSSL_HW_METRICS
             if (ret == MP_HW_FALLBACK) {
                 esp_mp_mulmod_fallback_ct++;
             }
@@ -1821,6 +1858,86 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
+     * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
+     * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
+     * the bits in X, Y and M.
+     * See 20.3.3 of ESP32-S3 technical manual
+     *  1. Wait until the hardware is ready.
+     *  2. Enable/disable interrupt that signals completion -- we don't use the interrupt.
+     *  3. Write the number of words required to represent the operands to the
+     *     RSA_MODE_REG (now called RSA_LENGTH_REG).
+     *  4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG).
+     *  5. Load X, Y, M, r' operands to memory blocks.
+     *  6. Start the operation by writing 1 to RSA_MOD_MULT_START_REG, then wait for it
+     *     to complete by monitoring RSA_IDLE_REG (which is now called RSA_QUERY_INTERRUPT_REG).
+     *  7. Read the result out.
+     *  8. Release the hardware lock so others can use it.
+     *  x. Clear the interrupt flag, if you used it (we don't). */
+
+    /* 1. Wait until hardware is ready. */
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
+    }
+    if (ret == MP_OKAY) {
+        /* 2. Disable completion interrupt signal; we don't use.
+        **    0 => no interrupt; 1 => interrupt on completion. */
+        DPORT_REG_WRITE(RSA_INT_ENA_REG, 0);
+
+        /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
+        OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
+        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+            ESP_LOGW(TAG, "result exceeds max bit length");
+            return MP_VAL; /*  Error: value is not able to be used. */
+        }
+        WordsForOperand = bits2words(OperandBits);
+        //  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
+        DPORT_REG_WRITE(RSA_MODE_REG, WordsForOperand - 1); /*  (mph->hwWords_sz >> 4) - 1) */
+
+        /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
+        DPORT_REG_WRITE(RSA_M_PRIME_REG, mph->mp);
+
+        /* Select acceleration options. */
+        DPORT_REG_WRITE(RSA_CONSTANT_TIME_REG, 0);
+        DPORT_REG_WRITE(RSA_SEARCH_POS_REG, 0); /* or RSA_SEARCH_ENABLE */
+
+        /* 5. Load X, Y, M, r' operands.
+         * Note RSA_MEM_RB_BLOCK_BASE == RSA_M_MEM on ESP32-C6*/
+        esp_mpint_to_memblock(RSA_X_MEM,
+                              X,
+                              mph->Xs,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_Y_MEM,
+                              Y,
+                              mph->Ys,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_M_MEM,
+                              M,
+                              mph->Ms,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_Z_MEM,
+                              &(mph->r_inv),
+                              mph->Rs,
+                              mph->hwWords_sz);
+
+        /* 6. Start operation and wait until it completes. */
+        process_start(RSA_SET_START_MODMULT_REG); /* we're here in esp_mp_mulmod */
+    }
+
+    if (ret == MP_OKAY) {
+        ret = wait_until_done(RSA_QUERY_CLEAN_REG);
+    }
+
+    if (ret == MP_OKAY) {
+        /* 7. read the result from MEM_Z              */
+        esp_memblock_to_mpint(RSA_Z_MEM, tmpZ, zwords);
+    }
+
+    /* 8. clear and release HW                    */
+    esp_mp_hw_unlock();
+
+    /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
@@ -2082,7 +2199,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int ret = MP_OKAY;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     uint32_t OperandBits;
     uint32_t WordsForOperand; /* TODO cleanup */
@@ -2232,7 +2349,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* step.7 clear and release HW                        */
     esp_mp_hw_unlock();
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
@@ -2307,7 +2424,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* 8. clear and release HW                    */
     esp_mp_hw_unlock();
-    /* end if CONFIG_IDF_TARGET_ESP32C3 */
+    /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
@@ -2423,6 +2540,7 @@ int esp_hw_show_mp_metrics(void)
 #if !defined(NO_ESP32_CRYPT)  &&  defined(HW_MATH_ENABLED)
     ret = MP_OKAY;
 
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     /* Metrics: esp_mp_mul() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
                    esp_mp_mul_usage_ct);
@@ -2434,6 +2552,7 @@ int esp_hw_show_mp_metrics(void)
                        esp_mp_mul_error_ct);
         ret = MP_VAL;
     }
+#endif
 
 #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     ESP_LOGI(TAG, ""); /* mulmod follows */
