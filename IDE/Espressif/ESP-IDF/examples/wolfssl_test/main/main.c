@@ -27,6 +27,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <user_settings.h>
 #include <wolfssl/version.h>
+#include <wolfssl/wolfcrypt/types.h>
 
 #ifndef WOLFSSL_ESPIDF
 #warning "problem with wolfSSL user settings. Check components/wolfssl/include"
@@ -134,8 +135,6 @@ void my_atmel_free(int slotId)
 
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
-
-#include <wolfssl/wolfcrypt/types.h>
 
 /* entry point */
 void app_main(void)

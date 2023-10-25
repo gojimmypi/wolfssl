@@ -242,6 +242,9 @@
 //    #define NO_AES /* even soft AES not working */
 //    #define NO_WOLFSSL_ESP32_CRYPT_AES
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C6 */
+
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
