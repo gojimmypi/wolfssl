@@ -75,6 +75,8 @@
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
 //    #include <bigint.h>
+    #include <soc/system_reg.h>
+    #include <soc/hwcrypto_reg.h>
 #endif
 static const char* const TAG = "wolfssl_esp32_mp";
 
@@ -107,10 +109,12 @@ struct esp_mp_helper
 
 /* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
+    static unsigned long esp_mp_max_used = 0;
+
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
-    #endif
+    #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
         static unsigned long esp_mp_mulmod_usage_ct = 0;
@@ -119,13 +123,12 @@ struct esp_mp_helper
         static unsigned long esp_mp_mulmod_small_x_ct = 0;
         static unsigned long esp_mp_mulmod_small_y_ct = 0;
         static unsigned long esp_mp_mulmod_error_ct = 0;
-    #endif
+    #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         static unsigned long esp_mp_exptmod_usage_ct = 0;
         static unsigned long esp_mp_exptmod_error_ct = 0;
         static unsigned long esp_mp_exptmod_fallback_ct = 0;
-        static unsigned long esp_mp_max_used = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 #endif
 
@@ -237,7 +240,7 @@ static int esp_mp_hw_islocked(void)
 #endif
     return ret;
 }
-
+static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED; /* TODO move! */
 /*
 * esp_mp_hw_lock()
 *
@@ -307,14 +310,27 @@ static int esp_mp_hw_lock()
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* TODO */
-    /* Activate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
+    /* Activate the RSA accelerator. See 20.3 of ESP32-C3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
-     * with v5 release. Maybe it will be deprecated? */
+     * with v5 release. Maybe it will be deprecated?
+     *
+     * The ESP32-C3 RSA Accelerator is activated by:
+     * setting the SYSTEM_CRYPTO_RSA_CLK_EN bit in the SYSTEM_PERIP_CLK_EN1_REG
+     * register and:
+     * clearing the SYSTEM_RSA_MEM_PD bit in the SYSTEM_RSA_PD_CTRL_REG reg.
+     * This releases the RSA Accelerator from reset.*/
     if (ret == 0) {
         periph_module_enable(PERIPH_RSA_MODULE);
 #warning "update, disabled:"
         /* clear bit to enable hardware operation; (set to disable) */
-        //DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
+       // DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
+
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            DPORT_REG_SET_BIT((volatile void *)(SYSTEM_PERIP_CLK_EN1_REG), SYSTEM_CRYPTO_RSA_CLK_EN );
+            DPORT_REG_CLR_BIT((volatile void *)(SYSTEM_RSA_PD_CTRL_REG),  SYSTEM_RSA_MEM_PD );
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Activate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
@@ -327,7 +343,7 @@ static int esp_mp_hw_lock()
         DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
     }
 #else
-    /* when unknown or not implmemted, assume there's no HW to lock */
+    /* when unknown or not implemented, assume there's no HW to lock */
 #endif
 
     /* reminder: wait until RSA_CLEAN_REG reads 1
@@ -353,12 +369,28 @@ static int esp_mp_hw_unlock( void )
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     //    ets_bigint_enable();
     /* TODO */
-        /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
+        /* Deactivate the RSA accelerator. See 20.3 of ESP32-C3 technical manual.
          * periph_module_enable doesn't seem to be documented and in private folder
-         * with v5 release. Maybe it will be deprecated? */
+         * with v5 release. Maybe it will be deprecated?
+     * The ESP32-C3 RSA Accelerator is activated by:
+     * setting the SYSTEM_CRYPTO_RSA_CLK_EN bit in the SYSTEM_PERIP_CLK_EN1_REG
+     * register and:
+     * clearing the SYSTEM_RSA_MEM_PD bit in the SYSTEM_RSA_PD_CTRL_REG reg.
+     * This releases the RSA Accelerator from reset.*/
 #warning "update, disabled:"
 //        DPORT_REG_SET_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
-        periph_module_disable(PERIPH_RSA_MODULE);
+        //periph_module_disable(PERIPH_RSA_MODULE);
+        /* we assume the opposite is true to disable: */
+        //DPORT_REG_CLR_BIT(SYSTEM_CRYPTO_RSA_CLK_EN, SYSTEM_PERIP_CLK_EN1_REG);
+        //DPORT_REG_SET_BIT(SYSTEM_RSA_MEM_PD, SYSTEM_RSA_PD_CTRL_REG);
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            DPORT_REG_CLR_BIT((volatile void *)(DR_REG_RSA_BASE + SYSTEM_CRYPTO_RSA_CLK_EN), SYSTEM_PERIP_CLK_EN1_REG);
+            DPORT_REG_SET_BIT((volatile void *)(DR_REG_RSA_BASE + SYSTEM_RSA_MEM_PD), SYSTEM_RSA_PD_CTRL_REG);
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
+
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
          * periph_module_enable doesn't seem to be documented and in private folder
@@ -696,6 +728,8 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
                   hwords * sizeof(word32)
                  );
     if (len != 0) {
+        u_int32_t peek =  (volatile u_int32_t*)(SYSTEM_PERIP_CLK_EN1_REG);
+        ESP_LOGE(TAG, "peek = 0x%0lux", peek);
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
     #ifdef DEBUG_WOLFSSL
         esp_show_mp("mp", (MATH_INT_T*)mp);
@@ -1083,7 +1117,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGE(TAG, "Caller must not try HW when validation active.");
     }
     else {
-        SET_HW_VALIDATION;
+        SET_HW_VALIDATION; /* force next mp_mul to SW for compare */
         mp_mul(X2, Y2, Z2);
         CLR_HW_VALIDATION;
     }
@@ -2401,6 +2435,7 @@ int esp_hw_show_mp_metrics(void)
         ret = MP_VAL;
     }
 
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     ESP_LOGI(TAG, ""); /* mulmod follows */
 
     /* Metrics: esp_mp_mulmod() */
@@ -2435,6 +2470,10 @@ int esp_hw_show_mp_metrics(void)
         ESP_LOGW(TAG, "Number of esp_mp_mulmod small y: %lu",
                        esp_mp_mulmod_small_y_ct);
     }
+#endif /* MULMOD disabled: !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
+
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+
 
     ESP_LOGI(TAG, ""); /* exptmod follows */
 
@@ -2450,6 +2489,8 @@ int esp_hw_show_mp_metrics(void)
                        esp_mp_exptmod_error_ct);
         ret = MP_VAL;
     }
+#endif /* EXPTMOD not disabled !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
 #else
     /* no HW math, no HW math metrics */

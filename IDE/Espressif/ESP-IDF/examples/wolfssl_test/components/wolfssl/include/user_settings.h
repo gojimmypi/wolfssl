@@ -234,8 +234,8 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3 */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3 */
 
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI        */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
@@ -259,12 +259,12 @@
 #endif
 
 /* debug options */
-#define ESP_VERIFY_MEMBLOCK
+// #define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
-#define DEBUG_WOLFSSL_VERBOSE
-#define DEBUG_WOLFSSL
-#define WOLFSSL_ESP32_CRYPT_DEBUG
-#define NO_RECOVER_SOFTWARE_CALC
+// #define DEBUG_WOLFSSL_VERBOSE
+// #define DEBUG_WOLFSSL
+// #define WOLFSSL_ESP32_CRYPT_DEBUG
+// #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
 
