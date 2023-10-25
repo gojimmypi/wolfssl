@@ -840,7 +840,7 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
 static int wc_esp_wait_until_idle(void)
 {
     int ret = 0; /* assume success */
-	int loop_ct = 10000;
+    int loop_ct = 10000;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* ESP32-C3 RISC-V TODO */
