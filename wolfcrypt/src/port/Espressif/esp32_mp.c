@@ -1168,7 +1168,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      * with operand length N = 32 × x,
      * where x ∈ {1, 2, 3, . . . , 64} */
     if (Xs > 64 || Ys > 64) {
-        return MP_HW_FALLBACK;
+        return MP_HW_FALLBACK; /* TODO metric on size fallback */
     }
 
     if (Zs <= sizeof(mp_digit)*8) {
@@ -1189,7 +1189,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     resultWords_sz = bits2words(Xs + Ys);
     /* sanity check */
-    if((hwWords_sz<<5) > ESP_HW_MULTI_RSAMAX_BITS) {
+    if((hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
         ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
     }
@@ -1295,7 +1295,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
 #endif
     } /* end of processing */
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* TODO */
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-S3 The RSA Accelerator supports large-number modular
@@ -1368,6 +1368,81 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         /* 6. read the result form MEM_Z              */
         esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, resultWords_sz);
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* TODO */
+    /* Unlike the ESP32 that is limited to only four operand lengths,
+     * the ESP32-S3 The RSA Accelerator supports large-number modular
+     * multiplication with operands of 128 different lengths.
+     *
+     * X & Y must be represented by the same number of bits. Must be
+     * enough to represent the larger one. */
+
+    /* Figure out how many words we need to
+     * represent each operand & the result. */
+
+    /* Make sure we are within capabilities of hardware. */
+    if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
+        ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
+        ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
+    }
+    if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
+        ESP_LOGW(TAG, "result exceeds max bit length(%d)", ESP_HW_RSAMAX_BIT );
+        ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
+    }
+
+    /* Steps to perform large number multiplication. Calculates Z = X x Y. The number of
+     * bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
+     * maximum number of bits in the X and Y is 2048.
+     * See 20.3.3 of ESP32-S3 technical manual
+     *  1. Lock the hardware so no-one else uses it and wait until it is ready.
+     *  2. Enable/disable interrupt that signals completion -- we don't use the interrupt.
+     *  3. Write number of words required for result to the RSA_MODE_REG (now called RSA_LENGTH_REG).
+     *     Number of words required for the result is 2 * words for operand - 1
+     *  4. Load X, Y operands to memory blocks. Note the Y value must be written to
+     *     right aligned.
+     *  5. Start the operation by writing 1 to RSA_MULT_START_REG, then wait for it
+     *     to complete by monitoring RSA_IDLE_REG (which is now called RSA_QUERY_INTERRUPT_REG).
+     *  6. Read the result out.
+     *  7. Release the hardware lock so others can use it.
+     *  x. Clear the interrupt flag, if you used it (we don't). */
+
+    /* 1. lock HW for use & wait until it is ready. */
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_lock(); /* enables HW clock */
+    } /* the only thing we expect is success or busy */
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
+    }
+
+    /* HW multiply */
+    if (ret == MP_OKAY) {
+        /* 2. Disable completion interrupt signal; we don't use.
+        **    0 => no interrupt; 1 => interrupt on completion. */
+        DPORT_REG_WRITE(RSA_INT_ENA_REG, 0);
+        /* 3. Write number of words required for result. */
+        /* 21.3.3 step 2: Write (/N16 − 1) to the RSA_MODE_REG register */
+        DPORT_REG_WRITE(RSA_MODE_REG, (hwWords_sz * 2 - 1));
+
+        /* 4. Load X, Y operands. Maximum is 64 words (64*8*4 = 2048 bits) */
+        esp_mpint_to_memblock(RSA_X_MEM,
+                              X,
+                              Xs,
+                              hwWords_sz);
+        esp_mpint_to_memblock(RSA_Z_MEM + hwWords_sz * 4,
+                              Y,
+                              Ys,
+                              hwWords_sz);
+
+        /* 5. Start operation and wait until it completes. */
+        process_start(RSA_SET_START_MULT_REG);
+        ret = wait_until_done(RSA_QUERY_CLEAN_REG);
+    }
+    if (ret == MP_OKAY) {
+        /* 6. read the result form MEM_Z              */
+        esp_memblock_to_mpint(RSA_Z_MEM, Z, resultWords_sz);
+    }
+    /* end ESP32-C6 */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-S3 The RSA Accelerator supports large-number modular

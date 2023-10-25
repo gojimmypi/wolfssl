@@ -1,0 +1,22 @@
+ 928  cd /mnt/c/
+  929  ls
+  930  cd SysGCC
+  931  ls
+  932  cd esp32
+  933  ls
+  934  cd esp-idf
+  935  ls
+  936  git clone https://github.com/espressif/esp-idf v5.1
+  937  cd v5.1
+  938  git checkout release/v5.1
+  939  . ./export.sh
+  940  /usr/bin/python3 /mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/idf_tools.py install
+  941  . ./export.sh
+  942  ./install.sh
+  943  . ./export.sh
+  944  cd /usr/bin/python3 /mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/idf_tools.py install
+  945  cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test
+  946  idf.py   flash --port /dev/ttyS31 --baud 115200
+  947  history
+
+
