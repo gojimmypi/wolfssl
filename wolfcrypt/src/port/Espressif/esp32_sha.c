@@ -1602,7 +1602,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
    return ret;
 }
-#endif /* esp_sha_start_process !CONFIG_IDF_TARGET_ESP32C3  */
+#endif /* esp_sha_start_process !CONFIG_IDF_TARGET_ESP32C3/C6  */
 
 /*
 ** process message block
@@ -1644,17 +1644,26 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     *  message: (word32[16])  (*(volatile uint32_t *)(SHA_TEXT_BASE))
     *  ((word32[16])  (*(volatile uint32_t *)(SHA_TEXT_BASE)))
     */
-    if (&data != _active_digest_address)
-    {
+    if (&data != _active_digest_address) {
         ESP_LOGV(TAG, "TODO Moving alternate ctx->for_digest");
         /* move last known digest into HW reg during interleave */
         // sha_ll_write_digest(ctx->sha_type, ctx->for_digest, WC_SHA256_BLOCK_SIZE);
         _active_digest_address = &data;
     }
-    if (ctx->isfirstblock)
-    {
-    //  ets_sha_disable(); /* the act of disable and enable */
-        ets_sha_enable();  /* will clear initial digest     */
+    if (ctx->isfirstblock) {
+        ets_sha_enable(); /* will clear initial digest     */
+        #if defined(DEBUG_WOLFSSL)
+        {
+            this_block_num = 1; /* one-based counter, just for debug info */
+        }
+        #endif
+    }
+    else {
+        #if defined(DEBUG_WOLFSSL)
+        {
+            this_block_num++;
+        }
+        #endif
     }
     /* call Espressif HAL for this hash*/
     sha_hal_hash_block(ctx->sha_type, (void *)(data), word32_to_save, ctx->isfirstblock);

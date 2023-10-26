@@ -391,22 +391,14 @@ static int esp_mp_hw_unlock( void )
         /* Disable RSA hardware */
         periph_module_disable(PERIPH_RSA_MODULE);
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    //    ets_bigint_enable();
-    /* TODO */
         /* Deactivate the RSA accelerator. See 20.3 of ESP32-C3 technical manual.
          * periph_module_enable doesn't seem to be documented and in private folder
          * with v5 release. Maybe it will be deprecated?
-     * The ESP32-C3 RSA Accelerator is activated by:
-     * setting the SYSTEM_CRYPTO_RSA_CLK_EN bit in the SYSTEM_PERIP_CLK_EN1_REG
-     * register and:
-     * clearing the SYSTEM_RSA_MEM_PD bit in the SYSTEM_RSA_PD_CTRL_REG reg.
-     * This releases the RSA Accelerator from reset.*/
-#warning "update, disabled:"
-//        DPORT_REG_SET_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
-        //periph_module_disable(PERIPH_RSA_MODULE);
-        /* we assume the opposite is true to disable: */
-        //DPORT_REG_CLR_BIT(SYSTEM_CRYPTO_RSA_CLK_EN, SYSTEM_PERIP_CLK_EN1_REG);
-        //DPORT_REG_SET_BIT(SYSTEM_RSA_MEM_PD, SYSTEM_RSA_PD_CTRL_REG);
+         * The ESP32-C3 RSA Accelerator is activated by:
+         * setting the SYSTEM_CRYPTO_RSA_CLK_EN bit in the SYSTEM_PERIP_CLK_EN1_REG
+         * register and:
+         * clearing the SYSTEM_RSA_MEM_PD bit in the SYSTEM_RSA_PD_CTRL_REG reg.
+         * This releases the RSA Accelerator from reset.*/
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
             DPORT_REG_CLR_BIT((volatile void *)(DR_REG_RSA_BASE + SYSTEM_CRYPTO_RSA_CLK_EN), SYSTEM_PERIP_CLK_EN1_REG);

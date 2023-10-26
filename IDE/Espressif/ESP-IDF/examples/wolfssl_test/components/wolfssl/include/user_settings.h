@@ -225,39 +225,38 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    // #define ESP_DISABLE_HW_TASK_LOCK
-//    #define NO_ESP32_CRYPT
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH /* to disable all SHA HW */
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3 */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3 */
+    /*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off:*/
+    /*  #define NO_ESP32_CRYPT                 */
 
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI        */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
+    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
-//    #define NO_AES /* even soft AES not working */
-//    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
+
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+    /* end CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-/*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off: */
+    /*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off: */
 
-/*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_ESP32_CRYPT                 */
 
-/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
-/* These are defined automatically in esp32-crypt.h, here for clarity only: */
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C6 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-/*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /* end CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)

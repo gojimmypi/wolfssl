@@ -372,7 +372,7 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
     else {
         ret = 0; /* keylen 24 (192 bit) not supported */
     }
-    ret = 0;
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     if (keylen == 16 || keylen == 32) {
         ret = 1;
@@ -380,6 +380,7 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
     else {
         ret = 0; /* keylen 24 (192 bit) not supported */
     }
+
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     ret = 0; /* not yet implemented */
 #else

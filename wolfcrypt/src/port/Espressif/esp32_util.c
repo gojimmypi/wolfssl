@@ -461,7 +461,7 @@ int ShowExtendedSystemInfo(void)
 #endif
     ESP_LOGI(TAG, "");
 
-    ShowHardwareAccleratoinSettings();
+    esp_ShowHardwareAcclerationSettings();
     ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
