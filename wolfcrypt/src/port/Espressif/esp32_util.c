@@ -597,11 +597,21 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
 
 int esp_hw_show_metrics(void)
 {
-#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
+#if  defined(WOLFSSL_HW_METRICS)
+    #if defined(WOLFSSL_ESP32_CRYPT)
         esp_hw_show_sha_metrics();
-#endif
-#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-    esp_hw_show_mp_metrics();
+    #else
+        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT");
+    #endif
+
+    #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
+        esp_hw_show_mp_metrics();
+    #else
+        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT_RSA_PRI not defined,"
+                      "HW math not enabled");
+    #endif
+#else
+    ESP_LOGV(TAG, "WOLFSSL_HW_METRICS is not enabled");
 #endif
     return 0;
 }
