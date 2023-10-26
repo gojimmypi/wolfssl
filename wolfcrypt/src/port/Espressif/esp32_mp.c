@@ -346,6 +346,10 @@ static int esp_mp_hw_lock()
         periph_module_enable(PERIPH_RSA_MODULE);
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
+            /* TODO: When implementing DS (Digital Signature HW), need to
+             * check if it is in use before disabling: */
+            DPORT_REG_CLR_BIT((volatile void *)(PCR_DS_CONF_REG), PCR_DS_RST_EN );
+
             DPORT_REG_SET_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN );
             DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_RST_EN );
         }
@@ -409,10 +413,13 @@ static int esp_mp_hw_unlock( void )
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        /* TODO: When implementing DS (Digital Signature HW), need to
+         * notify RSA HW is available. */
+
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
-            DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN);
             DPORT_REG_SET_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_RST_EN);
+            DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN);
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
 
@@ -1416,14 +1423,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* HW multiply */
     if (ret == MP_OKAY) {
-        /* 2. Disable completion interrupt signal; we don't use.
-        **    0 => no interrupt; 1 => interrupt on completion. */
+        /* 1. Disable completion interrupt signal; we don't use.
+         * Write 1 (enable) or 0 (disable) to the RSA_INT_ENA_REG register.
+         *    0 => no interrupt; 1 => interrupt on completion. */
         DPORT_REG_WRITE(RSA_INT_ENA_REG, 0);
-        /* 3. Write number of words required for result. */
-        /* 21.3.3 step 2: Write (/N16 − 1) to the RSA_MODE_REG register */
+        /* 2. Write number of words required for result. */
+        /* see 21.3.3 Write (/N16 − 1) to the RSA_MODE_REG register */
         DPORT_REG_WRITE(RSA_MODE_REG, (hwWords_sz * 2 - 1));
 
-        /* 4. Load X, Y operands. Maximum is 64 words (64*8*4 = 2048 bits) */
+        /* 3. Write Xi and Yi for ∈ {0, 1, . . . , n − 1} to memory blocks
+         * RSA_X_MEM and RSA_Z_MEM
+         * Maximum is 64 words (64*8*4 = 2048 bits) */
         esp_mpint_to_memblock(RSA_X_MEM,
                               X,
                               Xs,
@@ -1433,9 +1443,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                               Ys,
                               hwWords_sz);
 
-        /* 5. Start operation and wait until it completes. */
+        /* 4. Write 1 to the RSA_SET_START_MULT register */
         process_start(RSA_SET_START_MULT_REG);
-        ret = wait_until_done(RSA_QUERY_CLEAN_REG);
+
+        /* 5. Wait for the completion of computation, which happens when the
+         * content of RSA_QUERY_IDLE becomes 1 or the RSA interrupt occurs. */
+        ret = wait_until_done(RSA_QUERY_IDLE_REG);
     }
     if (ret == MP_OKAY) {
         /* 6. read the result form MEM_Z              */

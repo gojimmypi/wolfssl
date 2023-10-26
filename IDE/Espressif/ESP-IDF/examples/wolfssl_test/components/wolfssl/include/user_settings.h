@@ -256,7 +256,7 @@
 //    #define NO_ESP_MP_MUL_EVEN_ALT_CALC
 
 
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL 
+/*    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
     #define NO_AES /* even soft AES not working */
@@ -275,12 +275,12 @@
 #endif
 
 /* debug options */
- #define ESP_VERIFY_MEMBLOCK
+// #define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
- #define DEBUG_WOLFSSL_VERBOSE
- #define DEBUG_WOLFSSL
- #define WOLFSSL_ESP32_CRYPT_DEBUG
- #define NO_RECOVER_SOFTWARE_CALC
+// #define DEBUG_WOLFSSL_VERBOSE
+// #define DEBUG_WOLFSSL
+// #define WOLFSSL_ESP32_CRYPT_DEBUG
+// #define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
 
