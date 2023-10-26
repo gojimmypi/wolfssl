@@ -247,17 +247,16 @@
 
 /*  #define NO_ESP32_CRYPT                 */
 /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+
     #define NO_WOLFSSL_ESP32_CRYPT_AES
 /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */ /* mp_mul working! */
 
     /* WIP: mulmod failing when enabled: */
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-//    #define NO_ESP_MP_MUL_EVEN_ALT_CALC
+//  #define NO_ESP_MP_MUL_EVEN_ALT_CALC
 
-
-/*    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
     #define NO_AES /* even soft AES not working */
     #define NO_WOLFSSL_ESP32_CRYPT_AES

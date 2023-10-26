@@ -609,13 +609,16 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     return ret;
 }
 
-/* start HW process */
-static void process_start(u_int32_t reg)
+/* Start HW process. Reg is SoC-specific register. */
+static int process_start(u_int32_t reg)
 {
+    int ret = MP_OKAY;
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
     DPORT_REG_WRITE((volatile uint32_t*)reg, 1);
     ESP_EM__POST_PROCESS_START;
+
+    return ret;
 }
 
 /* wait until RSA math register indicates operation completed */
@@ -1444,14 +1447,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
                               hwWords_sz);
 
         /* 4. Write 1 to the RSA_SET_START_MULT register */
-        process_start(RSA_SET_START_MULT_REG);
+        ret = process_start(RSA_SET_START_MULT_REG);
 
-        /* 5. Wait for the completion of computation, which happens when the
-         * content of RSA_QUERY_IDLE becomes 1 or the RSA interrupt occurs. */
+    }
+    /* 5. Wait for the completion of computation, which happens when the
+        * content of RSA_QUERY_IDLE becomes 1 or the RSA interrupt occurs. */
+    if (ret == MP_OKAY) {
         ret = wait_until_done(RSA_QUERY_IDLE_REG);
     }
+
     if (ret == MP_OKAY) {
-        /* 6. read the result form MEM_Z              */
+        /* 6. read the result from MEM_Z */
         esp_memblock_to_mpint(RSA_Z_MEM, Z, resultWords_sz);
     }
     /* end ESP32-C6 */
@@ -2437,7 +2443,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* step.7 clear and release HW                        */
     esp_mp_hw_unlock();
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* TODO */
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
@@ -2512,7 +2518,84 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* 8. clear and release HW                    */
     esp_mp_hw_unlock();
-    /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
+    /* end if CONFIG_IDF_TARGET_ESP32C3 */
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* TODO */
+    /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
+     * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
+     * maximum number of bits in the X and Y is 2048.
+     * See 20.3.3 of ESP32-S3 technical manual
+     *  1. Wait until the hardware is ready.
+     *  2. Enable/disable interrupt that signals completion -- we don't use the interrupt.
+     *  3. Write (N_bits/32 - 1) to the RSA_MODE_REG (now called RSA_LENGTH_REG).
+     *     Here N_bits is the maximum number of bits in X, Y and M.
+     *  4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG).
+     *  5. Load X, Y, M, r' operands to memory blocks.
+     *  6. Start the operation by writing 1 to RSA_MODEXP_START_REG, then wait for it
+     *     to complete by monitoring RSA_IDLE_REG (which is now called RSA_QUERY_INTERRUPT_REG).
+     *  7. Read the result out.
+     *  8. Release the hardware lock so others can use it.
+     *  x. Clear the interrupt flag, if you used it (we don't). */
+
+    /* 1. Wait until hardware is ready. */
+    if (ret == MP_OKAY) {
+        ret = esp_mp_hw_wait_clean();
+    }
+
+    if (ret == MP_OKAY) {
+        OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
+        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+            ESP_LOGW(TAG, "result exceeds max bit length");
+            ret = MP_VAL; /*  Error: value is not able to be used. */
+        }
+        else {
+            WordsForOperand = bits2words(OperandBits);
+        }
+    }
+
+    if (ret == MP_OKAY) {
+        /* 2. Disable completion interrupt signal; we don't use.
+        **    0 => no interrupt; 1 => interrupt on completion. */
+        DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0);
+
+        /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
+        DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1);
+
+        /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
+        DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
+
+        /* 5. Load X, Y, M, r' operands. */
+        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                              X,
+                              mph->Xs,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE,
+                              Y,
+                              mph->Ys,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE,
+                              M,
+                              mph->Ms,
+                              mph->hwWords_sz);
+        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+                              &(mph->r_inv),
+                              mph->Rs,
+                              mph->hwWords_sz);
+
+        /* 6. Start operation and wait until it completes. */
+        process_start(RSA_MODEXP_START_REG);
+        ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
+    }
+
+    if (MP_OKAY == ret) {
+        /* 7. read the result form MEM_Z              */
+        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+    }
+
+    /* 8. clear and release HW                    */
+    esp_mp_hw_unlock();
+    /* end if CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
@@ -2628,8 +2711,13 @@ int esp_hw_show_mp_metrics(void)
 #if !defined(NO_ESP32_CRYPT)  &&  defined(HW_MATH_ENABLED)
     ret = MP_OKAY;
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+#if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
+    ESP_LOGI(TAG, "esp_mp_mul HW disabled with "
+                  "NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL");
+#else
     /* Metrics: esp_mp_mul() */
+    ESP_LOGI(TAG, ""); /* mul follows */
+    ESP_LOGI(TAG, "esp_mp_mul HW acceleration enabled.");
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
                    esp_mp_mul_usage_ct);
     if (esp_mp_mul_error_ct == 0) {
@@ -2642,9 +2730,14 @@ int esp_hw_show_mp_metrics(void)
     }
 #endif
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+#if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
+    ESP_LOGI(TAG, "esp_mp_mulmod HW disabled with "
+                  "NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD");
+#else
+    /* Metrics: esp_mp_mulmod() */
     ESP_LOGI(TAG, ""); /* mulmod follows */
 
+    ESP_LOGI(TAG, "esp_mp_mulmod HW acceleration enabled.");
     /* Metrics: esp_mp_mulmod() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %lu",
                    esp_mp_mulmod_usage_ct);
@@ -2679,9 +2772,11 @@ int esp_hw_show_mp_metrics(void)
     }
 #endif /* MULMOD disabled: !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-
-
+#if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
+    ESP_LOGI(TAG, "esp_mp_exptmod HW disabled with "
+                  "NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD");
+#else
+    /* Metrics: sp_mp_exptmod() */
     ESP_LOGI(TAG, ""); /* exptmod follows */
 
     ESP_LOGI(TAG, "Number of calls to esp_mp_exptmod: %lu",
