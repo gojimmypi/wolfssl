@@ -114,7 +114,10 @@ struct esp_mp_helper
 #ifdef WOLFSSL_HW_METRICS
     static unsigned long esp_mp_max_used = 0;
 
-    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+        static unsigned long esp_mp_mulmod_small_x_ct = 0;
+        static unsigned long esp_mp_mulmod_small_y_ct = 0;
+
+#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
@@ -123,8 +126,6 @@ struct esp_mp_helper
         static unsigned long esp_mp_mulmod_usage_ct = 0;
         static unsigned long esp_mp_mulmod_fallback_ct = 0;
         static unsigned long esp_mp_mulmod_even_mod_ct = 0;
-        static unsigned long esp_mp_mulmod_small_x_ct = 0;
-        static unsigned long esp_mp_mulmod_small_y_ct = 0;
         static unsigned long esp_mp_mulmod_error_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
@@ -2557,40 +2558,42 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (ret == MP_OKAY) {
         /* 2. Disable completion interrupt signal; we don't use.
         **    0 => no interrupt; 1 => interrupt on completion. */
-        DPORT_REG_WRITE(RSA_INTERRUPT_REG, 0);
+        DPORT_REG_WRITE(RSA_INT_ENA_REG, 0);
 
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
-        DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1);
+        DPORT_REG_WRITE(RSA_MODE_REG, WordsForOperand - 1);
 
-        /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
-        DPORT_REG_WRITE(RSA_M_DASH_REG, mph->mp);
+        /* 4. Write M' value into RSA_M_PRIME_REG  */
+        DPORT_REG_WRITE(RSA_M_PRIME_REG, mph->mp);
 
         /* 5. Load X, Y, M, r' operands. */
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+        esp_mpint_to_memblock(RSA_X_MEM,
                               X,
                               mph->Xs,
                               mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_Y_BLOCK_BASE,
+        esp_mpint_to_memblock(RSA_Y_MEM,
                               Y,
                               mph->Ys,
                               mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_M_BLOCK_BASE,
+        esp_mpint_to_memblock(RSA_M_MEM,
                               M,
                               mph->Ms,
                               mph->hwWords_sz);
-        esp_mpint_to_memblock(RSA_MEM_Z_BLOCK_BASE,
+        esp_mpint_to_memblock(RSA_Z_MEM,
                               &(mph->r_inv),
                               mph->Rs,
                               mph->hwWords_sz);
 
         /* 6. Start operation and wait until it completes. */
-        process_start(RSA_MODEXP_START_REG);
-        ret = wait_until_done(RSA_QUERY_INTERRUPT_REG);
+        /* Write 1 to the RSA_SET_START_MODEXP field of the
+         * RSA_SET_START_MODEXP_REG register to start computation.*/
+        process_start(RSA_SET_START_MODEXP_REG);
+        ret = wait_until_done(RSA_QUERY_IDLE_REG);
     }
 
     if (MP_OKAY == ret) {
         /* 7. read the result form MEM_Z              */
-        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+        esp_memblock_to_mpint(RSA_Z_MEM, Z, BITS_TO_WORDS(mph->Ms));
     }
 
     /* 8. clear and release HW                    */
