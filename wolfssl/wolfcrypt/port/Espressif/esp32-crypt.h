@@ -73,16 +73,19 @@
 **   Used to disabled only hash hardware, all algorithms: SHA2, etc.
 **
 **   NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
-**     When defined, disables only SHA hardware acceleration
+**     When defined, disables only SHA hardware acceleration, uses SW.
 **
 **   NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-**     When defined, disables only SHA-224 hardware acceleration
+**     When defined, disables only SHA-224 hardware acceleration, uses SW.
+**
+**   NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+**     When defined, disables only SHA-384 hardware acceleration, uses SW.
 **
 **   NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-**     When defined, disables only SHA-256 hardware acceleration
+**     When defined, disables only SHA-256 hardware acceleration, uses SW.
 **
 **   NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-**     When defined, disables only SHA-512 hardware acceleration
+**     When defined, disables only SHA-512 hardware acceleration, uses SW.
 **
 ** WOLFSSL_NOSHA512_224
 **   Define to disable SHA-512/224
@@ -114,14 +117,18 @@
 ** WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
 **   When defined, use hardware acceleration esp_mp_mul()
 **   for Large Number Multiplication: Z = X * Y
+**   Currently defined by default in tfm.c, see above to disable.
 **
 ** WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 **   When defined, use hardware acceleration esp_mp_exptmod()
 **   for Large Number Modular Exponentiation Z = X^Y mod M
+**   Currently defined by default in tfm.c, see above to disable.
 **
 ** WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 **   When defined, use hardware acceleration esp_mp_mulmod()
 **   for Large Number Modular Multiplication: Z = X * Y mod M
+**   Currently defined by default in tfm.c, see above to disable.
+**
 **
 *******************************************************************************
 ** Optional Settings:
@@ -175,7 +182,7 @@
 **
 *******************************************************************************
 ** Settings used from <esp_idf_version.h>
-**   (see esp-idf\v[N]\components\esp_common\include
+**   see .\esp-idf\v[N]\components\esp_common\include
 *******************************************************************************
 **
 ** ESP_IDF_VERSION_MAJOR
@@ -291,15 +298,15 @@
         #include <rom/ets_sys.h>
     #endif
 
-/* If for some reason there's a desire to disable specific SHAHW on the C6: */
-/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA                                 */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA     there *is* SHA HW on C6     */
-/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224                              */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224  there *is* SHA224 HW on C6  */
-/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                              */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there *is* SHA225 HW on C6  */
+/* If for some reason there's a desire to disable specific SHA HW on the C6: */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA                                  */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA     there *is* SHA HW on C6      */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224                               */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224  there *is* SHA224 HW on C6   */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                               */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there *is* SHA225 HW on C6   */
 
-    /* Code will fall back to SW with warning if these are removed:         */
+    /* Code will fall back to SW with warning if these are removed:          */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
@@ -344,6 +351,7 @@
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 #endif
+/* end CONFIG_IDF_TARGET_[x] config */
 
 #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL) && \
@@ -617,7 +625,7 @@ extern "C"
 #endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
 #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-        /* Z = X * Y */
+    /* Z = X * Y */
     WOLFSSL_LOCAL int esp_mp_mul(MATH_INT_T* X,
                                  MATH_INT_T* Y,
                                  MATH_INT_T* Z);

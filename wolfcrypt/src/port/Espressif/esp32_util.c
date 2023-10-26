@@ -31,6 +31,7 @@
 
 #include <wolfssl/version.h>
 
+/* some functions are only applicable when hardware encryption is enabled */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
 #if defined(WOLFSSL_ESPIDF)
@@ -43,9 +44,6 @@
 #endif
 
 static const char* TAG = "esp32_util";
-
-/* some functions are only applicable when hardware encryption is enabled */
-#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 
 /* Variable holding number of times ESP32 restarted since first boot.
  * It is placed into RTC memory using RTC_DATA_ATTR and
@@ -134,7 +132,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 ** Specific platforms: Espressif
 */
 #if defined(WOLFSSL_ESPIDF)
-static int ShowExtendedSystemInfo_platform_espressif()
+static int ShowExtendedSystemInfo_platform_espressif(void)
 {
 #if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
     WOLFSSL_VERSION_PRINTF("CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: %u MHz",
@@ -275,7 +273,7 @@ static int ShowExtendedSystemInfo_platform_espressif()
 /*
 ** All platforms: git details
 */
-static int ShowExtendedSystemInfo_git()
+static int ShowExtendedSystemInfo_git(void)
 {
 #if defined(HAVE_WC_INTROSPECTION) && !defined(ALLOW_BINARY_MISMATCH_INTROSPECTION)
 #pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
@@ -334,7 +332,7 @@ static int ShowExtendedSystemInfo_git()
 /*
 ** All platforms: thread details
 */
-static int ShowExtendedSystemInfo_thread()
+static int ShowExtendedSystemInfo_thread(void)
 {
     /* all platforms: stack high water mark check */
 #if defined(SINGLE_THREADED)
@@ -348,7 +346,7 @@ static int ShowExtendedSystemInfo_thread()
 /*
 ** All Platforms: platform details
 */
-static int ShowExtendedSystemInfo_platform()
+static int ShowExtendedSystemInfo_platform(void)
 {
 #if defined(WOLFSSL_ESPIDF)
 #if defined(CONFIG_IDF_TARGET)
@@ -360,16 +358,28 @@ static int ShowExtendedSystemInfo_platform()
     return 0;
 }
 
-int esp_increment_boot_count()
+int esp_increment_boot_count(void)
 {
     return ++_boot_count;
 }
 
-int esp_current_boot_count()
+int esp_current_boot_count(void)
 {
     return _boot_count;
 }
 
+int esp_ShowHardwareAcclerationSettings(void)
+{
+    ESP_LOGI(TAG, "Macro Name      Defined   Not Defined");
+    ESP_LOGI(TAG, "-------------- --------- -------------");
+#ifdef HW_MATH_ENABLED
+    ESP_LOGI(TAG, "HW_MATH_ENABLED    X");
+#else
+    ESP_LOGI(TAG, "HW_MATH_ENABLED                X");
+#endif
+
+    return 0;
+}
 /*
 *******************************************************************************
 ** The internal, portable, but currently private ShowExtendedSystemInfo()
@@ -386,8 +396,8 @@ int ShowExtendedSystemInfo(void)
                   "to disable.");
 #else
     ESP_LOGI(TAG, "SSID and plain text WiFi "
-                  "password not displayed in startup logs."
-                  "Define SHOW_SSID_AND_PASSWORD to enable.");
+                  "password not displayed in startup logs.");
+    ESP_LOGI(TAG, "Define SHOW_SSID_AND_PASSWORD to enable display.");
 #endif
 
 #if defined(WOLFSSL_MULTI_INSTALL_WARNING)
@@ -451,6 +461,7 @@ int ShowExtendedSystemInfo(void)
 #endif
     ESP_LOGI(TAG, "");
 
+    ShowHardwareAccleratoinSettings();
     ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
@@ -462,7 +473,7 @@ int ShowExtendedSystemInfo(void)
     return 0;
 }
 
-int esp_ShowExtendedSystemInfo()
+int esp_ShowExtendedSystemInfo(void)
 {
     /* Someday the ShowExtendedSystemInfo may be global.
      * See https://github.com/wolfSSL/wolfssl/pull/6149 */
