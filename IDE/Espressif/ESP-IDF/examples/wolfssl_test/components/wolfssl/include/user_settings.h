@@ -253,7 +253,8 @@
 /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */ /* mp_mul working! */
 
     /* WIP: mulmod failing when enabled: */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 //  #define NO_ESP_MP_MUL_EVEN_ALT_CALC
 
 //  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
@@ -274,12 +275,12 @@
 #endif
 
 /* debug options */
-// #define ESP_VERIFY_MEMBLOCK
+#define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
-// #define DEBUG_WOLFSSL_VERBOSE
-// #define DEBUG_WOLFSSL
-// #define WOLFSSL_ESP32_CRYPT_DEBUG
-// #define NO_RECOVER_SOFTWARE_CALC
+#define DEBUG_WOLFSSL_VERBOSE
+#define DEBUG_WOLFSSL
+#define WOLFSSL_ESP32_CRYPT_DEBUG
+#define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
 

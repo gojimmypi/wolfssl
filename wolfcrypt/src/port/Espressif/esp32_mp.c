@@ -1971,7 +1971,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      *  8. Release the hardware lock so others can use it.
      *  x. Clear the interrupt flag, if you used it (we don't). */
 
-    /* 1. Wait until hardware is ready. */
+    /* 1. Wait until hardware is ready for esp_mp_mulmod. */
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
     }
@@ -2020,10 +2020,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         process_start(RSA_SET_START_MODMULT_REG); /* we're here in esp_mp_mulmod */
     }
 
+    /* 5. Wait for the completion of computation, which happens when the
+     * content of RSA_QUERY_IDLE becomes 1 or the RSA interrupt occurs. */
     if (ret == MP_OKAY) {
-        ret = wait_until_done(RSA_QUERY_CLEAN_REG);
+        ret = wait_until_done(RSA_QUERY_IDLE_REG);
     }
-
     if (ret == MP_OKAY) {
         /* 7. read the result from MEM_Z              */
         esp_memblock_to_mpint(RSA_Z_MEM, tmpZ, zwords);
