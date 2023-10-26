@@ -213,6 +213,11 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             ret = esp_sha_init_ctx(ctx);
             break;
 
+        case WC_HASH_TYPE_SHA224:
+            ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
+            ret = esp_sha_init_ctx(ctx);
+            break;
+
         case WC_HASH_TYPE_SHA256:
             ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
@@ -358,7 +363,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
                     break;
 
                 default:
-                    /* This should almost occur. We'd need to have an
+                    /* This should almost never occur. We'd need to have an
                     ** uninitialized ctx that just happens to include the
                     ** breadcrumb initializer with the same address. */
                     ESP_LOGW(TAG, "ALERT: unexpected WC_ESP32SHA ctx mode: "
@@ -802,14 +807,15 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
             ret = WC_SHA_DIGEST_SIZE;
             break;
     #endif
+
     #ifdef WOLFSSL_SHA224
-    /*
-        no SHA224 HW at this time.
+        #if (CONFIG_IDF_TARGET_ESP32S3)
         case SHA2_224:
             ret = WC_SHA224_DIGEST_SIZE;
             break;
-    */
+        #endif
     #endif
+
     #ifndef NO_SHA256
         case SHA2_256: /* typically 32 bytes */
             ret = WC_SHA256_DIGEST_SIZE;
@@ -1471,6 +1477,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     switch (sha->sha_type) {
         case SHA1:
             HardwareAlgorithm = 0;
+            break;
+        case SHA2_224:
+            HardwareAlgorithm = 1;
             break;
         case SHA2_256:
             HardwareAlgorithm = 2;
