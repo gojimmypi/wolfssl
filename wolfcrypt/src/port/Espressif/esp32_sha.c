@@ -104,6 +104,7 @@ static const char* TAG = "wolf_hw_sha";
     static unsigned long esp_sha1_hw_hash_usage_ct = 0;
     static unsigned long esp_sha2_224_hw_hash_usage_ct = 0;
     static unsigned long esp_sha2_256_hw_hash_usage_ct = 0;
+    static unsigned long esp_sha256_sw_fallback_usage_ct = 0;
     static unsigned long esp_byte_reversal_checks_ct = 0;
     static unsigned long esp_byte_reversal_needed_ct = 0;
 #endif
@@ -2081,8 +2082,8 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 
 #if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
 int esp_sw_sha256_count_add() {
-    esp_sha1_sw_fallback_usage_ct++;
-    return esp_sha1_sw_fallback_usage_ct;
+    esp_sha256_sw_fallback_usage_ct++;
+    return esp_sha256_sw_fallback_usage_ct;
 }
 
 int esp_hw_show_sha_metrics(void)
@@ -2092,6 +2093,7 @@ int esp_hw_show_sha_metrics(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "------------- wolfSSL ESP HW SHA Metrics----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+
     ESP_LOGI(TAG, "esp_sha_hw_copy_ct            = %lu", esp_sha_hw_copy_ct);
     ESP_LOGI(TAG, "esp_sha1_hw_usage_ct          = %lu", esp_sha1_hw_usage_ct);
     ESP_LOGI(TAG, "esp_sha1_sw_fallback_usage_ct = %lu", esp_sha1_sw_fallback_usage_ct);

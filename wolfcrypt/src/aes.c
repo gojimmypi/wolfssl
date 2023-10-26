@@ -3300,6 +3300,11 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             return wc_AesSetKey_for_ESP32(aes, userKey, keylen, iv, dir);
         }
         else {
+        #if  defined(WOLFSSL_HW_METRICS)
+            /* It is interesting to know how many times we could not complete
+             * AES in hardware due to unsupported lengths. */
+            wc_esp32AesUnupportedLengthCountAdd();
+        #endif
         #ifdef DEBUG_WOLFSSL
             ESP_LOGW(TAG, "wc_AesSetKey HW Fallback, unsupported keylen = %d",
                            keylen);

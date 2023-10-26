@@ -37,7 +37,7 @@
     !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
 #include <wolfssl/wolfcrypt/aes.h>
-#include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 /* breadcrumb tag text for ESP_LOG() */
@@ -48,6 +48,10 @@ static wolfSSL_Mutex aes_mutex;
 
 /* keep track as to whether esp aes is initialized */
 static int espaes_CryptHwMutexInit = 0;
+
+#if defined(WOLFSSL_HW_METRICS)
+    static unsigned long esp_aes_unsupported_length_usage_ct = 0;
+#endif
 
 /*
 * lock hw engine.
@@ -98,7 +102,7 @@ static int esp_aes_hw_InUse()
              * 1 => DMA */
             DPORT_REG_WRITE(AES_DMA_ENABLE_REG, 0);
         }
-        #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+        #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         {
             /* Select working mode. Can be typical or DMA.
              * 0 => typical
@@ -154,15 +158,20 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
     } /* if mode */
 
     /*
-    ** ESP32: see table 22-1 in ESP32 Technical Reference
-    ** ESP32S3: see table 19-2 in ESP32S3 Technical Reference
-    ** mode     Algorithm             ESP32   ESP32S3  ESP32C3
-    **   0       AES-128 Encryption     y        y        y
-    **   1       AES-192 Encryption     y        n        n
-    **   2       AES-256 Encryption     y        y        y
-    **   4       AES-128 Decryption     y        y        y
-    **   5       AES-192 Decryption     y        n        n
-    **   6       AES-256 Decryption     y        y        y
+    ** ESP32:    see table 22-1 in ESP32 Technical Reference
+    ** ESP32-S3: see table 19-2 in ESP32-S3 Technical Reference
+    ** ESP32-C3:
+    ** ESP32-C6: see table 18-2 in ESP32-C6 Technical Reference
+    **
+    ** Mode     Algorithm             ESP32   ESP32S3  ESP32C3 ESP32C6
+    **   0       AES-128 Encryption     y        y        y       y
+    **   1       AES-192 Encryption     y        n        n       n
+    **   2       AES-256 Encryption     y        y        y       y
+    **   3       reserved               n        n        n       n
+    **   4       AES-128 Decryption     y        y        y       y
+    **   5       AES-192 Decryption     y        n        n       n
+    **   6       AES-256 Decryption     y        y        y       y
+    **   7       reserved               n        n        n       n
     */
     switch(ctx->keylen){
         case 24: mode_ += 1; break;
@@ -170,24 +179,47 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
         default: break;
     }
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-    if (mode_ == 1 || mode_ == 5 || mode_ == 7) {
+    /* Some specific modes are not supported on some targets. */
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    #define TARGET_AES_KEY_BASE AES_KEY_BASE
+    if (mode_ == 3 || mode_ > 6) {
         /* this should have been detected in aes.c and fall back to SW */
         ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
         ret = BAD_FUNC_ARG;
     }
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define TARGET_AES_KEY_BASE AES_KEY_BASE
+    if (mode_ == 1 || mode_ == 3 || mode_ == 5 || mode_ > 6) {
+        /* this should have been detected in aes.c and fall back to SW */
+        ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
+        ret = BAD_FUNC_ARG;
+    }
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    if (mode_ == 1 || mode_ == 5 || mode_ == 7) {
+    #define TARGET_AES_KEY_BASE AES_KEY_BASE
+    if (mode_ == 1 || mode_ == 3|| mode_ == 5 || mode_ > 6) {
         /* this should have been detected in aes.c and fall back to SW */
         ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
         ret = BAD_FUNC_ARG;
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define TARGET_AES_KEY_BASE AES_KEY_0_REG
+    if (mode_ == 1 || mode_ == 3 || mode_ == 5 || mode_ > 6) {
+        /* this should have been detected in aes.c and fall back to SW */
+        ESP_LOGE(TAG, "esp_aes_hw_Set_KeyMode unsupported mode: %i", mode_);
+        ret = BAD_FUNC_ARG;
+    }
+#else
+    /* assume all modes supported, use AES_KEY_BASE */
+    #define TARGET_AES_KEY_BASE AES_KEY_BASE
 #endif
 
+    /* */
     if (ret == 0) {
         /* update key */
         for (i = 0; i < (ctx->keylen) / sizeof(word32); i++) {
-            DPORT_REG_WRITE((volatile uint32_t*)(AES_KEY_BASE + (i * 4)),
+            DPORT_REG_WRITE((volatile uint32_t*)(TARGET_AES_KEY_BASE + (i * 4)),
                             *(((word32*)ctx->key) + i)
                            );
         }
@@ -260,7 +292,29 @@ static void esp_aes_bk(const byte* in, byte* out)
 
     /* read-out blocks */
     esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* See ESP32-C6 technical reference manual:
+    ** 18.4.3 Operation process using CPU working mode.
+    ** The ESP32-C6 also supports a DMA mode. (not ywt implemented)
+    **
+    ** Copy text for encrypting/decrypting blocks: */
+    DPORT_REG_WRITE(AES_TEXT_IN_0_REG, inwords[0]);
+    DPORT_REG_WRITE(AES_TEXT_IN_1_REG, inwords[1]);
+    DPORT_REG_WRITE(AES_TEXT_IN_2_REG, inwords[2]);
+    DPORT_REG_WRITE(AES_TEXT_IN_3_REG, inwords[3]);
+
+    /* start engine */
+    DPORT_REG_WRITE(AES_TRIGGER_REG, 1);
+
+    /* wait until finishing the process */
+    while (DPORT_REG_READ(AES_STATE_REG) != 0) {
+        /* waiting for the hardware accelerator to complete operation. */
+    }
+
+    /* read-out blocks */
+    esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_0_REG, 4);
 #else
+    /* TODO: properly re-order this */
     /* ESP32 */
     /* copy text for encrypting/decrypting blocks */
     DPORT_REG_WRITE(AES_TEXT_BASE, inwords[0]);
@@ -320,7 +374,12 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
     }
     ret = 0;
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    ret = 0; /* not yet implemented */
+    if (keylen == 16 || keylen == 32) {
+        ret = 1;
+    }
+    else {
+        ret = 0; /* keylen 24 (192 bit) not supported */
+    }
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     ret = 0; /* not yet implemented */
 #else
@@ -532,3 +591,30 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
 #endif /* WOLFSSL_ESP32_CRYPT */
 #endif /* NO_AES */
+
+#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
+int wc_esp32AesUnupportedLengthCountAdd() {
+    esp_aes_unsupported_length_usage_ct++;
+    return esp_aes_unsupported_length_usage_ct;
+}
+
+
+int esp_hw_show_aes_metrics(void)
+{
+    int ret = 0;
+#if defined(WOLFSSL_ESP32_CRYPT)
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "------------- wolfSSL ESP HW AES Metrics----------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+
+    ESP_LOGI(TAG, "esp_aes_unsupported_length_usage_ct = %lu",
+                   esp_aes_unsupported_length_usage_ct);
+#else
+    /* no HW math, no HW math metrics */
+    ret = 0;
+#endif /* HW_MATH_ENABLED */
+
+
+    return ret;
+}
+#endif /* WOLFSSL_HW_METRICS */

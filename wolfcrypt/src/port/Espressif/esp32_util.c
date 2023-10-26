@@ -27,6 +27,8 @@
 */
 
 #include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
 #include <wolfssl/version.h>
 
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
@@ -609,6 +611,13 @@ int esp_hw_show_metrics(void)
     #else
         ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT_RSA_PRI not defined,"
                       "HW math not enabled");
+    #endif
+
+    #if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
+        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32_CRYPT_AES is defined,"
+                      "HW AES not enabled");
+    #else
+        esp_hw_show_aes_metrics();
     #endif
 #else
     ESP_LOGV(TAG, "WOLFSSL_HW_METRICS is not enabled");

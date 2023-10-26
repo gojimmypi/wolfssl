@@ -400,7 +400,7 @@
         #if defined(CONFIG_IDF_TARGET_ESP32C2) \
          || defined(CONFIG_IDF_TARGET_ESP32C3) \
          || defined(CONFIG_IDF_TARGET_ESP32C6)
-            /* ok, only the know C@, C3, C6 chips allowed */
+            /* ok, only the known C2, C3, C6 chips allowed */
         #else
             #error "WOLFSSL_SP_RISCV32 can only be used on RISC-V architecture"
         #endif

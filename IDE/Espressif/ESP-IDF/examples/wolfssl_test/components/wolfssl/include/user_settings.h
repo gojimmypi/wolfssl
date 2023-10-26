@@ -241,32 +241,31 @@
 
 //    #define NO_AES /* even soft AES not working */
 //    #define NO_WOLFSSL_ESP32_CRYPT_AES
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C6 */
+/*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off: */
 
 /*  #define NO_ESP32_CRYPT                 */
 /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C6 */
 
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
 /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */ /* mp_mul working! */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-    /* WIP: mulmod failing when enabled: */
-//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-//  #define NO_ESP_MP_MUL_EVEN_ALT_CALC
-
-//  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-
-    #define NO_AES /* even soft AES not working */
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
+//    #define NO_AES /* even soft AES not working */
+//    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    /* end CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+
+    /* end CONFIG_IDF_TARGET_ESP32H2 */
 #else
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
