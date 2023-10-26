@@ -1548,6 +1548,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* step.7 clear and release HW                    */
     esp_mp_hw_unlock();
 
+
+
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (ret == MP_OKAY) {
         if (!mp_iszero(Z) && res_sign) {
@@ -1561,6 +1563,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
     }
 #endif
+
+    if (ret == MP_OKAY) {
+        /* never clean the result for anything other than success, as we may
+         * fall back to SW and we don't want to muck up operand values. */
+        esp_clean_result(Z, 0);
+    }
 
 #ifdef DEBUG_WOLFSSL
     if (mp_cmp(X, X2) != 0) {
@@ -1607,12 +1615,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         esp_mp_mul_error_ct++; /* includes fallback */
     }
 #endif
-
-    if (ret == MP_OKAY) {
-        /* never clean the result for anything other than success, as we may
-         * fall back to SW and we don't want to muck up operand values. */
-        esp_clean_result(Z, 0);
-    }
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mul \n");
 
