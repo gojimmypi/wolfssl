@@ -1195,7 +1195,22 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_FAIL("AES      test failed!\n", ret);
     else
         TEST_PASS("AES      test passed!\n");
+#endif
+
+#ifdef WOLFSSL_SHA224
+    if ( (ret = sha224_test()) != 0)
+        TEST_FAIL("SHA-224  test failed!\n", ret);
+    else
+        TEST_PASS("SHA-224  test passed!\n");
+#endif
+
+    #ifdef WOLFSSL_SHA224
+        if ( (ret = hmac_sha224_test()) != 0)
+            TEST_FAIL("HMAC-SHA224 test failed!\n", ret);
+        else
+            TEST_PASS("HMAC-SHA224 test passed!\n");
     #endif
+
 
 #ifdef WOLFSSL_AES_192
     if ( (ret = aes192_test()) != 0)
@@ -1238,6 +1253,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("SHA-224  test passed!\n");
 #endif
+
 
 
 #ifdef WOLFSSL_SHA384
@@ -1404,6 +1420,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif /* !defined(WOLFSSL_NOSHA512_256) & !FIPS ... */
 
 #endif /* WOLFSSL_SHA512 */
+
 
 #ifdef WOLFSSL_SHA3
     if ( (ret = sha3_test()) != 0)

@@ -214,8 +214,13 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             break;
 
         case WC_HASH_TYPE_SHA224:
+        #ifdef CONFIG_IDF_TARGET_ESP32S3
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
+        #else
+            /* Don't call init, always SW as there's no HW. */
+            ctx->mode = ESP32_SHA_SW;
+        #endif
             break;
 
         case WC_HASH_TYPE_SHA256:
@@ -1726,9 +1731,11 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
             esp_sha1_hw_hash_usage_ct++;
         break;
 
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
         case SHA2_224:
             esp_sha2_224_hw_hash_usage_ct++;
         break;
+    #endif
 
         case SHA2_256:
             esp_sha2_256_hw_hash_usage_ct++;
@@ -1966,12 +1973,15 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
         wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA256_BLOCK_SIZE);
         break;
 
+#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     case SHA2_224:
-#if defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(DEBUG_WOLFSSL_VERBOSE)
         ESP_LOGV(TAG, "    confirmed SHA224 type call match");
-#endif
+    #endif
         wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA224_BLOCK_SIZE);
         break;
+#endif
+
     default:
         ret = -1;
         ESP_LOGE(TAG, "    ERROR SHA type call mismatch");

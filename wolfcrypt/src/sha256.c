@@ -1364,9 +1364,9 @@ static int InitSha256(wc_Sha256* sha256)
 
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-//            if (sha256->ctx.mode == ESP32_SHA_INIT) {
-//                esp_sha_try_hw_lock(&sha256->ctx);
-//            }
+            if (sha256->ctx.mode == ESP32_SHA_INIT) {
+                esp_sha_try_hw_lock(&sha256->ctx);
+            }
             if (sha256->ctx.mode == ESP32_SHA_SW) {
                 ret = XTRANSFORM(sha256, (const byte*)local);
             }
@@ -1458,12 +1458,12 @@ static int InitSha256(wc_Sha256* sha256)
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-//        if (sha256->ctx.mode == ESP32_SHA_INIT) {
-//            esp_sha_try_hw_lock(&sha256->ctx);
-//        }
+        if (sha256->ctx.mode == ESP32_SHA_INIT) {
+            esp_sha_try_hw_lock(&sha256->ctx);
+        }
         /* depending on architecture and ctx.mode value
          * we may or may not need default digest */
-        set_default_digest256(sha256);
+        // set_default_digest256(sha256);
         if (sha256->ctx.mode == ESP32_SHA_SW) {
             ret = XTRANSFORM(sha256, (const byte*)local);
         }
@@ -1752,18 +1752,19 @@ static int InitSha256(wc_Sha256* sha256)
         sha224->W = NULL;
     #endif
 
-    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
-       (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
-        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
+        #if defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224)
         /* We know this is a fresh, uninitialized item, so set to INIT */
         if (sha224->ctx.mode != ESP32_SHA_SW) {
             ESP_LOGV(TAG, "Set sha224 ctx mode init to ESP32_SHA_SW. "
                           "Prior value: %d", sha224->ctx.mode);
         }
         /* no sha224 HW support is available, set to SW */
-//        sha224->ctx.mode = ESP32_SHA_SW;
-        /* We know this is a fresh, uninitialized item, so set to INIT */
-        sha224->ctx.mode = ESP32_SHA_INIT;
+            sha224->ctx.mode = ESP32_SHA_SW;
+        #else
+            /* We know this is a fresh, uninitialized item, so set to INIT */
+            sha224->ctx.mode = ESP32_SHA_INIT;
+        #endif
     #endif
 
         ret = InitSha224(sha224);
@@ -1814,7 +1815,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        (defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-//        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+        sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
         ret = Sha256Update((wc_Sha256*)sha224, data, len);
@@ -1842,9 +1843,10 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-        // ret = esp_sha_init(&(sha224->ctx), WC_HASH_TYPE_SHA224);
 
-        // sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
+        /* nothing enabled here for C3 success */
+        // ret = esp_sha_init(&(sha224->ctx), WC_HASH_TYPE_SHA224);
+ //       sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif
 
         ret = Sha256Final((wc_Sha256*)sha224);
@@ -2123,7 +2125,10 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-        ret = esp_sha224_ctx_copy(src, dst);
+        /* regardless of any other settings, there's no SHA-224 HW on ESP32 */
+        #ifndef CONFIG_IDF_TARGET_ESP32
+            ret = esp_sha224_ctx_copy(src, dst);
+        #endif
     #endif
 
     #ifdef WOLFSSL_HASH_FLAGS
