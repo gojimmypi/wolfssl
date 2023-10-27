@@ -212,18 +212,27 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    #define DEBUG_WOLFSSL_SHA_MUTEX
-    #define WOLFSSL_TEST_STRAY 1
+    // #define DEBUG_WOLFSSL_SHA_MUTEX
+    // #define WOLFSSL_TEST_STRAY 1
+
+    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA223 HW on ESP32  */
+    /* end CONFIG_IDF_TARGET_ESP32C3 */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /* end CONFIG_IDF_TARGET_ESP32S2 */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+    /* end CONFIG_IDF_TARGET_ESP32S3 */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off:*/
     /*  #define NO_ESP32_CRYPT                 */
