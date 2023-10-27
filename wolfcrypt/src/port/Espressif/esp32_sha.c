@@ -1157,8 +1157,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         /* created, but not yet locked */
         ret = esp_CryptHwMutexInit(&sha_mutex);
         if (ret == 0) {
-            ESP_LOGI(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
+            ESP_LOGI(TAG, "esp_CryptHwMutexInit sha_mutex init success.");
             mutex_ctx_owner = 0;
         #endif
         }

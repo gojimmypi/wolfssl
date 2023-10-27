@@ -41,9 +41,10 @@ Reminder than when building on WSL in `/mnt/c` there will be a noticeable perfor
 Example build on WSL, assuming `git clone` from `c:\workspace`:
 
 ```
-# Optionally install wolfSSL component
-# cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF
-./setup.sh
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
+
+echo "Run export.sh from ${WRK_IDF_PATH}"
+. ${WRK_IDF_PATH}/export.sh
 
 # switch to test example
 cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_test

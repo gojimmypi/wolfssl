@@ -27,6 +27,7 @@
 */
 
 #include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 #include <wolfssl/version.h>
@@ -61,6 +62,11 @@ RTC_DATA_ATTR static int _boot_count = 0;
 
 /* big nums can be very long, perhaps unitialized, so limit displayed words */
 #define MAX_WORDS_ESP_SHOW_MP 32
+
+/* Some helpers for macro display */
+#define STRINGIFY_IF_NOT_DEFINED_(macro) #macro
+#define STRINGIFY_IF_NOT_DEFINED(macro) STRINGIFY_IF_NOT_DEFINED_(macro)
+static int esp_ShowMacroStatus_need_header = 0;
 
 /*
  * initialize our mutex used to lock hardware access
@@ -368,15 +374,52 @@ int esp_current_boot_count(void)
     return _boot_count;
 }
 
+
+
+static int esp_ShowMacroStatus(char* s, char* not_defined)
+{
+    char msg[] =   "                                       ";
+    size_t i = 0;
+    #define MAX_STATUS_NAME_LENGTH 14
+    #define ESP_SMS_ENA_POS 20
+    #define ESP_SMS_DIS_POS 30
+
+    /* save our string (s) into the space-padded message (msg) */
+    while (s[i] != '\0' && msg[i] != '\0' && (i < MAX_STATUS_NAME_LENGTH)) {
+        msg[i] = s[i];
+        i++;
+    }
+
+    /* depending on if not defined, put an "x" in the appropriate column */
+    if (not_defined == NULL || not_defined[0] == '\0') {
+        msg[ESP_SMS_DIS_POS] = 'x';
+    }
+    else {
+        msg[ESP_SMS_ENA_POS] = 'x';
+    }
+
+    /* do we need a header? */
+    if (esp_ShowMacroStatus_need_header) {
+        ESP_LOGI(TAG, "Macro Name       Defined   Not Defined");
+        ESP_LOGI(TAG, "--------------- --------- -------------");
+        /*            0123456789012345678901234567890  */
+        /*                      1         2         3  */
+        esp_ShowMacroStatus_need_header = 0;
+    }
+
+    /* show the macro name with the "x" in the defined/not defined column */
+    ESP_LOGI(TAG, "%s", msg);
+    return 0;
+}
+
+
+
 int esp_ShowHardwareAcclerationSettings(void)
 {
-    ESP_LOGI(TAG, "Macro Name      Defined   Not Defined");
-    ESP_LOGI(TAG, "-------------- --------- -------------");
-#ifdef HW_MATH_ENABLED
-    ESP_LOGI(TAG, "HW_MATH_ENABLED    X");
-#else
-    ESP_LOGI(TAG, "HW_MATH_ENABLED                X");
-#endif
+    esp_ShowMacroStatus_need_header = 1;
+    esp_ShowMacroStatus("HW_MATH_ENABLED", STRINGIFY_IF_NOT_DEFINED(HW_MATH_ENABLED));
+    esp_ShowMacroStatus("RSA_LOW_MEM",     STRINGIFY_IF_NOT_DEFINED(RSA_LOW_MEM));
+    esp_ShowMacroStatus("WOLFSSL_SHA224",  STRINGIFY_IF_NOT_DEFINED(WOLFSSL_SHA224));
 
     return 0;
 }
@@ -427,12 +470,6 @@ int ShowExtendedSystemInfo(void)
 #if defined(LIBWOLFSSL_VERSION_HEX)
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_HEX = %x",
                             LIBWOLFSSL_VERSION_HEX);
-#endif
-
-#ifdef RSA_LOW_MEM
-    ESP_LOGI(TAG, "RSA_LOW_MEM is enabled");
-#else
-    ESP_LOGI(TAG, "RSA_LOW_MEM is NOT enabled");
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */

@@ -233,7 +233,9 @@ void app_main(void)
     */
     int loops = 0;
     do {
-        esp_hw_show_metrics();
+        #if defined(WOLFSSL_HW_METRICS)
+            esp_hw_show_metrics();
+        #endif
         ret = wolf_test_task();
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 

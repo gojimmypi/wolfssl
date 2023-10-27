@@ -284,12 +284,12 @@
 #endif
 
 /* debug options */
-#define ESP_VERIFY_MEMBLOCK
+//#define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
-#define DEBUG_WOLFSSL_VERBOSE
-#define DEBUG_WOLFSSL
-#define WOLFSSL_ESP32_CRYPT_DEBUG
-#define NO_RECOVER_SOFTWARE_CALC
+//#define DEBUG_WOLFSSL_VERBOSE
+//#define DEBUG_WOLFSSL
+//#define WOLFSSL_ESP32_CRYPT_DEBUG
+//#define NO_RECOVER_SOFTWARE_CALC
 
 /* optionally turn off individual math HW acceleration features */
 
