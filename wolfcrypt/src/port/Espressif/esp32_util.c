@@ -448,6 +448,8 @@ int ShowExtendedSystemInfo(void)
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );
 /*  ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount); */
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* no CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ */
 #else
     ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
