@@ -692,14 +692,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_siv_test(void);
 #endif
 
 #if defined(WOLFSSL_ESPIDF_ERROR_PAUSE)
+    /* When defined, pause at error condition rather than exit with error. */
     #define ERROR_OUT(err, eLabel) \
-       do { \
-           ret = (err); \
-           ESP_LOGE(TAG, "ESP Error! ret = %d ", ret); \
-           while (1) { \
-               vTaskDelay(60000); \
-           } \
-       while (0)
+        do { \
+            ret = (err); \
+            esp_ShowExtendedSystemInfo(); \
+            ESP_LOGE(TAG, "ESP Error! ret = %d ", err); \
+            while (1) { \
+                vTaskDelay(60000); \
+            } \
+        while (0)
 #else
     #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
 #endif
