@@ -1,5 +1,27 @@
 
 
+# wolfSSL Espressif IDE
+
+* [Component Manager Publisher](./component-manager/README.md)
+* [ESP-IDF Examples](./ESP-IDF/README.md)
+
+## Notes:
+
+WSL environment:
+
+Contents of `/etc/wsl.conf`:
+```text
+[automount]
+options = "metadata"
+```
+
+To ignore changes in file attributes, see https://github.com/microsoft/WSL/issues/936#issuecomment-1751469229
+
+```
+git config core.filemode false
+```
+
+
 Quick start
 ```
 
