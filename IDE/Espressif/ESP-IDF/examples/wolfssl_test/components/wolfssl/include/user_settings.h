@@ -130,9 +130,9 @@
     #define ESP32_USE_RSA_PRIMITIVE
     /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
-    #define EPS_RSA_EXPT_XBTIS           9 /* NOTE HW unreliable for small values! */
+    #define EPS_RSA_EXPT_XBTIS           0 /* NOTE HW unreliable for small values! */
     /* X and Y of X * Y mod P greater than                         */
-    #define ESP_RSA_MULM_BITS            16
+    #define ESP_RSA_MULM_BITS            0
 #endif
 
 
