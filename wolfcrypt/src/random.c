@@ -1866,9 +1866,13 @@ int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
             if (ret == DRBG_SUCCESS)
                 ret = Hash_DRBG_Generate((DRBG_internal *)rng->drbg, output, sz);
 
-            ForceZero(newSeed, sizeof(newSeed));
         #ifdef WOLFSSL_SMALL_STACK
+            if (newSeed != NULL) {
+                ForceZero(newSeed, SEED_SZ + SEED_BLOCK_SZ);
+            }
             XFREE(newSeed, rng->heap, DYNAMIC_TYPE_SEED);
+        #else
+            ForceZero(newSeed, sizeof(newSeed));
         #endif
         }
         else {
@@ -3445,70 +3449,6 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return 0;
     }
 
-#elif defined(WOLFSSL_RENESAS_TSIP)
-#if defined(WOLFSSL_RENESA_TSIP_IAREWRX)
-   #include "r_bsp/mcu/all/r_rx_compiler.h"
-#endif
-   #include "r_bsp/platform.h"
-    #include "r_tsip_rx_if.h"
-
-    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
-    {
-        int ret = 0;
-        word32 buffer[4];
-
-        while (sz > 0) {
-            word32 len = sizeof(buffer);
-
-            if (sz < len) {
-                len = sz;
-            }
-            /* return 4 words random number*/
-            ret = R_TSIP_GenerateRandomNumber((uint32_t*)buffer);
-            if(ret == TSIP_SUCCESS) {
-                XMEMCPY(output, &buffer, len);
-                output += len;
-                sz -= len;
-            } else
-                return ret;
-        }
-        return ret;
-    }
-#elif defined(WOLFSSL_RENESAS_FSPSM) || \
-          defined(WOLFSSL_RENESAS_FSPSM_CRYPTONLY)
-
-#if defined(WOLFSSL_RENESAS_SCEPROTECT)
-    #include "r_sce.h"
-    #define R_RANDOM_GEN(b) R_SCE_RandomNumberGenerate(b)
-#elif defined(WOLFSSL_RENESAS_RSIP)
-    #include "r_rsip.h"
-
-    extern rsip_ctrl_t rsip_ctrl;
-    #define R_RANDOM_GEN(b) R_RSIP_RandomNumberGenerate(&rsip_ctrl,b)
-#endif
-
-    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
-    {
-        int ret = 0;
-        word32 buffer[4];
-
-        while (sz > 0) {
-            word32 len = sizeof(buffer);
-
-            if (sz < len) {
-                len = sz;
-            }
-            /* return 4 words random number*/
-            ret = R_RANDOM_GEN(buffer);
-            if(ret == FSP_SUCCESS) {
-                XMEMCPY(output, &buffer, len);
-                output += len;
-                sz -= len;
-            } else
-                return ret;
-        }
-        return ret;
-    }
 
 #elif defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_TRNG)
     #include "hal_data.h"

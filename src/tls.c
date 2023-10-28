@@ -106,7 +106,8 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions);
 #endif
 
 /* Warn if secrets logging is enabled */
-#if defined(SHOW_SECRETS) || defined(WOLFSSL_SSLKEYLOGFILE)
+#if (defined(SHOW_SECRETS) || defined(WOLFSSL_SSLKEYLOGFILE)) && \
+    !defined(WOLFSSL_KEYLOG_EXPORT_WARNED)
     #ifndef _MSC_VER
         #warning The SHOW_SECRETS and WOLFSSL_SSLKEYLOGFILE options should only be used for debugging and never in a production environment
     #else
@@ -4704,8 +4705,7 @@ int TLSX_ValidateSupportedCurves(const WOLFSSL* ssl, byte first, byte second,
     #ifdef OPENSSL_EXTRA
         /* skip if name is not in supported ECC range
          * or disabled by user */
-        if (curve->name > WOLFSSL_ECC_MAX ||
-            wolfSSL_curve_is_disabled(ssl, curve->name))
+        if (wolfSSL_curve_is_disabled(ssl, curve->name))
             continue;
     #endif
 
@@ -6677,13 +6677,17 @@ static int TLSX_CA_Names_Parse(WOLFSSL *ssl, const byte* input,
         DecodedCert cert[1];
 #endif
 
-        if (length < OPAQUE16_LEN)
-            return BUFFER_ERROR;
-        ato16(input, &extLen);
-        idx += OPAQUE16_LEN;
-
-        if (idx + extLen > length)
+        if (length < OPAQUE16_LEN) {
             ret = BUFFER_ERROR;
+        }
+
+        if (ret == 0) {
+            ato16(input, &extLen);
+            idx += OPAQUE16_LEN;
+
+            if (idx + extLen > length)
+                ret = BUFFER_ERROR;
+        }
 
         if (ret == 0) {
             InitDecodedCert(cert, input + idx, extLen, ssl->heap);
@@ -7434,12 +7438,6 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
     }
 
     if (kse->key == NULL) {
-    #if defined(WOLFSSL_RENESAS_TSIP_TLS)
-        ret = tsip_Tls13GenEccKeyPair(ssl, kse);
-        if (ret != CRYPTOCB_UNAVAILABLE) {
-            return ret;
-        }
-    #endif
         /* Allocate an ECC key to hold private key. */
         kse->key = (byte*)XMALLOC(sizeof(ecc_key), ssl->heap, DYNAMIC_TYPE_ECC);
         if (kse->key == NULL) {
@@ -7454,6 +7452,12 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
             kse->keyLen = keySize;
             kse->pubKeyLen = keySize * 2 + 1;
 
+        #if defined(WOLFSSL_RENESAS_TSIP_TLS)
+            ret = tsip_Tls13GenEccKeyPair(ssl, kse);
+            if (ret != CRYPTOCB_UNAVAILABLE) {
+                return ret;
+            }
+        #endif
             /* setting eccKey means okay to call wc_ecc_free */
             eccKey = (ecc_key*)kse->key;
 
@@ -8650,8 +8654,7 @@ static int TLSX_SupportedGroups_Find(const WOLFSSL* ssl, word16 name,
     TLSX*          extension;
     SupportedCurve* curve = NULL;
 
-    if ((extension = TLSX_Find(extensions,
-                                              TLSX_SUPPORTED_GROUPS)) == NULL) {
+    if ((extension = TLSX_Find(extensions, TLSX_SUPPORTED_GROUPS)) == NULL) {
         if ((extension = TLSX_Find(ssl->ctx->extensions,
                                               TLSX_SUPPORTED_GROUPS)) == NULL) {
             return 0;
@@ -8722,7 +8725,7 @@ int TLSX_KeyShare_Parse_ClientHello(const WOLFSSL* ssl,
 int TLSX_KeyShare_Parse(WOLFSSL* ssl, const byte* input, word16 length,
                                byte msgType)
 {
-    int ret;
+    int ret = 0;
     KeyShareEntry *keyShareEntry = NULL;
     word16 group;
 
@@ -8802,12 +8805,7 @@ int TLSX_KeyShare_Parse(WOLFSSL* ssl, const byte* input, word16 length,
                 return ret;
         }
 
-#ifdef HAVE_PQC
-        /* For post-quantum groups, do this in TLSX_PopulateExtensions(). */
-        if (!WOLFSSL_NAMED_GROUP_IS_PQC(group))
-#endif
-            ret = TLSX_KeyShare_Use(ssl, group, 0, NULL, NULL, &ssl->extensions);
-
+        ret = TLSX_KeyShare_Use(ssl, group, 0, NULL, NULL, &ssl->extensions);
         if (ret == 0)
             ssl->session->namedGroup = ssl->namedGroup = group;
     }
@@ -9632,6 +9630,7 @@ int TLSX_KeyShare_Setup(WOLFSSL *ssl, KeyShareEntry* clientKSE)
     serverKSE->keLen = clientKSE->keLen;
     clientKSE->ke = NULL;
     clientKSE->keLen = 0;
+    ssl->namedGroup = serverKSE->group;
 
     TLSX_KeyShare_FreeAll((KeyShareEntry*)extension->data, ssl->heap);
     extension->data = (void *)serverKSE;
@@ -10141,6 +10140,8 @@ static WC_INLINE byte GetHmacLength(int hmac)
         case sm3_mac:
             return WC_SM3_DIGEST_SIZE;
     #endif
+        default:
+            break;
     }
     return 0;
 }
@@ -12968,19 +12969,8 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
                     namedGroup = kse->group;
             }
             if (namedGroup != WOLFSSL_NAMED_GROUP_INVALID) {
-#ifdef HAVE_PQC
-                /* For KEMs, the key share has already been generated, but not
-                 * if we are resuming. */
-                if (!WOLFSSL_NAMED_GROUP_IS_PQC(namedGroup)
-#ifdef HAVE_SESSION_TICKET
-                    || ssl->options.resuming
-#endif /* HAVE_SESSION_TICKET */
-                   )
-#endif /* HAVE_PQC */
-                {
-                    ret = TLSX_KeyShare_Use(ssl, namedGroup, 0, NULL, NULL,
-                            &ssl->extensions);
-                }
+                ret = TLSX_KeyShare_Use(ssl, namedGroup, 0, NULL, NULL,
+                        &ssl->extensions);
                 if (ret != 0)
                     return ret;
             }

@@ -752,6 +752,18 @@ static void SetKeyShare(WOLFSSL* ssl, int onlyKeyShare, int useX25519,
                 else
                     err_sys("unable to use curve secp256r1");
             } while (ret == WC_PENDING_E);
+        #elif defined(WOLFSSL_SM2)
+            do {
+                ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+                if (ret == WOLFSSL_SUCCESS)
+                    groups[count++] = WOLFSSL_ECC_SM2P256V1;
+            #ifdef WOLFSSL_ASYNC_CRYPT
+                else if (ret == WC_PENDING_E)
+                    wolfSSL_AsyncPoll(ssl, WOLF_POLL_FLAG_CHECK_HW);
+            #endif
+                else
+                    err_sys("unable to use curve sm2p256r1");
+            } while (ret == WC_PENDING_E);
         #endif
     #endif
         }
@@ -3324,6 +3336,11 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
             err_sys("Can't set DTLS ConnectionID");
     }
 #endif /* WOLFSSL_DTLS_CID */
+
+#ifdef WOLFSSL_DTLS_CH_FRAG
+    if (doDTLS)
+        wolfSSL_dtls13_allow_ch_frag(ssl, 1);
+#endif
 
 #ifndef WOLFSSL_CALLBACKS
         if (nonBlocking) {

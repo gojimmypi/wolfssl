@@ -610,6 +610,9 @@ const char* wc_GetErrorString(int error)
     case RSA_HW_VALIDATION_ACTIVE:
         return "Hardware acceleration will call into SW to validate result";
 
+    case AES_EAX_AUTH_E:
+        return "AES-EAX Authentication check fail";
+
     default:
         return "unknown error number";
 

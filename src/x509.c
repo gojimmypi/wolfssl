@@ -569,6 +569,10 @@ static int wolfssl_dns_entry_othername_to_gn(DNS_entry* dns,
         static const unsigned char upn_oid[] = {
             0x2B, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x14, 0x02, 0x03
         };
+        /* FASCN OID: 2.16.840.1.101.3.6.6 */
+        static const unsigned char fascn_oid[] = {
+            0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x06, 0x06
+        };
         const unsigned char* oid;
         word32 oidSz;
 
@@ -577,6 +581,10 @@ static int wolfssl_dns_entry_othername_to_gn(DNS_entry* dns,
             if (dns->oidSum == UPN_OID) {
                 oid = upn_oid;
                 oidSz = (word32)sizeof(upn_oid);
+            }
+            else if (dns->oidSum == FASCN_OID) {
+                oid = fascn_oid;
+                oidSz = (word32)sizeof(fascn_oid);
             }
             else {
                 goto err;
@@ -1540,15 +1548,19 @@ int wolfSSL_X509V3_EXT_print(WOLFSSL_BIO *out, WOLFSSL_X509_EXTENSION *ext,
                     if (sk->next) {
                         if ((valLen = XSNPRINTF(val, len, "%*s%s,",
                                       indent, "", str->strData))
-                            >= len)
+                            >= len) {
+                            XFREE(val, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                             return rc;
+                        }
                     } else {
                         if ((valLen = XSNPRINTF(val, len, "%*s%s",
                                       indent, "", str->strData))
-                            >= len)
+                            >= len) {
+                            XFREE(val, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                             return rc;
+                        }
                     }
-                    if (tmpLen + valLen > tmpSz) {
+                    if ((tmpLen + valLen) >= tmpSz) {
                         XFREE(val, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                         return rc;
                     }
@@ -6472,7 +6484,8 @@ static int X509PrintSignature_ex(WOLFSSL_BIO* bio, byte* sig,
                     break;
                 }
             }
-            if (valLen >= (int)sizeof(tmp) - tmpLen - 1) {
+            if ((tmpLen < 0) || (valLen < 0) ||
+                    (valLen >= ((int)sizeof(tmp) - tmpLen - 1))) {
                 ret = WOLFSSL_FAILURE;
                 break;
             }
@@ -12815,6 +12828,7 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
                 >= tmpSz)
             {
                 WOLFSSL_MSG("buffer overrun");
+                XFREE(tmp, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                 return WOLFSSL_FAILURE;
             }
 
@@ -12825,6 +12839,7 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
                 >= tmpSz)
             {
                 WOLFSSL_MSG("buffer overrun");
+                XFREE(tmp, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                 return WOLFSSL_FAILURE;
             }
             tmpSz = len + nameStrSz + 1; /* 1 for '=' */

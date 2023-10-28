@@ -138,9 +138,14 @@ WOLFSSL_LOCAL void GHASH(Gcm* gcm, const byte* a, word32 aSz, const byte* c,
     #include <wolfssl/wolfcrypt/port/Renesas/renesas_tsip_types.h>
 #endif
 
+#if defined(WOLFSSL_RENESAS_FSPSM)
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas-fspsm-crypt.h>
+#endif
+
 #ifdef WOLFSSL_MAXQ10XX_CRYPTO
     #include <wolfssl/wolfcrypt/port/maxim/maxq10xx.h>
 #endif
+
 
 #ifdef __cplusplus
     extern "C" {
@@ -525,6 +530,7 @@ WOLFSSL_API int wc_AesGcmDecryptFinal(Aes* aes, const byte* authTag,
                                    byte* authTag, word32 authTagSz,
                                    const byte* authIn, word32 authInSz);
 #endif /* HAVE_AESCCM */
+
 #ifdef HAVE_AES_KEYWRAP
  WOLFSSL_API int  wc_AesKeyWrap(const byte* key, word32 keySz,
                                 const byte* in, word32 inSz,
@@ -561,6 +567,14 @@ WOLFSSL_API int wc_AesXtsEncrypt(XtsAes* aes, byte* out,
 WOLFSSL_API int wc_AesXtsDecrypt(XtsAes* aes, byte* out,
         const byte* in, word32 sz, const byte* i, word32 iSz);
 
+WOLFSSL_API int wc_AesXtsEncryptConsecutiveSectors(XtsAes* aes,
+        byte* out, const byte* in, word32 sz, word64 sector,
+        word32 sectorSz);
+
+WOLFSSL_API int wc_AesXtsDecryptConsecutiveSectors(XtsAes* aes,
+        byte* out, const byte* in, word32 sz, word64 sector,
+        word32 sectorSz);
+
 WOLFSSL_API int wc_AesXtsFree(XtsAes* aes);
 #endif
 
@@ -585,6 +599,71 @@ int wc_AesSivDecrypt(const byte* key, word32 keySz, const byte* assoc,
                      word32 assocSz, const byte* nonce, word32 nonceSz,
                      const byte* in, word32 inSz, byte* siv, byte* out);
 #endif
+
+#ifdef WOLFSSL_AES_EAX
+
+/* Because of the circular dependency between AES and CMAC, we need to prevent
+ * inclusion of AES EAX from CMAC to avoid a recursive inclusion */
+#ifndef WOLF_CRYPT_CMAC_H
+#include <wolfssl/wolfcrypt/cmac.h>
+struct AesEax {
+    Aes  aes;
+    Cmac nonceCmac;
+    Cmac aadCmac;
+    Cmac ciphertextCmac;
+    byte nonceCmacFinal[AES_BLOCK_SIZE];
+    byte aadCmacFinal[AES_BLOCK_SIZE];
+    byte ciphertextCmacFinal[AES_BLOCK_SIZE];
+    byte prefixBuf[AES_BLOCK_SIZE];
+};
+#endif /* !defined(WOLF_CRYPT_CMAC_H) */
+
+typedef struct AesEax AesEax;
+
+/* One-shot API */
+WOLFSSL_API int  wc_AesEaxEncryptAuth(const byte* key, word32 keySz, byte* out,
+                                      const byte* in, word32 inSz,
+                                      const byte* nonce, word32 nonceSz,
+                                      /* output computed auth tag */
+                                      byte* authTag, word32 authTagSz,
+                                      /* input data to authenticate (header) */
+                                      const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int  wc_AesEaxDecryptAuth(const byte* key, word32 keySz, byte* out,
+                                      const byte* in, word32 inSz,
+                                      const byte* nonce, word32 nonceSz,
+                                      /* auth tag to verify against */
+                                      const byte* authTag, word32 authTagSz,
+                                      /* input data to authenticate (header) */
+                                      const byte* authIn, word32 authInSz);
+
+/* Incremental API */
+WOLFSSL_API int  wc_AesEaxInit(AesEax* eax,
+                               const byte* key, word32 keySz,
+                               const byte* nonce, word32 nonceSz,
+                               const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int  wc_AesEaxEncryptUpdate(AesEax* eax, byte* out,
+                                        const byte* in, word32 inSz,
+                                        const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int  wc_AesEaxDecryptUpdate(AesEax* eax, byte* out,
+                                        const byte* in, word32 inSz,
+                                        const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int  wc_AesEaxAuthDataUpdate(AesEax* eax,
+                                       const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int wc_AesEaxEncryptFinal(AesEax* eax,
+                                      byte* authTag, word32 authTagSz);
+
+WOLFSSL_API int wc_AesEaxDecryptFinal(AesEax* eax,
+                                      const byte* authIn, word32 authInSz);
+
+WOLFSSL_API int wc_AesEaxFree(AesEax* eax);
+
+#endif /* WOLFSSL_AES_EAX */
+
 
 #ifdef __cplusplus
     } /* extern "C" */

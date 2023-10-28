@@ -4410,10 +4410,37 @@ int SendTls13ClientHello(WOLFSSL* ssl)
     }
 #endif
 
-    /* Include length of TLS extensions. */
-    ret = TLSX_GetRequestSize(ssl, client_hello, &args->length);
-    if (ret != 0)
-        return ret;
+    {
+#ifdef WOLFSSL_DTLS_CH_FRAG
+        int maxFrag = wolfSSL_GetMaxFragSize(ssl, MAX_RECORD_SIZE);
+        word16 lenWithoutExts = args->length;
+#endif
+
+        /* Include length of TLS extensions. */
+        ret = TLSX_GetRequestSize(ssl, client_hello, &args->length);
+        if (ret != 0)
+            return ret;
+
+#ifdef WOLFSSL_DTLS_CH_FRAG
+        if (ssl->options.dtls && args->length > maxFrag &&
+                TLSX_Find(ssl->extensions, TLSX_COOKIE) == NULL) {
+            /* Try again with an empty key share if we would be fragmenting
+             * without a cookie */
+            ret = TLSX_KeyShare_Empty(ssl);
+            if (ret != 0)
+                return ret;
+            args->length = lenWithoutExts;
+            ret = TLSX_GetRequestSize(ssl, client_hello, &args->length);
+            if (ret != 0)
+                return ret;
+            if (args->length > maxFrag) {
+                WOLFSSL_MSG("Can't fit first CH in one fragment.");
+                return BUFFER_ERROR;
+            }
+            WOLFSSL_MSG("Sending empty key share so we don't fragment CH1");
+        }
+#endif
+    }
 
     /* Total message size. */
     args->sendSz = args->length + HANDSHAKE_HEADER_SZ + RECORD_HEADER_SZ;
@@ -6106,12 +6133,12 @@ static int CheckPreSharedKeys(WOLFSSL* ssl, const byte* input, word32 helloSz,
 
     /* Refine list for PSK processing. */
     RefineSuites(ssl, clSuites);
-    /* set after refineSuites, to avoid taking a stale ptr to ctx->Suites */
-    suites = WOLFSSL_SUITES(ssl);
 #ifndef WOLFSSL_PSK_ONE_ID
     if (usingPSK == NULL)
         return BAD_FUNC_ARG;
 
+    /* set after refineSuites, to avoid taking a stale ptr to ctx->Suites */
+    suites = WOLFSSL_SUITES(ssl);
     /* Server list has only common suites from refining in server or client
      * order. */
     for (i = 0; !(*usingPSK) && i < suites->suiteSz; i += 2) {
@@ -6628,11 +6655,20 @@ int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 #if defined(WOLFSSL_DTLS13) && defined(WOLFSSL_SEND_HRR_COOKIE)
     /* Update the ssl->options.dtlsStateful setting `if` statement in
      * wolfSSL_accept_TLSv13 when changing this one. */
-    if (IsDtlsNotSctpMode(ssl) && ssl->options.sendCookie) {
-        ret = DoClientHelloStateless(ssl, input, inOutIdx, helloSz);
+    if (IsDtlsNotSctpMode(ssl) && ssl->options.sendCookie &&
+            !ssl->options.dtlsStateful) {
+        ret = DoClientHelloStateless(ssl, input + *inOutIdx, helloSz, 0, NULL);
         if (ret != 0 || !ssl->options.dtlsStateful) {
             *inOutIdx += helloSz;
             goto exit_dch;
+        }
+        if (ssl->chGoodCb != NULL) {
+            int cbret = ssl->chGoodCb(ssl, ssl->chGoodCtx);
+            if (cbret < 0) {
+                ssl->error = cbret;
+                WOLFSSL_MSG("ClientHello Good Cb don't continue error");
+                return WOLFSSL_FATAL_ERROR;
+            }
         }
     }
     ssl->options.dtlsStateful = 1;
@@ -13226,17 +13262,6 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
             FALL_THROUGH;
 
         case TLS13_ACCEPT_SECOND_REPLY_DONE :
-
-#ifdef WOLFSSL_DTLS
-            if (ssl->chGoodCb != NULL) {
-                int cbret = ssl->chGoodCb(ssl, ssl->chGoodCtx);
-                if (cbret < 0) {
-                    ssl->error = cbret;
-                    WOLFSSL_MSG("ClientHello Good Cb don't continue error");
-                    return WOLFSSL_FATAL_ERROR;
-                }
-            }
-#endif
 
             if ((ssl->error = SendTls13ServerHello(ssl, server_hello)) != 0) {
                 WOLFSSL_ERROR(ssl->error);

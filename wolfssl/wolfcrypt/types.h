@@ -761,8 +761,8 @@ typedef struct w64wrapper {
 
         /* snprintf is used in asn.c for GetTimeString, PKCS7 test, and when
            debugging is turned on */
+        #ifndef XSNPRINTF
         #ifndef USE_WINDOWS_API
-            #ifndef XSNPRINTF
             #if defined(WOLFSSL_ESPIDF) && \
                 (!defined(NO_ASN_TIME) && defined(HAVE_PKCS7))
                     #include<stdarg.h>
@@ -797,7 +797,6 @@ typedef struct w64wrapper {
             #else
                 #include <stdio.h>
                 #define XSNPRINTF snprintf
-            #endif
             #endif
         #else
             #if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__)
@@ -834,6 +833,7 @@ typedef struct w64wrapper {
                 #define XSNPRINTF snprintf
             #endif /* _MSC_VER */
         #endif /* USE_WINDOWS_API */
+        #endif /* !XSNPRINTF */
 
         #if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA) || \
             defined(HAVE_ALPN) || defined(WOLFSSL_SNIFFER)
@@ -1014,14 +1014,15 @@ typedef struct w64wrapper {
         DYNAMIC_TYPE_DILITHIUM    = 97,
         DYNAMIC_TYPE_SPHINCS      = 98,
         DYNAMIC_TYPE_SM4_BUFFER   = 99,
-        DYNAMIC_TYPE_SNIFFER_SERVER     = 1000,
-        DYNAMIC_TYPE_SNIFFER_SESSION    = 1001,
-        DYNAMIC_TYPE_SNIFFER_PB         = 1002,
-        DYNAMIC_TYPE_SNIFFER_PB_BUFFER  = 1003,
-        DYNAMIC_TYPE_SNIFFER_TICKET_ID  = 1004,
-        DYNAMIC_TYPE_SNIFFER_NAMED_KEY  = 1005,
-        DYNAMIC_TYPE_SNIFFER_KEY        = 1006,
-        DYNAMIC_TYPE_SNIFFER_KEYLOG_NODE = 1007
+        DYNAMIC_TYPE_SNIFFER_SERVER      = 1000,
+        DYNAMIC_TYPE_SNIFFER_SESSION     = 1001,
+        DYNAMIC_TYPE_SNIFFER_PB          = 1002,
+        DYNAMIC_TYPE_SNIFFER_PB_BUFFER   = 1003,
+        DYNAMIC_TYPE_SNIFFER_TICKET_ID   = 1004,
+        DYNAMIC_TYPE_SNIFFER_NAMED_KEY   = 1005,
+        DYNAMIC_TYPE_SNIFFER_KEY         = 1006,
+        DYNAMIC_TYPE_SNIFFER_KEYLOG_NODE = 1007,
+        DYNAMIC_TYPE_AES_EAX = 1008,
     };
 
     /* max error buffer string size */
@@ -1376,8 +1377,7 @@ typedef struct w64wrapper {
         typedef unsigned int  THREAD_RETURN;
         typedef size_t        THREAD_TYPE;
         #define WOLFSSL_THREAD
-    #elif (defined(_POSIX_THREADS) || defined(HAVE_PTHREAD)) && \
-        !defined(__MINGW32__)
+    #elif (defined(_POSIX_THREADS) || defined(HAVE_PTHREAD))
         #ifndef __MACH__
             #include <pthread.h>
             typedef struct COND_TYPE {
