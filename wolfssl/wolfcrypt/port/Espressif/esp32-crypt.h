@@ -707,6 +707,7 @@ extern "C"
             __asm__ __volatile__("nop"); /* 5 */       \
             __asm__ __volatile__("nop"); /* 6 */       \
             __asm__ __volatile__("nop"); /* 7 */       \
+            __asm__ __volatile__("nop"); /* 7 */       \
         };
     #elif defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240)
         #define ESP_EM__3_16 { \
