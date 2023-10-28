@@ -691,8 +691,18 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_siv_test(void);
     static const char* TAG = "wolfcrypt_test"; /* ESP_LOG() breadcrumb */
 #endif
 
-
-#define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
+#if defined(WOLFSSL_ESPIDF_ERROR_PAUSE)
+    #define ERROR_OUT(err, eLabel) \
+       do { \
+           ret = (err); \
+           ESP_LOGE(TAG, "ESP Error! ret = %d ", ret); \
+           while (1) { \
+               vTaskDelay(60000); \
+           } \
+       while (0)
+#else
+    #define ERROR_OUT(err, eLabel) do { ret = (err); goto eLabel; } while (0)
+#endif
 
 static wc_test_ret_t debug_message(const char* msg)
 {
@@ -47396,8 +47406,13 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_test(void)
             ret = mp_mulmod(a, a, p, r2);
             if (ret != 0)
                 ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
-            if (mp_cmp(r1, r2) != 0)
+            if (mp_cmp(r1, r2) != 0) {
                 ERROR_OUT(WC_TEST_RET_ENC_NC, done);
+                ESP_LOGE(TAG, "mp_mulmod != mp_sqrmod");
+                while (1) {
+                    vTaskDelay(60000);
+                }
+            }
          #endif
 
      #if defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)

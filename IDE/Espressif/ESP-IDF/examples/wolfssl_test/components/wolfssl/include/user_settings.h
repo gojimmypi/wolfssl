@@ -284,6 +284,7 @@
 #endif
 
 /* debug options */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
 //#define ESP_VERIFY_MEMBLOCK
 #define WOLFSSL_HW_METRICS
 //#define DEBUG_WOLFSSL_VERBOSE
