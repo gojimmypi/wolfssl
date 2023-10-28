@@ -64,8 +64,8 @@ RTC_DATA_ATTR static int _boot_count = 0;
 #define MAX_WORDS_ESP_SHOW_MP 32
 
 /* Some helpers for macro display */
-#define STRINGIFY_IF_NOT_DEFINED_(macro) #macro
-#define STRINGIFY_IF_NOT_DEFINED(macro) STRINGIFY_IF_NOT_DEFINED_(macro)
+#define STR_NDEF_(macro) #macro
+#define STR_NDEF(macro) STR_NDEF_(macro)
 static int esp_ShowMacroStatus_need_header = 0;
 
 /*
@@ -412,14 +412,20 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
     return 0;
 }
 
-
-
+/* Show some interesting settings */
 int esp_ShowHardwareAcclerationSettings(void)
 {
     esp_ShowMacroStatus_need_header = 1;
-    esp_ShowMacroStatus("HW_MATH_ENABLED", STRINGIFY_IF_NOT_DEFINED(HW_MATH_ENABLED));
-    esp_ShowMacroStatus("RSA_LOW_MEM",     STRINGIFY_IF_NOT_DEFINED(RSA_LOW_MEM));
-    esp_ShowMacroStatus("WOLFSSL_SHA224",  STRINGIFY_IF_NOT_DEFINED(WOLFSSL_SHA224));
+    esp_ShowMacroStatus("HW_MATH_ENABLED",    STR_NDEF(HW_MATH_ENABLED));
+    esp_ShowMacroStatus("RSA_LOW_MEM",        STR_NDEF(RSA_LOW_MEM));
+    esp_ShowMacroStatus("WOLFSSL_SHA224",     STR_NDEF(WOLFSSL_SHA224));
+    esp_ShowMacroStatus("WOLFSSL_SHA384",     STR_NDEF(WOLFSSL_SHA384));
+    esp_ShowMacroStatus("WOLFSSL_SHA512",     STR_NDEF(WOLFSSL_SHA512));
+    esp_ShowMacroStatus("WOLFSSL_SHA3",       STR_NDEF(WOLFSSL_SHA3));
+    esp_ShowMacroStatus("HAVE_ED25519",       STR_NDEF(HAVE_ED25519));
+    esp_ShowMacroStatus("USE_FAST_MATH",      STR_NDEF(USE_FAST_MATH));
+    esp_ShowMacroStatus("SP_MATH",            STR_NDEF(SP_MATH));
+    esp_ShowMacroStatus("WOLFSSL_HW_METRICS", STR_NDEF(WOLFSSL_HW_METRICS));
 
     return 0;
 }
