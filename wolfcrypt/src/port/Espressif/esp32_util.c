@@ -38,7 +38,9 @@
 #if defined(WOLFSSL_ESPIDF)
     #include <esp_log.h>
     #include "sdkconfig.h"
-    #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
+    #include <hal/efuse_hal.h>
+
+#define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
 #else
     #include <stdio.h>
     #define WOLFSSL_VERSION_PRINTF(...) { printf(__VA_ARGS__); printf("\n"); }
@@ -437,14 +439,20 @@ int esp_ShowHardwareAcclerationSettings(void)
 int ShowExtendedSystemInfo(void)
 {
     unsigned chip_rev = -1;
+#ifdef HAVE_ESP_CLK
+    /* esp_clk.h is private */
     int cpu_freq = 0;
+#endif
 
     WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
 
     chip_rev = efuse_hal_chip_revision();
     ESP_LOGI(TAG, "Chip revision: v%d.%d", chip_rev / 100, chip_rev % 100);
+
+#ifdef HAVE_ESP_CLK
     cpu_freq = esp_clk_cpu_freq();
     ESP_EARLY_LOGI(TAG, "cpu freq: %d Hz", cpu_freq);
+#endif
 
 #if defined(SHOW_SSID_AND_PASSWORD)
     ESP_LOGW(TAG, "WARNING: SSID and plain text WiFi "
