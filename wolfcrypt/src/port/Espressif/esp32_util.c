@@ -436,7 +436,15 @@ int esp_ShowHardwareAcclerationSettings(void)
 */
 int ShowExtendedSystemInfo(void)
 {
+    unsigned chip_rev = -1;
+    int cpu_freq = 0;
+
     WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
+
+    chip_rev = efuse_hal_chip_revision();
+    ESP_LOGI(TAG, "Chip revision: v%d.%d", chip_rev / 100, chip_rev % 100);
+    cpu_freq = esp_clk_cpu_freq();
+    ESP_EARLY_LOGI(TAG, "cpu freq: %d Hz", cpu_freq);
 
 #if defined(SHOW_SSID_AND_PASSWORD)
     ESP_LOGW(TAG, "WARNING: SSID and plain text WiFi "
