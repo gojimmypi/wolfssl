@@ -266,7 +266,7 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
+                                        - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
 
     ESP_LOGI(TAG, "\n\nDone!\n\n"

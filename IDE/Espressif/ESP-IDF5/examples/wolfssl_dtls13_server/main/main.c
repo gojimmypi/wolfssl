@@ -100,7 +100,7 @@ void app_main(void)
     /* HWM is maximum amount of stack space that has been unused, in words. */
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - (uxTaskGetStackHighWaterMark(NULL) / 4)
+                   - (uxTaskGetStackHighWaterMark(NULL) )
             );
     ESP_LOGI(TAG, "Starting TLS Server...\n");
 
