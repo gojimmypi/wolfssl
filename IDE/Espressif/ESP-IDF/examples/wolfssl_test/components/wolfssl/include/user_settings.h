@@ -130,9 +130,9 @@
     #define ESP32_USE_RSA_PRIMITIVE
     /* threshold for performance adjustment for HW primitive use   */
     /* X bits of G^X mod P greater than                            */
-    #define EPS_RSA_EXPT_XBTIS           0 /* NOTE HW unreliable for small values! */
+    #define EPS_RSA_EXPT_XBTIS           9 /* NOTE HW unreliable for small values! */
     /* X and Y of X * Y mod P greater than                         */
-    #define ESP_RSA_MULM_BITS            0
+    #define ESP_RSA_MULM_BITS            16
 #endif
 
 
@@ -218,7 +218,8 @@
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA223 HW on ESP32  */
     /* end CONFIG_IDF_TARGET_ESP32C3 */
-
+    #undef  ESP_RSA_MULM_BITS
+    #define ESP_RSA_MULM_BITS 16
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH

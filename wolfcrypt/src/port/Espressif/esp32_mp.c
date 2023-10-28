@@ -110,6 +110,8 @@ struct esp_mp_helper
 #endif
 };
 
+static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
+
 /* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
     static unsigned long esp_mp_max_used = 0;
@@ -244,7 +246,7 @@ static int esp_mp_hw_islocked(void)
 #endif
     return ret;
 }
-static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED; /* TODO move! */
+
 /*
 * esp_mp_hw_lock()
 *
@@ -307,10 +309,14 @@ static int esp_mp_hw_lock()
     /* Enable RSA hardware */
     if (ret == 0) {
         periph_module_enable(PERIPH_RSA_MODULE);
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            /* clear bit to enable hardware operation; (set to disable) */
+            DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
+            ESP_EM__POST_SP_MP_HW_LOCK
 
-        /* clear bit to enable hardware operation; (set to disable) */
-        DPORT_REG_CLR_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_PD);
-        ESP_EM__POST_SP_MP_HW_LOCK
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* TODO */
@@ -661,7 +667,7 @@ static int esp_memblock_to_mpint(const uint32_t mem_address,
     ESP_EM__READ_NON_FIFO_REG;
     for (volatile uint32_t i = 0;  i < numwords; ++i) {
         ESP_EM__3_16;
-        mp->dp[i] = DPORT_SEQUENCE_REG_READ((uint32_t)(mem_address + i * 4));
+        mp->dp[i] = DPORT_SEQUENCE_REG_READ((volatile uint32_t)(mem_address + i * 4));
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
@@ -1623,7 +1629,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     struct esp_mp_helper mph[1]; /* we'll save some values in this mp helper */
-   MATH_INT_T tmpZ[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T tmpZ[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
 #ifdef DEBUG_WOLFSSL
     MATH_INT_T X2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
     MATH_INT_T Y2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
@@ -1634,6 +1640,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY;
+    int lock_called = 0;
     word32 zwords = 0;
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
@@ -1645,6 +1652,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     uint32_t OperandBits; /* TODO remove */
     int WordsForOperand;
@@ -1656,12 +1664,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     ESP_LOGV(TAG, "\nBegin esp_mp_mulmod \n");
-
-#ifdef WOLFSSL_HW_METRICS
-    esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
-    esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
-    esp_mp_max_used = (M->used > esp_mp_max_used) ? M->used : esp_mp_max_used;
-#endif
 
     /* do we have an even moduli? */
     if ((M->dp[0] & 1) == 0) {
@@ -1738,9 +1740,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (ret == MP_OKAY) {
 
         /* neg check: X*Y becomes negative, we'll need adjustment  */
-#if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
+    #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
         negcheck = mp_isneg(X) != mp_isneg(Y) ? 1 : 0;
-#endif
+    #endif
 
         /* calculate r_inv = R^2 mod M
         *    where: R = b^n, and b = 2^32
@@ -1764,8 +1766,23 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         zwords = bits2words(min(mph->Ms, mph->Xs + mph->Ys));
     }
 
+    /* we'll use hardware only for a minimum number of bits */
+    if (mph->Xs <= ESP_RSA_MULM_BITS || mph->Ys <= ESP_RSA_MULM_BITS) {
+        ret = MP_HW_FALLBACK;
+    }
+
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
+        lock_called = 1;
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+            esp_mp_max_used = (M->used > esp_mp_max_used) ? M->used : esp_mp_max_used;
+        }
+        #endif
+
         ret = esp_mp_hw_lock();
     }
 
@@ -1862,7 +1879,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     } /* step 1 .. 12 */
 
     /* step.13 clear and release HW                   */
-    esp_mp_hw_unlock();
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
 
     /* end of ESP32 */
 
@@ -2243,7 +2262,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     mp_clear(&(mph->r_inv));
 
     ESP_LOGV(TAG, "\nEnd esp_mp_mulmod \n");
-    if (ret == MP_OKAY) {
+    if (ret == MP_OKAY || ret == MP_HW_FALLBACK) {
         ESP_LOGV(TAG, "esp_mp_mulmod exit success ");
     }
     else {
