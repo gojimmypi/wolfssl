@@ -3656,7 +3656,90 @@ static wc_test_ret_t hw_math_test_mp_mulmod_template(void)
     return ret;
 }
 
+static wc_test_ret_t hw_sqr_test(void)
+{
+    int ret = 0;
+#ifdef WOLFSSL_SMALL_STACK
+    mp_int *a = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,
+                                  DYNAMIC_TYPE_TMP_BUFFER),
+        *b = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,
+                               DYNAMIC_TYPE_TMP_BUFFER),
+        *r1 = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,
+                                DYNAMIC_TYPE_TMP_BUFFER),
+        *r2 = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,
+                                DYNAMIC_TYPE_TMP_BUFFER),
+        *p = (mp_int *)XMALLOC(sizeof(mp_int), HEAP_HINT,
+                               DYNAMIC_TYPE_TMP_BUFFER);
+    if ((a == NULL) ||
+        (b == NULL) ||
+        (r1 == NULL) ||
+        (r2 == NULL) ||
+        (p == NULL))
+    {
+        ERROR_OUT(WC_TEST_RET_ENC_ERRNO, done);
+    }
+#else
+    mp_int a[1], b[1], r1[1], r2[1], p[1];
+#endif
 
+    /* 2416803921 mod 7023 = 0 */
+    a->used = 1;
+    a->dp[0] = 0x0000c009;
+
+    p->used = 1;
+    p->dp[0] = 0x00001b6f;
+
+    #if !defined(WOLFSSL_SP_MATH) || (defined(HAVE_ECC) && \
+                                (defined(ECC_SHAMIR) || defined(FP_ECC)))
+    /* Ensure sqrmod produce same result as mulmod. */
+    ret = mp_sqrmod(a, p, r1);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
+    ret = mp_mulmod(a, a, p, r2);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
+    if (mp_cmp(r1, r2) != 0) {
+        ERROR_OUT(WC_TEST_RET_ENC_NC, done);
+        ESP_LOGE(TAG, "mp_mulmod != mp_sqrmod");
+        while (1) {
+            vTaskDelay(60000);
+        }
+    }
+    #endif
+
+done:
+
+#ifdef WOLFSSL_SMALL_STACK
+    if (p) {
+        mp_clear(p);
+        XFREE(p, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+    if (r2) {
+        mp_clear(r2);
+        XFREE(r2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+    if (r1) {
+        mp_clear(r1);
+        XFREE(r1, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+    if (b) {
+        mp_clear(b);
+        XFREE(b, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+    if (a) {
+        mp_clear(a);
+        XFREE(a, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+#else
+    mp_clear(p);
+    mp_clear(r2);
+    mp_clear(r1);
+    mp_clear(b);
+    mp_clear(a);
+#endif
+
+    return ret;
+}
 
 /*
 ******************************************************************************
@@ -3724,6 +3807,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 #endif
     if (ret == MP_OKAY)
         ret = hw_math_test_mp_mulmod_4();
+
+    if (ret == MP_OKAY)
+        ret = hw_sqr_test();
 
     /* The most challenging test: one known to fail in HW */
     if (ret == MP_OKAY)
