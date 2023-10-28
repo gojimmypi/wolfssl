@@ -563,9 +563,9 @@ static int esp_clean_result(MATH_INT_T* Z, int used_padding)
     }
 
     /* trim any trailing zeros and adjust z.used size */
-    if (Z->used > 1) {
+    if (Z->used > 0) {
         ESP_LOGV(TAG, "ZTrim: Z->used = %d", Z->used);
-        for (size_t i = Z->used; i > 1; i--) {
+        for (size_t i = Z->used; i > 0; i--) {
             if (Z->dp[i - 1] == 0) {
                 /* last element in zero based array */
                 Z->used = i - 1;
@@ -1962,8 +1962,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
-
+    if (lock_called) {
+        esp_mp_hw_unlock();
+    }
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
