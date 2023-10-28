@@ -1357,9 +1357,20 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 /* relocated only during development */
 #if defined(WOLFSSL_PUBLIC_MP) && \
     (defined(WOLFSSL_SP_MATH_ALL) || defined(USE_FAST_MATH))
-    int ct = 1;
+    int ct = 30;
     while (ret == MP_OKAY && (ct > 0)) {
+    #if defined(HW_MATH_ENABLED) && !defined(NO_HW_MATH_TEST)
+        if ((ret = hw_math_test()) != 0)
+            TEST_FAIL("hw_math_test test loop failed!\n", ret);
+        else
+            TEST_PASS("hw_math_test test loop passed!\n");
+    #endif
         ret = mp_test();
+        if ( (ret = MP_OKAY) != 0)
+            TEST_FAIL("mp       test failed!\n", ret);
+        else
+            TEST_PASS("mp       test passed!\n");
+
 #ifdef WOLFSSL_HW_METRICS
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
         esp_hw_show_mp_metrics();
