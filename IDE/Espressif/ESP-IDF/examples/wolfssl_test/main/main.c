@@ -62,17 +62,6 @@
 /* see wolfssl/wolfcrypt/test/test.h */
 extern void wolf_crypt_task();
 
-//void IRAM_ATTR start_cpu1_default(void)
-//{
-//    // Wait for the app to initialze on CPU0
-//    while (1) {
-//#ifndef SINGLE_THREADED
-//        vTaskDelay(1000);
-//#endif
-//    }
-//    // do things
-//}
-
 static const char* const TAG = "wolfssl_test";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
@@ -197,11 +186,14 @@ void app_main(void)
     ESP_LOGI(TAG, "NO_ESP32_CRYPT defined! HW acceleration DISABLED.");
 #else
     #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C3.");
 
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-        /* #error "ESP32_CRYPT not yet supported on ESP32-S2" */
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for  ESP32-S2.");
+        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-S2.");
+
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-S3.");
+
     #else
         ESP_LOGI(TAG, "ESP32_CRYPT is enabled.");
     #endif
@@ -211,7 +203,7 @@ void app_main(void)
     set_time();
 #endif
 
-/* when using atecc608a on esp32-wroom-32se */
+/* when using atecc608a on esp32-WROOM-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
     #if defined(CUSTOM_SLOT_ALLOCATION)
@@ -280,6 +272,6 @@ void app_main(void)
 #else
         vTaskDelay(60000);
 #endif
-    } /* done whle */
+    } /* done while */
 #endif
 }
