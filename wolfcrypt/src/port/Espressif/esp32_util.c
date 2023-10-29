@@ -66,8 +66,9 @@ RTC_DATA_ATTR static int _boot_count = 0;
 #define MAX_WORDS_ESP_SHOW_MP 32
 
 /* Some helpers for macro display */
-#define STR_NDEF_(macro) #macro
-#define STR_NDEF(macro) STR_NDEF_(macro)
+#define STRING_OF(macro) #macro
+#define STR_IFNDEF(macro) STRING_OF(macro)
+
 static int esp_ShowMacroStatus_need_header = 0;
 
 /*
@@ -376,15 +377,18 @@ int esp_current_boot_count(void)
     return _boot_count;
 }
 
-
-
+/* See macro helpers above; not_defined is macro name when *not* defined */
 static int esp_ShowMacroStatus(char* s, char* not_defined)
 {
-    char msg[] =   "                                       ";
+    char hd1[] = "Macro Name                 Defined   Not Defined";
+    char hd2[] = "------------------------- --------- -------------";
+    char msg[] = ".........................                        ";
+        /*        012345678901234567890123456789012345678901234567890    */
+        /*                  1         2         3         4         5    */
     size_t i = 0;
-    #define MAX_STATUS_NAME_LENGTH 14
-    #define ESP_SMS_ENA_POS 20
-    #define ESP_SMS_DIS_POS 30
+    #define MAX_STATUS_NAME_LENGTH 25
+    #define ESP_SMS_ENA_POS 30
+    #define ESP_SMS_DIS_POS 42
 
     /* save our string (s) into the space-padded message (msg) */
     while (s[i] != '\0' && msg[i] != '\0' && (i < MAX_STATUS_NAME_LENGTH)) {
@@ -392,20 +396,18 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
         i++;
     }
 
-    /* depending on if not defined, put an "x" in the appropriate column */
+    /* Depending on if defined, put an "x" in the appropriate column */
     if (not_defined == NULL || not_defined[0] == '\0') {
-        msg[ESP_SMS_DIS_POS] = 'x';
+        msg[ESP_SMS_ENA_POS] = 'X';
     }
     else {
-        msg[ESP_SMS_ENA_POS] = 'x';
+        msg[ESP_SMS_DIS_POS] = 'X';
     }
 
     /* do we need a header? */
     if (esp_ShowMacroStatus_need_header) {
-        ESP_LOGI(TAG, "Macro Name       Defined   Not Defined");
-        ESP_LOGI(TAG, "--------------- --------- -------------");
-        /*            0123456789012345678901234567890  */
-        /*                      1         2         3  */
+        ESP_LOGI(TAG, "%s", hd1);
+        ESP_LOGI(TAG, "%s", hd2);
         esp_ShowMacroStatus_need_header = 0;
     }
 
@@ -418,17 +420,17 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
 int esp_ShowHardwareAcclerationSettings(void)
 {
     esp_ShowMacroStatus_need_header = 1;
-    esp_ShowMacroStatus("HW_MATH_ENABLED",    STR_NDEF(HW_MATH_ENABLED));
-    esp_ShowMacroStatus("RSA_LOW_MEM",        STR_NDEF(RSA_LOW_MEM));
-    esp_ShowMacroStatus("WOLFSSL_SHA224",     STR_NDEF(WOLFSSL_SHA224));
-    esp_ShowMacroStatus("WOLFSSL_SHA384",     STR_NDEF(WOLFSSL_SHA384));
-    esp_ShowMacroStatus("WOLFSSL_SHA512",     STR_NDEF(WOLFSSL_SHA512));
-    esp_ShowMacroStatus("WOLFSSL_SHA3",       STR_NDEF(WOLFSSL_SHA3));
-    esp_ShowMacroStatus("HAVE_ED25519",       STR_NDEF(HAVE_ED25519));
-    esp_ShowMacroStatus("USE_FAST_MATH",      STR_NDEF(USE_FAST_MATH));
-    esp_ShowMacroStatus("SP_MATH",            STR_NDEF(SP_MATH));
-    esp_ShowMacroStatus("WOLFSSL_HW_METRICS", STR_NDEF(WOLFSSL_HW_METRICS));
-
+    esp_ShowMacroStatus("HW_MATH_ENABLED",    STR_IFNDEF(HW_MATH_ENABLED));
+    esp_ShowMacroStatus("RSA_LOW_MEM",        STR_IFNDEF(RSA_LOW_MEM));
+    esp_ShowMacroStatus("WOLFSSL_SHA224",     STR_IFNDEF(WOLFSSL_SHA224));
+    esp_ShowMacroStatus("WOLFSSL_SHA384",     STR_IFNDEF(WOLFSSL_SHA384));
+    esp_ShowMacroStatus("WOLFSSL_SHA512",     STR_IFNDEF(WOLFSSL_SHA512));
+    esp_ShowMacroStatus("WOLFSSL_SHA3",       STR_IFNDEF(WOLFSSL_SHA3));
+    esp_ShowMacroStatus("HAVE_ED25519",       STR_IFNDEF(HAVE_ED25519));
+    esp_ShowMacroStatus("USE_FAST_MATH",      STR_IFNDEF(USE_FAST_MATH));
+    esp_ShowMacroStatus("SP_MATH",            STR_IFNDEF(SP_MATH));
+    esp_ShowMacroStatus("WOLFSSL_HW_METRICS", STR_IFNDEF(WOLFSSL_HW_METRICS));
+    ESP_LOGI(TAG, "");
     return 0;
 }
 /*
@@ -495,18 +497,34 @@ int ShowExtendedSystemInfo(void)
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* not available for C3 at this time */
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    /* ESP_RSA_MULM_BITS should be set to at least 16 for ESP32 */
+    #if defined(ESP_RSA_MULM_BITS)
+        #if (ESP_RSA_MULM_BITS < 16)
+            ESP_LOGW(TAG, "Warning: ESP_RSA_MULM_BITS < 16 for ESP32");
+        #endif
+    #else
+        ESP_LOGW(TAG, "Warning: ESP_RSA_MULM_BITS not defined for ESP32");
+    #endif
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* info not available for C3 at this time */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
-             );
+    #if defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
+        ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                        CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+                    );
+    #endif
+
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );
 /*  ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount); */
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     /* no CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ */
 #else
