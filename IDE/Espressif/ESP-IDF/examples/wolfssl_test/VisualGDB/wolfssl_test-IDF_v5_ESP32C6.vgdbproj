@@ -73,7 +73,7 @@
         </IDFCheckout>
         <COMPort>COM36</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
-        <UseCCache>false</UseCCache>
+        <UseCCache>true</UseCCache>
         <DeviceID>ESP32C6</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
@@ -220,7 +220,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 30000" -f target/esp32c6.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 15000" -f target/esp32c6.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
