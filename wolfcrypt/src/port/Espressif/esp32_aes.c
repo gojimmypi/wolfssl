@@ -346,19 +346,9 @@ static void esp_aes_bk(const byte* in, byte* out)
 int wc_esp32AesSupportedKeyLenValue(int keylen)
 {
     int ret = 0;
+
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (keylen == 16 || keylen == 24 || keylen == 32) {
-        ret = 1;
-    }
-    else {
-        ret = 0; /* keylen 24 (192 bit) not supported */
-    }
-
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    ret = 0; /* not yet implemented */
-
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    if (keylen == 16 || keylen == 32) {
         ret = 1;
     }
     else {
@@ -383,8 +373,21 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     ret = 0; /* not yet implemented */
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    ret = 0; /* not yet implemented */
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    if (keylen == 16 || keylen == 32) {
+        ret = 1;
+    }
+    else {
+        ret = 0; /* keylen 24 (192 bit) not supported */
+    }
+
 #else
     ret = 0; /* if we don't know, then it is not supported */
+
 #endif
     return ret;
 }
@@ -593,17 +596,24 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 #endif /* WOLFSSL_ESP32_CRYPT */
 #endif /* NO_AES */
 
-#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
+/* Metrics */
+#if defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
+
+#if defined(WOLFSSL_HW_METRICS)
+
 int wc_esp32AesUnupportedLengthCountAdd() {
     esp_aes_unsupported_length_usage_ct++;
     return esp_aes_unsupported_length_usage_ct;
 }
 
+#endif /* WOLFSSL_HW_METRICS */
 
 int esp_hw_show_aes_metrics(void)
 {
     int ret = 0;
-#if defined(WOLFSSL_ESP32_CRYPT)
+
+#if defined(WOLFSSL_HW_METRICS)
+
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "------------- wolfSSL ESP HW AES Metrics----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -612,10 +622,9 @@ int esp_hw_show_aes_metrics(void)
                    esp_aes_unsupported_length_usage_ct);
 #else
     /* no HW math, no HW math metrics */
-    ret = 0;
-#endif /* HW_MATH_ENABLED */
 
+#endif /* WOLFSSL_HW_METRICS */
 
     return ret;
 }
-#endif /* WOLFSSL_HW_METRICS */
+#endif /* WOLFSSL_ESP32_CRYPT && !NO_WOLFSSL_ESP32_CRYPT_AES */
