@@ -74,7 +74,6 @@
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
-//    #include <bigint.h>
     #include <soc/system_reg.h>
     #include <soc/hwcrypto_reg.h>
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -319,7 +318,6 @@ static int esp_mp_hw_lock()
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* TODO */
     /* Activate the RSA accelerator. See 20.3 of ESP32-C3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
      * with v5 release. Maybe it will be deprecated?
@@ -1890,7 +1888,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
      * the bits in X, Y and M.
-     * See 20.3.3 of ESP32-S3 technical manual
+     * See 20.3.3 of ESP32-C3 technical manual
      *  1. Wait until the hardware is ready.
      *  2. Enable/disable interrupt that signals completion -- we don't use the interrupt.
      *  3. Write the number of words required to represent the operands to the
@@ -1920,7 +1918,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             return MP_VAL; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
-        //  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
+        /* alt: DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1); */
         DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1); /*  (mph->hwWords_sz >> 4) - 1) */
 
         /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
@@ -2001,7 +1999,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             return MP_VAL; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
-        //  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
+        /* alt:  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1); */
         DPORT_REG_WRITE(RSA_MODE_REG, WordsForOperand - 1); /*  (mph->hwWords_sz >> 4) - 1) */
 
         /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
@@ -2083,7 +2081,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             return MP_VAL; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
-        //  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1);
+        /* alt:  DPORT_REG_WRITE(RSA_MULT_MODE_REG, (mph->hwWords_sz >> 4) - 1); */
         DPORT_REG_WRITE(RSA_LENGTH_REG, WordsForOperand - 1); /*  (mph->hwWords_sz >> 4) - 1) */
 
         /* 4. Write M' value into RSA_M_PRIME_REG (now called RSA_M_DASH_REG) */
@@ -2460,7 +2458,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_hw_unlock();
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* TODO */
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
@@ -2537,7 +2534,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO */
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
