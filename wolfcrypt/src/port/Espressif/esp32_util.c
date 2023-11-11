@@ -53,6 +53,10 @@ static const char* TAG = "esp32_util";
  * maintains its value when ESP32 wakes from deep sleep.
  */
 RTC_DATA_ATTR static int _boot_count = 0;
+static int esp_ShowMacroStatus_need_header = 0;
+/* Some helpers for macro display */
+#define STRING_OF(macro) #macro
+#define STR_IFNDEF(macro) STRING_OF(macro)
 
 #if defined(WOLFSSL_ESP32_CRYPT) && \
   (!defined(NO_AES)        || !defined(NO_SHA) || !defined(NO_SHA256) ||\
@@ -64,12 +68,6 @@ RTC_DATA_ATTR static int _boot_count = 0;
 
 /* big nums can be very long, perhaps unitialized, so limit displayed words */
 #define MAX_WORDS_ESP_SHOW_MP 32
-
-/* Some helpers for macro display */
-#define STRING_OF(macro) #macro
-#define STR_IFNDEF(macro) STRING_OF(macro)
-
-static int esp_ShowMacroStatus_need_header = 0;
 
 /*
  * initialize our mutex used to lock hardware access
