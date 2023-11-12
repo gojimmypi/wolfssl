@@ -206,7 +206,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
 
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
         case WC_HASH_TYPE_SHA:
             ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
@@ -214,7 +214,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             break;
 
         case WC_HASH_TYPE_SHA224:
-        #ifdef CONFIG_IDF_TARGET_ESP32S3
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
         #else
@@ -228,7 +228,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             ret = esp_sha_init_ctx(ctx);
             break;
 
-    #ifdef CONFIG_IDF_TARGET_ESP32S3
+    #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
         case  WC_HASH_TYPE_SHA384:
             /* TODO is SHA384 really not supported on -S3? */
             ctx->mode = ESP32_SHA_SW;
@@ -303,7 +303,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     /* other chipsets will be implemented here */
     ESP_LOGW(TAG, "SW Fallback; CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
     ctx->mode = ESP32_SHA_SW;
-#endif /* defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3) */
+#endif /* defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) */
 
     return ret;
 }
@@ -814,7 +814,7 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
     #endif
 
     #ifdef WOLFSSL_SHA224
-        #if (CONFIG_IDF_TARGET_ESP32S3)
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
         case SHA2_224:
             ret = WC_SHA224_DIGEST_SIZE;
             break;
@@ -860,7 +860,7 @@ static int wc_esp_wait_until_idle(void)
         loop_ct--;
         /* do nothing while waiting. */
     }
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     while (REG_READ(SHA_BUSY_REG)) {
       /* do nothing while waiting. */
     }
@@ -923,7 +923,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 
     /* once the value we read is a 0 in the DPORT_PERI_CLK_EN_REG bit
      * then we have fully unrolled the enables via ref_counts[periph]==0 */
-#if CONFIG_IDF_TARGET_ESP32S3
+#if  defined(CONFIG_IDF_TARGET_ESP32S2) ||defined(CONFIG_IDF_TARGET_ESP32S3)
     /* once the value we read is a 0 in the DPORT_PERI_CLK_EN_REG bit
      * then we have fully unrolled the enables via ref_counts[periph]==0 */
     while (periph_ll_periph_enabled(PERIPH_SHA_MODULE)) {
@@ -1441,7 +1441,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 static int esp_sha_start_process(WC_ESP32SHA* sha)
 {
     int ret = 0;
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint8_t HardwareAlgorithm;
 #endif
 
@@ -1474,8 +1474,9 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
         ESP_LOGV(TAG, "      continue block #%d", this_block_num);
     #endif
     } /* not first block */
-    /* end CONFIG_IDF_TARGET_ESP32C3 */
-    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* end CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
+
+    #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
 
     /* Translate from Wolf SHA type to hardware algorithm. */
     HardwareAlgorithm = 0;
@@ -1627,7 +1628,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
 {
     int ret = 0; /* assume success */
     word32 word32_to_save = (len) / (sizeof(word32));
-#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint32_t* MessageSource;
     uint32_t* AcceleratorMessage;
 #elif CONFIG_IDF_TARGET_ESP32
@@ -1682,7 +1683,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     /* call Espressif HAL for this hash*/
     sha_hal_hash_block(ctx->sha_type, (void *)(data), word32_to_save, ctx->isfirstblock);
     ctx->isfirstblock = 0; /* once we hash a block, we're no longer at the first */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     MessageSource = (uint32_t*)data;
     AcceleratorMessage = (uint32_t*)(SHA_TEXT_BASE);
     while (word32_to_save--) {
@@ -1757,12 +1758,12 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 {
     word32 digestSz;
 
-#if CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint64_t* pHash64Buffer;
     uint32_t* pHashDestination;
     size_t szHashWords;
     size_t szHash64Words;
-# endif
+#endif
 
     ESP_LOGV(TAG, "enter esp_digest_state");
 
@@ -1774,7 +1775,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     /* TODO S3 */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (ctx->sha_type == SHA_INVALID) {
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     if (ctx->sha_type == SHA_TYPE_MAX) {
 #else
     ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");
@@ -1791,7 +1792,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
         return -1;
     }
-#if CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (ctx->isfirstblock == true) {
         /* no hardware use yet. Nothing to do yet */
         return 0;
@@ -1832,8 +1833,11 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     /* each sha_type register is at a different location  */
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
+    /* TODO ? ESP32-C3 RISC-V TODO */
+#elif  defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* TODO */
 #else
+        /* TODO what's this? */
     switch (ctx->sha_type) {
         case SHA1:
             DPORT_REG_WRITE(SHA_1_LOAD_REG, 1);

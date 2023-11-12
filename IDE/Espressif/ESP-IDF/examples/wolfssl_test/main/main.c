@@ -168,6 +168,11 @@ void app_main(void)
                    CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
             );
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    ESP_LOGI(TAG, "CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ
+             );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
@@ -236,7 +241,6 @@ void app_main(void)
     }
     while (ret == 0);
     ESP_LOGI(TAG, "loops = %d", loops);
-
 
     /* note wolfCrypt_Cleanup() should always be called when finished.
     ** This is called at the end of wolf_test_task();

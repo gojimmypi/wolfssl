@@ -95,7 +95,7 @@ static int esp_aes_hw_InUse()
         /* Enable AES hardware */
         periph_module_enable(PERIPH_AES_MODULE);
 
-        #if defined(CONFIG_IDF_TARGET_ESP32S3)
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
         {
             /* Select working mode. Can be typical or DMA.
              * 0 => typical
@@ -188,7 +188,7 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
         ret = BAD_FUNC_ARG;
     }
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     #define TARGET_AES_KEY_BASE AES_KEY_BASE
     if (mode_ == 1 || mode_ == 3 || mode_ == 5 || mode_ > 6) {
         /* this should have been detected in aes.c and fall back to SW */
@@ -250,7 +250,7 @@ static void esp_aes_bk(const byte* in, byte* out)
 #endif
 
     ESP_LOGV(TAG, "enter esp_aes_bk");
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     /* See esp32 - s3 technical reference manual:
     ** 19.4.3 Operation process using CPU working mode.
     ** The ESP32-S3 also supports a DMA mode.
@@ -374,10 +374,7 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     ret = 0; /* not yet implemented */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    ret = 0; /* not yet implemented */
-
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) ||  defined(CONFIG_IDF_TARGET_ESP32S3)
     if (keylen == 16 || keylen == 32) {
         ret = 1;
     }

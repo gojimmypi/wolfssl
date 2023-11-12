@@ -155,6 +155,9 @@
 ** WOLFSSL_ESP32_CRYPT_DEBUG
 **   When defined, enables hardware cryptography debugging
 **
+** WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
+**   Shows a warning when mulm falls back for minimum number of bits
+**
 ** NO_HW_MATH_TEST
 **   Even if HW is enabled, do not run HW math tests. See HW_MATH_ENABLED.
 **
@@ -314,8 +317,6 @@
     /* end CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
     #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
@@ -327,8 +328,6 @@
     /* end CONFIG_IDF_TARGET_ESP32S2 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-//    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
     #include "soc/dport_reg.h"
     #include "soc/hwcrypto_reg.h"
     #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
@@ -423,7 +422,7 @@ extern "C"
         #include "rom/aes.h"
     #endif
 
-    typedef enum tagES32_AES_PROCESS
+    typedef enum tagES32_AES_PROCESS /* TODO what's this ? */
     {
         ESP32_AES_LOCKHW            = 1,
         ESP32_AES_UPDATEKEY_ENCRYPT = 2,

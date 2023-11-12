@@ -122,12 +122,24 @@
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
-    /* threshold for performance adjustment for HW primitive use   */
-    /* X bits of G^X mod P greater than                            */
-    #define EPS_RSA_EXPT_XBTIS           32 /* NOTE HW unreliable for small values! */
-    /* X and Y of X * Y mod P greater than                         */
-    #define ESP_RSA_MULM_BITS            9
+
+
+    #if defined(CONFIG_IDF_TARGET_ESP32)
+        #undef ESP_RSA_MULM_BITS
+        #undef ESP_RSA_EXPT_XBITS
+
+        /* NOTE HW unreliable for small values! */
+        /* threshold for performance adjustment for HW primitive use   */
+        /* X bits of G^X mod P greater than                            */
+        #define ESP_RSA_EXPT_XBITS           32
+        /* X and Y of X * Y mod P greater than                         */
+        #define ESP_RSA_MULM_BITS            9
+
+        #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+
+    #endif
 #endif
+
 #define RSA_LOW_MEM
 
 /* #define WOLFSSL_ATECC508A_DEBUG          */
@@ -204,23 +216,25 @@
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA223 HW on ESP32  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
     /* end CONFIG_IDF_TARGET_ESP32 */
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+    /***** end CONFIG_IDF_TARGET_ESP32 *****/
+
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    /* end CONFIG_IDF_TARGET_ESP32S2 */
+    /* #define NO_ESP32_CRYPT                 */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+    /***** end CONFIG_IDF_TARGET_ESP32S2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    /* end CONFIG_IDF_TARGET_ESP32S3 */
+    /***** end CONFIG_IDF_TARGET_ESP32S3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off:*/
@@ -237,7 +251,7 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
-    /* end CONFIG_IDF_TARGET_ESP32C3 */
+    /***** end CONFIG_IDF_TARGET_ESP32C3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /*  wolfSSL Hardware Acceleration is enabled unless otherwise turned off: */
@@ -255,7 +269,7 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
-    /* end CONFIG_IDF_TARGET_ESP32C6 */
+    /***** end CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
 /*  wolfSSL Hardware Acceleration not yet implemented */
@@ -264,7 +278,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 
-    /* end CONFIG_IDF_TARGET_ESP32H2 */
+    /***** end CONFIG_IDF_TARGET_ESP32H2 *****/
 #else
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
@@ -283,8 +297,10 @@
 #define WOLFSSL_TEST_STRAY 1
 #define USE_ESP_DPORT_ACCESS_READ_BUFFER
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
+#define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
 */
+
 #define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
 #define WOLFSSL_HW_METRICS
 

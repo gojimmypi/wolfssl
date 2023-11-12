@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_test_IDF_v5_ESP32S2", "wolfssl_test_IDF_v5_ESP32S2.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{B18B004C-75A5-4569-857C-BFDB7A0DDE66}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{659DEA11-DB60-4A90-838A-639F265D2C43}"
 	ProjectSection(SolutionItems) = preProject

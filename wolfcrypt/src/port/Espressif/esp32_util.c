@@ -508,7 +508,7 @@ int ShowExtendedSystemInfo(void)
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* info not available for C3 at this time */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     #if defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
         ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                         CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ

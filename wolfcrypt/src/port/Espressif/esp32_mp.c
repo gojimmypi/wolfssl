@@ -71,6 +71,18 @@
 #define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
 #define BITS_IN_ONE_WORD            32
 
+#ifndef ESP_RSA_MULM_BITS
+    #define ESP_RSA_MULM_BITS 8
+#endif
+
+#ifndef ESP_RSA_EXPT_XBITS
+    #define ESP_RSA_EXPT_XBITS 8
+#endif
+
+#ifndef ESP_RSA_EXPT_YBITS
+	#define ESP_RSA_EXPT_YBITS 8
+#endif
+
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -78,6 +90,9 @@
     #include <soc/hwcrypto_reg.h>
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     #include <soc/pcr_reg.h>
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    #include <soc/system_reg.h>
+    #include <soc/hwcrypto_reg.h>
 #endif
 
 static const char* const TAG = "wolfssl_esp32_mp";
@@ -196,7 +211,7 @@ static int esp_mp_hw_wait_clean(void)
         /*  wait. expected delay 1 to 2 uS  */
         ESP_EM__MP_HW_WAIT_CLEAN
     }
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     ESP_EM__PRE_MP_HW_WAIT_CLEAN
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_QUERY_CLEAN_REG) != 1)
     {
@@ -360,6 +375,30 @@ static int esp_mp_hw_lock()
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* Activate the RSA accelerator. See 18.3 of ESP32-S2 technical manual.
+     * periph_module_enable doesn't seem to be documented and in private folder
+     * with v5 release. Maybe it will be deprecated? */
+    if (ret == 0) {
+        periph_module_enable(PERIPH_RSA_MODULE);
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            /* Note these names are different from those in the documentation!
+             *
+             * Documenation lists the same names as the ESP32-C3:
+             *
+             * DPORT_REG_SET_BIT((volatile void *)(SYSTEM_PERIP_CLK_EN1_REG),
+             *                   SYSTEM_CRYPTO_RSA_CLK_EN );
+             * DPORT_REG_CLR_BIT((volatile void *)(SYSTEM_RSA_PD_CTRL_REG),
+             *                   SYSTEM_RSA_MEM_PD );
+             *
+             * However, in the sytem_reg.h, the names below were found:
+             */
+            DPORT_REG_SET_BIT((volatile void *)(DPORT_CPU_PERIP_CLK_EN1_REG), DPORT_CRYPTO_RSA_CLK_EN );
+            DPORT_REG_CLR_BIT((volatile void *)(DPORT_RSA_PD_CTRL_REG),  DPORT_RSA_MEM_PD );
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
+    }
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Activate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
@@ -419,6 +458,13 @@ static int esp_mp_hw_unlock( void )
             DPORT_REG_CLR_BIT((volatile void *)(PCR_RSA_CONF_REG), PCR_RSA_CLK_EN);
         }
         portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
+         * periph_module_enable doesn't seem to be documented and in private folder
+         * with v5 release. Maybe it will be deprecated? */
+        DPORT_REG_SET_BIT(DPORT_RSA_PD_CTRL_REG, DPORT_RSA_MEM_PD);
+        periph_module_disable(PERIPH_RSA_MODULE);
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         /* Deactivate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
@@ -957,10 +1003,12 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     if (ret == MP_OKAY) {
         mph->Ys = mp_count_bits(Y); /* init Y's to pass to montgomery init */
 
-        if (mph->Ys <= EPS_RSA_EXPT_XBTIS || mph->Ys <= 8) { /* hard floor 8 bits, problematic in some ESP32 */
-    #ifdef WOLFSSL_HW_METRICS
-            esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
-    #endif
+        if (mph->Ys <= ESP_RSA_EXPT_XBITS || mph->Ys <= ESP_RSA_EXPT_YBITS) { /* hard floor 8 bits, problematic in some ESP32 */
+            #ifdef WOLFSSL_HW_METRICS
+            {
+                esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
+            }
+            #endif
             ESP_LOGV(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
                           mph->Ys);
             ret = MP_HW_FALLBACK; /* fall back to software calc at exit */
@@ -994,7 +1042,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
 #else
     exp = 0; /* no HW, no montgomery HW init */
@@ -1459,7 +1507,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
     /* end ESP32-C6 */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-S3 The RSA Accelerator supports large-number modular
      * multiplication with operands of 128 different lengths.
@@ -1654,7 +1702,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     uint32_t OperandBits; /* TODO remove */
     int WordsForOperand;
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint32_t OperandBits; /* TODO remove */
     int WordsForOperand;
 #else
@@ -1767,6 +1815,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* we'll use hardware only for a minimum number of bits */
     if (mph->Xs <= ESP_RSA_MULM_BITS || mph->Ys <= ESP_RSA_MULM_BITS) {
         ret = MP_HW_FALLBACK;
+        #ifdef WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
+        {
+            ESP_LOGV(TAG, "esp_mp_mulmod falling back for ESP_RSA_MULM_BITS!");
+        }
+        #endif
     }
 
     /* lock HW for use, enable peripheral clock */
@@ -1880,7 +1933,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (lock_called) {
         ret = esp_mp_hw_unlock();
     }
-
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
     /* end of ESP32 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -2046,7 +2101,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_hw_unlock();
 
     /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
@@ -2112,7 +2167,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* 6. Start operation and wait until it completes. */
         process_start(RSA_MOD_MULT_START_REG); /* we're here in esp_mp_mulmod */
         asm volatile("memw");
-        asm volatile("nop");
+        asm volatile("nop"); /* TODO move EM */
         asm volatile("nop");
         asm volatile("nop");
         asm volatile("nop");
@@ -2130,13 +2185,24 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        if (ret == MP_HW_FALLBACK) {
+            ESP_LOGV(TAG, "Lock not called due to no-lock MP_HW_FALLBACK");
+        }
+        else {
+            ESP_LOGW(TAG, "Lock unexpectedly not called");
+        }
+    }
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
     /* for all non-supported chipsets, fall back to SW calcs */
     ret = MP_HW_FALLBACK;
 #endif
+
     if (ret == MP_OKAY) {
         /* additional steps                               */
         /* this is needed for known issue when Z is greater than M */
@@ -2311,7 +2377,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* TODO */
     uint32_t OperandBits;
     uint32_t WordsForOperand; /* TODO cleanup */
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint32_t OperandBits;
     uint32_t WordsForOperand; /* TODO cleanup */
 #else
@@ -2611,7 +2677,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     esp_mp_hw_unlock();
     /* end if CONFIG_IDF_TARGET_ESP32C6 */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
