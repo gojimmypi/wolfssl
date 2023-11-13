@@ -209,10 +209,10 @@
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /* #define NO_ESP32_CRYPT                 */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
     /* end CONFIG_IDF_TARGET_ESP32S2 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
