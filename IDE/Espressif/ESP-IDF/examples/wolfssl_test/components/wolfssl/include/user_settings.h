@@ -355,6 +355,7 @@
 */
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
+
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
