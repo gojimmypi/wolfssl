@@ -2324,6 +2324,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #if !defined(WOLFSSL_ESPIDF)
 /* gate this for target platforms wishing to avoid printf reference */
         printf("Exiting main with return code: %ld\n", (long int)args.return_code);
+#endif
 
         return args.return_code;
     } /* wolfcrypt_test_main or wolf_test_task */
