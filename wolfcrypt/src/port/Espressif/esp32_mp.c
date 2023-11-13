@@ -2062,11 +2062,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    if (lock_called) {
+    if (mulmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
-        ESP_LOGV(TAG, "Lock not called");
+        ESP_LOGV(TAG, "Lock not called, esp_mp_hw_unlock skipped");
     }
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
@@ -2152,7 +2152,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         ret = esp_mp_hw_unlock();
     }
     else {
-        ESP_LOGV(TAG, "Lock not called");
+        ESP_LOGV(TAG, "Lock not called, esp_mp_hw_unlock skipped");
     }
 
     /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
