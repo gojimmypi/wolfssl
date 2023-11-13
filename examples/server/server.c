@@ -3361,7 +3361,7 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
                     err = 0; /* reset error */
                     ret = wolfSSL_read_early_data(ssl, input, sizeof(input)-1,
                                                                           &len);
-                    if (ret != WOLFSSL_SUCCESS) {
+                    if (ret <= 0) {
                         err = SSL_get_error(ssl, 0);
                     #ifdef WOLFSSL_ASYNC_CRYPT
                         if (err == WC_PENDING_E) {
@@ -3395,7 +3395,14 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
             } while (err == WC_PENDING_E);
         }
 #else
-        (void)nonBlocking;
+        if (nonBlocking) {
+            #ifdef WOLFSSL_DTLS
+            if (doDTLS) {
+                wolfSSL_dtls_set_using_nonblock(ssl, 1);
+            }
+            #endif
+            tcp_set_nonblocking(&clientfd);
+        }
         ret = NonBlockingSSL_Accept(ssl);
 #endif
 #ifdef WOLFSSL_EARLY_DATA

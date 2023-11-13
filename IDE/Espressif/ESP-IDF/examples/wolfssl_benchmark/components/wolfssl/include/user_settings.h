@@ -32,6 +32,7 @@
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
+#include <sdkconfig.h>
 
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
@@ -59,6 +60,7 @@
 /* #define NO_OLD_TLS */
 
 #define BENCH_EMBEDDED
+#define USE_CERT_BUFFERS_2048
 
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
@@ -72,7 +74,7 @@
 
 #define NO_FILESYSTEM
 
- #define HAVE_AESGCM
+#define HAVE_AESGCM
 
 #define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
@@ -92,9 +94,11 @@
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
+#define HAVE_ED25519
 
  #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
+/* #define HAVE_PKCS7 */
 
 #define HAVE_PKCS7
 
@@ -130,6 +134,9 @@
 #endif
 #define RSA_LOW_MEM
 
+/* debug options */
+/* #define DEBUG_WOLFSSL */
+/* #define WOLFSSL_ESP32_CRYPT_DEBUG */
 /* #define WOLFSSL_ATECC508A_DEBUG          */
 
 /* date/time                               */
@@ -198,6 +205,7 @@
 ** Uncomment these lines to force SW instead of HW accleration */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    /* when you want not to use HW acceleration on ESP32 (below for S3, etc */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
@@ -216,6 +224,7 @@
     /* end CONFIG_IDF_TARGET_ESP32S2 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* when you want not to use HW acceleration on ESP32-S3 */
     /* #define NO_ESP32_CRYPT                 */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* #define NO_WOLFSSL_ESP32_CRYPT_AES     */
@@ -266,6 +275,7 @@
 
     /* end CONFIG_IDF_TARGET_ESP32H2 */
 #else
+    /* anything else unknown will have HW disabled by default */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -309,7 +319,7 @@
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
 
 /* Turn off Large Number ESP32 HW Modular Multiplication
-** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+** [Z = X x Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
 
 

@@ -20,7 +20,7 @@
  */
 
 /* This user_settings.h is for Espressif ESP-IDF */
-#include "sdkconfig.h"
+#include <sdkconfig.h>
 
 /* The Espressif sdkconfig will have chipset info.
 **
@@ -59,6 +59,7 @@
 /* #define NO_OLD_TLS */
 
 #define BENCH_EMBEDDED
+#define USE_CERT_BUFFERS_2048
 
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
@@ -72,7 +73,7 @@
 
 #define NO_FILESYSTEM
 
- #define HAVE_AESGCM
+#define HAVE_AESGCM
 
 #define WOLFSSL_RIPEMD
 /* when you want to use SHA224 */
@@ -92,9 +93,11 @@
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
+#define HAVE_ED25519
 
  #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
+/* #define HAVE_PKCS7 */
 
 #define HAVE_PKCS7
 
@@ -128,15 +131,15 @@
         #undef ESP_RSA_EXPT_XBITS
 
         /* NOTE HW unreliable for small values! */
-        /* threshold for performance adjustment for HW primitive use   */
-        /* X bits of G^X mod P greater than                            */
+    /* threshold for performance adjustment for HW primitive use   */
+    /* X bits of G^X mod P greater than                            */
         #define ESP_RSA_EXPT_XBITS           32
-        /* X and Y of X * Y mod P greater than                         */
+    /* X and Y of X * Y mod P greater than                         */
         #define ESP_RSA_MULM_BITS            9
 
         #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
 
-    #endif
+#endif
 #endif
 
 #define RSA_LOW_MEM
@@ -335,7 +338,7 @@
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
 
 /* Turn off Large Number ESP32 HW Modular Multiplication
-** [Z = X × Y mod M] in esp_mp_mulmod()                         */
+** [Z = X � Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
 
 

@@ -4727,7 +4727,7 @@ static int EchCheckAcceptance(WOLFSSL* ssl, const byte* input,
     int digestSize;
     HS_Hashes* tmpHashes;
     HS_Hashes* acceptHashes;
-    byte zeros[WC_MAX_DIGEST_SIZE] = {0};
+    byte zeros[WC_MAX_DIGEST_SIZE];
     byte transcriptEchConf[WC_MAX_DIGEST_SIZE];
     byte expandLabelPrk[WC_MAX_DIGEST_SIZE];
     byte acceptConfirmation[ECH_ACCEPT_CONFIRMATION_SZ];
@@ -4847,7 +4847,7 @@ static int EchWriteAcceptance(WOLFSSL* ssl, byte* output,
     int digestSize;
     HS_Hashes* tmpHashes;
     HS_Hashes* acceptHashes;
-    byte zeros[WC_MAX_DIGEST_SIZE] = {0};
+    byte zeros[WC_MAX_DIGEST_SIZE];
     byte transcriptEchConf[WC_MAX_DIGEST_SIZE];
     byte expandLabelPrk[WC_MAX_DIGEST_SIZE];
     XMEMSET(zeros, 0, sizeof(zeros));

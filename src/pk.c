@@ -3556,7 +3556,6 @@ int wolfSSL_RSA_verify_PKCS1_PSS(WOLFSSL_RSA *rsa, const unsigned char *mHash,
 
     if (ret == 1) {
         /* Calculate the salt length to use for special cases. */
-        /* TODO: use special case wolfCrypt values. */
         switch (saltLen) {
         /* Negative saltLen values are treated differently */
         case RSA_PSS_SALTLEN_DIGEST:
