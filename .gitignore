@@ -496,3 +496,5 @@ MagicCrypto
 debian/changelog
 debian/control
 *.deb
+/mycerts
+/mycertsSM
