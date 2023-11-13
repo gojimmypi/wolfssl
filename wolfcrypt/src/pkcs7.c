@@ -8697,6 +8697,7 @@ static int wc_PKCS7_DecryptKtri(PKCS7* pkcs7, byte* in, word32 inSz,
     mp_int serialNum[1];
     RsaKey privKey[1];
 #endif
+    XMEMSET(issuerHash, 0, sizeof(issuerHash));
 
 #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)
     keyIdSize = wc_HashGetDigestSize(wc_HashTypeConvert(HashIdAlg(
@@ -10033,6 +10034,7 @@ static int wc_PKCS7_DecryptKari(PKCS7* pkcs7, byte* in, word32 inSz,
     word32 tmpIdx = (idx) ? *idx : 0;
 #endif
 
+    WOLFSSL_ENTER("wc_PKCS7_DecryptKari");
     if (pkcs7 == NULL || pkiMsg == NULL ||
         idx == NULL || decryptedKey == NULL || decryptedKeySz == NULL) {
         return BAD_FUNC_ARG;
@@ -10294,6 +10296,7 @@ static int wc_PKCS7_DecryptRecipientInfos(PKCS7* pkcs7, byte* in,
         return BAD_FUNC_ARG;
     }
 
+    WOLFSSL_ENTER("wc_PKCS7_DecryptRecipientInfos");
 #ifndef NO_PKCS7_STREAM
     tmpIdx = *idx;
 #endif

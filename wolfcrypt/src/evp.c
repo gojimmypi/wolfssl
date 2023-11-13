@@ -6017,7 +6017,7 @@ void wolfSSL_EVP_init(void)
                 else
 #endif /* HAVE_CHACHA && HAVE_POLY1305 */
 #if defined(WOLFSSL_SM4_GCM)
-                if (ctx->cipherType == SM4_GCM_TYPE) {
+                if (ctx->cipherType == WOLFSSL_SM4_GCM) {
                     if (arg <= 0 || arg > SM4_BLOCK_SIZE) {
                         break;
                     }
@@ -6025,7 +6025,7 @@ void wolfSSL_EVP_init(void)
                 else
 #endif
 #if defined(WOLFSSL_SM4_CCM)
-                if (ctx->cipherType == SM4_CCM_TYPE) {
+                if (ctx->cipherType == WOLFSSL_SM4_CCM) {
                     if (arg <= 0 || arg > SM4_BLOCK_SIZE) {
                         break;
                     }
@@ -12028,7 +12028,7 @@ int wolfSSL_EVP_EncodeBlock(unsigned char *out, const unsigned char *in,
     if (out == NULL || in == NULL)
         return WOLFSSL_FATAL_ERROR;
 
-    if (Base64_Encode(in, (word32)inLen, out, &ret) == 0)
+    if (Base64_Encode_NoNl(in, (word32)inLen, out, &ret) == 0)
         return (int)ret;
     else
         return WOLFSSL_FATAL_ERROR;

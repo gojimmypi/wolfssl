@@ -1415,8 +1415,7 @@ int wc_HashGetFlags(wc_HashAlg* hash, enum wc_HashType type, word32* flags)
             return MEMORY_E;
     #endif
 
-
-#ifdef WOLF_CRYPTO_CB
+    #ifdef WOLF_CRYPTO_CB
         /* only use devId if its not an empty hash */
         if (data != NULL && len > 0)
             devId = wc_CryptoCb_GetDevIdAtIndex(0);

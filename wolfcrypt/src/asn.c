@@ -70,6 +70,8 @@ ASN Options:
  * WOLFSSL_NO_OCSP_DATE_CHECK: Disable date checks for OCSP responses. This
     may be required when the system's real-time clock is not very accurate.
     It is recommended to enforce the nonce check instead if possible.
+ * WOLFSSL_NO_CRL_DATE_CHECK: Disable date checks for CRL's.
+ * WOLFSSL_NO_CRL_NEXT_DATE: Do not fail if CRL next date is missing
  * WOLFSSL_FORCE_OCSP_NONCE_CHECK: Require nonces to be available in OCSP
     responses. The nonces are optional and may not be supported by all
     responders. If it can be ensured that the used responder sends nonces this
@@ -18567,7 +18569,7 @@ static int DecodeBasicCaConstraint(const byte* input, int sz, DecodedCert* cert)
     word32 idx = 0;
     byte isCA = 0;
 
-    WOLFSSL_ENTER("DecodeBasicCaConstraints");
+    WOLFSSL_ENTER("DecodeBasicCaConstraint");
 
     CALLOC_ASNGETDATA(dataASN, basicConsASN_Length, ret, cert->heap);
 
@@ -29007,6 +29009,12 @@ int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
         /* Set signature OID and signature data. */
         SetASN_OID(&dataASN[SIGASN_IDX_SIGALGO_OID], (word32)sigAlgoType,
                    oidSigType);
+        if (dataASN[SIGASN_IDX_SIGALGO_OID].data.buffer.data == NULL) {
+            /* The OID was not found or compiled in! */
+            ret = ASN_UNKNOWN_OID_E;
+        }
+    }
+    if (ret == 0) {
         if (IsSigAlgoECC((word32)sigAlgoType)) {
             /* ECDSA and EdDSA doesn't have NULL tagged item. */
             dataASN[SIGASN_IDX_SIGALGO_NULL].noOut = 1;
@@ -36661,7 +36669,7 @@ static int ParseCRL_CertList(RevokedCert* rcert, DecodedCRL* dcrl,
     if (doNextDate)
 #endif
     {
-#ifndef NO_ASN_TIME
+#if !defined(NO_ASN_TIME) && !defined(WOLFSSL_NO_CRL_DATE_CHECK)
         if (verify != NO_VERIFY &&
                 !XVALIDATE_DATE(dcrl->nextDate, dcrl->nextDateFormat, AFTER)) {
             WOLFSSL_MSG("CRL after date is no longer valid");
@@ -37191,7 +37199,7 @@ end:
         dcrl->nextDateFormat = (dataASN[CRLASN_IDX_TBS_NEXTUPDATE_UTC].tag != 0)
                 ? dataASN[CRLASN_IDX_TBS_NEXTUPDATE_UTC].tag
                 : dataASN[CRLASN_IDX_TBS_NEXTUPDATE_GT].tag;
-    #ifndef NO_ASN_TIME
+    #if !defined(NO_ASN_TIME) && !defined(WOLFSSL_NO_CRL_DATE_CHECK)
         if (dcrl->nextDateFormat != 0) {
             /* Next date was set, so validate it. */
             if (verify != NO_VERIFY &&
@@ -37202,8 +37210,8 @@ end:
             }
         }
     }
-    if (ret == 0) {
-    #endif
+    if (ret == 0) { /* in "no time" cases above "ret" is not set */
+    #endif /* !NO_ASN_TIME && !WOLFSSL_NO_CRL_DATE_CHECK */
     #ifdef OPENSSL_EXTRA
         /* Parse and store the issuer name. */
         dcrl->issuerSz = GetASNItem_Length(dataASN[CRLASN_IDX_TBS_ISSUER],
@@ -37517,8 +37525,10 @@ int wc_MIME_parse_headers(char* in, int inLen, MimeHdr** headers)
             }
             else if (mimeStatus == MIME_BODYVAL && cur == ';' && pos >= 1) {
                 end = pos-1;
-                if (bodyVal != NULL)
+                if (bodyVal != NULL) {
                     XFREE(bodyVal, NULL, DYNAMIC_TYPE_PKCS7);
+                    bodyVal = NULL;
+                }
                 ret = wc_MIME_header_strip(curLine, &bodyVal, start, end);
                 if (ret) {
                     goto error;
@@ -37611,9 +37621,12 @@ error:
     if (ret != 0)
         wc_MIME_free_hdrs(curHdr);
     wc_MIME_free_hdrs(nextHdr);
-    XFREE(nameAttr, NULL, DYNAMIC_TYPE_PKCS7);
-    XFREE(bodyVal, NULL, DYNAMIC_TYPE_PKCS7);
-    XFREE(nextParam, NULL, DYNAMIC_TYPE_PKCS7);
+    if (nameAttr != NULL)
+        XFREE(nameAttr, NULL, DYNAMIC_TYPE_PKCS7);
+    if (bodyVal != NULL)
+        XFREE(bodyVal, NULL, DYNAMIC_TYPE_PKCS7);
+    if (nextParam != NULL)
+        XFREE(nextParam, NULL, DYNAMIC_TYPE_PKCS7);
 
     return ret;
 }

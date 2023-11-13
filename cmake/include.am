@@ -4,4 +4,3 @@ EXTRA_DIST += cmake/config.in
 EXTRA_DIST += cmake/functions.cmake
 EXTRA_DIST += cmake/modules/FindARIA.cmake
 EXTRA_DIST += cmake/modules/FindOQS.cmake
-
