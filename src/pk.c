@@ -3562,7 +3562,11 @@ int wolfSSL_RSA_verify_PKCS1_PSS(WOLFSSL_RSA *rsa, const unsigned char *mHash,
         case RSA_PSS_SALTLEN_DIGEST:
             saltLen = hashLen;
             break;
-        case RSA_PSS_SALTLEN_MAX_SIGN:
+        case RSA_PSS_SALTLEN_AUTO:
+        #ifdef WOLFSSL_PSS_SALT_LEN_DISCOVER
+            saltLen = RSA_PSS_SALT_LEN_DISCOVER;
+            break;
+        #endif
         case RSA_PSS_SALTLEN_MAX:
         #ifdef WOLFSSL_PSS_LONG_SALT
             saltLen = emLen - hashLen - 2;

@@ -1396,6 +1396,7 @@ typedef WOLFSSL_SRTP_PROTECTION_PROFILE      SRTP_PROTECTION_PROFILE;
 #define sk_ASN1_OBJECT_pop_free         wolfSSL_sk_ASN1_OBJECT_pop_free
 #define GENERAL_NAME_free               wolfSSL_GENERAL_NAME_free
 #define GENERAL_NAMES_free              wolfSSL_GENERAL_NAMES_free
+#define EXTENDED_KEY_USAGE_free         wolfSSL_EXTENDED_KEY_USAGE_free
 
 #define AUTHORITY_INFO_ACCESS_free      wolfSSL_AUTHORITY_INFO_ACCESS_free
 #define AUTHORITY_INFO_ACCESS_pop_free  wolfSSL_AUTHORITY_INFO_ACCESS_pop_free
@@ -1478,11 +1479,11 @@ typedef WOLFSSL_SRTP_PROTECTION_PROFILE      SRTP_PROTECTION_PROFILE;
 #define PEM_F_PEM_DEF_CALLBACK  100
 
 /* Avoid wolfSSL error code range */
-#define PEM_R_NO_START_LINE             (-MIN_CODE_E + 1001)
-#define PEM_R_PROBLEMS_GETTING_PASSWORD (-MIN_CODE_E + 1002)
-#define PEM_R_BAD_PASSWORD_READ         (-MIN_CODE_E + 1003)
-#define PEM_R_BAD_DECRYPT               (-MIN_CODE_E + 1004)
-#define ASN1_R_HEADER_TOO_LONG          (-MIN_CODE_E + 1005)
+#define PEM_R_NO_START_LINE             (-MIN_CODE_E + 1)
+#define PEM_R_PROBLEMS_GETTING_PASSWORD (-MIN_CODE_E + 2)
+#define PEM_R_BAD_PASSWORD_READ         (-MIN_CODE_E + 3)
+#define PEM_R_BAD_DECRYPT               (-MIN_CODE_E + 4)
+#define ASN1_R_HEADER_TOO_LONG          (-MIN_CODE_E + 5)
 
 #define ERR_LIB_RSA             4
 #define ERR_LIB_EC              16

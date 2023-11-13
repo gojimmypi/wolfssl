@@ -7239,10 +7239,10 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
     else if (type == TRUSTED_PEER_TYPE) {
         /* add trusted peer cert. der is freed within */
         if (ctx != NULL)
-            ret = AddTrustedPeer(ctx->cm, &der, !ctx->verifyNone);
+            ret = AddTrustedPeer(ctx->cm, &der, verify);
         else {
             SSL_CM_WARNING(ssl);
-            ret = AddTrustedPeer(SSL_CM(ssl), &der, !ssl->options.verifyNone);
+            ret = AddTrustedPeer(SSL_CM(ssl), &der, verify);
         }
         if (ret != WOLFSSL_SUCCESS) {
             WOLFSSL_MSG("Error adding trusted peer");
@@ -8576,10 +8576,7 @@ int wolfSSL_CTX_load_system_CA_certs(WOLFSSL_CTX* ctx)
      * load them manually into wolfSSL "the old way". Accessiblity of this API
      * is indicated by the presence of the Security/SecTrustSettings.h header */
     ret = LoadSystemCaCertsMac(ctx, &loaded);
-#elif defined(WOLFSSL_APPLE_NATIVE_CERT_VALIDATION) \
-   || (defined(HAVE_SECURITY_SECCERTIFICATE_H) \
-       && defined(HAVE_SECURITY_SECTRUST_H)    \
-       && defined(HAVE_SECURITY_SECPOLICY_H))
+#elif defined(WOLFSSL_APPLE_NATIVE_CERT_VALIDATION)
     /* For other Apple devices, Apple has removed the ability to obtain
      * certificates from the trust store, so we can't use wolfSSL's built-in
      * certificate validation mechanisms anymore. We instead must call into the
@@ -15730,6 +15727,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
                                        const unsigned char* in,
                                        long sz, int format)
     {
+        int verify;
         WOLFSSL_ENTER("wolfSSL_CTX_trust_peer_buffer");
 
         /* sanity check on arguments */
@@ -15737,12 +15735,17 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
             return BAD_FUNC_ARG;
         }
 
+        verify = GET_VERIFY_SETTING_CTX(ctx);
+        if (WOLFSSL_LOAD_VERIFY_DEFAULT_FLAGS &
+                 WOLFSSL_LOAD_FLAG_DATE_ERR_OKAY)
+            verify = VERIFY_SKIP_DATE;
+
         if (format == WOLFSSL_FILETYPE_PEM)
             return ProcessChainBuffer(ctx, in, sz, format, TRUSTED_PEER_TYPE,
-                                      NULL, GET_VERIFY_SETTING_CTX(ctx));
+                                      NULL, verify);
         else
             return ProcessBuffer(ctx, in, sz, format, TRUSTED_PEER_TYPE, NULL,
-                                 NULL, 0, GET_VERIFY_SETTING_CTX(ctx));
+                                 NULL, 0, verify);
     }
 #endif /* WOLFSSL_TRUST_PEER_CERT */
 
@@ -16803,11 +16806,13 @@ cleanup:
 #endif /* OPENSSL_EXTRA || WOLFSSL_EXTRA || WOLFSSL_WPAS_SMALL */
 
     /* return true if connection established */
-    int wolfSSL_is_init_finished(WOLFSSL* ssl)
+    int wolfSSL_is_init_finished(const WOLFSSL* ssl)
     {
         if (ssl == NULL)
             return 0;
 
+        /* Can't use ssl->options.connectState and ssl->options.acceptState because
+         * they differ in meaning for TLS <=1.2 and 1.3 */
         if (ssl->options.handShakeState == HANDSHAKE_DONE)
             return 1;
 
@@ -22199,20 +22204,20 @@ int wolfSSL_ERR_GET_LIB(unsigned long err)
 
     value = (err & 0xFFFFFFL);
     switch (value) {
-    case -SSL_R_HTTP_REQUEST:
+    case -SSL_R_HTTP_REQUEST: /* -306 */
         return ERR_LIB_SSL;
-    case -ASN_NO_PEM_HEADER:
-    case PEM_R_NO_START_LINE:
-    case PEM_R_PROBLEMS_GETTING_PASSWORD:
-    case PEM_R_BAD_PASSWORD_READ:
-    case PEM_R_BAD_DECRYPT:
+    case -ASN_NO_PEM_HEADER: /* -162 */
+    case PEM_R_NO_START_LINE: /* (-MIN_CODE_E + 1) */
+    case PEM_R_PROBLEMS_GETTING_PASSWORD: /*  (-MIN_CODE_E + 2) */
+    case PEM_R_BAD_PASSWORD_READ: /* duplicate  (-MIN_CODE_E + 3) = 303 */
+    case PEM_R_BAD_DECRYPT: /* (-MIN_CODE_E + 4) */
         return ERR_LIB_PEM;
-    case EVP_R_BAD_DECRYPT:
-    case EVP_R_BN_DECODE_ERROR:
-    case EVP_R_DECODE_ERROR:
-    case EVP_R_PRIVATE_KEY_DECODE_ERROR:
+    case EVP_R_BAD_DECRYPT: /*  (-MIN_CODE_E + 100 + 1) */
+    case EVP_R_BN_DECODE_ERROR: /* (-MIN_CODE_E + 100 + 2) */
+    case EVP_R_DECODE_ERROR: /* (-MIN_CODE_E + 100 + 3) */
+    case EVP_R_PRIVATE_KEY_DECODE_ERROR: /*  (-MIN_CODE_E + 100 + 4) */
         return ERR_LIB_EVP;
-    case ASN1_R_HEADER_TOO_LONG:
+    case ASN1_R_HEADER_TOO_LONG: /* (-MIN_CODE_E + 5) */
         return ERR_LIB_ASN1;
     default:
         return 0;
@@ -24297,6 +24302,38 @@ WOLFSSL_STACK* wolfSSL_sk_dup(WOLFSSL_STACK* sk)
 error:
     if (ret) {
         wolfSSL_sk_GENERAL_NAME_free(ret);
+    }
+    return NULL;
+}
+
+
+WOLFSSL_STACK* wolfSSL_shallow_sk_dup(WOLFSSL_STACK* sk)
+{
+
+    WOLFSSL_STACK* ret = NULL;
+    WOLFSSL_STACK** prev = &ret;
+
+    WOLFSSL_ENTER("wolfSSL_shallow_sk_dup");
+
+    for (; sk != NULL; sk = sk->next) {
+        WOLFSSL_STACK* cur = wolfSSL_sk_new_node(sk->heap);
+
+        if (!cur) {
+            WOLFSSL_MSG("wolfSSL_sk_new_node error");
+            goto error;
+        }
+
+        XMEMCPY(cur, sk, sizeof(WOLFSSL_STACK));
+        cur->next = NULL;
+
+        *prev = cur;
+        prev = &cur->next;
+    }
+    return ret;
+
+error:
+    if (ret) {
+        wolfSSL_sk_free(ret);
     }
     return NULL;
 }
@@ -31948,12 +31985,7 @@ int wolfSSL_SSL_in_init(WOLFSSL *ssl)
 {
     WOLFSSL_ENTER("wolfSSL_SSL_in_init");
 
-    if (ssl == NULL)
-        return WOLFSSL_FAILURE;
-
-    /* Can't use ssl->options.connectState and ssl->options.acceptState because
-     * they differ in meaning for TLS <=1.2 and 1.3 */
-    return ssl->options.handShakeState != HANDSHAKE_DONE;
+    return !wolfSSL_is_init_finished(ssl);
 }
 
 int wolfSSL_SSL_in_connect_init(WOLFSSL* ssl)
@@ -32607,7 +32639,7 @@ static int set_curves_list(WOLFSSL* ssl, WOLFSSL_CTX *ctx, const char* names)
     char name[MAX_CURVE_NAME_SZ];
     byte groups_len = 0;
 #ifdef WOLFSSL_SMALL_STACK
-    void *heap = ssl? ssl->heap : ctx ? ctx->heap : NULL; (void)heap;
+    void *heap = ssl? ssl->heap : ctx ? ctx->heap : NULL;
     int *groups;
 #else
     int groups[WOLFSSL_MAX_GROUP_COUNT];
@@ -36004,6 +36036,9 @@ PKCS7* wolfSSL_d2i_PKCS7_ex(PKCS7** p7, const unsigned char** in, int len,
                                                                          != 0) {
             WOLFSSL_MSG("wc_PKCS7_VerifySignedData failed");
             wolfSSL_PKCS7_free((PKCS7*)pkcs7);
+            if (p7 != NULL) {
+                *p7 = NULL;
+            }
             return NULL;
         }
     }

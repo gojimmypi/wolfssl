@@ -7624,6 +7624,12 @@ int AllocKey(WOLFSSL* ssl, int type, void** pKey)
     /* Sanity check key destination */
     if (*pKey != NULL) {
         WOLFSSL_MSG("Key already present!");
+    #ifdef WOLFSSL_ASYNC_CRYPT
+        /* allow calling this again for async reentry */
+        if (ssl->error == WC_PENDING_E) {
+            return 0;
+        }
+    #endif
         return BAD_STATE_E;
     }
 
@@ -14415,8 +14421,9 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                     }
                 }
                 else if (ret == ASN_PARSE_E || ret == BUFFER_E ||
-                         ret == MEMORY_E) {
-                    WOLFSSL_MSG("Got Peer cert ASN PARSE_E, BUFFER E, MEMORY_E");
+                         ret == MEMORY_E || ret == BAD_FUNC_ARG) {
+                    WOLFSSL_MSG("Got Peer cert ASN_PARSE_E, BUFFER_E, MEMORY_E,"
+                                " BAD_FUNC_ARG");
                 #if defined(WOLFSSL_EXTRA_ALERTS) || defined(OPENSSL_EXTRA) || \
                                                defined(OPENSSL_EXTRA_X509_SMALL)
                     DoCertFatalAlert(ssl, ret);
@@ -20179,20 +20186,8 @@ static int DtlsShouldDrop(WOLFSSL* ssl, int retcode)
 #ifndef NO_WOLFSSL_SERVER
     if (ssl->options.side == WOLFSSL_SERVER_END
             && ssl->curRL.type != handshake && !IsSCR(ssl)) {
-        int beforeCookieVerified = 0;
-        if (!IsAtLeastTLSv1_3(ssl->version)) {
-            beforeCookieVerified =
-                ssl->options.acceptState < ACCEPT_FIRST_REPLY_DONE;
-        }
-#ifdef WOLFSSL_DTLS13
-        else {
-            beforeCookieVerified =
-                ssl->options.acceptState < TLS13_ACCEPT_SECOND_REPLY_DONE;
-        }
-#endif /* WOLFSSL_DTLS13 */
-
-        if (beforeCookieVerified) {
-            WOLFSSL_MSG("Drop non-handshake record before handshake");
+        if (!ssl->options.dtlsStateful) {
+            WOLFSSL_MSG("Drop non-handshake record when not stateful");
             return 1;
         }
     }
@@ -26878,7 +26873,7 @@ int PickHashSigAlgo(WOLFSSL* ssl, const byte* hashSigAlgo, word32 hashSigAlgoSz)
             /* add data, put in buffer if bigger than static buffer */
             info->packets[info->numberPackets].valueSz = totalSz;
             if (totalSz < MAX_VALUE_SZ) {
-                XMEMCPY(info->packets[info->numberPackets].value, data + lateRL,
+                XMEMCPY(info->packets[info->numberPackets].value + lateRL, data,
                                sz);
             }
             else {
@@ -34435,6 +34430,9 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
 #if defined(WOLFSSL_TLS13) && defined(HAVE_SUPPORTED_CURVES)
         if (cs.doHelloRetry) {
+            /* Make sure we don't send HRR twice */
+            if (ssl->options.serverState == SERVER_HELLO_RETRY_REQUEST_COMPLETE)
+                return INVALID_PARAMETER;
             ssl->options.serverState = SERVER_HELLO_RETRY_REQUEST_COMPLETE;
             return TLSX_KeyShare_SetSupported(ssl, &ssl->extensions);
         }
@@ -38891,14 +38889,17 @@ int wolfSSL_AsyncPop(WOLFSSL* ssl, byte* state)
             XMEMSET(&asyncDev->event, 0, sizeof(WOLF_EVENT));
             ssl->asyncDev = NULL;
         }
-    #if !defined(WOLFSSL_ASYNC_CRYPT_SW) && \
-        (defined(WOLF_CRYPTO_CB) || defined(HAVE_PK_CALLBACKS))
+        /* for crypto or PK callback, if pending remove from queue */
+    #if (defined(WOLF_CRYPTO_CB) || defined(HAVE_PK_CALLBACKS)) && \
+        !defined(WOLFSSL_ASYNC_CRYPT_SW) && !defined(HAVE_INTEL_QA) && \
+        !defined(HAVE_CAVIUM)
         else if (ret == WC_PENDING_E) {
             /* Allow the underlying crypto API to be called again to trigger the
              * crypto or PK callback. The actual callback must be called, since
              * the completion is not detected in the poll like Intel QAT or
              * Nitrox */
             ret = wolfEventQueue_Remove(&ssl->ctx->event_queue, event);
+
         }
     #endif
     }

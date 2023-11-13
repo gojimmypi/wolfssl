@@ -156,6 +156,7 @@
 #ifdef WOLFSSL_SIPHASH
     #include <wolfssl/wolfcrypt/siphash.h>
 #endif
+  #include <wolfssl/wolfcrypt/kdf.h>
 #ifndef NO_PWDBASED
     #include <wolfssl/wolfcrypt/pwdbased.h>
 #endif
@@ -564,6 +565,9 @@
 #define BENCH_PBKDF2             0x00000100
 #define BENCH_SIPHASH            0x00000200
 
+/* KDF algorithms */
+#define BENCH_SRTP_KDF           0x00000001
+
 /* Asymmetric algorithms. */
 #define BENCH_RSA_KEYGEN         0x00000001
 #define BENCH_RSA                0x00000002
@@ -649,6 +653,8 @@ static word32 bench_cipher_algs = 0;
 static word32 bench_digest_algs = 0;
 /* MAC algorithms to benchmark. */
 static word32 bench_mac_algs = 0;
+/* KDF algorithms to benchmark. */
+static word32 bench_kdf_algs = 0;
 /* Asymmetric algorithms to benchmark. */
 static word32 bench_asym_algs = 0;
 /* Post-Quantum Asymmetric algorithms to benchmark. */
@@ -827,9 +833,18 @@ static const bench_alg bench_mac_opt[] = {
     #ifndef NO_PWDBASED
     { "-pbkdf2",             BENCH_PBKDF2            },
     #endif
+#endif
     #ifdef WOLFSSL_SIPHASH
     { "-siphash",            BENCH_SIPHASH           },
     #endif
+    { NULL, 0 }
+};
+
+/* All recognized KDF algorithm choosing command line options. */
+static const bench_alg bench_kdf_opt[] = {
+    { "-kdf",                0xffffffff              },
+#ifdef WC_SRTP_KDF
+    { "-srtp-kdf",           BENCH_SRTP_KDF          },
 #endif
     { NULL, 0 }
 };
@@ -1680,6 +1695,7 @@ static void benchmark_static_init(int force)
         bench_cipher_algs = 0;
         bench_digest_algs = 0;
         bench_mac_algs = 0;
+        bench_kdf_algs = 0;
         bench_asym_algs = 0;
         bench_pq_asym_algs = 0;
         bench_other_algs = 0;
@@ -2819,12 +2835,18 @@ static void* benchmarks_do(void* args)
             bench_pbkdf2();
         }
     #endif
-    #ifdef WOLFSSL_SIPHASH
-        if (bench_all || (bench_mac_algs & BENCH_SIPHASH)) {
-            bench_siphash();
-        }
-    #endif
 #endif /* NO_HMAC */
+#ifdef WOLFSSL_SIPHASH
+    if (bench_all || (bench_mac_algs & BENCH_SIPHASH)) {
+        bench_siphash();
+    }
+#endif
+
+#ifdef WC_SRTP_KDF
+    if (bench_all || (bench_kdf_algs & BENCH_SRTP_KDF)) {
+        bench_srtpkdf();
+    }
+#endif
 
 #ifdef HAVE_SCRYPT
     if (bench_all || (bench_other_algs & BENCH_SCRYPT))
@@ -4766,6 +4788,7 @@ void bench_chacha(void)
     double start;
     int    i, count;
 
+    XMEMSET(&enc, 0, sizeof(enc));
     wc_Chacha_SetKey(&enc, bench_key, 16);
 
     bench_stats_start(&count, &start);
@@ -6754,6 +6777,68 @@ void bench_siphash(void)
 }
 #endif
 
+#ifdef WC_SRTP_KDF
+void bench_srtpkdf(void)
+{
+    double start;
+    int count;
+    int ret = 0;
+    byte keyE[32];
+    byte keyA[20];
+    byte keyS[14];
+    const byte *key = bench_key_buf;
+    const byte salt[14] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                           0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e };
+    const byte index[6] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
+    int kdrIdx = 0;
+    int i;
+
+    bench_stats_start(&count, &start);
+    do {
+        for (i = 0; i < numBlocks; i++) {
+            ret = wc_SRTP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
+                kdrIdx, index, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
+                keyS, sizeof(keyS));
+        }
+        count += i;
+    } while (bench_stats_check(start));
+    bench_stats_asym_finish("KDF", 128, "SRTP", 0, count, start, ret);
+
+    bench_stats_start(&count, &start);
+    do {
+        for (i = 0; i < numBlocks; i++) {
+            ret = wc_SRTP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
+                kdrIdx, index, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
+                keyS, sizeof(keyS));
+        }
+        count += i;
+    } while (bench_stats_check(start));
+    bench_stats_asym_finish("KDF", 256, "SRTP", 0, count, start, ret);
+
+    bench_stats_start(&count, &start);
+    do {
+        for (i = 0; i < numBlocks; i++) {
+            ret = wc_SRTCP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
+                kdrIdx, index, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
+                keyS, sizeof(keyS));
+        }
+        count += i;
+    } while (bench_stats_check(start));
+    bench_stats_asym_finish("KDF", 128, "SRTCP", 0, count, start, ret);
+
+    bench_stats_start(&count, &start);
+    do {
+        for (i = 0; i < numBlocks; i++) {
+            ret = wc_SRTCP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
+                kdrIdx, index, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
+                keyS, sizeof(keyS));
+        }
+        count += i;
+    } while (bench_stats_check(start));
+    bench_stats_asym_finish("KDF", 256, "SRTCP", 0, count, start, ret);
+}
+#endif
+
 #ifndef NO_RSA
 
 #if defined(WOLFSSL_KEY_GEN)
@@ -7406,7 +7491,7 @@ void bench_dh(int useDeviceID)
     word32 agreeSz[BENCH_MAX_PENDING];
 #if defined(HAVE_FFDHE_2048) || defined(HAVE_FFDHE_3072) || defined(HAVE_FFDHE_4096)
 #ifdef HAVE_PUBLIC_FFDHE
-    const DhParams *params = NULL; (void)params;
+    const DhParams *params = NULL;
 #else
     int paramName = 0;
 #endif
@@ -10694,6 +10779,8 @@ static void Usage(void)
         print_alg(bench_digest_opt[i].str, &line);
     for (i=0; bench_mac_opt[i].str != NULL; i++)
         print_alg(bench_mac_opt[i].str, &line);
+    for (i=0; bench_kdf_opt[i].str != NULL; i++)
+        print_alg(bench_kdf_opt[i].str, &line);
     for (i=0; bench_asym_opt[i].str != NULL; i++)
         print_alg(bench_asym_opt[i].str, &line);
     for (i=0; bench_other_opt[i].str != NULL; i++)
@@ -10763,7 +10850,13 @@ static int string_matches(const char* arg, const char* str)
     #ifdef WOLFSSL_ESPIDF
         int argc = construct_argv();
         char** argv = (char**)__argv;
-
+/* TODO review */
+//    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+//        ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
+//        ESP_LOGI(TAG, "Enable ESP32-C3 timer ");
+//        ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));
+//        ESP_ERROR_CHECK(gptimer_start(esp_gptimer));
+//    #endif
     #elif defined(MAIN_NO_ARGS)
         int argc = 0;
         char** argv = NULL;
@@ -10922,6 +11015,14 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
                     optMatched = 1;
                 }
             }
+            /* Known KDF algorithms */
+            for (i=0; !optMatched && bench_kdf_opt[i].str != NULL; i++) {
+                if (string_matches(argv[1], bench_kdf_opt[i].str)) {
+                    bench_kdf_algs |= bench_kdf_opt[i].val;
+                    bench_all = 0;
+                    optMatched = 1;
+                }
+            }
             /* Known asymmetric algorithms */
             for (i=0; !optMatched && bench_asym_opt[i].str != NULL; i++) {
                 if (string_matches(argv[1], bench_asym_opt[i].str)) {
@@ -11020,7 +11121,7 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
     #endif
     }
 
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_stop(esp_gptimer));
         ESP_ERROR_CHECK(gptimer_disable(esp_gptimer));
         ESP_ERROR_CHECK(gptimer_del_timer(esp_gptimer));

@@ -4903,6 +4903,17 @@ void wolfSSL_GENERAL_NAMES_free(WOLFSSL_GENERAL_NAMES *gens)
     wolfSSL_sk_GENERAL_NAME_free(gens);
 }
 
+void wolfSSL_EXTENDED_KEY_USAGE_free(WOLFSSL_STACK * sk)
+{
+    WOLFSSL_ENTER("wolfSSL_EXTENDED_KEY_USAGE_free");
+
+    if (sk == NULL) {
+        return;
+    }
+
+    wolfSSL_sk_X509_pop_free(sk, NULL);
+}
+
 #if defined(OPENSSL_ALL) && !defined(NO_BIO)
 /* Outputs name string of the given WOLFSSL_GENERAL_NAME_OBJECT to WOLFSSL_BIO.
  * Can handle following GENERAL_NAME_OBJECT types:
@@ -7465,6 +7476,7 @@ int wolfSSL_i2d_X509(WOLFSSL_X509* x509, unsigned char** out)
 {
     const unsigned char* der;
     int derSz = 0;
+    int advance = 1;
 
     WOLFSSL_ENTER("wolfSSL_i2d_X509");
 
@@ -7485,10 +7497,14 @@ int wolfSSL_i2d_X509(WOLFSSL_X509* x509, unsigned char** out)
             WOLFSSL_LEAVE("wolfSSL_i2d_X509", MEMORY_E);
             return MEMORY_E;
         }
+        advance = 0;
     }
 
-    if (out != NULL)
+    if (out != NULL) {
         XMEMCPY(*out, der, derSz);
+        if (advance)
+            *out += derSz;
+    }
 
     WOLFSSL_LEAVE("wolfSSL_i2d_X509", derSz);
     return derSz;
@@ -14105,7 +14121,8 @@ int wolfSSL_X509_REQ_add1_attr_by_NID(WOLFSSL_X509 *req,
             }
         }
         ret = wolfSSL_sk_push(req->reqAttributes, attr);
-        if (ret != WOLFSSL_SUCCESS) {
+        if ((ret != WOLFSSL_SUCCESS) || (req->reqAttributes->type == STACK_TYPE_CIPHER)) {
+            /* CIPHER type makes a copy */
             wolfSSL_X509_ATTRIBUTE_free(attr);
         }
     }
