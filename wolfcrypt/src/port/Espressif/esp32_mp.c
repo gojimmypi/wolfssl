@@ -179,6 +179,9 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 *
 * See esp_mp_hw_lock().
 *
+* Note we'll also keep track locally if the lock was called at all.
+* For instance, fallback to SW for very small operand and we won't lock HW.
+*
 * When the RSA Accelerator is released from reset, the register RSA_CLEAN_REG
 * reads 0 and an initialization process begins. Hardware initializes the four
 * memory blocks by setting them to 0. After initialization is complete,
@@ -490,7 +493,6 @@ static int esp_mp_hw_unlock( void )
 
     return ret;
 }
-
 
 /* Only mulmod and mulexp_mod HW accelerator need montgomery math prep: M' */
 #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD) \
@@ -1140,6 +1142,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY; /* assume success until proven wrong */
+    int mp_mul_lock_called = 0; /* We may fall back to SW; track if locked */
 
     /* we don't use the mph helper for mp_mul, so we'll calculate locally: */
     word32 Xs;
@@ -1295,9 +1298,18 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         }
     }
 
+    /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        /* lock HW for use */
-        ret = esp_mp_hw_lock(); /* enables HW clock */
+        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+        }
+        #endif
+
+        ret = esp_mp_hw_lock();
     }
 
     if (ret == MP_OKAY) {
@@ -1389,9 +1401,19 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      *  x. Clear the interrupt flag, if you used it (we don't). */
 
     /* 1. lock HW for use & wait until it is ready. */
+    /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        ret = esp_mp_hw_lock(); /* enables HW clock */
-    } /* the only thing we expect is success or busy */
+        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+        }
+        #endif
+
+        ret = esp_mp_hw_lock();
+    }  /* the only thing we expect is success or busy */
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
     }
@@ -1462,9 +1484,20 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      *  x. Clear the interrupt flag, if you used it (we don't). */
 
     /* 1. lock HW for use & wait until it is ready. */
+    /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        ret = esp_mp_hw_lock(); /* enables HW clock */
+        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+        }
+        #endif
+
+        ret = esp_mp_hw_lock();
     } /* the only thing we expect is success or busy */
+
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
     }
@@ -1546,8 +1579,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* 1. lock HW for use & wait until it is ready. */
     if (ret == MP_OKAY) {
-        ret = esp_mp_hw_lock(); /* enables HW clock */
-    } /* the only thing we expect is success or busy */
+        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+        }
+        #endif
+
+        ret = esp_mp_hw_lock();
+    } /* the only thing we expect is success or busy */ /* the only thing we expect is success or busy */
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
     }
@@ -1590,7 +1632,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* common exit for all chipset types */
 
     /* step.7 clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (mp_mul_lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
 
 
 
@@ -1686,7 +1733,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY;
-    int lock_called = 0;
+    int mulmod_lock_called = 0;
     word32 zwords = 0;
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
@@ -1824,7 +1871,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        lock_called = 1;
+        mulmod_lock_called = 1; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -2016,7 +2063,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* 8. clear and release HW                    */
     if (lock_called) {
-        esp_mp_hw_unlock();
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
     }
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
@@ -2098,7 +2148,12 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (mulmod_lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
 
     /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -2371,6 +2426,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      * (e.g. the address of X and Z could be the same when called) */
     struct esp_mp_helper mph[1]; /* we'll save some mp helper data here */
     int ret = MP_OKAY;
+    int lock_called = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -2446,14 +2502,23 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* lock and init the HW                           */
     if (ret == MP_OKAY) {
+        lock_called = 1; /* we'll not try to unlock unless we locked */
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            /* Only track max values when using HW */
+            esp_mp_max_used = (X->used > esp_mp_max_used) ? X->used : esp_mp_max_used;
+            esp_mp_max_used = (Y->used > esp_mp_max_used) ? Y->used : esp_mp_max_used;
+        }
+        #endif
+
         ret = esp_mp_hw_lock();
         if (ret != MP_OKAY) {
             ESP_LOGE(TAG, "esp_mp_hw_lock failed");
-    #ifdef DEBUG_WOLFSSL
-            esp_mp_exptmod_depth_counter--;
-    #endif
+            #ifdef DEBUG_WOLFSSL
+                esp_mp_exptmod_depth_counter--;
+            #endif
         }
-    }
+    } /* the only thing we expect is success or busy */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* non-ESP32S3 Xtensa (regular ESP32) */
@@ -2520,8 +2585,13 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
     }
 
-    /* step.7 clear and release HW                        */
-    esp_mp_hw_unlock();
+    /* step.7 clear and release expt_mod HW               */
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* Steps to perform large number modular exponentiation. Calculates Z = (X ^ Y) modulo M.
@@ -2596,7 +2666,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -2674,7 +2749,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
     /* end if CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -2750,7 +2830,12 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    esp_mp_hw_unlock();
+    if (lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+    else {
+        ESP_LOGV(TAG, "Lock not called");
+    }
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #else
