@@ -240,15 +240,15 @@ static int esp_mp_hw_wait_clean(void)
 */
 static int esp_mp_hw_islocked(void)
 {
-    int ret = 0;
+    int ret = FALSE;
 #ifdef SINGLE_THREADED
-    if (single_thread_locked == 0) {
+    if (single_thread_locked == FALSE) {
         /* not in use */
         ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = false");
     }
     else {
         ESP_LOGV(TAG, "SINGLE_THREADED esp_mp_hw_islocked = true");
-        ret = 1;
+        ret = TRUE;
     }
 #else
     TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(mp_mutex);
@@ -258,7 +258,7 @@ static int esp_mp_hw_islocked(void)
     }
     else {
         ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
-        ret = 1;
+        ret = TRUE;
     }
 #endif
     return ret;
@@ -270,7 +270,7 @@ static int esp_mp_hw_islocked(void)
 * Lock HW engine.
 * This should be called before using engine.
 *
-* Returns 0 if the HW lock was initialized and mutex lock.
+* Returns 0 (ESP_OK) if the HW lock was initialized and mutex lock.
 *
 * See Chapter 24:
 *  https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
@@ -286,19 +286,19 @@ static int esp_mp_hw_islocked(void)
 * after being released from reset, and before writing to any RSA Accelerator
 * memory blocks or registers for the first time.
 */
-static int esp_mp_hw_lock()
+static int esp_mp_hw_lock(void)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 
     ESP_LOGV(TAG, "enter esp_mp_hw_lock");
 #ifdef SINGLE_THREADED
-    single_thread_locked = 1;
+    single_thread_locked = TRUE;
 #else
-    if (espmp_CryptHwMutexInit == 0) {
+    if (espmp_CryptHwMutexInit == ESP_OK) {
         ret = esp_CryptHwMutexInit(&mp_mutex);
-        if (ret == 0) {
+        if (ret == ESP_OK) {
             /* flag esp mp as initialized */
-            espmp_CryptHwMutexInit = 1;
+            espmp_CryptHwMutexInit = TRUE;
         }
         else {
             ESP_LOGE(TAG, "mp mutex initialization failed.");
@@ -309,13 +309,13 @@ static int esp_mp_hw_lock()
     }
 
     /* Set our mutex to indicate the HW is in use */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* lock hardware; there should be exactly one instance
          * of esp_CryptHwMutexLock(&mp_mutex ...) in code  */
         /* TODO - do we really want to wait?
          *    probably not */
         ret = esp_CryptHwMutexLock(&mp_mutex, ESP_MP_HW_LOCK_MAX_DELAY);
-        if (ret != 0) {
+        if (ret != ESP_OK) {
             ESP_LOGE(TAG, "mp engine lock failed.");
             ret = WC_HW_WAIT_E; /* caller is expected to fall back to SW */
         }
@@ -324,7 +324,7 @@ static int esp_mp_hw_lock()
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* Enable RSA hardware */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
@@ -345,7 +345,7 @@ static int esp_mp_hw_lock()
      * register and:
      * clearing the SYSTEM_RSA_MEM_PD bit in the SYSTEM_RSA_PD_CTRL_REG reg.
      * This releases the RSA Accelerator from reset.*/
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
@@ -365,7 +365,7 @@ static int esp_mp_hw_lock()
      *
      * Additionally, users also need to clear PCR_DS_RST_EN bit to
      * reset Digital Signature (DS).*/
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
@@ -382,7 +382,7 @@ static int esp_mp_hw_lock()
     /* Activate the RSA accelerator. See 18.3 of ESP32-S2 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
      * with v5 release. Maybe it will be deprecated? */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
         portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
         {
@@ -406,7 +406,7 @@ static int esp_mp_hw_lock()
     /* Activate the RSA accelerator. See 20.3 of ESP32-S3 technical manual.
      * periph_module_enable doesn't seem to be documented and in private folder
      * with v5 release. Maybe it will be deprecated? */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
 
         /* clear bit to enable hardware operation; (set to disable) */
@@ -425,7 +425,7 @@ static int esp_mp_hw_lock()
 /*
 **  Release RSA HW engine
 */
-static int esp_mp_hw_unlock( void )
+static int esp_mp_hw_unlock(void)
 {
     int ret = MP_OKAY;
     if (esp_mp_hw_islocked()) {
@@ -477,15 +477,16 @@ static int esp_mp_hw_unlock( void )
         periph_module_disable(PERIPH_RSA_MODULE);
 #else
         /* unknown platform, assume no HW to unlock  */
-#endif
-        /* unlock */
+        ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called for unlnown target");
+#endif  /* per-SoC unlock */
+
 #if defined(SINGLE_THREADED)
-        single_thread_locked = 0;
+        single_thread_locked = FALSE;
 #else
         esp_CryptHwMutexUnLock(&mp_mutex);
 #endif /* SINGLE_THREADED */
 
-        ESP_LOGV(TAG, "esp_mp_hw_unlock");
+        ESP_LOGV(TAG, "exit esp_mp_hw_unlock");
     }
     else {
         ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called when not locked.");
@@ -660,14 +661,14 @@ static int process_start(u_int32_t reg)
     int ret = MP_OKAY;
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
-    DPORT_REG_WRITE((volatile uint32_t*)reg, 1);
+    DPORT_REG_WRITE((volatile word32*)reg, 1);
     ESP_EM__POST_PROCESS_START;
 
     return ret;
 }
 
 /* wait until RSA math register indicates operation completed */
-static int wait_until_done(uint32_t reg)
+static int wait_until_done(word32 reg)
 {
     int ret = MP_OKAY;
     word32 timeout = 0;
@@ -679,17 +680,19 @@ static int wait_until_done(uint32_t reg)
     }
     ESP_EM__DPORT_FIFO_READ;
 
-#ifdef CONFIG_IDF_TARGET_ESP32C6
+#if defined(CONFIG_IDF_TARGET_ESP32C6)
     /* Write 1 or 0 to the RSA_INT_ENA_REG register to
      * enable or disable the interrupt function. */
     DPORT_REG_WRITE(RSA_INT_CLR_REG, 1); /* write 1 to clear */
     DPORT_REG_WRITE(RSA_INT_ENA_REG, 0); /* disable */
+    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* not currently clearing / disable on C3 */
+    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
 #else
-    /* TODO what to do for CONFIG_IDF_TARGET_ESP32C6 ?*/
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
 #endif
-
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "rsa operation timed out.");
@@ -700,37 +703,37 @@ static int wait_until_done(uint32_t reg)
 }
 
 /* read data from memory into mp_init          */
-static int esp_memblock_to_mpint(const uint32_t mem_address,
+static int esp_memblock_to_mpint(const word32 mem_address,
                                  MATH_INT_T* mp,
                                  word32 numwords)
 {
     int ret = MP_OKAY;
 #ifdef USE_ESP_DPORT_ACCESS_READ_BUFFER
-    esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
+    esp_dport_access_read_buffer((word32*)mp->dp, mem_address, numwords);
 #else
     ESP_EM__PRE_DPORT_READ;
     DPORT_INTERRUPT_DISABLE();
     ESP_EM__READ_NON_FIFO_REG;
-    for (volatile uint32_t i = 0;  i < numwords; ++i) {
+    for (volatile word32 i = 0;  i < numwords; ++i) {
         ESP_EM__3_16;
-        mp->dp[i] = DPORT_SEQUENCE_REG_READ((volatile uint32_t)(mem_address + i * 4));
+        mp->dp[i] = DPORT_SEQUENCE_REG_READ((volatile word32)(mem_address + i * 4));
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
     mp->used = numwords;
 
 #if defined(ESP_VERIFY_MEMBLOCK)
-    ret = XMEMCMP((const uint32_t *)mem_address, /* HW reg memory */
-                  (const uint32_t *)&mp->dp,     /* our dp value  */
+    ret = XMEMCMP((const word32 *)mem_address, /* HW reg memory */
+                  (const word32 *)&mp->dp,     /* our dp value  */
                   numwords * sizeof(word32));
 
-    if (ret != 0 ) {
+    if (ret != ESP_OK) {
         ESP_LOGW(TAG, "Validation Failure esp_memblock_to_mpint.\n"
                       "Reading %u Words at Address =  0x%08x",
                        (int)(numwords * sizeof(word32)),
                        (unsigned int)mem_address);
         ESP_LOGI(TAG, "Trying again... ");
-        esp_dport_access_read_buffer((uint32_t*)mp->dp, mem_address, numwords);
+        esp_dport_access_read_buffer((word32*)mp->dp, mem_address, numwords);
         mp->used = numwords;
         if (0 != XMEMCMP((const void *)mem_address, (const void *)&mp->dp, numwords * sizeof(word32))) {
             ESP_LOGE(TAG, "Validation Failure esp_memblock_to_mpint "
@@ -1005,7 +1008,8 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     if (ret == MP_OKAY) {
         mph->Ys = mp_count_bits(Y); /* init Y's to pass to montgomery init */
 
-        if (mph->Ys <= ESP_RSA_EXPT_XBITS || mph->Ys <= ESP_RSA_EXPT_YBITS) { /* hard floor 8 bits, problematic in some ESP32 */
+        if (mph->Ys <= ESP_RSA_EXPT_XBITS || mph->Ys <= ESP_RSA_EXPT_YBITS) {
+            /* hard floor 8 bits, problematic in some older ESP32 chips */
             #ifdef WOLFSSL_HW_METRICS
             {
                 esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
@@ -1142,15 +1146,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY; /* assume success until proven wrong */
-    int mp_mul_lock_called = 0; /* We may fall back to SW; track if locked */
+    int mp_mul_lock_called = FALSE; /* We may fall back to SW; track if locked */
 
     /* we don't use the mph helper for mp_mul, so we'll calculate locally: */
     word32 Xs;
     word32 Ys;
     word32 Zs;
-    word32 maxWords_sz;
-    word32 hwWords_sz;
-    word32 resultWords_sz;
+    word32 maxWords_sz = 0;
+    word32 hwWords_sz = 0;
+    word32 resultWords_sz = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     word32 left_pad_offset = 0;
@@ -1239,17 +1243,16 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     }
 
     if (ret == MP_OKAY) {
+        /* maximum bits and words for writing to HW */
+        maxWords_sz = bits2words(max(Xs, Ys));
+        hwWords_sz  = words2hwords(maxWords_sz);
 
-    }
-    /* maximum bits and words for writing to HW */
-    maxWords_sz = bits2words(max(Xs, Ys));
-    hwWords_sz  = words2hwords(maxWords_sz);
-
-    resultWords_sz = bits2words(Xs + Ys);
-    /* sanity check */
-    if((hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
-        ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
+        resultWords_sz = bits2words(Xs + Ys);
+        /* sanity check */
+        if((hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
+            ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
+            ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
+        }
     }
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
@@ -1300,7 +1303,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        mp_mul_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -1403,7 +1406,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* 1. lock HW for use & wait until it is ready. */
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        mp_mul_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -1486,7 +1489,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     /* 1. lock HW for use & wait until it is ready. */
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        mp_mul_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -1579,7 +1582,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* 1. lock HW for use & wait until it is ready. */
     if (ret == MP_OKAY) {
-        mp_mul_lock_called = 1; /* we'll not try to unlock unless we locked */
+        mp_mul_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -1638,8 +1641,6 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     else {
         ESP_LOGV(TAG, "Lock not called");
     }
-
-
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
     if (ret == MP_OKAY) {
@@ -1711,7 +1712,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     return ret;
 } /* esp_mp_mul() */
-#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL*/
+#endif /* Use HW mp_mul: ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL*/
 
 #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
 /* Large Number Modular Multiplication
@@ -1733,7 +1734,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
 
     int ret = MP_OKAY;
-    int mulmod_lock_called = 0;
+    int mulmod_lock_called = FALSE;
     word32 zwords = 0;
 
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
@@ -1747,10 +1748,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    uint32_t OperandBits; /* TODO remove */
+    word32 OperandBits; /* TODO remove */
     int WordsForOperand;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    uint32_t OperandBits; /* TODO remove */
+    word32 OperandBits; /* TODO remove */
     int WordsForOperand;
 #else
     ret = MP_HW_FALLBACK;
@@ -1871,7 +1872,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* lock HW for use, enable peripheral clock */
     if (ret == MP_OKAY) {
-        mulmod_lock_called = 1; /* we'll not try to unlock unless we locked */
+        mulmod_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -1977,7 +1978,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     } /* step 1 .. 12 */
 
     /* step.13 clear and release HW                   */
-    if (lock_called) {
+    if (mulmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
@@ -2395,7 +2396,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #endif
     return ret;
 } /* esp_mp_mulmod */
-#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
+#endif /* Use HW mulmod: ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
 
 #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
@@ -2426,16 +2427,16 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
      * (e.g. the address of X and Z could be the same when called) */
     struct esp_mp_helper mph[1]; /* we'll save some mp helper data here */
     int ret = MP_OKAY;
-    int lock_called = 0;
+    int exptmod_lock_called = FALSE;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     /* TODO */
-    uint32_t OperandBits;
-    uint32_t WordsForOperand; /* TODO cleanup */
+    word32 OperandBits;
+    word32 WordsForOperand; /* TODO cleanup */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    uint32_t OperandBits;
-    uint32_t WordsForOperand; /* TODO cleanup */
+    word32 OperandBits;
+    word32 WordsForOperand; /* TODO cleanup */
 #else
 #endif
 
@@ -2502,7 +2503,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* lock and init the HW                           */
     if (ret == MP_OKAY) {
-        lock_called = 1; /* we'll not try to unlock unless we locked */
+        exptmod_lock_called = TRUE; /* we'll not try to unlock unless we locked */
         #ifdef WOLFSSL_HW_METRICS
         {
             /* Only track max values when using HW */
@@ -2586,7 +2587,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* step.7 clear and release expt_mod HW               */
-    if (lock_called) {
+    if (exptmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
@@ -2666,7 +2667,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    if (lock_called) {
+    if (exptmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
@@ -2749,7 +2750,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    if (lock_called) {
+    if (exptmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
@@ -2830,7 +2831,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    if (lock_called) {
+    if (exptmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
@@ -2861,8 +2862,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     return ret;
 } /* esp_mp_exptmod */
-#endif /* ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-        * (turns on/off mp_exptmod) */
+#endif /* Use HW expmod: ! NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
 #endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI) &&
         * !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
@@ -2961,7 +2961,7 @@ int esp_hw_show_mp_metrics(void)
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
 #else
     /* no HW math, no HW math metrics */
-    ret = 0;
+    ret = ESP_OK;
 #endif /* HW_MATH_ENABLED */
 
 

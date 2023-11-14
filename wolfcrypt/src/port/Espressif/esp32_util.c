@@ -39,6 +39,7 @@
     #include <esp_log.h>
     #include "sdkconfig.h"
     #include <hal/efuse_hal.h>
+    #include <esp_err.h>
 
 #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
 #else
@@ -100,7 +101,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
 #ifdef SINGLE_THREADED
     return wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
 #else
-    return ((xSemaphoreTake( *mutex, block_time ) == pdTRUE) ? 0 : BAD_MUTEX_E);
+    return ((xSemaphoreTake(*mutex, block_time) == pdTRUE) ? 0 : BAD_MUTEX_E);
 #endif
 }
 
@@ -118,7 +119,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     return wc_UnLockMutex(mutex);
 #else
     xSemaphoreGive(*mutex);
-    return 0;
+    return ESP_OK;
 #endif
 }
 #endif /* WOLFSSL_ESP32_CRYPT, etc. */
@@ -267,7 +268,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     #endif
 #endif
 
-    return 0;
+    return ESP_OK;
 }
 #endif
 
@@ -282,19 +283,10 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 */
 static int ShowExtendedSystemInfo_git(void)
 {
-#if defined(HAVE_WC_INTROSPECTION) && !defined(ALLOW_BINARY_MISMATCH_INTROSPECTION)
-#pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
-                "HAVE_WC_INTROSPECTION are enabled. Some extended " \
-                "information details will not be available.")
-
-    WOLFSSL_VERSION_PRINTF("HAVE_WC_INTROSPECTION enabled. "
-                           "Some extended system details not available.");
-#else
     /* Display some interesting git values that may change,
     ** but not desired for introspection which requires object code to be
     ** maximally bitwise-invariant.
     */
-
 
 #if defined(LIBWOLFSSL_VERSION_GIT_TAG)
     /* git config describe --tags --abbrev=0 */
@@ -332,8 +324,7 @@ static int ShowExtendedSystemInfo_git(void)
                            LIBWOLFSSL_VERSION_GIT_HASH_DATE);
 #endif
 
-#endif /* else not HAVE_WC_INTROSPECTION */
-    return 0;
+    return ESP_OK;
 }
 
 /*
@@ -347,7 +338,7 @@ static int ShowExtendedSystemInfo_thread(void)
 #else
     WOLFSSL_VERSION_PRINTF("NOT SINGLE_THREADED");
 #endif
-    return 0;
+    return ESP_OK;
 }
 
 /*
@@ -362,7 +353,7 @@ static int ShowExtendedSystemInfo_platform(void)
     ShowExtendedSystemInfo_platform_espressif();
 #endif
 #endif
-    return 0;
+    return ESP_OK;
 }
 
 int esp_increment_boot_count(void)
@@ -411,7 +402,7 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
 
     /* show the macro name with the "x" in the defined/not defined column */
     ESP_LOGI(TAG, "%s", msg);
-    return 0;
+    return ESP_OK;
 }
 
 /* Show some interesting settings */
@@ -429,7 +420,7 @@ int esp_ShowHardwareAcclerationSettings(void)
     esp_ShowMacroStatus("SP_MATH",            STR_IFNDEF(SP_MATH));
     esp_ShowMacroStatus("WOLFSSL_HW_METRICS", STR_IFNDEF(WOLFSSL_HW_METRICS));
     ESP_LOGI(TAG, "");
-    return 0;
+    return ESP_OK;
 }
 /*
 *******************************************************************************
@@ -445,6 +436,16 @@ int ShowExtendedSystemInfo(void)
 #endif
 
     WOLFSSL_VERSION_PRINTF("Extended Version and Platform Information.");
+
+#if defined(HAVE_WC_INTROSPECTION) && \
+   !defined(ALLOW_BINARY_MISMATCH_INTROSPECTION)
+#pragma message("WARNING: both HAVE_VERSION_EXTENDED_INFO and " \
+                "HAVE_WC_INTROSPECTION are enabled. Some extended " \
+                "information details will not be available.")
+
+    WOLFSSL_VERSION_PRINTF("HAVE_WC_INTROSPECTION enabled. "
+                           "Some extended system details not available.");
+#endif /* else not HAVE_WC_INTROSPECTION */
 
     chip_rev = efuse_hal_chip_revision();
     ESP_LOGI(TAG, "Chip revision: v%d.%d", chip_rev / 100, chip_rev % 100);
@@ -462,14 +463,15 @@ int ShowExtendedSystemInfo(void)
 #else
     ESP_LOGI(TAG, "SSID and plain text WiFi "
                   "password not displayed in startup logs.");
-    ESP_LOGI(TAG, "Define SHOW_SSID_AND_PASSWORD to enable display.");
+    ESP_LOGI(TAG, "  Define SHOW_SSID_AND_PASSWORD to enable display.");
 #endif
 
 #if defined(WOLFSSL_MULTI_INSTALL_WARNING)
     /* CMake may have detected undesired multiple installs, so give warning. */
     WOLFSSL_VERSION_PRINTF("");
     WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
-    WOLFSSL_VERSION_PRINTF("Check ESP-IDF and local project [components] directory.");
+    WOLFSSL_VERSION_PRINTF("Check ESP-IDF components and "
+                           "local project [components] directory.");
     WOLFSSL_VERSION_PRINTF("");
 #else
     #ifdef WOLFSSL_USER_SETTINGS_DIR
@@ -539,7 +541,7 @@ int ShowExtendedSystemInfo(void)
     ESP_LOGI(TAG, "");
 
     esp_ShowHardwareAcclerationSettings();
-    ShowExtendedSystemInfo_git(); /* may be limited during active introspection */
+    ShowExtendedSystemInfo_git();
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
 
@@ -547,7 +549,7 @@ int ShowExtendedSystemInfo(void)
     esp_increment_boot_count();
     ESP_LOGI(TAG, "Boot count: %d", esp_current_boot_count());
 
-    return 0;
+    return ESP_OK;
 }
 
 int esp_ShowExtendedSystemInfo(void)
@@ -565,9 +567,10 @@ int esp_ShowExtendedSystemInfo(void)
 int esp_show_mp_attributes(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
-    int ret = 0;
+    int ret = ESP_OK;
+
     if (X == NULL) {
-        ret = -1;
+        ret = ESP_FAIL;
         ESP_LOGV(MP_TAG, "esp_show_mp_attributes called with X == NULL");
     }
     else {
@@ -592,7 +595,7 @@ int esp_show_mp(char* c, MATH_INT_T* X)
     int words_to_show = 0;
 
     if (X == NULL) {
-        ret = -1;
+        ret = ESP_FAIL;
         ESP_LOGV(MP_TAG, "esp_show_mp called with X == NULL");
     }
     else {
@@ -710,6 +713,6 @@ int esp_hw_show_metrics(void)
 #else
     ESP_LOGV(TAG, "WOLFSSL_HW_METRICS is not enabled");
 #endif
-    return 0;
+    return ESP_OK;
 }
 

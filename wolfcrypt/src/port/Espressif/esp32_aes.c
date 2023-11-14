@@ -59,15 +59,15 @@ static int espaes_CryptHwMutexInit = 0;
 *
 * returns 0 if the hw lock was initialized and mutex lock
 */
-static int esp_aes_hw_InUse()
+static int esp_aes_hw_InUse(void)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 
     ESP_LOGV(TAG, "enter esp_aes_hw_InUse");
 
     if (espaes_CryptHwMutexInit == 0) {
         ret = esp_CryptHwMutexInit(&aes_mutex);
-        if (ret == 0) {
+        if (ret == ESP_OK) {
             /* flag esp aes as initialized */
             espaes_CryptHwMutexInit = 1;
         }
@@ -79,7 +79,7 @@ static int esp_aes_hw_InUse()
         /* esp aes has already been initialized */
     }
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* lock hardware; there should be exactly one instance
          * of esp_CryptHwMutexLock(&aes_mutex ...) in code  */
         /* TODO - do we really want to wait?
@@ -91,7 +91,7 @@ static int esp_aes_hw_InUse()
     }
 
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* Enable AES hardware */
         periph_module_enable(PERIPH_AES_MODULE);
 
@@ -133,11 +133,11 @@ static void esp_aes_hw_Leave( void )
 
 /*
  * set key to hardware key registers.
- * return 0 on success; -1 if mode isn't supported.
+ * return ESP_OK = 0 on success; BAD_FUNC_ARG if mode isn't supported.
  */
 static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
 {
-    int ret = 0;
+    int ret = ESP_OK;
     word32 i;
     word32 mode_ = 0;
 
@@ -216,15 +216,15 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
 #endif
 
     /* */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* update key */
         for (i = 0; i < (ctx->keylen) / sizeof(word32); i++) {
-            DPORT_REG_WRITE((volatile uint32_t*)(TARGET_AES_KEY_BASE + (i * 4)),
+            DPORT_REG_WRITE((volatile word32*)(TARGET_AES_KEY_BASE + (i * 4)),
                             *(((word32*)ctx->key) + i)
                            );
         }
 
-        if (ret == 0) {
+        if (ret == ESP_OK) {
             DPORT_REG_WRITE(AES_MODE_REG, mode_);
         }
         ESP_LOGV(TAG, "  leave esp_aes_hw_Setkey");
@@ -241,13 +241,9 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
  */
 static void esp_aes_bk(const byte* in, byte* out)
 {
-    const word32 *inwords = (const word32 *)in;
+    const word32 *inwords = (const word32*)in;
 
-#if ESP_IDF_VERSION_MAJOR >= 4
-    uint32_t *outwords    = (uint32_t *)out;
-#else
-    word32 *outwords      = (word32 *)out;
-#endif
+    word32* outwords = (word32*)out;
 
     ESP_LOGV(TAG, "enter esp_aes_bk");
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -291,7 +287,7 @@ static void esp_aes_bk(const byte* in, byte* out)
     }
 
     /* read-out blocks */
-    esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
+    esp_dport_access_read_buffer((uint32_t*)outwords, AES_TEXT_OUT_BASE, 4);
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /* See ESP32-C6 technical reference manual:
     ** 18.4.3 Operation process using CPU working mode.
@@ -345,14 +341,14 @@ static void esp_aes_bk(const byte* in, byte* out)
 * @param aes:a value of a ley length */
 int wc_esp32AesSupportedKeyLenValue(int keylen)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (keylen == 16 || keylen == 24 || keylen == 32) {
         ret = 1;
     }
     else {
-        ret = 0; /* keylen 24 (192 bit) not supported */
+        ret = ESP_OK; /* keylen 24 (192 bit) not supported */
     }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -360,7 +356,7 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
         ret = 1;
     }
     else {
-        ret = 0; /* keylen 24 (192 bit) not supported */
+        ret = ESP_OK; /* keylen 24 (192 bit) not supported */
     }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -368,22 +364,22 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
         ret = 1;
     }
     else {
-        ret = 0; /* keylen 24 (192 bit) not supported */
+        ret = ESP_OK; /* keylen 24 (192 bit) not supported */
     }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    ret = 0; /* not yet implemented */
+    ret = ESP_OK; /* not yet implemented */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) ||  defined(CONFIG_IDF_TARGET_ESP32S3)
     if (keylen == 16 || keylen == 32) {
         ret = 1;
     }
     else {
-        ret = 0; /* keylen 24 (192 bit) not supported */
+        ret = ESP_OK; /* keylen 24 (192 bit) not supported */
     }
 
 #else
-    ret = 0; /* if we don't know, then it is not supported */
+    ret = ESP_OK; /* if we don't know, then it is not supported */
 
 #endif
     return ret;
@@ -397,7 +393,7 @@ int wc_esp32AesSupportedKeyLen(struct Aes* aes)
 {
     int ret;
     if (aes == NULL) {
-        ret = 0; /* we need a valid aes object to get its keylength */
+        ret = ESP_OK; /* we need a valid aes object to get its keylength */
     }
     else {
         ret = wc_esp32AesSupportedKeyLenValue(aes->keylen);
@@ -416,21 +412,21 @@ int wc_esp32AesSupportedKeyLen(struct Aes* aes)
 */
 int wc_esp32AesEncrypt(Aes *aes, const byte* in, byte* out)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 
     ESP_LOGV(TAG, "enter wc_esp32AesEncrypt");
     /* lock the hw engine */
     ret = esp_aes_hw_InUse();
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_ENCRYPT);
-        if (ret != 0) {
+        if (ret != ESP_OK) {
             ESP_LOGE(TAG, "wc_esp32AesEncrypt failed during esp_aes_hw_Set_KeyMode");
         }
     }
 
     /* load the key into the register */
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* process a one block of AES */
         esp_aes_bk(in, out);
     }
@@ -458,14 +454,14 @@ int wc_esp32AesDecrypt(Aes *aes, const byte* in, byte* out)
     esp_aes_hw_InUse();
     /* load the key into the register */
     ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_DECRYPT);
-    if (ret != 0) {
+    if (ret != ESP_OK) {
         ESP_LOGE(TAG, "wc_esp32AesDecrypt failed during esp_aes_hw_Set_KeyMode");
         /* release hw */
         esp_aes_hw_Leave();
         ret = BAD_FUNC_ARG;
     }
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         /* process a one block of AES */
         esp_aes_bk(in, out);
         /* release hw engine */
@@ -502,14 +498,14 @@ int wc_esp32AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
     ret = esp_aes_hw_InUse();
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_ENCRYPT);
-        if (ret != 0) {
+        if (ret != ESP_OK) {
             ESP_LOGW(TAG, "wc_esp32AesCbcEncrypt failed HW Set KeyMode");
         }
     } /* if set esp_aes_hw_InUse successful */
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         while (blocks--) {
             XMEMCPY(temp_block, in + offset, AES_BLOCK_SIZE);
 
@@ -525,7 +521,7 @@ int wc_esp32AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
             /* store IV for next block */
             XMEMCPY(iv, out + offset - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
         } /* while (blocks--) */
-    } /* if Set Mode successful (ret == 0) */
+    } /* if Set Mode successful (ret == ESP_OK) */
 
     esp_aes_hw_Leave();
     ESP_LOGV(TAG, "leave wc_esp32AesCbcEncrypt");
@@ -560,14 +556,14 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
     ret = esp_aes_hw_InUse();
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_DECRYPT);
-        if (ret != 0) {
+        if (ret != ESP_OK) {
             ESP_LOGW(TAG, "wc_esp32AesCbcDecrypt failed HW Set KeyMode");
         }
     }
 
-    if (ret == 0) {
+    if (ret == ESP_OK) {
         while (blocks--) {
             XMEMCPY(temp_block, in + offset, AES_BLOCK_SIZE);
 
@@ -583,7 +579,7 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
             offset += AES_BLOCK_SIZE;
         } /* while (blocks--) */
-    } /* if Set Mode was successful (ret == 0) */
+    } /* if Set Mode was successful (ret == ESP_OK) */
 
     esp_aes_hw_Leave();
     ESP_LOGV(TAG, "leave wc_esp32AesCbcDecrypt");
@@ -598,7 +594,7 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
 #if defined(WOLFSSL_HW_METRICS)
 
-int wc_esp32AesUnupportedLengthCountAdd() {
+int wc_esp32AesUnupportedLengthCountAdd(void) {
     esp_aes_unsupported_length_usage_ct++;
     return esp_aes_unsupported_length_usage_ct;
 }
@@ -607,7 +603,7 @@ int wc_esp32AesUnupportedLengthCountAdd() {
 
 int esp_hw_show_aes_metrics(void)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 
 #if defined(WOLFSSL_HW_METRICS)
 
