@@ -135,15 +135,16 @@
         #undef ESP_RSA_EXPT_XBITS
 
         /* NOTE HW unreliable for small values! */
-    /* threshold for performance adjustment for HW primitive use   */
-    /* X bits of G^X mod P greater than                            */
+        /* threshold for performance adjustment for HW primitive use   */
+        /* X bits of G^X mod P greater than                            */
         #define ESP_RSA_EXPT_XBITS           32
-    /* X and Y of X * Y mod P greater than                         */
+        /* X and Y of X * Y mod P greater than                         */
         #define ESP_RSA_MULM_BITS            9
+        #ifndef ESP_RSA_MULM_BITS
+            #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+        #endif
 
-        #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
-
-#endif
+    #endif
 #endif
 
 #define RSA_LOW_MEM
