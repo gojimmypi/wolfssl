@@ -48,6 +48,8 @@
 #undef WOLFSSL_ESP32
 
 #define WOLFSSL_ESP32
+
+/* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
@@ -72,6 +74,8 @@
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
+
+#define NO_OLD_TLS
 
 #define HAVE_AESGCM
 
@@ -156,6 +160,8 @@
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
+#define HASH_SIZE_LIMIT /* for test.c */
+
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
 
@@ -221,7 +227,7 @@
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
-    /* end CONFIG_IDF_TARGET_ESP32 */
+
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
@@ -331,19 +337,17 @@
 
 /* Turn off Large Number ESP32 HW Multiplication:
 ** [Z = X * Y] in esp_mp_mul()                                  */
-/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL                */
 
 /* Turn off Large Number ESP32 HW Modular Exponentiation:
 ** [Z = X^Y mod M] in esp_mp_exptmod()                          */
-/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD        */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD               */
 
 /* Turn off Large Number ESP32 HW Modular Multiplication
-** [Z = X � Y mod M] in esp_mp_mulmod()                         */
-/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD         */
+** [Z = X x Y mod M] in esp_mp_mulmod()                         */
+/* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
 
-/* #define HONOR_MATH_USED_LENGTH     */ /* this is known to fail in TFM */
-/* #define CHECK_MP_READ_UNSIGNED_BIN */ /* this is known to fail in TFM */
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
 
@@ -354,11 +358,11 @@
 #define ATCA_WOLFSSL
 */
 
-/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-
+/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
+*/
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>

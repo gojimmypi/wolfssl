@@ -50,7 +50,7 @@ message(STATUS "THIS_USER = ${THIS_USER}")
 # The component name is the directory name. "No feature to change this".
 # See https://github.com/espressif/esp-idf/issues/8978#issuecomment-1129892685
 
-# set the root of wolfSSL:
+# set the root of wolfSSL in top-level project CMakelists.txt:
 #   set(WOLFSSL_ROOT  "C:/some path/with/spaces")
 #   set(WOLFSSL_ROOT  "c:/workspace/wolfssl-[username]")
 #   set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
@@ -299,7 +299,12 @@ else()
 
                     # next check if there's a [root]/include/config.h
                     if( EXISTS "${WOLFSSL_ROOT}/include/config.h" )
-                        message(FATAL_ERROR "Found stray wolfSSL config.h in        ${WOLFSSL_ROOT}/include/config.h (please move it to ${WOLFSSL_PROJECT_DIR}/include/config.h")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "Found stray wolfSSL config.h in ${WOLFSSL_ROOT}/include/config.h"              )
+                        message(STATUS "  Please move it to ${WOLFSSL_PROJECT_DIR}/include/config.h"                   )
+                        message(STATUS "******************************************************************************")
+                        message(STATUS "******************************************************************************")
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/config.h" )
@@ -381,14 +386,14 @@ else()
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm64.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_armthumb.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_c32.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_c64.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
-        #"\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm64.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_armthumb.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_c32.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_c64.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -416,7 +421,7 @@ else()
                             REQUIRES "${COMPONENT_REQUIRES}"
                             EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                             PRIV_REQUIRES esp_timer driver # this will typically only be needed for wolfSSL benchmark
-                            )
+                           )
     # some optional diagnostics
     if (1)
         get_cmake_property(_variableNames VARIABLES)
