@@ -248,27 +248,27 @@ static void esp_aes_bk(const byte* in, byte* out)
     outwords = (uint32_t*)out;
 
     ESP_LOGV(TAG, "enter esp_aes_bk");
-#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    /* See esp32 - s3 technical reference manual:
-    ** 19.4.3 Operation process using CPU working mode.
-    ** The ESP32-S3 also supports a DMA mode.
-    **
-    ** Copy text for encrypting/decrypting blocks: */
-    DPORT_REG_WRITE(AES_TEXT_IN_BASE, inwords[0]);
-    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 4, inwords[1]);
-    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 8, inwords[2]);
-    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 12, inwords[3]);
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    /* copy text for encrypting/decrypting blocks */
+    DPORT_REG_WRITE(AES_TEXT_BASE, inwords[0]);
+    DPORT_REG_WRITE(AES_TEXT_BASE + 4, inwords[1]);
+    DPORT_REG_WRITE(AES_TEXT_BASE + 8, inwords[2]);
+    DPORT_REG_WRITE(AES_TEXT_BASE + 12, inwords[3]);
 
     /* start engine */
-    DPORT_REG_WRITE(AES_TRIGGER_REG, 1);
+    DPORT_REG_WRITE(AES_START_REG, 1);
 
     /* wait until finishing the process */
-    while (DPORT_REG_READ(AES_STATE_REG) != 0) {
-        /* waiting for the hardware accelerator to complete operation. */
+    while (1) {
+        if (DPORT_REG_READ(AES_IDLE_REG) == 1) {
+            break;
+        }
     }
 
     /* read-out blocks */
-    esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
+    esp_dport_access_read_buffer(outwords, AES_TEXT_BASE, 4);
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* See ESP32-C3 technical reference manual:
     ** 19.4.3 Operation process using CPU working mode.
@@ -311,27 +311,33 @@ static void esp_aes_bk(const byte* in, byte* out)
 
     /* read-out blocks */
     esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_0_REG, 4);
-#else
-    /* TODO: properly re-order this */
-    /* ESP32 */
-    /* copy text for encrypting/decrypting blocks */
-    DPORT_REG_WRITE(AES_TEXT_BASE, inwords[0]);
-    DPORT_REG_WRITE(AES_TEXT_BASE + 4, inwords[1]);
-    DPORT_REG_WRITE(AES_TEXT_BASE + 8, inwords[2]);
-    DPORT_REG_WRITE(AES_TEXT_BASE + 12, inwords[3]);
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* See esp32 - s3 technical reference manual:
+    ** 19.4.3 Operation process using CPU working mode.
+    ** The ESP32-S3 also supports a DMA mode.
+    **
+    ** Copy text for encrypting/decrypting blocks: */
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE, inwords[0]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 4, inwords[1]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 8, inwords[2]);
+    DPORT_REG_WRITE(AES_TEXT_IN_BASE + 12, inwords[3]);
 
     /* start engine */
-    DPORT_REG_WRITE(AES_START_REG, 1);
+    DPORT_REG_WRITE(AES_TRIGGER_REG, 1);
 
     /* wait until finishing the process */
-    while (1) {
-        if (DPORT_REG_READ(AES_IDLE_REG) == 1) {
-            break;
-        }
+    while (DPORT_REG_READ(AES_STATE_REG) != 0) {
+        /* waiting for the hardware accelerator to complete operation. */
     }
 
     /* read-out blocks */
-    esp_dport_access_read_buffer(outwords, AES_TEXT_BASE, 4);
+    esp_dport_access_read_buffer(outwords, AES_TEXT_OUT_BASE, 4);
+
+#else
+    ESP_LOGW(TAG, "Warning: esp_aes_bk called for unsupported target: %s",
+                   CONFIG_IDF_TARGET)
+
 #endif
 
     ESP_LOGV(TAG, "leave esp_aes_bk");
