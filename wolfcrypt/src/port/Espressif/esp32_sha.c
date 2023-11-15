@@ -1769,7 +1769,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint64_t* pHash64Buffer;
-    word32* pHashDestination;
+    uint32_t* pHashDestination;
     size_t szHashWords;
     size_t szHash64Words;
 #endif
@@ -1811,7 +1811,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     wc_esp_wait_until_idle();
 
     /* read hash result into buffer & flip endianness */
-    pHashDestination = (word32*)hash;
+    pHashDestination = (uint32_t*)hash;
     szHashWords = wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32);
     esp_dport_access_read_buffer(pHashDestination, SHA_H_BASE, szHashWords);
 
