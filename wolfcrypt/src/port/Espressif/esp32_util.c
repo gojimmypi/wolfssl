@@ -507,17 +507,14 @@ int ShowExtendedSystemInfo(void)
         ESP_LOGW(TAG, "Warning: ESP_RSA_MULM_BITS not defined for ESP32");
     #endif
 
+#elif  defined(CONFIG_IDF_TARGET_ESP32C2)
+    ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+            );
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* info not available for C3 at this time */
-
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    #if defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
-        ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                        CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
-                    );
-    #endif
-
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+    ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+            );
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
@@ -525,13 +522,19 @@ int ShowExtendedSystemInfo(void)
             );
 /*  ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount); */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    /* no CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ */
-#else
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
-            );
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    #if defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
+        ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+                    );
+    #endif
+
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+
+#else
+
 #endif
 
     /* all platforms: stack high water mark check */
