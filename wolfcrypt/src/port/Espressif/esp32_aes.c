@@ -602,6 +602,7 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
 #if defined(WOLFSSL_HW_METRICS)
 
+/* increment esp_aes_unsupported_length_usage_ct and return current value */
 int wc_esp32AesUnupportedLengthCountAdd(void) {
     esp_aes_unsupported_length_usage_ct++;
     return esp_aes_unsupported_length_usage_ct;
@@ -609,6 +610,7 @@ int wc_esp32AesUnupportedLengthCountAdd(void) {
 
 #endif /* WOLFSSL_HW_METRICS */
 
+/* Show AES Metrics when enabled, otherwise callable but no action. */
 int esp_hw_show_aes_metrics(void)
 {
     int ret = ESP_OK;
