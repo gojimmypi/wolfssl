@@ -241,9 +241,11 @@ static int esp_aes_hw_Set_KeyMode(Aes *ctx, ESP32_AESPROCESS mode)
  */
 static void esp_aes_bk(const byte* in, byte* out)
 {
-    const word32 *inwords = (const word32*)in;
+    const word32* inwords;
+    uint32_t* outwords;
 
-    word32* outwords = (word32*)out;
+    inwords = (const word32*)in;
+    outwords = (uint32_t*)out;
 
     ESP_LOGV(TAG, "enter esp_aes_bk");
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
