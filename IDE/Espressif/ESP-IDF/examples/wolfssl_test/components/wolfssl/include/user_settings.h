@@ -343,7 +343,7 @@
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD               */
 
 /* Turn off Large Number ESP32 HW Modular Multiplication
-** [Z = X x Y mod M] in esp_mp_mulmod()                         */
+** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
 

@@ -1403,7 +1403,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
-    /* Steps to perform large number multiplication. Calculates Z = X x Y. The number of
+    /* Steps to perform large number multiplication. Calculates Z = X * Y. The number of
      * bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
      * See 20.3.3 of ESP32-S3 technical manual
@@ -1486,7 +1486,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
-    /* Steps to perform large number multiplication. Calculates Z = X x Y. The number of
+    /* Steps to perform large number multiplication. Calculates Z = X * Y. The number of
      * bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
      * See 20.3.3 of ESP32-S3 technical manual
@@ -1580,7 +1580,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
-    /* Steps to perform large number multiplication. Calculates Z = X x Y. The number of
+    /* Steps to perform large number multiplication. Calculates Z = X * Y. The number of
      * bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048.
      * See 20.3.3 of ESP32-S3 technical manual
@@ -2009,7 +2009,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* end of ESP32 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
+    /* Steps to perform large number modular multiplication. Calculates Z = (X * Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
      * the bits in X, Y and M.
@@ -2094,7 +2094,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
+    /* Steps to perform large number modular multiplication. Calculates Z = (X * Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
      * the bits in X, Y and M.
@@ -2180,7 +2180,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* end if CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    /* Steps to perform large number modular multiplication. Calculates Z = (X x Y) modulo M.
+    /* Steps to perform large number modular multiplication. Calculates Z = (X * Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x, where x = {1,2,3,...64}, so the
      * maximum number of bits in the X and Y is 2048. We must use the same number of words to represent
      * the bits in X, Y and M.
