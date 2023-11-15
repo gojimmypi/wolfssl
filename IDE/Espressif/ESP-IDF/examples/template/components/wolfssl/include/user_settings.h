@@ -131,24 +131,23 @@
     #define ESP32_USE_RSA_PRIMITIVE
 
     #if defined(CONFIG_IDF_TARGET_ESP32)
-        #undef ESP_RSA_MULM_BITS
-        #undef ESP_RSA_EXPT_XBITS
 
         /* NOTE HW unreliable for small values! */
-    /* threshold for performance adjustment for HW primitive use   */
-    /* X bits of G^X mod P greater than                            */
-        #define ESP_RSA_EXPT_XBITS           32
-    /* X and Y of X * Y mod P greater than                         */
-        #define ESP_RSA_MULM_BITS            9
+        /* threshold for performance adjustment for HW primitive use   */
+        /* X bits of G^X mod P greater than                            */
+        #undef  ESP_RSA_EXPT_XBITS
+        #define ESP_RSA_EXPT_XBITS 32
 
-        #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+        /* X and Y of X * Y mod P greater than                         */
+        #undef  ESP_RSA_MULM_BITS
+        #define ESP_RSA_MULM_BITS  16
 
-#endif
+    #endif
 #endif
 
 #define RSA_LOW_MEM
 
-/* #define WOLFSSL_ATECC508A_DEBUG          */
+/* #define WOLFSSL_ATECC508A_DEBUG         */
 
 /* date/time                               */
 /* if it cannot adjust time in the device, */
@@ -213,7 +212,7 @@
 */
 
 /* Default is HW enabled unless turned off.
-** Uncomment these lines to force SW instead of HW accleration */
+** Uncomment these lines to force SW instead of HW acceleration */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* wolfSSL HW Acceleration supported on ESP32. Uncomment to disable: */
