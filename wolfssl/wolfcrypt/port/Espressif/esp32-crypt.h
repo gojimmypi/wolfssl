@@ -249,7 +249,7 @@ enum {
     #else
         #include <rom/ets_sys.h>
     #endif
-    #define ESP_PROHIBIT_SMALL_X 0
+    #define ESP_PROHIBIT_SMALL_X FALSE
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
