@@ -685,13 +685,15 @@ static int wait_until_done(word32 reg)
      * enable or disable the interrupt function. */
     DPORT_REG_WRITE(RSA_INT_CLR_REG, 1); /* write 1 to clear */
     DPORT_REG_WRITE(RSA_INT_ENA_REG, 0); /* disable */
-    DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* not currently clearing / disable on C3 */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+
 #else
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
+
 #endif
 
     if (ESP_TIMEOUT(timeout)) {
@@ -2263,7 +2265,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
-    if (lock_called) {
+    if (mulmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
     else {
