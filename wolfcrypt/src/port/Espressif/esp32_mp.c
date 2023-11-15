@@ -72,7 +72,7 @@
 #define BITS_IN_ONE_WORD            32
 
 #ifndef ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 8
+    #define ESP_RSA_MULM_BITS 16
 #endif
 
 #ifndef ESP_RSA_EXPT_XBITS
@@ -991,7 +991,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     XMEMSET(mph, 0, sizeof(struct esp_mp_helper));
     mph->Xs = mp_count_bits(X); /* X's = the number of bits needed */
 
-#if ESP_PROHIBIT_SMALL_X
+#if (ESP_PROHIBIT_SMALL_X == TRUE)
     /* optionally prohibit small X.
     ** note this is very common in ECC: [1] * [Y] mod [M] */
     if ((X->used == 1) && (X->dp[1] < (1 << 8))) {
@@ -1008,34 +1008,50 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
     if (ret == MP_OKAY) {
         mph->Ys = mp_count_bits(Y); /* init Y's to pass to montgomery init */
 
-        if (mph->Ys <= ESP_RSA_EXPT_XBITS || mph->Ys <= ESP_RSA_EXPT_YBITS) {
+        if (mph->Xs <= ESP_RSA_EXPT_XBITS) {
+            /* hard floor 8 bits, problematic in some older ESP32 chips */
+            #ifdef WOLFSSL_HW_METRICS
+            {
+                esp_mp_mulmod_small_x_ct++; /* track how many times we fall back */
+            }
+            #endif
+            ESP_LOGV(TAG,
+                "esp_mp_montgomery_init MP_HW_FALLBACK Xs = %d",
+                mph->Xs);
+            ret = MP_HW_FALLBACK; /* fall back to software calc at exit */
+        } /* mph->Xs <= ESP_RSA_EXPT_XBITS */
+        else {
+            if (mph->Ys <= ESP_RSA_EXPT_YBITS) {
             /* hard floor 8 bits, problematic in some older ESP32 chips */
             #ifdef WOLFSSL_HW_METRICS
             {
                 esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
             }
             #endif
-            ESP_LOGV(TAG, "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
-                          mph->Ys);
+            ESP_LOGV(TAG,
+                "esp_mp_montgomery_init MP_HW_FALLBACK Ys = %d",
+                mph->Ys);
             ret = MP_HW_FALLBACK; /* fall back to software calc at exit */
-        }
-        else {
-            mph->Ms = mp_count_bits(M);
-            /* maximum bits and words for writing to HW */
-            mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
-            mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
+            } /* Ys <= ESP_RSA_EXPT_YBITS */
+            else {
+                /* X and Y size ok, continue... */
+                mph->Ms = mp_count_bits(M);
+                /* maximum bits and words for writing to HW */
+                mph->maxWords_sz = bits2words(max(mph->Xs, max(mph->Ys, mph->Ms)));
+                mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
 
-            if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
-                ESP_LOGW(TAG, "Warning: hwWords_sz = %d (%d bits)"
-                              " exceeds HW maximum bits (%d), "
-                              " falling back to SW.",
-                              mph->hwWords_sz,
-                              mph->hwWords_sz << 5,
-                              ESP_HW_RSAMAX_BIT);
-                ret = MP_HW_FALLBACK;
-            }
-        }
-    }
+                if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
+                    ESP_LOGW(TAG, "Warning: hwWords_sz = %d (%d bits)"
+                                  " exceeds HW maximum bits (%d), "
+                                  " falling back to SW.",
+                        mph->hwWords_sz,
+                        mph->hwWords_sz << 5,
+                        ESP_HW_RSAMAX_BIT);
+                    ret = MP_HW_FALLBACK;
+                } /* hwWords_sz check  */
+            } /* X and Y size ok */
+        } /* X size check */
+    } /* Prior operation ok */
 
     ESP_LOGV(TAG, "hwWords_sz = %d", mph->hwWords_sz);
 
@@ -1862,7 +1878,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     /* we'll use hardware only for a minimum number of bits */
     if (mph->Xs <= ESP_RSA_MULM_BITS || mph->Ys <= ESP_RSA_MULM_BITS) {
+        #ifdef WOLFSSL_HW_METRICS
+        {
+            esp_mp_mulmod_small_y_ct++; /* track how many times we fall back */
+        }
+        #endif
         ret = MP_HW_FALLBACK;
+        /* TODO Metrics */
         #ifdef WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
         {
             ESP_LOGV(TAG, "esp_mp_mulmod falling back for ESP_RSA_MULM_BITS!");
