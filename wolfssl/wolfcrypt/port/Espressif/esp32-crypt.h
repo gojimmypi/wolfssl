@@ -474,7 +474,7 @@ extern "C"
 #ifdef WOLFSSL_ESP32_CRYPT_DEBUG
 
     void wc_esp32TimerStart(void);
-    uint64_t  wc_esp32elapsedTime(void);
+    uint64_t wc_esp32elapsedTime(void);
 
 #endif /* WOLFSSL_ESP32_CRYPT_DEBUG */
 
