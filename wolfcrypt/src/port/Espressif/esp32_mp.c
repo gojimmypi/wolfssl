@@ -408,9 +408,12 @@ static int esp_mp_hw_lock(void)
      * with v5 release. Maybe it will be deprecated? */
     if (ret == ESP_OK) {
         periph_module_enable(PERIPH_RSA_MODULE);
-
-        /* clear bit to enable hardware operation; (set to disable) */
-        DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
+        portENTER_CRITICAL_SAFE(&wc_rsa_reg_lock);
+        {
+            /* clear bit to enable hardware operation; (set to disable) */
+            DPORT_REG_CLR_BIT(SYSTEM_RSA_PD_CTRL_REG, SYSTEM_RSA_MEM_PD);
+        }
+        portEXIT_CRITICAL_SAFE(&wc_rsa_reg_lock);
     }
 #else
     /* when unknown or not implemented, assume there's no HW to lock */
