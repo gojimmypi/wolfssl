@@ -37,7 +37,13 @@
 /* this project */
 #include "client-tls.h"
 #include "time_helper.h"
-#include "wifi_connect.h"
+
+#ifndef CONFIG_IDF_TARGET_ESP32H2
+    /* There's no WiFi on ESP32-H2.
+     * For wired ethernet, see:
+     * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
+    #include "wifi_connect.h"
+#endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -152,12 +158,16 @@ void app_main(void)
     /* ESP_ERROR_CHECK(nvs_flash_erase()); */
 
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
-    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR is active, using example code.");
+    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
     ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    ESP_ERROR_CHECK(example_connect());
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        ESP_LOGE(TAG, "There's no WiFi on ESP32-H2. ");
+    #else
+        ESP_ERROR_CHECK(esp_netif_init());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
+        ESP_ERROR_CHECK(example_connect());
+    #endif
 #else
     ESP_ERROR_CHECK(nvs_flash_init());
 
@@ -170,15 +180,19 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    /* Initialize WiFi */
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    ret = wifi_init_sta();
-    while (ret != 0) {
-        ESP_LOGI(TAG, "Waiting...");
-        vTaskDelay(60000 / portTICK_PERIOD_MS);
-        ESP_LOGI(TAG, "Trying WiFi again...");
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        ESP_LOGE(TAG, "There's no WiFi on ESP32-H2. ");
+    #else
+        /* Initialize WiFi */
+        ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
         ret = wifi_init_sta();
-    }
+        while (ret != 0) {
+            ESP_LOGI(TAG, "Waiting...");
+            vTaskDelay(60000 / portTICK_PERIOD_MS);
+            ESP_LOGI(TAG, "Trying WiFi again...");
+            ret = wifi_init_sta();
+        }
+    #endif
 #endif
 
     /* Once we are connected to the network, start & wait for NTP time */
@@ -203,7 +217,7 @@ void app_main(void)
     /* just call the task */
     tls_smp_client_task((void*)NULL);
 #else
-    tls_args args[1];
+    tls_args args[1] = {0};
     /* start a thread with the task */
     args[0].loops = 10;
     args[0].port = 11111;
