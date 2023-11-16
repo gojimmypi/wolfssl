@@ -73,7 +73,7 @@
         </IDFCheckout>
         <COMPort>COM36</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
-        <UseCCache>true</UseCCache>
+        <UseCCache>false</UseCCache>
         <DeviceID>ESP32C6</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
