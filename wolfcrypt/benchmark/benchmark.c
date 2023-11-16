@@ -280,7 +280,7 @@
 #endif /* WOLFSSL_NO_FLOAT_FMT */
 
 #ifdef WOLFSSL_ESPIDF
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         #include "driver/gptimer.h"
         static gptimer_handle_t esp_gptimer = NULL;
         static gptimer_config_t esp_timer_config = {
@@ -293,8 +293,9 @@
           defined(CONFIG_IDF_TARGET_ESP32S3)
         #include <xtensa/hal.h>
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+
     #else
-        #error "CONFIG_IDF_TARGET not implemented"
+
     #endif
     #include <esp_log.h>
 #endif /* WOLFSSL_ESPIDF */
@@ -1220,7 +1221,7 @@ static const char* bench_desc_words[][15] = {
         /* reminder: unsigned long long max = 18,446,744,073,709,551,615 */
 
         /* the currently observed clock counter value */
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if  defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         uint64_t thisVal = 0;
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer, &thisVal));
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -1255,7 +1256,7 @@ static const char* bench_desc_words[][15] = {
         _xthal_get_ccount_ex += (thisVal - _xthal_get_ccount_last);
 
         /* all of this took some time, so reset the "last seen" value */
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer,
                                               &_xthal_get_ccount_last));
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -11107,7 +11108,7 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
     else
 #endif
     {
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
         ESP_LOGI(TAG, "Enable ESP32-C6 timer ");
         ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));
