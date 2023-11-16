@@ -58,9 +58,10 @@
 
 #ifdef HAVE_STACK_SIZE_VERBOSE
 #ifdef WOLFSSL_TEST_MAX_RELATIVE_STACK_BYTES
-    static ssize_t max_relative_stack = WOLFSSL_TEST_MAX_RELATIVE_STACK_BYTES;
+    static WC_MAYBE_UNUSED ssize_t max_relative_stack =
+        WOLFSSL_TEST_MAX_RELATIVE_STACK_BYTES;
 #else
-    static ssize_t max_relative_stack = -1;
+    static WC_MAYBE_UNUSED ssize_t max_relative_stack = -1;
 #endif
 #endif
 
@@ -17828,7 +17829,7 @@ static void initDefaultName(void)
     WOLFSSL_SMALL_STACK_STATIC const char certKeyUsage[] =
         "digitalSignature,nonRepudiation";
     #endif
-    #if defined(WOLFSSL_CERT_REQ) && !defined(NO_RSA)
+    #if defined(WOLFSSL_CERT_REQ) && !defined(NO_RSA) && !defined(NO_ASN_TIME)
         WOLFSSL_SMALL_STACK_STATIC const char certKeyUsage2[] =
         "digitalSignature,nonRepudiation,keyEncipherment,keyAgreement";
     #endif
