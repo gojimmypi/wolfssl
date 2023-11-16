@@ -27,16 +27,37 @@ echo "Found IDF_PATH = $IDF_PATH"
 #
 # Note these tests should FAIL if wolfSSL is already installed in ESP-IDF
 #
-for file in "benchmark" "client" "server" "test"; do
-    pushd ${SCRIPT_DIR}/examples/wolfssl_${file}/ && idf.py fullclean build;
-    THIS_ERR=$?
-    popd
-    if [ $THIS_ERR -ne 0 ]; then
-        echo "Failed in ${file}"
-        exit 1
+targets=$(idf.py --list-targets)
+for target in $targets; do
+    if [[ $target == esp32* ]]; then
+        echo "Found target to process: $target"
+    else
+        echo "Will skip target $target"
     fi
 done
 
+all_build_success=true
+targets=$(idf.py --list-targets)
+for target in $targets; do
+    if [[ $target == esp32* ]]; then
+        for file in "template" "wolfssl_benchmark" "wolfssl_client" "wolfssl_server" "wolfssl_test"; do
+            echo "Building target = ${target} for ${file}"
+            pushd ${SCRIPT_DIR}/examples/${file}/ && rm -rf ./build && idf.py set-target ${target} fullclean build > ${file}_${target}.log 2>&1
+            THIS_ERR=$?
+            popd
+            if [ $THIS_ERR -ne 0 ]; then
+                echo "Failed target ${target} in ${file}"
+                all_build_success=false
+            fi
+     done
+    fi
+done
+
+echo "All builds successful: ${all_build_success}"
+if [[ "${all_build_success}" == "false" ]]; then
+  echo "One or more builds failed"
+  exit 1
+fi
 
 # Check for option to also install wolfSSL.
 #
@@ -69,7 +90,7 @@ if  [[ "$RUN_SETUP" == "--run-setup" ]]; then
         THIS_ERR=$?
         popd
         if [ $? -ne 0 ]; then
-            echo "Failed in ${file}"
+            echo "Failed setup in ${file}"
             exit 1
         fi
     done
