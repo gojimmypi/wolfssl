@@ -1489,8 +1489,10 @@ WOLFSSL_ABI
 void wolfSSL_free(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_free");
+
     if (ssl)
         FreeSSL(ssl, ssl->ctx->heap);
+  
     WOLFSSL_LEAVE("wolfSSL_free", 0);
 }
 

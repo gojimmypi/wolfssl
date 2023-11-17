@@ -1814,7 +1814,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
          * the unexpected. by the time free is called, the hardware
          * should have already been released (lockDepth = 0)
          */
-        (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
+       (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
         ESP_LOGV(TAG, "Alert: hardware unlock needed in wc_Sha256Free.");
     }
     else {
