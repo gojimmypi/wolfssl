@@ -2660,8 +2660,7 @@ static void AesEncryptBlocks_C(Aes* aes, const byte* in, byte* out, word32 sz)
 
 #endif /* !WC_AES_BITSLICED */
 
-/* this section disabled with NO_AES_192 TODO check */
-/* calling this one when missing NO_AES_192  */
+/* Reminder: This section disabled with NO_AES_192. */
 static WARN_UNUSED_RESULT int wc_AesEncrypt(
     Aes* aes, const byte* inBlock, byte* outBlock)
 {
