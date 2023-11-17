@@ -33,10 +33,6 @@
 #undef WOLFSSL_SMALL_STACK_CACHE
 #endif
 
-#ifdef WOLFSSL_ESPIDF
-    #include <esp_log.h>
-#endif // WOLFSSL_IDF
-
 /*
 Possible ECC enable options:
  * HAVE_ECC:            Overall control of ECC                  default: on
