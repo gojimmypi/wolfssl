@@ -22,10 +22,12 @@
 
 #define __ESP32_CRYPT_H__
 
+#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 #include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
 
 /* wolfSSL  */
-#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/types.h>    /* for MATH_INT_T */
 
@@ -763,5 +765,7 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* WOLFSSL_ESPIDF */
 
 #endif  /* __ESP32_CRYPT_H__ */

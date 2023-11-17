@@ -18,7 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 /*
  * ESP32-C3: https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
@@ -29,7 +28,14 @@
     #include <config.h>
 #endif
 
+/* Reminder: user_settings.h is needed and included from settings.h
+ * Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt */
 #include <wolfssl/wolfcrypt/settings.h>
+
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+#include "sdkconfig.h" /* programmatically generated from sdkconfig */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
 /*****************************************************************************/
 /* this entire file content is excluded when NO_SHA, NO_SHA256
  * or when using WC_SHA384 or WC_SHA512
@@ -230,7 +236,6 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 
     #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
         case  WC_HASH_TYPE_SHA384:
-            /* TODO is SHA384 really not supported on -S3? */
             ctx->mode = ESP32_SHA_SW;
             ctx->sha_type = SHA2_384; /* Espressif type, but we won't use HW */
             break;
@@ -454,7 +459,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             ** If there's a problem, likely some undesired operation
             ** outside of wolfSSL.
             */
-/* TODO check if HW actually locked;  */
+            /* TODO debug check if HW actually locked;  */
             esp_sha_hw_unlock(ctx);
             ctx->mode = ESP32_SHA_INIT;
             break;
@@ -855,7 +860,7 @@ static int wc_esp_wait_until_idle(void)
     int loop_ct = 10000;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
+    /* ESP32-C3 and ESP32-C6 RISC-V */
     while ((sha_ll_busy() == true) && (loop_ct > 0)) {
         loop_ct--;
         /* do nothing while waiting. */
@@ -890,8 +895,6 @@ static int wc_esp_wait_until_idle(void)
 **
 ** Note that enable / disable only occurs when ref_counts[periph] == 0
 **
-** TODO: check if this works with other ESP32 platforms ESP32-C3,
-** ESP32-S3, etc.  (A: generally, no. RISC-V has different HW accelerator.)
 */
 int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 {
@@ -911,7 +914,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     }
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /*  RISC-V Architecture: TODO */
+    /*  RISC-V Architecture */
     (void)max_unroll_count;
     (void)_active_digest_address;
     ets_sha_disable();
@@ -1094,12 +1097,6 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     ESP_LOGI(TAG, "enter esp_sha_hw_lock for %x", (int)ctx->initializer);
 #endif
 
-/* TODO remove test code */
-    if ((int)ctx->initializer == 0x3fcc9f50) {
-        ESP_LOGW(TAG, "Found 0x3fcc9f50!");
-    }
-/* end TODO */
-
     #ifdef DEBUG_WOLFSSL_SHA_MUTEX
         taskENTER_CRITICAL(&sha_crit_sect);
         {
@@ -1192,7 +1189,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                               (int)mutex_ctx_task, (int)mutex_ctx_owner );
                 esp_CryptHwMutexUnLock(&sha_mutex);
                 ((WC_ESP32SHA*)mutex_ctx_owner)->mode = ESP32_SHA_INIT;
-                mutex_ctx_task = 0; /* TODO really needed init ? */
+                mutex_ctx_task = 0;
                 mutex_ctx_owner = 0;
             }
             else {
@@ -1202,7 +1199,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                               (int)ctx, (int)ctx->initializer );
                     esp_CryptHwMutexUnLock(&sha_mutex);
                     ctx->mode = ESP32_SHA_INIT;
-                    mutex_ctx_task = 0; /* TODO really needed init ? */
+                    mutex_ctx_task = 0;
                     mutex_ctx_owner = 0;
                 }
             }
@@ -1312,22 +1309,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #endif /* not defined(SINGLE_THREADED) */
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
-        // DPORT_REG_WRITE(SYSTEM_CRYPTO_SHA_CLK_EN, 4); /* this gets stuck, causes panic */
-        // (*(volatile word32 *)(0x0014)) = (*(volatile word32 *)(0x0014)) | 0x100 | 4;
-        // (*(word32 *)(0x0014)) = 0x100 | 4;
-        // DPORT_REG_WRITE(SYSTEM_CRYPTO_SHA_CLK_EN, 4);
-        // SYSTEM_PERIP_CLK_EN1_REG + 0x0014
-        // DR_REG_SHA_BASE = 0x6003b000 see https://github.com/espressif/esp-idf/blob/master/components/soc/esp32c3/include/soc/reg_base.h
-        /*  (DR_REG_SYSTEM_BASE + 0x014) */
-        // DPORT_REG_WRITE(SYSTEM_PERIP_CLK_EN1_REG, 4);
-        /* TODO - do we need to enable on C3? */
         ESP_LOGV(TAG, "ets_sha_enable for RISC-V");
         ets_sha_enable();
         ctx->mode = ESP32_SHA_HW;
-        // periph_ll_enable_clk_clear_rst((periph_module_t) PERIPH_SHA_MODULE);
-        // DPORT_REG_WRITE(SHA_MODE_REG, SHA2_256); /* 2 = SHA-256; see page 336 */
-
 #else
     if (ret == 0) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
@@ -1362,7 +1346,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     ret = 0;
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
+    /* ESP32-C3 and ESP32-C6 RISC-V  */
     ets_sha_disable(); /* disable also resets active, ongoing hash */
     ESP_LOGV(TAG, "ets_sha_disable in esp_sha_hw_unlock()");
 #else
@@ -1376,8 +1360,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      * and periph_module_disable() need to be unwound.
      *
      * see ref_counts[periph] in file: periph_ctrl.c */
-
-    /* TODO */
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
 #endif
@@ -1388,7 +1370,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
         ctx->lockDepth = 0;
     }
 
-    /* TODO */
 #if defined(ESP_MONITOR_HW_TASK_LOCK) && defined(WOLFSSL_ESP32_HW_LOCK_DEBUG)
     printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
 #endif
@@ -1425,7 +1406,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     else
     {
         ESP_LOGE(TAG, "ERROR unlock lockDepth not zero");
-        ret = ESP_FAIL; /* TODO macro value ? */
+        ret = ESP_FAIL;
     }
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
@@ -1453,13 +1434,10 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
-    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* ESP32-C3 RISC-V TODO */
-        // DPORT_REG_WRITE(SHA_START_REG, 1);
-        // DPORT_REG_WRITE(SHA_MODE_REG, 0); /* 0 = SHA-1; see page 336  */
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
     ESP_LOGV(TAG, "SHA1 SHA_START_REG");
     if (sha->isfirstblock) {
-        sha_ll_start_block(SHA2_256); //  TODO confirm & change to macro name
+        sha_ll_start_block(SHA2_256);
         sha->isfirstblock = false;
 
         ESP_LOGV(TAG, "      set sha->isfirstblock = 0");
@@ -1479,7 +1457,6 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     /***** END CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-/* TODO: instide C3/C6 only? */
     /* Translate from Wolf SHA type to hardware algorithm. */
     HardwareAlgorithm = 0;
     switch (sha->sha_type) {
@@ -1658,12 +1635,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
          *
          * Write value to DPORT register (does not require protecting)
          */
-//    #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-//        /* ESP32-C3 RISC-V TODO */
-//        DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
-//    #else
         DPORT_REG_WRITE(SHA_TEXT_BASE + (i*sizeof(word32)), *(data + i));
-//    #endif
         /* memw confirmed auto inserted by compiler here */
     }
     /* notify HW to start process
@@ -1689,7 +1661,8 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     if (&data != _active_digest_address) {
         ESP_LOGV(TAG, "TODO Moving alternate ctx->for_digest");
         /* move last known digest into HW reg during interleave */
-        // sha_ll_write_digest(ctx->sha_type, ctx->for_digest, WC_SHA256_BLOCK_SIZE);
+        /* sha_ll_write_digest(ctx->sha_type, ctx->for_digest,
+                               WC_SHA256_BLOCK_SIZE); */
         _active_digest_address = &data;
     }
     if (ctx->isfirstblock) {
@@ -1781,7 +1754,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     }
 
     /* sanity check */
-    /* TODO S3 */
+    /* TODO S3, other targets */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (ctx->sha_type == SHA_INVALID) {
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -2154,3 +2127,5 @@ int esp_hw_show_sha_metrics(void)
     return ret;
 }
 #endif /* WOLFSSL_HW_METRICS */
+
+#endif /* WOLFSSL_ESPIDF */

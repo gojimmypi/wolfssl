@@ -37,13 +37,18 @@
  * see https://github.com/espressif/esp-idf/issues/9511#issuecomment-1207342464
  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/release-5.x/5.0/gcc.html
  */
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
+
+/* Reminder: user_settings.h is needed and included from settings.h
+ * Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt */
 #include <wolfssl/wolfcrypt/settings.h>
 
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+#include "sdkconfig.h" /* programmatically generated from sdkconfig */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 
 #if !defined(NO_RSA) || defined(HAVE_ECC)
@@ -207,7 +212,6 @@ static int esp_mp_hw_wait_clean(void)
         ESP_EM__MP_HW_WAIT_CLEAN
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO */
     ESP_EM__PRE_MP_HW_WAIT_CLEAN
     while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(RSA_QUERY_CLEAN_REG) != 1)
     {
@@ -519,9 +523,9 @@ static int esp_calc_Mdash(MATH_INT_T *M, word32 k, mp_digit* md)
      *
      *    G is our parameter: M
      */
-    MATH_INT_T X[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T P[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y[1] = { }; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T X[1] = { };
+    MATH_INT_T P[1] = { };
+    MATH_INT_T Y[1] = { };
     word32 Xs;
 
     ESP_LOGV(TAG, "\nBegin esp_calc_Mdash USE_ALT_MPRIME\n");
@@ -825,11 +829,6 @@ static int esp_mpint_to_memblock(u_int32_t mem_address,
                   hwords * sizeof(word32)
                  );
     if (len != 0) {
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
-        /* TODO remove this C3 peek */
-        u_int32_t peek =  (volatile u_int32_t*)(SYSTEM_PERIP_CLK_EN1_REG);
-        ESP_LOGE(TAG, "peek = 0x%0lux", peek);
-    #endif
         ESP_LOGE(TAG, "esp_mpint_to_memblock compare fails at %d", len);
     #ifdef DEBUG_WOLFSSL
         esp_show_mp("mp", (MATH_INT_T*)mp);
@@ -1067,7 +1066,6 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 #if defined(CONFIG_IDF_TARGET_ESP32)
     exp = mph->hwWords_sz << 6;
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO */
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     exp = mph->maxWords_sz * BITS_IN_ONE_WORD * 2;
@@ -1160,10 +1158,10 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #ifdef DEBUG_WOLFSSL
     /* create a place to store copies to perform duplicate operations.
     ** copies needed as some operations overwrite operands: e.g. X = X * Y */
-    MATH_INT_T X2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1]; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1]; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T X2[1];
+    MATH_INT_T Y2[1];
+    MATH_INT_T Z2[1];
+    MATH_INT_T PEEK[1];
 #endif
 
     int ret = MP_OKAY; /* assume success until proven wrong */
@@ -1251,7 +1249,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
      * with operand length N = 32 × x,
      * where x ∈ {1, 2, 3, . . . , 64} */
     if (Xs > 64 || Ys > 64) {
-        return MP_HW_FALLBACK; /* TODO metric on size fallback */
+        return MP_HW_FALLBACK; /* TODO add count metric on size fallback */
     }
 
     if (Zs <= sizeof(mp_digit)*8) {
@@ -1387,9 +1385,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #endif
     } /* end of processing */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* TODO */
     /* Unlike the ESP32 that is limited to only four operand lengths,
-     * the ESP32-S3 The RSA Accelerator supports large-number modular
+     * the ESP32-C3 The RSA Accelerator supports large-number modular
      * multiplication with operands of 128 different lengths.
      *
      * X & Y must be represented by the same number of bits. Must be
@@ -1470,9 +1467,8 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, resultWords_sz);
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO */
     /* Unlike the ESP32 that is limited to only four operand lengths,
-     * the ESP32-S3 The RSA Accelerator supports large-number modular
+     * the ESP32-C6 The RSA Accelerator supports large-number modular
      * multiplication with operands of 128 different lengths.
      *
      * X & Y must be represented by the same number of bits. Must be
@@ -1744,13 +1740,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 {
     struct esp_mp_helper mph[1]; /* we'll save some values in this mp helper */
-    MATH_INT_T tmpZ[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T tmpZ[1] = { };
 #ifdef DEBUG_WOLFSSL
-    MATH_INT_T X2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Y2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T M2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T Z2[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
-    MATH_INT_T PEEK[1] = {}; /* TODO WOLFSSL_SMALL_STACK */
+    MATH_INT_T X2[1] = { };
+    MATH_INT_T Y2[1] = { };
+    MATH_INT_T M2[1] = { };
+    MATH_INT_T Z2[1] = { };
+    MATH_INT_T PEEK[1] = { };
     (void) PEEK;
 #endif
 
@@ -1769,10 +1765,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #if defined(CONFIG_IDF_TARGET_ESP32)
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    word32 OperandBits; /* TODO remove */
+    word32 OperandBits;
     int WordsForOperand;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-    word32 OperandBits; /* TODO remove */
+    word32 OperandBits;
     int WordsForOperand;
 #else
     ret = MP_HW_FALLBACK;
@@ -1808,21 +1804,6 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         return MP_HW_VALIDATION_ACTIVE;
     }
 #endif
-
-/*
- * TODO
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    r_inv = (MATH_INT_T*)XMALLOC(sizeof(MATH_INT_T), key->heap, DYNAMIC_TYPE_DH);
-    if (r_inv == NULL) {
-        return FP_MEM;
-    }
-    tmpZ = (MATH_INT_T*)XMALLOC(sizeof(MATH_INT_T), key->heap, DYNAMIC_TYPE_DH);
-    if (tmpZ == NULL) {
-        XFREE(r_inv, key->heap, DYNAMIC_TYPE_TMP_BUFFER);
-        return FP_MEM;
-    }
-#endif
-*/
 
 #ifdef DEBUG_WOLFSSL
     if (IS_HW_VALIDATION) {
@@ -1889,7 +1870,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         }
         #endif
         ret = MP_HW_FALLBACK;
-        /* TODO Metrics */
+        /* TODO add debug metrics */
         #ifdef WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
         {
             ESP_LOGV(TAG, "esp_mp_mulmod falling back for ESP_RSA_MULM_BITS!");
@@ -2457,14 +2438,15 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     int exptmod_lock_called = FALSE;
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    /* different calc */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO */
     word32 OperandBits;
-    word32 WordsForOperand; /* TODO cleanup */
+    word32 WordsForOperand;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     word32 OperandBits;
-    word32 WordsForOperand; /* TODO cleanup */
+    word32 WordsForOperand;
 #else
+    /* no HW */
 #endif
 
     ESP_LOGV(TAG, "\nBegin esp_mp_exptmod \n");
@@ -2995,3 +2977,5 @@ int esp_hw_show_mp_metrics(void)
     return ret;
 }
 #endif /* WOLFSSL_HW_METRICS */
+
+#endif /* WOLFSSL_ESPIDF */

@@ -386,6 +386,13 @@
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
 
+#if defined(WOLFSSL_ESPWROOM32)
+    /* WOLFSSL_ESPWROOM32 is a legacy macro gate.
+    ** Not be be confused with WOLFSSL_ESPWROOM32SE, naming a specific board */
+    #undef WOLFSSL_ESP32
+    #define WOLFSSL_ESP32
+#endif
+
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     #ifndef NO_ESP32_CRYPT
         #define WOLFSSL_ESP32_CRYPT

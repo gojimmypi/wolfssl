@@ -19,6 +19,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#ifdef HAVE_CONFIG_H
+    #include <config.h>
+#endif
+
+/* Reminder: user_settings.h is needed and included from settings.h
+ * Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt */
+#include <wolfssl/wolfcrypt/settings.h>
+
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+#include "sdkconfig.h" /* programmatically generated from sdkconfig */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
+/* Espressif */
+#include <esp_log.h>
+#include <esp_err.h>
+#include <hal/efuse_hal.h>
+
+/* wolfSSL */
+#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
+#include <wolfssl/wolfcrypt/types.h>
+#include <wolfssl/version.h>
+
 /*
 ** Version / Platform info.
 **
@@ -26,26 +48,12 @@
 ** https://github.com/wolfSSL/wolfssl/pull/6149
 */
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/types.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-
-#include <wolfssl/version.h>
-
-/* some functions are only applicable when hardware encryption is enabled */
-#include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
-
-#if defined(WOLFSSL_ESPIDF)
-    #include <esp_log.h>
-    #include "sdkconfig.h"
-    #include <hal/efuse_hal.h>
-    #include <esp_err.h>
-
 #define WOLFSSL_VERSION_PRINTF(...) ESP_LOGI(TAG, __VA_ARGS__)
-#else
-    #include <stdio.h>
-    #define WOLFSSL_VERSION_PRINTF(...) { printf(__VA_ARGS__); printf("\n"); }
-#endif
+/*
+ * If used in other platforms:
+ *   #include <stdio.h>
+ *   #define WOLFSSL_VERSION_PRINTF(...) { printf(__VA_ARGS__); printf("\n"); }
+ */
 
 static const char* TAG = "esp32_util";
 
@@ -719,3 +727,4 @@ int esp_hw_show_metrics(void)
     return ESP_OK;
 }
 
+#endif /* WOLFSSL_ESPIDF */

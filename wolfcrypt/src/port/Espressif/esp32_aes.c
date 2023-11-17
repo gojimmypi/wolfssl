@@ -23,21 +23,23 @@
  * WOLFSSL_SUCCESS and WOLFSSL_FAILURE values should only
  * be used in the ssl layer, not in wolfCrypt
  **/
-#include <string.h>
-#include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
+
+/* Reminder: user_settings.h is needed and included from settings.h
+ * Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt */
 #include <wolfssl/wolfcrypt/settings.h>
+
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+#include "sdkconfig.h" /* programmatically generated from sdkconfig */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 #ifndef NO_AES
 
-#if defined(WOLFSSL_ESP32_CRYPT) && \
-    !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-#include "sdkconfig.h" /* programmatically generated from sdkconfig */
+#if defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
 #include <wolfssl/wolfcrypt/aes.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 /* breadcrumb tag text for ESP_LOG() */
@@ -631,3 +633,5 @@ int esp_hw_show_aes_metrics(void)
     return ret;
 }
 #endif /* WOLFSSL_ESP32_CRYPT && !NO_WOLFSSL_ESP32_CRYPT_AES */
+
+#endif /* WOLFSSL_ESPIDF */
