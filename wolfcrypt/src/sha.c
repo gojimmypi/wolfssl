@@ -881,7 +881,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
         if (esp_sha_need_byte_reversal(&sha->ctx))
     #endif
     { /* reminder local also points to sha->buffer  */
-      //  ESP_LOGW(TAG, "SHA REVERSE!");
         ByteReverseWords(sha->buffer, sha->buffer, WC_SHA_BLOCK_SIZE);
     }
 #endif
@@ -906,18 +905,16 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)) && \
      defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 if (sha->ctx.mode == ESP32_SHA_HW) {
-    /* TODO is this the proper way to reverse endianness for the 64bit Espressif value?
-        * see also ByteReverseWord64() */
-#if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
-    ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
-#endif
+    #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+        ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
+    #endif
     ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* out */
                      &sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* in  */
                      2 * sizeof(word32) /* byte count to reverse */
                     );
-#if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
-    ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
-#endif
+    #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
+        ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
+    #endif
 } /* end if (sha->ctx.mode == ESP32_SHA_HW) */
 #endif
 
