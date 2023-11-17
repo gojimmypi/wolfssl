@@ -26,8 +26,6 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-/* TODO where best to put this? */
-#define USE_SHA_SOFTWARE_IMPL
 #if (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)) && \
     (!defined(WOLFSSL_ARMASM) && !defined(WOLFSSL_ARMASM_NO_NEON)) && \
     !defined(WOLFSSL_PSOC6_CRYPTO)
@@ -257,7 +255,7 @@ static int InitSha512_224(wc_Sha512* sha512)
     sha512->loLen   = 0;
     sha512->hiLen   = 0;
 
-#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)  && \
+#if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)
     /* HW needs to be carefully initialized, taking into account soft copy.
     ** If already in use; copy may revert to SW as needed.
