@@ -226,7 +226,7 @@
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
-    /* end CONFIG_IDF_TARGET_ESP32 */
+
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
@@ -296,6 +296,22 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP8266)
+    /*  TODO: Revisit ESP8266 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP266 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP8684)
+    /*  There's no Hardware Acceleration available on ESP8684 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
 #else
     /* Anything else encountered, disable HW accleration */
     #define NO_ESP32_CRYPT
@@ -343,7 +359,7 @@
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD               */
 
 /* Turn off Large Number ESP32 HW Modular Multiplication
-** [Z = X x Y mod M] in esp_mp_mulmod()                         */
+** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
 
