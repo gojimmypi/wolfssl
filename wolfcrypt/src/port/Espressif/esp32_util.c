@@ -417,16 +417,31 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
 int esp_ShowHardwareAcclerationSettings(void)
 {
     esp_ShowMacroStatus_need_header = 1;
-    esp_ShowMacroStatus("HW_MATH_ENABLED",    STR_IFNDEF(HW_MATH_ENABLED));
-    esp_ShowMacroStatus("RSA_LOW_MEM",        STR_IFNDEF(RSA_LOW_MEM));
-    esp_ShowMacroStatus("WOLFSSL_SHA224",     STR_IFNDEF(WOLFSSL_SHA224));
-    esp_ShowMacroStatus("WOLFSSL_SHA384",     STR_IFNDEF(WOLFSSL_SHA384));
-    esp_ShowMacroStatus("WOLFSSL_SHA512",     STR_IFNDEF(WOLFSSL_SHA512));
-    esp_ShowMacroStatus("WOLFSSL_SHA3",       STR_IFNDEF(WOLFSSL_SHA3));
-    esp_ShowMacroStatus("HAVE_ED25519",       STR_IFNDEF(HAVE_ED25519));
-    esp_ShowMacroStatus("USE_FAST_MATH",      STR_IFNDEF(USE_FAST_MATH));
-    esp_ShowMacroStatus("SP_MATH",            STR_IFNDEF(SP_MATH));
-    esp_ShowMacroStatus("WOLFSSL_HW_METRICS", STR_IFNDEF(WOLFSSL_HW_METRICS));
+    esp_ShowMacroStatus("HW_MATH_ENABLED",     STR_IFNDEF(HW_MATH_ENABLED));
+    esp_ShowMacroStatus("RSA_LOW_MEM",         STR_IFNDEF(RSA_LOW_MEM));
+    esp_ShowMacroStatus("WOLFSSL_SHA224",      STR_IFNDEF(WOLFSSL_SHA224));
+    esp_ShowMacroStatus("WOLFSSL_SHA384",      STR_IFNDEF(WOLFSSL_SHA384));
+    esp_ShowMacroStatus("WOLFSSL_SHA512",      STR_IFNDEF(WOLFSSL_SHA512));
+    esp_ShowMacroStatus("WOLFSSL_SHA3",        STR_IFNDEF(WOLFSSL_SHA3));
+    esp_ShowMacroStatus("HAVE_ED25519",        STR_IFNDEF(HAVE_ED25519));
+    esp_ShowMacroStatus("USE_FAST_MATH",       STR_IFNDEF(USE_FAST_MATH));
+    esp_ShowMacroStatus("WOLFSSL_SP_MATH_ALL", STR_IFNDEF(WOLFSSL_SP_MATH_ALL));
+    esp_ShowMacroStatus("WOLFSSL_SP_RISCV32",  STR_IFNDEF(WOLFSSL_SP_RISCV32));
+    esp_ShowMacroStatus("SP_MATH",             STR_IFNDEF(SP_MATH));
+    esp_ShowMacroStatus("WOLFSSL_HW_METRICS",  STR_IFNDEF(WOLFSSL_HW_METRICS));
+
+    #ifdef USE_FAST_MATH
+        ESP_LOGI(TAG, "USE_FAST_MATH");
+    #endif /* USE_FAST_MATH */
+
+    #ifdef WOLFSSL_SP_MATH_ALL
+        #ifdef WOLFSSL_SP_RISCV32
+            ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL + WOLFSSL_SP_RISCV32");
+        #else
+            ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL");
+        #endif
+    #endif /* WOLFSSL_SP_MATH_ALL */
+
     ESP_LOGI(TAG, "");
     return ESP_OK;
 }
@@ -530,7 +545,16 @@ int ShowExtendedSystemInfo(void)
             );
 /*  ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount); */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    #if defined(CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ)
+        ESP_LOGI(TAG, "CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                       CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ
+                    );
+    #endif
+
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
     #if defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
         ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                        CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
@@ -538,9 +562,6 @@ int ShowExtendedSystemInfo(void)
     #endif
 
     ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-
 #else
 
 #endif

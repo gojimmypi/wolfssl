@@ -192,7 +192,6 @@ int construct_argv()
 void app_main(void)
 {
     int stack_start = 0;
-    esp_err_t ret = 0;
     ESP_LOGI(TAG, "---------------- wolfSSL Benchmark Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -231,34 +230,26 @@ void app_main(void)
 
     do {
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-        #ifdef USE_FAST_MATH
-            ESP_LOGI(TAG, "USE_FAST_MATH");
-        #endif /* USE_FAST_MATH */
-
-        #ifdef WOLFSSL_SP_MATH_ALL
-            #ifdef WOLFSSL_SP_RISCV32
-                ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL + WOLFSSL_SP_RISCV32");
-            #else
-                ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL");
-            #endif
-        #endif /* WOLFSSL_SP_MATH_ALL */
 
         wolf_benchmark_task();
         ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 
-#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-        esp_hw_show_mp_metrics();
-#endif
+        #ifdef WOLFSSL_HW_METRICS
+            esp_hw_show_metrics();
+        #endif
     } while (BENCHMARK_LOOP);
-    /* wolfCrypt_Cleanup should always be called at completion,
-    ** and is called in wolf_benchmark_task().
-    */
+    /* Reminder: wolfCrypt_Cleanup should always be called at completion,
+    ** and is called in wolf_benchmark_task().  */
 
 #if defined(SINGLE_THREADED)
     /* need stack monitor for single thread */
 #else
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 #endif
+
+    ESP_LOGI(TAG, "\n\nDone!\n\n"
+                  "If running from idf.py monitor, press twice: Ctrl+]");
+
     /* after the test, we'll just wait */
     while (1) {
         /* do something other than nothing to help next program/debug session*/
