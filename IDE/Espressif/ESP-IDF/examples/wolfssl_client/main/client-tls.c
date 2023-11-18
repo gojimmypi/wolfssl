@@ -190,6 +190,7 @@ void my_atmel_free(int slotId)
 WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 {
 #if defined(SINGLE_THREADED)
+    int ret = ESP_OK;
     #define TLS_SMP_CLIENT_TASK_RET ret
 #else
     #define TLS_SMP_CLIENT_TASK_RET
