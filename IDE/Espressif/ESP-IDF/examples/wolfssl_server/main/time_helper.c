@@ -246,7 +246,7 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
-        /* TODO Connsider esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);  */
+        /* TODO Consider esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);  */
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
         if (NTP_SERVER_COUNT > CONFIG_LWIP_SNTP_MAX_SERVERS) {
             ESP_LOGW(TAG, "WARNING: %d NTP Servers defined, but "
