@@ -34,6 +34,11 @@ See the README.md file in the upper level 'examples' directory for more informat
 # . /mnt/c/SysGCC/esp32/esp-idf/master/export.sh
 . /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
 cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_server
+
+# optionally erase
+idf.py erase-flash -p /dev/ttyS19 -b 115200
+
+# Program flash
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 ```
 
