@@ -220,7 +220,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 40000" -f target/esp32h2.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 15000" -f target/esp32h2.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
@@ -235,7 +235,7 @@
           <string>mon reset halt</string>
           <string>load</string>
         </StartupCommands>
-        <ProgramFLASHUsingExternalTool>true</ProgramFLASHUsingExternalTool>
+        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
         <PreferredGDBPort>0</PreferredGDBPort>
         <PreferredTelnetPort>0</PreferredTelnetPort>
         <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
