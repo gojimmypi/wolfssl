@@ -20,26 +20,24 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/user_settings.h
 # Template
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/README.md
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/VisualGDB
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/components/wolfssl/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/components/wolfssl/include/user_settings.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/CMakeLists.txt
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/include
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/main.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/include/main.h
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/main.c
+
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/VisualGDB/wolfssl_template_IDF_v5.1_ESP32.vgdbproj
 
 # Benchmark
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/CMakeLists.txt
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/Makefile
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/README.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig.defaults
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/component.mk
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/Kconfig.projbuild
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/include/main.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/main.c
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/main/main.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/wolfssl/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/wolfssl/component.mk
 
@@ -54,7 +52,6 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/VisualGDB/wolfssl_
 
 # TLS Client
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/CMakeLists.txt
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/main
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/Makefile
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/README.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/sdkconfig.defaults
@@ -80,13 +77,12 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/main.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/server-tls.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/time_helper.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/wifi_connect.c
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/main.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/server-tls.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/time_helper.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/wifi_connect.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/component.mk
-
-
 
 #  wolfSSL Test
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/CMakeLists.txt
@@ -98,7 +94,8 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/component.mk
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/Kconfig.projbuild
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/main.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/time_helper.c
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/time_helper.h
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/include/main.h
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/include/time_helper.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl/component.mk
 
