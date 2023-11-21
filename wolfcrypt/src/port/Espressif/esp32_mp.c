@@ -72,8 +72,13 @@
 #define ESP_HW_RSAMAX_BIT           4096
 #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #define ESP_HW_RSAMIN_BIT           512
-#define BYTE_TO_WORDS(s)            (((s+3)>>2))         /* (s+(4-1))/ 4    */
-#define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)     /* (s+(32-1))/ 8/ 4*/
+
+/* (s+(4-1))/ 4    */
+#define BYTE_TO_WORDS(s)            (((s+3)>>2))
+
+/* (s+(32-1))/ 8/ 4*/
+#define BITS_TO_WORDS(s)            (((s+31)>>3)>>2)
+
 #define BITS_IN_ONE_WORD            32
 
 #ifndef ESP_RSA_MULM_BITS
@@ -108,7 +113,9 @@ static const char* const TAG = "wolfssl_esp32_mp";
     #define CLR_HW_VALIDATION {hw_validation = 0;}
     #define IS_HW_VALIDATION (hw_validation == 1)
     #undef WOLFSSL_HW_METRICS
-    #define WOLFSSL_HW_METRICS /* usage metrics always on during debug */
+
+    /* usage metrics always on during debug */
+    #define WOLFSSL_HW_METRICS
 #endif
 
 /* For esp_mp_exptmod and esp_mp_mulmod we need a variety of calculated helper

@@ -53,15 +53,15 @@ enum {
 /* MP_HW_FALLBACK: signal to caller to fall back to SW for math:
  *   algorithm not supported in SW
  *   known state needing only SW, (e.g. ctx copy)
- *   any other reason to force SW */
-#define MP_HW_FALLBACK ESP_MP_HW_FALLBACK  /* was -108 */
+ *   any other reason to force SW  (was -108)*/
+#define MP_HW_FALLBACK ESP_MP_HW_FALLBACK
 
 /* MP_HW_VALIDATION_ACTIVE this is informative only:
  * typically also means "MP_HW_FALLBACK": fall back to SW.
  *  optional HW validation active, so compute in SW to compare.
- *  fall back to SW, typically only used during debugging
+ *  fall back to SW, typically only used during debugging. (was -109)
  */
-#define MP_HW_VALIDATION_ACTIVE ESP_MP_HW_VALIDATION_ACTIVE  /* was -109 */
+#define MP_HW_VALIDATION_ACTIVE ESP_MP_HW_VALIDATION_ACTIVE
 
 /*
 *******************************************************************************
@@ -280,13 +280,14 @@ enum {
 /*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224                           */
 /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224  there is SHA224 HW on C3 */
 /*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                           */
-/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there is SHA225 HW on C3 */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there is SHA256 HW on C3 */
 
-    /* Code will fall back to SW with warning if these are removed:      */
+    /* Code will fall back to SW with warning if these are removed:
+     * Note there is no SHA384/SHA512 HW on ESP32-C3 */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C3 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C3 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -317,11 +318,12 @@ enum {
 /*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                               */
 /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there *is* SHA225 HW on C6   */
 
-    /* Code will fall back to SW with warning if these are removed:          */
+    /* Code will fall back to SW with warning if these are removed:
+     * note there is no SHA384/SHA512 HW on C6 */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384 /* no SHA384 HW on C6 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512 /* no SHA512 HW on C6 */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
