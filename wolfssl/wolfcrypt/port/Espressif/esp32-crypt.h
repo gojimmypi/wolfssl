@@ -570,11 +570,14 @@ extern "C"
     } WC_ESP32SHA;
 
     WOLFSSL_LOCAL int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx);
-    WOLFSSL_LOCAL int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type);
+    WOLFSSL_LOCAL int esp_sha_init(WC_ESP32SHA* ctx,
+                                   enum wc_HashType hash_type);
     WOLFSSL_LOCAL int esp_sha_init_ctx(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_try_hw_lock(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
-    WOLFSSL_LOCAL int esp_sha_hw_islocked(WC_ESP32SHA* ctx); /* 0 = not locked, or owner */
+
+    /* esp_sha_hw_islocked: returns 0 if not locked, otherwise owner address */
+    WOLFSSL_LOCAL int esp_sha_hw_islocked(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_call_count();
     WOLFSSL_LOCAL int esp_sha_lock_count();
     WOLFSSL_LOCAL int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
@@ -582,29 +585,38 @@ extern "C"
 
     struct wc_Sha;
     WOLFSSL_LOCAL int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
-    WOLFSSL_LOCAL int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess);
+    WOLFSSL_LOCAL int esp_sha_digest_process(struct wc_Sha* sha,
+                                             byte blockprocess);
     WOLFSSL_LOCAL int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
 #ifdef DEBUG_WOLFSSL_SHA_MUTEX
-    extern WC_ESP32SHA* stray_ctx; /* testing HW release in task that did not lock */
+    /* testing HW release in task that did not lock */
+    extern WC_ESP32SHA* stray_ctx;
 #endif
 
 #ifndef NO_SHA256
     struct wc_Sha256;
-    WOLFSSL_LOCAL int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
-    WOLFSSL_LOCAL int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst);
-    WOLFSSL_LOCAL int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess);
-    WOLFSSL_LOCAL int esp_sha256_process(struct wc_Sha256* sha, const byte* data);
-    WOLFSSL_LOCAL int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256, const byte* data);
+    WOLFSSL_LOCAL int esp_sha224_ctx_copy(struct wc_Sha256* src,
+                                          struct wc_Sha256* dst);
+    WOLFSSL_LOCAL int esp_sha256_ctx_copy(struct wc_Sha256* src,
+                                          struct wc_Sha256* dst);
+    WOLFSSL_LOCAL int esp_sha256_digest_process(struct wc_Sha256* sha,
+                                                byte blockprocess);
+    WOLFSSL_LOCAL int esp_sha256_process(struct wc_Sha256* sha,
+                                         const byte* data);
+    WOLFSSL_LOCAL int esp32_Transform_Sha256_demo(struct wc_Sha256* sha256,
+                                                  const byte* data);
 #endif
 
-    /* TODO do we really call esp_sha512_process for WOLFSSL_SHA384 ? */
     #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
     struct wc_Sha512;
-    WOLFSSL_LOCAL int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
-    WOLFSSL_LOCAL int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst);
+    WOLFSSL_LOCAL int esp_sha384_ctx_copy(struct wc_Sha512* src,
+                                          struct wc_Sha512* dst);
+    WOLFSSL_LOCAL int esp_sha512_ctx_copy(struct wc_Sha512* src,
+                                          struct wc_Sha512* dst);
     WOLFSSL_LOCAL int esp_sha512_process(struct wc_Sha512* sha);
-    WOLFSSL_LOCAL int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc);
+    WOLFSSL_LOCAL int esp_sha512_digest_process(struct wc_Sha512* sha,
+                                                byte blockproc);
 #endif
 
 #endif /* NO_SHA && etc */
