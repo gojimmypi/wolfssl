@@ -6,6 +6,8 @@
 #       distribution file set will not contain GitHub info
 #
 # see: https://github.com/wolfSSL/wolfssl/pull/5955
+#
+# Don't list any config.h files here
 
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/compileAllExamples.sh
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/dummy_config_h
@@ -54,8 +56,8 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/VisualGDB/wolfssl_
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/Makefile
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/README.md
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/README_server_sm.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/sdkconfig.defaults
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/VisualGDB/VisualGDB_wolfssl_client.vgdbproj
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/main/client-tls.c
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/main/CMakeLists.txt
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_client/main/component.mk

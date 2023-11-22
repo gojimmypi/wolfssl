@@ -1,7 +1,5 @@
 # wolfSSL Benchmark Example
 
-<!-- This file is included in the ESP Registry. There should be no relative URL links. -->
-
 This ESP32 example uses the [wolfSSL wolfcrypt Benchmark Application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
 
 For general information on wolfSSL examples for Espressif, see the
