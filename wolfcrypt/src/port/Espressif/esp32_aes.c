@@ -97,14 +97,16 @@ static int esp_aes_hw_InUse(void)
         /* Enable AES hardware */
         periph_module_enable(PERIPH_AES_MODULE);
 
-        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
+            defined(CONFIG_IDF_TARGET_ESP32S3)
         {
             /* Select working mode. Can be typical or DMA.
              * 0 => typical
              * 1 => DMA */
             DPORT_REG_WRITE(AES_DMA_ENABLE_REG, 0);
         }
-        #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+        #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
+              defined(CONFIG_IDF_TARGET_ESP32C6)
         {
             /* Select working mode. Can be typical or DMA.
              * 0 => typical
@@ -380,7 +382,7 @@ int wc_esp32AesSupportedKeyLenValue(int keylen)
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     ret = ESP_OK; /* not yet implemented */
 
-#elif defined(CONFIG_IDF_TARGET_ESP32S2) ||  defined(CONFIG_IDF_TARGET_ESP32S3)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (keylen == 16 || keylen == 32) {
         ret = 1;
     }
@@ -415,9 +417,10 @@ int wc_esp32AesSupportedKeyLen(struct Aes* aes)
 * wc_esp32AesEncrypt
 * @brief: a one block encrypt of the input block, into the output block
 * @param aes: a pointer of the AES object used to encrypt data
-* @param in : a pointer of the input buffer containing plain text to be encrypted
-* @param out: a pointer of the output buffer in which to store the cipher text of
-*             the encrypted message
+* @param in : a pointer of the input buffer containing
+*             plain text to be encrypted
+* @param out: a pointer of the output buffer in which to store the
+*             cipher text of the encrypted message
 * @return: 0 on success, BAD_FUNC_ARG if the AES algorithm isn't supported.
 */
 int wc_esp32AesEncrypt(Aes *aes, const byte* in, byte* out)
@@ -431,7 +434,8 @@ int wc_esp32AesEncrypt(Aes *aes, const byte* in, byte* out)
     if (ret == ESP_OK) {
         ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_ENCRYPT);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "wc_esp32AesEncrypt failed during esp_aes_hw_Set_KeyMode");
+            ESP_LOGE(TAG, "wc_esp32AesEncrypt failed "
+                          "during esp_aes_hw_Set_KeyMode");
         }
     }
 
@@ -450,9 +454,10 @@ int wc_esp32AesEncrypt(Aes *aes, const byte* in, byte* out)
 * wc_esp32AesDecrypt
 * @brief: a one block decrypt of the input block, into the output block
 * @param aes: a pointer of the AES object used to decrypt data
-* @param in : a pointer of the input buffer containing plain text to be decrypted
-* @param out: a pointer of the output buffer in which to store the cipher text of
-*             the decrypted message
+* @param in : a pointer of the input buffer containing
+*             plain text to be decrypted
+* @param out: a pointer of the output buffer in which to store the
+*             cipher text of the decrypted message
 * @return: 0 on success, BAD_FUNC_ARG if the AES algorithm isn't supported.
 */
 int wc_esp32AesDecrypt(Aes *aes, const byte* in, byte* out)
@@ -465,7 +470,8 @@ int wc_esp32AesDecrypt(Aes *aes, const byte* in, byte* out)
     /* load the key into the register */
     ret = esp_aes_hw_Set_KeyMode(aes, ESP32_AES_UPDATEKEY_DECRYPT);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "wc_esp32AesDecrypt failed during esp_aes_hw_Set_KeyMode");
+        ESP_LOGE(TAG, "wc_esp32AesDecrypt failed "
+                      "during esp_aes_hw_Set_KeyMode");
         /* release hw */
         esp_aes_hw_Leave();
         ret = BAD_FUNC_ARG;
@@ -484,12 +490,13 @@ int wc_esp32AesDecrypt(Aes *aes, const byte* in, byte* out)
 /*
 * wc_esp32AesCbcEncrypt
 * @brief: Encrypts a plain text message from the input buffer, and places the
-*         resulting cipher text into the output buffer using cipher block chaining
-*         with AES.
+*         resulting cipher text into the output buffer using cipher block
+*         chaining with AES.
 * @param aes: a pointer of the AES object used to encrypt data
-* @param out: a pointer of the output buffer in which to store the cipher text of
-*             the encrypted message
-* @param in : a pointer of the input buffer containing plain text to be encrypted
+* @param out: a pointer of the output buffer in which to store the
+              cipher text of the encrypted message
+* @param in : a pointer of the input buffer containing
+*             plain text to be encrypted
 * @param sz : size of input message
 * @return: 0 on success, BAD_FUNC_ARG if the AES algorithm isn't supported.
 */
@@ -541,12 +548,13 @@ int wc_esp32AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 /*
 * wc_esp32AesCbcDecrypt
 * @brief: Encrypts a plain text message from the input buffer, and places the
-*         resulting cipher text into the output buffer using cipher block chaining
-*         with AES.
+*         resulting cipher text into the output buffer using cipher block
+*         chaining with AES.
 * @param aes: a pointer of the AES object used to decrypt data
-* @param out: a pointer of the output buffer in which to store the cipher text of
-*             the decrypted message
-* @param in : a pointer of the input buffer containing plain text to be decrypted
+* @param out: a pointer of the output buffer in which to store the
+*             cipher text of the decrypted message
+* @param in : a pointer of the input buffer containing
+*             plain text to be decrypted
 * @param sz : size of input message
 * @return: 0 on success, BAD_FUNC_ARG if the AES algorithm isn't supported.
 */
