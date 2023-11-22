@@ -73,7 +73,8 @@
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    const static word32 ** _active_digest_address = 0; /* keep track of the currently active SHA hash object for interleaving */
+    /* keep track of the currently active SHA hash object for interleaving */
+    const static word32 ** _active_digest_address = 0;
 #endif
 
 static const char* TAG = "wolf_hw_sha";
@@ -212,7 +213,8 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
 
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32) || \
+    defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
         case WC_HASH_TYPE_SHA:
             ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
@@ -220,7 +222,8 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             break;
 
         case WC_HASH_TYPE_SHA224:
-        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
+            defined(CONFIG_IDF_TARGET_ESP32S3)
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
         #else
@@ -234,7 +237,8 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
             ret = esp_sha_init_ctx(ctx);
             break;
 
-    #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
+        defined(CONFIG_IDF_TARGET_ESP32S3)
         case  WC_HASH_TYPE_SHA384:
             ctx->mode = ESP32_SHA_SW;
             ctx->sha_type = SHA2_384; /* Espressif type, but we won't use HW */
@@ -308,7 +312,9 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     /* other chipsets will be implemented here */
     ESP_LOGW(TAG, "SW Fallback; CONFIG_IDF_TARGET = %s", CONFIG_IDF_TARGET);
     ctx->mode = ESP32_SHA_SW;
-#endif /* defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) */
+#endif /* CONFIG_IDF_TARGET_ESP32   ||
+        * CONFIG_IDF_TARGET_ESP32S2 ||
+        * CONFIG_IDF_TARGET_ESP32S3 */
 
     return ret;
 }
@@ -428,7 +434,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
                 case ESP32_SHA_HW_COPY:
                     /* This is an interesting but acceptable situation:
                     ** an anticipated active HW copy that will demote to SW. */
-                    ESP_LOGV(TAG, "HW WC_ESP32SHA ctx mode = ESP32_SHA_HW_COPY.");
+                    ESP_LOGV(TAG, "HW WC_ESP32SHA ctx mode = "
+                                  "ESP32_SHA_HW_COPY.");
                     break;
 
                 default:
@@ -497,7 +504,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     ctx->isfirstblock = true;
     ctx->lockDepth = 0; /* new objects will always start with lock depth = 0 */
 
-    return ESP_OK; /* Always return success. We assume all issues handled, above. */
+    return ESP_OK; /* Always return success.
+                    * We assume all issues handled, above. */
 } /* esp_sha_init_ctx */
 
 /*
@@ -517,21 +525,26 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
         if (ret == 0) {
-            /* note we arrived here only because the src is already in HW mode */
-            dst->ctx.mode = ESP32_SHA_HW_COPY; /* provide init hint to SW revert */
+            /* Note we arrived here only because
+             * the src is already in HW mode.
+             * provide init hint to SW revert: */
+            dst->ctx.mode = ESP32_SHA_HW_COPY;
 
             /* initializer will be set during init */
             ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA);
             if (ret != 0) {
-                ESP_LOGE(TAG, "Error during esp_sha_ctx_copy in esp_sha_init.");
+                ESP_LOGE(TAG, "Error during esp_sha_ctx_copy "
+                              "in esp_sha_init.");
             }
         }
         else {
-            ESP_LOGE(TAG, "Error during esp_sha_ctx_copy in esp_sha_digest_process.");
+            ESP_LOGE(TAG, "Error during esp_sha_ctx_copy "
+                          "in esp_sha_digest_process.");
         }
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
-        #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+        #if defined(CONFIG_IDF_TARGET_ESP32C3) || \
+            defined(CONFIG_IDF_TARGET_ESP32C6)
             /* Reverse digest for C3 when HW enabled but fallback to SW. */
             ByteReverseWords(dst->digest, dst->digest, WC_SHA_DIGEST_SIZE);
             #ifdef WOLFSSL_HW_METRICS
@@ -617,7 +630,8 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         }
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
-            #if defined(CONFIG_IDF_TARGET_ESP32C3)  || defined(CONFIG_IDF_TARGET_ESP32C6)
+            #if defined(CONFIG_IDF_TARGET_ESP32C3) || \
+                defined(CONFIG_IDF_TARGET_ESP32C6)
             {
                 /* Reverse digest byte order for C3 fallback to SW. */
                 ByteReverseWords(dst->digest,
@@ -672,11 +686,13 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
             /* initializer will be set during init */
             ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA384);
             if (ret != 0) {
-                ESP_LOGE(TAG, "Error during esp_sha384_ctx_copy in esp_sha_init.");
+                ESP_LOGE(TAG, "Error during esp_sha384_ctx_copy "
+                              "in esp_sha_init.");
             }
         }
         else {
-            ESP_LOGE(TAG, "Error during esp_sha384_ctx_copy in esp_sha512_digest_process.");
+            ESP_LOGE(TAG, "Error during esp_sha384_ctx_copy "
+                          "in esp_sha512_digest_process.");
         }
 
         /* just some diagnostic runtime info */
@@ -742,7 +758,8 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         /* reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
-    #if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if !defined(CONFIG_IDF_TARGET_ESP32C3) && \
+        !defined(CONFIG_IDF_TARGET_ESP32C6)
         dst->ctx.initializer = &dst->ctx; /*breadcrumb is this ctx address */
     #endif
     #ifdef ESP_MONITOR_HW_TASK_LOCK
@@ -819,7 +836,8 @@ static word32 wc_esp_sha_digest_size(WC_ESP_SHA_TYPE type)
     #endif
 
     #ifdef WOLFSSL_SHA224
-        #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+        #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
+            defined(CONFIG_IDF_TARGET_ESP32S3)
         case SHA2_224:
             ret = WC_SHA224_DIGEST_SIZE;
             break;
@@ -1100,7 +1118,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     #ifdef DEBUG_WOLFSSL_SHA_MUTEX
         taskENTER_CRITICAL(&sha_crit_sect);
         {
-            _sha_call_count++; /* let's keep track of how many times we call this */
+            /* let's keep track of how many times we call this */
+            _sha_call_count++;
         }
         taskEXIT_CRITICAL(&sha_crit_sect);
     #endif
@@ -1230,7 +1249,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
             if (esp_sha_call_count() == 8 && WOLFSSL_TEST_STRAY) {
-                /* once we've locked 10 times here, we'll force a fallback to SW until other thread unlocks */
+                /* Once we've locked 10 times here,
+                 * we'll force a fallback to SW until other thread unlocks. */
                 taskENTER_CRITICAL(&sha_crit_sect);
                 {
                     (void)stray_ctx;
@@ -1244,14 +1264,17 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 }
                 taskEXIT_CRITICAL(&sha_crit_sect);
                 if (stray_ctx == NULL) {
-                    ESP_LOGW(TAG, "DEBUG_WOLFSSL_SHA_MUTEX on, but stray_ctx is NULL; are you running the peek task to set the stay test?");
+                    ESP_LOGW(TAG, "DEBUG_WOLFSSL_SHA_MUTEX on, but stray_ctx "
+                                  "is NULL; are you running the peek task to "
+                                  "set the stay test?");
                 }
                 else {
                     ESP_LOGI(TAG, "%x", (int)stray_ctx->initializer);
                     ESP_LOGI(TAG, "%x", (int)&stray_ctx);
                     ESP_LOGW(TAG,
                              "\n\nLocking with stray\n\n"
-                             "DEBUG_WOLFSSL_SHA_MUTEX call count 8, ctx->mode = ESP32_SHA_SW %x\n\n",
+                             "DEBUG_WOLFSSL_SHA_MUTEX call count 8, "
+                             "ctx->mode = ESP32_SHA_SW %x\n\n",
                              (int)mutex_ctx_owner);
                     ctx->task_owner = xTaskGetCurrentTaskHandle();
                     ctx->mode = ESP32_SHA_SW;
@@ -1263,7 +1286,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             /* check to see if we had a prior fail and need to unroll enables */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGW(TAG, "Locking for ctx %x, current mutex_ctx_owner = %x",
-                                        (int)&ctx, (int)esp_sha_mutex_ctx_owner());
+                           (int)&ctx, (int)esp_sha_mutex_ctx_owner());
         #endif
             ret = esp_unroll_sha_module_enable(ctx);
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
@@ -1274,7 +1297,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             taskENTER_CRITICAL(&sha_crit_sect);
             {
                 mutex_ctx_owner = (void*)ctx->initializer;
-                _sha_lock_count++; /* let's keep track of how many times we lock this */
+                /* let's keep track of how many times we lock this */
+                _sha_lock_count++;
             }
             taskEXIT_CRITICAL(&sha_crit_sect);
         #endif
@@ -1291,11 +1315,14 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             /* We should have otherwise anticipated this; how did we get here?
             ** This code should rarely, ideally never be reached. */
         #ifdef DEBUG_WOLFSSL_SHA_MUTEX
-            ESP_LOGI(TAG, "\nHardware in use by %x; Mode REVERT to ESP32_SHA_SW for %x\n",
-                           (int)esp_sha_mutex_ctx_owner(),  (int)ctx->initializer);
+            ESP_LOGI(TAG, "\nHardware in use by %x; "
+                           "Mode REVERT to ESP32_SHA_SW for %x\n",
+                           (int)esp_sha_mutex_ctx_owner(),
+                           (int)ctx->initializer);
             ESP_LOGI(TAG, "Software Mode, lock depth = %d, for this %x",
                           ctx->lockDepth, (int)ctx->initializer);
-            ESP_LOGI(TAG, "Current mutext owner = %x", (int)esp_sha_mutex_ctx_owner());
+            ESP_LOGI(TAG, "Current mutext owner = %x",
+                           (int)esp_sha_mutex_ctx_owner());
         #endif
             ctx->mode = ESP32_SHA_SW;
             return ESP_OK; /* success, but revert to SW */
@@ -1317,7 +1344,9 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         {
-            printf("1) Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+            /* TODO ESP_LOG */
+            printf("1) Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n",
+                   __LINE__, ctx->lockDepth, (unsigned)ctx);
         }
         #endif
         periph_module_enable(PERIPH_SHA_MODULE);
@@ -1361,7 +1390,9 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      *
      * see ref_counts[periph] in file: periph_ctrl.c */
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
-    printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+    /* TODO ESP_LOG */
+    printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n",
+           __LINE__, ctx->lockDepth, (unsigned)ctx);
 #endif
     if (ctx->lockDepth > 0) {
         ctx->lockDepth--;
@@ -1371,7 +1402,9 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     }
 
 #if defined(ESP_MONITOR_HW_TASK_LOCK) && defined(WOLFSSL_ESP32_HW_LOCK_DEBUG)
-    printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n", __LINE__, ctx->lockDepth, (unsigned)ctx);
+    /* TODO ESP_LOG */
+    printf("3) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n",
+           __LINE__, ctx->lockDepth, (unsigned)ctx);
 #endif
     if (0 == ctx->lockDepth) // should we only unlock if depth is 0?
     {
@@ -1381,7 +1414,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
         /* unlock HW engine for next use */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         {
-            ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, mutex_ctx_owner = %x",
+            ESP_LOGW(TAG, "Unlocking for %x, from ctx %x, & = %x, "
+                          "mutex_ctx_owner = %x",
                            (int)esp_sha_mutex_ctx_owner(),
                            (int)ctx,
                            (int)&ctx,
@@ -1681,18 +1715,24 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
         #endif
     }
     /* call Espressif HAL for this hash*/
-    sha_hal_hash_block(ctx->sha_type, (void *)(data), word32_to_save, ctx->isfirstblock);
-    ctx->isfirstblock = 0; /* once we hash a block, we're no longer at the first */
+    sha_hal_hash_block(ctx->sha_type,
+                       (void *)(data),
+                       word32_to_save,
+                       ctx->isfirstblock);
+    ctx->isfirstblock = 0; /* once we hash a block,
+                            * we're no longer at the first */
     /***** END CONFIG_IDF_TARGET_ESP32C3 or CONFIG_IDF_TARGET_ESP32C6 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     MessageSource = (word32*)data;
     AcceleratorMessage = (word32*)(SHA_TEXT_BASE);
     while (word32_to_save--) {
-      /* Must swap endianness of data loaded into hardware accelerator to produce
-       * correct result. Using DPORT_REG_WRITE doesn't avoid this for ESP32s3.
-       * Note: data sheet claims we also need to swap endianness across 64 byte words
-       * when doing SHA-512, but the SHA-512 result is not correct if you do that. */
+      /* Must swap endianness of data loaded into hardware accelerator
+       * to produce correct result. Using DPORT_REG_WRITE doesn't avoid this
+       * for ESP32s3.
+       * Note: data sheet claims we also need to swap endianness across
+       * 64 byte words when doing SHA-512, but the SHA-512 result is not
+       * correct if you do that. */
       DPORT_REG_WRITE(AcceleratorMessage, __builtin_bswap32(*MessageSource));
       ++AcceleratorMessage;
       ++MessageSource;
@@ -1754,10 +1794,12 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     }
 
     /* sanity check */
-    /* TODO S3, other targets */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     if (ctx->sha_type == SHA_INVALID) {
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
+      defined(CONFIG_IDF_TARGET_ESP32S2) || \
+      defined(CONFIG_IDF_TARGET_ESP32S3) || \
+      defined(CONFIG_IDF_TARGET_ESP32C6)
     if (ctx->sha_type == SHA_TYPE_MAX) {
 #else
     ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");
@@ -1807,7 +1849,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-    sha_ll_read_digest(ctx->sha_type, (void *)hash, wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
+    sha_ll_read_digest(ctx->sha_type,
+                       (void *)hash,
+                       wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
 #else
     /* not CONFIG_IDF_TARGET_ESP32S3 */
     /* wait until idle */
@@ -1956,15 +2000,19 @@ int esp_sha256_process(struct wc_Sha256* sha, const byte* data)
 #if defined(DEBUG_WOLFSSL_VERBOSE)
         ESP_LOGV(TAG, "    confirmed SHA256 type call match");
 #endif
-        wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA256_BLOCK_SIZE);
+        wc_esp_process_block(&sha->ctx,
+                             (const word32*)data,
+                             WC_SHA256_BLOCK_SIZE);
         break;
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+#if defined(WOLFSSL_SHA224) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224)
     case SHA2_224:
     #if defined(DEBUG_WOLFSSL_VERBOSE)
         ESP_LOGV(TAG, "    confirmed SHA224 type call match");
     #endif
-        wc_esp_process_block(&sha->ctx, (const word32*)data, WC_SHA224_BLOCK_SIZE);
+        wc_esp_process_block(&sha->ctx,
+                             (const word32*)data,
+                             WC_SHA224_BLOCK_SIZE);
         break;
 #endif
 
@@ -2108,15 +2156,24 @@ int esp_hw_show_sha_metrics(void)
     ESP_LOGI(TAG, "------------- wolfSSL ESP HW SHA Metrics----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
 
-    ESP_LOGI(TAG, "esp_sha_hw_copy_ct            = %lu", esp_sha_hw_copy_ct);
-    ESP_LOGI(TAG, "esp_sha1_hw_usage_ct          = %lu", esp_sha1_hw_usage_ct);
-    ESP_LOGI(TAG, "esp_sha1_sw_fallback_usage_ct = %lu", esp_sha1_sw_fallback_usage_ct);
-    ESP_LOGI(TAG, "esp_sha_reverse_words_ct      = %lu", esp_sha_reverse_words_ct);
-    ESP_LOGI(TAG, "esp_sha1_hw_hash_usage_ct     = %lu", esp_sha1_hw_hash_usage_ct);
-    ESP_LOGI(TAG, "esp_sha2_224_hw_hash_usage_ct = %lu", esp_sha2_224_hw_hash_usage_ct);
-    ESP_LOGI(TAG, "esp_sha2_256_hw_hash_usage_ct = %lu", esp_sha2_256_hw_hash_usage_ct);
-    ESP_LOGI(TAG, "esp_byte_reversal_checks_ct   = %lu", esp_byte_reversal_checks_ct);
-    ESP_LOGI(TAG, "esp_byte_reversal_needed_ct   = %lu", esp_byte_reversal_needed_ct);
+    ESP_LOGI(TAG, "esp_sha_hw_copy_ct            = %lu",
+                   esp_sha_hw_copy_ct);
+    ESP_LOGI(TAG, "esp_sha1_hw_usage_ct          = %lu",
+                   esp_sha1_hw_usage_ct);
+    ESP_LOGI(TAG, "esp_sha1_sw_fallback_usage_ct = %lu",
+                   esp_sha1_sw_fallback_usage_ct);
+    ESP_LOGI(TAG, "esp_sha_reverse_words_ct      = %lu",
+                   esp_sha_reverse_words_ct);
+    ESP_LOGI(TAG, "esp_sha1_hw_hash_usage_ct     = %lu",
+                   esp_sha1_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_sha2_224_hw_hash_usage_ct = %lu",
+                   esp_sha2_224_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_sha2_256_hw_hash_usage_ct = %lu",
+                   esp_sha2_256_hw_hash_usage_ct);
+    ESP_LOGI(TAG, "esp_byte_reversal_checks_ct   = %lu",
+                   esp_byte_reversal_checks_ct);
+    ESP_LOGI(TAG, "esp_byte_reversal_needed_ct   = %lu",
+                   esp_byte_reversal_needed_ct);
 
 #else
     /* no HW math, no HW math metrics */

@@ -714,8 +714,8 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
                        name_A, name_B);
     }
     else {
-      //  esp_show_mp(name_A, A);
-      //  esp_show_mp(name_B, B);
+      /*  esp_show_mp(name_A, A); */
+      /*  esp_show_mp(name_B, B); */
     }
     return ret;
 }

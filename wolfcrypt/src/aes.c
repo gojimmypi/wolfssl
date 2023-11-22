@@ -3584,11 +3584,17 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         return 0;
     }
 #elif defined(FREESCALE_LTC)
-    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen, const byte* iv,
-                  int dir)
+    int wc_AesSetKeyLocal(Aes* aes, const byte* userKey, word32 keylen,
+        const byte* iv, int dir, int checkKeyLen)
     {
-        if (aes == NULL || !((keylen == 16) || (keylen == 24) || (keylen == 32)))
+        if (aes == NULL)
             return BAD_FUNC_ARG;
+
+        if (checkKeyLen) {
+            if (!((keylen == 16) || (keylen == 24) || (keylen == 32)))
+                return BAD_FUNC_ARG;
+        }
+        (void)dir;
 
         aes->rounds = keylen/4 + 6;
         XMEMCPY(aes->key, userKey, keylen);
@@ -3601,14 +3607,21 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         return wc_AesSetIV(aes, iv);
     }
 
+    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
+        const byte* iv, int dir)
+    {
+        return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 1);
+    }
+
+
     int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
                         const byte* iv, int dir)
     {
         return wc_AesSetKey(aes, userKey, keylen, iv, dir);
     }
 #elif defined(FREESCALE_MMCAU)
-    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
-        const byte* iv, int dir)
+    int wc_AesSetKeyLocal(Aes* aes, const byte* userKey, word32 keylen,
+        const byte* iv, int dir, int checkKeyLen)
     {
         int ret;
         byte* rk;
@@ -3618,10 +3631,13 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
 
         (void)dir;
 
-        if (!((keylen == 16) || (keylen == 24) || (keylen == 32)))
-            return BAD_FUNC_ARG;
         if (aes == NULL)
             return BAD_FUNC_ARG;
+
+        if (checkKeyLen) {
+            if (!((keylen == 16) || (keylen == 24) || (keylen == 32)))
+                return BAD_FUNC_ARG;
+        }
 
         rk = (byte*)aes->key;
         if (rk == NULL)
@@ -3671,6 +3687,12 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         }
 
         return ret;
+    }
+
+    int wc_AesSetKey(Aes* aes, const byte* userKey, word32 keylen,
+        const byte* iv, int dir)
+    {
+        return wc_AesSetKeyLocal(aes, userKey, keylen, iv, dir, 1);
     }
 
     int wc_AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
@@ -5017,6 +5039,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     #ifdef HAVE_AES_DECRYPT
     int wc_AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     {
+        int ret;
         int offset = 0;
         byte* iv;
         byte temp_block[AES_BLOCK_SIZE];
@@ -5035,7 +5058,9 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         while (blocks--) {
             XMEMCPY(temp_block, in + offset, AES_BLOCK_SIZE);
 
-            wc_AesDecrypt(aes, in + offset, out + offset);
+            ret = wc_AesDecrypt(aes, in + offset, out + offset);
+            if (ret != 0)
+                return ret;
 
             /* XOR block with IV for CBC */
             xorbuf(out + offset, iv, AES_BLOCK_SIZE);

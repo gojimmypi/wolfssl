@@ -906,7 +906,7 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
      defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 if (sha->ctx.mode == ESP32_SHA_HW) {
     #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
-        ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
+    	ESP_LOGV(TAG, "Start: Reverse PAD SIZE Endianness.");
     #endif
     ByteReverseWords(&sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* out */
                      &sha->buffer[WC_SHA_PAD_SIZE/sizeof(word32)], /* in  */
