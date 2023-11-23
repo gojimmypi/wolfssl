@@ -589,7 +589,7 @@ extern "C"
                                              byte blockprocess);
     WOLFSSL_LOCAL int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
-#ifdef DEBUG_WOLFSSL_SHA_MUTEX
+#ifdef WOLFSSL_DEBUG_MUTEX
     /* testing HW release in task that did not lock */
     extern WC_ESP32SHA* stray_ctx;
 #endif

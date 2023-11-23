@@ -1764,7 +1764,7 @@ enum Misc {
 #ifndef ECDHE_SIZE /* allow this to be overridden at compile-time */
     ECDHE_SIZE          = 32,  /* ECDHE server size defaults to 256 bit */
 #endif
-    MAX_EXPORT_ECC_SZ   = 256, /* Export ANS X9.62 max future size */
+    MAX_EXPORT_ECC_SZ   = 256, /* Export ANSI X9.62 max future size */
     MAX_CURVE_NAME_SZ   = 16,  /* Maximum size of curve name string */
 
     NEW_SA_MAJOR        = 8,   /* Most significant byte used with new sig algos */
@@ -3576,7 +3576,7 @@ struct WOLFSSL_CTX {
     byte        sendVerify:2;     /* for client side (can not be single bit) */
     byte        haveRSA:1;        /* RSA available */
     byte        haveECC:1;        /* ECC available */
-    byte        haveDH:1;         /* server DH parms set by user */
+    byte        haveDH:1;         /* server DH params set by user */
     byte        haveECDSAsig:1;   /* server cert signed w/ ECDSA */
     byte        haveFalconSig:1;  /* server cert signed w/ Falcon */
     byte        haveDilithiumSig:1;/* server cert signed w/ Dilithium */
@@ -3666,11 +3666,13 @@ struct WOLFSSL_CTX {
 #if defined(OPENSSL_EXTRA) || defined(HAVE_CURL)
     word32            disabledCurves;   /* curves disabled by user */
 #endif
-#ifdef OPENSSL_EXTRA
+#ifdef WOLFSSL_SESSION_ID_CTX
     byte              sessionCtx[ID_LEN]; /* app session context ID */
+    byte              sessionCtxSz;
+#endif
+#ifdef OPENSSL_EXTRA
     const unsigned char *alpn_cli_protos;/* ALPN client protocol list */
     unsigned int         alpn_cli_protos_len;
-    byte              sessionCtxSz;
     byte              cbioFlag;  /* WOLFSSL_CBIO_RECV/SEND: CBIORecv/Send is set */
     CallbackInfoState* CBIS;      /* used to get info about SSL state */
     WOLFSSL_X509_VERIFY_PARAM* param;    /* verification parameters*/
@@ -4325,10 +4327,10 @@ struct WOLFSSL_SESSION {
     word16             idLen;             /* serverID length          */
     byte               serverID[SERVER_ID_LEN]; /* for easier client lookup */
 #endif
-#ifdef OPENSSL_EXTRA
+#ifdef WOLFSSL_SESSION_ID_CTX
     byte               sessionCtxSz;      /* sessionCtx length        */
     byte               sessionCtx[ID_LEN]; /* app specific context id */
-#endif /* OPENSSL_EXTRA */
+#endif /* WOLFSSL_SESSION_ID_CTX */
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
     byte               peerVerifyRet;     /* cert verify error */
 #endif
@@ -4630,7 +4632,7 @@ struct Options {
     word16            usingCompression:1; /* are we using compression */
     word16            haveRSA:1;          /* RSA available */
     word16            haveECC:1;          /* ECC available */
-    word16            haveDH:1;           /* server DH parms set by user */
+    word16            haveDH:1;           /* server DH params set by user */
     word16            haveECDSAsig:1;     /* server ECDSA signed cert */
     word16            haveStaticECC:1;    /* static server ECC private key */
     word16            haveFalconSig:1;    /* server Falcon signed cert */
@@ -5475,13 +5477,16 @@ struct WOLFSSL {
     CipherSpecs     specs;
     Keys            keys;
     Options         options;
+#ifdef WOLFSSL_SESSION_ID_CTX
+    byte             sessionCtx[ID_LEN]; /* app session context ID */
+    byte             sessionCtxSz;       /* size of sessionCtx stored */
+#endif
 #ifdef OPENSSL_EXTRA
     CallbackInfoState* CBIS;             /* used to get info about SSL state */
     int              cbmode;             /* read or write on info callback */
     int              cbtype;             /* event type in info callback */
     WOLFSSL_BIO*     biord;              /* socket bio read  to free/close */
     WOLFSSL_BIO*     biowr;              /* socket bio write to free/close */
-    byte             sessionCtx[ID_LEN]; /* app session context ID */
     WOLFSSL_X509_VERIFY_PARAM* param;    /* verification parameters*/
 #endif
 #if defined(OPENSSL_EXTRA) || defined(HAVE_CURL)
@@ -5493,7 +5498,6 @@ struct WOLFSSL {
 #endif
 #ifdef OPENSSL_EXTRA
     byte             readAhead;
-    byte             sessionCtxSz;       /* size of sessionCtx stored */
 #ifdef HAVE_PK_CALLBACKS
     void*            loggingCtx;         /* logging callback argument */
 #endif

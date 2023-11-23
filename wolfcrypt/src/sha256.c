@@ -1138,7 +1138,7 @@ static int InitSha256(wc_Sha256* sha256)
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                    #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
                         ESP_LOGI(TAG, "Sha256Update process software");
                     }
@@ -1152,7 +1152,7 @@ static int InitSha256(wc_Sha256* sha256)
                     ret = XTRANSFORM(sha256, (const byte*)local);
                 }
                 else {
-                    #if defined(DEBUG_WOLFSSL_SHA_MUTEX)
+                    #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
                         ESP_LOGI(TAG, "Sha256Update process hardware");
                     }
@@ -1434,7 +1434,7 @@ static int InitSha256(wc_Sha256* sha256)
                 &sha256->buffer[WC_SHA256_PAD_SIZE / sizeof(word32)], /* out */
                 &sha256->buffer[WC_SHA256_PAD_SIZE / sizeof(word32)], /* in  */
                 2 * sizeof(word32) /* byte count to reverse */
-            ); /* TODO is this a 32 or 64 bit reversal? */
+            );
         #if defined(WOLFSSL_SUPER_VERBOSE_DEBUG)
             ESP_LOGV(TAG, "End: Reverse PAD SIZE Endianness.");
         #endif

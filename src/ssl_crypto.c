@@ -1616,8 +1616,8 @@ WOLFSSL_HMAC_CTX* wolfSSL_HMAC_CTX_new(void)
  *
  * Not an OpenSSL compatibility API.
  *
- * @param [in, out] ctx  HMAC contect object.
- * @return  1 inficating success.
+ * @param [in, out] ctx  HMAC context object.
+ * @return  1 indicating success.
  */
 int wolfSSL_HMAC_CTX_Init(WOLFSSL_HMAC_CTX* ctx)
 {
@@ -1972,7 +1972,7 @@ unsigned char* wolfSSL_HMAC(const WOLFSSL_EVP_MD* evp_md, const void* key,
     unsigned char* ret = NULL;
     int rc = 0;
     int type = 0;
-    int hmacLen;
+    int hmacLen = 0;
 #ifdef WOLFSSL_SMALL_STACK
     Hmac* hmac = NULL;
 #else
@@ -2061,7 +2061,7 @@ size_t wolfSSL_HMAC_size(const WOLFSSL_HMAC_CTX* ctx)
  * START OF CMAC API
  ******************************************************************************/
 
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
 #if defined(WOLFSSL_CMAC) && defined(OPENSSL_EXTRA) && \
     defined(WOLFSSL_AES_DIRECT)
 /* Allocate a new CMAC context object.
@@ -2275,7 +2275,7 @@ int wolfSSL_CMAC_Final(WOLFSSL_CMAC_CTX* ctx, unsigned char* out, size_t* len)
     return ret;
 }
 #endif /* WOLFSSL_CMAC && OPENSSL_EXTRA && WOLFSSL_AES_DIRECT */
-#endif /* OPENSSL_EXTRA */
+#endif /* OPENSSL_EXTRA && !WOLFCRYPT_ONLY */
 
 /*******************************************************************************
  * END OF CMAC API

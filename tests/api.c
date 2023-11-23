@@ -35690,7 +35690,7 @@ static int test_X509_STORE_untrusted(void)
         NULL
     };
 
-    /* Only immediate issuer in untrusted chaing. Fails since can't build chain
+    /* Only immediate issuer in untrusted chain. Fails since can't build chain
      * to loaded CA. */
     ExpectIntEQ(test_X509_STORE_untrusted_certs(untrusted1, 0,
             X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY, 1), TEST_SUCCESS);
@@ -40602,7 +40602,7 @@ static int test_wolfSSL_ERR_put_error(void)
 static int test_wolfSSL_ERR_get_error_order(void)
 {
     EXPECT_DECLS;
-#ifdef WOLFSSL_HAVE_ERROR_QUEUE
+#if defined(WOLFSSL_HAVE_ERROR_QUEUE) && defined(OPENSSL_EXTRA)
     /* Empty the queue. */
     wolfSSL_ERR_clear_error();
 
@@ -40613,7 +40613,7 @@ static int test_wolfSSL_ERR_get_error_order(void)
     ExpectIntEQ(wolfSSL_ERR_get_error(), -ASN_NO_SIGNER_E);
     ExpectIntEQ(wolfSSL_ERR_peek_error(), -ASN_SELF_SIGNED_E);
     ExpectIntEQ(wolfSSL_ERR_get_error(), -ASN_SELF_SIGNED_E);
-#endif /* WOLFSSL_HAVE_ERROR_QUEUE */
+#endif /* WOLFSSL_HAVE_ERROR_QUEUE && OPENSSL_EXTRA */
     return EXPECT_RESULT();
 }
 
@@ -45068,6 +45068,7 @@ static int test_wolfSSL_SESSION(void)
 #endif
     ExpectIntEQ(wolfSSL_SSL_SESSION_set_timeout(sess, 500), SSL_SUCCESS);
 
+#ifdef WOLFSSL_SESSION_ID_CTX
     /* fail case with miss match session context IDs (use compatibility API) */
     ExpectIntEQ(SSL_set_session_id_context(ssl, context, contextSz),
             SSL_SUCCESS);
@@ -45080,6 +45081,7 @@ static int test_wolfSSL_SESSION(void)
             SSL_SUCCESS);
     ExpectNotNull(ssl = wolfSSL_new(ctx));
     ExpectIntEQ(wolfSSL_set_session(ssl, sess), SSL_FAILURE);
+#endif
 #endif /* OPENSSL_EXTRA */
 
     wolfSSL_free(ssl);
@@ -50666,6 +50668,62 @@ static int test_MakeCertWithPathLen(void)
     wc_InitDecodedCert(&decodedCert, der, derSize, NULL);
     ExpectIntEQ(wc_ParseCert(&decodedCert, CERT_TYPE, NO_VERIFY, NULL), 0);
     ExpectIntEQ(decodedCert.pathLength, expectedPathLen);
+
+    wc_FreeDecodedCert(&decodedCert);
+    ret = wc_ecc_free(&key);
+    ExpectIntEQ(ret, 0);
+    ret = wc_FreeRng(&rng);
+    ExpectIntEQ(ret, 0);
+#endif
+    return EXPECT_RESULT();
+}
+
+static int test_MakeCertWithCaFalse(void)
+{
+    EXPECT_DECLS;
+#if defined(WOLFSSL_ALLOW_ENCODING_CA_FALSE) && defined(WOLFSSL_CERT_REQ) && \
+    !defined(NO_ASN_TIME) && defined(WOLFSSL_CERT_GEN) && defined(HAVE_ECC)
+    const byte expectedIsCa = 0;
+    Cert cert;
+    DecodedCert decodedCert;
+    byte der[FOURK_BUF];
+    int derSize = 0;
+    WC_RNG rng;
+    ecc_key key;
+    int ret;
+
+    XMEMSET(&rng, 0, sizeof(WC_RNG));
+    XMEMSET(&key, 0, sizeof(ecc_key));
+    XMEMSET(&cert, 0, sizeof(Cert));
+    XMEMSET(&decodedCert, 0, sizeof(DecodedCert));
+
+    ExpectIntEQ(wc_InitRng(&rng), 0);
+    ExpectIntEQ(wc_ecc_init(&key), 0);
+    ExpectIntEQ(wc_ecc_make_key(&rng, 32, &key), 0);
+    ExpectIntEQ(wc_InitCert(&cert), 0);
+
+    (void)XSTRNCPY(cert.subject.country, "US", CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.state, "state", CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.locality, "Bozeman", CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.org, "yourOrgNameHere", CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.unit, "yourUnitNameHere", CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.commonName, "www.yourDomain.com",
+        CTC_NAME_SIZE);
+    (void)XSTRNCPY(cert.subject.email, "yourEmail@yourDomain.com",
+        CTC_NAME_SIZE);
+
+    cert.selfSigned = 1;
+    cert.isCA       = expectedIsCa;
+    cert.isCaSet    = 1;
+    cert.sigType    = CTC_SHA256wECDSA;
+
+    ExpectIntGE(wc_MakeCert(&cert, der, FOURK_BUF, NULL, &key, &rng), 0);
+    ExpectIntGE(derSize = wc_SignCert(cert.bodySz, cert.sigType, der,
+        FOURK_BUF, NULL, &key, &rng), 0);
+
+    wc_InitDecodedCert(&decodedCert, der, derSize, NULL);
+    ExpectIntEQ(wc_ParseCert(&decodedCert, CERT_TYPE, NO_VERIFY, NULL), 0);
+    ExpectIntEQ(decodedCert.isCA, expectedIsCa);
 
     wc_FreeDecodedCert(&decodedCert);
     ret = wc_ecc_free(&key);
@@ -62120,7 +62178,9 @@ static int test_wolfSSL_set_SSL_CTX(void)
     ExpectNotNull(ssl = wolfSSL_new(ctx2));
     ExpectIntNE((wolfSSL_get_options(ssl) & WOLFSSL_OP_NO_TLSv1_3), 0);
 #ifdef WOLFSSL_INT_H
+#ifdef WOLFSSL_SESSION_ID_CTX
     ExpectIntEQ(XMEMCMP(ssl->sessionCtx, session_id2, 4), 0);
+#endif
     ExpectTrue(ssl->buffers.certificate == ctx2->certificate);
     ExpectTrue(ssl->buffers.certChain == ctx2->certChain);
 #endif
@@ -62142,7 +62202,9 @@ static int test_wolfSSL_set_SSL_CTX(void)
 #ifdef WOLFSSL_INT_H
     ExpectTrue(ssl->buffers.certificate == ctx1->certificate);
     ExpectTrue(ssl->buffers.certChain == ctx1->certChain);
+#ifdef WOLFSSL_SESSION_ID_CTX
     ExpectIntEQ(XMEMCMP(ssl->sessionCtx, session_id1, 4), 0);
+#endif
 #endif
 
     wolfSSL_free(ssl);
@@ -68515,6 +68577,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_ParseCert),
     TEST_DECL(test_wc_ParseCert_Error),
     TEST_DECL(test_MakeCertWithPathLen),
+    TEST_DECL(test_MakeCertWithCaFalse),
     TEST_DECL(test_wc_SetKeyUsage),
     TEST_DECL(test_wc_SetAuthKeyIdFromPublicKey_ex),
     TEST_DECL(test_wc_SetSubjectBuffer),
