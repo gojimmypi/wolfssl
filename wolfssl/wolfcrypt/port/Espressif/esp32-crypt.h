@@ -254,6 +254,31 @@ enum {
     #define ESP_PROHIBIT_SMALL_X FALSE
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+      defined(CONFIG_IDF_TARGET_ESP8684)
+    /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
+     * single QFN 4x4 mm package. Out of released documentation, Technical
+     * Reference Manual as well as ESP-IDF Programming Guide is applicable
+     * to both ESP32-C2 and ESP8684.
+     *
+     * Hardware Acceleration not yet implemented. Do not enable: */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     #include <soc/dport_access.h>
     #include <soc/hwcrypto_reg.h>
