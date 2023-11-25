@@ -268,6 +268,9 @@ enum {
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
     #define NO_WOLFSSL_ESP32_CRYPT_AES /* No AES HW */
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI /* No RSA HW*/
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL /* No RSA, so no mp_mul    */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD /* No RSA, so no mp_mulmod */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD /* No RSA, no mp_exptmod  */
 
     #include <soc/dport_access.h>
     #include <soc/hwcrypto_reg.h>
