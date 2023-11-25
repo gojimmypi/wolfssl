@@ -2144,6 +2144,7 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     /* start register offset */
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+    defined(CONFIG_IDF_TARGET_ESP8684) || \
     defined(CONFIG_IDF_TARGET_ESP32C3) || \
     defined(CONFIG_IDF_TARGET_ESP32C6)
     /* No SHA-512 HW on RISC-V SoC, so nothing to do. */
