@@ -259,20 +259,42 @@ enum {
     /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
      * single QFN 4x4 mm package. Out of released documentation, Technical
      * Reference Manual as well as ESP-IDF Programming Guide is applicable
-     * to both ESP32-C2 and ESP8684.
-     *
-     * Hardware Acceleration not yet implemented. Do not enable: */
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+     * to both ESP32-C2 and ESP8684. */
 
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
-    #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    /* #define NO_ESP32_CRYPT */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
+    #define NO_WOLFSSL_ESP32_CRYPT_AES /* No AES HW */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI /* No RSA HW*/
+
+    #include <soc/dport_access.h>
+    #include <soc/hwcrypto_reg.h>
+
+    #if ESP_IDF_VERSION_MAJOR < 5
+        #include <soc/cpu.h>
+    #endif
+
+    #if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+        #include <esp_private/periph_ctrl.h>
+    #else
+        #include <driver/periph_ctrl.h>
+    #endif
+
+    #if ESP_IDF_VERSION_MAJOR >= 4
+        /* #include <esp32/rom/ets_sys.h> */
+    #else
+        #include <rom/ets_sys.h>
+    #endif
+
+/* If for some reason there's a desire to disable specific HW on the C2: */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA                              */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA     there is SHA HW on C2    */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224                           */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224  there is SHA224 HW on C2 */
+/*  #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256                           */
+/*  #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256  there is SHA256 HW on C2 */
+
+    /* Code will fall back to SW with warning if these are removed:
+     * Note there is no SHA384/SHA512 HW on ESP32-C3 */
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512

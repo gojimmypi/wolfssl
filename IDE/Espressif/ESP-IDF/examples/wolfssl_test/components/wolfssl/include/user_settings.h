@@ -263,10 +263,25 @@
      * to both ESP32-C2 and ESP8684.
      *
      * Hardware Acceleration not yet implemented. Do not enable: */
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    /* wolfSSL HW Acceleration supported on ESP32-C3. Uncomment to disable: */
+
+    /*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
+
+    /* These are defined automatically in esp32-crypt.h, here for clarity:  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+
+    #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
+    // #define WOLFSSL_SHA224
+
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+
+    /* Automatically defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -334,6 +349,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif /* CONFIG_IDF_TARGET Check */
 
+#define DEBUG_WOLFSSL
 /* Debug options:
 
 #define ESP_VERIFY_MEMBLOCK

@@ -71,20 +71,14 @@
           <Subdirectory>esp-idf/v5.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM43</COMPort>
+        <COMPort>COM3</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32C2</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
   </Build>
-  <CustomBuild>
-    <PreSyncActions />
-    <PreBuildActions />
-    <PostBuildActions />
-    <PreCleanActions />
-    <PostCleanActions />
-  </CustomBuild>
+  <CustomBuild />
   <CustomDebug>
     <PreDebugActions />
     <PostDebugActions />
@@ -93,9 +87,9 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM43</ComPortName>
+      <ComPortName>COM3</ComPortName>
       <AdvancedSettings>
-        <BaudRate>115200</BaudRate>
+        <BaudRate>74880</BaudRate>
         <DataBits>8</DataBits>
         <Parity>None</Parity>
         <StopBits>One</StopBits>
@@ -220,7 +214,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 30000" -f target/esp32c2.cfg</CommandLine>
+        <CommandLine>-f interface/ftdi/tigard.cfg -c "adapter_khz 25000" -f target/esp32c2.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />

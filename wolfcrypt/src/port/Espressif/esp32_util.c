@@ -200,9 +200,11 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
 #elif CONFIG_IDF_TARGET_ESP32C6
-    /* not supported at this time */
+    /* TODO Xthal not supported at this time */
+#elif CONFIG_IDF_TARGET_ESP32C2
+    /* TODO Xthal not supported at this time */
 #elif CONFIG_IDF_TARGET_ESP32C3
-    /* not supported at this time */
+    /* TODO Xthal not supported at this time */
 #elif CONFIG_IDF_TARGET_ESP32S3
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
@@ -227,6 +229,8 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S2.");
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32C2)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C3)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -530,7 +534,7 @@ int ShowExtendedSystemInfo(void)
         ESP_LOGW(TAG, "Warning: ESP_RSA_MULM_BITS not defined for ESP32");
     #endif
 
-#elif  defined(CONFIG_IDF_TARGET_ESP32C2)
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );

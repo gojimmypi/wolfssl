@@ -174,8 +174,22 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
     /***** END CONFIG_IDF_TARGET_ESP32S3 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    /* wolfSSL HW Acceleration supported on ESP32-C2. Uncomment to disable: */
+#elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+      defined(CONFIG_IDF_TARGET_ESP8684)
+    /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
+     * single QFN 4x4 mm package. Out of released documentation, Technical
+     * Reference Manual as well as ESP-IDF Programming Guide is applicable
+     * to both ESP32-C2 and ESP8684.
+     *
+     * TODO Hardware Acceleration not yet implemented. Do not enable: */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* wolfSSL HW Acceleration supported on ESP32-C3. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */

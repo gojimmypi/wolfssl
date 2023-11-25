@@ -725,7 +725,8 @@ static int InitSha256(wc_Sha256* sha256)
 #endif
 
     /* when not ESP32-C3, we'll need digest for SW or HW */
-    #if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
+    #if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
         ret = 1;
     #endif
 
@@ -1121,7 +1122,7 @@ static int InitSha256(wc_Sha256* sha256)
                           (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
                 if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
                 #endif
-                #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+                #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
                      defined(CONFIG_IDF_TARGET_ESP32C6)) && \
                     defined(WOLFSSL_ESP32_CRYPT) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1227,7 +1228,7 @@ static int InitSha256(wc_Sha256* sha256)
             #endif
 
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-                #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+                #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
                      defined(CONFIG_IDF_TARGET_ESP32C6)) && \
                     defined(WOLFSSL_ESP32_CRYPT) && \
                    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1340,12 +1341,12 @@ static int InitSha256(wc_Sha256* sha256)
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
             if (sha256->ctx.mode == ESP32_SHA_INIT) {
-                esp_sha_try_hw_lock(&sha256->ctx);
+                esp_sha_try_hw_lock(&sha256->ctx); /* TODO remove duplicate lock */
             }
         #endif
 
         #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-            #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+            #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
                  defined(CONFIG_IDF_TARGET_ESP32C6))  && \
                 defined(WOLFSSL_ESP32_CRYPT) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1392,13 +1393,13 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
-            esp_sha_try_hw_lock(&sha256->ctx);
+            esp_sha_try_hw_lock(&sha256->ctx); /* TODO aren't we already locked? */
         }
     #endif
 
         /* store lengths */
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
              defined(CONFIG_IDF_TARGET_ESP32C6)) && \
             defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1421,7 +1422,7 @@ static int InitSha256(wc_Sha256* sha256)
 
     /* Only the ESP32-C3 with HW enabled may need pad size byte order reversal
      * depending on HW or SW mode */
-    #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+    #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
          defined(CONFIG_IDF_TARGET_ESP32C6)) && \
          defined(WOLFSSL_ESP32_CRYPT) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1460,7 +1461,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
-            esp_sha_try_hw_lock(&sha256->ctx);
+            esp_sha_try_hw_lock(&sha256->ctx); /* TODO already locked, no? */
         }
         /* depending on architecture and ctx.mode value
          * we may or may not need default digest */
@@ -1468,7 +1469,7 @@ static int InitSha256(wc_Sha256* sha256)
             ret = XTRANSFORM(sha256, (const byte*)local);
         }
         else {
-            ret = esp_sha256_digest_process(sha256, 1);
+            ret = esp_sha256_digest_process(sha256, 1); /* TODO Use TRUE */
         }
     #else
         ret = XTRANSFORM(sha256, (const byte*)local);
@@ -1490,7 +1491,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #ifdef LITTLE_ENDIAN_ORDER
-        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
              defined(CONFIG_IDF_TARGET_ESP32C6)) && \
             defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1545,7 +1546,7 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6))  && \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6))  && \
             defined(WOLFSSL_ESP32_CRYPT) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1556,7 +1557,7 @@ static int InitSha256(wc_Sha256* sha256)
                                  WC_SHA256_DIGEST_SIZE);
             }
     #endif
-        XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE);
+        XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE); /* dst, src, l */
 
         return InitSha256(sha256);  /* reset state */
     }
@@ -1852,7 +1853,7 @@ static int InitSha256(wc_Sha256* sha256)
             return ret;
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if (defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        #if (defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || \
              defined(CONFIG_IDF_TARGET_ESP32C6))  && \
             defined(WOLFSSL_ESP32_CRYPT) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \

@@ -124,12 +124,31 @@ void my_atmel_free(int slotId)
 
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
-
+#include "driver/uart.h"
 /* entry point */
 void app_main(void)
 {
     int stack_start = 0;
     esp_err_t ret = 0;
+
+/* TODO why 74880 ? */
+    // Configure UART parameters
+    uart_config_t uart_config = {
+        .baud_rate = 115200,   // Set your desired baud rate here
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+    };
+
+    // Apply configuration
+    uart_param_config(UART_NUM_0, &uart_config);
+
+    // Set UART pins
+  //  uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+    // Initialize UART driver
+    uart_driver_install(UART_NUM_0, 200 * 2, 0, 0, NULL, 0);
+
     ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -190,7 +209,7 @@ void app_main(void)
 #if defined(NO_ESP32_CRYPT)
     ESP_LOGI(TAG, "NO_ESP32_CRYPT defined! HW acceleration DISABLED.");
 #else
-    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3)
         ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C3.");
 
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
