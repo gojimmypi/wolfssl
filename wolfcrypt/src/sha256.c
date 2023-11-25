@@ -715,7 +715,11 @@ static int InitSha256(wc_Sha256* sha256)
      */
     static int set_default_digest256(wc_Sha256* sha256)
     {
-        return 0;  /* TODO not used at this time. */
+
+// TODO
+       /* >>>>>>>>>>> */ return 0;  /* TODO not used at this time. */
+
+
         int ret = 0;
 #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
 
@@ -724,14 +728,17 @@ static int InitSha256(wc_Sha256* sha256)
         }
 #endif
 
-    /* when not ESP32-C3, we'll need digest for SW or HW */
-    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
-    #if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* When not ESP32-C3, we'll need digest for SW or HW */
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        defined(CONFIG_IDF_TARGET_ESP32C6)
+    #else
         ret = 1;
     #endif
 
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
         if ((ret == 1) && (sha256->ctx.isfirstblock == 1)) {
             XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
                 sha256->digest[0] = 0x6A09E667L;
@@ -743,7 +750,7 @@ static int InitSha256(wc_Sha256* sha256)
                 sha256->digest[6] = 0x1F83D9ABL;
                 sha256->digest[7] = 0x5BE0CD19L;
         }
-#endif
+    #endif
         return ret;
     }
 
@@ -1112,7 +1119,7 @@ static int InitSha256(wc_Sha256* sha256)
                     ESP_LOGV(TAG, "Sha256Update try hardware");
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
-                set_default_digest256(sha256);
+                // TODO: Not yet implemented: set_default_digest256(sha256);
             #endif
 
 

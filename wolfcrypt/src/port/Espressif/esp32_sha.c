@@ -755,9 +755,16 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 */
 int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 {
-    int ret = 0;
-    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
-#if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+    int ret = ESP_OK; /* Assume success (zero) */
+
+#if defined(CONFIG_IDF_TARGET_ESP32C2)   || \
+    defined(CONFIG_IDF_TARGET_ESP8684)   || \
+    defined(CONFIG_IDF_TARGET_ESP32C3)   || \
+    defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* there's no SHA512 HW on the RISC-V SoC so there's nothing to do. */
+#elif defined(CONFIG_IDF_TARGET_ESP32)   || \
+      defined(CONFIG_IDF_TARGET_ESP32S2) || \
+      defined(CONFIG_IDF_TARGET_ESP32S3)
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* Get a copy of the HW digest, but don't process it. */
         ESP_LOGI(TAG, "esp_sha512_ctx_copy esp_sha512_digest_process");
@@ -786,7 +793,8 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
     /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
-    #if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && \
+    #if !defined(CONFIG_IDF_TARGET_ESP32C2) && \
+        !defined(CONFIG_IDF_TARGET_ESP32C3) && \
         !defined(CONFIG_IDF_TARGET_ESP32C6)
         dst->ctx.initializer = &dst->ctx; /*breadcrumb is this ctx address */
     #endif
@@ -798,6 +806,7 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         #endif
     }
 #endif
+
     return ret;
 } /* esp_sha512_ctx_copy */
 #endif
@@ -1495,9 +1504,13 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 * Assumes register already loaded.
 * Returns a negative value error code upon failure.
 */
-    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
-#if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
-/* the ESP32-C3 HAL has built-in process start, everything else uses: */
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+    defined(CONFIG_IDF_TARGET_ESP8684) || \
+    defined(CONFIG_IDF_TARGET_ESP32C3) || \
+    defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* ESP32-C3 HAL has built-in process start, nothing to declare here. */
+#else
+    /* Everything else uses esp_sha_start_process() */
 static int esp_sha_start_process(WC_ESP32SHA* sha)
 {
     int ret = 0;
@@ -2129,8 +2142,12 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     int ret = 0; /* assume success */
     ESP_LOGV(TAG, "enter esp_sha512_block");
     /* start register offset */
-    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
-#if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+    defined(CONFIG_IDF_TARGET_ESP32C3) || \
+    defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* No SHA-512 HW on RISC-V SoC, so nothing to do. */
+#else
     /* note that in SW mode, wolfSSL uses 64 bit words */
     if (sha->ctx.mode == ESP32_SHA_SW) {
         ByteReverseWords64(sha->buffer,
