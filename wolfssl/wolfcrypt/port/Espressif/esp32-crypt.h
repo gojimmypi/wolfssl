@@ -264,7 +264,8 @@ enum {
      * to both ESP32-C2 and ESP8684.
      *
      * Note there is not currently an expected CONFIG_IDF_TARGET_ESP8684.
-     * The macro is included for clarity, and possible future inclusion. */
+     * The ESP8684 is detected with CONFIG_IDF_TARGET_ESP32C2.
+     * The macro is included for clarity, and possible future rename. */
 
     /* #define NO_ESP32_CRYPT */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
