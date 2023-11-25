@@ -259,7 +259,10 @@ enum {
     /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
      * single QFN 4x4 mm package. Out of released documentation, Technical
      * Reference Manual as well as ESP-IDF Programming Guide is applicable
-     * to both ESP32-C2 and ESP8684. */
+     * to both ESP32-C2 and ESP8684.
+     *
+     * Note there is not currently an expected CONFIG_IDF_TARGET_ESP8684.
+     * The macro is included for clarity, and possible future inclusion. */
 
     /* #define NO_ESP32_CRYPT */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
@@ -299,7 +302,7 @@ enum {
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-    /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
+    /***** END CONFIG_IDF_TARGET_ESP32C2 aka CONFIG_IDF_TARGET_ESP8684 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     #include <soc/dport_access.h>
@@ -546,7 +549,8 @@ extern "C"
         #if defined(CONFIG_IDF_TARGET_ESP32)
             #include "esp32/rom/sha.h"
             #define WC_ESP_SHA_TYPE enum SHA_TYPE
-        #elif defined(CONFIG_IDF_TARGET_ESP32C2)
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+              defined(CONFIG_IDF_TARGET_ESP8684)
             #include "esp32c2/rom/sha.h"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32C3)
