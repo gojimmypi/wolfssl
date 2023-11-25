@@ -330,14 +330,6 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP8684)
-    /*  There's no Hardware Acceleration available on ESP8684 */
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    /***** END CONFIG_IDF_TARGET_ESP8684 *****/
-
 #else
     /* Anything else encountered, disable HW accleration */
     #define NO_ESP32_CRYPT

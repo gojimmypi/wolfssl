@@ -203,10 +203,12 @@ enum {
 **
 ** CONFIG_IDF_TARGET_[SoC]
 **   CONFIG_IDF_TARGET_ESP32
-**   CONFIG_IDF_TARGET_ESP32S2
-**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C2
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
+**   CONFIG_IDF_TARGET_ESP32S2
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32H2
 **
 ]*******************************************************************************
 ** Informative settings. Not meant to be edited:
@@ -834,6 +836,6 @@ extern "C"
 }
 #endif
 
-#endif /* WOLFSSL_ESPIDF */
+#endif /* WOLFSSL_ESPIDF (entire contents excluded when not Espressif ESP-IDF) */
 
 #endif  /* __ESP32_CRYPT_H__ */

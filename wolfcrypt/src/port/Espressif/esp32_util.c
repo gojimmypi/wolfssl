@@ -733,18 +733,19 @@ int esp_hw_show_metrics(void)
     #if defined(WOLFSSL_ESP32_CRYPT)
         esp_hw_show_sha_metrics();
     #else
-        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT");
+        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT not defined, "
+                      "HW SHA hash not enabled");
     #endif
 
     #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
         esp_hw_show_mp_metrics();
     #else
-        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT_RSA_PRI not defined,"
+        ESP_LOGI(TAG, "WOLFSSL_ESP32_CRYPT_RSA_PRI not defined, "
                       "HW math not enabled");
     #endif
 
     #if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32_CRYPT_AES is defined,"
+        ESP_LOGI(TAG, "NO_WOLFSSL_ESP32_CRYPT_AES is defined, "
                       "HW AES not enabled");
     #else
         esp_hw_show_aes_metrics();

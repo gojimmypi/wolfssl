@@ -1381,11 +1381,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         else
             TEST_PASS("mp       test passed!\n");
 
-#ifdef WOLFSSL_HW_METRICS
-#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-        esp_hw_show_mp_metrics();
-#endif
-#endif
+        #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
+        {
+            esp_hw_show_mp_metrics();
+        }
+        #endif
         ct--;
         ESP_LOGI(TAG, "\n\nmp_test loops = %d\n\n", ct);
     }
