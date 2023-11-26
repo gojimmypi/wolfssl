@@ -1887,6 +1887,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         ESP_LOGE(TAG, "unexpected error. sha_type is invalid.");
         return ESP_FAIL;
     }
+
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (ctx->isfirstblock == true) {
         /* no hardware use yet. Nothing to do yet */
@@ -1920,11 +1921,12 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
 #elif defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP8684)
-    vTaskDelay(1); /* TODO remove timing hack */
+    wc_esp_wait_until_idle();
     sha_ll_read_digest(ctx->sha_type,
                        (void *)hash,
                        wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    wc_esp_wait_until_idle();
     sha_ll_read_digest(ctx->sha_type,
                        (void *)hash,
                        wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
