@@ -12706,10 +12706,12 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
 #endif
     {
     #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-        ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
-        ESP_LOGI(TAG, "Enable %s timer ", CONFIG_IDF_TARGET);
+        if (esp_gptimer == NULL) {
+            ESP_ERROR_CHECK(gptimer_new_timer(&esp_timer_config, &esp_gptimer));
+        }
         ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));
         ESP_ERROR_CHECK(gptimer_start(esp_gptimer));
+        ESP_LOGI(TAG, "Enable %s timer ", CONFIG_IDF_TARGET);
     #endif
 
     #ifdef HAVE_STACK_SIZE
@@ -12719,10 +12721,9 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
     #endif
     }
 
-        #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(gptimer_stop(esp_gptimer));
         ESP_ERROR_CHECK(gptimer_disable(esp_gptimer));
-        ESP_ERROR_CHECK(gptimer_del_timer(esp_gptimer));
     #endif
 
     return ret;
