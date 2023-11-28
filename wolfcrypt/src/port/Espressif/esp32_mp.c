@@ -140,12 +140,14 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 
 /* usage metrics can be turned on independently of debugging */
 #ifdef WOLFSSL_HW_METRICS
-    static unsigned long esp_mp_max_used = 0;
+        static unsigned long esp_mp_max_used = 0;
 
         static unsigned long esp_mp_mulmod_small_x_ct = 0;
         static unsigned long esp_mp_mulmod_small_y_ct = 0;
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+        static unsigned long esp_mp_max_timeout = 0;
+
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
@@ -235,6 +237,13 @@ static int esp_mp_hw_wait_clean(void)
 #else
     /* no HW timeout if we don't know the platform. assumes no HW */
 #endif
+
+    #if #defined(WOLFSSL_HW_METRICS)
+    {
+        esp_mp_max_timeout = (timeout > esp_mp_max_timeout) ? timeout :
+                                                        esp_mp_max_timeout;
+    }
+    #endif
 
     if (ESP_TIMEOUT(timeout)) {
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean waiting HW ready timed out.");
@@ -1298,7 +1307,7 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
         resultWords_sz = bits2words(Xs + Ys);
         /* sanity check */
-        if((hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
+        if ( (hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
             ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
             ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
