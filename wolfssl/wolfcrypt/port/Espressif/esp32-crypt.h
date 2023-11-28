@@ -23,6 +23,7 @@
 #define __ESP32_CRYPT_H__
 
 #include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+#include "user_settings.h"
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 #include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
@@ -142,6 +143,10 @@ enum {
 **
 ** WOLFSSL_HW_METRICS
 **   Enables metric counters for calls to HW, success, fall back, oddities.
+**
+** WOLFSSL_HAS_METRICS
+**   Indicates that we actually have metrics to show. Useful for old wolfSSL
+**   libraries tested with newer examples, or when all HW turned off.
 **
 ** DEBUG_WOLFSSL
 **   Turns on development testing. Validates HW accelerated results to software
@@ -743,6 +748,8 @@ extern "C"
 *******************************************************************************
 */
 #ifdef WOLFSSL_HW_METRICS
+    #define WOLFSSL_HAS_METRICS
+
     /* Allow sha256 code to keep track of SW fallback during active HW */
     WOLFSSL_LOCAL int esp_sw_sha256_count_add();
 

@@ -249,7 +249,7 @@ void app_main(void)
     */
     int loops = 0;
     do {
-        #if defined(WOLFSSL_HW_METRICS)
+        #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
             esp_hw_show_metrics();
         #endif
         ret = wolf_test_task();
