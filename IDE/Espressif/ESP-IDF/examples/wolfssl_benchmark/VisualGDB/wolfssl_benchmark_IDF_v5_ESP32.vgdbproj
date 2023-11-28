@@ -71,7 +71,7 @@
           <Subdirectory>esp-idf/v5.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM23</COMPort>
+        <COMPort>COM19</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32</DeviceID>
