@@ -238,7 +238,7 @@ static int esp_mp_hw_wait_clean(void)
     /* no HW timeout if we don't know the platform. assumes no HW */
 #endif
 
-    #if #defined(WOLFSSL_HW_METRICS)
+    #if defined(WOLFSSL_HW_METRICS)
     {
         esp_mp_max_timeout = (timeout > esp_mp_max_timeout) ? timeout :
                                                         esp_mp_max_timeout;
@@ -3069,6 +3069,8 @@ int esp_hw_show_mp_metrics(void)
 #endif /* EXPTMOD not disabled !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
+    ESP_LOGI(TAG, "Max timeout: esp_mp_max_timeout = %lu", esp_mp_max_timeout);
+
 #else
     /* no HW math, no HW math metrics */
     ret = ESP_OK;
