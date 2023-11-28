@@ -81,7 +81,7 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
 
 ## Build examples
 
- 1. See README in each example folder
+ 1. See README in each example folder.
 
 ## Support
 
