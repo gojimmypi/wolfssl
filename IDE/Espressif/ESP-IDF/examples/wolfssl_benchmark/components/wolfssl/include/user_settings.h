@@ -49,6 +49,9 @@
 
 #define WOLFSSL_ESP32
 
+/* Legacy library testing */
+
+
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
@@ -97,9 +100,9 @@
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
-#define HAVE_ED25519
+//#define HAVE_ED25519
 
- #define OPENSSL_EXTRA
+#define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 
@@ -157,7 +160,7 @@
 
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x249F00
+#define ESP_RSA_TIMEOUT_CNT    0x349F00
 
 #define HASH_SIZE_LIMIT /* for test.c */
 
@@ -165,16 +168,17 @@
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-/* #undef USE_FAST_MATH          */
-/* #define SP_MATH               */
-/* #define WOLFSSL_SP_MATH_ALL   */
+//#undef USE_FAST_MATH
+// #define SP_MATH
+//#define WOLFSSL_SP_MATH_ALL
+//#define WOLFSSL_SP_RISCV32
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
-/* #define USE_INTEGER_HEAP_MATH */
+// #define USE_INTEGER_HEAP_MATH
 
 
-#define WOLFSSL_SMALL_STACK
+// #define WOLFSSL_SMALL_STACK
 
 
 #define HAVE_VERSION_EXTENDED_INFO
@@ -282,6 +286,10 @@
     /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* wolfSSL HW Acceleration supported on ESP32-C3. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
@@ -299,6 +307,10 @@
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
@@ -330,6 +342,14 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP8684)
+    /*  There's no Hardware Acceleration available on ESP8684 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
 #else
     /* Anything else encountered, disable HW accleration */
     #define NO_ESP32_CRYPT
@@ -354,12 +374,16 @@
 #define ESP_DISABLE_HW_TASK_LOCK
 */
 
-#define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
+/* Pause in a loop rather than exit. */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE
+
 #define WOLFSSL_HW_METRICS
 
-/* #define HASH_SIZE_LIMIT */ /* for test.c */
+/* for test.c */
+/* #define HASH_SIZE_LIMIT */
 
-/* #define NO_HW_MATH_TEST */ /* Optionall turn off HW math checks */
+/* Optionally turn off HW math checks */
+/* #define NO_HW_MATH_TEST */
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -425,3 +449,12 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+/* Some of the possible hardening options:
+ *
+    #define WC_AES_BITSLICE
+    #define HAVE_AES_ECB
+    #define HAVE_AES_DIRECT
+*/
+#define WC_AES_BITSLICE
+#define WC_NO_CACHE_RESISTANT
