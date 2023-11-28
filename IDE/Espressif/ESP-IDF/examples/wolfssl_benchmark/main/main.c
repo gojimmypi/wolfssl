@@ -131,12 +131,13 @@ char* __argv[WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS];
 
 int construct_argv()
 {
+    #define ARG_BUFF_SIZE 16
     int cnt = 0;
     int i = 0;
     int len = 0;
     char *_argv; /* buffer for copying the string    */
     char *ch; /* char pointer to trace the string */
-    char buff[16] = { 0 }; /* buffer for a argument copy       */
+    char buff[ARG_BUFF_SIZE] = { 0 }; /* buffer for a argument copy       */
 
     ESP_LOGI(TAG, "construct_argv arg:%s\n", CONFIG_BENCH_ARGV);
     len = strlen(CONFIG_BENCH_ARGV);
@@ -169,7 +170,7 @@ int construct_argv()
         memset(buff, 0, sizeof(buff));
         /* copy each args into buffer */
         i = 0;
-        while ((*ch != ' ') && (*ch != '\0') && (i < 16)) {
+        while ((*ch != ' ') && (*ch != '\0') && (i <= ARG_BUFF_SIZE)) {
             buff[i] = *ch;
             ++i;
             ++ch;
@@ -247,10 +248,10 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         wolf_benchmark_task();
-        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+//        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
 
         #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
-            esp_hw_show_metrics();
+ //           esp_hw_show_metrics();
         #endif
     } while (BENCHMARK_LOOP);
     /* Reminder: wolfCrypt_Cleanup should always be called at completion,
