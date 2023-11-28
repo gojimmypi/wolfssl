@@ -6,9 +6,13 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_benchmark_IDF_v5_ESP32C6", "wolfssl_benchmark_IDF_v5_ESP32C6.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{BA89C9A8-67E1-40EA-BD3A-B7D09141DC31}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{D12E5015-E980-44BC-B6A0-78E862541A6D}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
