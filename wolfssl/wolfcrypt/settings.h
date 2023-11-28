@@ -396,6 +396,12 @@
     #define WOLFSSL_ESP32
 #endif
 
+#if defined(NO_ESP32WROOM32_CRYPT)
+    #undef NO_ESP32WROOM32_CRYPT
+    #define NO_ESP32_CRYPT
+    #warning "Please use NO_ESP32_CRYPT not NO_ESP32WROOM32_CRYPT"
+#endif
+
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     #ifndef NO_ESP32_CRYPT
         #define WOLFSSL_ESP32_CRYPT
