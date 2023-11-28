@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.0.011 for detect test/benchmark
+# Version 5.6.4.012 for improved manual WOLFSSL_ROOT
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -27,8 +27,17 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CURRENT_SOURCE_DIR ".")
-set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
-set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
+
+# Optionally set your source to wolfSSL in your project CMakeLists.txt like this:
+# set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
+
+# Don't include lwip requirement for benchmark and test apps.
+if( ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_benchmark") OR ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_test") )
+    message(STATUS "Not including lwip for ${CMAKE_PROJECT_NAME}")
+else()
+    # benchmark and test do not need wifi
+    set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+endif()
 
 # find the user name to search for possible "wolfssl-username"
 message(STATUS "USERNAME = $ENV{USERNAME}")
@@ -82,11 +91,12 @@ function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
     else()
         get_filename_component(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}" ABSOLUTE)
         IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
-        if("${FOUND_WOLFSSL}")
-            message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
+        if( "${FOUND_WOLFSSL}" STREQUAL "" )
+            message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found: $ENV{WOLFSSL_ROOT}\n"
+                                "Try setting WOLFSSL_ROOT in your project CMakeFile.txt or correct environment variable.")
+            # Abort CMake after fatal error.
         else()
-            message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found:")
-            message(STATUS "$ENV{WOLFSSL_ROOT}")
+            message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
         endif()
     endif()
 
@@ -167,7 +177,24 @@ else()
     message(STATUS "************************************************************************************************")
 
     # search for wolfSSL
-    FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
+    # TODO allow for cmake prior def
+
+    if(WOLFSSL_ROOT)
+        IS_WOLFSSL_SOURCE("${WOLFSSL_ROOT}" FOUND_WOLFSSL)
+        if(FOUND_WOLFSSL)
+            message(STATUS "Found WOLFSSL_ROOT via CMake specification.")
+        else()
+            # WOLFSSL_ROOT Path specified in CMakeLists.txt is not a valid path
+            message(FATAL_ERROR "WOLFSSL_ROOT CMake Variable defined, but path not found: ${WOLFSSL_ROOT}\n"
+                                "Try correcting WOLFSSL_ROOT in your project CMakeFile.txt or setting environment variable.")
+            # Abort CMake after fatal error.
+        endif()
+    else()
+        message(STATUS "Searching for wolfSL source code...")
+        FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
+    endif()
+
+
     if(WOLFSSL_ROOT)
         message(STATUS "NEW Found wolfssl directory at: ${WOLFSSL_ROOT}")
     else()
@@ -175,17 +202,18 @@ else()
         # Abort. We need wolfssl _somewhere_.
         message(FATAL_ERROR "Could not find wolfssl in ${WOLFSSL_ROOT}.\n"
                             "Try setting WOLFSSL_ROOT environment variable or git clone.")
+        # Abort CMake after fatal error.
     endif()
 
     set(INCLUDE_PATH ${WOLFSSL_ROOT})
 
     set(WOLFSSL_EXTRA_PROJECT_DIR "${WOLFSSL_ROOT}/src/")
 
-    if( ${CMAKE_PROJECT_NAME} STREQUAL "wolfssl_benchmark" )
+    if( "${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_benchmark" )
         set(WOLFSSL_EXTRA_PROJECT_DIR "${WOLFSSL_ROOT}/wolfcrypt/benchmark")
     endif()
 
-    if( ${CMAKE_PROJECT_NAME} STREQUAL "wolfssl_test" )
+    if( "${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_test" )
         set(WOLFSSL_EXTRA_PROJECT_DIR "${WOLFSSL_ROOT}/wolfcrypt/test")
     endif()
 
@@ -230,10 +258,12 @@ else()
         message(STATUS "Remove either the local project component: ${WOLFSSL_PROJECT_DIR} ")
         message(STATUS "or the Espressif shared component installed at: $ENV{IDF_PATH}/components/wolfssl/ ")
         message(STATUS "")
-        message(FATAL_ERROR "Please use wolfSSL in either local project or Espressif components, but not both.")
         message(STATUS "")
         message(STATUS "**************************************************************************************")
         message(STATUS "")
+
+        message(FATAL_ERROR "Please use wolfSSL in either local project or Espressif components, but not both.")
+        # Abort CMake after fatal error.
 
         # Optional: if you change the above FATAL_ERROR to STATUS you can warn at runtime with this macro definition:
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_MULTI_INSTALL_WARNING")
@@ -284,6 +314,7 @@ else()
                         message(FATAL_ERROR "Found stray wolfSSL user_settings.h in "
                                             "${WOLFSSL_ROOT}/include/user_settings.h "
                                             " (please move it to ${WOLFSSL_PROJECT_DIR}/include/user_settings.h )")
+                        # Abort CMake after fatal error.
                     else()
                         # we won't overwrite an existing user settings file, just note that we already have one:
                         if( EXISTS "${WOLFSSL_PROJECT_DIR}/include/user_settings.h" )

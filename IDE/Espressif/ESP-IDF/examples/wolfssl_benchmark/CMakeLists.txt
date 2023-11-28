@@ -68,6 +68,9 @@ else()
     message(STATUS "No conflicting wolfSSL components found.")
 endif()
 
+# Optionally specify a location for wolfSSL component source code
+# set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 set(COMPONENTS
