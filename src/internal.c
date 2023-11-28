@@ -8458,12 +8458,22 @@ void FreeHandshakeResources(WOLFSSL* ssl)
     }
 #endif /* HAVE_PK_CALLBACKS */
 
-#if defined(HAVE_TLS_EXTENSIONS) && !defined(HAVE_SNI) && \
-!defined(NO_TLS) && !defined(HAVE_ALPN) && !defined(WOLFSSL_POST_HANDSHAKE_AUTH) && \
+#if defined(HAVE_TLS_EXTENSIONS) && !defined(HAVE_SNI) && !defined(NO_TLS) && \
+    !defined(HAVE_ALPN) && !defined(WOLFSSL_POST_HANDSHAKE_AUTH) && \
     !defined(WOLFSSL_DTLS_CID)
     /* Some extensions need to be kept for post-handshake querying. */
     TLSX_FreeAll(ssl->extensions, ssl->heap);
     ssl->extensions = NULL;
+#else
+#if !defined(NO_CERTS) && !defined(WOLFSSL_NO_SIGALG)
+    TLSX_Remove(&ssl->extensions, TLSX_SIGNATURE_ALGORITHMS, ssl->heap);
+#endif
+    TLSX_Remove(&ssl->extensions, TLSX_EC_POINT_FORMATS, ssl->heap);
+    TLSX_Remove(&ssl->extensions, TLSX_SUPPORTED_GROUPS, ssl->heap);
+#ifdef WOLFSSL_TLS13
+    TLSX_Remove(&ssl->extensions, TLSX_SUPPORTED_VERSIONS, ssl->heap);
+    TLSX_Remove(&ssl->extensions, TLSX_KEY_SHARE, ssl->heap);
+#endif
 #endif
 
 #ifdef WOLFSSL_STATIC_MEMORY
@@ -32894,6 +32904,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                                     ssl->eccTempKeyPresent =
                                         DYNAMIC_TYPE_CURVE25519;
                                 }
+                                else {
+                                    FreeKey(ssl, DYNAMIC_TYPE_CURVE25519,
+                                    (void**)&ssl->eccTempKey);
+                                }
                             }
                             break;
                         }
@@ -32916,6 +32930,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                                 if (ret == 0 || ret == WC_PENDING_E) {
                                     ssl->eccTempKeyPresent =
                                         DYNAMIC_TYPE_CURVE448;
+                                }
+                                else {
+                                    FreeKey(ssl, DYNAMIC_TYPE_CURVE448,
+                                    (void**)&ssl->eccTempKey);
                                 }
                             }
                             break;
