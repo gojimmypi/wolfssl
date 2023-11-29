@@ -106,6 +106,7 @@
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 
+
 #define HAVE_PKCS7
 
 #if defined(HAVE_PKCS7)
@@ -113,6 +114,7 @@
     #define HAVE_X963_KDF
     #define WOLFSSL_AES_DIRECT
 #endif
+
 
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
@@ -452,9 +454,9 @@
 
 /* Some of the possible hardening options:
  *
-    #define WC_AES_BITSLICE
+    #define WC_AES_BITSLICED
     #define HAVE_AES_ECB
     #define HAVE_AES_DIRECT
 */
-#define WC_AES_BITSLICE
 #define WC_NO_CACHE_RESISTANT
+#define WC_AES_BITSLICED

@@ -436,7 +436,7 @@ int esp_ShowHardwareAcclerationSettings(void)
     esp_ShowMacroStatus("WOLFSSL_SP_RISCV32",  STR_IFNDEF(WOLFSSL_SP_RISCV32));
     esp_ShowMacroStatus("SP_MATH",             STR_IFNDEF(SP_MATH));
     esp_ShowMacroStatus("WOLFSSL_HW_METRICS",  STR_IFNDEF(WOLFSSL_HW_METRICS));
-    esp_ShowMacroStatus("WC_AES_BITSLICE",     STR_IFNDEF(WC_AES_BITSLICE));
+    esp_ShowMacroStatus("WC_AES_BITSLICED",    STR_IFNDEF(WC_AES_BITSLICED));
     esp_ShowMacroStatus("HAVE_AES_ECB",        STR_IFNDEF(HAVE_AES_ECB));
     esp_ShowMacroStatus("HAVE_AES_DIRECT",     STR_IFNDEF(HAVE_AES_DIRECT));
 
