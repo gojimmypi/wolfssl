@@ -459,4 +459,5 @@
     #define HAVE_AES_DIRECT
 */
 #define WC_NO_CACHE_RESISTANT
-#define WC_AES_BITSLICED
+//#define WC_AES_BITSLICED
+//#define HAVE_AES_ECB

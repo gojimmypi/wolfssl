@@ -875,6 +875,10 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 
 
+#if defined(WC_AES_BITSLICED) && !defined(HAVE_AES_ECB)
+    #error "When WC_AES_BITSLICED is defined, HAVE_AES_ECB is needed."
+#endif
+
 #ifdef NEED_AES_TABLES
 
 #ifndef WC_AES_BITSLICED
