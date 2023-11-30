@@ -10490,6 +10490,14 @@ EVP_TEST_END:
         }
     #endif
 
+        ret = wc_AesInit(enc, HEAP_HINT, INVALID_DEVID);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+
+        ret = wc_AesInit(dec, HEAP_HINT, INVALID_DEVID);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+
         ret = wc_AesSetKey(enc, key2, sizeof(key2), iv2, AES_ENCRYPTION);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
@@ -15949,6 +15957,10 @@ static wc_test_ret_t aesccm_128_test(void)
     XMEMSET(c2, 0, sizeof(c2));
     XMEMSET(p2, 0, sizeof(p2));
     XMEMSET(iv2, 0, sizeof(iv2));
+
+    ret = wc_AesInit(enc, HEAP_HINT, devId);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
 
 #ifndef HAVE_SELFTEST
     /* selftest build does not have wc_AesCcmSetNonce() or
@@ -23069,6 +23081,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
     if (answer != 1)
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
 
+    wc_FreeDsaKey(key);
+    key_inited = 0;
+
+    ret = wc_InitDsaKey_h(key, NULL);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+    key_inited = 1;
+
 #ifdef WOLFSSL_KEY_GEN
     {
     int    derSz = 0;
@@ -23112,16 +23132,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
 #endif /* WOLFSSL_KEY_GEN */
 
   out:
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (key) {
-#endif
-        ret = wc_InitDsaKey_h(key, NULL);
-        if (ret != 0)
-            ret = WC_TEST_RET_ENC_EC(ret);
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    }
-#endif
 
 #ifdef WOLFSSL_KEY_GEN
     if (der)

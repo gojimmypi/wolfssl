@@ -3888,6 +3888,8 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
  * and we need both HW and SW. */
 #ifdef NEED_SOFTWARE_AES_SETKEY
 
+#ifdef NEED_AES_TABLES
+
 #ifndef WC_AES_BITSLICED
 /* Set the AES key and expand.
  *
@@ -4127,6 +4129,8 @@ static void AesSetKey_C(Aes* aes, const byte* key, word32 keySz, int dir)
     bs_set_key(aes->bs_key, key, keySz, aes->rounds);
 }
 #endif /* WC_AES_BITSLICED */
+
+#endif /* NEED_AES_TABLES */
 
     /* Software AES - SetKey */
     static WARN_UNUSED_RESULT int wc_AesSetKeyLocal(
