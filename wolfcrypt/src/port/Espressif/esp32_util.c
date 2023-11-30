@@ -382,7 +382,7 @@ int esp_current_boot_count(void)
 }
 
 /* See macro helpers above; not_defined is macro name when *not* defined */
-static int esp_ShowMacroStatus(char* s, char* not_defined)
+static int show_macro(char* s, char* not_defined)
 {
     char hd1[] = "Macro Name                 Defined   Not Defined";
     char hd2[] = "------------------------- --------- -------------";
@@ -403,9 +403,11 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
     /* Depending on if defined, put an "x" in the appropriate column */
     if (not_defined == NULL || not_defined[0] == '\0') {
         msg[ESP_SMS_ENA_POS] = 'X';
+        msg[ESP_SMS_ENA_POS+1] = 0; /* end of line to eliminate space pad */
     }
     else {
         msg[ESP_SMS_DIS_POS] = 'X';
+        msg[ESP_SMS_DIS_POS+1] = 0; /* end of line to eliminate space pad */
     }
 
     /* do we need a header? */
@@ -421,32 +423,47 @@ static int esp_ShowMacroStatus(char* s, char* not_defined)
 }
 
 /* Show some interesting settings */
-int esp_ShowHardwareAcclerationSettings(void)
+int ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
-    esp_ShowMacroStatus("HW_MATH_ENABLED",     STR_IFNDEF(HW_MATH_ENABLED));
-    esp_ShowMacroStatus("RSA_LOW_MEM",         STR_IFNDEF(RSA_LOW_MEM));
-    esp_ShowMacroStatus("WOLFSSL_SHA224",      STR_IFNDEF(WOLFSSL_SHA224));
-    esp_ShowMacroStatus("WOLFSSL_SHA384",      STR_IFNDEF(WOLFSSL_SHA384));
-    esp_ShowMacroStatus("WOLFSSL_SHA512",      STR_IFNDEF(WOLFSSL_SHA512));
-    esp_ShowMacroStatus("WOLFSSL_SHA3",        STR_IFNDEF(WOLFSSL_SHA3));
-    esp_ShowMacroStatus("HAVE_ED25519",        STR_IFNDEF(HAVE_ED25519));
-    esp_ShowMacroStatus("USE_FAST_MATH",       STR_IFNDEF(USE_FAST_MATH));
-    esp_ShowMacroStatus("WOLFSSL_SP_MATH_ALL", STR_IFNDEF(WOLFSSL_SP_MATH_ALL));
-    esp_ShowMacroStatus("WOLFSSL_SP_RISCV32",  STR_IFNDEF(WOLFSSL_SP_RISCV32));
-    esp_ShowMacroStatus("SP_MATH",             STR_IFNDEF(SP_MATH));
-    esp_ShowMacroStatus("WOLFSSL_HW_METRICS",  STR_IFNDEF(WOLFSSL_HW_METRICS));
-    esp_ShowMacroStatus("WC_AES_BITSLICED",    STR_IFNDEF(WC_AES_BITSLICED));
-    esp_ShowMacroStatus("HAVE_AES_ECB",        STR_IFNDEF(HAVE_AES_ECB));
-    esp_ShowMacroStatus("HAVE_AES_DIRECT",     STR_IFNDEF(HAVE_AES_DIRECT));
 
-#ifdef WOLFSSL_SP_MATH_ALL
-        #ifdef WOLFSSL_SP_RISCV32
-            ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL + WOLFSSL_SP_RISCV32");
-        #else
-            ESP_LOGI(TAG, "WOLFSSL_SP_MATH_ALL");
-        #endif
-    #endif /* WOLFSSL_SP_MATH_ALL */
+    show_macro("HW_MATH_ENABLED",            STR_IFNDEF(HW_MATH_ENABLED));
+
+    /* Features */
+    show_macro("WOLFSSL_SHA224",             STR_IFNDEF(WOLFSSL_SHA224));
+    show_macro("WOLFSSL_SHA384",             STR_IFNDEF(WOLFSSL_SHA384));
+    show_macro("WOLFSSL_SHA512",             STR_IFNDEF(WOLFSSL_SHA512));
+    show_macro("WOLFSSL_SHA3",               STR_IFNDEF(WOLFSSL_SHA3));
+    show_macro("HAVE_ED25519",               STR_IFNDEF(HAVE_ED25519));
+    show_macro("HAVE_AES_ECB",               STR_IFNDEF(HAVE_AES_ECB));
+    show_macro("HAVE_AES_DIRECT",            STR_IFNDEF(HAVE_AES_DIRECT));
+
+    /* Math Library Selection */
+    show_macro("USE_FAST_MATH",              STR_IFNDEF(USE_FAST_MATH));
+    show_macro("WOLFSSL_SP_MATH_ALL",        STR_IFNDEF(WOLFSSL_SP_MATH_ALL));
+#ifdef WOLFSSL_SP_RISCV32
+    show_macro("WOLFSSL_SP_RISCV32",         STR_IFNDEF(WOLFSSL_SP_RISCV32));
+#endif
+    show_macro("SP_MATH",                    STR_IFNDEF(SP_MATH));
+
+    /* Diagnostics */
+    show_macro("WOLFSSL_HW_METRICS",         STR_IFNDEF(WOLFSSL_HW_METRICS));
+
+    /* Optimizations */
+    show_macro("RSA_LOW_MEM",                STR_IFNDEF(RSA_LOW_MEM));
+
+    /* Security Hardening */
+    show_macro("WC_AES_BITSLICED",           STR_IFNDEF(WC_AES_BITSLICED));
+    show_macro("TFM_TIMING_RESISTANT",       STR_IFNDEF(TFM_TIMING_RESISTANT));
+    show_macro("ECC_TIMING_RESISTANT",       STR_IFNDEF(ECC_TIMING_RESISTANT));
+    show_macro("WC_RSA_BLINDING",            STR_IFNDEF(WC_RSA_BLINDING));
+    show_macro("NO_WRITEV",                  STR_IFNDEF(NO_WRITEV));
+
+    /* Environment */
+    show_macro("FREERTOS",                   STR_IFNDEF(FREERTOS));
+    show_macro("NO_WOLFSSL_DIR",             STR_IFNDEF(NO_WOLFSSL_DIR));
+    show_macro("WOLFSSL_NO_CURRDIR",         STR_IFNDEF(WOLFSSL_NO_CURRDIR));
+    show_macro("WOLFSSL_LWIP",               STR_IFNDEF(WOLFSSL_LWIP));
 
     ESP_LOGI(TAG, "");
     return ESP_OK;
@@ -578,7 +595,7 @@ int ShowExtendedSystemInfo(void)
 #endif
     ESP_LOGI(TAG, "");
 
-    esp_ShowHardwareAcclerationSettings();
+    ShowExtendedSystemInfo_config();
     ShowExtendedSystemInfo_git();
     ShowExtendedSystemInfo_platform();
     ShowExtendedSystemInfo_thread();
