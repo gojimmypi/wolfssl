@@ -427,43 +427,54 @@ int ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
 
-    show_macro("HW_MATH_ENABLED",            STR_IFNDEF(HW_MATH_ENABLED));
+    show_macro("HW_MATH_ENABLED",           STR_IFNDEF(HW_MATH_ENABLED));
 
     /* Features */
-    show_macro("WOLFSSL_SHA224",             STR_IFNDEF(WOLFSSL_SHA224));
-    show_macro("WOLFSSL_SHA384",             STR_IFNDEF(WOLFSSL_SHA384));
-    show_macro("WOLFSSL_SHA512",             STR_IFNDEF(WOLFSSL_SHA512));
-    show_macro("WOLFSSL_SHA3",               STR_IFNDEF(WOLFSSL_SHA3));
-    show_macro("HAVE_ED25519",               STR_IFNDEF(HAVE_ED25519));
-    show_macro("HAVE_AES_ECB",               STR_IFNDEF(HAVE_AES_ECB));
-    show_macro("HAVE_AES_DIRECT",            STR_IFNDEF(HAVE_AES_DIRECT));
+    show_macro("WOLFSSL_SHA224",            STR_IFNDEF(WOLFSSL_SHA224));
+    show_macro("WOLFSSL_SHA384",            STR_IFNDEF(WOLFSSL_SHA384));
+    show_macro("WOLFSSL_SHA512",            STR_IFNDEF(WOLFSSL_SHA512));
+    show_macro("WOLFSSL_SHA3",              STR_IFNDEF(WOLFSSL_SHA3));
+    show_macro("HAVE_ED25519",              STR_IFNDEF(HAVE_ED25519));
+    show_macro("HAVE_AES_ECB",              STR_IFNDEF(HAVE_AES_ECB));
+    show_macro("HAVE_AES_DIRECT",           STR_IFNDEF(HAVE_AES_DIRECT));
 
     /* Math Library Selection */
-    show_macro("USE_FAST_MATH",              STR_IFNDEF(USE_FAST_MATH));
-    show_macro("WOLFSSL_SP_MATH_ALL",        STR_IFNDEF(WOLFSSL_SP_MATH_ALL));
+    show_macro("USE_FAST_MATH",             STR_IFNDEF(USE_FAST_MATH));
+    show_macro("WOLFSSL_SP_MATH_ALL",       STR_IFNDEF(WOLFSSL_SP_MATH_ALL));
 #ifdef WOLFSSL_SP_RISCV32
-    show_macro("WOLFSSL_SP_RISCV32",         STR_IFNDEF(WOLFSSL_SP_RISCV32));
+    show_macro("WOLFSSL_SP_RISCV32",        STR_IFNDEF(WOLFSSL_SP_RISCV32));
 #endif
-    show_macro("SP_MATH",                    STR_IFNDEF(SP_MATH));
+    show_macro("SP_MATH",                   STR_IFNDEF(SP_MATH));
 
     /* Diagnostics */
-    show_macro("WOLFSSL_HW_METRICS",         STR_IFNDEF(WOLFSSL_HW_METRICS));
+    show_macro("WOLFSSL_HW_METRICS",        STR_IFNDEF(WOLFSSL_HW_METRICS));
 
     /* Optimizations */
-    show_macro("RSA_LOW_MEM",                STR_IFNDEF(RSA_LOW_MEM));
+    show_macro("RSA_LOW_MEM",               STR_IFNDEF(RSA_LOW_MEM));
 
     /* Security Hardening */
-    show_macro("WC_AES_BITSLICED",           STR_IFNDEF(WC_AES_BITSLICED));
-    show_macro("TFM_TIMING_RESISTANT",       STR_IFNDEF(TFM_TIMING_RESISTANT));
-    show_macro("ECC_TIMING_RESISTANT",       STR_IFNDEF(ECC_TIMING_RESISTANT));
-    show_macro("WC_RSA_BLINDING",            STR_IFNDEF(WC_RSA_BLINDING));
-    show_macro("NO_WRITEV",                  STR_IFNDEF(NO_WRITEV));
+
+    /* WC_NO_CACHE_RESISTANT is only important if another process can be
+     * run on the device. With embedded it is less likely to be exploitable.
+     * Timing attacks are usually by probe. So typically turn this on: */
+    show_macro("WC_NO_CACHE_RESISTANT",     STR_IFNDEF(WC_NO_CACHE_RESISTANT));
+
+    /* Side channel bit slicing */
+    show_macro("WC_AES_BITSLICED",          STR_IFNDEF(WC_AES_BITSLICED));
+
+    /* Unrolling will normally improve performance,
+     * so make sure WOLFSSL_AES_NO_UNROLL isn't defined unless you want it */
+    show_macro("WOLFSSL_AES_NO_UNROLL",     STR_IFNDEF(WOLFSSL_AES_NO_UNROLL));
+    show_macro("TFM_TIMING_RESISTANT",      STR_IFNDEF(TFM_TIMING_RESISTANT));
+    show_macro("ECC_TIMING_RESISTANT",      STR_IFNDEF(ECC_TIMING_RESISTANT));
+    show_macro("WC_RSA_BLINDING",           STR_IFNDEF(WC_RSA_BLINDING));
+    show_macro("NO_WRITEV",                 STR_IFNDEF(NO_WRITEV));
 
     /* Environment */
-    show_macro("FREERTOS",                   STR_IFNDEF(FREERTOS));
-    show_macro("NO_WOLFSSL_DIR",             STR_IFNDEF(NO_WOLFSSL_DIR));
-    show_macro("WOLFSSL_NO_CURRDIR",         STR_IFNDEF(WOLFSSL_NO_CURRDIR));
-    show_macro("WOLFSSL_LWIP",               STR_IFNDEF(WOLFSSL_LWIP));
+    show_macro("FREERTOS",                  STR_IFNDEF(FREERTOS));
+    show_macro("NO_WOLFSSL_DIR",            STR_IFNDEF(NO_WOLFSSL_DIR));
+    show_macro("WOLFSSL_NO_CURRDIR",        STR_IFNDEF(WOLFSSL_NO_CURRDIR));
+    show_macro("WOLFSSL_LWIP",              STR_IFNDEF(WOLFSSL_LWIP));
 
     ESP_LOGI(TAG, "");
     return ESP_OK;
