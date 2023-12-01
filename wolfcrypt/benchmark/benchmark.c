@@ -1339,7 +1339,7 @@ static const char* bench_result_words3[][5] = {
         thisVal = esp_cpu_get_cycle_count();
 
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-        thisVal = 0;
+        thisVal = esp_cpu_get_cycle_count();
     #else
         /* reminder unsupported CONFIG_IDF_TARGET captured above */
         thisVal = esp_cpu_get_cycle_count(); /* xthal_get_ccount(); */
@@ -1404,7 +1404,7 @@ static const char* bench_result_words3[][5] = {
             ESP_LOGV(TAG, "_xthal_get_ccount_last   = %llu", _esp_cpu_count_last);
         }
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-        _xthal_get_ccount_last = 0;
+        _esp_cpu_count_last = esp_cpu_get_cycle_count();
     #else
          _esp_cpu_count_last = xthal_get_ccount();
     #endif
