@@ -477,6 +477,19 @@ int ShowExtendedSystemInfo_config(void)
     show_macro("WOLFSSL_LWIP",              STR_IFNDEF(WOLFSSL_LWIP));
 
     ESP_LOGI(TAG, "");
+#ifdef defined(CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
+    ESP_LOGI(TAG, "Compiler Optimiztion: Default");
+#elif defined(CONFIG_COMPILER_OPTIMIZATION_SIZE)
+    ESP_LOGI(TAG, "Compiler Optimiztion: Size");
+#elif defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
+    ESP_LOGI(TAG, "Compiler Optimiztion: Performance");
+#elif defined(CONFIG_COMPILER_OPTIMIZATION_NONE)
+    ESP_LOGI(TAG, "Compiler Optimiztion: None");
+else
+    ESP_LOGI(TAG, "Compiler Optimiztion: Unknown");
+#endif
+    ESP_LOGI(TAG, "");
+
     return ESP_OK;
 }
 /*
