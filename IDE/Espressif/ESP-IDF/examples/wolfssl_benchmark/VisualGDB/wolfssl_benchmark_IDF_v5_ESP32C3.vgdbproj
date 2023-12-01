@@ -28,20 +28,12 @@
     <BinaryDirectory>build/$(PlatformName)/$(ConfigurationName)</BinaryDirectory>
     <MakeCommandTemplate>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
-      <RemoteHost>
-        <HostName>BuildMachine</HostName>
-        <Transport>BuiltinShortcut</Transport>
-      </RemoteHost>
       <Command>$(ToolchainNinja)</Command>
       <WorkingDirectory>$(BuildDir)</WorkingDirectory>
       <BackgroundMode xsi:nil="true" />
     </MakeCommandTemplate>
     <CMakeCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
-      <RemoteHost>
-        <HostName>BuildMachine</HostName>
-        <Transport>BuiltinShortcut</Transport>
-      </RemoteHost>
       <Command>$(SYSPROGS_CMAKE_PATH)</Command>
       <BackgroundMode xsi:nil="true" />
     </CMakeCommand>
@@ -98,14 +90,6 @@
     <PostDebugActions />
     <DebugStopActions />
     <BreakMode>Default</BreakMode>
-    <CustomBreakCommand>
-      <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
-      <RemoteHost>
-        <HostName>BuildMachine</HostName>
-        <Transport>BuiltinShortcut</Transport>
-      </RemoteHost>
-      <BackgroundMode xsi:nil="true" />
-    </CustomBreakCommand>
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
@@ -175,65 +159,15 @@
   <UserDefinedVariables />
   <ImportedPropertySheets />
   <CodeSense>
-    <Enabled>True</Enabled>
+    <Enabled>Unknown</Enabled>
     <ExtraSettings>
       <HideErrorsInSystemHeaders>true</HideErrorsInSystemHeaders>
       <SupportLightweightReferenceAnalysis>true</SupportLightweightReferenceAnalysis>
-      <DiscoverySettings>
-        <Mode>Enabled</Mode>
-        <SearchInProjectDir>true</SearchInProjectDir>
-        <SearchInSourceDirs>true</SearchInSourceDirs>
-        <SearchInIncludeSubdirs>true</SearchInIncludeSubdirs>
-      </DiscoverySettings>
       <CheckForClangFormatFiles>true</CheckForClangFormatFiles>
       <FormattingEngine xsi:nil="true" />
     </ExtraSettings>
     <CodeAnalyzerSettings>
       <Enabled>false</Enabled>
-      <SelectedAnalyzers>
-        <string>apiModeling.google.GTest</string>
-        <string>core.builtin.BuiltinFunctions</string>
-        <string>core.builtin.NoReturnFunctions</string>
-        <string>core.CallAndMessage</string>
-        <string>core.DivideZero</string>
-        <string>core.DynamicTypePropagation</string>
-        <string>core.NonnilStringConstants</string>
-        <string>core.NonNullParamChecker</string>
-        <string>core.NullDereference</string>
-        <string>core.StackAddressEscape</string>
-        <string>core.UndefinedBinaryOperatorResult</string>
-        <string>core.uninitialized.ArraySubscript</string>
-        <string>core.uninitialized.Assign</string>
-        <string>core.uninitialized.Branch</string>
-        <string>core.uninitialized.CapturedBlockVariable</string>
-        <string>core.uninitialized.UndefReturn</string>
-        <string>core.VLASize</string>
-        <string>cplusplus.NewDelete</string>
-        <string>cplusplus.NewDeleteLeaks</string>
-        <string>cplusplus.SelfAssignment</string>
-        <string>deadcode.DeadStores</string>
-        <string>nullability.NullPassedToNonnull</string>
-        <string>nullability.NullReturnedFromNonnull</string>
-        <string>security.insecureAPI.getpw</string>
-        <string>security.insecureAPI.gets</string>
-        <string>security.insecureAPI.mkstemp</string>
-        <string>security.insecureAPI.mktemp</string>
-        <string>security.insecureAPI.UncheckedReturn</string>
-        <string>security.insecureAPI.vfork</string>
-        <string>unix.API</string>
-        <string>unix.cstring.BadSizeArg</string>
-        <string>unix.cstring.NullArg</string>
-        <string>unix.Malloc</string>
-        <string>unix.MallocSizeof</string>
-        <string>unix.MismatchedDeallocator</string>
-        <string>unix.StdCLibraryFunctions</string>
-        <string>unix.Vfork</string>
-      </SelectedAnalyzers>
-      <ExtraArguments>
-        <string>-analyzer-store=region</string>
-        <string>-analyzer-opt-analyze-nested-blocks</string>
-        <string>-analyzer-eagerly-assume</string>
-      </ExtraArguments>
     </CodeAnalyzerSettings>
   </CodeSense>
   <Configurations>
@@ -248,22 +182,18 @@
   </Configurations>
   <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
-    <AdditionalStartupCommands>
-      <GDBPreStartupCommands />
-      <GDBStartupCommands />
-      <GDBFinalizationCommands />
-    </AdditionalStartupCommands>
+    <AdditionalStartupCommands />
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>
-        <UseFrameParameter>true</UseFrameParameter>
-        <SimpleValuesFlagSupported>true</SimpleValuesFlagSupported>
-        <ListLocalsSupported>true</ListLocalsSupported>
-        <ByteLevelMemoryCommandsAvailable>true</ByteLevelMemoryCommandsAvailable>
-        <ThreadInfoSupported>true</ThreadInfoSupported>
-        <PendingBreakpointsSupported>true</PendingBreakpointsSupported>
-        <SupportTargetCommand>true</SupportTargetCommand>
-        <ReliableBreakpointNotifications>true</ReliableBreakpointNotifications>
+        <UseFrameParameter>false</UseFrameParameter>
+        <SimpleValuesFlagSupported>false</SimpleValuesFlagSupported>
+        <ListLocalsSupported>false</ListLocalsSupported>
+        <ByteLevelMemoryCommandsAvailable>false</ByteLevelMemoryCommandsAvailable>
+        <ThreadInfoSupported>false</ThreadInfoSupported>
+        <PendingBreakpointsSupported>false</PendingBreakpointsSupported>
+        <SupportTargetCommand>false</SupportTargetCommand>
+        <ReliableBreakpointNotifications>false</ReliableBreakpointNotifications>
       </Features>
       <EnableSmartStepping>false</EnableSmartStepping>
       <FilterSpuriousStoppedNotifications>false</FilterSpuriousStoppedNotifications>
@@ -273,7 +203,7 @@
       <MakeLogFile>false</MakeLogFile>
       <IgnoreModuleEventsWhileStepping>true</IgnoreModuleEventsWhileStepping>
       <UseRelativePathsOnly>false</UseRelativePathsOnly>
-      <ExitAction>Disconnect</ExitAction>
+      <ExitAction>None</ExitAction>
       <DisableDisassembly>false</DisableDisassembly>
       <ExamineMemoryWithXCommand>false</ExamineMemoryWithXCommand>
       <StepIntoNewInstanceEntry>app_main</StepIntoNewInstanceEntry>
@@ -290,7 +220,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 20000" -f target/esp32c3.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 3000" -f target/esp32c3.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
@@ -322,7 +252,7 @@
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
-    <SemihostingSupport>Disabled</SemihostingSupport>
+    <SemihostingSupport>Auto</SemihostingSupport>
     <SemihostingPollingDelay>0</SemihostingPollingDelay>
     <StepIntoEntryPoint>false</StepIntoEntryPoint>
     <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>
