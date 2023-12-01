@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\..\..\..\..\README = ..\..\..\..\..\..\README
 		..\..\..\README.md = ..\..\..\README.md
 		..\README.md = ..\README.md
+		..\sdkconfig = ..\sdkconfig
 		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
@@ -38,6 +39,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif Port", "Espressif
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{3BA29EA8-68C5-4144-B471-33BA380C323E}"
+	ProjectSection(SolutionItems) = preProject
+		..\sdkconfig = ..\sdkconfig
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
