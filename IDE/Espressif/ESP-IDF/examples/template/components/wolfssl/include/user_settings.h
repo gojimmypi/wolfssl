@@ -92,14 +92,15 @@
 /* when you want to use SHA3 */
 #define WOLFSSL_SHA3
 
-#define HAVE_ED25519 /* ED25519 requires SHA512 */
+/* Reminder: ED25519 requires SHA512 */
+#define HAVE_ED25519
 
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 #define HAVE_ED25519
 
-/* Optional OPENSSL compatibility *
+/* Optional OPENSSL compatibility */
 #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
