@@ -95,7 +95,8 @@
 /* when you want to use SHA3 */
 #define WOLFSSL_SHA3
 
-#define HAVE_ED25519 /* ED25519 requires SHA512 */
+ /* ED25519 requires SHA512 */
+#define HAVE_ED25519
 
 #define HAVE_ECC
 #define HAVE_CURVE25519
@@ -180,7 +181,7 @@
 // #define USE_INTEGER_HEAP_MATH
 
 
-// #define WOLFSSL_SMALL_STACK
+#define WOLFSSL_SMALL_STACK
 
 
 #define HAVE_VERSION_EXTENDED_INFO
@@ -458,6 +459,9 @@
     #define HAVE_AES_ECB
     #define HAVE_AES_DIRECT
 */
+
+/* TODO consider moving this to settings.h as default */
 #define WC_NO_CACHE_RESISTANT
 //#define WC_AES_BITSLICED
 //#define HAVE_AES_ECB
+
