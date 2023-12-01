@@ -12070,7 +12070,11 @@ void bench_sphincsKeySign(byte level, byte optim)
     #endif
 
         (void) reset;
-
+        if (reset) {
+            esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+            _esp_cpu_count_last = 0;
+            ESP_LOGV(TAG, "current_time reset!");
+        }
         /* tick count == ms, if configTICK_RATE_HZ is set to 1000 */
 
         tickCount = xTaskGetTickCount();
