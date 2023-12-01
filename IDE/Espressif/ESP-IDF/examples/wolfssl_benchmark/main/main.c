@@ -24,12 +24,15 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/settings.h>
-#include <user_settings.h>
+#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+/* Do not explicitly include wolfSSL user_settings.h */
 #include <wolfssl/version.h>
 #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
 #ifndef WOLFSSL_ESPIDF
-    #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
+    #error "Problem with wolfSSL user_settings. "           \
+           "Check components/wolfssl/include "              \
+           "and confirm WOLFSSL_USER_SETTINGS is defined, " \
+           "typically in the component CMakeLists.txt"
 #endif
 
 #include <wolfssl/wolfcrypt/types.h>

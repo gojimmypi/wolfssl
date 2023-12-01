@@ -22,10 +22,17 @@
 
 #define __ESP32_CRYPT_H__
 
+/* WOLFSSL_USER_SETTINGS must be defined, typically in the CMakeLists.txt:
+ *
+ * set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS") */
 #include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
-#include "user_settings.h"
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+
+#ifndef WOLFSSL_USER_SETTINGS
+    #error  "WOLFSSL_USER_SETTINGS must be defined for Espressif targts"
+#endif
+
 #include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
 
 /* wolfSSL  */
