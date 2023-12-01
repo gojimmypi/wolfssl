@@ -12070,14 +12070,16 @@ void bench_sphincsKeySign(byte level, byte optim)
     #endif
 
         (void) reset;
-        if (reset) {
-            esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
-            _esp_cpu_count_last = 0;
-            ESP_LOGV(TAG, "current_time reset!");
-        }
         /* tick count == ms, if configTICK_RATE_HZ is set to 1000 */
 
         tickCount = xTaskGetTickCount();
+
+        if (reset) {
+            esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+            _esp_cpu_count_last = esp_cpu_get_cycle_count();;
+            ESP_LOGV(TAG, "current_time reset!");
+        }
+
         #if defined(configTICK_RATE_HZ) && defined(CONFIG_FREERTOS_HZ)
             return (double)tickCount / configTICK_RATE_HZ;
         #else
@@ -12085,6 +12087,7 @@ void bench_sphincsKeySign(byte level, byte optim)
                           "assuming 1000 Hz.");
             return (double)tickCount / 1000;
         #endif /* configTICK_RATE_HZ */
+
 
     }
 
