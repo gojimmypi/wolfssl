@@ -1323,10 +1323,10 @@ static const char* bench_result_words3[][5] = {
     uint64_t esp_get_cycle_count_ex()
     {
         /* reminder: unsigned long long max = 18,446,744,073,709,551,615 */
+        uint64_t thisVal = 0; /* CPU counter, "this current value" as read. */
 
         /* the currently observed clock counter value */
     #if  defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-        uint64_t thisVal = 0; /* CPU counter, "this current value" as read. */
 
         #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
             uint64_t thisTimerVal = 0; /* Timer Value as alternate to compare */
@@ -1342,7 +1342,7 @@ static const char* bench_result_words3[][5] = {
         thisVal = 0;
     #else
         /* reminder unsupported CONFIG_IDF_TARGET captured above */
-        thisVal = esp_cpu_get_cycle_count; /* xthal_get_ccount(); */
+        thisVal = esp_cpu_get_cycle_count(); /* xthal_get_ccount(); */
     #endif
         /* if the current value is less than the previous value,
         ** we likely overflowed at least once.
@@ -1406,7 +1406,7 @@ static const char* bench_result_words3[][5] = {
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         _xthal_get_ccount_last = 0;
     #else
-         _xthal_get_ccount_last = xthal_get_ccount();
+         _esp_cpu_count_last = xthal_get_ccount();
     #endif
         return _esp_get_cycle_count_ex; /* returns the */
     }
