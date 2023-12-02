@@ -12804,7 +12804,7 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
             }
             ESP_ERROR_CHECK(gptimer_enable(esp_gptimer));
             ESP_ERROR_CHECK(gptimer_start(esp_gptimer));
-            ESP_LOGI(TAG, "Enable %s timer ", CONFIG_IDF_TARGET);
+            ESP_LOGI(TAG, "Enable %s timer", CONFIG_IDF_TARGET);
         #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
         }
     #endif

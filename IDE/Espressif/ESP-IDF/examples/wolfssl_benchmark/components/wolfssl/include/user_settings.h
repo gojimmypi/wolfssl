@@ -165,7 +165,8 @@
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x349F00
 
-#define HASH_SIZE_LIMIT /* for test.c */
+/* hash limit for test.c */
+#define HASH_SIZE_LIMIT
 
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
@@ -264,6 +265,10 @@
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
       defined(CONFIG_IDF_TARGET_ESP8684)
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
      * single QFN 4x4 mm package. Out of released documentation, Technical
      * Reference Manual as well as ESP-IDF Programming Guide is applicable
@@ -275,9 +280,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
-    /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+    /* These are defined automatically in esp32-crypt.h, here for clarity.
+     * No SHA384 and no SHA512 hardware is available on the ESP32-C2     */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Automatically defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
