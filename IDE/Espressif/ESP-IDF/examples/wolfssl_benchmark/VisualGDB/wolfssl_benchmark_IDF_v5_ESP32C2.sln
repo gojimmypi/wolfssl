@@ -15,6 +15,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{CF25
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{BD20BB1E-1CEA-4743-B1B8-8E361784AC5E}"
+	ProjectSection(SolutionItems) = preProject
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_HW.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_HW.txt
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_HW_compiler_performance_optimized.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_HW_compiler_performance_optimized.txt
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_NO_HW.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C2_NO_HW.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

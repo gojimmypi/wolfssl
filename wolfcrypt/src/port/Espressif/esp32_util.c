@@ -200,13 +200,13 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
 #elif CONFIG_IDF_TARGET_ESP32C6
-    /* TODO Xthal not supported at this time */
+
 #elif CONFIG_IDF_TARGET_ESP32C2
 
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
-    /* TODO Xthal not supported at this time */
+
 #elif CONFIG_IDF_TARGET_ESP32C3
-    /* TODO Xthal not supported at this time */
+
 #elif CONFIG_IDF_TARGET_ESP32S3
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
@@ -233,7 +233,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-S3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
           defined(CONFIG_IDF_TARGET_ESP8684)
-        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C2.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C3)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -241,7 +241,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-H2.");
     #else
-        /* this should have been detected & disabled in user_settins.h */
+        /* This should have been detected & disabled in user_settins.h */
         #error "ESP32_CRYPT not yet supported on this IDF TARGET"
     #endif
 
@@ -252,12 +252,12 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     #endif
 
     #if defined(NO_WOLFSSL_ESP32_CRYPT_AES)
-        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_AES is defined!"
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_AES is defined! "
                                "(disabled HW AES).");
     #endif
 
     #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
-        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_RSA_PRI defined!"
+        WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_RSA_PRI defined! "
                                "(disabled HW RSA)");
     #endif
 #endif
@@ -478,15 +478,15 @@ int ShowExtendedSystemInfo_config(void)
 
     ESP_LOGI(TAG, "");
 #if defined(CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
-    ESP_LOGI(TAG, "Compiler Optimiztion: Default");
+    ESP_LOGI(TAG, "Compiler Optimization: Default");
 #elif defined(CONFIG_COMPILER_OPTIMIZATION_SIZE)
-    ESP_LOGI(TAG, "Compiler Optimiztion: Size");
+    ESP_LOGI(TAG, "Compiler Optimization: Size");
 #elif defined(CONFIG_COMPILER_OPTIMIZATION_PERF)
-    ESP_LOGI(TAG, "Compiler Optimiztion: Performance");
+    ESP_LOGI(TAG, "Compiler Optimization: Performance");
 #elif defined(CONFIG_COMPILER_OPTIMIZATION_NONE)
-    ESP_LOGI(TAG, "Compiler Optimiztion: None");
+    ESP_LOGI(TAG, "Compiler Optimization: None");
 #else
-    ESP_LOGI(TAG, "Compiler Optimiztion: Unknown");
+    ESP_LOGI(TAG, "Compiler Optimization: Unknown");
 #endif
     ESP_LOGI(TAG, "");
 
