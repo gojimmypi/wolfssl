@@ -80,6 +80,12 @@ enum {
 **
 ** Primary Settings:
 **
+** WC_NO_HARDEN
+**   Disables some timing resistance / side-channel attack prevention.
+**
+** NO_ESPIDF_DEFAULT
+**   When defined, disables some default definitions. See wolfcrypt/settings.h
+**
 ** NO_ESP32_CRYPT
 **   When defined, disables all hardware acceleration on the ESP32
 **

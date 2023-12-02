@@ -49,9 +49,6 @@
 
 #define WOLFSSL_ESP32
 
-/* Legacy library testing */
-
-
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
@@ -101,12 +98,11 @@
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
-//#define HAVE_ED25519
+#define HAVE_ED25519
 
 #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
-
 
 #define HAVE_PKCS7
 
@@ -115,7 +111,6 @@
     #define HAVE_X963_KDF
     #define WOLFSSL_AES_DIRECT
 #endif
-
 
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
@@ -172,14 +167,14 @@
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-//#undef USE_FAST_MATH
-// #define SP_MATH
-//#define WOLFSSL_SP_MATH_ALL
-//#define WOLFSSL_SP_RISCV32
+/* #undef USE_FAST_MATH          */
+/* #define SP_MATH               */
+/* #define WOLFSSL_SP_MATH_ALL   */
+/* #define WOLFSSL_SP_RISCV32    */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
-// #define USE_INTEGER_HEAP_MATH
+/* #define USE_INTEGER_HEAP_MATH */
 
 
 #define WOLFSSL_SMALL_STACK
@@ -265,10 +260,6 @@
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
       defined(CONFIG_IDF_TARGET_ESP8684)
-    #define NO_ESP32_CRYPT
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
      * single QFN 4x4 mm package. Out of released documentation, Technical
      * Reference Manual as well as ESP-IDF Programming Guide is applicable
@@ -280,10 +271,9 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
-    /* These are defined automatically in esp32-crypt.h, here for clarity.
-     * No SHA384 and no SHA512 hardware is available on the ESP32-C2     */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    /* These are defined automatically in esp32-crypt.h, here for clarity    */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Automatically defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -406,7 +396,6 @@
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
-
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
 
@@ -451,15 +440,11 @@
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
 
-/* Some of the possible hardening options:
+/* See settings.h for some of the possible hardening options:
  *
-    #define WC_AES_BITSLICED
-    #define HAVE_AES_ECB
-    #define HAVE_AES_DIRECT
-*/
-
-/* TODO consider moving this to settings.h as default */
-#define WC_NO_CACHE_RESISTANT
-//#define WC_AES_BITSLICED
-//#define HAVE_AES_ECB
-
+ *  #define NO_ESPIDF_DEFAULT
+ *  #define WC_NO_CACHE_RESISTANT
+ *  #define WC_AES_BITSLICED
+ *  #define HAVE_AES_ECB
+ *  #define HAVE_AES_DIRECT
+ */

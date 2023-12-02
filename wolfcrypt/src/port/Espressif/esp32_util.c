@@ -427,6 +427,8 @@ int ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
 
+    show_macro("NO_ESPIDF_DEFAULT",         STR_IFNDEF(NO_ESPIDF_DEFAULT));
+
     show_macro("HW_MATH_ENABLED",           STR_IFNDEF(HW_MATH_ENABLED));
 
     /* Features */
@@ -453,6 +455,9 @@ int ShowExtendedSystemInfo_config(void)
     show_macro("RSA_LOW_MEM",               STR_IFNDEF(RSA_LOW_MEM));
 
     /* Security Hardening */
+    show_macro("WC_NO_HARDEN",              STR_IFNDEF(WC_NO_HARDEN));
+    show_macro("TFM_TIMING_RESISTANT",      STR_IFNDEF(TFM_TIMING_RESISTANT));
+    show_macro("ECC_TIMING_RESISTANT",      STR_IFNDEF(ECC_TIMING_RESISTANT));
 
     /* WC_NO_CACHE_RESISTANT is only important if another process can be
      * run on the device. With embedded it is less likely to be exploitable.
@@ -463,7 +468,7 @@ int ShowExtendedSystemInfo_config(void)
     show_macro("WC_AES_BITSLICED",          STR_IFNDEF(WC_AES_BITSLICED));
 
     /* Unrolling will normally improve performance,
-     * so make sure WOLFSSL_AES_NO_UNROLL isn't defined unless you want it */
+     * so make sure WOLFSSL_AES_NO_UNROLL isn't defined unless you want it. */
     show_macro("WOLFSSL_AES_NO_UNROLL",     STR_IFNDEF(WOLFSSL_AES_NO_UNROLL));
     show_macro("TFM_TIMING_RESISTANT",      STR_IFNDEF(TFM_TIMING_RESISTANT));
     show_macro("ECC_TIMING_RESISTANT",      STR_IFNDEF(ECC_TIMING_RESISTANT));

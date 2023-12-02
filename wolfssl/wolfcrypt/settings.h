@@ -378,16 +378,20 @@
 #endif
 
 #if defined(WOLFSSL_ESPIDF)
-    #define FREERTOS
-    #define WOLFSSL_LWIP
-    #define NO_WRITEV
     #define SIZEOF_LONG_LONG 8
-    #define NO_WOLFSSL_DIR
-    #define WOLFSSL_NO_CURRDIR
+    #ifndef NO_ESPIDF_DEFAULT
+        #define FREERTOS
+        #define WOLFSSL_LWIP
+        #define NO_WRITEV
+        #define NO_WOLFSSL_DIR
+        #define WOLFSSL_NO_CURRDIR
 
-    #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
-    #define WC_RSA_BLINDING
+        #define TFM_TIMING_RESISTANT
+        #define ECC_TIMING_RESISTANT
+        #define WC_RSA_BLINDING
+        #define WC_NO_CACHE_RESISTANT
+    #endif /* !WOLFSSL_ESPIDF_NO_DEFAULT */
+
 
 #if defined(WOLFSSL_ESPWROOM32)
     /* WOLFSSL_ESPWROOM32 is a legacy macro gate.
