@@ -34,6 +34,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{FE52
 		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{7263FE6C-1C20-49E2-A8DF-6AEDE6ACFA28}"
+	ProjectSection(SolutionItems) = preProject
+		..\main\Kconfig.projbuild = ..\main\Kconfig.projbuild
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

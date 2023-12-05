@@ -27,8 +27,6 @@
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
-#define DEFAULT_PORT                     11111
-
 #define TLS_SMP_SERVER_TASK_NAME         "tls_sever_example"
 #define TLS_SMP_SERVER_TASK_WORDS        22240
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
