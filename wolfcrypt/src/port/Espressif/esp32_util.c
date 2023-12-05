@@ -201,6 +201,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
                            Xthal_have_ccount);
 #elif CONFIG_IDF_TARGET_ESP32C6
 
+
 #elif CONFIG_IDF_TARGET_ESP32C2
 
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
