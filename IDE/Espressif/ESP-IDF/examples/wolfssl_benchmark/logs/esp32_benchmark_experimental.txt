@@ -4,15 +4,15 @@ rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
 configsip: 0, SPIWP:0xee
 clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
 mode:DIO, clock div:2
-load:0x3fff0030,len:7100
-ho 0 tail 12 room 4
-load:0x40078000,len:15584
+load:0x3fff0030,len:7092
+load:0x40078000,len:15476
 load:0x40080400,len:4
-load:0x40080404,len:3876
-entry 0x4008064c
+ho 8 tail 4 room 4
+load:0x40080404,len:3668
+entry 0x4008061c
 I (30) boot: ESP-IDF v5.1-231-ga7b62bbcaf-dirty 2nd stage bootloader
-I (30) boot: compile time Dec  5 2023 12:04:54
-I (32) boot: Multicore bootloader
+I (30) boot: compile time Dec  5 2023 12:16:44
+W (32) boot: Unicore bootloader
 I (36) boot: chip revision: v1.0
 I (40) boot.esp32: SPI Speed      : 40MHz
 I (44) boot.esp32: SPI Mode       : DIO
@@ -22,383 +22,381 @@ I (59) boot: Partition Table:
 I (62) boot: ## Label            Usage          Type ST Offset   Length
 I (70) boot:  0 nvs              WiFi data        01 02 00009000 00006000
 I (77) boot:  1 phy_init         RF data          01 01 0000f000 00001000
-I (85) boot:  2 factory          factory app      00 00 00010000 00177000
+I (84) boot:  2 factory          factory app      00 00 00010000 00177000
 I (92) boot: End of partition table
-I (96) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=168d4h ( 92372) map
-I (138) esp_image: segment 1: paddr=000268fc vaddr=3ffb0000 size=021e4h (  8676) load
-I (142) esp_image: segment 2: paddr=00028ae8 vaddr=40080000 size=07530h ( 30000) load
-I (156) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=3c880h (247936) map
-I (246) esp_image: segment 4: paddr=0006c8a8 vaddr=40087530 size=04ab8h ( 19128) load
-I (254) esp_image: segment 5: paddr=00071368 vaddr=50000000 size=00004h (     4) load
-I (261) boot: Loaded app from partition at offset 0x10000
-I (261) boot: Disabling RNG early entropy source...
-I (275) cpu_start: Multicore app
+I (96) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=16080h ( 90240) map
+I (137) esp_image: segment 1: paddr=000260a8 vaddr=3ffb0000 size=01758h (  5976) load
+I (140) esp_image: segment 2: paddr=00027808 vaddr=40080000 size=08810h ( 34832) load
+I (157) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=3c044h (245828) map
+I (247) esp_image: segment 4: paddr=0006c06c vaddr=40088810 size=02554h (  9556) load
+I (251) esp_image: segment 5: paddr=0006e5c8 vaddr=50000000 size=00004h (     4) load
+I (258) boot: Loaded app from partition at offset 0x10000
+I (258) boot: Disabling RNG early entropy source...
+I (275) cpu_start: Unicore app
 I (275) cpu_start: Pro cpu up.
-I (275) cpu_start: Starting app cpu, entry point is 0x40081168
-I (263) cpu_start: App cpu up.
-I (293) cpu_start: Pro cpu start user code
-I (293) cpu_start: cpu freq: 240000000 Hz
-I (293) cpu_start: Application information:
-I (298) cpu_start: Project name:     wolfssl_benchmark
-I (304) cpu_start: App version:      v5.6.3-stable-2551-gd326254a1-d
-I (311) cpu_start: Compile time:     Dec  5 2023 12:04:46
-I (317) cpu_start: ELF file SHA256:  62499d8b8a0452fd...
-I (323) cpu_start: ESP-IDF:          v5.1-231-ga7b62bbcaf-dirty
-I (330) cpu_start: Min chip rev:     v0.0
-I (334) cpu_start: Max chip rev:     v3.99 
-I (339) cpu_start: Chip rev:         v1.0
-I (344) heap_init: Initializing. RAM available for dynamic allocation:
-I (351) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
-I (357) heap_init: At 3FFB2B40 len 0002D4C0 (181 KiB): DRAM
-I (363) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
-I (370) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
-I (376) heap_init: At 4008BFE8 len 00014018 (80 KiB): IRAM
+I (275) cpu_start: Single core mode
+I (287) cpu_start: Pro cpu start user code
+I (287) cpu_start: cpu freq: 240000000 Hz
+I (287) cpu_start: Application information:
+I (292) cpu_start: Project name:     wolfssl_benchmark
+I (298) cpu_start: App version:      v5.6.3-stable-2552-g767ce7fc0-d
+I (305) cpu_start: Compile time:     Dec  5 2023 12:16:36
+I (311) cpu_start: ELF file SHA256:  8e4140744310b0d5...
+I (317) cpu_start: ESP-IDF:          v5.1-231-ga7b62bbcaf-dirty
+I (324) cpu_start: Min chip rev:     v0.0
+I (328) cpu_start: Max chip rev:     v3.99 
+I (333) cpu_start: Chip rev:         v1.0
+I (338) heap_init: Initializing. RAM available for dynamic allocation:
+I (345) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (351) heap_init: At 3FFB1FC8 len 0002E038 (184 KiB): DRAM
+I (357) heap_init: At 3FFE0440 len 0001FBC0 (126 KiB): D/IRAM
+I (364) heap_init: At 40078000 len 00008000 (32 KiB): IRAM
+I (370) heap_init: At 4008AD64 len 0001529C (84 KiB): IRAM
+I (376) heap_init: At 3FF80000 len 00002000 (8 KiB): RTCRAM
 I (384) spi_flash: detected chip: generic
 I (387) spi_flash: flash io: dio
 W (391) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in t
 he binary image header.
-I (405) app_start: Starting scheduler on CPU0
-I (409) app_start: Starting scheduler on CPU1
+I (404) app_start: Starting scheduler on CPU0
 I (409) main_task: Started on CPU0
-I (419) main_task: Calling app_main()
-I (422) wolfssl_benchmark: ---------------- wolfSSL Benchmark Example ------------
-I (422) wolfssl_benchmark: --------------------------------------------------------
-I (428) wolfssl_benchmark: --------------------------------------------------------
-I (436) wolfssl_benchmark: ---------------------- BEGIN MAIN ----------------------
-I (444) wolfssl_benchmark: --------------------------------------------------------
-I (453) wolfssl_benchmark: --------------------------------------------------------
-I (461) esp32_util: Extended Version and Platform Information.
-I (467) esp32_util: Chip revision: v1.0
-I (472) esp32_util: SSID and plain text WiFi password not displayed in startup logs.
-I (480) esp32_util:   Define SHOW_SSID_AND_PASSWORD to enable display.
-I (488) esp32_util: Using wolfSSL user_settings.h in C://workspace//wolfssl-gojimmypi//IDE//Espressif//ESP-IDF//exa
+I (413) main_task: Calling app_main()
+I (417) wolfssl_benchmark: ---------------- wolfSSL Benchmark Example ------------
+I (417) wolfssl_benchmark: --------------------------------------------------------
+I (423) wolfssl_benchmark: --------------------------------------------------------
+I (431) wolfssl_benchmark: ---------------------- BEGIN MAIN ----------------------
+I (439) wolfssl_benchmark: --------------------------------------------------------
+I (448) wolfssl_benchmark: --------------------------------------------------------
+I (456) esp32_util: Extended Version and Platform Information.
+I (462) esp32_util: Chip revision: v1.0
+I (467) esp32_util: SSID and plain text WiFi password not displayed in startup logs.
+I (475) esp32_util:   Define SHOW_SSID_AND_PASSWORD to enable display.
+I (482) esp32_util: Using wolfSSL user_settings.h in C://workspace//wolfssl-gojimmypi//IDE//Espressif//ESP-IDF//exa
 mples//wolfssl_benchmark//components//wolfssl//include//user_settings.h
-I (505) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.4
-I (511) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006004
-I (516) esp32_util: Stack HWM: 54168
-I (520) esp32_util: 
-I (523) esp32_util: Macro Name                 Defined   Not Defined
-I (530) esp32_util: ------------------------- --------- -------------
-I (537) esp32_util: NO_ESPIDF_DEFAULT........                 X
-I (544) esp32_util: HW_MATH_ENABLED..........     X
-I (550) esp32_util: WOLFSSL_SHA224...........     X
-I (555) esp32_util: WOLFSSL_SHA384...........     X
-I (561) esp32_util: WOLFSSL_SHA512...........     X
-I (566) esp32_util: WOLFSSL_SHA3.............     X
-I (572) esp32_util: HAVE_ED25519.............     X
-I (577) esp32_util: HAVE_AES_ECB.............                 X
-I (584) esp32_util: HAVE_AES_DIRECT..........                 X
-I (591) esp32_util: USE_FAST_MATH............     X
-I (596) esp32_util: WOLFSSL_SP_MATH_ALL......                 X
-I (603) esp32_util: SP_MATH..................                 X
-I (609) esp32_util: WOLFSSL_HW_METRICS.......     X
-I (615) esp32_util: RSA_LOW_MEM..............     X
-I (620) esp32_util: WC_NO_HARDEN.............                 X
-I (627) esp32_util: TFM_TIMING_RESISTANT.....     X
-I (633) esp32_util: ECC_TIMING_RESISTANT.....     X
-I (638) esp32_util: WC_NO_CACHE_RESISTANT....     X
-I (644) esp32_util: WC_AES_BITSLICED.........                 X
-I (650) esp32_util: WOLFSSL_AES_NO_UNROLL....                 X
-I (657) esp32_util: TFM_TIMING_RESISTANT.....     X
-I (662) esp32_util: ECC_TIMING_RESISTANT.....     X
-I (668) esp32_util: WC_RSA_BLINDING..........     X
-I (674) esp32_util: NO_WRITEV................     X
-I (679) esp32_util: FREERTOS.................     X
-I (685) esp32_util: NO_WOLFSSL_DIR...........     X
-I (690) esp32_util: WOLFSSL_NO_CURRDIR.......     X
-I (696) esp32_util: WOLFSSL_LWIP.............     X
-I (701) esp32_util: 
-I (704) esp32_util: Compiler Optimization: Default
-I (710) esp32_util: 
-I (713) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
-I (722) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
-I (729) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = d326254a1debab22a93718f203c618becd504904
-I (738) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = d326254a1
-I (744) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Dec 5 04:59:49 2023 -0800'
-I (753) esp32_util: CONFIG_IDF_TARGET = esp32
-I (758) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 240 MHz
-I (765) esp32_util: Xthal_have_ccount: 1
-I (769) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55500
-I (775) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55500
-I (781) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
-I (787) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
-I (793) esp32_util: Stack HWM: 53944
-I (797) esp32_util: NO_ESP32_CRYPT defined! HW acceleration DISABLED.
-I (804) esp32_util: NOT SINGLE_THREADED
-I (809) esp32_util: Boot count: 1
-I (813) wolfssl_benchmark: app_main CONFIG_BENCH_ARGV = -lng 0
-I (821) wolfssl_benchmark: Stack HWM: 53944
+I (500) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.4
+I (506) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006004
+I (511) esp32_util: Stack HWM: 54208
+I (515) esp32_util: 
+I (518) esp32_util: Macro Name                 Defined   Not Defined
+I (525) esp32_util: ------------------------- --------- -------------
+I (532) esp32_util: NO_ESPIDF_DEFAULT........                 X
+I (539) esp32_util: HW_MATH_ENABLED..........     X
+I (545) esp32_util: WOLFSSL_SHA224...........     X
+I (550) esp32_util: WOLFSSL_SHA384...........     X
+I (556) esp32_util: WOLFSSL_SHA512...........     X
+I (561) esp32_util: WOLFSSL_SHA3.............     X
+I (567) esp32_util: HAVE_ED25519.............     X
+I (572) esp32_util: HAVE_AES_ECB.............                 X
+I (579) esp32_util: HAVE_AES_DIRECT..........                 X
+I (586) esp32_util: USE_FAST_MATH............     X
+I (591) esp32_util: WOLFSSL_SP_MATH_ALL......                 X
+I (598) esp32_util: SP_MATH..................                 X
+I (604) esp32_util: WOLFSSL_HW_METRICS.......     X
+I (610) esp32_util: RSA_LOW_MEM..............     X
+I (615) esp32_util: WC_NO_HARDEN.............                 X
+I (622) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (628) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (633) esp32_util: WC_NO_CACHE_RESISTANT....     X
+I (639) esp32_util: WC_AES_BITSLICED.........                 X
+I (645) esp32_util: WOLFSSL_AES_NO_UNROLL....                 X
+I (652) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (657) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (663) esp32_util: WC_RSA_BLINDING..........     X
+I (669) esp32_util: NO_WRITEV................     X
+I (674) esp32_util: FREERTOS.................     X
+I (680) esp32_util: NO_WOLFSSL_DIR...........     X
+I (685) esp32_util: WOLFSSL_NO_CURRDIR.......     X
+I (691) esp32_util: WOLFSSL_LWIP.............     X
+I (696) esp32_util: 
+I (699) esp32_util: Compiler Optimization: Default
+I (705) esp32_util: 
+I (707) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (717) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (724) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 767ce7fc07f62b7e4132179c9807c6b5d4763bf7
+I (733) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 767ce7fc0
+I (739) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Tue Dec 5 12:16:02 2023 -0800'
+I (748) esp32_util: CONFIG_IDF_TARGET = esp32
+I (753) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 240 MHz
+I (759) esp32_util: Xthal_have_ccount: 1
+I (764) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55500
+I (770) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55500
+I (776) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (782) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (788) esp32_util: Stack HWM: 53984
+I (792) esp32_util: NO_ESP32_CRYPT defined! HW acceleration DISABLED.
+I (799) esp32_util: NOT SINGLE_THREADED
+I (804) esp32_util: Boot count: 1
+I (808) wolfssl_benchmark: app_main CONFIG_BENCH_ARGV = -lng 0
+I (816) wolfssl_benchmark: Stack HWM: 53984
 
-I (824) wolfssl_benchmark: construct_argv arg:-lng 0
+I (819) wolfssl_benchmark: construct_argv arg:-lng 0
 
 ------------------------------------------------------------------------------
  wolfSSL version 5.6.4
 ------------------------------------------------------------------------------
 wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
-I (846) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
-W (846) wolfssl_benchmark: NO current_time() reset!
-I (846) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=0.437000
-I (846) wolfssl_benchmark: wc_MakeRsaKey start
-I (15050) wolfssl_benchmark: wc_MakeRsaKey finish
-I (15050) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-W (15051) wolfssl_benchmark: last_tickCount unchanged? 14642
-RSA     1024  key gen         1 ops took 14.205 sec, avg 14205.000 ms, 0.070 ops/sec
-I (15065) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
-W (15071) wolfssl_benchmark: NO current_time() reset!
-I (15077) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=14.668000
-I (15085) wolfssl_benchmark: wc_MakeRsaKey start
-I (112185) wolfssl_benchmark: wc_MakeRsaKey finish
-I (112185) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-W (112186) wolfssl_benchmark: last_tickCount unchanged? 111777
-RSA     2048  key gen         1 ops took 97.109 sec, avg 97109.000 ms, 0.010 ops/sec
-W (112201) wolfssl_benchmark: NO current_time() reset!
-I (112206) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=111.797000
-W (112214) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 1161840808, adding UINT_MAX.
-W (113233) wolfssl_benchmark: last_tickCount unchanged? 112824
-RSA     2048   public        48 ops took 1.027 sec, avg 21.396 ms, 46.738 ops/sec
-W (113236) wolfssl_benchmark: NO current_time() reset!
-I (113241) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=112.832000
-RSA     2048  private         2 ops took 8.223 sec, avg 4111.500 ms, 0.243 ops/sec
-I (121465) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
-W (121467) wolfssl_benchmark: NO current_time() reset!
-I (121472) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=121.063000
-I (121481) wolfssl_benchmark: wc_MakeRsaKey start
-I (137968) wolfssl_benchmark: wc_MakeRsaKey finish
-I (137969) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-W (137969) wolfssl_benchmark: last_tickCount unchanged? 137560
-RSA     1024  key gen         1 ops took 16.497 sec, avg 16497.000 ms, 0.061 ops/sec
-I (137984) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
-W (137990) wolfssl_benchmark: NO current_time() reset!
-I (137995) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=137.586000
-W (138004) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 3056348652, adding UINT_MAX.
-I (138014) wolfssl_benchmark: wc_MakeRsaKey start
-I (208683) wolfssl_benchmark: wc_MakeRsaKey finish
-I (208684) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-W (208684) wolfssl_benchmark: last_tickCount unchanged? 208275
-RSA     2048  key gen         1 ops took 70.689 sec, avg 70689.000 ms, 0.014 ops/sec
-W (208699) wolfssl_benchmark: NO current_time() reset!
-I (208704) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=208.295000
-W (208712) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 2846592038, adding UINT_MAX.
-W (209731) wolfssl_benchmark: last_tickCount unchanged? 209322
-RSA     2048   public        48 ops took 1.027 sec, avg 21.396 ms, 46.738 ops/sec
-W (209734) wolfssl_benchmark: NO current_time() reset!
-I (209740) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=209.331000
-W (217962) wolfssl_benchmark: last_tickCount unchanged? 217553
-RSA     2048  private         2 ops took 8.222 sec, avg 4111.000 ms, 0.243 ops/sec
-W (217968) wolfssl_benchmark: NO current_time() reset!
-I (217970) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=217.561000
-W (217979) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 775517362, adding UINT_MAX.
-W (218997) wolfssl_benchmark: last_tickCount unchanged? 218588
-RNG                        525 KiB took 1.027 seconds,  511.198 KiB/s Cycles per byte = 450.26
-W (219001) wolfssl_benchmark: NO current_time() reset!
-I (219007) wolfssl_benchmark: bench_stats_start total_cycles = 242061264, start=218.598000
-W (220015) wolfssl_benchmark: last_tickCount unchanged? 219606
-AES-128-CBC-enc           2200 KiB took 1.008 seconds, 2182.540 KiB/s Cycles per byte = 106.44
-W (220019) wolfssl_benchmark: NO current_time() reset!
-I (220025) wolfssl_benchmark: bench_stats_start total_cycles = 239786213, start=219.616000
-W (221035) wolfssl_benchmark: last_tickCount unchanged? 220626
-AES-128-CBC-dec           2175 KiB took 1.010 seconds, 2153.465 KiB/s Cycles per byte = 107.93
-W (221039) wolfssl_benchmark: NO current_time() reset!
-I (221045) wolfssl_benchmark: bench_stats_start total_cycles = 240378145, start=220.636000
-W (222051) wolfssl_benchmark: last_tickCount unchanged? 221642
-AES-192-CBC-enc           1900 KiB took 1.006 seconds, 1888.668 KiB/s Cycles per byte = 122.94
-W (222055) wolfssl_benchmark: NO current_time() reset!
-I (222060) wolfssl_benchmark: bench_stats_start total_cycles = 239197595, start=221.651000
-W (223065) wolfssl_benchmark: last_tickCount unchanged? 222656
-AES-192-CBC-dec           1875 KiB took 1.005 seconds, 1865.672 KiB/s Cycles per byte = 124.44
-W (223069) wolfssl_benchmark: NO current_time() reset!
-I (223075) wolfssl_benchmark: bench_stats_start total_cycles = 238916542, start=222.666000
-W (224078) wolfssl_benchmark: last_tickCount unchanged? 223669
-AES-256-CBC-enc           1675 KiB took 1.003 seconds, 1669.990 KiB/s Cycles per byte = 139.17
-W (224083) wolfssl_benchmark: NO current_time() reset!
-I (224088) wolfssl_benchmark: bench_stats_start total_cycles = 238707040, start=223.679000
-W (225102) wolfssl_benchmark: last_tickCount unchanged? 224693
-AES-256-CBC-dec           1675 KiB took 1.014 seconds, 1651.874 KiB/s Cycles per byte = 140.66
-W (225107) wolfssl_benchmark: NO current_time() reset!
-I (225112) wolfssl_benchmark: bench_stats_start total_cycles = 241253080, start=224.703000
-W (226154) wolfssl_benchmark: last_tickCount unchanged? 225745
-AES-128-GCM-enc            350 KiB took 1.042 seconds,  335.893 KiB/s Cycles per byte = 691.85
-W (226158) wolfssl_benchmark: NO current_time() reset!
-I (226164) wolfssl_benchmark: bench_stats_start total_cycles = 247959322, start=225.755000
-W (227207) wolfssl_benchmark: last_tickCount unchanged? 226798
-AES-128-GCM-dec            350 KiB took 1.043 seconds,  335.570 KiB/s Cycles per byte = 692.35
-W (227211) wolfssl_benchmark: NO current_time() reset!
-I (227216) wolfssl_benchmark: bench_stats_start total_cycles = 248139961, start=226.807000
-W (228283) wolfssl_benchmark: last_tickCount unchanged? 227874
-AES-192-GCM-enc            350 KiB took 1.067 seconds,  328.022 KiB/s Cycles per byte = 708.52
-W (228288) wolfssl_benchmark: NO current_time() reset!
-I (228293) wolfssl_benchmark: bench_stats_start total_cycles = 253933394, start=227.884000
-W (229361) wolfssl_benchmark: last_tickCount unchanged? 228952
-AES-192-GCM-dec            350 KiB took 1.068 seconds,  327.715 KiB/s Cycles per byte = 709.09
-W (229365) wolfssl_benchmark: NO current_time() reset!
-I (229371) wolfssl_benchmark: bench_stats_start total_cycles = 254137507, start=228.962000
-W (230385) wolfssl_benchmark: last_tickCount unchanged? 229976
-AES-256-GCM-enc            325 KiB took 1.014 seconds,  320.513 KiB/s Cycles per byte = 725.01
-W (230389) wolfssl_benchmark: NO current_time() reset!
-I (230395) wolfssl_benchmark: bench_stats_start total_cycles = 241283761, start=229.986000
-W (231410) wolfssl_benchmark: last_tickCount unchanged? 231001
-AES-256-GCM-dec            325 KiB took 1.015 seconds,  320.197 KiB/s Cycles per byte = 725.57
-W (231414) wolfssl_benchmark: NO current_time() reset!
-I (231420) wolfssl_benchmark: bench_stats_start total_cycles = 241470295, start=231.011000
-W (232421) wolfssl_benchmark: last_tickCount unchanged? 232012
-GMAC Default               411 KiB took 1.001 seconds,  410.589 KiB/s Cycles per byte = 566.22
-W (232426) wolfssl_benchmark: NO current_time() reset!
-I (232431) wolfssl_benchmark: bench_stats_start total_cycles = 238300908, start=232.022000
-W (233443) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 191913162, adding UINT_MAX.
-W (233443) wolfssl_benchmark: last_tickCount unchanged? 233034
-3DES                       450 KiB took 1.012 seconds,  444.664 KiB/s Cycles per byte = 522.13
-W (233457) wolfssl_benchmark: NO current_time() reset!
-I (233462) wolfssl_benchmark: bench_stats_start total_cycles = 240598057, start=233.053000
-W (234462) wolfssl_benchmark: last_tickCount unchanged? 234053
-MD5                      13625 KiB took 1.000 seconds, 13625.000 KiB/s Cycles per byte =  17.04
-W (234466) wolfssl_benchmark: NO current_time() reset!
-I (234472) wolfssl_benchmark: bench_stats_start total_cycles = 237717437, start=234.063000
-W (235473) wolfssl_benchmark: last_tickCount unchanged? 235064
-SHA                       5850 KiB took 1.001 seconds, 5844.156 KiB/s Cycles per byte =  39.75
-W (235477) wolfssl_benchmark: NO current_time() reset!
-I (235483) wolfssl_benchmark: bench_stats_start total_cycles = 238126474, start=235.074000
-W (236491) wolfssl_benchmark: last_tickCount unchanged? 236082
-SHA-224                   1325 KiB took 1.008 seconds, 1314.484 KiB/s Cycles per byte = 176.78
-W (236495) wolfssl_benchmark: NO current_time() reset!
-I (236501) wolfssl_benchmark: bench_stats_start total_cycles = 239852808, start=236.092000
-W (237509) wolfssl_benchmark: last_tickCount unchanged? 237100
-SHA-256                   1325 KiB took 1.008 seconds, 1314.484 KiB/s Cycles per byte = 176.77
-W (237513) wolfssl_benchmark: NO current_time() reset!
-I (237519) wolfssl_benchmark: bench_stats_start total_cycles = 239839412, start=237.110000
-W (238530) wolfssl_benchmark: last_tickCount unchanged? 238121
-SHA-384                   1150 KiB took 1.011 seconds, 1137.488 KiB/s Cycles per byte = 204.25
-W (238534) wolfssl_benchmark: NO current_time() reset!
-I (238540) wolfssl_benchmark: bench_stats_start total_cycles = 240527154, start=238.131000
-W (239550) wolfssl_benchmark: last_tickCount unchanged? 239141
-SHA-512                   1150 KiB took 1.010 seconds, 1138.614 KiB/s Cycles per byte = 204.05
-W (239554) wolfssl_benchmark: NO current_time() reset!
-I (239560) wolfssl_benchmark: bench_stats_start total_cycles = 240284061, start=239.151000
-W (240570) wolfssl_benchmark: last_tickCount unchanged? 240161
-SHA-512/224               1150 KiB took 1.010 seconds, 1138.614 KiB/s Cycles per byte = 204.12
-W (240574) wolfssl_benchmark: NO current_time() reset!
-I (240580) wolfssl_benchmark: bench_stats_start total_cycles = 240367995, start=240.171000
-W (241590) wolfssl_benchmark: last_tickCount unchanged? 241181
-SHA-512/256               1150 KiB took 1.010 seconds, 1138.614 KiB/s Cycles per byte = 204.11
-W (241595) wolfssl_benchmark: NO current_time() reset!
-I (241600) wolfssl_benchmark: bench_stats_start total_cycles = 240364869, start=241.191000
-W (242612) wolfssl_benchmark: last_tickCount unchanged? 242203
-SHA3-224                  1125 KiB took 1.012 seconds, 1111.660 KiB/s Cycles per byte = 208.88
-W (242616) wolfssl_benchmark: NO current_time() reset!
-I (242622) wolfssl_benchmark: bench_stats_start total_cycles = 240624278, start=242.212000
-W (243621) wolfssl_benchmark: last_tickCount unchanged? 243212
-SHA3-256                  1050 KiB took 1.000 seconds, 1050.000 KiB/s Cycles per byte = 221.17
-W (243625) wolfssl_benchmark: NO current_time() reset!
-I (243631) wolfssl_benchmark: bench_stats_start total_cycles = 237799637, start=243.222000
-W (244648) wolfssl_benchmark: last_tickCount unchanged? 244239
-SHA3-384                   825 KiB took 1.017 seconds,  811.209 KiB/s Cycles per byte = 286.44
-W (244652) wolfssl_benchmark: NO current_time() reset!
-I (244658) wolfssl_benchmark: bench_stats_start total_cycles = 241985054, start=244.249000
-W (245671) wolfssl_benchmark: last_tickCount unchanged? 245262
-SHA3-512                   575 KiB took 1.013 seconds,  567.621 KiB/s Cycles per byte = 409.20
-W (245675) wolfssl_benchmark: NO current_time() reset!
-I (245680) wolfssl_benchmark: bench_stats_start total_cycles = 240938399, start=245.271000
-W (246691) wolfssl_benchmark: last_tickCount unchanged? 246282
-SHAKE128                  1300 KiB took 1.011 seconds, 1285.856 KiB/s Cycles per byte = 180.60
-W (246695) wolfssl_benchmark: NO current_time() reset!
-I (246701) wolfssl_benchmark: bench_stats_start total_cycles = 240418106, start=246.292000
-W (247724) wolfssl_benchmark: last_tickCount unchanged? 247315
-SHAKE256                  1075 KiB took 1.023 seconds, 1050.831 KiB/s Cycles per byte = 221.11
-W (247728) wolfssl_benchmark: NO current_time() reset!
-I (247734) wolfssl_benchmark: bench_stats_start total_cycles = 243402167, start=247.325000
-W (248735) wolfssl_benchmark: last_tickCount unchanged? 248326
-RIPEMD                    6025 KiB took 1.001 seconds, 6018.981 KiB/s Cycles per byte =  38.60
-W (248739) wolfssl_benchmark: NO current_time() reset!
-I (248745) wolfssl_benchmark: bench_stats_start total_cycles = 238156956, start=248.336000
-W (249745) wolfssl_benchmark: last_tickCount unchanged? 249336
-HMAC-MD5                 13475 KiB took 1.000 seconds, 13475.000 KiB/s Cycles per byte =  17.24
-W (249749) wolfssl_benchmark: NO current_time() reset!
-I (249755) wolfssl_benchmark: bench_stats_start total_cycles = 237888833, start=249.346000
-W (250757) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 52340918, adding UINT_MAX.
-W (250757) wolfssl_benchmark: last_tickCount unchanged? 250348
-HMAC-SHA                  5800 KiB took 1.002 seconds, 5788.423 KiB/s Cycles per byte =  40.13
-W (250771) wolfssl_benchmark: NO current_time() reset!
-I (250776) wolfssl_benchmark: bench_stats_start total_cycles = 238360105, start=250.367000
-W (251793) wolfssl_benchmark: last_tickCount unchanged? 251384
-HMAC-SHA224               1325 KiB took 1.017 seconds, 1302.852 KiB/s Cycles per byte = 178.25
-W (251797) wolfssl_benchmark: NO current_time() reset!
-I (251803) wolfssl_benchmark: bench_stats_start total_cycles = 241855548, start=251.394000
-W (252819) wolfssl_benchmark: last_tickCount unchanged? 252410
-HMAC-SHA256               1325 KiB took 1.016 seconds, 1304.134 KiB/s Cycles per byte = 178.24
-W (252824) wolfssl_benchmark: NO current_time() reset!
-I (252829) wolfssl_benchmark: bench_stats_start total_cycles = 241836695, start=252.420000
-HMAC-SHA384               1125 KiB took 1.007 seconds, 1117.180 KiB/s Cycles per byte = 207.79
-W (253837) wolfssl_benchmark: NO current_time() reset!
-I (253840) wolfssl_benchmark: bench_stats_start total_cycles = 239377821, start=253.431000
-W (254844) wolfssl_benchmark: last_tickCount unchanged? 254435
-HMAC-SHA512               1125 KiB took 1.004 seconds, 1120.518 KiB/s Cycles per byte = 207.47
-W (254849) wolfssl_benchmark: NO current_time() reset!
-I (254854) wolfssl_benchmark: bench_stats_start total_cycles = 239008959, start=254.445000
-W (256047) wolfssl_benchmark: last_tickCount unchanged? 255638
-PBKDF2                       0 KiB took 1.193 seconds,    0.157 KiB/s Cycles per byte = 1480044.20
-I (256052) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
-W (256058) wolfssl_benchmark: NO current_time() reset!
-I (256063) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=255.654000
-I (256073) wolfssl_benchmark: wc_MakeRsaKey start
-I (264328) wolfssl_benchmark: wc_MakeRsaKey finish
-I (264329) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-RSA     1024  key gen         1 ops took 8.267 sec, avg 8267.000 ms, 0.121 ops/sec
-I (264337) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
-W (264343) wolfssl_benchmark: NO current_time() reset!
-I (264349) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=263.940000
-I (264358) wolfssl_benchmark: wc_MakeRsaKey start
-I (421522) wolfssl_benchmark: wc_MakeRsaKey finish
-I (421522) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
-W (421523) wolfssl_benchmark: last_tickCount unchanged? 421114
-RSA     2048  key gen         1 ops took 157.174 sec, avg 157174.000 ms, 0.006 ops/sec
-W (421538) wolfssl_benchmark: NO current_time() reset!
-I (421543) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=421.134000
-W (421552) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 2388526958, adding UINT_MAX.
-W (422571) wolfssl_benchmark: last_tickCount unchanged? 422162
-RSA     2048   public        48 ops took 1.028 sec, avg 21.417 ms, 46.693 ops/sec
-W (422574) wolfssl_benchmark: NO current_time() reset!
-I (422579) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=422.170000
-W (430802) wolfssl_benchmark: last_tickCount unchanged? 430393
-RSA     2048  private         2 ops took 8.223 sec, avg 4111.500 ms, 0.243 ops/sec
-W (430805) wolfssl_benchmark: NO current_time() reset!
-I (430811) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=430.402000
-W (430820) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 317809147, adding UINT_MAX.
-ECC   [      SECP256R1]   256  key gen         4 ops took 1.260 sec, avg 315.000 ms, 3.175 ops/sec
-W (432692) wolfssl_benchmark: NO current_time() reset!
-I (432692) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=432.283000
-W (433935) wolfssl_benchmark: last_tickCount unchanged? 433526
-ECDHE [      SECP256R1]   256    agree         4 ops took 1.243 sec, avg 310.750 ms, 3.218 ops/sec
-W (433939) wolfssl_benchmark: NO current_time() reset!
-I (433945) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=433.536000
-W (435205) wolfssl_benchmark: last_tickCount unchanged? 434796
-ECDSA [      SECP256R1]   256     sign         4 ops took 1.260 sec, avg 315.000 ms, 3.175 ops/sec
-W (435210) wolfssl_benchmark: NO current_time() reset!
-I (435216) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=434.806000
-W (436417) wolfssl_benchmark: last_tickCount unchanged? 436008
-ECDSA [      SECP256R1]   256   verify         2 ops took 1.202 sec, avg 601.000 ms, 1.664 ops/sec
-W (436422) wolfssl_benchmark: NO current_time() reset!
-I (436428) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=436.019000
-W (437625) wolfssl_benchmark: last_tickCount unchanged? 437216
-CURVE  25519  key gen         3 ops took 1.197 sec, avg 399.000 ms, 2.506 ops/sec
-W (438419) wolfssl_benchmark: NO current_time() reset!
-I (438419) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=438.010000
-W (440003) wolfssl_benchmark: last_tickCount unchanged? 439594
-CURVE  25519    agree         4 ops took 1.584 sec, avg 396.000 ms, 2.525 ops/sec
-W (440006) wolfssl_benchmark: NO current_time() reset!
-I (440012) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=439.603000
-W (441012) wolfssl_benchmark: last_tickCount unchanged? 440603
-ED     25519  key gen        42 ops took 1.000 sec, avg 23.810 ms, 42.000 ops/sec
-W (441040) wolfssl_benchmark: NO current_time() reset!
-I (441040) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=440.631000
-W (442081) wolfssl_benchmark: last_tickCount unchanged? 441672
-ED     25519     sign        38 ops took 1.041 sec, avg 27.395 ms, 36.503 ops/sec
-W (442084) wolfssl_benchmark: NO current_time() reset!
-I (442090) wolfssl_benchmark: bench_stats_start total_cycles = 284168486, start=441.681000
-W (443132) wolfssl_benchmark: last_tickCount unchanged? 442723
-ED     25519   verify        26 ops took 1.042 sec, avg 40.077 ms, 24.952 ops/sec
+I (841) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
+W (841) wolfssl_benchmark: NO current_time() reset!
+I (841) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=0.432000
+I (841) wolfssl_benchmark: wc_MakeRsaKey start
+I (9990) wolfssl_benchmark: wc_MakeRsaKey finish
+I (9990) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+W (9991) wolfssl_benchmark: last_tickCount unchanged? 9582
+RSA     1024  key gen         1 ops took 9.150 sec, avg 9150.000 ms, 0.109 ops/sec
+I (10004) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
+W (10010) wolfssl_benchmark: NO current_time() reset!
+I (10016) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=9.607000
+I (10024) wolfssl_benchmark: wc_MakeRsaKey start
+I (96772) wolfssl_benchmark: wc_MakeRsaKey finish
+I (96772) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+W (96773) wolfssl_benchmark: last_tickCount unchanged? 96364
+RSA     2048  key gen         1 ops took 86.757 sec, avg 86757.000 ms, 0.012 ops/sec
+W (96788) wolfssl_benchmark: NO current_time() reset!
+I (96793) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=96.384000
+W (96801) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 1757612924, adding UINT_MAX.
+W (97813) wolfssl_benchmark: last_tickCount unchanged? 97404
+RSA     2048   public        48 ops took 1.020 sec, avg 21.250 ms, 47.059 ops/sec
+W (97816) wolfssl_benchmark: NO current_time() reset!
+I (97822) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=97.413000
+W (106013) wolfssl_benchmark: last_tickCount unchanged? 105604
+RSA     2048  private         2 ops took 8.191 sec, avg 4095.500 ms, 0.244 ops/sec
+I (106016) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
+W (106022) wolfssl_benchmark: NO current_time() reset!
+I (106028) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=105.619000
+I (106036) wolfssl_benchmark: wc_MakeRsaKey start
+I (115728) wolfssl_benchmark: wc_MakeRsaKey finish
+I (115729) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+W (115730) wolfssl_benchmark: last_tickCount unchanged? 115321
+RSA     1024  key gen         1 ops took 9.702 sec, avg 9702.000 ms, 0.103 ops/sec
+I (115744) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
+W (115750) wolfssl_benchmark: NO current_time() reset!
+I (115755) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=115.346000
+W (115764) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 2013731294, adding UINT_MAX.
+I (115774) wolfssl_benchmark: wc_MakeRsaKey start
+I (273379) wolfssl_benchmark: wc_MakeRsaKey finish
+I (273379) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+W (273380) wolfssl_benchmark: last_tickCount unchanged? 272971
+RSA     2048  key gen         1 ops took 157.625 sec, avg 157625.000 ms, 0.006 ops/sec
+W (273395) wolfssl_benchmark: NO current_time() reset!
+I (273400) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=272.991000
+W (273409) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 1193821684, adding UINT_MAX.
+W (274421) wolfssl_benchmark: last_tickCount unchanged? 274012
+RSA     2048   public        48 ops took 1.021 sec, avg 21.271 ms, 47.013 ops/sec
+W (274424) wolfssl_benchmark: NO current_time() reset!
+I (274430) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=274.021000
+W (282621) wolfssl_benchmark: last_tickCount unchanged? 282212
+RSA     2048  private         2 ops took 8.191 sec, avg 4095.500 ms, 0.244 ops/sec
+W (282627) wolfssl_benchmark: NO current_time() reset!
+I (282630) wolfssl_benchmark: bench_stats_start total_cycles = 0, start=282.221000
+W (283666) wolfssl_benchmark: last_tickCount unchanged? 283257
+RNG                        550 KiB took 1.036 seconds,  530.888 KiB/s Cycles per byte = 437.90
+W (283670) wolfssl_benchmark: NO current_time() reset!
+I (283676) wolfssl_benchmark: bench_stats_start total_cycles = 246627161, start=283.267000
+W (284683) wolfssl_benchmark: last_tickCount unchanged? 284274
+AES-128-CBC-enc           2200 KiB took 1.007 seconds, 2184.707 KiB/s Cycles per byte = 106.34
+W (284687) wolfssl_benchmark: NO current_time() reset!
+I (284692) wolfssl_benchmark: bench_stats_start total_cycles = 239567498, start=284.283000
+W (285702) wolfssl_benchmark: last_tickCount unchanged? 285293
+AES-128-CBC-dec           2175 KiB took 1.010 seconds, 2153.465 KiB/s Cycles per byte = 107.83
+W (285706) wolfssl_benchmark: NO current_time() reset!
+I (285712) wolfssl_benchmark: bench_stats_start total_cycles = 240154094, start=285.303000
+W (286717) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 92771241, adding UINT_MAX.
+W (286717) wolfssl_benchmark: last_tickCount unchanged? 286308
+AES-192-CBC-enc           1900 KiB took 1.005 seconds, 1890.547 KiB/s Cycles per byte = 122.83
+W (286731) wolfssl_benchmark: NO current_time() reset!
+I (286736) wolfssl_benchmark: bench_stats_start total_cycles = 238981555, start=286.327000
+W (287740) wolfssl_benchmark: last_tickCount unchanged? 287331
+AES-192-CBC-dec           1875 KiB took 1.004 seconds, 1867.530 KiB/s Cycles per byte = 124.32
+W (287744) wolfssl_benchmark: NO current_time() reset!
+I (287750) wolfssl_benchmark: bench_stats_start total_cycles = 238702736, start=287.341000
+W (288752) wolfssl_benchmark: last_tickCount unchanged? 288343
+AES-256-CBC-enc           1675 KiB took 1.002 seconds, 1671.657 KiB/s Cycles per byte = 139.04
+W (288757) wolfssl_benchmark: NO current_time() reset!
+I (288762) wolfssl_benchmark: bench_stats_start total_cycles = 238489379, start=288.353000
+W (289775) wolfssl_benchmark: last_tickCount unchanged? 289366
+AES-256-CBC-dec           1675 KiB took 1.013 seconds, 1653.504 KiB/s Cycles per byte = 140.53
+W (289780) wolfssl_benchmark: NO current_time() reset!
+I (289785) wolfssl_benchmark: bench_stats_start total_cycles = 241036445, start=289.376000
+W (290822) wolfssl_benchmark: last_tickCount unchanged? 290413
+AES-128-GCM-enc            350 KiB took 1.037 seconds,  337.512 KiB/s Cycles per byte = 688.44
+W (290826) wolfssl_benchmark: NO current_time() reset!
+I (290832) wolfssl_benchmark: bench_stats_start total_cycles = 246737774, start=290.423000
+W (291870) wolfssl_benchmark: last_tickCount unchanged? 291461
+AES-128-GCM-dec            350 KiB took 1.038 seconds,  337.187 KiB/s Cycles per byte = 688.89
+W (291874) wolfssl_benchmark: NO current_time() reset!
+I (291879) wolfssl_benchmark: bench_stats_start total_cycles = 246896426, start=291.470000
+W (292941) wolfssl_benchmark: last_tickCount unchanged? 292532
+AES-192-GCM-enc            350 KiB took 1.062 seconds,  329.567 KiB/s Cycles per byte = 705.10
+W (292946) wolfssl_benchmark: NO current_time() reset!
+I (292951) wolfssl_benchmark: bench_stats_start total_cycles = 252707039, start=292.542000
+W (294014) wolfssl_benchmark: last_tickCount unchanged? 293605
+AES-192-GCM-dec            350 KiB took 1.063 seconds,  329.257 KiB/s Cycles per byte = 705.64
+W (294018) wolfssl_benchmark: NO current_time() reset!
+I (294023) wolfssl_benchmark: bench_stats_start total_cycles = 252899888, start=293.614000
+W (295033) wolfssl_benchmark: last_tickCount unchanged? 294624
+AES-256-GCM-enc            325 KiB took 1.010 seconds,  321.782 KiB/s Cycles per byte = 721.42
+W (295037) wolfssl_benchmark: NO current_time() reset!
+I (295042) wolfssl_benchmark: bench_stats_start total_cycles = 240089432, start=294.633000
+W (296053) wolfssl_benchmark: last_tickCount unchanged? 295644
+AES-256-GCM-dec            325 KiB took 1.011 seconds,  321.464 KiB/s Cycles per byte = 721.96
+W (296057) wolfssl_benchmark: NO current_time() reset!
+I (296062) wolfssl_benchmark: bench_stats_start total_cycles = 240268352, start=295.653000
+W (297063) wolfssl_benchmark: last_tickCount unchanged? 296654
+GMAC Default               411 KiB took 1.001 seconds,  410.589 KiB/s Cycles per byte = 565.64
+W (297068) wolfssl_benchmark: NO current_time() reset!
+I (297073) wolfssl_benchmark: bench_stats_start total_cycles = 238058021, start=296.664000
+W (298083) wolfssl_benchmark: last_tickCount unchanged? 297674
+3DES                       450 KiB took 1.010 seconds,  445.545 KiB/s Cycles per byte = 521.66
+W (298087) wolfssl_benchmark: NO current_time() reset!
+I (298093) wolfssl_benchmark: bench_stats_start total_cycles = 240380183, start=297.684000
+W (299093) wolfssl_benchmark: last_tickCount unchanged? 298684
+MD5                      13650 KiB took 1.000 seconds, 13650.000 KiB/s Cycles per byte =  17.02
+W (299097) wolfssl_benchmark: NO current_time() reset!
+I (299103) wolfssl_benchmark: bench_stats_start total_cycles = 237928754, start=298.694000
+W (300103) wolfssl_benchmark: last_tickCount unchanged? 299694
+SHA                       5850 KiB took 1.000 seconds, 5850.000 KiB/s Cycles per byte =  39.71
+W (300107) wolfssl_benchmark: NO current_time() reset!
+I (300113) wolfssl_benchmark: bench_stats_start total_cycles = 237902129, start=299.704000
+W (301128) wolfssl_benchmark: last_tickCount unchanged? 300719
+SHA-224                   1375 KiB took 1.015 seconds, 1354.680 KiB/s Cycles per byte = 171.44
+W (301132) wolfssl_benchmark: NO current_time() reset!
+I (301137) wolfssl_benchmark: bench_stats_start total_cycles = 241393634, start=300.728000
+W (302152) wolfssl_benchmark: last_tickCount unchanged? 301743
+SHA-256                   1375 KiB took 1.015 seconds, 1354.680 KiB/s Cycles per byte = 171.44
+W (302156) wolfssl_benchmark: NO current_time() reset!
+I (302162) wolfssl_benchmark: bench_stats_start total_cycles = 241389425, start=301.753000
+W (303181) wolfssl_benchmark: last_tickCount unchanged? 302772
+SHA-384                   1175 KiB took 1.019 seconds, 1153.091 KiB/s Cycles per byte = 201.47
+W (303185) wolfssl_benchmark: NO current_time() reset!
+I (303191) wolfssl_benchmark: bench_stats_start total_cycles = 242406659, start=302.782000
+W (304209) wolfssl_benchmark: last_tickCount unchanged? 303800
+SHA-512                   1175 KiB took 1.018 seconds, 1154.224 KiB/s Cycles per byte = 201.26
+W (304213) wolfssl_benchmark: NO current_time() reset!
+I (304218) wolfssl_benchmark: bench_stats_start total_cycles = 242157188, start=303.809000
+W (304227) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 407913, adding UINT_MAX.
+W (305225) wolfssl_benchmark: last_tickCount unchanged? 304816
+SHA-512/224               1150 KiB took 1.007 seconds, 1142.006 KiB/s Cycles per byte = 201.33
+W (305229) wolfssl_benchmark: NO current_time() reset!
+I (305235) wolfssl_benchmark: bench_stats_start total_cycles = 237091115, start=304.826000
+W (306253) wolfssl_benchmark: last_tickCount unchanged? 305844
+SHA-512/256               1175 KiB took 1.018 seconds, 1154.224 KiB/s Cycles per byte = 201.33
+W (306257) wolfssl_benchmark: NO current_time() reset!
+I (306263) wolfssl_benchmark: bench_stats_start total_cycles = 242244206, start=305.854000
+W (307274) wolfssl_benchmark: last_tickCount unchanged? 306865
+SHA3-224                  1125 KiB took 1.011 seconds, 1112.760 KiB/s Cycles per byte = 208.68
+W (307277) wolfssl_benchmark: NO current_time() reset!
+I (307283) wolfssl_benchmark: bench_stats_start total_cycles = 240397547, start=306.874000
+W (308306) wolfssl_benchmark: last_tickCount unchanged? 307897
+SHA3-256                  1075 KiB took 1.023 seconds, 1050.831 KiB/s Cycles per byte = 220.96
+W (308310) wolfssl_benchmark: NO current_time() reset!
+I (308315) wolfssl_benchmark: bench_stats_start total_cycles = 243229271, start=307.906000
+W (309332) wolfssl_benchmark: last_tickCount unchanged? 308923
+SHA3-384                   825 KiB took 1.017 seconds,  811.209 KiB/s Cycles per byte = 286.17
+W (309335) wolfssl_benchmark: NO current_time() reset!
+I (309341) wolfssl_benchmark: bench_stats_start total_cycles = 241757111, start=308.932000
+W (310353) wolfssl_benchmark: last_tickCount unchanged? 309944
+SHA3-512                   575 KiB took 1.012 seconds,  568.182 KiB/s Cycles per byte = 408.82
+W (310357) wolfssl_benchmark: NO current_time() reset!
+I (310363) wolfssl_benchmark: bench_stats_start total_cycles = 240712007, start=309.954000
+W (311373) wolfssl_benchmark: last_tickCount unchanged? 310964
+SHAKE128                  1300 KiB took 1.010 seconds, 1287.129 KiB/s Cycles per byte = 180.43
+W (311377) wolfssl_benchmark: NO current_time() reset!
+I (311382) wolfssl_benchmark: bench_stats_start total_cycles = 240191846, start=310.973000
+W (312404) wolfssl_benchmark: last_tickCount unchanged? 311995
+SHAKE256                  1075 KiB took 1.022 seconds, 1051.859 KiB/s Cycles per byte = 220.91
+W (312408) wolfssl_benchmark: NO current_time() reset!
+I (312414) wolfssl_benchmark: bench_stats_start total_cycles = 243173594, start=312.005000
+W (313414) wolfssl_benchmark: last_tickCount unchanged? 313005
+RIPEMD                    6025 KiB took 1.000 seconds, 6025.000 KiB/s Cycles per byte =  38.57
+W (313419) wolfssl_benchmark: NO current_time() reset!
+I (313424) wolfssl_benchmark: bench_stats_start total_cycles = 237937685, start=313.015000
+W (314425) wolfssl_benchmark: last_tickCount unchanged? 314016
+HMAC-MD5                 13500 KiB took 1.001 seconds, 13486.513 KiB/s Cycles per byte =  17.22
+W (314429) wolfssl_benchmark: NO current_time() reset!
+I (314435) wolfssl_benchmark: bench_stats_start total_cycles = 238112114, start=314.026000
+W (315436) wolfssl_benchmark: last_tickCount unchanged? 315027
+HMAC-SHA                  5800 KiB took 1.001 seconds, 5794.206 KiB/s Cycles per byte =  40.10
+W (315440) wolfssl_benchmark: NO current_time() reset!
+I (315446) wolfssl_benchmark: bench_stats_start total_cycles = 238134981, start=315.037000
+W (316451) wolfssl_benchmark: last_tickCount unchanged? 316042
+HMAC-SHA224               1350 KiB took 1.005 seconds, 1343.284 KiB/s Cycles per byte = 172.88
+W (316455) wolfssl_benchmark: NO current_time() reset!
+I (316460) wolfssl_benchmark: bench_stats_start total_cycles = 238994495, start=316.051000
+W (317465) wolfssl_benchmark: last_tickCount unchanged? 317056
+HMAC-SHA256               1350 KiB took 1.005 seconds, 1343.284 KiB/s Cycles per byte = 172.87
+W (317469) wolfssl_benchmark: NO current_time() reset!
+I (317475) wolfssl_benchmark: bench_stats_start total_cycles = 238975850, start=317.066000
+W (318488) wolfssl_benchmark: last_tickCount unchanged? 318079
+HMAC-SHA384               1150 KiB took 1.013 seconds, 1135.242 KiB/s Cycles per byte = 204.63
+W (318492) wolfssl_benchmark: NO current_time() reset!
+I (318498) wolfssl_benchmark: bench_stats_start total_cycles = 240968630, start=318.089000
+W (319510) wolfssl_benchmark: last_tickCount unchanged? 319101
+HMAC-SHA512               1150 KiB took 1.012 seconds, 1136.364 KiB/s Cycles per byte = 204.44
+W (319514) wolfssl_benchmark: NO current_time() reset!
+I (319519) wolfssl_benchmark: bench_stats_start total_cycles = 240749351, start=319.110000
+W (320678) wolfssl_benchmark: last_tickCount unchanged? 320269
+PBKDF2                       0 KiB took 1.159 seconds,    0.162 KiB/s Cycles per byte = 1437383.85
+I (320683) wolfssl_benchmark: bench_rsaKeyGen_helper k = 0
+W (320689) wolfssl_benchmark: NO current_time() reset!
+I (320695) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=320.286000
+I (320704) wolfssl_benchmark: wc_MakeRsaKey start
+I (326508) wolfssl_benchmark: wc_MakeRsaKey finish
+I (326509) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+RSA     1024  key gen         1 ops took 5.815 sec, avg 5815.000 ms, 0.172 ops/sec
+I (326517) wolfssl_benchmark: bench_rsaKeyGen_helper k = 1
+W (326523) wolfssl_benchmark: NO current_time() reset!
+I (326529) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=326.120000
+W (326538) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 1059895942, adding UINT_MAX.
+I (326548) wolfssl_benchmark: wc_MakeRsaKey start
+I (364090) wolfssl_benchmark: wc_MakeRsaKey finish
+I (364090) wolfssl_benchmark: bench_rsaKeyGen_helper: count = 1
+W (364091) wolfssl_benchmark: last_tickCount unchanged? 363682
+RSA     2048  key gen         1 ops took 37.562 sec, avg 37562.000 ms, 0.027 ops/sec
+W (364106) wolfssl_benchmark: NO current_time() reset!
+I (364111) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=363.702000
+W (365123) wolfssl_benchmark: last_tickCount unchanged? 364714
+RSA     2048   public        48 ops took 1.012 sec, avg 21.083 ms, 47.431 ops/sec
+W (365125) wolfssl_benchmark: NO current_time() reset!
+I (365131) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=364.722000
+RSA     2048  private         2 ops took 8.193 sec, avg 4096.500 ms, 0.244 ops/sec
+W (373325) wolfssl_benchmark: NO current_time() reset!
+I (373326) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=372.917000
+W (374498) wolfssl_benchmark: last_tickCount unchanged? 374089
+ECC   [      SECP256R1]   256  key gen         4 ops took 1.172 sec, avg 293.000 ms, 3.413 ops/sec
+W (375084) wolfssl_benchmark: NO current_time() reset!
+I (375084) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=374.675000
+W (376249) wolfssl_benchmark: last_tickCount unchanged? 375840
+ECDHE [      SECP256R1]   256    agree         4 ops took 1.165 sec, avg 291.250 ms, 3.433 ops/sec
+W (376253) wolfssl_benchmark: NO current_time() reset!
+I (376259) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=375.850000
+W (376268) wolfssl_benchmark: Alert: Detected xthal_get_ccount overflow at 110315759, adding UINT_MAX.
+ECDSA [      SECP256R1]   256     sign         4 ops took 1.192 sec, avg 298.000 ms, 3.356 ops/sec
+W (377452) wolfssl_benchmark: NO current_time() reset!
+I (377455) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=377.046000
+W (378582) wolfssl_benchmark: last_tickCount unchanged? 378173
+ECDSA [      SECP256R1]   256   verify         2 ops took 1.127 sec, avg 563.500 ms, 1.775 ops/sec
+W (378586) wolfssl_benchmark: NO current_time() reset!
+I (378592) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=378.183000
+W (379788) wolfssl_benchmark: last_tickCount unchanged? 379379
+CURVE  25519  key gen         3 ops took 1.196 sec, avg 398.667 ms, 2.508 ops/sec
+W (380581) wolfssl_benchmark: NO current_time() reset!
+I (380582) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=380.173000
+W (382164) wolfssl_benchmark: last_tickCount unchanged? 381755
+CURVE  25519    agree         4 ops took 1.582 sec, avg 395.500 ms, 2.528 ops/sec
+W (382166) wolfssl_benchmark: NO current_time() reset!
+I (382172) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=381.763000
+W (383195) wolfssl_benchmark: last_tickCount unchanged? 382786
+ED     25519  key gen        43 ops took 1.023 sec, avg 23.791 ms, 42.033 ops/sec
+W (383222) wolfssl_benchmark: NO current_time() reset!
+I (383223) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=382.814000
+ED     25519     sign        38 ops took 1.037 sec, avg 27.289 ms, 36.644 ops/sec
+W (384261) wolfssl_benchmark: NO current_time() reset!
+I (384263) wolfssl_benchmark: bench_stats_start total_cycles = 275977700, start=383.854000
+W (385308) wolfssl_benchmark: last_tickCount unchanged? 384899
+ED     25519   verify        26 ops took 1.045 sec, avg 40.192 ms, 24.880 ops/sec
 Benchmark complete
-I (443137) wolfssl_benchmark: Stack HWM: 52572
+I (385313) wolfssl_benchmark: Stack HWM: 52576
 
-I (443142) wolfssl_benchmark: 
+I (385319) wolfssl_benchmark: 
 
 Done!
 
