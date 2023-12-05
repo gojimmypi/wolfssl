@@ -32,7 +32,8 @@
 #include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/types.h>
 #ifndef WOLFSSL_ESPIDF
-    #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
+    #warning "Problem with wolfSSL user_settings."
+    #warning "Check components/wolfssl/include"
 #endif
 
 #if ESP_IDF_VERSION_MAJOR >= 5

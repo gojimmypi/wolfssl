@@ -84,17 +84,10 @@ git submodule update --init --recursive
 
 cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 
+# Pick ESP-IDF install directory, this one for v5.0 in VisualGDB
+. /mnt/c/SysGCC/esp32/esp-idf/v5.0/export.sh
 
-# Pick ESP-IDF install directory, these examples for VisualGDB from WSL
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
-
-. $WRK_IDF_PATH/export.sh
-idf.py set-target esp32c3
-
-# Optionally erase flash
-idf.py erase-flash -p /dev/ttyS44 -b 115200
-
+idf.py set-target ESP32C3
 
 idf.py build flash -p /dev/ttyS20 -b 115200 monitor
 ```

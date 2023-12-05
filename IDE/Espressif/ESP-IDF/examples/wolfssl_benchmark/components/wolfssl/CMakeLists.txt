@@ -292,6 +292,8 @@ else()
 
     # wolfSSL user_settings.h is in the local project.
     set(WOLFSSL_PROJECT_DIR "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
+    add_definitions(-DWOLFSSL_USER_SETTINGS_DIR="${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
+
 
     string(REPLACE "/" "//" STR_WOLFSSL_PROJECT_DIR "${WOLFSSL_PROJECT_DIR}")
     add_definitions(-DWOLFSSL_USER_SETTINGS_DIR="${STR_WOLFSSL_PROJECT_DIR}//include//user_settings.h")

@@ -31,7 +31,8 @@
 #include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/types.h>
 #ifndef WOLFSSL_ESPIDF
-    #warning "problem with wolfSSL user_settings. Check components/wolfssl/include"
+    #warning "Problem with wolfSSL user_settings."
+    #warning "Check components/wolfssl/include"
 #endif
 
 #if ESP_IDF_VERSION_MAJOR >= 5
@@ -134,7 +135,6 @@ static EventGroupHandle_t s_wifi_event_group;
 
 static int s_retry_num = 0;
 ip_event_got_ip_t* event;
-
 
 static void event_handler(void* arg,
                           esp_event_base_t event_base,

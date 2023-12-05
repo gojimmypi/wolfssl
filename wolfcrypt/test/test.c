@@ -22991,15 +22991,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
     wc_Sha sha;
     byte   hash[WC_SHA_DIGEST_SIZE];
     byte   signature[40];
+#if (defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)) || \
+    defined(WOLFSSL_KEY_GEN)
+    int key_inited = 0;
+#endif
 #ifdef WOLFSSL_KEY_GEN
     byte*  der = 0;
-#endif
-#define DSA_TEST_TMP_SIZE 1024
-    int key_inited = 0;
     int derIn_inited = 0;
-#ifdef WOLFSSL_KEY_GEN
     int genKey_inited = 0;
 #endif
+#define DSA_TEST_TMP_SIZE 1024
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     byte   *tmp = (byte *)XMALLOC(DSA_TEST_TMP_SIZE, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     DsaKey *key = (DsaKey *)XMALLOC(sizeof *key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -23056,7 +23057,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
     ret = wc_InitDsaKey(key);
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+#if (defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)) || \
+    defined(WOLFSSL_KEY_GEN)
     key_inited = 1;
+#endif
 
     ret = wc_DsaPrivateKeyDecode(tmp, &idx, key, bytes);
     if (ret != 0)
@@ -23082,12 +23086,18 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
 
     wc_FreeDsaKey(key);
+#if (defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)) || \
+    defined(WOLFSSL_KEY_GEN)
     key_inited = 0;
+#endif
 
     ret = wc_InitDsaKey_h(key, NULL);
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+#if (defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)) || \
+    defined(WOLFSSL_KEY_GEN)
     key_inited = 1;
+#endif
 
 #ifdef WOLFSSL_KEY_GEN
     {
@@ -32303,6 +32313,58 @@ static wc_test_ret_t ecc_test_nonblock(WC_RNG* rng)
 }
 #endif /* WC_ECC_NONBLOCK && WOLFSSL_HAVE_SP_ECC && WOLFSSL_PUBLIC_MP */
 
+#if !defined(NO_ASN) && !defined(HAVE_SELFTEST) && \
+    (!defined(HAVE_FIPS) || (defined(HAVE_FIPS_VERSION) && \
+    (HAVE_FIPS_VERSION > 2)))
+static int ecc_test_raw_enc_dec(void)
+{
+    int ret;
+    unsigned char r[1];
+    word32 rSz;
+    unsigned char s[1];
+    word32 sSz;
+    unsigned char rZero[] = { 0, 0, 0, 0 };
+    unsigned char sOne[] = { 0, 0, 1 };
+    unsigned char sigRaw[32];
+    word32 sigRawSz;
+    unsigned char expSig[] = { 0x30, 0x06, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01 };
+
+    sigRawSz = sizeof(sigRaw);
+    ret = wc_ecc_rs_raw_to_sig(rZero, sizeof(rZero), sOne, sizeof(sOne),
+        sigRaw, &sigRawSz);
+    if (ret != 0) {
+        return WC_TEST_RET_ENC_EC(ret);
+    }
+    if (sigRawSz != sizeof(expSig)) {
+        return WC_TEST_RET_ENC_EC((int)sigRawSz);
+    }
+    if (XMEMCMP(sigRaw, expSig, sizeof(expSig)) != 0) {
+        return WC_TEST_RET_ENC_NC;
+    }
+
+    rSz = sizeof(r);
+    sSz = sizeof(s);
+    ret = wc_ecc_sig_to_rs(sigRaw, sigRawSz, r, &rSz, s, &sSz);
+    if (ret != 0) {
+        return WC_TEST_RET_ENC_EC(ret);
+    }
+    if (rSz != 1) {
+        return WC_TEST_RET_ENC_EC((int)rSz);
+    }
+    if (sSz != 1) {
+        return WC_TEST_RET_ENC_EC((int)sSz);
+    }
+    if (r[0] != 0) {
+        return WC_TEST_RET_ENC_EC(r[0]);
+    }
+    if (s[0] != 1) {
+        return WC_TEST_RET_ENC_EC(s[0]);
+    }
+
+    return ret;
+}
+#endif
+
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
 {
     wc_test_ret_t ret;
@@ -32436,6 +32498,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
     ret = ecc_test_curve(&rng, 32, ECC_SM2P256V1);
     if (ret < 0) {
         printf("SM2\n");
+        goto done;
+    }
+#endif
+
+#if !defined(NO_ASN) && !defined(HAVE_SELFTEST) && \
+    (!defined(HAVE_FIPS) || (defined(HAVE_FIPS_VERSION) && \
+    (HAVE_FIPS_VERSION > 2)))
+    ret = ecc_test_raw_enc_dec();
+    if (ret != 0) {
+        printf("raw sig encode/decode\n");
         goto done;
     }
 #endif
