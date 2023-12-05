@@ -1,4 +1,4 @@
-/* server-tls.h
+/* client-tls.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
