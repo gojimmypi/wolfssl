@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{28AF9FD0-7AA4-4673-B1AF-2A7D13B80A6E}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{CF2533E1-E04D-4370-A0D5-30CAAB2CED8F}"

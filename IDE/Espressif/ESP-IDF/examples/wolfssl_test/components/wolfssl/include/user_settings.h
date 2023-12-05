@@ -92,14 +92,15 @@
 /* when you want to use SHA3 */
 #define WOLFSSL_SHA3
 
-#define HAVE_ED25519 /* ED25519 requires SHA512 */
+ /* ED25519 requires SHA512 */
+#define HAVE_ED25519
 
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 #define HAVE_ED25519
 
- #define OPENSSL_EXTRA
+#define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 
@@ -159,7 +160,8 @@
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
-#define HASH_SIZE_LIMIT /* for test.c */
+/* hash limit for test.c */
+#define HASH_SIZE_LIMIT
 
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
@@ -168,6 +170,7 @@
 /* #undef USE_FAST_MATH          */
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
+/* #define WOLFSSL_SP_RISCV32    */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
@@ -362,12 +365,16 @@
 #define ESP_DISABLE_HW_TASK_LOCK
 */
 
-#define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
+/* Pause in a loop rather than exit. */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE
+
 #define WOLFSSL_HW_METRICS
 
-/* #define HASH_SIZE_LIMIT */ /* for test.c */
+/* for test.c */
+/* #define HASH_SIZE_LIMIT */
 
-/* #define NO_HW_MATH_TEST */ /* Optionall turn off HW math checks */
+/* Optionally turn off HW math checks */
+/* #define NO_HW_MATH_TEST */
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -388,7 +395,6 @@
 /* Turn off Large Number ESP32 HW Modular Multiplication
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
-
 
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
@@ -433,3 +439,12 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+/* See settings.h for some of the possible hardening options:
+ *
+ *  #define NO_ESPIDF_DEFAULT
+ *  #define WC_NO_CACHE_RESISTANT
+ *  #define WC_AES_BITSLICED
+ *  #define HAVE_AES_ECB
+ *  #define HAVE_AES_DIRECT
+ */

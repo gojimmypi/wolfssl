@@ -196,22 +196,8 @@ int construct_argv()
 void app_main(void)
 {
     int stack_start = 0;
-#ifdef ENABLED_AESBS
-#endif
-#if defined(WOLFSSL_CMAKE_SYSTEM_NAME_LINUX)
-    ESP_LOGI(TAG, "main found WOLFSSL_CMAKE_SYSTEM_NAME_LINUX");
-#endif
-#if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
-    ESP_LOGI(TAG, "main found WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS");
-#endif
-#if defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
-    ESP_LOGI(TAG, "main found WOLFSSL_CMAKE_SYSTEM_NAME_APPLE");
-#endif
-#if defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
-    ESP_LOGI(TAG, "main found WOLFSSL_CMAKE_SYSTEM_NAME_WSL");
-#endif
 
-    ESP_LOGI(TAG, "---------------- wolfSSL Benchmark Example ------------");
+    ESP_LOGI(TAG, "---------------- wolfSSL Benchmark Example -------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
@@ -251,10 +237,11 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         wolf_benchmark_task();
-//        ESP_LOGI(TAG, "Stack used: %d\n", stack_start - uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Stack used: %d\n",
+                      stack_start - uxTaskGetStackHighWaterMark(NULL));
 
         #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
- //           esp_hw_show_metrics();
+            esp_hw_show_metrics();
         #endif
     } while (BENCHMARK_LOOP);
     /* Reminder: wolfCrypt_Cleanup should always be called at completion,
