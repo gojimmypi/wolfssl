@@ -392,7 +392,6 @@
         #define WC_NO_CACHE_RESISTANT
     #endif /* !WOLFSSL_ESPIDF_NO_DEFAULT */
 
-
 #if defined(WOLFSSL_ESPWROOM32)
     /* WOLFSSL_ESPWROOM32 is a legacy macro gate.
     ** Not be be confused with WOLFSSL_ESPWROOM32SE, naming a specific board */
