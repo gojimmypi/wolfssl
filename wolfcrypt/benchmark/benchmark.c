@@ -56,35 +56,6 @@
     #include <config.h>
 #endif
 
-
-/* Some common, optional user settings                           */
-/* these can also be set in wolfssl/options.h or user_settings.h */
-/* ------------------------------------------------------------- */
-/* make the binary always use CSV format:                        */
-/* #define WOLFSSL_BENCHMARK_FIXED_CSV                           */
-/*                                                               */
-/* choose to use the same units, regardless of scale. pick 1:    */
-/* #define WOLFSSL_BENCHMARK_FIXED_UNITS_GB                      */
-/* #define WOLFSSL_BENCHMARK_FIXED_UNITS_MB                      */
-/* #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB                      */
-/* #define WOLFSSL_BENCHMARK_FIXED_UNITS_B                       */
-/*                                                               */
-/* when the output should be in machine-parseable format:        */
-/* #define GENERATE_MACHINE_PARSEABLE_REPORT                     */
-/*                                                               */
-
-/* define the max length for each string of metric reported */
-#define __BENCHMARK_MAXIMUM_LINE_LENGTH 150
-
-/* some internal helpers to get values of settings   */
-/* this first one gets the text name of the #define parameter */
-#define __BENCHMARK_VALUE_TO_STRING(x) #x
-
-/* this next one gets the text value of the assigned value of #define param */
-#define __BENCHMARK_VALUE(x) __BENCHMARK_VALUE_TO_STRING(x)
-
-#define WOLFSSL_FIXED_UNITS_PER_SEC "MB/s" /* may be re-set by fixed units */
-
 #ifndef WOLFSSL_USER_SETTINGS
     #include <wolfssl/options.h>
 #endif
@@ -1277,17 +1248,18 @@ static const char* bench_result_words3[][5] = {
 
     /* The ESP32 (both Xtensa and RISC-V have raw CPU counters). */
     #define HAVE_GET_CYCLES
-    #define INIT_CYCLE_COUNTER do {                        \
-                                  esp_cpu_set_cycle_count(0); \
+    #define INIT_CYCLE_COUNTER do {                                    \
+                                  ESP_LOGV(TAG, "INIT_CYCLE_COUNTER"); \
+                                  esp_cpu_set_cycle_count(0);          \
                                } while (0) ;
 
     /* esp_get_cpu_benchmark_cycles:
+     *
      *   Architecture-independant CPU clock counter.
      *   WARNING: the hal UINT xthal_get_ccount() quietly rolls over. */
     static WC_INLINE word64 esp_get_cpu_benchmark_cycles(void);
 
     #define BEGIN_ESP_CYCLES begin_cycles = (esp_get_cpu_benchmark_cycles());
-
 
     /* since it rolls over, we have something that will tolerate one */
     #define END_ESP_CYCLES                                          \
@@ -1326,7 +1298,10 @@ static const char* bench_result_words3[][5] = {
         uint64_t thisVal = 0; /* CPU counter, "this current value" as read. */
 
         /* the currently observed clock counter value */
-    #if  defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        defined(CONFIG_IDF_TARGET_ESP32C6)
 
         #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
             uint64_t thisTimerVal = 0; /* Timer Value as alternate to compare */
@@ -1341,8 +1316,14 @@ static const char* bench_result_words3[][5] = {
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         thisVal = esp_cpu_get_cycle_count();
     #else
-        /* reminder unsupported CONFIG_IDF_TARGET captured above */
-        thisVal = esp_cpu_get_cycle_count(); /* xthal_get_ccount(); */
+        /* TODO: Why doesn't esp_cpu_get_cycle_count work for Xtensa?
+         * Calling current_time(1) to reset time causes thisVal overflow,
+         * on Xtensa, but not on RISC-V architecture. See also, below */
+        #ifndef __XTENSA__
+            thisVal = esp_cpu_get_cycle_count();
+        #else
+            thisVal = esp_cpu_get_cycle_count(); // xthal_get_ccount();
+        #endif
     #endif
         /* if the current value is less than the previous value,
         ** we likely overflowed at least once.
@@ -1361,8 +1342,8 @@ static const char* bench_result_words3[][5] = {
             ** as well call xthal_get_ccount_ex() with no more than one
             ** overflow CPU tick count, all will be well.
             */
-            ESP_LOGW(TAG, "Alert: Detected xthal_get_ccount overflow, "
-                          "adding %ull", UINT_MAX);
+            ESP_LOGW(TAG, "Alert: Detected xthal_get_ccount overflow, %llu, "
+                          "adding UINT_MAX.", thisVal);
             thisVal += (word64)UINT_MAX; /* add 32 bit max to our 64 bit val */
         }
 
@@ -1406,7 +1387,9 @@ static const char* bench_result_words3[][5] = {
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         _esp_cpu_count_last = esp_cpu_get_cycle_count();
     #else
-         _esp_cpu_count_last = xthal_get_ccount();
+        /* TODO: Why doesn't esp_cpu_get_cycle_count work for Xtensa?
+         * thisVal = esp_cpu_get_cycle_count(); See also, above */
+        _esp_cpu_count_last = esp_cpu_get_cycle_count(); // xthal_get_ccount();
     #endif
         return _esp_get_cycle_count_ex; /* returns the */
     }
@@ -2021,7 +2004,7 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
     *start = current_time(1);
 
 #ifdef WOLFSSL_ESPIDF
-    ESP_LOGV(TAG, "finish total_cycles = %llu, start=" FLT_FMT,
+    ESP_LOGI(TAG, "bench_stats_start total_cycles = %llu, start=" FLT_FMT,
                    total_cycles, FLT_FMT_ARGS(*start) );
 
     BEGIN_ESP_CYCLES
@@ -2902,6 +2885,98 @@ static void* benchmarks_do(void* args)
     bench_iv = (byte*)bench_iv_buf;
 #endif
 
+/*
+#ifndef NO_RSA
+#ifndef HAVE_RENESAS_SYNC
+    #ifdef WOLFSSL_KEY_GEN
+        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
+        #ifndef NO_SW_BENCH
+            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
+                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
+                bench_rsaKeyGen(0);
+            }
+            else {
+                bench_rsaKeyGen_size(0, bench_size);
+            }
+        #endif
+        #ifdef BENCH_DEVID
+            if (bench_asym_algs & BENCH_RSA_SZ) {
+                bench_rsaKeyGen_size(1, bench_size);
+            }
+            else {
+                bench_rsaKeyGen(1);
+            }
+        #endif
+        }
+    #endif
+    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
+    #ifndef NO_SW_BENCH
+        bench_rsa(0);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa(1);
+    #endif
+    }
+
+    #ifdef WOLFSSL_KEY_GEN
+    if (bench_asym_algs & BENCH_RSA_SZ) {
+    #ifndef NO_SW_BENCH
+        bench_rsa_key(0, bench_size);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa_key(1, bench_size);
+    #endif
+    }
+    #endif
+#endif
+#endif
+
+#ifndef NO_RSA
+#ifndef HAVE_RENESAS_SYNC
+    #ifdef WOLFSSL_KEY_GEN
+        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
+        #ifndef NO_SW_BENCH
+            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
+                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
+                bench_rsaKeyGen(0);
+            }
+            else {
+                bench_rsaKeyGen_size(0, bench_size);
+            }
+        #endif
+        #ifdef BENCH_DEVID
+            if (bench_asym_algs & BENCH_RSA_SZ) {
+                bench_rsaKeyGen_size(1, bench_size);
+            }
+            else {
+                bench_rsaKeyGen(1);
+            }
+        #endif
+        }
+    #endif
+    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
+    #ifndef NO_SW_BENCH
+        bench_rsa(0);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa(1);
+    #endif
+    }
+
+    #ifdef WOLFSSL_KEY_GEN
+    if (bench_asym_algs & BENCH_RSA_SZ) {
+    #ifndef NO_SW_BENCH
+        bench_rsa_key(0, bench_size);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa_key(1, bench_size);
+    #endif
+    }
+    #endif
+#endif
+#endif
+*/
+    
 #ifndef WC_NO_RNG
     if (bench_all || (bench_other_algs & BENCH_RNG))
         bench_rng();
@@ -3624,8 +3699,8 @@ int benchmark_init(void)
     wolfSSL_Debugging_ON();
 #endif
 
-//    printf("%swolfCrypt Benchmark (block bytes %d, min " FLT_FMT_PREC " sec each)\n",
-//           info_prefix, (int)bench_size, FLT_FMT_PREC_ARGS(1, BENCH_MIN_RUNTIME_SEC));
+    printf("%swolfCrypt Benchmark (block bytes %d, min " FLT_FMT_PREC " sec each)\n",
+           info_prefix, (int)bench_size, FLT_FMT_PREC_ARGS(1, BENCH_MIN_RUNTIME_SEC));
 
 #ifndef GENERATE_MACHINE_PARSEABLE_REPORT
     if (csv_format == 1) {
@@ -8010,6 +8085,7 @@ static void bench_rsaKeyGen_helper(int useDeviceID, word32 keySz)
             RECORD_MULTI_VALUE_STATS();
         } /* for times */
         count += times;
+        ESP_LOGI(TAG, "bench_rsaKeyGen_helper: count = %d", count);
     } while (bench_stats_check(start)
 #ifdef MULTI_VALUE_STATISTICS
        || runs < minimum_runs
@@ -8043,6 +8119,7 @@ void bench_rsaKeyGen(int useDeviceID)
 #endif
 
     for (k = 0; k < (int)(sizeof(keySizes)/sizeof(int)); k++) {
+        ESP_LOGI(TAG, "bench_rsaKeyGen_helper k = %d", k);
         bench_rsaKeyGen_helper(useDeviceID, keySizes[k]);
     }
 }
@@ -12060,35 +12137,67 @@ void bench_sphincsKeySign(byte level, byte optim)
     /* prototype definition */
     int construct_argv();
     extern char* __argv[22];
+    static TickType_t last_tickCount = 0;
 #endif
+    /* Benchmark passage of time, in fractional seconds */
     double current_time(int reset)
     {
+        double ret;
     #if ESP_IDF_VERSION_MAJOR >= 4
-        TickType_t tickCount;
+        TickType_t tickCount; /* typically 32 bit */
     #else
         portTickType tickCount;
     #endif
 
-        (void) reset;
-        /* tick count == ms, if configTICK_RATE_HZ is set to 1000 */
-
-        tickCount = xTaskGetTickCount();
-
+    #if defined(__XTENSA__)
+        (void)reset;
         if (reset) {
-            esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
-            _esp_cpu_count_last = esp_cpu_get_cycle_count();;
-            ESP_LOGV(TAG, "current_time reset!");
+            ESP_LOGW(TAG, "current_time() reset!");
+            portTICK_TYPE_ENTER_CRITICAL();
+            {
+                esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+                _esp_cpu_count_last = esp_cpu_get_cycle_count();
+            }
+            portTICK_TYPE_EXIT_CRITICAL();
         }
+    #else
+        /* Only reset the CPU counter for RISC-V */
+        if (reset) {
+            ESP_LOGV(TAG, "current_time() reset!");
+            /* TODO: why does Espressif esp_cpu_get_cycle_count() cause
+             * unexpected rollovers in return values for Xtensa but not RISC-V?
+             * See also esp_get_cycle_count_ex() */
+            #ifdef __XTENSA__
+                _esp_cpu_count_last = xthal_get_ccount();
+            #else
+                esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+                _esp_cpu_count_last = esp_cpu_get_cycle_count();
+            #endif
+       }
+    #endif
 
-        #if defined(configTICK_RATE_HZ) && defined(CONFIG_FREERTOS_HZ)
-            return (double)tickCount / configTICK_RATE_HZ;
-        #else
-            ESP_LOGW(TAG, "Warning: configTICK_RATE_HZ not defined,"
-                          "assuming 1000 Hz.");
-            return (double)tickCount / 1000;
-        #endif /* configTICK_RATE_HZ */
+    /* tick count == ms, if configTICK_RATE_HZ is set to 1000 */
+    tickCount = xTaskGetTickCount(); /* RTOS ticks, not CPU cycles!
+    The count of ticks since vTaskStartScheduler was called, typiclly in app_startup.c */
+    ESP_LOGV(TAG, "tickCount = %lu", tickCount);
 
+    if (tickCount == last_tickCount) {
+        ESP_LOGW(TAG, "last_tickCount unchanged? %lu", tickCount);
 
+    }
+    if (tickCount < last_tickCount) {
+        ESP_LOGW(TAG, "last_tickCount overflow?");
+    }
+    last_tickCount = tickCount;
+
+    #if defined(configTICK_RATE_HZ) && defined(CONFIG_FREERTOS_HZ)
+        ret = (double)tickCount / configTICK_RATE_HZ;
+    #else
+        ESP_LOGW(TAG, "Warning: configTICK_RATE_HZ not defined,"
+                        "assuming 1000 Hz.");
+        ret = (double)(tickCount / 1000.0);
+    #endif /* configTICK_RATE_HZ */
+        return ret;
     }
 
 #elif defined (WOLFSSL_TIRTOS)
