@@ -281,7 +281,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
-     * Automatically defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
+     * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL

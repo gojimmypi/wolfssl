@@ -1322,7 +1322,7 @@ static const char* bench_result_words3[][5] = {
         #ifndef __XTENSA__
             thisVal = esp_cpu_get_cycle_count();
         #else
-            thisVal = esp_cpu_get_cycle_count(); // xthal_get_ccount();
+            thisVal = xthal_get_ccount(); /* or esp_cpu_get_cycle_count(); */
         #endif
     #endif
         /* if the current value is less than the previous value,
@@ -1342,7 +1342,7 @@ static const char* bench_result_words3[][5] = {
             ** as well call xthal_get_ccount_ex() with no more than one
             ** overflow CPU tick count, all will be well.
             */
-            ESP_LOGW(TAG, "Alert: Detected xthal_get_ccount overflow, %llu, "
+            ESP_LOGW(TAG, "Alert: Detected xthal_get_ccount overflow at %llu, "
                           "adding UINT_MAX.", thisVal);
             thisVal += (word64)UINT_MAX; /* add 32 bit max to our 64 bit val */
         }
@@ -1359,7 +1359,8 @@ static const char* bench_result_words3[][5] = {
             _esp_cpu_timer_diff      = esp_cycle_abs_diff(_esp_cpu_count_last, _esp_cpu_timer_last);
         #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
 
-        /* adjust our actual returned value that takes into account overflow */
+        /* Adjust our actual returned value that takes into account overflow,
+         * increment 64 bit extended total by this 32 bit differential: */
         _esp_get_cycle_count_ex += (thisVal - _esp_cpu_count_last);
         #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
             _xthal_get_ccount_exDiff = esp_cycle_abs_diff(_esp_get_cycle_count_ex, _xthal_get_ccount_exAlt);
@@ -1389,9 +1390,11 @@ static const char* bench_result_words3[][5] = {
     #else
         /* TODO: Why doesn't esp_cpu_get_cycle_count work for Xtensa?
          * thisVal = esp_cpu_get_cycle_count(); See also, above */
-        _esp_cpu_count_last = esp_cpu_get_cycle_count(); // xthal_get_ccount();
+        _esp_cpu_count_last = esp_cpu_get_cycle_count(); /* or xthal_get_ccount(); */
     #endif
-        return _esp_get_cycle_count_ex; /* returns the */
+
+        /* Return the 64 bit extended total from 32 bit counter. */
+        return _esp_get_cycle_count_ex;
     }
 
 /* implement other architecture cycle counters here */
@@ -2885,51 +2888,6 @@ static void* benchmarks_do(void* args)
     bench_iv = (byte*)bench_iv_buf;
 #endif
 
-/*
-#ifndef NO_RSA
-#ifndef HAVE_RENESAS_SYNC
-    #ifdef WOLFSSL_KEY_GEN
-        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
-        #ifndef NO_SW_BENCH
-            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
-                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
-                bench_rsaKeyGen(0);
-            }
-            else {
-                bench_rsaKeyGen_size(0, bench_size);
-            }
-        #endif
-        #ifdef BENCH_DEVID
-            if (bench_asym_algs & BENCH_RSA_SZ) {
-                bench_rsaKeyGen_size(1, bench_size);
-            }
-            else {
-                bench_rsaKeyGen(1);
-            }
-        #endif
-        }
-    #endif
-    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
-    #ifndef NO_SW_BENCH
-        bench_rsa(0);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa(1);
-    #endif
-    }
-
-    #ifdef WOLFSSL_KEY_GEN
-    if (bench_asym_algs & BENCH_RSA_SZ) {
-    #ifndef NO_SW_BENCH
-        bench_rsa_key(0, bench_size);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa_key(1, bench_size);
-    #endif
-    }
-    #endif
-#endif
-#endif
 
 #ifndef NO_RSA
 #ifndef HAVE_RENESAS_SYNC
@@ -2975,8 +2933,53 @@ static void* benchmarks_do(void* args)
     #endif
 #endif
 #endif
-*/
-    
+
+#ifndef NO_RSA
+#ifndef HAVE_RENESAS_SYNC
+    #ifdef WOLFSSL_KEY_GEN
+        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
+        #ifndef NO_SW_BENCH
+            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
+                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
+                bench_rsaKeyGen(0);
+            }
+            else {
+                bench_rsaKeyGen_size(0, bench_size);
+            }
+        #endif
+        #ifdef BENCH_DEVID
+            if (bench_asym_algs & BENCH_RSA_SZ) {
+                bench_rsaKeyGen_size(1, bench_size);
+            }
+            else {
+                bench_rsaKeyGen(1);
+            }
+        #endif
+        }
+    #endif
+    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
+    #ifndef NO_SW_BENCH
+        bench_rsa(0);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa(1);
+    #endif
+    }
+
+    #ifdef WOLFSSL_KEY_GEN
+    if (bench_asym_algs & BENCH_RSA_SZ) {
+    #ifndef NO_SW_BENCH
+        bench_rsa_key(0, bench_size);
+    #endif
+    #ifdef BENCH_DEVID
+        bench_rsa_key(1, bench_size);
+    #endif
+    }
+    #endif
+#endif
+#endif
+
+
 #ifndef WC_NO_RNG
     if (bench_all || (bench_other_algs & BENCH_RNG))
         bench_rng();
@@ -8073,8 +8076,10 @@ static void bench_rsaKeyGen_helper(int useDeviceID, word32 keySz)
                         goto exit;
                     }
 
+                    ESP_LOGI(TAG, "wc_MakeRsaKey start");
                     ret = wc_MakeRsaKey(&genKey[i], (int)keySz, rsa_e_val,
                                         &gRng);
+                    ESP_LOGI(TAG, "wc_MakeRsaKey finish");
                     if (!bench_async_handle(&ret,
                         BENCH_ASYNC_GET_DEV(&genKey[i]), 0,
                                             &times, &pending)) {
@@ -12151,14 +12156,20 @@ void bench_sphincsKeySign(byte level, byte optim)
 
     #if defined(__XTENSA__)
         (void)reset;
+
         if (reset) {
-            ESP_LOGW(TAG, "current_time() reset!");
+            /* TODO: Determine a mechanism for reset that does not interfere
+             * with freeRTOS tick. Using this code for Xtensa appears to cause
+             * RTOS tick timer to stick. See "last_tickCount unchanged".
+            ESP_LOGW(TAG, "Current_time() reset!");
             portTICK_TYPE_ENTER_CRITICAL();
             {
                 esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+                _esp_cpu_count_last = xthal_get_ccount();
                 _esp_cpu_count_last = esp_cpu_get_cycle_count();
             }
             portTICK_TYPE_EXIT_CRITICAL();
+            */
         }
     #else
         /* Only reset the CPU counter for RISC-V */
