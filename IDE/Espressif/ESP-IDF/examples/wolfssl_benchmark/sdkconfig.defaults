@@ -15,6 +15,14 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
 # We don't want to have the watchdog timeout during tests & benchmarks
 #
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+#
+# Panic & Watchdog
+CONFIG_ESP_INT_WDT_TIMEOUT_MS=3000
+CONFIG_ESP_TASK_WDT_EN=n
+CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
+
+# Set max COU frequency (falls back as needed for lower maximum)
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 
 #
 # Compiler options
@@ -42,10 +50,10 @@ CONFIG_COMPILER_STACK_CHECK=y
 # CONFIG_COMPILER_DISABLE_GCC12_WARNINGS is not set
 # CONFIG_COMPILER_DUMP_RTL_FILES is not set
 # end of Compiler options
-CONFIG_COMPILER_STACK_CHECK_MODE_NORM=y
+
+# We don't know that the min is actually v2,
+# but this is the earliest tested.
 CONFIG_ESP32C3_REV_MIN_2=y
-
-
 
 #
 # Partition Table
@@ -59,3 +67,7 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp_large.csv"
 CONFIG_PARTITION_TABLE_OFFSET=0x8000
 CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
+
+
+# CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
