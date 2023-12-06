@@ -1024,7 +1024,7 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
         return MP_HW_FALLBACK;
     }
     if ((X == NULL) || (Y == NULL) || (M == NULL) ) {
-        /* if a bad oprand passed, we cannot use HW */
+        /* if a bad operand passed, we cannot use HW */
         ESP_LOGE(TAG, "ERROR: Bad Montgomery operand, falling back to SW");
         return MP_HW_FALLBACK;
     }

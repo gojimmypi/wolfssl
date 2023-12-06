@@ -47,7 +47,8 @@
 
 
 /* this entire file content is excluded if not using HW hash acceleration */
-#if defined(WOLFSSL_ESP32_CRYPT) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+#if defined(WOLFSSL_ESP32_CRYPT) && \
+   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684) || \
@@ -979,7 +980,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
     (void)max_unroll_count;
     (void)_active_digest_address;
     ets_sha_disable();
-    /* We don't chek for unroll s done below, for Xtensa*/
+    /* We don't check for unroll as done below, for Xtensa*/
 #else
     /************* Xtensa Architecture *************/
 
@@ -1920,16 +1921,22 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     } /* not (ctx->sha_type == SHA2_512) */
 
     /* end if CONFIG_IDF_TARGET_ESP32S3 */
-#elif defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP8684)
+#elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+      defined(CONFIG_IDF_TARGET_ESP8684)
     wc_esp_wait_until_idle();
-    sha_ll_read_digest(ctx->sha_type,
-                       (void *)hash,
-                       wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    sha_ll_read_digest(
+    	ctx->sha_type,
+        (void *)hash,
+        wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32)
+    );
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
+      defined(CONFIG_IDF_TARGET_ESP32C6)
     wc_esp_wait_until_idle();
-    sha_ll_read_digest(ctx->sha_type,
-                       (void *)hash,
-                       wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32));
+    sha_ll_read_digest(
+    	ctx->sha_type,
+        (void *)hash,
+        wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32)
+    );
 #else
     /* not CONFIG_IDF_TARGET_ESP32S3 or Cx TODO make explicit ESP32 check */
     /* wait until idle */

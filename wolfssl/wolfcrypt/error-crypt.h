@@ -268,7 +268,7 @@ enum {
  //   RSA_HW_VALIDATION_ACTIVE = -303, /* optional debug HW validation active */
 
     WC_LAST_E           = -299,  /* Update this to indicate last error */
-    MIN_CODE_E          = -300   /* errors -101 - -303 */
+    MIN_CODE_E          = -300   /* errors -101 - -299 */
 
     /* add new companion error id strings for any new error codes
        wolfcrypt/src/error.c !!! */

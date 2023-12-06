@@ -200,14 +200,13 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
 #elif CONFIG_IDF_TARGET_ESP32C6
-
-
+  /* TODO find Xthal for C6 */
 #elif CONFIG_IDF_TARGET_ESP32C2
-
+  /* TODO find Xthal for C6 */
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
-
+  /* TODO find Xthal for C6 */
 #elif CONFIG_IDF_TARGET_ESP32C3
-
+    /* not supported at this time */
 #elif CONFIG_IDF_TARGET_ESP32S3
     WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
                            Xthal_have_ccount);
