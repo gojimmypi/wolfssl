@@ -1,0 +1,222 @@
+ets Jun  8 2016 00:22:57
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6612
+load:0x40078000,len:14788
+load:0x40080400,len:3792
+entry 0x40080694
+I (26) boot: ESP-IDF v4.4.1-dirty 2nd stage bootloader
+I (26) boot: compile time 13:12:48
+I (26) boot: chip revision: 1
+I (30) boot_comm: chip revision: 1, min. bootloader chip revision: 0
+I (37) boot.esp32: SPI Speed      : 40MHz
+I (41) boot.esp32: SPI Mode       : DIO
+I (46) boot.esp32: SPI Flash Size : 2MB
+I (50) boot: Enabling RNG early entropy source...
+I (56) boot: Partition Table:
+I (59) boot: ## Label            Usage          Type ST Offset   Length
+I (67) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (74) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (82) boot:  2 factory          factory app      00 00 00010000 00177000
+I (89) boot: End of partition table
+I (93) boot_comm: chip revision: 1, min. application chip revision: 0
+I (100) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=17474h ( 95348) map
+I (143) esp_image: segment 1: paddr=0002749c vaddr=3ffb0000 size=02240h (  8768) load
+I (147) esp_image: segment 2: paddr=000296e4 vaddr=40080000 size=06934h ( 26932) load
+I (160) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=3de14h (253460) map
+I (252) esp_image: segment 4: paddr=0006de3c vaddr=40086934 size=04164h ( 16740) load
+I (259) esp_image: segment 5: paddr=00071fa8 vaddr=50000000 size=00014h (    20) load
+I (265) boot: Loaded app from partition at offset 0x10000
+I (265) boot: Disabling RNG early entropy source...
+I (281) cpu_start: Pro cpu up.
+I (281) cpu_start: Starting app cpu, entry point is 0x4008105c
+I (268) cpu_start: App cpu up.
+I (295) cpu_start: Pro cpu start user code
+I (295) cpu_start: cpu freq: 240000000
+I (295) cpu_start: Application information:
+I (300) cpu_start: Project name:     wolfssl_benchmark
+I (306) cpu_start: App version:      v5.6.3-stable-2608-ge2f69ea3e-d
+I (313) cpu_start: Compile time:     Dec  6 2023 13:12:32
+I (319) cpu_start: ELF file SHA256:  9bb144765ad40ab6...
+I (325) cpu_start: ESP-IDF:          v4.4.1-dirty
+I (331) heap_init: Initializing. RAM available for dynamic allocation:
+I (338) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (344) heap_init: At 3FFB2C88 len 0002D378 (180 KiB): DRAM
+I (350) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (356) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (363) heap_init: At 4008AA98 len 00015568 (85 KiB): IRAM
+I (370) spi_flash: detected chip: generic
+I (374) spi_flash: flash io: dio
+W (377) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the 
+binary image header.
+I (392) cpu_start: Starting scheduler on PRO CPU.
+I (0) cpu_start: Starting scheduler on APP CPU.
+I (406) wolfssl_benchmark: ---------------- wolfSSL Benchmark Example -------------
+I (406) wolfssl_benchmark: --------------------------------------------------------
+I (411) wolfssl_benchmark: --------------------------------------------------------
+I (420) wolfssl_benchmark: ---------------------- BEGIN MAIN ----------------------
+I (428) wolfssl_benchmark: --------------------------------------------------------
+I (436) wolfssl_benchmark: --------------------------------------------------------
+I (445) esp32_util: Extended Version and Platform Information.
+I (451) esp32_util: SSID and plain text WiFi password not displayed in startup logs.
+I (460) esp32_util:   Define SHOW_SSID_AND_PASSWORD to enable display.
+I (467) esp32_util: Using wolfSSL user_settings.h in C://workspace//wolfssl-gojimmypi//IDE//Espressif//ESP-IDF//exampl
+es//wolfssl_benchmark//components//wolfssl//include//user_settings.h
+I (484) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.4
+I (490) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006004
+I (496) esp32_util: Stack HWM: 54256
+I (500) esp32_util: 
+I (503) esp32_util: Macro Name                 Defined   Not Defined
+I (510) esp32_util: ------------------------- --------- -------------
+I (517) esp32_util: NO_ESPIDF_DEFAULT........                 X
+I (523) esp32_util: HW_MATH_ENABLED..........     X
+I (529) esp32_util: WOLFSSL_SHA224...........     X
+I (535) esp32_util: WOLFSSL_SHA384...........     X
+I (540) esp32_util: WOLFSSL_SHA512...........     X
+I (546) esp32_util: WOLFSSL_SHA3.............     X
+I (551) esp32_util: HAVE_ED25519.............     X
+I (557) esp32_util: HAVE_AES_ECB.............                 X
+I (563) esp32_util: HAVE_AES_DIRECT..........                 X
+I (570) esp32_util: USE_FAST_MATH............     X
+I (576) esp32_util: WOLFSSL_SP_MATH_ALL......                 X
+I (582) esp32_util: SP_MATH..................                 X
+I (589) esp32_util: WOLFSSL_HW_METRICS.......     X
+I (594) esp32_util: RSA_LOW_MEM..............     X
+I (600) esp32_util: WC_NO_HARDEN.............                 X
+I (606) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (612) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (618) esp32_util: WC_NO_CACHE_RESISTANT....     X
+I (623) esp32_util: WC_AES_BITSLICED.........                 X
+I (630) esp32_util: WOLFSSL_AES_NO_UNROLL....                 X
+I (636) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (642) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (647) esp32_util: WC_RSA_BLINDING..........     X
+I (653) esp32_util: NO_WRITEV................     X
+I (658) esp32_util: FREERTOS.................     X
+I (664) esp32_util: NO_WOLFSSL_DIR...........     X
+I (670) esp32_util: WOLFSSL_NO_CURRDIR.......     X
+I (675) esp32_util: WOLFSSL_LWIP.............     X
+I (681) esp32_util: 
+I (684) esp32_util: Compiler Optimization: Performance
+I (689) esp32_util: 
+I (692) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi/wolfssl.git
+I (701) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (708) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = e2f69ea3e7db40aee42cc9ff281476877283426c
+I (717) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = e2f69ea3e
+I (724) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Wed Dec 6 11:41:37 2023 -0800'
+I (733) esp32_util: CONFIG_IDF_TARGET = esp32
+I (738) esp32_util: CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: 240 MHz
+I (744) esp32_util: Xthal_have_ccount: 1
+I (749) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55500
+I (755) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55500
+I (761) esp32_util: CONFIG_TIMER_TASK_STACK_SIZE: 3584
+I (767) esp32_util: CONFIG_TIMER_TASK_STACK_DEPTH: 2048
+I (773) esp32_util: Stack HWM: 53856
+I (777) esp32_util: ESP32_CRYPT is enabled for ESP32.
+I (783) esp32_util: NOT SINGLE_THREADED
+I (787) esp32_util: Boot count: 1
+I (791) wolfssl_benchmark: app_main CONFIG_BENCH_ARGV = -lng 0
+I (800) wolfssl_benchmark: Stack HWM: 53856
+
+I (803) wolfssl_benchmark: construct_argv arg:-lng 0
+
+------------------------------------------------------------------------------
+ wolfSSL version 5.6.4
+------------------------------------------------------------------------------
+wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
+RNG                        850 KiB took 1.023 seconds,  830.890 KiB/s Cycles per byte = 282.20
+AES-128-CBC-enc           7950 KiB took 1.001 seconds, 7942.058 KiB/s Cycles per byte =  29.51
+AES-128-CBC-dec           7900 KiB took 1.001 seconds, 7892.108 KiB/s Cycles per byte =  29.70
+AES-192-CBC-enc           7950 KiB took 1.002 seconds, 7934.132 KiB/s Cycles per byte =  29.54
+AES-192-CBC-dec           7900 KiB took 1.002 seconds, 7884.232 KiB/s Cycles per byte =  29.72
+AES-256-CBC-enc           7925 KiB took 1.000 seconds, 7925.000 KiB/s Cycles per byte =  29.57
+AES-256-CBC-dec           7875 KiB took 1.000 seconds, 7875.000 KiB/s Cycles per byte =  29.76
+AES-128-GCM-enc            375 KiB took 1.066 seconds,  351.782 KiB/s Cycles per byte = 666.84
+AES-128-GCM-dec            375 KiB took 1.067 seconds,  351.453 KiB/s Cycles per byte = 666.87
+AES-192-GCM-enc            375 KiB took 1.068 seconds,  351.124 KiB/s Cycles per byte = 667.77
+AES-192-GCM-dec            375 KiB took 1.069 seconds,  350.795 KiB/s Cycles per byte = 668.06
+AES-256-GCM-enc            350 KiB took 1.000 seconds,  350.000 KiB/s Cycles per byte = 669.94
+AES-256-GCM-dec            350 KiB took 1.000 seconds,  350.000 KiB/s Cycles per byte = 670.07
+GMAC Default               487 KiB took 1.000 seconds,  487.000 KiB/s Cycles per byte = 481.12
+3DES                       550 KiB took 1.029 seconds,  534.500 KiB/s Cycles per byte = 438.51
+MD5                      17275 KiB took 1.000 seconds, 17275.000 KiB/s Cycles per byte =  13.58
+SHA                      20700 KiB took 1.000 seconds, 20700.000 KiB/s Cycles per byte =  11.33
+SHA-224                   2050 KiB took 1.009 seconds, 2031.715 KiB/s Cycles per byte = 115.41
+SHA-256                  19775 KiB took 1.000 seconds, 19775.000 KiB/s Cycles per byte =  11.85
+SHA-384                  24950 KiB took 1.000 seconds, 24950.000 KiB/s Cycles per byte =   9.40
+SHA-512                  25025 KiB took 1.001 seconds, 25000.000 KiB/s Cycles per byte =   9.37
+SHA-512/224               1350 KiB took 1.017 seconds, 1327.434 KiB/s Cycles per byte = 176.50
+SHA-512/256               1350 KiB took 1.016 seconds, 1328.740 KiB/s Cycles per byte = 176.35
+SHA3-224                   950 KiB took 1.019 seconds,  932.287 KiB/s Cycles per byte = 251.52
+SHA3-256                   900 KiB took 1.024 seconds,  878.906 KiB/s Cycles per byte = 266.53
+SHA3-384                   700 KiB took 1.036 seconds,  675.676 KiB/s Cycles per byte = 346.76
+SHA3-512                   475 KiB took 1.008 seconds,  471.230 KiB/s Cycles per byte = 497.64
+SHAKE128                  1100 KiB took 1.017 seconds, 1081.613 KiB/s Cycles per byte = 216.71
+SHAKE256                   900 KiB took 1.023 seconds,  879.765 KiB/s Cycles per byte = 266.48
+RIPEMD                    5875 KiB took 1.001 seconds, 5869.131 KiB/s Cycles per byte =  39.92
+HMAC-MD5                 17075 KiB took 1.001 seconds, 17057.942 KiB/s Cycles per byte =  13.74
+HMAC-SHA                 20200 KiB took 1.001 seconds, 20179.820 KiB/s Cycles per byte =  11.61
+HMAC-SHA224               2025 KiB took 1.005 seconds, 2014.925 KiB/s Cycles per byte = 116.40
+HMAC-SHA256              19125 KiB took 1.001 seconds, 19105.894 KiB/s Cycles per byte =  12.26
+HMAC-SHA384              23925 KiB took 1.000 seconds, 23925.000 KiB/s Cycles per byte =   9.79
+HMAC-SHA512              23950 KiB took 1.000 seconds, 23950.000 KiB/s Cycles per byte =   9.78
+PBKDF2                       0 KiB took 1.043 seconds,    0.449 KiB/s Cycles per byte = 521564.70
+RSA     1024  key gen         1 ops took 1.173 sec, avg 1173.000 ms, 0.853 ops/sec
+RSA     2048  key gen         1 ops took 1.087 sec, avg 1087.000 ms, 0.920 ops/sec
+RSA     2048   public        14 ops took 1.102 sec, avg 78.714 ms, 12.704 ops/sec
+RSA     2048  private         6 ops took 1.175 sec, avg 195.833 ms, 5.106 ops/sec
+ECC   [      SECP256R1]   256  key gen         4 ops took 1.480 sec, avg 370.000 ms, 2.703 ops/sec
+ECDHE [      SECP256R1]   256    agree         4 ops took 1.478 sec, avg 369.500 ms, 2.706 ops/sec
+ECDSA [      SECP256R1]   256     sign         4 ops took 1.492 sec, avg 373.000 ms, 2.681 ops/sec
+ECDSA [      SECP256R1]   256   verify         2 ops took 1.416 sec, avg 708.000 ms, 1.412 ops/sec
+CURVE  25519  key gen         4 ops took 1.134 sec, avg 283.500 ms, 3.527 ops/sec
+CURVE  25519    agree         4 ops took 1.127 sec, avg 281.750 ms, 3.549 ops/sec
+ED     25519  key gen        74 ops took 1.006 sec, avg 13.595 ms, 73.559 ops/sec
+ED     25519     sign        62 ops took 1.014 sec, avg 16.355 ms, 61.144 ops/sec
+ED     25519   verify        56 ops took 1.018 sec, avg 18.179 ms, 55.010 ops/sec
+Benchmark complete
+I (55452) wolfssl_benchmark: Stack used: 1008
+
+I (55455) wolf_hw_sha: --------------------------------------------------------
+I (55463) wolf_hw_sha: ------------- wolfSSL ESP HW SHA Metrics----------------
+I (55471) wolf_hw_sha: --------------------------------------------------------
+I (55479) wolf_hw_sha: esp_sha_hw_copy_ct            = 0
+I (55485) wolf_hw_sha: esp_sha1_hw_usage_ct          = 0
+I (55491) wolf_hw_sha: esp_sha1_sw_fallback_usage_ct = 0
+I (55497) wolf_hw_sha: esp_sha_reverse_words_ct      = 0
+I (55503) wolf_hw_sha: esp_sha1_hw_hash_usage_ct     = 658460
+I (55509) wolf_hw_sha: esp_sha2_224_hw_hash_usage_ct = 0
+I (55515) wolf_hw_sha: esp_sha2_256_hw_hash_usage_ct = 721574
+I (55521) wolf_hw_sha: esp_byte_reversal_checks_ct   = 0
+I (55527) wolf_hw_sha: esp_byte_reversal_needed_ct   = 0
+I (55533) wolfssl_esp32_mp: 
+I (55537) wolfssl_esp32_mp: esp_mp_mul HW acceleration enabled.
+I (55544) wolfssl_esp32_mp: Number of calls to esp_mp_mul: 0
+I (55550) wolfssl_esp32_mp: Success: no esp_mp_mul() errors.
+I (55556) wolfssl_esp32_mp: 
+I (55560) wolfssl_esp32_mp: esp_mp_mulmod HW acceleration enabled.
+I (55567) wolfssl_esp32_mp: Number of calls to esp_mp_mulmod: 94
+I (55573) wolfssl_esp32_mp: Number of fallback to SW mp_mulmod: 18
+I (55580) wolfssl_esp32_mp: Success: no esp_mp_mulmod errors.
+I (55587) wolfssl_esp32_mp: Success: no esp_mp_mulmod even mod.
+I (55593) wolfssl_esp32_mp: Success: no esp_mp_mulmod small x or y.
+I (55600) wolfssl_esp32_mp: 
+I (55604) wolfssl_esp32_mp: Number of calls to esp_mp_exptmod: 156
+I (55611) wolfssl_esp32_mp: Number of fallback to SW mp_exptmod: 0
+I (55617) wolfssl_esp32_mp: Success: no esp_mp_exptmod errors.
+I (55624) wolfssl_esp32_mp: Max N->used: esp_mp_max_used = 64
+I (55630) wolfssl_esp32_mp: Max timeout: esp_mp_max_timeout = 1
+I (55637) wolf_hw_aes: --------------------------------------------------------
+I (55645) wolf_hw_aes: ------------- wolfSSL ESP HW AES Metrics----------------
+I (55653) wolf_hw_aes: --------------------------------------------------------
+I (55661) wolf_hw_aes: esp_aes_unsupported_length_usage_ct = 0
+I (55667) wolfssl_benchmark: Stack HWM: 52848
+
+I (55673) wolfssl_benchmark: 
+
+Done!
+
+If running from idf.py monitor, press twice: Ctrl+]

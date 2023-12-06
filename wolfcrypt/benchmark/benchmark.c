@@ -1274,11 +1274,19 @@ static const char* bench_result_words3[][5] = {
     #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
 
     /* The ESP32 (both Xtensa and RISC-V have raw CPU counters). */
-    #define HAVE_GET_CYCLES
-    #define INIT_CYCLE_COUNTER do {          \
-        ESP_LOGV(TAG, "INIT_CYCLE_COUNTER"); \
-        esp_cpu_set_cycle_count(0);          \
-    } while (0);
+    #if ESP_IDF_VERSION_MAJOR >= 5
+        /* esp_cpu_set_cycle_count() introduced in ESP-IDF v5 */
+        #define HAVE_GET_CYCLES
+        #define INIT_CYCLE_COUNTER do {          \
+            ESP_LOGV(TAG, "INIT_CYCLE_COUNTER"); \
+            esp_cpu_set_cycle_count(0);          \
+        } while (0);
+    #else
+        #define HAVE_GET_CYCLES
+        #define INIT_CYCLE_COUNTER do {          \
+            ESP_LOGV(TAG, "INIT_CYCLE_COUNTER"); \
+        } while (0);
+    #endif
 
     #define BEGIN_ESP_CYCLES do {                        \
         ESP_LOGV(TAG, "BEGIN_ESP_CYCLES");               \
@@ -1494,7 +1502,11 @@ static const char* bench_result_words3[][5] = {
              * when resetting CPU cycle counter? FreeRTOS tick collison?
              *    thisVal = esp_cpu_get_cycle_count(); See also, above
              * or thisVal = xthal_get_ccount(); */
-            _esp_cpu_count_last = esp_cpu_get_cycle_count();
+            #if ESP_IDF_VERSION_MAJOR < 5
+                _esp_cpu_count_last = xthal_get_ccount();
+            #else
+                _esp_cpu_count_last = esp_cpu_get_cycle_count();
+            #endif
         #endif
 
         /* Return the 64 bit extended total from 32 bit counter. */
@@ -3009,99 +3021,6 @@ static void* benchmarks_do(void* args)
     bench_key = (byte*)bench_key_buf;
     bench_iv = (byte*)bench_iv_buf;
 #endif
-
-#ifdef EARLY_DUPLICATE_RSA
-#ifndef NO_RSA
-#ifndef HAVE_RENESAS_SYNC
-    #ifdef WOLFSSL_KEY_GEN
-        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
-        #ifndef NO_SW_BENCH
-            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
-                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
-                bench_rsaKeyGen(0);
-            }
-            else {
-                bench_rsaKeyGen_size(0, bench_size);
-            }
-        #endif
-        #ifdef BENCH_DEVID
-            if (bench_asym_algs & BENCH_RSA_SZ) {
-                bench_rsaKeyGen_size(1, bench_size);
-            }
-            else {
-                bench_rsaKeyGen(1);
-            }
-        #endif
-        }
-    #endif
-    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
-    #ifndef NO_SW_BENCH
-        bench_rsa(0);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa(1);
-    #endif
-    }
-
-    #ifdef WOLFSSL_KEY_GEN
-    if (bench_asym_algs & BENCH_RSA_SZ) {
-    #ifndef NO_SW_BENCH
-        bench_rsa_key(0, bench_size);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa_key(1, bench_size);
-    #endif
-    }
-    #endif
-#endif
-#endif
-
-#ifndef NO_RSA
-#ifndef HAVE_RENESAS_SYNC
-    #ifdef WOLFSSL_KEY_GEN
-        if (bench_all || (bench_asym_algs & BENCH_RSA_KEYGEN)) {
-        #ifndef NO_SW_BENCH
-            if (((word32)bench_asym_algs == 0xFFFFFFFFU) ||
-                        (bench_asym_algs & BENCH_RSA_SZ) == 0) {
-                bench_rsaKeyGen(0);
-            }
-            else {
-                bench_rsaKeyGen_size(0, bench_size);
-            }
-        #endif
-        #ifdef BENCH_DEVID
-            if (bench_asym_algs & BENCH_RSA_SZ) {
-                bench_rsaKeyGen_size(1, bench_size);
-            }
-            else {
-                bench_rsaKeyGen(1);
-            }
-        #endif
-        }
-    #endif
-    if (bench_all || (bench_asym_algs & BENCH_RSA)) {
-    #ifndef NO_SW_BENCH
-        bench_rsa(0);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa(1);
-    #endif
-    }
-
-    #ifdef WOLFSSL_KEY_GEN
-    if (bench_asym_algs & BENCH_RSA_SZ) {
-    #ifndef NO_SW_BENCH
-        bench_rsa_key(0, bench_size);
-    #endif
-    #ifdef BENCH_DEVID
-        bench_rsa_key(1, bench_size);
-    #endif
-    }
-    #endif
-#endif
-#endif
-#endif /* EARLY_DUPLICATE_RSA */
-
 
 #ifndef WC_NO_RNG
     if (bench_all || (bench_other_algs & BENCH_RNG))
