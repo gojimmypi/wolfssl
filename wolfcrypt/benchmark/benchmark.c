@@ -1317,23 +1317,20 @@ static const char* bench_result_words3[][5] = {
     ** the Espressif `unsigned xthal_get_ccount()` (Xtensa) or
     ** `esp_cpu_get_cycle_count` (RISC-V) which are known to overflow
     ** at least once during full benchmark tests.
+    **
+    ** To test timing overflow:
+    **   vTaskDelay( (const TickType_t)(configTICK_RATE_HZ * 17 * 5) );
     */
     uint64_t esp_get_cycle_count_ex()
     {
         /* reminder: unsigned long long max = 18,446,744,073,709,551,615    */
         /*           unsigned int max       =              4,294,967,295    */
-                                                      //     203,711,189
-                                                      //   2,193,694,628
-                                                      //   1,974,250,131
-                                                      //     625,772,128
-                                                      // 204,000,000,000
-                                                      //   1,974,037,041
         uint64_t thisVal = 0; /* CPU counter, "this current value" as read. */
         uint64_t thisIncrement = 0; /* The adjusted increment amount.       */
         uint64_t expected_diff = 0; /* FreeRTOS esimated expected CPU diff. */
+    #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
         uint32_t tickCount = 0; /* Currrent rtos tick counter.              */
         uint32_t tickDiff = 0;  /* Tick difference from last check.         */
-    #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
         uint32_t tickBeginDiff = 0; /* Tick difference from beginning.      */
     #endif
 
@@ -1364,15 +1361,12 @@ static const char* bench_result_words3[][5] = {
             thisVal = xthal_get_ccount(); /* or esp_cpu_get_cycle_count(); */
         #endif
     #endif
-        /* if the current value is less than the previous value,
-        ** we likely overflowed at least once.
-        */
-        tickCount = xTaskGetTickCount(); /* Our local FreeRTOS tick count */
-        tickDiff = tickCount - last_tickCount; /* ticks since bench start */
-        expected_diff = CPU_TICK_CYCLES * tickDiff; /* CPU expected count */
 
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
         {
+            tickCount = xTaskGetTickCount(); /* Our local FreeRTOS tick count */
+            tickDiff = tickCount - last_tickCount; /* ticks since bench start */
+            expected_diff = CPU_TICK_CYCLES * tickDiff; /* CPU expected count */
             ESP_LOGV(TAG, "CPU_TICK_CYCLES = %d", (int)CPU_TICK_CYCLES);
             ESP_LOGV(TAG, "tickCount           = %lu", tickCount);
             ESP_LOGV(TAG, "last_tickCount      = %lu", last_tickCount);
@@ -1406,11 +1400,12 @@ static const char* bench_result_words3[][5] = {
                     thisVal);
             #endif
 
-
-//            expected_diff = (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE)
-//                            * tickDiff / configTICK_RATE_HZ;
-//            ESP_LOGI(TAG, "expected_diff2      = %llu", expected_diff);
-
+            /* double check expected diff calc */
+            #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
+              expected_diff = (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE)
+                              * tickDiff / configTICK_RATE_HZ;
+              ESP_LOGI(TAG, "expected_diff2      = %llu", expected_diff);
+            #endif
             if (expected_diff > UINT_MAX) {
                 /* The number of cycles expected from FreeRTOS ticks is
                  * greater than the maximum size of an unsigned 32-bit
@@ -1421,7 +1416,7 @@ static const char* bench_result_words3[][5] = {
                 thisVal += expected_diff; /* FreeRTOS calc to our 64 bit val */
             }
             else {
-                thisVal += (word64)UINT_MAX; /* add 32 bit max to our 64 bit val */
+                thisVal += (word64)UINT_MAX; /* add 32 bit max to our 64 bit */
             }
 
             #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
@@ -2132,7 +2127,6 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
 
 static WC_INLINE int bench_stats_check(double start)
 {
-    // TODO is this Espressif-specific? probably not.
     double this_current_time;
     this_current_time = current_time(0); /* get the timestamp, no reset */
     #if defined(WOLFSSL_ESPIDF) && defined(DEBUG_WOLFSSL_BENCHMARK_TIMING)
@@ -4034,13 +4028,6 @@ void bench_rng(void)
     }
 
     bench_stats_start(&count, &start);
-
-    // TODO remove:
-    ESP_LOGI(TAG, "(word64)UINT_MAX   = %llu",(word64)UINT_MAX);
-    uint thisDelay = configTICK_RATE_HZ * 17 * 5; //  * 10;
-    ESP_LOGI(TAG, "thisDelay = %d",thisDelay);
-    vTaskDelay( (const TickType_t)thisDelay);
-    // END TODO
 
     do {
         for (i = 0; i < numBlocks; i++) {
