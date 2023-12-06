@@ -12387,7 +12387,7 @@ void bench_sphincsKeySign(byte level, byte optim)
     {
         double time_now;
         double current_s = OS_GetTime() / 1000.0;
-        double current_us = OS_GetTime_us() / 1000000.0;
+        double current_us = OS_GetTime_us() / MILLION_VALUE;
         time_now = (double)( current_s + current_us);
 
         (void) reset;
@@ -12514,20 +12514,20 @@ void bench_sphincsKeySign(byte level, byte optim)
          * outside wolfcrypt.
          */
         return (double)rusage.ru_utime.tv_sec +
-            (double)rusage.ru_utime.tv_usec / 1000000.0;
+            (double)rusage.ru_utime.tv_usec / MILLION_VALUE;
     }
 
     static void check_for_excessive_stime(const char *desc,
                                           const char *desc_extra)
     {
         double start_utime = (double)base_rusage.ru_utime.tv_sec +
-            (double)base_rusage.ru_utime.tv_usec / 1000000.0;
+            (double)base_rusage.ru_utime.tv_usec / MILLION_VALUE;
         double start_stime = (double)base_rusage.ru_stime.tv_sec +
-            (double)base_rusage.ru_stime.tv_usec / 1000000.0;
+            (double)base_rusage.ru_stime.tv_usec / MILLION_VALUE;
         double cur_utime = (double)cur_rusage.ru_utime.tv_sec +
-            (double)cur_rusage.ru_utime.tv_usec / 1000000.0;
+            (double)cur_rusage.ru_utime.tv_usec / MILLION_VALUE;
         double cur_stime = (double)cur_rusage.ru_stime.tv_sec +
-            (double)cur_rusage.ru_stime.tv_usec / 1000000.0;
+            (double)cur_rusage.ru_stime.tv_usec / MILLION_VALUE;
         double stime_utime_ratio =
             (cur_stime - start_stime) / (cur_utime - start_utime);
         if (stime_utime_ratio > .1)
