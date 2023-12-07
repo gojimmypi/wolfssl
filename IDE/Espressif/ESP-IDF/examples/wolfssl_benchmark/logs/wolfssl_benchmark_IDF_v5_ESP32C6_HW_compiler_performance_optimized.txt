@@ -1,7 +1,7 @@
 ESP-ROM:esp32c6-20220919
 Build:Sep 19 2022
 rst:0x18 (JTAG_CPU),boot:0xc (SPI_FAST_FLASH_BOOT)
-Saved PC:0x20000830
+Saved PC:0x20000834
 SPIWP:0xee
 mode:DIO, clock div:2
 load:0x4086c410,len:0xd10
@@ -9,7 +9,7 @@ load:0x4086e610,len:0x2d68
 load:0x40875720,len:0x17e4
 entry 0x4086c410
 I (24) boot: ESP-IDF v5.1-231-ga7b62bbcaf-dirty 2nd stage bootloader
-I (24) boot: compile time Dec  7 2023 08:24:11
+I (24) boot: compile time Dec  7 2023 13:56:23
 I (25) boot: chip revision: v0.0
 I (28) boot.esp32c6: SPI Speed      : 80MHz
 I (33) boot.esp32c6: SPI Mode       : DIO
@@ -23,9 +23,9 @@ I (74) boot:  2 factory          factory app      00 00 00010000 00177000
 I (82) boot: End of partition table
 I (86) esp_image: segment 0: paddr=00010020 vaddr=42038020 size=147e8h ( 83944) map
 I (111) esp_image: segment 1: paddr=00024810 vaddr=40800000 size=03808h ( 14344) load
-I (115) esp_image: segment 2: paddr=00028020 vaddr=42000020 size=37c7ch (228476) map
-I (163) esp_image: segment 3: paddr=0005fca4 vaddr=40803808 size=0540ch ( 21516) load
-I (169) esp_image: segment 4: paddr=000650b8 vaddr=40808c20 size=00f14h (  3860) load
+I (115) esp_image: segment 2: paddr=00028020 vaddr=42000020 size=37c8ch (228492) map
+I (163) esp_image: segment 3: paddr=0005fcb4 vaddr=40803808 size=0540ch ( 21516) load
+I (169) esp_image: segment 4: paddr=000650c8 vaddr=40808c20 size=00f14h (  3860) load
 I (173) boot: Loaded app from partition at offset 0x10000
 I (175) boot: Disabling RNG early entropy source...
 I (392) cpu_start: Unicore app
@@ -35,9 +35,9 @@ I (408) cpu_start: Pro cpu start user code
 I (409) cpu_start: cpu freq: 160000000 Hz
 I (409) cpu_start: Application information:
 I (412) cpu_start: Project name:     wolfssl_benchmark
-I (417) cpu_start: App version:      v5.6.3-stable-2620-g1cde42be9-d
-I (424) cpu_start: Compile time:     Dec  7 2023 08:23:53
-I (430) cpu_start: ELF file SHA256:  0f67f0a1546e9543...
+I (417) cpu_start: App version:      v5.6.3-stable-2654-g94411350b-d
+I (424) cpu_start: Compile time:     Dec  7 2023 13:56:03
+I (430) cpu_start: ELF file SHA256:  1b71a68bfe52b044...
 I (436) cpu_start: ESP-IDF:          v5.1-231-ga7b62bbcaf-dirty
 I (443) cpu_start: Min chip rev:     v0.0
 I (448) cpu_start: Max chip rev:     v0.99
@@ -48,8 +48,8 @@ I (471) heap_init: At 4087C610 len 00002F54 (11 KiB): STACK/DIRAM
 I (478) heap_init: At 50000000 len 00003FE8 (15 KiB): RTCRAM
 I (485) spi_flash: detected chip: generic
 I (489) spi_flash: flash io: dio
-W (493) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using the
- size in the binary image header.
+W (493) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using the size in the binary image
+ header.
 I (506) sleep: Configure to isolate all GPIO pins in sleep state
 I (513) sleep: Enable automatic switching of GPIO sleep configuration
 I (520) app_start: Starting scheduler on CPU0
@@ -70,62 +70,62 @@ I (583) wolfssl_benchmark: construct_argv arg:-lng 0
  wolfSSL version 5.6.4
 ------------------------------------------------------------------------------
 wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
-RNG                       1425 KiB took 1.005 seconds, 1417.910 KiB/s Cycles per byte = 110.21
-AES-128-CBC-enc           4325 KiB took 1.003 seconds, 4312.064 KiB/s Cycles per byte =  36.25
-AES-128-CBC-dec           4450 KiB took 1.004 seconds, 4432.271 KiB/s Cycles per byte =  35.25
+RNG                       1425 KiB took 1.004 seconds, 1419.323 KiB/s Cycles per byte = 110.09
+AES-128-CBC-enc           4450 KiB took 1.004 seconds, 4432.271 KiB/s Cycles per byte =  35.24
+AES-128-CBC-dec           4325 KiB took 1.004 seconds, 4307.769 KiB/s Cycles per byte =  36.25
 AES-192-CBC-enc           1450 KiB took 1.011 seconds, 1434.224 KiB/s Cycles per byte = 108.95
 AES-192-CBC-dec           1425 KiB took 1.005 seconds, 1417.910 KiB/s Cycles per byte = 110.22
-AES-256-CBC-enc           4300 KiB took 1.001 seconds, 4295.704 KiB/s Cycles per byte =  36.35
-AES-256-CBC-dec           4425 KiB took 1.002 seconds, 4416.168 KiB/s Cycles per byte =  35.36
-AES-128-GCM-enc            450 KiB took 1.019 seconds,  441.609 KiB/s Cycles per byte = 353.75
-AES-128-GCM-dec            450 KiB took 1.019 seconds,  441.609 KiB/s Cycles per byte = 353.84
-AES-192-GCM-enc            450 KiB took 1.037 seconds,  433.944 KiB/s Cycles per byte = 359.93
+AES-256-CBC-enc           4425 KiB took 1.001 seconds, 4420.579 KiB/s Cycles per byte =  35.35
+AES-256-CBC-dec           4300 KiB took 1.000 seconds, 4300.000 KiB/s Cycles per byte =  36.36
+AES-128-GCM-enc            450 KiB took 1.019 seconds,  441.609 KiB/s Cycles per byte = 353.76
+AES-128-GCM-dec            450 KiB took 1.019 seconds,  441.609 KiB/s Cycles per byte = 353.85
+AES-192-GCM-enc            450 KiB took 1.036 seconds,  434.363 KiB/s Cycles per byte = 359.93
 AES-192-GCM-dec            450 KiB took 1.037 seconds,  433.944 KiB/s Cycles per byte = 360.05
-AES-256-GCM-enc            450 KiB took 1.040 seconds,  432.692 KiB/s Cycles per byte = 360.87
-AES-256-GCM-dec            450 KiB took 1.040 seconds,  432.692 KiB/s Cycles per byte = 360.98
+AES-256-GCM-enc            450 KiB took 1.039 seconds,  433.109 KiB/s Cycles per byte = 360.62
+AES-256-GCM-dec            450 KiB took 1.039 seconds,  433.109 KiB/s Cycles per byte = 360.73
 GMAC Default               621 KiB took 1.000 seconds,  621.000 KiB/s Cycles per byte = 251.62
-3DES                       400 KiB took 1.061 seconds,  377.003 KiB/s Cycles per byte = 414.19
+3DES                       400 KiB took 1.060 seconds,  377.358 KiB/s Cycles per byte = 414.19
 MD5                      10750 KiB took 1.000 seconds, 10750.000 KiB/s Cycles per byte =  14.53
 SHA                      13150 KiB took 1.001 seconds, 13136.863 KiB/s Cycles per byte =  11.89
 SHA-224                  13000 KiB took 1.000 seconds, 13000.000 KiB/s Cycles per byte =  12.02
-SHA-256                  12925 KiB took 1.000 seconds, 12925.000 KiB/s Cycles per byte =  12.08
-SHA-384                   1300 KiB took 1.010 seconds, 1287.129 KiB/s Cycles per byte = 121.36
+SHA-256                  13000 KiB took 1.000 seconds, 13000.000 KiB/s Cycles per byte =  12.02
+SHA-384                   1300 KiB took 1.009 seconds, 1288.404 KiB/s Cycles per byte = 121.36
 SHA-512                   1300 KiB took 1.009 seconds, 1288.404 KiB/s Cycles per byte = 121.27
 SHA-512/224               1300 KiB took 1.009 seconds, 1288.404 KiB/s Cycles per byte = 121.27
 SHA-512/256               1300 KiB took 1.009 seconds, 1288.404 KiB/s Cycles per byte = 121.27
 SHA3-224                   925 KiB took 1.004 seconds,  921.315 KiB/s Cycles per byte = 169.56
-SHA3-256                   875 KiB took 1.006 seconds,  869.781 KiB/s Cycles per byte = 179.71
+SHA3-256                   875 KiB took 1.007 seconds,  868.918 KiB/s Cycles per byte = 179.71
 SHA3-384                   675 KiB took 1.009 seconds,  668.979 KiB/s Cycles per byte = 233.55
-SHA3-512                   475 KiB took 1.018 seconds,  466.601 KiB/s Cycles per byte = 334.82
-SHAKE128                  1075 KiB took 1.007 seconds, 1067.527 KiB/s Cycles per byte = 146.31
-SHAKE256                   875 KiB took 1.007 seconds,  868.918 KiB/s Cycles per byte = 179.71
+SHA3-512                   475 KiB took 1.017 seconds,  467.060 KiB/s Cycles per byte = 334.82
+SHAKE128                  1075 KiB took 1.006 seconds, 1068.588 KiB/s Cycles per byte = 146.31
+SHAKE256                   875 KiB took 1.006 seconds,  869.781 KiB/s Cycles per byte = 179.71
 RIPEMD                    4325 KiB took 1.000 seconds, 4325.000 KiB/s Cycles per byte =  36.14
-HMAC-MD5                 10650 KiB took 1.001 seconds, 10639.361 KiB/s Cycles per byte =  14.70
-HMAC-SHA                 12950 KiB took 1.001 seconds, 12937.063 KiB/s Cycles per byte =  12.08
+HMAC-MD5                 10625 KiB took 1.000 seconds, 10625.000 KiB/s Cycles per byte =  14.70
+HMAC-SHA                 12925 KiB took 1.000 seconds, 12925.000 KiB/s Cycles per byte =  12.08
 HMAC-SHA224              12800 KiB took 1.000 seconds, 12800.000 KiB/s Cycles per byte =  12.21
-HMAC-SHA256              12725 KiB took 1.000 seconds, 12725.000 KiB/s Cycles per byte =  12.28
+HMAC-SHA256              12800 KiB took 1.000 seconds, 12800.000 KiB/s Cycles per byte =  12.21
 HMAC-SHA384               1275 KiB took 1.005 seconds, 1268.657 KiB/s Cycles per byte = 123.21
-HMAC-SHA512               1275 KiB took 1.004 seconds, 1269.920 KiB/s Cycles per byte = 123.13
-PBKDF2                       1 KiB took 1.040 seconds,    0.721 KiB/s Cycles per byte = 216783.54
-RSA     1024  key gen         2 ops took 2.431 sec, avg 1215.500 ms, 0.823 ops/sec
-RSA     2048  key gen         1 ops took 12.637 sec, avg 12637.000 ms, 0.079 ops/sec
+HMAC-SHA512               1275 KiB took 1.005 seconds, 1268.657 KiB/s Cycles per byte = 123.13
+PBKDF2                       1 KiB took 1.040 seconds,    0.721 KiB/s Cycles per byte = 216784.01
+RSA     1024  key gen         2 ops took 1.241 sec, avg 620.500 ms, 1.612 ops/sec
+RSA     2048  key gen         1 ops took 12.449 sec, avg 12449.000 ms, 0.080 ops/sec
 RSA     2048   public         6 ops took 1.415 sec, avg 235.833 ms, 4.240 ops/sec
-RSA     2048  private         2 ops took 1.041 sec, avg 520.500 ms, 1.921 ops/sec
+RSA     2048  private         2 ops took 1.042 sec, avg 521.000 ms, 1.919 ops/sec
 ECC   [      SECP256R1]   256  key gen         4 ops took 1.293 sec, avg 323.250 ms, 3.094 ops/sec
 ECDHE [      SECP256R1]   256    agree         4 ops took 1.288 sec, avg 322.000 ms, 3.106 ops/sec
 ECDSA [      SECP256R1]   256     sign         4 ops took 1.306 sec, avg 326.500 ms, 3.063 ops/sec
-ECDSA [      SECP256R1]   256   verify         2 ops took 1.244 sec, avg 622.000 ms, 1.608 ops/sec
+ECDSA [      SECP256R1]   256   verify         2 ops took 1.245 sec, avg 622.500 ms, 1.606 ops/sec
 CURVE  25519  key gen         4 ops took 1.160 sec, avg 290.000 ms, 3.448 ops/sec
-CURVE  25519    agree         4 ops took 1.160 sec, avg 290.000 ms, 3.448 ops/sec
+CURVE  25519    agree         4 ops took 1.159 sec, avg 289.750 ms, 3.451 ops/sec
 ED     25519  key gen        88 ops took 1.009 sec, avg 11.466 ms, 87.215 ops/sec
 ED     25519     sign        78 ops took 1.021 sec, avg 13.090 ms, 76.396 ops/sec
-ED     25519   verify        52 ops took 1.019 sec, avg 19.596 ms, 51.030 ops/sec
+ED     25519   verify        52 ops took 1.004 sec, avg 19.308 ms, 51.793 ops/sec
 Benchmark complete
-I (67322) wolfssl_benchmark: Stack used: 1616
+I (65922) wolfssl_benchmark: Stack used: 1616
 
-I (67325) wolfssl_benchmark: Stack HWM: 52776
+I (65925) wolfssl_benchmark: Stack HWM: 52776
 
-I (67330) wolfssl_benchmark:
+I (65930) wolfssl_benchmark:
 
 Done!
 
