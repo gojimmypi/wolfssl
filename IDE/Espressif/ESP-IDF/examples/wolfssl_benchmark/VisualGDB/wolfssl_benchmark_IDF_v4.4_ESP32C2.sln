@@ -3,16 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_benchmark_IDF_v4.4_ESP32C3", "wolfssl_benchmark_IDF_v4.4_ESP32C3.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{D2FA2E4F-7CAC-491F-8F6B-DF1BAA27D887}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{F78B4FA9-E522-47DF-A50C-669758A461A5}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{F5C11A6C-5BC4-45C5-8F98-7C8BD26DA56D}"
-	ProjectSection(SolutionItems) = preProject
-		..\sdkconfig = ..\sdkconfig
-	EndProjectSection
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_benchmark_IDF_v4.4_ESP32C2", "wolfssl_benchmark_IDF_v4.4_ESP32C2.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6563C931-E743-43BD-B686-C106E387BA5D}
+		SolutionGuid = {BD2E46B6-A5D6-4BE9-8581-229C5828A1DC}
 	EndGlobalSection
 EndGlobal

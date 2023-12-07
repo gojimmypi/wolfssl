@@ -322,7 +322,9 @@
     #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
           defined(CONFIG_IDF_TARGET_ESP32C6)
         #include <esp_cpu.h>
-        #include "driver/gptimer.h"
+        #if ESP_IDF_VERSION_MAJOR >= 5
+            #include <driver/gptimer.h>
+        #endif
         #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
             #define RESOLUTION_SCALE 100
             static gptimer_handle_t esp_gptimer = NULL;
@@ -1358,7 +1360,11 @@ static const char* bench_result_words3[][5] = {
             thisTimerVal = thisTimerVal * RESOLUTION_SCALE;
         #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
 
-        thisVal = esp_cpu_get_cycle_count();
+        #if ESP_IDF_VERSION_MAJOR >= 5
+            thisVal = esp_cpu_get_cycle_count();
+        #else
+            thisVal = cpu_hal_get_cycle_count();
+        #endif
 
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         thisVal = esp_cpu_get_cycle_count();
@@ -1492,7 +1498,13 @@ static const char* bench_result_words3[][5] = {
                 ESP_LOGI(TAG, "diffDiff                 = %llu", diffDiff);
                 ESP_LOGI(TAG, "_xthal_get_ccount_exDiff = %llu", _xthal_get_ccount_exDiff);
             #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
-            _esp_cpu_count_last = esp_cpu_get_cycle_count();
+
+            #if ESP_IDF_VERSION_MAJOR >= 5
+                _esp_cpu_count_last = esp_cpu_get_cycle_count()
+            #else
+                _esp_cpu_count_last = cpu_hal_get_cycle_count();
+            #endif
+
             ESP_LOGV(TAG, "_xthal_get_ccount_last   = %llu", _esp_cpu_count_last);
         }
         #elif defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -12224,8 +12236,13 @@ void bench_sphincsKeySign(byte level, byte optim)
             #ifdef __XTENSA__
                 _esp_cpu_count_last = xthal_get_ccount();
             #else
-                esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
-                _esp_cpu_count_last = esp_cpu_get_cycle_count();
+                #if ESP_IDF_VERSION_MAJOR >= 5
+                    esp_cpu_set_cycle_count((esp_cpu_cycle_count_t)0);
+                    _esp_cpu_count_last = esp_cpu_get_cycle_count();
+                #else
+                    cpu_hal_set_cycle_count((uint32_t)0);
+                    _esp_cpu_count_last = cpu_hal_get_cycle_count();
+                #endif
             #endif
        }
     #endif
