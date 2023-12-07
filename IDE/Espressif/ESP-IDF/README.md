@@ -28,6 +28,9 @@ method is to have this line in the main `CMakeLists.txt` file as shown in the
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 ```
 
+When defining `WOLFSSL_USER_SETTINGS`, this tells the `settings.h` file to
+looks for the wolfSSL `user_settings.h` in the project as described below.
+
 ### File: `sdkconfig.h`
 
 The Espressif `sdkconfig.h`, generated automatically from your `sdkconfig`
@@ -61,7 +64,7 @@ Here's an example to be included at the top of a given source file:
 ```
 
 Prior version of the Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
-called `/include`. This methods, while possible, is no longer recommended.
+called `/include`. This method, while possible, is no longer recommended.
 
 Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
 
