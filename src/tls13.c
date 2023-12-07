@@ -5621,6 +5621,11 @@ static int DoTls13CertificateRequest(WOLFSSL* ssl, const byte* input,
     if (ssl->toInfoOn) AddLateName("CertificateRequest", &ssl->timeoutInfo);
 #endif
 
+#ifdef OPENSSL_EXTRA
+    if ((ret = CertSetupCbWrapper(ssl)) != 0)
+        return ret;
+#endif
+
     if (OPAQUE8_LEN > size)
         return BUFFER_ERROR;
 
@@ -6598,6 +6603,9 @@ static void FreeDch13Args(WOLFSSL* ssl, void* pArgs)
         XFREE(args->clSuites, ssl->heap, DYNAMIC_TYPE_SUITES);
         args->clSuites = NULL;
     }
+#ifdef OPENSSL_EXTRA
+    ssl->clSuites = NULL;
+#endif
 }
 
 int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
@@ -6982,6 +6990,11 @@ int DoTls13ClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
     case TLS_ASYNC_DO:
     {
+#ifdef OPENSSL_EXTRA
+    ssl->clSuites = args->clSuites;
+    if ((ret = CertSetupCbWrapper(ssl)) != 0)
+        goto exit_dch;
+#endif
 #ifndef NO_CERTS
     if (!args->usingPSK) {
         if ((ret = MatchSuite(ssl, args->clSuites)) < 0) {
@@ -8248,11 +8261,6 @@ static int SendTls13Certificate(WOLFSSL* ssl)
         listSz = 0;
     }
     else {
-#ifdef OPENSSL_EXTRA
-        if ((ret = CertSetupCbWrapper(ssl)) != 0)
-            return ret;
-#endif
-
         if (!ssl->buffers.certificate) {
             WOLFSSL_MSG("Send Cert missing certificate buffer");
             return BUFFER_ERROR;
