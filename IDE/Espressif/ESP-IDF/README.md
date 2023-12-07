@@ -9,7 +9,7 @@ See the latest [Espressif Migration Guides](https://docs.espressif.com/projects/
 
 ## Examples
 
-Included are the following [examples](./Examples/README.md):
+Included are the following [examples](./examples/README.md):
 
 * Bare-bones [Template](./examples/template/README.md)
 * Simple [TLS Client](./examples/wolfssl_client/README.md) / [TLS Server](./examples/wolfssl_server/README.md)

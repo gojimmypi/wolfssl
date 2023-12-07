@@ -1,5 +1,7 @@
 # wolfSSL TLS Server Example
 
+This is wolfSSL TLS Server demo, typically used with the [Espressif TLS Client](../wolfssl_client/README.md)
+or the CLI [Client](https://github.com/wolfSSL/wolfssl/tree/master/examples/client).
 
 ## VisualGDB
 
