@@ -1500,7 +1500,7 @@ static const char* bench_result_words3[][5] = {
             #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
 
             #if ESP_IDF_VERSION_MAJOR >= 5
-                _esp_cpu_count_last = esp_cpu_get_cycle_count()
+                _esp_cpu_count_last = esp_cpu_get_cycle_count();
             #else
                 _esp_cpu_count_last = cpu_hal_get_cycle_count();
             #endif
