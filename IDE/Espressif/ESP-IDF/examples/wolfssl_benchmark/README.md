@@ -2,7 +2,7 @@
 
 This ESP32 example uses the [wolfSSL wolfcrypt Benchmark Application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/benchmark).
 
-For general information on wolfSSL examples for Espressif, see the
+For general information on [wolfSSL examples for Espressif](../README.md), see the
 [README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
 
 ## Espressif ESP Component Registry

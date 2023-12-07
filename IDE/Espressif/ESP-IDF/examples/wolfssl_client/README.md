@@ -5,6 +5,9 @@ or the CLI [Server](https://github.com/wolfSSL/wolfssl/tree/master/examples/serv
 
 When using the CLI, see the [example parameters](/IDE/Espressif/ESP-IDF/examples#interaction-with-wolfssl-cli).
 
+For general information on [wolfSSL examples for Espressif](../README.md), see the
+[README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
+
 ## VisualGDB
 
 Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.

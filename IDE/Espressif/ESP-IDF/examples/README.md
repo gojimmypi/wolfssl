@@ -1,4 +1,4 @@
-# Espressif Examples for wolfSSL
+# wolfSSL Examples for Espressif
 
 ## Core Examples
 
@@ -110,11 +110,11 @@ It may be helpful to also delete the `sdkconfig` file. (Save a backup if you've 
 
 ## Other Topics
 
-[RSA peripheral 50% slower on ESP32-S3/C3 than S2](https://www.esp32.com/viewtopic.php?t=23830)
+- esp32.com: [RSA peripheral 50% slower on ESP32-S3/C3 than S2](https://www.esp32.com/viewtopic.php?t=23830)
 
-[GPIO6,GPIO7,GPIO8,and GPIO9 changed for ESP32-WROOM-32E](https://esp32.com/viewtopic.php?t=29058)
+- esp32.com: [GPIO6,GPIO7,GPIO8,and GPIO9 changed for ESP32-WROOM-32E](https://esp32.com/viewtopic.php?t=29058)
 
-See also [this ESP-FAQ Handbook](https://docs.espressif.com/projects/esp-faq/en/latest/esp-faq-en-master.pdf)
+See also [this ESP-FAQ Handbook](https://docs.espressif.com/projects/esp-faq/en/latest/esp-faq-en-master.pdf).
 
 
 
