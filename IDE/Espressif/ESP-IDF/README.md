@@ -7,18 +7,26 @@ Espressif has [a list of all ESP-IDF versions](https://docs.espressif.com/projec
 
 See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
 
-## Overview
-
-ESP-IDF development framework with wolfSSL by setting `WOLFSSL_ESPIDF` definition.
+## Examples
 
 Included are the following examples:
 
-* Bare-bones [Template](./examples/wolfssl_client/README.md)
+* Bare-bones [Template](./examples/template/README.md)
 * Simple [TLS Client](./examples/wolfssl_client/README.md) / [TLS Server](./examples/wolfssl_server/README.md)
 * Cryptographic [Test](./examples/wolfssl_test/README.md)
 * Cryptographic [Benchmark](./examples/wolfssl_benchmark/README.md)
 
 ## Important Usage Details
+
+The wolfSSL code specific to the Espressif ESP-IDF development framework
+is gated in code with the `WOLFSSL_ESPIDF` definition. This is enabled
+automatically when the `WOLFSSL_USER_SETTINGS` is defined. The recommended
+method is to have this line in the main `CMakeLists.txt` file as shown in the
+[example](./examples/template/main/CMakeLists.txt):
+
+```cmake
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+```
 
 ### File: `sdkconfig.h`
 
