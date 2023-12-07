@@ -86,6 +86,7 @@ cd ${WRK_PROJECT_DIR}
 idf.py build flash -p /dev/ttyS9 -b 115200 monitor
 ```
 
+Bad chip version:
 
 ```
 ESP-ROM:esp32c3-20200918
@@ -104,6 +105,11 @@ I (35) boot: chip revision: 2
 E (38) boot_comm: This chip is revision 2 but the application is configured for minimum revision 3. Can't run.
 ```
 
+If you've encountered a chip version earlier than that confirmed to be working
+at wolfSSL, try adjusting the settings in `menuconfig`.
+
+#### A fatal error occurred: This chip is esp[X] not esp[Y]
+
 ```
 A fatal error occurred: This chip is ESP32-S3 not ESP32-C3. Wrong --chip argument?
 CMake Error at run_serial_tool.cmake:56 (message):
@@ -112,11 +118,27 @@ CMake Error at run_serial_tool.cmake:56 (message):
   --chip esp32c3 failed
 ```
 
+Delete the `./build` and rename/delete your `sdkconfig` file, then run
+`idf.py set-target`, in this example setting to `esp32c3`:
+
+```bash
+idf.py set-target esp32c3
+```
+
+#### Cmake Cache Warning
+
 ```
 Executing action: clean
 Project sdkconfig was generated for target 'esp32s3', but CMakeCache.txt contains 'esp32c3'. To keep the setting in sdkconfig (esp32s3) and re-generate CMakeCache.txt, run 'idf.py fullclean'. To re-generate sdkconfig for 'esp32c3' target, run 'idf.py set-target esp32c3'.
 ```
 
+As indicated, run `idf.py set-target` and/or delete the `./build` directory.
+
+#### Connecting, but fails to connect.
+
+Some devices, particularly 3rd party, non-Espressif dev boards may not have implemented
+the reset-program hardware properly, causing devices to not be programmed with the
+`idf.py flash` command:
 
 ```
 Connecting......................................
@@ -128,7 +150,11 @@ CMake Error at run_serial_tool.cmake:56 (message):
   /mnt/c/SysGCC/esp32/esp-idf/v4.4.2/components/esptool_py/esptool/esptool.py
   --chip esp32 failed
 ```
+
 Solution:
 
 Press and hold`EN` button, press and release `IO0` button, then release `EN` button.
 
+#### Other Solutions
+
+See also [this ESP-FAQ Handbook](https://docs.espressif.com/projects/esp-faq/en/latest/esp-faq-en-master.pdf)
