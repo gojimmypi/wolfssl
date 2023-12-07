@@ -4,15 +4,21 @@
 
 This directory contains documentation and examples for the Espressif SoC devices.
 
+Although wolfSSL _should_ work on any device, there's explicit support for these:
+
 ## Getting Started
 
-If you are new to wolfSSL on the Espressif ESP32, this video can help to get started:
+If you are new to wolfSSL on the Espressif ESP32, [this video](https://www.youtube.com/watch?v=CzwA3ZBZBZ8)
+can help to get started:
 
 [![Video Preview](https://img.youtube.com/vi/CzwA3ZBZBZ8/0.jpg)](https://www.youtube.com/watch?v=CzwA3ZBZBZ8)
 
+The [wolfSSL Manual](https://www.wolfssl.com/documentation/manuals/wolfssl/index.html) is also a useful
+resource.
+
 ## Requirements
 
-The wolfSSL Espressif IDE code required the ESP-IDF to be installed for
+The wolfSSL Espressif IDE code requires the ESP-IDF to be installed for
 [Windows](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html)
 or [Linux / MacOS](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/linux-macos-setup.html).
 

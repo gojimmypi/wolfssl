@@ -1,7 +1,8 @@
-# ESP-IDF port
+# ESP-IDF Port
 
-NOTICE: These Espressif examples have been created and tested with the latest stable release branch of 
-[ESP-IDF V5.1](https://docs.espressif.com/projects/esp-idf/en/release-v5.1/esp32/get-started/index.html)
+These Espressif examples have been created and tested with the latest stable release branch of 
+[ESP-IDF V5.1](https://docs.espressif.com/projects/esp-idf/en/release-v5.1/esp32/get-started/index.html).
+The prior version 4.4 ESP-IDF is still supported, however version 5.1 or greater is recommended.
 
 See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
 
@@ -9,21 +10,32 @@ See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en
 
 ESP-IDF development framework with wolfSSL by setting `WOLFSSL_ESPIDF` definition.
 
-Including the following examples:
+Included are the following examples:
 
 * Bare-bones [Template](./examples/wolfssl_client/README.md)
-* Simple [TLS client](./examples/wolfssl_client/README.md)/[server](./examples/wolfssl_server/README.md)
-* Cryptographic [test](./examples/wolfssl_test/README.md)
-* Cryptographic [benchmark](./examples/wolfssl_benchmark/README.md)
+* Simple [TLS Client](./examples/wolfssl_client/README.md) / [TLS Server](./examples/wolfssl_server/README.md)
+* Cryptographic [Test](./examples/wolfssl_test/README.md)
+* Cryptographic [Benchmark](./examples/wolfssl_benchmark/README.md)
 
 ## Important Usage Details
 
-The *user_settings.h* file enables some of the hardened settings. See the respective project directory:
+### `sdkconfig.h`
 
-  `project/components/wolfssl/user_settings.h`
+The Espressif `sdkconfig.h`, generated from your `sdkconfig` file, should be included before any other files.
 
-A typical project will _not_ directly reference the `user_settings.h` file. Here's an example to be included at the
-top of a source file:
+### `user_settings.h`
+
+The `user_settings.h` file enables some of the hardened security settings. There are also some
+default configuration items in the wolfssl `settings.h`. With the latest version of
+wolfSSL, some of these defaults can be disabled with `NO_ESPIDF_DEFAULT` and customized
+in your project `user_settings.h` as desired.
+
+See the respective project directory:
+
+  `[project-dir]/components/wolfssl/user_settings.h`
+
+A typical project will _not_ directly reference the `user_settings.h` file.
+Here's an example to be included at the top of a given source file:
 
 ```c
 /* ESP-IDF */
@@ -37,17 +49,19 @@ top of a source file:
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 ```
 
-Note the built-in `settings.h` references your project `user_settings.h`. The
+Prior version of the Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
+called `/include`. This methods, while possible, is no longer recommended.
+
+Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
+
+### `wolfssl/wolfcrypt/settings.h`
+
+The built-in `settings.h` references your project `user_settings.h`. The
 `settings.h` should _not_ be edited directly. Any wolfSSL settings should be adjusted in your local project
 `user_settings.h` file.
 
 The `settings.h` has some SoC-target-specific settings, so be sure to `#include "sdkconfig.h"` at the beginning
 of your source code, particularly before the `#include <wolfssl/wolfcrypt/settings.h>` line.
-
-Prior version of the Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
-called `/include`. This methods, while possible, is not recommended any longer.
-
-Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
 
 ## Requirements
 
