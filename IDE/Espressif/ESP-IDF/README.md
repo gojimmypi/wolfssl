@@ -1,21 +1,53 @@
 # ESP-IDF port
 
 NOTICE: These Espressif examples have been created and tested with the latest stable release branch of 
-[ESP-IDF V4](https://docs.espressif.com/projects/esp-idf/en/v4.4.1/esp32/get-started/index.html)
-and have not yet been upgraded to the master branch V5. 
+[ESP-IDF V5.1](https://docs.espressif.com/projects/esp-idf/en/release-v5.1/esp32/get-started/index.html)
+
 See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
 
 ## Overview
 
- ESP-IDF development framework with wolfSSL by setting *WOLFSSL_ESPIDF* definition
+ESP-IDF development framework with wolfSSL by setting `WOLFSSL_ESPIDF` definition.
 
 Including the following examples:
 
-* Simple [TLS client](./examples/wolfssl_client/)/[server](./examples/wolfssl_server/)
-* Cryptographic [test](./examples/wolfssl_test/)
-* Cryptographic [benchmark](./examples/wolfssl_benchmark/)
+* Bare-bones [Template](./examples/wolfssl_client/README.md)
+* Simple [TLS client](./examples/wolfssl_client/README.md)/[server](./examples/wolfssl_server/README.md)
+* Cryptographic [test](./examples/wolfssl_test/README.md)
+* Cryptographic [benchmark](./examples/wolfssl_benchmark/README.md)
 
- The *user_settings.h* file enables some of the hardened settings.
+## Important Usage Details
+
+The *user_settings.h* file enables some of the hardened settings. See the respective project directory:
+
+  `project/components/wolfssl/user_settings.h`
+
+A typical project will _not_ directly reference the `user_settings.h` file. Here's an example to be included at the
+top of a source file:
+
+```c
+/* ESP-IDF */
+#include <esp_log.h>
+#include "sdkconfig.h"
+
+/* wolfSSL */
+#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+/* Do not explicitly include wolfSSL user_settings.h */
+#include <wolfssl/version.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+```
+
+Note the built-in `settings.h` references your project `user_settings.h`. The
+`settings.h` should _not_ be edited directly. Any wolfSSL settings should be adjusted in your local project
+`user_settings.h` file.
+
+The `settings.h` has some SoC-target-specific settings, so be sure to `#include "sdkconfig.h"` at the beginning
+of your source code, particularly before the `#include <wolfssl/wolfcrypt/settings.h>` line.
+
+Prior version of the Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
+called `/include`. This methods, while possible, is not recommended any longer.
+
+Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
 
 ## Requirements
 
@@ -56,11 +88,15 @@ See the specific examples for additional details.
 
 ## Setup for Linux (wolfSSL local copy)
 
+This is a legacy method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
+
  1. Run `setup.sh` at _/path/to_`/wolfssl/IDE/Espressif/ESP-IDF/` to deploy files into ESP-IDF tree  
  2. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
  3. Find [Example Programs](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples) under _/path/to/esp_`/esp-idf/examples/protocols/wolfssl_xxx` (where xxx is the project name)
 
 ## Setup for Windows
+
+This is a legacy method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
 
  1. Run ESP-IDF Command Prompt (cmd.exe) or Run ESP-IDF PowerShell Environment
  2. Run `setup_win.bat` at `.\IDE\Espressif\ESP-IDF\`
@@ -68,6 +104,12 @@ See the specific examples for additional details.
  4. Find [Example programs](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples) under _/path/to/esp_`/esp-idf/examples/protocols/wolfssl_xxx` (where xxx is the project name)
 
 ## Setup for VisualGDB
+
+See the local project `./VisualGDB` for sample project files. For single-step JTAG debugging on boards that do not
+have a built-in JTAG port, the wolfSSL examples use the open source [Tigard board](https://github.com/tigard-tools/tigard#readme).
+
+See also the [gojimmypi blog](https://gojimmypi.github.io/Tigard-JTAG-SingleStep-Debugging-ESP32/) on using the Tigard
+to JTAG debug the ESP32.
 
 ### Clone a specific version:
 
@@ -92,10 +134,10 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
    - Microsoft Windows 10 Pro 10.0.19041 
    - WSL Ubuntu
 
-   - ESP-IDF: ESP-IDF v4.3.2
-   - Module : ESP32-WROOM-32
+   - ESP-IDF: ESP-IDF v5.1
+   - Module : all those supported in ESP-IDF v5.1
 
-## JTAG Debugging
+## JTAG Debugging Notes
 
 All of the examples are configured to use either the on-board JTAG (when available) or
 the open source [Tigard multi-protocol tool for hardware hacking](https://github.com/tigard-tools/tigard).
@@ -104,4 +146,29 @@ VisualGDB users should find the configuration file in the `interface\ftdi` direc
 
 ```
 C:\Users\%USERNAME%\AppData\Local\VisualGDB\EmbeddedDebugPackages\com.sysprogs.esp32.core\share\openocd\scripts\interface\ftdi
+```
+
+For reference, the `tigard.cfg` looks like this:
+
+```
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Tigard: An FTDI FT2232H-based multi-protocol tool for hardware hacking.
+# https://github.com/tigard-tools/tigard
+
+adapter driver ftdi
+
+ftdi device_desc "Tigard V1.1"
+ftdi vid_pid 0x0403 0x6010
+
+ftdi channel 1
+
+ftdi layout_init 0x0038 0x003b
+ftdi layout_signal nTRST -data 0x0010
+ftdi layout_signal nSRST -data 0x0020
+
+# This board doesn't support open-drain reset modes since its output buffer is
+# always enabled.
+reset_config srst_push_pull trst_push_pull
+
 ```
