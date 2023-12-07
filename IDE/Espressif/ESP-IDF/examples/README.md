@@ -1,6 +1,10 @@
 # Espressif Examples for wolfSSL
 
+## Core Examples
+
 These are the core examples for wolfSSL:
+
+- [Template](./template/README.md)
 
 - [Benchmark](./wolfssl_benchmark/README.md)
 
@@ -10,6 +14,25 @@ These are the core examples for wolfSSL:
 
 - [TLS Server](./wolfssl_server/README.md)
 
+## Other Espressif wolfSSL Examples
+
+See these other repositories for additional examples:
+
+- [wolfssl-examples](https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32)
+
+- [wolfssh](https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif)
+
+- [wolfssh-examples](https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif)
+
+
+## Interaction with wolfSSL CLI
+
+See the [server](https://github.com/wolfSSL/wolfssl/tree/master/examples/server)
+and [client](https://github.com/wolfSSL/wolfssl/tree/master/examples/client)
+examples.
+
+Here are some examples using wolfSSL from Linux to communicate with an
+ESP32 TLS client or server:
 
 TLS1.3 Linux Server
 ```
@@ -45,14 +68,6 @@ TLS1.3 Linux Client to ESP32 Server: `TLS_AES_128_GCM_SHA256`
 There's an additional example that uses wolfSSL installed as a component to the shared ESP-IDF:
 
 - [Test IDF](./wolfssl_test_idf/README.md)
-
-## Other Espressif wolfSSL Examples
-
-- [wolfssl-examples](https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32)
-
-- [wolfssh](https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif)
-
-- [wolfssh-examples](https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif)
 
 ## Installing wolfSSL for Espressif projects
 

@@ -2,8 +2,22 @@
 
 # wolfSSL Espressif IDE
 
-* [Component Manager Publisher](./component-manager/README.md)
+The wolfSSL Espressif IDE code required the ESP-IDF to be installed for
+[Windows](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html)
+or [Linux / MacOS](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/linux-macos-setup.html).
+See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+
+## Examples:
+
+There are a variety of examples to help get started:
+
 * [ESP-IDF Examples](./ESP-IDF/README.md)
+
+## Managed Component
+
+The wolfSSL library can be installed as a managed component:
+
+* [Espressif Managed Component Registry](https://components.espressif.com/components/wolfssl/wolfssl)
 
 ## Notes:
 
