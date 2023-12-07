@@ -1,6 +1,6 @@
-#wolfSSL Example
+# wolfSSL TLS Client Example
 
-The Example contains of wolfSSL tls client demo.
+The Example contains of wolfSSL TLS Client demo.
 
 ## VisualGDB
 

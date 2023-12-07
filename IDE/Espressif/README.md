@@ -35,7 +35,7 @@ See the [Espressif Getting Started Guide](https://docs.espressif.com/projects/es
 
 Any editor can be used. See also the [Espressif Third-Party Tools](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/resources.html)
 for a list of feature-rich Integrated Development Environments.
-The [wolfSSL examples](./ESP-IDF/Examples/README.md) all include a `./VisualGDB` directory with SoC-specific configurations
+The [wolfSSL examples](./ESP-IDF/examples/README.md) all include a `./VisualGDB` directory with SoC-specific configurations
 to help get started quickly.
 
 Although not required, a [JTAG Adapter](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html)

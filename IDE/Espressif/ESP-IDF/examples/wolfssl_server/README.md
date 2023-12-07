@@ -1,4 +1,4 @@
-# wolfSSL Server Example
+# wolfSSL TLS Server Example
 
 
 ## VisualGDB

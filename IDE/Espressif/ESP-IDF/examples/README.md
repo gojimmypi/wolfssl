@@ -18,11 +18,11 @@ These are the core examples for wolfSSL:
 
 See these other repositories for additional examples:
 
-- [wolfssl-examples](https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32)
+- [wolfssl-examples/ESP32](https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32)
 
-- [wolfssh](https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif)
+- [wolfssh/Espressif](https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif)
 
-- [wolfssh-examples](https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif)
+- [wolfssh-examples/Espressif](https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif)
 
 
 ## Interaction with wolfSSL CLI
@@ -78,15 +78,19 @@ wolfSSL to be installed.
 If you want to install wolfSSL, see the setup for [wolfSSL](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF#setup-for-linux) 
 and [wolfSSH](https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif#setup-for-linux).
 
+The [Espressif Managed Component for wolfSSL](https://components.espressif.com/components/wolfssl/wolfssl)
+also installs source code locally, instead of pointing to a source repository.
+
 ## VisualGDB
 
-Users of VisualGDB can find project files in each respective example `.\VisualGDB` directory.
-For convenience, there are separate project for various target chip sets and ESP-IDF version.
+Users of [VisualGDB](https://visualgdb.com/) can find Espressif project files in each respective
+example `.\VisualGDB` directory. For convenience, there are separate project for various
+target SoC and ESP-IDF version.
 
 For devices without a built-in JTAG, the projects are configured with the open source [Tigard](https://www.crowdsupply.com/securinghw/tigard)
 and using port `COM20`.
 
-For devices _with_ a built-in JTAG, the projects are using `COM9`
+For devices _with_ a built-in JTAG, the projects are using `COM9`.
 
 Edit the COM port for your project:
 
@@ -94,7 +98,7 @@ Edit the COM port for your project:
 - Raw Terminal; COM Port
 
 
-## Throubleshooting
+## Troubleshooting
 
 If unusual errors occur, exit Visual Studio and manually delete these directories to start over:
 
@@ -103,11 +107,13 @@ If unusual errors occur, exit Visual Studio and manually delete these directorie
 - `.\VisualGDB\.vs`
 
 
+## Other Topics
+
 [RSA peripheral 50% slower on ESP32-S3/C3 than S2](https://www.esp32.com/viewtopic.php?t=23830)
 
 [GPIO6,GPIO7,GPIO8,and GPIO9 changed for ESP32-WROOM-32E](https://esp32.com/viewtopic.php?t=29058)
 
-
+See also [this ESP-FAQ Handbook](https://docs.espressif.com/projects/esp-faq/en/latest/esp-faq-en-master.pdf)
 
 
 
