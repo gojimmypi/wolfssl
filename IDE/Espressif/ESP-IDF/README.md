@@ -30,7 +30,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
 ### File: `sdkconfig.h`
 
-The Espressif `sdkconfig.h`, generated from your `sdkconfig` file, should be included before any other files.
+The Espressif `sdkconfig.h`, generated automatically from your `sdkconfig`
+file at [build](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html)
+time, should be included before any other files.
 
 ### File: `user_settings.h`
 
