@@ -64,4 +64,6 @@ For examples, see:
 - [wolfssh-examples](https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif)
 
 
+See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).
+
 

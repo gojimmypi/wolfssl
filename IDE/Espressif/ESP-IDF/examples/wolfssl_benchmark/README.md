@@ -254,3 +254,5 @@ A 'clean` may be needed after freshly installing a new component:
 ```
 idf.py clean build  flash -p /dev/ttyS7 -b 115200 monitor
 ```
+
+See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).

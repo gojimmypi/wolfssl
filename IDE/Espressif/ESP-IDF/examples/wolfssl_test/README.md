@@ -172,3 +172,5 @@ I (136548) wolfcrypt_test: Exiting main with return code:  0
 
 I (136548) wolfssl_test: wolf_test_task complete success result code = 0
 ```
+
+See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).

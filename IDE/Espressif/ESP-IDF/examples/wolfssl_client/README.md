@@ -3,7 +3,7 @@
 This is the wolfSSL TLS Client demo, typically used with the [Espressif TLS Server](../wolfssl_server/README.md)
 or the CLI [Server](https://github.com/wolfSSL/wolfssl/tree/master/examples/server).
 
-When using the CLI, see the [example parameters](https://github.com/gojimmypi/wolfssl/tree/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples#interaction-with-wolfssl-cli).
+When using the CLI, see the [example parameters](/IDE/Espressif/ESP-IDF/examples#interaction-with-wolfssl-cli).
 
 ## VisualGDB
 
@@ -42,14 +42,14 @@ When you want to test the wolfSSL client
 Command:
 
 ```
-cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_server
+cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_server
 . /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 
 ```
 
 ```
-cd /mnt/c/workspace/wolfssl-gojimmypi
+cd /mnt/c/workspace/wolfssl-$USER
 
 ./examples/client/client  -h 192.168.1.108 -v 4 -l TLS_SM4_GCM_SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem     -A ./certs/sm2/root-sm2.pem -C
 ```
@@ -71,5 +71,5 @@ I hear you fa shizzle!
 ./examples/server/server                   -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3     -c ./certs/sm2/server-sm2.pem -k ./certs/sm2/server-sm2-priv.pem     -A ./certs/sm2/client-sm2.pem -V
 ```
 
-See the README.md file in the upper level 'examples' directory for more information about examples.
+See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).
 
