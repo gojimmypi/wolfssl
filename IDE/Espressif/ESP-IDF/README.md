@@ -19,11 +19,11 @@ Included are the following examples:
 
 ## Important Usage Details
 
-### `sdkconfig.h`
+### File: `sdkconfig.h`
 
 The Espressif `sdkconfig.h`, generated from your `sdkconfig` file, should be included before any other files.
 
-### `user_settings.h`
+### File: `user_settings.h`
 
 The `user_settings.h` file enables some of the hardened security settings. There are also some
 default configuration items in the wolfssl `settings.h`. With the latest version of
@@ -54,9 +54,9 @@ called `/include`. This methods, while possible, is no longer recommended.
 
 Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
 
-### `wolfssl/wolfcrypt/settings.h`
+### File: `wolfssl/wolfcrypt/settings.h`
 
-The built-in `settings.h` references your project `user_settings.h`. The
+The wolfSSL  built-in `settings.h` references your project `user_settings.h`. The
 `settings.h` should _not_ be edited directly. Any wolfSSL settings should be adjusted in your local project
 `user_settings.h` file.
 
