@@ -5,11 +5,11 @@ These Espressif examples have been created and tested with the latest stable rel
 The prior version 4.4 ESP-IDF is still supported, however version 5.1 or greater is recommended.
 Espressif has [a list of all ESP-IDF versions](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/versions.html).
 
-See the latest [migration guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
+See the latest [Espressif Migration Guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/index.html).
 
 ## Examples
 
-Included are the following examples:
+Included are the following [examples](./Examples/README.md):
 
 * Bare-bones [Template](./examples/template/README.md)
 * Simple [TLS Client](./examples/wolfssl_client/README.md) / [TLS Server](./examples/wolfssl_server/README.md)
@@ -63,7 +63,7 @@ Here's an example to be included at the top of a given source file:
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 ```
 
-Prior version of the Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
+Prior versions of the wolfSSL Espressif library expected the `user_settings.h` to be in the root wolfssl folder in a directory
 called `/include`. This method, while possible, is no longer recommended.
 
 Be sure to *not* have a `user_settings.h` in _both_ the local project and the wolfssl `include` directories.
