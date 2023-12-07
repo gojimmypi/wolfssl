@@ -39,7 +39,8 @@ The [wolfSSL examples](./ESP-IDF/examples/README.md) all include a `./VisualGDB`
 to help get started quickly.
 
 Although not required, a [JTAG Adapter](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html)
-can be helpful for development.
+can be helpful for development. When not using a built-in JTAG from Espressif, the examples typically
+use the open source [Tigard board](https://github.com/tigard-tools/tigard#readme).
 
 ## Examples:
 
