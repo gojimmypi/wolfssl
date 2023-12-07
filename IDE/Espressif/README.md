@@ -7,11 +7,11 @@ This directory contains documentation and examples for the Espressif SoC devices
 Although wolfSSL _should_ work on any Espressif device, there's explicit support for these:
 
 - esp32
-- esp32s2
-- esp32c3
-- esp32s3
 - esp32c2
+- esp32c3
 - esp32c6
+- esp32s2
+- esp32s3
 - esp32h2
 
 
@@ -32,6 +32,14 @@ The wolfSSL Espressif IDE code requires the ESP-IDF to be installed for
 or [Linux / MacOS](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/linux-macos-setup.html).
 
 See the [Espressif Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+
+Any editor can be used. See also the [Espressif Third-Party Tools](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/resources.html)
+for a list of feature-rich Integrated Development Environments.
+The [wolfSSL examples](./ESP-IDF/Examples/README.md) all include a `./VisualGDB` directory with SoC-specific configurations
+to help get started quickly.
+
+Although not required, a [JTAG Adapter](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html)
+can be helpful for development.
 
 ## Examples:
 
