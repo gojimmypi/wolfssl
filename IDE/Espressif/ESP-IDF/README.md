@@ -147,6 +147,10 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
 
 ## Configuration
 
+ 1. The `user_settings.h` can be found in `[project]/components/wolfssl/include/user_settings.h`. 
+
+## Configuration (Legacy IDF install)
+
  1. The `user_settings.h` can be found in _/path/to/esp_`/esp-idf/components/wolfssl/include/user_settings.h`
 
 ## Build examples
@@ -159,11 +163,11 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
 
  Note: This is tested with :  
    - OS: Ubuntu 20.04.3 LTS
-   - Microsoft Windows 10 Pro 10.0.19041 
-   - WSL Ubuntu
-
+   - Microsoft Windows 10 Pro 10.0.19041 / Windows 11 Pro 22H2 22621.2715
+   - Visual Studio 2022 17.7.6 with VisualGDB 5.6R9 (build 4777)
+   - WSL 1 Ubuntu 22.04.3 LTS
    - ESP-IDF: ESP-IDF v5.1
-   - Module : all those supported in ESP-IDF v5.1
+   - SoC Module : all those supported in ESP-IDF v5.1
 
 ## JTAG Debugging Notes
 
