@@ -106,6 +106,7 @@ If unusual errors occur, exit Visual Studio and manually delete these directorie
 - `.\VisualGDB\.visualgdb`
 - `.\VisualGDB\.vs`
 
+It may be helpful to also delete the `sdkconfig` file. (Save a backup if you've made changes to defaults)
 
 ## Other Topics
 
