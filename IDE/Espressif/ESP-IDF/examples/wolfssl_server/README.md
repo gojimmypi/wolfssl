@@ -3,7 +3,7 @@
 This is the wolfSSL TLS Server demo, typically used with the [Espressif TLS Client](../wolfssl_client/README.md)
 or the CLI [Client](https://github.com/wolfSSL/wolfssl/tree/master/examples/client).
 
-When using the CLI, see the [example parameters](https://github.com/gojimmypi/wolfssl/tree/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples#interaction-with-wolfssl-cli).
+When using the CLI, see the [example parameters](/IDE/Espressif/ESP-IDF/examples#interaction-with-wolfssl-cli).
 
 ## VisualGDB
 
@@ -14,7 +14,7 @@ No wolfSSL setup is needed. You may need to adjust your specific COM port. The d
 
 The Example contains a wolfSSL simple server.
 
-1. `idf.py menuconfigure` to configure the project
+1. `idf.py menuconfig` to configure the project
 
     1-1. Example Connection Configuration ->
     
@@ -37,7 +37,7 @@ See the README.md file in the upper level 'examples' directory for more informat
 ```
 # . /mnt/c/SysGCC/esp32/esp-idf/master/export.sh
 . /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
-cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_server
+cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_server
 
 # optionally erase
 idf.py erase-flash -p /dev/ttyS19 -b 115200
@@ -50,7 +50,7 @@ idf.py flash -p /dev/ttyS19 -b 115200 monitor
 Linux Client to x108 SM server
 
 ```
-cd /mnt/c/workspace/wolfssl-gojimmypi
+cd /mnt/c/workspace/wolfssl-$USER
 
 # show the ciphers
 ./examples/client/client -e
@@ -104,3 +104,5 @@ ECDHE-RSA-CHACHA20-POLY1305-OLD:
 ECDHE-ECDSA-CHACHA20-POLY1305-OLD:
 DHE-RSA-CHACHA20-POLY1305-OLD:
 ```
+
+See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).
