@@ -368,7 +368,7 @@
 /* Pause in a loop rather than exit. */
 #define WOLFSSL_ESPIDF_ERROR_PAUSE
 
-#define WOLFSSL_HW_METRICS
+/* #define WOLFSSL_HW_METRICS */
 
 /* for test.c */
 /* #define HASH_SIZE_LIMIT */
