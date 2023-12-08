@@ -90,7 +90,7 @@
 #endif
 
 #ifndef ESP_RSA_EXPT_YBITS
-	#define ESP_RSA_EXPT_YBITS 8
+    #define ESP_RSA_EXPT_YBITS 8
 #endif
 
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
