@@ -22,6 +22,53 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Log", "Log", "{C928544F-D640-44BC-A053-F88556BE5943}"
+	ProjectSection(SolutionItems) = preProject
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_HW.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_HW.txt
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_HW_compiler_performance_optimized.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_HW_compiler_performance_optimized.txt
+		..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_NO_HW.txt = ..\logs\wolfssl_benchmark_IDF_v5_ESP32C6_NO_HW.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif", "Espressif", "{8F8CB0DB-5BDE-4F63-AD2D-5FF7BBFEE593}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\README.md = ..\..\..\..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP-IDF", "ESP-IDF", "{48399DCA-DE0F-40C2-9430-2FAFA73C916C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\README.md = ..\..\..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A3582250-98D7-4F2E-A710-1DE1F7100A28}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\README.md = ..\..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{C76BD7F8-4B86-4F58-BDBD-683229FA33A8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\template\README.md = ..\..\template\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl_server", "wolfssl_server", "{557EDA73-3257-4443-9F04-BE3A452459C2}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\wolfssl_server\README.md = ..\..\wolfssl_server\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl_client", "wolfssl_client", "{A5F240DE-8713-4C3C-BC00-4E177124C5CD}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\wolfssl_client\README.md = ..\..\wolfssl_client\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl_test", "wolfssl_test", "{464C206C-1BF4-4170-85D9-7CEAE2C8B6EC}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\wolfssl_test\README.md = ..\..\wolfssl_test\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl_benchmark", "wolfssl_benchmark", "{967D1467-19E2-4C1B-B53B-C78B63DF861F}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -44,6 +91,14 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D12E5015-E980-44BC-B6A0-78E862541A6D} = {BA89C9A8-67E1-40EA-BD3A-B7D09141DC31}
+		{8F8CB0DB-5BDE-4F63-AD2D-5FF7BBFEE593} = {040DB320-32A5-43B0-B545-6BD1C936A960}
+		{48399DCA-DE0F-40C2-9430-2FAFA73C916C} = {8F8CB0DB-5BDE-4F63-AD2D-5FF7BBFEE593}
+		{A3582250-98D7-4F2E-A710-1DE1F7100A28} = {48399DCA-DE0F-40C2-9430-2FAFA73C916C}
+		{C76BD7F8-4B86-4F58-BDBD-683229FA33A8} = {A3582250-98D7-4F2E-A710-1DE1F7100A28}
+		{557EDA73-3257-4443-9F04-BE3A452459C2} = {A3582250-98D7-4F2E-A710-1DE1F7100A28}
+		{A5F240DE-8713-4C3C-BC00-4E177124C5CD} = {A3582250-98D7-4F2E-A710-1DE1F7100A28}
+		{464C206C-1BF4-4170-85D9-7CEAE2C8B6EC} = {A3582250-98D7-4F2E-A710-1DE1F7100A28}
+		{967D1467-19E2-4C1B-B53B-C78B63DF861F} = {A3582250-98D7-4F2E-A710-1DE1F7100A28}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4A0F96DE-B80A-422F-B1CB-AFA32FA90296}
