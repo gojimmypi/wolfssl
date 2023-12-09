@@ -154,7 +154,7 @@ CMake Error at run_serial_tool.cmake:56 (message):
 
 Solution:
 
-Press and hold`EN` button, press and release `IO0` button, then release `EN` button.
+Press and hold `EN` button, press and release `IO0` button, then release `EN` button.
 
 #### Other Solutions
 
