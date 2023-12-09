@@ -27,7 +27,7 @@
 #include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
 /* Do not explicitly include wolfSSL user_settings.h */
 #include <wolfssl/version.h>
-#include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #ifndef WOLFSSL_ESPIDF
     #error "Problem with wolfSSL user_settings. "           \
            "Check components/wolfssl/include "              \
@@ -253,8 +253,9 @@ void app_main(void)
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 #endif
 
-    ESP_LOGI(TAG, "\n\nDone!\n\n"
-                  "If running from idf.py monitor, press twice: Ctrl+]");
+#ifdef WOLFSSL_ESPIDF_EXIT_MESSAGE
+    ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+#endif
 
     /* after the test, we'll just wait */
     while (1) {
