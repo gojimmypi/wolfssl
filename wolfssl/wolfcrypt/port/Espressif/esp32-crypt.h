@@ -44,6 +44,13 @@
 #include <esp_types.h>
 #include <esp_log.h>
 
+/* Optional exit message.
+ * The WOLFSSL_COMPLETE keyword exits wolfSSL test harness script. */
+#define WOLFSSL_ESPIDF_EXIT_MESSAGE \
+    "\n\nDone!"                 \
+    "\n\nWOLFSSL_COMPLETE"      \
+    "\n\nIf running from idf.py monitor, press twice: Ctrl+]"
+
 /* exit codes to be used in tfm.c, sp_int.c, integer.c, etc.
  *
  * see wolfssl/wolfcrypt/error-crypt.h
