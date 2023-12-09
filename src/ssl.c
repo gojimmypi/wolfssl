@@ -29848,6 +29848,8 @@ static int wolfSSL_TicketKeyCb(WOLFSSL* ssl,
 end:
 
     (void)wc_HmacFree(&hmacCtx.hmac);
+    (void)wolfSSL_EVP_CIPHER_CTX_cleanup(evpCtx);
+
 #ifdef WOLFSSL_SMALL_STACK
     XFREE(evpCtx, ssl->heap, DYNAMIC_TYPE_TMP_BUFFER);
 #endif

@@ -114,7 +114,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #pragma warning(disable: 4127)
 #endif
 
-
 /* Define AES implementation includes and functions */
 #if defined(STM32_CRYPTO)
      /* STM32F2/F4/F7/L4/L5/H7/WB55 hardware AES support for ECB, CBC, CTR and GCM modes */
@@ -131,6 +130,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         CRYP_InitTypeDef cryptInit;
         CRYP_KeyInitTypeDef keyInit;
     #endif
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
 
     #ifdef WOLFSSL_STM32_CUBEMX
         ret = wc_Stm32_Aes_Init(aes, &hcryp);
@@ -226,6 +231,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         CRYP_InitTypeDef cryptInit;
         CRYP_KeyInitTypeDef keyInit;
     #endif
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
 
     #ifdef WOLFSSL_STM32_CUBEMX
         ret = wc_Stm32_Aes_Init(aes, &hcryp);
@@ -343,6 +354,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             if (ret != 0)
                 return ret;
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+            ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+#endif
+
             if (wolfSSL_CryptHwMutexLock() == 0) {
                 LTC_AES_EncryptEcb(LTC_BASE, inBlock, outBlock, AES_BLOCK_SIZE,
                     key, keySize);
@@ -359,6 +376,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             int ret = wc_AesGetKeySize(aes, &keySize);
             if (ret != 0)
                 return ret;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+            ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+#endif
 
             if (wolfSSL_CryptHwMutexLock() == 0) {
                 LTC_AES_DecryptEcb(LTC_BASE, inBlock, outBlock, AES_BLOCK_SIZE,
@@ -384,6 +407,14 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
+
         if (wolfSSL_CryptHwMutexLock() == 0) {
         #ifdef FREESCALE_MMCAU_CLASSIC
             if ((wc_ptr_t)outBlock % WOLFSSL_MMCAU_ALIGNMENT) {
@@ -403,6 +434,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
         if (wolfSSL_CryptHwMutexLock() == 0) {
         #ifdef FREESCALE_MMCAU_CLASSIC
             if ((wc_ptr_t)outBlock % WOLFSSL_MMCAU_ALIGNMENT) {
@@ -428,6 +466,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
         /* Thread mutex protection handled in Pic32Crypto */
         return wc_Pic32AesCrypt(aes->key, aes->keylen, NULL, 0,
             outBlock, inBlock, AES_BLOCK_SIZE,
@@ -439,6 +484,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
         /* Thread mutex protection handled in Pic32Crypto */
         return wc_Pic32AesCrypt(aes->key, aes->keylen, NULL, 0,
             outBlock, inBlock, AES_BLOCK_SIZE,
@@ -454,6 +506,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
         int ret;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
+
         ret = wolfSSL_CryptHwMutexLock();
         if (ret == 0) {
             ret = nrf51_aes_encrypt(inBlock, (byte*)aes->key, aes->rounds,
@@ -489,6 +548,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
         int ret;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
+
         /* Thread mutex protection handled in esp_aes_hw_InUse */
     #ifdef NEED_AES_HW_FALLBACK
         if (wc_esp32AesSupportedKeyLen(aes)) {
@@ -507,6 +573,11 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
         int ret = 0;
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
         /* Thread mutex protection handled in esp_aes_hw_InUse */
     #ifdef NEED_AES_HW_FALLBACK
         if (wc_esp32AesSupportedKeyLen(aes)) {
@@ -700,6 +771,14 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         static WARN_UNUSED_RESULT int wc_AesEncrypt(
             Aes* aes, const byte* inBlock, byte* outBlock)
         {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+            {
+                int ret =
+                    wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+                if (ret < 0)
+                    return ret;
+            }
+#endif
             return wc_AesEncryptDirect(aes, outBlock, inBlock);
         }
 
@@ -842,6 +921,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
         return AES_ECB_encrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
     }
     #endif
@@ -850,6 +936,13 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
         return AES_ECB_decrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
     }
     #endif
@@ -2674,6 +2767,14 @@ static WARN_UNUSED_RESULT int wc_AesEncrypt(
         return BAD_FUNC_ARG;
     }
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+    {
+        int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+    }
+#endif
+
     r = aes->rounds >> 1;
 
     if (r > 7 || r == 0) {
@@ -3416,6 +3517,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         return BAD_FUNC_ARG;
     }
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+    {
+        int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+    }
+#endif
+
     r = aes->rounds >> 1;
 
     if (r > 7 || r == 0) {
@@ -3508,6 +3617,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             return BAD_FUNC_ARG;
         }
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
+
         rk = aes->key;
         aes->keylen = keylen;
         aes->rounds = keylen/4 + 6;
@@ -3581,6 +3698,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         if (aes == NULL)
             return BAD_FUNC_ARG;
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
+
         aes->keylen = keylen;
         aes->rounds = keylen/4 + 6;
         XMEMCPY(aes->key, userKey, keylen);
@@ -3601,6 +3726,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     {
         if (aes == NULL)
             return BAD_FUNC_ARG;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
 
         if (checkKeyLen) {
             if (!((keylen == 16) || (keylen == 24) || (keylen == 32)))
@@ -3645,6 +3778,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
 
         if (aes == NULL)
             return BAD_FUNC_ARG;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
 
         if (checkKeyLen) {
             if (!((keylen == 16) || (keylen == 24) || (keylen == 32)))
@@ -3725,6 +3866,12 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         if (aes == NULL || keylen != 16)
             return BAD_FUNC_ARG;
 
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
+
         aes->keylen = keylen;
         aes->rounds = keylen/4 + 6;
         XMEMCPY(aes->key, userKey, keylen);
@@ -3756,6 +3903,14 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         if (aes == NULL || (keylen != 16 && keylen != 24 && keylen != 32)) {
             return BAD_FUNC_ARG;
         }
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret < 0)
+                return ret;
+        }
+#endif
 
     #if !defined(WOLFSSL_AES_128)
         if (keylen == 16) {
@@ -3800,6 +3955,16 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             keylen != AES_256_KEY_SIZE)) {
             return BAD_FUNC_ARG;
         }
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        {
+            int ret2 =
+                wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+            if (ret2 < 0)
+                return ret2;
+        }
+#endif
+
     #if defined(AES_MAX_KEY_SIZE)
         if (keylen > (AES_MAX_KEY_SIZE/8)) {
             return BAD_FUNC_ARG;
@@ -4143,6 +4308,14 @@ static void AesSetKey_C(Aes* aes, const byte* key, word32 keySz, int dir)
         word32 localSz = 32;
     #endif
 
+        if (aes == NULL)
+            return BAD_FUNC_ARG;
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+        ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+#endif
+
         switch (keylen) {
     #if defined(AES_MAX_KEY_SIZE) && AES_MAX_KEY_SIZE >= 128 &&     \
         defined(WOLFSSL_AES_128)
@@ -4462,6 +4635,14 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 {
     if (aes == NULL)
         return BAD_FUNC_ARG;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+    {
+        int ret = wc_debug_CipherLifecycleCheck(aes->CipherLifecycleTag, 0);
+        if (ret < 0)
+            return ret;
+    }
+#endif
 
     if (iv)
         XMEMCPY(aes->reg, iv, AES_BLOCK_SIZE);
@@ -10021,10 +10202,6 @@ int wc_AesGcmDecryptFinal(Aes* aes, const byte* authTag, word32 authTagSz)
         VECTOR_REGISTERS_POP;
     }
 
-    /* reset the state */
-    if (ret == 0)
-        wc_AesFree(aes);
-
     return ret;
 }
 #endif /* HAVE_AES_DECRYPT || HAVE_AESGCM_DECRYPT */
@@ -10989,6 +11166,12 @@ int wc_AesInit(Aes* aes, void* heap, int devId)
 #if defined(WOLFSSL_RENESAS_FSPSM)
     XMEMSET(&aes->ctx, 0, sizeof(aes->ctx));
 #endif
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+    if (ret == 0)
+        ret = wc_debug_CipherLifecycleInit(&aes->CipherLifecycleTag, aes->heap);
+#endif
+
     return ret;
 }
 
@@ -11043,6 +11226,10 @@ void wc_AesFree(Aes* aes)
 {
     if (aes == NULL)
         return;
+
+#ifdef WC_DEBUG_CIPHER_LIFECYCLE
+    (void)wc_debug_CipherLifecycleFree(&aes->CipherLifecycleTag, aes->heap, 1);
+#endif
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
     wolfAsync_DevCtxFree(&aes->asyncDev, WOLFSSL_ASYNC_MARKER_AES);
@@ -11099,17 +11286,16 @@ void wc_AesFree(Aes* aes)
     wc_MAXQ10XX_AesFree(aes);
 #endif
 
-#ifdef WOLFSSL_CHECK_MEM_ZERO
-    wc_MemZero_Check(aes, sizeof(Aes));
-#endif
-
 #if ((defined(WOLFSSL_RENESAS_FSPSM_TLS) || \
     defined(WOLFSSL_RENESAS_FSPSM_CRYPTONLY)) && \
     !defined(NO_WOLFSSL_RENESAS_FSPSM_AES))
     wc_fspsm_Aesfree(aes);
 #endif
-}
 
+#ifdef WOLFSSL_CHECK_MEM_ZERO
+    wc_MemZero_Check(aes, sizeof(Aes));
+#endif
+}
 
 int wc_AesGetKeySize(Aes* aes, word32* keySize)
 {
@@ -12069,6 +12255,24 @@ int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
 /* Galios Field to use */
 #define GF_XTS 0x87
 
+int wc_AesXtsInit(XtsAes* aes, void* heap, int devId)
+{
+    int    ret = 0;
+
+    if (aes == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    if ((ret = wc_AesInit(&aes->tweak, heap, devId)) != 0) {
+        return ret;
+    }
+    if ((ret = wc_AesInit(&aes->aes, heap, devId)) != 0) {
+        return ret;
+    }
+
+    return 0;
+}
+
 /* This is to help with setting keys to correct encrypt or decrypt type.
  *
  * tweak AES key for tweak in XTS
@@ -12080,25 +12284,15 @@ int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
  * heap  heap hint to use for memory. Can be NULL
  * devId id to use with async crypto. Can be 0
  *
- * Note: is up to user to call wc_AesFree on tweak and aes key when done.
- *
  * return 0 on success
  */
-int wc_AesXtsSetKey(XtsAes* aes, const byte* key, word32 len, int dir,
-        void* heap, int devId)
+int wc_AesXtsSetKeyNoInit(XtsAes* aes, const byte* key, word32 len, int dir)
 {
     word32 keySz;
     int    ret = 0;
 
     if (aes == NULL || key == NULL) {
         return BAD_FUNC_ARG;
-    }
-
-    if ((ret = wc_AesInit(&aes->tweak, heap, devId)) != 0) {
-        return ret;
-    }
-    if ((ret = wc_AesInit(&aes->aes, heap, devId)) != 0) {
-        return ret;
     }
 
     keySz = len/2;
@@ -12122,6 +12316,33 @@ int wc_AesXtsSetKey(XtsAes* aes, const byte* key, word32 len, int dir,
         }
 #endif
     }
+
+    return ret;
+}
+
+/* Combined call to wc_AesXtsInit() and wc_AesXtsSetKeyNoInit().
+ *
+ * Note: is up to user to call wc_AesXtsFree when done.
+ *
+ * return 0 on success
+ */
+int wc_AesXtsSetKey(XtsAes* aes, const byte* key, word32 len, int dir,
+        void* heap, int devId)
+{
+    int    ret = 0;
+
+    if (aes == NULL || key == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    ret = wc_AesXtsInit(aes, heap, devId);
+    if (ret != 0)
+        return ret;
+
+    ret = wc_AesXtsSetKeyNoInit(aes, key, len, dir);
+
+    if (ret != 0)
+        wc_AesXtsFree(aes);
 
     return ret;
 }
@@ -13030,6 +13251,7 @@ int  wc_AesEaxEncryptAuth(const byte* key, word32 keySz, byte* out,
     AesEax *eax = &eax_mem;
 #endif
     int ret;
+    int eaxInited = 0;
 
     if (key == NULL || out == NULL || in == NULL || nonce == NULL
                               || authTag == NULL || authIn == NULL) {
@@ -13050,6 +13272,7 @@ int  wc_AesEaxEncryptAuth(const byte* key, word32 keySz, byte* out,
                              authIn, authInSz)) != 0) {
         goto cleanup;
     }
+    eaxInited = 1;
 
     if ((ret = wc_AesEaxEncryptUpdate(eax, out, in, inSz, NULL, 0)) != 0) {
         goto cleanup;
@@ -13060,7 +13283,8 @@ int  wc_AesEaxEncryptAuth(const byte* key, word32 keySz, byte* out,
     }
 
 cleanup:
-    wc_AesEaxFree(eax);
+    if (eaxInited)
+        wc_AesEaxFree(eax);
 #if defined(WOLFSSL_SMALL_STACK)
     XFREE(eax, NULL, DYNAMIC_TYPE_AES_EAX);
 #endif
@@ -13090,6 +13314,7 @@ int  wc_AesEaxDecryptAuth(const byte* key, word32 keySz, byte* out,
     AesEax *eax = &eax_mem;
 #endif
     int ret;
+    int eaxInited = 0;
 
     if (key == NULL || out == NULL || in == NULL || nonce == NULL
                               || authTag == NULL || authIn == NULL) {
@@ -13111,6 +13336,7 @@ int  wc_AesEaxDecryptAuth(const byte* key, word32 keySz, byte* out,
 
         goto cleanup;
     }
+    eaxInited = 1;
 
     if ((ret = wc_AesEaxDecryptUpdate(eax, out, in, inSz, NULL, 0)) != 0) {
         goto cleanup;
@@ -13121,7 +13347,8 @@ int  wc_AesEaxDecryptAuth(const byte* key, word32 keySz, byte* out,
     }
 
 cleanup:
-    wc_AesEaxFree(eax);
+    if (eaxInited)
+        wc_AesEaxFree(eax);
 #if defined(WOLFSSL_SMALL_STACK)
     XFREE(eax, NULL, DYNAMIC_TYPE_AES_EAX);
 #endif
@@ -13144,6 +13371,9 @@ int  wc_AesEaxInit(AesEax* eax,
 {
     int ret = 0;
     word32 cmacSize;
+    int aesInited = 0;
+    int nonceCmacInited = 0;
+    int aadCmacInited = 0;
 
     if (eax == NULL || key == NULL ||  nonce == NULL) {
         return BAD_FUNC_ARG;
@@ -13152,14 +13382,16 @@ int  wc_AesEaxInit(AesEax* eax,
     XMEMSET(eax->prefixBuf, 0, sizeof(eax->prefixBuf));
 
     if ((ret = wc_AesInit(&eax->aes, NULL, INVALID_DEVID)) != 0) {
-        return ret;
+        goto out;
     }
+    aesInited = 1;
+
     if ((ret = wc_AesSetKey(&eax->aes,
                             key,
                             keySz,
                             NULL,
                             AES_ENCRYPTION)) != 0) {
-        return ret;
+        goto out;
     }
 
     /*
@@ -13173,26 +13405,27 @@ int  wc_AesEaxInit(AesEax* eax,
                            NULL)) != 0) {
         return ret;
     }
+    nonceCmacInited = 1;
 
     if ((ret = wc_CmacUpdate(&eax->nonceCmac,
                              eax->prefixBuf,
                              sizeof(eax->prefixBuf))) != 0) {
-        return ret;
+        goto out;
     }
 
     if ((ret = wc_CmacUpdate(&eax->nonceCmac, nonce, nonceSz)) != 0) {
-        return ret;
+        goto out;
     }
 
     cmacSize = AES_BLOCK_SIZE;
     if ((ret = wc_CmacFinal(&eax->nonceCmac,
                             eax->nonceCmacFinal,
                             &cmacSize)) != 0) {
-        return ret;
+        goto out;
     }
 
     if ((ret = wc_AesSetIV(&eax->aes, eax->nonceCmacFinal)) != 0) {
-        return ret;
+        goto out;
     }
 
     /*
@@ -13207,18 +13440,19 @@ int  wc_AesEaxInit(AesEax* eax,
                            keySz,
                            WC_CMAC_AES,
                            NULL)) != 0) {
-        return ret;
+        goto out;
     }
+    aadCmacInited = 1;
 
     if ((ret = wc_CmacUpdate(&eax->aadCmac,
                              eax->prefixBuf,
                              sizeof(eax->prefixBuf))) != 0) {
-        return ret;
+        goto out;
     }
 
     if (authIn != NULL) {
         if ((ret = wc_CmacUpdate(&eax->aadCmac, authIn, authInSz)) != 0) {
-            return ret;
+            goto out;
         }
     }
 
@@ -13233,13 +13467,24 @@ int  wc_AesEaxInit(AesEax* eax,
                            keySz,
                            WC_CMAC_AES,
                            NULL)) != 0) {
-        return ret;
+        goto out;
     }
 
     if ((ret = wc_CmacUpdate(&eax->ciphertextCmac,
                              eax->prefixBuf,
                              sizeof(eax->prefixBuf))) != 0) {
-        return ret;
+        goto out;
+    }
+
+out:
+
+    if (ret != 0) {
+        if (aesInited)
+            wc_AesFree(&eax->aes);
+        if (nonceCmacInited)
+            wc_CmacFree(&eax->nonceCmac);
+        if (aadCmacInited)
+            wc_CmacFree(&eax->aadCmac);
     }
 
     return ret;
@@ -13370,17 +13615,17 @@ int wc_AesEaxEncryptFinal(AesEax* eax, byte* authTag, word32 authTagSz)
 
     /* Complete the OMAC for the ciphertext */
     cmacSize = AES_BLOCK_SIZE;
-    if ((ret = wc_CmacFinal(&eax->ciphertextCmac,
-                            eax->ciphertextCmacFinal,
-                            &cmacSize)) != 0) {
+    if ((ret = wc_CmacFinalNoFree(&eax->ciphertextCmac,
+                                  eax->ciphertextCmacFinal,
+                                  &cmacSize)) != 0) {
         return ret;
     }
 
     /* Complete the OMAC for auth data */
     cmacSize = AES_BLOCK_SIZE;
-    if ((ret = wc_CmacFinal(&eax->aadCmac,
-                            eax->aadCmacFinal,
-                            &cmacSize)) != 0) {
+    if ((ret = wc_CmacFinalNoFree(&eax->aadCmac,
+                                  eax->aadCmacFinal,
+                                  &cmacSize)) != 0) {
         return ret;
     }
 
@@ -13427,17 +13672,17 @@ int wc_AesEaxDecryptFinal(AesEax* eax,
 
     /* Complete the OMAC for the ciphertext */
     cmacSize = AES_BLOCK_SIZE;
-    if ((ret = wc_CmacFinal(&eax->ciphertextCmac,
-                            eax->ciphertextCmacFinal,
-                            &cmacSize)) != 0) {
+    if ((ret = wc_CmacFinalNoFree(&eax->ciphertextCmac,
+                                  eax->ciphertextCmacFinal,
+                                  &cmacSize)) != 0) {
         return ret;
     }
 
     /* Complete the OMAC for auth data */
     cmacSize = AES_BLOCK_SIZE;
-    if ((ret = wc_CmacFinal(&eax->aadCmac,
-                            eax->aadCmacFinal,
-                            &cmacSize)) != 0) {
+    if ((ret = wc_CmacFinalNoFree(&eax->aadCmac,
+                                  eax->aadCmacFinal,
+                                  &cmacSize)) != 0) {
         return ret;
     }
 
@@ -13474,8 +13719,8 @@ int wc_AesEaxDecryptFinal(AesEax* eax,
 }
 
 /*
- * Frees the underlying AES context. Must be called when done using the AES EAX
- * context structure
+ * Frees the underlying CMAC and AES contexts. Must be called when done using
+ * the AES EAX context structure.
  *
  * Returns 0 on success
  * Returns error code on failure
@@ -13486,6 +13731,8 @@ int wc_AesEaxFree(AesEax* eax)
         return BAD_FUNC_ARG;
     }
 
+    (void)wc_CmacFree(&eax->ciphertextCmac);
+    (void)wc_CmacFree(&eax->aadCmac);
     wc_AesFree(&eax->aes);
 
     return 0;
