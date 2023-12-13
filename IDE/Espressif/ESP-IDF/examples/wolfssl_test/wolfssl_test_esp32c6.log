@@ -1,0 +1,97 @@
+/mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/check_python_dependencies.py:12: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+  import pkg_resources
+Executing action: fullclean
+Build directory '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build' not found. Nothing to clean.
+Executing action: set-target
+Set Target to: esp32c6, new sdkconfig will be created.
+Running cmake in directory /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/gojimmypi/.espressif/python_env/idf5.1_py3.10_env/bin/python -DESP_PLATFORM=1 -DIDF_TARGET=esp32c6 -DCCACHE_ENABLE=0 /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test"...
+-- No conflicting wolfSSL components found.
+-- Existing sdkconfig '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig' renamed to '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.old'.
+Detected UNIX
+Detected WSL
+Detected Linux
+-- Found Git: /usr/bin/git (found version "2.34.1") 
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: /home/gojimmypi/.espressif/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-gcc
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /home/gojimmypi/.espressif/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /home/gojimmypi/.espressif/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Building ESP-IDF components for target esp32c6
+-- USERNAME = 
+-- THIS_USER = gojimmypi
+-- wolfssl component CMAKE_BUILD_EARLY_EXPANSION:
+-- Project sdkconfig file /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig
+Loading defaults file /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults...
+/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults:11 CONFIG_MAIN_TASK_STACK_SIZE was replaced with CONFIG_ESP_MAIN_TASK_STACK_SIZE
+/tmp/kconfgen_tmptpdv61na:34 line was updated to CONFIG_ESP32C3_REV_MIN_0=n
+/tmp/kconfgen_tmptpdv61na:35 line was updated to CONFIG_ESP32C3_REV_MIN_1=n
+/tmp/kconfgen_tmptpdv61na:37 line was updated to CONFIG_ESP32C3_REV_MIN_3=n
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of time_t
+-- Check size of time_t - done
+-- Found Python3: /home/gojimmypi/.espressif/python_env/idf5.1_py3.10_env/bin/python (found version "3.10.12") found components: Interpreter 
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS - Success
+-- App "wolfssl_test" version: v5.6.3-stable-2551-gd326254a1-d
+-- Adding linker script /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_system/ld/esp32c6/sections.ld.in
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.api.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.rvfp.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.newlib.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.version.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.phy.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.coexist.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.net80211.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.pp.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.wdt.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.newlib-normal.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/esp_rom/esp32c6/ld/esp32c6.rom.heap.ld
+-- Adding linker script /mnt/c/SysGCC/esp32/esp-idf/v5.1/components/soc/esp32c6/ld/esp32c6.peripherals.ld
+-- Found LIBWOLFSSL_VERSION_GIT_HASH=d326254a1debab22a93718f203c618becd504904
+-- Found LIBWOLFSSL_VERSION_GIT_SHORT_HASH=d326254a1
+-- Found LIBWOLFSSL_VERSION_GIT_HASH_DATE='Tue Dec 5 04:59:49 2023 -0800'
+-- 
+-- USERNAME = 
+-- THIS_USER = gojimmypi
+-- ************************************************************************************************
+-- wolfssl component config:
+-- ************************************************************************************************
+-- Starting FIND_WOLFSSL_DIRECTORY
+-- The WOLFSSL_ROOT environment variable is not set. Searching...
+-- CMAKE_CURRENT_SOURCE_DIR = .
+-- CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi/IDE
+-- Looking in /mnt/c/workspace/wolfssl-gojimmypi/IDE
+-- Next CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi
+-- Found wolfssl in CURRENT_SEARCH_DIR = /mnt/c/workspace/wolfssl-gojimmypi
+-- NEW Found wolfssl directory at: /mnt/c/workspace/wolfssl-gojimmypi
+-- This COMPONENT_SRCDIRS = "/mnt/c/workspace/wolfssl-gojimmypi/src/";"/mnt/c/workspace/wolfssl-gojimmypi/wolfcrypt/src";"/mnt/c/workspace/wolfssl-gojimmypi/wolfcrypt/src/port/Espressif";"/mnt/c/workspace/wolfssl-gojimmypi/wolfcrypt/src/port/atmel";"/mnt/c/workspace/wolfssl-gojimmypi/wolfcrypt/test"
+
+Aborted!

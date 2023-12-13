@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/idf.py", line 773, in <module>
+    main()
+  File "/mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/idf.py", line 692, in main
+    checks_output = None if SHELL_COMPLETE_RUN else check_environment()
+  File "/mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/idf.py", line 88, in check_environment
+    out = subprocess.check_output(
+  File "/usr/lib/python3.10/subprocess.py", line 421, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+  File "/usr/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 1141, in communicate
+    stdout = self.stdout.read()
+KeyboardInterrupt

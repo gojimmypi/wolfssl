@@ -1,0 +1,16 @@
+/mnt/c/SysGCC/esp32/esp-idf/v5.1/tools/check_python_dependencies.py:12: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+  import pkg_resources
+Executing action: fullclean
+Build directory '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/template/build' not found. Nothing to clean.
+Executing action: set-target
+Set Target to: esp32h2, new sdkconfig will be created.
+Running cmake in directory /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/template/build
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/gojimmypi/.espressif/python_env/idf5.1_py3.10_env/bin/python -DESP_PLATFORM=1 -DIDF_TARGET=esp32h2 -DCCACHE_ENABLE=0 /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/template"...
+-- No conflicting wolfSSL components found.
+-- Existing sdkconfig '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/template/sdkconfig' renamed to '/mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/template/sdkconfig.old'.
+Detected UNIX
+Detected WSL
+Detected Linux
+-- Found Git: /usr/bin/git (found version "2.34.1") 
+
+Aborted!
