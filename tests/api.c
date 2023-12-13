@@ -438,6 +438,7 @@ typedef struct testVector {
 typedef int (*ctx_cb)(WOLFSSL_CTX* ctx);
 typedef int (*ssl_cb)(WOLFSSL* ssl);
 typedef int (*test_cbType)(WOLFSSL_CTX *ctx, WOLFSSL *ssl);
+typedef int (*hs_cb)(WOLFSSL_CTX **ctx, WOLFSSL **ssl);
 
 typedef struct test_ssl_cbf {
     method_provider method;
@@ -445,6 +446,7 @@ typedef struct test_ssl_cbf {
     ssl_cb ssl_ready;
     ssl_cb on_result;
     ssl_cb on_cleanup;
+    hs_cb  on_handshake;
     WOLFSSL_CTX* ctx;
     const char* caPemFile;
     const char* certPemFile;
@@ -6156,6 +6158,14 @@ int test_wolfSSL_client_server_nofail_memio(test_ssl_cbf* client_cb,
         ExpectIntEQ(client_on_handshake(test_ctx.c_ctx, test_ctx.c_ssl),
             TEST_SUCCESS);
     }
+    if (client_cb->on_handshake != NULL) {
+        ExpectIntEQ(client_cb->on_handshake(&test_ctx.c_ctx, &test_ctx.c_ssl),
+            TEST_SUCCESS);
+    }
+    if (server_cb->on_handshake != NULL) {
+        ExpectIntEQ(server_cb->on_handshake(&test_ctx.s_ctx, &test_ctx.s_ssl),
+            TEST_SUCCESS);
+    }
 #ifdef WOLFSSL_HAVE_TLS_UNIQUE
     XMEMSET(server_side_msg2, 0, MD_MAX_SIZE);
     msg_len = wolfSSL_get_peer_finished(test_ctx.s_ssl, server_side_msg2,
@@ -8761,8 +8771,8 @@ static int test_wolfSSL_CTX_add_session_ext(
         /* connection 1 - first connection */
         fprintf(stderr, "\tconnect: %s: j=%d\n", param->tls_version, j);
 
-        XMEMSET(&client_cb, 0, sizeof(callback_functions));
-        XMEMSET(&server_cb, 0, sizeof(callback_functions));
+        XMEMSET(&client_cb, 0, sizeof(client_cb));
+        XMEMSET(&server_cb, 0, sizeof(server_cb));
         client_cb.method  = param->client_meth;
         server_cb.method  = param->server_meth;
 
@@ -9329,7 +9339,6 @@ static int test_wolfSSL_dtls_export(void)
 
     return EXPECT_RESULT();
 }
-
 
 #if defined(WOLFSSL_SESSION_EXPORT) && !defined(WOLFSSL_NO_TLS12)
 #ifdef WOLFSSL_TLS13
@@ -10214,6 +10223,114 @@ static int test_wolfSSL_SNI_GetFromBuffer(void)
 
 #endif /* HAVE_IO_TESTS_DEPENDENCIES */
 
+
+#if defined(WOLFSSL_DTLS) && defined(WOLFSSL_SESSION_EXPORT) && \
+    defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES)
+/* Dummy peer functions to satisfy the exporter/importer */
+static int test_wolfSSL_dtls_export_peers_get_peer(WOLFSSL* ssl, char* ip,
+        int* ipSz, unsigned short* port, int* fam)
+{
+    (void)ssl;
+    ip[0] = -1;
+    *ipSz = 1;
+    *port = 1;
+    *fam = 2;
+    return 1;
+}
+
+static int test_wolfSSL_dtls_export_peers_set_peer(WOLFSSL* ssl, char* ip,
+        int ipSz, unsigned short port, int fam)
+{
+    (void)ssl;
+    if (ip[0] != -1 || ipSz != 1 || port != 1 || fam != 2)
+        return 0;
+    return 1;
+}
+
+static int test_wolfSSL_dtls_export_peers_on_handshake(WOLFSSL_CTX **ctx,
+        WOLFSSL **ssl)
+{
+    EXPECT_DECLS;
+    unsigned char* sessionBuf = NULL;
+    unsigned int sessionSz = 0;
+    void* ioWriteCtx = wolfSSL_GetIOWriteCtx(*ssl);
+    void* ioReadCtx = wolfSSL_GetIOReadCtx(*ssl);
+
+    wolfSSL_CTX_SetIOGetPeer(*ctx, test_wolfSSL_dtls_export_peers_get_peer);
+    wolfSSL_CTX_SetIOSetPeer(*ctx, test_wolfSSL_dtls_export_peers_set_peer);
+    ExpectIntGE(wolfSSL_dtls_export(*ssl, NULL, &sessionSz), 0);
+    ExpectNotNull(sessionBuf =
+        (unsigned char*)XMALLOC(sessionSz, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER));
+    ExpectIntGE(wolfSSL_dtls_export(*ssl, sessionBuf, &sessionSz), 0);
+    wolfSSL_free(*ssl);
+    *ssl = NULL;
+    ExpectNotNull(*ssl = wolfSSL_new(*ctx));
+    ExpectIntGE(wolfSSL_dtls_import(*ssl, sessionBuf, sessionSz), 0);
+    wolfSSL_SetIOWriteCtx(*ssl, ioWriteCtx);
+    wolfSSL_SetIOReadCtx(*ssl, ioReadCtx);
+
+    XFREE(sessionBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    return EXPECT_RESULT();
+}
+#endif
+
+static int test_wolfSSL_dtls_export_peers(void)
+{
+    EXPECT_DECLS;
+#if defined(WOLFSSL_DTLS) && defined(WOLFSSL_SESSION_EXPORT) && \
+    defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES)
+    test_ssl_cbf client_cbf;
+    test_ssl_cbf server_cbf;
+    size_t i, j;
+    struct test_params {
+        method_provider client_meth;
+        method_provider server_meth;
+        const char* dtls_version;
+    } params[] = {
+#ifndef NO_OLD_TLS
+        {wolfDTLSv1_client_method, wolfDTLSv1_server_method, "1.0"},
+#endif
+        {wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method, "1.2"},
+        /* TODO DTLS 1.3 exporting not supported
+#ifdef WOLFSSL_DTLS13
+        {wolfDTLSv1_3_client_method, wolfDTLSv1_3_server_method, "1.3"},
+#endif
+         */
+    };
+
+    for (i = 0; i < sizeof(params)/sizeof(*params); i++) {
+        for (j = 0; j <= 0b11; j++) {
+            XMEMSET(&client_cbf, 0, sizeof(client_cbf));
+            XMEMSET(&server_cbf, 0, sizeof(server_cbf));
+
+            printf("\n\tTesting DTLS %s connection;", params[i].dtls_version);
+
+            client_cbf.method = params[i].client_meth;
+            server_cbf.method = params[i].server_meth;
+
+            if (j & 0b01) {
+                client_cbf.on_handshake =
+                        test_wolfSSL_dtls_export_peers_on_handshake;
+                printf(" With client export;");
+            }
+            if (j & 0b10) {
+                server_cbf.on_handshake =
+                        test_wolfSSL_dtls_export_peers_on_handshake;
+                printf(" With server export;");
+            }
+
+            printf("\n");
+
+            ExpectIntEQ(test_wolfSSL_client_server_nofail_memio(&client_cbf,
+                &server_cbf, NULL), TEST_SUCCESS);
+            if (!EXPECT_SUCCESS())
+                break;
+        }
+    }
+#endif
+    return EXPECT_RESULT();
+}
+
 static int test_wolfSSL_UseTrustedCA(void)
 {
     EXPECT_DECLS;
@@ -10553,6 +10670,60 @@ static void verify_ALPN_client_list(WOLFSSL* ssl)
     AssertIntEQ(WOLFSSL_SUCCESS, wolfSSL_ALPN_FreePeerProtocol(ssl, &clist));
 }
 
+#if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || \
+    defined(WOLFSSL_HAPROXY) || defined(HAVE_LIGHTY)
+
+/* ALPN select callback, success with spdy/2 */
+static int select_ALPN_spdy2(WOLFSSL *ssl, const unsigned char **out,
+    unsigned char *outlen, const unsigned char *in,
+    unsigned int inlen, void *arg)
+{
+    /* spdy/2 */
+    const char proto[] = {0x73, 0x70, 0x64, 0x79, 0x2f, 0x32};
+
+    (void)ssl;
+    (void)arg;
+
+    /* adding +1 since LEN byte comes first */
+    if (inlen < sizeof(proto) + 1) {
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
+    if (XMEMCMP(in + 1, proto, sizeof(proto)) == 0) {
+        *out = in + 1;
+        *outlen = (unsigned char)sizeof(proto);
+        return SSL_TLSEXT_ERR_OK;
+    }
+
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+/* ALPN select callback, force failure */
+static int select_ALPN_failure(WOLFSSL *ssl, const unsigned char **out,
+    unsigned char *outlen, const unsigned char *in,
+    unsigned int inlen, void *arg)
+{
+    (void)ssl;
+    (void)out;
+    (void)outlen;
+    (void)in;
+    (void)inlen;
+    (void)arg;
+
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static void use_ALPN_spdy2_callback(WOLFSSL* ssl)
+{
+    wolfSSL_set_alpn_select_cb(ssl, select_ALPN_spdy2, NULL);
+}
+
+static void use_ALPN_failure_callback(WOLFSSL* ssl)
+{
+    wolfSSL_set_alpn_select_cb(ssl, select_ALPN_failure, NULL);
+}
+#endif /* OPENSSL_ALL | NGINX | HAPROXY | LIGHTY | QUIC */
+
 static int test_wolfSSL_UseALPN_connection(void)
 {
     int res = TEST_SKIPPED;
@@ -10607,6 +10778,30 @@ static int test_wolfSSL_UseALPN_connection(void)
     client_cb.ctx_ready = NULL; client_cb.ssl_ready = use_ALPN_all;     client_cb.on_result = NULL;
     server_cb.ctx_ready = NULL; server_cb.ssl_ready = use_ALPN_unknown; server_cb.on_result = verify_ALPN_FATAL_ERROR_on_client;
     test_wolfSSL_client_server(&client_cb, &server_cb);
+
+#if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || \
+    defined(WOLFSSL_HAPROXY) || defined(HAVE_LIGHTY)
+
+    /* WOLFSSL-level ALPN select callback tests */
+    /* Callback: success (one protocol, spdy/2) */
+    client_cb.ctx_ready = NULL;
+    client_cb.ssl_ready = use_ALPN_one;
+    client_cb.on_result = verify_ALPN_matching_spdy2;
+    server_cb.ctx_ready = NULL;
+    server_cb.ssl_ready = use_ALPN_spdy2_callback;
+    server_cb.on_result = verify_ALPN_matching_spdy2;
+    test_wolfSSL_client_server(&client_cb, &server_cb);
+
+    /* Callback: failure (one client protocol, spdy/2) */
+    client_cb.ctx_ready = NULL;
+    client_cb.ssl_ready = use_ALPN_one;
+    client_cb.on_result = NULL;
+    server_cb.ctx_ready = NULL;
+    server_cb.ssl_ready = use_ALPN_failure_callback;
+    server_cb.on_result = verify_ALPN_FATAL_ERROR_on_client;
+    test_wolfSSL_client_server(&client_cb, &server_cb);
+
+#endif /* OPENSSL_ALL | NGINX | HAPROXY | LIGHTY */
 
     res = TEST_RES_CHECK(1);
 #endif /* !NO_WOLFSSL_CLIENT && !NO_WOLFSSL_SERVER */
@@ -61689,6 +61884,7 @@ static word32 test_wolfSSL_dtls_stateless_HashWOLFSSL(const WOLFSSL* ssl)
     sslCopy.buffers.outputBuffer.offset = 0;
     sslCopy.error = 0;
     sslCopy.curSize = 0;
+    sslCopy.curStartIdx = 0;
     sslCopy.keys.curSeq_lo = 0;
     XMEMSET(&sslCopy.curRL, 0, sizeof(sslCopy.curRL));
 #ifdef WOLFSSL_DTLS13
@@ -67353,7 +67549,11 @@ static int test_TLSX_CA_NAMES_bad_extension(void)
         }
 
         ExpectIntEQ(wolfSSL_connect(ssl_c), -1);
+#ifndef WOLFSSL_DISABLE_EARLY_SANITY_CHECKS
+        ExpectIntEQ(wolfSSL_get_error(ssl_c, -1), OUT_OF_ORDER_E);
+#else
         ExpectIntEQ(wolfSSL_get_error(ssl_c, -1), BUFFER_ERROR);
+#endif
 
         wolfSSL_free(ssl_c);
         ssl_c = NULL;
@@ -68572,6 +68772,108 @@ static int test_dtls13_early_data(void)
 
     ExpectTrue(wolfSSL_session_reused(ssl_c));
     ExpectTrue(wolfSSL_session_reused(ssl_s));
+
+    wolfSSL_SESSION_free(sess);
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_s);
+#endif
+    return EXPECT_RESULT();
+}
+
+#ifdef HAVE_CERTIFICATE_STATUS_REQUEST
+static int test_self_signed_stapling_client_v1_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    EXPECT_DECLS;
+    ExpectIntEQ(wolfSSL_CTX_EnableOCSPStapling(ctx), 1);
+    ExpectIntEQ(wolfSSL_CTX_UseOCSPStapling(ctx, WOLFSSL_CSR_OCSP,
+            WOLFSSL_CSR_OCSP_USE_NONCE), 1);
+    return EXPECT_RESULT();
+}
+#endif
+
+#ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
+static int test_self_signed_stapling_client_v2_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    EXPECT_DECLS;
+    ExpectIntEQ(wolfSSL_CTX_EnableOCSPStapling(ctx), 1);
+    ExpectIntEQ(wolfSSL_CTX_UseOCSPStaplingV2(ctx, WOLFSSL_CSR2_OCSP,
+            WOLFSSL_CSR2_OCSP_USE_NONCE), 1);
+    return EXPECT_RESULT();
+}
+
+static int test_self_signed_stapling_client_v2_multi_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    EXPECT_DECLS;
+    ExpectIntEQ(wolfSSL_CTX_EnableOCSPStapling(ctx), 1);
+    ExpectIntEQ(wolfSSL_CTX_UseOCSPStaplingV2(ctx, WOLFSSL_CSR2_OCSP_MULTI,
+            0), 1);
+    return EXPECT_RESULT();
+}
+#endif
+
+#if defined(HAVE_CERTIFICATE_STATUS_REQUEST) \
+ || defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
+static int test_self_signed_stapling_server_ctx_ready(WOLFSSL_CTX* ctx)
+{
+    EXPECT_DECLS;
+    ExpectIntEQ(wolfSSL_CTX_EnableOCSPStapling(ctx), 1);
+    return EXPECT_RESULT();
+}
+#endif
+
+static int test_self_signed_stapling(void)
+{
+    EXPECT_DECLS;
+#if defined(HAVE_CERTIFICATE_STATUS_REQUEST) \
+ || defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
+    test_ssl_cbf client_cbf;
+    test_ssl_cbf server_cbf;
+    size_t i;
+    struct {
+        method_provider client_meth;
+        method_provider server_meth;
+        ctx_cb client_ctx;
+        const char* tls_version;
+    } params[] = {
+#if defined(WOLFSSL_TLS13) && defined(HAVE_CERTIFICATE_STATUS_REQUEST)
+        { wolfTLSv1_3_client_method, wolfTLSv1_3_server_method,
+            test_self_signed_stapling_client_v1_ctx_ready, "TLSv1_3 v1" },
+#endif
+#ifndef WOLFSSL_NO_TLS12
+#ifdef HAVE_CERTIFICATE_STATUS_REQUEST
+        { wolfTLSv1_2_client_method, wolfTLSv1_2_server_method,
+            test_self_signed_stapling_client_v1_ctx_ready, "TLSv1_2 v1" },
+#endif
+#ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
+        { wolfTLSv1_2_client_method, wolfTLSv1_2_server_method,
+            test_self_signed_stapling_client_v2_ctx_ready, "TLSv1_2 v2" },
+        { wolfTLSv1_2_client_method, wolfTLSv1_2_server_method,
+            test_self_signed_stapling_client_v2_multi_ctx_ready,
+            "TLSv1_2 v2 multi" },
+#endif
+#endif
+    };
+
+    for (i = 0; i < sizeof(params)/sizeof(*params) && !EXPECT_FAIL(); i++) {
+        XMEMSET(&client_cbf, 0, sizeof(client_cbf));
+        XMEMSET(&server_cbf, 0, sizeof(server_cbf));
+
+        printf("\nTesting self-signed cert with status request: %s\n",
+                params[i].tls_version);
+
+        client_cbf.method = params[i].client_meth;
+        client_cbf.ctx_ready = params[i].client_ctx;
+
+        server_cbf.method = params[i].server_meth;
+        server_cbf.certPemFile = "certs/ca-cert.pem";
+        server_cbf.keyPemFile  = "certs/ca-key.pem";
+        server_cbf.ctx_ready = test_self_signed_stapling_server_ctx_ready;
+
+        ExpectIntEQ(test_wolfSSL_client_server_nofail_memio(&client_cbf,
+            &server_cbf, NULL), TEST_SUCCESS);
+    }
 #endif
     return EXPECT_RESULT();
 }
@@ -69705,6 +70007,7 @@ TEST_CASE testCases[] = {
     /* Uses Assert in handshake callback. */
     TEST_DECL(test_wolfSSL_tls_export),
 #endif
+    TEST_DECL(test_wolfSSL_dtls_export_peers),
     TEST_DECL(test_wolfSSL_SetMinVersion),
     TEST_DECL(test_wolfSSL_CTX_SetMinVersion),
 
@@ -69768,6 +70071,7 @@ TEST_CASE testCases[] = {
     /* OCSP Stapling */
     TEST_DECL(test_wolfSSL_UseOCSPStapling),
     TEST_DECL(test_wolfSSL_UseOCSPStaplingV2),
+    TEST_DECL(test_self_signed_stapling),
 
     /* Multicast */
     TEST_DECL(test_wolfSSL_mcast),

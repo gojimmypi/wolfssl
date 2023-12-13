@@ -1909,8 +1909,10 @@ static int csv_format = 0;
 /* globals for cipher tests */
 static THREAD_LS_T byte* bench_plain = NULL;
 static THREAD_LS_T byte* bench_cipher = NULL;
+#ifndef NO_FILESYSTEM
 static THREAD_LS_T char* hash_input = NULL;
 static THREAD_LS_T char* cipher_input = NULL;
+#endif
 
 static const XGEN_ALIGN byte bench_key_buf[] =
 {
@@ -2951,14 +2953,18 @@ static void* benchmarks_do(void* args)
         bench_plain = (byte*)XMALLOC((size_t)bench_buf_size + 16*2,
                                  HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
 
-        if (bench_plain == NULL)
+        if (bench_plain == NULL) {
+            XFCLOSE(file);
             goto exit;
+        }
 
         if ((size_t)XFREAD(bench_plain, 1, rawSz, file)
                 != (size_t)rawSz) {
             XFCLOSE(file);
             goto exit;
         }
+
+        XFCLOSE(file);
     }
     else {
         XMEMSET(bench_plain, 0, (size_t)bench_buf_size);
@@ -2994,14 +3000,18 @@ static void* benchmarks_do(void* args)
         bench_cipher = (byte*)XMALLOC((size_t)bench_buf_size + 16*2,
                                  HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
 
-        if (bench_cipher == NULL)
+        if (bench_cipher == NULL) {
+            XFCLOSE(file);
             goto exit;
+        }
 
         if ((size_t)XFREAD(bench_cipher, 1, rawSz, file)
                 != (size_t)rawSz) {
             XFCLOSE(file);
             goto exit;
         }
+
+        XFCLOSE(file);
     }
     else {
         XMEMSET(bench_cipher, 0, (size_t)bench_buf_size);
@@ -12847,6 +12857,7 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
             if (argc > 1)
                 numBlocks = XATOI(argv[1]);
         }
+#ifndef NO_FILESYSTEM
         else if (string_matches(argv[1], "-hash_input")) {
             argc--;
             argv++;
@@ -12859,6 +12870,7 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
             if (argc > 1)
                 cipher_input = argv[1];
         }
+#endif
 #ifdef MULTI_VALUE_STATISTICS
         else if (string_matches(argv[1], "-min_runs")) {
             argc--;

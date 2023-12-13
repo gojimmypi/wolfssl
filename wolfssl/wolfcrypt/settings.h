@@ -297,7 +297,11 @@
     #if FIPS_VERSION_LT(2,0)
         #define WC_RNG RNG
     #else
-        #ifndef WOLFSSL_STM32L4
+        /* RNG needs to be defined to WC_RNG anytime another library on the
+         * system or other set of headers included by wolfSSL already defines
+         * RNG. Examples are:
+         * wolfEngine, wolfProvider and potentially other use-cases */
+        #ifndef RNG
             #define RNG WC_RNG
         #endif
     #endif
@@ -3143,6 +3147,10 @@ extern void uITRON4_free(void *p) ;
 
 #if defined(WOLFSSL_DTLS_CID) && !defined(WOLFSSL_DTLS13)
 #error "ConnectionID is supported for DTLSv1.3 only"
+#endif
+
+#if defined(WOLFSSL_QUIC) && defined(WOLFSSL_CALLBACKS)
+    #error WOLFSSL_QUIC is incompatible with WOLFSSL_CALLBACKS.
 #endif
 
 /* RSA Key Checking is disabled by default unless WOLFSSL_RSA_KEY_CHECK is
