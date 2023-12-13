@@ -1,0 +1,63 @@
+ESP-ROM:esp32c3-api1-20210207
+Build:Feb  7 2021
+rst:0x1 (POWERON),boot:0xf (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+I (30) boot: ESP-IDF v4.4.1-dirty 2nd stage bootloader
+I (30) boot: compile time 10:13:40
+I (30) boot: chip revision: 3
+I (32) boot.esp32c3: SPI Speed      : 80MHz
+I (37) boot.esp32c3: SPI Mode       : DIO
+I (42) boot.esp32c3: SPI Flash Size : 4MB
+I (47) boot: Enabling RNG early entropy source...
+I (216) cpu_start: cpu freq: 160000000
+I (216) cpu_start: Application information:
+I (218) cpu_start: Project name:     wolfSSL_esp32_benchmark
+I (225) cpu_start: App version:      v0.1-925-g935ebfd
+I (231) cpu_start: Compile time:     Aug  3 2022 10:12:05
+I (237) cpu_start: ELF file SHA256:  900d509ee08c8d01...
+I (243) cpu_start: ESP-IDF:          v4.4.1-dirty
+I (249) heap_init: Initializing. RAM available for dynamic allocation:
+I (255) heap_init: At 3FC8DB60 len 000324A0 (201 KiB): DRAM
+I (261) heap_init: At 3FCC0000 len 0001F060 (124 KiB): STACK/DRAM
+I (268) heap_init: At 50000020 len 00001FE0 (7 KiB): RTCRAM
+I (275) spi_flash: detected chip: generic
+I (279) spi_flash: flash io: dio
+
+
+AES-128-CBC-enc     10 MB took 1.000 seconds,   10.376 MB/s
+AES-128-CBC-dec     11 MB took 1.001 seconds,   10.561 MB/s
+AES-192-CBC-enc      9 MB took 1.000 seconds,    9.399 MB/s
+AES-192-CBC-dec     10 MB took 1.000 seconds,    9.546 MB/s
+AES-256-CBC-enc      9 MB took 1.000 seconds,    8.594 MB/s
+AES-256-CBC-dec      9 MB took 1.002 seconds,    8.723 MB/s
+AES-128-GCM-enc      3 MB took 1.007 seconds,    2.546 MB/s
+AES-128-GCM-dec      3 MB took 1.007 seconds,    2.546 MB/s
+AES-192-GCM-enc      2 MB took 1.004 seconds,    2.480 MB/s
+AES-192-GCM-dec      2 MB took 1.004 seconds,    2.480 MB/s
+AES-256-GCM-enc      2 MB took 1.008 seconds,    2.422 MB/s
+AES-256-GCM-dec      2 MB took 1.009 seconds,    2.420 MB/s
+GMAC Default         3 MB took 1.000 seconds,    3.397 MB/s
+3DES                 3 MB took 1.003 seconds,    3.164 MB/s
+MD5                102 MB took 1.000 seconds,  101.978 MB/s
+SHA                 49 MB took 1.000 seconds,   48.730 MB/s
+SHA-256             15 MB took 1.000 seconds,   14.941 MB/s
+SHA-512             13 MB took 1.001 seconds,   12.731 MB/s
+HMAC-MD5           101 MB took 1.000 seconds,  100.977 MB/s
+HMAC-SHA            48 MB took 1.000 seconds,   48.291 MB/s
+HMAC-SHA256         15 MB took 1.001 seconds,   14.805 MB/s
+HMAC-SHA512         13 MB took 1.001 seconds,   12.536 MB/s
+PBKDF2               2 KB took 1.008 seconds,    1.829 KB/s
+RSA     2048 public        394 ops took 1.000 sec, avg 2.538 ms, 394.000 ops/sec
+RSA     2048 private         8 ops took 1.293 sec, avg 161.625 ms, 6.187 ops/sec
+ECC   [      SECP256R1]   256 key gen        50 ops took 1.039 sec, avg 20.780 m                                  s, 48.123 ops/sec
+ECDHE [      SECP256R1]   256 agree          50 ops took 1.038 sec, avg 20.760 m                                  s, 48.170 ops/sec
+ECDSA [      SECP256R1]   256 sign           48 ops took 1.010 sec, avg 21.042 m                                  s, 47.525 ops/sec
+ECDSA [      SECP256R1]   256 verify         26 ops took 1.045 sec, avg 40.192 m                                  s, 24.880 ops/sec
+CURVE  25519 key gen        20 ops took 1.003 sec, avg 50.150 ms, 19.940 ops/sec
+CURVE  25519 agree          20 ops took 1.002 sec, avg 50.100 ms, 19.960 ops/sec
+ED     25519 key gen       529 ops took 1.001 sec, avg 1.892 ms, 528.472 ops/sec
+ED     25519 sign          470 ops took 1.000 sec, avg 2.128 ms, 470.000 ops/sec
+ED     25519 verify        254 ops took 1.002 sec, avg 3.945 ms, 253.493 ops/sec
+Benchmark complete
+I (467072) wolfbenchmark: wolfssl_check: 0
