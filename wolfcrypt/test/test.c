@@ -28003,11 +28003,35 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srtpkdf_test(void)
             keyS, tv[i].ksSz);
         if (ret != 0)
             return WC_TEST_RET_ENC_EC(ret);
-        if (XMEMCMP(keyE, tv[i].ke, 16) != 0)
+        if (XMEMCMP(keyE, tv[i].ke, tv[i].keSz) != 0)
             return WC_TEST_RET_ENC_NC;
-        if (XMEMCMP(keyA, tv[i].ka, 20) != 0)
+        if (XMEMCMP(keyA, tv[i].ka, tv[i].kaSz) != 0)
             return WC_TEST_RET_ENC_NC;
-        if (XMEMCMP(keyS, tv[i].ks, 14) != 0)
+        if (XMEMCMP(keyS, tv[i].ks, tv[i].ksSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index, WC_SRTP_LABEL_ENCRYPTION,
+            keyE, tv[i].keSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyE, tv[i].ke, tv[i].keSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index, WC_SRTP_LABEL_MSG_AUTH,
+            keyA, tv[i].kaSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyA, tv[i].ka, tv[i].kaSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index, WC_SRTP_LABEL_SALT, keyS,
+            tv[i].ksSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyS, tv[i].ks, tv[i].ksSz) != 0)
             return WC_TEST_RET_ENC_NC;
 
         ret = wc_SRTCP_KDF(tv[i].key, tv[i].keySz, tv[i].salt, tv[i].saltSz,
@@ -28015,11 +28039,35 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srtpkdf_test(void)
             keyS, tv[i].ksSz);
         if (ret != 0)
             return WC_TEST_RET_ENC_EC(ret);
-        if (XMEMCMP(keyE, tv[i].ke_c, 16) != 0)
+        if (XMEMCMP(keyE, tv[i].ke_c, tv[i].keSz) != 0)
             return WC_TEST_RET_ENC_NC;
-        if (XMEMCMP(keyA, tv[i].ka_c, 20) != 0)
+        if (XMEMCMP(keyA, tv[i].ka_c, tv[i].kaSz) != 0)
             return WC_TEST_RET_ENC_NC;
-        if (XMEMCMP(keyS, tv[i].ks_c, 14) != 0)
+        if (XMEMCMP(keyS, tv[i].ks_c, tv[i].ksSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTCP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index_c,
+            WC_SRTCP_LABEL_ENCRYPTION, keyE, tv[i].keSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyE, tv[i].ke_c, tv[i].keSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTCP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index_c, WC_SRTCP_LABEL_MSG_AUTH,
+            keyA, tv[i].kaSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyA, tv[i].ka_c, tv[i].kaSz) != 0)
+            return WC_TEST_RET_ENC_NC;
+
+        ret = wc_SRTCP_KDF_label(tv[i].key, tv[i].keySz, tv[i].salt,
+            tv[i].saltSz, tv[i].kdfIdx, tv[i].index_c, WC_SRTCP_LABEL_SALT,
+            keyS, tv[i].kaSz);
+        if (ret != 0)
+            return WC_TEST_RET_ENC_EC(ret);
+        if (XMEMCMP(keyS, tv[i].ks_c, tv[i].ksSz) != 0)
             return WC_TEST_RET_ENC_NC;
     }
 
@@ -48580,6 +48628,67 @@ static wc_test_ret_t mp_test_cmp(mp_int* a, mp_int* b)
     ret = mp_cmp(a, b);
     if (ret != MP_EQ)
         return WC_TEST_RET_ENC_NC;
+#endif
+
+#if defined(HAVE_ECC) && !defined(WC_NO_RNG) && \
+    defined(WOLFSSL_ECC_GEN_REJECT_SAMPLING)
+    mp_zero(a);
+    mp_zero(b);
+    ret = mp_cmp_ct(a, b, 1);
+    if (ret != MP_EQ)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(a, a, a->used);
+    if (ret != MP_EQ)
+        return WC_TEST_RET_ENC_EC(ret);
+
+#ifdef WOLFSSL_SP_MATH_ALL
+    ret = mp_cmp_ct(a, NULL, a->used);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(NULL, a, a->used);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
+#endif
+
+    mp_read_radix(a, "1", MP_RADIX_HEX);
+    ret = mp_cmp_ct(a, b, 1);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(b, a, 1);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
+
+    mp_read_radix(a, "0123456789abcdef0123456789abcdef", MP_RADIX_HEX);
+    ret = mp_cmp_ct(a, b, a->used);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(b, a, a->used);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
+
+    mp_read_radix(b, "1123456789abcdef0123456789abcdef", MP_RADIX_HEX);
+    ret = mp_cmp_ct(b, a, a->used);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(a, b, a->used);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
+
+    mp_read_radix(b, "0123456789abcdef0123456789abcdf0", MP_RADIX_HEX);
+    ret = mp_cmp_ct(b, a, a->used);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(a, b, a->used);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
+
+    mp_read_radix(b, "0123456789abcdf0", MP_RADIX_HEX);
+    ret = mp_cmp_ct(a, b, a->used);
+    if (ret != MP_GT)
+        return WC_TEST_RET_ENC_EC(ret);
+    ret = mp_cmp_ct(b, a, a->used);
+    if (ret != MP_LT)
+        return WC_TEST_RET_ENC_EC(ret);
 #endif
 
     return 0;
