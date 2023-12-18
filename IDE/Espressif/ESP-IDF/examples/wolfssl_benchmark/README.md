@@ -82,13 +82,16 @@ git fetch
 git pull
 git submodule update --init --recursive
 
-cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
+# pick your workspace location
+# cd ~/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
+# cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
+# cd /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
+cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 
-# Pick ESP-IDF install directory, this one for v5.1 in VisualGDB
-
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
+# Pick ESP-IDF toolchain install directory, this one for v5.1 in VisualGDB
 WRK_IDF_PATH=~/esp/esp-idf
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
 
 . $WRK_IDF_PATH/export.sh
 
