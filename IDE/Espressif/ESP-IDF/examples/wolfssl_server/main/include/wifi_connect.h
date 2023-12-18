@@ -36,7 +36,6 @@
 
 #define USE_WIFI_EXAMPLE
 #ifdef USE_WIFI_EXAMPLE
-    #include "esp_netif.h"
     #include "protocol_examples_common.h" /* see project CMakeLists.txt */
 #endif
 
