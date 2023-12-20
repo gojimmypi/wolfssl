@@ -1,0 +1,81 @@
+tail 0
+chksum 0xf5
+load 0x3ffe8408, len 24, room 8 
+tail 0
+chksum 0x7c
+load 0x3ffe8420, len 3312, room 8 
+tail 8
+chksum 0x56
+csum 0x56
+I (60) boot: ESP-IDF v3.4 2nd stage bootloader
+I (60) boot: compile time 18:52:49
+I (69) qio_mode: Enabling default flash chip QIO
+I (69) boot: SPI Speed      : 40MHz
+I (73) boot: SPI Mode       : QIO
+I (79) boot: SPI Flash Size : 2MB
+I (85) boot: Partition Table:
+I (91) boot: ## Label            Usage          Type ST Offset   Length
+I (102) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (114) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (125) boot:  2 factory          factory app      00 00 00010000 000f0000
+I (137) boot: End of partition table
+I (143) esp_image: segment 0: paddr=0x00010010 vaddr=0x40210010 size=0x46de0 (290272) map
+I (255) esp_image: segment 1: paddr=0x00056df8 vaddr=0x40256df0 size=0x14588 ( 83336) map
+I (284) esp_image: segment 2: paddr=0x0006b388 vaddr=0x3ffe8000 size=0x004d8 (  1240) load
+I (285) esp_image: segment 3: paddr=0x0006b868 vaddr=0x40100000 size=0x00080 (   128) load
+I (296) esp_image: segment 4: paddr=0x0006b8f0 vaddr=0x40100080 size=0x04628 ( 17960) load
+I (315) boot: Loaded app from partition at offset 0x10000
+Hello world!
+This is ESP8266 chip with 1 CPU cores, WiFi, silicon revision 1, 2MB external flash
+wolfCrypt Benchmark (block bytes 1024, min 1.0 sec each)
+RNG                        375 KiB took 1.019 seconds,  368.008 KiB/s Cycles per byte =  31.27
+AES-128-CBC-enc             75 KiB took 1.045 seconds,   71.770 KiB/s Cycles per byte = 170.51
+AES-128-CBC-dec            525 KiB took 1.036 seconds,  506.757 KiB/s Cycles per byte =  26.25
+AES-192-CBC-enc             75 KiB took 1.141 seconds,   65.732 KiB/s Cycles per byte = 198.56
+AES-192-CBC-dec            475 KiB took 1.050 seconds,  452.381 KiB/s Cycles per byte =  33.49
+AES-256-CBC-enc             75 KiB took 1.221 seconds,   61.425 KiB/s Cycles per byte = 227.11
+AES-256-CBC-dec            425 KiB took 1.053 seconds,  403.609 KiB/s Cycles per byte =  42.60
+AES-128-GCM-enc             75 KiB took 1.321 seconds,   56.775 KiB/s Cycles per byte = 258.28
+AES-128-GCM-dec             75 KiB took 1.319 seconds,   56.861 KiB/s Cycles per byte = 276.07
+AES-192-GCM-enc             75 KiB took 1.408 seconds,   53.267 KiB/s Cycles per byte = 295.26
+AES-192-GCM-dec             75 KiB took 1.407 seconds,   53.305 KiB/s Cycles per byte = 313.03
+AES-256-GCM-enc             75 KiB took 1.485 seconds,   50.505 KiB/s Cycles per byte = 331.83
+AES-256-GCM-dec             75 KiB took 1.484 seconds,   50.539 KiB/s Cycles per byte = 352.26
+GMAC Default               247 KiB took 1.001 seconds,  246.753 KiB/s Cycles per byte = 110.79
+3DES                       125 KiB took 1.228 seconds,  101.792 KiB/s Cycles per byte = 228.60
+MD5                       1100 KiB took 1.009 seconds, 1090.188 KiB/s Cycles per byte =  26.91
+SHA                       3925 KiB took 1.006 seconds, 3901.590 KiB/s Cycles per byte =   7.77
+SHA-224                    925 KiB took 1.007 seconds,  918.570 KiB/s Cycles per byte =  34.01
+SHA-256                    925 KiB took 1.016 seconds,  910.433 KiB/s Cycles per byte =  35.17
+SHA-384                    850 KiB took 1.009 seconds,  842.418 KiB/s Cycles per byte =  39.31
+SHA-512                    850 KiB took 1.008 seconds,  843.254 KiB/s Cycles per byte =  40.59
+SHA-512/224                850 KiB took 1.007 seconds,  844.091 KiB/s Cycles per byte =  41.74
+SHA-512/256                875 KiB took 1.025 seconds,  853.659 KiB/s Cycles per byte =  41.65
+SHA3-224                   575 KiB took 1.036 seconds,  555.019 KiB/s Cycles per byte =  65.13
+SHA3-256                   550 KiB took 1.041 seconds,  528.338 KiB/s Cycles per byte =  69.96
+SHA3-384                   425 KiB took 1.042 seconds,  407.869 KiB/s Cycles per byte =  93.16
+SHA3-512                   300 KiB took 1.052 seconds,  285.171 KiB/s Cycles per byte = 135.20
+SHAKE128                   650 KiB took 1.013 seconds,  641.658 KiB/s Cycles per byte =  63.95
+SHAKE256                   525 KiB took 1.001 seconds,  524.476 KiB/s Cycles per byte =  81.03
+RIPEMD                    4300 KiB took 1.002 seconds, 4291.417 KiB/s Cycles per byte =  10.12
+HMAC-MD5                  1100 KiB took 1.017 seconds, 1081.613 KiB/s Cycles per byte =  40.51
+HMAC-SHA                  4100 KiB took 1.005 seconds, 4079.602 KiB/s Cycles per byte =  11.10
+HMAC-SHA224                900 KiB took 1.005 seconds,  895.522 KiB/s Cycles per byte =  51.64
+HMAC-SHA256                900 KiB took 1.005 seconds,  895.522 KiB/s Cycles per byte =  52.65
+HMAC-SHA384                850 KiB took 1.028 seconds,  826.848 KiB/s Cycles per byte =  56.95
+HMAC-SHA512                850 KiB took 1.026 seconds,  828.460 KiB/s Cycles per byte =  58.23
+PBKDF2                       0 KiB took 1.266 seconds,    0.099 KiB/s Cycles per byte = 406123.48
+RSA     1024  key gen         1 ops took 35.121 sec, avg 35121.000 ms, 0.028 ops/sec
+RSA     2048  key gen         1 ops took 1652.644 sec, avg 1652644.000 ms, 0.001 ops/sec
+RSA     2048   public         8 ops took 1.195 sec, avg 149.375 ms, 6.695 ops/sec
+RSA     2048  private         2 ops took 117.456 sec, avg 58728.000 ms, 0.017 ops/sec
+ECC   [      SECP256R1]   256  key gen         2 ops took 3.943 sec, avg 1971.500 ms, 0.507 ops/sec
+ECDHE [      SECP256R1]   256    agree         2 ops took 3.949 sec, avg 1974.500 ms, 0.506 ops/sec
+ECDSA [      SECP256R1]   256     sign         2 ops took 3.974 sec, avg 1987.000 ms, 0.503 ops/sec
+ECDSA [      SECP256R1]   256   verify         2 ops took 7.767 sec, avg 3883.500 ms, 0.257 ops/sec
+CURVE  25519  key gen         2 ops took 1.988 sec, avg 994.000 ms, 1.006 ops/sec
+CURVE  25519    agree         2 ops took 1.529 sec, avg 764.500 ms, 1.308 ops/sec
+ED     25519  key gen        17 ops took 1.002 sec, avg 58.941 ms, 16.966 ops/sec
+ED     25519     sign        16 ops took 1.007 sec, avg 62.937 ms, 15.889 ops/sec
+ED     25519   verify         6 ops took 1.283 sec, avg 213.833 ms, 4.677 ops/sec
+Benchmark complete
