@@ -44,6 +44,13 @@
 #include <esp_types.h>
 #include <esp_log.h>
 
+#if ESP_IDF_VERSION_MAJOR >= 4
+    #define WOLFSSL_ESPIDF_BLANKLINE_MESSAGE ""
+#else
+    /* Older ESP-IDF such as that for ESP8266 do not support empty strings */
+    #define WOLFSSL_ESPIDF_BLANKLINE_MESSAGE "."
+#endif
+
 /* Optional exit message.
  * The WOLFSSL_COMPLETE keyword exits wolfSSL test harness script. */
 #define WOLFSSL_ESPIDF_EXIT_MESSAGE \
@@ -521,7 +528,7 @@ extern "C"
     #if ESP_IDF_VERSION_MAJOR >= 4
         #include "esp32/rom/aes.h"
     #else
-        #include "rom/aes.h"
+       // #include "rom/aes.h"
     #endif
 
     typedef enum tagES32_AES_PROCESS /* TODO what's this ? */
