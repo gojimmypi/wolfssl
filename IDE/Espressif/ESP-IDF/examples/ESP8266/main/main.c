@@ -17,7 +17,7 @@
     #include <wolfssl/wolfcrypt/settings.h>
     #include <wolfcrypt/benchmark/benchmark.h>
 #else
-    #error "Be sure to include in CMakeLists or Makefile:\
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
             CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
@@ -37,11 +37,11 @@ void app_main()
     printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    printf("Done!\n");
+//    for (int i = 10; i >= 0; i--) {
+//        printf("Restarting in %d seconds...\n", i);
+//        vTaskDelay(1000 / portTICK_PERIOD_MS);
+//    }
+//    printf("Done!\n");
     fflush(stdout);
     benchmark_test(NULL);
     // esp_restart();
