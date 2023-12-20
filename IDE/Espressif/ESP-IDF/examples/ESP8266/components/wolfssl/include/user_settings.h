@@ -114,7 +114,7 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* when you want to use AES counter mode */
+/* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
 
@@ -128,7 +128,7 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-/* RSA primitive specific definition */
+/* rsa primitive specific definition */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
@@ -160,9 +160,10 @@
 
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x249F00
+#define ESP_RSA_TIMEOUT_CNT    0x349F00
 
-#define HASH_SIZE_LIMIT /* for test.c */
+/* hash limit for test.c */
+#define HASH_SIZE_LIMIT
 
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
@@ -171,6 +172,7 @@
 /* #undef USE_FAST_MATH          */
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
+/* #define WOLFSSL_SP_RISCV32    */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
@@ -332,6 +334,15 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP8684)
+    /*  There's no Hardware Acceleration available on ESP8684 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
 #else
     /* Anything else encountered, disable HW accleration */
     #define NO_ESP32_CRYPT
@@ -356,12 +367,16 @@
 #define ESP_DISABLE_HW_TASK_LOCK
 */
 
-#define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
-#define WOLFSSL_HW_METRICS
+/* Pause in a loop rather than exit. */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE
 
-/* #define HASH_SIZE_LIMIT */ /* for test.c */
+/* #define WOLFSSL_HW_METRICS */
 
-/* #define NO_HW_MATH_TEST */ /* Optionall turn off HW math checks */
+/* for test.c */
+/* #define HASH_SIZE_LIMIT */
+
+/* Optionally turn off HW math checks */
+/* #define NO_HW_MATH_TEST */
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -382,7 +397,6 @@
 /* Turn off Large Number ESP32 HW Modular Multiplication
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
-
 
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
 #define USE_CERT_BUFFERS_2048
@@ -427,3 +441,12 @@
     #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+/* See settings.h for some of the possible hardening options:
+ *
+ *  #define NO_ESPIDF_DEFAULT
+ *  #define WC_NO_CACHE_RESISTANT
+ *  #define WC_AES_BITSLICED
+ *  #define HAVE_AES_ECB
+ *  #define HAVE_AES_DIRECT
+ */
