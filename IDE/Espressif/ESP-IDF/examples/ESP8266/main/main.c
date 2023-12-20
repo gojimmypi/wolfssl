@@ -7,15 +7,18 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#define WOLFSSL_USER_SETTINGS
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+
 #ifdef WOLFSSL_USER_SETTINGS
     #include <wolfssl/wolfcrypt/settings.h>
     #include <wolfcrypt/benchmark/benchmark.h>
+#else
+    #error "Be sure to include in CMakeLists or Makefile:\
+            CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
 
