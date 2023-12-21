@@ -59,6 +59,7 @@ COMPONENT_ADD_INCLUDEDIRS += include
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT).
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)wolfssl
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)wolfssl/wolfcrypt
+COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)wolfssl/wolfcrypt/port/Espressif
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)wolfcrypt/benchmark
 # COMPONENT_ADD_INCLUDEDIRS += $ENV(IDF_PATH)/components/freertos/include/freertos
 # COMPONENT_ADD_INCLUDEDIRS += "$ENV(IDF_PATH)/soc/esp32s3/include/soc"
@@ -81,7 +82,9 @@ COMPONENT_OBJEXCLUDE += $(WOLFSSL_ROOT)wolfcrypt/src/aes_gcm_x86_asm.o
 COMPONENT_OBJEXCLUDE += $(WOLFSSL_ROOT)src/bio.o
 
 
-
+##
+## wolfSSL
+##
 COMPONENT_OBJS := $(WOLFSSL_ROOT)src/bio.o
 # COMPONENT_OBJS += src/conf.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)src/crl.o
@@ -105,6 +108,9 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)src/wolfio.o
 # COMPONENT_OBJS += src/x509.o
 # COMPONENT_OBJS += src/x509_str.o
 
+##
+## wolfcrypt
+##
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/aes.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/arc4.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/asm.o
@@ -207,8 +213,27 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/wolfcrypt_last.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/wolfevent.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/wolfmath.o
 
+##
+## Espressif
+##
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_aes.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_mp.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_sha.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_util.o
+
+##
+## wolfcrypt benchmark  (optional)
+##
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/benchmark/benchmark.o
 
+##
+## wolfcrypt test (optional)
+##
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/test/test.o
+
+##
+## wolfcrypt
+##
 COMPONENT_SRCDIRS += $(WOLFSSL_ROOT)wolfcrypt/src
 
 
