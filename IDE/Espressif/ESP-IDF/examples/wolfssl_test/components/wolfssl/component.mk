@@ -235,7 +235,3 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/test/test.o
 ## wolfcrypt
 ##
 COMPONENT_SRCDIRS += $(WOLFSSL_ROOT)wolfcrypt/src
-
-
-# SRC_FILES := $(filter-out src/bar.cpp, $(SRC_FILES))
-# @echo "hello world! $(COMPONENT_OBJS)"

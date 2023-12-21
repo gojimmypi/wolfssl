@@ -487,6 +487,10 @@ extern "C"
 
     WOLFSSL_LOCAL int esp_ShowExtendedSystemInfo(void);
 
+    WOLFSSL_LOCAL esp_err_t esp_DisableWatchdog(void);
+
+    WOLFSSL_LOCAL esp_err_t esp_EnableWatchdog(void);
+
     /* Compare MATH_INT_T A to MATH_INT_T B
      * During debug, the strings name_A and name_B can help
      * identify variable name. */

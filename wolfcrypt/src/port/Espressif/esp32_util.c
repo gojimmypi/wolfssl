@@ -36,6 +36,7 @@
 #include <esp_err.h>
 #if ESP_IDF_VERSION_MAJOR > 4
     #include <hal/efuse_hal.h>
+    #include <soc/rtc_wdt.h>
 #endif
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
@@ -151,6 +152,12 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #if defined(WOLFSSL_ESPIDF)
 static int ShowExtendedSystemInfo_platform_espressif(void)
 {
+#ifdef NO_WATCHDOG
+    ESP_LOGI(TAG, "Found NO_WATCHDOG");
+#else
+    ESP_LOGI(TAG, "Watchdog active; missing NO_WATCHDOG definition.");
+#endif
+
 #if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
     WOLFSSL_VERSION_PRINTF("CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: %u MHz",
                            CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
@@ -648,6 +655,48 @@ int esp_ShowExtendedSystemInfo(void)
     /* Someday the ShowExtendedSystemInfo may be global.
      * See https://github.com/wolfSSL/wolfssl/pull/6149 */
     return ShowExtendedSystemInfo();
+}
+
+/*
+ *  Disable the watchdog timer (use with caution)
+ */
+
+esp_err_t esp_DisableWatchdog(void)
+{
+    esp_err_t ret = ESP_OK;
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+    *((volatile uint32_t*) 0x60000900) &= ~(1);
+#else
+    rtc_wdt_protect_off();
+    rtc_wdt_disable();
+#endif
+
+#ifdef DEBUG_WOLFSSL
+    ESP_LOGI(TAG, "Watchdog disabled.");
+#endif
+
+    return ret;
+}
+
+/*
+ *  Enable the watchdog timer.
+ */
+
+esp_err_t esp_EnabledWatchdog(void)
+{
+    esp_err_t ret = ESP_OK;
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+     *((volatile uint32_t*) 0x60000900) |= 1;
+#else
+    rtc_wdt_protect_on();
+    rtc_wdt_enable();
+#endif
+
+#ifdef DEBUG_WOLFSSL
+    ESP_LOGI(TAG, "Watchdog enabled.");
+#endif
+
+    return ret;
 }
 
 /* Print a MATH_INT_T attribute list.

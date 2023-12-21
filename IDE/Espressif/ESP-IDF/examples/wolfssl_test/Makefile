@@ -3,9 +3,10 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := wolfssl_test
+CFLAGS +=-DWOLFSSL_USER_SETTINGS
+EXTRA_CFLAGS += -DNO_WATCHDOG
 
-CFLAGS += -DWOLFSSL_USER_SETTINGS
+PROJECT_NAME := wolfssl_test
 
 include $(IDF_PATH)/make/project.mk
 

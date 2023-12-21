@@ -131,11 +131,17 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 #include "driver/uart.h"
+
 /* entry point */
 void app_main(void)
 {
     int stack_start = 0;
     esp_err_t ret = 0;
+
+#ifdef NO_WATCHDOG
+    ESP_LOGV(TAG, "Found NO_WATCHDOG");
+    esp_DisableWatchdog();
+#endif
 
 /* TODO why 74880 ? */
     // Configure UART parameters
