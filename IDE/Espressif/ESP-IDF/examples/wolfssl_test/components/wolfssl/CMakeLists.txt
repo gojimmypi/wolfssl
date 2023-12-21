@@ -19,20 +19,25 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.4.014 for ESP8266 support; optional esp-timer / driver components
+# Version 5.6.4.015 for ESP8266 support; optional esp-timer / driver components
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
 
 cmake_minimum_required(VERSION 3.16)
+
+set(VERBOSE_COMPONENT_MESSAGES 1)
+
+# The scope of this CMAKE_C_FLAGS is just this component:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 
 # Optionally set your source to wolfSSL in your project CMakeLists.txt like this:
 # set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
 
 # Optional compiler definitions to help with system name detection (typically printed by app diagnostics)
-if(1)
+if(VERBOSE_COMPONENT_MESSAGES)
     if(WIN32)
         # Windows-specific configuration here
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")
@@ -317,7 +322,7 @@ else()
 
     # get a list of all wolfcrypt assembly files; we'll exclude them as they don't target Xtensa
     file(GLOB EXCLUDE_ASM *.S)
-    file(GLOB_RECURSE EXCLUDE_ASM ${CMAKE_SOURCE_DIR} "${WOLFSSL_ROOT}/wolfcrypt/src/*.S")
+    file(GLOB EXCLUDE_ASM ${CMAKE_SOURCE_DIR} "${WOLFSSL_ROOT}/wolfcrypt/src/*.S")
 
     message(STATUS "IDF_PATH = $ENV{IDF_PATH}")
     message(STATUS "PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
@@ -447,6 +452,7 @@ else()
         endif() #else not an ESP-IDF component
     endif() # else not local copy and EDP-IDF wolfSSL
 
+  message(STATUS "a")
 
     # RTOS_IDF_PATH is typically:
     # "/Users/{username}/Desktop/esp-idf/components/freertos/include/freertos"
@@ -467,7 +473,7 @@ else()
         endif()
     endif()
 
-
+    # wolfSSL-specific include directories
     set(COMPONENT_ADD_INCLUDEDIRS
         "./include" # this is the location of local project wolfssl user_settings.h
         "\"${WOLFSSL_ROOT}/\""
@@ -477,7 +483,7 @@ else()
         "\"${RTOS_IDF_PATH}/\""
         )
 
-
+    # Optionally include cryptoauthlib if present
     if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
         list(APPEND COMPONENT_ADD_INCLUDEDIRS "../cryptoauthlib/lib")
     endif()
@@ -486,7 +492,7 @@ else()
     list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\"")
 
 
-
+    # Some files are known to be included elsewhere, or not used for Espressif
     set(COMPONENT_SRCEXCLUDE
         "\"${WOLFSSL_ROOT}/src/bio.c\""
         "\"${WOLFSSL_ROOT}/src/conf.c\""
@@ -540,15 +546,29 @@ else()
                               "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
 
-    # some optional diagnostics
-    if (1)
+    # Some optional diagnostics. Verbose ones are truncated.
+    if (VERBOSE_COMPONENT_MESSAGES)
         get_cmake_property(_variableNames VARIABLES)
         list (SORT _variableNames)
         message(STATUS "")
         message(STATUS "ALL VARIABLES BEGIN")
         message(STATUS "")
         foreach (_variableName ${_variableNames})
-            message(STATUS "${_variableName}=${${_variableName}}")
+            if (      ("${_variableName}" STREQUAL "bootloader_binary_files")
+                    OR ("${_variableName}" STREQUAL "Component paths")
+                    OR ("${_variableName}" STREQUAL "component_targets")
+                    OR ("${_variableName}" STREQUAL "__COMPONENT_TARGETS")
+                    OR ("${_variableName}" STREQUAL "CONFIGS_LIST")
+                    OR ("${_variableName}" STREQUAL "__CONFIG_VARIABLES")
+                    OR ("${_variableName}" STREQUAL "val")
+                    OR ("${_variableName}" MATCHES "^__idf_")
+               )
+                # Truncate the displayed value:
+                string(SUBSTRING "${${_variableName}}" 0 70 truncatedValue)
+                message(STATUS "${_variableName} = ${truncatedValue} ... (truncated)")
+            else()
+                message(STATUS "${_variableName}=${${_variableName}}")
+            endif()
         endforeach()
         message(STATUS "")
         message(STATUS "ALL VARIABLES END")
