@@ -92,13 +92,12 @@
 /* when you want to use SHA3 */
 #define WOLFSSL_SHA3
 
- /* ED25519 requires SHA512 */
+/* Reminder: ED25519 requires SHA512 */
 #define HAVE_ED25519
 
 #define HAVE_ECC
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
-#define HAVE_ED25519
 
 #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
@@ -276,7 +275,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
-     * Automatically defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
+     * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
@@ -368,7 +367,7 @@
 /* Pause in a loop rather than exit. */
 #define WOLFSSL_ESPIDF_ERROR_PAUSE
 
-#define WOLFSSL_HW_METRICS
+/* #define WOLFSSL_HW_METRICS */
 
 /* for test.c */
 /* #define HASH_SIZE_LIMIT */

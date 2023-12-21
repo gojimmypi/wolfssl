@@ -24,17 +24,23 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/settings.h>
-#include <user_settings.h>
-#include <wolfssl/version.h>
-#include <wolfssl/wolfcrypt/types.h>
-
-#ifndef WOLFSSL_ESPIDF
-#warning "problem with wolfSSL user settings. Check components/wolfssl/include"
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h> /* << references user_settings.h */
+    /* Do not explicitly include wolfSSL user_settings.h here. */
+    #include <user_settings.h>
+    #include <wolfssl/version.h>
+    #include <wolfssl/wolfcrypt/types.h>
+    #include <wolfcrypt/test/test.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#else
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+CFLAGS +=-DWOLFSSL_USER_SETTINGS  See also components/wolfssl/include"
 #endif
 
-#include <wolfcrypt/test/test.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
+/* set to 0 for one benchmark,
+** set to 1 for continuous benchmark loop */
+#define TEST_LOOP 0
 
 /*
 ** the wolfssl component can be installed in either:
@@ -209,7 +215,10 @@ void app_main(void)
 #if defined(NO_ESP32_CRYPT)
     ESP_LOGI(TAG, "NO_ESP32_CRYPT defined! HW acceleration DISABLED.");
 #else
-    #if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if defined(CONFIG_IDF_TARGET_ESP32C2)
+        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C2.");
+
+    #elif defined(CONFIG_IDF_TARGET_ESP32C3)
         ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C3.");
 
     #elif defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -258,8 +267,11 @@ void app_main(void)
 
         loops++;
     }
-    while (ret == 0);
+    while (TEST_LOOP && (ret == 0));
+
+#if defined TEST_LOOP && (TEST_LOOP == 1)
     ESP_LOGI(TAG, "loops = %d", loops);
+#endif
 
     /* note wolfCrypt_Cleanup() should always be called when finished.
     ** This is called at the end of wolf_test_task();
@@ -285,8 +297,12 @@ void app_main(void)
                                         - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
 
+#ifdef WOLFSSL_ESPIDF_EXIT_MESSAGE
+    ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+#else
     ESP_LOGI(TAG, "\n\nDone!\n\n"
                   "If running from idf.py monitor, press twice: Ctrl+]");
+#endif
 
     /* done */
     while (1) {

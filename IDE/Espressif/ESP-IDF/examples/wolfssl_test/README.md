@@ -5,7 +5,6 @@ This is the ESP32 Version of the [wolfSSL wolfcrypt test application](https://gi
 For general information on [wolfSSL examples for Espressif](../README.md), see the
 [README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
 
-
 ## ESP Registry
 
 The easiest way to get started with wolfSSL is by using the 
@@ -23,7 +22,7 @@ idf.py -b 115200 flash monitor
 Open the VisualGDB Visual Studio Project file in the [VisualGDB directory](./VisualGDB/README.md) and click the "Start" button.
 No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
 
-## ESP-IDF Commandline
+## ESP-IDF Commandline (version 4.4 or greater for the ESP32)
 
 1. `idf.py menuconfig` to configure the program.  
     1-1. Example Configuration ->
@@ -64,6 +63,24 @@ idf.py erase-flash -p /dev/ttyS24 -b 115200
 idf.py 
 # build and flash, in this example to COM24
 idf.py build flash -p /dev/ttyS24 -b 115200 monitor
+```
+
+## ESP-IDF Commandline (version 3.5 or earlier for the ESP8266)
+
+
+```
+WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+. $WRK_IDF_PATH/export.sh
+
+# install as needed / prompted
+/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/install.sh
+
+cd IDE/Espressif/ESP-IDF/examples/ESP8266
+
+# adjust settings as desired
+idf.py menuconfig
+
+idf.py build flash -p /dev/ttyS55 -b 115200
 ```
 
 ## Example Output
