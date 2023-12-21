@@ -1258,7 +1258,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #ifdef WOLFSSL_SHA224
-    ESP_LOGI(TAG, "Start sha224_test");
     if ( (ret = sha224_test()) != 0)
         TEST_FAIL("SHA-224  test failed!\n", ret);
     else
@@ -1266,7 +1265,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
     #ifdef WOLFSSL_SHA224
-    ESP_LOGI(TAG, "Start hmac_sha224_test");
         if ( (ret = hmac_sha224_test()) != 0)
             TEST_FAIL("HMAC-SHA224 test failed!\n", ret);
         else
@@ -1275,7 +1273,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 
 #ifdef WOLFSSL_AES_192
-    ESP_LOGI(TAG, "Start aes192_test");
     if ( (ret = aes192_test()) != 0)
         TEST_FAIL("AES192   test failed!\n", ret);
     else
@@ -1283,14 +1280,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #ifndef NO_SHA256
-    ESP_LOGI(TAG, "Start sha256_test");
     if ( (ret = sha256_test()) != 0)
         TEST_FAIL("SHA-256  test failed!\n", ret);
     else
         TEST_PASS("SHA-256  test passed!\n");
 #endif
 #ifdef WOLFSSL_SHA224
-    ESP_LOGI(TAG, "Start sha224_test");
     if ( (ret = sha224_test()) != 0)
         TEST_FAIL("SHA-224  test failed!\n", ret);
     else
@@ -1389,7 +1384,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         }
         #endif
         ct--;
-        ESP_LOGI(TAG, "\n\nmp_test loops = %d\n\n", ct);
     }
     if ( (ret = MP_OKAY) != 0)
         TEST_FAIL("mp       test failed!\n", ret);
@@ -7958,23 +7952,19 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hmac_sha224_test(void)
             continue; /* cavium can't handle short keys, fips not allowed */
 #endif
 
-        ESP_LOGI(TAG, "Step 1");
         if ((ret = wc_HmacInit(&hmac, HEAP_HINT, devId)) != 0)
             return WC_TEST_RET_ENC_EC(ret);
 
-        ESP_LOGI(TAG, "Step 2");
         ret = wc_HmacSetKey(&hmac, WC_SHA224, (byte*)keys[i],
             (word32)XSTRLEN(keys[i]));
         if (ret != 0)
             return WC_TEST_RET_ENC_EC(ret);
 
-        ESP_LOGI(TAG, "Step 3");
         ret = wc_HmacUpdate(&hmac, (byte*)test_hmac[i].input,
                    (word32)test_hmac[i].inLen);
         if (ret != 0)
             return WC_TEST_RET_ENC_EC(ret);
 
-        ESP_LOGI(TAG, "Step 4");
         ret = wc_HmacFinal(&hmac, hash);
         if (ret != 0)
             return WC_TEST_RET_ENC_EC(ret);
@@ -7982,7 +7972,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hmac_sha224_test(void)
         if (XMEMCMP(hash, test_hmac[i].output, WC_SHA224_DIGEST_SIZE) != 0)
             return WC_TEST_RET_ENC_I(i);
 
-        ESP_LOGI(TAG, "Step 5");
         wc_HmacFree(&hmac);
     }
 
