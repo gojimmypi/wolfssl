@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.4.013 for improved manual WOLFSSL_ROOT
+# Version 5.6.4.014 for ESP8266 support; optional esp-timer / driver components
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -60,7 +60,8 @@ if(1)
         message("Detected Apple")
     endif()
 endif() # End optional WOLFSSL_CMAKE_SYSTEM_NAME
-    message(STATUS "CONFIG_IDF_TARGET = ${CONFIG_IDF_TARGET}")
+
+message(STATUS "CONFIG_TARGET_PLATFORM = ${CONFIG_TARGET_PLATFORM}")
 
 # Check that there are not conflicting wolfSSL components
 # The ESP Registry Component will be in ./managed_components/wolfssl__wolfssl
@@ -220,11 +221,6 @@ endfunction()
 #   FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
 #
 
-set(THIS_INCLUDE_TIMER "esp_timer")
-set(THIS_INCLUDE_TIMER "")
-set(THIS_INCLUDE_DRIVER "driver")
-set(THIS_INCLUDE_DRIVER "")
-
 if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "wolfssl component CMAKE_BUILD_EARLY_EXPANSION:")
     idf_component_register(
@@ -239,6 +235,15 @@ else()
     message(STATUS "************************************************************************************************")
     message(STATUS "wolfssl component config:")
     message(STATUS "************************************************************************************************")
+
+    if ( "${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266")
+        # There's no esp_timer, no driver components for the ESP8266
+        set(THIS_INCLUDE_TIMER "")
+        set(THIS_INCLUDE_DRIVER "")
+    else()
+        set(THIS_INCLUDE_TIMER "esp_timer")
+        set(THIS_INCLUDE_DRIVER "driver")
+    endif()
 
     # search for wolfSSL
     # TODO allow for cmake prior def

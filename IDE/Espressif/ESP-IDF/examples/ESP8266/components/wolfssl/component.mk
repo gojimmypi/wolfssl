@@ -17,14 +17,43 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
+
 #
 # Component Makefile
 #
+#
+# The Espressif Managed Components are only for newer versions of the ESP-IDF
+# Typically only for ESP32[-x] targets and only for ESP-IDF v4.3 or later:
+# See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-component-manager.html
+#     https://components.espressif.com/
+#
+# Usage:
+#
+#   make flash
+#
+#   make flash ESPPORT=/dev/ttyS55
+#
+#   make flash ESPBAUD=9600
+#
+#   make monitor ESPPORT=COM1
+#
+#   make monitor ESPPORT=/dev/ttyS55 MONITORBAUD=115200
+#
+#   export ESPPORT=/dev/ttyS55
+#
+# https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html
+#
 
+# Although the project should define WOLFSSL_USER_SETTINGS, we'll also
+# define it here:
 CFLAGS +=-DWOLFSSL_USER_SETTINGS
 
+# In the wolfSSL GitHub examples for Espressif,
+# the root is 7 directories up from here:
 WOLFSSL_ROOT := ../../../../../../../
 
+# NOTE: The wolfSSL include diretory (e.g. user_settings.h) is
+# located HERE in THIS project, and *not* in the wolfSSL root.
 COMPONENT_ADD_INCLUDEDIRS := .
 COMPONENT_ADD_INCLUDEDIRS += include
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT).
@@ -147,9 +176,9 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sm2.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sm3.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sm4.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sphincs.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_arm32.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_arm64.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_armthumb.o
+# COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_arm32.o
+# COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_arm64.o
+# COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_armthumb.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_c32.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_c64.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/sp_cortexm.o
