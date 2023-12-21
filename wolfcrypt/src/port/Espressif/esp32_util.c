@@ -36,7 +36,7 @@
 #include <esp_err.h>
 #if ESP_IDF_VERSION_MAJOR > 4
     #include <hal/efuse_hal.h>
-    #include <soc/rtc_wdt.h>
+    #include <rtc_wdt.h>
 #endif
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
