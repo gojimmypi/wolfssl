@@ -469,10 +469,11 @@ else()
 
 
     set(COMPONENT_ADD_INCLUDEDIRS
-        "./include" # this is the location of wolfssl user_settings.h
+        "./include" # this is the location of local project wolfssl user_settings.h
         "\"${WOLFSSL_ROOT}/\""
         "\"${WOLFSSL_ROOT}/wolfssl/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif\""
         "\"${RTOS_IDF_PATH}/\""
         )
 
