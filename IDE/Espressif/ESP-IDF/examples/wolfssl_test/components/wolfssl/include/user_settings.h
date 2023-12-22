@@ -102,14 +102,14 @@
 // #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
-//
-//#define HAVE_PKCS7
-//
-//#if defined(HAVE_PKCS7)
-//    #define HAVE_AES_KEYWRAP
-//    #define HAVE_X963_KDF
-//    #define WOLFSSL_AES_DIRECT
-//#endif
+
+#define HAVE_PKCS7
+
+#if defined(HAVE_PKCS7)
+    #define HAVE_AES_KEYWRAP
+    #define HAVE_X963_KDF
+    #define WOLFSSL_AES_DIRECT
+#endif
 
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
