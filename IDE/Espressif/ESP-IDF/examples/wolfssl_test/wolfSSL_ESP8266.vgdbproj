@@ -236,14 +236,33 @@
       <EnablePrettyPrinters>false</EnablePrettyPrinters>
     </AdditionalGDBSettings>
     <DebugMethod>
-      <ID>gdbstub</ID>
-      <Configuration xsi:type="com.visualgdb.edp.espxx.settings.gdbstub">
-        <StubBaudRate>74880</StubBaudRate>
-        <BootloaderBaudRate>115200</BootloaderBaudRate>
-        <BootloaderResetDelay>50</BootloaderResetDelay>
-        <BootloaderActivationSequence>!DTR;RTS;SLEEP;DTR;!RTS;SLEEP;!DTR;SLEEP</BootloaderActivationSequence>
+      <ID>openocd</ID>
+      <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp8266">
+        <CommandLine>-f interface/ftdi/flyswatter.cfg -f target/esp8266.cfg -c "adapter_khz 3000"</CommandLine>
+        <ExtraParameters>
+          <Frequency xsi:nil="true" />
+          <BoostedFrequency xsi:nil="true" />
+          <ConnectUnderReset>false</ConnectUnderReset>
+        </ExtraParameters>
+        <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
         <ProgramMode>Enabled</ProgramMode>
-        <SuppressResetConfirmation>false</SuppressResetConfirmation>
+        <StartupCommands>
+          <string>set remotetimeout 60</string>
+          <string>target remote :$$SYS:GDB_PORT$$</string>
+          <string>mon reset halt</string>
+          <string>load</string>
+          <string>mon xtensa_no_interrupts_during_steps on</string>
+          <string>mon esp8266_autofeed_watchdog on</string>
+        </StartupCommands>
+        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
+        <PreferredGDBPort>0</PreferredGDBPort>
+        <PreferredTelnetPort>0</PreferredTelnetPort>
+        <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
+        <SelectedCoreIndex xsi:nil="true" />
+        <SuggestionLogicRevision>0</SuggestionLogicRevision>
+        <ResetMode>Soft</ResetMode>
+        <ProgramSectorSize>4096</ProgramSectorSize>
+        <EraseSectorSize>4096</EraseSectorSize>
         <FLASHSettings>
           <Size>size4M</Size>
           <Frequency>freq40M</Frequency>

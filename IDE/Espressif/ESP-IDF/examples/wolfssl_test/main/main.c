@@ -34,13 +34,15 @@
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
-CFLAGS +=-DWOLFSSL_USER_SETTINGS  See also components/wolfssl/include"
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS  See also components/wolfssl/include"
 #endif
 
 
 /* set to 0 for one benchmark,
 ** set to 1 for continuous benchmark loop */
 #define TEST_LOOP 0
+
+#define THIS_UART_RX_BUFFER_SIZE 200
 
 /*
 ** the wolfssl component can be installed in either:
@@ -135,31 +137,22 @@ void my_atmel_free(int slotId)
 /* entry point */
 void app_main(void)
 {
-    int stack_start = 0;
-    esp_err_t ret = 0;
-
-#ifdef NO_WATCHDOG
-    ESP_LOGV(TAG, "Found NO_WATCHDOG");
-    esp_DisableWatchdog();
-#endif
-
-/* TODO why 74880 ? */
-    // Configure UART parameters
     uart_config_t uart_config = {
         .baud_rate = 115200,   // Set your desired baud rate here
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
     };
+    esp_err_t ret = 0;
+    int stack_start = 0;
 
-    // Apply configuration
+    /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
+     *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
+
+    /* Some targets may need to have UART speed set. */
+    ESP_LOGI(TAG, "UART init");
     uart_param_config(UART_NUM_0, &uart_config);
-
-    // Set UART pins
-  //  uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-
-    // Initialize UART driver
-    uart_driver_install(UART_NUM_0, 200 * 2, 0, 0, NULL, 0);
+    uart_driver_install(UART_NUM_0, THIS_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
 
     ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -167,6 +160,11 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
+    esp_DisableWatchdog();
+#endif
 
 #ifdef ESP_TASK_MAIN_STACK
      ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
@@ -193,50 +191,8 @@ void app_main(void)
     esp_ShowExtendedSystemInfo();
 #endif
 
-    /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
-#if defined(CONFIG_IDF_TARGET_ESP32)
-    ESP_LOGI(TAG, "CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
-            );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    ESP_LOGI(TAG, "CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ
-             );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
-                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
-             );
-    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
-#else
-    /* not available for other platformas at this time */
-#endif
-
     /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-    /* check to see if we are using hardware encryption
-     * TODO: move this to esp_util.c  */
-#if defined(NO_ESP32_CRYPT)
-    ESP_LOGI(TAG, "NO_ESP32_CRYPT defined! HW acceleration DISABLED.");
-#else
-    #if defined(CONFIG_IDF_TARGET_ESP32C2)
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C2.");
-
-    #elif defined(CONFIG_IDF_TARGET_ESP32C3)
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-C3.");
-
-    #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-S2.");
-
-    #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled for ESP32-S3.");
-
-    #else
-        ESP_LOGI(TAG, "ESP32_CRYPT is enabled.");
-    #endif
-#endif
 
 #if defined (WOLFSSL_USE_TIME_HELPER)
     set_time();
