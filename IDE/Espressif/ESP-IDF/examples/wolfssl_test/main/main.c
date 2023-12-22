@@ -37,12 +37,23 @@
     CFLAGS +=-DWOLFSSL_USER_SETTINGS  See also components/wolfssl/include"
 #endif
 
+#include "driver/uart.h"
 
-/* set to 0 for one benchmark,
-** set to 1 for continuous benchmark loop */
+
+/* set to 0 for one test,
+** set to 1 for continuous test loop */
 #define TEST_LOOP 0
 
-#define THIS_UART_RX_BUFFER_SIZE 200
+#define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
+
+#ifdef CONFIG_ESP8266_XTAL_FREQ_26
+    /* 26MHz crystal: 74880 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 74880
+#else
+    /* 40MHz crystal: 115200 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 115200
+#endif
+
 
 /*
 ** the wolfssl component can be installed in either:
@@ -64,7 +75,7 @@
 */
 #undef WOLFSSL_USE_TIME_HELPER
 #if defined(WOLFSSL_USE_TIME_HELPER)
-    #include "time_helper.h" */
+    #include "time_helper.h"
 #endif
 
 /* see wolfssl/wolfcrypt/test/test.h */
@@ -132,13 +143,12 @@ void my_atmel_free(int slotId)
 
 #endif /* CUSTOM_SLOT_ALLOCATION                                        */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
-#include "driver/uart.h"
 
 /* entry point */
 void app_main(void)
 {
     uart_config_t uart_config = {
-        .baud_rate = 115200,   // Set your desired baud rate here
+        .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -152,7 +162,8 @@ void app_main(void)
     /* Some targets may need to have UART speed set. */
     ESP_LOGI(TAG, "UART init");
     uart_param_config(UART_NUM_0, &uart_config);
-    uart_driver_install(UART_NUM_0, THIS_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
+    uart_driver_install(UART_NUM_0,
+                        THIS_MONITOR_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
 
     ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");

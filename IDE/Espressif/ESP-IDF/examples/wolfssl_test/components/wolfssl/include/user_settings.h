@@ -99,17 +99,17 @@
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 
-#define OPENSSL_EXTRA
+// #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
-
-#define HAVE_PKCS7
-
-#if defined(HAVE_PKCS7)
-    #define HAVE_AES_KEYWRAP
-    #define HAVE_X963_KDF
-    #define WOLFSSL_AES_DIRECT
-#endif
+//
+//#define HAVE_PKCS7
+//
+//#if defined(HAVE_PKCS7)
+//    #define HAVE_AES_KEYWRAP
+//    #define HAVE_X963_KDF
+//    #define WOLFSSL_AES_DIRECT
+//#endif
 
 /* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
@@ -186,16 +186,16 @@
 
 /* #define HAVE_HASHDRBG */
 
-#define WOLFSSL_KEY_GEN
-#define WOLFSSL_CERT_REQ
-#define WOLFSSL_CERT_GEN
-#define WOLFSSL_CERT_EXT
-#define WOLFSSL_SYS_CA_CERTS
-
-
-#define WOLFSSL_CERT_TEXT
-
-#define WOLFSSL_ASN_TEMPLATE
+//#define WOLFSSL_KEY_GEN
+//#define WOLFSSL_CERT_REQ
+//#define WOLFSSL_CERT_GEN
+//#define WOLFSSL_CERT_EXT
+//#define WOLFSSL_SYS_CA_CERTS
+//
+//
+//#define WOLFSSL_CERT_TEXT
+//
+//#define WOLFSSL_ASN_TEMPLATE
 
 /*
 #undef  WOLFSSL_KEY_GEN
