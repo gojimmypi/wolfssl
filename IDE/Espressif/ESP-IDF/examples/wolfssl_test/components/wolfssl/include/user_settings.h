@@ -103,6 +103,7 @@
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 
+// same as test, but compiler optimized
 #define HAVE_PKCS7
 
 #if defined(HAVE_PKCS7)
