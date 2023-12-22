@@ -1,0 +1,187 @@
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x40100000, len 5680, room 16
+tail 0
+chksum 0xd8
+load 0x3ffe8008, len 24, room 8
+tail 0
+chksum 0x51
+load 0x3ffe8020, len 3144, room 8
+tail 0
+chksum 0x6b
+csum 0x6b
+I (42) boot: ESP-IDF v3.4 2nd stage bootloader
+                                              I (42) boot: compile time 13:23:26
+                                                                               I         (43) qio_mode: Enabling default flash chip QIO
+                                               I (48) boot: SPI Speed      : 40M        Hz
+  I (55) boot: SPI Mode       : QIO
+                                   I (61) boot: SPI Flash Size : 2MB
+                                                                    I (67) boot:         Partition Table:
+                 I (72) boot: ## Label            Usage          Type ST Offset           Length
+        I (83) boot:  0 nvs              WiFi data        01 02 00009000 0000600        0
+ I (95) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+                                                                          I (106        ) boot:  2 factory          factory app      00 00 00010000 000f0000
+                                                                    I (117) boot        : End of partition table
+                        I (124) esp_image: segment 0: paddr=0x00010010 vaddr=0x4        0210010 size=0x5e49c (386204) map
+                                 I (137) esp_image: segment 1: paddr=0x0006e4b4         vaddr=0x4026e4ac size=0x1f198 (127384) map
+                                          I (151) esp_image: segment 2: paddr=0x        0008d654 vaddr=0x60001200 size=0x00004 (     4) load
+                                                    I (164) esp_image: segment 3        : paddr=0x0008d660 vaddr=0x3ffe8000 size=0x00560 (  1376) load
+                                                              I (178) esp_image:         segment 4: paddr=0x0008dbc8 vaddr=0x40100000 size=0x00080 (   128) load
+                                                                        I (192)         esp_image: segment 5: paddr=0x0008dc50 vaddr=0x40100080 size=0x0460c ( 17932) lo        ad
+  I (205) boot: Loaded app from partition at offset 0x10000
+                                                           I (230) wolfssl_test:         UART init
+I (231) wolfssl_test: ------------------ wolfSSL Test Example ----------------
+I (234) wolfssl_test: --------------------------------------------------------
+I (244) wolfssl_test: --------------------------------------------------------
+I (256) wolfssl_test: ---------------------- BEGIN MAIN ----------------------
+I (268) wolfssl_test: --------------------------------------------------------
+I (280) wolfssl_test: --------------------------------------------------------
+W (293) wolfssl_test: Found WOLFSSL_ESP_NO_WATCHDOG, disabling...
+I (303) wolfssl_test: CONFIG_ESP_MAIN_TASK_STACK_SIZE = 55500 bytes (13875 words        )
+I (318) wolfssl_test: Stack Start HWM: 54088 bytes
+I (324) esp32_util: Extended Version and Platform Information.
+I (334) esp32_util: SSID and plain text WiFi password not displayed in startup l        ogs.
+I (347) esp32_util:   Define SHOW_SSID_AND_PASSWORD to enable display.
+I (358) esp32_util: Using wolfSSL user_settings.h in //mnt//c//workspace//wolfss        l-gojimmypi//IDE//Espressif//ESP-IDF//examples//wolfssl_test//components//wolfss        l//include//user_settings.h
+I (384) esp32_util: LIBWOLFSSL_VERSION_STRING = 5.6.4
+I (393) esp32_util: LIBWOLFSSL_VERSION_HEX = 5006004
+I (404) esp32_util: Stack HWM: 54088
+I (408) esp32_util: .
+I (413) esp32_util: Macro Name                 Defined   Not Defined
+I (424) esp32_util: ------------------------- --------- -------------
+I (435) esp32_util: NO_ESPIDF_DEFAULT........                 X
+I (445) esp32_util: HW_MATH_ENABLED..........     X
+I (453) esp32_util: WOLFSSL_SHA224...........     X
+I (462) esp32_util: WOLFSSL_SHA384...........     X
+I (470) esp32_util: WOLFSSL_SHA512...........     X
+I (479) esp32_util: WOLFSSL_SHA3.............     X
+I (487) esp32_util: HAVE_ED25519.............     X
+I (496) esp32_util: HAVE_AES_ECB.............                 X
+I (506) esp32_util: HAVE_AES_DIRECT..........                 X
+I (516) esp32_util: USE_FAST_MATH............     X
+I (525) esp32_util: WOLFSSL_SP_MATH_ALL......                 X
+I (535) esp32_util: SP_MATH..................                 X
+I (545) esp32_util: WOLFSSL_HW_METRICS.......                 X
+I (555) esp32_util: RSA_LOW_MEM..............     X
+I (565) esp32_util: WC_NO_HARDEN.............                 X
+I (575) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (583) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (592) esp32_util: WC_NO_CACHE_RESISTANT....     X
+I (600) esp32_util: WC_AES_BITSLICED.........                 X
+I (610) esp32_util: WOLFSSL_AES_NO_UNROLL....                 X
+I (621) esp32_util: TFM_TIMING_RESISTANT.....     X
+I (629) esp32_util: ECC_TIMING_RESISTANT.....     X
+I (638) esp32_util: WC_RSA_BLINDING..........     X
+I (646) esp32_util: NO_WRITEV................     X
+I (655) esp32_util: FREERTOS.................     X
+I (663) esp32_util: NO_WOLFSSL_DIR...........     X
+I (672) esp32_util: WOLFSSL_NO_CURRDIR.......     X
+I (680) esp32_util: WOLFSSL_LWIP.............     X
+I (689) esp32_util: .
+I (693) esp32_util: Compiler Optimization: Unknown
+I (702) esp32_util: .
+I (706) esp32_util: LIBWOLFSSL_VERSION_GIT_ORIGIN = https://github.com/gojimmypi        /wolfssl.git
+I (720) esp32_util: LIBWOLFSSL_VERSION_GIT_BRANCH = ED25519_SHA2_fix
+I (731) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH = 2ea728478354694f0d9200362f19ab        b1b171504a
+I (745) esp32_util: LIBWOLFSSL_VERSION_GIT_SHORT_HASH = 2ea728478
+I (755) esp32_util: LIBWOLFSSL_VERSION_GIT_HASH_DATE = 'Fri Dec 22 14:34:56 2023         -0800'
+I (768) esp32_util: CONFIG_IDF_TARGET = esp8266
+I (776) esp32_util: Found WOLFSSL_ESP_NO_WATCHDOG
+I (785) esp32_util: CONFIG_MAIN_TASK_STACK_SIZE: 55500
+I (794) esp32_util: CONFIG_ESP_MAIN_TASK_STACK_SIZE: 55500
+I (805) esp32_util: Stack HWM: 53864
+I (809) esp32_util: No HW acceleration on ESP8266.
+I (818) esp32_util: NOT SINGLE_THREADED
+I (825) esp32_util: Boot count: 1
+I (833) wolfssl_test: Stack HWM: 53864
+
+------------------------------------------------------------------------------
+ wolfSSL version 5.6.4
+------------------------------------------------------------------------------
+error    test passed!
+MEMORY   test passed!
+base64   test passed!
+base16   test passed!
+hw_math_test test passed!
+AES      test passed!
+SHA-224  test passed!
+HMAC-SHA224 test passed!
+AES192   test passed!
+SHA-256  test passed!
+SHA-224  test passed!
+SHA      test passed!
+ED25519  test passed!
+SHA-224  test passed!
+SHA-384  test passed!
+SHA-512  test passed!
+SHA-512/224  test passed!
+SHA-512/256  test passed!
+SHA-3    test passed!
+hw_math_test test loop passed!
+mp       test passed!
+mp       test passed!
+ECC      test passed!
+asn      test passed!
+RANDOM   test passed!
+MD5      test passed!
+MD4      test passed!
+SHA      test passed!
+SHA-224  test passed!
+SHA-256  test passed!
+SHA-384  test passed!
+SHA-512  test passed!
+SHA-512/224  test passed!
+SHA-512/256  test passed!
+SHA-3    test passed!
+SHAKE128 test passed!
+SHAKE256 test passed!
+Hash     test passed!
+RIPEMD   test passed!
+HMAC-MD5 test passed!
+HMAC-SHA test passed!
+HMAC-SHA224 test passed!
+HMAC-SHA256 test passed!
+HMAC-SHA384 test passed!
+HMAC-SHA512 test passed!
+HMAC-SHA3   test passed!
+HMAC-KDF    test passed!
+TLSv1.3 KDF test passed!
+GMAC     test passed!
+DES      test passed!
+DES3     test passed!
+AES      test passed!
+AES192   test passed!
+AES256   test passed!
+AES-GCM  test passed!
+RSA      test passed!
+PWDBASED test passed!
+OPENSSL  test passed!
+OPENSSL (EVP MD) passed!
+OPENSSL (PKEY0) passed!
+OPENSSL (PKEY1) passed!
+OPENSSL (EVP Sign/Verify) passed!
+ECC      test passed!
+ECC buffer test passed!
+CURVE25519 test passed!
+ED25519  test passed!
+mp       test passed!
+logging  test passed!
+time test passed!
+mutex    test passed!
+Test complete
+I (1510947) wolfcrypt_test: Exiting main with return code:  0
+
+I (1510955) wolfssl_test: Stack HWM: 48776
+
+I (1510961) wolfssl_test: loops = 0
+I (1510967) wolfssl_test: wolf_test_task complete success result code = 0
+I (1510981) wolfssl_test: Stack HWM: 48776
+I (1510988) wolfssl_test: Stack used: 6724
+I (1510993) wolfssl_test:
+
+Done!
+
+WOLFSSL_COMPLETE
+
+If running from idf.py monitor, press twice: Ctrl+]

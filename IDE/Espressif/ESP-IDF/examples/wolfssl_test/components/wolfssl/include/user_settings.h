@@ -99,17 +99,19 @@
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
 
-// #define OPENSSL_EXTRA
-/* when you want to use pkcs7 */
-/* #define HAVE_PKCS7 */
+#define OPENSSL_EXTRA
 
-// same as test, but compiler optimized
-#define HAVE_PKCS7
+#if !defined(CONFIG_IDF_TARGET_ESP8266)
+    /* TODO: Is there a memory problem for ESP8266? Fails test. */
 
-#if defined(HAVE_PKCS7)
-    #define HAVE_AES_KEYWRAP
-    #define HAVE_X963_KDF
-    #define WOLFSSL_AES_DIRECT
+    /* when you want to use pkcs7 */
+    #define HAVE_PKCS
+
+    #if defined(HAVE_PKCS7)
+        #define HAVE_AES_KEYWRAP
+        #define HAVE_X963_KDF
+        #define WOLFSSL_AES_DIRECT
+    #endif
 #endif
 
 /* when you want to use aes counter mode */
