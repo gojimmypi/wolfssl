@@ -71,14 +71,20 @@
           <Subdirectory>esp-idf/v5.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM3</COMPort>
+        <COMPort>COM11</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32C2</DeviceID>
       </ESPIDFExtension>
     </ProjectModeSettings>
   </Build>
-  <CustomBuild />
+  <CustomBuild>
+    <PreSyncActions />
+    <PreBuildActions />
+    <PostBuildActions />
+    <PreCleanActions />
+    <PostCleanActions />
+  </CustomBuild>
   <CustomDebug>
     <PreDebugActions />
     <PostDebugActions />
