@@ -1,41 +1,63 @@
-# This tag is used to include this file in the ESP Component Registry:
-
+# Note that during the build process, settings from sdkconfig.defaults will not override those already in sdkconfig.
+# See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html#custom-sdkconfig-defaults
+CONFIG_BENCH_ARGV="-lng 0"
 #
 # Default main stack size
 #
 # This is typically way bigger than needed for stack size. See user_settings.h
 #
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=55000
-
-# Legacy stack size for older ESP-IDF versions
-CONFIG_MAIN_TASK_STACK_SIZE=55000
-
+# For wolfSSL SMALL_STACK, 3072 bytes should be sufficient for benchmark app.
+#
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
 #
 # Watchdog Timers
 #
-# We don't want to have the watchdog timeout during tests
+# We don't want to have the watchdog timeout during tests & benchmarks
 #
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
-CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+#
+# Panic & Watchdog
+CONFIG_ESP_INT_WDT_TIMEOUT_MS=10000
+CONFIG_ESP_TASK_WDT_EN=n
+CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
+
+# Set max COU frequency (falls back as needed for lower maximum)
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# FreeRTOS ticks at 1ms interval
+CONFIG_FREERTOS_UNICORE=y
+CONFIG_FREERTOS_HZ=1000
 
 #
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y
+# CONFIG_COMPILER_OPTIMIZATION_SIZE is not set
+# CONFIG_COMPILER_OPTIMIZATION_PERF is not set
+# CONFIG_COMPILER_OPTIMIZATION_NONE is not set
 CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_ENABLE=y
+# CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_SILENT is not set
+# CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_DISABLE is not set
+CONFIG_COMPILER_FLOAT_LIB_FROM_GCCLIB=y
 CONFIG_COMPILER_OPTIMIZATION_ASSERTION_LEVEL=2
+# CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT is not set
 CONFIG_COMPILER_HIDE_PATHS_MACROS=y
+# CONFIG_COMPILER_CXX_EXCEPTIONS is not set
+# CONFIG_COMPILER_CXX_RTTI is not set
+# CONFIG_COMPILER_STACK_CHECK_MODE_NONE is not set
 CONFIG_COMPILER_STACK_CHECK_MODE_NORM=y
+# CONFIG_COMPILER_STACK_CHECK_MODE_STRONG is not set
+# CONFIG_COMPILER_STACK_CHECK_MODE_ALL is not set
 CONFIG_COMPILER_STACK_CHECK=y
+# CONFIG_COMPILER_WARN_WRITE_STRINGS is not set
+# CONFIG_COMPILER_SAVE_RESTORE_LIBCALLS is not set
+# CONFIG_COMPILER_DISABLE_GCC12_WARNINGS is not set
+# CONFIG_COMPILER_DUMP_RTL_FILES is not set
+# end of Compiler options
 
-# minimum C3 chip revision known to work is 2.
-# rev 0 and 1 not available for testing.
-# all revisions expected to work.
-CONFIG_ESP32C3_REV_MIN_0=
-CONFIG_ESP32C3_REV_MIN_1=
+# We don't know that the min is actually v2,
+# but this is the earliest tested.
 CONFIG_ESP32C3_REV_MIN_2=y
-CONFIG_ESP32C3_REV_MIN_3=
-
 
 #
 # Partition Table
@@ -49,3 +71,7 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp_large.csv"
 CONFIG_PARTITION_TABLE_OFFSET=0x8000
 CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
+
+
+# CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
