@@ -152,21 +152,11 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #if defined(WOLFSSL_ESPIDF)
 static int ShowExtendedSystemInfo_platform_espressif(void)
 {
-#ifdef NO_WATCHDOG
-    ESP_LOGI(TAG, "Found NO_WATCHDOG");
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGI(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG");
 #else
-    ESP_LOGI(TAG, "Watchdog active; missing NO_WATCHDOG definition.");
+    ESP_LOGW(TAG, "Watchdog active; missing WOLFSSL_ESP_NO_WATCHDOG definition.");
 #endif
-
-#if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
-    WOLFSSL_VERSION_PRINTF("CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: %u MHz",
-                           CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
-#endif
-
-#if CONFIG_IDF_TARGET_ESP32
-
-    WOLFSSL_VERSION_PRINTF("Xthal_have_ccount: %u",
-                           Xthal_have_ccount);
 
     /* this is the legacy stack size */
 #if defined(CONFIG_MAIN_TASK_STACK_SIZE)
@@ -204,30 +194,43 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 
 #endif
 
-#elif CONFIG_IDF_TARGET_ESP32S2
-    WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
+/* Platform-specific attributes of interest*/
+#if CONFIG_IDF_TARGET_ESP32
+    #if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
+        WOLFSSL_VERSION_PRINTF("CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: %u MHz",
+                               CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+    #endif
+    WOLFSSL_VERSION_PRINTF("Xthal_have_ccount: %u",
                            Xthal_have_ccount);
-#elif CONFIG_IDF_TARGET_ESP32C6
-  /* TODO find Xthal for C6 */
+
 #elif CONFIG_IDF_TARGET_ESP32C2
-  /* TODO find Xthal for C6 */
-#elif defined(CONFIG_IDF_TARGET_ESP8684)
-  /* TODO find Xthal for C6 */
+    /* TODO find Xthal for C2 */
 #elif CONFIG_IDF_TARGET_ESP32C3
     /* not supported at this time */
-#elif CONFIG_IDF_TARGET_ESP32S3
-    WOLFSSL_VERSION_PRINTF("Xthal_have_ccount = %u",
-                           Xthal_have_ccount);
+#elif CONFIG_IDF_TARGET_ESP32C6
+    /* TODO find Xthal for C6 */
 #elif CONFIG_IDF_TARGET_ESP32H2
-    /* not supported at this time */
-#elif CONFIG_IDF_TARGET_ESP32C2
-    /* not supported at this time */
+    /* TODO find Xthal for H2 */
+#elif CONFIG_IDF_TARGET_ESP32S2
+    ESP_LOGI(TAG, "CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ
+             );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#elif CONFIG_IDF_TARGET_ESP32S3
+    ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
+                   CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+             );
+    ESP_LOGI(TAG, "Xthal_have_ccount = %u", Xthal_have_ccount);
+#elif defined(CONFIG_IDF_TARGET_ESP8684)
+    /* TODO find Xthal for ESP8684 */
 #else
     /* not supported at this time */
 #endif
 
-    /* check to see if we are using hardware encryption */
-#if defined(NO_ESP32_CRYPT)
+/* check to see if we are using hardware encryption */
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+    WOLFSSL_VERSION_PRINTF("No HW acceleration on ESP8266.");
+#elif (NO_ESP32_CRYPT)
     WOLFSSL_VERSION_PRINTF("NO_ESP32_CRYPT defined! "
                            "HW acceleration DISABLED.");
 #else
@@ -253,7 +256,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
         #error "ESP32_CRYPT not yet supported on this IDF TARGET"
     #endif
 
-        /* Even though enabled, some specifics may be disabled */
+    /* Even though enabled, some specifics may be disabled */
     #if defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         WOLFSSL_VERSION_PRINTF("NO_WOLFSSL_ESP32_CRYPT_HASH is defined!"
                                "(disabled HW SHA).");
