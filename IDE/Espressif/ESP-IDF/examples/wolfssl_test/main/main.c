@@ -154,6 +154,8 @@ void app_main(void)
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     /* not available for C3 at this time */
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* not available for C6 at this time */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     ESP_LOGI(TAG, "CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
@@ -184,8 +186,6 @@ void app_main(void)
         ESP_LOGI(TAG, "ESP32_CRYPT is enabled.");
     #endif
 #endif
-
-
 
 #if defined (WOLFSSL_USE_TIME_HELPER)
     set_time();
@@ -218,25 +218,29 @@ void app_main(void)
 
     if (rc == 0) {
         ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", rc);
-
-        /* exit keyword for wolfssl_monitor.py */
-        ESP_LOGI(TAG, "WOLFSSL_COMPLETE\n");
     }
     else {
         ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", rc);
         /* see wolfssl/wolfcrypt/error-crypt.h */
-
-        /* exit keyword for wolfssl_monitor.py */
-        ESP_LOGE(TAG, "WOLFSSL_FAIL\n");
     }
 
-    ESP_LOGI(TAG, "\n\nDone!"
-                  "If running from idf.py monitor, press twice: Ctrl+]\n\n"
-            );
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
-    /* after the test, we'll just wait */
+        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                        - (uxTaskGetStackHighWaterMark(NULL) / 4));
+#endif
+
+    ESP_LOGI(TAG, "\n\nDone!\n\n"
+                  "If running from idf.py monitor, press twice: Ctrl+]");
+
+    /* done */
     while (1) {
-        /* nothing */
-    }
+#if defined(SINGLE_THREADED)
+        while (1);
+#else
+        vTaskDelay(60000);
+#endif
+    } /* done whle */
 #endif
 }
