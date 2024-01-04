@@ -189,16 +189,16 @@
 
 /* #define HAVE_HASHDRBG */
 
-//#define WOLFSSL_KEY_GEN
-//#define WOLFSSL_CERT_REQ
-//#define WOLFSSL_CERT_GEN
-//#define WOLFSSL_CERT_EXT
-//#define WOLFSSL_SYS_CA_CERTS
-//
-//
-//#define WOLFSSL_CERT_TEXT
-//
-//#define WOLFSSL_ASN_TEMPLATE
+#define WOLFSSL_KEY_GEN
+#define WOLFSSL_CERT_REQ
+#define WOLFSSL_CERT_GEN
+#define WOLFSSL_CERT_EXT
+#define WOLFSSL_SYS_CA_CERTS
+
+
+#define WOLFSSL_CERT_TEXT
+
+#define WOLFSSL_ASN_TEMPLATE
 
 /*
 #undef  WOLFSSL_KEY_GEN
