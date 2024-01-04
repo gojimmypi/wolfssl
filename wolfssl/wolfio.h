@@ -318,6 +318,12 @@
     #include <network.h>
     #define SEND_FUNCTION net_send
     #define RECV_FUNCTION net_recv
+#elif defined(WOLFSSL_ESPIDF)
+    #define SEND_FUNCTION send
+    #define RECV_FUNCTION recv
+    #if !defined(HAVE_SOCKADDR) && !defined(WOLFSSL_NO_SOCK)
+        #define HAVE_SOCKADDR
+    #endif
 #elif defined(WOLFSSL_LWIP) && !defined(WOLFSSL_APACHE_MYNEWT)
     #define SEND_FUNCTION lwip_send
     #define RECV_FUNCTION lwip_recv
