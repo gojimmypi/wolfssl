@@ -357,9 +357,6 @@
         #include <esp_system.h>
         #include <esp_timer.h>
         #include <xtensa/hal.h>
-        #if defined(CONFIG_NEWLIB_NANO_FORMAT)
-            #error "CONFIG_NEWLIB_NANO_FORMAT cannot be used with benchmark"
-        #endif
     #else
         /* Other platform */
     #endif
