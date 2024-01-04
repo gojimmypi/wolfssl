@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.4.015 for ESP8266 support; optional esp-timer / driver components
+# Version 5.6.4.016 for improved manual setting of WOLFSSL_ROOT + ESP8266 support; optional esp-timer / driver components
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -36,6 +36,9 @@ set(CMAKE_CURRENT_SOURCE_DIR ".")
 # Optionally set your source to wolfSSL in your project CMakeLists.txt like this:
 # set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
 
+if ( "${WOLFSSL_ROOT}" STREQUAL "")
+    set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
+endif()
 # Optional compiler definitions to help with system name detection (typically printed by app diagnostics)
 if(VERBOSE_COMPONENT_MESSAGES)
     if(WIN32)
@@ -122,13 +125,12 @@ message(STATUS "THIS_USER = ${THIS_USER}")
 #   set(WOLFSSL_ROOT  "C:/some path/with/spaces")
 #   set(WOLFSSL_ROOT  "c:/workspace/wolfssl-[username]")
 #   set(WOLFSSL_ROOT  "/mnt/c/some path/with/spaces")
-#
 #   or use this logic to assign value from Environment Variable WOLFSSL_ROOT,
-#   or assume this is a wolfSSL example, 7 subdirectories below:
-#
+#   or assume this is an example 7 subdirectories below:
+
 # We are typically in [root]/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/wolfssl
 # The root of wolfSSL is 7 directories up from here:
-#
+
 # function: IS_WOLFSSL_SOURCE
 #  parameter: DIRECTORY_PARAMETER - the directory to test
 #  output:    RESULT = contains contents of DIRECTORY_PARAMETER for wolfssl directory, otherwise blank.
@@ -148,21 +150,32 @@ endfunction()
 #   FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
 # *********************************************************************************************
 function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
-    message(STATUS "Starting FIND_WOLFSSL_DIRECTORY")
-    set(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}")
-    if( "${CURRENT_SEARCH_DIR}" STREQUAL "" )
-        message(STATUS "The WOLFSSL_ROOT environment variable is not set. Searching...")
-    else()
-        get_filename_component(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}" ABSOLUTE)
-        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
-        if( "${FOUND_WOLFSSL}" STREQUAL "" )
-            message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found: $ENV{WOLFSSL_ROOT}\n"
-                                "Try setting WOLFSSL_ROOT in your project CMakeFile.txt or correct environment variable.")
-            # Abort CMake after fatal error.
+    message(STATUS "Starting FIND_WOLFSSL_DIRECTORY: ${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}")
+
+    if ( "${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}" STREQUAL "" )
+        set(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}")
+        if( "${CURRENT_SEARCH_DIR}" STREQUAL "" )
+            message(STATUS "The WOLFSSL_ROOT environment variable is not set. Searching...")
         else()
-            message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
+            get_filename_component(CURRENT_SEARCH_DIR "$ENV{WOLFSSL_ROOT}" ABSOLUTE)
+            IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
+            if( FOUND_WOLFSSL )
+                message(STATUS "Found WOLFSSL_ROOT via Environment Variable:")
+            else()
+                message(FATAL_ERROR "WOLFSSL_ROOT Environment Variable defined, but path not found:")
+                message(STATUS "$ENV{WOLFSSL_ROOT}")
+            endif()
+        endif()
+    else()
+        get_filename_component(CURRENT_SEARCH_DIR "${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}" ABSOLUTE)
+        IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
+        if( FOUND_WOLFSSL )
+            message(STATUS "Found WOLFSSL_ROOT via prior specification.")
+        else()
+            message(FATAL_ERROR "WOLFSSL_ROOT Variable defined, but path not found: ${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}")
         endif()
     endif()
+
 
     # we'll start in the CMAKE_CURRENT_SOURCE_DIR, typically [something]/projectname/components/wolfssl
     message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -452,7 +465,6 @@ else()
         endif() #else not an ESP-IDF component
     endif() # else not local copy and EDP-IDF wolfSSL
 
-  message(STATUS "a")
 
     # RTOS_IDF_PATH is typically:
     # "/Users/{username}/Desktop/esp-idf/components/freertos/include/freertos"
