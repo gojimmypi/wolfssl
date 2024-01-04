@@ -4280,8 +4280,8 @@ static int wc_PKCS7_ParseSignerInfo(PKCS7* pkcs7, byte* in, word32 inSz,
         word32* idxIn, int degenerate, byte** signedAttrib, int* signedAttribSz)
 {
     int ret = 0;
-    int length;
-    int version;
+    int length = 0;
+    int version = 0;
     word32 sigOID = 0, hashOID = 0;
     word32 idx = *idxIn, localIdx;
     byte tag;
@@ -12576,7 +12576,14 @@ int wc_PKCS7_EncodeEncryptedData(PKCS7* pkcs7, byte* output, word32 outputSz)
             return MEMORY_E;
         }
 
-        FlattenAttributes(pkcs7, flatAttribs, attribs, attribsCount);
+        ret = FlattenAttributes(pkcs7, flatAttribs, attribs, attribsCount);
+        if (ret != 0) {
+            XFREE(attribs, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
+            XFREE(encryptedContent, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
+            XFREE(plain, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
+            XFREE(flatAttribs, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
+            return ret;
+        }
         attribsSetSz = SetImplicit(ASN_SET, 1, attribsSz, attribSet);
 
     } else {

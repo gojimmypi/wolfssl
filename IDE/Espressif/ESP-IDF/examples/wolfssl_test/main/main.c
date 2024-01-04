@@ -55,6 +55,10 @@
 #endif
 
 
+/* set to 0 for one benchmark,
+** set to 1 for continuous benchmark loop */
+#define TEST_LOOP 0
+
 /*
 ** the wolfssl component can be installed in either:
 **
@@ -243,7 +247,7 @@ void app_main(void)
     while (TEST_LOOP && (ret == 0));
 
 #if defined TEST_LOOP && (TEST_LOOP == 1)
-    ESP_LOGI(TAG, "loops = %d", loops);
+    ESP_LOGI(TAG, "Test loops completed: %d", loops);
 #endif
 
     /* note wolfCrypt_Cleanup() should always be called when finished.

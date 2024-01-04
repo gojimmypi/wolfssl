@@ -9679,7 +9679,7 @@ static void bench_xmss_sign_verify(const char * params)
 
     ret = wc_XmssKey_GetPubLen(&key, &pkSz);
     if (pkSz != XMSS_SHA256_PUBLEN) {
-        fprintf(stderr, "error: xmss pub len: got %d, expected %d\n", pkSz,
+        fprintf(stderr, "error: xmss pub len: got %u, expected %d\n", pkSz,
                 XMSS_SHA256_PUBLEN);
         goto exit_xmss_sign_verify;
     }
@@ -10387,6 +10387,9 @@ exit_enc:
 #endif
 
     RESET_MULTI_VALUE_STATS_VARS();
+
+    if (ret != 0)
+        goto exit;
 
     bench_stats_start(&count, &start);
     do {
@@ -11826,7 +11829,7 @@ void bench_falconKeySign(byte level)
                     x = FALCON_LEVEL5_SIG_SIZE;
                 }
 
-                ret = wc_falcon_sign_msg(msg, sizeof(msg), sig, &x, &key);
+                ret = wc_falcon_sign_msg(msg, sizeof(msg), sig, &x, &key, GLOBAL_RNG);
                 if (ret != 0) {
                     printf("wc_falcon_sign_msg failed\n");
                 }
@@ -11947,7 +11950,7 @@ void bench_dilithiumKeySign(byte level)
                     x = DILITHIUM_LEVEL5_SIG_SIZE;
                 }
 
-                ret = wc_dilithium_sign_msg(msg, sizeof(msg), sig, &x, &key);
+                ret = wc_dilithium_sign_msg(msg, sizeof(msg), sig, &x, &key, GLOBAL_RNG);
                 if (ret != 0) {
                     printf("wc_dilithium_sign_msg failed\n");
                 }
@@ -12093,7 +12096,7 @@ void bench_sphincsKeySign(byte level, byte optim)
                     x = SPHINCS_SMALL_LEVEL5_SIG_SIZE;
                 }
 
-                ret = wc_sphincs_sign_msg(msg, sizeof(msg), sig, &x, &key);
+                ret = wc_sphincs_sign_msg(msg, sizeof(msg), sig, &x, &key, GLOBAL_RNG);
                 if (ret != 0) {
                     printf("wc_sphincs_sign_msg failed\n");
                 }

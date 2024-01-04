@@ -1,4 +1,4 @@
-/* wolfssl_version.h.in
+/* liboqs.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -19,22 +19,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/*!
+    \file wolfssl/wolfcrypt/port/liboqs/liboqs.h
+*/
+/*
 
-#ifndef WOLFSSL_VERSION_H
-#define WOLFSSL_VERSION_H
+DESCRIPTION
+This library provides the support interfaces to the liboqs library providing
+implementations for Post-Quantum cryptography algorithms.
+*/
+
+#ifndef WOLF_CRYPT_LIBOQS_H
+#define WOLF_CRYPT_LIBOQS_H
+
+#include <wolfssl/wolfcrypt/types.h>
+#include <wolfssl/wolfcrypt/random.h>
 
 
 #ifdef __cplusplus
-extern "C" {
+    extern "C" {
 #endif
 
-#define LIBWOLFSSL_VERSION_STRING "5.6.6"
-#define LIBWOLFSSL_VERSION_HEX 0x05006006
+#if defined(HAVE_LIBOQS)
+
+#include "oqs/oqs.h"
+    
+
+int wolfSSL_liboqsInit(void);
+
+int wolfSSL_liboqsRngMutexLock(WC_RNG* rng);
+
+int wolfSSL_liboqsRngMutexUnlock(void);
+
+#endif /* HAVE_LIBOQS */
 
 #ifdef __cplusplus
-}
+    } /* extern "C" */
 #endif
 
-
-#endif /* WOLFSSL_VERSION_H */
-
+#endif /* WOLF_CRYPT_LIBOQS_H */
