@@ -713,6 +713,7 @@ static int InitSha256(wc_Sha256* sha256)
      * the SHA accelerator uses the initial Hash values (constant C) stored
      * in the hardware for hash tasks"
      */
+#ifdef TODO_DEFAULT_DIGEST
     static int set_default_digest256(wc_Sha256* sha256)
     {
 
@@ -752,7 +753,8 @@ static int InitSha256(wc_Sha256* sha256)
         }
     #endif
         return ret;
-    }
+    } /* set_default_digest256 */
+#endif
 
     /*
     ** An Espressif-specific InitSha256()
