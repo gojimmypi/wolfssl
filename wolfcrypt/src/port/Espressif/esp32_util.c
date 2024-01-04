@@ -670,8 +670,15 @@ esp_err_t esp_DisableWatchdog(void)
 #if defined(CONFIG_IDF_TARGET_ESP8266)
     *((volatile uint32_t*) 0x60000900) &= ~(1);
 #else
-    rtc_wdt_protect_off();
-    rtc_wdt_disable();
+    #if ESP_IDF_VERSION_MAJOR >= 5
+    {
+        rtc_wdt_protect_off();
+        rtc_wdt_disable();
+    }
+    #else
+        ESP_LOGW(TAG, "esp_DisableWatchdog not implemented on ESP_OIDF v%d",
+                      ESP_IDF_VERSION_MAJOR);
+    #endif
 #endif
 
 #ifdef DEBUG_WOLFSSL
@@ -691,8 +698,15 @@ esp_err_t esp_EnabledWatchdog(void)
 #if defined(CONFIG_IDF_TARGET_ESP8266)
      *((volatile uint32_t*) 0x60000900) |= 1;
 #else
-    rtc_wdt_protect_on();
-    rtc_wdt_enable();
+    #if ESP_IDF_VERSION_MAJOR >= 5
+    {
+        rtc_wdt_protect_on();
+        rtc_wdt_enable();
+    }
+    #else
+        ESP_LOGW(TAG, "esp_DisableWatchdog not implemented on ESP_OIDF v%d",
+                      ESP_IDF_VERSION_MAJOR);
+    #endif
 #endif
 
 #ifdef DEBUG_WOLFSSL
