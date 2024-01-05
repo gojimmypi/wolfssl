@@ -36,6 +36,20 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+/* Edded per https://www.wolfssl.com/forums/post7411.html#p7411 */
+#define SINGLE_THREADED
+#define HAVE_ECC
+#define WOLFSSL_SMALL_STACK
+#define WOLFSSL_ESPIDF
+#define WOLFSSL_ESP32
+#define OPENSSL_EXTRA
+#define OPENSSL_ALL
+#define HAVE_TLS_EXTENSIONS
+#define HAVE_SUPPORTED_CURVES
+
+/* (one possible) resolution to error "No encryption algorithm available for default ticket encryption." */
+#define HAVE_AESGCM
+
 /*
  * choose ONE of these Espressif chips to define:
  *
