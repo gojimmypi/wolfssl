@@ -19,19 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* This user_settings.h is for Espressif ESP-IDF */
-#include <sdkconfig.h>
 
-/* The Espressif sdkconfig will have chipset info.
-**
-** Possible values:
-**
-**   CONFIG_IDF_TARGET_ESP32
-**   CONFIG_IDF_TARGET_ESP32S2
-**   CONFIG_IDF_TARGET_ESP32S3
-**   CONFIG_IDF_TARGET_ESP32C3
-**   CONFIG_IDF_TARGET_ESP32C6
-*/
+#define NO_FILESYSTEM
 
 #undef  WOLFSSL_ESPIDF
 // #define WOLFSSL_ESPIDF
@@ -42,8 +31,6 @@
 #define WOLFSSL_SMALL_STACK
 // #define WOLFSSL_ESPIDF
 // #define WOLFSSL_ESP32
-#define OPENSSL_EXTRA
-#define OPENSSL_ALL
 #define HAVE_TLS_EXTENSIONS
 #define HAVE_SUPPORTED_CURVES
 
@@ -72,7 +59,9 @@
 
 
 /* Optional OPENSSL compatibility */
-#define OPENSSL_EXTRA
+/* #define OPENSSL_EXTRA */
+/* #define OPENSSL_ALL */
+
 /* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 

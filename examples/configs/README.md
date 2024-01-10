@@ -10,6 +10,7 @@ such as building with a custom IDE.
 * [user_settings_min_ecc.h](./user_settings_min_ecc.h): This is ECC and SHA-256 only. For ECC verify only add `BUILD_VERIFY_ONLY`.
 
 ## Embedded targets
+* [user_settings_arduino.h](./user_settings_arduino): Basic template for Arduino environment.
 * [user_settings_EBSnet.h](./user_settings_EBSnet.h): Example configuration file for use with EBSnet ports.
 * [user_settings_espressif.h](./user_settings_espressif.h): Example configuration file for the Espressif ESP-IDF
 * [user_settings_stm32.h](./user_settings_stm32.h): Example configuration file generated from the wolfSSL STM32 Cube pack.
