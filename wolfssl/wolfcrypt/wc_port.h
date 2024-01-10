@@ -698,50 +698,20 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
 
     #if !defined(NO_WOLFSSL_DIR)\
         && !defined(WOLFSSL_NUCLEUS) && !defined(WOLFSSL_NUCLEUS_1_2)
-        #if defined(USE_WINDOWS_API)
-            #include <sys/stat.h>
-            #ifndef XSTAT
-            #define XSTAT       _stat
-            #endif
-            #define XS_ISREG(s) (s & _S_IFREG)
-            #define SEPARATOR_CHAR ';'
-        #elif defined(ARDUINO)
-            #ifndef XSTAT
-            #define XSTAT       _stat
-            #endif
-            #define XS_ISREG(s) (s & _S_IFREG)
-            #define SEPARATOR_CHAR ';'
-        #elif defined(INTIME_RTOS)
-            #include <sys/stat.h>
-            #ifndef XSTAT
-            #define XSTAT _stat64
-            #endif
-            #define XS_ISREG(s) S_ISREG(s)
-            #define SEPARATOR_CHAR ';'
-            #define XWRITE      write
-            #define XREAD       read
-            #define XCLOSE      close
-        #elif defined(WOLFSSL_TELIT_M2MB)
-            #ifndef XSTAT
-            #define XSTAT       m2mb_fs_stat
-            #endif
-            #define XS_ISREG(s) (s & M2MB_S_IFREG)
-            #define SEPARATOR_CHAR ':'
-        #else
-            #include <dirent.h>
-            #include <unistd.h>
-            #include <sys/stat.h>
-            #define XWRITE      write
-            #define XREAD       read
-            #define XCLOSE      close
-            #ifndef XSTAT
-            #define XSTAT       stat
-            #endif
-            #define XS_ISREG(s) S_ISREG(s)
-            #define SEPARATOR_CHAR ':'
+    #if defined(USE_WINDOWS_API)
+        #include <sys/stat.h>
+        #ifndef XSTAT
+        #define XSTAT       _stat
         #endif
         #define XS_ISREG(s) (s & _S_IFREG)
         #define SEPARATOR_CHAR ';'
+#elif defined(ARDUINO)
+#ifndef XSTAT
+#define XSTAT       _stat
+#endif
+#define XS_ISREG(s) (s & _S_IFREG)
+#define SEPARATOR_CHAR ';'
+
 
     #elif defined(INTIME_RTOS)
         #include <sys/stat.h>
@@ -814,9 +784,9 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
         #define IntimeFindNext(data)  (0 == _findnext64(data))
         #define IntimeFindClose(data) (0 == _findclose64(data))
         #define IntimeFilename(ctx)   ctx->FindFileData.f_filename
-    #elif defined(ARDUINO)
+#elif defined(ARDUINO)
         /* TODO: board specific features */
-    #else
+#else
         struct dirent* entry;
         DIR*   dir;
         XSTAT_TYPE s;
