@@ -20,9 +20,13 @@
  */
 
 /*
- This was original tested with Intel Galileo acting as the Client, with a 
-laptop acting as a server using the server example provided in examples/server.
-Legacy Ardunio v1.86 was used to compile and program the Galileo 
+Tested with:
+
+1) Intel Galileo acting as the Client, with a laptop acting as a server using
+   the server example provided in examples/server.
+   Legacy Arduino v1.86 was used to compile and program the Galileo
+
+2) Espressif ESP32 WiFi
 */
 
 #define USE_CERT_BUFFERS_2048
@@ -31,24 +35,67 @@ Legacy Ardunio v1.86 was used to compile and program the Galileo
 #include <Ethernet.h>
 #include <wolfssl/certs_test.h>
 
+/* optional board-specific networking includes */
+#if defined(ESP32)
+    #define #USING_WIFI
+    #include <WiFi.h>
+    WiFiClient client;
+#elif defined(ESP8266)
+    #define #USING_WIFI
+    #include <ESP8266WiFi.h>
+    WiFiClient client;
+/* #elif defined(OTHER_BOARD) */
+    /* TODO other boards here */
+#else
+    EthernetClient client;
+#endif
+
+#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
+#if defined(MY_PRIVATE_CONFIG)
+    /* the /workspace directory may contain a private config
+     * excluded from GitHub with items such as WiFi passwords */
+    #include MY_PRIVATE_CONFIG
+    const char* ssid = CONFIG_ESP_WIFI_SSID;
+    const char* password = CONFIG_ESP_WIFI_PASSWORD;
+#else
+    /* when using WiFi capable boards: */
+    const char* ssid = "your_SSID";
+    const char* password = "your_PASSWORD";
+#endif
 
 const char host[] = "192.168.1.148"; /* server to connect to */
 const int port = 11111; /* port on server to connect to */
+const int serial_baud = 115200; /* local serial port to monitor */
+
+WOLFSSL_CTX* ctx = NULL;
+WOLFSSL* ssl = NULL;
 
 int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 
-EthernetClient client;
-
-WOLFSSL_CTX* ctx = NULL;
-WOLFSSL* ssl = NULL;
-
 void setup() {
     WOLFSSL_METHOD* method;
-    /* Initialize Return Code */
-    int rc;
-    Serial.begin(9600);
+    int rc = 0;
+
+    Serial.begin(serial_baud);
+
+    #if defined(USING_WIFI)
+        /* Connect to WiFi */
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(ssid, password);
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(1000);
+            Serial.print("Connecting to WiFi ");
+            Serial.println(ssid);
+}
+
+        Serial.print("Connected to WiFi ");
+        Serial.println(ssid);
+    #else
+        /* We'll assume the Ethernet connection is ready to go.*/
+    #endif
+
     /* Delay need to ensure connection to server */
     delay(4000);
 
@@ -146,7 +193,7 @@ void loop() {
                         Serial.print("TLS Read Error: ");
                         Serial.println(errBuf);
                         break;
-                    } 
+                    }
                     else if (input > 0) {
                         reply[input] = '\0';
                         Serial.print(reply);
@@ -154,7 +201,7 @@ void loop() {
                     else {
                         Serial.println();
                     }
-                } 
+                }
             }
             else {
                 err = wolfSSL_get_error(ssl, 0);
