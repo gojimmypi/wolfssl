@@ -499,3 +499,6 @@ debian/control
 *.deb
 /mycerts
 /mycertsSM
+
+# Always include Espressif Makefile
+!**/Espressif/ESP-IDF/**/Makefile
