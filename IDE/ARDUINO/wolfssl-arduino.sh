@@ -2,12 +2,39 @@
 
 # this script will reformat the wolfSSL source code to be compatible with
 # an Arduino project
-# run as bash ./wolfssl-arduino.sh
+# run as bash ./wolfssl-arduino.sh [INSTALL] [path]
 
 # ROOT_DIR="/mnt/c/Users/gojimmypi/Documents/Arduino/libraries"
-
-ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
 ROOT_DIR="/wolfSSL"
+
+if [ $# -gt 0 ]; then
+    THIS_OPERATION="$1"
+    if [ "$THIS_OPERATION" = "INSTALL" ]; then
+        echo "Install is active"
+
+        # Check environment
+        if [ -n "$WSL_DISTRO_NAME" ]; then
+            # we found a non-blank WSL environment distro name
+            current_path="$(pwd)"
+            pattern="/mnt/?"
+            if [ "$(echo "$current_path" | grep -E "^$pattern")" ]; then
+                # if we are in WSL and shared Windows file system, 'ln' does not work.
+                ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
+            else
+                ARDUINO_ROOT="~/Arduino/libraries"
+            fi
+        fi
+
+        if [ -d "$ARDUINO_ROOT/$ROOT_DIR" ]; then
+            echo "Error: the installation directory already exists: $ARDUINO_ROOT/$ROOT_DIR"
+            exit 1
+        fi
+    else
+        echo "Error: not a valid operation: $THIS_OPERATION"
+        exit 1
+    fi
+fi
+
 ROOT_SRC_DIR="${ROOT_DIR}/src"
 WOLFSSL_SRC="${ROOT_SRC_DIR}/src"
 WOLFSSL_HEADERS="${ROOT_SRC_DIR}/wolfssl"
@@ -179,8 +206,11 @@ else
     exit 1
 fi
 
-#
-
-cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h"
-echo "mv $ROOT_DIR $ARDUINO_ROOT"
-mv ".$ROOT_DIR" "$ARDUINO_ROOT"
+# Optionally install to a separate directory.
+# Note we should have exited above if a problem was encountered,
+# as we'll never want to install a bad library.
+if [ "$THIS_OPERATION" = "INSTALL" ]; then
+    cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h"
+    echo "mv $ROOT_DIR $ARDUINO_ROOT"
+    mv ".$ROOT_DIR" "$ARDUINO_ROOT"
+fi
