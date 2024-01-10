@@ -4,6 +4,9 @@
 # an Arduino project
 # run as bash ./wolfssl-arduino.sh
 
+# ROOT_DIR="/mnt/c/Users/gojimmypi/Documents/Arduino/libraries"
+
+ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
 ROOT_DIR="/wolfSSL"
 ROOT_SRC_DIR="${ROOT_DIR}/src"
 WOLFSSL_SRC="${ROOT_SRC_DIR}/src"
@@ -31,34 +34,65 @@ WOLFSSL_VERSION=$(grep -i "LIBWOLFSSL_VERSION_STRING" ${TOP_DIR}/wolfssl/version
 DIR=${PWD##*/}
 
 if [ "$DIR" = "ARDUINO" ]; then
-	if [ ! -d ".${ROOT_DIR}" ]; then
-	    mkdir .${ROOT_DIR}
+    if [ ! -d ".${ROOT_DIR}" ]; then
+        echo "Line 38: mkdir .${ROOT_DIR}"
+        mkdir .${ROOT_DIR}
     fi
     if [ ! -d ".${ROOT_SRC_DIR}" ]; then
-	    mkdir .${ROOT_SRC_DIR}
+        echo "Line 42: mkdir .${ROOT_SRC_DIR}"
+        mkdir .${ROOT_SRC_DIR}
     fi
 
     if [ ! -d ".${WOLFSSL_HEADERS}" ]; then
-	    mkdir .${WOLFSSL_HEADERS}
+        echo "Line 47: mkdir .${WOLFSSL_HEADERS}"
+        mkdir .${WOLFSSL_HEADERS}
     fi
 
+    echo "Line 51: cp ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}"
     cp ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}
     if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
+        echo "Line 54: mkdir .${WOLFCRYPT_HEADERS}"
         mkdir .${WOLFCRYPT_HEADERS}
+        mkdir .${WOLFCRYPT_HEADERS}/port
+        mkdir .${WOLFCRYPT_HEADERS}/port/atmel
+        mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
     fi
+
+    # is this a dupe?
+    if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
+        echo "Line 54: mkdir .${WOLFCRYPT_HEADERS}"
+        mkdir .${WOLFCRYPT_HEADERS}
+        mkdir .${WOLFCRYPT_HEADERS}/port
+        mkdir .${WOLFCRYPT_HEADERS}/port/atmel
+        mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
+    fi
+
+    echo "Line 58: cp ${WOLFCRYPT_HEADERS_TOP}/*.h .${WOLFCRYPT_HEADERS}"
     cp ${WOLFCRYPT_HEADERS_TOP}/*.h .${WOLFCRYPT_HEADERS}
+    cp ${WOLFCRYPT_HEADERS_TOP}/port/atmel/*.h     .${WOLFCRYPT_HEADERS}/port/atmel
+    cp ${WOLFCRYPT_HEADERS_TOP}/port/Espressif/*.h .${WOLFCRYPT_HEADERS}/port/Espressif
 
     # Add in source files to wolfcrypt/src
     if [ ! -d ".${WOLFCRYPT_ROOT}" ]; then
+        echo "Line 63: mkdir .${WOLFCRYPT_ROOT}"
         mkdir .${WOLFCRYPT_ROOT}
     fi
     if [ ! -d ".${WOLFCRYPT_SRC}" ]; then
+        echo "Line 67: mkdir .${WOLFCRYPT_SRC}"
         mkdir .${WOLFCRYPT_SRC}
+        mkdir .${WOLFCRYPT_SRC}/port
+        mkdir .${WOLFCRYPT_SRC}/port/atmel
+        mkdir .${WOLFCRYPT_SRC}/port/Espressif
     fi
-    cp ${WOLFCRYPT_SRC_TOP}/*.c .${WOLFCRYPT_SRC}
-    
+
+    echo "Line $LINENO: cp ${WOLFCRYPT_SRC_TOP}/*.c .${WOLFCRYPT_SRC}"
+    cp -r ${WOLFCRYPT_SRC_TOP}/*.c                  .${WOLFCRYPT_SRC}
+    cp -r ${WOLFCRYPT_SRC_TOP}/port/atmel/*.c       .${WOLFCRYPT_SRC}/port/atmel
+    cp -r ${WOLFCRYPT_SRC_TOP}/port/Espressif/*.c   .${WOLFCRYPT_SRC}/port/Espressif
+
     # Add in source files to top level src folders
     if [ ! -d ".${WOLFSSL_SRC}" ]; then
+        echo "Line $LINENO: mkdir .${WOLFSSL_SRC}"
         mkdir .${WOLFSSL_SRC}
     fi
     cp ${WOLFSSL_SRC_TOP}/*.c .${WOLFSSL_SRC}
@@ -69,7 +103,7 @@ if [ "$DIR" = "ARDUINO" ]; then
     # make a copy of evp.c and bio.c for ssl.c to include inline
     cp .${WOLFSSL_HEADERS}/evp.c .${WOLFCRYPT_SRC}/evp.c
     cp .${WOLFSSL_HEADERS}/bio.c .${WOLFCRYPT_SRC}/bio.c
-    
+
     # copy openssl compatibility headers to their appropriate location
     if [ ! -d ".${OPENSSL_DIR}" ]; then
         mkdir .${OPENSSL_DIR}
@@ -86,45 +120,45 @@ EOF
 
 
 # Creates user_settings file if one does not exist
-    if [ ! -f ".${ROOT_SRC_DIR}/user_settings.h" ]; then
-    	cat > .${ROOT_SRC_DIR}/user_settings.h <<EOF
-/* Generated wolfSSL user_settings.h file for Arduino */
-#ifndef ARDUINO_USER_SETTINGS_H
-#define ARDUINO_USER_SETTINGS_H
-
-/* Platform */
-#define WOLFSSL_ARDUINO
-
-/* Math library (remove this to use normal math)*/
+#     if [ ! -f ".${ROOT_SRC_DIR}/user_settings.h" ]; then
+#         cat > .${ROOT_SRC_DIR}/user_settings.h <<EOF
+# /* Generated wolfSSL user_settings.h file for Arduino */
+# #ifndef ARDUINO_USER_SETTINGS_H
+# #define ARDUINO_USER_SETTINGS_H
+#
+# /* Platform */
+# #define WOLFSSL_ARDUINO
+#
+# /* Math library (remove this to use normal math)*/
 #define USE_FAST_MATH
 #define TFM_NO_ASM
 #define NO_ASN_TIME
-
-/* When using Intel Galileo Uncomment the line below */
-/* #define INTEL_GALILEO */
-
-/* RNG DEFAULT !!FOR TESTING ONLY!! */
-/* comment out the error below to get started w/ bad entropy source
- * This will need fixed before distribution but is OK to test with */
+#
+# /* When using Intel Galileo Uncomment the line below */
+# /* #define INTEL_GALILEO */
+#
+# /* RNG DEFAULT !!FOR TESTING ONLY!! */
+# /* comment out the error below to get started w/ bad entropy source
+#  * This will need fixed before distribution but is OK to test with */
 #error "needs solved, see: https://www.wolfssl.com/docs/porting-guide/"
 #define WOLFSSL_GENSEED_FORTEST
 
 #endif /* ARDUINO_USER_SETTINGS_H */
-EOF
-    fi
+# EOF
+#     fi
 
-    cp .${WOLFCRYPT_HEADERS}/settings.h .${WOLFCRYPT_HEADERS}/settings.h.bak
-    cat > .${WOLFCRYPT_HEADERS}/settings.h <<EOF
-/*wolfSSL Generated ARDUINO settings */
-#ifndef WOLFSSL_USER_SETTINGS
-    #define WOLFSSL_USER_SETTINGS
-#endif /* WOLFSSL_USER_SETTINGS */ 
-/*wolfSSL Generated ARDUINO settings: END */	
+#    cp .${WOLFCRYPT_HEADERS}/settings.h .${WOLFCRYPT_HEADERS}/settings.h.bak
+#    cat > .${WOLFCRYPT_HEADERS}/settings.h <<EOF
+# /*wolfSSL Generated ARDUINO settings */
+# #ifndef WOLFSSL_USER_SETTINGS
+#    #define WOLFSSL_USER_SETTINGS
+#endif /* WOLFSSL_USER_SETTINGS */
+#/*wolfSSL Generated ARDUINO settings: END */
+#
+#EOF
+#    cat .${WOLFCRYPT_HEADERS}/settings.h.bak >> .${WOLFCRYPT_HEADERS}/settings.h
 
-EOF
-    cat .${WOLFCRYPT_HEADERS}/settings.h.bak >> .${WOLFCRYPT_HEADERS}/settings.h
-
-    #Creating library.properties file based off of: 
+    #Creating library.properties file based off of:
     #https://arduino.github.io/arduino-cli/0.35/library-specification/#libraryproperties-file-format
 
     cat > .${ROOT_DIR}/library.properties <<EOF
@@ -142,4 +176,11 @@ EOF
 
 else
     echo "ERROR: You must be in the IDE/ARDUINO directory to run this script"
+    exit 1
 fi
+
+#
+
+cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h"
+echo "mv $ROOT_DIR $ARDUINO_ROOT"
+mv ".$ROOT_DIR" "$ARDUINO_ROOT"

@@ -265,6 +265,15 @@
 /* Uncomment next line if using MAXQ108x */
 /* #define WOLFSSL_MAXQ108X */
 
+#if defined(ARDUINO)
+    /* we don't have the luxury of compiler options, so manually define */
+    #undef FREERTOS
+    #ifndef WOLFSSL_USER_SETTINGS
+        #define WOLFSSL_USER_SETTINGS
+    #endif /* WOLFSSL_USER_SETTINGS */
+#else
+ouch
+#endif
 
 #ifdef WOLFSSL_USER_SETTINGS
     #include "user_settings.h"
@@ -381,10 +390,18 @@
     #include <nx_api.h>
 #endif
 
-#if defined(WOLFSSL_ESPIDF)
+
+#if defined(WOLFSSL_ESPIDF) || \
+    (defined(ARDUINO) && defined(ESP32))
     #define SIZEOF_LONG_LONG 8
+
     #ifndef NO_ESPIDF_DEFAULT
-        #define FREERTOS
+        #ifndef defined(ARDUINO)
+            #warning "Defining FREERTOS"
+            #define FREERTOS
+        #endif
+
+        /* TODO: recheck that we really want this: */
         #define WOLFSSL_LWIP
         #define NO_WRITEV
         #define NO_WOLFSSL_DIR
@@ -406,25 +423,27 @@
 #if defined(NO_ESP32WROOM32_CRYPT)
     #undef NO_ESP32WROOM32_CRYPT
     #define NO_ESP32_CRYPT
-    #warning "Please use NO_ESP32_CRYPT not NO_ESP32WROOM32_CRYPT"
+    #error "Please use NO_ESP32_CRYPT not NO_ESP32WROOM32_CRYPT"
 #endif
 
 #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     #undef NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #warning "Please use NO_WOLFSSL_ESP32_CRYPT_HASH not NO_ESP32WROOM32_CRYPT"
+    #error "Please use NO_WOLFSSL_ESP32_CRYPT_HASH not NO_ESP32WROOM32_CRYPT"
 #endif
 
 #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_AES)
     #undef NO_WOLFSSL_ESP32WROOM32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #warning "Please use NO_WOLFSSL_ESP32_CRYPT_AES not NO_WOLFSSL_ESP32WROOM32_CRYPT_AES"
+    #error "Please use NO_WOLFSSL_ESP32_CRYPT_AES" \
+           " not " "NO_WOLFSSL_ESP32WROOM32_CRYPT_AES"
 #endif
 
 #if defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
     #undef NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #warning "Please use NO_WOLFSSL_ESP32_CRYPT_RSA_PRI not NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI"
+    #error "Please use NO_WOLFSSL_ESP32_CRYPT_RSA_PRI" \
+           " not " "NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI"
 #endif
 
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
@@ -703,7 +722,7 @@
     #define NO_WOLFSSL_DIR
     #define SINGLE_THREADED
     #define NO_DEV_RANDOM
-    #ifndef INTEL_GALILEO /* Galileo has time.h compatibility */
+    #if !defined(INTEL_GALILEO) && !defined(ESP32) /* Galileo has time.h compatibility */
         #define TIME_OVERRIDES
         #ifndef XTIME
             #error "Must define XTIME externally see porting guide"
@@ -913,7 +932,8 @@ extern void uITRON4_free(void *p) ;
     #define XREALLOC    yaXREALLOC
 #endif
 
-
+/* TODO find this */
+#undef FREERTOS
 #ifdef FREERTOS
     #include "FreeRTOS.h"
     #include <task.h>
@@ -2927,7 +2947,7 @@ extern void uITRON4_free(void *p) ;
     !defined(WOLFSSL_SHA512) && defined(WC_NO_RNG) && \
     !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL) \
     && !defined(USE_FAST_MATH) && defined(NO_SHA256)
-    #undef  WOLFSSL_NO_FORCE_ZERO
+#undef  WOLFSSL_NO_FORCE_ZERO
     #define WOLFSSL_NO_FORCE_ZERO
 #endif
 
@@ -3274,6 +3294,11 @@ extern void uITRON4_free(void *p) ;
         #error "RFC9325 requires some additional alerts to be sent"
     #endif
     /* Ciphersuite check done in internal.h */
+#endif
+
+/* Some final sanity checks */
+#if defined(WOLFSSL_ESPIDF) && defined(ARDUINO)
+    #error "Found both ESPIDF and ARDUINO. Pick one."
 #endif
 
 
