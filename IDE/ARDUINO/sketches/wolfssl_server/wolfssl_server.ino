@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
 #include <wolfssl.h>
 #include <wolfssl/ssl.h>
 #include <Ethernet.h>
@@ -28,25 +27,77 @@
 #include <wolfssl/certs_test.h>
 
 #ifdef NO_WOLFSSL_SERVER
-  #error Please undefine NO_WOLFSSL_SERVER for this example
+    #error Please undefine NO_WOLFSSL_SERVER for this example
 #endif
 
-const int port = 11111; /* port to listen on */
+#define WOLFSSL_PORT 11111
+/* optional board-specific networking includes */
+#if defined(ESP32)
+    #define USING_WIFI
+    #include <WiFi.h>
+    WiFiServer  server(WOLFSSL_PORT);
+    WiFiClient client;
+#elif defined(ESP8266)
+    #define USING_WIFI
+    #include <ESP8266WiFi.h>
+    WiFiServer  server(WOLFSSL_PORT);
+    WiFiClient client;
+/* #elif defined(OTHER_BOARD) */
+    /* TODO other boards here */
+#else
+    EthernetServer server(WOLFSSL_PORT);
+    EthernetClient client;
+#endif
 
-int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
-int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
+#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
+#if defined(MY_PRIVATE_CONFIG)
+    /* the /workspace directory may contain a private config
+     * excluded from GitHub with items such as WiFi passwords */
+    #include MY_PRIVATE_CONFIG
+    const char* ssid = CONFIG_ESP_WIFI_SSID;
+    const char* password = CONFIG_ESP_WIFI_PASSWORD;
+#else
+    /* when using WiFi capable boards: */
+    const char* ssid = "your_SSID";
+    const char* password = "your_PASSWORD";
+#endif
 
-EthernetServer server(port);
-EthernetClient client;
+/* we expect our IP address from DHCP */
+const int serial_baud = 115200; /* local serial port to monitor */
 
 WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
 
-void setup() {
-  int err;
-  WOLFSSL_METHOD* method;
+int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
+int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 
-  Serial.begin(9600);
+/*****************************************************************************/
+/* Arduino setup()
+/*****************************************************************************/
+void setup(void) {
+    WOLFSSL_METHOD* method;
+    int err;
+
+    Serial.begin(serial_baud);
+
+    #if defined(USING_WIFI)
+        /* Connect to WiFi */
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(ssid, password);
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(1000);
+            Serial.print("Connecting to WiFi ");
+            Serial.println(ssid);
+}
+
+        Serial.print("Connected to WiFi ");
+        Serial.println(ssid);
+    #else
+        /* We'll assume the Ethernet connection is ready to go.*/
+    #endif
+
+    /* Delay need to ensure connection to server */
+    delay(4000);
 
   method = wolfTLSv1_2_server_method();
   if (method == NULL) {
@@ -65,13 +116,13 @@ void setup() {
   wolfSSL_SetIORecv(ctx, EthernetReceive);
 
   /* setup the private key and certificate */
-  err = wolfSSL_CTX_use_PrivateKey_buffer(ctx, ecc_key_der_256, 
+  err = wolfSSL_CTX_use_PrivateKey_buffer(ctx, ecc_key_der_256,
     sizeof_ecc_key_der_256, WOLFSSL_FILETYPE_ASN1);
   if (err != WOLFSSL_SUCCESS) {
     Serial.println("error setting key");
     return;
   }
-  err = wolfSSL_CTX_use_certificate_buffer(ctx, serv_ecc_der_256, 
+  err = wolfSSL_CTX_use_certificate_buffer(ctx, serv_ecc_der_256,
     sizeof_serv_ecc_der_256, WOLFSSL_FILETYPE_ASN1);
   if (err != WOLFSSL_SUCCESS) {
     Serial.println("error setting certificate");
@@ -80,41 +131,46 @@ void setup() {
 
   /* Start the server */
   server.begin();
-  
+
   return;
 }
 
+/*****************************************************************************/
+/* EthernetSend() to send a message string. See Arduino loop()
+/*****************************************************************************/
 int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
-  int sent = 0;
-
-  sent = client.write((byte*)msg, sz);
-
-  return sent;
+    int sent = 0;
+    sent = client.write((byte*)msg, sz);
+    return sent;
 }
 
+/*****************************************************************************/
+/* EthernetReceive() to receive a reply string. See Arduino loop()
+/*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
-  int ret = 0;
-
-  while (client.available() > 0 && ret < sz) {
-    reply[ret++] = client.read();
-  }
-
-  return ret;
+    int ret = 0;
+    while (client.available() > 0 && ret < sz) {
+        reply[ret++] = client.read();
+    }
+    return ret;
 }
 
+/*****************************************************************************/
+/* Arduino loop()
+/*****************************************************************************/
 void loop() {
-  int err = 0;
-  int input = 0;
-  char errBuf[80];
-  char reply[80];
-  int replySz = 0;
-  const char* cipherName;
+    int err            = 0;
+    int input          = 0;
+    char errBuf[80]    = "(no error";
+    char reply[80]     = "(no reply)";
+    int replySz = 0;
+    const char* cipherName;
 
-  /* Listen for incoming client requests. */
-  client = server.available();
-  if (!client) {
-    return;
-  }
+    /* Listen for incoming client requests. */
+    client = server.available();
+    if (!client) {
+      return;
+    }
 
   if (client.connected()) {
 
@@ -136,7 +192,7 @@ void loop() {
 
     Serial.print("SSL version is ");
     Serial.println(wolfSSL_get_version(ssl));
-    
+
     cipherName = wolfSSL_get_cipher(ssl);
     Serial.print("SSL cipher suite is ");
     Serial.println(cipherName);
@@ -169,7 +225,7 @@ void loop() {
       Serial.print("TLS Write Error: ");
       Serial.println(errBuf);
     }
-    
+
     wolfSSL_shutdown(ssl);
     wolfSSL_free(ssl);
   }
