@@ -37,11 +37,11 @@ Tested with:
 
 /* optional board-specific networking includes */
 #if defined(ESP32)
-    #define #USING_WIFI
+    #define USING_WIFI
     #include <WiFi.h>
     WiFiClient client;
 #elif defined(ESP8266)
-    #define #USING_WIFI
+    #define USING_WIFI
     #include <ESP8266WiFi.h>
     WiFiClient client;
 /* #elif defined(OTHER_BOARD) */
@@ -74,7 +74,10 @@ int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 
-void setup() {
+/*****************************************************************************/
+/* Arduino setup()
+/*****************************************************************************/
+void setup(void) {
     WOLFSSL_METHOD* method;
     int rc = 0;
 
@@ -134,12 +137,18 @@ void setup() {
     return;
 }
 
+/*****************************************************************************/
+/* EthernetSend() to send a message msg string.
+/*****************************************************************************/
 int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
     int sent = 0;
     sent = client.write((byte*)msg, sz);
     return sent;
 }
 
+/*****************************************************************************/
+/* EthernetReceive() to receive a reply string.
+/*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
     while (client.available() > 0 && ret < sz) {
@@ -148,6 +157,9 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     return ret;
 }
 
+/*****************************************************************************/
+/* Arduino loop()
+/*****************************************************************************/
 void loop() {
     int err            = 0;
     int input          = 0;
