@@ -814,6 +814,8 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
         #define IntimeFindNext(data)  (0 == _findnext64(data))
         #define IntimeFindClose(data) (0 == _findclose64(data))
         #define IntimeFilename(ctx)   ctx->FindFileData.f_filename
+    #elif defined(ARDUINO)
+        /* TODO: board specific features */
     #else
         struct dirent* entry;
         DIR*   dir;

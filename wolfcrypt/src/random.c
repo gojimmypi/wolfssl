@@ -3394,7 +3394,23 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
         return 0;
     }
+#elif defined(ARDUINO)
+    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
+    {
+        word32 rand;
+        while (sz > 0) {
+            word32 len = sizeof(rand);
+            if (sz < len)
+                len = sz;
+            /* Get an Arduino framework random number */
+            rand = random();
+            XMEMCPY(output, &rand, len);
+            output += len;
+            sz -= len;
+        }
 
+        return 0;
+    }
 #elif defined(WOLFSSL_ESPIDF)
 
     /* Espressif */

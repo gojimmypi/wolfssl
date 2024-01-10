@@ -53,11 +53,12 @@
     #define WC_MD5_PAD_SIZE WC_MD5_PAD_SIZE
 #endif
 
+/* in bytes */
 enum {
-    WC_MD5             = WC_HASH_TYPE_MD5,
-    WC_MD5_BLOCK_SIZE  = 64, /* in bytes */
-    WC_MD5_DIGEST_SIZE = 16, /* in bytes */
-    WC_MD5_PAD_SIZE    = 56  /* in bytes */
+    WC_MD5             =  WC_HASH_TYPE_MD5,
+    WC_MD5_BLOCK_SIZE  = 64,
+    WC_MD5_DIGEST_SIZE = 16,
+    WC_MD5_PAD_SIZE    = 56
 };
 
 

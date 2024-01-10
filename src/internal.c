@@ -2314,6 +2314,12 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
             ctx->CBIORecvFrom = uIPRecvFrom;
         }
         #endif
+    #elif defined(ARDUINO)
+        #if defined(__AVR__)
+            /* likely not available here*/
+        #elif defined(ESP32) || defined(ESP8266)
+            /* TODO */
+        #endif /* Arduino */
     #else
         ctx->CBIORecv = EmbedReceive;
         ctx->CBIOSend = EmbedSend;

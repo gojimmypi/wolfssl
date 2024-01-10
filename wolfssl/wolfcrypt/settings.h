@@ -271,8 +271,16 @@
     #ifndef WOLFSSL_USER_SETTINGS
         #define WOLFSSL_USER_SETTINGS
     #endif /* WOLFSSL_USER_SETTINGS */
-#else
-ouch
+
+    /* board-specific */
+    #if defined(__AVR__)
+        #define WOLFSSL_NO_SOCK
+        #define NO_WRITEV
+    #elif defined(ESP32) || defined(ESP8266)
+        /* assume sockets available */
+    #else
+        #define WOLFSSL_NO_SOCK
+    #endif
 #endif
 
 #ifdef WOLFSSL_USER_SETTINGS
@@ -932,8 +940,11 @@ extern void uITRON4_free(void *p) ;
     #define XREALLOC    yaXREALLOC
 #endif
 
-/* TODO find this */
-#undef FREERTOS
+#if defined(ARDUINO)
+    /* TODO find this */
+    #undef FREERTOS
+#endif
+
 #ifdef FREERTOS
     #include "FreeRTOS.h"
     #include <task.h>
@@ -2947,7 +2958,7 @@ extern void uITRON4_free(void *p) ;
     !defined(WOLFSSL_SHA512) && defined(WC_NO_RNG) && \
     !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL) \
     && !defined(USE_FAST_MATH) && defined(NO_SHA256)
-#undef  WOLFSSL_NO_FORCE_ZERO
+    #undef  WOLFSSL_NO_FORCE_ZERO
     #define WOLFSSL_NO_FORCE_ZERO
 #endif
 

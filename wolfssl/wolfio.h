@@ -66,6 +66,8 @@
             #include <errno.h>
             #define LWIP_PROVIDE_ERRNO 1
         #endif
+    #elif defined(ARDUINO)
+        /* TODO Add specific boards */
     #elif defined(FREESCALE_MQX)
         #include <posix.h>
         #include <rtcs.h>
