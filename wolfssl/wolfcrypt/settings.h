@@ -404,8 +404,7 @@
     #define SIZEOF_LONG_LONG 8
 
     #ifndef NO_ESPIDF_DEFAULT
-        #ifndef defined(ARDUINO)
-            #warning "Defining FREERTOS"
+        #ifndef ARDUINO
             #define FREERTOS
         #endif
 
