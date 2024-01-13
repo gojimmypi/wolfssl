@@ -1021,7 +1021,11 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             ** This should never happen unless someone else called
             ** periph_module_disable() or threading not working properly.
             **/
-            ESP_LOGW(TAG, "warning lockDepth mismatch.");
+            ESP_LOGW(TAG, "warning lockDepth mismatch: %d", ctx->lockDepth);
+            if (actual_unroll_count == 0 && ctx->lockDepth > 2) {
+                ESP_LOGW(TAG, "Large lockDepth discrepancy often indicates"
+                              "stack overflow or memory corruption");
+            }
         }
         ctx->lockDepth = 0;
         ctx->mode = ESP32_SHA_INIT;
@@ -1332,6 +1336,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGW(TAG, "Locking for ctx %x, current mutex_ctx_owner = %x",
                            (int)&ctx, (int)esp_sha_mutex_ctx_owner());
+            ESP_LOGI(TAG, "ctx->lockDepth = %d", ctx->lockDepth);
         #endif
             ret = esp_unroll_sha_module_enable(ctx);
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG

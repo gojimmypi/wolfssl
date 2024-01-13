@@ -1301,6 +1301,9 @@ static int InitSha256(wc_Sha256* sha256)
 #else
     int wc_Sha256Update(wc_Sha256* sha256, const byte* data, word32 len)
     {
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH
+        ESP_LOGI(TAG, "wc_Sha256Update");
+    #endif
         if (sha256 == NULL || (data == NULL && len > 0)) {
             return BAD_FUNC_ARG;
         }
@@ -1338,7 +1341,9 @@ static int InitSha256(wc_Sha256* sha256)
 
         int ret;
         byte* local;
-
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH     
+        ESP_LOGW(TAG, "start Sha256Final; sha256 %d", sha256->ctx.lockDepth);
+    #endif
         if (sha256 == NULL) {
             return BAD_FUNC_ARG;
         }
@@ -1419,6 +1424,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
+            ESP_LOGW(TAG, "sha256 final ctx->lockDepth = %d", (&sha256->ctx)->lockDepth);
             esp_sha_try_hw_lock(&sha256->ctx); /* TODO aren't we already locked? */
         }
     #endif
@@ -1559,6 +1565,12 @@ static int InitSha256(wc_Sha256* sha256)
         if (sha256 == NULL || hash == NULL) {
             return BAD_FUNC_ARG;
         }
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH
+        ESP_LOGW(TAG, "start wc_Sha256Final; sha256 %d", sha256->ctx.lockDepth);
+        if (sha256->ctx.lockDepth > 1) {
+            ESP_LOGE(TAG, "Bad lock depth!");
+        }
+    #endif
 
     #ifdef WOLF_CRYPTO_CB
         #ifndef WOLF_CRYPTO_CB_FIND
@@ -1580,7 +1592,12 @@ static int InitSha256(wc_Sha256* sha256)
         #endif
         }
     #endif /* WOLFSSL_ASYNC_CRYPT */
-
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH
+        ESP_LOGW(TAG, "calling Sha256Final; sha256 %d", sha256->ctx.lockDepth);
+        if (sha256->ctx.lockDepth > 1) {
+            ESP_LOGE(TAG, "Bad lock depth!");
+        }
+    #endif
         ret = Sha256Final(sha256);
         if (ret != 0) {
             return ret;
