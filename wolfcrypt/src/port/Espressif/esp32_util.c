@@ -230,7 +230,7 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 /* check to see if we are using hardware encryption */
 #if defined(CONFIG_IDF_TARGET_ESP8266)
     WOLFSSL_VERSION_PRINTF("No HW acceleration on ESP8266.");
-#elif (NO_ESP32_CRYPT)
+#elif defined(NO_ESP32_CRYPT)
     WOLFSSL_VERSION_PRINTF("NO_ESP32_CRYPT defined! "
                            "HW acceleration DISABLED.");
 #else
