@@ -395,11 +395,11 @@ int esp_current_boot_count(void)
 /* See macro helpers above; not_defined is macro name when *not* defined */
 static int show_macro(char* s, char* not_defined)
 {
-    char hd1[] = "Macro Name                 Defined   Not Defined";
-    char hd2[] = "------------------------- --------- -------------";
-    char msg[] = ".........................                        ";
-        /*        012345678901234567890123456789012345678901234567890    */
-        /*                  1         2         3         4         5    */
+    const char hd1[] = "Macro Name                 Defined   Not Defined";
+          char hd2[] = "------------------------- --------- -------------";
+          char msg[] = ".........................                        ";
+             /*        012345678901234567890123456789012345678901234567890 */
+             /*                  1         2         3         4         5 */
     size_t i = 0;
     #define MAX_STATUS_NAME_LENGTH 25
     #define ESP_SMS_ENA_POS 30
