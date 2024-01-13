@@ -530,7 +530,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     !defined(NO_WOLFSSL_ESP32_CRYPT_AES)
     #include <esp_log.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-    const char* TAG = "aes";
+    static const char* TAG = "aes";
 
     /* We'll use SW for fallback:
      *   unsupported key lengths. (e.g. ESP32-S3)
