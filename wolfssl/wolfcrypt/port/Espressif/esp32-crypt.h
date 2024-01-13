@@ -655,11 +655,11 @@ extern "C"
         ** actual enable/disable only occurs for ref_counts[periph] == 0
         **
         **  see ref_counts[periph] in periph_ctrl.c */
-        byte lockDepth : 7; /* 7 bits for a small number, pack with below. */
+        byte lockDepth; /* 7 bits for a small number, pack with below. */
 
         /* 0 (false) this is NOT first block.
         ** 1 (true ) this is first block.  */
-        byte isfirstblock : 1; /* 1 bit only for true / false */
+        byte isfirstblock; /* 1 bit only for true / false */
     } WC_ESP32SHA;
 
     WOLFSSL_LOCAL int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx);
