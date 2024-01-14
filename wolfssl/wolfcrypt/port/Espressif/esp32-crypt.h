@@ -51,12 +51,19 @@
     #define WOLFSSL_ESPIDF_BLANKLINE_MESSAGE "."
 #endif
 
+#if defined(WOLFSSL_STACK_CHECK)
+    #define CTX_STACK_CHECK(ctx) esp_sha_stack_check(ctx)
+#else
+    #define CTX_STACK_CHECK(ctx) {}
+#endif
+
 /* Optional exit message.
  * The WOLFSSL_COMPLETE keyword exits wolfSSL test harness script. */
 #define WOLFSSL_ESPIDF_EXIT_MESSAGE \
     "\n\nDone!"                 \
     "\n\nWOLFSSL_COMPLETE"      \
     "\n\nIf running from idf.py monitor, press twice: Ctrl+]"
+
 
 /* exit codes to be used in tfm.c, sp_int.c, integer.c, etc.
  *
@@ -632,11 +639,14 @@ extern "C"
 
     typedef struct
     {
+    #if defined(WOLFSSL_STACK_CHECK)
+        word32 first_word;
+    #endif
         /* pointer to object the initialized HW; to track copies */
         void* initializer;
-#ifndef SINGLE_THREADED
-        void* task_owner;
-#endif
+    #ifdef ESP_MONITOR_HW_TASK_LOCK
+        TaskHandle_t task_owner;
+    #endif
 
         /* an ESP32_MODE value; typically:
         **   0 init,
@@ -660,7 +670,10 @@ extern "C"
         /* 0 (false) this is NOT first block.
         ** 1 (true ) this is first block.  */
         byte isfirstblock : 1; /* 1 bit only for true / false */
-    } WC_ESP32SHA;
+    #if defined(WOLFSSL_STACK_CHECK)
+        word32 last_word;
+    #endif
+    } WC_ESP32SHA __attribute__((aligned(4)));
 
     WOLFSSL_LOCAL int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_init(WC_ESP32SHA* ctx,
@@ -874,6 +887,12 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#if defined(WOLFSSL_STACK_CHECK)
+
+int esp_sha_stack_check(WC_ESP32SHA* sha);
+
+#endif /* WOLFSSL_STACK_CHECK */
 
 #endif /* WOLFSSL_ESPIDF (entire contents excluded when not Espressif ESP-IDF) */
 

@@ -171,6 +171,7 @@ static const char* TAG = "wolf_hw_sha";
 int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 {
     int ret = TRUE; /* assume we'll need reversal, look for exceptions */
+    CTX_STACK_CHECK(ctx);
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684) || \
     defined(CONFIG_IDF_TARGET_ESP32C3) || \
@@ -207,6 +208,8 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 #else
     /* other platforms always return true */
 #endif
+    CTX_STACK_CHECK(ctx);
+
     return ret;
 }
 
@@ -224,6 +227,7 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
+    CTX_STACK_CHECK(ctx);
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || \
     defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -330,6 +334,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 #endif /* CONFIG_IDF_TARGET_ESP32   ||
         * CONFIG_IDF_TARGET_ESP32S2 ||
         * CONFIG_IDF_TARGET_ESP32S3 */
+    CTX_STACK_CHECK(ctx);
 
     return ret;
 }
@@ -338,6 +343,8 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 /* we'll call a separate init as there's only 1 HW acceleration */
 int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
+    CTX_STACK_CHECK(ctx);
+
     if (ctx->initializer == NULL) {
         ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx");
 
@@ -516,9 +523,10 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
     /* reminder: always start isfirstblock = 1 (true) when using HW engine */
     /* we're always on the first block at init time (not zero-based!) */
-    ctx->isfirstblock = true;
+    ctx->isfirstblock = true; /* TODO this is saved beyond object size */
     ctx->lockDepth = 0; /* new objects will always start with lock depth = 0 */
 
+    CTX_STACK_CHECK(ctx);
     return ESP_OK; /* Always return success.
                     * We assume all issues handled, above. */
 } /* esp_sha_init_ctx */
@@ -972,6 +980,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
 #if defined(CONFIG_IDF_TARGET_ESP32)
     word32 this_sha_mask; /* this is the bit-mask for our SHA CLK_EN_REG */
 #endif
+    CTX_STACK_CHECK(ctx);
 
     if (ctx == NULL) {
         ESP_LOGE(TAG, "esp_unroll_sha_module_enable called with null ctx.");
@@ -1045,16 +1054,20 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         ESP_LOGI(TAG, "Setting ctx->mode = ESP32_SHA_SW");
         ctx->mode = ESP32_SHA_SW;
     }
+    CTX_STACK_CHECK(ctx);
     return ret;
 } /* esp_unroll_sha_module_enable */
 
 int esp_sha_set_stray(WC_ESP32SHA* ctx)
 {
     int ret = 0;
+    CTX_STACK_CHECK(ctx);
+
 #ifdef WOLFSSL_DEBUG_MUTEX
     stray_ctx = ctx;
     ret= (int)stray_ctx;
 #endif
+    CTX_STACK_CHECK(ctx);
     return ret;
 }
 
@@ -1067,6 +1080,8 @@ int esp_sha_set_stray(WC_ESP32SHA* ctx)
 int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 {
     int ret = 0;
+    CTX_STACK_CHECK(ctx);
+
 #ifdef WOLFSSL_DEBUG_MUTEX
     taskENTER_CRITICAL(&sha_crit_sect);
     {
@@ -1107,6 +1122,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
                       (int)esp_sha_mutex_ctx_owner());
     }
 #endif
+    CTX_STACK_CHECK(ctx);
     return ret;
 }
 
@@ -1118,6 +1134,8 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
+    CTX_STACK_CHECK(ctx);
+
     ret = esp_sha_hw_islocked(ctx); /* get the owner of the current lock */
     if (ret == 0) {
         /* no lock */
@@ -1150,14 +1168,17 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
                 /* We cannot free a SHA onbject locks from a different task.
                  * So give the ctx a hint for the other task to clean it up. */
                 ctx->mode = ESP32_SHA_FREED;
+                ESP_LOGI(TAG, "ESP32_SHA_FREED");
             }
         }
         #endif
 
         }
     }
+    CTX_STACK_CHECK(ctx);
     return ret;
 }
+
 /*
 ** lock HW engine.
 ** this should be called before using engine.
@@ -1165,6 +1186,7 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
 int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 {
     int ret = 0;
+    CTX_STACK_CHECK(ctx);
 
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     ESP_LOGI(TAG, "enter esp_sha_hw_lock for %x", (int)ctx->initializer);
@@ -1419,6 +1441,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     }
 #endif
     ESP_LOGV(TAG, "leave esp_sha_hw_lock");
+    CTX_STACK_CHECK(ctx);
 
     return ret;
 } /* esp_sha_try_hw_lock */
@@ -1430,6 +1453,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 {
     int ret = ESP_OK; /* assume success (zero) */
+    CTX_STACK_CHECK(ctx);
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
 #endif
@@ -1507,6 +1531,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGI(TAG, "leave esp_sha_hw_unlock, %x", (int)ctx->initializer);
     #endif
+    CTX_STACK_CHECK(ctx);
 
     return ret;
 } /* esp_sha_hw_unlock */
@@ -1525,7 +1550,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     /* Everything else uses esp_sha_start_process() */
 static int esp_sha_start_process(WC_ESP32SHA* sha)
 {
-    int ret = 0;
+    int ret = ESP_OK;
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     uint8_t HardwareAlgorithm;
 #endif
@@ -1533,6 +1558,7 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
     if (sha == NULL) {
         return BAD_FUNC_ARG;
     }
+    CTX_STACK_CHECK(sha);
 
     ESP_LOGV(TAG, "    enter esp_sha_start_process");
 
@@ -1699,9 +1725,10 @@ static int esp_sha_start_process(WC_ESP32SHA* sha)
             ESP_LOGV(TAG, "      continue block #%d", this_block_num);
         #endif
 
-   ESP_LOGV(TAG, "    leave esp_sha_start_process");
+    ESP_LOGV(TAG, "    leave esp_sha_start_process");
+    CTX_STACK_CHECK(sha);
 
-   return ret;
+    return ret;
 }
 #endif /* esp_sha_start_process !CONFIG_IDF_TARGET_ESP32C3/C6  */
 
@@ -1723,6 +1750,8 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     /* not used */
 #endif
     ESP_LOGV(TAG, "  enter esp_process_block");
+    CTX_STACK_CHECK(ctx);
+
     if (word32_to_save > 0x31) {
         word32_to_save = 0x31;
         ESP_LOGE(TAG, "  ERROR esp_process_block length exceeds 0x31 words.");
@@ -1850,6 +1879,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     }
 #endif
 
+    CTX_STACK_CHECK(ctx);
     ESP_LOGV(TAG, "  leave esp_process_block");
     return ret;
 } /* wc_esp_process_block */
@@ -1869,6 +1899,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
 #endif
 
     ESP_LOGV(TAG, "enter esp_digest_state");
+    CTX_STACK_CHECK(ctx);
 
     if (ctx == NULL) {
         return BAD_FUNC_ARG;
@@ -2036,8 +2067,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
             pwrd1[i]     ^= pwrd1[i + 1];
         }
     }
-#endif
+#endif /* SHA512 or SHA384*/
 #endif /* not CONFIG_IDF_TARGET_ESP32S3, C3, else... */
+    CTX_STACK_CHECK(ctx);
 
     ESP_LOGV(TAG, "leave esp_digest_state");
     return ESP_OK;
@@ -2294,9 +2326,25 @@ int esp_hw_show_sha_metrics(void)
     ret = 0;
 #endif /* HW_MATH_ENABLED */
 
-
     return ret;
 }
+
 #endif /* WOLFSSL_ESP32_CRYPT and WOLFSSL_HW_METRICS */
+
+#if defined(WOLFSSL_STACK_CHECK)
+int esp_sha_stack_check(WC_ESP32SHA* sha) {
+    int ret = ESP_OK;
+
+    if (sha == NULL) {
+        ESP_LOGW(TAG, "esp_sha_stack_check; sha is NULL");
+    }
+    else {
+        if (sha->first_word != 0 || sha->last_word != 0) {
+            ret = ESP_FAIL;
+        }
+    }
+    return ret;
+}
+#endif /* WOLFSSL_STACK_CHECK */
 
 #endif /* WOLFSSL_ESPIDF (exclude entire contents for non-Espressif projects. */
