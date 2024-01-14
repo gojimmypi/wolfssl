@@ -684,7 +684,10 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 } /* esp_sha256_ctx_copy */
 #endif
 
-#if defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512)
+#if !(defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384) && \
+      defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)    \
+     ) && \
+    (defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512))
 /*
 ** internal sha384 ctx copy for ESP HW
 */
@@ -749,7 +752,10 @@ int esp_sha384_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 } /* esp_sha384_ctx_copy */
 #endif
 
-#if defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512)
+#if !(defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384) && \
+      defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)    \
+     ) && \
+    (defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512))
 /*
 ** Internal sha512 ctx copy for ESP HW.
 ** If HW already active, fall back to SW for this ctx.
@@ -1023,7 +1029,7 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
             **/
             ESP_LOGW(TAG, "warning lockDepth mismatch: %d", ctx->lockDepth);
             if (actual_unroll_count == 0 && ctx->lockDepth > 2) {
-                ESP_LOGW(TAG, "Large lockDepth discrepancy often indicates"
+                ESP_LOGW(TAG, "Large lockDepth discrepancy often indicates "
                               "stack overflow or memory corruption");
             }
         }
@@ -1199,7 +1205,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ESP_LOGE(TAG, "unexpected error in esp_sha_try_hw_lock.");
         return ESP_FAIL;
     }
-#else /* not ESP_FAILfined(SINGLE_THREADED) */
+#else /* not defined(SINGLE_THREADED) */
     /*
     ** there's only one SHA engine for all the hash types
     ** so when any hash is in use, no others can use it.
@@ -2147,7 +2153,10 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
 
 #endif /* NO_SHA256 */
 
-#if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
+#if !(defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384) && \
+      defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)    \
+     ) && \
+    (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384))
 /*
 ** sha512 process. this is used for sha384 too.
 */
