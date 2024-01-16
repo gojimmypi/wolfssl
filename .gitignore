@@ -322,6 +322,7 @@ wolfcrypt/src/port/intel/qat_test
 # Arduino Generated Files
 /IDE/ARDUINO/wolfSSL
 scripts/memtest.txt
+/IDE/ARDUINO/Arduino_README_prepend.md.tmp
 
 # Doxygen generated files
 doc/doxygen_warnings
@@ -485,3 +486,4 @@ debian/control
 
 # Always include Espressif Makefile
 !**/Espressif/ESP-IDF/**/Makefile
+/IDE/ARDUINO/Arduino_README_prepend.md.tmp
