@@ -705,13 +705,12 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
         #endif
         #define XS_ISREG(s) (s & _S_IFREG)
         #define SEPARATOR_CHAR ';'
-#elif defined(ARDUINO)
-#ifndef XSTAT
-#define XSTAT       _stat
-#endif
-#define XS_ISREG(s) (s & _S_IFREG)
-#define SEPARATOR_CHAR ';'
-
+    #elif defined(ARDUINO)
+        #ifndef XSTAT
+            #define XSTAT       _stat
+        #endif
+        #define XS_ISREG(s) (s & _S_IFREG)
+        #define SEPARATOR_CHAR ';'
 
     #elif defined(INTIME_RTOS)
         #include <sys/stat.h>
