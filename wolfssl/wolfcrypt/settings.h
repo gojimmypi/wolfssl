@@ -416,6 +416,8 @@
 
         #define TFM_TIMING_RESISTANT
         #define ECC_TIMING_RESISTANT
+
+        /* WC_RSA_BLINDING takes up extra space! */
         #define WC_RSA_BLINDING
         #define WC_NO_CACHE_RESISTANT
     #endif /* !WOLFSSL_ESPIDF_NO_DEFAULT */
