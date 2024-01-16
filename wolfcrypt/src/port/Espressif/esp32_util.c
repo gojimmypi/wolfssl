@@ -668,12 +668,15 @@ esp_err_t esp_DisableWatchdog(void)
 {
     esp_err_t ret = ESP_OK;
 #if defined(CONFIG_IDF_TARGET_ESP8266)
+    /* magic bit twiddle to disable WDT on ESP8266 */
     *((volatile uint32_t*) 0x60000900) &= ~(1);
+#elif CONFIG_IDF_TARGET_ESP32S3
+    ESP_LOGW(TAG, "esp_DisableWatchdog TODO S3");
 #else
     #if ESP_IDF_VERSION_MAJOR >= 5
     {
-        rtc_wdt_protect_off();
-        rtc_wdt_disable();
+            rtc_wdt_protect_off();
+            rtc_wdt_disable();
     }
     #else
         ESP_LOGW(TAG, "esp_DisableWatchdog not implemented on ESP_OIDF v%d",
@@ -696,7 +699,10 @@ esp_err_t esp_EnabledWatchdog(void)
 {
     esp_err_t ret = ESP_OK;
 #if defined(CONFIG_IDF_TARGET_ESP8266)
+     /* magic bit twiddle to enable WDT on ESP8266 */
      *((volatile uint32_t*) 0x60000900) |= 1;
+#elif CONFIG_IDF_TARGET_ESP32S3
+    ESP_LOGW(TAG, "esp_EnableWatchdog TODO S3");
 #else
     #if ESP_IDF_VERSION_MAJOR >= 5
     {
