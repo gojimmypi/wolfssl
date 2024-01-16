@@ -227,6 +227,16 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
+
+    if (ctx == NULL) {
+        ret = ESP_FAIL;
+    }
+#if defined(WOLFSSL_STACK_CHECK)
+    else {
+        ctx->first_word = 0;
+        ctx->last_word = 0;
+    }
+#endif
     CTX_STACK_CHECK(ctx);
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || \
@@ -1750,6 +1760,9 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     /* not used */
 #endif
     ESP_LOGV(TAG, "  enter esp_process_block");
+    if ((ctx->sha_type < 0) || (ctx->sha_type > 3)) {
+        ESP_LOGE(TAG, "Unexpected sha_type: %d", ctx->sha_type);
+    }
     CTX_STACK_CHECK(ctx);
 
     if (word32_to_save > 0x31) {
@@ -2340,6 +2353,7 @@ int esp_sha_stack_check(WC_ESP32SHA* sha) {
     }
     else {
         if (sha->first_word != 0 || sha->last_word != 0) {
+            ESP_LOGE(TAG, "esp_sha_stack_check warning");
             ret = ESP_FAIL;
         }
     }
