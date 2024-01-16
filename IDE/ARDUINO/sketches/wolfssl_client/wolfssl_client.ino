@@ -91,7 +91,7 @@ void setup(void) {
             delay(1000);
             Serial.print("Connecting to WiFi ");
             Serial.println(ssid);
-}
+        }
 
         Serial.print("Connected to WiFi ");
         Serial.println(ssid);
