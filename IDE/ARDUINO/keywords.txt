@@ -1,0 +1,63 @@
+# Syntax Coloring Map For wolfSSL
+# See https://arduino.github.io/arduino-cli/0.35/library-specification/#keywords
+
+#=============================================
+#	Datatypes	(KEYWORD1)
+#=============================================
+
+
+#=============================================
+#	Methods	and	Functions	(KEYWORD2)
+#=============================================
+wolfSSL_SetIORecv	KEYWORD1
+wolfSSL_SetIOSend	KEYWORD1
+wolfSSL_CTX_set_verify	KEYWORD1
+wolfSSL_CTX_new	KEYWORD1
+wolfSSL_free	KEYWORD1
+wolfSSL_shutdown	KEYWORD1
+wolfSSL_write	KEYWORD1
+wolfSSL_read	KEYWORD1
+wolfSSL_pending	KEYWORD1
+wolfSSL_get_cipher	KEYWORD1
+wolfSSL_get_version	KEYWORD1
+wolfSSL_accept	KEYWORD1
+wolfSSL_new	KEYWORD1
+wolfSSL_CTX_use_certificate_buffer	KEYWORD1
+wolfSSL_CTX_use_PrivateKey_buffer	KEYWORD1
+
+#=============================================
+#	Instances	(KEYWORD2)
+#=============================================
+ctx	KEYWORD2
+client	KEYWORD2
+server	KEYWORD2
+ssl	KEYWORD2
+method	KEYWORD2
+
+
+#=============================================
+#	Constants	(LITERAL1)
+#=============================================
+serial_baud	LITERAL1
+SSL_VERIFY_NONE	LITERAL1
+WOLFSSL_FILETYPE_ASN1	LITERAL1
+WOLFSSL_SUCCESS	LITERAL1
+WOLFSSL_PORT	LITERAL1
+USE_CERT_BUFFERS_256	LITERAL1
+NO_WOLFSSL_SERVER	LITERAL1
+MY_PRIVATE_CONFIG	LITERAL1
+CONFIG_ESP_WIFI_PASSWORD	LITERAL1
+CONFIG_ESP_WIFI_SSID	LITERAL1
+CONFIG_ESP_WIFI_SSID	LITERAL1
+CONFIG_ESP_WIFI_PASSWORD	LITERAL1
+MY_PRIVATE_CONFIG	LITERAL1
+NO_WOLFSSL_SERVER	LITERAL1
+USE_CERT_BUFFERS_256	LITERAL1
+WOLFSSL_PORT	LITERAL1
+NO_WOLFSSL_SERVER	LITERAL1
+MY_PRIVATE_CONFIG	LITERAL1
+USE_CERT_BUFFERS_256	LITERAL1
+CONFIG_ESP_WIFI_PASSWORD	LITERAL1
+CONFIG_ESP_WIFI_SSID	LITERAL1
+
+

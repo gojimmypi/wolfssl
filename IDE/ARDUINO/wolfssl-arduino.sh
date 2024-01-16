@@ -3,30 +3,66 @@
 # this script will reformat the wolfSSL source code to be compatible with
 # an Arduino project
 # run as bash ./wolfssl-arduino.sh [INSTALL] [path]
-
-# ROOT_DIR="/mnt/c/Users/gojimmypi/Documents/Arduino/libraries"
+#
+# The default is to install to a local wolfSSL directory (`ROOT_DIR`).
+# If successfully built, and the INSTALL option is used, tis directory
+# is then moved to the target.
+#
+# To ensure a pristine build, the directory must not exist.
+#
+# REminder there's typically no $USER for github actions, but:
+# ROOT_DIR="/mnt/c/Users/$USER/Documents/Arduino/libraries"
+#
 ROOT_DIR="/wolfSSL"
+
+# For verbose copy, set CP_CMD="-v", otherwise clear it: CP_CMD="cp"
+# Do not set to empty string, as copy will fail with this: CP_CMD=""
+# CP_CMD="cp -v "
+CP_CMD="cp "
+
+# Specify the executable shell checker you want to use:
+MY_SHELLCHECK="shellcheck"
+
+# Check if the executable is available in the PATH
+if command -v "$MY_SHELLCHECK" >/dev/null 2>&1; then
+    # Run your command here
+    shellcheck "$0" || exit 1
+else
+    echo "$MY_SHELLCHECK is not installed. Please install it if changes to this script have been made."
+fi
+
+if ! [ "$CP_CMD" = "cp " ]; then
+    if [ "$CP_CMD" = "cp -v" ]; then
+        echo "Copy verbose mode"
+    else
+        echo "ERROR: Copy mode not supported: $CP_CMD"
+        exit 1
+    fi
+fi
+
+# Check environment
+if [ -n "$WSL_DISTRO_NAME" ]; then
+    # we found a non-blank WSL environment distro name
+    current_path="$(pwd)"
+    pattern="/mnt/?"
+    if echo "$current_path" | grep -Eq "^$pattern"; then
+        # if we are in WSL and shared Windows file system, 'ln' does not work.
+        ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
+    else
+        ARDUINO_ROOT="$HOME/Arduino/libraries"
+    fi
+fi
+echo "The Arduino library root is: $ARDUINO_ROOT"
 
 if [ $# -gt 0 ]; then
     THIS_OPERATION="$1"
     if [ "$THIS_OPERATION" = "INSTALL" ]; then
         echo "Install is active"
 
-        # Check environment
-        if [ -n "$WSL_DISTRO_NAME" ]; then
-            # we found a non-blank WSL environment distro name
-            current_path="$(pwd)"
-            pattern="/mnt/?"
-            if [ "$(echo "$current_path" | grep -E "^$pattern")" ]; then
-                # if we are in WSL and shared Windows file system, 'ln' does not work.
-                ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
-            else
-                ARDUINO_ROOT="~/Arduino/libraries"
-            fi
-        fi
-
         if [ -d "$ARDUINO_ROOT/$ROOT_DIR" ]; then
             echo "Error: the installation directory already exists: $ARDUINO_ROOT/$ROOT_DIR"
+            echo "A new directory needs to be created to ensure there are no stray files"
+            echo "Please delete the directory (or rename it) and try again."
             exit 1
         fi
     else
@@ -56,29 +92,37 @@ OPENSSL_DIR_TOP="${WOLFSSL_HEADERS_TOP}/openssl"
 
 # TODO: Parse version number
 WOLFSSL_VERSION=$(grep -i "LIBWOLFSSL_VERSION_STRING" ${TOP_DIR}/wolfssl/version.h | cut -d '"' -f 2)
-
+echo "Found wolfSSL version $WOLFSSL_VERSION"
 
 DIR=${PWD##*/}
 
 if [ "$DIR" = "ARDUINO" ]; then
-    if [ ! -d ".${ROOT_DIR}" ]; then
-        echo "Line 38: mkdir .${ROOT_DIR}"
+    #
+    if [ -d ".${ROOT_DIR}" ]; then
+        echo "ERROR: $(realpath ".${ROOT_DIR}") is not empty"
+        exit 1
+    else
+        echo "Step 01: mkdir .${ROOT_DIR}"
         mkdir .${ROOT_DIR}
     fi
+
+    #
     if [ ! -d ".${ROOT_SRC_DIR}" ]; then
-        echo "Line 42: mkdir .${ROOT_SRC_DIR}"
+        echo "Step 02: mkdir .${ROOT_SRC_DIR}"
         mkdir .${ROOT_SRC_DIR}
     fi
 
+    #
     if [ ! -d ".${WOLFSSL_HEADERS}" ]; then
-        echo "Line 47: mkdir .${WOLFSSL_HEADERS}"
+        echo "Step 03: mkdir .${WOLFSSL_HEADERS}"
         mkdir .${WOLFSSL_HEADERS}
     fi
 
-    echo "Line 51: cp ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}"
-    cp ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}
+    #
+    echo "Step 04: cp    ${WOLFSSL_HEADERS_TOP}/*.h           .${WOLFSSL_HEADERS}"
+    $CP_CMD ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}
     if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
-        echo "Line 54: mkdir .${WOLFCRYPT_HEADERS}"
+        echo "Step 05: mkdir .${WOLFCRYPT_HEADERS}"
         mkdir .${WOLFCRYPT_HEADERS}
         mkdir .${WOLFCRYPT_HEADERS}/port
         mkdir .${WOLFCRYPT_HEADERS}/port/atmel
@@ -86,56 +130,57 @@ if [ "$DIR" = "ARDUINO" ]; then
     fi
 
     # is this a dupe?
-    if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
-        echo "Line 54: mkdir .${WOLFCRYPT_HEADERS}"
-        mkdir .${WOLFCRYPT_HEADERS}
-        mkdir .${WOLFCRYPT_HEADERS}/port
-        mkdir .${WOLFCRYPT_HEADERS}/port/atmel
-        mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
-    fi
+#    if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
+#        echo "Step 03: mkdir .${WOLFCRYPT_HEADERS}"
+#        mkdir .${WOLFCRYPT_HEADERS}
+#        mkdir .${WOLFCRYPT_HEADERS}/port
+#        mkdir .${WOLFCRYPT_HEADERS}/port/atmel
+#        mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
+#    fi
 
-    echo "Line 58: cp ${WOLFCRYPT_HEADERS_TOP}/*.h .${WOLFCRYPT_HEADERS}"
-    cp ${WOLFCRYPT_HEADERS_TOP}/*.h .${WOLFCRYPT_HEADERS}
-    cp ${WOLFCRYPT_HEADERS_TOP}/port/atmel/*.h     .${WOLFCRYPT_HEADERS}/port/atmel
-    cp ${WOLFCRYPT_HEADERS_TOP}/port/Espressif/*.h .${WOLFCRYPT_HEADERS}/port/Espressif
+    echo "Step 06: cp    ${WOLFCRYPT_HEADERS_TOP}/*.h  .${WOLFCRYPT_HEADERS}"
+    $CP_CMD ${WOLFCRYPT_HEADERS_TOP}/*.h                .${WOLFCRYPT_HEADERS}                 || exit 1
+    $CP_CMD ${WOLFCRYPT_HEADERS_TOP}/port/atmel/*.h     .${WOLFCRYPT_HEADERS}/port/atmel      || exit 1
+    $CP_CMD ${WOLFCRYPT_HEADERS_TOP}/port/Espressif/*.h .${WOLFCRYPT_HEADERS}/port/Espressif  || exit 1
 
     # Add in source files to wolfcrypt/src
     if [ ! -d ".${WOLFCRYPT_ROOT}" ]; then
-        echo "Line 63: mkdir .${WOLFCRYPT_ROOT}"
+        #
+        echo "Step 07: mkdir .${WOLFCRYPT_ROOT}"
         mkdir .${WOLFCRYPT_ROOT}
     fi
     if [ ! -d ".${WOLFCRYPT_SRC}" ]; then
-        echo "Line 67: mkdir .${WOLFCRYPT_SRC}"
+        echo "Step 08: mkdir .${WOLFCRYPT_SRC}"
         mkdir .${WOLFCRYPT_SRC}
         mkdir .${WOLFCRYPT_SRC}/port
         mkdir .${WOLFCRYPT_SRC}/port/atmel
         mkdir .${WOLFCRYPT_SRC}/port/Espressif
     fi
 
-    echo "Line $LINENO: cp ${WOLFCRYPT_SRC_TOP}/*.c .${WOLFCRYPT_SRC}"
-    cp -r ${WOLFCRYPT_SRC_TOP}/*.c                  .${WOLFCRYPT_SRC}
-    cp -r ${WOLFCRYPT_SRC_TOP}/port/atmel/*.c       .${WOLFCRYPT_SRC}/port/atmel
-    cp -r ${WOLFCRYPT_SRC_TOP}/port/Espressif/*.c   .${WOLFCRYPT_SRC}/port/Espressif
+    echo "Step 09: cp    ${WOLFCRYPT_SRC_TOP}/*.c .${WOLFCRYPT_SRC}"
+    $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/*.c                  .${WOLFCRYPT_SRC}                || exit 1
+    $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/port/atmel/*.c       .${WOLFCRYPT_SRC}/port/atmel     || exit 1
+    $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/port/Espressif/*.c   .${WOLFCRYPT_SRC}/port/Espressif || exit 1
 
     # Add in source files to top level src folders
     if [ ! -d ".${WOLFSSL_SRC}" ]; then
-        echo "Line $LINENO: mkdir .${WOLFSSL_SRC}"
+        echo "Step 10: mkdir .${WOLFSSL_SRC}"
         mkdir .${WOLFSSL_SRC}
     fi
-    cp ${WOLFSSL_SRC_TOP}/*.c .${WOLFSSL_SRC}
+    $CP_CMD ${WOLFSSL_SRC_TOP}/*.c .${WOLFSSL_SRC}                                        || exit 1
     # put bio and evp as includes
-    cp .${WOLFSSL_SRC}/bio.c .${WOLFSSL_HEADERS}
-    cp .${WOLFCRYPT_SRC}/evp.c .${WOLFSSL_HEADERS}
+    $CP_CMD .${WOLFSSL_SRC}/bio.c .${WOLFSSL_HEADERS}                                     || exit 1
+    $CP_CMD .${WOLFCRYPT_SRC}/evp.c .${WOLFSSL_HEADERS}                                   || exit 1
 
     # make a copy of evp.c and bio.c for ssl.c to include inline
-    cp .${WOLFSSL_HEADERS}/evp.c .${WOLFCRYPT_SRC}/evp.c
-    cp .${WOLFSSL_HEADERS}/bio.c .${WOLFCRYPT_SRC}/bio.c
+    $CP_CMD .${WOLFSSL_HEADERS}/evp.c .${WOLFCRYPT_SRC}/evp.c                             || exit 1
+    $CP_CMD .${WOLFSSL_HEADERS}/bio.c .${WOLFCRYPT_SRC}/bio.c                             || exit 1
 
     # copy openssl compatibility headers to their appropriate location
     if [ ! -d ".${OPENSSL_DIR}" ]; then
         mkdir .${OPENSSL_DIR}
     fi
-    cp ${OPENSSL_DIR_TOP}/* .${OPENSSL_DIR}
+    $CP_CMD ${OPENSSL_DIR_TOP}/* .${OPENSSL_DIR}                                          || exit 1
 
 
     cat > .${ROOT_SRC_DIR}/wolfssl.h <<EOF
@@ -206,11 +251,15 @@ else
     exit 1
 fi
 
+# At this point, the library is complete, but we want some additional files.
+
+
 # Optionally install to a separate directory.
 # Note we should have exited above if a problem was encountered,
 # as we'll never want to install a bad library.
 if [ "$THIS_OPERATION" = "INSTALL" ]; then
-    cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h"
+    echo "Install: cp ../../examples/configs/user_settings_arduino.h  .${ROOT_SRC_DIR}/user_settings.h"
+    cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h" || exit 1
     echo "mv $ROOT_DIR $ARDUINO_ROOT"
     mv ".$ROOT_DIR" "$ARDUINO_ROOT"
 fi
