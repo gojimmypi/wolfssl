@@ -39,6 +39,8 @@ Tested with:
 #if defined(ESP32)
     #define USING_WIFI
     #include <WiFi.h>
+    #include <NTPClient.h>
+    #include <WiFiUdp.h>
     WiFiClient client;
 #elif defined(ESP8266)
     #define USING_WIFI
@@ -63,7 +65,7 @@ Tested with:
     const char* password = "your_PASSWORD";
 #endif
 
-const char host[] = "192.168.1.148"; /* server to connect to */
+const char host[] = "192.168.1.39"; /* server to connect to */
 const int port = 11111; /* port on server to connect to */
 const int serial_baud = 115200; /* local serial port to monitor */
 
@@ -82,7 +84,9 @@ void setup(void) {
     int rc = 0;
 
     Serial.begin(serial_baud);
-
+    WiFiUDP ntpUDP;
+    NTPClient timeClient(ntpUDP, "pool.ntp.org");
+  
     #if defined(USING_WIFI)
         /* Connect to WiFi */
         WiFi.mode(WIFI_STA);
@@ -93,8 +97,15 @@ void setup(void) {
             Serial.println(ssid);
         }
 
-        Serial.print("Connected to WiFi ");
+        Serial.print("Connected to WiFi");
         Serial.println(ssid);
+        Serial.print("Client IP = ");
+        Serial.println(WiFi.localIP());
+        
+        timeClient.begin();
+        delay(2000);
+        timeClient.update();
+        Serial.println(timeClient.getFormattedTime());
     #else
         /* We'll assume the Ethernet connection is ready to go.*/
     #endif

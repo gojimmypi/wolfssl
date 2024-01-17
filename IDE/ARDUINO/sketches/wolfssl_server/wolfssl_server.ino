@@ -35,12 +35,16 @@
 #if defined(ESP32)
     #define USING_WIFI
     #include <WiFi.h>
-    WiFiServer  server(WOLFSSL_PORT);
+    #include <NTPClient.h>
+    #include <WiFiUdp.h>
+    WiFiServer server(WOLFSSL_PORT);
     WiFiClient client;
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
-    WiFiServer  server(WOLFSSL_PORT);
+    #include <NTPClient.h>
+    #include <WiFiUdp.h>
+    WiFiServer server(WOLFSSL_PORT);
     WiFiClient client;
 /* #elif defined(OTHER_BOARD) */
     /* TODO other boards here */
@@ -80,6 +84,9 @@ void setup(void) {
 
     Serial.begin(serial_baud);
 
+    WiFiUDP ntpUDP;
+    NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
     #if defined(USING_WIFI)
         /* Connect to WiFi */
         WiFi.mode(WIFI_STA);
@@ -92,6 +99,13 @@ void setup(void) {
 
         Serial.print("Connected to WiFi ");
         Serial.println(ssid);
+        Serial.print("Server IP = ");
+        Serial.println(WiFi.localIP());
+        
+        timeClient.begin();
+        delay(2000);
+        timeClient.update();
+        Serial.println(timeClient.getFormattedTime());
     #else
         /* We'll assume the Ethernet connection is ready to go.*/
     #endif
