@@ -37,11 +37,17 @@ Tested with:
 #include <wolfssl/certs_test.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
+/* There's a 3rd party NTPClient library by Fabrice Weinberg.
+ * If it is installed, uncomment define USE_NTP_LIB here: */
+/* #define USE_NTP_LIB */
+#ifdef USE_NTP_LIB
+    #include <NTPClient.h>
+#endif
+
 /* optional board-specific networking includes */
 #if defined(ESP32)
     #define USING_WIFI
     #include <WiFi.h>
-    #include <NTPClient.h>
     #include <WiFiUdp.h>
     WiFiClient client;
 #elif defined(ESP8266)
@@ -54,6 +60,7 @@ Tested with:
     EthernetClient client;
 #endif
 
+/* If you have a private include, define it here, otherwise edit WiFi params */
 #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
@@ -78,6 +85,7 @@ int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 
+
 /*****************************************************************************/
 /* Arduino setup()                                                           */
 /*****************************************************************************/
@@ -86,9 +94,12 @@ void setup(void) {
     int rc = 0;
     int ntp_tries = 20;
     char* wc_error_message = (char*)malloc(255 + 1);
-    Serial.begin(serial_baud);
+#ifdef USE_NTP_LIB
     WiFiUDP ntpUDP;
     NTPClient timeClient(ntpUDP, "pool.ntp.org");
+#endif
+
+    Serial.begin(serial_baud);
 
     #if defined(USING_WIFI)
         /* Connect to WiFi */
@@ -102,38 +113,42 @@ void setup(void) {
 
         Serial.print("Connected to WiFi");
         Serial.println(ssid);
-        Serial.print("Client IP = ");
+        Serial.print("wolfSSL Example Client IP = ");
         Serial.println(WiFi.localIP());
-
-        /* we need an timedate in the range of cert expiration */
-        timeClient.begin();
-        timeClient.update();
-        delay(1000);
-        while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
-            timeClient.forceUpdate();
-            Serial.println("Waiting for NTP update");
-            delay(2000);
-            ntp_tries--;
-        }
-        if (ntp_tries <= 0) {
-            Serial.println("Warning: gave up waiting on NTP");
-        }
-        Serial.println(timeClient.getFormattedTime());
-        Serial.println(timeClient.getEpochTime());
-
-        ntp_tries = 5;
-        configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
-
-        // Wait for time to be set
-        while ((time(nullptr) <= 100000) && ntp_tries > 0) {
-            Serial.println("Waiting for time to be set...");
-            delay(1000);
-            ntp_tries--;
-        }
-
     #else
         /* We'll assume the Ethernet connection is ready to go.*/
     #endif
+
+    /* we need a date in the range of cert expiration */
+#ifdef USE_NTP_LIB
+    timeClient.begin();
+    timeClient.update();
+    delay(1000);
+    while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
+        timeClient.forceUpdate();
+        Serial.println("Waiting for NTP update");
+        delay(2000);
+        ntp_tries--;
+    }
+    if (ntp_tries <= 0) {
+        Serial.println("Warning: gave up waiting on NTP");
+    }
+    Serial.println(timeClient.getFormattedTime());
+    Serial.println(timeClient.getEpochTime());
+#endif
+
+#if defined(ESP32)
+    /* see esp32-hal-time.c */
+    ntp_tries = 5;
+    configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
+
+    /* Wait for time to be set */
+    while ((time(nullptr) <= 100000) && ntp_tries > 0) {
+        Serial.println("Waiting for time to be set...");
+        delay(2000);
+        ntp_tries--;
+    }
+#endif
 
     /* Delay need to ensure connection to server */
     delay(4000);
@@ -154,7 +169,7 @@ void setup(void) {
                                         sizeof_ca_cert_der_2048,\
                                         WOLFSSL_FILETYPE_ASN1);
     if (rc == WOLFSSL_SUCCESS) {
-        Serial.print("Success: load_verify ca_cert_der_2048.");
+        Serial.print("Success: load_verify ca_cert_der_2048");
     }
     else {
         Serial.print("Error: wolfSSL_CTX_load_verify_buffer failed: ");
@@ -167,7 +182,7 @@ void setup(void) {
                                             sizeof_client_cert_der_2048,\
                                             WOLFSSL_FILETYPE_ASN1);
     if (rc == WOLFSSL_SUCCESS) {
-        Serial.print("Success: use certificate ca_cert_der_2048.");
+        Serial.print("Success: use certificate ca_cert_der_2048");
     }
     else {
         Serial.print("Error: wolfSSL_CTX_use_certificate_buffer failed: ");
