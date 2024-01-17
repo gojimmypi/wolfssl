@@ -165,7 +165,8 @@ void setup(void) {
     else {
         Serial.println("ERROR: wolfSSL_Init failed");
     }
-    /* Delay need to ensure connection to server */
+
+    /* Delay needed to ensure connection to server. TODO: really ? */
     delay(4000);
     Serial.println("Here we go!");
 
@@ -186,6 +187,7 @@ void setup(void) {
     wolfSSL_SetIORecv(ctx, EthernetReceive);
 
     /* Certificate */
+    Serial.println("Initializing certificates...");
     ret = wolfSSL_CTX_use_certificate_buffer(ctx,
                                              server_cert_der_2048,
                                              sizeof_server_cert_der_2048,
@@ -216,10 +218,11 @@ void setup(void) {
     /* Start the server
      * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
      */
+    Serial.println("Begin Server... (waiting for client)"); 
     server.begin();
 
   return;
-}
+} /* Arduino setup */
 
 /*****************************************************************************/
 /* EthernetSend() to send a message string. See Arduino loop()               */
@@ -245,23 +248,26 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /* Arduino loop()                                                            */
 /*****************************************************************************/
 void loop() {
+    char errBuf[256]   = "(no error";
+    char reply[256]    = "(no reply)";
+    const char msg[]   = "I hear you fa shizzle!";
     int ret            = 0;
     int input          = 0;
-    char errBuf[80]    = "(no error";
-    char reply[80]     = "(no reply)";
     int replySz        = 0;
     const char* cipherName;
 
     /* Listen for incoming client requests. */
     client = server.available();
     if (!client) {
-        //Serial.println("ERROR: Failed to create a client.");
-        return; // fail_wait();
+        delay(10);
+        return;
     }
 
+    Serial.println("Found a client!")
     if (client.connected()) {
 
-        Serial.println("Client connected");
+        Serial.print("Client connected from ");
+        Serial.println(client.remoteIP());
 
         ssl = wolfSSL_new(ctx);
         if (ssl == NULL) {
@@ -284,8 +290,9 @@ void loop() {
         Serial.print("Server Read: ");
         /* wait for data */
         while (!client.available()) {
-
+            delay(10);
         }
+
         /* read data */
         while (wolfSSL_pending(ssl)) {
             input = wolfSSL_read(ssl, reply, sizeof(reply) - 1);
@@ -302,22 +309,35 @@ void loop() {
                 Serial.print(reply);
             }
             else {
-                Serial.println();
+                Serial.println("<end of reply, input == 0>");
             }
         }
 
+        /* Write our reply into buff */
+        memset(reply, 0, sizeof(reply));
+        memcpy(reply, msg, sizeof(msg));
+        replySz = strnlen(reply, sizeof(reply));
+
         /* echo data */
+        Serial.println("Sending reply...");
         if ((wolfSSL_write(ssl, reply, replySz)) != replySz) {
             ret = wolfSSL_get_error(ssl, 0);
             wolfSSL_ERR_error_string(ret, errBuf);
             Serial.print("TLS Write Error: ");
             Serial.println(errBuf);
         }
+        else {
+            Serial.println("Reply sent!");
+        }
 
         wolfSSL_shutdown(ssl);
         wolfSSL_free(ssl);
     }
+    else {
+        Serial.println("Client not connected. Trying again...")
+        delay(100);
+    }
 
     client.stop();
     Serial.println("Connection complete");
-}
+} /* Arduino loop repeats */
