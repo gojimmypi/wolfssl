@@ -86,6 +86,12 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 
 
+void fail_wait(void) {
+    Serial.println("Failed");
+    while(1) {
+        delay(1000);
+    }
+}
 /*****************************************************************************/
 /* Arduino setup()                                                           */
 /*****************************************************************************/
@@ -101,23 +107,27 @@ void setup(void) {
 
     Serial.begin(serial_baud);
 
-    #if defined(USING_WIFI)
-        /* Connect to WiFi */
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(ssid, password);
-        while (WiFi.status() != WL_CONNECTED) {
-            delay(1000);
-            Serial.print("Connecting to WiFi ");
-            Serial.println(ssid);
-        }
-
-        Serial.print("Connected to WiFi");
+#if defined(USING_WIFI)
+    /* Connect to WiFi */
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.print("Connecting to WiFi ");
         Serial.println(ssid);
-        Serial.print("wolfSSL Example Client IP = ");
-        Serial.println(WiFi.localIP());
-    #else
-        /* We'll assume the Ethernet connection is ready to go.*/
-    #endif
+    }
+
+    Serial.print("Connected to WiFi ");
+    Serial.println(ssid);
+#else
+    /* We'll assume the Ethernet connection is ready to go.*/
+#endif
+    Serial.println("********************************************************");
+    Serial.print("   wolfSSL Example Client IP = ");
+    Serial.println(WiFi.localIP());
+    Serial.print("Configured Server Host to connect to: ");
+    Serial.println(host);
+    Serial.println("********************************************************");
 
     /* we need a date in the range of cert expiration */
 #ifdef USE_NTP_LIB
@@ -228,12 +238,6 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     return ret;
 }
 
-void fail_wait() {
-    Serial.println("Failed");
-    while(1) {
-        delay(1000);
-    }
-}
 /*****************************************************************************/
 /* Arduino loop()                                                            */
 /*****************************************************************************/
