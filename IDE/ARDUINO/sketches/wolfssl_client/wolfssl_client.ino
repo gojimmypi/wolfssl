@@ -129,7 +129,7 @@ void setup(void) {
             Serial.println("Waiting for time to be set...");
             delay(1000);
             ntp_tries--;
-        }        
+        }
 
     #else
         /* We'll assume the Ethernet connection is ready to go.*/
@@ -153,24 +153,41 @@ void setup(void) {
     rc = wolfSSL_CTX_load_verify_buffer(ctx, ca_cert_der_2048,\
                                         sizeof_ca_cert_der_2048,\
                                         WOLFSSL_FILETYPE_ASN1);
-    Serial.print("\n\n Return code of load_verify is:");
-    Serial.println(rc);
-    Serial.println("");
-    wc_ErrorString(rc, wc_error_message);
-    Serial.println(wc_error_message);
-    
+    if (rc == WOLFSSL_SUCCESS) {
+        Serial.print("Success: load_verify ca_cert_der_2048.");
+    }
+    else {
+        Serial.print("Error: wolfSSL_CTX_load_verify_buffer failed: ");
+        wc_ErrorString(rc, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
+    /* Certificate */
     rc = wolfSSL_CTX_use_certificate_buffer(ctx, client_cert_der_2048,\
                                             sizeof_client_cert_der_2048,\
                                             WOLFSSL_FILETYPE_ASN1);
-    Serial.print("\n\n Return code of use_certificate_buffer is:");
-    Serial.println(rc);
-    Serial.println("");
+    if (rc == WOLFSSL_SUCCESS) {
+        Serial.print("Success: use certificate ca_cert_der_2048.");
+    }
+    else {
+        Serial.print("Error: wolfSSL_CTX_use_certificate_buffer failed: ");
+        wc_ErrorString(rc, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
+    /* Private Key */
     rc = wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key_der_2048,\
                                             sizeof_client_key_der_2048,\
                                             WOLFSSL_FILETYPE_ASN1);
-    Serial.print("\n\n Return code of use_PrivateKey_buffer is:");
-    Serial.println(rc);
-    Serial.println("");
+    if (rc == WOLFSSL_SUCCESS) {
+        Serial.print("Success: use private key buffer ca_cert_der_2048.");
+    }
+    else {
+        Serial.print("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: ");
+        wc_ErrorString(rc, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
     return;
@@ -200,7 +217,7 @@ void fail_wait() {
     Serial.println("Failed");
     while(1) {
         delay(1000);
-    } 
+    }
 }
 /*****************************************************************************/
 /* Arduino loop()                                                            */
