@@ -3,6 +3,9 @@
 # All paths should be given relative to the root
 
 EXTRA_DIST+= IDE/ARDUINO/README.md
+EXTRA_DIST+= IDE/ARDUINO/Arduino_README_prepend.md
+EXTRA_DIST+= IDE/ARDUINO/library.properties.template
+EXTRA_DIST+= IDE/ARDUINO/PREPENDED_README.md
 EXTRA_DIST+= IDE/ARDUINO/sketches/README.md
 EXTRA_DIST+= IDE/ARDUINO/sketches/wolfssl_client/README.md
 EXTRA_DIST+= IDE/ARDUINO/sketches/wolfssl_client/wolfssl_client.ino

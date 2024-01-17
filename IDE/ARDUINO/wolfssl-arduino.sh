@@ -10,10 +10,13 @@
 #
 # To ensure a pristine build, the directory must not exist.
 #
-# REminder there's typically no $USER for github actions, but:
+# Reminder there's typically no $USER for GitHub actions, but:
 # ROOT_DIR="/mnt/c/Users/$USER/Documents/Arduino/libraries"
 #
 ROOT_DIR="/wolfSSL"
+
+# The Arduino Version will initially have a suffix appended during fine tuning stage.
+WOLFSSL_VERSION_ARUINO_SUFFIX="01"
 
 # For verbose copy, set CP_CMD="-v", otherwise clear it: CP_CMD="cp"
 # Do not set to empty string, as copy will fail with this: CP_CMD=""
@@ -30,7 +33,7 @@ MY_SHELLCHECK="shellcheck"
 # we'll allow extra files, overwrites, etc.
 #
 # Note in all cases, the local IDE/ARDUINO/wolfSSL must be empty.
-THIS_INSTALL_IS_GITHUB=false
+THIS_INSTALL_IS_GITHUB="false"
 
 # Check if the executable is available in the PATH
 if command -v "$MY_SHELLCHECK" >/dev/null 2>&1; then
@@ -68,20 +71,20 @@ if [ $# -gt 0 ]; then
     if [ "$THIS_OPERATION" = "INSTALL" ]; then
         THIS_INSTALL_DIR=$2
 
-        echo "Install is active"
+        echo "Install is active."
 
         if [ "$THIS_INSTALL_DIR" = "" ]; then
             if [ -d "$ARDUINO_ROOT$ROOT_DIR" ]; then
                 echo "Error: the installation directory already exists: $ARDUINO_ROOT$ROOT_DIR"
                 echo "A new directory needs to be created to ensure there are no stray files"
-                echo "Please delete the directory (or rename it) and try again."
+                echo "Please delete or move the directory and try again."
                 exit 1
             fi
         else
             echo "Installing to $THIS_INSTALL_DIR"
             if [ -d "$THIS_INSTALL_DIR/.git" ];then
                 echo "Target is a GitHub repository."
-                THIS_INSTALL_IS_GITHUB=true
+                THIS_INSTALL_IS_GITHUB="true"
             else
                 echo "Target is NOT a GitHub repository."
             fi
@@ -102,8 +105,7 @@ WOLFCRYPT_HEADERS="${WOLFSSL_HEADERS}/wolfcrypt"
 OPENSSL_DIR="${WOLFSSL_HEADERS}/openssl"
 
 
-
-# TOP indicates the file directory comes from the top level of the wolfssl repo
+# TOP indicates the file directory for top level of the wolfssl repository.
 TOP_DIR="../.."
 WOLFSSL_SRC_TOP="${TOP_DIR}/src"
 WOLFSSL_HEADERS_TOP="${TOP_DIR}/wolfssl"
@@ -113,7 +115,6 @@ WOLFCRYPT_HEADERS_TOP="${WOLFSSL_HEADERS_TOP}/wolfcrypt"
 OPENSSL_DIR_TOP="${WOLFSSL_HEADERS_TOP}/openssl"
 
 
-# TODO: Parse version number
 WOLFSSL_VERSION=$(grep -i "LIBWOLFSSL_VERSION_STRING" ${TOP_DIR}/wolfssl/version.h | cut -d '"' -f 2)
 if [ "$WOLFSSL_VERSION" = "" ]; then
     echo "ERROR: Could not find wolfSSL Version in ${TOP_DIR}/wolfssl/version.h"
@@ -122,10 +123,10 @@ else
     echo "Found wolfSSL version $WOLFSSL_VERSION"
 fi
 
-DIR=${PWD##*/}
+THIS_DIR=${PWD##*/}
 
-if [ "$DIR" = "ARDUINO" ]; then
-    #
+if [ "$THIS_DIR" = "ARDUINO" ]; then
+    # mkdir ./wolfSSL
     if [ -d ".${ROOT_DIR}" ]; then
         echo "ERROR: $(realpath ".${ROOT_DIR}") is not empty"
         exit 1
@@ -134,22 +135,23 @@ if [ "$DIR" = "ARDUINO" ]; then
         mkdir .${ROOT_DIR}
     fi
 
-    #
+    # mkdir ./wolfSSL/src
     if [ ! -d ".${ROOT_SRC_DIR}" ]; then
         echo "Step 02: mkdir .${ROOT_SRC_DIR}"
         mkdir .${ROOT_SRC_DIR}
     fi
 
-    #
+    # mkdir ./wolfSSL/src/wolfssl
     if [ ! -d ".${WOLFSSL_HEADERS}" ]; then
         echo "Step 03: mkdir .${WOLFSSL_HEADERS}"
         mkdir .${WOLFSSL_HEADERS}
     fi
 
-    #
+    #  cp ../../wolfssl/*.h  ./wolfSSL/src/wolfssl
     echo "Step 04: cp    ${WOLFSSL_HEADERS_TOP}/*.h               .${WOLFSSL_HEADERS}"
     $CP_CMD ${WOLFSSL_HEADERS_TOP}/*.h .${WOLFSSL_HEADERS}
     if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
+        #  mkdir ./wolfSSL/src/wolfssl/wolfcrypt
         echo "Step 05: mkdir .${WOLFCRYPT_HEADERS}"
         mkdir .${WOLFCRYPT_HEADERS}
         mkdir .${WOLFCRYPT_HEADERS}/port
@@ -157,15 +159,7 @@ if [ "$DIR" = "ARDUINO" ]; then
         mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
     fi
 
-    # is this a dupe?
-#    if [ ! -d ".${WOLFCRYPT_HEADERS}" ]; then
-#        echo "Step 03: mkdir .${WOLFCRYPT_HEADERS}"
-#        mkdir .${WOLFCRYPT_HEADERS}
-#        mkdir .${WOLFCRYPT_HEADERS}/port
-#        mkdir .${WOLFCRYPT_HEADERS}/port/atmel
-#        mkdir .${WOLFCRYPT_HEADERS}/port/Espressif
-#    fi
-
+    # cp  ../../wolfssl/wolfcrypt/*.h  ./wolfSSL/src/wolfssl/wolfcrypt
     echo "Step 06: cp    ${WOLFCRYPT_HEADERS_TOP}/*.h     .${WOLFCRYPT_HEADERS}"
     $CP_CMD ${WOLFCRYPT_HEADERS_TOP}/*.h                .${WOLFCRYPT_HEADERS}                 || exit 1
     $CP_CMD ${WOLFCRYPT_HEADERS_TOP}/port/atmel/*.h     .${WOLFCRYPT_HEADERS}/port/atmel      || exit 1
@@ -173,10 +167,12 @@ if [ "$DIR" = "ARDUINO" ]; then
 
     # Add in source files to wolfcrypt/src
     if [ ! -d ".${WOLFCRYPT_ROOT}" ]; then
-        #
+        # mkdir ./wolfSSL/src/wolfcrypt
         echo "Step 07: mkdir .${WOLFCRYPT_ROOT}"
         mkdir .${WOLFCRYPT_ROOT}
     fi
+
+    # mkdir ./wolfSSL/src/wolfcrypt/src
     if [ ! -d ".${WOLFCRYPT_SRC}" ]; then
         echo "Step 08: mkdir .${WOLFCRYPT_SRC}"
         mkdir .${WOLFCRYPT_SRC}
@@ -185,13 +181,15 @@ if [ "$DIR" = "ARDUINO" ]; then
         mkdir .${WOLFCRYPT_SRC}/port/Espressif
     fi
 
-    echo "Step 09: cp    ${WOLFCRYPT_SRC_TOP}/*.c          .${WOLFCRYPT_SRC}"
+    # cp  ../../wolfcrypt/src/*.c  ./wolfSSL/src/wolfcrypt/src
+    echo "Step 09: cp    ${WOLFCRYPT_SRC_TOP}/*.c         .${WOLFCRYPT_SRC}"
     $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/*.c                  .${WOLFCRYPT_SRC}                || exit 1
     $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/port/atmel/*.c       .${WOLFCRYPT_SRC}/port/atmel     || exit 1
     $CP_CMD -r ${WOLFCRYPT_SRC_TOP}/port/Espressif/*.c   .${WOLFCRYPT_SRC}/port/Espressif || exit 1
 
     # Add in source files to top level src folders
     if [ ! -d ".${WOLFSSL_SRC}" ]; then
+        # mkdir ./wolfSSL/src/src
         echo "Step 10: mkdir .${WOLFSSL_SRC}"
         mkdir .${WOLFSSL_SRC}
     fi
@@ -258,69 +256,88 @@ EOF
 #EOF
 #    cat .${WOLFCRYPT_HEADERS}/settings.h.bak >> .${WOLFCRYPT_HEADERS}/settings.h
 
-    #Creating library.properties file based off of:
-    #https://arduino.github.io/arduino-cli/0.35/library-specification/#libraryproperties-file-format
+# Create `library.properties`
+# See https://arduino.github.io/arduino-cli/0.35/library-specification/#libraryproperties-file-format
 
-    cat > .${ROOT_DIR}/library.properties <<EOF
-name=wolfSSL
-version=${WOLFSSL_VERSION}
-author=wolfSSL inc
-maintainer=wolfSSL inc <support@wolfssl.com>
-sentence=A lightweight SSL/TLS library written in ANSI C and targeted for embedded, RTOS, and resource-constrained environments.
-paragraph=Manual: https://www.wolfssl.com/documentation/manuals/wolfssl/index.html.
-category=Communication
-url=https://www.wolfssl.com/
-architectures=*
-
-EOF
+#     cat > .${ROOT_DIR}/library.properties <<EOF
+# name=wolfSSL
+# version=${WOLFSSL_VERSION}
+# author=wolfSSL inc
+# maintainer=wolfSSL inc <support@wolfssl.com>
+# sentence=A lightweight SSL/TLS library written in ANSI C and targeted for embedded, RTOS, and resource-constrained environments.
+# paragraph=Manual: https://www.wolfssl.com/documentation/manuals/wolfssl/index.html.
+# category=Communication
+# url=https://www.wolfssl.com/
+# architectures=*
+#
+# EOF
 
 else
     echo "ERROR: You must be in the IDE/ARDUINO directory to run this script"
     exit 1
 fi
 
-# At this point, the library is complete, but we want some additional files.
-
+# At this point, the library is complete, but we need some additional files.
+#
+# optional diagnostics:
 # echo ".${ROOT_DIR}"
 # echo "${TOP_DIR}"
 # echo "cp ${TOP_DIR}/README.md     .${ROOT_DIR}/"
 
-# Replace the $$WOLFSSL_VERSION$$ text in Arduino_README_prepend.md,
+# Replace the `${WOLFSSL_VERSION}` text in Arduino_README_prepend.md,
 # saving it to a .tmp file. Prepend that file to the wolfSSL README.md
 # file as PREPENDED_README.md, then copy that to the publish directory
 # as an Arduino-specific README.md file.
-
-VERSION_PLACEHOLDER="\$\$WOLFSSL_VERSION\$\$"
+VERSION_PLACEHOLDER="\${WOLFSSL_VERSION}"
+ARDUINO_VERSION_SUFFIX_PLACEHOLDER="\${WOLFSSL_VERSION_ARUINO_SUFFIX}"
 PREPEND_FILE="Arduino_README_prepend.md"
-sed "s/$VERSION_PLACEHOLDER/$WOLFSSL_VERSION/" "$PREPEND_FILE" > "$PREPEND_FILE.tmp"
+PROPERTIES_FILE_TEMPLATE="library.properties.template"
+sed s/"$VERSION_PLACEHOLDER"/"$WOLFSSL_VERSION"/ "$PREPEND_FILE" > "$PREPEND_FILE.tmp"
 cat "$PREPEND_FILE.tmp" ${TOP_DIR}/README.md > PREPENDED_README.md
 
-echo "Step 11: Final root file copy"
-$CP_CMD  PREPENDED_README.md      .${ROOT_DIR}/README.md
-$CP_CMD  ${TOP_DIR}/"LICENSING"     .${ROOT_DIR}/
-$CP_CMD  ${TOP_DIR}/"README"        .${ROOT_DIR}/
-$CP_CMD  ${TOP_DIR}/"COPYING"       .${ROOT_DIR}/
-$CP_CMD  ${TOP_DIR}/"ChangeLog.md"  .${ROOT_DIR}/
-$CP_CMD  ${TOP_DIR}/".editorconfig" .${ROOT_DIR}/
-$CP_CMD  ${TOP_DIR}/".gitignore"    .${ROOT_DIR}/
+# Here we'll insert the wolfSSL version into the `library.properties.tmp` file, along with an Arduino version suffix.
+# The result should be something like version=5.6.601 (for the 1st incremental version on top of 5.6.6)
+sed            s/"$VERSION_PLACEHOLDER"/"$WOLFSSL_VERSION"/                              "$PROPERTIES_FILE_TEMPLATE" > "library.properties.tmp"
+sed -i.backup  s/"$ARDUINO_VERSION_SUFFIX_PLACEHOLDER"/"$WOLFSSL_VERSION_ARUINO_SUFFIX"/ "library.properties.tmp"
 
-$CP_CMD  "keywords.txt"             .${ROOT_DIR}/
+# cat library.properties.tmp
+# echo "${WOLFSSL_VERSION_ARUINO_SUFFIX}"
+
+echo "Step 11: Final root file copy"
+$CP_CMD  PREPENDED_README.md        .${ROOT_DIR}/README.md           || exit 1
+$CP_CMD  library.properties.tmp     .${ROOT_DIR}/library.properties  || exit 1
+$CP_CMD  ${TOP_DIR}/"LICENSING"     .${ROOT_DIR}/                    || exit 1
+$CP_CMD  ${TOP_DIR}/"README"        .${ROOT_DIR}/                    || exit 1
+$CP_CMD  ${TOP_DIR}/"COPYING"       .${ROOT_DIR}/                    || exit 1
+$CP_CMD  ${TOP_DIR}/"ChangeLog.md"  .${ROOT_DIR}/                    || exit 1
+$CP_CMD  ${TOP_DIR}/".editorconfig" .${ROOT_DIR}/                    || exit 1
+$CP_CMD  ${TOP_DIR}/".gitignore"    .${ROOT_DIR}/                    || exit 1
+
+$CP_CMD  "keywords.txt"             .${ROOT_DIR}/                    || exit 1
 
 
 echo "Step 12: workspace to publish:"
+echo ""
+head -n 3  PREPENDED_README.md
+echo ""
 ls ./wolfSSL -al
+echo ""
 
 # Optionally install to a separate directory.
 # Note we should have exited above if a problem was encountered,
 # as we'll never want to install a bad library.
 if [ "$THIS_OPERATION" = "INSTALL" ]; then
-    if [ $THIS_INSTALL_IS_GITHUB ]; then
+    if [ "$THIS_INSTALL_IS_GITHUB" = "true" ]; then
         echo "Installing to GitHub directory: $THIS_INSTALL_DIR"
-        cp -r ".$ROOT_DIR"/* "$THIS_INSTALL_DIR"
+        cp -r ".$ROOT_DIR"/* "$THIS_INSTALL_DIR" || exit 1
     else
-        echo "Install: cp ../../examples/configs/user_settings_arduino.h  .${ROOT_SRC_DIR}/user_settings.h"
+        echo "Install:"
+        echo "cp ../../examples/configs/user_settings_arduino.h  .${ROOT_SRC_DIR}/user_settings.h"
         cp ../../examples/configs/user_settings_arduino.h  ".${ROOT_SRC_DIR}/user_settings.h" || exit 1
+
         echo "mv $ROOT_DIR $ARDUINO_ROOT"
-        mv ".$ROOT_DIR" "$ARDUINO_ROOT"
+        mv ".$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
     fi
 fi
+
+echo "Done!"
