@@ -28,7 +28,7 @@
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include <user_settings.h>
+/* Reminder: settings.h includes user_settings.h */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #ifndef WOLFSSL_ESPIDF
     #warning "Problem with wolfSSL user_settings."

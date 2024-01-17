@@ -29,11 +29,13 @@ Tested with:
 2) Espressif ESP32 WiFi
 */
 
-#define USE_CERT_BUFFERS_2048
+// #define USE_CERT_BUFFERS_2048
 #include <wolfssl.h>
+#include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 #include <Ethernet.h>
 #include <wolfssl/certs_test.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
 
 /* optional board-specific networking includes */
 #if defined(ESP32)
@@ -65,7 +67,7 @@ Tested with:
     const char* password = "your_PASSWORD";
 #endif
 
-const char host[] = "192.168.1.39"; /* server to connect to */
+const char host[] = "192.168.1.38"; /* server to connect to */
 const int port = 11111; /* port on server to connect to */
 const int serial_baud = 115200; /* local serial port to monitor */
 
@@ -77,16 +79,17 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 
 /*****************************************************************************/
-/* Arduino setup()
+/* Arduino setup()                                                           */
 /*****************************************************************************/
 void setup(void) {
     WOLFSSL_METHOD* method;
     int rc = 0;
-
+    int ntp_tries = 20;
+    char* wc_error_message = (char*)malloc(255 + 1);
     Serial.begin(serial_baud);
     WiFiUDP ntpUDP;
     NTPClient timeClient(ntpUDP, "pool.ntp.org");
-  
+
     #if defined(USING_WIFI)
         /* Connect to WiFi */
         WiFi.mode(WIFI_STA);
@@ -101,27 +104,49 @@ void setup(void) {
         Serial.println(ssid);
         Serial.print("Client IP = ");
         Serial.println(WiFi.localIP());
-        
+
+        /* we need an timedate in the range of cert expiration */
         timeClient.begin();
-        delay(2000);
         timeClient.update();
+        delay(1000);
+        while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
+            timeClient.forceUpdate();
+            Serial.println("Waiting for NTP update");
+            delay(2000);
+            ntp_tries--;
+        }
+        if (ntp_tries <= 0) {
+            Serial.println("Warning: gave up waiting on NTP");
+        }
         Serial.println(timeClient.getFormattedTime());
+        Serial.println(timeClient.getEpochTime());
+
+        ntp_tries = 5;
+        configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
+
+        // Wait for time to be set
+        while ((time(nullptr) <= 100000) && ntp_tries > 0) {
+            Serial.println("Waiting for time to be set...");
+            delay(1000);
+            ntp_tries--;
+        }        
+
     #else
         /* We'll assume the Ethernet connection is ready to go.*/
     #endif
 
     /* Delay need to ensure connection to server */
     delay(4000);
-
-    method = wolfTLSv1_2_client_method();
+    Serial.println("Here we go!");
+    method = wolfSSLv23_client_method();
     if (method == NULL) {
         Serial.println("unable to get method");
-    return;
+        return;
     }
     ctx = wolfSSL_CTX_new(method);
     if (ctx == NULL) {
         Serial.println("unable to get ctx");
-    return;
+        return;
     }
     /* initialize wolfSSL using callback functions */
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, 0);
@@ -131,6 +156,9 @@ void setup(void) {
     Serial.print("\n\n Return code of load_verify is:");
     Serial.println(rc);
     Serial.println("");
+    wc_ErrorString(rc, wc_error_message);
+    Serial.println(wc_error_message);
+    
     rc = wolfSSL_CTX_use_certificate_buffer(ctx, client_cert_der_2048,\
                                             sizeof_client_cert_der_2048,\
                                             WOLFSSL_FILETYPE_ASN1);
@@ -149,7 +177,7 @@ void setup(void) {
 }
 
 /*****************************************************************************/
-/* EthernetSend() to send a message msg string.
+/* EthernetSend() to send a message msg string.                              */
 /*****************************************************************************/
 int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
     int sent = 0;
@@ -158,7 +186,7 @@ int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
 }
 
 /*****************************************************************************/
-/* EthernetReceive() to receive a reply string.
+/* EthernetReceive() to receive a reply string.                              */
 /*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
@@ -168,8 +196,14 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     return ret;
 }
 
+void fail_wait() {
+    Serial.println("Failed");
+    while(1) {
+        delay(1000);
+    } 
+}
 /*****************************************************************************/
-/* Arduino loop()
+/* Arduino loop()                                                            */
 /*****************************************************************************/
 void loop() {
     int err            = 0;
@@ -188,7 +222,7 @@ void loop() {
             ssl = wolfSSL_new(ctx);
             if (ssl == NULL) {
                 Serial.println("Unable to allocate SSL object");
-                return;
+                fail_wait();
             }
             err = wolfSSL_connect(ssl);
             if (err != WOLFSSL_SUCCESS) {
@@ -208,7 +242,9 @@ void loop() {
                 while (!client.available()) {}
                 /* read data */
                 while (wolfSSL_pending(ssl)) {
+                    Serial.println("Start wolfSSL_read");
                     input = wolfSSL_read(ssl, reply, sizeof(reply) - 1);
+                    Serial.println("Finish wolfSSL_read");
                     total_input += input;
                     if (input < 0) {
                         err = wolfSSL_get_error(ssl, 0);
