@@ -218,7 +218,7 @@ void setup(void) {
     /* Start the server
      * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
      */
-    Serial.println("Begin Server... (waiting for client)"); 
+    Serial.println("Begin Server... (waiting for client)");
     server.begin();
 
   return;
@@ -238,6 +238,9 @@ int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
 /*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
+    while (client.available() <= 0) {
+        
+    }
     while (client.available() > 0 && ret < sz) {
         reply[ret++] = client.read();
     }
@@ -290,7 +293,7 @@ void loop() {
         Serial.print("Server Read: ");
         /* wait for data */
         while (!client.available()) {
-            delay(1);
+            /* wait */
         }
 
         /* read data */
@@ -329,7 +332,7 @@ void loop() {
         else {
             Serial.println("Reply sent!");
         }
-
+        delay(1000);
         wolfSSL_shutdown(ssl);
         wolfSSL_free(ssl);
     }
