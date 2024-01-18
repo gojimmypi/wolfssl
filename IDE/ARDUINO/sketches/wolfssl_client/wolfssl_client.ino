@@ -29,7 +29,18 @@ Tested with:
 2) Espressif ESP32 WiFi
 */
 
-// #define USE_CERT_BUFFERS_2048
+/* If you have a private include, define it here, otherwise edit WiFi params */
+#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
+
+/* Edit this with your other TLS host server address to connect to: */
+#define EXAMPLE_HOST "192.168.1.38"
+
+/* wolfssl TLS examples communciate on port 11111 */
+#define WOLFSSL_PORT 11111
+
+/* We'll wait up to 2000 milliseconds to properly shut down connection */
+#define SHUTDOWN_DELAY_MS 2000
+
 #include <wolfssl.h>
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
@@ -60,8 +71,6 @@ Tested with:
     EthernetClient client;
 #endif
 
-/* If you have a private include, define it here, otherwise edit WiFi params */
-#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
      * excluded from GitHub with items such as WiFi passwords */
@@ -74,8 +83,8 @@ Tested with:
     const char* password = "your_PASSWORD";
 #endif
 
-const char host[] = "192.168.1.38"; /* server to connect to */
-const int port = 11111; /* port on server to connect to */
+const char host[] = EXAMPLE_HOST; /* server to connect to */
+const int port = WOLFSSL_PORT; /* port on server to connect to */
 const int serial_baud = 115200; /* local serial port to monitor */
 
 WOLFSSL_CTX* ctx = NULL;
@@ -245,14 +254,17 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /* Arduino loop()                                                            */
 /*****************************************************************************/
 void loop() {
-    int ret            = 0;
-    int input          = 0;
-    int total_input    = 0;
-    char msg[32]       = "hello wolfssl!";
-    int msgSz          = (int)strlen(msg);
     char errBuf[80];
     char reply[80];
+    char msg[32]       = "hello wolfssl!";
     const char* cipherName;
+    int retry_shutdown = SHUTDOWN_DELAY_MS; /* max try, once per millisecond */
+    int total_input    = 0;
+    int msgSz          = 0;
+    int input          = 0;
+    int ret            = 0;
+    msgSz = (int)strlen(msg);
+
     if (reconnect) {
         reconnect--;
         if (client.connect(host, port)) {
@@ -274,7 +286,7 @@ void loop() {
                 Serial.println("Unable to allocate SSL object");
                 fail_wait();
             }
-            
+
             ret = wolfSSL_connect(ssl);
             if (ret != WOLFSSL_SUCCESS) {
                 ret = wolfSSL_get_error(ssl, 0);
@@ -328,12 +340,25 @@ void loop() {
                 Serial.print("TLS Write Error: ");
                 Serial.println(errBuf);
             }
-            wolfSSL_shutdown(ssl);
+
+            Serial.println("Shutdown!");
+            do {
+                delay(1);
+                retry_shutdown--;
+                ret = wolfSSL_shutdown(ssl);
+            } while ((ret == WOLFSSL_SHUTDOWN_NOT_DONE) && (retry_shutdown > 0));
+
+            if (retry_shutdown <= 0) {
+                /* if wolfSSL_free is called before properly shutting down the
+                 * ssl object, undesired rsults may occur. */
+                Serial.println("Warning! Shutdown did not properly complete.");
+            }
+
             wolfSSL_free(ssl);
             client.stop();
             Serial.println("Connection complete.");
             reconnect = 0;
-        }
+        } /* client.connect(host, port) */
         else {
             Serial.println("Trying to reconnect...");
         }
