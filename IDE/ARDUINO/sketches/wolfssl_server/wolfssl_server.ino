@@ -238,9 +238,6 @@ int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
 /*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
-    while (client.available() <= 0) {
-        
-    }
     while (client.available() > 0 && ret < sz) {
         reply[ret++] = client.read();
     }
@@ -258,6 +255,7 @@ void loop() {
     int input          = 0;
     int replySz        = 0;
     const char* cipherName;
+    int retry_shutdown = 2000; /* retry shutdown, once per millisecond */
 
     /* Listen for incoming client requests. */
     client = server.available();
@@ -316,12 +314,11 @@ void loop() {
             }
         }
 
-        /* Write our reply into buff */
+        /* Write our message into reply buffer to send */
         memset(reply, 0, sizeof(reply));
         memcpy(reply, msg, sizeof(msg));
         replySz = strnlen(reply, sizeof(reply));
 
-        /* echo data */
         Serial.println("Sending reply...");
         if ((wolfSSL_write(ssl, reply, replySz)) != replySz) {
             ret = wolfSSL_get_error(ssl, 0);
@@ -332,16 +329,27 @@ void loop() {
         else {
             Serial.println("Reply sent!");
         }
-        delay(1000);
-        wolfSSL_shutdown(ssl);
+        Serial.println("Shutdown!");
+        do {
+            delay(1);
+            retry_shutdown--;
+            ret = wolfSSL_shutdown(ssl);
+        } while ((ret == WOLFSSL_SHUTDOWN_NOT_DONE) && (retry_shutdown > 0));
+
+        if (retry_shutdown <= 0) {
+            /* if wolfSSL_free is called before properly shutting down the
+             * ssl object, undesired rsults may occur. */
+            Serial.println("Warning! Shutdown did not properly complete.");
+        }
+
         wolfSSL_free(ssl);
     }
     else {
         Serial.println("Client not connected. Trying again...");
-        delay(100);
     }
 
     client.stop();
     Serial.println("Connection complete.");
     Serial.println("");
+    delay(1000);
 } /* Arduino loop repeats */
