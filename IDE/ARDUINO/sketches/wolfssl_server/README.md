@@ -27,7 +27,28 @@ connect with the `client` executable:
 ./examples/client/client -h 192.168.1.38 -p 11111 -v 3
 ```
 
-Output expected:
+Here's one possible script to test the server from a command-line client:
+
+```bash
+#!/bin/bash
+echo "client log " > client_log.txt
+counter=1
+THIS_ERR=0
+while [ $THIS_ERR -eq 0 ]; do
+    ./examples/client/client -h 192.168.1.38 -p 11111 -v 3 >> client_log.txt
+
+    THIS_ERR=$?
+    if [ $? -ne 0 ]; then
+        echo "Failed!"
+        exit 1
+    fi
+    echo "Iteration $counter"
+    echo "Iteration $counter" >> client_log.txt
+    ((counter++))
+done
+```
+
+Output expected from the `client` command:
 
 ```
 $ ./examples/client/client -h 192.168.1.38 -p 11111 -v 3

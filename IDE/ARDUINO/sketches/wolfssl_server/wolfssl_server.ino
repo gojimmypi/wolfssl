@@ -22,6 +22,11 @@
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
 
+/* We'll wait up to 2000 milliseconds to properly shut down connection */
+#define SHUTDOWN_DELAY_MS 2000
+
+#define SERIAL_BAUD 115200
+
 #include <wolfssl.h>
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
@@ -74,7 +79,7 @@
 #endif
 
 /* we expect our IP address from DHCP */
-const int serial_baud = 115200; /* local serial port to monitor */
+const int serial_baud = SERIAL_BAUD; /* local serial port to monitor */
 
 WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
@@ -84,7 +89,7 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 
 /* fail_wait - in case of unrecoverable error */
 void fail_wait(void) {
-    Serial.println("Failed");
+    Serial.println("Failed.");
     while(1) {
         delay(1000);
     }
@@ -172,7 +177,7 @@ void setup(void) {
 
     method = wolfSSLv23_server_method();
     if (method == NULL) {
-        Serial.println("unable to get method");
+        Serial.println("unable to get wolfSSLv23_server_method");
         fail_wait();
     }
     ctx = wolfSSL_CTX_new(method);
@@ -221,7 +226,7 @@ void setup(void) {
     Serial.println("Begin Server... (waiting for client)");
     server.begin();
 
-  return;
+    return;
 } /* Arduino setup */
 
 /*****************************************************************************/
@@ -248,14 +253,14 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /* Arduino loop()                                                            */
 /*****************************************************************************/
 void loop() {
-    char errBuf[256]   = "(no error";
-    char reply[256]    = "(no reply)";
+    char errBuf[80]    = "(no error";
+    char reply[80]     = "(no reply)";
     const char msg[]   = "I hear you fa shizzle!";
-    int ret            = 0;
+    const char* cipherName;
     int input          = 0;
     int replySz        = 0;
-    const char* cipherName;
-    int retry_shutdown = 2000; /* retry shutdown, once per millisecond */
+    int retry_shutdown = SHUTDOWN_DELAY_MS; /* max try, once per millisecond */
+    int ret            = 0;
 
     /* Listen for incoming client requests. */
     client = server.available();
@@ -329,6 +334,7 @@ void loop() {
         else {
             Serial.println("Reply sent!");
         }
+
         Serial.println("Shutdown!");
         do {
             delay(1);
