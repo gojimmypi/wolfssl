@@ -263,10 +263,10 @@ void loop() {
         return;
     }
 
-    Serial.println("Found a client!")
+    Serial.println("Found a client!");
     if (client.connected()) {
 
-        Serial.print("Client connected from ");
+        Serial.print("Client connected from remote IP: ");
         Serial.println(client.remoteIP());
 
         ssl = wolfSSL_new(ctx);
@@ -290,7 +290,7 @@ void loop() {
         Serial.print("Server Read: ");
         /* wait for data */
         while (!client.available()) {
-            delay(10);
+            delay(1);
         }
 
         /* read data */
@@ -334,10 +334,11 @@ void loop() {
         wolfSSL_free(ssl);
     }
     else {
-        Serial.println("Client not connected. Trying again...")
+        Serial.println("Client not connected. Trying again...");
         delay(100);
     }
 
     client.stop();
-    Serial.println("Connection complete");
+    Serial.println("Connection complete.");
+    Serial.println("");
 } /* Arduino loop repeats */
