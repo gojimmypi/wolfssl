@@ -302,7 +302,6 @@ void loop() {
             }
 
             Serial.println("Connecting to wolfSSL server....");
-
             do {
                 err = 0; /* reset error */
                 ret = wolfSSL_connect(ssl);
@@ -312,17 +311,7 @@ void loop() {
                     Serial.print("TLS Connect Error: ");
                     Serial.println(errBuf);
                 }
-                Serial.print(err); //
             } while (err == WC_PENDING_E);
-            Serial.println(); //
-
-//            if (ret != WOLFSSL_SUCCESS) {
-//                ret = wolfSSL_get_error(ssl, 0);
-//                wolfSSL_ERR_error_string(ret, errBuf);
-//                Serial.print("TLS Connect Error: ");
-//                Serial.println(errBuf);
-//            }
-
 
             Serial.print("SSL version is ");
             Serial.println(wolfSSL_get_version(ssl));
@@ -339,46 +328,22 @@ void loop() {
             Serial.print("Sending secure message to server: ");
             Serial.println(msg);
             if ((wolfSSL_write(ssl, msg, msgSz)) == msgSz) {
-                Serial.print("Waiting for Server response.");
+                Serial.println("Waiting for Server response...");
                 /* wait for data */
                 while (!client.available()) {
                     /* wait */
                 }
 
                 /* read data */
-    do {
-        ret = wolfSSL_read(ssl, reply, sizeof(reply)-1);
-        if (ret < 0) {
-            err = wolfSSL_get_error(ssl, 0);
-        }
-    } while (err == WC_PENDING_E);
-    Serial.println(reply);
+                do {
+                    ret = wolfSSL_read(ssl, reply, sizeof(reply)-1);
+                    if (ret < 0) {
+                        err = wolfSSL_get_error(ssl, 0);
+                    }
+                } while (err == WC_PENDING_E);
+                Serial.println(reply);
 
-/*
-                while (wolfSSL_pending(ssl)) {
-                    input = wolfSSL_read(ssl, reply, sizeof(reply) - 1);
-                    Serial.println("Finish wolfSSL_read");
-                    total_input += input;
-                    if (input < 0) {
-                        ret = wolfSSL_get_error(ssl, 0);
-                        wolfSSL_ERR_error_string(ret, errBuf);
-                        Serial.print("TLS Read Error: ");
-                        Serial.println(errBuf);
-                        break;
-                    }
-                    else if (input > 0) {
-                        reply[input] = '\0';
-                        Serial.print(reply);
-                    }
-                    else {
-                        Serial.println();
-                        Serial.println("<end> (input = 0)");
-                    }
-                }
-                */
-                /* while wolfSSL_pending */
-                Serial.println("Pending Data Done");
-            }
+            } /* any message size mismatch is an error */
             else {
                 ret = wolfSSL_get_error(ssl, 0);
                 wolfSSL_ERR_error_string(ret, errBuf);
@@ -395,7 +360,7 @@ void loop() {
 
             if (retry_shutdown <= 0) {
                 /* if wolfSSL_free is called before properly shutting down the
-                 * ssl object, undesired rsults may occur. */
+                 * ssl object, undesired results may occur. */
                 Serial.println("Warning! Shutdown did not properly complete.");
             }
 
