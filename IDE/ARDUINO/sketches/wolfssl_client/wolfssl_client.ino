@@ -71,7 +71,7 @@ Tested with:
     #include <ESP8266WiFi.h>
     WiFiClient client;
 /* #elif defined(OTHER_BOARD) */
-    /* TODO other boards here */
+    /* TODO define other boards here */
 #else
     EthernetClient client;
 #endif
@@ -320,7 +320,8 @@ void loop() {
             Serial.print("SSL cipher suite is ");
             Serial.println(cipherName);
 
-            /* see test.h 
+            /* see test.h
+             * TODO: test.h needs a little bit of Arduino work for these:
             showPeerEx(ssl, lng_index);
             showPeerPEM(ssl);
             */
@@ -329,9 +330,8 @@ void loop() {
             Serial.println(msg);
             if ((wolfSSL_write(ssl, msg, msgSz)) == msgSz) {
                 Serial.println("Waiting for Server response...");
-                /* wait for data */
                 while (!client.available()) {
-                    /* wait */
+                    /* wait for  data */
                 }
 
                 /* read data */
@@ -339,24 +339,28 @@ void loop() {
                     ret = wolfSSL_read(ssl, reply, sizeof(reply)-1);
                     if (ret < 0) {
                         err = wolfSSL_get_error(ssl, 0);
-                    }
+                        wolfSSL_ERR_error_string(err, errBuf);
+                        Serial.print("ERROR during TLS Read: ");
+                        Serial.println(errBuf);                    }
                 } while (err == WC_PENDING_E);
                 Serial.println(reply);
 
-            } /* any message size mismatch is an error */
+            } /* wolfSSL_write message size matched */
             else {
-                ret = wolfSSL_get_error(ssl, 0);
-                wolfSSL_ERR_error_string(ret, errBuf);
-                Serial.print("TLS Write Error: ");
+                err = wolfSSL_get_error(ssl, 0);
+                wolfSSL_ERR_error_string(err, errBuf);
+                Serial.print("ERROR: during TLS Write ");
                 Serial.println(errBuf);
-            }
+            }  /* any wolfSSL_write message size mismatch is an error */
 
             Serial.println("Shutdown!");
             do {
                 delay(1);
                 retry_shutdown--;
                 ret = wolfSSL_shutdown(ssl);
-            } while ((ret == WOLFSSL_SHUTDOWN_NOT_DONE) && (retry_shutdown > 0));
+            } while (   (ret == WOLFSSL_SHUTDOWN_NOT_DONE)
+                     && (retry_shutdown > 0)
+                    ); /* There may be pending data, so wait. */
 
             if (retry_shutdown <= 0) {
                 /* if wolfSSL_free is called before properly shutting down the
@@ -367,11 +371,18 @@ void loop() {
             wolfSSL_free(ssl);
             client.stop();
             Serial.println("Connection complete.");
-            reconnect = 0;
+            reconnect = 10; /* to repeatedly test, reset this to non-zero */
         } /* client.connect(host, port) */
         else {
             Serial.println("Problem sending message. Trying to reconnect...");
         }
     }
     delay(1000);
+    if (reconnect > 0) {
+        Serial.println("Arduino loop repeating...");
+        Serial.println();
+    }
+    else {
+        Serial.println("Done!");
+    }
 } /* Arduino loop repeats */
