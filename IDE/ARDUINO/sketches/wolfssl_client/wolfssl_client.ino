@@ -170,7 +170,7 @@ void show_memory(void)
 #endif
 
 #if defined(DEBUG_WOLFSSL)
-    Serial.print("My guess at free mem: ");
+    Serial.print("Estimated free memory: ");
     Serial.println(stack_ptr - heapend + mi.fordblks);
 #endif
 
@@ -212,8 +212,12 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /*****************************************************************************/
 static int setup_hardware(void) {
     int ret = 0;
+
+#if defined(__arm__)
+    /* need to manually turn on random number generator on Arduino Due, etc. */
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
+#endif
 
     show_memory();
     randomSeed(analogRead(0));
@@ -314,8 +318,9 @@ static int setup_network(void) {
         Serial.print(F("  DHCP assigned IP "));
         Serial.println(Ethernet.localIP());
     }
-    /* We'll assume the Ethernet connection is ready to go.*/
+    /* We'll assume the Ethernet connection is ready to go. */
 #endif
+
     Serial.println(F("********************************************************"));
     Serial.print(F("      wolfSSL Example Client IP = "));
 #if defined(USING_WIFI)
@@ -329,7 +334,7 @@ static int setup_network(void) {
 
     /* Delay need to ensure connection to server */
     // delay(4000);
-    Serial.println(F("Here we go!"));
+    Serial.println(F("Setup network complete."));
 
     return ret;
 }
@@ -343,7 +348,7 @@ static int setup_wolfssl(void) {
 
     method = wolfSSLv23_client_method();
     if (method == NULL) {
-        Serial.println(F("unable to get method"));
+        Serial.println(F("unable to get wolfssl client method"));
         ret = -1;
     }
     ctx = wolfSSL_CTX_new(method);
@@ -419,7 +424,7 @@ void setup(void) {
     Serial.begin(serial_baud);
     Serial.println(F(""));
     Serial.println(F(""));
-    Serial.println(F("wolfSSL TLS Client Startup."));
+    Serial.println(F("wolfSSL TLS Client Example Startup."));
 
     setup_hardware();
 
@@ -434,6 +439,7 @@ void setup(void) {
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
 
+    Serial.println(F("Completed Arduino setup()"));
     return;
 }
 
@@ -448,7 +454,9 @@ static int error_check(int this_ret, bool halt_on_error,
         Serial.println(message);
     }
     else {
-        Serial.print(F("ERROR: "));
+        Serial.print(F("ERROR: return = "));
+        Serial.print(this_ret);
+        Serial.print(F(": "));
         Serial.println(message);
         if (halt_on_error) {
             fail_wait();
@@ -460,18 +468,23 @@ static int error_check(int this_ret, bool halt_on_error,
 }
 
 /*****************************************************************************/
-/* wolfSSL error_check_ssl()                                                     */
+/* wolfSSL error_check_ssl                                                   */
 /*   Parameters:                                                             */
 /*     ssl           is the current WOLFSSL object pointer                   */
 /*     halt_on_error set to true to suspend operations for critical error    */
 /*     message       is expected to be a memory-efficient F("") macro string */
 /*****************************************************************************/
-static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error,
-                          const __FlashStringHelper* message){
+static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
+                           const __FlashStringHelper* message) {
     int ret = 0;
     int err = 0;
     if (ssl == NULL) {
-        Serial.println(F("Unable to allocate SSL object"));
+        Serial.println(F("ssl is Null; Unable to allocate SSL object?"));
+#ifndef DEBUG_WOLFSSL
+        Serial.println(F("Define DEBUG_WOLFSSL in user_settings.h for more."));
+#else
+        Serial.println(F("See wolfssl/wolfcrypt/error-crypt.h for codes."));
+#endif
         Serial.print(F("ERROR: "));
         Serial.println(message);
         show_memory();
@@ -480,19 +493,23 @@ static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error,
         }
     }
     else {
-        err = wolfSSL_get_error(ssl, 0);
+        err = wolfSSL_get_error(ssl, this_ret);
         if (err == WOLFSSL_SUCCESS) {
             Serial.print(F("Success m: "));
             Serial.println(message);
-
         }
         else {
-            wolfSSL_ERR_error_string(ret, errBuf);
-            Serial.print(F("WOLFSSL Error: "));
-            Serial.println(errBuf);
+            if (err < 0) {
+                wolfSSL_ERR_error_string(err, errBuf);
+                Serial.print(F("WOLFSSL Error: "));
+                Serial.print(err);
+                Serial.print(F("; "));
+                Serial.println(errBuf);
+            }
+            else {
+                Serial.println(F("Success: ssl object."));
+            }
         }
-
-        Serial.println(F("Successfully created ssl object"));
     }
     show_memory();
 
@@ -518,15 +535,20 @@ void loop() {
     int err            = 0;
     msgSz = (int)strlen(msg);
 
+    Serial.println(F(""));
+    Serial.println(F("Starting Arduino loop() ..."));
+
 #if defined(DEBUG_WOLFSSL)
     wolfSSL_Debugging_ON();
 #endif
 
-
     if (reconnect) {
         reconnect--;
-        if (client.connect(host, port)) {
-            Serial.print(F("Connected to server at "));
+        /* WiFi client returns true if connection succeeds, false if not.  */
+        /* Wired client returns int (1,-1,-2,-3,-4) for connection status. */
+        ret = client.connect(host, port);
+        if (ret > 0) {
+            Serial.print(F("Connected to host at "));
             Serial.print(host);
             Serial.print(F(":"));
             Serial.println(port);
@@ -535,23 +557,30 @@ void loop() {
             ret = wolfSSL_Init();
             error_check(ret, false, F("calling wolfSSL_Init") );
 
-
             /* create secure connection object. see setup for ctx certs. */
+            Serial.println(F("Calling ssl = wolfSSL_new(ctx)"));
             ssl = wolfSSL_new(ctx);
-            error_check_ssl(ssl, true, F("Create WOLFSSL object from ctx"));
+            error_check_ssl(ssl, 0, true, F("Create WOLFSSL object from ctx"));
 
-            Serial.println(F("Connecting to wolfSSL server...."));
+            Serial.print(F("Connecting to wolfSSL TLS Secure Server..."));
             do {
                 err = 0; /* reset error */
                 ret = wolfSSL_connect(ssl);
                 if ((ret != WOLFSSL_SUCCESS) && (ret != WC_PENDING_E)) {
-                    err = wolfSSL_get_error(ssl, 0);
-                    wolfSSL_ERR_error_string(ret, errBuf);
-                    Serial.print(F("TLS Connect Error: "));
-                    Serial.println(errBuf);
+                    error_check_ssl(ssl, ret, true,
+                                    F("Create WOLFSSL object from ctx"));
+                    //err = wolfSSL_get_error(ssl, 0);
+                    //wolfSSL_ERR_error_string(ret, errBuf);
+                    //Serial.print(F("TLS Connect Error: "));
+                    //Serial.println(errBuf);
+                }
+                else {
+                   Serial.print(F("."));
                 }
             } while (err == WC_PENDING_E);
-show_memory();
+
+            Serial.println();
+            Serial.println(F("Connected!"));
             Serial.print(F("SSL version is "));
             Serial.println(wolfSSL_get_version(ssl));
 
@@ -567,39 +596,56 @@ show_memory();
 
             Serial.print(F("Sending secure message to server: "));
             Serial.println(msg);
-            if ((wolfSSL_write(ssl, msg, msgSz)) == msgSz) {
-                Serial.println(F("Waiting for Server response..."));
+            ret = wolfSSL_write(ssl, msg, msgSz);
+            if (ret == msgSz) {
+                Serial.print(F("Waiting for Server response..."));
+
                 while (!client.available()) {
-                    /* wait for  data */
+                    /* wait for data */
                 }
 
+                Serial.print(F("Reading response.."));
                 /* read data */
                 do {
-                    ret = wolfSSL_read(ssl, reply, sizeof(reply)-1);
+                    ret = wolfSSL_read(ssl, reply, sizeof(reply) - 1);
                     if (ret < 0) {
-                        err = wolfSSL_get_error(ssl, 0);
-                        wolfSSL_ERR_error_string(err, errBuf);
-                        Serial.print(F("ERROR during TLS Read: "));
-                        Serial.println(errBuf);                    }
+                        error_check_ssl(ssl, ret, false,
+                                        F("during TLS Read"));
+                        //err = wolfSSL_get_error(ssl, 0);
+                        //wolfSSL_ERR_error_string(err, errBuf);
+                        //Serial.print(F("ERROR during TLS Read: "));
+                        //Serial.println(errBuf);
+                    }
+                    else {
+                        Serial.print(F("."));
+                    }
                 } while (err == WC_PENDING_E);
-                Serial.println(reply);
+                Serial.println();
+
+                Serial.println();
+                Serial.println(reply); /* typically: I hear you fa shizzle! */
+                Serial.println();
 
             } /* wolfSSL_write message size matched */
             else {
-                err = wolfSSL_get_error(ssl, 0);
-                wolfSSL_ERR_error_string(err, errBuf);
-                Serial.print(F("ERROR: during TLS Write "));
-                Serial.println(errBuf);
+                error_check_ssl(ssl, ret, false,
+                    F("during TLS Write"));
+                //err = wolfSSL_get_error(ssl, 0);
+                //wolfSSL_ERR_error_string(err, errBuf);
+                //Serial.print(F("ERROR: during TLS Write "));
+                //Serial.println(errBuf);
             }  /* any wolfSSL_write message size mismatch is an error */
 
-            Serial.println(F("Shutdown!"));
+            Serial.print(F("Shutting down.."));
             do {
                 delay(1);
+                Serial.print(F("."));
                 retry_shutdown--;
                 ret = wolfSSL_shutdown(ssl);
             } while (   (ret == WOLFSSL_SHUTDOWN_NOT_DONE)
                      && (retry_shutdown > 0)
-                    ); /* There may be pending data, so wait. */
+                    ); /* There may be pending data, so wait until done. */
+            Serial.println();
 
             if (retry_shutdown <= 0) {
                 /* if wolfSSL_free is called before properly shutting down the
@@ -611,7 +657,7 @@ show_memory();
             client.stop();
             Serial.println(F("Connection complete."));
             if (REPEAT_CONNECTION) {
-                reconnect = RECONNECT_ATTEMPTS; /* non-zero to repeat */
+                reconnect = RECONNECT_ATTEMPTS;
             }
             else {
                 reconnect = 0;
