@@ -220,6 +220,11 @@ void setup(void) {
         Serial.println(wc_error_message);
     }
 
+    Serial.print("Size of ctx:");
+    Serial.println(sizeof(ctx));
+    Serial.print("Size of ssl:");
+    Serial.println(sizeof(ssl));
+
     /* Start the server
      * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
      */
