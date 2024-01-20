@@ -267,6 +267,9 @@
 
 #if defined(ARDUINO)
     /* we don't have the luxury of compiler options, so manually define */
+    #undef  WOLFSSL_ARDUINO
+    #define WOLFSSL_ARDUINO
+
     #undef FREERTOS
     #ifndef WOLFSSL_USER_SETTINGS
         #define WOLFSSL_USER_SETTINGS
@@ -276,6 +279,9 @@
     #if defined(__AVR__)
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
+    #elif defined(__arm__)
+//        #define WOLFSSL_NO_SOCK
+//        #define NO_WRITEV
     #elif defined(ESP32) || defined(ESP8266)
         /* assume sockets available */
     #else
@@ -438,17 +444,33 @@
     #include <nx_api.h>
 #endif
 
+#if defined(ARDUINO)
+    #if defined(ESP32) || defined(__arm__)
+        #ifndef NO_ARDUINO_DEFAULT
+            #define SIZEOF_LONG_LONG 8
+            #ifdef FREERTOS
+                #undef FREERTOS
+            #endif
 
-#if defined(WOLFSSL_ESPIDF) || \
-    (defined(ARDUINO) && defined(ESP32))
+            #define WOLFSSL_LWIP
+            #define NO_WRITEV
+            #define NO_WOLFSSL_DIR
+            #define WOLFSSL_NO_CURRDIR
+
+            #define TFM_TIMING_RESISTANT
+            #define ECC_TIMING_RESISTANT
+            #define WC_RSA_BLINDING
+            #define WC_NO_CACHE_RESISTANT
+        #endif /* !NO_ARDUINO_DEFAULT */
+    #elif defined(OTHERBOARD)
+        /* TODO: define other Arduino boards here */
+    #endif
+#endif
+
+#if defined(WOLFSSL_ESPIDF)
     #define SIZEOF_LONG_LONG 8
-
     #ifndef NO_ESPIDF_DEFAULT
-        #ifndef ARDUINO
-            #define FREERTOS
-        #endif
-
-        /* TODO: recheck that we really want this: */
+        #define FREERTOS
         #define WOLFSSL_LWIP
         #define NO_WRITEV
         #define NO_WOLFSSL_DIR
@@ -781,7 +803,13 @@
     #define NO_WOLFSSL_DIR
     #define SINGLE_THREADED
     #define NO_DEV_RANDOM
-    #if !defined(INTEL_GALILEO) && !defined(ESP32) /* Galileo has time.h compatibility */
+    #if defined(INTEL_GALILEO) || defined(ESP32)
+        /* boards with has time.h compatibility */
+    #elif defined(__arm__)
+        /* TODO is time really missing from Arduino Due? */
+        /* This is a brute-force solution to make it work: */
+        #define NO_ASN_TIME
+    #else
         #define TIME_OVERRIDES
         #ifndef XTIME
             #error "Must define XTIME externally see porting guide"
@@ -991,10 +1019,6 @@ extern void uITRON4_free(void *p) ;
     #define XREALLOC    yaXREALLOC
 #endif
 
-#if defined(ARDUINO)
-    /* TODO find this */
-    #undef FREERTOS
-#endif
 
 #ifdef FREERTOS
     #include "FreeRTOS.h"
