@@ -36,7 +36,7 @@ Tested with:
 #define REPEAT_CONNECTION 0
 
 /* Edit this with your other TLS host server address to connect to: */
-#define EXAMPLE_HOST "192.168.1.38"
+#define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
 
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
@@ -113,7 +113,7 @@ Tested with:
    || defined(HAVE_SERVER_RENEGOTIATION_INFO)
 #endif
 
-const char host[] PROGMEM = EXAMPLE_HOST; /* server to connect to */
+const char host[] PROGMEM = WOLFSSL_TLS_SERVER_HOST; /* server to connect to */
 const int port PROGMEM = WOLFSSL_PORT; /* port on server to connect to */
 const int serial_baud PROGMEM = 115200; /* local serial port to monitor */
 
@@ -138,31 +138,41 @@ extern "C" char *sbrk(int i);
 
 /* fail_wait - in case of unrecoverable error */
 static void fail_wait(void) {
+    show_memory();
+
     Serial.println(F("Failed. Halt."));
     while (1) {
         delay(1000);
     }
 }
 
-void ShowMemory(void)
+/*****************************************************************************/
+/* show_memory() to optionally view during debugging.                         */
+/*****************************************************************************/
+void show_memory(void)
 {
 	struct mallinfo mi=mallinfo();
 
 	char *heapend=sbrk(0);
 	register char * stack_ptr asm("sp");
+#if defined(DEBUG_WOLFSSL_VERBOSE)
+    Serial.print("    arena=");
+    Serial.println(mi.arena);
+    Serial.print("  ordblks=");
+    Serial.println(mi.ordblks);
+    Serial.print(" uordblks=");
+    Serial.println(mi.uordblks);
+    Serial.print(" fordblks=");
+    Serial.println(mi.fordblks);
+    Serial.print(" keepcost=");
+    Serial.println(mi.keepcost);
+#endif
 
-	Serial.print("    arena=");
-  Serial.println(mi.arena);
-	Serial.print("  ordblks=");
-  Serial.println(mi.ordblks);
-	Serial.print(" uordblks=");
-  Serial.println(mi.uordblks);
-	Serial.print(" fordblks=");
-  Serial.println(mi.fordblks);
-	Serial.print(" keepcost=");
-  Serial.println(mi.keepcost);
-	Serial.print("My guess at free mem: ");
-  Serial.println(stack_ptr - heapend + mi.fordblks);
+#if defined(DEBUG_WOLFSSL)
+    Serial.print("My guess at free mem: ");
+    Serial.println(stack_ptr - heapend + mi.fordblks);
+#endif
+
 //	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
 //	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
 //	Serial.print("Heap End %lx\n", (unsigned long)heapend);
@@ -204,7 +214,7 @@ static int setup_hardware(void) {
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
 
-    ShowMemory();
+    show_memory();
     randomSeed(analogRead(0));
     return ret;
 }
@@ -351,7 +361,7 @@ static int setup_certificates(void) {
     int ret = 0;
 
     Serial.println(F("Initializing certificates..."));
-    ShowMemory();
+    show_memory();
     /* initialize wolfSSL using callback functions */
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, 0);
 
@@ -426,6 +436,33 @@ void setup(void) {
     return;
 }
 
+static int error_check(int this_ret, bool halt_on_error, 
+                      const __FlashStringHelper* message) {
+    int ret = 0;
+    if (this_ret == WOLFSSL_SUCCESS) {
+        Serial.print(F("Success: "));
+        Serial.println(message);
+    }
+    else {
+        Serial.println(F("ERROR: wolfSSL_Init failed"));
+        if (halt_on_error) {
+            fail_wait();
+        }
+    }
+    show_memory();
+
+    return ret;
+}
+
+static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error, 
+                          const __FlashStringHelper* message){
+    int ret = 0;
+
+    return ret;                            
+}
+
+  //  ret, F("calling wolfSSL_Init"), false);
+
 /*****************************************************************************/
 /*****************************************************************************/
 /* Arduino loop()                                                            */
@@ -443,7 +480,12 @@ void loop() {
     int ret            = 0;
     int err            = 0;
     msgSz = (int)strlen(msg);
-// wolfSSL_Debugging_ON();
+
+#if defined(DEBUG_WOLFSSL)
+    wolfSSL_Debugging_ON();
+#endif
+
+
     if (reconnect) {
         reconnect--;
         if (client.connect(host, port)) {
@@ -452,24 +494,22 @@ void loop() {
             Serial.print(F(":"));
             Serial.println(port);
 
+            /* initialize wolfSSL */
             ret = wolfSSL_Init();
-            if (ret == WOLFSSL_SUCCESS) {
-                Serial.println(F("Successfully called wolfSSL_Init"));
-            }
-            else {
-                Serial.println(F("ERROR: wolfSSL_Init failed"));
-            }
-ShowMemory();
+            error_check(ret, false, F("calling wolfSSL_Init") );
+
+
+            /* create secure connection object. see setup for ctx certs. */
             ssl = wolfSSL_new(ctx);
             if (ssl == NULL) {
                 Serial.println(F("Unable to allocate SSL object"));
-ShowMemory();
+                show_memory();
                 fail_wait();
             }
             else {
                 Serial.println(F("Successfully created ssl object"));
             }
-ShowMemory();
+show_memory();
             Serial.println(F("Connecting to wolfSSL server...."));
             do {
                 err = 0; /* reset error */
@@ -481,7 +521,7 @@ ShowMemory();
                     Serial.println(errBuf);
                 }
             } while (err == WC_PENDING_E);
-ShowMemory();
+show_memory();
             Serial.print(F("SSL version is "));
             Serial.println(wolfSSL_get_version(ssl));
 
