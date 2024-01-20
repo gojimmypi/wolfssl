@@ -344,7 +344,7 @@ void loop() {
 
         if (retry_shutdown <= 0) {
             /* if wolfSSL_free is called before properly shutting down the
-             * ssl object, undesired rsults may occur. */
+             * ssl object, undesired results may occur. */
             Serial.println("Warning! Shutdown did not properly complete.");
         }
 
