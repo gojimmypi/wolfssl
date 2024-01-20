@@ -59,6 +59,13 @@ Tested with:
     const char* password PROGMEM = "your_PASSWORD";
 #endif
 
+/* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
+ * If it is installed, uncomment define USE_NTP_LIB here: */
+/* #define USE_NTP_LIB */
+#define USE_NTP_LIB
+#ifdef USE_NTP_LIB
+    #include <NTPClient.h>
+#endif
 
 #include <wolfssl.h>
 /* Important: make sure settings.h appears before any other wolfSSL headers */
@@ -72,12 +79,11 @@ Tested with:
 
 #include <Ethernet.h>
 
-/* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
- * If it is installed, uncomment define USE_NTP_LIB here: */
-/* #define USE_NTP_LIB */
-#define USE_NTP_LIB
-#ifdef USE_NTP_LIB
-    #include <NTPClient.h>
+/* Define DEBUG_WOLFSSL in user_settings.h for more verbose logging. */
+#if defined(DEBUG_WOLFSSL)
+    #define PROGRESS_DOT F("")
+#else
+    #define PROGRESS_DOT F(".")
 #endif
 
 /* optional board-specific networking includes */
@@ -137,7 +143,9 @@ char *ramend=(char *)0x20088000;
 #include <malloc.h>
 extern "C" char *sbrk(int i);
 
-/* fail_wait - in case of unrecoverable error */
+/*****************************************************************************/
+/* fail_wait - in case of unrecoverable error                                */
+/*****************************************************************************/
 static void fail_wait(void) {
     show_memory();
 
@@ -538,6 +546,7 @@ void loop() {
     Serial.println(F(""));
     Serial.println(F("Starting Arduino loop() ..."));
 
+    /* define DEBUG_WOLFSSL in wolfSSL user_settings.h for diagnostics */
 #if defined(DEBUG_WOLFSSL)
     wolfSSL_Debugging_ON();
 #endif
@@ -575,7 +584,7 @@ void loop() {
                     //Serial.println(errBuf);
                 }
                 else {
-                   Serial.print(F("."));
+                   Serial.print(PROGRESS_DOT);
                 }
             } while (err == WC_PENDING_E);
 
@@ -617,7 +626,7 @@ void loop() {
                         //Serial.println(errBuf);
                     }
                     else {
-                        Serial.print(F("."));
+                        Serial.print(PROGRESS_DOT);
                     }
                 } while (err == WC_PENDING_E);
                 Serial.println();
@@ -639,7 +648,7 @@ void loop() {
             Serial.print(F("Shutting down.."));
             do {
                 delay(1);
-                Serial.print(F("."));
+                Serial.print(PROGRESS_DOT);
                 retry_shutdown--;
                 ret = wolfSSL_shutdown(ssl);
             } while (   (ret == WOLFSSL_SHUTDOWN_NOT_DONE)
