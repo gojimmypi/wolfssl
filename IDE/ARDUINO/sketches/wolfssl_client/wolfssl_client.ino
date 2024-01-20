@@ -41,6 +41,9 @@ Tested with:
 /* We'll wait up to 2000 milliseconds to properly shut down connection */
 #define SHUTDOWN_DELAY_MS 2000
 
+/* Number of times to retry. Set to zero for single test, no retry */
+#define RECONNECT_ATTEMPTS 0
+
 #include <wolfssl.h>
 /* Important: make sure settings.h appears before any other wolfSSL headers */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -56,6 +59,7 @@ Tested with:
 /* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
  * If it is installed, uncomment define USE_NTP_LIB here: */
 /* #define USE_NTP_LIB */
+#define USE_NTP_LIB
 #ifdef USE_NTP_LIB
     #include <NTPClient.h>
 #endif
@@ -66,6 +70,9 @@ Tested with:
     #include <WiFi.h>
     #include <WiFiUdp.h>
     WiFiClient client;
+    #ifdef USE_NTP_LIB
+        WiFiUDP ntpUDP;
+    #endif
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
@@ -165,6 +172,29 @@ void ShowMemory(void)
 //	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
 }
 
+/*****************************************************************************/
+/* EthernetSend() to send a message string.                                  */
+/*****************************************************************************/
+int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
+    int sent = 0;
+    sent = client.write((byte*)message, sz);
+    return sent;
+}
+
+/*****************************************************************************/
+/* EthernetReceive() to receive a reply string.                              */
+/*****************************************************************************/
+int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
+    int ret = 0;
+    while (client.available() > 0 && ret < sz) {
+        reply[ret++] = client.read();
+    }
+    return ret;
+}
+
+/*****************************************************************************/
+/* Arduino setup_hardware()                                                  */
+/*****************************************************************************/
 static int setup_hardware(void) {
     int ret = 0;
     pmc_enable_periph_clk(ID_TRNG);
@@ -175,6 +205,48 @@ static int setup_hardware(void) {
     return ret;
 }
 
+static int setup_datetime(void) {
+    int ret = 0;
+    /* we need a date in the range of cert expiration */
+#ifdef USE_NTP_LIB
+    #if defined(ESP32)
+        NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
+    timeClient.begin();
+    timeClient.update();
+    delay(1000);
+    while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
+        timeClient.forceUpdate();
+        Serial.println(F("Waiting for NTP update"));
+        delay(2000);
+        ntp_tries--;
+    }
+    if (ntp_tries <= 0) {
+        Serial.println(F("Warning: gave up waiting on NTP"));
+    }
+    Serial.println(timeClient.getFormattedTime());
+    Serial.println(timeClient.getEpochTime());
+    #endif
+#endif
+
+#if defined(ESP32)
+    /* see esp32-hal-time.c */
+    ntp_tries = 5;
+    configTime(0, 0, "pool.ntp.org"));  // You can replace "pool.ntp.org" with your preferred NTP server
+
+    /* Wait for time to be set */
+    while ((time(nullptr) <= 100000) && ntp_tries > 0) {
+        Serial.println(F("Waiting for time to be set..."));
+        delay(2000);
+        ntp_tries--;
+    }
+#endif
+
+    return ret;
+}
+/*****************************************************************************/
+/* Arduino setup_network()                                                   */
+/*****************************************************************************/
 static int setup_network(void) {
     int ret = 0;
 #if defined(USING_WIFI)
@@ -236,6 +308,9 @@ static int setup_network(void) {
     return ret;
 }
 
+/*****************************************************************************/
+/* Arduino setup_wolfssl()                                                   */
+/*****************************************************************************/
 static int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
@@ -254,6 +329,9 @@ static int setup_wolfssl(void) {
     return ret;
 }
 
+/*****************************************************************************/
+/* Arduino setup_certificates()                                              */
+/*****************************************************************************/
 static int setup_certificates(void) {
     int ret = 0;
 
@@ -291,9 +369,9 @@ static int setup_certificates(void) {
 
     /* Private Key */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                           client_key_der_2048,
-                                           sizeof_client_key_der_2048,
-                                           WOLFSSL_FILETYPE_ASN1);
+                                            client_key_der_2048,
+                                            sizeof_client_key_der_2048,
+                                            WOLFSSL_FILETYPE_ASN1);
     if (ret == WOLFSSL_SUCCESS) {
         Serial.println(F("Success: use private key buffer ca_cert_der_2048."));
     }
@@ -305,8 +383,11 @@ static int setup_certificates(void) {
 
     return ret;
 }
+
+/*****************************************************************************/
 /*****************************************************************************/
 /* Arduino setup()                                                           */
+/*****************************************************************************/
 /*****************************************************************************/
 void setup(void) {
     Serial.begin(serial_baud);
@@ -316,48 +397,15 @@ void setup(void) {
 
     setup_hardware();
 
+    setup_datetime();
+
     setup_network();
 
-    int rc = 0;
     int ntp_tries = 20;
 
-#ifdef USE_NTP_LIB
-    WiFiUDP ntpUDP;
-    NTPClient timeClient(ntpUDP, "pool.ntp.org");
-#endif
 
 
 
-    /* we need a date in the range of cert expiration */
-#ifdef USE_NTP_LIB
-    timeClient.begin();
-    timeClient.update();
-    delay(1000);
-    while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
-        timeClient.forceUpdate();
-        Serial.println(F("Waiting for NTP update"));
-        delay(2000);
-        ntp_tries--;
-    }
-    if (ntp_tries <= 0) {
-        Serial.println(F("Warning: gave up waiting on NTP"));
-    }
-    Serial.println(timeClient.getFormattedTime());
-    Serial.println(timeClient.getEpochTime());
-#endif
-
-#if defined(ESP32)
-    /* see esp32-hal-time.c */
-    ntp_tries = 5;
-    configTime(0, 0, "pool.ntp.org"));  // You can replace "pool.ntp.org" with your preferred NTP server
-
-    /* Wait for time to be set */
-    while ((time(nullptr) <= 100000) && ntp_tries > 0) {
-        Serial.println(F("Waiting for time to be set..."));
-        delay(2000);
-        ntp_tries--;
-    }
-#endif
 
 
     /* Delay need to ensure connection to server */
@@ -374,27 +422,9 @@ void setup(void) {
 }
 
 /*****************************************************************************/
-/* EthernetSend() to send a message string.                                  */
-/*****************************************************************************/
-int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
-    int sent = 0;
-    sent = client.write((byte*)message, sz);
-    return sent;
-}
-
-/*****************************************************************************/
-/* EthernetReceive() to receive a reply string.                              */
-/*****************************************************************************/
-int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
-    int ret = 0;
-    while (client.available() > 0 && ret < sz) {
-        reply[ret++] = client.read();
-    }
-    return ret;
-}
-
 /*****************************************************************************/
 /* Arduino loop()                                                            */
+/*****************************************************************************/
 /*****************************************************************************/
 void loop() {
     char errBuf[80];
@@ -505,7 +535,7 @@ ShowMemory();
             wolfSSL_free(ssl);
             client.stop();
             Serial.println(F("Connection complete."));
-            reconnect = 10; /* to repeatedly test, reset this to non-zero */
+            reconnect = RECONNECT_ATTEMPTS; /* non-zero to repeat */
         } /* client.connect(host, port) */
         else {
             Serial.println(F("Problem sending message. Trying to reconnect..."));
@@ -518,5 +548,8 @@ ShowMemory();
     }
     else {
         Serial.println(F("Done!"));
+        while(1) {
+          /* wait forever */
+        }
     }
 } /* Arduino loop repeats */
