@@ -120,6 +120,7 @@ const int serial_baud PROGMEM = 115200; /* local serial port to monitor */
 WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
 char* wc_error_message = (char*)malloc(80 + 1);
+char errBuf[80];
 
 static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
@@ -436,7 +437,10 @@ void setup(void) {
     return;
 }
 
-static int error_check(int this_ret, bool halt_on_error, 
+/*****************************************************************************/
+/* wolfSSL error_check()                                                     */
+/*****************************************************************************/
+static int error_check(int this_ret, bool halt_on_error,
                       const __FlashStringHelper* message) {
     int ret = 0;
     if (this_ret == WOLFSSL_SUCCESS) {
@@ -444,7 +448,8 @@ static int error_check(int this_ret, bool halt_on_error,
         Serial.println(message);
     }
     else {
-        Serial.println(F("ERROR: wolfSSL_Init failed"));
+        Serial.print(F("ERROR: "));
+        Serial.println(message);
         if (halt_on_error) {
             fail_wait();
         }
@@ -454,11 +459,44 @@ static int error_check(int this_ret, bool halt_on_error,
     return ret;
 }
 
-static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error, 
+/*****************************************************************************/
+/* wolfSSL error_check_ssl()                                                     */
+/*   Parameters:                                                             */
+/*     ssl           is the current WOLFSSL object pointer                   */
+/*     halt_on_error set to true to suspend operations for critical error    */
+/*     message       is expected to be a memory-efficient F("") macro string */
+/*****************************************************************************/
+static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error,
                           const __FlashStringHelper* message){
     int ret = 0;
+    int err = 0;
+    if (ssl == NULL) {
+        Serial.println(F("Unable to allocate SSL object"));
+        Serial.print(F("ERROR: "));
+        Serial.println(message);
+        show_memory();
+        if (halt_on_error) {
+            fail_wait();
+        }
+    }
+    else {
+        err = wolfSSL_get_error(ssl, 0);
+        if (err == WOLFSSL_SUCCESS) {
+            Serial.print(F("Success m: "));
+            Serial.println(message);
 
-    return ret;                            
+        }
+        else {
+            wolfSSL_ERR_error_string(ret, errBuf);
+            Serial.print(F("WOLFSSL Error: "));
+            Serial.println(errBuf);
+        }
+
+        Serial.println(F("Successfully created ssl object"));
+    }
+    show_memory();
+
+    return ret;
 }
 
   //  ret, F("calling wolfSSL_Init"), false);
@@ -469,7 +507,6 @@ static int error_check_ssl(WOLFSSL* ssl, bool halt_on_error,
 /*****************************************************************************/
 /*****************************************************************************/
 void loop() {
-    char errBuf[80];
     char reply[80];
     char msg[32]       = "hello wolfssl!";
     const char* cipherName;
@@ -501,15 +538,8 @@ void loop() {
 
             /* create secure connection object. see setup for ctx certs. */
             ssl = wolfSSL_new(ctx);
-            if (ssl == NULL) {
-                Serial.println(F("Unable to allocate SSL object"));
-                show_memory();
-                fail_wait();
-            }
-            else {
-                Serial.println(F("Successfully created ssl object"));
-            }
-show_memory();
+            error_check_ssl(ssl, true, F("Create WOLFSSL object from ctx"));
+
             Serial.println(F("Connecting to wolfSSL server...."));
             do {
                 err = 0; /* reset error */
