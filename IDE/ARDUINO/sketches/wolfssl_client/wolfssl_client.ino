@@ -53,7 +53,7 @@ Tested with:
 
 #include <Ethernet.h>
 
-/* There's a 3rd party NTPClient library by Fabrice Weinberg.
+/* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
  * If it is installed, uncomment define USE_NTP_LIB here: */
 /* #define USE_NTP_LIB */
 #ifdef USE_NTP_LIB
@@ -71,7 +71,7 @@ Tested with:
     #include <ESP8266WiFi.h>
     WiFiClient client;
 /* #elif defined(OTHER_BOARD) */
-    /* TODO define other boards here */
+/* TODO define other boards here */
 #else
     EthernetClient client;
 #endif
@@ -88,45 +88,95 @@ Tested with:
     const char* password PROGMEM = "your_PASSWORD";
 #endif
 
+
+#if defined(HAVE_SNI)                           \
+   || defined(HAVE_MAX_FRAGMENT)                  \
+   || defined(HAVE_TRUSTED_CA)                    \
+   || defined(HAVE_TRUNCATED_HMAC)                \
+   || defined(HAVE_CERTIFICATE_STATUS_REQUEST)    \
+   || defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2) \
+   || defined(HAVE_SUPPORTED_CURVES)              \
+   || defined(HAVE_ALPN)                          \
+   || defined(HAVE_SESSION_TICKET)                \
+   || defined(HAVE_SECURE_RENEGOTIATION)          \
+   || defined(HAVE_SERVER_RENEGOTIATION_INFO)
+#endif
+
 const char host[] PROGMEM = EXAMPLE_HOST; /* server to connect to */
 const int port PROGMEM = WOLFSSL_PORT; /* port on server to connect to */
 const int serial_baud PROGMEM = 115200; /* local serial port to monitor */
 
 WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
+char* wc_error_message = (char*)malloc(80 + 1);
 
 int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 int reconnect = 10;
 static int lng_index PROGMEM = 0; /* 0 = English */
 
+
 /* fail_wait - in case of unrecoverable error */
-void fail_wait(void) {
+static void fail_wait(void) {
     Serial.println(F("Failed. Halt."));
     while(1) {
         delay(1000);
     }
 }
 
-/*****************************************************************************/
-/* Arduino setup()                                                           */
-/*****************************************************************************/
-void setup(void) {
-    WOLFSSL_METHOD* method;
-    int rc = 0;
-    int ntp_tries = 20;
-    char* wc_error_message = (char*)malloc(255 + 1);
-#ifdef USE_NTP_LIB
-    WiFiUDP ntpUDP;
-    NTPClient timeClient(ntpUDP, "pool.ntp.org");
-#endif
 
-    Serial.begin(serial_baud);
-    Serial.println(F(""));
-    Serial.println(F(""));
-    Serial.println(F("wolfSSL TLS Client Startup."));
+extern char _end;
+extern "C" char *sbrk(int i);
+char *ramstart=(char *)0x20070000;
+char *ramend=(char *)0x20088000;
+
+#include <malloc.h>
+extern "C" char *sbrk(int i);
+
+void ShowMemory(void)
+{
+	struct mallinfo mi=mallinfo();
+
+	char *heapend=sbrk(0);
+	register char * stack_ptr asm("sp");
+
+	Serial.print("    arena=");
+  Serial.println(mi.arena);
+	Serial.print("  ordblks=");
+  Serial.println(mi.ordblks);
+	Serial.print(" uordblks=");
+  Serial.println(mi.uordblks);
+	Serial.print(" fordblks=");
+  Serial.println(mi.fordblks);
+	Serial.print(" keepcost=");
+  Serial.println(mi.keepcost);
+	Serial.print("My guess at free mem: ");
+  Serial.println(stack_ptr - heapend + mi.fordblks);
+//	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
+//	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
+//	Serial.print("Heap End %lx\n", (unsigned long)heapend);
+//	Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
+//	Serial.print("RAM End %lx\n", (unsigned long)ramend);
+
+//	Serial.print("Heap RAM Used: ",mi.uordblks);
+//	Serial.print("Program RAM Used ",&_end - ramstart);
+//	Serial.print("Stack RAM Used ",ramend - stack_ptr);
+
+//	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+}
+
+static int setup_hardware(void) {
+    int ret = 0;
+    pmc_enable_periph_clk(ID_TRNG);
+    trng_enable(TRNG);
+
+    ShowMemory();
     randomSeed(analogRead(0));
+    return ret;
+}
 
+static int setup_network(void) {
+    int ret = 0;
 #if defined(USING_WIFI)
     /* Connect to WiFi */
     WiFi.mode(WIFI_STA);
@@ -183,6 +233,100 @@ void setup(void) {
     Serial.print(F("   Configured Server Host to connect to: "));
     Serial.println(host);
     Serial.println(F("********************************************************"));
+    return ret;
+}
+
+static int setup_wolfssl(void) {
+    int ret = 0;
+    WOLFSSL_METHOD* method;
+
+    method = wolfSSLv23_client_method();
+    if (method == NULL) {
+        Serial.println(F("unable to get method"));
+        ret = -1;
+    }
+    ctx = wolfSSL_CTX_new(method);
+    if (ctx == NULL) {
+        Serial.println(F("unable to get ctx"));
+        ret = -1;
+    }
+
+    return ret;
+}
+
+static int setup_certificates(void) {
+    int ret = 0;
+
+    Serial.println(F("Initializing certificates..."));
+    ShowMemory();
+    /* initialize wolfSSL using callback functions */
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, 0);
+
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+                                         ca_cert_der_2048,
+                                         sizeof_ca_cert_der_2048,
+                                         WOLFSSL_FILETYPE_ASN1);
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.println(F("Success: load_verify ca_cert_der_2048"));
+    }
+    else {
+        Serial.println(F("Error: wolfSSL_CTX_load_verify_buffer failed: "));
+        wc_ErrorString(ret, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
+    /* Certificate */
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             client_cert_der_2048,
+                                             sizeof_client_cert_der_2048,
+                                             WOLFSSL_FILETYPE_ASN1);
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.println(F("Success: use certificate ca_cert_der_2048"));
+    }
+    else {
+        Serial.println(F("Error: wolfSSL_CTX_use_certificate_buffer failed: "));
+        wc_ErrorString(ret, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
+    /* Private Key */
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                           client_key_der_2048,
+                                           sizeof_client_key_der_2048,
+                                           WOLFSSL_FILETYPE_ASN1);
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.println(F("Success: use private key buffer ca_cert_der_2048."));
+    }
+    else {
+        Serial.println(F("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: "));
+        wc_ErrorString(ret, wc_error_message);
+        Serial.println(wc_error_message);
+    }
+
+    return ret;
+}
+/*****************************************************************************/
+/* Arduino setup()                                                           */
+/*****************************************************************************/
+void setup(void) {
+    Serial.begin(serial_baud);
+    Serial.println(F(""));
+    Serial.println(F(""));
+    Serial.println(F("wolfSSL TLS Client Startup."));
+
+    setup_hardware();
+
+    setup_network();
+
+    int rc = 0;
+    int ntp_tries = 20;
+
+#ifdef USE_NTP_LIB
+    WiFiUDP ntpUDP;
+    NTPClient timeClient(ntpUDP, "pool.ntp.org");
+#endif
+
+
 
     /* we need a date in the range of cert expiration */
 #ifdef USE_NTP_LIB
@@ -215,76 +359,26 @@ void setup(void) {
     }
 #endif
 
+
     /* Delay need to ensure connection to server */
     delay(4000);
     Serial.println(F("Here we go!"));
-    method = wolfSSLv23_client_method();
-    if (method == NULL) {
-        Serial.println(F("unable to get method"));
-        return;
-    }
-    ctx = wolfSSL_CTX_new(method);
-    if (ctx == NULL) {
-        Serial.println(F("unable to get ctx"));
-        return;
-    }
+    setup_wolfssl();
 
-    Serial.println(F("Initializing certificates..."));
-
-    /* initialize wolfSSL using callback functions */
-    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, 0);
-    rc = wolfSSL_CTX_load_verify_buffer(ctx,
-                                        ca_cert_der_2048,
-                                        sizeof_ca_cert_der_2048,
-                                        WOLFSSL_FILETYPE_ASN1);
-    if (rc == WOLFSSL_SUCCESS) {
-        Serial.println(F("Success: load_verify ca_cert_der_2048"));
-    }
-    else {
-        Serial.println(F("Error: wolfSSL_CTX_load_verify_buffer failed: "));
-        wc_ErrorString(rc, wc_error_message);
-        Serial.println(wc_error_message);
-    }
-
-    /* Certificate */
-    rc = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                            client_cert_der_2048,
-                                            sizeof_client_cert_der_2048,
-                                            WOLFSSL_FILETYPE_ASN1);
-    if (rc == WOLFSSL_SUCCESS) {
-        Serial.println(F("Success: use certificate ca_cert_der_2048"));
-    }
-    else {
-        Serial.println(F("Error: wolfSSL_CTX_use_certificate_buffer failed: "));
-        wc_ErrorString(rc, wc_error_message);
-        Serial.println(wc_error_message);
-    }
-
-    /* Private Key */
-    rc = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                           client_key_der_2048,
-                                           sizeof_client_key_der_2048,
-                                           WOLFSSL_FILETYPE_ASN1);
-    if (rc == WOLFSSL_SUCCESS) {
-        Serial.println(F("Success: use private key buffer ca_cert_der_2048."));
-    }
-    else {
-        Serial.println(F("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: "));
-        wc_ErrorString(rc, wc_error_message);
-        Serial.println(wc_error_message);
-    }
+    setup_certificates();
 
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
+
     return;
 }
 
 /*****************************************************************************/
-/* EthernetSend() to send a message msg string.                              */
+/* EthernetSend() to send a message string.                                  */
 /*****************************************************************************/
-int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx) {
+int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
     int sent = 0;
-    sent = client.write((byte*)msg, sz);
+    sent = client.write((byte*)message, sz);
     return sent;
 }
 
@@ -314,7 +408,7 @@ void loop() {
     int ret            = 0;
     int err            = 0;
     msgSz = (int)strlen(msg);
-
+// wolfSSL_Debugging_ON();
     if (reconnect) {
         reconnect--;
         if (client.connect(host, port)) {
@@ -330,16 +424,17 @@ void loop() {
             else {
                 Serial.println(F("ERROR: wolfSSL_Init failed"));
             }
-
+ShowMemory();
             ssl = wolfSSL_new(ctx);
             if (ssl == NULL) {
                 Serial.println(F("Unable to allocate SSL object"));
+ShowMemory();
                 fail_wait();
             }
             else {
                 Serial.println(F("Successfully created ssl object"));
             }
-
+ShowMemory();
             Serial.println(F("Connecting to wolfSSL server...."));
             do {
                 err = 0; /* reset error */
@@ -351,7 +446,7 @@ void loop() {
                     Serial.println(errBuf);
                 }
             } while (err == WC_PENDING_E);
-
+ShowMemory();
             Serial.print(F("SSL version is "));
             Serial.println(wolfSSL_get_version(ssl));
 
