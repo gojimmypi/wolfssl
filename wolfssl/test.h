@@ -175,26 +175,28 @@
         int h_length;        /* length of address */
         char** h_addr_list;  /* list of addresses from the name server */
     };
+#elif defined(ARDUINO)
+    /* TODO, define board-specific */
 #else
     #include <string.h>
     #include <sys/types.h>
-#ifndef WOLFSSL_LEANPSK
-    #include <unistd.h>
-    #include <netdb.h>
-    #include <netinet/in.h>
-    #include <netinet/tcp.h>
-    #include <arpa/inet.h>
-    #include <sys/ioctl.h>
-    #include <sys/time.h>
-    #include <sys/socket.h>
-    #ifdef HAVE_PTHREAD
-        #include <pthread.h>
-    #endif
-    #include <fcntl.h>
-    #ifdef TEST_IPV6
+    #ifndef WOLFSSL_LEANPSK
+        #include <unistd.h>
         #include <netdb.h>
+        #include <netinet/in.h>
+        #include <netinet/tcp.h>
+        #include <arpa/inet.h>
+        #include <sys/ioctl.h>
+        #include <sys/time.h>
+        #include <sys/socket.h>
+        #ifdef HAVE_PTHREAD
+            #include <pthread.h>
+        #endif
+        #include <fcntl.h>
+        #ifdef TEST_IPV6
+            #include <netdb.h>
+        #endif
     #endif
-#endif
     #ifdef FREESCALE_MQX
         typedef int socklen_t ;
     #endif
