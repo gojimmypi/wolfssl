@@ -32,6 +32,9 @@ Tested with:
 /* If you have a private include, define it here, otherwise edit WiFi params */
 #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 
+/* set REPEAT_CONNECTION to a non-zero value to continually run the example. */
+#define REPEAT_CONNECTION 0
+
 /* Edit this with your other TLS host server address to connect to: */
 #define EXAMPLE_HOST "192.168.1.38"
 
@@ -41,8 +44,21 @@ Tested with:
 /* We'll wait up to 2000 milliseconds to properly shut down connection */
 #define SHUTDOWN_DELAY_MS 2000
 
-/* Number of times to retry. Set to zero for single test, no retry */
-#define RECONNECT_ATTEMPTS 0
+/* Number of times to retry connection.  */
+#define RECONNECT_ATTEMPTS 20
+
+#if defined(MY_PRIVATE_CONFIG)
+    /* the /workspace directory may contain a private config
+     * excluded from GitHub with items such as WiFi passwords */
+    #include MY_PRIVATE_CONFIG
+    const char* ssid PROGMEM = CONFIG_ESP_WIFI_SSID;
+    const char* password PROGMEM  = CONFIG_ESP_WIFI_PASSWORD;
+#else
+    /* when using WiFi capable boards: */
+    const char* ssid PROGMEM  = "your_SSID";
+    const char* password PROGMEM = "your_PASSWORD";
+#endif
+
 
 #include <wolfssl.h>
 /* Important: make sure settings.h appears before any other wolfSSL headers */
@@ -83,18 +99,6 @@ Tested with:
     EthernetClient client;
 #endif
 
-#if defined(MY_PRIVATE_CONFIG)
-    /* the /workspace directory may contain a private config
-     * excluded from GitHub with items such as WiFi passwords */
-    #include MY_PRIVATE_CONFIG
-    const char* ssid PROGMEM = CONFIG_ESP_WIFI_SSID;
-    const char* password PROGMEM  = CONFIG_ESP_WIFI_PASSWORD;
-#else
-    /* when using WiFi capable boards: */
-    const char* ssid PROGMEM  = "your_SSID";
-    const char* password PROGMEM = "your_PASSWORD";
-#endif
-
 
 #if defined(HAVE_SNI)                           \
    || defined(HAVE_MAX_FRAGMENT)                  \
@@ -117,19 +121,11 @@ WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
 char* wc_error_message = (char*)malloc(80 + 1);
 
-int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
-int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
-int reconnect = 10;
+static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
+static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
+static int reconnect = RECONNECT_ATTEMPTS;
 static int lng_index PROGMEM = 0; /* 0 = English */
 
-
-/* fail_wait - in case of unrecoverable error */
-static void fail_wait(void) {
-    Serial.println(F("Failed. Halt."));
-    while(1) {
-        delay(1000);
-    }
-}
 
 
 extern char _end;
@@ -139,6 +135,14 @@ char *ramend=(char *)0x20088000;
 
 #include <malloc.h>
 extern "C" char *sbrk(int i);
+
+/* fail_wait - in case of unrecoverable error */
+static void fail_wait(void) {
+    Serial.println(F("Failed. Halt."));
+    while (1) {
+        delay(1000);
+    }
+}
 
 void ShowMemory(void)
 {
@@ -205,8 +209,14 @@ static int setup_hardware(void) {
     return ret;
 }
 
+/*****************************************************************************/
+/* Arduino setup_datetime()                                                  */
+/*   The device needs to have a valid date within the valid range of certs.  */
+/*****************************************************************************/
 static int setup_datetime(void) {
     int ret = 0;
+    int ntp_tries = 20;
+
     /* we need a date in the range of cert expiration */
 #ifdef USE_NTP_LIB
     #if defined(ESP32)
@@ -305,6 +315,11 @@ static int setup_network(void) {
     Serial.print(F("   Configured Server Host to connect to: "));
     Serial.println(host);
     Serial.println(F("********************************************************"));
+
+    /* Delay need to ensure connection to server */
+    // delay(4000);
+    Serial.println(F("Here we go!"));
+
     return ret;
 }
 
@@ -401,16 +416,6 @@ void setup(void) {
 
     setup_network();
 
-    int ntp_tries = 20;
-
-
-
-
-
-
-    /* Delay need to ensure connection to server */
-    delay(4000);
-    Serial.println(F("Here we go!"));
     setup_wolfssl();
 
     setup_certificates();
@@ -535,7 +540,12 @@ ShowMemory();
             wolfSSL_free(ssl);
             client.stop();
             Serial.println(F("Connection complete."));
-            reconnect = RECONNECT_ATTEMPTS; /* non-zero to repeat */
+            if (REPEAT_CONNECTION) {
+                reconnect = RECONNECT_ATTEMPTS; /* non-zero to repeat */
+            }
+            else {
+                reconnect = 0;
+            }
         } /* client.connect(host, port) */
         else {
             Serial.println(F("Problem sending message. Trying to reconnect..."));
