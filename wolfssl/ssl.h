@@ -1056,8 +1056,11 @@ WOLFSSL_ABI WOLFSSL_API int wolfSSL_CTX_use_certificate_file(
     WOLFSSL_CTX* ctx, const char* file, int format);
 WOLFSSL_ABI WOLFSSL_API int wolfSSL_CTX_use_PrivateKey_file(
     WOLFSSL_CTX* ctx, const char* file, int format);
-
-#endif
+#ifdef WOLFSSL_DUAL_ALG_CERTS
+WOLFSSL_API int wolfSSL_CTX_use_AltPrivateKey_file(
+    WOLFSSL_CTX* ctx, const char* file, int format);
+#endif /* WOLFSSL_DUAL_ALG_CERTS */
+#endif /* !NO_FILESYSTEM && !NO_CERTS */
 
 #ifndef NO_CERTS
 #define WOLFSSL_LOAD_FLAG_NONE          0x00000000
@@ -1681,6 +1684,7 @@ WOLFSSL_API void wolfSSL_sk_CIPHER_free(WOLF_STACK_OF(WOLFSSL_CIPHER)* sk);
 WOLFSSL_API WOLFSSL_SESSION* wolfSSL_get1_session(WOLFSSL* ssl);
 
 WOLFSSL_API WOLFSSL_X509* wolfSSL_X509_new(void);
+WOLFSSL_API WOLFSSL_X509* wolfSSL_X509_new_ex(void* heap);
 WOLFSSL_API WOLFSSL_X509* wolfSSL_X509_dup(WOLFSSL_X509* x);
 #if defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA)
 WOLFSSL_API int wolfSSL_RSA_up_ref(WOLFSSL_RSA* rsa);
@@ -2885,6 +2889,9 @@ WOLFSSL_API WOLFSSL_X509* wolfSSL_d2i_X509(WOLFSSL_X509** x509,
         const unsigned char** in, int len);
 WOLFSSL_API WOLFSSL_X509*
     wolfSSL_X509_d2i(WOLFSSL_X509** x509, const unsigned char* in, int len);
+WOLFSSL_API WOLFSSL_X509*
+    wolfSSL_X509_d2i_ex(WOLFSSL_X509** x509, const unsigned char* in, int len,
+    void* heap);
 #ifdef WOLFSSL_CERT_REQ
 WOLFSSL_API WOLFSSL_X509*
     wolfSSL_X509_REQ_d2i(WOLFSSL_X509** x509, const unsigned char* in, int len);
@@ -4010,6 +4017,16 @@ WOLFSSL_API int wolfSSL_UseKeyShare(WOLFSSL* ssl, word16 group);
 WOLFSSL_API int wolfSSL_NoKeyShares(WOLFSSL* ssl);
 #endif
 
+#ifdef WOLFSSL_DUAL_ALG_CERTS
+#define WOLFSSL_CKS_SIGSPEC_NATIVE      0x0001
+#define WOLFSSL_CKS_SIGSPEC_ALTERNATIVE 0x0002
+#define WOLFSSL_CKS_SIGSPEC_BOTH        0x0003
+#define WOLFSSL_CKS_SIGSPEC_EXTERNAL    0x0004
+
+WOLFSSL_API int wolfSSL_UseCKS(WOLFSSL* ssl, byte *sigSpec, word16 sigSpecSz);
+WOLFSSL_API int wolfSSL_CTX_UseCKS(WOLFSSL_CTX* ctx, byte *sigSpec,
+                                   word16 sigSpecSz);
+#endif /* WOLFSSL_DUAL_ALG_CERTS */
 
 /* Secure Renegotiation */
 #if defined(HAVE_SECURE_RENEGOTIATION) || defined(HAVE_SERVER_RENEGOTIATION_INFO)

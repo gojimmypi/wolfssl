@@ -835,6 +835,314 @@ static int test_wolfSSL_Method_Allocators(void)
     return EXPECT_RESULT();
 }
 
+#if defined(WOLFSSL_DUAL_ALG_CERTS) && !defined(NO_FILESYSTEM)
+/*----------------------------------------------------------------------------*
+ | Dual algorithm Certificate Tests
+ *----------------------------------------------------------------------------*/
+#define LARGE_TEMP_SZ 4096
+
+/* To better understand this, please see the X9.146 example in wolfssl-examples
+ * repo. */
+static int do_dual_alg_root_certgen(byte **out, char *caKeyFile,
+                                    char *sapkiFile, char *altPrivFile)
+{
+    EXPECT_DECLS;
+    FILE* file = NULL;
+    Cert newCert;
+    DecodedCert preTBS;
+
+    byte caKeyBuf[LARGE_TEMP_SZ];
+    word32 caKeySz = LARGE_TEMP_SZ;
+    byte sapkiBuf[LARGE_TEMP_SZ];
+    word32 sapkiSz = LARGE_TEMP_SZ;
+    byte altPrivBuf[LARGE_TEMP_SZ];
+    word32 altPrivSz = LARGE_TEMP_SZ;
+    byte altSigAlgBuf[LARGE_TEMP_SZ];
+    word32 altSigAlgSz = LARGE_TEMP_SZ;
+    byte scratchBuf[LARGE_TEMP_SZ];
+    word32 scratchSz = LARGE_TEMP_SZ;
+    byte preTbsBuf[LARGE_TEMP_SZ];
+    word32 preTbsSz = LARGE_TEMP_SZ;
+    byte altSigValBuf[LARGE_TEMP_SZ];
+    word32 altSigValSz = LARGE_TEMP_SZ;
+    byte *outBuf = NULL;
+    word32 outSz = LARGE_TEMP_SZ;
+    WC_RNG rng;
+    RsaKey caKey;
+    ecc_key altCaKey;
+    word32 idx = 0;
+    ExpectNotNull(outBuf = (byte*)XMALLOC(outSz, NULL,
+                  DYNAMIC_TYPE_TMP_BUFFER));
+    ExpectIntEQ(wc_InitRng(&rng), 0);
+    XMEMSET(caKeyBuf, 0, caKeySz);
+    ExpectNotNull(file = fopen(caKeyFile, "rb"));
+    ExpectIntGT(caKeySz = (word32)fread(caKeyBuf, 1, caKeySz, file), 0);
+    fclose(file);
+    ExpectIntEQ(wc_InitRsaKey_ex(&caKey, NULL, INVALID_DEVID), 0);
+    idx = 0;
+    ExpectIntEQ(wc_RsaPrivateKeyDecode(caKeyBuf, &idx, &caKey, caKeySz),
+                0);
+    XMEMSET(sapkiBuf, 0, sapkiSz);
+    ExpectNotNull(file = fopen(sapkiFile, "rb"));
+    ExpectIntGT(sapkiSz = (word32)fread(sapkiBuf, 1, sapkiSz, file), 0);
+    fclose(file);
+    XMEMSET(altPrivBuf, 0, altPrivSz);
+    ExpectNotNull(file = fopen(altPrivFile, "rb"));
+    ExpectIntGT(altPrivSz = (word32)fread(altPrivBuf, 1, altPrivSz, file), 0);
+    fclose(file);
+    wc_ecc_init(&altCaKey);
+    idx = 0;
+    ExpectIntEQ(wc_EccPrivateKeyDecode(altPrivBuf, &idx, &altCaKey,
+                                       (word32)altPrivSz), 0);
+    XMEMSET(altSigAlgBuf, 0, altSigAlgSz);
+    ExpectIntGT(altSigAlgSz = SetAlgoID(CTC_SHA256wECDSA, altSigAlgBuf,
+                                         oidSigType, 0), 0);
+    wc_InitCert(&newCert);
+    strncpy(newCert.subject.country, "US", CTC_NAME_SIZE);
+    strncpy(newCert.subject.state, "MT", CTC_NAME_SIZE);
+    strncpy(newCert.subject.locality, "Bozeman", CTC_NAME_SIZE);
+    strncpy(newCert.subject.org, "wolfSSL", CTC_NAME_SIZE);
+    strncpy(newCert.subject.unit, "Engineering", CTC_NAME_SIZE);
+    strncpy(newCert.subject.commonName, "www.wolfssl.com", CTC_NAME_SIZE);
+    strncpy(newCert.subject.email, "root@wolfssl.com", CTC_NAME_SIZE);
+    newCert.sigType = CTC_SHA256wRSA;
+    newCert.isCA    = 1;
+
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "1.2.3.4.5",
+                (const byte *)"This is NOT a critical extension", 32), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.72", sapkiBuf,
+                sapkiSz), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.73", altSigAlgBuf,
+                                altSigAlgSz), 0);
+
+    XMEMSET(scratchBuf, 0, scratchSz);
+    ExpectIntGT(scratchSz = wc_MakeSelfCert(&newCert, scratchBuf, scratchSz,
+                &caKey, &rng), 0);
+    wc_InitDecodedCert(&preTBS, scratchBuf, scratchSz, 0);
+    ExpectIntEQ(wc_ParseCert(&preTBS, CERT_TYPE, NO_VERIFY, NULL), 0);
+
+    XMEMSET(preTbsBuf, 0, preTbsSz);
+    ExpectIntGT(preTbsSz = wc_GeneratePreTBS(&preTBS, preTbsBuf, preTbsSz), 0);
+    XMEMSET(altSigValBuf, 0, altSigValSz);
+    ExpectIntGT(altSigValSz = wc_MakeSigWithBitStr(altSigValBuf, altSigValSz,
+                CTC_SHA256wECDSA, preTbsBuf, preTbsSz, ECC_TYPE, &altCaKey,
+                &rng), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.74", altSigValBuf,
+                altSigValSz), 0);
+
+    /* Finally, generate the new certificate. */
+    XMEMSET(outBuf, 0, outSz);
+    ExpectIntGT(outSz = wc_MakeSelfCert(&newCert, outBuf, outSz, &caKey, &rng),
+                0);
+    *out = outBuf;
+    wc_FreeRsaKey(&caKey);
+    wc_FreeRng(&rng);
+    return outSz;
+}
+
+static int do_dual_alg_server_certgen(byte **out, char *caKeyFile,
+                                      char *sapkiFile, char *altPrivFile,
+                                      char *serverKeyFile,
+                                      byte *caCertBuf, int caCertSz)
+{
+    EXPECT_DECLS;
+    FILE* file = NULL;
+    Cert newCert;
+    DecodedCert preTBS;
+
+    byte serverKeyBuf[LARGE_TEMP_SZ];
+    word32 serverKeySz = LARGE_TEMP_SZ;
+    byte caKeyBuf[LARGE_TEMP_SZ];
+    word32 caKeySz = LARGE_TEMP_SZ;
+    byte sapkiBuf[LARGE_TEMP_SZ];
+    word32 sapkiSz = LARGE_TEMP_SZ;
+    byte altPrivBuf[LARGE_TEMP_SZ];
+    word32 altPrivSz = LARGE_TEMP_SZ;
+    byte altSigAlgBuf[LARGE_TEMP_SZ];
+    word32 altSigAlgSz = LARGE_TEMP_SZ;
+    byte scratchBuf[LARGE_TEMP_SZ];
+    word32 scratchSz = LARGE_TEMP_SZ;
+    byte preTbsBuf[LARGE_TEMP_SZ];
+    word32 preTbsSz = LARGE_TEMP_SZ;
+    byte altSigValBuf[LARGE_TEMP_SZ];
+    word32 altSigValSz = LARGE_TEMP_SZ;
+    byte *outBuf = NULL;
+    word32 outSz = LARGE_TEMP_SZ;
+    WC_RNG rng;
+    RsaKey caKey;
+    RsaKey serverKey;
+    ecc_key altCaKey;
+    word32 idx = 0;
+    ExpectNotNull(outBuf = (byte*)XMALLOC(outSz, NULL,
+                  DYNAMIC_TYPE_TMP_BUFFER));
+    ExpectIntEQ(wc_InitRng(&rng), 0);
+    XMEMSET(serverKeyBuf, 0, serverKeySz);
+    ExpectNotNull(file = fopen(serverKeyFile, "rb"));
+    ExpectIntGT(serverKeySz = (word32)fread(serverKeyBuf, 1, serverKeySz, file),
+                0);
+    fclose(file);
+    ExpectIntEQ(wc_InitRsaKey_ex(&serverKey, NULL, INVALID_DEVID), 0);
+    idx = 0;
+    ExpectIntEQ(wc_RsaPrivateKeyDecode(serverKeyBuf, &idx, &serverKey,
+                (word32)serverKeySz), 0);
+    XMEMSET(caKeyBuf, 0, caKeySz);
+    ExpectNotNull(file = fopen(caKeyFile, "rb"));
+    ExpectIntGT(caKeySz = (word32)fread(caKeyBuf, 1, caKeySz, file), 0);
+    fclose(file);
+    ExpectIntEQ(wc_InitRsaKey_ex(&caKey, NULL, INVALID_DEVID), 0);
+    idx = 0;
+    ExpectIntEQ(wc_RsaPrivateKeyDecode(caKeyBuf, &idx, &caKey,
+                (word32)caKeySz), 0);
+    XMEMSET(sapkiBuf, 0, sapkiSz);
+    ExpectNotNull(file = fopen(sapkiFile, "rb"));
+    ExpectIntGT(sapkiSz = (word32)fread(sapkiBuf, 1, sapkiSz, file), 0);
+    fclose(file);
+    XMEMSET(altPrivBuf, 0, altPrivSz);
+    ExpectNotNull(file = fopen(altPrivFile, "rb"));
+    ExpectIntGT(altPrivSz = (word32)fread(altPrivBuf, 1, altPrivSz, file), 0);
+    fclose(file);
+    wc_ecc_init(&altCaKey);
+    idx = 0;
+    ExpectIntEQ(wc_EccPrivateKeyDecode(altPrivBuf, &idx, &altCaKey,
+                (word32)altPrivSz), 0);
+    XMEMSET(altSigAlgBuf, 0, altSigAlgSz);
+    ExpectIntGT(altSigAlgSz = SetAlgoID(CTC_SHA256wECDSA, altSigAlgBuf,
+                oidSigType, 0), 0);
+    wc_InitCert(&newCert);
+    strncpy(newCert.subject.country, "US", CTC_NAME_SIZE);
+    strncpy(newCert.subject.state, "MT", CTC_NAME_SIZE);
+    strncpy(newCert.subject.locality, "Bozeman", CTC_NAME_SIZE);
+    strncpy(newCert.subject.org, "wolfSSL", CTC_NAME_SIZE);
+    strncpy(newCert.subject.unit, "Engineering", CTC_NAME_SIZE);
+    strncpy(newCert.subject.commonName, "www.wolfssl.com", CTC_NAME_SIZE);
+    strncpy(newCert.subject.email, "server@wolfssl.com", CTC_NAME_SIZE);
+
+    newCert.sigType = CTC_SHA256wRSA;
+    newCert.isCA    = 0;
+    ExpectIntEQ(wc_SetIssuerBuffer(&newCert, caCertBuf, caCertSz), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "1.2.3.4.5",
+                (const byte *)"This is NOT a critical extension", 32), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.72", sapkiBuf,
+                sapkiSz), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.73", altSigAlgBuf,
+                altSigAlgSz), 0);
+    XMEMSET(scratchBuf, 0, scratchSz);
+    ExpectIntGT(wc_MakeCert(&newCert, scratchBuf, scratchSz, &serverKey, NULL,
+                &rng), 0);
+    ExpectIntGT(scratchSz = wc_SignCert(newCert.bodySz, newCert.sigType,
+                scratchBuf, scratchSz, &caKey, NULL, &rng), 0);
+    wc_InitDecodedCert(&preTBS, scratchBuf, scratchSz, 0);
+    ExpectIntEQ(wc_ParseCert(&preTBS, CERT_TYPE, NO_VERIFY, NULL), 0);
+    XMEMSET(preTbsBuf, 0, preTbsSz);
+    ExpectIntGT(preTbsSz = wc_GeneratePreTBS(&preTBS, preTbsBuf, preTbsSz), 0);
+    XMEMSET(altSigValBuf, 0, altSigValSz);
+    ExpectIntGT(altSigValSz = wc_MakeSigWithBitStr(altSigValBuf, altSigValSz,
+                CTC_SHA256wECDSA, preTbsBuf, preTbsSz, ECC_TYPE, &altCaKey,
+                &rng), 0);
+    ExpectIntEQ(wc_SetCustomExtension(&newCert, 0, "2.5.29.74",
+                 altSigValBuf, altSigValSz), 0);
+    /* Finally, generate the new certificate. */
+    XMEMSET(outBuf, 0, outSz);
+    ExpectIntGT(wc_MakeCert(&newCert, outBuf, outSz, &serverKey, NULL, &rng),
+                0);
+    ExpectIntGT(outSz = wc_SignCert(newCert.bodySz, newCert.sigType, outBuf,
+                outSz, &caKey, NULL, &rng), 0);
+    *out = outBuf;
+    wc_FreeRsaKey(&caKey);
+    wc_FreeRsaKey(&serverKey);
+    wc_FreeRng(&rng);
+    return outSz;
+}
+
+static int do_dual_alg_tls13_connection(byte *caCert, word32 caCertSz,
+                                        byte *serverCert, word32 serverCertSz,
+                                        byte *serverKey, word32 serverKeySz,
+                                        int negative_test)
+{
+    EXPECT_DECLS;
+    WOLFSSL_CTX *ctx_c = NULL;
+    WOLFSSL_CTX *ctx_s = NULL;
+    WOLFSSL *ssl_c = NULL;
+    WOLFSSL *ssl_s = NULL;
+    struct test_memio_ctx test_ctx;
+
+    XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+    ExpectIntEQ(test_memio_setup_ex(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+                wolfTLSv1_3_client_method, wolfTLSv1_3_server_method,
+                caCert, caCertSz, serverCert, serverCertSz,
+                serverKey, serverKeySz), 0);
+    if (negative_test) {
+        ExpectTrue(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL) != 0);
+    }
+    else {
+        ExpectIntEQ(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL), 0);
+    }
+    wolfSSL_free(ssl_c);
+    wolfSSL_free(ssl_s);
+    wolfSSL_CTX_free(ctx_c);
+    wolfSSL_CTX_free(ctx_s);
+    return EXPECT_RESULT();
+}
+
+static int test_dual_alg_support(void)
+{
+    EXPECT_DECLS;
+    /* Root CA and server keys will be the same. This is only appropriate for
+     * testing. */
+    char keyFile[] = "./certs/ca-key.der";
+    char sapkiFile[] = "./certs/ecc-keyPub.der";
+    char altPrivFile[] = "./certs/ecc-key.der";
+    char wrongPrivFile[] = "./certs/ecc-client-key.der";
+    byte *serverKey = NULL;
+    size_t serverKeySz = 0;
+    byte *root = NULL;
+    int rootSz = 0;
+    byte *server = NULL;
+    int serverSz = 0;
+
+    ExpectIntEQ(load_file(keyFile, &serverKey, &serverKeySz), 0);
+
+    /* Base normal case. */
+    rootSz = do_dual_alg_root_certgen(&root, keyFile, sapkiFile, altPrivFile);
+    ExpectNotNull(root);
+    ExpectIntGT(rootSz, 0);
+    serverSz = do_dual_alg_server_certgen(&server, keyFile, sapkiFile,
+                                        altPrivFile, keyFile, root, rootSz);
+    ExpectNotNull(server);
+    ExpectIntGT(serverSz, 0);
+    ExpectIntEQ(do_dual_alg_tls13_connection(root, rootSz,
+                server, serverSz, serverKey, (word32)serverKeySz, 0),
+                TEST_SUCCESS);
+    XFREE(root, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(server, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+
+    /* Now we try a negative case. Note that we use wrongPrivFile to generate
+     * the alternative signature and then set negative_test to true for the
+     * call to do_dual_alg_tls13_connection(). Its expecting a failed connection
+     * because the signature won't verify. */
+    rootSz = do_dual_alg_root_certgen(&root, keyFile, sapkiFile, wrongPrivFile);
+    ExpectNotNull(root);
+    ExpectIntGT(rootSz, 0);
+    serverSz = do_dual_alg_server_certgen(&server, keyFile, sapkiFile,
+                                          wrongPrivFile, keyFile, root, rootSz);
+    ExpectNotNull(server);
+    ExpectIntGT(serverSz, 0);
+    ExpectIntEQ(do_dual_alg_tls13_connection(root, rootSz,
+                server, serverSz, serverKey, (word32)serverKeySz, 1),
+                TEST_SUCCESS);
+    XFREE(root, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(server, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+
+    free(serverKey);
+
+    return EXPECT_RESULT();
+}
+#else
+static int test_dual_alg_support(void)
+{
+    return TEST_SKIPPED;
+}
+#endif /* WOLFSSL_DUAL_ALG_CERTS && !NO_FILESYSTEM */
 
 /*----------------------------------------------------------------------------*
  | Context
@@ -31740,7 +32048,7 @@ static int test_wolfSSL_X509_NAME(void)
         XFCLOSE(f);
 
     c = buf;
-    ExpectNotNull(x509 = wolfSSL_X509_d2i(NULL, c, bytes));
+    ExpectNotNull(x509 = wolfSSL_X509_d2i_ex(NULL, c, bytes, HEAP_HINT));
 
     /* test cmp function */
     ExpectNotNull(a = X509_get_issuer_name(x509));
@@ -34250,9 +34558,11 @@ static int test_wolfSSL_tmp_dh(void)
     BIO_free(bio);
     DSA_free(dsa);
     DH_free(dh);
+    dh = NULL;
 #if defined(WOLFSSL_DH_EXTRA) && \
     (defined(WOLFSSL_QT) || defined(OPENSSL_ALL) || defined(WOLFSSL_OPENSSH))
     DH_free(dh2);
+    dh2 = NULL;
 #endif
     SSL_free(ssl);
     SSL_CTX_free(ctx);
@@ -36869,8 +37179,8 @@ static int test_wolfSSL_X509_NID(void)
     /* ------ PARSE ORIGINAL SELF-SIGNED CERTIFICATE ------ */
 
     /* convert cert from DER to internal WOLFSSL_X509 struct */
-    ExpectNotNull(cert = wolfSSL_X509_d2i(&cert, client_cert_der_2048,
-            sizeof_client_cert_der_2048));
+    ExpectNotNull(cert = wolfSSL_X509_d2i_ex(&cert, client_cert_der_2048,
+            sizeof_client_cert_der_2048, HEAP_HINT));
 
     /* ------ EXTRACT CERTIFICATE ELEMENTS ------ */
 
@@ -46835,6 +47145,7 @@ static int test_wolfSSL_PEM_read_DHparams(void)
         XFCLOSE(fp);
 
     DH_free(dh);
+    dh = NULL;
 #endif
     return EXPECT_RESULT();
 }
@@ -47593,7 +47904,9 @@ static int test_wolfSSL_EVP_PKEY_set1_get1_DH (void)
 
     EVP_PKEY_free(pkey);
     DH_free(setDh);
+    setDh = NULL;
     DH_free(dh);
+    dh = NULL;
 #endif /* !NO_DH && WOLFSSL_DH_EXTRA && !NO_FILESYSTEM */
 #endif /* !HAVE_FIPS || HAVE_FIPS_VERSION > 2 */
 #endif /* OPENSSL_ALL || WOLFSSL_QT || WOLFSSL_OPENSSH */
@@ -47763,6 +48076,7 @@ static int test_wolfSSL_CTX_ctrl(void)
     BIO_free(bio);
     DSA_free(dsa);
     DH_free(dh);
+    dh = NULL;
 #endif
 #endif
 #ifdef HAVE_ECC
@@ -48009,6 +48323,7 @@ static int test_wolfSSL_EVP_PKEY_keygen(void)
 
         ASN1_INTEGER_free(asn1int);
         DH_free(dh);
+        dh = NULL;
         XFREE(derBuffer, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 
         EVP_PKEY_free(pkey);
@@ -48097,6 +48412,7 @@ static int test_wolfSSL_EVP_PKEY_copy_parameters(void)
     ExpectIntEQ(BN_cmp(g1, g2), 0);
 
     DH_free(dh);
+    dh = NULL;
     EVP_PKEY_free(copy);
     EVP_PKEY_free(params);
 #endif
@@ -48842,7 +49158,9 @@ static int test_wolfSSL_EVP_PKEY_param_check(void)
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     DH_free(setDh);
+    setDh = NULL;
     DH_free(dh);
+    dh = NULL;
 #endif
 #endif
     return EXPECT_RESULT();
@@ -58122,6 +58440,7 @@ static int test_wolfSSL_DH(void)
     ExpectNotNull(dh = DH_generate_parameters(2048, 2, NULL, NULL));
     ExpectIntEQ(wolfSSL_DH_generate_parameters_ex(NULL, 2048, 2, NULL), 0);
     DH_free(dh);
+    dh = NULL;
 #endif
 #endif /* !HAVE_FIPS || (HAVE_FIPS_VERSION && HAVE_FIPS_VERSION > 2) */
 #endif /* OPENSSL_ALL */
@@ -58276,6 +58595,7 @@ static int test_wolfSSL_DH(void)
     ExpectIntEQ(wolfSSL_DH_up_ref(dh), WOLFSSL_SUCCESS);
     DH_free(dh); /* decrease ref count */
     DH_free(dh); /* free WOLFSSL_DH */
+    dh = NULL;
     q = NULL;
 
     ExpectNull((dh = DH_new_by_nid(NID_sha1)));
@@ -58285,16 +58605,19 @@ static int test_wolfSSL_DH(void)
 #ifdef HAVE_FFDHE_2048
     ExpectNotNull((dh = DH_new_by_nid(NID_ffdhe2048)));
     DH_free(dh);
+    dh = NULL;
     q = NULL;
 #endif
 #ifdef HAVE_FFDHE_3072
     ExpectNotNull((dh = DH_new_by_nid(NID_ffdhe3072)));
     DH_free(dh);
+    dh = NULL;
     q = NULL;
 #endif
 #ifdef HAVE_FFDHE_4096
     ExpectNotNull((dh = DH_new_by_nid(NID_ffdhe4096)));
     DH_free(dh);
+    dh = NULL;
     q = NULL;
 #endif
 #else
@@ -58494,6 +58817,7 @@ static int test_wolfSSL_DH_check(void)
     ExpectIntEQ(wolfSSL_DH_check(dh, NULL), 0);
     ExpectIntEQ(codes, DH_CHECK_P_NOT_PRIME);
     DH_free(dh);
+    dh = NULL;
 #endif
 #endif /* !NO_DH  && !NO_DSA */
 #endif
@@ -58979,6 +59303,7 @@ static int test_wolfSSL_i2d_DHparams(void)
     ExpectIntEQ(wolfSSL_i2d_DHparams(dh, NULL), 268);
 
     DH_free(dh);
+    dh = NULL;
 
     *buf = 0;
 #endif
@@ -59008,6 +59333,7 @@ static int test_wolfSSL_i2d_DHparams(void)
     ExpectIntEQ(wolfSSL_i2d_DHparams(dh, NULL), 396);
 
     DH_free(dh);
+    dh = NULL;
 #endif
 
     dh = DH_new();
@@ -59015,6 +59341,7 @@ static int test_wolfSSL_i2d_DHparams(void)
     pt2 = buf;
     ExpectIntEQ(wolfSSL_i2d_DHparams(dh, &pt2), 0);
     DH_free(dh);
+    dh = NULL;
 #endif /* !HAVE_FIPS || HAVE_FIPS_VERSION > 2 */
 #endif /* !NO_DH && (HAVE_FFDHE_2048 || HAVE_FFDHE_3072) */
 #endif
@@ -69274,6 +69601,8 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfCrypt_Cleanup),
 
     TEST_DECL(test_wolfSSL_Init),
+
+    TEST_DECL(test_dual_alg_support),
 
     /*********************************
      * OpenSSL compatibility API tests
