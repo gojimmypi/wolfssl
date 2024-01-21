@@ -33,7 +33,7 @@ Tested with:
 #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 
 /* set REPEAT_CONNECTION to a non-zero value to continually run the example. */
-#define REPEAT_CONNECTION 0
+#define REPEAT_CONNECTION 1
 
 /* Edit this with your other TLS host server address to connect to: */
 #define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
@@ -46,6 +46,9 @@ Tested with:
 
 /* Number of times to retry connection.  */
 #define RECONNECT_ATTEMPTS 20
+
+/* Optional stress test. Define to consume memory until exhausted: */
+#define MEMORY_STRESS_TEST
 
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
@@ -128,6 +131,13 @@ WOLFSSL* ssl = NULL;
 char* wc_error_message = (char*)malloc(80 + 1);
 char errBuf[80];
 
+#if defined(MEMORY_STRESS_TEST)
+    #define MEMORY_STRESS_ITERATIONS 100
+    #define MEMORY_STRESS_BLOCK_SIZE 1024
+    char* memory_stress[MEMORY_STRESS_ITERATIONS]; /* typically 1K per item */
+    int mem_ctr        = 0;
+#endif
+
 static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 static int reconnect = RECONNECT_ATTEMPTS;
@@ -177,7 +187,7 @@ void show_memory(void)
     Serial.println(mi.keepcost);
 #endif
 
-#if defined(DEBUG_WOLFSSL)
+#if defined(DEBUG_WOLFSSL) || defined(MEMORY_STRESS_TEST)
     Serial.print("Estimated free memory: ");
     Serial.println(stack_ptr - heapend + mi.fordblks);
 #endif
@@ -466,6 +476,7 @@ static int error_check(int this_ret, bool halt_on_error,
         Serial.print(this_ret);
         Serial.print(F(": "));
         Serial.println(message);
+        Serial.println(wc_GetErrorString(this_ret));
         if (halt_on_error) {
             fail_wait();
         }
@@ -484,8 +495,8 @@ static int error_check(int this_ret, bool halt_on_error,
 /*****************************************************************************/
 static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
                            const __FlashStringHelper* message) {
-    int ret = 0;
     int err = 0;
+
     if (ssl == NULL) {
         Serial.println(F("ssl is Null; Unable to allocate SSL object?"));
 #ifndef DEBUG_WOLFSSL
@@ -521,10 +532,8 @@ static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
     }
     show_memory();
 
-    return ret;
+    return err;
 }
-
-  //  ret, F("calling wolfSSL_Init"), false);
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -576,7 +585,8 @@ void loop() {
                 err = 0; /* reset error */
                 ret = wolfSSL_connect(ssl);
                 if ((ret != WOLFSSL_SUCCESS) && (ret != WC_PENDING_E)) {
-                    error_check_ssl(ssl, ret, true,
+                    Serial.println(F("Failed connection, checking error."));
+                    err = error_check_ssl(ssl, ret, true,
                                     F("Create WOLFSSL object from ctx"));
                     //err = wolfSSL_get_error(ssl, 0);
                     //wolfSSL_ERR_error_string(ret, errBuf);
@@ -684,7 +694,17 @@ void loop() {
     else {
         Serial.println(F("Done!"));
         while(1) {
-          /* wait forever */
+            /* wait forever */
         }
     }
+
+#if defined(MEMORY_STRESS_TEST)
+    if (mem_ctr < MEMORY_STRESS_ITERATIONS) {
+        memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_BLOCK_SIZE);
+        mem_ctr++;
+        Serial.print(F("Memory stress increment: "));
+        Serial.println(mem_ctr);
+        show_memory();
+    }
+#endif
 } /* Arduino loop repeats */
