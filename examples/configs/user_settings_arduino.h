@@ -1,4 +1,4 @@
-/* user_settings.h
+/* examples/configs/user_settings_arduino.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -19,36 +19,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/* This is a sample Arduino user_settings.h for wolfSSL */
 
 #define NO_FILESYSTEM
+#define USE_CERT_BUFFERS_2048
 
+/* Make sure this is not an ESP-IDF file */
 #undef  WOLFSSL_ESPIDF
-// #define WOLFSSL_ESPIDF
 
 /* Edded per https://www.wolfssl.com/forums/post7411.html#p7411 */
 #define SINGLE_THREADED
 #define HAVE_ECC
 #define WOLFSSL_SMALL_STACK
-// #define WOLFSSL_ESPIDF
-// #define WOLFSSL_ESP32
+//#define WOLFSSL_SMALL_STACK_EXTRA
+//#define WOLFSSL_SMALL_STACK_CIPHERS
+//#define NO_DH
+//#define NO_RSA
+//#define NO_OLD_TLS
+
+/* CAnnot use WOLFSSL_NO_MALLOC with small stack */
+/* #define WOLFSSL_NO_MALLOC */
+
 #define HAVE_TLS_EXTENSIONS
 #define HAVE_SUPPORTED_CURVES
 
-/* (one possible) resolution to error "No encryption algorithm available for default ticket encryption." */
 #define HAVE_AESGCM
-
-/*
- * choose ONE of these Espressif chips to define:
- *
- * WOLFSSL_ESP32
- * WOLFSSL_ESPWROOM32SE
- * WOLFSSL_ESP8266
- */
-#undef WOLFSSL_ESPWROOM32SE
-#undef WOLFSSL_ESP8266
-#undef WOLFSSL_ESP32
-
-// #define WOLFSSL_ESP32
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -126,9 +121,6 @@
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
-
-
-#define WOLFSSL_SMALL_STACK
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines to force SW instead of HW acceleration */
@@ -301,7 +293,6 @@
 
 
 #define WOLFSSL_PUBLIC_MP /* used by benchmark */
-#define USE_CERT_BUFFERS_2048
 
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
@@ -315,7 +306,8 @@
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
-// #define WOLFSSL_MEMORY_STORAGEWOLFSSL_MEMORY_STORAGE __FlashStringHelper *
+
+// #define WOLFSSL_MEMORY_STORAGE __FlashStringHelper *
 
 #define WOLFSSL_MEMORY_STORAGE
 
@@ -334,15 +326,47 @@
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
-    #define USE_CERT_BUFFERS_2048
-    #define USE_CERT_BUFFERS_256
-    #define CTX_CA_CERT          ca_cert_der_2048
-    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-    #define CTX_SERVER_CERT      server_cert_der_2048
-    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
-    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-    #define CTX_SERVER_KEY       server_key_der_2048
-    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
-    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+//    #define USE_CERT_BUFFERS_2048
+//    #define USE_CERT_BUFFERS_256
+    #if defined(USE_CERT_BUFFERS_2048)
+        #include <wolfssl/certs_test.h>
+        #define CTX_CA_CERT          ca_cert_der_2048
+        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_SERVER_CERT      server_cert_der_2048
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_SERVER_KEY       server_key_der_2048
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      client_cert_der_2048
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CLIENT_KEY       client_key_der_2048
+        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #elif defined(USE_CERT_BUFFERS_1024)
+        #include <wolfssl/certs_test.h>
+        #define CTX_CA_CERT          ca_cert_der_1024
+        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      client_cert_der_1024
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_1024
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CLIENT_KEY       client_key_der_1024
+        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_1024
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_SERVER_CERT      server_cert_der_1024
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_1024
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_SERVER_KEY       server_key_der_1024
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #else
+        #error "Must define USE_CERT_BUFFERS_2048, "
+    #endif
 #endif
