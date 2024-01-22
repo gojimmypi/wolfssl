@@ -29,6 +29,11 @@ Tested with:
 2) Espressif ESP32 WiFi
 */
 
+/*
+ * Note to code editors: the Arduino client and server examples are edited in
+ * parallel for side-by-side comparison between examples.
+ */
+
 /* If you have a private include, define it here, otherwise edit WiFi params */
 #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 
@@ -40,6 +45,9 @@ Tested with:
 
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
+
+/* Choose a monitor serial baud rate: 9600, 14400, 19200, 57600, 74880, etc. */
+#define SERIAL_BAUD 115200
 
 /* We'll wait up to 2000 milliseconds to properly shut down connection */
 #define SHUTDOWN_DELAY_MS 2000
@@ -63,9 +71,8 @@ Tested with:
 #endif
 
 /* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
- * If it is installed, uncomment define USE_NTP_LIB here: */
+ * If it is installed, uncomment the #define USE_NTP_LIB here: */
 /* #define USE_NTP_LIB */
-#define USE_NTP_LIB
 #ifdef USE_NTP_LIB
     #include <NTPClient.h>
 #endif
@@ -124,7 +131,7 @@ Tested with:
 
 const char host[] PROGMEM = WOLFSSL_TLS_SERVER_HOST; /* server to connect to */
 const int port PROGMEM = WOLFSSL_PORT; /* port on server to connect to */
-const int serial_baud PROGMEM = 115200; /* local serial port to monitor */
+const int serial_baud PROGMEM = SERIAL_BAUD; /* local serial port to monitor */
 
 WOLFSSL_CTX* ctx = NULL;
 WOLFSSL* ssl = NULL;
@@ -144,14 +151,14 @@ static int reconnect = RECONNECT_ATTEMPTS;
 static int lng_index PROGMEM = 0; /* 0 = English */
 
 
-
+#if defined(__arm__)
 extern char _end;
 extern "C" char *sbrk(int i);
 char *ramstart=(char *)0x20070000;
 char *ramend=(char *)0x20088000;
 
 #include <malloc.h>
-extern "C" char *sbrk(int i);
+#endif
 
 /*****************************************************************************/
 /* fail_wait - in case of unrecoverable error                                */
@@ -170,39 +177,41 @@ static void fail_wait(void) {
 /*****************************************************************************/
 void show_memory(void)
 {
-	struct mallinfo mi=mallinfo();
+#if defined(__arm__)
+    struct mallinfo mi = mallinfo();
 
-	char *heapend=sbrk(0);
+    char *heapend=sbrk(0);
 	register char * stack_ptr asm("sp");
-#if defined(DEBUG_WOLFSSL_VERBOSE)
-    Serial.print("    arena=");
-    Serial.println(mi.arena);
-    Serial.print("  ordblks=");
-    Serial.println(mi.ordblks);
-    Serial.print(" uordblks=");
-    Serial.println(mi.uordblks);
-    Serial.print(" fordblks=");
-    Serial.println(mi.fordblks);
-    Serial.print(" keepcost=");
-    Serial.println(mi.keepcost);
+    #if defined(DEBUG_WOLFSSL_VERBOSE)
+        Serial.print("    arena=");
+        Serial.println(mi.arena);
+        Serial.print("  ordblks=");
+        Serial.println(mi.ordblks);
+        Serial.print(" uordblks=");
+        Serial.println(mi.uordblks);
+        Serial.print(" fordblks=");
+        Serial.println(mi.fordblks);
+        Serial.print(" keepcost=");
+        Serial.println(mi.keepcost);
+    #endif
+
+    #if defined(DEBUG_WOLFSSL) || defined(MEMORY_STRESS_TEST)
+        Serial.print("Estimated free memory: ");
+        Serial.println(stack_ptr - heapend + mi.fordblks);
+    #endif
+
+    //	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
+    //	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
+    //	Serial.print("Heap End %lx\n", (unsigned long)heapend);
+    //	Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
+    //	Serial.print("RAM End %lx\n", (unsigned long)ramend);
+
+    //	Serial.print("Heap RAM Used: ",mi.uordblks);
+    //	Serial.print("Program RAM Used ",&_end - ramstart);
+    //	Serial.print("Stack RAM Used ",ramend - stack_ptr);
+
+    //	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
 #endif
-
-#if defined(DEBUG_WOLFSSL) || defined(MEMORY_STRESS_TEST)
-    Serial.print("Estimated free memory: ");
-    Serial.println(stack_ptr - heapend + mi.fordblks);
-#endif
-
-//	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
-//	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
-//	Serial.print("Heap End %lx\n", (unsigned long)heapend);
-//	Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
-//	Serial.print("RAM End %lx\n", (unsigned long)ramend);
-
-//	Serial.print("Heap RAM Used: ",mi.uordblks);
-//	Serial.print("Program RAM Used ",&_end - ramstart);
-//	Serial.print("Stack RAM Used ",ramend - stack_ptr);
-
-//	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
 }
 
 /*****************************************************************************/
@@ -255,27 +264,27 @@ static int setup_datetime(void) {
     #if defined(ESP32)
         NTPClient timeClient(ntpUDP, "pool.ntp.org");
 
-    timeClient.begin();
-    timeClient.update();
-    delay(1000);
-    while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
-        timeClient.forceUpdate();
-        Serial.println(F("Waiting for NTP update"));
-        delay(2000);
-        ntp_tries--;
-    }
-    if (ntp_tries <= 0) {
-        Serial.println(F("Warning: gave up waiting on NTP"));
-    }
-    Serial.println(timeClient.getFormattedTime());
-    Serial.println(timeClient.getEpochTime());
+        timeClient.begin();
+        timeClient.update();
+        delay(1000);
+        while (!timeClient.isTimeSet() && (ntp_tries > 0)) {
+            timeClient.forceUpdate();
+            Serial.println(F("Waiting for NTP update"));
+            delay(2000);
+            ntp_tries--;
+        }
+        if (ntp_tries <= 0) {
+            Serial.println(F("Warning: gave up waiting on NTP"));
+        }
+        Serial.println(timeClient.getFormattedTime());
+        Serial.println(timeClient.getEpochTime());
     #endif
 #endif
 
 #if defined(ESP32)
     /* see esp32-hal-time.c */
     ntp_tries = 5;
-    configTime(0, 0, "pool.ntp.org"));  // You can replace "pool.ntp.org" with your preferred NTP server
+    configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
 
     /* Wait for time to be set */
     while ((time(nullptr) <= 100000) && ntp_tries > 0) {
@@ -287,6 +296,7 @@ static int setup_datetime(void) {
 
     return ret;
 }
+
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
 /*****************************************************************************/
@@ -364,6 +374,7 @@ static int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
 
+    /* See companion server example with wolfSSLv23_server_method here. */
     method = wolfSSLv23_client_method();
     if (method == NULL) {
         Serial.println(F("unable to get wolfssl client method"));
