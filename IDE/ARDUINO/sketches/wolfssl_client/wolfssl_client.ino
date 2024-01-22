@@ -38,7 +38,7 @@ Tested with:
 #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
 
 /* set REPEAT_CONNECTION to a non-zero value to continually run the example. */
-#define REPEAT_CONNECTION 1
+#define REPEAT_CONNECTION 0
 
 /* Edit this with your other TLS host server address to connect to: */
 #define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
@@ -71,7 +71,7 @@ Tested with:
 #endif
 
 /* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
- * If it is installed, uncomment the #define USE_NTP_LIB here: */
+ * If it is installed, uncomment define USE_NTP_LIB here: */
 /* #define USE_NTP_LIB */
 #ifdef USE_NTP_LIB
     #include <NTPClient.h>
@@ -243,6 +243,7 @@ static int setup_hardware(void) {
 
 #if defined(__arm__)
     /* need to manually turn on random number generator on Arduino Due, etc. */
+    Serial.println(F("Enabled ARM TRNG"));
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
 #endif
@@ -362,7 +363,7 @@ static int setup_network(void) {
     Serial.println(F("********************************************************"));
 
     /* Delay need to ensure connection to server */
-    // delay(4000);
+    delay(4000);
     Serial.println(F("Setup network complete."));
 
     return ret;
@@ -379,12 +380,12 @@ static int setup_wolfssl(void) {
     method = wolfSSLv23_client_method();
     if (method == NULL) {
         Serial.println(F("unable to get wolfssl client method"));
-        ret = -1;
+        fail_wait();
     }
     ctx = wolfSSL_CTX_new(method);
     if (ctx == NULL) {
         Serial.println(F("unable to get ctx"));
-        ret = -1;
+        fail_wait();
     }
 
     return ret;
@@ -412,6 +413,7 @@ static int setup_certificates(void) {
         Serial.println(F("Error: wolfSSL_CTX_load_verify_buffer failed: "));
         wc_ErrorString(ret, wc_error_message);
         Serial.println(wc_error_message);
+        fail_wait();
     }
 
     /* Certificate */
@@ -426,6 +428,7 @@ static int setup_certificates(void) {
         Serial.println(F("Error: wolfSSL_CTX_use_certificate_buffer failed: "));
         wc_ErrorString(ret, wc_error_message);
         Serial.println(wc_error_message);
+        fail_wait();
     }
 
     /* Private Key */
@@ -440,6 +443,7 @@ static int setup_certificates(void) {
         Serial.println(F("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: "));
         wc_ErrorString(ret, wc_error_message);
         Serial.println(wc_error_message);
+        fail_wait();
     }
 
     return ret;
@@ -455,6 +459,11 @@ void setup(void) {
     Serial.println(F(""));
     Serial.println(F(""));
     Serial.println(F("wolfSSL TLS Client Example Startup."));
+
+    /* define DEBUG_WOLFSSL in wolfSSL user_settings.h for diagnostics */
+#if defined(DEBUG_WOLFSSL)
+    wolfSSL_Debugging_ON();
+#endif
 
     setup_hardware();
 
@@ -477,7 +486,7 @@ void setup(void) {
 /* wolfSSL error_check()                                                     */
 /*****************************************************************************/
 static int error_check(int this_ret, bool halt_on_error,
-                      const char* message) {
+                      const __FlashStringHelper* message) {
     int ret = 0;
     if (this_ret == WOLFSSL_SUCCESS) {
         Serial.print(F("Success: "));
@@ -506,7 +515,7 @@ static int error_check(int this_ret, bool halt_on_error,
 /*     message       is expected to be a memory-efficient F("") macro string */
 /*****************************************************************************/
 static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
-                           const char* message) {
+                           const __FlashStringHelper* message) {
     int err = 0;
 
     if (ssl == NULL) {
@@ -596,10 +605,14 @@ void loop() {
             do {
                 err = 0; /* reset error */
                 ret = wolfSSL_connect(ssl);
+                Serial.print("ret =");
+                Serial.println(ret);
                 if ((ret != WOLFSSL_SUCCESS) && (ret != WC_PENDING_E)) {
                     Serial.println(F("Failed connection, checking error."));
                     err = error_check_ssl(ssl, ret, true,
                                     F("Create WOLFSSL object from ctx"));
+                Serial.print("err =");
+                Serial.println(err);
                     //err = wolfSSL_get_error(ssl, 0);
                     //wolfSSL_ERR_error_string(ret, errBuf);
                     //Serial.print(F("TLS Connect Error: "));
@@ -699,11 +712,12 @@ void loop() {
         }
     }
     delay(1000);
-    if (reconnect > 0) {
+    if ((reconnect > 0) && (REPEAT_CONNECTION)) {
         Serial.println(F("Arduino loop repeating..."));
         Serial.println();
     }
     else {
+        printf("wow");
         Serial.println(F("Done!"));
         while(1) {
             /* wait forever */
