@@ -27,17 +27,18 @@
 /* Make sure this is not an ESP-IDF file */
 #undef  WOLFSSL_ESPIDF
 
-/* Edded per https://www.wolfssl.com/forums/post7411.html#p7411 */
-#define SINGLE_THREADED
 #define HAVE_ECC
 #define WOLFSSL_SMALL_STACK
 //#define WOLFSSL_SMALL_STACK_EXTRA
 //#define WOLFSSL_SMALL_STACK_CIPHERS
 //#define NO_DH
-//#define NO_RSA
+
+/* RSA must be enabled for examples, but can be disabled like this: */
+/* #define NO_RSA */
+
 //#define NO_OLD_TLS
 
-/* CAnnot use WOLFSSL_NO_MALLOC with small stack */
+/* Cannot use WOLFSSL_NO_MALLOC with small stack */
 /* #define WOLFSSL_NO_MALLOC */
 
 #define HAVE_TLS_EXTENSIONS
@@ -93,8 +94,6 @@
 
     #endif
 #endif
-
-#define RSA_LOW_MEM
 
 /* #define WOLFSSL_ATECC508A_DEBUG         */
 

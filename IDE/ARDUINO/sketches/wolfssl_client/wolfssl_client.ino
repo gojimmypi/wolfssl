@@ -142,6 +142,7 @@ char errBuf[80];
 #if defined(MEMORY_STRESS_TEST)
     #define MEMORY_STRESS_ITERATIONS 100
     #define MEMORY_STRESS_BLOCK_SIZE 1024
+    #define MEMORY_STRESS_INITIAL (91760-(35*1024))
     char* memory_stress[MEMORY_STRESS_ITERATIONS]; /* typically 1K per item */
     int mem_ctr        = 0;
 #endif
@@ -478,6 +479,13 @@ void setup(void) {
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
 
+    /* Optionally pre-allocate a large block of memory for testing */
+#if defined(MEMORY_STRESS_TEST)
+    show_memory();
+    memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_INITIAL);
+    show_memory();
+#endif
+
     Serial.println(F("Completed Arduino setup()"));
     return;
 }
@@ -551,7 +559,6 @@ static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
             }
         }
     }
-    show_memory();
 
     return err;
 }
@@ -575,11 +582,6 @@ void loop() {
 
     Serial.println(F(""));
     Serial.println(F("Starting Arduino loop() ..."));
-
-    /* define DEBUG_WOLFSSL in wolfSSL user_settings.h for diagnostics */
-#if defined(DEBUG_WOLFSSL)
-    wolfSSL_Debugging_ON();
-#endif
 
     if (reconnect) {
         reconnect--;
@@ -726,10 +728,13 @@ void loop() {
 
 #if defined(MEMORY_STRESS_TEST)
     if (mem_ctr < MEMORY_STRESS_ITERATIONS) {
-        memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_BLOCK_SIZE);
+        /* reminder: mem_ctr == 0 is MEMORY_STRESS_INITIAL allocation */
         mem_ctr++;
         Serial.print(F("Memory stress increment: "));
-        Serial.println(mem_ctr);
+        Serial.print(mem_ctr);
+        Serial.print(F(". Allocating addition memory (bytes): "));
+        Serial.println(MEMORY_STRESS_BLOCK_SIZE);
+        memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_BLOCK_SIZE);
         show_memory();
     }
 #endif

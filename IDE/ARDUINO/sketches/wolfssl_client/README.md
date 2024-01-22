@@ -10,3 +10,13 @@ Other IDE products are also supported, such as:
 
 For examples on other platforms, see the [IDE directory](https://github.com/wolfssl/wolfssl/tree/master/IDE).
 Additional examples can be found on [wolfSSL/wolfssl-examples](https://github.com/wolfSSL/wolfssl-examples/).
+
+
+### Troubleshooting
+
+When encountering odd errors such as `undefined reference to ``_impure_ptr'`, try cleaning the Arduino
+cache directories. For Windows, that's typically in:
+
+```text
+C:\Users\%USERNAME%\AppData\Local\Temp\arduino\sketches
+```
