@@ -105,6 +105,7 @@ Tested with:
     #ifdef USE_NTP_LIB
         WiFiUDP ntpUDP;
     #endif
+    #define F 
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
@@ -476,7 +477,7 @@ void setup(void) {
 /* wolfSSL error_check()                                                     */
 /*****************************************************************************/
 static int error_check(int this_ret, bool halt_on_error,
-                      const __FlashStringHelper* message) {
+                      const char* message) {
     int ret = 0;
     if (this_ret == WOLFSSL_SUCCESS) {
         Serial.print(F("Success: "));
@@ -505,7 +506,7 @@ static int error_check(int this_ret, bool halt_on_error,
 /*     message       is expected to be a memory-efficient F("") macro string */
 /*****************************************************************************/
 static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
-                           const __FlashStringHelper* message) {
+                           const char* message) {
     int err = 0;
 
     if (ssl == NULL) {
