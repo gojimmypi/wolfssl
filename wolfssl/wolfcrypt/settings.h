@@ -267,8 +267,11 @@
 
 #if defined(ARDUINO)
     /* we don't have the luxury of compiler options, so manually define */
-    #undef  WOLFSSL_ARDUINO
-    #define WOLFSSL_ARDUINO
+    #if defined(__arm__)
+        #undef  WOLFSSL_ARDUINO
+        #define WOLFSSL_ARDUINO
+    /* ESP32? */
+    #endif // defined(__arm__)
 
     #undef FREERTOS
     #ifndef WOLFSSL_USER_SETTINGS
@@ -280,8 +283,8 @@
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
     #elif defined(__arm__)
-//        #define WOLFSSL_NO_SOCK
-//        #define NO_WRITEV
+        #define WOLFSSL_NO_SOCK
+        #define NO_WRITEV
     #elif defined(ESP32) || defined(ESP8266)
         /* assume sockets available */
     #else
@@ -445,7 +448,7 @@
 #endif
 
 #if defined(ARDUINO)
-    #if defined(ESP32) || defined(__arm__)
+    #if defined(ESP32)
         #ifndef NO_ARDUINO_DEFAULT
             #define SIZEOF_LONG_LONG 8
             #ifdef FREERTOS
@@ -462,6 +465,10 @@
             #define WC_RSA_BLINDING
             #define WC_NO_CACHE_RESISTANT
         #endif /* !NO_ARDUINO_DEFAULT */
+    #elif defined(__arm__)
+            #define NO_WRITEV
+            #define NO_WOLFSSL_DIR
+            #define WOLFSSL_NO_CURRDIR
     #elif defined(OTHERBOARD)
         /* TODO: define other Arduino boards here */
     #endif
