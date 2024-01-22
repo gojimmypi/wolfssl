@@ -41,7 +41,7 @@ Tested with:
 #define REPEAT_CONNECTION 1
 
 /* Edit this with your other TLS host server address to connect to: */
-#define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
+// #define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
 
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
@@ -74,12 +74,14 @@ Tested with:
     const char* password PROGMEM = "your_PASSWORD";
 #endif
 
+#define BROADCAST_ADDRESS "255.255.255.255"
+
 /* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
  * If it is installed, uncomment define USE_NTP_LIB here: */
 /* #define USE_NTP_LIB */
 // #define USE_NTP_LIB
 #ifdef USE_NTP_LIB
-    #include <NTPClient.h> 
+    #include <NTPClient.h>
 #endif
 
 #include <wolfssl.h>
@@ -119,7 +121,7 @@ Tested with:
     /* #elif defined(OTHER_BOARD) */
 /* TODO define other boards here */
 #else
-    EthernetClient server;
+    EthernetServer server(WOLFSSL_PORT);
     EthernetClient client;
 #endif
 
@@ -358,7 +360,7 @@ static int setup_network(void) {
 #endif
 
     Serial.println(F("********************************************************"));
-    Serial.print(F("      wolfSSL Example Client IP = "));
+    Serial.print(F("      wolfSSL Example Server IP = "));
 #if defined(USING_WIFI)
     Serial.println(WiFi.localIP());
 #else
@@ -391,7 +393,7 @@ static int setup_wolfssl(void) {
     else {
         Serial.println("ERROR: wolfSSL_Init failed");
     }
-    
+
     /* Delay needed to ensure connection to server. TODO: really ? */
     delay(4000);
     Serial.println("Here we go!");
@@ -460,10 +462,11 @@ static int setup_certificates(void) {
     /* Start the server
      * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
      */
+
+    server.begin();
+     
     Serial.println("Begin Server... (waiting for remote client to connect)");
 
-   // there's not othernet server.begin
-   // server.begin();
 
     return ret;
 } /* Arduino setup */
@@ -492,6 +495,10 @@ void setup(void) {
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
 
+#if defined THIS_USER_SETTINGS_VERSION
+    Serial.print(F("This user_settings.h version:"))
+    Serial.println(THIS_USER_SETTINGS_VERSION)
+#endif
     Serial.println(F("Completed Arduino setup()"));
     return;
 }
@@ -570,6 +577,17 @@ static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
     return err;
 }
 
+static int is_valid_client(void) {
+    int ret = 0;
+//    IPAddress this_address = client.remoteIP();
+    ret = (client.remoteIP().fromString(BROADCAST_ADDRESS) != client.remoteIP());
+    Serial.print("Checking for broadcast ");
+    Serial.println(client.remoteIP().fromString(BROADCAST_ADDRESS));
+    Serial.print("Result is:");
+    Serial.println(ret);
+    return ret;
+}
+
 /*****************************************************************************/
 /*****************************************************************************/
 /* Arduino loop()                                                            */
@@ -584,18 +602,16 @@ void loop() {
     int replySz        = 0;
     int retry_shutdown = SHUTDOWN_DELAY_MS; /* max try, once per millisecond */
     int ret            = 0;
+    IPAddress broadcast_address(255, 255, 255, 255);
 
     /* Listen for incoming client requests. */
     client = server.available();
-    if (!client) {
-        delay(100);
-        Serial.print(".");
-        return;
-    }
-
-    Serial.println("Found a client!");
-    if (client.connected()) {
-
+//    if (client && !(client.remoteIP() == broadcast_address) ) {
+    if (client)  {
+       Serial.println("Have Client");
+       while (!client.connected()) {
+            delay(10);
+       }
         Serial.print("Client connected from remote IP: ");
         Serial.println(client.remoteIP());
 
@@ -675,11 +691,11 @@ void loop() {
         wolfSSL_free(ssl);
     }
     else {
-        Serial.println("Client not connected. Trying again...");
+        // Serial.println("Client not connected. Trying again...");
     }
 
-    client.stop();
-    Serial.println("Connection complete.");
-    Serial.println("");
-    delay(1000);
+    //client.stop();
+    //Serial.println("Connection complete.");
+    //Serial.println("");
+    delay(100);
 } /* Arduino loop repeats */

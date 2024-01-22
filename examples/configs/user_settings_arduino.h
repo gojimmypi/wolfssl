@@ -35,6 +35,7 @@
 
 /* RSA must be enabled for examples, but can be disabled like this: */
 /* #define NO_RSA */
+#define RSA_LOW_MEM
 
 //#define NO_OLD_TLS
 
@@ -325,8 +326,6 @@
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
-//    #define USE_CERT_BUFFERS_2048
-//    #define USE_CERT_BUFFERS_256
     #if defined(USE_CERT_BUFFERS_2048)
         #include <wolfssl/certs_test.h>
         #define CTX_CA_CERT          ca_cert_der_2048
@@ -366,6 +365,6 @@
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #else
-        #error "Must define USE_CERT_BUFFERS_2048, "
+        #error "Must define USE_CERT_BUFFERS_2048 or USE_CERT_BUFFERS_1024"
     #endif
 #endif
