@@ -315,6 +315,9 @@
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
+// #define WOLFSSL_MEMORY_STORAGEWOLFSSL_MEMORY_STORAGE __FlashStringHelper *
+
+#define WOLFSSL_MEMORY_STORAGE
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
