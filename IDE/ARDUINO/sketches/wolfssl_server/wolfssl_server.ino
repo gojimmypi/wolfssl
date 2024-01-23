@@ -384,8 +384,6 @@ static int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
 
-
-
     ret = wolfSSL_Init();
     if (ret == WOLFSSL_SUCCESS) {
         Serial.println("Successfully called wolfSSL_Init");
@@ -459,15 +457,6 @@ static int setup_certificates(void) {
     Serial.print("Size of ssl:");
     Serial.println(sizeof(ssl));
 
-    /* Start the server
-     * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
-     */
-
-    server.begin();
-     
-    Serial.println("Begin Server... (waiting for remote client to connect)");
-
-
     return ret;
 } /* Arduino setup */
 
@@ -499,7 +488,17 @@ void setup(void) {
     Serial.print(F("This user_settings.h version:"))
     Serial.println(THIS_USER_SETTINGS_VERSION)
 #endif
+
+    /* Start the server
+     * See https://www.arduino.cc/reference/en/libraries/ethernet/server.begin/
+     */
+
     Serial.println(F("Completed Arduino setup()"));
+
+    server.begin();
+    Serial.println("Begin Server... (waiting for remote client to connect)");
+    delay(1000);
+
     return;
 }
 
@@ -577,17 +576,6 @@ static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
     return err;
 }
 
-static int is_valid_client(void) {
-    int ret = 0;
-//    IPAddress this_address = client.remoteIP();
-    ret = (client.remoteIP().fromString(BROADCAST_ADDRESS) != client.remoteIP());
-    Serial.print("Checking for broadcast ");
-    Serial.println(client.remoteIP().fromString(BROADCAST_ADDRESS));
-    Serial.print("Result is:");
-    Serial.println(ret);
-    return ret;
-}
-
 /*****************************************************************************/
 /*****************************************************************************/
 /* Arduino loop()                                                            */
@@ -606,11 +594,11 @@ void loop() {
 
     /* Listen for incoming client requests. */
     client = server.available();
-//    if (client && !(client.remoteIP() == broadcast_address) ) {
     if (client)  {
        Serial.println("Have Client");
        while (!client.connected()) {
-            delay(10);
+           /* wait for the client to actually connect */
+           delay(10);
        }
         Serial.print("Client connected from remote IP: ");
         Serial.println(client.remoteIP());
@@ -634,9 +622,8 @@ void loop() {
         Serial.println(cipherName);
 
         Serial.print("Server Read: ");
-        /* wait for data */
         while (!client.available()) {
-            /* wait */
+            /* wait for data */
         }
 
         /* read data */
@@ -689,13 +676,23 @@ void loop() {
         }
 
         wolfSSL_free(ssl);
+        Serial.println("Connection complete.");
+        if (REPEAT_CONNECTION) {
+            Serial.println();
+            Serial.println("Waiting for next connection.");
+        }
+        else {
+            client.stop();
+            Serial.println("Done!");
+            while (1) {
+                /* wait forever if not repeating */
+                delay(100);
+            }
+        }
     }
     else {
-        // Serial.println("Client not connected. Trying again...");
+        /* Serial.println("Client not connected. Trying again..."); */
     }
 
-    //client.stop();
-    //Serial.println("Connection complete.");
-    //Serial.println("");
     delay(100);
 } /* Arduino loop repeats */
