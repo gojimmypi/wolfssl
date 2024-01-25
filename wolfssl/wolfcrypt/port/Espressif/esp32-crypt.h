@@ -473,7 +473,7 @@ enum {
 #endif
 
 #ifdef SINGLE_THREADED
-    #undef ESP_MONITOR_HW_TASK_LOCK
+//    #undef ESP_MONITOR_HW_TASK_LOCK
 #else
     /* Unless explicitly disabled, monitor task lock when not single thread. */
     #ifndef ESP_DISABLE_HW_TASK_LOCK

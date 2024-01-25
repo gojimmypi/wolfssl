@@ -356,10 +356,10 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     CTX_STACK_CHECK(ctx);
 
     if (ctx->initializer == NULL) {
-        ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx");
+        ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx initializer");
 
-        /* we'll keep track of who initialized this */
-        ctx->initializer = ctx; /* save our address in the initializer */
+        /* we'll keep track of which ctx initialized this */
+        ctx->initializer = ctx;
         #ifdef ESP_MONITOR_HW_TASK_LOCK
         {
             /* Keep track of which freeRTOS task actually locks HW */
@@ -431,6 +431,14 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             **
             ** In either case, initialize: */
             ctx->initializer = ctx; /* set a new address */
+            ESP_LOGW(TAG, "ctx initializer overwrite! from %0x to %0x",
+                           (word32)ctx->initializer,
+                           (word32)ctx
+                     );
+            if (ctx->mode != ESP32_SHA_INIT) {
+                ESP_LOGW(TAG, "Warning: SHA CTX not in init mode as expected");
+                ctx->mode = ESP32_SHA_INIT;
+            }
         #ifdef ESP_MONITOR_HW_TASK_LOCK
         {
             /* not HW mode, so we are not interested in task owner */
@@ -2190,6 +2198,9 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
     }
 
     wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
+#else
+    ESP_LOGE(TAG, "Call esp_sha256_digest_process with "
+                  "NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 ");
 #endif
     ESP_LOGV(TAG, "leave esp_sha256_digest_process");
     return ret;

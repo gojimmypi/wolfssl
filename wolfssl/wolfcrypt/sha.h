@@ -121,6 +121,9 @@ enum {
 
 /* Sha digest */
 struct wc_Sha {
+#ifdef WOLFSSL_STACK_CHECK
+    int first_word;
+#endif
 #ifdef FREESCALE_LTC_SHA
     ltc_hash_ctx_t ctx;
 #elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
@@ -171,6 +174,9 @@ struct wc_Sha {
 #endif
 #ifdef WOLFSSL_HASH_FLAGS
     word32 flags; /* enum wc_HashFlags in hash.h */
+#endif
+#ifdef WOLFSSL_STACK_CHECK
+    word32 last_word;
 #endif
 };
 

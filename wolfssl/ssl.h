@@ -3051,8 +3051,8 @@ WOLFSSL_API int wolfSSL_make_eap_keys(WOLFSSL* ssl, void* key, unsigned int len,
         /* allow writev style writing */
         WOLFSSL_API int wolfSSL_writev(WOLFSSL* ssl, const struct iovec* iov,
                                      int iovcnt);
-    #endif
-#endif
+    #endif /* !NO_WRITEV */
+#endif /* !_WIN32 */
 
 
 #ifndef NO_CERTS

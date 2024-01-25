@@ -551,6 +551,10 @@ int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
     }
     /* We know this is a fresh, uninitialized item, so set to INIT */
     sha512->ctx.mode = ESP32_SHA_INIT;
+#else
+#ifdef WOLFSSL_ESPIDF
+    ESP_LOGV(TAG, "wc_InitSha512_ex no HW enabled");
+#endif
 #endif
 
     return InitSha512_Family(sha512, heap, devId, InitSha512);

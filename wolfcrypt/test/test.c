@@ -3712,7 +3712,9 @@ static wc_test_ret_t hw_sqr_test(void)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
     if (mp_cmp(r1, r2) != 0) {
         ERROR_OUT(WC_TEST_RET_ENC_NC, done);
+    #ifdef WOLFSSL_ESPIDF
         ESP_LOGE(TAG, "mp_mulmod != mp_sqrmod");
+    #endif
         while (1) {
             vTaskDelay(60000);
         }
@@ -4366,19 +4368,19 @@ WOLFSSL_TEST_SUBROUTINE int error_test(void)
 
         if (i != missing[j]) {
             if (XSTRCMP(errStr, unknownStr) == 0) {
-                ESP_LOGW(TAG, "oops 1"); /* TODO */
+              //  ESP_LOGW(TAG, "oops 1"); /* TODO */
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRCMP(out, unknownStr) == 0) {
-                ESP_LOGW(TAG, "oops 2");/* TODO */
+              //  ESP_LOGW(TAG, "oops 2");/* TODO */
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRCMP(errStr, out) != 0) {
-                ESP_LOGW(TAG, "oops 3");/* TODO */
+             //   ESP_LOGW(TAG, "oops 3");/* TODO */
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRLEN(errStr) >= WOLFSSL_MAX_ERROR_SZ) {
-                ESP_LOGW(TAG, "oops 4");/* TODO */
+             //   ESP_LOGW(TAG, "oops 4");/* TODO */
                 return WC_TEST_RET_ENC_NC;
             }
         }
@@ -5458,14 +5460,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 #endif
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA256_DIGEST_SIZE) != 0) {
-            ESP_LOGE(TAG, "fail!");
+          //  ESP_LOGE(TAG, "fail!");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
         if (XMEMCMP(hash, hashcopy, WC_SHA256_DIGEST_SIZE) != 0) {
-            ESP_LOGE(TAG, "fail 2!");
+         //   ESP_LOGE(TAG, "fail 2!");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
-        vTaskDelay(100); /* TODO remove timing hack */
+      //  vTaskDelay(100); /* TODO remove timing hack */
     }
 
 #ifndef NO_LARGE_HASH_TEST
@@ -49724,9 +49726,13 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_test(void)
                 ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
             if (mp_cmp(r1, r2) != 0) {
                 ERROR_OUT(WC_TEST_RET_ENC_NC, done);
+#ifdef WOLFSSL_ESPIDF
                 ESP_LOGE(TAG, "mp_mulmod != mp_sqrmod");
+#endif
                 while (1) {
+#ifdef WOLFSSL_ESPIDF
                     vTaskDelay(60000);
+#endif
                 }
             }
          #endif

@@ -327,7 +327,7 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     wc_Sha256* sha = &drbg->sha256;
 #else
-    wc_Sha256 sha[1];
+    wc_Sha256 sha[1] = { };
 #endif
 #ifdef WOLFSSL_SMALL_STACK
     byte* digest;
@@ -493,7 +493,7 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     wc_Sha256* sha = &drbg->sha256;
 #else
-    wc_Sha256 sha[1];
+    wc_Sha256 sha[1] = { };
 #endif
 
     if (drbg == NULL) {
@@ -595,7 +595,7 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     wc_Sha256* sha = &drbg->sha256;
 #else
-    wc_Sha256 sha[1];
+    wc_Sha256 sha[1] = { };
 #endif
     byte type;
     word32 reseedCtr;
