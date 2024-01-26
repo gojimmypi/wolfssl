@@ -320,6 +320,8 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #include <wolfssl/wolfcrypt/xmss.h>
 #ifdef HAVE_LIBXMSS
     #include <wolfssl/wolfcrypt/ext_xmss.h>
+#else
+    #include <wolfssl/wolfcrypt/wc_xmss.h>
 #endif
 #endif
 #if defined(WOLFSSL_HAVE_LMS)
@@ -617,11 +619,11 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t scrypt_test(void);
     WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  kyber_test(void);
 #endif
 #if defined(WOLFSSL_HAVE_XMSS)
+    #if !defined(WOLFSSL_SMALL_STACK) && WOLFSSL_XMSS_MIN_HEIGHT <= 10
+    WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  xmss_test_verify_only(void);
+    #endif
     #if !defined(WOLFSSL_XMSS_VERIFY_ONLY)
     WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  xmss_test(void);
-    #endif
-    #if defined(WOLFSSL_XMSS_VERIFY_ONLY) && !defined(WOLFSSL_SMALL_STACK)
-    WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  xmss_test_verify_only(void);
     #endif
 #endif
 #if defined(WOLFSSL_HAVE_LMS)
@@ -1983,15 +1985,15 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #if defined(WOLFSSL_HAVE_XMSS)
-    #if !defined(WOLFSSL_XMSS_VERIFY_ONLY)
-    if ( (ret = xmss_test()) != 0)
-        TEST_FAIL("XMSS     test failed!\n", ret);
+    #if !defined(WOLFSSL_SMALL_STACK) && WOLFSSL_XMSS_MIN_HEIGHT <= 10
+    if ( (ret = xmss_test_verify_only()) != 0)
+        TEST_FAIL("XMSS Vfy test failed!\n", ret);
     else
-        TEST_PASS("XMSS     test passed!\n");
+        TEST_PASS("XMSS Vfy test passed!\n");
     #endif
 
-    #if defined(WOLFSSL_XMSS_VERIFY_ONLY) && !defined(WOLFSSL_SMALL_STACK)
-    if ( (ret = xmss_test_verify_only()) != 0)
+    #if !defined(WOLFSSL_XMSS_VERIFY_ONLY)
+    if ( (ret = xmss_test()) != 0)
         TEST_FAIL("XMSS     test failed!\n", ret);
     else
         TEST_PASS("XMSS     test passed!\n");
@@ -4355,7 +4357,7 @@ WOLFSSL_TEST_SUBROUTINE int error_test(void)
     int i;
     int j = 0;
     /* Values that are not or no longer error codes. */
-    int missing[] = { -123, -124, -128, -129, -159, -163, -164,
+    int missing[] = { -124, -128, -129, -159, -163, -164,
                       -165, -166, -167, -168, -169, -233,   0 };
 
     /* Check that all errors have a string and it's the same through the two
@@ -38933,7 +38935,15 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test(void)
     unsigned char * old_sk = NULL;
     const char *    msg = "XMSS post quantum signature test";
     word32          msgSz = (word32) XSTRLEN(msg);
+#if WOLFSSL_XMSS_MIN_HEIGHT <= 10
+    const char *    param = "XMSS-SHA2_10_256";
+#elif WOLFSSL_XMSS_MIN_HEIGHT <= 20
     const char *    param = "XMSSMT-SHA2_20/4_256";
+#elif WOLFSSL_XMSS_MIN_HEIGHT <= 40
+    const char *    param = "XMSSMT-SHA2_40/8_256";
+#else
+    const char *    param = "XMSSMT-SHA2_60/12_256";
+#endif
     byte *          sig = NULL;
 
 #ifndef HAVE_FIPS
@@ -39033,7 +39043,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test(void)
 
             ret2 = wc_XmssKey_Verify(&verifyKey, sig, sigSz, (byte *) msg,
                                      msgSz);
-            if (ret2 != -1) {
+            if ((ret2 != -1) && (ret2 != SIG_VERIFY_E)) {
                 /* Verify passed when it should have failed. */
                 return WC_TEST_RET_ENC_I(j);
             }
@@ -39066,8 +39076,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test(void)
 }
 #endif /*if defined(WOLFSSL_HAVE_XMSS) && !defined(WOLFSSL_XMSS_VERIFY_ONLY)*/
 
-#if defined(WOLFSSL_HAVE_XMSS) && defined(WOLFSSL_XMSS_VERIFY_ONLY) && \
-    !defined(WOLFSSL_SMALL_STACK)
+#if defined(WOLFSSL_HAVE_XMSS) && !defined(WOLFSSL_SMALL_STACK) && \
+    WOLFSSL_XMSS_MIN_HEIGHT <= 10
 
 /* A simple xmss verify only test using:
  *   XMSS-SHA2_10_256
@@ -39470,7 +39480,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test_verify_only(void)
     xmss_msg[sizeof(xmss_msg) / 2] ^= 1;
     ret2 = wc_XmssKey_Verify(&verifyKey, xmss_sig, sizeof(xmss_sig),
                              (byte *) xmss_msg, sizeof(xmss_msg));
-    if (ret2 != -1) {
+    if ((ret2 != -1) && (ret2 != SIG_VERIFY_E)) {
         printf("error: wc_XmssKey_Verify returned %d, expected -1\n", ret2);
         return WC_TEST_RET_ENC_EC(ret);
     }
@@ -39491,7 +39501,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test_verify_only(void)
 
         ret2 = wc_XmssKey_Verify(&verifyKey, xmss_sig, sizeof(xmss_sig),
                                  (byte *) xmss_msg, sizeof(xmss_msg));
-        if (ret2 != -1) {
+        if ((ret2 != -1) && (ret2 != SIG_VERIFY_E)) {
             /* Verify passed when it should have failed. */
             return WC_TEST_RET_ENC_I(j);
         }
@@ -39505,8 +39515,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test_verify_only(void)
 
     return ret;
 }
-#endif /* if defined(WOLFSSL_HAVE_XMSS) && defined(WOLFSSL_XMSS_VERIFY_ONLY) &&
-        *    !defined(WOLFSSL_SMALL_STACK) */
+#endif /* WOLFSSL_HAVE_XMSS && !WOLFSSL_SMALL_STACK &&
+        * WOLFSSL_XMSS_MIN_HEIGHT <= 10 */
 
 
 #if defined(WOLFSSL_HAVE_LMS) && !defined(WOLFSSL_LMS_VERIFY_ONLY)

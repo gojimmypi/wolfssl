@@ -1478,11 +1478,12 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
         return ssl;
 
     ssl = (WOLFSSL*) XMALLOC(sizeof(WOLFSSL), ctx->heap, DYNAMIC_TYPE_SSL);
-    if (ssl)
+    if (ssl) {
         if ( (ret = InitSSL(ssl, ctx, 0)) < 0) {
             FreeSSL(ssl, ctx->heap);
             ssl = 0;
         }
+    }
 
     WOLFSSL_LEAVE("wolfSSL_new", ret);
     (void)ret;
@@ -3072,7 +3073,7 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
                    ssl->options.haveDH, ssl->options.haveECDSAsig,
                    ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                    ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                   ssl->options.haveAnon, TRUE, ssl->options.side);
+                   ssl->options.useAnon, TRUE, ssl->options.side);
     }
 
     WOLFSSL_LEAVE("wolfSSL_SetTmpDH", 0);
@@ -5333,7 +5334,7 @@ int wolfSSL_SetVersion(WOLFSSL* ssl, int version)
                ssl->options.haveDH, ssl->options.haveECDSAsig,
                ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-               ssl->options.haveAnon, TRUE, ssl->options.side);
+               ssl->options.useAnon, TRUE, ssl->options.side);
     return WOLFSSL_SUCCESS;
 }
 #endif /* !leanpsk */
@@ -7954,7 +7955,7 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
                    havePSK, ssl->options.haveDH, ssl->options.haveECDSAsig,
                    ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                    ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                   ssl->options.haveAnon, TRUE, ssl->options.side);
+                   ssl->options.useAnon, TRUE, ssl->options.side);
     }
     else if (ctx && resetSuites) {
         word16 havePSK = 0;
@@ -7978,7 +7979,7 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff,
                    ctx->haveECC, TRUE, ctx->haveStaticECC,
                    ctx->haveFalconSig, ctx->haveDilithiumSig,
 #ifdef HAVE_ANON
-                   ctx->haveAnon,
+                   ctx->useAnon,
 #else
                    FALSE,
 #endif
@@ -11841,8 +11842,8 @@ static int CheckcipherList(const char* list)
  *
  * returns WOLFSSL_SUCCESS on success and sets the cipher suite list
  */
-static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
-        const char* list)
+static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
+        Suites* suites, const char* list)
 {
     int     ret = 0;
     int     listattribute = 0;
@@ -11867,7 +11868,7 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
        /* list has mixed(pre-TLSv13 and TLSv13) suites
         * update cipher suites the same as before
         */
-        return (SetCipherList(ctx, suites, list)) ? WOLFSSL_SUCCESS :
+        return (SetCipherList_ex(ctx, ssl, suites, list)) ? WOLFSSL_SUCCESS :
         WOLFSSL_FAILURE;
     }
     else if (listattribute == 1) {
@@ -11881,7 +11882,8 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
         * simulate set_ciphersuites() compatibility layer API
         */
         tls13Only = 1;
-        if (!IsAtLeastTLSv1_3(ctx->method->version)) {
+        if ((ctx != NULL && !IsAtLeastTLSv1_3(ctx->method->version)) ||
+                (ssl != NULL && !IsAtLeastTLSv1_3(ssl->version))) {
             /* Silently ignore TLS 1.3 ciphers if we don't support it. */
             return WOLFSSL_SUCCESS;
         }
@@ -11913,7 +11915,7 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, Suites* suites,
         XMEMCPY(suitesCpy, suites->suites, suites->suiteSz);
     suitesCpySz = suites->suiteSz;
 
-    ret = SetCipherList(ctx, suites, list);
+    ret = SetCipherList_ex(ctx, ssl, suites, list);
     if (ret != 1) {
 #ifdef WOLFSSL_SMALL_STACK
         XFREE(suitesCpy, NULL, DYNAMIC_TYPE_TMP_BUFFER);
@@ -11977,7 +11979,7 @@ int wolfSSL_CTX_set_cipher_list(WOLFSSL_CTX* ctx, const char* list)
         return WOLFSSL_FAILURE;
 
 #ifdef OPENSSL_EXTRA
-    return wolfSSL_parse_cipher_list(ctx, ctx->suites, list);
+    return wolfSSL_parse_cipher_list(ctx, NULL, ctx->suites, list);
 #else
     return (SetCipherList(ctx, ctx->suites, list)) ?
         WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
@@ -12013,9 +12015,9 @@ int wolfSSL_set_cipher_list(WOLFSSL* ssl, const char* list)
         return WOLFSSL_FAILURE;
 
 #ifdef OPENSSL_EXTRA
-    return wolfSSL_parse_cipher_list(ssl->ctx, ssl->suites, list);
+    return wolfSSL_parse_cipher_list(NULL, ssl, ssl->suites, list);
 #else
-    return (SetCipherList(ssl->ctx, ssl->suites, list)) ?
+    return (SetCipherList_ex(NULL, ssl, ssl->suites, list)) ?
         WOLFSSL_SUCCESS :
         WOLFSSL_FAILURE;
 #endif
@@ -13118,7 +13120,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
         (void)havePSK;
 
         #ifdef HAVE_ANON
-            haveAnon = ssl->options.haveAnon;
+            haveAnon = ssl->options.useAnon;
         #endif
         (void)haveAnon;
 
@@ -15717,7 +15719,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
                    ssl->options.haveDH, ssl->options.haveECDSAsig,
                    ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                    ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                   ssl->options.haveAnon, TRUE, ssl->options.side);
+                   ssl->options.useAnon, TRUE, ssl->options.side);
     }
     #ifdef OPENSSL_EXTRA
     /**
@@ -15774,7 +15776,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
                    ssl->options.haveDH, ssl->options.haveECDSAsig,
                    ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                    ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                   ssl->options.haveAnon, TRUE, ssl->options.side);
+                   ssl->options.useAnon, TRUE, ssl->options.side);
     }
 
     const char* wolfSSL_get_psk_identity_hint(const WOLFSSL* ssl)
@@ -15865,7 +15867,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
         if (ctx == NULL)
             return WOLFSSL_FAILURE;
 
-        ctx->haveAnon = 1;
+        ctx->useAnon = 1;
 
         return WOLFSSL_SUCCESS;
     }
@@ -21990,7 +21992,7 @@ long wolfSSL_set_options(WOLFSSL* ssl, long op)
                    ssl->options.haveDH, ssl->options.haveECDSAsig,
                    ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                    ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                   ssl->options.haveAnon, TRUE, ssl->options.side);
+                   ssl->options.useAnon, TRUE, ssl->options.side);
     }
 
     return ssl->options.mask;
@@ -32900,7 +32902,7 @@ int wolfSSL_RAND_seed(const void* seed, int len)
  */
 const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 {
-#ifndef NO_FILESYSTEM
+#if !defined(NO_FILESYSTEM) && defined(XGETENV)
     char* rt;
 
     WOLFSSL_ENTER("wolfSSL_RAND_file_name");
@@ -32910,7 +32912,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
     }
 
     XMEMSET(fname, 0, len);
-    /* if access to stdlib.h */
+
     if ((rt = XGETENV("RANDFILE")) != NULL) {
         if (len > XSTRLEN(rt)) {
             XMEMCPY(fname, rt, XSTRLEN(rt));
@@ -32923,7 +32925,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 
     /* $RANDFILE was not set or is too large, check $HOME */
     if (rt == NULL) {
-        char ap[] = "/.rnd";
+        const char ap[] = "/.rnd";
 
         WOLFSSL_MSG("Environment variable RANDFILE not set");
         if ((rt = XGETENV("HOME")) == NULL) {
@@ -32931,7 +32933,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
             return NULL;
         }
 
-        if (len > XSTRLEN(rt) +  XSTRLEN(ap)) {
+        if (len > XSTRLEN(rt) + XSTRLEN(ap)) {
             fname[0] = '\0';
             XSTRNCAT(fname, rt, len);
             XSTRNCAT(fname, ap, len - XSTRLEN(rt));
@@ -32945,9 +32947,9 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 
     return fname;
 #else
-    /* no filesystem defined */
     WOLFSSL_ENTER("wolfSSL_RAND_file_name");
-    WOLFSSL_MSG("No filesystem feature enabled, not compiled in");
+    WOLFSSL_MSG("RAND_file_name requires filesystem and getenv support, "
+                "not compiled in");
     (void)fname;
     (void)len;
     return NULL;
@@ -35407,7 +35409,7 @@ void wolfSSL_PKCS12_PBE_add(void)
     WOLFSSL_ENTER("wolfSSL_PKCS12_PBE_add");
 }
 
-#if !defined(NO_FILESYSTEM)
+#if !defined(NO_FILESYSTEM) && !defined(NO_STDIO_FILESYSTEM)
 WOLFSSL_X509_PKCS12 *wolfSSL_d2i_PKCS12_fp(XFILE fp,
         WOLFSSL_X509_PKCS12 **pkcs12)
 {

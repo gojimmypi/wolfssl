@@ -4728,8 +4728,8 @@ static int EchCheckAcceptance(WOLFSSL* ssl, const byte* input,
     int serverRandomOffset, int helloSz)
 {
     int ret = 0;
-    int digestType;
-    int digestSize;
+    int digestType = 0;
+    int digestSize = 0;
     HS_Hashes* tmpHashes;
     HS_Hashes* acceptHashes;
     byte zeros[WC_MAX_DIGEST_SIZE];
@@ -4861,10 +4861,10 @@ static int EchWriteAcceptance(WOLFSSL* ssl, byte* output,
   int serverRandomOffset, int helloSz)
 {
     int ret = 0;
-    int digestType;
-    int digestSize;
-    HS_Hashes* tmpHashes;
-    HS_Hashes* acceptHashes;
+    int digestType = 0;
+    int digestSize = 0;
+    HS_Hashes* tmpHashes = NULL;
+    HS_Hashes* acceptHashes = NULL;
     byte zeros[WC_MAX_DIGEST_SIZE];
     byte transcriptEchConf[WC_MAX_DIGEST_SIZE];
     byte expandLabelPrk[WC_MAX_DIGEST_SIZE];
@@ -9886,8 +9886,9 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
                     ERROR_OUT(MEMORY_E, exit_dcv);
                 }
 
-                CreateSigData(ssl, args->sigData, &args->sigDataSz, 1);
-                ret = 0;
+                ret = CreateSigData(ssl, args->sigData, &args->sigDataSz, 1);
+                if (ret < 0)
+                    goto exit_dcv;
             }
         #endif
         #ifdef HAVE_ED448
@@ -9900,8 +9901,9 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
                     ERROR_OUT(MEMORY_E, exit_dcv);
                 }
 
-                CreateSigData(ssl, args->sigData, &args->sigDataSz, 1);
-                ret = 0;
+                ret = CreateSigData(ssl, args->sigData, &args->sigDataSz, 1);
+                if (ret < 0)
+                    goto exit_dcv;
             }
        #endif
        #ifdef HAVE_PQC
@@ -9913,7 +9915,11 @@ static int DoTls13CertificateVerify(WOLFSSL* ssl, byte* input,
                     ERROR_OUT(MEMORY_E, exit_dcv);
                 }
 
-                CreateSigData(ssl, sigData, &sigDataSz, 1);
+                ret = CreateSigData(ssl, sigData, &sigDataSz, 1);
+                if (ret < 0) {
+                    goto exit_dcv;
+                }
+
 #ifdef WOLFSSL_DUAL_ALG_CERTS
                 if (!wolfSSL_is_server(ssl) &&
                     ssl->sigSpec != NULL &&
@@ -13490,7 +13496,7 @@ void wolfSSL_set_psk_client_cs_callback(WOLFSSL* ssl,
                ssl->options.haveDH, ssl->options.haveECDSAsig,
                ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-               ssl->options.haveAnon, TRUE, ssl->options.side);
+               ssl->options.useAnon, TRUE, ssl->options.side);
 }
 
 /* Set the PSK callback that returns the cipher suite for a client to use
@@ -13543,7 +13549,7 @@ void wolfSSL_set_psk_client_tls13_callback(WOLFSSL* ssl,
                ssl->options.haveDH, ssl->options.haveECDSAsig,
                ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-               ssl->options.haveAnon, TRUE, ssl->options.side);
+               ssl->options.useAnon, TRUE, ssl->options.side);
 }
 
 /* Set the PSK callback that returns the cipher suite for a server to use
@@ -13593,7 +13599,7 @@ void wolfSSL_set_psk_server_tls13_callback(WOLFSSL* ssl,
                ssl->options.haveDH, ssl->options.haveECDSAsig,
                ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-               ssl->options.haveAnon, TRUE, ssl->options.side);
+               ssl->options.useAnon, TRUE, ssl->options.side);
 }
 
 /* Get name of first supported cipher suite that uses the hash indicated.

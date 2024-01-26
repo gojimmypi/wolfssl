@@ -1254,7 +1254,7 @@ static int ExportOptions(WOLFSSL* ssl, byte* exp, word32 len, byte ver,
     exp[idx++] = 0;
 #endif
 #ifdef HAVE_ANON
-    exp[idx++] = options->haveAnon;
+    exp[idx++] = options->useAnon;
 #else
     exp[idx++] = 0;
 #endif
@@ -1459,7 +1459,7 @@ static int ImportOptions(WOLFSSL* ssl, const byte* exp, word32 len, byte ver,
     idx++;
 #endif
 #ifdef HAVE_ANON
-    options->haveAnon = exp[idx++];     /* User wants to allow Anon suites */
+    options->useAnon = exp[idx++];     /* User wants to allow Anon suites */
 #else
     idx++;
 #endif
@@ -6415,7 +6415,7 @@ void InitSSL_CTX_Suites(WOLFSSL_CTX* ctx)
     havePSK = ctx->havePSK;
 #endif /* NO_PSK */
 #ifdef HAVE_ANON
-    haveAnon = ctx->haveAnon;
+    haveAnon = ctx->useAnon;
 #endif /* HAVE_ANON*/
 #ifndef NO_CERTS
     keySz = ctx->privateKeySz;
@@ -6448,7 +6448,7 @@ int InitSSL_Suites(WOLFSSL* ssl)
 #endif /* NO_PSK */
 #if !defined(NO_CERTS) && !defined(WOLFSSL_SESSION_EXPORT)
 #ifdef HAVE_ANON
-    haveAnon = (byte)ssl->options.haveAnon;
+    haveAnon = (byte)ssl->options.useAnon;
 #endif /* HAVE_ANON*/
 #ifdef WOLFSSL_MULTICAST
     haveMcast = (byte)ssl->options.haveMcast;
@@ -6478,7 +6478,7 @@ int InitSSL_Suites(WOLFSSL* ssl)
                 havePSK, ssl->options.haveDH, ssl->options.haveECDSAsig,
                 ssl->options.haveECC, ssl->options.haveStaticECC,
                 ssl->options.haveFalconSig, ssl->options.haveDilithiumSig,
-                ssl->options.haveAnon, ssl->options.side);
+                ssl->options.useAnon, ssl->options.side);
     }
 
 #if !defined(NO_CERTS) && !defined(WOLFSSL_SESSION_EXPORT)
@@ -6698,7 +6698,7 @@ int SetSSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 #endif
 
 #ifdef HAVE_ANON
-    ssl->options.haveAnon = ctx->haveAnon;
+    ssl->options.useAnon = ctx->useAnon;
 #endif
 #ifndef NO_DH
     ssl->options.minDhKeySz = ctx->minDhKeySz;
@@ -11003,18 +11003,11 @@ int EarlySanityCheckMsgReceived(WOLFSSL* ssl, byte type, word32 msgSz)
 {
     int ret = 0;
 #ifndef WOLFSSL_DISABLE_EARLY_SANITY_CHECKS
-    byte version_negotiated = 0;
-
-    WOLFSSL_ENTER("EarlySanityCheckMsgReceived");
-
-#ifdef WOLFSSL_DTLS
     /* Version has only been negotiated after we either send or process a
      * ServerHello message */
-    if (ssl->options.dtls)
-        version_negotiated = ssl->options.serverState >= SERVER_HELLO_COMPLETE;
-    else
-#endif
-        version_negotiated = 1;
+    byte version_negotiated = ssl->options.serverState >= SERVER_HELLO_COMPLETE;
+
+    WOLFSSL_ENTER("EarlySanityCheckMsgReceived");
 
     if (version_negotiated)
         ret = MsgCheckEncryption(ssl, type, ssl->keys.decryptedCur == 1);
@@ -13583,7 +13576,8 @@ static void FreeProcPeerCertArgs(WOLFSSL* ssl, void* pArgs)
 }
 #if defined(OPENSSL_ALL) && defined(WOLFSSL_CERT_GEN) && \
     (defined(WOLFSSL_CERT_REQ) || defined(WOLFSSL_CERT_EXT)) && \
-    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR)
+    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR) && \
+    !defined(NO_STDIO_FILESYSTEM)
 /* load certificate file which has the form <hash>.(r)N[0..N]       */
 /* in the folder.                                                   */
 /* (r), in the case of CRL file                                     */
@@ -14493,7 +14487,8 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         &subjectHash, &alreadySigner);
 #if defined(OPENSSL_ALL) && defined(WOLFSSL_CERT_GEN) && \
     (defined(WOLFSSL_CERT_REQ) || defined(WOLFSSL_CERT_EXT)) && \
-    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR)
+    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR) && \
+    !defined(NO_STDIO_FILESYSTEM)
                     if (ret == ASN_NO_SIGNER_E || ret == ASN_SELF_SIGNED_E) {
                         WOLFSSL_MSG("try to load certificate if hash dir is set");
                         ret = LoadCertByIssuer(SSL_STORE(ssl),
@@ -14779,7 +14774,8 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         &subjectHash, &alreadySigner);
 #if defined(OPENSSL_ALL) && defined(WOLFSSL_CERT_GEN) && \
     (defined(WOLFSSL_CERT_REQ) || defined(WOLFSSL_CERT_EXT)) && \
-    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR)
+    !defined(NO_FILESYSTEM) && !defined(NO_WOLFSSL_DIR) && \
+    !defined(NO_STDIO_FILESYSTEM)
                     if (ret == ASN_NO_SIGNER_E || ret == ASN_SELF_SIGNED_E) {
                         int lastErr = ret; /* save error from last time */
                         WOLFSSL_MSG("try to load certificate if hash dir is set");
@@ -26204,7 +26200,8 @@ ciphersuites introduced through the "bulk" ciphersuites.
 
 @return true on success, else false.
 */
-int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
+static int ParseCipherList(Suites* suites,
+        const char* list, ProtocolVersion version, int privateKeySz, byte side)
 {
     int       ret              = 0;
     int       idx              = 0;
@@ -26233,14 +26230,14 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
 #ifndef NO_RSA
         haveRSA = 1;
 #endif
-        InitSuites(suites, ctx->method->version,
+        InitSuites(suites, version,
 #ifndef NO_CERTS
-                ctx->privateKeySz,
+                privateKeySz,
 #else
                 0,
 #endif
                 haveRSA, 1, 1, !haveRSA, 1, haveRSA, !haveRSA, 1, 1, 0, 0,
-                ctx->method->side);
+                side);
         return 1; /* wolfSSL default */
     }
 
@@ -26317,9 +26314,6 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
                 haveSig |= SIG_ANON;
             else
                 haveSig &= ~SIG_ANON;
-        #ifdef HAVE_ANON
-            ctx->haveAnon = (haveSig & SIG_ANON) == SIG_ANON;
-        #endif
             haveRSA = 1;
             haveDH = 1;
             haveECC = 1;
@@ -26342,9 +26336,6 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
         if (XSTRCMP(name, "HIGH") == 0 && allowing) {
             /* Disable static, anonymous, and null ciphers */
             haveSig &= ~SIG_ANON;
-        #ifdef HAVE_ANON
-            ctx->haveAnon = 0;
-        #endif
             haveRSA = 1;
             haveDH = 1;
             haveECC = 1;
@@ -26364,9 +26355,6 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
                 haveSig |= SIG_ANON;
             else
                 haveSig &= ~SIG_ANON;
-        #ifdef HAVE_ANON
-            ctx->haveAnon = allowing;
-        #endif
             if (allowing) {
                 /* Allow RSA by default. */
                 if (!haveECC)
@@ -26480,7 +26468,7 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
 
             #ifdef WOLFSSL_DTLS
                 /* don't allow stream ciphers with DTLS */
-                if (ctx->method->version.major == DTLS_MAJOR) {
+                if (version.major == DTLS_MAJOR) {
                     if (XSTRSTR(name, "RC4"))
                     {
                         WOLFSSL_MSG("Stream ciphers not supported with DTLS");
@@ -26597,14 +26585,14 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
     if (ret) {
         int keySz = 0;
     #ifndef NO_CERTS
-        keySz = ctx->privateKeySz;
+        keySz = privateKeySz;
     #endif
     #ifdef OPENSSL_EXTRA
         if (callInitSuites) {
             suites->setSuites = 0; /* Force InitSuites */
             suites->hashSigAlgoSz = 0; /* Force InitSuitesHashSigAlgo call
                                         * inside InitSuites */
-            InitSuites(suites, ctx->method->version, keySz, (word16)haveRSA,
+            InitSuites(suites, version, keySz, (word16)haveRSA,
                        (word16)havePSK, (word16)haveDH,
                        (word16)((haveSig & SIG_ECDSA) != 0),
                        (word16)haveECC, (word16)haveStaticRSA,
@@ -26612,7 +26600,7 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
                        (word16)((haveSig & SIG_FALCON) != 0),
                        (word16)((haveSig & SIG_DILITHIUM) != 0),
                        (word16)((haveSig & SIG_ANON) != 0),
-                       (word16)haveNull, ctx->method->side);
+                       (word16)haveNull, side);
             /* Restore user ciphers ahead of defaults */
             XMEMMOVE(suites->suites + idx, suites->suites,
                     min(suites->suiteSz, WOLFSSL_MAX_SUITE_SZ-idx));
@@ -26627,7 +26615,7 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
         }
 
 #ifdef HAVE_RENEGOTIATION_INDICATION
-        if (ctx->method->side == WOLFSSL_CLIENT_END) {
+        if (side == WOLFSSL_CLIENT_END) {
             if (suites->suiteSz > WOLFSSL_MAX_SUITE_SZ - 2) {
                 WOLFSSL_MSG("Too many ciphersuites");
                 return 0;
@@ -26641,9 +26629,42 @@ int SetCipherList(WOLFSSL_CTX* ctx, Suites* suites, const char* list)
         suites->setSuites = 1;
     }
 
-    (void)ctx;
-
     return ret;
+}
+
+int SetCipherList_ex(const WOLFSSL_CTX* ctx, const WOLFSSL* ssl,
+        Suites* suites, const char* list)
+{
+    ProtocolVersion version;
+    int privateKeySz = 0;
+    byte side;
+
+    if (ctx != NULL) {
+        version = ctx->method->version;
+#ifndef NO_CERTS
+        privateKeySz = ctx->privateKeySz;
+#endif
+        side = ctx->method->side;
+    }
+    else if (ssl != NULL) {
+        version = ssl->version;
+#ifndef NO_CERTS
+        privateKeySz = ssl->buffers.keySz;
+#endif
+        side = (byte)ssl->options.side;
+    }
+    else {
+        WOLFSSL_MSG("SetCipherList_ex parameter error");
+        return 0;
+    }
+
+    return ParseCipherList(suites, list, version, privateKeySz, side);
+}
+
+int SetCipherList(const WOLFSSL_CTX* ctx, Suites* suites,
+                                 const char* list)
+{
+    return SetCipherList_ex(ctx, NULL, suites, list);
 }
 
 #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_SET_CIPHER_BYTES)
@@ -35329,7 +35350,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                        ssl->options.haveDH, ssl->options.haveECDSAsig,
                        ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                        ssl->options.haveFalconSig,
-                       ssl->options.haveDilithiumSig, ssl->options.haveAnon,
+                       ssl->options.haveDilithiumSig, ssl->options.useAnon,
                        TRUE, ssl->options.side);
         }
 
@@ -35720,7 +35741,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                        ssl->options.haveDH, ssl->options.haveECDSAsig,
                        ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                        ssl->options.haveFalconSig,
-                       ssl->options.haveDilithiumSig, ssl->options.haveAnon,
+                       ssl->options.haveDilithiumSig, ssl->options.useAnon,
                        TRUE, ssl->options.side);
         }
 
@@ -35798,7 +35819,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                            ssl->options.haveDH, ssl->options.haveECDSAsig,
                            ssl->options.haveECC, TRUE, ssl->options.haveStaticECC,
                            ssl->options.haveFalconSig,
-                           ssl->options.haveDilithiumSig, ssl->options.haveAnon,
+                           ssl->options.haveDilithiumSig, ssl->options.useAnon,
                            TRUE, ssl->options.side);
             }
         }
