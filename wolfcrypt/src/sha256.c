@@ -1180,14 +1180,14 @@ static int InitSha256(wc_Sha256* sha256)
                 }
             #else
                 /* Always SW */
-                ESP_LOGI(TAG, "Sha256 Update process fixed SW");
+                WOLFSSL_MSG("Sha256 Update process fixed SW");
                 ret = XTRANSFORM(sha256, (const byte*)local);
             #endif
 
                 if (ret == 0)
                     sha256->buffLen = 0;
                 else {
-                    ESP_LOGE(TAG, "sha25 error");
+                    WOLFSSL_MSG("sha256 buffLen = 0 error");
                     len = 0; /* error */
                 }
             }

@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <VisualGDBProjectSettings2 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Project xsi:type="com.visualgdb.project.external.esp-idf">
-    <CustomSourceDirectories>
-      <Directories />
-      <PathStyle>Unknown</PathStyle>
-    </CustomSourceDirectories>
     <AutoProgramSPIFFSPartition>true</AutoProgramSPIFFSPartition>
     <ProjectModeSettings>
       <ProjectGUID>c9687472-a434-43a7-9026-7914f425b9b4</ProjectGUID>
@@ -53,7 +49,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM55</ComPortName>
+      <ComPortName>COM65</ComPortName>
       <AdvancedSettings>
         <BaudRate>74880</BaudRate>
         <DataBits>8</DataBits>
@@ -200,7 +196,11 @@
   </Configurations>
   <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
-    <AdditionalStartupCommands />
+    <AdditionalStartupCommands>
+      <GDBPreStartupCommands />
+      <GDBStartupCommands />
+      <GDBFinalizationCommands />
+    </AdditionalStartupCommands>
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>
