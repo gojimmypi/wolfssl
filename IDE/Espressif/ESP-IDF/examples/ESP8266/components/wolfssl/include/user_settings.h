@@ -48,6 +48,7 @@
 #undef WOLFSSL_ESP32
 
 #define WOLFSSL_ESP8266
+#define DEBUG_WOLFSSL
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
