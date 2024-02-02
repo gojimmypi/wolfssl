@@ -410,6 +410,9 @@ static int setup_wolfssl(void) {
     return ret;
 }
 
+#define xstr(x) str(x)
+#define str(x) #x
+
 /*****************************************************************************/
 /* Arduino setup_certificates()                                              */
 /*****************************************************************************/
@@ -426,11 +429,12 @@ static int setup_certificates(void) {
     /* Certificate */
     Serial.println("Initializing certificates...");
     ret = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                             server_cert_der_2048,
-                                             sizeof_server_cert_der_2048,
-                                             WOLFSSL_FILETYPE_ASN1);
+                                             CTX_SERVER_CERT,
+                                             CTX_SERVER_CERT_SIZE,
+                                             CTX_CA_CERT_TYPE);
     if (ret == WOLFSSL_SUCCESS) {
-        Serial.println("Success: use certificate server_cert_der_2048");
+        Serial.print("Success: use certificate: ");
+        Serial.println(xstr(CTX_SERVER_CERT));
     }
     else {
         Serial.print("Error: wolfSSL_CTX_use_certificate_buffer failed: ");
@@ -440,11 +444,12 @@ static int setup_certificates(void) {
 
     /* setup the private key and certificate */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                            server_key_der_2048,
-                                            sizeof_server_key_der_2048,
-                                            WOLFSSL_FILETYPE_ASN1);
+                                            CTX_SERVER_KEY,
+                                            CTX_SERVER_KEY_SIZE,
+                                            CTX_SERVER_KEY_TYPE);
     if (ret == WOLFSSL_SUCCESS) {
-        Serial.println("Success: use private key buffer server_key_der_2048.");
+        Serial.print("Success: use private key buffer: ");
+        Serial.println(xstr(CTX_SERVER_KEY));
     }
     else {
         Serial.print("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: ");

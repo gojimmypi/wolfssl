@@ -27,6 +27,11 @@ connect with the `client` executable:
 ./examples/client/client -h 192.168.1.38 -p 11111 -v 3
 ```
 
+## wolfSSL Error -308 wolfSSL_connect error state on socket
+
+When using a wired Ethernet connection, and this error is encountered, simply
+press the reset button or power cycle the Arduino before making a connection.
+
 Here's one possible script to test the server from a command-line client:
 
 ```bash
