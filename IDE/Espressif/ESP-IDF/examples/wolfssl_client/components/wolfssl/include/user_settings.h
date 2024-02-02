@@ -30,6 +30,7 @@
 #ifdef TEST_SET7
     #define WOLFSSL_SMALL_STACK
     #define WOLFSSL_SMALL_STACK_CACHE
+    #define GCM_SMALL
 
     #define HAVE_ECC
     // #define USE_CERT_BUFFERS_1024
