@@ -50,6 +50,7 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
+/* certs typically defined in user_settings.h, here for reference:
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
@@ -73,6 +74,7 @@
     #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
     #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+*/
 
 /* Project */
 #include "wifi_connect.h"
@@ -91,13 +93,17 @@ static const char* const TAG = "tls_client";
 
 #if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
+int this_heap = 0;
+int this_stack = 0;
 
+/* we'll allocate and release before */
+#define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
 int ShowCiphers(WOLFSSL* ssl)
 {
-    #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
     char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
     const char* cipher_used;
     int ret = 0;
+    return WOLFSSL_SUCCESS;
 
     if (ssl == NULL) {
         ESP_LOGI(TAG, "WOLFSSL* ssl is NULL, so no cipher in use");
@@ -185,7 +191,26 @@ void my_atmel_free(int slotId)
 }
 #endif /* CUSTOM_SLOT_ALLOCATION */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
+#include "types.h"
 
+#include "esp_system.h"
+
+//void sdk_system_print_meminfo(void) {
+//    uint8_t *heap_end = xPortSupervisorStackPointer;
+//    printf("%s: %p ~ %p, len: %d\n", "data  ", _data_start, _data_end, _data_end - _data_start);
+//    printf("%s: %p ~ %p, len: %d\n", "rodata", _rodata_start, _rodata_end, _rodata_end - _rodata_start);
+//    printf("%s: %p ~ %p, len: %d\n", "bss   ", _bss_start, _bss_end, _bss_end - _bss_start);
+//    printf("%s: %p ~ %p, len: %d\n", "heap  ", _heap_start, heap_end, heap_end - _heap_start);
+//}
+/*****************************************************************************/
+/* fail_wait - in case of unrecoverable error                                */
+/*****************************************************************************/
+static void fail_wait(void) {
+    ESP_LOGE(TAG, "fail wait...");
+    while (1) {
+        vTaskDelay(1000);
+    }
+}
 /* client task */
 WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 {
@@ -210,6 +235,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     int minDhKeyBits = DEFAULT_MIN_DHKEY_BITS;
 #endif
     size_t len;
+    ESP_LOGI(TAG, "tls_smp_client_task buff start: %p", &buff);
+    ESP_LOGI(TAG, "tls_smp_client_task sndMsg start: %p", &sndMsg);
+    UBaseType_t uxHighWaterMark;
+    uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL); // Pass NULL to check the current task
+    ESP_LOGI(TAG, "Minimum free stack space: %d words\n", (word32)uxHighWaterMark);
 
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
@@ -217,6 +247,38 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     wolfSSL_Debugging_ON();
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
+
+    wolfSSL_Mutex m[100];
+    wolfSSL_Mutex m2[100];
+    ESP_LOGI(TAG, "wolfSSL_Mutex m size = %d; start: %p", (word32)sizeof(m), &m);
+    ESP_LOGI(TAG, "m[0] %p", &m[0]);
+    ESP_LOGI(TAG, "m2[99] %p", &m[99]);
+
+    int i = 0;
+    for (i = 0; i < 0; i++) {
+        this_heap = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "Creating mutex %d at %p, this heap = %d", i, &m[i], this_heap);
+
+        m[i] = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
+        ret_i = wc_InitMutex(&m[i]);
+        if (ret_i != 0) {
+            fail_wait();
+        }
+        else {
+            ESP_LOGI(TAG, "m[i] = %p\n", m[i]);
+        }
+
+       ESP_LOGI(TAG, "Creating mutex2 %d at %p, this heap = %d", i, &m2[i], this_heap);
+       m2[i] = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
+        ret_i = wc_InitMutex(&m2[i]);
+        if (ret_i != 0) {
+            fail_wait();
+        }
+        else {
+            ESP_LOGI(TAG, "m2[i] = %p\n", m2[i]);
+        }
+    }
+
 
     doPeerCheck = 1;
     sendGet = 0;
@@ -226,13 +288,19 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
-    wolfSSL_Init();
+    this_heap = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "this heap = %d", this_heap);
+    ret_i = wolfSSL_Init();
+    if (ret_i != WOLFSSL_SUCCESS) {
+        fail_wait();
+    }
 
     /* Create a socket that uses an Internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to create the socket\n");
+        fail_wait();
     }
 
     ESP_LOGI(TAG, "get target IP address");
@@ -247,14 +315,15 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
 
     /* Create and initialize WOLFSSL_CTX */
-    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    /* ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());    SSL 3.0 - TLS 1.3. */
     /*   options:   */
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());      only TLS 1.2 */
+    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());    /*    only TLS 1.2 */
     /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());      only TLS 1.3 */
     /* wolfSSL_CTX_NoTicketTLSv12(); */
     /* wolfSSL_NoTicketTLSv12();     */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX\n");
+        fail_wait();
     }
 
 #if defined(WOLFSSL_ESP32_CIPHER_SUITE)
@@ -300,16 +369,19 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
 #ifdef DEBUG_WOLFSSL
     ShowCiphers(NULL);
+/*
+ * TODO: set this to the task stack size, not main
     ESP_LOGI(TAG,
              "Stack used: %d\n",
              CONFIG_ESP_MAIN_TASK_STACK_SIZE
              - uxTaskGetStackHighWaterMark(NULL));
+*/
 #endif
 
 /* see user_settings PROJECT_DH for HAVE_DH and HAVE_FFDHE_2048 */
 #ifndef NO_DH
-    ret = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
-     if (ret != SSL_SUCCESS) {
+    ret_i = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
+     if (ret_i != SSL_SUCCESS) {
         ESP_LOGE(TAG, "Error setting minimum DH key size");
     }
 #endif
@@ -321,7 +393,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
     else {
         ESP_LOGW(TAG, "doPeerCheck != 0");
-        WOLFSSL_MSG("Loading... our cert");
+        WOLFSSL_MSG("Loading... client cert");
+        this_heap = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "this heap = %d", this_heap);
+
         /* load our certificate */
         ret_i = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                          CTX_CLIENT_CERT,
@@ -329,23 +404,35 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
                                          CTX_CLIENT_CERT_TYPE);
         if (ret_i != SSL_SUCCESS) {
             ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret_i);
+            fail_wait();
         }
 
-    /* Load client certificates into WOLFSSL_CTX */
-    WOLFSSL_MSG("Loading...cert");
-    ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
+        /* Load client certificates into WOLFSSL_CTX */
+        WOLFSSL_MSG("Loading...CA Cert");
+        this_heap = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "this heap = %d", this_heap);
+        ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CA_CERT,
                                          CTX_CA_CERT_SIZE,
                                          CTX_CA_CERT_TYPE);
 
+        if(ret_i  != SSL_SUCCESS) {
+            wolfSSL_CTX_free(ctx) ; ctx = NULL ;
+            ESP_LOGE(TAG, "ERROR: failed to load cert; err: %d ", ret_i) ;
+            fail_wait();
+        }
+
+        WOLFSSL_MSG("Loading...Private Key");
+        this_heap = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "this heap = %d", this_heap);
         ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                          CTX_CLIENT_KEY,
                                          CTX_CLIENT_KEY_SIZE,
                                          CTX_CLIENT_KEY_TYPE);
         if(ret_i  != SSL_SUCCESS) {
             wolfSSL_CTX_free(ctx) ; ctx = NULL ;
-            ESP_LOGE(TAG, "ERROR: failed to load key %d, "
-                          "please check the file.\n", ret_i) ;
+            ESP_LOGE(TAG, "ERROR: failed to load priv key; err: %d ", ret_i) ;
+            fail_wait();
         }
 
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
@@ -372,18 +459,21 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
 
     /* Connect to the server */
-    sprintf(buff,
+    ESP_LOGI(TAG,
             "Connecting to server....%s(port:%d)",
             TLS_SMP_TARGET_HOST,
             TLS_SMP_DEFAULT_PORT);
     WOLFSSL_MSG(buff);
-    printf("%s\n", buff);
+    ESP_LOGI(TAG, "%s\n", buff);
 
     if ((ret_i = connect(sockfd,
                        (struct sockaddr *)&servAddr,
                        sizeof(servAddr))) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
     }
+
+    this_heap = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "this heap = %d", this_heap);
 
     WOLFSSL_MSG("Create a WOLFSSL object");
     /* Create a WOLFSSL object */
@@ -424,7 +514,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     WOLFSSL_MSG("Connect to wolfSSL on the server side");
     /* Connect to wolfSSL on the server side */
-    if (wolfSSL_connect(ssl) == SSL_SUCCESS) {
+    ret_i = wolfSSL_connect(ssl);
+    if (ret_i == SSL_SUCCESS) {
 #ifdef DEBUG_WOLFSSL
         ShowCiphers(ssl);
 #endif
@@ -433,13 +524,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         memset(buff, 0, sizeof(buff));
 
         if (sendGet) {
-            printf("SSL connect ok, sending GET...\n");
+            ESP_LOGI(TAG, "SSL connect ok, sending GET...\n");
             len = XSTRLEN(sndMsg);
             strncpy(buff, sndMsg, len);
             buff[len] = '\0';
         }
         else {
-            sprintf(buff, "message from esp32 tls client\n");
+            ESP_LOGI(TAG, "message from esp32 tls client: %s\n", buff);
             len = strnlen(buff, sizeof(buff));
         }
         /* Send the message to the server */
@@ -454,11 +545,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         }
 
         /* Print to stdout any data the server sends */
-        printf("Server: ");
-        printf("%s\n", buff);
+        ESP_LOGI(TAG, "Server: ");
+        ESP_LOGI(TAG, "%s\n", buff);
         }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
+        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL ret = %d \n", ret_i);
     }
 #ifdef DEBUG_WOLFSSL
     ShowCiphers(ssl);
@@ -487,10 +578,15 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
+    this_heap = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "tls_smp_client_init esp_get_free_heap_size@ %p = %d", &this_heap, this_heap);
+    ESP_LOGI(TAG, "xTaskCreate create tls_smp_client_task stack depth: %d",
+                   TLS_SMP_CLIENT_TASK_BYTES);
+// sdk_system_print_meminfo
     /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
     ret = xTaskCreate(tls_smp_client_task,
                       TLS_SMP_CLIENT_TASK_NAME,
-                      TLS_SMP_CLIENT_TASK_WORDS,
+                      TLS_SMP_CLIENT_TASK_BYTES,
                       NULL,
                       TLS_SMP_CLIENT_TASK_PRIORITY,
                       &_handle);

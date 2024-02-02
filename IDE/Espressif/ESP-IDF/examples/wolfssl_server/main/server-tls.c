@@ -372,7 +372,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     vTaskDelete(NULL);
 
-	return TLS_SMP_SERVER_TASK_RET;
+    return TLS_SMP_SERVER_TASK_RET;
 }
 
 #if defined(SINGLE_THREADED)

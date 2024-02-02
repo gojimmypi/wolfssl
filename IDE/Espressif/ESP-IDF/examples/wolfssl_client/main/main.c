@@ -27,8 +27,9 @@
 #include <esp_event.h>
 
 /* wolfSSL */
+/* Always includ wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here */
 #include <wolfssl/wolfcrypt/settings.h>
-/* Reminder: settings.h includes user_settings.h */
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #ifndef WOLFSSL_ESPIDF
     #warning "Problem with wolfSSL user_settings."
@@ -44,13 +45,17 @@
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
     #include "wifi_connect.h"
+    /*
+     * Note ModBus TCP cannot be disabled on ESP8266 tos-sdk/v3.4
+     * See https://github.com/espressif/esp-modbus/issues/2
+     */
 #endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
-static const char* const TAG = "TLS Client";
+static const char* TAG = "TLS Client";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -115,6 +120,64 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                       */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
+
+/* see
+ * C:\SysGCC\esp8266\rtos-sdk\v3.4\components\esp8266\ld\esp8266.project.ld.in
+ */
+extern void* _data_start[];
+extern void* _data_end[];
+extern void* _rodata_start[];
+extern void* _rodata_end[];
+extern void* _bss_start[];
+extern void* _bss_end[];
+extern void* _rtc_data_start[];
+extern void* _rtc_data_end[];
+extern void* _rtc_bss_start[];
+extern void* _rtc_bss_end[];
+extern void* _iram_start[];
+extern void* _iram_end[];
+extern void* _init_start[];
+extern void* _init_end[];
+extern void* _iram_text_start[];
+extern void* _iram_text_end[];
+extern void* _iram_bss_start[];
+extern void* _iram_bss_end[];
+extern void* _noinit_start[];
+extern void* _noinit_end[];
+extern void* _text_start[];
+extern void* _text_end[];
+extern void* _heap_start[];
+extern void* _heap_end[];
+//extern void *xPortSupervisorStackPointer;
+
+void sdk_system_print_meminfo(void) {
+    // uint8_t *heap_end = xPortSupervisorStackPointer;
+    //ESP_LOGI(TAG, "xPortSupervisorStackPointer (heap end?) = %p", heap_end);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "data      ", _data_start,   _data_end,
+                  (uintptr_t)_data_end        - (uintptr_t)_data_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "bss       ", _bss_start,    _bss_end,
+                  (uintptr_t)_bss_end         - (uintptr_t)_bss_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "noinit    ", _noinit_start,    _noinit_end,
+                  (uintptr_t)_noinit_end      - (uintptr_t)_noinit_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "rodata    ", _rodata_start, _rodata_end,
+                  (uintptr_t)_rodata_end      - (uintptr_t)_rodata_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram      ", _iram_start,    _iram_end,
+                  (uintptr_t)_iram_end        - (uintptr_t)_iram_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram text ", _iram_text_start, _iram_text_end,
+                  (uintptr_t)_iram_text_end   - (uintptr_t)_iram_text_start);
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram bss  ", _iram_bss_start, _iram_bss_end,
+                  (uintptr_t)_iram_bss_end    - (uintptr_t)_iram_bss_start);
+
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "init      ", _init_start,      _init_end,
+                  (uintptr_t)_init_end      - (uintptr_t)_init_start);
+
+    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "text      ", _text_start,    _text_end,
+                  (uintptr_t)_text_end      - (uintptr_t)_text_start);
+
+//    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "heap  ", _heap_start,   _heap_end,
+//                  (uintptr_t)_heap_end[0]   - (uintptr_t)_heap_start[0]);
+}
+
 /* for FreeRTOS */
 void app_main(void)
 {
@@ -126,12 +189,16 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+    sdk_system_print_meminfo();
 #ifdef ESP_TASK_MAIN_STACK
     ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
 #endif
 #ifdef TASK_EXTRA_STACK_SIZE
     ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
 #endif
+
+#ifndef SINGLE_THREADED
+
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE,
@@ -145,6 +212,7 @@ void app_main(void)
      */
     stack_start = uxTaskGetStackHighWaterMark(NULL);
     ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
+#endif
 #endif
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
@@ -225,11 +293,17 @@ void app_main(void)
 
     /* HWM is maximum amount of stack space that has been unused, in bytes
      * not words (unlike vanilla freeRTOS). */
+#ifndef SINGLE_THREADED
+
+#endif
+
+#ifndef SINGLE_THREADED
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - (uxTaskGetStackHighWaterMark(NULL))
             );
     ESP_LOGI(TAG, "Starting TLS Client task ...\n");
+#endif
 
 #if defined(SINGLE_THREADED)
     /* just call the task */
@@ -239,6 +313,9 @@ void app_main(void)
     /* start a thread with the task */
     args[0].loops = 10;
     args[0].port = 11111;
+
+    int this_heap = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d", &this_heap, this_heap);
     tls_smp_client_init(args);
 /* optional additional client threads
     tls_smp_client_init(args);
@@ -251,6 +328,8 @@ void app_main(void)
 */
 #endif
 
+#ifndef SINGLE_THREADED
+
     ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
     vTaskDelete(NULL);
     /* done */
@@ -262,13 +341,12 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                         - (uxTaskGetStackHighWaterMark(NULL) ));
 #endif
+        vTaskDelay(60000);
+    } /* done while */
 
-#if defined(SINGLE_THREADED)
+#else
         ESP_LOGV(TAG, "\n\nDone!\n\n");
         while (1);
-#else
-        vTaskDelay(60000);
 #endif
-    } /* done whle */
 
 } /* app_main */

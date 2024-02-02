@@ -22,36 +22,171 @@
 /* This is a sample Arduino user_settings.h for wolfSSL */
 
 #define NO_FILESYSTEM
-#define USE_CERT_BUFFERS_2048
+//#define USE_CERT_BUFFERS_2048
 
 #define WOLFSSL_ESPIDF
 
-#define HAVE_ECC
-#define WOLFSSL_SMALL_STACK
-/* #define WOLFSSL_SMALL_STACK_EXTRA */
-/* #define WOLFSSL_SMALL_STACK_CIPHERS */
-/* #define NO_DH */
+#define TEST_SET7
+#ifdef TEST_SET7
+    #define WOLFSSL_SMALL_STACK
+    //#define WOLFSSL_SMALL_STACK_CACHE
 
-/* RSA must be enabled for examples, but can be disabled like this: */
-/* #define NO_RSA */
-#define RSA_LOW_MEM
+    #define HAVE_ECC
+    #define USE_CERT_BUFFERS_1024
 
-/* #define NO_OLD_TLS */
+    //#define HAVE_DH
+    #define RSA_LOW_MEM
+    #define NO_OLD_TLS
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
 
-/* Cannot use WOLFSSL_NO_MALLOC with small stack */
-/* #define WOLFSSL_NO_MALLOC */
+    #define HAVE_AESGCM
 
-#define HAVE_TLS_EXTENSIONS
-#define HAVE_SUPPORTED_CURVES
+    #define NO_FILESYSTEM
 
-#define HAVE_AESGCM
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif // TEST_SET4
+
+#ifdef TEST_SET6
+    #define WOLFSSL_SMALL_STACK
+    //#define WOLFSSL_SMALL_STACK_CACHE
+
+    #define HAVE_ECC
+    #define USE_CERT_BUFFERS_256
+    #define NO_RSA
+
+    //#define HAVE_DH
+    //#define RSA_LOW_MEM
+    #define NO_OLD_TLS
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+
+    #define HAVE_AESGCM
+
+    #define NO_FILESYSTEM
+
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif // TEST_SET4
+
+#ifdef TEST_SET5
+    #define WOLFSSL_STATIC_MEMORY
+    //#define WOLFSSL_SMALL_STACK
+    //#define WOLFSSL_SMALL_STACK_CACHE
+    #define HAVE_ECC
+    #define HAVE_DH
+    #define RSA_LOW_MEM
+    #define NO_OLD_TLS
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+
+    #define HAVE_AESGCM
+
+    #define NO_FILESYSTEM
+
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif // TEST_SET5
+
+// #define TEST_SET4
+#ifdef TEST_SET4
+    #define WOLFSSL_NO_MALLOC
+    #define HAVE_ECC
+    #define RSA_LOW_MEM
+    #define NO_OLD_TLS
+   // #define HAVE_SUPPORTED_CURVES
+
+    /* when you want to use SINGLE THREAD */
+    #define SINGLE_THREADED
+    #define NO_FILESYSTEM
+
+    #define HAVE_AESGCM
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif // TEST_SET4
+
+
+// #define TEST_SET3
+#ifdef TEST_SET3
+    #define WOLFSSL_SMALL_STACK
+    #define WOLFSSL_SMALL_STACK_CACHE
+
+//    #define WOLFSSL_STATIC_MEMORY
+    #define HAVE_ECC
+    #define RSA_LOW_MEM
+    #define NO_OLD_TLS
+   // #define HAVE_SUPPORTED_CURVES
+
+    /* when you want to use SINGLE THREAD */
+    #define SINGLE_THREADED
+    #define NO_FILESYSTEM
+
+    #define HAVE_AESGCM
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif
+
+#ifdef TEST_SET2
+//    #define WOLFSSL_SMALL_STACK
+    #define WOLFSSL_SMALL_STACK_CACHE
+    #define WOLFSSL_STATIC_MEMORY
+    #define HAVE_ECC
+//    #define HAVE_DH
+//    #define HAVE_FFDHE_2048
+    #define NO_OLD_TLS
+    /* TLS 1.3                                 */
+    #define WOLFSSL_TLS13
+    #define HAVE_TLS_EXTENSIONS
+    #define WC_RSA_PSS
+    #define HAVE_HKDF
+    #define HAVE_AEAD
+   // #define HAVE_SUPPORTED_CURVES
+
+    /* when you want to use SINGLE THREAD */
+    /* #define SINGLE_THREADED */
+    #define NO_FILESYSTEM
+
+    #define HAVE_AESGCM
+    /* when you want to use SHA384 */
+    /* #define WOLFSSL_SHA384 */
+#endif
+
+
+#ifdef TEST_SET1
+    #define HAVE_ECC
+    // #define WOLFSSL_SMALL_STACK
+    #define WOLFSSL_SMALL_STACK_EXTRA
+    #define WOLFSSL_SMALL_STACK_CIPHERS
+    #define NO_DH
+    #define WOLFSSL_STATIC_MEMORY
+
+    /* RSA must be enabled for examples, but can be disabled like this: */
+    #define NO_RSA
+    #define RSA_LOW_MEM
+
+    #define NO_OLD_TLS
+
+    /* Cannot use WOLFSSL_NO_MALLOC with small stack */
+    #define WOLFSSL_NO_MALLOC
+
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+
+    #define HAVE_AESGCM
+    #define NO_DSA
+    #define NO_RC4
+    #define NO_MD4
+    #define NO_MD5
+    #define NO_DES3
+#endif
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-#define SINGLE_THREADED
+// #define SINGLE_THREADED see above TODO
 
 
 /* Optional OPENSSL compatibility */
@@ -106,8 +241,6 @@
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
-
-#define HASH_SIZE_LIMIT /* for test.c */
 
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
@@ -264,6 +397,7 @@
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
 */
+#define DEBUG_WOLFSSL
 
 #define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
 
@@ -320,7 +454,20 @@
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
-    #if defined(USE_CERT_BUFFERS_2048)
+    #if defined(HAVE_ECC) && defined(USE_CERT_BUFFERS_256)
+        #include <wolfssl/certs_test.h>
+        #define CTX_CA_CERT          ca_ecc_key_der_256
+        #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_key_der_256
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CLIENT_KEY       ecc_clikey_der_256
+        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikeypub_der_256
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+    #elif defined(USE_CERT_BUFFERS_2048)
         #include <wolfssl/certs_test.h>
         #define CTX_CA_CERT          ca_cert_der_2048
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048

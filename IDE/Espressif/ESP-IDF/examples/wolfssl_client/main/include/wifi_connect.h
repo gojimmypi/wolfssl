@@ -46,7 +46,7 @@
 
 /* when using a private config with plain text passwords,
  * file my_private_config.h should be excluded from git updates */
-/* #define  USE_MY_PRIVATE_CONFIG */
+#define  USE_MY_PRIVATE_CONFIG
 
 #ifdef  USE_MY_PRIVATE_CONFIG
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
@@ -57,9 +57,11 @@
         #include "~/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
         #include "~/Documents/my_private_config.h"
+    #elif defined(OS_WINDOWS)
+        #include "/workspace/my_private_config.h"
     #else
-        #warning "did not detect environment. using ~/my_private_config.h"
-        #include "~/my_private_config.h"
+   //     #warning "did not detect environment. using ~/my_private_config.h"
+        #include "/workspace/my_private_config.h"
 	#endif
 #else
 

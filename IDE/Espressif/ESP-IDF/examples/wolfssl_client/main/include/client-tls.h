@@ -29,7 +29,7 @@
 #ifdef CONFIG_WOLFSSL_TARGET_HOST
     #define TLS_SMP_TARGET_HOST         CONFIG_WOLFSSL_TARGET_HOST
 #else
-    #define TLS_SMP_TARGET_HOST         "192.168.1.41"
+    #define TLS_SMP_TARGET_HOST         "192.168.1.37"
 #endif
 
 #ifdef CONFIG_WOLFSSL_TARGET_PORT
@@ -39,13 +39,16 @@
 #endif
 
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
-#define TLS_SMP_CLIENT_TASK_WORDS       31240
+//#define TLS_SMP_CLIENT_TASK_BYTES       (26 * 1024)
+// #define TLS_SMP_CLIENT_TASK_BYTES       (20 * 1024) /* leave handshake fail -125*/
+#define TLS_SMP_CLIENT_TASK_BYTES       (18 * 1024)
+
 #define TLS_SMP_CLIENT_TASK_PRIORITY    8
 
 #if defined(SINGLE_THREADED)
     #define WOLFSSL_ESP_TASK int
 #else
-    #include "freertos/FreeRTOS.h"
+    #include <freertos/FreeRTOS.h>
     #define WOLFSSL_ESP_TASK void
 #endif
 

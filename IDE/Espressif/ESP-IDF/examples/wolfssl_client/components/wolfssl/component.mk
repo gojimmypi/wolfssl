@@ -224,12 +224,12 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_util.o
 ##
 ## wolfcrypt benchmark  (optional)
 ##
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/benchmark/benchmark.o
+## COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/benchmark/benchmark.o
 
 ##
 ## wolfcrypt test (optional)
 ##
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/test/test.o
+## COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/test/test.o
 
 ##
 ## wolfcrypt

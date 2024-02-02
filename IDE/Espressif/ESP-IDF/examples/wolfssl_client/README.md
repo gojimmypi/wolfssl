@@ -8,12 +8,21 @@ When using the CLI, see the [example parameters](/IDE/Espressif/ESP-IDF/examples
 For general information on [wolfSSL examples for Espressif](../README.md), see the
 [README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
 
+## Troubleshooting
+
+Wierd results, odd messages, unexpect compiler errors? Manually delete the Arduino build directory.
+For Windows users, this is the set of hash-named directories located here:
+
+```text
+C:\Users\%USERNAME%\AppData\Local\Temp\arduino\sketches
+```
+
 ## VisualGDB
 
 Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
 No wolfSSL setup is needed. You may need to adjust your specific COM port. The default is `COM20`.
 
-## ESP-IDF Commandline
+## ESP-IDF Commandline v5.x
 
 
 1. `idf.py menuconfig` to config the project
@@ -38,9 +47,60 @@ When you want to test the wolfSSL client
 
          e.g. Launch ./examples/server/server -v 4 -b -i -d
 
+
+## VisualGDB for ESP8266
+
+Reminder that we build with `make` and not `cmake` in VisualGDB.
+
+Build files will be created in `[project directory]\build`
+
+## ESP-IDF CMake Commandline (version 3.5 or earlier for the ESP8266)
+
+Build files will be created in `[project directory]\build\debug`
+
+```
+# Set your path to RTOS SDK, shown here for default from WSL vis VisualGDB
+WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+. $WRK_IDF_PATH/export.sh
+
+# install as needed / prompted
+/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/install.sh
+
+cd IDE/Espressif/ESP-IDF/examples/ESP8266
+
+# adjust settings as desired
+idf.py menuconfig
+
+idf.py build flash -p /dev/ttyS55 -b 115200
+```
+
 ## SM Ciphers
 
+(TODO coming soon)
+
 #### Working Linux Client to ESP32 Server
+
+```
+./examples/client/client -h 192.168.1.37 -p 11111 -v 3
+```
+
+```text
+-c <file>   Certificate file,           default ./certs/client-cert.pem
+-k <file>   Key file,                   default ./certs/client-key.pem
+-A <file>   Certificate Authority file, default ./certs/ca-cert.pem
+```
+
+Example client, with default certs explicitly given:
+
+```bash
+./examples/client/client -h 192.168.1.37 -p 11111 -v 3 -c ./certs/client-cert.pem -k      ./certs/client-key.pem -A     ./certs/ca-cert.pem
+```
+
+Example client, with RSA 1024 certs explicitly given:
+
+```
+./examples/client/client -h 192.168.1.37 -p 11111 -v 3 -c ./certs/1024/client-cert.pem -k ./certs/1024/client-key.pem -A ./certs/1024/ca-cert.pem
+```
 
 Command:
 
@@ -48,7 +108,6 @@ Command:
 cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_server
 . /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
-
 ```
 
 ```
@@ -75,4 +134,3 @@ I hear you fa shizzle!
 ```
 
 See the README.md file in the upper level 'examples' directory for [more information about examples](../README.md).
-
