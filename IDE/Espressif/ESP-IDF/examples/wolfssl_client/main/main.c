@@ -124,58 +124,118 @@ void my_atmel_free(int slotId)
 /* see
  * C:\SysGCC\esp8266\rtos-sdk\v3.4\components\esp8266\ld\esp8266.project.ld.in
  */
-extern void* _data_start[];
-extern void* _data_end[];
-extern void* _rodata_start[];
-extern void* _rodata_end[];
-extern void* _bss_start[];
-extern void* _bss_end[];
-extern void* _rtc_data_start[];
-extern void* _rtc_data_end[];
-extern void* _rtc_bss_start[];
-extern void* _rtc_bss_end[];
-extern void* _iram_start[];
-extern void* _iram_end[];
-extern void* _init_start[];
-extern void* _init_end[];
-extern void* _iram_text_start[];
-extern void* _iram_text_end[];
-extern void* _iram_bss_start[];
-extern void* _iram_bss_end[];
-extern void* _noinit_start[];
-extern void* _noinit_end[];
-extern void* _text_start[];
-extern void* _text_end[];
-extern void* _heap_start[];
-extern void* _heap_end[];
+extern uintptr_t _data_start[];
+extern uintptr_t _data_end[];
+extern uintptr_t _rodata_start[];
+extern uintptr_t _rodata_end[];
+extern uintptr_t _bss_start[];
+extern uintptr_t _bss_end[];
+extern uintptr_t _rtc_data_start[];
+extern uintptr_t _rtc_data_end[];
+extern uintptr_t _rtc_bss_start[];
+extern uintptr_t _rtc_bss_end[];
+extern uintptr_t _iram_start[];
+extern uintptr_t _iram_end[];
+extern uintptr_t _init_start[];
+extern uintptr_t _init_end[];
+extern uintptr_t _iram_text_start[];
+extern uintptr_t _iram_text_end[];
+extern uintptr_t _iram_bss_start[];
+extern uintptr_t _iram_bss_end[];
+extern uintptr_t _noinit_start[];
+extern uintptr_t _noinit_end[];
+extern uintptr_t _text_start[];
+extern uintptr_t _text_end[];
+extern uintptr_t _heap_start[];
+extern uintptr_t _heap_end[];
+
+extern void* _thread_local_start;
+extern void* _thread_local_end;
 //extern void *xPortSupervisorStackPointer;
 
-void sdk_system_print_meminfo(void) {
-    // uint8_t *heap_end = xPortSupervisorStackPointer;
-    //ESP_LOGI(TAG, "xPortSupervisorStackPointer (heap end?) = %p", heap_end);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "data      ", _data_start,   _data_end,
-                  (uintptr_t)_data_end        - (uintptr_t)_data_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "bss       ", _bss_start,    _bss_end,
-                  (uintptr_t)_bss_end         - (uintptr_t)_bss_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "noinit    ", _noinit_start,    _noinit_end,
-                  (uintptr_t)_noinit_end      - (uintptr_t)_noinit_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "rodata    ", _rodata_start, _rodata_end,
-                  (uintptr_t)_rodata_end      - (uintptr_t)_rodata_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram      ", _iram_start,    _iram_end,
-                  (uintptr_t)_iram_end        - (uintptr_t)_iram_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram text ", _iram_text_start, _iram_text_end,
-                  (uintptr_t)_iram_text_end   - (uintptr_t)_iram_text_start);
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "iram bss  ", _iram_bss_start, _iram_bss_end,
-                  (uintptr_t)_iram_bss_end    - (uintptr_t)_iram_bss_start);
+enum sdk_memory_segment
+{
+    data,
+    bss,
+    noinit,
+    rodata,
+    iram,
+    iram_text,
+    iram_bss,
+    init,
+    text,
+    thread_local,
+    SDK_MEMORY_SEGMENT_COUNT
+};
 
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "init      ", _init_start,      _init_end,
-                  (uintptr_t)_init_end      - (uintptr_t)_init_start);
+static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT] = {
+    "data         ",
+    "bss          ",
+    "noinit       ",
+    "rodata       ",
+    "iram         ",
+    "iram_text    ",
+    "iram_bss     ",
+    "init         ",
+    "text         ",
+    "thread_local ",
+};
+static void* sdk_memory_segment_start[SDK_MEMORY_SEGMENT_COUNT] = {};
+static void* sdk_memory_segment_end[SDK_MEMORY_SEGMENT_COUNT] = {};
 
-    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "text      ", _text_start,    _text_end,
-                  (uintptr_t)_text_end      - (uintptr_t)_text_start);
+/* Given a given memory segment [m]: assign text names, starting and ending
+ * addresses. See also sdk_var_whereis() that requires this initialization. */
+int sdk_log_meminfo(enum sdk_memory_segment m, void* s, void* e)
+{
+    const char* str;
+    str = sdk_memory_segment_text[m];
+    sdk_memory_segment_start[m] = s;
+    sdk_memory_segment_end[m] = e;
+    /* For ESP8266 See ./build/[Debug|Release]/esp8266/esp8266.project.ld */
+    if (m == SDK_MEMORY_SEGMENT_COUNT) {
+        ESP_LOGI(TAG, "                    Linker Memory Map");
+        ESP_LOGI(TAG, "-----------------------------------------------------");
+        ESP_LOGI(TAG, "                  Start         End      Length");
+    }
+    else {
+        ESP_LOGI(TAG, "%s: %p ~ %p : %d", str, s, e, (word32)(e - s));
+    }
+    return ESP_OK;
+}
 
-//    ESP_LOGI(TAG, "%s: %p ~ %p, len: %u", "heap  ", _heap_start,   _heap_end,
-//                  (uintptr_t)_heap_end[0]   - (uintptr_t)_heap_start[0]);
+/* Show all known linker memory segment names, starting & ending addresses. */
+int sdk_init_meminfo(void) {
+    sdk_log_meminfo(SDK_MEMORY_SEGMENT_COUNT, NULL, NULL); /* print header */
+    sdk_log_meminfo(thread_local, _thread_local_start, _thread_local_end);
+    sdk_log_meminfo(data,         _data_start,         _data_end);
+    sdk_log_meminfo(bss,          _bss_start,          _bss_end);
+    sdk_log_meminfo(noinit,       _noinit_start,       _noinit_end);
+    sdk_log_meminfo(rodata,       _rodata_start,       _rodata_end);
+    sdk_log_meminfo(iram,         _iram_start,         _iram_end);
+    sdk_log_meminfo(iram_text,    _iram_text_start,    _iram_text_end);
+    sdk_log_meminfo(iram_bss,     _iram_bss_start,     _iram_bss_end);
+    sdk_log_meminfo(init,         _init_start,         _init_end);
+    sdk_log_meminfo(text,         _text_start,         _text_end);
+    ESP_LOGI(TAG, "-----------------------------------------------------");
+    return ESP_OK;
+}
+
+/* Returns ESP_OK if found in known memory map, ESP_FAIL otherwise */
+int sdk_var_whereis(const char* v_name, void* v) {
+    esp_err_t ret = ESP_FAIL;
+    for (enum sdk_memory_segment m = 0 ;m < SDK_MEMORY_SEGMENT_COUNT; m++) {
+        if (v >= sdk_memory_segment_start[m] &&
+            v <= sdk_memory_segment_start[m]) {
+                ret = ESP_OK;
+                ESP_LOGI(TAG, "%s found at %p in %s", v_name, v,
+                              sdk_memory_segment_text[m]);
+            }
+    }
+
+    if (ret == ESP_FAIL) {
+        ESP_LOGW(TAG, "%s not found in known memory map: %p", v_name, v);
+    }
+    return ret;
 }
 
 /* for FreeRTOS */
@@ -189,7 +249,7 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
-    sdk_system_print_meminfo();
+    sdk_init_meminfo();
 #ifdef ESP_TASK_MAIN_STACK
     ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
 #endif
@@ -211,6 +271,7 @@ void app_main(void)
      * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
      */
     stack_start = uxTaskGetStackHighWaterMark(NULL);
+    sdk_var_whereis("stack_start", &stack_start);
     ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
 #endif
 #endif
