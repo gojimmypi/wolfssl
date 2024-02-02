@@ -41,7 +41,7 @@
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
 //#define TLS_SMP_CLIENT_TASK_BYTES       (26 * 1024)
 // #define TLS_SMP_CLIENT_TASK_BYTES       (20 * 1024) /* leave handshake fail -125*/
-#define TLS_SMP_CLIENT_TASK_BYTES       (18 * 1024)
+#define TLS_SMP_CLIENT_TASK_BYTES       (15 * 1024)
 
 #define TLS_SMP_CLIENT_TASK_PRIORITY    8
 

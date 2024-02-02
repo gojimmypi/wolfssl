@@ -22,17 +22,17 @@
 /* This is a sample Arduino user_settings.h for wolfSSL */
 
 #define NO_FILESYSTEM
-//#define USE_CERT_BUFFERS_2048
+#define USE_CERT_BUFFERS_2048
 
 #define WOLFSSL_ESPIDF
 
 #define TEST_SET7
 #ifdef TEST_SET7
     #define WOLFSSL_SMALL_STACK
-    //#define WOLFSSL_SMALL_STACK_CACHE
+    #define WOLFSSL_SMALL_STACK_CACHE
 
     #define HAVE_ECC
-    #define USE_CERT_BUFFERS_1024
+    // #define USE_CERT_BUFFERS_1024
 
     //#define HAVE_DH
     #define RSA_LOW_MEM
@@ -243,16 +243,23 @@
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 /* USE_FAST_MATH is default */
-#define USE_FAST_MATH
+// #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-/* #undef USE_FAST_MATH          */
-/* #define SP_MATH               */
+//#undef USE_FAST_MATH
+//#define SP_MATH
 /* #define WOLFSSL_SP_MATH_ALL   */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
-/* #define USE_INTEGER_HEAP_MATH */
+// #define USE_INTEGER_HEAP_MATH
+#define SP_MATH
+#define WOLFSSL_SP_SMALL
+#define WOLFSSL_HAVE_SP_RSA
+#define WOLFSSL_SP_MATH
+#define SP_WORD_SIZE 32
+#define WOLFSSL_SP_MATH_ALL
+
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines to force SW instead of HW acceleration */
