@@ -230,6 +230,9 @@ void show_memory(void)
 /*****************************************************************************/
 int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
     int sent = 0;
+    (void)ssl;
+    (void)ctx;
+
     sent = client.write((byte*)message, sz);
     return sent;
 }
@@ -239,6 +242,9 @@ int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
 /*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
+    (void)ssl;
+    (void)ctx;
+
     while (client.available() > 0 && ret < sz) {
         reply[ret++] = client.read();
     }
