@@ -1465,6 +1465,7 @@ int wolfSSL_CTX_new_rng(WOLFSSL_CTX* ctx)
 }
 #endif
 
+#include <esp_log.h>
 
 WOLFSSL_ABI
 WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
@@ -1479,10 +1480,19 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
 
     ssl = (WOLFSSL*) XMALLOC(sizeof(WOLFSSL), ctx->heap, DYNAMIC_TYPE_SSL);
     if (ssl) {
-        if ( (ret = InitSSL(ssl, ctx, 0)) < 0) {
+        ESP_LOGI("ssl", "xmalloc success... init");
+        ret = InitSSL(ssl, ctx, 0);
+        ESP_LOGI("ssl", "InitSSL ret = %d", ret);
+        if (ret < 0) {
             FreeSSL(ssl, ctx->heap);
             ssl = 0;
         }
+        else {
+            ESP_LOGI("ssl", "init success ret = %d", ret);
+        }
+    }
+    else {
+        ESP_LOGE("ssl", "xmalloc failed");
     }
 
     WOLFSSL_LEAVE("wolfSSL_new", ret);
@@ -12698,7 +12708,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                 return WOLFSSL_FATAL_ERROR;
             }
             ssl->options.connectState = CLIENT_HELLO_SENT;
-            WOLFSSL_MSG("connect state: CLIENT_HELLO_SENT");
+            WOLFSSL_MSG("ssl.c connect state: CLIENT_HELLO_SENT");
             FALL_THROUGH;
 
         case CLIENT_HELLO_SENT :
@@ -12712,6 +12722,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                     neededState = SERVER_HELLOVERIFYREQUEST_COMPLETE;
             #endif
             /* get response */
+            WOLFSSL_MSG("ssl.c ssl->options.serverState < neededState");
             while (ssl->options.serverState < neededState) {
                 #ifdef WOLFSSL_TLS13
                     if (ssl->options.tls1_3)

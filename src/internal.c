@@ -24,6 +24,7 @@
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
+#include <esp_log.h>
 
 #include <wolfssl/wolfcrypt/settings.h>
 
@@ -7075,7 +7076,9 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
         /* FIPS RNG API does not accept a heap hint */
 #ifndef HAVE_FIPS
+        ESP_LOGE("int", "wc_InitRng_ex...");
         if ( (ret = wc_InitRng_ex(ssl->rng, ssl->heap, ssl->devId)) != 0) {
+            ESP_LOGE("int", "wc_InitRng_ex failed...");
             WOLFSSL_MSG("RNG Init error");
             return ret;
         }
@@ -7406,11 +7409,15 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->disabledCurves = ctx->disabledCurves;
 #endif
 
+    ESP_LOGI("int", "InitCiphers...");
+
     InitCiphers(ssl);
+    ESP_LOGI("int", "InitCipherSpecs...");
     InitCipherSpecs(&ssl->specs);
 
     /* all done with init, now can return errors, call other stuff */
     if ((ret = ReinitSSL(ssl, ctx, writeDup)) != 0) {
+        ESP_LOGW("int", "ReinitSSL failed... %d", ret);
         return ret;
     }
 
@@ -7444,6 +7451,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         && ret != NO_PRIVATE_KEY
 #endif
         ) {
+        ESP_LOGE("int", "SetSSL_CTX failed... %d", ret);
         return ret;
     }
     ssl->options.dtls = ssl->version.major == DTLS_MAJOR;
@@ -7457,8 +7465,10 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
     /* hsHashes */
     ret = InitHandshakeHashes(ssl);
-    if (ret != 0)
+    if (ret != 0) {
+        ESP_LOGE("int", "InitHandshakeHashes failed... %d", ret);
         return ret;
+    }
 
 #if defined(WOLFSSL_DTLS) && !defined(NO_WOLFSSL_SERVER)
     if (ssl->options.dtls && ssl->options.side == WOLFSSL_SERVER_END) {
@@ -7500,10 +7510,11 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
     ssl->session = wolfSSL_NewSession(ssl->heap);
     if (ssl->session == NULL) {
+        ESP_LOGE("int", "wolfSSL_NewSession memory error failed... %d", ret);
         WOLFSSL_MSG("SSL Session Memory error");
         return MEMORY_E;
     }
-
+    ESP_LOGI("ssl", "breadcrumb ret = %d", ret);
 #ifdef HAVE_SESSION_TICKET
     ssl->options.noTicketTls12 = ctx->noTicketTls12;
 #endif
@@ -7580,6 +7591,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->sigSpec = ctx->sigSpec;
     ssl->sigSpecSz = ctx->sigSpecSz;
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
+    ESP_LOGI("ssl", "InitSSL done = %d", ret);
     return 0;
 }
 

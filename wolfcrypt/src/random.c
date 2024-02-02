@@ -28,6 +28,7 @@ This library contains implementation for the random number generator.
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
+#include <esp_log.h>
 
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
@@ -1677,14 +1678,19 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
             if (ret == 0)
                 ret = wc_RNG_TestSeed(seed, seedSz);
             else {
+                ESP_LOGE("int", "wc_RNG_TestSeed failed... %d", ret);
                 ret = DRBG_FAILURE;
                 rng->status = DRBG_FAILED;
             }
 
             if (ret == DRBG_SUCCESS)
                 ret = Hash_DRBG_Instantiate((DRBG_internal *)rng->drbg,
-                            seed + SEED_BLOCK_SZ, seedSz - SEED_BLOCK_SZ,
-                            nonce, nonceSz, rng->heap, devId);
+                    seed + SEED_BLOCK_SZ,
+                    seedSz - SEED_BLOCK_SZ,
+                    nonce,
+                    nonceSz,
+                    rng->heap,
+                    devId);
 
             if (ret != DRBG_SUCCESS) {
             #if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_STATIC_MEMORY)
@@ -1692,6 +1698,9 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
             #endif
                 rng->drbg = NULL;
             }
+        }
+        else {
+            ESP_LOGE("int", "_InitRng failed...");
         }
 
         ForceZero(seed, seedSz);
@@ -3482,7 +3491,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 #elif defined(WOLFSSL_ESPIDF)
 
     /* Espressif */
-    #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
+    #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE) || defined(WOLFSSL_ESP8266)
 
         /* Espressif ESP32 */
         #include <esp_system.h>
@@ -3515,6 +3524,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
         int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         {
+            ESP_LOGI("rnd", "ESP8266 Random");
             word32 rand;
             while (sz > 0) {
                 word32 len = sizeof(rand);
@@ -3808,15 +3818,17 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
     #ifndef NO_DEV_URANDOM /* way to disable use of /dev/urandom */
         os->fd = open("/dev/urandom", O_RDONLY);
+        ESP_LOGE("rnd", "open(/dev/urandom... %d", 0);
         if (os->fd == -1)
     #endif
         {
+            ESP_LOGE("rnd", "open(/dev/urandom... %d", 1);
             /* may still have /dev/random */
             os->fd = open("/dev/random", O_RDONLY);
             if (os->fd == -1)
                 return OPEN_RAN_E;
         }
-
+        ESP_LOGE("rnd", "rnd read... %d", 0);
         while (sz) {
             int len = (int)read(os->fd, output, sz);
             if (len == -1) {
