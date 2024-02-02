@@ -113,9 +113,9 @@ int set_fixed_default_time(void)
     /* ideally, we'd like to set time from network,
      * but let's set a default time, just in case */
     struct tm timeinfo = {
-        .tm_year = 2023 - 1900,
-        .tm_mon  = 10,
-        .tm_mday = 02,
+        .tm_year = 2024 - 1900,
+        .tm_mon  = 01,
+        .tm_mday = 05,
         .tm_hour = 13,
         .tm_min  = 01,
         .tm_sec  = 05

@@ -184,11 +184,18 @@ void app_main(void)
 
     /* Initialize NVS */
     ret = nvs_flash_init();
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+#else
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
+#endif
     ESP_ERROR_CHECK(ret);
 
     #if defined(CONFIG_IDF_TARGET_ESP32H2)

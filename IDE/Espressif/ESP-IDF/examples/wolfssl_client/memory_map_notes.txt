@@ -1,0 +1,26 @@
+Used SPIFLASH: 606KB out of 16MB (3%) [+8584]
+Used INSTR_RAM: 25KB out of 32KB (80%) [-10K]
+Used DATA_RAM: 35KB out of 80KB (43%) [+1816]
+
+I (59) boot: Partition Table:
+I (65) boot: ## Label            Usage          Type ST Offset   Length
+I (76) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (88) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (99) boot:  2 factory          factory app      00 00 00010000 000f0000
+I (111) boot: End of partition table
+I (117) esp_image: segment 0: paddr=0x00010010 vaddr=0x40210010 size=0x7aee0 (503520) map
+I (343) esp_image: segment 1: paddr=0x0008aef8 vaddr=0x4028aef0 size=0x1a8d4 (108756) map
+I (390) esp_image: segment 2: paddr=0x000a57d4 vaddr=0x3ffe8000 size=0x00654 (  1620) load
+I (391) esp_image: segment 3: paddr=0x000a5e30 vaddr=0x40100000 size=0x00080 (   128) load
+I (401) esp_image: segment 4: paddr=0x000a5eb8 vaddr=0x40100080 size=0x07ea8 ( 32424) load
+I (428) boot: Loaded app from partition at offset 0x10000
+I (453) TLS Client: ---------------- wolfSSL TLS Client Example ------------
+I (454) TLS Client: --------------------------------------------------------
+I (461) TLS Client: --------------------------------------------------------
+I (473) TLS Client: ---------------------- BEGIN MAIN ----------------------
+I (485) TLS Client: --------------------------------------------------------
+I (487) TLS Client: --------------------------------------------------------
+I (508) TLS Client: data  : 0x3ffe8000 ~ 0x3ffe8654, len: 1620
+I (518) TLS Client: rodata: 0x4028aef0 ~ 0x402a57cc, len: 108764
+I (529) TLS Client: bss   : 0x3ffe8660 ~ 0x3fff0590, len: 32560
+I (539) TLS Client: iram  : 0x40100000 ~ 0x4010901c, len: 36892
