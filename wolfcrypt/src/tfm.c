@@ -2460,6 +2460,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   M = (fp_int*)XMALLOC(sizeof(fp_int)*((1 << winsize) + 1), NULL,
                                                            DYNAMIC_TYPE_BIGINT);
   if (M == NULL) {
+     ESP_LOGE("TFM", "_fp_exptmod_nct XMALLOC failed: %d", (word32)sizeof(fp_int)*((1 << winsize) + 1));
      return FP_MEM;
   }
 #endif
@@ -3305,6 +3306,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
+       ESP_LOGE("TFM", "handle modulus of zero");
       return FP_VAL;
    }
    if (fp_isone(P)) {
@@ -3356,8 +3358,13 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
    #ifdef WOLFSSL_SMALL_STACK
       tmp = (fp_int*)XMALLOC(sizeof(fp_int) * 2, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-      if (tmp == NULL)
-          return FP_MEM;
+       if (tmp == NULL) {
+           ESP_LOGE("TFM", "fp_exptmod_nct XMALLOC failed: %d", sizeof(fp_int) * 2);
+           return FP_MEM;
+       }
+       else {
+           ESP_LOGI("TFM", "fp_exptmod_nct XMALLOC success: %d", sizeof(fp_int) * 2);
+       }
    #endif
 
       /* yes, copy G and invmod it */
@@ -3365,16 +3372,22 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       fp_init_copy(&tmp[1], P);
       tmp[1].sign = FP_ZPOS;
       err = fp_invmod(&tmp[0], &tmp[1], &tmp[0]);
-      if (err == FP_OKAY) {
-         X->sign = FP_ZPOS;
-         err =  _fp_exptmod_nct(&tmp[0], X, P, Y);
-         if (X != Y) {
-            X->sign = FP_NEG;
-         }
-         if ((err == 0) && (P->sign == FP_NEG)) {
-            err = fp_add(Y, P, Y);
-         }
-      }
+       if (err == FP_OKAY) {
+           X->sign = FP_ZPOS;
+           err =  _fp_exptmod_nct(&tmp[0], X, P, Y);
+           if (err != FP_OKAY) {
+               ESP_LOGE("TFM", "_fp_exptmod_nct failed");
+           }
+           if (X != Y) {
+               X->sign = FP_NEG;
+           }
+           if ((err == 0) && (P->sign == FP_NEG)) {
+               err = fp_add(Y, P, Y);
+           }
+       }
+       else {
+           ESP_LOGE("TFM", "fp_invmod failed");
+       }
    #ifdef WOLFSSL_SMALL_STACK
       XFREE(tmp, NULL, DYNAMIC_TYPE_BIGINT);
    #endif
@@ -3458,7 +3471,7 @@ int fp_sqr(fp_int *A, fp_int *B)
     /* fall through to software calcs */
 #endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
-/* TODO check / test */    
+/* TODO check / test */
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
     if (esp_hw_validation_active()) {
         ESP_LOGV(TAG, "Skipping call to esp_mp_mul "

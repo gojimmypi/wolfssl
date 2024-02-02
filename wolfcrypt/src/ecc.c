@@ -5817,6 +5817,9 @@ static int _ecc_make_key_ex(WC_RNG* rng, int keysize, ecc_key* key,
         if (err == MP_OKAY) {
             err = wc_ecc_curve_load(key->dp, &curve, ECC_CURVE_FIELD_ALL);
         }
+        else {
+            WOLFSSL_MSG("ALLOC_CURVE_SPECS  failed");
+        }
 
         /* generate k */
         if (err == MP_OKAY) {
@@ -5827,7 +5830,9 @@ static int _ecc_make_key_ex(WC_RNG* rng, int keysize, ecc_key* key,
         if (err == MP_OKAY) {
             err = ecc_make_pub_ex(key, curve, NULL, rng);
         }
-
+        else {
+            WOLFSSL_MSG("wc_ecc_gen_k failed");
+        }
         if (err == MP_OKAY
         #ifdef WOLFSSL_ASYNC_CRYPT
             || err == WC_PENDING_E
@@ -5837,6 +5842,7 @@ static int _ecc_make_key_ex(WC_RNG* rng, int keysize, ecc_key* key,
         }
         else {
             /* cleanup these on failure case only */
+            WOLFSSL_MSG("ecc_make_pub_ex failed");
             mp_forcezero(key->k);
         }
 
