@@ -1,7 +1,8 @@
 ------------------- Memory utilization report -------------------
-Used SPIFLASH: 617KB out of 16MB (3%)
-Used INSTR_RAM: 26KB out of 32KB (82%)
-Used DATA_RAM: 34KB out of 80KB (43%)
+Used SPIFLASH: 617KB out of 16MB (3%) [+184]
+Used INSTR_RAM: 25KB out of 32KB (80%) [-520]
+Used DATA_RAM: 35KB out of 80KB (44%) [+536]
+Used DATA_RAM: 35KB out of 80KB (44%) [+536]
 
 ------------------- Boot log ----------------------
 
@@ -47,26 +48,26 @@ I (545) TLS Client: C memory map io : 0x3ff00000 ~ 0x3ff0ffff : 0x0ffff (65535)
 I (558) TLS Client: * thread_local  : 0x3ffe8000 ~ 0x3ffe8000 : 0x00000 (0)
 I (569) TLS Client: C data          : 0x3ffe8000 ~ 0x3ffe8654 : 0x00654 (1620)
 I (581) TLS Client: * user data ram : 0x3ffe8000 ~ 0x3fffc000 : 0x14000 (81920)
-I (594) TLS Client: * bss           : 0x3ffe8660 ~ 0x3fff0b30 : 0x084d0 (34000)
+I (594) TLS Client: * bss           : 0x3ffe8660 ~ 0x3fff0d30 : 0x086d0 (34512)
 I (606) TLS Client: * noinit        : 0x3ffe8654 ~ 0x3ffe8654 : 0x00000 (0)
 I (618) TLS Client: C ets system    : 0x3fffc000 ~ 0x40000000 : 0x04000 (16384)
 I (630) TLS Client: * rodata        : 0x4028f19c ~ 0x402aa594 : 0x1b3f8 (111608)
 I (642) TLS Client: C iram1         : 0x40100000 ~ 0x40108000 : 0x08000 (32768)
 I (655) TLS Client: C iramf1        : 0x40108000 ~ 0x4010c000 : 0x04000 (16384)
 I (667) TLS Client: C iramf2        : 0x4010c000 ~ 0x40110000 : 0x04000 (16384)
-I (679) TLS Client: * iram          : 0x40100000 ~ 0x40106988 : 0x06988 (27016)
+I (679) TLS Client: * iram          : 0x40100000 ~ 0x40106780 : 0x06780 (26496)
 I (691) TLS Client: * iram_text     : 0x40100080 ~ 0x40105d8e : 0x05d0e (23822)
-I (704) TLS Client: * iram_bss      : 0x40105d90 ~ 0x40106988 : 0x00bf8 (3064)
+I (704) TLS Client: * iram_bss      : 0x40105d90 ~ 0x40106780 : 0x009f0 (2544)
 I (716) TLS Client: * init          : 0x40100000 ~ 0x40100080 : 0x00080 (128)
 I (728) TLS Client: * text          : 0x40210010 ~ 0x4028f19a : 0x7f18a (520586)
 I (740) TLS Client: * rtc data      : 0x60001200 ~ 0x60001200 : 0x00000 (0)
 I (752) TLS Client: -----------------------------------------------------
-I (764) TLS Client: Variable [sample_stack_var] found at 0x3fff18e0 in * user data ram
-I (777) TLS Client: Variable [sample_heap_var] found at 0x401071e8 in C iram1
+I (764) TLS Client: Variable [sample_stack_var] found at 0x3fff1ae0 in * user data ram
+I (777) TLS Client: Variable [sample_heap_var] found at 0x40106fe0 in C iram1
 I (790) TLS Client: ESP_TASK_MAIN_STACK: 3584
 I (798) TLS Client: TASK_EXTRA_STACK_SIZE: 0
 I (805) TLS Client: CONFIG_ESP_MAIN_TASK_STACK_SIZE = 3584 bytes (896 words)
-I (817) TLS Client: Variable [stack_start] found at 0x3fff1900 in * user data ram
+I (817) TLS Client: Variable [stack_start] found at 0x3fff1b00 in * user data ram
 I (830) TLS Client: Stack Start HWM: 2728 bytes
 I (838) time_helper: Setting the time. Startup time:
 I (849) time_helper: The current date/time is: Wed Dec 31 16:00:00 1969
@@ -82,268 +83,269 @@ I (925) TLS Client: ESP_WIFI_MODE_STA
 I (933) system_api: Base MAC address is not set, read default base MAC address from EFUSE
 I (946) system_api: Base MAC address is not set, read default base MAC address from EFUSE
 phy_version: 1163.0, 665d56c, Jun 24 2020, 10:00:08, RTOS new
-I (1015) phy_init: phy ver: 1163_0
-I (1035) wifi_connect: wifi_init_sta finished. Connecting...
-I (1039) wifi_connect: this heap = 47532
-I (1159) wifi:state: 0 -> 2 (b0)
-I (1201) wifi:state: 2 -> 3 (0)
-I (1209) wifi:state: 3 -> 5 (10)
-I (1457) wifi:connected with badger, aid = 12, channel 6, HT20, bssid = 6e:82:17:25:8c:4a
-I (2940) tcpip_adapter: sta ip: 192.168.1.34, mask: 255.255.255.0, gw: 192.168.1.1
-I (2943) wifi_connect: got ip:192.168.1.34
-I (2946) wifi_connect: xEventGroupWaitBits finished.
-I (2954) wifi_connect: connected to ap SSID:badger
-I (2964) time_helper: The current date/time is: Mon Feb  5 13:01:07 2024
-I (2974) time_helper: Successfuly set time via NTP servers.
-I (2983) TLS Client: Initial Stack Used (before wolfSSL Server): 1448 bytes
-I (2995) TLS Client: Starting TLS Client task ...
+I (1017) phy_init: phy ver: 1163_0
+I (1038) wifi_connect: wifi_init_sta finished. Connecting...
+I (1039) wifi_connect: this heap = 47540
+I (1161) wifi:state: 0 -> 2 (b0)
+I (1207) wifi:state: 2 -> 3 (0)
+I (1222) wifi:state: 3 -> 5 (10)
+I (1389) wifi:connected with wc_test, aid = 12, channel 6, HT20, bssid = 6e:82:27:25:7c:4a
+I (2440) tcpip_adapter: sta ip: 192.168.1.34, mask: 255.255.255.0, gw: 192.168.1.1
+I (2443) wifi_connect: got ip:192.168.1.34
+I (2446) wifi_connect: xEventGroupWaitBits finished.
+I (2454) wifi_connect: connected to ap SSID:wc_test
+I (2464) time_helper: The current date/time is: Mon Feb  5 13:01:06 2024
+I (2474) time_helper: Successfuly set time via NTP servers.
+I (2484) TLS Client: Initial Stack Used (before wolfSSL Server): 1448 bytes
+I (2496) TLS Client: Starting TLS Client task ...
 
-I (3004) TLS Client: main tls_smp_client_init heap @ 0x3fff190c = 46964
-I (3015) tls_client: tls_smp_client_init esp_get_free_heap_size@ 0x3ffea888 = 46964
-I (3028) tls_client: xTaskCreate create tls_smp_client_task stack depth: 15360
-I (3040) tls_client: tls_smp_client_task buff start: 0x3fffca70
-I (3050) tls_client: tls_smp_client_task sndMsg start: 0x3fffcb70
-I (3061) tls_client: Minimum free stack space: 13896 words
+I (2504) TLS Client: main tls_smp_client_init heap @ 0x3fff1b0c = 46972
+I (2515) tls_client: tls_smp_client_init esp_get_free_heap_size@ 0x3ffeaa88 = 46972
+I (2528) tls_client: xTaskCreate create tls_smp_client_task stack depth: 15360
+I (2540) tls_client: tls_smp_client_task buff start: 0x3fffcc70
+I (2550) tls_client: tls_smp_client_task sndMsg start: 0x3fffcd70
+I (2561) tls_client: Minimum free stack space: 13896 words
 
-I (3070) wolfssl: wolfSSL Entering tls_client_example
-I (3079) tls_client: wolfSSL_Mutex m size = 400; start: 0x3fffcba0
-I (3089) tls_client: m[0] 0x3fffcba0
-I (3096) tls_client: m2[99] 0x3fffcd2c
-I (3103) wolfssl: Debug ON
-I (3108) tls_client: this heap = 31476
-I (3115) wolfssl: wolfSSL Entering wolfSSL_Init
-I (3123) wolfssl: wolfSSL Entering wolfCrypt_Init
-I (3131) wc_port: wc_InitMutex for 0x3fff0740; heap = 31476
-W (3141) wc_port: xSemaphoreCreateMutex success: 0x3fff0740
-I (3150) wc_port: wc_InitMutex success heap = 31392
-I (3159) wc_port: wc_InitMutex for 0x3ffeefa0; heap = 31392
-W (3168) wc_port: xSemaphoreCreateMutex success: 0x3ffeefa0
-I (3178) wc_port: wc_InitMutex success heap = 31308
-I (3187) wc_port: wc_InitMutex for 0x3ffeaad8; heap = 31308
-W (3196) wc_port: xSemaphoreCreateMutex success: 0x3ffeaad8
-I (3206) wc_port: wc_InitMutex success heap = 31224
-I (3214) wc_port: wc_InitMutex for 0x3fff0734; heap = 31224
-W (3224) wc_port: xSemaphoreCreateMutex success: 0x3fff0734
-I (3234) wc_port: wc_InitMutex success heap = 31140
-I (3243) tls_client: get target IP address
-I (3250) wolfssl: wolfSSL Entering TLSv1_2_client_method_ex
-I (3259) wolfssl: wolfSSL Entering wolfSSL_CTX_new_ex
-I (3268) wc_port: wc_InitMutex for 0x3fffd128; heap = 30280
-W (3278) wc_port: xSemaphoreCreateMutex success: 0x3fffd128
-I (3287) wc_port: wc_InitMutex success heap = 30196
-I (3296) wolfssl: wolfSSL Entering wolfSSL_CertManagerNew
-I (3305) SSL_certman: heap param is null
-I (3312) SSL_certman: DYNAMIC_TYPE_CERT_MANAGER Allocating = 104 bytes
-I (3323) wc_port: wc_InitMutex for 0x3fffd2d8; heap = 30084
-W (3333) wc_port: xSemaphoreCreateMutex success: 0x3fffd2d8
-I (3342) wc_port: wc_InitMutex success heap = 30000
-I (3351) wc_port: wc_InitMutex for 0x3fffd2e4; heap = 30000
-W (3361) wc_port: xSemaphoreCreateMutex success: 0x3fffd2e4
-I (3370) wc_port: wc_InitMutex success heap = 29916
-I (3379) wolfssl: wolfSSL Leaving wolfSSL_CTX_new_ex, return 0
-W (3389) tls_client: doPeerCheck != 0
-I (3395) wolfssl: Loading... client cert
-I (3402) tls_client: this heap = 29916
-I (3409) wolfssl: wolfSSL Entering wolfSSL_CTX_use_certificate_chain_buffer_format
-I (3422) wolfssl: Checking cert signature type
-I (3430) wolfssl: wolfSSL Entering GetExplicitVersion
-I (3439) wolfssl: wolfSSL Entering wc_GetSerialNumber
-I (3447) wolfssl: Got Cert Header
-I (3454) wolfssl: wolfSSL Entering GetObjectId
-I (3462) wolfssl: Got Algo ID
-I (3467) wolfssl: Getting Name
-I (3473) wolfssl: Getting Cert Name
-I (3482) wolfssl: Getting Name
-I (3485) wolfssl: Getting Cert Name
-I (3492) wolfssl: Got Subject Name
-I (3498) wolfssl: wolfSSL Entering GetAlgoId
-I (3505) wolfssl: wolfSSL Entering GetObjectId
-I (3513) wolfssl: Got Key
-I (3518) wolfssl: Not ECDSA cert signature
-I (3526) wolfssl: Loading...CA Cert
-I (3532) tls_client: this heap = 28572
-I (3539) wolfssl: wolfSSL Entering wolfSSL_CTX_load_verify_buffer_ex
-I (3550) wolfssl: Adding a CA
-I (3555) wolfssl: wolfSSL Entering GetExplicitVersion
-I (3564) wolfssl: wolfSSL Entering wc_GetSerialNumber
-I (3573) wolfssl: Got Cert Header
-I (3579) wolfssl: wolfSSL Entering GetObjectId
-I (3587) wolfssl: Got Algo ID
-I (3592) wolfssl: Getting Name
-I (3598) wolfssl: Getting Cert Name
-I (3606) wolfssl: Getting Name
-I (3610) wolfssl: Getting Cert Name
-I (3618) wolfssl: Got Subject Name
-I (3623) wolfssl: wolfSSL Entering GetAlgoId
-I (3631) wolfssl: wolfSSL Entering GetObjectId
-I (3639) wolfssl: Got Key
-I (3643) wolfssl: Parsed Past Key
-I (3650) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (3659) wolfssl: wolfSSL Entering GetObjectId
-I (3667) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (3675) wolfssl: wolfSSL Entering GetObjectId
-I (3683) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (3692) wolfssl: wolfSSL Entering GetObjectId
-I (3699) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
-I (3709) wolfssl: wolfSSL Entering GetObjectId
-I (3717) wolfssl: wolfSSL Entering DecodeAltNames
-I (3725) wolfssl:       Unsupported name type, skipping
-I (3733) wolfssl: wolfSSL Entering GetObjectId
-I (3741) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (3750) wolfssl: wolfSSL Entering GetObjectId
-I (3758) wolfssl: wolfSSL Entering GetObjectId
-I (3766) wolfssl: wolfSSL Entering GetObjectId
-I (3773) wolfssl:       Parsed new CA
-I (3780) wolfssl:       Freeing Parsed CA
-I (3786) wolfssl:       Freeing der CA
-I (3792) wolfssl:               OK Freeing der CA
-I (3799) wolfssl: wolfSSL Leaving AddCA, return 0
-I (3807) wolfssl: wolfSSL Leaving wolfSSL_CTX_load_verify_buffer_ex, return 1
-I (3819) wolfssl: Loading...Private Key
-I (3826) tls_client: this heap = 28132
-I (3833) wolfssl: wolfSSL Entering wolfSSL_CTX_use_PrivateKey_buffer
-I (3844) wolfssl: wolfSSL Entering GetAlgoId
-I (3852) wolfssl: wolfSSL Entering GetAlgoId
-I (3859) wolfssl: wolfSSL Leaving wolfSSL_CTX_use_PrivateKey_buffer, return 1
-I (3871) wolfssl: wolfSSL Entering wolfSSL_CTX_set_verify
-I (3880) wolfssl: inet_pton
-I (3886) tls_client: Connecting to server....192.168.1.37(port:11111)
-I (3897) wolfssl: ????????????????????????????????????????????????????????????????????????????????????????????????????
+I (2570) wolfssl: wolfSSL Entering tls_client_example
+I (2579) tls_client: wolfSSL_Mutex m size = 400; start: 0x3fffcda0
+I (2590) tls_client: m[0] 0x3fffcda0
+I (2597) tls_client: m2[99] 0x3fffcf2c
+I (2603) wolfssl: Debug ON
+I (2608) tls_client: this heap = 31484
+I (2615) wolfssl: wolfSSL Entering wolfSSL_Init
+I (2623) wolfssl: wolfSSL Entering wolfCrypt_Init
+I (2631) wc_port: wc_InitMutex for 0x3fff0940; heap = 31484
+W (2641) wc_port: xSemaphoreCreateMutex success: 0x3fff0940
+I (2651) wc_port: wc_InitMutex success heap = 31400
+I (2659) wc_port: wc_InitMutex for 0x3ffef1a0; heap = 31400
+W (2669) wc_port: xSemaphoreCreateMutex success: 0x3ffef1a0
+I (2678) wc_port: wc_InitMutex success heap = 31316
+I (2687) wc_port: wc_InitMutex for 0x3ffeacd8; heap = 31316
+W (2697) wc_port: xSemaphoreCreateMutex success: 0x3ffeacd8
+I (2706) wc_port: wc_InitMutex success heap = 31232
+I (2715) wc_port: wc_InitMutex for 0x3fff0934; heap = 31232
+W (2724) wc_port: xSemaphoreCreateMutex success: 0x3fff0934
+I (2734) wc_port: wc_InitMutex success heap = 31148
+I (2744) tls_client: get target IP address
+I (2751) wolfssl: wolfSSL Entering TLSv1_2_client_method_ex
+I (2759) wolfssl: wolfSSL Entering wolfSSL_CTX_new_ex
+I (2768) wc_port: wc_InitMutex for 0x3fffd328; heap = 30288
+W (2778) wc_port: xSemaphoreCreateMutex success: 0x3fffd328
+I (2787) wc_port: wc_InitMutex success heap = 30204
+I (2796) wolfssl: wolfSSL Entering wolfSSL_CertManagerNew
+I (2806) SSL_certman: heap param is null
+I (2812) SSL_certman: DYNAMIC_TYPE_CERT_MANAGER Allocating = 104 bytes
+I (2823) wc_port: wc_InitMutex for 0x3fffd4d8; heap = 30092
+W (2833) wc_port: xSemaphoreCreateMutex success: 0x3fffd4d8
+I (2843) wc_port: wc_InitMutex success heap = 30008
+I (2851) wc_port: wc_InitMutex for 0x3fffd4e4; heap = 30008
+W (2861) wc_port: xSemaphoreCreateMutex success: 0x3fffd4e4
+I (2870) wc_port: wc_InitMutex success heap = 29924
+I (2879) wolfssl: wolfSSL Leaving wolfSSL_CTX_new_ex, return 0
+W (2889) tls_client: doPeerCheck != 0
+I (2897) wolfssl: Loading... client cert
+I (2903) tls_client: this heap = 29924
+I (2910) wolfssl: wolfSSL Entering wolfSSL_CTX_use_certificate_chain_buffer_format
+I (2923) wolfssl: Checking cert signature type
+I (2930) wolfssl: wolfSSL Entering GetExplicitVersion
+I (2940) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (2948) wolfssl: Got Cert Header
+I (2954) wolfssl: wolfSSL Entering GetObjectId
+I (2962) wolfssl: Got Algo ID
+I (2967) wolfssl: Getting Name
+I (2973) wolfssl: Getting Cert Name
+I (2982) wolfssl: Getting Name
+I (2985) wolfssl: Getting Cert Name
+I (2993) wolfssl: Got Subject Name
+I (2999) wolfssl: wolfSSL Entering GetAlgoId
+I (3006) wolfssl: wolfSSL Entering GetObjectId
+I (3013) wolfssl: Got Key
+I (3018) wolfssl: Not ECDSA cert signature
+I (3026) wolfssl: Loading...CA Cert
+I (3032) tls_client: this heap = 28580
+I (3039) wolfssl: wolfSSL Entering wolfSSL_CTX_load_verify_buffer_ex
+I (3050) wolfssl: Adding a CA
+I (3056) wolfssl: wolfSSL Entering GetExplicitVersion
+I (3064) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (3073) wolfssl: Got Cert Header
+I (3079) wolfssl: wolfSSL Entering GetObjectId
+I (3087) wolfssl: Got Algo ID
+I (3093) wolfssl: Getting Name
+I (3098) wolfssl: Getting Cert Name
+I (3108) wolfssl: Getting Name
+I (3110) wolfssl: Getting Cert Name
+I (3118) wolfssl: Got Subject Name
+I (3123) wolfssl: wolfSSL Entering GetAlgoId
+I (3131) wolfssl: wolfSSL Entering GetObjectId
+I (3139) wolfssl: Got Key
+I (3144) wolfssl: Parsed Past Key
+I (3150) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (3159) wolfssl: wolfSSL Entering GetObjectId
+I (3167) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (3175) wolfssl: wolfSSL Entering GetObjectId
+I (3183) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (3192) wolfssl: wolfSSL Entering GetObjectId
+I (3200) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
+I (3210) wolfssl: wolfSSL Entering GetObjectId
+I (3217) wolfssl: wolfSSL Entering DecodeAltNames
+I (3225) wolfssl:       Unsupported name type, skipping
+I (3233) wolfssl: wolfSSL Entering GetObjectId
+I (3241) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (3250) wolfssl: wolfSSL Entering GetObjectId
+I (3258) wolfssl: wolfSSL Entering GetObjectId
+I (3266) wolfssl: wolfSSL Entering GetObjectId
+I (3274) wolfssl:       Parsed new CA
+I (3280) wolfssl:       Freeing Parsed CA
+I (3286) wolfssl:       Freeing der CA
+I (3292) wolfssl:               OK Freeing der CA
+I (3299) wolfssl: wolfSSL Leaving AddCA, return 0
+I (3308) wolfssl: wolfSSL Leaving wolfSSL_CTX_load_verify_buffer_ex, return 1
+I (3319) wolfssl: Loading...Private Key
+I (3326) tls_client: this heap = 28140
+I (3333) wolfssl: wolfSSL Entering wolfSSL_CTX_use_PrivateKey_buffer
+I (3344) wolfssl: wolfSSL Entering GetAlgoId
+I (3352) wolfssl: wolfSSL Entering GetAlgoId
+I (3359) wolfssl: wolfSSL Leaving wolfSSL_CTX_use_PrivateKey_buffer, return 1
+I (3371) wolfssl: wolfSSL Entering wolfSSL_CTX_set_verify
+I (3380) wolfssl: inet_pton
+I (3386) tls_client: Connecting to server....192.168.1.37(port:11111)
+I (3397) wolfssl: ????????????????????????????????????????????????????????????????????????????????????????????????????
 ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 ??????????????????????????????????????GET /index.html HTTP/1.0
 
 
-I (3939) tls_client: ?????????????????????????????????????????????????????????????????????????????????????????????????
+I (3439) tls_client: ?????????????????????????????????????????????????????????????????????????????????????????????????
 ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 ?????????????????????????????????????????GET /index.html HTTP/1.0
 
 
 
-I (4211) tls_client: this heap = 30600
-I (4213) wolfssl: Create a WOLFSSL object
-I (4214) wolfssl: wolfSSL Entering wolfSSL_new
-I (4218) ssl: xmalloc success... init
-I (4224) int: InitCiphers...
-I (4230) int: InitCipherSpecs...
-I (4236) wolfssl: wolfSSL Entering ReinitSSL
-E (4243) int: wc_InitRng_ex...
-I (4254) wolfssl: wolfSSL Entering SetSSL_CTX
-I (4257) wolfssl: wolfSSL Entering wolfSSL_NewSession
-I (4266) wc_port: wc_InitMutex for 0x3fff147c; heap = 28172
-W (4275) wc_port: xSemaphoreCreateMutex success: 0x3fff147c
-I (4285) wc_port: wc_InitMutex success heap = 28088
-I (4293) ssl: breadcrumb ret = 0
-I (4301) ssl: InitSSL done = 0
-I (4305) ssl: InitSSL ret = 0
-I (4311) ssl: init success ret = 0
-I (4317) wolfssl: wolfSSL Leaving wolfSSL_new, return 0
-I (4326) tls_client:
+I (3528) tls_client: this heap = 30472
+I (3529) wolfssl: Create a WOLFSSL object
+I (3531) wolfssl: wolfSSL Entering wolfSSL_new
+I (3534) ssl: xmalloc success... init
+I (3541) int: InitCiphers...
+I (3546) int: InitCipherSpecs...
+I (3552) wolfssl: wolfSSL Entering ReinitSSL
+E (3560) int: wc_InitRng_ex...
+I (3571) wolfssl: wolfSSL Entering SetSSL_CTX
+I (3574) wolfssl: wolfSSL Entering wolfSSL_NewSession
+I (3582) wc_port: wc_InitMutex for 0x3fff166c; heap = 28180
+W (3592) wc_port: xSemaphoreCreateMutex success: 0x3fff166c
+I (3601) wc_port: wc_InitMutex success heap = 28096
+I (3610) ssl: breadcrumb ret = 0
+I (3616) ssl: InitSSL done = 0
+I (3622) ssl: InitSSL ret = 0
+I (3627) ssl: init success ret = 0
+I (3634) wolfssl: wolfSSL Leaving wolfSSL_new, return 0
+I (3643) tls_client:
 Created WOLFSSL object:
-I (4334) wolfssl: wolfSSL Entering wolfSSL_set_fd
-I (4342) wolfssl: wolfSSL Entering wolfSSL_set_read_fd
-I (4351) wolfssl: wolfSSL Leaving wolfSSL_set_read_fd, return 1
-I (4361) wolfssl: wolfSSL Entering wolfSSL_set_write_fd
-I (4370) wolfssl: wolfSSL Leaving wolfSSL_set_write_fd, return 1
-I (4381) wolfssl: Connect to wolfSSL on the server side
-I (4390) wolfssl: wolfSSL Entering wolfSSL_connect
-I (4398) wolfssl: wolfSSL Entering ReinitSSL
-I (4406) wolfssl: wolfSSL Entering SendClientHello
-I (4414) wolfssl: Adding signature algorithms extension
-I (4423) wolfssl: growing output buffer
-I (4431) wolfssl: Signature Algorithms extension to write
-I (4440) wolfssl: Point Formats extension to write
-I (4448) wolfssl: Supported Groups extension to write
-I (4465) wolfssl: Shrinking output buffer
-I (4467) wolfssl: wolfSSL Leaving SendClientHello, return 0
-I (4474) wolfssl: ssl.c connect state: CLIENT_HELLO_SENT
-I (4483) wolfssl: ssl.c ssl->options.serverState < neededState
-I (4620) wolfssl: growing input buffer
-I (4622) wolfssl: received record layer msg
-I (4623) wolfssl: got HANDSHAKE
-I (4624) wolfssl: wolfSSL Entering DoHandShakeMsg
-I (4633) wolfssl: wolfSSL Entering EarlySanityCheckMsgReceived
-I (4643) wolfssl: wolfSSL Leaving EarlySanityCheckMsgReceived, return 0
-I (4654) wolfssl: wolfSSL Entering DoHandShakeMsgType
-I (4663) wolfssl: Sha256 Update process fixed SW
-I (4671) wolfssl: processing server hello
-I (4678) wolfssl: wolfSSL Entering DoServerHello
-I (4686) wolfssl: Point Formats extension received
-I (4695) wolfssl: wolfSSL Entering wolfSSL_get_options
-I (4703) wolfssl: wolfSSL Entering VerifyClientSuite
-I (4713) wolfssl: wolfSSL Leaving DoServerHello, return 0
-I (4721) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
-I (4732) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
-I (4741) wolfssl: Shrinking input buffer
-I (4750) wolfssl: growing input buffer
-I (4756) wolfssl: received record layer msg
-I (4763) wolfssl: got HANDSHAKE
-I (4769) wolfssl: wolfSSL Entering DoHandShakeMsg
-I (4777) wolfssl: wolfSSL Entering EarlySanityCheckMsgReceived
-I (4787) wolfssl: wolfSSL Leaving EarlySanityCheckMsgReceived, return 0
-I (4798) wolfssl: wolfSSL Entering DoHandShakeMsgType
-I (4808) wolfssl: Sha256 Update process fixed SW
-I (4816) wolfssl: processing certificate
-I (4822) wolfssl: wolfSSL Entering DoCertificate
-I (4830) wolfssl: wolfSSL Entering ProcessPeerCerts
-I (4839) wolfssl: Loading peer's cert chain
-I (4846) wolfssl:       Put another cert into chain
-I (4854) wolfssl: Verifying Peer's cert
-I (4861) wolfssl: wolfSSL Entering GetExplicitVersion
-I (4870) wolfssl: wolfSSL Entering wc_GetSerialNumber
-I (4879) wolfssl: Got Cert Header
-I (4885) wolfssl: wolfSSL Entering GetObjectId
-I (4893) wolfssl: Got Algo ID
-I (4898) wolfssl: Getting Name
-I (4904) wolfssl: Getting Cert Name
-I (4912) wolfssl: Getting Name
-I (4917) wolfssl: Getting Cert Name
-I (4924) wolfssl: Got Subject Name
-I (4929) wolfssl: wolfSSL Entering GetAlgoId
-I (4939) wolfssl: wolfSSL Entering GetObjectId
-I (4945) wolfssl: Got Key
-I (4949) wolfssl: Parsed Past Key
-I (4956) wolfssl: wolfSSL Entering DecodeCertExtensions
-I (4965) wolfssl: wolfSSL Entering GetObjectId
-I (4973) wolfssl: wolfSSL Entering DecodeSubjKeyId
-I (4981) wolfssl: wolfSSL Entering GetObjectId
-I (4989) wolfssl: wolfSSL Entering DecodeAuthKeyId
-I (4997) wolfssl: wolfSSL Entering GetObjectId
-I (5005) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
-I (5015) wolfssl: wolfSSL Entering GetObjectId
-I (5023) wolfssl: wolfSSL Entering DecodeAltNames
-I (5031) wolfssl:       Unsupported name type, skipping
-I (5039) wolfssl: wolfSSL Entering GetObjectId
-I (5047) wolfssl: wolfSSL Entering DecodeExtKeyUsage
-I (5056) wolfssl: wolfSSL Entering GetObjectId
-I (5064) wolfssl: wolfSSL Entering GetObjectId
-I (5072) wolfssl: wolfSSL Entering GetObjectId
-I (5079) wolfssl: CA found
-I (5085) wolfssl: wolfSSL Entering ConfirmSignature
-I (5094) wolfssl: wolfSSL Leaving ConfirmSignature, return -125
-I (5103) wolfssl: Confirm signature failed
-I (5110) wolfssl: Got Peer cert ASN_PARSE_E, BUFFER_E, MEMORY_E, BAD_FUNC_ARG
-I (5123) wolfssl: wolfSSL Leaving ProcessPeerCerts, return -125
-I (5133) wolfssl: wolfSSL Leaving DoCertificate, return -125
-I (5143) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return -125
-I (5153) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return -125
-I (5163) wolfssl: wolfSSL error occurred, error = -125
-I (5172) wolfssl: wolfSSL error occurred, error = -125
-E (5181) tls_client: ERROR: failed to connect to wolfSSL ret = -1
+I (3651) wolfssl: wolfSSL Entering wolfSSL_set_fd
+I (3659) wolfssl: wolfSSL Entering wolfSSL_set_read_fd
+I (3668) wolfssl: wolfSSL Leaving wolfSSL_set_read_fd, return 1
+I (3678) wolfssl: wolfSSL Entering wolfSSL_set_write_fd
+I (3687) wolfssl: wolfSSL Leaving wolfSSL_set_write_fd, return 1
+I (3697) wolfssl: Connect to wolfSSL on the server side
+I (3706) wolfssl: wolfSSL Entering wolfSSL_connect
+I (3716) wolfssl: wolfSSL Entering ReinitSSL
+I (3723) wolfssl: wolfSSL Entering SendClientHello
+I (3731) wolfssl: Adding signature algorithms extension
+I (3740) wolfssl: growing output buffer
+I (3748) wolfssl: Signature Algorithms extension to write
+I (3756) wolfssl: Point Formats extension to write
+I (3764) wolfssl: Supported Groups extension to write
+I (3778) wolfssl: Shrinking output buffer
+I (3781) wolfssl: wolfSSL Leaving SendClientHello, return 0
+I (3790) wolfssl: ssl.c connect state: CLIENT_HELLO_SENT
+I (3799) wolfssl: ssl.c ssl->options.serverState < neededState
+I (3944) wolfssl: growing input buffer
+I (3946) wolfssl: received record layer msg
+I (3947) wolfssl: got HANDSHAKE
+I (3949) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (3957) wolfssl: wolfSSL Entering EarlySanityCheckMsgReceived
+I (3967) wolfssl: wolfSSL Leaving EarlySanityCheckMsgReceived, return 0
+I (3978) wolfssl: wolfSSL Entering DoHandShakeMsgType
+I (3987) wolfssl: Sha256 Update process fixed SW
+I (3995) wolfssl: processing server hello
+I (4002) wolfssl: wolfSSL Entering DoServerHello
+I (4010) wolfssl: Point Formats extension received
+I (4019) wolfssl: wolfSSL Entering wolfSSL_get_options
+I (4030) wolfssl: wolfSSL Entering VerifyClientSuite
+I (4037) wolfssl: wolfSSL Leaving DoServerHello, return 0
+E (4046) wifi: AES PN: 0000000000000009 <= 000000000000000a
+I (4057) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return 0
+I (4066) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return 0
+I (4075) wolfssl: Shrinking input buffer
+I (4084) wolfssl: growing input buffer
+I (4090) wolfssl: received record layer msg
+I (4097) wolfssl: got HANDSHAKE
+I (4103) wolfssl: wolfSSL Entering DoHandShakeMsg
+I (4111) wolfssl: wolfSSL Entering EarlySanityCheckMsgReceived
+I (4121) wolfssl: wolfSSL Leaving EarlySanityCheckMsgReceived, return 0
+I (4132) wolfssl: wolfSSL Entering DoHandShakeMsgType
+I (4141) wolfssl: Sha256 Update process fixed SW
+I (4150) wolfssl: processing certificate
+I (4156) wolfssl: wolfSSL Entering DoCertificate
+I (4164) wolfssl: wolfSSL Entering ProcessPeerCerts
+I (4173) wolfssl: Loading peer's cert chain
+I (4180) wolfssl:       Put another cert into chain
+I (4188) wolfssl: Verifying Peer's cert
+I (4195) wolfssl: wolfSSL Entering GetExplicitVersion
+I (4204) wolfssl: wolfSSL Entering wc_GetSerialNumber
+I (4212) wolfssl: Got Cert Header
+I (4219) wolfssl: wolfSSL Entering GetObjectId
+I (4228) wolfssl: Got Algo ID
+I (4232) wolfssl: Getting Name
+I (4239) wolfssl: Getting Cert Name
+I (4247) wolfssl: Getting Name
+I (4251) wolfssl: Getting Cert Name
+I (4258) wolfssl: Got Subject Name
+I (4264) wolfssl: wolfSSL Entering GetAlgoId
+I (4271) wolfssl: wolfSSL Entering GetObjectId
+I (4279) wolfssl: Got Key
+I (4284) wolfssl: Parsed Past Key
+I (4290) wolfssl: wolfSSL Entering DecodeCertExtensions
+I (4300) wolfssl: wolfSSL Entering GetObjectId
+I (4308) wolfssl: wolfSSL Entering DecodeSubjKeyId
+I (4316) wolfssl: wolfSSL Entering GetObjectId
+I (4324) wolfssl: wolfSSL Entering DecodeAuthKeyId
+I (4332) wolfssl: wolfSSL Entering GetObjectId
+I (4340) wolfssl: wolfSSL Entering DecodeBasicCaConstraint
+I (4349) wolfssl: wolfSSL Entering GetObjectId
+I (4357) wolfssl: wolfSSL Entering DecodeAltNames
+I (4366) wolfssl:       Unsupported name type, skipping
+I (4374) wolfssl: wolfSSL Entering GetObjectId
+I (4383) wolfssl: wolfSSL Entering DecodeExtKeyUsage
+I (4391) wolfssl: wolfSSL Entering GetObjectId
+I (4398) wolfssl: wolfSSL Entering GetObjectId
+I (4406) wolfssl: wolfSSL Entering GetObjectId
+I (4414) wolfssl: CA found
+I (4419) wolfssl: wolfSSL Entering ConfirmSignature
+I (4429) wolfssl: wolfSSL Leaving ConfirmSignature, return -125
+I (4439) wolfssl: Confirm signature failed
+I (4445) wolfssl: Got Peer cert ASN_PARSE_E, BUFFER_E, MEMORY_E, BAD_FUNC_ARG
+I (4457) wolfssl: wolfSSL Leaving ProcessPeerCerts, return -125
+I (4468) wolfssl: wolfSSL Leaving DoCertificate, return -125
+I (4477) wolfssl: wolfSSL Leaving DoHandShakeMsgType(), return -125
+I (4488) wolfssl: wolfSSL Leaving DoHandShakeMsg(), return -125
+I (4498) wolfssl: wolfSSL error occurred, error = -125
+I (4507) wolfssl: wolfSSL error occurred, error = -125
+E (4516) tls_client: ERROR: failed to connect to wolfSSL ret = -1
 
-I (5192) wolfssl: wolfSSL Entering wolfSSL_free
-I (5200) wolfssl: Free'ing client ssl
-I (5207) wolfssl: Shrinking input buffer
-I (5214) wolfssl: Signature Algorithms extension to free
-I (5223) wolfssl: Point Formats extension free
-I (5231) wolfssl: Supported Groups extension free
-I (5239) wolfssl: wolfSSL Entering ClientSessionToSession
-I (5248) wolfssl: wolfSSL Entering wolfSSL_FreeSession
-I (5257) wolfssl: wolfSSL_FreeSession full free
-I (5265) wolfssl: CTX ref count not 0 yet, no free
-I (5274) wolfssl: wolfSSL Leaving wolfSSL_free, return 0
-I (5283) wolfssl: wolfSSL Entering wolfSSL_CTX_free
-I (5291) wolfssl: CTX ref count down to 0, doing full free
-I (5301) wolfssl: wolfSSL Entering wolfSSL_CertManagerFree
-I (5311) wolfssl: wolfSSL Leaving wolfSSL_CTX_free, return 0
-I (5320) wolfssl: wolfSSL Entering wolfSSL_Cleanup
-I (5329) wolfssl: wolfSSL Entering wolfCrypt_Cleanup
+I (4527) wolfssl: wolfSSL Entering wolfSSL_free
+I (4536) wolfssl: Free'ing client ssl
+I (4542) wolfssl: Shrinking input buffer
+I (4549) wolfssl: Signature Algorithms extension to free
+I (4558) wolfssl: Point Formats extension free
+I (4566) wolfssl: Supported Groups extension free
+I (4574) wolfssl: wolfSSL Entering ClientSessionToSession
+I (4583) wolfssl: wolfSSL Entering wolfSSL_FreeSession
+I (4592) wolfssl: wolfSSL_FreeSession full free
+I (4600) wolfssl: CTX ref count not 0 yet, no free
+I (4609) wolfssl: wolfSSL Leaving wolfSSL_free, return 0
+I (4618) wolfssl: wolfSSL Entering wolfSSL_CTX_free
+I (4626) wolfssl: CTX ref count down to 0, doing full free
+I (4636) wolfssl: wolfSSL Entering wolfSSL_CertManagerFree
+I (4646) wolfssl: wolfSSL Leaving wolfSSL_CTX_free, return 0
+I (4655) wolfssl: wolfSSL Entering wolfSSL_Cleanup
+I (4664) wolfssl: wolfSSL Entering wolfCrypt_Cleanup
