@@ -487,3 +487,4 @@ debian/control
 # Always include Espressif Makefile
 !**/Espressif/ESP-IDF/**/Makefile
 /IDE/ARDUINO/Arduino_README_prepend.md.tmp
+/IDE/Espressif/ESP-IDF/examples/z save
