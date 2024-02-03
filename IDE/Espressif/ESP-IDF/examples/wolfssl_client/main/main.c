@@ -136,8 +136,10 @@ extern uintptr_t _rtc_bss_start[];
 extern uintptr_t _rtc_bss_end[];
 extern uintptr_t _iram_start[];
 extern uintptr_t _iram_end[];
+#if defined(CONFIG_IDF_TARGET_ESP8266)
 extern uintptr_t _init_start[];
 extern uintptr_t _init_end[];
+#endif
 extern uintptr_t _iram_text_start[];
 extern uintptr_t _iram_text_end[];
 extern uintptr_t _iram_bss_start[];
@@ -223,6 +225,7 @@ int sdk_log_meminfo(enum sdk_memory_segment m, void* start, void* end)
     sdk_memory_segment_start[m] = start;
     sdk_memory_segment_end[m] = end;
     /* For ESP8266 See ./build/[Debug|Release]/esp8266/esp8266.project.ld */
+    /* For ESP32   See ./build/VisualGDB/Debug/esp-idf/esp_system/ld/     */
     if (m == SDK_MEMORY_SEGMENT_COUNT) {
         ESP_LOGI(TAG, "                    Linker Memory Map");
         ESP_LOGI(TAG, "-----------------------------------------------------");
@@ -256,7 +259,9 @@ int sdk_init_meminfo(void) {
     sdk_log_meminfo(iram,          _iram_start,         _iram_end);
     sdk_log_meminfo(iram_text,     _iram_text_start,    _iram_text_end);
     sdk_log_meminfo(iram_bss,      _iram_bss_start,     _iram_bss_end);
+#if defined(CONFIG_IDF_TARGET_ESP8266)
     sdk_log_meminfo(init,          _init_start,         _init_end);
+#endif
     sdk_log_meminfo(text,          _text_start,         _text_end);
     sdk_log_meminfo(rtc_data,      _rtc_data_start,     _rtc_data_end);
     ESP_LOGI(TAG, "-----------------------------------------------------");

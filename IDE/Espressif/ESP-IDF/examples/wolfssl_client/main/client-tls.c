@@ -248,17 +248,19 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     wolfSSL_Debugging_ON();
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
-    wolfSSL_Mutex m[100];
-    wolfSSL_Mutex m2[100];
+    #define MUTEXT_TEST_SIZE 1
+    wolfSSL_Mutex m[MUTEXT_TEST_SIZE];
+    wolfSSL_Mutex m2[MUTEXT_TEST_SIZE];
     ESP_LOGI(TAG, "wolfSSL_Mutex m size = %d; start: %p", (word32)sizeof(m), &m);
     ESP_LOGI(TAG, "m[0] %p", &m[0]);
-    ESP_LOGI(TAG, "m2[99] %p", &m[99]);
+    ESP_LOGI(TAG, "m2[MUTEXT_TEST_SIZE-1] %p", &m[MUTEXT_TEST_SIZE-1]);
 
     int i = 0;
-    for (i = 0; i < 0; i++) {
+    for (i = 0; i < MUTEXT_TEST_SIZE; i++) {
+#if defined(DEBUG_WOLFSSL)
         this_heap = esp_get_free_heap_size();
         ESP_LOGI(TAG, "Creating mutex %d at %p, this heap = %d", i, &m[i], this_heap);
-
+#endif
         m[i] = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
         ret_i = wc_InitMutex(&m[i]);
         if (ret_i != 0) {
@@ -268,7 +270,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             ESP_LOGI(TAG, "m[i] = %p\n", m[i]);
         }
 
+#if defined(DEBUG_WOLFSSL)
        ESP_LOGI(TAG, "Creating mutex2 %d at %p, this heap = %d", i, &m2[i], this_heap);
+#endif
        m2[i] = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
         ret_i = wc_InitMutex(&m2[i]);
         if (ret_i != 0) {
@@ -288,8 +292,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     ShowCiphers(NULL);
 #endif
     /* Initialize wolfSSL */
+#if defined(DEBUG_WOLFSSL)
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "this heap = %d", this_heap);
+#endif
+
     ret_i = wolfSSL_Init();
     if (ret_i != WOLFSSL_SUCCESS) {
         fail_wait();
@@ -315,9 +322,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
 
     /* Create and initialize WOLFSSL_CTX */
-    /* ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());    SSL 3.0 - TLS 1.3. */
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
     /*   options:   */
-    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());    /*    only TLS 1.2 */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());      only TLS 1.2 */
     /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());      only TLS 1.3 */
     /* wolfSSL_CTX_NoTicketTLSv12(); */
     /* wolfSSL_NoTicketTLSv12();     */
@@ -394,9 +401,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     else {
         ESP_LOGW(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... client cert");
+#if defined(DEBUG_WOLFSSL)
         this_heap = esp_get_free_heap_size();
         ESP_LOGI(TAG, "this heap = %d", this_heap);
-
+#endif
         /* load our certificate */
         ret_i = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                          CTX_CLIENT_CERT,
@@ -409,8 +417,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
         /* Load client certificates into WOLFSSL_CTX */
         WOLFSSL_MSG("Loading...CA Cert");
+#if defined(DEBUG_WOLFSSL)
         this_heap = esp_get_free_heap_size();
         ESP_LOGI(TAG, "this heap = %d", this_heap);
+#endif
         ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CA_CERT,
                                          CTX_CA_CERT_SIZE,
@@ -423,8 +433,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         }
 
         WOLFSSL_MSG("Loading...Private Key");
+#if defined(DEBUG_WOLFSSL)
         this_heap = esp_get_free_heap_size();
         ESP_LOGI(TAG, "this heap = %d", this_heap);
+#endif
         ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                          CTX_CLIENT_KEY,
                                          CTX_CLIENT_KEY_SIZE,
@@ -464,6 +476,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             TLS_SMP_TARGET_HOST,
             TLS_SMP_DEFAULT_PORT);
     WOLFSSL_MSG(buff);
+    printf("%s\n", buff);
     ESP_LOGI(TAG, "%s\n", buff);
 
     if ((ret_i = connect(sockfd,
@@ -472,9 +485,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
     }
 
+#if defined(DEBUG_WOLFSSL)
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "this heap = %d", this_heap);
-
+#endif
     WOLFSSL_MSG("Create a WOLFSSL object");
     /* Create a WOLFSSL object */
     if ((ssl = wolfSSL_new(ctx)) == NULL) {
@@ -530,6 +544,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             buff[len] = '\0';
         }
         else {
+            sprintf(buff, "message from esp32 tls client\n");
             ESP_LOGI(TAG, "message from esp32 tls client: %s\n", buff);
             len = strnlen(buff, sizeof(buff));
         }
@@ -546,6 +561,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
         /* Print to stdout any data the server sends */
         ESP_LOGI(TAG, "Server: ");
+        printf("%s\n", buff);
         ESP_LOGI(TAG, "%s\n", buff);
         }
     else {
@@ -578,8 +594,11 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
+
+#if defined(DEBUG_WOLFSSL)
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "tls_smp_client_init esp_get_free_heap_size@ %p = %d", &this_heap, this_heap);
+#endif
     ESP_LOGI(TAG, "xTaskCreate create tls_smp_client_task stack depth: %d",
                    TLS_SMP_CLIENT_TASK_BYTES);
 // sdk_system_print_meminfo

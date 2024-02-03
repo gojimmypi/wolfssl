@@ -62,7 +62,7 @@
     #else
    //     #warning "did not detect environment. using ~/my_private_config.h"
         #include "/workspace/my_private_config.h"
-	#endif
+    #endif
 #else
 
     /*
@@ -83,7 +83,7 @@
     #endif
 
     #if defined(CONFIG_ESP_WIFI_PASSWORD)
-        /* tyically from ESP32 with ESP-IDF v4 ot v5 */
+        /* tyically from ESP32 with ESP-IDF v4 or v5 */
         #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
     #elif defined(CONFIG_EXAMPLE_WIFI_SSID)
         /* tyically from ESP8266 rtos-sdk/v3.4 */

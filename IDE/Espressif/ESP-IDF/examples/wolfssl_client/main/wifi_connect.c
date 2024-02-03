@@ -28,7 +28,6 @@
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include "user_settings.h"
 #include <wolfssl/version.h>
 #include <wolfssl/wolfcrypt/types.h>
 #ifndef WOLFSSL_ESPIDF

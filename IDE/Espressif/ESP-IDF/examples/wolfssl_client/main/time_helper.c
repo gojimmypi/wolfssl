@@ -322,7 +322,7 @@ int set_time_wait_for_ntp(void)
 #endif
 
     if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Successfuly set time via NTP servers.");
+        ESP_LOGI(TAG, "Successfully set time via NTP servers.");
         }
     else {
         ESP_LOGW(TAG, "Warning: Failed to set time with NTP: "

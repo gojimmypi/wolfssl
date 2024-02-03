@@ -19,18 +19,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* This is a sample Arduino user_settings.h for wolfSSL */
+/* This user_settings.h is for Espressif ESP-IDF */
+#include <sdkconfig.h>
 
 #define NO_FILESYSTEM
 #define USE_CERT_BUFFERS_2048
 
+#undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+
+/*
+ * choose ONE of these Espressif chips to define:
+ *
+ * WOLFSSL_ESP32
+ * WOLFSSL_ESPWROOM32SE
+ * WOLFSSL_ESP8266
+ */
+#undef WOLFSSL_ESPWROOM32SE
+#undef WOLFSSL_ESP8266
+#undef WOLFSSL_ESP32
+
+#define WOLFSSL_ESP32
 #define TEST_SET7
 #ifdef TEST_SET7
     #define WOLFSSL_SMALL_STACK
-    #define WOLFSSL_SMALL_STACK_CACHE
-    #define GCM_SMALL
+ //   #define WOLFSSL_SMALL_STACK_CACHE /* causes SHA error */
+ //   #define GCM_SMALL /* causes server error */
 
     #define HAVE_ECC
     // #define USE_CERT_BUFFERS_1024
@@ -244,7 +259,7 @@
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
 /* USE_FAST_MATH is default */
-// #define USE_FAST_MATH
+#define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
 //#undef USE_FAST_MATH
@@ -254,12 +269,12 @@
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
 // #define USE_INTEGER_HEAP_MATH
-#define SP_MATH
-#define WOLFSSL_SP_SMALL
-#define WOLFSSL_HAVE_SP_RSA
-#define WOLFSSL_SP_MATH
-#define SP_WORD_SIZE 32
-#define WOLFSSL_SP_MATH_ALL
+//#define SP_MATH
+//#define WOLFSSL_SP_SMALL
+//#define WOLFSSL_HAVE_SP_RSA
+//#define WOLFSSL_SP_MATH
+//#define SP_WORD_SIZE 32
+//#define WOLFSSL_SP_MATH_ALL
 
 
 /* Default is HW enabled unless turned off.

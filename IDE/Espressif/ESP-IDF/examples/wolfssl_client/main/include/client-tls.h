@@ -21,9 +21,11 @@
 #ifndef _SERVER_TLS_
 #define _SERVER_TLS_
 
+/* Local project, auto-generated configuration */
+#include "sdkconfig.h"
+
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
-#include "sdkconfig.h"
 
 /* See main/Kconfig.projbuild for default configuration settings */
 #ifdef CONFIG_WOLFSSL_TARGET_HOST
@@ -41,8 +43,12 @@
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
 //#define TLS_SMP_CLIENT_TASK_BYTES       (26 * 1024)
 // #define TLS_SMP_CLIENT_TASK_BYTES       (20 * 1024) /* leave handshake fail -125*/
-#define TLS_SMP_CLIENT_TASK_BYTES       (15 * 1024)
 
+#if defined(ESP8266)
+    #define TLS_SMP_CLIENT_TASK_BYTES       (15 * 1024)
+#else
+    #define TLS_SMP_CLIENT_TASK_BYTES 15240
+#endif
 #define TLS_SMP_CLIENT_TASK_PRIORITY    8
 
 #if defined(SINGLE_THREADED)
