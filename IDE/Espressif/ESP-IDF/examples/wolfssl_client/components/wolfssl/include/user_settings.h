@@ -40,7 +40,8 @@
 #undef WOLFSSL_ESP8266
 #undef WOLFSSL_ESP32
 
-#define WOLFSSL_ESP32
+#define WOLFSSL_ESP8266
+
 #define TEST_SET7
 #ifdef TEST_SET7
     #define WOLFSSL_SMALL_STACK
