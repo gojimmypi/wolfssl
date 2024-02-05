@@ -81,11 +81,11 @@ const static char *TAG = "wifi_connect";
     #define CONFIG_ESP_MAXIMUM_RETRY 5
 #endif
 /* FreeRTOS event group to signal when we are connected*/
-IRAM_ATTR static EventGroupHandle_t s_wifi_event_group;
+static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-IRAM_ATTR static void event_handler(void* arg, esp_event_base_t event_base,
+static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
@@ -108,7 +108,7 @@ IRAM_ATTR static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-IRAM_ATTR int wifi_init_sta(void)
+int wifi_init_sta(void)
 {
     word32 this_heap;
 
