@@ -12724,10 +12724,12 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
             /* get response */
             WOLFSSL_MSG("ssl.c ssl->options.serverState < neededState");
             while (ssl->options.serverState < neededState) {
+                ESP_LOGI(TAG, "while (ssl->options.serverState < neededState)");
                 #ifdef WOLFSSL_TLS13
                     if (ssl->options.tls1_3)
                         return wolfSSL_connect_TLSv13(ssl);
                 #endif
+                ESP_LOGI(TAG, "ProcessReply...");
                 if ( (ssl->error = ProcessReply(ssl)) < 0) {
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
@@ -12743,6 +12745,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                             neededState = SERVER_HELLODONE_COMPLETE;
                     }
                 }
+                ESP_LOGI(TAG, "ProcessReply... done");
 
 #ifdef WOLFSSL_DTLS13
                 if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)

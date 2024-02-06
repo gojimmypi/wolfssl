@@ -24,9 +24,12 @@
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-#include <esp_log.h>
 
 #include <wolfssl/wolfcrypt/settings.h>
+#if defined(WOLFSSL_ESPIDF)
+    #include <esp_log.h>
+    static char* TAG = "int";
+#endif
 
 /*
  * WOLFSSL_SMALL_CERT_VERIFY:
@@ -7076,7 +7079,7 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
         /* FIPS RNG API does not accept a heap hint */
 #ifndef HAVE_FIPS
-        ESP_LOGE("int", "wc_InitRng_ex...");
+        ESP_LOGI(TAG, "wc_InitRng_ex...");
         if ( (ret = wc_InitRng_ex(ssl->rng, ssl->heap, ssl->devId)) != 0) {
             ESP_LOGE("int", "wc_InitRng_ex failed...");
             WOLFSSL_MSG("RNG Init error");
@@ -20683,6 +20686,8 @@ static int DtlsShouldDrop(WOLFSSL* ssl, int retcode)
 
 int ProcessReply(WOLFSSL* ssl)
 {
+
+    ESP_LOGI(TAG, "ProcessReplyEx...");
     return ProcessReplyEx(ssl, 0);
 }
 
@@ -20718,6 +20723,7 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
         WOLFSSL_MSG("ProcessReply retry in error state, not allowed");
         return ssl->error;
     }
+    ESP_LOGI(TAG, "ProcessReplyEx... 20726");
 
     /* If checking alert on error (allowSocketErr == 1) do not try and
      * process alerts for async or ocsp non blocking */
@@ -20754,9 +20760,12 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     }
 #endif
 
+    ESP_LOGI(TAG, "RetrySendAlert...");
     ret = RetrySendAlert(ssl);
-    if (ret != 0)
+    if (ret != 0) {
+        ESP_LOGI(TAG, "RetrySendAlert failed, giving up.");
         return ret;
+    }
 
     for (;;) {
         switch (ssl->options.processReply) {
@@ -37456,6 +37465,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                 WOLFSSL_MSG("Found session matching the session id"
                             " found in the ticket");
                 /* Allocate and populate an InternalTicket */
+                /* TODO: fails for WOLFSSL_NO_REALLOC */
                 tmp = (byte*)XREALLOC(psk->identity, sizeof(InternalTicket),
                         ssl->heap, DYNAMIC_TYPE_TLSX);
                 if (tmp != NULL) {

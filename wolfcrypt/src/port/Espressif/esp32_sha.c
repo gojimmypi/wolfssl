@@ -2312,7 +2312,8 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 #endif /* WOLFSSL_ESP32_CRYPT */
 #endif /* !defined(NO_SHA) ||... */
 
-#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS)
+#if defined(WOLFSSL_ESP32_CRYPT) && defined(WOLFSSL_HW_METRICS) && \
+   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
 int esp_sw_sha256_count_add(void) {
     esp_sha256_sw_fallback_usage_ct++;
     return esp_sha256_sw_fallback_usage_ct;

@@ -55,7 +55,7 @@
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
-static const char* TAG = "TLS Client";
+static const char* TAG = "main";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)

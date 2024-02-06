@@ -144,11 +144,11 @@ int wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_start() );
 
     ESP_LOGI(TAG, "wifi_init_sta finished. Connecting...");
-    this_heap = esp_get_free_heap_size();
-    ESP_LOGI(TAG, "this heap = %d", this_heap);
-    if (this_heap < WIFI_LOW_HEAP_WARNING) {
-        ESP_LOGW(TAG, "Warning: WiFi low heap: %d", WIFI_LOW_HEAP_WARNING);
-    }
+//    this_heap = esp_get_free_heap_size();
+//    ESP_LOGI(TAG, "this heap = %d", this_heap);
+//    if (this_heap < WIFI_LOW_HEAP_WARNING) {
+//        ESP_LOGW(TAG, "Warning: WiFi low heap: %d", WIFI_LOW_HEAP_WARNING);
+//    }
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,

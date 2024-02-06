@@ -47,7 +47,7 @@
 #if defined(ESP8266)
     #define TLS_SMP_CLIENT_TASK_BYTES       (15 * 1024)
 #else
-    #define TLS_SMP_CLIENT_TASK_BYTES 15240
+    #define TLS_SMP_CLIENT_TASK_BYTES (8 * 1024)
 #endif
 #define TLS_SMP_CLIENT_TASK_PRIORITY    8
 

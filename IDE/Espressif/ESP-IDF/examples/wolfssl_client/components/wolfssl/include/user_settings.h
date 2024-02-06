@@ -1,4 +1,4 @@
-/* examples/configs/user_settings_ESP8266.h
+/* user_settings.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -22,12 +22,19 @@
 /* This user_settings.h is for Espressif ESP-IDF */
 #include <sdkconfig.h>
 
-#define NO_FILESYSTEM
-#define USE_CERT_BUFFERS_2048
+/* The Espressif sdkconfig will have chipset info.
+**
+** Possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S2
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
+*/
 
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
-
 
 /*
  * choose ONE of these Espressif chips to define:
@@ -40,180 +47,73 @@
 #undef WOLFSSL_ESP8266
 #undef WOLFSSL_ESP32
 
-#define WOLFSSL_ESP8266
-
-#define TEST_SET7
-#ifdef TEST_SET7
-    #define WOLFSSL_SMALL_STACK
- //   #define WOLFSSL_SMALL_STACK_CACHE /* causes SHA error */
- //   #define GCM_SMALL /* causes server error */
-
-    #define HAVE_ECC
-    // #define USE_CERT_BUFFERS_1024
-
-    //#define HAVE_DH
-    #define RSA_LOW_MEM
-    #define NO_OLD_TLS
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-
-    #define HAVE_AESGCM
-
-    #define NO_FILESYSTEM
-
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif // TEST_SET4
-
-#ifdef TEST_SET6
-    #define WOLFSSL_SMALL_STACK
-    //#define WOLFSSL_SMALL_STACK_CACHE
-
-    #define HAVE_ECC
-    #define USE_CERT_BUFFERS_256
-    #define NO_RSA
-
-    //#define HAVE_DH
-    //#define RSA_LOW_MEM
-    #define NO_OLD_TLS
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-
-    #define HAVE_AESGCM
-
-    #define NO_FILESYSTEM
-
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif // TEST_SET4
-
-#ifdef TEST_SET5
-    #define WOLFSSL_STATIC_MEMORY
-    //#define WOLFSSL_SMALL_STACK
-    //#define WOLFSSL_SMALL_STACK_CACHE
-    #define HAVE_ECC
-    #define HAVE_DH
-    #define RSA_LOW_MEM
-    #define NO_OLD_TLS
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-
-    #define HAVE_AESGCM
-
-    #define NO_FILESYSTEM
-
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif // TEST_SET5
-
-// #define TEST_SET4
-#ifdef TEST_SET4
-    #define WOLFSSL_NO_MALLOC
-    #define HAVE_ECC
-    #define RSA_LOW_MEM
-    #define NO_OLD_TLS
-   // #define HAVE_SUPPORTED_CURVES
-
-    /* when you want to use SINGLE THREAD */
-    #define SINGLE_THREADED
-    #define NO_FILESYSTEM
-
-    #define HAVE_AESGCM
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif // TEST_SET4
-
-
-// #define TEST_SET3
-#ifdef TEST_SET3
-    #define WOLFSSL_SMALL_STACK
-    #define WOLFSSL_SMALL_STACK_CACHE
-
-//    #define WOLFSSL_STATIC_MEMORY
-    #define HAVE_ECC
-    #define RSA_LOW_MEM
-    #define NO_OLD_TLS
-   // #define HAVE_SUPPORTED_CURVES
-
-    /* when you want to use SINGLE THREAD */
-    #define SINGLE_THREADED
-    #define NO_FILESYSTEM
-
-    #define HAVE_AESGCM
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif
-
-#ifdef TEST_SET2
-//    #define WOLFSSL_SMALL_STACK
-    #define WOLFSSL_SMALL_STACK_CACHE
-    #define WOLFSSL_STATIC_MEMORY
-    #define HAVE_ECC
-//    #define HAVE_DH
-//    #define HAVE_FFDHE_2048
-    #define NO_OLD_TLS
-    /* TLS 1.3                                 */
-    #define WOLFSSL_TLS13
-    #define HAVE_TLS_EXTENSIONS
-    #define WC_RSA_PSS
-    #define HAVE_HKDF
-    #define HAVE_AEAD
-   // #define HAVE_SUPPORTED_CURVES
-
-    /* when you want to use SINGLE THREAD */
-    /* #define SINGLE_THREADED */
-    #define NO_FILESYSTEM
-
-    #define HAVE_AESGCM
-    /* when you want to use SHA384 */
-    /* #define WOLFSSL_SHA384 */
-#endif
-
-
-#ifdef TEST_SET1
-    #define HAVE_ECC
-    // #define WOLFSSL_SMALL_STACK
-    #define WOLFSSL_SMALL_STACK_EXTRA
-    #define WOLFSSL_SMALL_STACK_CIPHERS
-    #define NO_DH
-    #define WOLFSSL_STATIC_MEMORY
-
-    /* RSA must be enabled for examples, but can be disabled like this: */
-    #define NO_RSA
-    #define RSA_LOW_MEM
-
-    #define NO_OLD_TLS
-
-    /* Cannot use WOLFSSL_NO_MALLOC with small stack */
-    #define WOLFSSL_NO_MALLOC
-
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-
-    #define HAVE_AESGCM
-    #define NO_DSA
-    #define NO_RC4
-    #define NO_MD4
-    #define NO_MD5
-    #define NO_DES3
-#endif
+#define WOLFSSL_ESP32
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-// #define SINGLE_THREADED see above TODO
+/* #define SINGLE_THREADED */
 
+/* When you don't want to use the old SHA */
+/* #define NO_SHA */
+/* #define NO_OLD_TLS */
 
-/* Optional OPENSSL compatibility */
-/* #define OPENSSL_EXTRA */
-/* #define OPENSSL_ALL */
+#define BENCH_EMBEDDED
+#define USE_CERT_BUFFERS_2048
+#define WOLFSSL_SMALL_STACK
+#define HAVE_ECC
+ #define RSA_LOW_MEM
+/* TLS 1.3                                 */
+#define WOLFSSL_TLS13
+#define HAVE_TLS_EXTENSIONS
+#define WC_RSA_PSS
+#define HAVE_HKDF
+#define HAVE_AEAD
+#define HAVE_SUPPORTED_CURVES
 
-/* when you want to use pkcs7 */
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+#define NO_FILESYSTEM
+
+#define NO_OLD_TLS
+
+#define HAVE_AESGCM
+
+#define WOLFSSL_RIPEMD
+/* when you want to use SHA224 */
+#define WOLFSSL_SHA224
+
+/* when you want to use SHA384 */
+#define WOLFSSL_SHA384
+
+/* when you want to use SHA512 */
+#define WOLFSSL_SHA512
+
+/* when you want to use SHA3 */
+#define WOLFSSL_SHA3
+
+#define HAVE_ED25519 /* ED25519 requires SHA512 */
+
+//#define HAVE_ECC
+//#define HAVE_CURVE25519
+//#define CURVE25519_SMALL
+//#define HAVE_ED25519
+//
+// #define OPENSSL_EXTRA
+///* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
 
-/* when you want to use AES counter mode */
+#define HAVE_PKCS7
+
+#if defined(HAVE_PKCS7)
+    #define HAVE_AES_KEYWRAP
+    #define HAVE_X963_KDF
+    #define WOLFSSL_AES_DIRECT
+#endif
+
+/* when you want to use aes counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
 
@@ -227,7 +127,7 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-/* RSA primitive specific definition */
+/* rsa primitive specific definition */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
@@ -247,6 +147,8 @@
     #endif
 #endif
 
+#define RSA_LOW_MEM
+
 /* #define WOLFSSL_ATECC508A_DEBUG         */
 
 /* date/time                               */
@@ -259,29 +161,66 @@
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
 #define ESP_RSA_TIMEOUT_CNT    0x249F00
 
+#define HASH_SIZE_LIMIT /* for test.c */
+
 /* USE_FAST_MATH is default */
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-//#undef USE_FAST_MATH
-//#define SP_MATH
+/* #undef USE_FAST_MATH          */
+/* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
-// #define USE_INTEGER_HEAP_MATH
-//#define SP_MATH
-//#define WOLFSSL_SP_SMALL
-//#define WOLFSSL_HAVE_SP_RSA
-//#define WOLFSSL_SP_MATH
-//#define SP_WORD_SIZE 32
-//#define WOLFSSL_SP_MATH_ALL
+/* #define USE_INTEGER_HEAP_MATH */
 
+
+#define WOLFSSL_SMALL_STACK
+
+
+#define HAVE_VERSION_EXTENDED_INFO
+/* #define HAVE_WC_INTROSPECTION */
+
+#define  HAVE_SESSION_TICKET
+
+/* #define HAVE_HASHDRBG */
+
+#define WOLFSSL_KEY_GEN
+#define WOLFSSL_CERT_REQ
+#define WOLFSSL_CERT_GEN
+#define WOLFSSL_CERT_EXT
+#define WOLFSSL_SYS_CA_CERTS
+
+
+#define WOLFSSL_CERT_TEXT
+
+#define WOLFSSL_ASN_TEMPLATE
+
+/*
+#undef  WOLFSSL_KEY_GEN
+#undef  WOLFSSL_CERT_REQ
+#undef  WOLFSSL_CERT_GEN
+#undef  WOLFSSL_CERT_EXT
+#undef  WOLFSSL_SYS_CA_CERTS
+*/
+
+/*
+--enable-keygen
+--enable-certgen
+--enable-certreq
+--enable-certext
+--enable-asn-template
+*/
 
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines to force SW instead of HW acceleration */
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
+//    #define NO_ESP32_CRYPT
+      #define NO_WOLFSSL_ESP32_CRYPT_HASH
+//    #define NO_WOLFSSL_ESP32_CRYPT_AES
+//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* wolfSSL HW Acceleration supported on ESP32. Uncomment to disable: */
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
@@ -390,16 +329,23 @@
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP8266)
-    #undef  WOLFSSL_ESP8266
-    #define WOLFSSL_ESP8266
     /*  TODO: Revisit ESP8266 */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP8684)
+    /*  There's no Hardware Acceleration available on ESP8684 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
 #else
-    /* Anything else encountered, disable HW acceleration */
+    /* Anything else encountered, disable HW accleration */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -421,13 +367,13 @@
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
 */
-#define DEBUG_WOLFSSL
 
 #define WOLFSSL_ESPIDF_ERROR_PAUSE /* Pause in a loop rather than exit. */
+#define WOLFSSL_HW_METRICS
 
 /* #define HASH_SIZE_LIMIT */ /* for test.c */
 
-/* #define NO_HW_MATH_TEST */ /* Optionally turn off HW math checks */
+/* #define NO_HW_MATH_TEST */ /* Optionall turn off HW math checks */
 
 /* Optionally include alternate HW test library: alt_hw_test.h */
 /* When enabling, the ./components/wolfssl/CMakeLists.txt file
@@ -449,6 +395,9 @@
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
+
+#define WOLFSSL_PUBLIC_MP /* used by benchmark */
+#define USE_CERT_BUFFERS_2048
 
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
@@ -478,58 +427,15 @@
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
-    #if defined(HAVE_ECC) && defined(USE_CERT_BUFFERS_256)
-        #include <wolfssl/certs_test.h>
-        #define CTX_CA_CERT          ca_ecc_key_der_256
-        #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_key_der_256
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_CLIENT_CERT      cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-        #define CTX_CLIENT_KEY       ecc_clikey_der_256
-        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikeypub_der_256
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-
-    #elif defined(USE_CERT_BUFFERS_2048)
-        #include <wolfssl/certs_test.h>
-        #define CTX_CA_CERT          ca_cert_der_2048
-        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_SERVER_CERT      server_cert_der_2048
-        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
-        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-        #define CTX_SERVER_KEY       server_key_der_2048
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
-        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_CLIENT_CERT      client_cert_der_2048
-        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-        #define CTX_CLIENT_KEY       client_key_der_2048
-        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #elif defined(USE_CERT_BUFFERS_1024)
-        #include <wolfssl/certs_test.h>
-        #define CTX_CA_CERT          ca_cert_der_1024
-        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_CLIENT_CERT      client_cert_der_1024
-        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_1024
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-        #define CTX_CLIENT_KEY       client_key_der_1024
-        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_1024
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_SERVER_CERT      server_cert_der_1024
-        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_1024
-        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-        #define CTX_SERVER_KEY       server_key_der_1024
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
-        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #else
-        #error "Must define USE_CERT_BUFFERS_2048 or USE_CERT_BUFFERS_1024"
-    #endif
+    #define USE_CERT_BUFFERS_2048
+    #define USE_CERT_BUFFERS_256
+    #define CTX_CA_CERT          ca_cert_der_2048
+    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_CERT      server_cert_der_2048
+    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_KEY       server_key_der_2048
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif

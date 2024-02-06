@@ -349,7 +349,7 @@ int set_time_wait_for_ntp(void)
 
     ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
 #else
-    ESP_LOGE(TAG, "HAS_ESP_NETIF_SNTP now defined");
+    ESP_LOGE(TAG, "HAS_ESP_NETIF_SNTP not defined");
 #endif /* HAS_ESP_NETIF_SNTP */
     esp_show_current_datetime();
 
