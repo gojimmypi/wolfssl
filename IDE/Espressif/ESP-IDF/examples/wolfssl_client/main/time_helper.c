@@ -116,9 +116,9 @@ int set_fixed_default_time(void)
     /* ideally, we'd like to set time from network,
      * but let's set a default time, just in case */
     struct tm timeinfo = {
-        .tm_year = 2023 - 1900,
+        .tm_year = 2024 - 1900,
         .tm_mon  = 1,
-        .tm_mday = 02,
+        .tm_mday = 05,
         .tm_hour = 13,
         .tm_min  = 01,
         .tm_sec  = 05
@@ -279,7 +279,6 @@ int set_time(void)
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
     config.smooth_sync = true;
 #endif
-    return ret;
 
     if (NTP_SERVER_COUNT) {
         /* next, let's setup NTP time servers
