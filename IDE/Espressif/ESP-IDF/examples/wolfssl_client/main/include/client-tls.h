@@ -44,8 +44,8 @@
 //#define TLS_SMP_CLIENT_TASK_BYTES       (26 * 1024)
 // #define TLS_SMP_CLIENT_TASK_BYTES       (20 * 1024) /* leave handshake fail -125*/
 
-#if defined(ESP8266)
-    #define TLS_SMP_CLIENT_TASK_BYTES       (15 * 1024)
+#if defined(WOLFSSL_ESP8266)
+    #define TLS_SMP_CLIENT_TASK_BYTES       (6 * 1024)
 #else
     #define TLS_SMP_CLIENT_TASK_BYTES (8 * 1024)
 #endif

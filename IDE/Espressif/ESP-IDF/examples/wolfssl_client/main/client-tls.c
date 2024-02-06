@@ -34,7 +34,6 @@
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
-#include "user_settings.h"
 #include <wolfssl/ssl.h>
 
 #ifdef WOLFSSL_TRACK_MEMORY
@@ -48,30 +47,6 @@
 
     #undef  DEFAULT_MAX_DHKEY_BITS
     #define DEFAULT_MAX_DHKEY_BITS 2048
-#endif
-
-#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    #include <wolfssl/certs_test_sm.h>
-    #define CTX_CA_CERT          root_sm2
-    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
-    #define CTX_CLIENT_CERT      client_sm2
-    #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2
-    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_PEM
-    #define CTX_CLIENT_KEY       client_sm2_priv
-    #define CTX_CLIENT_KEY_SIZE  sizeof_client_sm2_priv
-    #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_PEM
-#else
-    #include <wolfssl/certs_test.h>
-    #define CTX_CA_CERT          ca_cert_der_2048
-    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-    #define CTX_CLIENT_CERT      client_cert_der_2048
-    #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
-    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-    #define CTX_CLIENT_KEY       client_key_der_2048
-    #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
-    #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
 
 /* Project */
@@ -331,9 +306,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
             ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret_i);
         }
 
-    /* Load client certificates into WOLFSSL_CTX */
-    WOLFSSL_MSG("Loading...cert");
-    ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
+        /* Load client certificates into WOLFSSL_CTX */
+        WOLFSSL_MSG("Loading...cert");
+        ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CA_CERT,
                                          CTX_CA_CERT_SIZE,
                                          CTX_CA_CERT_TYPE);
@@ -420,10 +395,17 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 #endif
 
     /* Attach wolfSSL to the socket */
-    wolfSSL_set_fd(ssl, sockfd);
+    ret_i = wolfSSL_set_fd(ssl, sockfd);
+    if (ret_i == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "wolfSSL_set_fd success");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
+    }
 
     WOLFSSL_MSG("Connect to wolfSSL on the server side");
     /* Connect to wolfSSL on the server side */
+    ret_i = wolfSSL_connect(ssl);
     if (wolfSSL_connect(ssl) == SSL_SUCCESS) {
 #ifdef DEBUG_WOLFSSL
         ShowCiphers(ssl);
@@ -458,7 +440,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         printf("%s\n", buff);
         }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL\n");
+        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL. Error: %d\n", ret_i);
     }
 #ifdef DEBUG_WOLFSSL
     ShowCiphers(ssl);
