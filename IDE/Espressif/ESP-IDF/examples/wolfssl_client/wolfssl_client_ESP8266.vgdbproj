@@ -24,8 +24,8 @@
       </Version>
     </ToolchainID>
     <IDFCheckout>
-      <Version>master</Version>
-      <Subdirectory>rtos-sdk/master</Subdirectory>
+      <Version>release/v3.4</Version>
+      <Subdirectory>rtos-sdk/v3.4</Subdirectory>
       <Type>RTOS_SDK</Type>
     </IDFCheckout>
     <BuildThreadCount>0</BuildThreadCount>

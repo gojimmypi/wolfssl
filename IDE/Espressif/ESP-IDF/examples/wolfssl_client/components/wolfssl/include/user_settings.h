@@ -21,7 +21,8 @@
 
 /* This user_settings.h is for Espressif ESP-IDF */
 #include <sdkconfig.h>
-
+#define DEBUG_WOLFSSL
+#define DEBUG_WOLFSSL_VERBOSE
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Possible values:
@@ -49,6 +50,9 @@
 
 #define WOLFSSL_ESP8266
 
+/* Small session cache saves a lot of RAM for ClientCache and SessionCache */
+#define SMALL_SESSION_CACHE
+
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
@@ -64,7 +68,7 @@
 #define USE_CERT_BUFFERS_2048
 #define WOLFSSL_SMALL_STACK
 #define HAVE_ECC
- #define RSA_LOW_MEM
+#define RSA_LOW_MEM
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
@@ -406,12 +410,73 @@
 #define ATCA_WOLFSSL
 */
 
-/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm
+/* The section below defines macros used in typically all of the wolfSSL
+ * examples such as the client and server for certs stored in header files.
+ *
+ * There are various certificate examples in this header file:
+ * https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/certs_test.h
+ *
+ * To use the sets of macros below, define *one* of these:
+ *
+ *    USE_CERT_BUFFERS_1024  - ECC 1024 bit encoded ASN1
+ *    USE_CERT_BUFFERS_2048  - RSA 2048 bit encoded ASN1
+ *    WOLFSSL_SM[2,3,4]      - SM Ciphers
+ *
+ * For example: define USE_CERT_BUFFERS_2048 to use CA Certs used in this
+ *  wolfSSL function for the `ca_cert_der_2048` buffer, size and types:
+ *
+ *     ret = wolfSSL_CTX_load_verify_buffer(ctx,
+ *                                          CTX_CA_CERT,
+ *                                          CTX_CA_CERT_SIZE,
+ *                                          CTX_CA_CERT_TYPE);
+ *
+ * See https://www.wolfssl.com/documentation/manuals/wolfssl/group__CertsKeys.html#function-wolfssl_ctx_load_verify_buffer
+ *
+ * In this case the CTX_CA_CERT will be defined as `ca_cert_der_2048` as
+ * defined here: https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/certs_test.h
+ *
+ * The CTX_CA_CERT_SIZE and CTX_CA_CERT_TYPE are similarly used to reference
+ * array size and cert type respectively.
+ *
+ * Similarly for loading the private client key:
+ *
+ *  ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+ *                                          CTX_CLIENT_KEY,
+ *                                          CTX_CLIENT_KEY_SIZE,
+ *                                          CTX_CLIENT_KEY_TYPE);
+ *
+ * see https://www.wolfssl.com/documentation/manuals/wolfssl/group__CertsKeys.html#function-wolfssl_ctx_use_privatekey_buffer
+ *
+ * Similarly, the other macros are for server certificates and keys:
+ *   `CTX_SERVER_CERT` and `CTX_SERVER_KEY` are available.
+ *
+ * The certificate and key names are typically `static const unsigned char`
+ * arrays. The [NAME]_size are typically `sizeof([array name])`, and the types
+ * are the known wolfSSL encoding type integers (e.g. WOLFSSL_FILETYPE_PEM).
+ *
+ * See `SSL_FILETYPE_[name]` in
+ *   https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/ssl.h
+ *
+ * See Abstract Syntax Notation One (ASN.1) in:
+ *   https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/wolfcrypt/asn.h
+ *
+ * Optional SM4 Ciphers:
+ *
+ * Although the SM ciphers are shown here, the `certs_test_sm.h` may not yet
+ * be available. See:
+ *   https://github.com/wolfSSL/wolfssl/pull/6825
+ *   https://github.com/wolfSSL/wolfsm
+ *
+ * Uncomment these 3 macros to enable the SM Ciphers and use the macros below.
+ */
+
+/*
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
 
+/* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
     #define CTX_CA_CERT          root_sm2
@@ -427,15 +492,47 @@
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
-    #define USE_CERT_BUFFERS_2048
-    #define USE_CERT_BUFFERS_256
-    #define CTX_CA_CERT          ca_cert_der_2048
-    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-    #define CTX_SERVER_CERT      server_cert_der_2048
-    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
-    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-    #define CTX_SERVER_KEY       server_key_der_2048
-    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
-    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-#endif
+    #if defined(USE_CERT_BUFFERS_2048)
+        #include <wolfssl/certs_test.h>
+        #define CTX_CA_CERT          ca_cert_der_2048
+        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_SERVER_CERT      server_cert_der_2048
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_SERVER_KEY       server_key_der_2048
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      client_cert_der_2048
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CLIENT_KEY       client_key_der_2048
+        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+    #elif defined(USE_CERT_BUFFERS_1024)
+        #include <wolfssl/certs_test.h>
+        #define CTX_CA_CERT          ca_cert_der_1024
+        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      client_cert_der_1024
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_1024
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CLIENT_KEY       client_key_der_1024
+        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_1024
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_SERVER_CERT      server_cert_der_1024
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_1024
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_SERVER_KEY       server_key_der_1024
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #else
+        /* Optionally define custom cert arrays, sizes, and types here */
+        #error "Must define USE_CERT_BUFFERS_2048 or USE_CERT_BUFFERS_1024"
+    #endif
+#endif /* Conditional key and cert constant names */
