@@ -1465,8 +1465,6 @@ int wolfSSL_CTX_new_rng(WOLFSSL_CTX* ctx)
 }
 #endif
 
-#include <esp_log.h>
-
 WOLFSSL_ABI
 WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
 {
@@ -1475,25 +1473,34 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
 
     WOLFSSL_ENTER("wolfSSL_new");
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        WOLFSSL_MSG("wolfSSL_new ctx is null");
         return ssl;
+    }
 
     ssl = (WOLFSSL*) XMALLOC(sizeof(WOLFSSL), ctx->heap, DYNAMIC_TYPE_SSL);
     if (ssl) {
-        ESP_LOGI("ssl", "xmalloc success... init");
         ret = InitSSL(ssl, ctx, 0);
-        ESP_LOGI("ssl", "InitSSL ret = %d", ret);
         if (ret < 0) {
+            WOLFSSL_MSG_EX("wolfSSL_new failed during InitSSL. ret = %d", ret);
             FreeSSL(ssl, ctx->heap);
             ssl = 0;
         }
         else {
-            ESP_LOGI("ssl", "init success ret = %d", ret);
-        }
-    }
+            if (ret == 0) {
+                WOLFSSL_MSG("wolfSSL_new InitSSL success");
+            }
+            else {
+                /* Only success (0) or negative values should ever be seen. */
+                WOLFSSL_MSG_EX("WARNING: wolfSSL_new unexpected InitSSL return"
+                               " value = %d", ret);
+            }
+        } /* if InitSSL check */
+    } /* ssl XMALLOC success */
     else {
-        ESP_LOGE("ssl", "xmalloc failed");
-    }
+        WOLFSSL_MSG_EX("ssl xmalloc failed to allocate %d bytes",
+                       (int)sizeof(WOLFSSL));
+    } /* if ssl check */
 
     WOLFSSL_LEAVE("wolfSSL_new", ret);
     (void)ret;
@@ -1506,12 +1513,14 @@ WOLFSSL_ABI
 void wolfSSL_free(WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_free");
-      /* TODO remove */
-#ifdef WOLFSSL_ESP32
-    printf("Free SSL: %0x\n", (int)ssl);
-#endif
-    if (ssl)
+
+    if (ssl) {
+        WOLFSSL_MSG_EX("Free SSL: %0x\n", (int)ssl);
         FreeSSL(ssl, ssl->ctx->heap);
+    }
+    else {
+        WOLFSSL_MSG("Free SSL: wolfSSL_free already null");
+    }
     WOLFSSL_LEAVE("wolfSSL_free", 0);
 }
 
@@ -6016,10 +6025,15 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
        aren't under heavy load, basically allows 200 new sessions per minute
 
        SMALL_SESSION_CACHE only stores 6 sessions, good for embedded clients
-       or systems where the default of nearly 3kB is too much RAM, this define
-       uses less than 500 bytes RAM
+       or systems where the default of is too much RAM.
+       SessionCache takes about 2K, ClientCache takes about 3Kbytes
+
+       MICRO_SESSION_CACHE only stores 1 session, good for embedded clients
+       or systems where memory is at a premium.
+       SessionCache takes about 400 bytes, ClientCache takes 576 bytes
 
        default SESSION_CACHE stores 33 sessions (no XXX_SESSION_CACHE defined)
+       SessionCache takes about 13K bytes, ClientCache takes 17K bytes
     */
     #if defined(TITAN_SESSION_CACHE)
         #define SESSIONS_PER_ROW 31
@@ -6039,6 +6053,9 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
     #elif defined(SMALL_SESSION_CACHE)
         #define SESSIONS_PER_ROW 2
         #define SESSION_ROWS 3
+    #elif defined(MICRO_SESSION_CACHE)
+        #define SESSIONS_PER_ROW 1
+        #define SESSION_ROWS 1
     #else
         #define SESSIONS_PER_ROW 3
         #define SESSION_ROWS 11
@@ -11904,7 +11921,6 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
               /* TODO remove / review */
 
         WOLFSSL_MSG("\n\nWarning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
-//        ESP_LOGW("ssl","WOLFSSL_MAX_SUITE_SZ");
         suites->suiteSz = WOLFSSL_MAX_SUITE_SZ;
     }
 #ifdef WOLFSSL_SMALL_STACK
@@ -12724,12 +12740,12 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
             /* get response */
             WOLFSSL_MSG("ssl.c ssl->options.serverState < neededState");
             while (ssl->options.serverState < neededState) {
-                ESP_LOGI(TAG, "while (ssl->options.serverState < neededState)");
+                WOLFSSL_MSG("while (ssl->options.serverState < neededState)...");
                 #ifdef WOLFSSL_TLS13
                     if (ssl->options.tls1_3)
                         return wolfSSL_connect_TLSv13(ssl);
                 #endif
-                ESP_LOGI(TAG, "ProcessReply...");
+                WOLFSSL_MSG("ProcessReply...");
                 if ( (ssl->error = ProcessReply(ssl)) < 0) {
                     WOLFSSL_ERROR(ssl->error);
                     return WOLFSSL_FATAL_ERROR;
@@ -12745,7 +12761,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                             neededState = SERVER_HELLODONE_COMPLETE;
                     }
                 }
-                ESP_LOGI(TAG, "ProcessReply... done");
+                WOLFSSL_MSG("ProcessReply done.");
 
 #ifdef WOLFSSL_DTLS13
                 if (ssl->options.dtls && IsAtLeastTLSv1_3(ssl->version)

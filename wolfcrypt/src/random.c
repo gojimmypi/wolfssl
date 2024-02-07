@@ -28,10 +28,12 @@ This library contains implementation for the random number generator.
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
-#include <esp_log.h>
 
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
+#if defined(DEBUG_WOLFSSL)
+    #include <wolfssl/wolfcrypt/logging.h>
+#endif
 
 /* on HPUX 11 you may need to install /dev/random see
    http://h20293.www2.hp.com/portal/swdepot/displayProductInfo.do?productNumber=KRNG11I
@@ -1655,6 +1657,10 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
                 (struct DRBG*)XMALLOC(sizeof(DRBG_internal), rng->heap,
                                                           DYNAMIC_TYPE_RNG);
         if (rng->drbg == NULL) {
+    #if defined(DEBUG_WOLFSSL)
+            WOLFSSL_MSG_EX("_InitRng XMALLOC failed to allocate %d bytes",
+                           sizeof(DRBG_internal));
+    #endif
             ret = MEMORY_E;
             rng->status = DRBG_FAILED;
         }
@@ -1672,13 +1678,15 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
                     ret = DRBG_FAILURE;
                 }
             }
-#else
+    #else
             ret = wc_GenerateSeed(&rng->seed, seed, seedSz);
-#endif
+    #endif
             if (ret == 0)
                 ret = wc_RNG_TestSeed(seed, seedSz);
             else {
-                ESP_LOGE("int", "wc_RNG_TestSeed failed... %d", ret);
+    #if defined(DEBUG_WOLFSSL)
+                WOLFSSL_MSG_EX("wc_RNG_TestSeed failed... %d", ret);
+    #endif
                 ret = DRBG_FAILURE;
                 rng->status = DRBG_FAILED;
             }
@@ -1700,7 +1708,9 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
             }
         }
         else {
-            ESP_LOGE("int", "_InitRng failed...");
+    #if defined(DEBUG_WOLFSSL)
+            WOLFSSL_MSG_EX("_InitRng failed...");
+    #endif
         }
 
         ForceZero(seed, seedSz);
@@ -3491,7 +3501,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 #elif defined(WOLFSSL_ESPIDF)
 
     /* Espressif */
-    #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE) || defined(WOLFSSL_ESP8266)
+    #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
 
         /* Espressif ESP32 */
         #include <esp_system.h>
@@ -3524,7 +3534,9 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
         int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         {
-            ESP_LOGI("rnd", "ESP8266 Random");
+    #if defined(DEBUG_WOLFSSL)
+            WOLFSSL_ENTER("ESP8266 Random");
+    #endif
             word32 rand;
             while (sz > 0) {
                 word32 len = sizeof(rand);
@@ -3539,7 +3551,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
             return 0;
         }
-    #endif /* end WOLFSSL_ESP32 */
+    #endif /* end WOLFSSL_ESPIDF */
 
 #elif defined(WOLFSSL_LINUXKM)
     #include <linux/random.h>
@@ -3818,17 +3830,23 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
     #ifndef NO_DEV_URANDOM /* way to disable use of /dev/urandom */
         os->fd = open("/dev/urandom", O_RDONLY);
-        ESP_LOGE("rnd", "open(/dev/urandom... %d", 0);
+        #if defined(DEBUG_WOLFSSL)
+            WOLFSSL_MSG_EX("open(/dev/urandom... %d", 0);
+        #endif
         if (os->fd == -1)
     #endif
         {
-            ESP_LOGE("rnd", "open(/dev/urandom... %d", 1);
+    #if defined(DEBUG_WOLFSSL)
+            WOLFSSL_MSG_EX("open(/dev/urandom... %d", 1);
+    #endif
             /* may still have /dev/random */
             os->fd = open("/dev/random", O_RDONLY);
             if (os->fd == -1)
                 return OPEN_RAN_E;
         }
-        ESP_LOGE("rnd", "rnd read... %d", 0);
+    #if defined(DEBUG_WOLFSSL)
+        WOLFSSL_MSG_EX("rnd read... %d", 0);
+    #endif
         while (sz) {
             int len = (int)read(os->fd, output, sz);
             if (len == -1) {

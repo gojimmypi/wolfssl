@@ -26,10 +26,6 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
-#if defined(WOLFSSL_ESPIDF)
-    #include <esp_log.h>
-    static char* TAG = "int";
-#endif
 
 /*
  * WOLFSSL_SMALL_CERT_VERIFY:
@@ -7079,9 +7075,7 @@ int ReinitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
         /* FIPS RNG API does not accept a heap hint */
 #ifndef HAVE_FIPS
-        ESP_LOGI(TAG, "wc_InitRng_ex...");
         if ( (ret = wc_InitRng_ex(ssl->rng, ssl->heap, ssl->devId)) != 0) {
-            ESP_LOGE("int", "wc_InitRng_ex failed...");
             WOLFSSL_MSG("RNG Init error");
             return ret;
         }
@@ -7412,15 +7406,12 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->disabledCurves = ctx->disabledCurves;
 #endif
 
-    ESP_LOGI("int", "InitCiphers...");
-
     InitCiphers(ssl);
-    ESP_LOGI("int", "InitCipherSpecs...");
     InitCipherSpecs(&ssl->specs);
 
     /* all done with init, now can return errors, call other stuff */
     if ((ret = ReinitSSL(ssl, ctx, writeDup)) != 0) {
-        ESP_LOGW("int", "ReinitSSL failed... %d", ret);
+        WOLFSSL_MSG_EX("ReinitSSL failed. err = %d", ret);
         return ret;
     }
 
@@ -7454,7 +7445,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         && ret != NO_PRIVATE_KEY
 #endif
         ) {
-        ESP_LOGE("int", "SetSSL_CTX failed... %d", ret);
+        WOLFSSL_MSG_EX("SetSSL_CTX failed. err = %d", ret);
         return ret;
     }
     ssl->options.dtls = ssl->version.major == DTLS_MAJOR;
@@ -7469,7 +7460,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     /* hsHashes */
     ret = InitHandshakeHashes(ssl);
     if (ret != 0) {
-        ESP_LOGE("int", "InitHandshakeHashes failed... %d", ret);
+        WOLFSSL_MSG_EX("InitHandshakeHashes failed. err = %d", ret);
         return ret;
     }
 
@@ -7513,11 +7504,10 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
 
     ssl->session = wolfSSL_NewSession(ssl->heap);
     if (ssl->session == NULL) {
-        ESP_LOGE("int", "wolfSSL_NewSession memory error failed... %d", ret);
-        WOLFSSL_MSG("SSL Session Memory error");
+        WOLFSSL_MSG_EX("SSL Session Memory error. wolfSSL_NewSession "
+                       "err = %d", ret);
         return MEMORY_E;
     }
-    ESP_LOGI("ssl", "breadcrumb ret = %d", ret);
 #ifdef HAVE_SESSION_TICKET
     ssl->options.noTicketTls12 = ctx->noTicketTls12;
 #endif
@@ -7594,7 +7584,8 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->sigSpec = ctx->sigSpec;
     ssl->sigSpecSz = ctx->sigSpecSz;
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
-    ESP_LOGI("ssl", "InitSSL done = %d", ret);
+    /* Returns 0 on success, not WOLFSSL_SUCCESS (1) */
+    WOLFSSL_MSG_EX("InitSSL done. return 0 (success)");
     return 0;
 }
 
@@ -20686,8 +20677,6 @@ static int DtlsShouldDrop(WOLFSSL* ssl, int retcode)
 
 int ProcessReply(WOLFSSL* ssl)
 {
-
-    ESP_LOGI(TAG, "ProcessReplyEx...");
     return ProcessReplyEx(ssl, 0);
 }
 
@@ -20723,7 +20712,6 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
         WOLFSSL_MSG("ProcessReply retry in error state, not allowed");
         return ssl->error;
     }
-    ESP_LOGI(TAG, "ProcessReplyEx... 20726");
 
     /* If checking alert on error (allowSocketErr == 1) do not try and
      * process alerts for async or ocsp non blocking */
@@ -20760,10 +20748,9 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     }
 #endif
 
-    ESP_LOGI(TAG, "RetrySendAlert...");
     ret = RetrySendAlert(ssl);
     if (ret != 0) {
-        ESP_LOGI(TAG, "RetrySendAlert failed, giving up.");
+        WOLFSSL_MSG_EX("RetrySendAlert failed, giving up. err = %d", ret);
         return ret;
     }
 
@@ -24662,8 +24649,16 @@ static int SendAlert_ex(WOLFSSL* ssl, int severity, int type)
 
 int RetrySendAlert(WOLFSSL* ssl)
 {
-    int type = ssl->pendingAlert.code;
-    int severity = ssl->pendingAlert.level;
+    int type;
+    int severity;
+    WOLFSSL_ENTER("RetrySendAlert");
+
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    type = ssl->pendingAlert.code;
+    severity = ssl->pendingAlert.level;
 
     if (severity == alert_none)
         return 0;
@@ -24677,6 +24672,12 @@ int RetrySendAlert(WOLFSSL* ssl)
 /* send alert message */
 int SendAlert(WOLFSSL* ssl, int severity, int type)
 {
+    WOLFSSL_ENTER("SendAlert");
+
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
     if (ssl->pendingAlert.level != alert_none) {
         int ret = RetrySendAlert(ssl);
         if (ret != 0) {
