@@ -25,9 +25,7 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
- #include <wolfssl/internal.h>
-#include <esp_log.h>
-static char* TAG = "SSL_certman";
+#include <wolfssl/internal.h>
 
 #if !defined(WOLFSSL_SSL_CERTMAN_INCLUDED)
     #ifndef WOLFSSL_IGNORE_FILE_WARN
@@ -92,13 +90,13 @@ WOLFSSL_CERT_MANAGER* wolfSSL_CertManagerNew_ex(void* heap)
 
     WOLFSSL_ENTER("wolfSSL_CertManagerNew");
     if (heap == NULL) {
-        ESP_LOGI(TAG, "heap param is null");
+         WOLFSSL_MSG("heap param is null");
     }
     else {
-        ESP_LOGI(TAG, "heap = %p", heap);
-
+         WOLFSSL_MSG_EX("heap param = %p", heap);
     }
-    ESP_LOGI(TAG, "DYNAMIC_TYPE_CERT_MANAGER Allocating = %d bytes", (word32)sizeof(WOLFSSL_CERT_MANAGER));
+    WOLFSSL_MSG_EX("DYNAMIC_TYPE_CERT_MANAGER Allocating = %d bytes",
+                    (word32)sizeof(WOLFSSL_CERT_MANAGER));
 
     /* Allocate memory for certificate manager. */
     cm = (WOLFSSL_CERT_MANAGER*)XMALLOC(sizeof(WOLFSSL_CERT_MANAGER), heap,
