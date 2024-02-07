@@ -12,18 +12,19 @@ https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectron
 
 ## Using wolfSSL from the Arduino IDE
 
-Coming soon! https://github.com/wolfSSL/arduino-wolfSSL
+Coming soon! https://github.com/wolfSSL/arduino-wolfSSL See [PR #1](https://github.com/wolfSSL/Arduino-wolfSSL/pull/1).
 
 This option will allow wolfSSL to be installed directly using the native Arduino tools.
 
 ## Manually Reformatting wolfSSL as a Compatible Arduino Library
 
-[This](./wolfssl-arduino.sh) is a shell script that will re-organize the wolfSSL library to be 
-compatible with Arduino projects that use Arduino IDE 1.5.0 or newer. 
-The Arduino IDE requires a library's source files to be in the library's root 
-directory with a header file in the name of the library. This script moves all 
-`src/` files to the `IDE/ARDUINO/wolfSSL/src` directory and creates a stub header
-file called `wolfssl.h` inside that directory.
+USe [this](./wolfssl-arduino.sh) shell script that will re-organize the wolfSSL library to be 
+compatible with [Arduino Library Specification](https://arduino.github.io/arduino-cli/0.35/library-specification/)
+for projects that use Arduino IDE 1.5.0 or newer.
+
+The Arduino IDE requires a library's source files to be in the library's root directory with a
+header file in the name of the library. This script moves all `src/` files to the `IDE/ARDUINO/wolfSSL/src`
+directory and creates a stub header file called `wolfssl.h` inside that directory.
 
 ### Step 1:
 
@@ -42,7 +43,7 @@ from within the `wolfssl/IDE/ARDUINO` directory:
     - Adds the [default](../../examples/configs/user_settings_arduino.h) as `user_settings.h`.
     - The wolfSSL library is now available from the Arduino IDE.
 
-3. `./wolfssl-arduino.sh INSTALL /path/to/repository`
+3. `./wolfssl-arduino.sh INSTALL /path/to/repository` (Used to update [arduino-wolfSSL](https://github.com/wolfSSL/arduino-wolfSSL))
     - Creates an Arduino Library in `wolfSSL` directory
     - Copies that directory contents to the specified `/path/to/repository`
     - Adds the [default](../../examples/configs/user_settings_arduino.h) as `user_settings.h`. 
@@ -56,7 +57,7 @@ from within the `wolfssl/IDE/ARDUINO` directory:
 Edit `<arduino-libraries>/wolfSSL/src/user_settings.h`
 If building for Intel Galileo platform add: `#define INTEL_GALILEO`.
 Add any other custom settings, for a good start see the examples in wolfssl root
-"/examples/configs/user_settings_*.h"
+"[/examples/configs/user_settings_*.h](https://github.com/wolfssl/wolfssl/tree/master/examples/configs)"
 
 ### Step 3:
 
