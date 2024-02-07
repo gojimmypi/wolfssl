@@ -23,18 +23,24 @@ Step 1: To configure wolfSSL with Arduino, enter one of the following commands
 from within the `wolfssl/IDE/ARDUINO` directory:
 
 1. `./wolfssl-arduino.sh`
-    - Creates an Arduino Library in `wolfSSL` directory
+    - Creates an Arduino Library directory structure in the local `wolfSSL` directory of `IDE/ARDUINO`.
+    - You can add your own `user_settings.h`, or see the [default](../../examples/configs/user_settings_arduino.h).
+
 2 `./wolfssl-arduino.sh INSTALL`
-     - Creates an Arduino Library in `wolfSSL` directory
+     - Creates an Arduino Library in the local `wolfSSL` directory
      - Moves that directory to the Arduino library directory:
        - `$HOME/Arduino/libraries` for most bash environments
        - `/mnt/c/Users/$USER/Documents/Arduino/libraries` (for WSL)
+    - Adds the [default](../../examples/configs/user_settings_arduino.h) as `user_settings.h`. 
+
 3. `./wolfssl-arduino.sh INSTALL /path/to/repository`
-     - Creates an Arduino Library in `wolfSSL` directory
-     - Copies that directory contents to the specified `/path/to/repository`
+    - Creates an Arduino Library in `wolfSSL` directory
+    - Copies that directory contents to the specified `/path/to/repository`
+    - Adds the [default](../../examples/configs/user_settings_arduino.h) as `user_settings.h`. 
+     
 4. `./wolfssl-arduino.sh INSTALL /path/to/any/other/directory`
-     - Creates an Arduino Library in `wolfSSL` directory
-     - Copies that directory contents to the specified `/path/to/repository`
+    - Creates an Arduino Library in `wolfSSL` directory
+    - Copies that directory contents to the specified `/path/to/repository`
 
 Step 2: Edit `<arduino-libraries>/wolfSSL/src/user_settings.h`
 If building for Intel Galileo platform add: `#define INTEL_GALILEO`.
