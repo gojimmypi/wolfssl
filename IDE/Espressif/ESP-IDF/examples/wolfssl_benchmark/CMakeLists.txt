@@ -25,9 +25,9 @@ cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-set(COMPONENTS
-  main
-  wolfssl
-) # set components
+#set(COMPONENTS
+  #main
+  #wolfssl
+#) # set components
 
 project(wolfssl_benchmark)

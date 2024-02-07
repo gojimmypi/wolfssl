@@ -90,6 +90,7 @@ cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_benchma
 
 # Pick ESP-IDF toolchain install directory, this one for v5.1 in VisualGDB
 WRK_IDF_PATH=~/esp/esp-idf
+WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
 
