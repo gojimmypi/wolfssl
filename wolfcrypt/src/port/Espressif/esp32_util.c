@@ -1,6 +1,6 @@
 /* esp32_util.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -464,6 +464,7 @@ int ShowExtendedSystemInfo_config(void)
 
     /* Optimizations */
     show_macro("RSA_LOW_MEM",               STR_IFNDEF(RSA_LOW_MEM));
+    show_macro("SMALL_SESSION_CACHE",       STR_IFNDEF(SMALL_SESSION_CACHE));
 
     /* Security Hardening */
     show_macro("WC_NO_HARDEN",              STR_IFNDEF(WC_NO_HARDEN));
