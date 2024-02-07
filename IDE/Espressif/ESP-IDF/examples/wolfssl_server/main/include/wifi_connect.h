@@ -31,8 +31,8 @@
 #define TLS_SMP_SERVER_TASK_WORDS        22240
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
 
-#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
-#define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
+//#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
+// #define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
 
 #define USE_WIFI_EXAMPLE
 #ifdef USE_WIFI_EXAMPLE
@@ -49,7 +49,7 @@
 
 /* when using a private config with plain text passwords,
  * file my_private_config.h should be excluded from git updates */
-/* #define  USE_MY_PRIVATE_CONFIG */
+#define  USE_MY_PRIVATE_CONFIG
 
 #ifdef  USE_MY_PRIVATE_CONFIG
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
@@ -73,14 +73,22 @@
     ** If you'd rather not, just change the below entries to strings with
     ** the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
     */
-    #ifdef CONFIG_ESP_WIFI_SSID
+    #if defined(CONFIG_ESP_WIFI_SSID)
+        /* tyically from ESP32 with ESP-IDF v4 ot v5 */
         #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
+    #elif defined(CONFIG_EXAMPLE_WIFI_SSID)
+        /* tyically from ESP8266 rtos-sdk/v3.4 */
+        #define EXAMPLE_ESP_WIFI_SSID CONFIG_EXAMPLE_WIFI_SSID
     #else
         #define EXAMPLE_ESP_WIFI_SSID "MYSSID_WIFI_CONNECT"
     #endif
 
-    #ifdef CONFIG_ESP_WIFI_PASSWORD
+    #if defined(CONFIG_ESP_WIFI_PASSWORD)
+        /* tyically from ESP32 with ESP-IDF v4 or v5 */
         #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
+    #elif defined(CONFIG_EXAMPLE_WIFI_SSID)
+        /* tyically from ESP8266 rtos-sdk/v3.4 */
+        #define EXAMPLE_ESP_WIFI_PASS CONFIG_EXAMPLE_WIFI_PASSWORD
     #else
         #define EXAMPLE_ESP_WIFI_PASS "MYPASSWORD_WIFI_CONNECT"
     #endif

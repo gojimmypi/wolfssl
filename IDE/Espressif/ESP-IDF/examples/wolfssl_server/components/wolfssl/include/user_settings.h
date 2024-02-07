@@ -70,7 +70,9 @@
 #define HAVE_HKDF
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
-
+/* Cauases error in internal.c
+ #define WOLFSSL_NO_REALLOC
+*/
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
