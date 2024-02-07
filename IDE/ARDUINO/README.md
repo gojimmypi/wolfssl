@@ -56,12 +56,12 @@ from within the `wolfssl/IDE/ARDUINO` directory:
 
 Edit `<arduino-libraries>/wolfSSL/src/user_settings.h`
 If building for Intel Galileo platform add: `#define INTEL_GALILEO`.
-Add any other custom settings, for a good start see the examples in wolfssl root
+Add any other custom settings. For a good start see the examples in wolfssl root
 "[/examples/configs/user_settings_*.h](https://github.com/wolfssl/wolfssl/tree/master/examples/configs)"
 
 ### Step 3:
 
-If you experience any issues with custom user_settings.h see the wolfssl
+If you experience any issues with custom `user_settings.h` see the wolfssl
 porting guide here for more assistance: https://www.wolfssl.com/docs/porting-guide/
 
 If you have any issues contact support@wolfssl.com for help.
@@ -73,7 +73,7 @@ If you have any issues contact support@wolfssl.com for help.
 The wolfSSL library should automatically be detected when found in the `libraries`
 directory.
 
-    - In `Sketch -> Include Library` choose wolfSSL for new sketches.
+  - In `Sketch -> Include Library` choose wolfSSL for new sketches.
 
 
 ##### Including wolfSSL in Arduino Libraries (for Arduino version 1.6.6)
@@ -116,13 +116,13 @@ cd /mnt/c/workspace/wolfssl-$USER
 ./examples/client/client -h 192.168.1.43 -p 11111 -v 3
 ```
 
-Build wolfSSL to include wolfSSH support, but to an alternate development directory.
+Build wolfSSL to include wolfSSH support to an alternate development directory.
 
 ```bash
- cd /mnt/c/workspace/wolfssl-$USER
- ./configure --prefix=/mnt/c/workspace/wolfssh-$USER/wolfssl_install --enable-ssh
- make
- make install
+cd /mnt/c/workspace/wolfssl-$USER
+./configure --prefix=/mnt/c/workspace/wolfssh-$USER/wolfssl_install --enable-ssh
+make
+make install
 
 ```
 
@@ -146,7 +146,7 @@ make clean
 make && make test
 ```
 
-Build and run `testwolfcrypt`
+Build and run `testwolfcrypt`.
 
 ```bash
 ./autogen.sh
