@@ -17,11 +17,12 @@ if  [[ "$IDF_PATH" == "" ]]; then
     echo "Error: $IDF_PATH not found; run Espressif export.sh"
     exit 1
 fi
-SCRIPT_DIR=$(builtin cd ${BASH_SOURCE%/*}; pwd)
+SCRIPT_DIR=$(builtin cd "${BASH_SOURCE%/*}" || exit 1; pwd)
 RUN_SETUP=$1
 THIS_ERR=0
 
 echo "Found IDF_PATH = $IDF_PATH"
+echo "RUN_SETUP: $RUN_SETUP"
 
 # Regular tests of wolfSSL in local component directories of each project:
 #
