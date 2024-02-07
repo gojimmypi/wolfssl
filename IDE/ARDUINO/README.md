@@ -27,10 +27,10 @@ from within the `wolfssl/IDE/ARDUINO` directory:
     - You can add your own `user_settings.h`, or see the [default](../../examples/configs/user_settings_arduino.h).
 
 2 `./wolfssl-arduino.sh INSTALL`
-     - Creates an Arduino Library in the local `wolfSSL` directory
-     - Moves that directory to the Arduino library directory:
-       - `$HOME/Arduino/libraries` for most bash environments
-       - `/mnt/c/Users/$USER/Documents/Arduino/libraries` (for WSL)
+    - Creates an Arduino Library in the local `wolfSSL` directory
+    - Moves that directory to the Arduino library directory:
+        - `$HOME/Arduino/libraries` for most bash environments
+        - `/mnt/c/Users/$USER/Documents/Arduino/libraries` (for WSL)
     - Adds the [default](../../examples/configs/user_settings_arduino.h) as `user_settings.h`. 
 
 3. `./wolfssl-arduino.sh INSTALL /path/to/repository`
