@@ -8,14 +8,44 @@ When using the CLI, see the [example parameters](/IDE/Espressif/ESP-IDF/examples
 For general information on [wolfSSL examples for Espressif](../README.md), see the
 [README](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md) file.
 
+## Quick Start
+
+Use the [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
+for ESP32 or [RTOS SDK](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html)
+for the ESP8266.
+
+Run `menuconfig` utility (`idf.py menuconfig` for ESP32 or `make menuconfig` for the ESP8266)
+and set the various parameters for the target device, along with local WiFi settings:
+
+* Target Host: `CONFIG_WOLFSSL_TARGET_HOST` (The IP address of a listening server)
+* Target Port: `CONFIG_WOLFSSL_TARGET_PORT` (Typically `11111`)
+* Example WiFi SSID: `CONFIG_EXAMPLE_WIFI_SSID` (The WiFi that you want to connect to)
+* Example WiFi Password: `CONFIG_EXAMPLE_WIFI_PASSWORD` (The WiFi password)
+
+The latest examples use makefiles that do not require local file copy installation of wolfSSL.
+
+Build and flash the software to see the example in action.
+
 ## Troubleshooting
 
-Wierd results, odd messages, unexpect compiler errors? Manually delete the Arduino build directory.
-For Windows users, this is the set of hash-named directories located here:
+Weird results, odd messages, unexpected compiler errors? Manually delete the build directory and
+any locally generated files (`sdkconfig`, `sdkconfig-debug`, etc.) and start over.
+
+The `build` directory is typically located in the root of the project directory:  `[project]/build`.
+
+For Windows Arduino users, there is the set of hash-named directories located here:
 
 ```text
 C:\Users\%USERNAME%\AppData\Local\Temp\arduino\sketches
 ```
+
+Difficulty flashing:
+
+* Ensure the target device has a robust, stable, clean power supply.
+* Check that quality USB cables are being used.
+* Try lowering the flash baud rate in the `menuconfig`. The 115200 is typically reliable.
+* Review board specifications: some require manual boot mode via on-board buttons.
+* See [Espressif ESP Frequently Asked Questions](https://docs.espressif.com/projects/esp-faq/en/latest/esp-faq-en-master.pdf)
 
 ## VisualGDB
 
@@ -66,7 +96,10 @@ WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 # install as needed / prompted
 /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/install.sh
 
-cd IDE/Espressif/ESP-IDF/examples/ESP8266
+cd IDE/Espressif/ESP-IDF/examples/wolfssl_client
+
+# or for example, WSL with C:\workspace as home for git clones:
+# cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_client
 
 # adjust settings as desired
 idf.py menuconfig
@@ -77,8 +110,9 @@ idf.py build flash -p /dev/ttyS55 -b 115200
 ## SM Ciphers
 
 (TODO coming soon)
+See https://github.com/wolfSSL/wolfsm
 
-#### Working Linux Client to ESP32 Server
+#### Working Linux Client to ESP32 Server Example:
 
 ```
 ./examples/client/client -h 192.168.1.37 -p 11111 -v 3
