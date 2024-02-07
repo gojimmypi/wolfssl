@@ -303,6 +303,7 @@ int set_time(void)
             }
             ESP_LOGI(TAG, "%s", thisServer);
             sntp_setservername(i, thisServer);
+            ret = ESP_OK;
         }
     #ifdef HAS_ESP_NETIF_SNTP
         ret = esp_netif_sntp_init(&config);

@@ -62,7 +62,7 @@
  *  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3        -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
  *
  **/
-static const char* const TAG = "tls_client";
+static const char* const TAG = "client-tls";
 
 #if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
@@ -469,7 +469,17 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
-    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
+    /* See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html#functions  */
+    if (TLS_SMP_CLIENT_TASK_BYTES < (6 * 1024)) {
+        ESP_LOGW(TAG, "Warning: TLS_SMP_CLIENT_TASK_BYTES < 6KB");
+    }
+#ifndef WOLFSSL_SMALL_STACK
+    ESP_LOGW(TAG, "WARNING: WOLFSSL_SMALL_STACK is not defined. Consider "
+                  "defining that to reduce embedded memory usage.");
+#endif
+
+    /* Note that despite vanilla FreeRTOS using WORDS for a parameter,
+     * Espressif uses BYTES for the task stack size here: */
     ret = xTaskCreate(tls_smp_client_task,
                       TLS_SMP_CLIENT_TASK_NAME,
                       TLS_SMP_CLIENT_TASK_BYTES,
