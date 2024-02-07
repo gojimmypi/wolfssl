@@ -18,7 +18,7 @@ This option will allow wolfSSL to be installed directly using the native Arduino
 
 ## Manually Reformatting wolfSSL as a Compatible Arduino Library
 
-USe [this](./wolfssl-arduino.sh) shell script that will re-organize the wolfSSL library to be 
+Use [this](./wolfssl-arduino.sh) shell script that will re-organize the wolfSSL library to be 
 compatible with [Arduino Library Specification](https://arduino.github.io/arduino-cli/0.35/library-specification/)
 for projects that use Arduino IDE 1.5.0 or newer.
 
@@ -50,7 +50,7 @@ from within the `wolfssl/IDE/ARDUINO` directory:
      
 4. `./wolfssl-arduino.sh INSTALL /path/to/any/other/directory`
     - Creates an Arduino Library in `wolfSSL` directory
-    - Copies that directory contents to the specified `/path/to/repository`
+    - Copies that directory contents to the specified `/path/to/any/other/directory`
 
 ### Step 2:
 
@@ -87,9 +87,9 @@ directory.
 
 Open an example Arduino sketch for wolfSSL:
 
-    - wolfSSL Client INO sketch: `sketches/wolfssl_client/wolfssl_client.ino`
+  - wolfSSL [Client INO sketch](./sketches/wolfssl_client/README.md): `sketches/wolfssl_client/wolfssl_client.ino`
 
-    - wolfSSL Server INO sketch: `sketches/wolfssl_server/wolfssl_server.ino`
+  - wolfSSL [Server INO sketch](./sketches/wolfssl_server/README.md): `sketches/wolfssl_server/wolfssl_server.ino`
 
 #### Script Examples
 
