@@ -23,9 +23,10 @@
 #include <sdkconfig.h>
 #define DEBUG_WOLFSSL
 #define DEBUG_WOLFSSL_VERBOSE
+
 /* The Espressif sdkconfig will have chipset info.
 **
-** Possible values:
+** Some possible values:
 **
 **   CONFIG_IDF_TARGET_ESP32
 **   CONFIG_IDF_TARGET_ESP32S2
@@ -38,7 +39,7 @@
 #define WOLFSSL_ESPIDF
 
 /*
- * choose ONE of these Espressif chips to define:
+ * ONE of these Espressif chipsets should be defined:
  *
  * WOLFSSL_ESP32
  * WOLFSSL_ESPWROOM32SE
@@ -47,10 +48,12 @@
 #undef WOLFSSL_ESPWROOM32SE
 #undef WOLFSSL_ESP8266
 #undef WOLFSSL_ESP32
+/* See below for chipset detection from sdkconfig.h */
 
-#define WOLFSSL_ESP8266
-
-/* Small session cache saves a lot of RAM for ClientCache and SessionCache */
+/* Small session cache saves a lot of RAM for ClientCache and SessionCache.
+ * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
+ * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
+ * When really desparate, try NO_SESSION_CACHE.  */
 #define SMALL_SESSION_CACHE
 
 /* optionally turn off SHA512/224 SHA512/256 */
@@ -69,6 +72,7 @@
 #define WOLFSSL_SMALL_STACK
 #define HAVE_ECC
 #define RSA_LOW_MEM
+
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
@@ -85,7 +89,9 @@
 
 #define HAVE_AESGCM
 
-#define WOLFSSL_RIPEMD
+/* Optional RIPEMD: RACE Integrity Primitives Evaluation Message Digest */
+/* #define WOLFSSL_RIPEMD */
+
 /* when you want to use SHA224 */
 #define WOLFSSL_SHA224
 
@@ -93,23 +99,16 @@
 #define WOLFSSL_SHA384
 
 /* when you want to use SHA512 */
-#define WOLFSSL_SHA512
+/* #define WOLFSSL_SHA512 */
 
 /* when you want to use SHA3 */
-#define WOLFSSL_SHA3
+/* #define WOLFSSL_SHA3 */
 
-#define HAVE_ED25519 /* ED25519 requires SHA512 */
+/* ED25519 requires SHA512 */
+/* #define HAVE_ED25519 */
 
-//#define HAVE_ECC
-//#define HAVE_CURVE25519
-//#define CURVE25519_SMALL
-//#define HAVE_ED25519
-//
-// #define OPENSSL_EXTRA
-///* when you want to use pkcs7 */
+/* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
-
-#define HAVE_PKCS7
 
 #if defined(HAVE_PKCS7)
     #define HAVE_AES_KEYWRAP
@@ -131,7 +130,7 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-/* rsa primitive specific definition */
+/* RSA primitive specific definition */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     /* Define USE_FAST_MATH and SMALL_STACK                        */
     #define ESP32_USE_RSA_PRIMITIVE
@@ -150,8 +149,6 @@
 
     #endif
 #endif
-
-#define RSA_LOW_MEM
 
 /* #define WOLFSSL_ATECC508A_DEBUG         */
 
@@ -179,10 +176,6 @@
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
 
-
-#define WOLFSSL_SMALL_STACK
-
-
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
 
@@ -196,7 +189,6 @@
 #define WOLFSSL_CERT_EXT
 #define WOLFSSL_SYS_CA_CERTS
 
-
 #define WOLFSSL_CERT_TEXT
 
 #define WOLFSSL_ASN_TEMPLATE
@@ -209,7 +201,7 @@
 #undef  WOLFSSL_SYS_CA_CERTS
 */
 
-/*
+/* command-line options
 --enable-keygen
 --enable-certgen
 --enable-certreq
@@ -217,10 +209,11 @@
 --enable-asn-template
 */
 
-/* Default is HW enabled unless turned off.
-** Uncomment these lines to force SW instead of HW acceleration */
-
+/* Chipset detection from sdkconfig.h
+ * Default is HW enabled unless turned off.
+ * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32)
+    #define WOLFSSL_ESP32
 //    #define NO_ESP32_CRYPT
       #define NO_WOLFSSL_ESP32_CRYPT_HASH
 //    #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -242,6 +235,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-S2. Uncomment to disable: */
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
@@ -254,6 +248,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32S2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-S3. Uncomment to disable: */
     /*  #define NO_ESP32_CRYPT                         */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH            */
@@ -267,6 +262,7 @@
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
       defined(CONFIG_IDF_TARGET_ESP8684)
+    #define WOLFSSL_ESP32
     /* ESP8684 is essentially ESP32-C2 chip + flash embedded together in a
      * single QFN 4x4 mm package. Out of released documentation, Technical
      * Reference Manual as well as ESP-IDF Programming Guide is applicable
@@ -292,6 +288,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32C2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C3. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
@@ -309,6 +306,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
@@ -325,6 +323,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
@@ -333,7 +332,11 @@
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP8266)
-    /*  TODO: Revisit ESP8266 */
+    #define WOLFSSL_ESP8266
+
+    /* There's no hardware encryption on the ESP8266 */
+    /* Consider using the ESP32-C2/C3/C6
+     * See https://www.espressif.com/en/products/socs/esp32-c2 */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -350,6 +353,7 @@
 
 #else
     /* Anything else encountered, disable HW accleration */
+    #warning "Unexpected CONFIG_IDF_TARGET_NN value"
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -410,7 +414,9 @@
 #define ATCA_WOLFSSL
 */
 
-/* The section below defines macros used in typically all of the wolfSSL
+/***************************** Certificate Macros *****************************
+ *
+ * The section below defines macros used in typically all of the wolfSSL
  * examples such as the client and server for certs stored in header files.
  *
  * There are various certificate examples in this header file:
