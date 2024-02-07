@@ -26916,12 +26916,55 @@ static int test_wc_PKCS7_EncodeSignedData(void)
     }
 
     ExpectIntGT(wc_PKCS7_EncodeSignedData(pkcs7, output, outputSz), 0);
-
     wc_PKCS7_Free(pkcs7);
     pkcs7 = NULL;
+
     ExpectNotNull(pkcs7 = wc_PKCS7_New(HEAP_HINT, testDevId));
     ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, NULL, 0), 0);
     ExpectIntEQ(wc_PKCS7_VerifySignedData(pkcs7, output, outputSz), 0);
+
+#ifdef ASN_BER_TO_DER
+    wc_PKCS7_Free(pkcs7);
+
+    /* reinitialize and test setting stream mode */
+    {
+        int signedSz;
+
+        ExpectNotNull(pkcs7 = wc_PKCS7_New(HEAP_HINT, testDevId));
+        ExpectIntEQ(wc_PKCS7_Init(pkcs7, HEAP_HINT, INVALID_DEVID), 0);
+
+        ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, cert, certSz), 0);
+
+        if (pkcs7 != NULL) {
+            pkcs7->content = data;
+            pkcs7->contentSz = (word32)sizeof(data);
+            pkcs7->privateKey = key;
+            pkcs7->privateKeySz = (word32)sizeof(key);
+            pkcs7->encryptOID = RSAk;
+        #ifdef NO_SHA
+            pkcs7->hashOID = SHA256h;
+        #else
+            pkcs7->hashOID = SHAh;
+        #endif
+            pkcs7->rng = &rng;
+        }
+        ExpectIntEQ(wc_PKCS7_GetStreamMode(pkcs7), 0);
+        ExpectIntEQ(wc_PKCS7_SetStreamMode(pkcs7, 1), 0);
+        ExpectIntEQ(wc_PKCS7_SetStreamMode(NULL, 1), BAD_FUNC_ARG);
+        ExpectIntEQ(wc_PKCS7_GetStreamMode(pkcs7), 1);
+
+        ExpectIntGT(signedSz = wc_PKCS7_EncodeSignedData(pkcs7, output,
+            outputSz), 0);
+        wc_PKCS7_Free(pkcs7);
+        pkcs7 = NULL;
+
+        ExpectNotNull(pkcs7 = wc_PKCS7_New(HEAP_HINT, testDevId));
+        ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, NULL, 0), 0);
+
+        /* use exact signed buffer size since BER encoded */
+        ExpectIntEQ(wc_PKCS7_VerifySignedData(pkcs7, output, signedSz), 0);
+    }
+#endif
 
     /* Pass in bad args. */
     ExpectIntEQ(wc_PKCS7_EncodeSignedData(NULL, output, outputSz),
@@ -27953,6 +27996,9 @@ static int test_wc_PKCS7_EncodeDecodeEnvelopedData(void)
     EXPECT_DECLS;
 #if defined(HAVE_PKCS7)
     PKCS7*      pkcs7 = NULL;
+#ifdef ASN_BER_TO_DER
+    int encodedSz = 0;
+#endif
 #ifdef ECC_TIMING_RESISTANT
     WC_RNG      rng;
 #endif
@@ -28153,6 +28199,39 @@ static int test_wc_PKCS7_EncodeDecodeEnvelopedData(void)
 
     testSz = (int)sizeof(testVectors)/(int)sizeof(pkcs7EnvelopedVector);
     for (i = 0; i < testSz; i++) {
+    #ifdef ASN_BER_TO_DER
+        /* test setting stream mode */
+        ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, (testVectors + i)->cert,
+                                    (word32)(testVectors + i)->certSz), 0);
+        if (pkcs7 != NULL) {
+        #ifdef ECC_TIMING_RESISTANT
+            pkcs7->rng = &rng;
+        #endif
+
+            pkcs7->content       = (byte*)(testVectors + i)->content;
+            pkcs7->contentSz     = (testVectors + i)->contentSz;
+            pkcs7->contentOID    = (testVectors + i)->contentOID;
+            pkcs7->encryptOID    = (testVectors + i)->encryptOID;
+            pkcs7->keyWrapOID    = (testVectors + i)->keyWrapOID;
+            pkcs7->keyAgreeOID   = (testVectors + i)->keyAgreeOID;
+            pkcs7->privateKey    = (testVectors + i)->privateKey;
+            pkcs7->privateKeySz  = (testVectors + i)->privateKeySz;
+        }
+        ExpectIntEQ(wc_PKCS7_SetStreamMode(pkcs7, 1), 0);
+
+        ExpectIntGE(encodedSz = wc_PKCS7_EncodeEnvelopedData(pkcs7, output,
+            (word32)sizeof(output)), 0);
+
+        decodedSz = wc_PKCS7_DecodeEnvelopedData(pkcs7, output,
+            (word32)encodedSz, decoded, (word32)sizeof(decoded));
+        ExpectIntGE(decodedSz, 0);
+        /* Verify the size of each buffer. */
+        ExpectIntEQ((word32)sizeof(input)/sizeof(char), decodedSz);
+        wc_PKCS7_Free(pkcs7);
+        pkcs7 = NULL;
+        ExpectNotNull(pkcs7 = wc_PKCS7_New(HEAP_HINT, testDevId));
+    #endif
+
         ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, (testVectors + i)->cert,
                                     (word32)(testVectors + i)->certSz), 0);
         if (pkcs7 != NULL) {
@@ -28170,6 +28249,11 @@ static int test_wc_PKCS7_EncodeDecodeEnvelopedData(void)
             pkcs7->privateKeySz  = (testVectors + i)->privateKeySz;
         }
 
+    #ifdef ASN_BER_TO_DER
+        /* test without setting stream mode */
+        ExpectIntEQ(wc_PKCS7_GetStreamMode(pkcs7), 0);
+    #endif
+
         ExpectIntGE(wc_PKCS7_EncodeEnvelopedData(pkcs7, output,
             (word32)sizeof(output)), 0);
 
@@ -28178,6 +28262,7 @@ static int test_wc_PKCS7_EncodeDecodeEnvelopedData(void)
         ExpectIntGE(decodedSz, 0);
         /* Verify the size of each buffer. */
         ExpectIntEQ((word32)sizeof(input)/sizeof(char), decodedSz);
+
         /* Don't free the last time through the loop. */
         if (i < testSz - 1) {
             wc_PKCS7_Free(pkcs7);
@@ -28871,7 +28956,6 @@ static int test_wc_PKCS7_signed_enveloped(void)
 #ifdef HAVE_AES_CBC
     PKCS7* inner = NULL;
 #endif
-    void*  pt = NULL;
     WC_RNG rng;
     unsigned char key[FOURK_BUF/2];
     unsigned char cert[FOURK_BUF/2];
@@ -28958,17 +29042,13 @@ static int test_wc_PKCS7_signed_enveloped(void)
         pkcs7->rng = &rng;
     }
 
-    /* Set no certs in bundle for this test. Hang on to the pointer though to
-     * free it later. */
+    /* Set no certs in bundle for this test. */
     if (pkcs7 != NULL) {
-        pt = (void*)pkcs7->certList;
-        pkcs7->certList = NULL; /* no certs in bundle */
+        ExpectIntEQ(wc_PKCS7_SetNoCerts(pkcs7, 1), 0);
+        ExpectIntEQ(wc_PKCS7_SetNoCerts(NULL, 1), BAD_FUNC_ARG);
+        ExpectIntEQ(wc_PKCS7_GetNoCerts(pkcs7), 1);
     }
     ExpectIntGT((sigSz = wc_PKCS7_EncodeSignedData(pkcs7, sig, sigSz)), 0);
-    if (pkcs7 != NULL) {
-        /* restore pointer for PKCS7 free call */
-        pkcs7->certList = (Pkcs7Cert*)pt;
-    }
     wc_PKCS7_Free(pkcs7);
     pkcs7 = NULL;
 
@@ -47311,7 +47391,7 @@ static int test_wolfSSL_OPENSSL_hexstr2buf(void)
     long len = 0;
     unsigned char* returnedBuf = NULL;
 
-    for (i = 0; i < NUM_CASES && EXPECT_SUCCESS(); ++i) {
+    for (i = 0; i < NUM_CASES && !EXPECT_FAIL(); ++i) {
         returnedBuf = wolfSSL_OPENSSL_hexstr2buf(inputs[i], &len);
         if (returnedBuf == NULL) {
             ExpectIntEQ(expectedOutputs[i].ret, 0);
@@ -69273,6 +69353,146 @@ static int test_tls_multi_handshakes_one_record(void)
     return EXPECT_RESULT();
 }
 
+
+static int test_write_dup(void)
+{
+    EXPECT_DECLS;
+#if defined(HAVE_MANUAL_MEMIO_TESTS_DEPENDENCIES) && defined(HAVE_WRITE_DUP)
+    size_t i, j;
+    char hiWorld[] = "dup message";
+    char readData[sizeof(hiWorld) + 5];
+    struct {
+        method_provider client_meth;
+        method_provider server_meth;
+        const char* version_name;
+        int version;
+    } methods[] = {
+#ifndef WOLFSSL_NO_TLS12
+        {wolfTLSv1_2_client_method, wolfTLSv1_2_server_method, "TLS 1.2", WOLFSSL_TLSV1_2},
+#endif
+#ifdef WOLFSSL_TLS13
+        {wolfTLSv1_3_client_method, wolfTLSv1_3_server_method, "TLS 1.3", WOLFSSL_TLSV1_3},
+#endif
+    };
+    struct {
+        const char* cipher;
+        int version;
+    } ciphers[] = {
+/* For simplicity the macros are copied from internal.h */
+/* TLS 1.2 */
+#if defined(HAVE_CHACHA) && defined(HAVE_POLY1305) && !defined(NO_SHA256)
+    #if defined(HAVE_ECC) || defined(HAVE_CURVE25519) || defined(HAVE_CURVE448)
+        #ifndef NO_RSA
+            {"ECDHE-RSA-CHACHA20-POLY1305", WOLFSSL_TLSV1_2},
+        #endif
+    #endif
+    #if !defined(NO_DH) && !defined(NO_RSA) && !defined(NO_TLS_DH)
+        {"DHE-RSA-CHACHA20-POLY1305", WOLFSSL_TLSV1_2},
+    #endif
+#endif
+#if !defined(NO_DH) && !defined(NO_AES) && !defined(NO_TLS) && \
+    !defined(NO_RSA) && defined(HAVE_AESGCM) && !defined(NO_TLS_DH)
+    #if !defined(NO_SHA256) && defined(WOLFSSL_AES_128)
+        {"DHE-RSA-AES128-GCM-SHA256", WOLFSSL_TLSV1_2},
+    #endif
+    #if defined(WOLFSSL_SHA384) && defined(WOLFSSL_AES_256)
+        {"DHE-RSA-AES256-GCM-SHA384", WOLFSSL_TLSV1_2},
+    #endif
+#endif
+#if (defined(HAVE_ECC) || defined(HAVE_CURVE25519) || defined(HAVE_CURVE448)) \
+                                         && !defined(NO_TLS) && !defined(NO_AES)
+    #ifdef HAVE_AESGCM
+        #if !defined(NO_SHA256) && defined(WOLFSSL_AES_128)
+            #ifndef NO_RSA
+                {"ECDHE-RSA-AES128-GCM-SHA256", WOLFSSL_TLSV1_2},
+            #endif
+        #endif
+        #if defined(WOLFSSL_SHA384) && defined(WOLFSSL_AES_256)
+            #ifndef NO_RSA
+                {"ECDHE-RSA-AES256-GCM-SHA384", WOLFSSL_TLSV1_2},
+            #endif
+        #endif
+    #endif
+#endif
+/* TLS 1.3 */
+#ifdef WOLFSSL_TLS13
+    #ifdef HAVE_AESGCM
+        #if !defined(NO_SHA256) && defined(WOLFSSL_AES_128)
+            {"TLS13-AES128-GCM-SHA256", WOLFSSL_TLSV1_3},
+        #endif
+        #if defined(WOLFSSL_SHA384) && defined(WOLFSSL_AES_256)
+            {"TLS13-AES256-GCM-SHA384", WOLFSSL_TLSV1_3},
+        #endif
+    #endif
+    #if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
+        #ifndef NO_SHA256
+            {"TLS13-CHACHA20-POLY1305-SHA256", WOLFSSL_TLSV1_3},
+        #endif
+    #endif
+    #ifdef HAVE_AESCCM
+        #if !defined(NO_SHA256) && defined(WOLFSSL_AES_128)
+            {"TLS13-AES128-CCM-SHA256", WOLFSSL_TLSV1_3},
+        #endif
+    #endif
+#endif
+    };
+
+    for (i = 0; i < XELEM_CNT(methods); i++) {
+        for (j = 0; j < XELEM_CNT(ciphers) && !EXPECT_FAIL(); j++) {
+            struct test_memio_ctx test_ctx;
+            WOLFSSL_CTX *ctx_c = NULL, *ctx_s = NULL;
+            WOLFSSL *ssl_c = NULL, *ssl_s = NULL;
+            WOLFSSL *ssl_c2 = NULL;
+
+            if (methods[i].version != ciphers[j].version)
+                continue;
+
+            if (i == 0 && j == 0)
+                printf("\n");
+
+            printf("Testing %s with %s... ", methods[i].version_name,
+                    ciphers[j].cipher);
+
+            XMEMSET(&test_ctx, 0, sizeof(test_ctx));
+
+            test_ctx.c_ciphers = test_ctx.s_ciphers = ciphers[j].cipher;
+
+            ExpectIntEQ(test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
+                    methods[i].client_meth, methods[i].server_meth), 0);
+            ExpectIntEQ(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL), 0);
+
+            ExpectNotNull(ssl_c2 = wolfSSL_write_dup(ssl_c));
+            ExpectIntEQ(wolfSSL_write(ssl_c, hiWorld, sizeof(hiWorld)),
+                    WRITE_DUP_WRITE_E);
+            ExpectIntEQ(wolfSSL_write(ssl_c2, hiWorld, sizeof(hiWorld)),
+                    sizeof(hiWorld));
+
+            ExpectIntEQ(wolfSSL_read(ssl_s, readData, sizeof(readData)),
+                    sizeof(hiWorld));
+            ExpectIntEQ(wolfSSL_write(ssl_s, hiWorld, sizeof(hiWorld)),
+                    sizeof(hiWorld));
+
+            ExpectIntEQ(wolfSSL_read(ssl_c2, readData, sizeof(readData)),
+                    WRITE_DUP_READ_E);
+            ExpectIntEQ(wolfSSL_read(ssl_c, readData, sizeof(readData)),
+                    sizeof(hiWorld));
+
+            if (EXPECT_SUCCESS())
+                printf("ok\n");
+            else
+                printf("failed\n");
+
+            wolfSSL_free(ssl_c);
+            wolfSSL_free(ssl_c2);
+            wolfSSL_free(ssl_s);
+            wolfSSL_CTX_free(ctx_c);
+            wolfSSL_CTX_free(ctx_s);
+        }
+    }
+#endif
+    return EXPECT_RESULT();
+}
+
 /*----------------------------------------------------------------------------*
  | Main
  *----------------------------------------------------------------------------*/
@@ -70577,6 +70797,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_tls13_pq_groups),
     TEST_DECL(test_tls13_early_data),
     TEST_DECL(test_tls_multi_handshakes_one_record),
+    TEST_DECL(test_write_dup),
     /* This test needs to stay at the end to clean up any caches allocated. */
     TEST_DECL(test_wolfSSL_Cleanup)
 };

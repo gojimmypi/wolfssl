@@ -40,7 +40,10 @@
      * but individual components can be turned off. See user_settings.h
      */
     #define WOLFSSL_USE_ESP32_CRYPT_HASH_HW
-    static const char* TAG = "wc_sha_512";
+    #if !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384) && \
+        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)
+        static const char* TAG = "wc_sha_512";
+    #endif
 #else
     #undef WOLFSSL_USE_ESP32_CRYPT_HASH_HW
 #endif
@@ -943,7 +946,11 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
 
     /* pad with zeros */
     if (sha512->buffLen > WC_SHA512_PAD_SIZE) {
-        XMEMSET(&local[sha512->buffLen], 0, WC_SHA512_BLOCK_SIZE - sha512->buffLen);
+        if (sha512->buffLen < WC_SHA512_BLOCK_SIZE ) {
+            XMEMSET(&local[sha512->buffLen], 0,
+                WC_SHA512_BLOCK_SIZE - sha512->buffLen);
+        }
+
         sha512->buffLen += WC_SHA512_BLOCK_SIZE - sha512->buffLen;
 #if defined(LITTLE_ENDIAN_ORDER)
     #if defined(USE_INTEL_SPEEDUP) && \

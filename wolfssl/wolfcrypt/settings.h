@@ -2797,6 +2797,14 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_IPV6
 #endif
 
+/* ---------------------------------------------------------------------------
+ * ASN Library Selection (default to ASN_TEMPLATE)
+ * ---------------------------------------------------------------------------
+ */
+#if !defined(WOLFSSL_ASN_TEMPLATE) && !defined(WOLFSSL_ASN_ORIGINAL) && \
+    !defined(NO_ASN)
+    #define WOLFSSL_ASN_TEMPLATE
+#endif
 
 #ifdef WOLFSSL_LINUXKM
     #ifdef HAVE_CONFIG_H
@@ -2833,6 +2841,7 @@ extern void uITRON4_free(void *p) ;
     #ifndef WOLFSSL_TEST_SUBROUTINE
         #define WOLFSSL_TEST_SUBROUTINE static
     #endif
+    #undef HAVE_PTHREAD
     #undef HAVE_STRINGS_H
     #undef HAVE_ERRNO_H
     #undef HAVE_THREAD_LS

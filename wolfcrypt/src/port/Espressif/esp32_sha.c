@@ -1245,7 +1245,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         ESP_LOGE(TAG, "unexpected error in esp_sha_try_hw_lock.");
         return ESP_FAIL;
     }
-#else /* not defined(SINGLE_THREADED) */
+#else /* not SINGLE_THREADED */
     /*
     ** there's only one SHA engine for all the hash types
     ** so when any hash is in use, no others can use it.

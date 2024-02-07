@@ -26651,6 +26651,8 @@ static int ParseCipherList(Suites* suites,
         suites->setSuites = 1;
     }
 
+    (void)privateKeySz;
+
     return ret;
 }
 

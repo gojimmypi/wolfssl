@@ -2734,6 +2734,17 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
             ret = MP_TO_E;
         }
     }
+#ifdef WOLFSSL_RSA_CHECK_D_ON_DECRYPT
+    if ((ret == 0) && (type == RSA_PRIVATE_DECRYPT)) {
+        mp_sub(&key->n, &key->p, tmp);
+        mp_sub(tmp, &key->q, tmp);
+        mp_add_d(tmp, 1, tmp);
+        mp_mulmod(&key->d, &key->e, tmp, tmp);
+        if (!mp_isone(tmp)) {
+            ret = MP_EXPTMOD_E;
+        }
+    }
+#endif
 #else
     (void)type;
     (void)key;
@@ -3143,7 +3154,9 @@ static int wc_RsaFunction_ex(const byte* in, word32 inLen, byte* out,
     }
 #endif
 
-#ifndef WOLF_CRYPTO_CB_ONLY_RSA
+#ifdef WOLF_CRYPTO_CB_ONLY_RSA
+    return NO_VALID_DEVID;
+#else /* !WOLF_CRYPTO_CB_ONLY_RSA */
     SAVE_VECTOR_REGISTERS(return _svr_ret;);
 
 #if !defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(TEST_UNPAD_CONSTANT_TIME) && \
@@ -3195,7 +3208,7 @@ static int wc_RsaFunction_ex(const byte* in, word32 inLen, byte* out,
         wc_RsaCleanup(key);
     }
     return ret;
-#endif /* WOLF_CRYPTO_CB_ONLY_RSA */
+#endif /* !WOLF_CRYPTO_CB_ONLY_RSA */
 }
 
 int wc_RsaFunction(const byte* in, word32 inLen, byte* out,

@@ -109,7 +109,8 @@ on the specific device platform.
     **
     ** Beware of possible conflict in test.c (that one now named TEST_TAG)
     */
-    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
+       !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         static const char* TAG = "wc_sha256";
     #endif
 #endif
@@ -301,7 +302,15 @@ static int InitSha256(wc_Sha256* sha256)
     extern "C" {
 #endif
 
+        extern int Transform_Sha256_SSE2_Sha(wc_Sha256 *sha256,
+                                             const byte* data);
+        extern int Transform_Sha256_SSE2_Sha_Len(wc_Sha256* sha256,
+                                                 const byte* data, word32 len);
     #if defined(HAVE_INTEL_AVX1)
+        extern int Transform_Sha256_AVX1_Sha(wc_Sha256 *sha256,
+                                             const byte* data);
+        extern int Transform_Sha256_AVX1_Sha_Len(wc_Sha256* sha256,
+                                                 const byte* data, word32 len);
         extern int Transform_Sha256_AVX1(wc_Sha256 *sha256, const byte* data);
         extern int Transform_Sha256_AVX1_Len(wc_Sha256* sha256,
                                              const byte* data, word32 len);
@@ -355,6 +364,22 @@ static int InitSha256(wc_Sha256* sha256)
 
         intel_flags = cpuid_get_flags();
 
+        if (IS_INTEL_SHA(intel_flags)) {
+        #ifdef HAVE_INTEL_AVX1
+            if (IS_INTEL_AVX1(intel_flags)) {
+                Transform_Sha256_p = Transform_Sha256_AVX1_Sha;
+                Transform_Sha256_Len_p = Transform_Sha256_AVX1_Sha_Len;
+                Transform_Sha256_is_vectorized = 1;
+            }
+            else
+        #endif
+            {
+                Transform_Sha256_p = Transform_Sha256_SSE2_Sha;
+                Transform_Sha256_Len_p = Transform_Sha256_SSE2_Sha_Len;
+                Transform_Sha256_is_vectorized = 1;
+            }
+        }
+        else
     #ifdef HAVE_INTEL_AVX2
         if (IS_INTEL_AVX2(intel_flags)) {
         #ifdef HAVE_INTEL_RORX
@@ -1360,8 +1385,11 @@ static int InitSha256(wc_Sha256* sha256)
 
         /* pad with zeros */
         if (sha256->buffLen > WC_SHA256_PAD_SIZE) {
-            XMEMSET(&local[sha256->buffLen], 0,
-                WC_SHA256_BLOCK_SIZE - sha256->buffLen);
+            if (sha256->buffLen < WC_SHA256_BLOCK_SIZE) {
+                XMEMSET(&local[sha256->buffLen], 0,
+                    WC_SHA256_BLOCK_SIZE - sha256->buffLen);
+            }
+
             sha256->buffLen += WC_SHA256_BLOCK_SIZE - sha256->buffLen;
 
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \

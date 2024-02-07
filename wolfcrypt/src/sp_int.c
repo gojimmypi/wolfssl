@@ -5408,7 +5408,8 @@ int sp_cmp_mag(const sp_int* a, const sp_int* b)
 
 #if defined(WOLFSSL_SP_MATH_ALL) || defined(HAVE_ECC) || !defined(NO_DSA) || \
     defined(OPENSSL_EXTRA) || !defined(NO_DH) || \
-    (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY))
+    (!defined(NO_RSA) && (!defined(WOLFSSL_RSA_VERIFY_ONLY) || \
+     defined(WOLFSSL_KEY_GEN)))
 /* Compare two multi-precision numbers.
  *
  * Assumes a and b are not NULL.
@@ -18067,6 +18068,8 @@ static int _sp_read_radix_16(sp_int* a, const char* in)
     unsigned int s = 0;
     unsigned int j = 0;
     sp_int_digit d;
+    /* Skip whitespace at end of line */
+    int eol_done = 0;
 
     /* Make all nibbles in digit 0. */
     d = 0;
@@ -18077,9 +18080,12 @@ static int _sp_read_radix_16(sp_int* a, const char* in)
         int ch = (int)HexCharToByte(in[i]);
         /* Check for invalid character. */
         if (ch < 0) {
+            if (!eol_done && CharIsWhiteSpace(in[i]))
+                continue;
             err = MP_VAL;
             break;
         }
+        eol_done = 1;
 
         /* Check whether we have filled the digit. */
         if (s == SP_WORD_SIZE) {
@@ -18149,6 +18155,8 @@ static int _sp_read_radix_10(sp_int* a, const char* in)
             ch -= '0';
         }
         else {
+            if (CharIsWhiteSpace(ch))
+                continue;
             /* Return error on invalid character. */
             err = MP_VAL;
             break;
@@ -19260,7 +19268,7 @@ int sp_prime_is_prime_ex(const sp_int* a, int trials, int* result, WC_RNG* rng)
 }
 #endif /* WOLFSSL_SP_PRIME_GEN */
 
-#if !defined(NO_RSA) || defined(WOLFSSL_KEY_GEN)
+#if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN)
 
 /* Calculates the Greatest Common Denominator (GCD) of a and b into r.
  *
@@ -19428,7 +19436,7 @@ int sp_gcd(const sp_int* a, const sp_int* b, sp_int* r)
     return err;
 }
 
-#endif /* WOLFSSL_SP_MATH_ALL && !NO_RSA && WOLFSSL_KEY_GEN */
+#endif /* !NO_RSA && WOLFSSL_KEY_GEN */
 
 #if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN) && \
     (!defined(WC_RSA_BLINDING) || defined(HAVE_FIPS) || defined(HAVE_SELFTEST))
@@ -19554,7 +19562,8 @@ int sp_lcm(const sp_int* a, const sp_int* b, sp_int* r)
     return err;
 }
 
-#endif /* WOLFSSL_SP_MATH_ALL && !NO_RSA && WOLFSSL_KEY_GEN */
+#endif /* !NO_RSA && WOLFSSL_KEY_GEN && (!WC_RSA_BLINDING || HAVE_FIPS ||
+        * HAVE_SELFTEST) */
 
 /* Returns the run time settings.
  *
