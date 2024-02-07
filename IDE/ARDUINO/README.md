@@ -1,5 +1,16 @@
 ### wolfSSL with Arduino
 
+Many of the supported devices are natively built-in to the [Arduino IDE Board Manager](https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-board-manager/)
+and by adding [additional cores](https://docs.arduino.cc/learn/starting-guide/cores/) as needed.
+
+STM32 Support can be added by including this link in the "Additional Boards Managers URLs" field:
+
+https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+
+from [stm32duino/Arduino_Core_STM32](https://github.com/stm32duino/Arduino_Core_STM32?tab=readme-ov-file#getting-started)   .
+
+
+
 ##### Reformatting wolfSSL as a compatible Arduino Library
 This is a shell script that will re-organize the wolfSSL library to be 
 compatible with Arduino projects that use Arduino IDE 1.5.0 or newer. 
@@ -56,6 +67,69 @@ directory.
 
 Open an example Arduino sketch for wolfSSL:
 
-	- wolfSSL Client INO sketch: `sketches/wolfssl_client/wolfssl_client.ino`
+    - wolfSSL Client INO sketch: `sketches/wolfssl_client/wolfssl_client.ino`
 
-	- wolfSSL Server INO sketch: `sketches/wolfssl_server/wolfssl_server.ino`
+    - wolfSSL Server INO sketch: `sketches/wolfssl_server/wolfssl_server.ino`
+
+#### Script Examples
+
+Publish wolfSSL from WSL to a repository.
+
+```bash
+rm -rf /mnt/c/Users/$USER/Documents/Arduino/libraries/wolfSSL
+rm -rf /mnt/c/workspace/wolfssl-$USER/IDE/ARDUINO/wolfSSL
+./wolfssl-arduino.sh INSTALL /mnt/c/workspace/Arduino-wolfSSL-$USER/
+```
+
+Publish wolfSSL from WSL to default Windows local library.
+
+```bash
+rm -rf /mnt/c/Users/$USER/Documents/Arduino/libraries/wolfSSL
+rm -rf /mnt/c/workspace/wolfssl-arduino/IDE/ARDUINO/wolfSSL
+./wolfssl-arduino.sh INSTALL
+```
+
+Test the TLS server by running a local command-line client.
+
+```bash
+cd /mnt/c/workspace/wolfssl-$USER
+./examples/client/client -h 192.168.1.43 -p 11111 -v 3
+```
+
+Build wolfSSL to include wolfSSH support, but to an alternate development directory.
+
+```bash
+ cd /mnt/c/workspace/wolfssl-$USER
+ ./configure --prefix=/mnt/c/workspace/wolfssh-$USER/wolfssl_install --enable-ssh
+ make
+ make install
+
+```
+
+Build wolfSSH with wolfSSL not installed to default directory.
+
+```bash
+cd /mnt/c/workspace/wolfssh-$USER
+./configure --with-wolfssl=/mnt/c/workspace/wolfssh-$USER/wolfssl_install
+make
+./examples/client/client -u jill -h 192.168.1.34 -p 22222 -P upthehill
+```
+
+Test the current wolfSSL.
+
+```bash
+cd /mnt/c/workspace/wolfssl-arduino
+git status
+./autogen.sh
+./configure --enable-all
+make clean
+make && make test
+```
+
+Build and run `testwolfcrypt`
+
+```bash
+./autogen.sh
+./configure --enable-all
+make clean && make && ./wolfcrypt/test/testwolfcrypt
+```
