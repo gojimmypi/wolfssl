@@ -22,7 +22,12 @@
 
 #define __ESP_SDK_LIB_H__
 
-#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 
@@ -32,7 +37,10 @@
 
 #include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
 
+#define ESP_SDK_MEM_LIB_VERSION 1
 WOLFSSL_LOCAL esp_err_t esp_sdk_time_mem_init(void);
+WOLFSSL_LOCAL esp_err_t sdk_var_whereis(const char* v_name, void* v);
+
 WOLFSSL_LOCAL esp_err_t esp_sdk_time_lib_init(void);
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_lib_init(void);
 
