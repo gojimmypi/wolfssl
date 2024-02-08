@@ -11930,8 +11930,6 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 
     /* list contains ciphers either only for TLS 1.3 or <= TLS 1.2 */
     if (suites->suiteSz == 0) {
-              /* TODO remove / review */
-
         WOLFSSL_MSG("\n\nWarning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
         suites->suiteSz = WOLFSSL_MAX_SUITE_SZ;
     }
@@ -12627,12 +12625,12 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
     #else
         #ifdef WOLFSSL_TLS13
         if (ssl->options.tls1_3) {
-            printf("TLS 1.3!\n");
+            WOLFSSL_MSG("TLS 1.3!\n");
             return wolfSSL_connect_TLSv13(ssl);
         }
         #endif
 
-        // printf(">> NOT TLS 1.3!\n");
+        WOLFSSL_MSG(">> NOT TLS 1.3!\n");
         WOLFSSL_ENTER("wolfSSL_connect");
 
         /* make sure this wolfSSL object has arrays and rng setup. Protects
@@ -12736,7 +12734,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                 return WOLFSSL_FATAL_ERROR;
             }
             ssl->options.connectState = CLIENT_HELLO_SENT;
-            WOLFSSL_MSG("ssl.c connect state: CLIENT_HELLO_SENT");
+            WOLFSSL_MSG("connect state: CLIENT_HELLO_SENT");
             FALL_THROUGH;
 
         case CLIENT_HELLO_SENT :

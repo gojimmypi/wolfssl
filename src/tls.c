@@ -24,6 +24,7 @@
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
+
 #include <wolfssl/wolfcrypt/settings.h>
 
 #ifndef WOLFCRYPT_ONLY

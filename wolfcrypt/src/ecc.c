@@ -5807,7 +5807,7 @@ static int _ecc_make_key_ex(WC_RNG* rng, int keysize, ecc_key* key,
             err = wc_ecc_curve_load(key->dp, &curve, ECC_CURVE_FIELD_ALL);
         }
         else {
-            WOLFSSL_MSG("ALLOC_CURVE_SPECS  failed");
+            WOLFSSL_MSG("ALLOC_CURVE_SPECS failed");
         }
 
         /* generate k */

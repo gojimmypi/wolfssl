@@ -1426,7 +1426,7 @@ int wolfSSL_CryptHwMutexUnLock(void)
         return iReturn;
     }
 
-int wc_FreeMutex(wolfSSL_Mutex* m)
+    int wc_FreeMutex(wolfSSL_Mutex* m)
     {
         vSemaphoreDelete( *m );
         return 0;
