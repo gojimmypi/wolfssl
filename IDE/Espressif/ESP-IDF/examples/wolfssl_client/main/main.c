@@ -120,9 +120,7 @@ void my_atmel_free(int slotId)
 #endif /* CUSTOM_SLOT_ALLOCATION                                       */
 #endif /* WOLFSSL_ESPWROOM32SE && HAVE_PK_CALLBACK && WOLFSSL_ATECC508A */
 
-
-
-/* for FreeRTOS */
+/* Entry for FreeRTOS */
 void app_main(void)
 {
     int stack_start = 0;
@@ -143,26 +141,32 @@ void app_main(void)
     ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
 #endif
 
-#ifndef SINGLE_THREADED
-
-#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+#ifdef SINGLE_THREADED
+    ESP_LOGI(TAG, "Single threaded");
+#else
     ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE,
-                   (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
+             (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
 
-    /* Returns the high water mark of the stack associated with xTask. That is,
-     * the minimum free stack space there has been (in bytes not words, unlike
-     * vanilla FreeRTOS) since the task started. The smaller the returned
-     * number the closer the task has come to overflowing its stack.
-     * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
-     */
-    stack_start = uxTaskGetStackHighWaterMark(NULL);
-#ifdef ESP_SDK_MEM_LIB_VERSION
-    sdk_var_whereis("stack_start", &stack_start);
-#endif
-    ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
-#endif
-#endif
+    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    {
+        /* Returns the high water mark of the stack associated with xTask. That is,
+         * the minimum free stack space there has been (in bytes not words, unlike
+         * vanilla FreeRTOS) since the task started. The smaller the returned
+         * number the closer the task has come to overflowing its stack.
+         * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+         */
+        stack_start = uxTaskGetStackHighWaterMark(NULL);
+        #ifdef ESP_SDK_MEM_LIB_VERSION
+        {
+            sdk_var_whereis("stack_start", &stack_start);
+        }
+        #endif
+
+        ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
+    }
+    #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
+#endif /* SINGLE_THREADED */
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
@@ -201,18 +205,23 @@ void app_main(void)
 
     /* Initialize NVS */
     ret = nvs_flash_init();
-#if defined(CONFIG_IDF_TARGET_ESP8266)
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
+    #if defined(CONFIG_IDF_TARGET_ESP8266)
+    {
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
     }
-#else
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
+    #else
+    {
+        /* Non-ESP8266 initialization is slightly different */
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+            ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
     }
-#endif
+    #endif /* else not CONFIG_IDF_TARGET_ESP8266 */
     ESP_ERROR_CHECK(ret);
 
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -227,8 +236,8 @@ void app_main(void)
             ESP_LOGI(TAG, "Trying WiFi again...");
             ret = wifi_init_sta();
         }
-    #endif
-#endif
+    #endif /* else not CONFIG_IDF_TARGET_ESP32H2 */
+#endif /* else FOUND_PROTOCOL_EXAMPLES_DIR not found */
 
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
@@ -240,20 +249,6 @@ void app_main(void)
         esp_show_current_datetime();
     }
 
-    /* HWM is maximum amount of stack space that has been unused, in bytes
-     * not words (unlike vanilla freeRTOS). */
-#ifndef SINGLE_THREADED
-
-#endif
-
-#ifndef SINGLE_THREADED
-    ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
-                   CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                   - (uxTaskGetStackHighWaterMark(NULL))
-            );
-    ESP_LOGI(TAG, "Starting TLS Client task ...\n");
-#endif
-
 #if defined(SINGLE_THREADED)
     /* just call the task */
     tls_smp_client_task((void*)NULL);
@@ -263,7 +258,16 @@ void app_main(void)
     args[0].loops = 10;
     args[0].port = 11111;
 
-    int this_heap = esp_get_free_heap_size();
+    /* HWM is maximum amount of stack space that has been unused, in bytes
+     * not words (unlike vanilla freeRTOS). */
+    int this_heap;
+    this_heap = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                   - (uxTaskGetStackHighWaterMark(NULL))
+            );
+    ESP_LOGI(TAG, "Starting TLS Client task ...\n");
+
     ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d",
                   &this_heap, this_heap);
     tls_smp_client_init(args);
@@ -278,25 +282,24 @@ void app_main(void)
 */
 #endif
 
-#ifndef SINGLE_THREADED
-
+    /* Done */
+#ifdef SINGLE_THREADED
+    ESP_LOGV(TAG, "\n\nDone!\n\n");
+    while (1);
+#else
     ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
     vTaskDelete(NULL);
     /* done */
     while (1) {
         ESP_LOGV(TAG, "\n\nLoop...\n\n");
-#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
         ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                         - (uxTaskGetStackHighWaterMark(NULL) ));
-#endif
+    #endif
         vTaskDelay(60000);
     } /* done while */
-
-#else
-        ESP_LOGV(TAG, "\n\nDone!\n\n");
-        while (1);
-#endif
+#endif /* else not SINGLE_THREADED */
 
 } /* app_main */
