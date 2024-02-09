@@ -175,13 +175,13 @@ int probably_valid_time_string(const char* str)
 int set_time_from_string(const char* time_buffer)
 {
     /* expecting github default formatting: 'Thu Aug 31 12:41:45 2023 -0700' */
+    char offset[28]; /* large arrays, just in case there's still bad data */
+    char day_str[28];
+    char month_str[28];
     const char *format = "%3s %3s %d %d:%d:%d %d %s";
     struct tm this_timeinfo;
     struct timeval now;
     time_t interim_time;
-    char offset[28]; /* large arrays, just in case there's still bad data */
-    char day_str[28];
-    char month_str[28];
     int day, year, hour, minute, second;
     int quote_offset = 0;
     int ret = 0;
@@ -224,8 +224,9 @@ int set_time_from_string(const char* time_buffer)
             ESP_LOGI(TAG, "Time updated to %s", time_buffer);
         }
         else {
-            ESP_LOGE(TAG, "Failed to convert \"%s\" to a tm date.", time_buffer);
-            ESP_LOGI(TAG, "Trying fixed date that was hard-coded.");
+            ESP_LOGE(TAG, "Failed to convert \"%s\" to a tm date.",
+                           time_buffer);
+            ESP_LOGI(TAG, "Trying fixed date that was hard-coded....");
             set_fixed_default_time();
             ret = ESP_FAIL;
         }

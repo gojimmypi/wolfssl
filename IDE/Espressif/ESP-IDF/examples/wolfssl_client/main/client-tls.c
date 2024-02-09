@@ -18,7 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-
 #include "client-tls.h"
 
 /* Espressif FreeRTOS */
@@ -27,6 +26,9 @@
     #include <freertos/task.h>
     #include <freertos/event_groups.h>
 #endif
+
+/* Espressif */
+#include <esp_log.h>
 
 /* socket includes */
 #include <lwip/netdb.h>
@@ -62,7 +64,7 @@
  *  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3        -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
  *
  **/
-static const char* const TAG = "client-tls";
+#define TAG "client-tls"
 
 #if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
@@ -239,29 +241,29 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
  *
  * reference code for SM Ciphers:
  *
-        #if defined(HAVE_AESGCM) && !defined(NO_DH)
-            #ifdef WOLFSSL_TLS13
-                defaultCipherList = "TLS13-AES128-GCM-SHA256"
-                #ifndef WOLFSSL_NO_TLS12
-                                    ":DHE-PSK-AES128-GCM-SHA256"
-                #endif
-                ;
-            #else
-                defaultCipherList = "DHE-PSK-AES128-GCM-SHA256";
+    #if defined(HAVE_AESGCM) && !defined(NO_DH)
+        #ifdef WOLFSSL_TLS13
+            defaultCipherList = "TLS13-AES128-GCM-SHA256"
+            #ifndef WOLFSSL_NO_TLS12
+                                ":DHE-PSK-AES128-GCM-SHA256"
             #endif
-        #elif defined(HAVE_AESGCM) && defined(WOLFSSL_TLS13)
-                defaultCipherList = "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
-                #ifndef WOLFSSL_NO_TLS12
-                                    ":PSK-AES128-GCM-SHA256"
-                #endif
-                ;
-        #elif defined(HAVE_NULL_CIPHER)
-                defaultCipherList = "PSK-NULL-SHA256";
-        #elif !defined(NO_AES_CBC)
-                defaultCipherList = "PSK-AES128-CBC-SHA256";
+            ;
         #else
-                defaultCipherList = "PSK-AES128-GCM-SHA256";
+            defaultCipherList = "DHE-PSK-AES128-GCM-SHA256";
         #endif
+    #elif defined(HAVE_AESGCM) && defined(WOLFSSL_TLS13)
+            defaultCipherList = "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
+            #ifndef WOLFSSL_NO_TLS12
+                                ":PSK-AES128-GCM-SHA256"
+            #endif
+            ;
+    #elif defined(HAVE_NULL_CIPHER)
+            defaultCipherList = "PSK-NULL-SHA256";
+    #elif !defined(NO_AES_CBC)
+            defaultCipherList = "PSK-AES128-CBC-SHA256";
+    #else
+            defaultCipherList = "PSK-AES128-GCM-SHA256";
+    #endif
 */
 
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
@@ -269,16 +271,16 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+                       WOLFSSL_ESP32_CIPHER_SUITE);
     }
 #endif
 
 #ifdef DEBUG_WOLFSSL
     ShowCiphers(NULL);
-    ESP_LOGI(TAG,
-             "Stack used: %d\n",
-             CONFIG_ESP_MAIN_TASK_STACK_SIZE
-             - uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack used: %d\n",
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                   - uxTaskGetStackHighWaterMark(NULL));
 #endif
 
 /* see user_settings PROJECT_DH for HAVE_DH and HAVE_FFDHE_2048 */
@@ -303,7 +305,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
                                          CTX_CLIENT_CERT_SIZE,
                                          CTX_CLIENT_CERT_TYPE);
         if (ret_i != SSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to load chain %d, please check the file.\n", ret_i);
+            ESP_LOGE(TAG, "ERROR: failed to load chain %d, "
+                          "please check the file.", ret_i);
         }
 
         /* Load client certificates into WOLFSSL_CTX */
@@ -440,7 +443,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         printf("%s\n", buff);
         }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL. Error: %d\n", ret_i);
+        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL. "
+                      "Error: %d\n", ret_i);
     }
 #ifdef DEBUG_WOLFSSL
     ShowCiphers(ssl);

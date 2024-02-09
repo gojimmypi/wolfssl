@@ -21,9 +21,6 @@
 #ifndef _WIFI_CONNECT_H_
 #define _WIFI_CONNECT_H_
 
-#include <esp_idf_version.h>
-#include <esp_log.h>
-
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
@@ -34,6 +31,10 @@
 #ifdef USE_WIFI_EXAMPLE
     #include "esp_netif.h"
     #include "protocol_examples_common.h" /* see project CMakeLists.txt */
+#endif
+
+#ifdef OS_WINDOWS
+    // #error "OS_WINDOWS"
 #endif
 
 /**
@@ -48,14 +49,34 @@
  * file my_private_config.h should be excluded from git updates */
 #define  USE_MY_PRIVATE_CONFIG
 
+/* Note that IntelliSense may not work properly in the next section for the
+ * Espressif SDK 3.4 on the ESP8266. Macros should still be defined.
+ * See the project-level Makefile. Example found in:
+ * https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template
+ */
 #ifdef  USE_MY_PRIVATE_CONFIG
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
+        #define WOLFSSL_CMAKE
+        #include "/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_WINDOWS)
+        #define WOLFSSL_MAKE
         #include "/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_WSL)
+        #define WOLFSSL_CMAKE
+        #include "/mnt/c/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_WSL)
+        #define WOLFSSL_MAKE
         #include "/mnt/c/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_LINUX)
+        #define WOLFSSL_CMAKE
+        #include "~/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_LINUX)
+        #define WOLFSSL_MAKE
         #include "~/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
+        #include "~/Documents/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_APPLE)
+        #define WOLFSSL_MAKE
         #include "~/Documents/my_private_config.h"
     #elif defined(OS_WINDOWS)
         #include "/workspace/my_private_config.h"

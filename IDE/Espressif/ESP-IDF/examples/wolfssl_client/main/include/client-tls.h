@@ -41,14 +41,14 @@
 #endif
 
 #define TLS_SMP_CLIENT_TASK_NAME        "tls_client_example"
-//#define TLS_SMP_CLIENT_TASK_BYTES       (26 * 1024)
-// #define TLS_SMP_CLIENT_TASK_BYTES       (20 * 1024) /* leave handshake fail -125*/
 
+/* Reminder: Vanilla FreeRTOS is words, Espressif is bytes. */
 #if defined(WOLFSSL_ESP8266)
-    #define TLS_SMP_CLIENT_TASK_BYTES       (6 * 1024)
+    #define TLS_SMP_CLIENT_TASK_BYTES (6 * 1024)
 #else
     #define TLS_SMP_CLIENT_TASK_BYTES (8 * 1024)
 #endif
+
 #define TLS_SMP_CLIENT_TASK_PRIORITY    8
 
 #if defined(SINGLE_THREADED)

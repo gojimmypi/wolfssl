@@ -264,7 +264,8 @@ void app_main(void)
     args[0].port = 11111;
 
     int this_heap = esp_get_free_heap_size();
-    ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d", &this_heap, this_heap);
+    ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d",
+                  &this_heap, this_heap);
     tls_smp_client_init(args);
 /* optional additional client threads
     tls_smp_client_init(args);

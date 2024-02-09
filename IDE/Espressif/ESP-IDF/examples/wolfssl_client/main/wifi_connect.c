@@ -18,13 +18,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
- #include "wifi_connect.h"
+#include "wifi_connect.h"
 
+/* FreeRTOS */
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
-#include <esp_wifi.h>
+
+/* Espressif */
 #include <esp_log.h>
+#include <esp_idf_version.h>
+#include <esp_wifi.h>
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
