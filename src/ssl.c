@@ -1465,6 +1465,7 @@ int wolfSSL_CTX_new_rng(WOLFSSL_CTX* ctx)
 }
 #endif
 
+
 WOLFSSL_ABI
 WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
 {
@@ -1475,34 +1476,33 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
 
     if (ctx == NULL) {
         WOLFSSL_MSG("wolfSSL_new ctx is null");
-        return ssl;
+        return NULL;
     }
 
     ssl = (WOLFSSL*) XMALLOC(sizeof(WOLFSSL), ctx->heap, DYNAMIC_TYPE_SSL);
-    if (ssl) {
+
+    if (ssl == NULL) {
+        WOLFSSL_MSG_EX("ssl xmalloc failed to allocate %d bytes",
+                        (int)sizeof(WOLFSSL));
+    }
+    else {
         ret = InitSSL(ssl, ctx, 0);
         if (ret < 0) {
-            WOLFSSL_MSG_EX("wolfSSL_new failed during InitSSL. ret = %d", ret);
+            WOLFSSL_MSG_EX("wolfSSL_new failed during InitSSL. err = %d", ret);
             FreeSSL(ssl, ctx->heap);
-            ssl = 0;
+            ssl = NULL;
+        }
+        else if (ret == 0) {
+            WOLFSSL_MSG("wolfSSL_new InitSSL success");
         }
         else {
-            if (ret == 0) {
-                WOLFSSL_MSG("wolfSSL_new InitSSL success");
-            }
-            else {
-                /* Only success (0) or negative values should ever be seen. */
-                WOLFSSL_MSG_EX("WARNING: wolfSSL_new unexpected InitSSL return"
-                               " value = %d", ret);
-            }
-        } /* if InitSSL check */
+            /* Only success (0) or negative values should ever be seen. */
+            WOLFSSL_MSG_EX("WARNING: wolfSSL_new unexpected InitSSL return"
+                           " value = %d", ret);
+        } /* InitSSL check */
     } /* ssl XMALLOC success */
-    else {
-        WOLFSSL_MSG_EX("ssl xmalloc failed to allocate %d bytes",
-                       (int)sizeof(WOLFSSL));
-    } /* if ssl check */
 
-    WOLFSSL_LEAVE("wolfSSL_new", ret);
+    WOLFSSL_LEAVE("wolfSSL_new InitSSL =", ret);
     (void)ret;
 
     return ssl;
@@ -1515,7 +1515,7 @@ void wolfSSL_free(WOLFSSL* ssl)
     WOLFSSL_ENTER("wolfSSL_free");
 
     if (ssl) {
-        WOLFSSL_MSG_EX("Free SSL: %0x\n", (int)ssl);
+        WOLFSSL_MSG_EX("Free SSL: %p", (uintptr_t)ssl);
         FreeSSL(ssl, ssl->ctx->heap);
     }
     else {
@@ -11930,7 +11930,7 @@ static int wolfSSL_parse_cipher_list(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 
     /* list contains ciphers either only for TLS 1.3 or <= TLS 1.2 */
     if (suites->suiteSz == 0) {
-        WOLFSSL_MSG("\n\nWarning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
+        WOLFSSL_MSG("Warning suites->suiteSz = 0 set to WOLFSSL_MAX_SUITE_SZ");
         suites->suiteSz = WOLFSSL_MAX_SUITE_SZ;
     }
 #ifdef WOLFSSL_SMALL_STACK
@@ -12625,12 +12625,12 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
     #else
         #ifdef WOLFSSL_TLS13
         if (ssl->options.tls1_3) {
-            WOLFSSL_MSG("TLS 1.3!\n");
+            WOLFSSL_MSG("TLS 1.3");
             return wolfSSL_connect_TLSv13(ssl);
         }
         #endif
 
-        WOLFSSL_MSG(">> NOT TLS 1.3!\n");
+        WOLFSSL_MSG("TLS 1.2 or lower");
         WOLFSSL_ENTER("wolfSSL_connect");
 
         /* make sure this wolfSSL object has arrays and rng setup. Protects
@@ -12748,9 +12748,9 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
                     neededState = SERVER_HELLOVERIFYREQUEST_COMPLETE;
             #endif
             /* get response */
-            WOLFSSL_MSG("ssl.c ssl->options.serverState < neededState");
+            WOLFSSL_MSG("Server state up to needed state.");
             while (ssl->options.serverState < neededState) {
-                WOLFSSL_MSG("while (ssl->options.serverState < neededState)...");
+                WOLFSSL_MSG("Progressing server state...");
                 #ifdef WOLFSSL_TLS13
                     if (ssl->options.tls1_3)
                         return wolfSSL_connect_TLSv13(ssl);
@@ -21448,20 +21448,20 @@ int wolfSSL_ERR_GET_LIB(unsigned long err)
 
     value = (err & 0xFFFFFFL);
     switch (value) {
-    case -SSL_R_HTTP_REQUEST: /* -306 */
+    case -SSL_R_HTTP_REQUEST:
         return ERR_LIB_SSL;
-    case -ASN_NO_PEM_HEADER: /* -162 */
-    case PEM_R_NO_START_LINE: /* (-MIN_CODE_E + 1) */
-    case PEM_R_PROBLEMS_GETTING_PASSWORD: /*  (-MIN_CODE_E + 2) */
-    case PEM_R_BAD_PASSWORD_READ: /* duplicate  (-MIN_CODE_E + 3) = 303 */
-    case PEM_R_BAD_DECRYPT: /* (-MIN_CODE_E + 4) */
+    case -ASN_NO_PEM_HEADER:
+    case PEM_R_NO_START_LINE:
+    case PEM_R_PROBLEMS_GETTING_PASSWORD:
+    case PEM_R_BAD_PASSWORD_READ:
+    case PEM_R_BAD_DECRYPT:
         return ERR_LIB_PEM;
-    case EVP_R_BAD_DECRYPT: /*  (-MIN_CODE_E + 100 + 1) */
-    case EVP_R_BN_DECODE_ERROR: /* (-MIN_CODE_E + 100 + 2) */
-    case EVP_R_DECODE_ERROR: /* (-MIN_CODE_E + 100 + 3) */
-    case EVP_R_PRIVATE_KEY_DECODE_ERROR: /*  (-MIN_CODE_E + 100 + 4) */
+    case EVP_R_BAD_DECRYPT:
+    case EVP_R_BN_DECODE_ERROR:
+    case EVP_R_DECODE_ERROR:
+    case EVP_R_PRIVATE_KEY_DECODE_ERROR:
         return ERR_LIB_EVP;
-    case ASN1_R_HEADER_TOO_LONG: /* (-MIN_CODE_E + 5) */
+    case ASN1_R_HEADER_TOO_LONG:
         return ERR_LIB_ASN1;
     default:
         return 0;

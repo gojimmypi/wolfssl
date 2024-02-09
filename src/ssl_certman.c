@@ -93,7 +93,8 @@ WOLFSSL_CERT_MANAGER* wolfSSL_CertManagerNew_ex(void* heap)
          WOLFSSL_MSG("heap param is null");
     }
     else {
-         WOLFSSL_MSG_EX("heap param = %p", heap);
+        /* Some systems may have heap in unexpected segments. (IRAM vs DRAM) */
+        WOLFSSL_MSG_EX("heap param = %p", heap);
     }
     WOLFSSL_MSG_EX("DYNAMIC_TYPE_CERT_MANAGER Allocating = %d bytes",
                     (word32)sizeof(WOLFSSL_CERT_MANAGER));
@@ -102,7 +103,8 @@ WOLFSSL_CERT_MANAGER* wolfSSL_CertManagerNew_ex(void* heap)
     cm = (WOLFSSL_CERT_MANAGER*)XMALLOC(sizeof(WOLFSSL_CERT_MANAGER), heap,
         DYNAMIC_TYPE_CERT_MANAGER);
     if (cm == NULL) {
-        WOLFSSL_MSG("XMALLOC failed");
+        WOLFSSL_MSG_EX("XMALLOC failed to allocate WOLFSSL_CERT_MANAGER %d "
+                    "bytes.", (int)sizeof(WOLFSSL_CERT_MANAGER));
         err = 1;
     }
     if (!err) {
@@ -584,6 +586,19 @@ void wolfSSL_CertManagerSetVerify(WOLFSSL_CERT_MANAGER* cm, VerifyCallback vc)
 }
 #endif /* NO_WOLFSSL_CM_VERIFY */
 
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+void wolfSSL_CertManagerSetUnknownExtCallback(WOLFSSL_CERT_MANAGER* cm,
+        wc_UnknownExtCallback cb)
+{
+    WOLFSSL_ENTER("wolfSSL_CertManagerSetUnknownExtCallback");
+    if (cm != NULL) {
+        cm->unknownExtCallback = cb;
+    }
+
+}
+#endif /* WOLFSSL_CUSTOM_OID && WOLFSSL_ASN_TEMPLATE && HAVE_OID_DECODING */
+
 #if !defined(NO_WOLFSSL_CLIENT) || !defined(WOLFSSL_NO_CLIENT_AUTH)
 /* Verify the certificate.
  *
@@ -651,6 +666,12 @@ int CM_VerifyBuffer_ex(WOLFSSL_CERT_MANAGER* cm, const unsigned char* buff,
     if (ret == 0) {
         /* Create a decoded certificate with DER buffer. */
         InitDecodedCert(cert, buff, (word32)sz, cm->heap);
+
+#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
+    && defined(HAVE_OID_DECODING)
+        if (cm->unknownExtCallback != NULL)
+            wc_SetUnknownExtCallback(cert, cm->unknownExtCallback);
+#endif
 
         /* Parse DER into decoded certificate fields and verify signature
          * against a known CA. */

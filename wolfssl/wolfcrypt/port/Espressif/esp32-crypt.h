@@ -629,6 +629,8 @@ extern "C"
             #include "rom/sha.h"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #endif
+    #elif defined(CONFIG_IDF_TARGET_ESP8266)
+        /* there's no HW to include */
     #else
         #include "rom/sha.h"
     #endif

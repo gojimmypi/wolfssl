@@ -1181,7 +1181,7 @@ static int InitSha256(wc_Sha256* sha256)
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
                     #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
-                        ESP_LOGI(TAG, "Sha256 Update process software");
+                        ESP_LOGI(TAG, "Sha256Update process software");
                     }
                     #endif
                     #ifdef WOLFSSL_HW_METRICS
@@ -1299,11 +1299,11 @@ static int InitSha256(wc_Sha256* sha256)
             #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGV(TAG, "Sha256 Update process software loop");
+                    ESP_LOGV(TAG, "Sha256Update process software loop");
                     ret = XTRANSFORM(sha256, (const byte*)local32);
                 }
                 else {
-                    ESP_LOGV(TAG, "Sha256 Update process hardware loop");
+                    ESP_LOGV(TAG, "Sha256Update process hardware loop");
                     esp_sha256_process(sha256, (const byte*)local32);
                 }
             #else

@@ -2688,7 +2688,7 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
 #endif
 
     if (INIT_MP_INT_SIZE(tmp, mp_bitsused(&key->n)) != MP_OKAY) {
-        WOLFSSL_MSG("INIT_MP_INT_SIZE != MP_OKAY");
+        WOLFSSL_MSG("INIT_MP_INT_SIZE failed.");
         ret = MP_INIT_E;
     }
 
@@ -2708,16 +2708,14 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
         case RSA_PRIVATE_DECRYPT:
         case RSA_PRIVATE_ENCRYPT:
         {
-            WOLFSSL_MSG("RsaFunctionPrivate...");
             ret = RsaFunctionPrivate(tmp, key, rng);
             break;
         }
     #endif
         case RSA_PUBLIC_ENCRYPT:
         case RSA_PUBLIC_DECRYPT:
-            WOLFSSL_MSG("Calling mp_exptmod_nct...");
             if (mp_exptmod_nct(tmp, &key->e, &key->n, tmp) != MP_OKAY) {
-                WOLFSSL_MSG("mp_exptmod_nct != MP_OKAY");
+                WOLFSSL_MSG("mp_exptmod_nct failed");
                 ret = MP_EXPTMOD_E;
             }
             break;
@@ -2730,7 +2728,7 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
     if (ret == 0) {
         WOLFSSL_MSG("mp_to_unsigned_bin_len_ct...");
         if (mp_to_unsigned_bin_len_ct(tmp, out, (int)*outLen) != MP_OKAY) {
-            WOLFSSL_MSG("mp_to_unsigned_bin_len_ct != MP_OKAY");
+            WOLFSSL_MSG("mp_to_unsigned_bin_len_ct failed");
             ret = MP_TO_E;
         }
     }
@@ -2768,7 +2766,7 @@ static int wc_RsaFunctionSync(const byte* in, word32 inLen, byte* out,
 
     ret = wc_RsaEncryptSize(key);
     if (ret < 0) {
-        WOLFSSL_MSG("bad wc_RsaEncryptSize");
+        WOLFSSL_MSG_EX("wc_RsaEncryptSize failed err = %d", ret);
         return ret;
     }
     keyLen = (word32)ret;
@@ -3163,7 +3161,7 @@ static int wc_RsaFunction_ex(const byte* in, word32 inLen, byte* out,
     !defined(NO_RSA_BOUNDS_CHECK)
     if (type == RSA_PRIVATE_DECRYPT &&
         key->state == RSA_STATE_DECRYPT_EXPTMOD) {
-        WOLFSSL_MSG("Calling RsaFunctionCheckIn...");
+
         ret = RsaFunctionCheckIn(in, inLen, key, checkSmallCt);
         if (ret != 0) {
             RESTORE_VECTOR_REGISTERS();
@@ -3187,7 +3185,6 @@ static int wc_RsaFunction_ex(const byte* in, word32 inLen, byte* out,
     else
 #endif
     {
-        WOLFSSL_MSG("Calling wc_RsaFunctionSync...");
         ret = wc_RsaFunctionSync(in, inLen, out, outLen, type, key, rng);
     }
 
