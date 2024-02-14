@@ -29,6 +29,11 @@ This library contains implementation for the random number generator.
     #include <config.h>
 #endif
 
+// TODO Remove:
+#define TAG "rng"
+#include <esp_log.h>
+
+
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #if defined(DEBUG_WOLFSSL)
@@ -361,8 +366,10 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
     #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
         ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
     #else
+        ESP_LOGI(TAG, "Sha256 init");
         ret = wc_InitSha256(sha);
-    #endif
+              // not this one      sha->ctx.mode = ESP32_SHA_SW;
+#endif
         if (ret != 0)
             break;
 #endif
@@ -386,6 +393,8 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
         if (ret == 0)
             ret = wc_Sha256Final(sha, digest);
 
+
+        ESP_LOGI(TAG, "RNG Sha256 final");
 #ifndef WOLFSSL_SMALL_STACK_CACHE
         wc_Sha256Free(sha);
 #endif
@@ -525,17 +534,42 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
 
     XMEMCPY(data, V, DRBG_SEED_LEN);
     for (i = 0; i < len; i++) {
+        ESP_LOGI(TAG, "RNG Sha256 init 2");
+
 #ifndef WOLFSSL_SMALL_STACK_CACHE
     #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
         ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
     #else
+        int this_force_sw = 0;
+//        if (esp_sha_hw_in_use()) {
+//            ESP_LOGW(TAG, "\n\nHW In use!");
+//            this_force_sw = 1;
+//        }
         ret = wc_InitSha256(sha);
+        if (ret != 0) {
+            ESP_LOGE(TAG, "wc_InitSha256 failed!");
+        }
+        if (this_force_sw) {
+            sha->ctx.mode = ESP32_SHA_SW; /* Hash_gen probably this one */
+            force_sw++;
+        }
     #endif
         if (ret == 0)
 #endif
             ret = wc_Sha256Update(sha, data, DRBG_SEED_LEN);
+        if (ret != 0) {
+            ESP_LOGE(TAG, "wc_Sha256Update failed!");
+        }
+
         if (ret == 0)
             ret = wc_Sha256Final(sha, digest);
+
+        if (ret != 0) {
+            ESP_LOGE(TAG, "wc_Sha256Final failed!");
+        }
+
+        ESP_LOGI(TAG, "RNG Sha256 final 2");
+
 #ifndef WOLFSSL_SMALL_STACK_CACHE
         wc_Sha256Free(sha);
 #endif
@@ -629,15 +663,39 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
         #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
             ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
         #else
+        ESP_LOGI(TAG, "RNG Sha256 init 3");
             ret = wc_InitSha256(sha);
+            if (ret != 0) {
+                ESP_LOGE(TAG, "wc_InitSha256 failed!");
+            }
+            if (force_sw) {
+                sha->ctx.mode = ESP32_SHA_SW; /* Hash_DRBG_Generate probably this one */
+                force_sw++;
+            }
+
         #endif
             if (ret == 0)
 #endif
                 ret = wc_Sha256Update(sha, &type, sizeof(type));
-            if (ret == 0)
+            if (ret != 0) {
+                ESP_LOGE(TAG, "wc_Sha256Update failed!");
+            }
+
+            if (ret == 0) {
                 ret = wc_Sha256Update(sha, drbg->V, sizeof(drbg->V));
-            if (ret == 0)
+            }
+            else {
+                ESP_LOGE(TAG, "wc_Sha256Update failed!");
+            }
+
+            if (ret == 0) {
                 ret = wc_Sha256Final(sha, digest);
+            }
+            else {
+                ESP_LOGE(TAG, "wc_Sha256Final failed!");
+            }
+
+            ESP_LOGI(TAG, "RNG Sha256 final 3");
 
 #ifndef WOLFSSL_SMALL_STACK_CACHE
             wc_Sha256Free(sha);

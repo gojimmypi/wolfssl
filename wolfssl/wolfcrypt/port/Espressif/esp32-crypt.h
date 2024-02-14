@@ -693,6 +693,7 @@ extern "C"
     WOLFSSL_LOCAL int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
 
     /* esp_sha_hw_islocked: returns 0 if not locked, otherwise owner address */
+    WOLFSSL_LOCAL int esp_sha_hw_in_use();
     WOLFSSL_LOCAL int esp_sha_hw_islocked(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_call_count();
     WOLFSSL_LOCAL int esp_sha_lock_count();
@@ -898,16 +899,6 @@ extern "C"
 }
 #endif
 
-/* Compatibility checks */
-#if defined(DEBUG_WOLFSSH) || defined(ESP_ENABLE_WOLFSSH) || \
-    defined(WOLFSSH_TERM)  || defined(WOLFSSH_TEST_SERVER)
-    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-        /* need to add this line to wolfssl component user_settings.h
-         * #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 */
-        #error "ESP32_CRYPT_HASH_SHA256 not supported on wolfSSL at this time"
-    #endif
-#endif /* SSH SHA256 HW check */
-
 #if defined(WOLFSSL_STACK_CHECK)
 
 int esp_sha_stack_check(WC_ESP32SHA* sha);
@@ -920,7 +911,7 @@ int esp_sha_stack_check(WC_ESP32SHA* sha);
     #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
         /* need to add this line to wolfssl component user_settings.h
          * #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 */
-        #error "ESP32_CRYPT_HASH_SHA256 not supported on wolfSSL at this time"
+  //      #error "ESP32_CRYPT_HASH_SHA256 not supported on wolfSSL at this time"
     #endif
 #endif /* SSH SHA256 HW check */
 

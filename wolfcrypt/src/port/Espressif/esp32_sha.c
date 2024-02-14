@@ -228,15 +228,17 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
     int ret = 0;
 
+    ESP_LOGI(TAG, "\n\nwcInit SHA256 for ctx %p\n\n", ctx);
+
     if (ctx == NULL) {
         ret = ESP_FAIL;
     }
-#if defined(WOLFSSL_STACK_CHECK)
     else {
+#if defined(WOLFSSL_STACK_CHECK)
         ctx->first_word = 0;
         ctx->last_word = 0;
-    }
 #endif
+    }
     CTX_STACK_CHECK(ctx);
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || \
@@ -360,6 +362,11 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 
         /* we'll keep track of which ctx initialized this */
         ctx->initializer = ctx;
+// TODO remove:
+if ((word32)ctx == 0x3ffd1544) {
+    ESP_LOGI(TAG, "Breadcrumb 1: 0x3ffd1544");
+}
+
         #ifdef ESP_MONITOR_HW_TASK_LOCK
         {
             /* Keep track of which freeRTOS task actually locks HW */
@@ -369,6 +376,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
         ctx->mode = ESP32_SHA_INIT;
     }
     else {
+        ESP_LOGI(TAG, "This esp_sha_init_ctx ctx mode: %d", ctx->mode);
         /* things may be more interesting when previously initialized */
         if (ctx->initializer == ctx) {
             /* We're likely re-using an existing object previously initialized.
@@ -376,7 +384,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             ** the same pointer value, but that's highly unlikely; We'd need
             ** to discard, then re-init to same memory location for a matching
             ** initializer. */
-            ESP_LOGV(TAG, "re-using existing WC_ESP32SHA ctx");
+            ESP_LOGI(TAG, "re-using existing WC_ESP32SHA ctx %p", ctx);
 
             /* we should never have an unexpected mode in a known ctx */
             switch (ctx->mode) {
@@ -391,6 +399,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
                         ESP_LOGW(TAG, "Warning: unable to unlock ctx mutex ");
                     }
                 #else
+                    /* Here we assume the locking task also does unlocking. */
                     esp_sha_hw_unlock(ctx);
                 #endif
                     ctx->mode = ESP32_SHA_INIT;
@@ -424,6 +433,23 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             ** May need to unlock HW, below. */
         } /* ctx->initializer == ctx */
         else {
+// TODO remove:
+if ((word32)ctx == 0x3ffd1544) {
+    ESP_LOGI(TAG, "Breadcrumb 2: 0x3ffd1544");
+}
+            if ((ctx->initializer >= (void*)0x3ff00000) &&
+                (ctx->initializer <= (void*)0x3ffFFFFF)) {
+                ESP_LOGW(TAG, "ctx initializer overwrite! from %0x to %0x",
+                               (word32)ctx->initializer,
+                               (word32)ctx
+                         );
+                    ESP_LOGI(TAG, "This ctx mode: %d", ctx->mode);
+            }
+            else {
+                ESP_LOGW(TAG, "ctx initializer overwrite! from garbage to %0x",
+                               (word32)ctx
+                         );
+            }
             /* We may end up here with either dirty memory
             ** or copied SHA ctx.
             **
@@ -431,10 +457,6 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             **
             ** In either case, initialize: */
             ctx->initializer = ctx; /* set a new address */
-            ESP_LOGW(TAG, "ctx initializer overwrite! from %0x to %0x",
-                           (word32)ctx->initializer,
-                           (word32)ctx
-                     );
             if (ctx->mode != ESP32_SHA_INIT) {
                 ESP_LOGW(TAG, "Warning: SHA CTX not in init mode as expected");
                 ctx->mode = ESP32_SHA_INIT;
@@ -1089,6 +1111,10 @@ int esp_sha_set_stray(WC_ESP32SHA* ctx)
     return ret;
 }
 
+int esp_sha_hw_in_use()
+{
+    return InUse;
+}
 /*
 ** return HW lock owner, otherwise zero if not locked.
 **
@@ -1100,7 +1126,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
     int ret = 0;
     CTX_STACK_CHECK(ctx);
 
-#ifdef WOLFSSL_DEBUG_MUTEX
+#ifdef WOLFSSL_DEBUG_MUTEX_disabled
     taskENTER_CRITICAL(&sha_crit_sect);
     {
         ret = (int)mutex_ctx_owner;
@@ -1146,7 +1172,7 @@ int esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 
 /*
  * The HW is typically unlocked when the SHA hash wc_Sha[nn]Final() is called.
- * However, in the case of TS connections, the in progress hash may at times be
+ * However, in the case of TLS connections the in-progress hash may at times be
  * abandoned. Thus this function should be called at free time. See internal.c
  */
 int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
@@ -1156,9 +1182,10 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
 
     ret = esp_sha_hw_islocked(ctx); /* get the owner of the current lock */
     if (ret == 0) {
-        /* no lock */
+        ESP_LOGI(TAG, "No unfinished lock to clean up for ctx %p.", ctx);
     }
     else {
+        ESP_LOGI(TAG, "Unfinished lock clean up: %p.", ctx);
         if (ret == (int)ctx) {
             /* found a match for this object */
             if (ret == (int)(ctx->initializer)) {
@@ -1194,6 +1221,10 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
         }
     }
     CTX_STACK_CHECK(ctx);
+    // ctx->mode = ESP32_SHA_SW;
+    if (ctx->mode != ESP32_SHA_INIT) {
+        ESP_LOGW(TAG, "esp_sha_release_unfinished_lock mode = %d", ctx->mode);
+    }
     return ret;
 }
 
@@ -1235,9 +1266,10 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         if (!InUse) {
             ctx->mode = ESP32_SHA_HW;
             InUse = 1;
+            ESP_LOGW(TAG, "\n\nHW in use\n\n"); ret = 0;
         }
         else {
-            ctx->mode = ESP32_SHA_SW;
+            ctx->mode = ESP32_SHA_SW; ret = 1;
         }
     }
     else {
@@ -1476,18 +1508,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     ESP_LOGV(TAG, "enter esp_sha_hw_unlock");
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-    defined(CONFIG_IDF_TARGET_ESP8684) || \
-    defined(CONFIG_IDF_TARGET_ESP32C3) || \
-    defined(CONFIG_IDF_TARGET_ESP32C6)
-    ets_sha_disable(); /* disable also resets active, ongoing hash */
-    ESP_LOGV(TAG, "ets_sha_disable in esp_sha_hw_unlock()");
-#else
-    /* Disable AES hardware */
-    // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
-    // a power saving feature that could be handled at a different level than per-calculation.
-    periph_module_disable(PERIPH_SHA_MODULE);
-#endif
     /* we'll keep track of our lock depth.
      * in case of unexpected results, all the periph_module_disable() calls
      * and periph_module_disable() need to be unwound.
@@ -1495,13 +1515,29 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
      * see ref_counts[periph] in file: periph_ctrl.c */
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
     /* TODO ESP_LOG */
-    printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA @ %0x\n",
-           __LINE__, ctx->lockDepth, (unsigned)ctx);
+    printf("2) esp_sha_hw_unlock Lock depth @ %d = %d for WC_ESP32SHA ctx @ %p\n",
+           __LINE__, ctx->lockDepth, ctx);
 #endif
+
+
     if (ctx->lockDepth > 0) {
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP32C3) || \
+        defined(CONFIG_IDF_TARGET_ESP32C6)
+        ets_sha_disable(); /* disable also resets active, ongoing hash */
+        ESP_LOGV(TAG, "ets_sha_disable in esp_sha_hw_unlock()");
+    #else
+        /* Disable AES hardware */
+        // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
+        // a power saving feature that could be handled at a different level than per-calculation.
+        ESP_LOGI(TAG, ">> Disable SHA module ctx %p;  for ctx->initializer %p", ctx, ctx->initializer);
+        periph_module_disable(PERIPH_SHA_MODULE);
+    #endif
         ctx->lockDepth--;
     }
     else {
+        ESP_LOGI(TAG, ">> Disable SHA module skipped for %p", ctx->initializer);
         ctx->lockDepth = 0;
     }
 
@@ -1513,7 +1549,8 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     if (0 == ctx->lockDepth) // should we only unlock if depth is 0?
     {
     #if defined(SINGLE_THREADED)
-        InUse = 0;
+           ESP_LOGW(TAG, "\n\nHW released, not in use\n\n");
+         InUse = 0;
     #else
         /* unlock HW engine for next use */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG

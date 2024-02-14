@@ -32,7 +32,7 @@
 #if defined(WOLFSSL_ESPIDF)
     #include <esp_log.h>
     #include <esp_system.h>
-    static char* TAG = "wc_port";
+    #define TAG "wc_port"
 #endif
 #ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>

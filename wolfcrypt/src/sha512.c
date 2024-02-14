@@ -546,7 +546,7 @@ int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)
     if (sha512->ctx.mode != ESP32_SHA_INIT) {
-        ESP_LOGV(TAG, "Set ctx mode from prior value: "
+        ESP_LOGV(TAG, "Set sha512 ctx mode to ESP32_SHA_INIT from prior value: "
                       "%d", sha512->ctx.mode);
     }
     /* We know this is a fresh, uninitialized item, so set to INIT */
@@ -1454,7 +1454,7 @@ int wc_InitSha384_ex(wc_Sha384* sha384, void* heap, int devId)
 #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)  && \
    !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384)
     if (sha384->ctx.mode != ESP32_SHA_INIT) {
-        ESP_LOGV(TAG, "Set ctx mode from prior value: "
+        ESP_LOGV(TAG, "Set sha512 ctx mode from prior value: "
                            "%d", sha384->ctx.mode);
     }
     /* We know this is a fresh, uninitialized item, so set to INIT */

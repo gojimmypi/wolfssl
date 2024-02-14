@@ -64,7 +64,7 @@
     static WC_MAYBE_UNUSED ssize_t max_relative_stack = -1;
 #endif
 #endif
-
+int force_sw = 0;
 const byte const_byte_array[] = "A+Gd\0\0\0";
 #define CBPTR_EXPECTED 'A'
 
