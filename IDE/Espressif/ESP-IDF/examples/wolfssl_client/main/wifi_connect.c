@@ -1,6 +1,6 @@
 /* wifi_connect.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -44,6 +44,7 @@
 
 #if defined(CONFIG_IDF_TARGET_ESP8266)
 #elif ESP_IDF_VERSION_MAJOR >= 5
+    /* example path set in cmake file */
 #elif ESP_IDF_VERSION_MAJOR >= 4
     #include "protocol_examples_common.h"
 #else
@@ -386,7 +387,8 @@ int wifi_init_sta(void)
 
 int wifi_show_ip(void)
 {
-    // TODO Causes panic: ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+    /* TODO Causes panic: ESP_LOGI(TAG, "got ip:" IPSTR,
+     * IP2STR(&event->ip_info.ip)); */
     return ESP_OK;
 }
 #endif

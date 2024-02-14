@@ -1,6 +1,6 @@
 /* client-tls.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#ifndef _SERVER_TLS_
-#define _SERVER_TLS_
+#ifndef _CLIENT_TLS_H_
+#define _CLIENT_TLS_H_
 
 /* Local project, auto-generated configuration */
 #include "sdkconfig.h"

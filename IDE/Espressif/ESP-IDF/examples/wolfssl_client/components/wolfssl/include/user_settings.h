@@ -1,6 +1,6 @@
 /* user_settings.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -18,6 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+/* Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.6.6-01 */
 
 /* This user_settings.h is for Espressif ESP-IDF */
 #include <sdkconfig.h>
@@ -214,10 +216,6 @@
  * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     #define WOLFSSL_ESP32
-//    #define NO_ESP32_CRYPT
-      #define NO_WOLFSSL_ESP32_CRYPT_HASH
-//    #define NO_WOLFSSL_ESP32_CRYPT_AES
-//    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* wolfSSL HW Acceleration supported on ESP32. Uncomment to disable: */
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
