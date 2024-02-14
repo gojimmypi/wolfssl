@@ -792,10 +792,7 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret = 0; /* zero = success */
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-       ESP_LOGI(TAG, "\n\nInit SHA256 for ctx %p\n\n", &(sha256->ctx));
-#endif
-       if (sha256 == NULL) {
+        if (sha256 == NULL) {
             return BAD_FUNC_ARG;
         }
 
@@ -833,9 +830,6 @@ static int InitSha256(wc_Sha256* sha256)
             return BAD_FUNC_ARG;
         }
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-        ESP_LOGI(TAG, "\n\nwcInit SHA256 ex %p\n\n", sha256);
-#endif
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         /* We know this is a fresh, uninitialized item, so set to INIT */
@@ -1118,9 +1112,6 @@ static int InitSha256(wc_Sha256* sha256)
         word32 blocksLen;
         byte* local;
 
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-        ESP_LOGI(TAG, "Sha256Update for ctx %p; mode = %d", &(sha256->ctx), sha256->ctx.mode);
-#endif
         if (sha256 == NULL || (data == NULL && len > 0)) {
             return BAD_FUNC_ARG;
         }
