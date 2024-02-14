@@ -1113,7 +1113,13 @@ int esp_sha_set_stray(WC_ESP32SHA* ctx)
 
 int esp_sha_hw_in_use()
 {
-    return InUse;
+    int ret;
+#ifdef SINGLE_THREADED
+    ret = InUse
+#else
+    ret = (sha_mutex != NULL);
+#endif
+    return ret;
 }
 /*
 ** return HW lock owner, otherwise zero if not locked.
