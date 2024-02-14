@@ -374,6 +374,9 @@
 
 #undef OPENSSL_EXTRA
 #define OPENSSL_EXTRA
+
+#undef HAVE_OID_DECODING
+#define HAVE_OID_DECODING
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
 
 /* ---------------------------------------------------------------------------
@@ -806,6 +809,9 @@
 
 
 #ifdef WOLFSSL_ARDUINO
+    /* Define WOLFSSL_USER_IO here to avoid check in internal.c */
+    #define WOLFSSL_USER_IO
+
     #define NO_WRITEV
     #define NO_WOLFSSL_DIR
     #define SINGLE_THREADED

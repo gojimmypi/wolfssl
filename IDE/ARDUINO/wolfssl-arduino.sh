@@ -216,62 +216,6 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
 #include <wolfssl/ssl.h>
 EOF
 
-
-# Creates user_settings file if one does not exist
-#     if [ ! -f ".${ROOT_SRC_DIR}/user_settings.h" ]; then
-#         cat > .${ROOT_SRC_DIR}/user_settings.h <<EOF
-# /* Generated wolfSSL user_settings.h file for Arduino */
-# #ifndef ARDUINO_USER_SETTINGS_H
-# #define ARDUINO_USER_SETTINGS_H
-#
-# /* Platform */
-# #define WOLFSSL_ARDUINO
-#
-# /* Math library (remove this to use normal math)*/
-#define USE_FAST_MATH
-#define TFM_NO_ASM
-#define NO_ASN_TIME
-#
-# /* When using Intel Galileo Uncomment the line below */
-# /* #define INTEL_GALILEO */
-#
-# /* RNG DEFAULT !!FOR TESTING ONLY!! */
-# /* comment out the error below to get started w/ bad entropy source
-#  * This will need fixed before distribution but is OK to test with */
-#error "needs solved, see: https://www.wolfssl.com/docs/porting-guide/"
-#define WOLFSSL_GENSEED_FORTEST
-
-#endif /* ARDUINO_USER_SETTINGS_H */
-# EOF
-#     fi
-
-#    cp .${WOLFCRYPT_HEADERS}/settings.h .${WOLFCRYPT_HEADERS}/settings.h.bak
-#    cat > .${WOLFCRYPT_HEADERS}/settings.h <<EOF
-# /*wolfSSL Generated ARDUINO settings */
-# #ifndef WOLFSSL_USER_SETTINGS
-#    #define WOLFSSL_USER_SETTINGS
-#endif /* WOLFSSL_USER_SETTINGS */
-#/*wolfSSL Generated ARDUINO settings: END */
-#
-#EOF
-#    cat .${WOLFCRYPT_HEADERS}/settings.h.bak >> .${WOLFCRYPT_HEADERS}/settings.h
-
-# Create `library.properties`
-# See https://arduino.github.io/arduino-cli/0.35/library-specification/#libraryproperties-file-format
-
-#     cat > .${ROOT_DIR}/library.properties <<EOF
-# name=wolfSSL
-# version=${WOLFSSL_VERSION}
-# author=wolfSSL inc
-# maintainer=wolfSSL inc <support@wolfssl.com>
-# sentence=A lightweight SSL/TLS library written in ANSI C and targeted for embedded, RTOS, and resource-constrained environments.
-# paragraph=Manual: https://www.wolfssl.com/documentation/manuals/wolfssl/index.html.
-# category=Communication
-# url=https://www.wolfssl.com/
-# architectures=*
-#
-# EOF
-
 else
     echo "ERROR: You must be in the IDE/ARDUINO directory to run this script"
     exit 1

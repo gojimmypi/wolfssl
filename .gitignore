@@ -323,6 +323,9 @@ wolfcrypt/src/port/intel/qat_test
 /IDE/ARDUINO/wolfSSL
 scripts/memtest.txt
 /IDE/ARDUINO/Arduino_README_prepend.md.tmp
+/IDE/ARDUINO/library.properties.tmp
+/IDE/ARDUINO/library.properties.tmp.backup
+/IDE/ARDUINO/PREPENDED_README.md
 
 # Doxygen generated files
 doc/doxygen_warnings
@@ -399,7 +402,7 @@ XXX-fips-test
 # Generated user_settings_asm.h.
 user_settings_asm.h
 
-# VisualGDB
+# VisualGD
 **/.visualgdb
 
 # Espressif sdk config default should be saved in sdkconfig.defaults
@@ -407,69 +410,15 @@ user_settings_asm.h
 /IDE/Espressif/**/sdkconfig
 /IDE/Espressif/**/sdkconfig.old
 
-# Espressif managed components to exclude:
-/IDE/Espressif/**/managed_components/**
-
-# Espressif managed component lock files to exclude.
-# "In general, it's ok to have it under version control, however, it ties
-# the solution to the exact version of ESP-IDF and will be ignored if an
-# example is built against another IDF version or for a different target.
-# So it's better to git ignore it for the examples."
-/IDE/Espressif/**/dependencies.lock
+# MPLAB
+/IDE/MPLABX16/wolfssl.X/dist/default/
+/IDE/MPLABX16/wolfssl.X/.generated_files
+/IDE/MPLABX16/wolfcrypt_test.X/dist/default/
+/IDE/MPLABX16/wolfcrypt_test.X/.generated_files
 
 # auto-created CMake backups
 **/CMakeLists.txt.old
-/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/oqs
 
-/IDE/Espressif/**/sdkconfig.old
-
-# any installed /include/user_settings.h is specific to an install, so exclude:
-/include/user_settings.h
-
-/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32s3.h.save
-/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.save
-/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/libs/user_settings_esp32.h.default
-/include.old
-/wolfssl/wolfcrypt/sha.h.WIP_FEB18
-/wolfcrypt/test/test.c.save
-/wolfcrypt/test/test.c.master
-/wolfcrypt/src/sha512.c.WIP_FEB18
-/wolfcrypt/src/sha512.c.Feb18
-/wolfcrypt/src/hash.c.WIP_FEB18
-/wolfcrypt/src/hash - Copy.c
-/wolfcrypt/src/evp.c.WIP_FEB18
-/wolfcrypt/src/evp - Copy.c
-/src/ssl.c.WIP_FEB18
-/include/user_settings.h.paul
-/wolfcrypt/src/port/Espressif/backup
-/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205/private
-/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.old
-/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205_new
-/IDE/Espressif/ESP-IDF5/examples/wolfssl_server_6205_old
-/wolfcrypt/src/port/Espressif/esp32_mp - WIP
-/examples/asn1/asn1
-/IDE/Espressif/component_test
-/IDE/Espressif/another_test
-
-
-# ESP Registry Files
-
-# Temporary wolfssl component install directories that are copied locally at install time
-/IDE/Espressif/wolfssl
-/IDE/Espressif/component-manager/wolfssl
-/IDE/Espressif/component-manager/wolfcrypt
-/IDE/Espressif/component-manager/src
-/IDE/Espressif/component-manager/dist
-
-# Exclude most of the example files that are copied at install time
-# from https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples
-/IDE/Espressif/component-manager/examples/**/*
-
-/IDE/Espressif/ESP-IDF/examples/wolfssl_test/components/cryptoauthlib
-
-# ignroe the local copy of DTLS source
-/dtls
-/examples/dtls
 # MagicCrypto (ARIA Cipher)
 MagicCrypto
 
@@ -481,10 +430,3 @@ MagicCrypto
 debian/changelog
 debian/control
 *.deb
-/mycerts
-/mycertsSM
-
-# Always include Espressif Makefile
-!**/Espressif/ESP-IDF/**/Makefile
-/IDE/ARDUINO/Arduino_README_prepend.md.tmp
-/IDE/Espressif/ESP-IDF/examples/z save

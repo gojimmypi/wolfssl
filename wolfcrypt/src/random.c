@@ -362,7 +362,7 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
         ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
     #else
         ret = wc_InitSha256(sha);
-#endif
+    #endif
         if (ret != 0)
             break;
 #endif
@@ -525,7 +525,6 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
 
     XMEMCPY(data, V, DRBG_SEED_LEN);
     for (i = 0; i < len; i++) {
-
 #ifndef WOLFSSL_SMALL_STACK_CACHE
     #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
         ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
@@ -537,7 +536,6 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
             ret = wc_Sha256Update(sha, data, DRBG_SEED_LEN);
         if (ret == 0)
             ret = wc_Sha256Final(sha, digest);
-
 #ifndef WOLFSSL_SMALL_STACK_CACHE
         wc_Sha256Free(sha);
 #endif
@@ -636,12 +634,11 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
             if (ret == 0)
 #endif
                 ret = wc_Sha256Update(sha, &type, sizeof(type));
-            if (ret == 0) {
+            if (ret == 0)
                 ret = wc_Sha256Update(sha, drbg->V, sizeof(drbg->V));
-            }
-            if (ret == 0) {
+            if (ret == 0)
                 ret = wc_Sha256Final(sha, digest);
-            }
+
 #ifndef WOLFSSL_SMALL_STACK_CACHE
             wc_Sha256Free(sha);
 #endif
@@ -3489,8 +3486,11 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             rand = trng_read_output_data(TRNG);
         #elif defined(__STM32__)
             /* TODO: confirm this is proper random number on Arduino STM32 */
+            #warning "Not yet tested on STM32 targets"
             rand = random();
         #else
+            /* TODO: Pull requests appreciated for new targets */
+            #warning "Not yet tested on this target"
             rand = random();
         #endif
             XMEMCPY(output, &rand, len);
