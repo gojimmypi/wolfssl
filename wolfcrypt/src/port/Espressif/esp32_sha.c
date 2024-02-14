@@ -1257,19 +1257,19 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 
     /* Init mutex
      *
-     * Note that even single thread mode may calculate hashes
-     * concurrently, so we still need to keep track of the
-     * engine being busy or not.
-     **/
+     * Note that even single thread mode may calculate separate hashes
+     * concurrently, so we still need to keep track of the engine being
+     * busy or not.
+     */
 #if defined(SINGLE_THREADED)
     if (ctx->mode == ESP32_SHA_INIT) {
         if (!InUse) {
             ctx->mode = ESP32_SHA_HW;
             InUse = 1;
-            ESP_LOGW(TAG, "\n\nHW in use\n\n"); ret = 0;
+            ESP_LOGW(TAG, "\n\nHW in use\n\n");
         }
         else {
-            ctx->mode = ESP32_SHA_SW; ret = 1;
+            ctx->mode = ESP32_SHA_SW;
         }
     }
     else {
@@ -1463,17 +1463,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     }
 #endif /* not defined(SINGLE_THREADED) */
 
-#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-    defined(CONFIG_IDF_TARGET_ESP8684) || \
-    defined(CONFIG_IDF_TARGET_ESP32C3) || \
-    defined(CONFIG_IDF_TARGET_ESP32C6)
-    {
-        ESP_LOGV(TAG, "ets_sha_enable for RISC-V");
-        ets_sha_enable();
-        ctx->mode = ESP32_SHA_HW;
-    }
-#else
-    if (ret == 0) {
+    if ((ret == 0) && (ctx->mode == ESP32_SHA_HW)) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         {
@@ -1482,14 +1472,29 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                    __LINE__, ctx->lockDepth, (unsigned)ctx);
         }
         #endif
-        periph_module_enable(PERIPH_SHA_MODULE);
-        ctx->mode = ESP32_SHA_HW;
+        #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+            defined(CONFIG_IDF_TARGET_ESP8684) || \
+            defined(CONFIG_IDF_TARGET_ESP32C3) || \
+            defined(CONFIG_IDF_TARGET_ESP32C6)
+        {
+            ESP_LOGV(TAG, "ets_sha_enable for RISC-V");
+            ets_sha_enable();
+        }
+        #else
+            ESP_LOGV(TAG, "ets_sha_enable for Xtensa");
+            periph_module_enable(PERIPH_SHA_MODULE);
+        #endif
     }
     else {
-        ESP_LOGW(TAG, ">>>> Other problem; Mode REVERT to ESP32_SHA_SW");
+        if (ret == 0) {
+            ESP_LOGW(TAG, "Normal SHA Software mode.");
+        }
+        else {
+            ESP_LOGW(TAG, "Warning; Unexpected Mode REVERT to ESP32_SHA_SW, "
+                          " err = %d", ret);
+        }
         ctx->mode = ESP32_SHA_SW;
     }
-#endif
     ESP_LOGV(TAG, "leave esp_sha_hw_lock");
     CTX_STACK_CHECK(ctx);
 
