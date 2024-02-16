@@ -101,8 +101,13 @@ int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex) {
  * call the ESP-IDF mutex lock; xSemaphoreTake
  * this is a general mutex locker, used for different mutex objects for
  * different HW acclerators or other single-use HW features.
+ *
+ * We should already have known if the resource is in use or not.
+ *
+ * Return 0 (ESP_OK) on success, otherwise BAD_MUTEX_E
  */
 int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
+    int ret;
     if (mutex == NULL) {
         WOLFSSL_ERROR_MSG("esp_CryptHwMutexLock called with null mutex");
         return BAD_MUTEX_E;
@@ -111,7 +116,16 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
 #ifdef SINGLE_THREADED
     return wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
 #else
-    return ((xSemaphoreTake(*mutex, block_time) == pdTRUE) ? 0 : BAD_MUTEX_E);
+    ret = xSemaphoreTake(*mutex, block_time);
+    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
+    if (ret == pdTRUE) {
+        ret = ESP_OK;
+    }
+    else {
+        ret = BAD_MUTEX_E;
+        ESP_LOGE(TAG, "xSemaphoreTake 0x%x failed = %d", (intptr_t)mutex, ret);
+    }
+    return ret;
 #endif
 }
 
@@ -120,6 +134,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
  *
  */
 int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
+    int ret;
     if (mutex == NULL) {
         WOLFSSL_ERROR_MSG("esp_CryptHwMutexLock called with null mutex");
         return BAD_MUTEX_E;
@@ -128,7 +143,18 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #ifdef SINGLE_THREADED
     return wc_UnLockMutex(mutex);
 #else
-    xSemaphoreGive(*mutex);
+    ESP_LOGI(TAG, ">> xSemaphoreGive ");
+    ret = xSemaphoreGive(*mutex);
+    if (ret == pdTRUE) {
+        ESP_LOGI(TAG, "Success: give mutex 0x%x",
+                       (intptr_t)mutex);
+        ret = ESP_OK;
+    }
+    else {
+        ESP_LOGW(TAG, "Failed to give mutex 0x%x err = %d ",
+                       (intptr_t)mutex, ret);
+        ret = ESP_FAIL;
+    }
     return ESP_OK;
 #endif
 }

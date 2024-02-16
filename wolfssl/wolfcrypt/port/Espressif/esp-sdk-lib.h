@@ -45,9 +45,12 @@ WOLFSSL_LOCAL esp_err_t esp_sdk_time_lib_init(void);
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_lib_init(void);
 
 /* Check for traps */
-#if !defined(NO_SESSION_CACHE) && !defined(MICRO_SESSION_CACHE) && \
-    !defined(SMALL_SESSION_CACHE)
-    #warning "Limited DRAM/IRAM on ESP8266. Check session cache settings"
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+    #if !defined(NO_SESSION_CACHE)    && \
+        !defined(MICRO_SESSION_CACHE) && \
+        !defined(SMALL_SESSION_CACHE)
+        #warning "Limited DRAM/IRAM on ESP8266. Check session cache settings"
+    #endif
 #endif
 
 #endif /* WOLFSSL_ESPIDF */

@@ -836,8 +836,8 @@ static int InitSha256(wc_Sha256* sha256)
         if (sha256->ctx.mode != ESP32_SHA_INIT) {
             ESP_LOGI(TAG, "Set sha256 ctx mode to ESP32_SHA_INIT from prior value: "
                                "%d", sha256->ctx.mode);
+            sha256->ctx.mode = ESP32_SHA_INIT;
         }
-        sha256->ctx.mode = ESP32_SHA_INIT;
     #endif
 
         return InitSha256(sha256);
@@ -1179,6 +1179,7 @@ static int InitSha256(wc_Sha256* sha256)
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
+                    ESP_LOGI(TAG, "Sha256Update process software");
                     #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
                         ESP_LOGI(TAG, "Sha256Update process software");
@@ -1194,18 +1195,20 @@ static int InitSha256(wc_Sha256* sha256)
                 }
                 else {
                     if (sha256->ctx.mode != ESP32_SHA_HW) {
-                         ESP_LOGW(TAG, "Sha256 Update process hardware unexpected mode");
+                         ESP_LOGW(TAG, "Sha256 Update process hardware "
+                                       "unexpected mode = %d", sha256->ctx.mode);
+                        sha256->ctx.mode = ESP32_SHA_HW; /* TODO we should not have to do this! */
                     }
                     #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
-                        ESP_LOGI(TAG, "Sha256 Update process hardware");
+                        ESP_LOGI(TAG, "Sha256Update process hardware");
                     }
                     #endif
                     esp_sha256_process(sha256, (const byte*)local);
                 }
             #else
                 /* Always SW */
-                WOLFSSL_MSG("Sha256 Update process fixed SW");
+                WOLFSSL_MSG("Sha256Update process fixed SW");
                 ret = XTRANSFORM(sha256, (const byte*)local);
             #endif
 
@@ -1368,9 +1371,7 @@ static int InitSha256(wc_Sha256* sha256)
 
         int ret;
         byte* local;
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-        ESP_LOGI(TAG, "Sha256Final for ctx %p, mode = %d", &(sha256->ctx), sha256->ctx.mode);
-#endif
+
         if (sha256 == NULL) {
             return BAD_FUNC_ARG;
         }
@@ -1397,7 +1398,8 @@ static int InitSha256(wc_Sha256* sha256)
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
             if (sha256->ctx.mode == ESP32_SHA_INIT) {
-                esp_sha_try_hw_lock(&sha256->ctx); /* TODO remove duplicate lock */
+                ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (1)");
+                esp_sha_try_hw_lock(&sha256->ctx); /* TODO remove duplicate lock? */
             }
         #endif
 
@@ -1427,6 +1429,7 @@ static int InitSha256(wc_Sha256* sha256)
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
             if (sha256->ctx.mode == ESP32_SHA_INIT) {
+                ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (2)");
                 esp_sha_try_hw_lock(&sha256->ctx);
             }
             if (sha256->ctx.mode == ESP32_SHA_SW) {
@@ -1454,7 +1457,8 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
-            esp_sha_try_hw_lock(&sha256->ctx); /* TODO aren't we already locked? A: no, not if sha update was small */
+             ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (3)");
+             esp_sha_try_hw_lock(&sha256->ctx); /* TODO aren't we already locked? A: no, not if sha update was small */
         }
     #endif
 
@@ -1532,6 +1536,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
+            ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (4)");
             esp_sha_try_hw_lock(&sha256->ctx); /* TODO already locked, no? */
         }
         /* depending on architecture and ctx.mode value
@@ -1542,10 +1547,12 @@ static int InitSha256(wc_Sha256* sha256)
         else {
             ret = esp_sha256_digest_process(sha256, 1); /* TODO Use TRUE */
         }
+        
+        ESP_LOGI(TAG, "SHA256Final NEW UNLOCK");
+        esp_sha_hw_unlock(&sha256->ctx);
     #else
         ret = XTRANSFORM(sha256, (const byte*)local);
     #endif
-
         return ret;
     }
 
@@ -2032,7 +2039,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
 #if defined(WOLFSSL_ESP32) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-    esp_sha_release_unfinished_lock(&(sha256->ctx));
+    esp_sha_release_unfinished_lock((WC_ESP32SHA*)&(sha256->ctx));
 #endif
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE

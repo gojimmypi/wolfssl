@@ -44,6 +44,18 @@
 #include <esp_types.h>
 #include <esp_log.h>
 
+#ifndef _INTPTR_T_DECLARED
+    #define intptr_t (void*)
+#endif
+
+#ifndef _UINTPTR_T_DECLARED
+    #define uintptr_t (void*)
+#endif
+
+#ifndef NULLPTR
+    #define NULLPTR ((uintptr_t)NULL)
+#endif
+
 #if ESP_IDF_VERSION_MAJOR >= 4
     #define WOLFSSL_ESPIDF_BLANKLINE_MESSAGE ""
 #else
@@ -652,10 +664,10 @@ extern "C"
     #if defined(WOLFSSL_STACK_CHECK)
         word32 first_word;
     #endif
-        /* pointer to object the initialized HW; to track copies */
-        void* initializer;
-#if !defined(SINGLE_THREADED) || defined(ESP_MONITOR_HW_TASK_LOCK)
-        void* task_owner;
+        /* Pointer to object that initialized HW, to track copies: */
+        uintptr_t initializer;
+#if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
+        TaskHandle_t task_owner;
 #endif
 
         /* an ESP32_MODE value; typically:
@@ -693,8 +705,10 @@ extern "C"
     WOLFSSL_LOCAL int esp_sha_hw_unlock(WC_ESP32SHA* ctx);
 
     /* esp_sha_hw_islocked: returns 0 if not locked, otherwise owner address */
+    WOLFSSL_LOCAL uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx);
+
+    /* esp_sha_hw_in_use returns 1 (true) if SHA HW in use, otherwise 0 */
     WOLFSSL_LOCAL int esp_sha_hw_in_use();
-    WOLFSSL_LOCAL int esp_sha_hw_islocked(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_call_count();
     WOLFSSL_LOCAL int esp_sha_lock_count();
     WOLFSSL_LOCAL int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
@@ -707,7 +721,7 @@ extern "C"
     WOLFSSL_LOCAL int esp_sha_process(struct wc_Sha* sha, const byte* data);
 
 #ifdef WOLFSSL_DEBUG_MUTEX
-    /* testing HW release in task that did not lock */
+    /* Testing HW release in task that did not lock: */
     extern WC_ESP32SHA* stray_ctx;
 #endif
 
