@@ -114,10 +114,10 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     }
 
 #ifdef SINGLE_THREADED
-    return wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
+    ret = wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
 #else
     ret = xSemaphoreTake(*mutex, block_time);
-    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
+    // ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
     if (ret == pdTRUE) {
         ret = ESP_OK;
     }
@@ -125,8 +125,8 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
         ret = BAD_MUTEX_E;
         ESP_LOGE(TAG, "xSemaphoreTake 0x%x failed = %d", (intptr_t)mutex, ret);
     }
-    return ret;
 #endif
+    return ret;
 }
 
 /*
@@ -143,19 +143,18 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #ifdef SINGLE_THREADED
     return wc_UnLockMutex(mutex);
 #else
-    ESP_LOGI(TAG, ">> xSemaphoreGive ");
+    // ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x count=", (intptr_t)mutex);
     ret = xSemaphoreGive(*mutex);
     if (ret == pdTRUE) {
-        ESP_LOGI(TAG, "Success: give mutex 0x%x",
-                       (intptr_t)mutex);
+        // ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)mutex);
         ret = ESP_OK;
     }
     else {
         ESP_LOGW(TAG, "Failed to give mutex 0x%x err = %d ",
-                       (intptr_t)mutex, ret);
+                        (intptr_t)mutex, ret);
         ret = ESP_FAIL;
     }
-    return ESP_OK;
+    return ret;
 #endif
 }
 #endif /* WOLFSSL_ESP32_CRYPT, etc. */
@@ -906,5 +905,47 @@ int esp_hw_show_metrics(void)
 #endif
     return ESP_OK;
 }
+
+int show_binary(byte* theVar, size_t dataSz) {
+    printf("*****************************************************\n");
+    word32 i;
+    for (i = 0; i < dataSz; i++)
+        printf("%02X", theVar[i]);
+    printf("\n");
+    printf("******************************************************\n");
+    return 0;
+}
+
+int hexToBinary(byte* toVar, const char* fromHexString, size_t szHexString ) {
+    int ret = 0;
+    // Calculate the actual binary length of the hex string
+    size_t byteLen = szHexString / 2;
+
+    if (toVar == NULL || fromHexString == NULL) {
+        ESP_LOGE("ssh", " error");
+        return -1;
+    }
+    if ((szHexString % 2 != 0)) {
+        ESP_LOGE("ssh", "fromHexString length not even!");
+    }
+
+    ESP_LOGW(TAG, "Replacing %d bytes at %x", byteLen, (word32)toVar);
+    memset(toVar, 0, byteLen);
+    // Iterate through the hex string and convert to binary
+    for (size_t i = 0; i < szHexString; i += 2) {
+        // Convert hex character to decimal
+        int decimalValue;
+        sscanf(&fromHexString[i], "%2x", &decimalValue);
+        size_t index = i / 2;
+     //  byte new_val =  (decimalValue & 0x0F) << ((i % 2) * 4);
+     //  ESP_LOGI("hex", "Current char = %d", toVar[index]);
+     //   ESP_LOGI("hex", "New val = %d", decimalValue);
+        toVar[index]  = decimalValue;
+    }
+
+    return ret;
+}
+
+
 
 #endif /* WOLFSSL_ESPIDF */

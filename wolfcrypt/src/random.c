@@ -1647,7 +1647,9 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
 
     ret = wc_RNG_HealthTestLocal(0, rng->heap, devId);
     if (ret != 0) {
+        #if defined(DEBUG_WOLFSSL)
         WOLFSSL_MSG_EX("wc_RNG_HealthTestLocal failed err = %d", ret);
+        #endif
         ret = DRBG_CONT_FAILURE;
     }
     else {
@@ -2206,21 +2208,27 @@ static int wc_RNG_HealthTestLocal(int reseed, void* heap, int devId)
         const byte* seedB = seedB_data;
         const byte* outputB = outputB_data;
 #endif
+#if defined(DEBUG_WOLFSSL)
         WOLFSSL_MSG_EX("RNG_HEALTH_TEST_CHECK_SIZE = %d", RNG_HEALTH_TEST_CHECK_SIZE);
         WOLFSSL_MSG_EX("sizeof(seedB_data)         = %d", (int)sizeof(outputB_data));
+#endif
         ret = wc_RNG_HealthTest_ex(0, NULL, 0,
                                    seedB, sizeof(seedB_data),
                                    NULL, 0,
                                    check, RNG_HEALTH_TEST_CHECK_SIZE,
                                    heap, devId);
         if (ret != 0) {
+            #if defined(DEBUG_WOLFSSL)
             WOLFSSL_MSG_EX("RNG_HealthTest failed: err = %d", ret);
+            #endif
         }
         else {
             ret = ConstantCompare(check, outputB,
                                 RNG_HEALTH_TEST_CHECK_SIZE);
             if (ret != 0) {
+                #if defined(DEBUG_WOLFSSL)
                 WOLFSSL_MSG_EX("Random ConstantCompare failed: err = %d", ret);
+                #endif
                 ret = -1;
             }
         }
