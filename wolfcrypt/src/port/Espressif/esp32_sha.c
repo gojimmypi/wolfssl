@@ -103,9 +103,12 @@ static const char* TAG = "wolf_hw_sha";
 #endif
 
 #ifdef WOLFSSL_DEBUG_MUTEX
-    #ifndef WOLFSSL_TEST_STRAY
+    #ifdef WOLFSSL_TEST_STRAY
+        #define WOLFSSL_TEST_STRAY_INJECT (esp_sha_call_count() == 10)
+    #else
         /* unless turned on, we won't be testing for strays */
         #define WOLFSSL_TEST_STRAY 0
+        #define WOLFSSL_TEST_STRAY_INJECT 0
     #endif
 #endif
 
@@ -1181,10 +1184,14 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
 
     ret = esp_sha_hw_islocked(ctx); /* get the owner of the current lock */
     if (ret == 0) {
-        // ESP_LOGI(TAG, "No unfinished lock to clean up for ctx %p.", ctx);
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+            ESP_LOGV(TAG, "No unfinished lock to clean up for ctx %p.", ctx);
+        #endif
     }
     else {
-        ESP_LOGI(TAG, "Unfinished lock clean up: %p.", ctx);
+        #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+            ESP_LOGI(TAG, "Unfinished lock clean up: %p.", ctx);
+        #endif
         if (ret == (uintptr_t)ctx) {
             /* found a match for this object */
             if (ret == (uintptr_t)(ctx->initializer)) {
@@ -1222,6 +1229,7 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
                 }
             }
             #else
+                /* Here we assume only 1 task, so no ESP32_SHA_FREED hint. */
                 ret = esp_sha_hw_unlock(ctx);
             #endif /* ESP_MONITOR_HW_TASK_LOCK */
         #endif /* SINGLE_THREADED or not */
@@ -1272,15 +1280,19 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
      */
 #if defined(SINGLE_THREADED)
     if (ctx->mode == ESP32_SHA_INIT) {
-        if (!InUse) {
-            /* Set single-threaded hardware mode */
-            ctx->mode = ESP32_SHA_HW;
-            InUse = 1;
-            ESP_LOGW(TAG, "\n\nHW in use\n\n");
-        }
-        else {
+        if (InUse) {
+            /* Revert to SW when HW is busy */
             ctx->mode = ESP32_SHA_SW;
         }
+        else {
+            /* Set single-threaded hardware mode. */
+            ctx->mode = ESP32_SHA_HW;
+            InUse = 1;
+            #ifdef WOLFSSL_DEBUG_MUTEX
+                ESP_LOGW(TAG, "\n\nHW in use\n\n");
+            #endif
+        }
+        ret = ESP_OK;
     }
     else {
         /* this should not happen */
@@ -1315,7 +1327,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             mutex_ctx_owner = NULLPTR; /* No one has the mutex yet.*/
             #ifdef WOLFSSL_DEBUG_MUTEX
             {
-                /* Take mutex for a test drive to ensure it works: */
+                /* Take mutex for a lock/unlock test drive to ensure it works: */
                 ret = esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0);
                 if (ret == ESP_OK) {
                     ret = esp_CryptHwMutexUnLock(&sha_mutex);
@@ -1328,7 +1340,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 }
             }
             #endif
-        } /* ret == 0*/
+        } /* ret == 0 for esp_CryptHwMutexInit */
         else {
             ESP_LOGE(TAG, "esp_CryptHwMutexInit sha_mutex failed.");
             #ifdef WOLFSSL_DEBUG_MUTEX
@@ -1415,9 +1427,10 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         #endif
 
         #ifdef WOLFSSL_DEBUG_MUTEX
-            if (esp_sha_call_count() == -1 && WOLFSSL_TEST_STRAY) {
-                /* Once we've locked 10 times here,
-                * we'll force a fallback to SW until other thread unlocks. */
+            if (WOLFSSL_TEST_STRAY_INJECT) {
+                ESP_LOGW(TAG, "Introducing SHA stray for testing");
+                /* Once we've locked [n] times here,
+                 * we'll force a fallback to SW until other thread unlocks. */
                 taskENTER_CRITICAL(&sha_crit_sect);
                 {
                     (void)stray_ctx;
@@ -1501,9 +1514,15 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                                esp_sha_mutex_ctx_owner());
             #endif
                 if (mutex_ctx_owner) {
-                    ESP_LOGW(TAG, "revert to SW since mutex_ctx_owner = %x",
-                                  mutex_ctx_owner);
+                #ifdef WOLFSSL_DEBUG_MUTEX
+                    ESP_LOGW(TAG, "revert to SW since mutex_ctx_owner = %x"
+                                    " but we are currenty ctx = %x",
+                                    mutex_ctx_owner, (intptr_t)ctx);
+                #endif
                     ctx->mode = ESP32_SHA_SW;
+                }
+                else {
+                    /* No ctx mutex owner, so hardware must be free. */
                 }
             }
             return ESP_OK; /* success, but revert to SW */
@@ -1517,7 +1536,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #endif /* not defined(SINGLE_THREADED) */
 
     // ESP_LOGI(TAG, "ctx->mode = %d", ctx->mode);
-    if ((ret == 0) && (ctx->mode == ESP32_SHA_HW)) {
+    if ((ret == ESP_OK) && (ctx->mode == ESP32_SHA_HW)) {
         ctx->lockDepth++; /* depth for THIS ctx (there could be others!) */
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         {
@@ -1540,13 +1559,16 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         #endif
     }
     else {
-        if (ret == 0) {
-            ESP_LOGW(TAG, "Normal SHA Software mode.");
-        }
-        else {
-            ESP_LOGW(TAG, "Warning; Unexpected Mode REVERT to ESP32_SHA_SW, "
-                          " err = %d", ret);
-        }
+        /* Set to SW */
+        #ifdef WOLFSSL_ESP32_CRYPT_DEBUG
+            if (ret == ESP_OK) {
+                ESP_LOGW(TAG, "Normal SHA Software fallback mode.");
+            }
+            else {
+                ESP_LOGW(TAG, "Warning: Unexpected Mode REVERT to ESP32_SHA_SW"
+                              ", err = %d", ret);
+            }
+        #endif
         ctx->mode = ESP32_SHA_SW;
     }
 
@@ -2170,7 +2192,9 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
      *  example:
      *    DPORT_SEQUENCE_REG_READ(address + i * 4);
      */
-         ESP_LOGW(TAG, "hw...");
+    #ifdef WOLFSSL_ESP32_CRYPT_DEBUG
+        ESP_LOGW(TAG, "SHA HW read...");
+    #endif
     esp_dport_access_read_buffer(
     #if ESP_IDF_VERSION_MAJOR >= 4
         (uint32_t*)(hash), /* the result will be found in hash upon exit */
