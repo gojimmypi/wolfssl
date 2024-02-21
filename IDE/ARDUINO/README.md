@@ -1,5 +1,12 @@
 # wolfSSL with Arduino
 
+See the [example sketches](./sketches/README.md):
+
+- [sketches/wolfssl_server](./sketches/wolfssl_server/README.md)
+= [sketches/wolfssl_client](./sketches/wolfssl_client/README.md)
+
+## Boards
+
 Many of the supported boards are natively built-in to the [Arduino IDE Board Manager](https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-board-manager/)
 and by adding [additional cores](https://docs.arduino.cc/learn/starting-guide/cores/) as needed.
 
@@ -28,7 +35,7 @@ directory and creates a stub header file called `wolfssl.h` inside that director
 
 ### Step 1:
 
-To configure wolfSSL with Arduino, enter one of the following commands
+To configure wolfSSL with Arduino, enter ONE of the following 4 commands
 from within the `wolfssl/IDE/ARDUINO` directory:
 
 1. `./wolfssl-arduino.sh`
