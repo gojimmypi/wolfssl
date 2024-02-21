@@ -126,8 +126,9 @@ static const char* TAG = "wolf_hw_sha";
     static unsigned long esp_byte_reversal_needed_ct = 0;
 #endif
 
-#if defined(ESP_MONITOR_HW_TASK_LOCK)
     static uintptr_t mutex_ctx_owner = NULLPTR;
+
+#if defined(ESP_MONITOR_HW_TASK_LOCK)
     #ifndef SINGLE_THREADED
         static TaskHandle_t mutex_ctx_task = NULL;
     #endif
@@ -370,6 +371,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
     CTX_STACK_CHECK(ctx);
 
+#ifdef USE_OLD_CODE
     if (ctx->initializer == NULLPTR) {
         ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx initializer");
 
@@ -551,7 +553,24 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             ctx->mode = ESP32_SHA_INIT;
             break;
     } /* switch (ctx->mode)  */
-
+#else
+    if ((uintptr_t)ctx == mutex_ctx_owner) {
+        ESP_LOGV(TAG, "Initializing current mutext owner!");
+//        #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
+//            if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
+//                esp_sha_hw_unlock(ctx);
+//            }
+//            else {
+//                ESP_LOGW(TAG, "Warning: unable to unlock ctx mutex ");
+//            }
+//        #else
+//            /* Here we assume the locking task also does unlocking. */
+//            esp_sha_hw_unlock(ctx);
+//        #endif
+        esp_sha_hw_unlock(ctx); // ctx->mode = ESP32_SHA_SW;
+    }
+    ctx->mode = ESP32_SHA_INIT;
+#endif
     /* reminder: always start isfirstblock = 1 (true) when using HW engine */
     /* we're always on the first block at init time (not zero-based!) */
     ctx->isfirstblock = true; /* TODO this is saved beyond object size */
@@ -615,7 +634,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         else {
             /* However NOT reverting to SW is not right.
             ** This should never happen. */
-            ESP_LOGW(TAG, "SHA Copy NOT set to SW");
+            ESP_LOGW(TAG, "SHA Copy NOT set to SW from %d", dst->ctx.mode);
         }
     } /* (src->ctx.mode == ESP32_SHA_HW */
     else { /* src not in HW mode, ok to copy. */
@@ -1419,9 +1438,13 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
          * TODO: allow for SHA interleave on chips that support it.
          */
 
-        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == 0) {
+        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == ESP_OK) {
             /* we've successfully locked */
+        #ifdef USE_OLD_CODE
             mutex_ctx_owner = ctx->initializer;
+        #else
+            mutex_ctx_owner = (uintptr_t)ctx;
+        #endif
         #ifdef ESP_MONITOR_HW_TASK_LOCK
             mutex_ctx_task = xTaskGetCurrentTaskHandle();
         #endif
@@ -1499,7 +1522,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         }
         else {
             /* When the lock is already in use: is it for this ctx? */
-            if ((uintptr_t)ctx->initializer == esp_sha_mutex_ctx_owner()) {
+            if ((uintptr_t)ctx == esp_sha_mutex_ctx_owner()) {
                 ctx->mode = ESP32_SHA_SW;
             }
             else {
@@ -1519,11 +1542,11 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                                     " but we are currenty ctx = %x",
                                     mutex_ctx_owner, (intptr_t)ctx);
                 #endif
-                    ctx->mode = ESP32_SHA_SW;
                 }
                 else {
                     /* No ctx mutex owner, so hardware must be free. */
                 }
+                ctx->mode = ESP32_SHA_SW;
             }
             return ESP_OK; /* success, but revert to SW */
         }

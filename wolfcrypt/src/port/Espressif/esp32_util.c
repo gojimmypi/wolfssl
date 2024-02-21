@@ -122,8 +122,8 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
         ret = ESP_OK;
     }
     else {
-        ret = BAD_MUTEX_E;
-        ESP_LOGE(TAG, "xSemaphoreTake 0x%x failed = %d", (intptr_t)mutex, ret);
+        ret = ESP_ERR_NOT_FINISHED;
+        ESP_LOGE(TAG, "xSemaphoreTake 0x%x not finished = %d", (intptr_t)mutex, ret);
     }
 #endif
     return ret;
