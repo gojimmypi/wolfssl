@@ -1171,7 +1171,14 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
     }
     #else
     {
-        ret = mutex_ctx_owner;
+        if (NULLPTR == mutex_ctx_owner) {
+            ESP_LOGV(TAG, "not esp_sha_hw_islocked");
+            ret = FALSE;
+        }
+        else {
+            ESP_LOGV(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
+            ret = TRUE;
+        }
     }
     #endif
     return ret;
