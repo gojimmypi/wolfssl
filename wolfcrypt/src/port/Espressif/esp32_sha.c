@@ -172,6 +172,10 @@ static const char* TAG = "wolf_hw_sha";
 ** The wolfCrypt functions for LITTLE_ENDIAN_ORDER typically
 ** reverse the byte order. Except when the hardware doesn't expect it.
 **
+** For SoC devices with no HW (Hardware Acceleration) support:
+**    ctx->sha_type will be SHA_INVALID
+**    ctx->mode     will be ESP32_SHA_SW
+**
 ** Returns 0 (FALSE) or 1 (TRUE); see wolfSSL types.h
 */
 int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
@@ -228,7 +232,11 @@ int esp_sha_need_byte_reversal(WC_ESP32SHA* ctx)
 ** Active HW states, such as from during a copy operation, are demoted to SW.
 ** For hash_type not available in HW, set SW mode.
 **
-** See esp_sha_init_ctx(ctx)
+** For ctx, mode will be
+**     ESP32_SHA_INIT  - For initialized, hardware-ready
+**     ESP32_SHA_SW    - Software only
+**
+** See esp_sha_init_ctx(ctx) for common initialization of ctx.
 */
 int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 {
@@ -239,15 +247,16 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 #endif
 
     if (ctx == NULL) {
-        ret = ESP_FAIL;
+        return ESP_FAIL;
     }
-    else {
+
 #if defined(WOLFSSL_STACK_CHECK)
-        ctx->first_word = 0;
-        ctx->last_word = 0;
+    ctx->first_word = 0;
+    ctx->last_word = 0;
 #endif
-    }
     CTX_STACK_CHECK(ctx);
+
+    ret = esp_sha_init_ctx(ctx);
 
 #if defined(CONFIG_IDF_TARGET_ESP32)   || \
     defined(CONFIG_IDF_TARGET_ESP32S2) || \
@@ -259,7 +268,6 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
         #ifndef NO_SHA
         case WC_HASH_TYPE_SHA:
             ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
-            ret = esp_sha_init_ctx(ctx);
             break;
         #endif
 
@@ -267,7 +275,6 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
         #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
             defined(CONFIG_IDF_TARGET_ESP32S3)
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
-            ret = esp_sha_init_ctx(ctx);
         #else
             /* Don't call init, always SW as there's no HW. */
             ctx->mode = ESP32_SHA_SW;
@@ -276,32 +283,27 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
 
         case WC_HASH_TYPE_SHA256:
             ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
-            ret = esp_sha_init_ctx(ctx);
             break;
 
     #if defined(CONFIG_IDF_TARGET_ESP32S2) || \
         defined(CONFIG_IDF_TARGET_ESP32S3)
         case  WC_HASH_TYPE_SHA384:
             ctx->mode = ESP32_SHA_SW;
-            ctx->sha_type = SHA2_384; /* Espressif type, but we won't use HW */
             break;
     #else
         case  WC_HASH_TYPE_SHA384:
             ctx->sha_type = SHA2_384; /* assign Espressif SHA HW type */
-            ret = esp_sha_init_ctx(ctx);
             break;
     #endif
 
         case WC_HASH_TYPE_SHA512:
             ctx->sha_type = SHA2_512; /* assign Espressif SHA HW type */
-            ret = esp_sha_init_ctx(ctx);
             break;
 
     #ifndef WOLFSSL_NOSHA512_224
         case WC_HASH_TYPE_SHA512_224:
             /* Don't call init, always SW as there's no HW. */
             ctx->mode = ESP32_SHA_SW;
-            ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
             break;
     #endif
 
@@ -309,14 +311,13 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
         case WC_HASH_TYPE_SHA512_256:
             /* Don't call init, always SW as there's no HW. */
             ctx->mode = ESP32_SHA_SW;
-            ctx->sha_type = SHA2_512; /* Espressif type, but we won't use HW */
             break;
     #endif
 
         default:
-           ret = esp_sha_init_ctx(ctx);
-           ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
-           break;
+            ctx->mode = ESP32_SHA_SW;
+            ESP_LOGW(TAG, "Unexpected hash_type in esp_sha_init");
+            break;
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
       defined(CONFIG_IDF_TARGET_ESP8684) || \
@@ -328,25 +329,25 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
         #ifndef NO_SHA
         case WC_HASH_TYPE_SHA:
-            ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
+            ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
             break;
         #endif
 
         case WC_HASH_TYPE_SHA224:
-            ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
+            ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             break;
 
         case WC_HASH_TYPE_SHA256:
-            ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
             ret = esp_sha_init_ctx(ctx);
+            ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
             break;
 
         default:
             /* We fall through to SW when there's no enabled HW, above. */
             ctx->mode = ESP32_SHA_SW;
-            ret = 0;
+            ret = ESP_OK;
             /* If there's no HW, the ctx reference should cause build error.
             ** The type should be gated away when there's no HW at all! */
             ctx->isfirstblock = true;
@@ -366,7 +367,7 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     return ret;
 }
 
-/* we'll call a common init as there's only 1 HW acceleration */
+/* we'll call a common init for non-chip-specific settings */
 int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
     CTX_STACK_CHECK(ctx);
@@ -571,6 +572,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     }
     ctx->mode = ESP32_SHA_INIT;
 #endif
+
+    ctx->sha_type = SHA_INVALID;
     /* reminder: always start isfirstblock = 1 (true) when using HW engine */
     /* we're always on the first block at init time (not zero-based!) */
     ctx->isfirstblock = true; /* TODO this is saved beyond object size */

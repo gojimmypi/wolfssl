@@ -141,7 +141,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     }
 
 #ifdef SINGLE_THREADED
-    return wc_UnLockMutex(mutex);
+    ret = wc_UnLockMutex(mutex);
 #else
     // ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x count=", (intptr_t)mutex);
     ret = xSemaphoreGive(*mutex);
@@ -154,8 +154,8 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
                         (intptr_t)mutex, ret);
         ret = ESP_FAIL;
     }
-    return ret;
 #endif
+    return ret;
 }
 #endif /* WOLFSSL_ESP32_CRYPT, etc. */
 
