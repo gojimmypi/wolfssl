@@ -468,6 +468,8 @@ static int devId = INVALID_DEVID;
 #define TEST_STRING    "Everyone gets Friday off."
 #define TEST_STRING_SZ 25
 
+static const char* active_wolfssl_test = "undefined";
+
 typedef struct testVector {
     const char*  input;
     const char*  output;
@@ -746,8 +748,11 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_eax_test(void);
         #define ERROR_OUT(err, eLabel) \
             do { \
                 ret = (err); \
+                ESP_LOGE(ESPIDF_TAG, "Failed: Error = %d during %s.", err, \
+                                     active_wolfssl_test); \
+                ESP_LOGI(ESPIDF_TAG, "Extended system info:"); \
                 esp_ShowExtendedSystemInfo(); \
-                ESP_LOGE(TAG, "ESP Error! ret = %d ", err); \
+                ESP_LOGW(ESPIDF_TAG, "Halt! WOLFSSL_ESPIDF_ERROR_PAUSE on."); \
                 while (1) { \
                     vTaskDelay(60000); \
                 } \
@@ -5405,7 +5410,15 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 
     testVector a, b, c, d;
     testVector test_sha[4];
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+    byte       i_hash[WC_SHA256_DIGEST_SIZE];
+    byte       i_hashcopy[WC_SHA256_DIGEST_SIZE];
+    testVector interleave_test_sha[4];
+    wc_Sha256  i_sha, i_shaCopy;
+#endif
+
     int times = sizeof(test_sha) / sizeof(struct testVector), i;
+    active_wolfssl_test = "sha256_test";
 
     a.input  = "";
     a.output = "\xe3\xb0\xc4\x42\x98\xfc\x1c\x14\x9a\xfb\xf4\xc8\x99\x6f\xb9"
@@ -5441,14 +5454,36 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
     test_sha[2] = c;
     test_sha[3] = d;
 
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+    interleave_test_sha[0] = a;
+    interleave_test_sha[1] = b;
+    interleave_test_sha[2] = c;
+    interleave_test_sha[3] = d;
+#endif
+
     ret = wc_InitSha256_ex(&sha, HEAP_HINT, devId);
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
+
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+    ret = wc_InitSha256_ex(&i_sha, HEAP_HINT, devId);
+    if (ret != 0)
+        return WC_TEST_RET_ENC_EC(ret);
+#endif
+
     ret = wc_InitSha256_ex(&shaCopy, HEAP_HINT, devId);
     if (ret != 0) {
         wc_Sha256Free(&sha);
         return WC_TEST_RET_ENC_EC(ret);
     }
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+    ret = wc_InitSha256_ex(&i_shaCopy, HEAP_HINT, devId);
+    if (ret != 0) {
+        wc_Sha256Free(&sha);
+        wc_Sha256Free(&i_sha);
+        return WC_TEST_RET_ENC_EC(ret);
+    }
+#endif
 
     for (i = 0; i < times; ++i) {
 #ifdef WOLFSSL_ESP32_CRYPT_HASH_SHA256_DEBUG
@@ -5461,20 +5496,49 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
         if (ret != 0) {
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        ret = wc_Sha256Update(&i_sha, (byte*)interleave_test_sha[i].input,
+            (word32)interleave_test_sha[i].inLen);
+        if (ret != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
+#endif
+
         ret = wc_Sha256GetHash(&sha, hashcopy);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        ret = wc_Sha256GetHash(&i_sha, i_hashcopy);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#endif
+
 #ifdef WOLFSSL_ESP32_CRYPT_HASH_SHA256_DEBUG
         ESP_LOG_BUFFER_HEXDUMP("hashcopy", hashcopy, WC_SHA256_DIGEST_SIZE, ESP_LOG_INFO);
 #endif
 
-        if (ret != 0)
-            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         ret = wc_Sha256Copy(&sha, &shaCopy);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        ret = wc_Sha256Copy(&i_sha, &i_shaCopy);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#endif
+
         ret = wc_Sha256Final(&sha, hash);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        ret = wc_Sha256Final(&i_sha, i_hash);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#endif
+
         wc_Sha256Free(&shaCopy);
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        wc_Sha256Free(&i_shaCopy);
+#endif
 
 #ifdef WOLFSSL_ESP32_CRYPT_HASH_SHA256_DEBUG
         ESP_LOGI("test", "\nhash, test_sha[i].output");
@@ -5490,6 +5554,20 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
          //   ESP_LOGE(TAG, "fail 2!");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+        if (XMEMCMP(i_hash, interleave_test_sha[i].output, WC_SHA256_DIGEST_SIZE) != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
+        if (XMEMCMP(i_hash, i_hashcopy, WC_SHA256_DIGEST_SIZE) != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
+        if (XMEMCMP(i_hash, test_sha[i].output, WC_SHA256_DIGEST_SIZE) != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
+        if (XMEMCMP(i_hash, hashcopy, WC_SHA256_DIGEST_SIZE) != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
+#endif
       //  vTaskDelay(100); /* TODO remove timing hack */
     }
 
@@ -5534,7 +5612,10 @@ exit:
 
     wc_Sha256Free(&sha);
     wc_Sha256Free(&shaCopy);
-
+#ifndef NO_WOLFSSL_SHA256_INTERLEAVE
+    wc_Sha256Free(&i_sha);
+    wc_Sha256Free(&i_shaCopy);
+#endif
     return ret;
 }
 #endif
