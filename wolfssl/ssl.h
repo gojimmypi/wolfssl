@@ -1132,6 +1132,10 @@ WOLFSSL_API int wolfSSL_CTX_up_ref(WOLFSSL_CTX* ctx);
 #ifdef OPENSSL_EXTRA
 WOLFSSL_API int wolfSSL_CTX_set_ecdh_auto(WOLFSSL_CTX* ctx, int onoff);
 WOLFSSL_API int wolfSSL_get_signature_nid(WOLFSSL* ssl, int* nid);
+WOLFSSL_API int wolfSSL_get_signature_type_nid(const WOLFSSL* ssl, int* nid);
+WOLFSSL_API int wolfSSL_get_peer_signature_nid(WOLFSSL* ssl, int* nid);
+WOLFSSL_API int wolfSSL_get_peer_signature_type_nid(const WOLFSSL* ssl,
+        int* nid);
 WOLFSSL_API int  wolfSSL_CTX_set1_sigalgs_list(WOLFSSL_CTX* ctx,
                                                const char* list);
 WOLFSSL_API int  wolfSSL_set1_sigalgs_list(WOLFSSL* ssl, const char* list);
@@ -3059,6 +3063,7 @@ WOLFSSL_API int wolfSSL_make_eap_keys(WOLFSSL* ssl, void* key, unsigned int len,
 #ifndef NO_CERTS
     /* SSL_CTX versions */
     WOLFSSL_API int wolfSSL_CTX_UnloadCAs(WOLFSSL_CTX* ctx);
+    WOLFSSL_API int wolfSSL_CTX_UnloadIntermediateCerts(WOLFSSL_CTX* ctx);
 #ifdef WOLFSSL_TRUST_PEER_CERT
     WOLFSSL_API int wolfSSL_CTX_Unload_trust_peers(WOLFSSL_CTX* ctx);
 #ifdef WOLFSSL_LOCAL_X509_STORE
@@ -3613,6 +3618,8 @@ WOLFSSL_API void wolfSSL_CTX_SetPerformTlsRecordProcessingCb(WOLFSSL_CTX* ctx,
         const unsigned char* buff, long sz, int format);
 
     WOLFSSL_API int wolfSSL_CertManagerUnloadCAs(WOLFSSL_CERT_MANAGER* cm);
+    WOLFSSL_API int wolfSSL_CertManagerUnloadIntermediateCerts(
+        WOLFSSL_CERT_MANAGER* cm);
 #ifdef WOLFSSL_TRUST_PEER_CERT
     WOLFSSL_API int wolfSSL_CertManagerUnload_trust_peers(
         WOLFSSL_CERT_MANAGER* cm);

@@ -2086,15 +2086,18 @@ int  wolfSSL_get_using_nonblock(WOLFSSL*);
     \brief This function writes sz bytes from the buffer, data, to the SSL
     connection, ssl. If necessary, wolfSSL_write() will negotiate an SSL/TLS
     session if the handshake has not already been performed yet by
-    wolfSSL_connect() or wolfSSL_accept(). wolfSSL_write() works with both
-    blocking and non-blocking I/O.  When the underlying I/O is non-blocking,
-    wolfSSL_write() will return when the underlying I/O could not satisfy the
-    needs of wolfSSL_write() to continue.  In this case, a call to
-    wolfSSL_get_error() will yield either SSL_ERROR_WANT_READ or
-    SSL_ERROR_WANT_WRITE.  The calling process must then repeat the call to
-    wolfSSL_write() when the underlying I/O is ready. If the underlying I/O
-    is blocking, wolfSSL_write() will only return once the buffer data of
-    size sz has been completely written or an error occurred.
+    wolfSSL_connect() or wolfSSL_accept(). When using (D)TLSv1.3 and early data
+    feature is compiled in, this function progresses the handshake only up to
+    the point when it is possible to send data. Next invokations of
+    wolfSSL_Connect()/wolfSSL_Accept()/wolfSSL_read() will complete the
+    handshake. wolfSSL_write() works with both blocking and non-blocking I/O.
+    When the underlying I/O is non-blocking, wolfSSL_write() will return when
+    the underlying I/O could not satisfy the needs of wolfSSL_write() to
+    continue.  In this case, a call to wolfSSL_get_error() will yield either
+    SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE.  The calling process must then
+    repeat the call to wolfSSL_write() when the underlying I/O is ready. If the
+    underlying I/O is blocking, wolfSSL_write() will only return once the buffer
+    data of size sz has been completely written or an error occurred.
 
     \return >0 the number of bytes written upon success.
     \return 0 will be returned upon failure.  Call wolfSSL_get_error() for
@@ -7596,17 +7599,48 @@ int wolfSSL_writev(WOLFSSL* ssl, const struct iovec* iov,
     WOLFSSL_METHOD method = wolfTLSv1_2_client_method();
     WOLFSSL_CTX* ctx = WOLFSSL_CTX_new(method);
     …
-    if(!wolfSSL_CTX_UnloadCAs(ctx)){
+    if(wolfSSL_CTX_UnloadCAs(ctx) != SSL_SUCCESS){
     	// The function did not unload CAs
     }
     \endcode
 
     \sa wolfSSL_CertManagerUnloadCAs
     \sa LockMutex
-    \sa FreeSignerTable
     \sa UnlockMutex
 */
 int wolfSSL_CTX_UnloadCAs(WOLFSSL_CTX*);
+
+
+/*!
+    \ingroup Setup
+
+    \brief This function unloads intermediate certificates added to the CA
+    signer list and frees them.
+
+    \return SSL_SUCCESS returned on successful execution of the function.
+    \return BAD_FUNC_ARG returned if the WOLFSSL_CTX struct is NULL or there
+    are otherwise unpermitted argument values passed in a subroutine.
+    \return BAD_STATE_E returned if the WOLFSSL_CTX has a reference count > 1.
+    \return BAD_MUTEX_E returned if there was a mutex error. The LockMutex()
+    did not return 0.
+
+    \param ctx a pointer to a WOLFSSL_CTX structure, created using
+    wolfSSL_CTX_new().
+
+    _Example_
+    \code
+    WOLFSSL_METHOD method = wolfTLSv1_2_client_method();
+    WOLFSSL_CTX* ctx = WOLFSSL_CTX_new(method);
+    …
+    if(wolfSSL_CTX_UnloadIntermediateCerts(ctx) != NULL){
+        // The function did not unload CAs
+    }
+    \endcode
+
+    \sa wolfSSL_CTX_UnloadCAs
+    \sa wolfSSL_CertManagerUnloadIntermediateCerts
+*/
+int wolfSSL_CTX_UnloadIntermediateCerts(WOLFSSL_CTX* ctx);
 
 /*!
     \ingroup Setup
@@ -9548,17 +9582,44 @@ int wolfSSL_CertManagerLoadCABuffer(WOLFSSL_CERT_MANAGER* cm,
     #include <wolfssl/ssl.h>
 
     WOLFSSL_CTX* ctx = wolfSSL_CTX_new(protocol method);
-    WOLFSSL_CERT_MANAGER* cm = wolfSSL_CertManagerNew();
+    WOLFSSL_CERT_MANAGER* cm = wolfSSL_CTX_GetCertManager(ctx);
     ...
-    if(wolfSSL_CertManagerUnloadCAs(ctx->cm) != SSL_SUCCESS){
+    if(wolfSSL_CertManagerUnloadCAs(cm) != SSL_SUCCESS){
+        Failure case.
+    }
+    \endcode
+
+    \sa UnlockMutex
+*/
+int wolfSSL_CertManagerUnloadCAs(WOLFSSL_CERT_MANAGER* cm);
+
+/*!
+    \ingroup CertManager
+    \brief This function unloads intermediate certificates add to the CA
+    signer list.
+
+    \return SSL_SUCCESS returned on successful execution of the function.
+    \return BAD_FUNC_ARG returned if the WOLFSSL_CERT_MANAGER is NULL.
+    \return BAD_MUTEX_E returned if there was a mutex error.
+
+    \param cm a pointer to a WOLFSSL_CERT_MANAGER structure,
+    created using wolfSSL_CertManagerNew().
+
+    _Example_
+    \code
+    #include <wolfssl/ssl.h>
+
+    WOLFSSL_CTX* ctx = wolfSSL_CTX_new(protocol method);
+    WOLFSSL_CERT_MANAGER* cm = wolfSSL_CTX_GetCertManager(ctx);
+    ...
+    if(wolfSSL_CertManagerUnloadIntermediateCerts(cm) != SSL_SUCCESS){
     	Failure case.
     }
     \endcode
 
-    \sa FreeSignerTable
     \sa UnlockMutex
 */
-int wolfSSL_CertManagerUnloadCAs(WOLFSSL_CERT_MANAGER* cm);
+int wolfSSL_CertManagerUnloadIntermediateCerts(WOLFSSL_CERT_MANAGER* cm);
 
 /*!
     \ingroup CertManager
