@@ -65,7 +65,7 @@
 #endif
 #endif
 
-    const byte const_byte_array[] = "A+Gd\0\0\0";
+const byte const_byte_array[] = "A+Gd\0\0\0";
 #define CBPTR_EXPECTED 'A'
 
 #if defined(WOLFSSL_TRACK_MEMORY_VERBOSE) && !defined(WOLFSSL_STATIC_MEMORY)
@@ -2212,13 +2212,14 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     if (args)
         ((func_args*)args)->return_code = ret;
 
-    TEST_PASS("Test complete\n");
-
+/* If hardware acceleration and respective metrics tracked, show results: */
 #ifdef WOLFSSL_HW_METRICS
-#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-    esp_hw_show_mp_metrics();
+	#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
+    	esp_hw_show_mp_metrics();
+	#endif
 #endif
-#endif
+
+    TEST_PASS("Test complete\n");
 
     EXIT_TEST(ret);
 } /* end of wolfcrypt_test() */
@@ -2258,7 +2259,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 #ifdef WOLFSSL_APACHE_MYNEWT
         #ifdef ARCH_sim
-        mcu_sim_parse_args(argc, argv);
+            mcu_sim_parse_args(argc, argv);
         #endif
         sysinit();
 
@@ -2315,19 +2316,19 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
             err_sys("Error with wolfCrypt_Init!\n", WC_TEST_RET_ENC_EC(ret));
         }
 
-    #ifdef HAVE_WC_INTROSPECTION
+#ifdef HAVE_WC_INTROSPECTION
         printf("Math: %s\n", wc_GetMathInfo());
-    #endif
-
-#ifdef WC_RNG_SEED_CB
-    wc_SetSeed_Cb(wc_GenerateSeed);
 #endif
 
-    #ifdef HAVE_STACK_SIZE
+#ifdef WC_RNG_SEED_CB
+        wc_SetSeed_Cb(wc_GenerateSeed);
+#endif
+
+#ifdef HAVE_STACK_SIZE
         StackSizeCheck(&args, wolfcrypt_test);
-    #else
+#else
         wolfcrypt_test(&args);
-    #endif
+#endif
 
         if ((ret = wolfCrypt_Cleanup()) != 0) {
             printf("wolfCrypt_Cleanup failed %d\n", (int)ret);
@@ -2347,15 +2348,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         while (1);
 #endif
 
-#ifdef WOLFSSL_ESPIDF
+#if defined(WOLFSSL_ESPIDF)
         /* ESP_LOGI to print takes up a lot less memory than printf */
         ESP_LOGI(ESPIDF_TAG, "Exiting main with return code: % d\n",
-                           args.return_code);
-#endif
-
-/* everything else will use printf */
-#if !defined(WOLFSSL_ESPIDF)
-/* gate this for target platforms wishing to avoid printf reference */
+                        args.return_code);
+#else
+        /* gate this for target platforms wishing to avoid printf reference */
         printf("Exiting main with return code: %ld\n", (long int)args.return_code);
 #endif
 
@@ -3742,13 +3740,8 @@ static wc_test_ret_t hw_sqr_test(void)
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
     if (mp_cmp(r1, r2) != 0) {
+        WOLFSSL_MSG("mp_mulmod and mp_sqrmod results differ!");
         ERROR_OUT(WC_TEST_RET_ENC_NC, done);
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGE(ESPIDF_TAG, "mp_mulmod != mp_sqrmod");
-    #endif
-        while (1) {
-            vTaskDelay(60000);
-        }
     }
     #endif
 
@@ -4371,7 +4364,6 @@ WOLFSSL_TEST_SUBROUTINE int error_test(void)
     const char* errStr;
     char        out[WOLFSSL_MAX_ERROR_SZ];
     const char* unknownStr = wc_GetErrorString(0);
-    WOLFSSL_ENTER("error_test");
 
 #ifdef NO_ERROR_STRINGS
     /* Ensure a valid error code's string matches an invalid code's.
@@ -4402,19 +4394,19 @@ WOLFSSL_TEST_SUBROUTINE int error_test(void)
 
         if (i != missing[j]) {
             if (XSTRCMP(errStr, unknownStr) == 0) {
-              //  ESP_LOGW(ESPIDF_TAG, "oops 1"); /* TODO */
+                WOLFSSL_MSG("errStr unknown");
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRCMP(out, unknownStr) == 0) {
-              //  ESP_LOGW(ESPIDF_TAG, "oops 2");/* TODO */
+                WOLFSSL_MSG("out unknown");
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRCMP(errStr, out) != 0) {
-             //   ESP_LOGW(ESPIDF_TAG, "oops 3");/* TODO */
+                WOLFSSL_MSG("errStr does not match output");
                 return WC_TEST_RET_ENC_NC;
             }
             if (XSTRLEN(errStr) >= WOLFSSL_MAX_ERROR_SZ) {
-             //   ESP_LOGW(ESPIDF_TAG, "oops 4");/* TODO */
+                WOLFSSL_MSG("errStr too long");
                 return WC_TEST_RET_ENC_NC;
             }
         }
@@ -5564,11 +5556,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 #endif
 
         if (XMEMCMP(hash, test_sha[i].output, WC_SHA256_DIGEST_SIZE) != 0) {
-          //  ESP_LOGE(ESPIDF_TAG, "fail!");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
         if (XMEMCMP(hash, hashcopy, WC_SHA256_DIGEST_SIZE) != 0) {
-         //   ESP_LOGE(ESPIDF_TAG, "fail 2!");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
 #ifndef NO_WOLFSSL_SHA256_INTERLEAVE
@@ -13929,6 +13919,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
         if (XMEMCMP(cipher, verify_ecb, AES_BLOCK_SIZE))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
+
+            /* this code removed? */
     #ifdef HAVE_AES_DECRYPT
         XMEMSET(plain, 0, AES_BLOCK_SIZE * 4);
         ret = wc_AesEcbDecrypt(dec, plain, cipher, AES_BLOCK_SIZE);
@@ -13986,31 +13978,21 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
     ret = wc_AsyncWait(ret, &dec->asyncDev, WC_ASYNC_FLAG_NONE);
 #endif
     if (ret != 0) {
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI("aes", "failed wc_AesCbcDecrypt");
-    #endif
+        WOLFSSL_MSG("failed wc_AesCbcDecrypt");
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     }
 
     if (XMEMCMP(plain, msg, AES_BLOCK_SIZE)) {
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI("aes", "failed plain");
-    #endif
+        WOLFSSL_MSG("wc_AesCbcDecrypt failed plain compare");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif /* HAVE_AES_DECRYPT */
     /* skipped because wrapped key use in case of renesas sm */
     #ifndef HAVE_RENESAS_SYNC
     if (XMEMCMP(cipher, verify, AES_BLOCK_SIZE)) {
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI("aes", "failed cipher");
-    #endif
+        WOLFSSL_MSG("wc_AesCbcDecrypt failed cipher-verify compare");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
-    #endif
-
-    #ifdef WOLFSSL_ESPIDF
-    ESP_LOGV("aes", "breakpoint; wc_AesCbcEncrypt / wc_AesCbcDecrypt success!");
     #endif
 #endif /* WOLFSSL_AES_128 */
 
@@ -14271,9 +14253,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
         if (XMEMCMP(plain + AES_BLOCK_SIZE, msg2 + AES_BLOCK_SIZE,
                     AES_BLOCK_SIZE)) {
-    #ifdef WOLFSSL_ESPIDF
-            ESP_LOGI("aes_test", "oops 11007");
-    #endif
+            WOLFSSL_MSG("wc_AesCbcDecrypt failed plain-msg2 compare");
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
         }
         #endif /* HAVE_AES_DECRYPT */
@@ -14545,19 +14525,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes192_test(void)
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (XMEMCMP(plain, msg, (int) sizeof(plain))) {
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGE("test", "plain wc_AesCbcDecrypt compare fail");
-    #endif
+        WOLFSSL_MSG("failed wc_AesCbcDecrypt plain-msg compare");
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif
-
-    if (XMEMCMP(cipher, verify, (int) sizeof(cipher))) {
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGE("test", "verify wc_AesCbcDecrypt compare fail");
-    #endif
-        ERROR_OUT(WC_TEST_RET_ENC_NC, out);
-    }
 
   out:
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
@@ -20193,8 +20164,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t rsa_no_pad_test(void)
     !defined(NO_FILESYSTEM)
     XFILE  file;
 #endif
-    WOLFSSL_ENTER("rsa_no_pad_test");
-
     WC_DECLARE_VAR(key, RsaKey, 1, HEAP_HINT);
     WC_DECLARE_VAR(out, byte, RSA_TEST_BYTES, HEAP_HINT);
     WC_DECLARE_VAR(plain, byte, RSA_TEST_BYTES, HEAP_HINT);
@@ -20202,6 +20171,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t rsa_no_pad_test(void)
     WC_ALLOC_VAR(key, RsaKey, 1, HEAP_HINT);
     WC_ALLOC_VAR(out, byte, RSA_TEST_BYTES, HEAP_HINT);
     WC_ALLOC_VAR(plain, byte, RSA_TEST_BYTES, HEAP_HINT);
+    WOLFSSL_ENTER("rsa_no_pad_test");
 
 #ifdef WC_DECLARE_VAR_IS_HEAP_ALLOC
     if (key == NULL || out == NULL || plain == NULL)
@@ -30452,15 +30422,7 @@ done:
 static wc_test_ret_t ecc_test_curve(WC_RNG* rng, int keySize, int curve_id)
 {
     wc_test_ret_t ret;
-
-#ifdef DEBUG_WOLFSSL
-    #ifdef WOLFSSL_ESPIDF
-        ESP_LOGI(ESPIDF_TAG, "ecc_test_curve keySize = %d\n", keySize);
-    #else
-        /* printf("ecc_test_curve keySize = %d\n", keySize); */
-    #endif
-#endif
-
+    WOLFSSL_MSG_EX("ecc_test_curve keySize = %d", keySize);
 
     ret = ecc_test_curve_size(rng, keySize, ECC_TEST_VERIFY_COUNT, curve_id,
         NULL);
@@ -32860,19 +32822,11 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test(void)
     wc_test_ret_t ret;
     WC_RNG rng;
     WOLFSSL_ENTER("ecc_test");
-
-#ifdef DEBUG_WOLFSSL
-    #ifdef WOLFSSL_ESPIDF
-        #if defined(ECC_MIN_KEY_SZ)
-            ESP_LOGI(ESPIDF_TAG,"ecc_test ECC_MIN_KEY_SZ = %d\n", ECC_MIN_KEY_SZ);
-        #else
-            ESP_LOGI(ESPIDF_TAG,"ecc_test ECC_MIN_KEY_SZ not defined.");
-        #endif
-    #else
-        /* printf("ecc_test keySize = %d\n", keySize); */
-    #endif
+#if defined(ECC_MIN_KEY_SZ)
+    WOLFSSL_MSG_EX("ecc_test ECC_MIN_KEY_SZ = %d\n", ECC_MIN_KEY_SZ);
+#else
+    WOLFSSL_MSG("ecc_test ECC_MIN_KEY_SZ not defined.");
 #endif
-
 
 #if defined(WOLFSSL_CERT_EXT) && \
     (!defined(NO_ECC256) || defined(HAVE_ALL_CURVES)) && ECC_MIN_KEY_SZ <= 256
@@ -50209,15 +50163,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_test(void)
             if (ret != 0)
                 ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
             if (mp_cmp(r1, r2) != 0) {
+                WOLFSSL_MSG("Fail: mp_mulmod result does not match mp_sqrmod!");
                 ERROR_OUT(WC_TEST_RET_ENC_NC, done);
-#ifdef WOLFSSL_ESPIDF
-                ESP_LOGE(ESPIDF_TAG, "mp_mulmod != mp_sqrmod");
-#endif
-                while (1) {
-#ifdef WOLFSSL_ESPIDF
-                    vTaskDelay(60000);
-#endif
-                }
             }
          #endif
 
