@@ -1022,8 +1022,10 @@ extern void uITRON4_free(void *p) ;
             #define NO_DH
         #endif
     #endif
-    #ifndef NO_DSA
-        #define NO_DSA
+    #ifndef HAVE_DSA
+        #ifndef NO_DSA
+            #define NO_DSA
+        #endif
     #endif
 
     #ifndef SINGLE_THREADED
@@ -3413,6 +3415,17 @@ extern void uITRON4_free(void *p) ;
     #error "Found both ESPIDF and ARDUINO. Pick one."
 #endif
 
+#if defined(WOLFSSL_CAAM_BLOB)
+    #ifndef WOLFSSL_CAAM
+        #error "WOLFSSL_CAAM_BLOB requires WOLFSSL_CAAM"
+    #endif
+#endif
+
+#if defined(HAVE_ED25519)
+    #ifndef WOLFSSL_SHA512
+        #error "HAVE_ED25519 requires WOLFSSL_SHA512"
+    #endif
+#endif
 
 #ifdef __cplusplus
     }   /* extern "C" */
