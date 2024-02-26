@@ -49,17 +49,82 @@
 
 #define WOLFSSL_ESP32
 
+/* Uncommon settings for testing only */
+#define TEST_ESPIDF_ALL_WOLFSSL
+#ifdef  TEST_ESPIDF_ALL_WOLFSSL
+    #define WOLFSSL_MD2
+    #define HAVE_BLAKE2
+    #define HAVE_BLAKE2B
+    #define HAVE_BLAKE2S
+
+    #define WC_RC2
+    #define WOLFSSL_ALLOW_RC4
+
+    #define HAVE_XCHACHA
+    #define HAVE_CHACHA
+    #define HAVE_POLY1305
+
+    #define WOLFSSL_AES_128
+    #define WOLFSSL_AES_OFB
+    #define WOLFSSL_AES_CFB
+    #define WOLFSSL_AES_XTS
+
+    /* #define WC_SRTP_KDF */
+    /* TODO Causes failure with Espressif AES HW Enabled */
+    /* #define HAVE_AES_ECB */
+    /* #define HAVE_AESCCM  */
+    /* TODO sanity check when missing HAVE_AES_ECB */
+    #define WOLFSSL_WOLFSSH
+
+    #define HAVE_AESGCM
+    #define WOLFSSL_AES_COUNTER
+
+//    #define WOLFCRYPT_HAVE_SRP
+    #define FP_MAX_BITS (8192 * 2)
+
+    #define HAVE_DH
+    #define HAVE_FFDHE
+    #define HAVE_FFDHE_2048
+
+    #define HAVE_CAMELLIA
+    #define HAVE_DSA
+
+    // needs SHA512?
+    // #define HAVE_HPKE
+
+    /* Not for Espressif? */
+    /* #define WOLFSSL_AES_EAX */
+
+    /* Only for WOLFSSL_IMX6_CAAM / WOLFSSL_QNX_CAAM ? */
+    /* #define WOLFSSL_CAAM      */
+    /* #define WOLFSSL_CAAM_BLOB */
+
+    #define WOLFSSL_AES_SIV
+    #define WOLFSSL_CMAC
+    #define WOLFSSL_AES_EAX
+
+    #define WOLFSSL_CERT_PIV
+    #define HAVE_SCRYPT
+    #define SCRYPT_TEST_ALL
+    #define HAVE_X963_KDF
+    #define HAVE_ECC_CDH
+    #define HAVE_COMP_KEY
+    #define ECC_SHAMIR
+    //#define WOLFSSL_HAVE_XMSS
+#endif
+
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+// #define SINGLE_THREADED
 
 /* When you don't want to use the old SHA */
 /* #define NO_SHA */
 /* #define NO_OLD_TLS */
 
+#define WOLFSSL_ESPIDF_ERROR_PAUSE_DURATION 120
 #define BENCH_EMBEDDED
 #define USE_CERT_BUFFERS_2048
 
@@ -92,7 +157,7 @@
 /* when you want to use SHA3 */
 #define WOLFSSL_SHA3
 
-/* Reminder: ED25519 requires SHA512 */
+/* ED25519 requires SHA512 */
 #define HAVE_ED25519
 
 #define HAVE_ECC
@@ -100,6 +165,8 @@
 #define CURVE25519_SMALL
 
 #define OPENSSL_EXTRA
+/* when you want to use pkcs7 */
+/* #define HAVE_PKCS7 */
 
 #if !defined(CONFIG_IDF_TARGET_ESP8266)
     /* TODO: Is there a memory problem for ESP8266? Fails test. */
@@ -216,9 +283,38 @@
 --enable-asn-template
 */
 
+/* WIP Interim fixes: */
+#if defined(HAVE_ED25519)
+
+#endif
+
+#if defined(WOLFCRYPT_HAVE_SRP) && !defined(SINGLE_THREADED)
+    /* TODO Investigate why SRP fails with HW, but passes all tests.
+     * The problem is with SHA512, but SHA384 must also be disabled when
+     * SHA512 is disabled */
+
+    /* SHA1 needed for WC_RC2 */
+    // #define NO_SHA
+
+    /* TODO Cannot turn off only SHA1 HW  */
+    // #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
+
+    /* TODO: SRP fails with SHA512 HW in non-SINGLE_THREADED mode */
+    /* workaround alternative #1: disable SHA512/384 HW  only*/
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* workaround alternative #2: disable all SHA512 */
+    #undef WOLFSSL_SHA512
+#endif
+
+#if defined(SINGLE_THREADED)
+    /* TODO Interleaving fix. WIP. PR soon */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 */
+#endif
+
+
 /* Default is HW enabled unless turned off.
 ** Uncomment these lines to force SW instead of HW acceleration */
-
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* wolfSSL HW Acceleration supported on ESP32. Uncomment to disable: */
     /*  #define NO_ESP32_CRYPT                 */
@@ -370,7 +466,7 @@
 /* Pause in a loop rather than exit. */
 #define WOLFSSL_ESPIDF_ERROR_PAUSE
 
-/* #define WOLFSSL_HW_METRICS */
+#define WOLFSSL_HW_METRICS
 
 /* for test.c */
 /* #define HASH_SIZE_LIMIT */
