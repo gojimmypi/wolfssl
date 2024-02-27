@@ -117,13 +117,21 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     ret = wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
 #else
     ret = xSemaphoreTake(*mutex, block_time);
-    // ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
+    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
     if (ret == pdTRUE) {
         ret = ESP_OK;
     }
     else {
-        ret = ESP_ERR_NOT_FINISHED;
-        ESP_LOGE(TAG, "xSemaphoreTake 0x%x not finished = %d", (intptr_t)mutex, ret);
+        if (ret == pdFALSE) {
+            ESP_LOGW(TAG, "xSemaphoreTake 0x%x failed. Still busy?",
+                           (intptr_t)mutex);
+            ret = ESP_ERR_NOT_FINISHED;
+        }
+        else {
+            ESP_LOGE(TAG, "xSemaphoreTake 0x%x unexpected = %d",
+                           (intptr_t)mutex, ret);
+            ret = BAD_MUTEX_E;
+        }
     }
 #endif
     return ret;
@@ -143,10 +151,10 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #ifdef SINGLE_THREADED
     ret = wc_UnLockMutex(mutex);
 #else
-    // ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x count=", (intptr_t)mutex);
+    ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x", (intptr_t)mutex);
     ret = xSemaphoreGive(*mutex);
     if (ret == pdTRUE) {
-        // ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)mutex);
+        ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)mutex);
         ret = ESP_OK;
     }
     else {

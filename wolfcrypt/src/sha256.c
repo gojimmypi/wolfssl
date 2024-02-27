@@ -105,14 +105,9 @@ on the specific device platform.
 #endif
 
 #ifdef WOLFSSL_ESPIDF
-    /* Define the ESP_LOGx(TAG, "" value for output messages here.
-    **
-    ** Beware of possible conflict in test.c (that one now named TEST_TAG)
+    /* Define the ESP_LOGx(TAG, ""...) value for output messages here.
     */
-    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
-       !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-        static const char* TAG = "wc_sha256";
-    #endif
+    #define TAG "wc_sha256"
 #endif
 
 #if defined(WOLFSSL_TI_HASH)
@@ -1820,7 +1815,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
-        /* not to be confused with SHAS512_224 */
+        /* not to be confused with SHA512_224 */
         ret = esp_sha_init(&(sha224->ctx), WC_HASH_TYPE_SHA224);
     #endif
 
@@ -1842,7 +1837,8 @@ static int InitSha256(wc_Sha256* sha256)
         sha224->W = NULL;
     #endif
 
-    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)  && \
+           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         #if defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224)
         /* We know this is a fresh, uninitialized item, so set to INIT */
         if (sha224->ctx.mode != ESP32_SHA_SW) {
@@ -1903,7 +1899,7 @@ static int InitSha256(wc_Sha256* sha256)
     #endif /* WOLFSSL_ASYNC_CRYPT */
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
-       (defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
+       !(defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) && \
         defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224))
         sha224->ctx.mode = ESP32_SHA_SW; /* no SHA224 HW, so always SW */
     #endif

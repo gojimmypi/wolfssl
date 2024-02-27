@@ -985,8 +985,10 @@ int wc_SrpVerifyPeersProof(Srp* srp, byte* proof, word32 size)
         if (!r) r = SrpHashUpdate(&srp->server_proof, srp->key, srp->keySz);
     }
 
-    if (!r && XMEMCMP(proof, digest, size) != 0)
+    if (!r && XMEMCMP(proof, digest, size) != 0) {
+        ESP_LOGE("SRP", "Verify Peers Proof vs Digest failed");
         r = SRP_VERIFY_E;
+    }
 
     return r;
 }

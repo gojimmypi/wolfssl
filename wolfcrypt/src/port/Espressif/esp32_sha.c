@@ -724,7 +724,7 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
             ESP_LOGV(TAG, "Confirmed wc_Sha256 Copy set to SW");
         }
         else {
-            ESP_LOGW(TAG, "wc_Sha256 Copy NOT set to SW");
+            ESP_LOGW(TAG, "wc_Sha256 Copy (mode = %d) NOT set to SW", dst->ctx.mode);
         }
     } /* (src->ctx.mode == ESP32_SHA_HW) */
     else {
@@ -1134,9 +1134,9 @@ int esp_sha_hw_in_use()
 #else
     ret = (mutex_ctx_owner != NULLPTR); // ||
 //          (1 == uxSemaphoreGetCount(sha_mutex));
-    ESP_LOGI(TAG, "mutex_ctx_owner = 0x%x", mutex_ctx_owner);
+    ESP_LOGI(TAG, "mutex_ctx_owner is 0x%x", mutex_ctx_owner);
 #endif
-    ESP_LOGI(TAG, "esp_sha_hw_in_use = %d", ret);
+    ESP_LOGI(TAG, "esp_sha_hw_in_use is %d", ret);
     return ret;
 }
 /*
@@ -1410,7 +1410,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             else {
                 if (ctx->mode == ESP32_SHA_FREED) {
                     ESP_LOGW(TAG,
-                        "ESP32_SHA_FREED unlocking ctx = %x"
+                        "ESP32_SHA_FREED unlocking (disabled) ctx = %x"
                               " for ctx.initializer = %x",
                         (uintptr_t)ctx,
                         (uintptr_t)ctx->initializer);
@@ -1421,7 +1421,13 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 //                    sha_mutex = NULL;
                 }
                 else {
-                    ESP_LOGW(TAG, "Not Freed!");
+                    if (ctx->mode == ESP32_SHA_INIT) {
+                        ESP_LOGI(TAG, "mutex_ctx_owner = 0x%x", mutex_ctx_owner);
+                        ESP_LOGI(TAG, "This ctx = 0x%x is ESP32_SHA_INIT", (uintptr_t)ctx);
+                    }
+                    else {
+                        ESP_LOGW(TAG, "Not Freed!");
+                    }
                 }
             }
         }
@@ -1437,6 +1443,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGI(TAG, "ESP32_SHA_INIT for %x\n", (uintptr_t)ctx->initializer);
 #endif
+        ESP_LOGI(TAG, "Init; release unfinished lock for ctx 0x%x", (uintptr_t)ctx);
         esp_sha_release_unfinished_lock(ctx);
 
         /* lock hardware; there should be exactly one instance
@@ -1448,12 +1455,13 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
          * TODO: allow for SHA interleave on chips that support it.
          */
 
-        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == ESP_OK) {
+        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == ESP_OK && mutex_ctx_owner == NULLPTR) {
             /* we've successfully locked */
         #ifdef USE_OLD_CODE
             mutex_ctx_owner = ctx->initializer;
         #else
             mutex_ctx_owner = (uintptr_t)ctx;
+            ESP_LOGI(TAG, "Assigned mutex_ctx_owner to 0x%x", mutex_ctx_owner);
         #endif
         #ifdef ESP_MONITOR_HW_TASK_LOCK
             mutex_ctx_task = xTaskGetCurrentTaskHandle();
@@ -1473,6 +1481,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                     else {
                         stray_ctx->initializer = (intptr_t)stray_ctx;
                         mutex_ctx_owner = (intptr_t)stray_ctx->initializer;
+                        /* TODO: do we really want this conditional assignment? */
                     }
                 }
                 taskEXIT_CRITICAL(&sha_crit_sect);
@@ -1516,6 +1525,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             taskENTER_CRITICAL(&sha_crit_sect);
             {
                 mutex_ctx_owner = (uintptr_t)ctx->initializer;
+                /* TODO: do we really want this conditional assignment? */
                 /* let's keep track of how many times we lock this */
                 _sha_lock_count++;
             }
@@ -1533,6 +1543,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         else {
             /* When the lock is already in use: is it for this ctx? */
             if ((uintptr_t)ctx == esp_sha_mutex_ctx_owner()) {
+                ESP_LOGI(TAG, "I'm the owner! 0x%x", (uintptr_t)ctx);
                 ctx->mode = ESP32_SHA_SW;
             }
             else {
@@ -1546,6 +1557,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 ESP_LOGI(TAG, "Current mutext owner = %x",
                                esp_sha_mutex_ctx_owner());
             #endif
+                ESP_LOGI(TAG, "I'm not owner! 0x%x; owner = 0x%x", (uintptr_t)ctx, mutex_ctx_owner);
                 if (mutex_ctx_owner) {
                 #ifdef WOLFSSL_DEBUG_MUTEX
                     ESP_LOGW(TAG, "revert to SW since mutex_ctx_owner = %x"
@@ -1556,6 +1568,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 else {
                     /* No ctx mutex owner, so hardware must be free. */
                 }
+                ESP_LOGI(TAG, "Set update ctx->mode = SW (from %d) for 0x%x", ctx->mode, (uintptr_t)ctx );
                 ctx->mode = ESP32_SHA_SW;
             }
             return ESP_OK; /* success, but revert to SW */
@@ -1689,7 +1702,9 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
 
         /* There should be exactly 1 instance of SHA unlock, and it's here: */
         esp_CryptHwMutexUnLock(&sha_mutex);
-        mutex_ctx_owner = 0;
+        /* we don't set owner to zero here. The HW is not in use,
+         * but there's a WIP hash calc.
+         * NO: mutex_ctx_owner = NULLPTR; */
 
         #ifdef ESP_MONITOR_HW_TASK_LOCK
             mutex_ctx_task = 0;
@@ -1700,7 +1715,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     #ifdef WOLFSSL_DEBUG_MUTEX
         taskENTER_CRITICAL(&sha_crit_sect);
         {
-            mutex_ctx_owner = 0;
+            mutex_ctx_owner = 0; /* TODO: do we really want this conditional assignment? */
         }
         taskEXIT_CRITICAL(&sha_crit_sect);
     #endif

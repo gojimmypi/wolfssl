@@ -1236,6 +1236,17 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("CAVP selftest passed!\n");
 #endif
 
+#ifdef WOLFCRYPT_HAVE_SRP
+    ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
+    if ( (ret = srp_test()) != 0)
+        TEST_FAIL("SRP      test failed!\n", ret);
+    else
+        TEST_PASS("SRP      test passed!\n");
+#endif
+    if (args)
+        ((func_args*)args)->return_code = ret;
+    return ret;
+
     if ( (ret = error_test()) != 0)
         TEST_FAIL("error    test failed!\n", ret);
     else
@@ -1373,6 +1384,14 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("SHA-3    test passed!\n");
 #endif
+
+#ifdef WOLFCRYPT_HAVE_SRP
+    if ( (ret = srp_test()) != 0)
+        TEST_FAIL("SRP      test failed!\n", ret);
+    else
+        TEST_PASS("SRP      test passed!\n");
+#endif
+
 
     /* early return */
    // TODO return 0;
@@ -5562,7 +5581,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
 #ifndef NO_WOLFSSL_SHA256_INTERLEAVE
-        if (XMEMCMP(i_hash, interleave_test_sha[i].output, WC_SHA256_DIGEST_SIZE) != 0) {
+        if (XMEMCMP(i_hash, interleave_test_sha[i].output,
+                                    WC_SHA256_DIGEST_SIZE) != 0) {
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
         if (XMEMCMP(i_hash, i_hashcopy, WC_SHA256_DIGEST_SIZE) != 0) {
@@ -5761,7 +5781,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
         if (XMEMCMP(hash, hashcopy, WC_SHA512_DIGEST_SIZE) != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
 #ifndef NO_WOLFSSL_SHA512_INTERLEAVE
-        if (XMEMCMP(i_hash, interleave_test_sha[i].output, WC_SHA512_DIGEST_SIZE) != 0) {
+        if (XMEMCMP(i_hash, interleave_test_sha[i].output,
+                                        WC_SHA512_DIGEST_SIZE) != 0) {
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
         if (XMEMCMP(i_hash, i_hashcopy, WC_SHA512_DIGEST_SIZE) != 0) {
@@ -5807,12 +5828,29 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
             (word32)sizeof(large_input));
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
+#ifndef NO_WOLFSSL_SHA512_INTERLEAVE
+        ret = wc_Sha512Update(&i_sha, (byte*)large_input,
+           (word32)sizeof(large_input));
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#endif
+
     }
     ret = wc_Sha512Final(&sha, hash);
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
+#ifndef NO_WOLFSSL_SHA512_INTERLEAVE
+    ret = wc_Sha512Final(&i_sha, i_hash);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+#endif
+
     if (XMEMCMP(hash, large_digest, WC_SHA512_DIGEST_SIZE) != 0)
         ERROR_OUT(WC_TEST_RET_ENC_NC, exit);
+#ifndef NO_WOLFSSL_SHA512_INTERLEAVE
+    if (XMEMCMP(i_hash, large_digest, WC_SHA512_DIGEST_SIZE) != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_NC, exit);
+#endif
 
 #ifndef NO_UNALIGNED_MEMORY_TEST
     /* Unaligned memory access test */
@@ -23562,9 +23600,17 @@ static wc_test_ret_t srp_test_digest(SrpType dgstType)
     XMEMSET(srv, 0, sizeof *srv);
     XMEMSET(cli, 0, sizeof *cli);
 
+    XMEMSET(serverProof, 0, SRP_MAX_DIGEST_SIZE);
+    XMEMSET(clientProof, 0, SRP_MAX_DIGEST_SIZE);
+
     /* generating random salt */
 
     r = generate_random_salt(salt, sizeof(salt));
+
+// TODO remove this test :
+//r = 0;
+//XMEMSET(salt, 0, sizeof(salt));
+//salt[0] = 5;
 
     /* client knows username and password.   */
     /* server knows N, g, salt and verifier. */
@@ -23632,6 +23678,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srp_test(void)
     wc_test_ret_t ret;
     WOLFSSL_ENTER("srp_test");
 
+
+#ifdef NO_SKIP_OTHERS
+
 #ifndef NO_SHA
     ret = srp_test_digest(SRP_TYPE_SHA);
     if (ret != 0)
@@ -23647,6 +23696,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srp_test(void)
     if (ret != 0)
         return ret;
 #endif
+
+#endif
+
 #ifdef WOLFSSL_SHA512
     ret = srp_test_digest(SRP_TYPE_SHA512);
     if (ret != 0)
