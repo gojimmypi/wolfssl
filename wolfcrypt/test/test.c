@@ -1236,16 +1236,16 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("CAVP selftest passed!\n");
 #endif
 
-#ifdef WOLFCRYPT_HAVE_SRP
-    ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
-    if ( (ret = srp_test()) != 0)
-        TEST_FAIL("SRP      test failed!\n", ret);
-    else
-        TEST_PASS("SRP      test passed!\n");
-#endif
-    if (args)
-        ((func_args*)args)->return_code = ret;
-    return ret;
+//#ifdef WOLFCRYPT_HAVE_SRP
+//    ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
+//    if ( (ret = srp_test()) != 0)
+//        TEST_FAIL("SRP      test failed!\n", ret);
+//    else
+//        TEST_PASS("SRP      test passed!\n");
+//#endif
+//    if (args)
+//        ((func_args*)args)->return_code = ret;
+//    return ret;
 
     if ( (ret = error_test()) != 0)
         TEST_FAIL("error    test failed!\n", ret);
@@ -1377,6 +1377,18 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif /* !defined(WOLFSSL_NOSHA512_256) & !FIPS ... */
 
 #endif /* WOLFSSL_SHA512 */
+
+#ifdef WOLFCRYPT_HAVE_SRP
+    ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
+    if ( (ret = srp_test()) != 0)
+        TEST_FAIL("SRP      test failed!\n", ret);
+    else
+        TEST_PASS("SRP      test passed!\n");
+#endif
+//    if (args)
+//        ((func_args*)args)->return_code = ret;
+//    return ret;
+
 
 #ifdef WOLFSSL_SHA3
     if ( (ret = sha3_test()) != 0)
@@ -5595,6 +5607,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
 #endif
+        if (esp_sha_hw_islocked(&sha.ctx)) {
+            ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
+        }
       //  vTaskDelay(100); /* TODO remove timing hack */
     }
 
@@ -5748,6 +5763,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
 #ifndef NO_WOLFSSL_SHA512_INTERLEAVE
+        ret = sha256_test();
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+
         ret = wc_Sha512GetHash(&i_sha, i_hashcopy);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);

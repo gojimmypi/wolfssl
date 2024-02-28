@@ -372,6 +372,16 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 {
     CTX_STACK_CHECK(ctx);
 
+    ctx->mode = ESP32_SHA_INIT;
+
+    /* This is a generic init; we don't yet know SHA type. */
+    ctx->sha_type = SHA_INVALID;
+
+    /* reminder: always start isfirstblock = 1 (true) when using HW engine */
+    /* we're always on the first block at init time (not zero-based!) */
+    ctx->isfirstblock = true; /* TODO this is saved beyond object size */
+    ctx->lockDepth = 0; /* new objects will always start with lock depth = 0 */
+
 #ifdef USE_OLD_CODE
     if (ctx->initializer == NULLPTR) {
         ESP_LOGV(TAG, "regular init of blank WC_ESP32SHA ctx initializer");
@@ -555,7 +565,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             break;
     } /* switch (ctx->mode)  */
 #else
-    if ((uintptr_t)ctx == mutex_ctx_owner) {
+    if ((uintptr_t)ctx == mutex_ctx_owner || mutex_ctx_owner == NULLPTR) {
         ESP_LOGV(TAG, "Initializing current mutext owner!");
 //        #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
 //            if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
@@ -568,16 +578,16 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
 //            /* Here we assume the locking task also does unlocking. */
 //            esp_sha_hw_unlock(ctx);
 //        #endif
-        esp_sha_hw_unlock(ctx); // ctx->mode = ESP32_SHA_SW;
+        if (esp_sha_hw_islocked(ctx)) {
+            esp_sha_hw_unlock(ctx); // ctx->mode = ESP32_SHA_SW;
+        }
+        mutex_ctx_owner = (uintptr_t)ctx;
     }
-    ctx->mode = ESP32_SHA_INIT;
+    else {
+        ESP_LOGI(TAG, "esp_sha_init_ctx for non-owner: 0x%x", (intptr_t)ctx);
+    }
 #endif
 
-    ctx->sha_type = SHA_INVALID;
-    /* reminder: always start isfirstblock = 1 (true) when using HW engine */
-    /* we're always on the first block at init time (not zero-based!) */
-    ctx->isfirstblock = true; /* TODO this is saved beyond object size */
-    ctx->lockDepth = 0; /* new objects will always start with lock depth = 0 */
 
     CTX_STACK_CHECK(ctx);
     return ESP_OK; /* Always return success.
@@ -1147,6 +1157,7 @@ int esp_sha_hw_in_use()
 */
 uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 {
+    TaskHandle_t mutexHolder;
     uintptr_t ret = 0;
     CTX_STACK_CHECK(ctx);
 
@@ -1174,13 +1185,28 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
     }
     #else
     {
-        if (NULLPTR == mutex_ctx_owner) {
-            ESP_LOGV(TAG, "not esp_sha_hw_islocked");
-            ret = FALSE;
+        if (sha_mutex == NULL) {
+            mutexHolder = NULL;
         }
         else {
-            ESP_LOGV(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
+            mutexHolder = xSemaphoreGetMutexHolder(sha_mutex);
+        }
+
+        if (mutexHolder == NULL) {
+            /* Mutex is not in use */
+            ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
+        }
+        else {
+            ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
             ret = TRUE;
+        }
+        if (NULLPTR == mutex_ctx_owner) {
+            ESP_LOGI(TAG, "not esp_sha_hw_islocked");
+            // ret = FALSE;
+        }
+        else {
+            ESP_LOGI(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
+            // ret = TRUE;
         }
     }
     #endif
@@ -1248,7 +1274,7 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
             {
                 if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
                     ESP_LOGI(TAG, "esp_sha_hw_unlock!"); /* TODO check for lock ? */
-                    ret = esp_sha_hw_unlock(ctx);
+                   // ret = esp_sha_hw_unlock(ctx);
                 }
                 else {
                     /* We cannot free a SHA object lock from a different task.
@@ -1455,7 +1481,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
          * TODO: allow for SHA interleave on chips that support it.
          */
 
-        if (esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == ESP_OK && mutex_ctx_owner == NULLPTR) {
+        if ((mutex_ctx_owner == NULLPTR) && esp_CryptHwMutexLock(&sha_mutex, (TickType_t)0) == ESP_OK) {
             /* we've successfully locked */
         #ifdef USE_OLD_CODE
             mutex_ctx_owner = ctx->initializer;
@@ -1703,7 +1729,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
         /* There should be exactly 1 instance of SHA unlock, and it's here: */
         esp_CryptHwMutexUnLock(&sha_mutex);
         /* we don't set owner to zero here. The HW is not in use,
-         * but there's a WIP hash calc.
+         * but there may be a WIP hash calc (e.g. sha update).
          * NO: mutex_ctx_owner = NULLPTR; */
 
         #ifdef ESP_MONITOR_HW_TASK_LOCK
@@ -2305,6 +2331,11 @@ int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
 
     ret = wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
 
+    if (blockprocess) {
+        ESP_LOGI(TAG, "sha blockprocess mutex_ctx_owner = NULLPTR");
+        mutex_ctx_owner = NULLPTR;
+    }
+
     ESP_LOGV(TAG, "leave esp_sha_digest_process");
 
     return ret;
@@ -2375,6 +2406,11 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
     }
 
     wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
+
+    if (blockprocess) {
+        ESP_LOGI(TAG, "blockprocess mutex_ctx_owner = NULLPTR");
+        mutex_ctx_owner = NULLPTR;
+    }
 #else
     ESP_LOGE(TAG, "Call esp_sha256_digest_process with "
                   "NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 ");
@@ -2434,7 +2470,16 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     }
     ESP_LOGV(TAG, "leave esp_sha512_block");
 #endif
-    return ret;
+    if (isfinal) {
+        if ((intptr_t)&sha->ctx == mutex_ctx_owner) {
+            ESP_LOGI(TAG, "isfinal cleanup 0x%x", mutex_ctx_owner);
+            mutex_ctx_owner = NULLPTR;
+        }
+        else {
+            ESP_LOGI(TAG, "isfinal no cleanup 0x%x", mutex_ctx_owner);
+        }
+    }
+return ret;
 } /* esp_sha512_block */
 
 /*

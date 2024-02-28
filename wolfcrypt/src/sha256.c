@@ -1540,11 +1540,10 @@ static int InitSha256(wc_Sha256* sha256)
             ret = XTRANSFORM(sha256, (const byte*)local);
         }
         else {
-            ret = esp_sha256_digest_process(sha256, 1); /* TODO Use TRUE */
+            ret = esp_sha256_digest_process(sha256, TRUE);
+            ESP_LOGI(TAG, "SHA256Final NEW UNLOCK");
+            esp_sha_hw_unlock(&sha256->ctx);
         }
-
-        // ESP_LOGI(TAG, "SHA256Final NEW UNLOCK");
-        //esp_sha_hw_unlock(&sha256->ctx);
     #else
         ret = XTRANSFORM(sha256, (const byte*)local);
     #endif

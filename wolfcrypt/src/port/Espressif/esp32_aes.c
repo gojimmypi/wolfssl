@@ -86,7 +86,13 @@ static int esp_aes_hw_InUse(void)
          * of esp_CryptHwMutexLock(&aes_mutex ...) in code  */
         /* TODO - do we really want to wait?
          *    probably not */
-        ret = esp_CryptHwMutexLock(&aes_mutex, portMAX_DELAY);
+        ret = esp_CryptHwMutexLock(&aes_mutex, 5000);
+        if (ret == ESP_OK) {
+            ESP_LOGW(TAG, "esp_CryptHwMutexLock aes success");
+        }
+        else {
+            ESP_LOGW(TAG, "esp_CryptHwMutexLock aes timeout! %d", ret);
+        }
     }
     else {
         ESP_LOGE(TAG, "aes engine lock failed.");
@@ -597,9 +603,9 @@ int wc_esp32AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
             offset += AES_BLOCK_SIZE;
         } /* while (blocks--) */
+        esp_aes_hw_Leave();
     } /* if Set Mode was successful (ret == ESP_OK) */
 
-    esp_aes_hw_Leave();
     ESP_LOGV(TAG, "leave wc_esp32AesCbcDecrypt");
     return ret;
 } /* wc_esp32AesCbcDecrypt */

@@ -98,7 +98,7 @@ int esp_CryptHwMutexInit(wolfSSL_Mutex* mutex) {
 }
 
 /*
- * call the ESP-IDF mutex lock; xSemaphoreTake
+ * Call the ESP-IDF mutex lock; xSemaphoreTake
  * this is a general mutex locker, used for different mutex objects for
  * different HW acclerators or other single-use HW features.
  *
@@ -114,22 +114,23 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     }
 
 #ifdef SINGLE_THREADED
-    ret = wc_LockMutex(mutex); /* xSemaphoreTake take with portMAX_DELAY */
+    /* does nothing in single thread mode, always return 0 */
+    ret = wc_LockMutex(mutex);
 #else
     ret = xSemaphoreTake(*mutex, block_time);
-    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)mutex, ret);
+    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)*mutex, ret);
     if (ret == pdTRUE) {
         ret = ESP_OK;
     }
     else {
         if (ret == pdFALSE) {
-            ESP_LOGW(TAG, "xSemaphoreTake 0x%x failed. Still busy?",
-                           (intptr_t)mutex);
+            ESP_LOGW(TAG, "xSemaphoreTake failed for 0x%x. Still busy?",
+                           (intptr_t)*mutex);
             ret = ESP_ERR_NOT_FINISHED;
         }
         else {
             ESP_LOGE(TAG, "xSemaphoreTake 0x%x unexpected = %d",
-                           (intptr_t)mutex, ret);
+                           (intptr_t)*mutex, ret);
             ret = BAD_MUTEX_E;
         }
     }
@@ -142,7 +143,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
  *
  */
 int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
-    int ret;
+    int ret = pdTRUE;
     if (mutex == NULL) {
         WOLFSSL_ERROR_MSG("esp_CryptHwMutexLock called with null mutex");
         return BAD_MUTEX_E;
@@ -151,16 +152,24 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #ifdef SINGLE_THREADED
     ret = wc_UnLockMutex(mutex);
 #else
-    ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x", (intptr_t)mutex);
-    ret = xSemaphoreGive(*mutex);
-    if (ret == pdTRUE) {
-        ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)mutex);
+    ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x", (intptr_t)*mutex);
+    TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(*mutex);
+
+    if (mutexHolder == NULL) {
+        ESP_LOGW(TAG, "esp_CryptHwMutexUnLock with no lock owner 0x%x",
+                        (intptr_t)*mutex);
         ret = ESP_OK;
     }
     else {
-        ESP_LOGW(TAG, "Failed to give mutex 0x%x err = %d ",
-                        (intptr_t)mutex, ret);
-        ret = ESP_FAIL;
+        ret = xSemaphoreGive(*mutex);
+        if (ret == pdTRUE) {
+            ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)*mutex);
+            ret = ESP_OK;
+        }
+        else {
+            ESP_LOGI(TAG, "Failed: give mutex 0x%x", (intptr_t)*mutex);
+            ret = ESP_OK;
+        }
     }
 #endif
     return ret;
