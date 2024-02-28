@@ -23698,30 +23698,50 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srp_test(void)
     WOLFSSL_ENTER("srp_test");
 
 
-#ifdef NO_SKIP_OTHERS
+//#ifdef NO_SKIP_OTHERS
 
 #ifndef NO_SHA
     ret = srp_test_digest(SRP_TYPE_SHA);
-    if (ret != 0)
+    if (ret != 0) {
+        WOLFSSL_MSG("SRP SHA failed");
         return ret;
+    }
+    else {
+        WOLFSSL_MSG("SRP SHA success");
+    }
 #endif
 #ifndef NO_SHA256
     ret = srp_test_digest(SRP_TYPE_SHA256);
-    if (ret != 0)
+    if (ret != 0) {
+        WOLFSSL_MSG("SRP SHA256 failed");
         return ret;
+    }
+    else {
+        WOLFSSL_MSG("SRP SHA256 success");
+    }
 #endif
 #ifdef WOLFSSL_SHA384
     ret = srp_test_digest(SRP_TYPE_SHA384);
-    if (ret != 0)
+    if (ret != 0) {
+        WOLFSSL_MSG("SRP SHA384 failed");
         return ret;
+    }
+    else {
+        WOLFSSL_MSG("SRP SHA384 success");
+    }
 #endif
 
-#endif
+// #endif
 
 #ifdef WOLFSSL_SHA512
     ret = srp_test_digest(SRP_TYPE_SHA512);
-    if (ret != 0)
+    if (ret != 0) {
+        WOLFSSL_MSG("SRP SHA512 failed");
         return ret;
+    }
+    else {
+        WOLFSSL_MSG("SRP SHA512 success");
+    }
 #endif
 
     return ret;

@@ -79,7 +79,7 @@
     #define HAVE_AESGCM
     #define WOLFSSL_AES_COUNTER
 
-//    #define WOLFCRYPT_HAVE_SRP
+    #define WOLFCRYPT_HAVE_SRP
     #define FP_MAX_BITS (8192 * 2)
 
     #define HAVE_DH
@@ -118,7 +118,7 @@
 /* #define WOLFSSL_NOSHA512_256 */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-// #define SINGLE_THREADED
+#define SINGLE_THREADED
 
 /* When you don't want to use the old SHA */
 /* #define NO_SHA */
@@ -158,7 +158,7 @@
 #define WOLFSSL_SHA3
 
 /* ED25519 requires SHA512 */
-#define HAVE_ED25519
+// #define HAVE_ED25519
 
 #define HAVE_ECC
 #define HAVE_CURVE25519
@@ -246,7 +246,7 @@
 /* #define USE_INTEGER_HEAP_MATH */
 
 
-#define WOLFSSL_SMALL_STACK
+// #define WOLFSSL_SMALL_STACK
 
 
 #define HAVE_VERSION_EXTENDED_INFO
@@ -304,7 +304,7 @@
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 //    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* workaround alternative #2: disable all SHA512 */
-    #undef WOLFSSL_SHA512
+    // #undef WOLFSSL_SHA512
 #endif
 
 #if defined(SINGLE_THREADED)
@@ -320,10 +320,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+    /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI  */
+       #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    /*   #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*   #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
@@ -447,6 +447,9 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif /* CONFIG_IDF_TARGET Check */
 
+#define DEBUG_WOLFSSL_SHA_MUTEX
+// #define WOLFSSL_DEBUG_MUTEX
+#define DEBUG_WOLFSSL
 /* Debug options:
 
 #define ESP_VERIFY_MEMBLOCK

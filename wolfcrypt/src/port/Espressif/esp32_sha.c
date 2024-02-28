@@ -168,6 +168,36 @@ static const char* TAG = "wolf_hw_sha";
     #endif
 #endif
 
+int esp_set_hw(WC_ESP32SHA* ctx)
+{
+    int ret = ESP_FAIL;
+    if ((uintptr_t)ctx == mutex_ctx_owner || mutex_ctx_owner == NULLPTR) {
+        ESP_LOGV(TAG, "Initializing current mutext owner!");
+//        #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
+//            if (ctx->task_owner == xTaskGetCurrentTaskHandle()) {
+//                esp_sha_hw_unlock(ctx);
+//            }
+//            else {
+//                ESP_LOGW(TAG, "Warning: unable to unlock ctx mutex ");
+//            }
+//        #else
+//            /* Here we assume the locking task also does unlocking. */
+//            esp_sha_hw_unlock(ctx);
+//        #endif
+        if (esp_sha_hw_islocked(ctx)) {
+             ESP_LOGI(TAG, "esp_set_hw already locked: 0x%x", (intptr_t)ctx);
+            // esp_sha_hw_unlock(ctx);
+        }
+        ctx->mode = ESP32_SHA_HW;
+        mutex_ctx_owner = (uintptr_t)ctx;
+        ret = ESP_OK;
+    }
+    else {
+        ESP_LOGI(TAG, "esp_sha_init_ctx HW for non-owner: 0x%x", (intptr_t)ctx);
+    }
+    return ret;
+}
+
 /*
 ** The wolfCrypt functions for LITTLE_ENDIAN_ORDER typically
 ** reverse the byte order. Except when the hardware doesn't expect it.
@@ -565,6 +595,8 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
             break;
     } /* switch (ctx->mode)  */
 #else
+
+#if defined(MUTEX_DURING_INIT)
     if ((uintptr_t)ctx == mutex_ctx_owner || mutex_ctx_owner == NULLPTR) {
         ESP_LOGV(TAG, "Initializing current mutext owner!");
 //        #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
@@ -584,10 +616,11 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
         mutex_ctx_owner = (uintptr_t)ctx;
     }
     else {
-        ESP_LOGI(TAG, "esp_sha_init_ctx for non-owner: 0x%x", (intptr_t)ctx);
+        ESP_LOGI(TAG, "MUTEX_DURING_INIT esp_sha_init_ctx for non-owner: 0x%x", (intptr_t)ctx);
     }
 #endif
 
+#endif /* MUTEX_DURING_INIT */
 
     CTX_STACK_CHECK(ctx);
     return ESP_OK; /* Always return success.
@@ -1202,11 +1235,11 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
         }
         if (NULLPTR == mutex_ctx_owner) {
             ESP_LOGI(TAG, "not esp_sha_hw_islocked");
-            // ret = FALSE;
+            ret = FALSE;
         }
         else {
             ESP_LOGI(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
-            // ret = TRUE;
+            ret = TRUE;
         }
     }
     #endif
@@ -1540,7 +1573,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             // ret = esp_unroll_sha_module_enable(ctx);
             if (ctx->mode == ESP32_SHA_INIT) {
                 /* Set non-single-threaded hardware mode */
-                ctx->mode = ESP32_SHA_HW;
+                esp_set_hw(ctx);
+                // ctx->mode = ESP32_SHA_HW;
             }
 
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
@@ -2332,6 +2366,8 @@ int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
     ret = wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
 
     if (blockprocess) {
+        ESP_LOGI(TAG, "esp_sha_digest_process NEW UNLOCK");
+        esp_sha_hw_unlock(&sha->ctx); /* also unlocks mutex */
         ESP_LOGI(TAG, "sha blockprocess mutex_ctx_owner = NULLPTR");
         mutex_ctx_owner = NULLPTR;
     }
@@ -2408,6 +2444,8 @@ int esp_sha256_digest_process(struct wc_Sha256* sha, byte blockprocess)
     wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
 
     if (blockprocess) {
+        ESP_LOGI(TAG, "esp_sha256_digest_process blockprocess UNLOCK");
+        esp_sha_hw_unlock(&sha->ctx); /* also unlocks mutex */
         ESP_LOGI(TAG, "blockprocess mutex_ctx_owner = NULLPTR");
         mutex_ctx_owner = NULLPTR;
     }
@@ -2470,15 +2508,15 @@ int esp_sha512_block(struct wc_Sha512* sha, const word32* data, byte isfinal)
     }
     ESP_LOGV(TAG, "leave esp_sha512_block");
 #endif
-    if (isfinal) {
-        if ((intptr_t)&sha->ctx == mutex_ctx_owner) {
-            ESP_LOGI(TAG, "isfinal cleanup 0x%x", mutex_ctx_owner);
-            mutex_ctx_owner = NULLPTR;
-        }
-        else {
-            ESP_LOGI(TAG, "isfinal no cleanup 0x%x", mutex_ctx_owner);
-        }
-    }
+//    if (isfinal) {
+//        if ((intptr_t)&sha->ctx == mutex_ctx_owner) {
+//            ESP_LOGI(TAG, "isfinal cleanup 0x%x", mutex_ctx_owner);
+//            mutex_ctx_owner = NULLPTR;
+//        }
+//        else {
+//            ESP_LOGI(TAG, "isfinal no cleanup 0x%x", mutex_ctx_owner);
+//        }
+//    }
 return ret;
 } /* esp_sha512_block */
 
@@ -2519,6 +2557,7 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
 
         ret = esp_sha512_block(sha, data, 1);
     }
+
     if (sha->ctx.mode == ESP32_SHA_HW) {
         ret = wc_esp_digest_state(&sha->ctx, (byte*)sha->digest);
     }
@@ -2526,6 +2565,12 @@ int esp_sha512_digest_process(struct wc_Sha512* sha, byte blockproc)
         ESP_LOGW(TAG, "Call esp_sha512_digest_process in non-HW mode?");
     }
 
+    if (blockproc) {
+        ESP_LOGI(TAG, "esp_sha512_digest_process NEW UNLOCK");
+        esp_sha_hw_unlock(&sha->ctx); /* also unlocks mutex */
+        ESP_LOGI(TAG, "mutex_ctx_owner = NULLPTR");
+        mutex_ctx_owner = NULLPTR;
+    }
     ESP_LOGV(TAG, "leave esp_sha512_digest_process");
 #endif
     return ret;

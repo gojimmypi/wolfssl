@@ -54,11 +54,6 @@
     #define THIS_MONITOR_UART_BAUD_DATE 115200
 #endif
 
-
-/* set to 0 for one benchmark,
-** set to 1 for continuous benchmark loop */
-#define TEST_LOOP 0
-
 /*
 ** the wolfssl component can be installed in either:
 **
