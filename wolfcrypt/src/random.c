@@ -3463,7 +3463,11 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             if (sz < len)
                 len = sz;
         /* Get an Arduino framework random number */
-        #if defined(__arm__)
+        #if defined(ARDUINO_SAMD_NANO_33_IOT)
+             rand = random();
+        #elif defined(ARDUINO_ARCH_RP2040)
+             rand = random();
+        #elif defined(__arm__)
             /* See: https://github.com/avrxml/asf/tree/master/sam/utils/cmsis/sam3x/include */
             #if defined(__SAM3A4C__)
                 #ifndef TRNG

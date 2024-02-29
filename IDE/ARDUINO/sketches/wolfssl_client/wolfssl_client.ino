@@ -41,7 +41,7 @@ Tested with:
 #define REPEAT_CONNECTION 0
 
 /* Edit this with your other TLS host server address to connect to: */
-#define WOLFSSL_TLS_SERVER_HOST "192.168.1.38"
+#define WOLFSSL_TLS_SERVER_HOST "192.168.1.37"
 
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
@@ -87,8 +87,6 @@ Tested with:
 #include <wolfssl/certs_test.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#include <Ethernet.h>
-
 /* Define DEBUG_WOLFSSL in user_settings.h for more verbose logging. */
 #if defined(DEBUG_WOLFSSL)
     #define PROGRESS_DOT F("")
@@ -105,15 +103,44 @@ Tested with:
     #ifdef USE_NTP_LIB
         WiFiUDP ntpUDP;
     #endif
-    #define F 
+    /* Ensure the F() flash macro is defined */
+    #ifndef F
+        #define F
+    #endif
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
     WiFiClient client;
-/* #elif defined(OTHER_BOARD) */
-/* TODO define other boards here */
-#else
+#elif defined(ARDUINO_SAM_DUE)
+    #include <SPI.h>
+    /* There's no WiFi/Ethernet on the Due. Requires Ethernet Shield. 
+    /* Needs "Ethernet by Various" library to be installed. Tested with V2.0.2 */
+    #include <Ethernet.h>
     EthernetClient client;
+#elif defined(ARDUINO_SAMD_NANO_33_IOT)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h>
+    WiFiClient client;
+#elif defined(ARDUINO_ARCH_RP2040)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h>
+    WiFiClient client;
+#elif defined(USING_WIFI)
+    #define USING_WIFI
+    #include <WiFi.h>
+    #include <WiFiUdp.h>
+    WiFiClient client;
+    #ifdef USE_NTP_LIB
+        WiFiUDP ntpUDP;
+    #endif
+/* TODO 
+#elif defined(OTHER_BOARD) 
+*/
+#else
+    #define USING_WIFI
+    WiFiClient client;
 #endif
 
 
@@ -165,7 +192,7 @@ char *ramend=(char *)0x20088000;
 /*****************************************************************************/
 /* fail_wait - in case of unrecoverable error                                */
 /*****************************************************************************/
-static void fail_wait(void) {
+void fail_wait(void) {
     show_memory();
 
     Serial.println(F("Failed. Halt."));
@@ -239,10 +266,14 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /*****************************************************************************/
 /* Arduino setup_hardware()                                                  */
 /*****************************************************************************/
-static int setup_hardware(void) {
+int setup_hardware(void) {
     int ret = 0;
 
-#if defined(__arm__)
+#if defined(ARDUINO_SAMD_NANO_33_IOT)
+
+#elif defined(ARDUINO_ARCH_RP2040)
+
+#elif defined(__arm__)
     /* need to manually turn on random number generator on Arduino Due, etc. */
     Serial.println(F("Enabled ARM TRNG"));
     pmc_enable_periph_clk(ID_TRNG);
@@ -258,7 +289,7 @@ static int setup_hardware(void) {
 /* Arduino setup_datetime()                                                  */
 /*   The device needs to have a valid date within the valid range of certs.  */
 /*****************************************************************************/
-static int setup_datetime(void) {
+int setup_datetime(void) {
     int ret = 0;
     int ntp_tries = 20;
 
@@ -303,16 +334,33 @@ static int setup_datetime(void) {
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
 /*****************************************************************************/
-static int setup_network(void) {
+int setup_network(void) {
     int ret = 0;
+
 #if defined(USING_WIFI)
+    int status = WL_IDLE_STATUS;
+
     /* Connect to WiFi */
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(1000);
+    #if defined(ESP8266) || defined(ESP32)
+        WiFi.mode(WIFI_STA);
+    #endif
+
+    if (WiFi.status() == WL_NO_MODULE) {
+        Serial.println("Communication with WiFi module failed!");
+        // don't continue
+        while (true) ;
+    }
+
+    String fv = WiFi.firmwareVersion();
+    if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
+        Serial.println("Please upgrade the firmware");
+    }
+
+    while (status != WL_CONNECTED) {
+        status = WiFi.begin(ssid, password);
         Serial.print(F("Connecting to WiFi "));
         Serial.println(ssid);
+        delay(10000);
     }
 
     Serial.print(F("Connected to WiFi "));
@@ -373,7 +421,7 @@ static int setup_network(void) {
 /*****************************************************************************/
 /* Arduino setup_wolfssl()                                                   */
 /*****************************************************************************/
-static int setup_wolfssl(void) {
+int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
 
@@ -395,7 +443,7 @@ static int setup_wolfssl(void) {
 /*****************************************************************************/
 /* Arduino setup_certificates()                                              */
 /*****************************************************************************/
-static int setup_certificates(void) {
+int setup_certificates(void) {
     int ret = 0;
 
     Serial.println(F("Initializing certificates..."));
@@ -457,6 +505,9 @@ static int setup_certificates(void) {
 /*****************************************************************************/
 void setup(void) {
     Serial.begin(serial_baud);
+    while (!Serial) {
+        ; // wait for serial port to connect. Needed for native USB port only
+    }
     Serial.println(F(""));
     Serial.println(F(""));
     Serial.println(F("wolfSSL TLS Client Example Startup."));
@@ -486,14 +537,14 @@ void setup(void) {
     show_memory();
 #endif
 
-    Serial.println(F("Completed Arduino setup()"));
+    Serial.println(F("Completed Arduino setup!"));
     return;
 }
 
 /*****************************************************************************/
 /* wolfSSL error_check()                                                     */
 /*****************************************************************************/
-static int error_check(int this_ret, bool halt_on_error,
+int error_check(int this_ret, bool halt_on_error,
                       const __FlashStringHelper* message) {
     int ret = 0;
     if (this_ret == WOLFSSL_SUCCESS) {
@@ -522,10 +573,9 @@ static int error_check(int this_ret, bool halt_on_error,
 /*     halt_on_error set to true to suspend operations for critical error    */
 /*     message       is expected to be a memory-efficient F("") macro string */
 /*****************************************************************************/
-static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
+int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
                            const __FlashStringHelper* message) {
     int err = 0;
-
     if (ssl == NULL) {
         Serial.println(F("ssl is Null; Unable to allocate SSL object?"));
 #ifndef DEBUG_WOLFSSL
@@ -587,12 +637,16 @@ void loop() {
         reconnect--;
         /* WiFi client returns true if connection succeeds, false if not.  */
         /* Wired client returns int (1,-1,-2,-3,-4) for connection status. */
+        Serial.print(F("Connecting to "));
+        Serial.print(host);
+        Serial.print(F(":"));
+        Serial.println(port);
+        // IPAddress server(192,168,1,37);
+        Serial.println(F("Here we go..."));
         ret = client.connect(host, port);
+        Serial.println(F("Ok, checking..."));
         if (ret > 0) {
-            Serial.print(F("Connected to host at "));
-            Serial.print(host);
-            Serial.print(F(":"));
-            Serial.println(port);
+            Serial.println(F("Connected!"));
 
             /* initialize wolfSSL */
             ret = wolfSSL_Init();

@@ -118,11 +118,32 @@ Tested with:
     #include <ESP8266WiFi.h>
     WiFiServer server(WOLFSSL_PORT);
     WiFiClient client;
-    /* #elif defined(OTHER_BOARD) */
-/* TODO define other boards here */
-#else
-    EthernetServer server(WOLFSSL_PORT);
+#elif defined(ARDUINO_SAM_DUE)
+    EthernetClient server(WOLFSSL_PORT);
     EthernetClient client;
+#elif defined(ARDUINO_SAMD_NANO_33_IOT)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h>
+    WiFiServer server(WOLFSSL_PORT);
+    WiFiClient client;
+#elif defined(ARDUINO_ARCH_RP2040)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h>
+    WiFiServer server(WOLFSSL_PORT);
+    WiFiClient client;
+#elif defined(USING_WIFI)
+    #define USING_WIFI
+    #include <WiFi.h>
+    #include <WiFiUdp.h>
+    WiFiClient client;
+    #ifdef USE_NTP_LIB
+        WiFiUDP ntpUDP;
+    #endif
+/* TODO #elif defined(OTHER_BOARD) */
+#else
+    #define USING_WIFI
 #endif
 
 
@@ -257,8 +278,11 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 static int setup_hardware(void) {
     int ret = 0;
 
-#if defined(__arm__)
+#if defined(ARDUINO_SAMD_NANO_33_IOT)
+
+#elif defined(__arm__)
     /* need to manually turn on random number generator on Arduino Due, etc. */
+    Serial.println(F("Enabled ARM TRNG"));
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
 #endif
@@ -320,7 +344,9 @@ static int setup_network(void) {
     int ret = 0;
 #if defined(USING_WIFI)
     /* Connect to WiFi */
-    WiFi.mode(WIFI_STA);
+    #if defined(ESP8266) || defined(ESP32)
+        WiFi.mode(WIFI_STA);
+    #endif
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
