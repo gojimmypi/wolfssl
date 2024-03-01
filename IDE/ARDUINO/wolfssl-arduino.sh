@@ -4,9 +4,16 @@
 # an Arduino project
 # run as bash ./wolfssl-arduino.sh [INSTALL] [path]
 #
+# ./wolfssl-arduino.sh
 # The default is to install to a local wolfSSL directory (`ROOT_DIR`).
 # If successfully built, and the INSTALL option is used, tis directory
 # is then moved to the target.
+#
+# ./wolfssl-arduino.sh INSTALL
+# Creates a local wolfSSL directory and then moves it to the ARDUINO_ROOT
+#
+# ./wolfssl-arduino.sh INSTALL /mnt/c/workspace/Arduino-wolfSSL-$USER
+# Updates the Arduino-wolfSSL fork for $USER to refresh versions.
 #
 # To ensure a pristine build, the directory must not exist.
 #
@@ -208,13 +215,8 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
     fi
     $CP_CMD ${OPENSSL_DIR_TOP}/* .${OPENSSL_DIR}                                          || exit 1
 
-
-    cat > .${ROOT_SRC_DIR}/wolfssl.h <<EOF
-/* Generated wolfSSL header file for Arduino */
-#include <user_settings.h>
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/ssl.h>
-EOF
+    # Finally, copy the Arduino-specific wolfssl library files into place: [lib]/src
+    $CP_CMD ./wolfssl.h .${ROOT_SRC_DIR}/wolfssl.h
 
 else
     echo "ERROR: You must be in the IDE/ARDUINO directory to run this script"

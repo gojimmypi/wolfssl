@@ -12,14 +12,6 @@
     <Dependency>
       <Type>Library</Type>
       <Key>
-        <Packager>wolfSSL inc</Packager>
-        <Name>wolfssl</Name>
-        <Version>5.6.6-Arduino.1</Version>
-      </Key>
-    </Dependency>
-    <Dependency>
-      <Type>Library</Type>
-      <Key>
         <Packager>Arduino</Packager>
         <Name>WiFiNINA</Name>
         <Version>1.8.14</Version>
