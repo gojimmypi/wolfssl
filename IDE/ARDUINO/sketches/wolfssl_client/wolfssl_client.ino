@@ -27,6 +27,8 @@ Tested with:
    Legacy Arduino v1.86 was used to compile and program the Galileo
 
 2) Espressif ESP32 WiFi
+
+3) Arduino Due, Nano33 IoT, Nano RP-2040
 */
 
 /*
@@ -56,7 +58,11 @@ Tested with:
 #define RECONNECT_ATTEMPTS 20
 
 /* Optional stress test. Define to consume memory until exhausted: */
-// #define MEMORY_STRESS_TEST
+/* #define MEMORY_STRESS_TEST */
+
+/* Choose client or server example, not both. */
+#define WOLFSSL_CLIENT_EXAMPLE
+/* #define WOLFSSL_SERVER_EXAMPLE */
 
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
@@ -69,6 +75,8 @@ Tested with:
     const char* ssid PROGMEM  = "your_SSID";
     const char* password PROGMEM = "your_PASSWORD";
 #endif
+
+#define BROADCAST_ADDRESS "255.255.255.255"
 
 /* There's an optional 3rd party NTPClient library by Fabrice Weinberg.
  * If it is installed, uncomment define USE_NTP_LIB here: */
@@ -94,12 +102,15 @@ Tested with:
     #define PROGRESS_DOT F(".")
 #endif
 
+/* Convert a macro to a string */
+#define xstr(x) str(x)
+#define str(x) #x
+
 /* optional board-specific networking includes */
 #if defined(ESP32)
     #define USING_WIFI
     #include <WiFi.h>
     #include <WiFiUdp.h>
-    WiFiClient client;
     #ifdef USE_NTP_LIB
         WiFiUDP ntpUDP;
     #endif
@@ -107,40 +118,48 @@ Tested with:
     #ifndef F
         #define F
     #endif
+    WiFiClient client;
+
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
     WiFiClient client;
+
 #elif defined(ARDUINO_SAM_DUE)
     #include <SPI.h>
     /* There's no WiFi/Ethernet on the Due. Requires Ethernet Shield.
     /* Needs "Ethernet by Various" library to be installed. Tested with V2.0.2 */
     #include <Ethernet.h>
     EthernetClient client;
+
 #elif defined(ARDUINO_SAMD_NANO_33_IOT)
     #define USING_WIFI
     #include <SPI.h>
     #include <WiFiNINA.h>
     WiFiClient client;
+
 #elif defined(ARDUINO_ARCH_RP2040)
     #define USING_WIFI
     #include <SPI.h>
     #include <WiFiNINA.h>
     WiFiClient client;
+
 #elif defined(USING_WIFI)
     #define USING_WIFI
     #include <WiFi.h>
     #include <WiFiUdp.h>
-    WiFiClient client;
     #ifdef USE_NTP_LIB
         WiFiUDP ntpUDP;
     #endif
+    WiFiClient client;
+
 /* TODO
 #elif defined(OTHER_BOARD)
 */
 #else
     #define USING_WIFI
     WiFiClient client;
+
 #endif
 
 
@@ -181,19 +200,13 @@ static int lng_index PROGMEM = 0; /* 0 = English */
 
 
 #if defined(__arm__)
-extern char _end;
-extern "C" char *sbrk(int i);
-char *ramstart=(char *)0x20070000;
-char *ramend=(char *)0x20088000;
-
-#include <malloc.h>
+    #include <malloc.h>
+    extern char _end;
+    extern "C" char *sbrk(int i);
+    char *ramstart=(char *)0x20070000;
+    char *ramend=(char *)0x20088000;
 #endif
 
-//int wolfssl_arduino_serial_print(const char *const s)
-//{
-//    Serial.println(s);
-//    return 0;
-//}
 /*****************************************************************************/
 /* fail_wait - in case of unrecoverable error                                */
 /*****************************************************************************/
@@ -245,6 +258,8 @@ void show_memory(void)
     //	Serial.print("Stack RAM Used ",ramend - stack_ptr);
 
     //	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+#else
+    Serial.println(F("show_memory() not implemented for this platform"));
 #endif
 }
 
@@ -253,6 +268,9 @@ void show_memory(void)
 /*****************************************************************************/
 int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
     int sent = 0;
+    (void)ssl;
+    (void)ctx;
+
     sent = client.write((byte*)message, sz);
     return sent;
 }
@@ -262,6 +280,9 @@ int EthernetSend(WOLFSSL* ssl, char* message, int sz, void* ctx) {
 /*****************************************************************************/
 int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     int ret = 0;
+    (void)ssl;
+    (void)ctx;
+
     while (client.available() > 0 && ret < sz) {
         reply[ret++] = client.read();
     }
@@ -334,7 +355,7 @@ int setup_datetime(void) {
 #endif
 
     return ret;
-}
+} /* setup_datetime*/
 
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
@@ -344,11 +365,6 @@ int setup_network(void) {
 
 #if defined(USING_WIFI)
     int status = WL_IDLE_STATUS;
-
-    /* Connect to WiFi */
-    #if defined(ESP8266) || defined(ESP32)
-        WiFi.mode(WIFI_STA);
-    #endif
 
     if (WiFi.status() == WL_NO_MODULE) {
         Serial.println("Communication with WiFi module failed!");
@@ -361,11 +377,16 @@ int setup_network(void) {
         Serial.println("Please upgrade the firmware");
     }
 
+    /* Connect to WiFi */
+    #if defined(ESP8266) || defined(ESP32)
+        WiFi.mode(WIFI_STA);
+    #endif
+
     while (status != WL_CONNECTED) {
         status = WiFi.begin(ssid, password);
         Serial.print(F("Connecting to WiFi "));
         Serial.println(ssid);
-        delay(10000);
+        delay(5000);
     }
 
     Serial.print(F("Connected to WiFi "));
@@ -429,6 +450,7 @@ int setup_network(void) {
 int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
+
 #if defined(DEBUG_WOLFSSL)
     wolfSSL_Debugging_ON();
     Serial.println(F("wolfSSL Debugging is On!"));
@@ -436,10 +458,24 @@ int setup_wolfssl(void) {
     Serial.println(F("wolfSSL Debugging is Off! (enable with DEBUG_WOLFSSL)"));
 #endif
 
-    /* See companion server example with wolfSSLv23_server_method here. */
-    // ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
-    // ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* only TLS 1.2 */
-    // method = wolfTLSv1_3_client_method(); /* only TLS 1.3 */
+    ret = wolfSSL_Init();
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.println("Successfully called wolfSSL_Init");
+    }
+    else {
+        Serial.println("ERROR: wolfSSL_Init failed");
+    }
+
+    /* TODO - mataching delay here (see server) */
+
+
+    /* See companion server example with wolfSSLv23_server_method here.
+     * method = wolfSSLv23_client_method());   SSL 3.0 - TLS 1.3.
+     * method = wolfTLSv1_2_client_method();   only TLS 1.2
+     * method = wolfTLSv1_3_client_method();   only TLS 1.3  */
+
+    Serial.println("Here we go!");
+
     method = wolfSSLv23_client_method();
     if (method == NULL) {
         Serial.println(F("unable to get wolfssl client method"));
@@ -526,10 +562,17 @@ void setup(void) {
     Serial.println(F(""));
     Serial.println(F("wolfSSL TLS Client Example Startup."));
 
-
     /* define DEBUG_WOLFSSL in wolfSSL user_settings.h for diagnostics */
 #if defined(DEBUG_WOLFSSL)
     wolfSSL_Debugging_ON();
+#endif
+
+    /* Optionally pre-allocate a large block of memory for testing */
+#if defined(MEMORY_STRESS_TEST)
+    Serial.println(F("WARNING: Memory Stress Test Active!"));
+    show_memory();
+    memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_INITIAL);
+    show_memory();
 #endif
 
     setup_hardware();
@@ -544,15 +587,6 @@ void setup(void) {
 
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
-    return;
-
-
-    /* Optionally pre-allocate a large block of memory for testing */
-#if defined(MEMORY_STRESS_TEST)
-    show_memory();
-    memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_INITIAL);
-    show_memory();
-#endif
 
     Serial.println(F("Completed Arduino setup!"));
     return;
