@@ -43,7 +43,7 @@ Tested with:
 #define REPEAT_CONNECTION 0
 
 /* Edit this with your other TLS host server address to connect to: */
-#define WOLFSSL_TLS_SERVER_HOST "192.168.1.37"
+#define WOLFSSL_TLS_SERVER_HOST "192.168.1.34"
 
 /* wolfssl TLS examples communciate on port 11111 */
 #define WOLFSSL_PORT 11111
@@ -58,7 +58,7 @@ Tested with:
 #define RECONNECT_ATTEMPTS 20
 
 /* Optional stress test. Define to consume memory until exhausted: */
-/* #define MEMORY_STRESS_TEST */
+#define MEMORY_STRESS_TEST
 
 /* Choose client or server example, not both. */
 #define WOLFSSL_CLIENT_EXAMPLE
@@ -162,7 +162,7 @@ Tested with:
 
 #endif
 
-
+/* Only for syntax highlighters to show interesting options enabled: */
 #if defined(HAVE_SNI)                           \
    || defined(HAVE_MAX_FRAGMENT)                  \
    || defined(HAVE_TRUSTED_CA)                    \
@@ -188,7 +188,7 @@ char errBuf[80];
 #if defined(MEMORY_STRESS_TEST)
     #define MEMORY_STRESS_ITERATIONS 100
     #define MEMORY_STRESS_BLOCK_SIZE 1024
-    #define MEMORY_STRESS_INITIAL (91760-(35*1024))
+    #define MEMORY_STRESS_INITIAL ((4*1024))
     char* memory_stress[MEMORY_STRESS_ITERATIONS]; /* typically 1K per item */
     int mem_ctr        = 0;
 #endif
@@ -210,25 +210,26 @@ static int lng_index PROGMEM = 0; /* 0 = English */
 /*****************************************************************************/
 /* fail_wait - in case of unrecoverable error                                */
 /*****************************************************************************/
-void fail_wait(void) {
+int fail_wait(void) {
     show_memory();
 
     Serial.println(F("Failed. Halt."));
     while (1) {
         delay(1000);
     }
+    return 0;
 }
 
 /*****************************************************************************/
 /* show_memory() to optionally view during debugging.                         */
 /*****************************************************************************/
-void show_memory(void)
+int show_memory(void)
 {
 #if defined(__arm__)
     struct mallinfo mi = mallinfo();
 
     char *heapend=sbrk(0);
-	register char * stack_ptr asm("sp");
+    register char * stack_ptr asm("sp");
     #if defined(DEBUG_WOLFSSL_VERBOSE)
         Serial.print("    arena=");
         Serial.println(mi.arena);
@@ -244,7 +245,8 @@ void show_memory(void)
 
     #if defined(DEBUG_WOLFSSL) || defined(MEMORY_STRESS_TEST)
         Serial.print("Estimated free memory: ");
-        Serial.println(stack_ptr - heapend + mi.fordblks);
+        Serial.print(stack_ptr - heapend + mi.fordblks);
+        Serial.println(F(" bytes"));
     #endif
 
     //	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
@@ -261,6 +263,7 @@ void show_memory(void)
 #else
     Serial.println(F("show_memory() not implemented for this platform"));
 #endif
+    return 0;
 }
 
 /*****************************************************************************/
@@ -296,14 +299,14 @@ int setup_hardware(void) {
     int ret = 0;
 
 #if defined(ARDUINO_SAMD_NANO_33_IOT)
-
+    Serial.println(F("Detected known tested and working Arduino Nano 33 IoT"));
 #elif defined(ARDUINO_ARCH_RP2040)
-
-#elif defined(__arm__)
+    Serial.println(F("Detected known tested and working Arduino RP-2040"));
+#elif defined(__arm__) && defined(ID_TRNG) && defined(TRNG)
     /* need to manually turn on random number generator on Arduino Due, etc. */
-    Serial.println(F("Enabled ARM TRNG"));
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
+    Serial.println(F("Enabled ARM TRNG"));
 #endif
 
     show_memory();
@@ -377,20 +380,20 @@ int setup_network(void) {
         Serial.println("Please upgrade the firmware");
     }
 
-    /* Connect to WiFi */
+    /* The ESP8266 & ESP32 support both AP and STA. We'll use STA: */
     #if defined(ESP8266) || defined(ESP32)
         WiFi.mode(WIFI_STA);
     #endif
 
+    Serial.print(F("Connecting to WiFi "));
+    Serial.print(ssid);
     while (status != WL_CONNECTED) {
         status = WiFi.begin(ssid, password);
-        Serial.print(F("Connecting to WiFi "));
-        Serial.println(ssid);
         delay(5000);
+        Serial.print(F("."));
     }
 
-    Serial.print(F("Connected to WiFi "));
-    Serial.println(ssid);
+    Serial.println(F(" Connected!"));
 #else
     /* Newer Ethernet shields have a
      * MAC address printed on a sticker on the shield */
@@ -451,11 +454,47 @@ int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
 
+    /* Show a revision of wolfssl user_settings.h file in use when available: */
+#if defined(WOLFSSL_USER_SETTINGS_ID)
+    Serial.print(F("WOLFSSL_USER_SETTINGS_ID: "));
+    Serial.println(F(WOLFSSL_USER_SETTINGS_ID));
+#else
+    Serial.println(F("No WOLFSSL_USER_SETTINGS_ID found."));
+#endif
+
+#if defined(NO_WOLFSSL_SERVER)
+    Serial.println(F("wolfSSL server code disabled to save space."));
+#endif
+#if defined(NO_WOLFSSL_CLIENT)
+    Serial.println(F("wolfSSL client code disabled to save space."));
+#endif
+
 #if defined(DEBUG_WOLFSSL)
     wolfSSL_Debugging_ON();
     Serial.println(F("wolfSSL Debugging is On!"));
 #else
     Serial.println(F("wolfSSL Debugging is Off! (enable with DEBUG_WOLFSSL)"));
+#endif
+
+    /* See ssl.c for TLS cache settings. Larger cache = use more RAM. */
+#if defined(NO_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS NO_SESSION_CACHE"));
+#elif defined(MICRO_SESSION_CACHEx)
+    Serial.println(F("wolfSSL TLS MICRO_SESSION_CACHE"));
+#elif defined(SMALL_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS SMALL_SESSION_CACHE"));
+#elif defined(MEDIUM_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS MEDIUM_SESSION_CACHE"));
+#elif defined(BIG_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS BIG_SESSION_CACHE"));
+#elif defined(HUGE_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS HUGE_SESSION_CACHE"));
+#elif defined(HUGE_SESSION_CACHE)
+    Serial.println(F("wolfSSL TLS HUGE_SESSION_CACHE"));
+#else
+    Serial.println(F("WARNING: Unknown or no TLS session cache setting."));
+    /* See wolfssl/src/ssl.c for amount of memory used.
+     * It is best on embedded devices to choose a TLS session cache size. */
 #endif
 
     ret = wolfSSL_Init();
@@ -498,8 +537,42 @@ int setup_certificates(void) {
 
     Serial.println(F("Initializing certificates..."));
     show_memory();
-    /* initialize wolfSSL using callback functions */
+
+    /* Use built-in validation, No verification callback function: */
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, 0);
+
+    /* Certificate */
+    Serial.println("Initializing certificates...");
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             CTX_CLIENT_CERT,
+                                             CTX_CLIENT_CERT_SIZE,
+                                             CTX_CLIENT_CERT_TYPE);
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.print("Success: use certificate: ");
+        Serial.println(xstr(CTX_SERVER_CERT));
+    }
+    else {
+        Serial.println(F("Error: wolfSSL_CTX_use_certificate_buffer failed: "));
+        wc_ErrorString(ret, wc_error_message);
+        Serial.println(wc_error_message);
+        fail_wait();
+    }
+
+    /* Setup private client key */
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            CTX_CLIENT_KEY,
+                                            CTX_CLIENT_KEY_SIZE,
+                                            CTX_CLIENT_KEY_TYPE);
+    if (ret == WOLFSSL_SUCCESS) {
+        Serial.print("Success: use private key buffer: ");
+        Serial.println(xstr(CTX_SERVER_KEY));
+    }
+    else {
+        Serial.println(F("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: "));
+        wc_ErrorString(ret, wc_error_message);
+        Serial.println(wc_error_message);
+        fail_wait();
+    }
 
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CA_CERT,
@@ -515,35 +588,7 @@ int setup_certificates(void) {
         fail_wait();
     }
 
-    /* Certificate */
-    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                             CTX_CLIENT_CERT,
-                                             CTX_CLIENT_CERT_SIZE,
-                                             CTX_CLIENT_CERT_TYPE);
-    if (ret == WOLFSSL_SUCCESS) {
-        Serial.println(F("Success: use certificate CTX_CLIENT_CERT"));
-    }
-    else {
-        Serial.println(F("Error: wolfSSL_CTX_use_certificate_buffer failed: "));
-        wc_ErrorString(ret, wc_error_message);
-        Serial.println(wc_error_message);
-        fail_wait();
-    }
 
-    /* Private Key */
-    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                            CTX_CLIENT_KEY,
-                                            CTX_CLIENT_KEY_SIZE,
-                                            CTX_CLIENT_KEY_TYPE);
-    if (ret == WOLFSSL_SUCCESS) {
-        Serial.println(F("Success: use private key buffer CTX_CLIENT_KEY."));
-    }
-    else {
-        Serial.println(F("Error: wolfSSL_CTX_use_PrivateKey_buffer failed: "));
-        wc_ErrorString(ret, wc_error_message);
-        Serial.println(wc_error_message);
-        fail_wait();
-    }
 
     return ret;
 }
@@ -570,7 +615,9 @@ void setup(void) {
     /* Optionally pre-allocate a large block of memory for testing */
 #if defined(MEMORY_STRESS_TEST)
     Serial.println(F("WARNING: Memory Stress Test Active!"));
-    show_memory();
+    Serial.print(F("Allocating extra memory: "));
+    Serial.print(MEMORY_STRESS_INITIAL);
+    Serial.println(F(" bytes..."));
     memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_INITIAL);
     show_memory();
 #endif
@@ -585,12 +632,18 @@ void setup(void) {
 
     setup_certificates();
 
+    /* Initialize wolfSSL using callback functions. */
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
 
     Serial.println(F("Completed Arduino setup!"));
+    /* See companion wolfssl_server.ino code; server begins listening here
+     * https://github.com/wolfSSL/wolfssl/tree/master/IDE/ARDUINO/sketches/wolfssl_server
+     * Any other server will work. See also:
+     * https://github.com/wolfSSL/wolfssl/tree/master/examples/client
+     */
     return;
-}
+} /* Arduino setup */
 
 /*****************************************************************************/
 /* wolfSSL error_check()                                                     */
@@ -615,7 +668,7 @@ int error_check(int this_ret, bool halt_on_error,
     show_memory();
 
     return ret;
-}
+} /* error_check */
 
 /*****************************************************************************/
 /* wolfSSL error_check_ssl                                                   */
@@ -680,9 +733,6 @@ void loop() {
     int ret            = 0;
     int err            = 0;
     msgSz = (int)strlen(msg);
-#ifdef MICRO_SESSION_CACHE
-
-#endif
     Serial.println(F(""));
     Serial.println(F("Starting Arduino loop() ..."));
 
