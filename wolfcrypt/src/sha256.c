@@ -1174,7 +1174,7 @@ static int InitSha256(wc_Sha256* sha256)
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
 
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGI(TAG, "Sha256Update process software");
+                    ESP_LOGV(TAG, "Sha256Update process software");
                     #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
                         ESP_LOGI(TAG, "Sha256Update process software");

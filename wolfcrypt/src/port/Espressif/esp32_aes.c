@@ -88,7 +88,7 @@ static int esp_aes_hw_InUse(void)
          *    probably not */
         ret = esp_CryptHwMutexLock(&aes_mutex, 5000);
         if (ret == ESP_OK) {
-            ESP_LOGW(TAG, "esp_CryptHwMutexLock aes success");
+            ESP_LOGV(TAG, "esp_CryptHwMutexLock aes success");
         }
         else {
             ESP_LOGW(TAG, "esp_CryptHwMutexLock aes timeout! %d", ret);

@@ -39,6 +39,12 @@
     #include <wolfcrypt/src/misc.c>
 #endif
 
+#ifdef DEBUG_WOLFSSL
+    #include <wolfcrypt/logging.h>
+#else
+    #define WOLFSSL_MSG(X)
+#endif
+
 /** Computes the session key using the Mask Generation Function 1. */
 static int wc_SrpSetKey(Srp* srp, byte* secret, word32 size);
 
@@ -82,7 +88,6 @@ static int SrpHashInit(SrpHash* hash, SrpType type, void* heap)
 
 static int SrpHashUpdate(SrpHash* hash, const byte* data, word32 size)
 {
-    ESP_LOGI("srp", "SrpHashUpdate %d", hash->type);
     switch (hash->type) {
         case SRP_TYPE_SHA:
             #ifndef NO_SHA
@@ -119,7 +124,6 @@ static int SrpHashUpdate(SrpHash* hash, const byte* data, word32 size)
 
 static int SrpHashFinal(SrpHash* hash, byte* digest)
 {
-    ESP_LOGI("srp", "SrpHashFinal %d", hash->type);
     switch (hash->type) {
         case SRP_TYPE_SHA:
             #ifndef NO_SHA
@@ -991,7 +995,7 @@ int wc_SrpVerifyPeersProof(Srp* srp, byte* proof, word32 size)
     }
 
     if (!r && XMEMCMP(proof, digest, size) != 0) {
-        ESP_LOGE("SRP", "Verify Peers Proof vs Digest failed");
+        WOLFSSL_MSG("Verify Peers Proof vs Digest failed");
         r = SRP_VERIFY_E;
     }
 

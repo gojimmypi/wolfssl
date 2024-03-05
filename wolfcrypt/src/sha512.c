@@ -972,7 +972,7 @@ static WC_INLINE int Sha512Final(wc_Sha512* sha512)
 #endif /* LITTLE_ENDIAN_ORDER */
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)
-        ESP_LOGI(TAG, "prelock sha512->ctx.mode = %d", sha512->ctx.mode);
+        ESP_LOGV(TAG, "prelock sha512->ctx.mode = %d", sha512->ctx.mode);
         if (sha512->ctx.mode == ESP32_SHA_INIT) {
             esp_sha_try_hw_lock(&sha512->ctx);
         }

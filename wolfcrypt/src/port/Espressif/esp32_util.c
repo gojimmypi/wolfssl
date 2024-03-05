@@ -118,7 +118,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
     ret = wc_LockMutex(mutex);
 #else
     ret = xSemaphoreTake(*mutex, block_time);
-    ESP_LOGI(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)*mutex, ret);
+    ESP_LOGV(TAG, "xSemaphoreTake 0x%x = %d", (intptr_t)*mutex, ret);
     if (ret == pdTRUE) {
         ret = ESP_OK;
     }
@@ -152,7 +152,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
 #ifdef SINGLE_THREADED
     ret = wc_UnLockMutex(mutex);
 #else
-    ESP_LOGI(TAG, ">> xSemaphoreGive 0x%x", (intptr_t)*mutex);
+    ESP_LOGV(TAG, ">> xSemaphoreGive 0x%x", (intptr_t)*mutex);
     TaskHandle_t mutexHolder = xSemaphoreGetMutexHolder(*mutex);
 
     if (mutexHolder == NULL) {
@@ -163,11 +163,11 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     else {
         ret = xSemaphoreGive(*mutex);
         if (ret == pdTRUE) {
-            ESP_LOGI(TAG, "Success: give mutex 0x%x", (intptr_t)*mutex);
+            ESP_LOGV(TAG, "Success: give mutex 0x%x", (intptr_t)*mutex);
             ret = ESP_OK;
         }
         else {
-            ESP_LOGI(TAG, "Failed: give mutex 0x%x", (intptr_t)*mutex);
+            ESP_LOGV(TAG, "Failed: give mutex 0x%x", (intptr_t)*mutex);
             ret = ESP_OK;
         }
     }
@@ -935,7 +935,7 @@ int show_binary(byte* theVar, size_t dataSz) {
 
 int hexToBinary(byte* toVar, const char* fromHexString, size_t szHexString ) {
     int ret = 0;
-    // Calculate the actual binary length of the hex string
+    /* Calculate the actual binary length of the hex string */
     size_t byteLen = szHexString / 2;
 
     if (toVar == NULL || fromHexString == NULL) {
@@ -948,15 +948,18 @@ int hexToBinary(byte* toVar, const char* fromHexString, size_t szHexString ) {
 
     ESP_LOGW(TAG, "Replacing %d bytes at %x", byteLen, (word32)toVar);
     memset(toVar, 0, byteLen);
-    // Iterate through the hex string and convert to binary
+    /* Iterate through the hex string and convert to binary */
     for (size_t i = 0; i < szHexString; i += 2) {
-        // Convert hex character to decimal
+        /* Convert hex character to decimal */
         int decimalValue;
         sscanf(&fromHexString[i], "%2x", &decimalValue);
         size_t index = i / 2;
-     //  byte new_val =  (decimalValue & 0x0F) << ((i % 2) * 4);
-     //  ESP_LOGI("hex", "Current char = %d", toVar[index]);
-     //   ESP_LOGI("hex", "New val = %d", decimalValue);
+#if (0)
+        /* Optionall peek at new values */
+        byte new_val =  (decimalValue & 0x0F) << ((i % 2) * 4);
+        ESP_LOGI("hex", "Current char = %d", toVar[index]);
+        ESP_LOGI("hex", "New val = %d", decimalValue);
+#endif
         toVar[index]  = decimalValue;
     }
 

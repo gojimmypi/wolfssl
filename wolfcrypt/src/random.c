@@ -2231,7 +2231,7 @@ static int wc_RNG_HealthTestLocal(int reseed, void* heap, int devId)
         const byte* seedB = seedB_data;
         const byte* outputB = outputB_data;
 #endif
-#if defined(DEBUG_WOLFSSL)
+#if defined(DEBUG_WOLFSSL_VERBOSE)
         WOLFSSL_MSG_EX("RNG_HEALTH_TEST_CHECK_SIZE = %d", RNG_HEALTH_TEST_CHECK_SIZE);
         WOLFSSL_MSG_EX("sizeof(seedB_data)         = %d", (int)sizeof(outputB_data));
 #endif
