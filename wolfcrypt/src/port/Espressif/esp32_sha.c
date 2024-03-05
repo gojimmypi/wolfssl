@@ -276,6 +276,11 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     ESP_LOGI(TAG, "\n\nesp_sha_init for ctx %p\n\n", ctx);
 #endif
 
+    // TODO test remove:
+    if (ctx == 0x3ffbfc64) {
+        ESP_LOGW(TAG, "Interesting 0x3ffbfc64");
+    }
+
     if (ctx == NULL) {
         return ESP_FAIL;
     }
@@ -742,14 +747,17 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
             ESP_LOGI(TAG, "esp_sha256_ctx_copy esp_sha512_digest_process");
         }
         #endif
-        ret = esp_sha256_digest_process(dst, 0); /* TODO Use FALSE*/
+        ret = esp_sha256_digest_process(dst, FALSE);
 
-        if (ret == 0) {
+        if (ret == ESP_OK) {
             /* provide init hint to possibly SW revert */
             dst->ctx.mode = ESP32_SHA_HW_COPY;
 
             /* initializer breadcrumb will be set during init */
-            ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA256 );
+            ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA256);
+        }
+        else {
+            ESP_LOGE(TAG, "Unexpected error during sha256 ctx copy: %d", ret);
         }
 
         if (dst->ctx.mode == ESP32_SHA_SW) {
@@ -767,11 +775,12 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
             ESP_LOGV(TAG, "Confirmed wc_Sha256 Copy set to SW");
         }
         else {
-            ESP_LOGW(TAG, "wc_Sha256 Copy (mode = %d) NOT set to SW", dst->ctx.mode);
+            ESP_LOGW(TAG, "wc_Sha256 Copy (mode = %d) set to SW", dst->ctx.mode);
+            dst->ctx.mode = ESP32_SHA_SW;
         }
     } /* (src->ctx.mode == ESP32_SHA_HW) */
     else {
-        ret = 0;
+        ret = ESP_OK;
         /*
         ** reminder this happened in XMEMCOPY: dst->ctx = src->ctx;
         ** No special HW init needed in SW mode.
@@ -880,9 +889,9 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
     if (src->ctx.mode == ESP32_SHA_HW) {
         /* Get a copy of the HW digest, but don't process it. */
         ESP_LOGI(TAG, "esp_sha512_ctx_copy esp_sha512_digest_process");
-        ret = esp_sha512_digest_process(dst, 0);
+        ret = esp_sha512_digest_process(dst, FALSE);
 
-        if (ret == 0) {
+        if (ret == ESP_OK) {
             /* provide init hint to SW revert */
             dst->ctx.mode = ESP32_SHA_HW_COPY;
 
@@ -896,11 +905,12 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
             ESP_LOGV(TAG, "Confirmed wc_Sha512 Copy set to SW");
         }
         else {
-            ESP_LOGW(TAG, "wc_Sha512 Copy NOT set to SW");
+            ESP_LOGW(TAG, "wc_Sha512 Copy set to SW");
+            dst->ctx.mode = ESP32_SHA_SW;
         }
     } /* src->ctx.mode == ESP32_SHA_HW */
     else {
-        ret = 0;
+        ret = ESP_OK;
         /* reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
@@ -1228,18 +1238,19 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
         if (mutexHolder == NULL) {
             /* Mutex is not in use */
             ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = false");
+            ret = 0;
         }
         else {
             ESP_LOGV(TAG, "multi-threaded esp_mp_hw_islocked = true");
-            ret = TRUE;
+            ret = mutex_ctx_owner;
         }
         if (NULLPTR == mutex_ctx_owner) {
             ESP_LOGI(TAG, "not esp_sha_hw_islocked");
-            ret = FALSE;
+            //ret = FALSE; /* TODO review for all */
         }
         else {
             ESP_LOGI(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
-            ret = TRUE;
+            //ret = TRUE;  /* TODO review for all */
         }
     }
     #endif
@@ -1272,11 +1283,13 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
 
     ret = esp_sha_hw_islocked(ctx); /* get the owner of the current lock */
     if (ret == 0) {
+        ESP_LOGI(TAG, "No unfinished lock to clean up for ctx %p.", ctx);
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGV(TAG, "No unfinished lock to clean up for ctx %p.", ctx);
         #endif
     }
     else {
+        ESP_LOGI(TAG, "Unfinished lock to clean up for ctx %p.", ctx);
         #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGI(TAG, "Unfinished lock clean up: %p.", ctx);
         #endif
@@ -1328,6 +1341,9 @@ int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
     CTX_STACK_CHECK(ctx);
     if (ctx->mode != ESP32_SHA_INIT) {
         ESP_LOGW(TAG, "esp_sha_release_unfinished_lock mode = %d", ctx->mode);
+        if (ctx->mode == ESP32_SHA_HW) {
+            ESP_LOGW(TAG, "esp_sha_release_unfinished_lock HW!");
+        }
     }
     return ret;
 } /* esp_sha_release_unfinished_lock */
@@ -1502,7 +1518,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
 #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGI(TAG, "ESP32_SHA_INIT for %x\n", (uintptr_t)ctx->initializer);
 #endif
-        ESP_LOGI(TAG, "Init; release unfinished lock for ctx 0x%x", (uintptr_t)ctx);
+        ESP_LOGI(TAG, "Init; release unfinished ESP32_SHA_INIT lock for ctx 0x%x", (uintptr_t)ctx);
         esp_sha_release_unfinished_lock(ctx);
 
         /* lock hardware; there should be exactly one instance

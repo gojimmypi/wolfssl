@@ -1158,7 +1158,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #if defined(DEBUG_WOLFSSL) && !defined(HAVE_VALGRIND)
-    wolfSSL_Debugging_ON();
+//    wolfSSL_Debugging_ON();
 #endif
 
 #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
@@ -23682,6 +23682,8 @@ static wc_test_ret_t srp_test_digest(SrpType dgstType)
 
     if (!r) r = wc_SrpComputeKey(srv, clientPubKey, clientPubKeySz,
                                        serverPubKey, serverPubKeySz);
+
+    /* TODO currently failing here, but problem is above */
     if (!r) r = wc_SrpVerifyPeersProof(srv, clientProof, clientProofSz);
     if (!r) r = wc_SrpGetProof(srv, serverProof, &serverProofSz);
 
@@ -23713,6 +23715,28 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t srp_test(void)
     wc_test_ret_t ret;
     WOLFSSL_ENTER("srp_test");
 
+// TODO remove these extra relocated tests
+wolfSSL_Debugging_OFF();
+#ifdef WOLFSSL_SHA512x
+    ret = sha512_test();
+    if (ret != 0) {
+        WOLFSSL_MSG("SHA512 failed");
+        return ret;
+    }
+#endif
+
+wolfSSL_Debugging_ON();
+WOLFSSL_MSG("Begin srp_test_digest(SRP_TYPE_SHA512)");
+#ifdef WOLFSSL_SHA512
+    ret = srp_test_digest(SRP_TYPE_SHA512);
+    if (ret != 0) {
+        WOLFSSL_MSG("SRP SHA512 failed");
+        return ret;
+    }
+    else {
+        WOLFSSL_MSG("SRP SHA512 success");
+    }
+#endif
 
 //#ifdef NO_SKIP_OTHERS
 
