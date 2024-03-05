@@ -82,6 +82,7 @@ static int SrpHashInit(SrpHash* hash, SrpType type, void* heap)
 
 static int SrpHashUpdate(SrpHash* hash, const byte* data, word32 size)
 {
+    ESP_LOGI("srp", "SrpHashUpdate %d", hash->type);
     switch (hash->type) {
         case SRP_TYPE_SHA:
             #ifndef NO_SHA
@@ -118,6 +119,7 @@ static int SrpHashUpdate(SrpHash* hash, const byte* data, word32 size)
 
 static int SrpHashFinal(SrpHash* hash, byte* digest)
 {
+    ESP_LOGI("srp", "SrpHashFinal %d", hash->type);
     switch (hash->type) {
         case SRP_TYPE_SHA:
             #ifndef NO_SHA
@@ -268,12 +270,12 @@ int wc_SrpInit_ex(Srp* srp, SrpType type, SrpSide side, void* heap, int devId)
     if ((r = SrpHashInit(&srp->client_proof, type, srp->heap)) != 0)
         return r;
 
-    srp->client_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
+    // srp->client_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
     if ((r = SrpHashInit(&srp->server_proof, type, srp->heap)) != 0) {
         SrpHashFree(&srp->client_proof);
         return r;
     }
-    srp->server_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
+    // srp->server_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
 
     if ((r = mp_init_multi(&srp->N,    &srp->g, &srp->auth,
                            &srp->priv, 0, 0)) != 0) {

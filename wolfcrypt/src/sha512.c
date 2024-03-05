@@ -782,17 +782,19 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
          defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512)
             ret = Transform_Sha512(sha512);
     #else
-            if(sha512->ctx.mode == ESP32_SHA_INIT) {
+            if (sha512->ctx.mode == ESP32_SHA_INIT) {
                 esp_sha_try_hw_lock(&sha512->ctx);
             }
-            ret = esp_sha512_process(sha512);
-            if(ret == 0 && sha512->ctx.mode == ESP32_SHA_SW){
+            if (sha512->ctx.mode == ESP32_SHA_SW) {
                 ByteReverseWords64(sha512->buffer, sha512->buffer,
                                                          WC_SHA512_BLOCK_SIZE);
                 ret = Transform_Sha512(sha512);
             }
+            else {
+                ret = esp_sha512_process(sha512);
+            }
     #endif
-            if (ret == 0)
+            if (ret == ESP_OK)
                 sha512->buffLen = 0;
             else
                 len = 0;

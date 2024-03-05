@@ -2541,7 +2541,7 @@ return ret;
 */
 int esp_sha512_process(struct wc_Sha512* sha)
 {
-    int ret = 0; /* assume success */
+    int ret = ESP_OK; /* assume success */
     word32 *data = (word32*)sha->buffer;
 
     ESP_LOGV(TAG, "enter esp_sha512_process");

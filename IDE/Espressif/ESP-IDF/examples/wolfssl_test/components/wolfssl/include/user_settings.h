@@ -86,11 +86,14 @@
     #define HAVE_FFDHE
     #define HAVE_FFDHE_2048
 
-    #define HAVE_CAMELLIA
+    /* TODO: there may be a problem with HAVE_CAMELLIA with HW AES disabled.
+     * Do not define NO_WOLFSSL_ESP32_CRYPT_AES when enabled: */
+    /* #define HAVE_CAMELLIA */
+
     #define HAVE_DSA
 
-    // needs SHA512?
-    // #define HAVE_HPKE
+    /* Needs SHA512 ?*/
+    #define HAVE_HPKE
 
     /* Not for Espressif? */
     /* #define WOLFSSL_AES_EAX */
@@ -98,6 +101,7 @@
     /* Only for WOLFSSL_IMX6_CAAM / WOLFSSL_QNX_CAAM ? */
     /* #define WOLFSSL_CAAM      */
     /* #define WOLFSSL_CAAM_BLOB */
+    #define WOLFSSL_WOLFSSH
 
     #define WOLFSSL_AES_SIV
     #define WOLFSSL_CMAC
@@ -108,6 +112,7 @@
     #define SCRYPT_TEST_ALL
     #define HAVE_X963_KDF
     #define HAVE_ECC_CDH
+//    #define WC_SRTP_KDF
     #define HAVE_COMP_KEY
     #define ECC_SHAMIR
     //#define WOLFSSL_HAVE_XMSS
@@ -320,12 +325,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
