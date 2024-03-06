@@ -3,7 +3,9 @@
 See the [example sketches](./sketches/README.md):
 
 - [sketches/wolfssl_server](./sketches/wolfssl_server/README.md)
-= [sketches/wolfssl_client](./sketches/wolfssl_client/README.md)
+- [sketches/wolfssl_client](./sketches/wolfssl_client/README.md)
+
+When publishing a new version to the Arduino Registry, be sure to edit `WOLFSSL_VERSION_ARUINO_SUFFIX` in the `wolfssl-arduino.sh` script.
 
 ## Boards
 
@@ -19,7 +21,7 @@ https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectron
 
 ## Using wolfSSL from the Arduino IDE
 
-Coming soon! https://github.com/wolfSSL/arduino-wolfSSL See [PR #1](https://github.com/wolfSSL/Arduino-wolfSSL/pull/1).
+The Official wolfSSL: https://github.com/wolfSSL/arduino-wolfSSL See [PR #1](https://github.com/wolfSSL/Arduino-wolfSSL/pull/1).
 
 This option will allow wolfSSL to be installed directly using the native Arduino tools.
 
@@ -100,9 +102,25 @@ Open an example Arduino sketch for wolfSSL:
 
 #### Script Examples
 
-Publish wolfSSL from WSL to a repository.
+Refresh the local Windows Arduino wolfSSL library from GitHub repository directory using WSL:
+
+Don't forget to edit `WOLFSSL_VERSION_ARUINO_SUFFIX`!
 
 ```bash
+# Change to the wolfSSL Arduino IDE directory
+cd /mnt/c/workspace/wolfssl-$USER/IDE/ARDUINO
+
+# remove current Arduino wolfSSL library
+rm -rf /mnt/c/Users/$USER/Documents/Arduino/libraries/wolfssl
+
+# Install wolfSSL as an Arduino library
+./wolfssl-arduino.sh INSTALL
+```
+
+Publish wolfSSL from WSL to a `Arduino-wolfSSL-$USER` repository.
+
+```bash
+cd /mnt/c/workspace/wolfssl-$USER/IDE/ARDUINO
 rm -rf /mnt/c/Users/$USER/Documents/Arduino/libraries/wolfSSL
 rm -rf /mnt/c/workspace/wolfssl-$USER/IDE/ARDUINO/wolfSSL
 ./wolfssl-arduino.sh INSTALL /mnt/c/workspace/Arduino-wolfSSL-$USER/
