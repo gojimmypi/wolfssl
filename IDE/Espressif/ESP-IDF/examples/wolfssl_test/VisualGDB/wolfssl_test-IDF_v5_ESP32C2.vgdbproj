@@ -71,7 +71,7 @@
           <Subdirectory>esp-idf/v5.1</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM11</COMPort>
+        <COMPort>COM71</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32C2</DeviceID>
@@ -93,7 +93,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM3</ComPortName>
+      <ComPortName>COM71</ComPortName>
       <AdvancedSettings>
         <BaudRate>74880</BaudRate>
         <DataBits>8</DataBits>
@@ -105,7 +105,7 @@
     <LastConnectionTime>0</LastConnectionTime>
     <EchoTypedCharacters>false</EchoTypedCharacters>
     <ClearContentsWhenReconnecting>true</ClearContentsWhenReconnecting>
-    <ReconnectAutomatically>false</ReconnectAutomatically>
+    <ReconnectAutomatically>true</ReconnectAutomatically>
     <DisplayMode>ASCII</DisplayMode>
     <Colors>
       <Background>
@@ -150,7 +150,7 @@
     <LineEnding>LF</LineEnding>
     <TreatLFAsCRLF>false</TreatLFAsCRLF>
     <KeepOpenAfterExit>false</KeepOpenAfterExit>
-    <ShowAfterProgramming>false</ShowAfterProgramming>
+    <ShowAfterProgramming>true</ShowAfterProgramming>
   </DeviceTerminalSettings>
   <CustomShortcuts>
     <Shortcuts />
