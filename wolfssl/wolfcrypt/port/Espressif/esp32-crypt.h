@@ -714,11 +714,13 @@ extern "C"
     WOLFSSL_LOCAL int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL int esp_sha_set_stray(WC_ESP32SHA* ctx);
 
+#ifndef NO_SHA
     struct wc_Sha;
     WOLFSSL_LOCAL int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst);
     WOLFSSL_LOCAL int esp_sha_digest_process(struct wc_Sha* sha,
                                              byte blockprocess);
     WOLFSSL_LOCAL int esp_sha_process(struct wc_Sha* sha, const byte* data);
+#endif /* NO_SHA */
 
 #ifdef WOLFSSL_DEBUG_MUTEX
     /* Testing HW release in task that did not lock: */
