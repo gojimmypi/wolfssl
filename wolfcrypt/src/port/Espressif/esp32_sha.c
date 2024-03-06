@@ -76,6 +76,9 @@
     #include <wolfcrypt/src/misc.c>
 #endif
 
+/* A value for an initialized, but not-yet-known SHA */
+#define WC_UNKNOWN_SHA (-1)
+
 static const char* TAG = "wolf_hw_sha";
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
@@ -398,7 +401,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     ctx->mode = ESP32_SHA_INIT;
 
     /* This is a generic init; we don't yet know SHA type. */
-    ctx->sha_type = SHA_TYPE_MAX;
+    ctx->sha_type = WC_UNKNOWN_SHA;
 
     /* reminder: always start isfirstblock = 1 (true) when using HW engine */
     /* we're always on the first block at init time (not zero-based!) */
@@ -1998,11 +2001,15 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     word32* AcceleratorMessage;
 #elif CONFIG_IDF_TARGET_ESP32
     int i;
+    /* Only values 0 .. 3 are valid for ESP32; SHA_INVALID = -1 */
+    #define MAX_SHA_VALUE 4
 #else
-    /* not used */
+    /* Newer SoC devices have a different value: SHA_TYPE_MAX */
+    #define MAX_SHA_VALUE SHA_TYPE_MAX
 #endif
     ESP_LOGV(TAG, "  enter esp_process_block");
-    if ((ctx->sha_type < 0) || (ctx->sha_type > 3)) {
+
+    if ((ctx->sha_type < 0) || (ctx->sha_type > MAX_SHA_VALUE)) {
         ESP_LOGE(TAG, "Unexpected sha_type: %d", ctx->sha_type);
     }
     CTX_STACK_CHECK(ctx);
