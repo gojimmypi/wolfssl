@@ -723,7 +723,8 @@ esp_err_t esp_DisableWatchdog(void)
             rtc_wdt_disable();
         #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
               defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)
+              defined(CONFIG_IDF_TARGET_ESP32C6) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)
             ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
         #else
             rtc_wdt_protect_off();
@@ -763,7 +764,8 @@ esp_err_t esp_EnabledWatchdog(void)
             rtc_wdt_enable();
         #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
               defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)
+              defined(CONFIG_IDF_TARGET_ESP32C6) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)
             ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
         #else
             rtc_wdt_protect_on();
