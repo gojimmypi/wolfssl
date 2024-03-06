@@ -91,7 +91,7 @@
     /* #define HAVE_CAMELLIA */
 
     /* DSA requies old SHA */
-    // #define HAVE_DSA
+    #define HAVE_DSA
 
     /* Needs SHA512 ?*/
     #define HAVE_HPKE
@@ -128,7 +128,7 @@
 // #define NO_WOLFSSL_SHA256_INTERLEAVE
 
 /* When you don't want to use the old SHA */
-#define NO_SHA
+// #define NO_SHA
 /* #define NO_OLD_TLS */
 
 #define WOLFSSL_ESPIDF_ERROR_PAUSE_DURATION 120

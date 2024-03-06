@@ -639,17 +639,14 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         /* Get a copy of the HW digest, but don't process it. */
         ret = esp_sha_digest_process(dst, 0);
         if (ret == 0) {
-            /* Note we arrived here only because
-             * the src is already in HW mode.
-             * provide init hint to SW revert: */
-            dst->ctx.mode = ESP32_SHA_HW_COPY;
-
             /* initializer will be set during init */
             ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA);
             if (ret != 0) {
                 ESP_LOGE(TAG, "Error during esp_sha_ctx_copy "
                               "in esp_sha_init.");
             }
+            /* As src is HW, the copy will be SW. TODO: Future interleave. */
+            dst->ctx.mode = ESP32_SHA_SW;
         }
         else {
             ESP_LOGE(TAG, "Error during esp_sha_ctx_copy "

@@ -52,6 +52,10 @@
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
 
+#ifdef DEBUG_WOLFSSL
+    #include <wolfcrypt/logging.h>
+#endif
+
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
@@ -2460,7 +2464,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   M = (fp_int*)XMALLOC(sizeof(fp_int)*((1 << winsize) + 1), NULL,
                                                            DYNAMIC_TYPE_BIGINT);
   if (M == NULL) {
-     ESP_LOGE("TFM", "_fp_exptmod_nct XMALLOC failed: %d", (word32)sizeof(fp_int)*((1 << winsize) + 1));
+     WOLFSSL_MSG_EX("_fp_exptmod_nct XMALLOC failed: %d", (word32)sizeof(fp_int)*((1 << winsize) + 1));
      return FP_MEM;
   }
 #endif
@@ -3359,11 +3363,11 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    #ifdef WOLFSSL_SMALL_STACK
       tmp = (fp_int*)XMALLOC(sizeof(fp_int) * 2, NULL, DYNAMIC_TYPE_TMP_BUFFER);
        if (tmp == NULL) {
-           ESP_LOGE("TFM", "fp_exptmod_nct XMALLOC failed: %d", sizeof(fp_int) * 2);
+           WOLFSSL_MSG_EX("fp_exptmod_nct XMALLOC failed: %d", sizeof(fp_int) * 2);
            return FP_MEM;
        }
        else {
-           ESP_LOGI("TFM", "fp_exptmod_nct XMALLOC success: %d", sizeof(fp_int) * 2);
+           WOLFSSL_MSG_EX("fp_exptmod_nct XMALLOC success: %d", sizeof(fp_int) * 2);
        }
    #endif
 
@@ -3376,7 +3380,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
            X->sign = FP_ZPOS;
            err =  _fp_exptmod_nct(&tmp[0], X, P, Y);
            if (err != FP_OKAY) {
-               ESP_LOGE("TFM", "_fp_exptmod_nct failed");
+               WOLFSSL_MSG("_fp_exptmod_nct failed");
            }
            if (X != Y) {
                X->sign = FP_NEG;
@@ -3386,7 +3390,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
            }
        }
        else {
-           ESP_LOGE("TFM", "fp_invmod failed");
+           WOLFSSL_MSG_EX("fp_invmod failed");
        }
    #ifdef WOLFSSL_SMALL_STACK
       XFREE(tmp, NULL, DYNAMIC_TYPE_BIGINT);

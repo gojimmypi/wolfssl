@@ -2833,6 +2833,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha_test(void)
     }
 
     for (i = 0; i < times; ++i) {
+        WOLFSSL_MSG_EX("SHA test #%d", i);
         ret = wc_ShaUpdate(&sha, (byte*)test_sha[i].input,
             (word32)test_sha[i].inLen);
         if (ret != 0)
@@ -2848,10 +2849,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         wc_ShaFree(&shaCopy);
 
-        if (XMEMCMP(hash, test_sha[i].output, WC_SHA_DIGEST_SIZE) != 0)
+        if (XMEMCMP(hash, test_sha[i].output, WC_SHA_DIGEST_SIZE) != 0) {
+            WOLFSSL_MSG("SHA hash result mismatch");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
-        if (XMEMCMP(hash, hashcopy, WC_SHA_DIGEST_SIZE) != 0)
+        }
+        if (XMEMCMP(hash, hashcopy, WC_SHA_DIGEST_SIZE) != 0) {
+            WOLFSSL_MSG("SHA hash copy result mismatch");
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
+        }
     }
 
 #ifndef NO_LARGE_HASH_TEST
