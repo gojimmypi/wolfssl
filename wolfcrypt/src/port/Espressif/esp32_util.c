@@ -168,7 +168,7 @@ int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
         }
         else {
             ESP_LOGV(TAG, "Failed: give mutex 0x%x", (intptr_t)*mutex);
-            ret = ESP_OK;
+            ret = ESP_FAIL;
         }
     }
 #endif
@@ -718,8 +718,16 @@ esp_err_t esp_DisableWatchdog(void)
 #else
     #if ESP_IDF_VERSION_MAJOR >= 5
     {
+        #if defined(CONFIG_IDF_TARGET_ESP32)
             rtc_wdt_protect_off();
             rtc_wdt_disable();
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)
+            ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
+        #else
+            rtc_wdt_protect_off();
+            rtc_wdt_disable();
+        #endif
     }
     #else
         ESP_LOGW(TAG, "esp_DisableWatchdog not implemented on ESP_OIDF v%d",
@@ -749,8 +757,16 @@ esp_err_t esp_EnabledWatchdog(void)
 #else
     #if ESP_IDF_VERSION_MAJOR >= 5
     {
-        rtc_wdt_protect_on();
-        rtc_wdt_enable();
+        #if defined(CONFIG_IDF_TARGET_ESP32)
+            rtc_wdt_protect_on();
+            rtc_wdt_enable();
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)
+            ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
+        #else
+            rtc_wdt_protect_on();
+            rtc_wdt_enable();
+        #endif
     }
     #else
         ESP_LOGW(TAG, "esp_DisableWatchdog not implemented on ESP_OIDF v%d",

@@ -90,7 +90,8 @@
      * Do not define NO_WOLFSSL_ESP32_CRYPT_AES when enabled: */
     /* #define HAVE_CAMELLIA */
 
-    #define HAVE_DSA
+    /* DSA requies old SHA */
+    // #define HAVE_DSA
 
     /* Needs SHA512 ?*/
     #define HAVE_HPKE
@@ -124,9 +125,10 @@
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
 // #define SINGLE_THREADED
+// #define NO_WOLFSSL_SHA256_INTERLEAVE
 
 /* When you don't want to use the old SHA */
-/* #define NO_SHA */
+#define NO_SHA
 /* #define NO_OLD_TLS */
 
 #define WOLFSSL_ESPIDF_ERROR_PAUSE_DURATION 120

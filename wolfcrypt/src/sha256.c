@@ -827,12 +827,10 @@ static int InitSha256(wc_Sha256* sha256)
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-        /* We know this is a fresh, uninitialized item, so set to INIT */
-        if (sha256->ctx.mode != ESP32_SHA_INIT) {
-            // ESP_LOGI(TAG, "Set sha256 ctx mode to ESP32_SHA_INIT from prior value: "
-            //                   "%d", sha256->ctx.mode);
-            sha256->ctx.mode = ESP32_SHA_INIT;
-        }
+        /* We know this is a fresh, uninitialized item:
+         * Set to ESP32_SHA_INIT for only possible HW calcs.
+         * Note mode may indicate later fallback to SW. */
+        sha256->ctx.mode = ESP32_SHA_INIT;
     #endif
 
         return InitSha256(sha256);

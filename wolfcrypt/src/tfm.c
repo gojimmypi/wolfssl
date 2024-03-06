@@ -3306,7 +3306,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
-       ESP_LOGE("TFM", "handle modulus of zero");
+      WOLFSSL_MSG("handle modulus of zero");
       return FP_VAL;
    }
    if (fp_isone(P)) {

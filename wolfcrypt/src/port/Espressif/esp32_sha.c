@@ -360,29 +360,21 @@ int esp_sha_init(WC_ESP32SHA* ctx, enum wc_HashType hash_type)
     switch (hash_type) { /* check each wolfSSL hash type WC_[n] */
         #ifndef NO_SHA
         case WC_HASH_TYPE_SHA:
-            ret = esp_sha_init_ctx(ctx);
             ctx->sha_type = SHA1; /* assign Espressif SHA HW type */
             break;
         #endif
 
         case WC_HASH_TYPE_SHA224:
-            ret = esp_sha_init_ctx(ctx);
             ctx->sha_type = SHA2_224; /* assign Espressif SHA HW type */
             break;
 
         case WC_HASH_TYPE_SHA256:
-            ret = esp_sha_init_ctx(ctx);
             ctx->sha_type = SHA2_256; /* assign Espressif SHA HW type */
             break;
 
         default:
             /* We fall through to SW when there's no enabled HW, above. */
             ctx->mode = ESP32_SHA_SW;
-            ret = ESP_OK;
-            /* If there's no HW, the ctx reference should cause build error.
-            ** The type should be gated away when there's no HW at all! */
-            ctx->isfirstblock = true;
-            ctx->sha_type = hash_type;
             ESP_LOGW(TAG, "Unsupported hash_type = %d in esp_sha_init, "
                           "falling back to SW", hash_type);
             break;
@@ -406,7 +398,7 @@ int esp_sha_init_ctx(WC_ESP32SHA* ctx)
     ctx->mode = ESP32_SHA_INIT;
 
     /* This is a generic init; we don't yet know SHA type. */
-    ctx->sha_type = SHA_INVALID;
+    ctx->sha_type = SHA_TYPE_MAX;
 
     /* reminder: always start isfirstblock = 1 (true) when using HW engine */
     /* we're always on the first block at init time (not zero-based!) */
@@ -714,7 +706,7 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
     /* There's no 224 hardware on ESP32 */
     /* TODO but there is on ESP32-C3 */
-    dst->ctx.initializer = &dst->ctx; /* assign the initializer to dst */
+    dst->ctx.initializer = (uintptr_t)&dst->ctx; /* assign the initializer to dst */
     #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
     {
         /* not HW mode for copy, so we are not interested in task owner */
@@ -747,11 +739,10 @@ int esp_sha256_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
         ret = esp_sha256_digest_process(dst, FALSE);
 
         if (ret == ESP_OK) {
-            /* provide init hint to possibly SW revert */
-            dst->ctx.mode = ESP32_SHA_HW_COPY;
-
             /* initializer breadcrumb will be set during init */
             ret = esp_sha_init(&(dst->ctx), WC_HASH_TYPE_SHA256);
+            /* As src is HW, the copy will be SW. TODO: Future interleave. */
+            dst->ctx.mode = ESP32_SHA_SW;
         }
         else {
             ESP_LOGE(TAG, "Unexpected error during sha256 ctx copy: %d", ret);
@@ -935,14 +926,14 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
 **
 ** See FIPS PUB 180-4, Instruction Section 1.
 **
-** See ESP32 shah.h for values:
+** See ESP32 sha.h for values:
 **
 **  enum SHA_TYPE {
 **      SHA1 = 0,
 **      SHA2_256,
 **      SHA2_384,
 **      SHA2_512,
-**      SHA_INVALID = -1,
+**      SHA_TYPE_MAX = -1,
 **  };
 **
 ** given the SHA_TYPE (see Espressif sha.h) return WC digest size.
@@ -2181,7 +2172,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
       defined(CONFIG_IDF_TARGET_ESP32S2) || \
       defined(CONFIG_IDF_TARGET_ESP32S3) || \
       defined(CONFIG_IDF_TARGET_ESP32C6)
-    if (ctx->sha_type == SHA_TYPE_MAX) {
+    if (ctx->sha_type >= SHA_TYPE_MAX) {
 #else
     ESP_LOGE(TAG, "unexpected target for wc_esp_digest_state");
     {

@@ -647,11 +647,13 @@ int wc_DsaExportKeyRaw(DsaKey* dsa, byte* x, word32* xSz, byte* y, word32* ySz)
     return err;
 }
 
+#ifndef NO_SHA
 int wc_DsaSign(const byte* digest, byte* out, DsaKey* key, WC_RNG* rng)
 {
     /* use sha1 by default for backwards compatibility */
     return wc_DsaSign_ex(digest, WC_SHA_DIGEST_SIZE, out, key, rng);
 }
+#endif
 
 int wc_DsaSign_ex(const byte* digest, word32 digestSz, byte* out, DsaKey* key,
     WC_RNG* rng)
@@ -982,11 +984,13 @@ int wc_DsaSign_ex(const byte* digest, word32 digestSz, byte* out, DsaKey* key,
     return ret;
 }
 
+#ifndef NO_SHA
 int wc_DsaVerify(const byte* digest, const byte* sig, DsaKey* key, int* answer)
 {
     /* use sha1 by default for backwards compatibility */
     return wc_DsaVerify_ex(digest, WC_SHA_DIGEST_SIZE, sig, key, answer);
 }
+#endif
 
 int wc_DsaVerify_ex(const byte* digest, word32 digestSz, const byte* sig,
     DsaKey* key, int* answer)
