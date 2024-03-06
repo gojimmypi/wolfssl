@@ -48,7 +48,7 @@ echo "Run export.sh from ${WRK_IDF_PATH}"
 . ${WRK_IDF_PATH}/export.sh
 
 # switch to test example
-cd /mnt/c/workspace/wolfssl/IDE/Espressif/ESP-IDF/examples/wolfssl_test
+cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_test
 
 # Pick ESP-IDF install directory, this one for v5.1 in VisualGDB
 . /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
