@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34601.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_server", "wolfssl_server.vgdbproj", "{12C8C4D7-5F6D-48A3-B161-13ED6200E3F1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Arduino_NANO_33_IoT = Debug|Arduino_NANO_33_IoT
+		Release|Arduino_NANO_33_IoT = Release|Arduino_NANO_33_IoT
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12C8C4D7-5F6D-48A3-B161-13ED6200E3F1}.Debug|Arduino_NANO_33_IoT.ActiveCfg = Debug|Arduino_NANO_33_IoT
+		{12C8C4D7-5F6D-48A3-B161-13ED6200E3F1}.Debug|Arduino_NANO_33_IoT.Build.0 = Debug|Arduino_NANO_33_IoT
+		{12C8C4D7-5F6D-48A3-B161-13ED6200E3F1}.Release|Arduino_NANO_33_IoT.ActiveCfg = Release|Arduino_NANO_33_IoT
+		{12C8C4D7-5F6D-48A3-B161-13ED6200E3F1}.Release|Arduino_NANO_33_IoT.Build.0 = Release|Arduino_NANO_33_IoT
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {27A0D94F-D6D2-48F9-B599-7D4D1DEF977E}
+	EndGlobalSection
+EndGlobal

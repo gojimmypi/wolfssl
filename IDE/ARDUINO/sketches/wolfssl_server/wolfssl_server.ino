@@ -58,7 +58,7 @@ Tested with:
 #define RECONNECT_ATTEMPTS 20
 
 /* Optional stress test. Define to consume memory until exhausted: */
-#define MEMORY_STRESS_TEST
+/* #define MEMORY_STRESS_TEST */
 
 /* Choose client or server example, not both. */
 /* #define WOLFSSL_CLIENT_EXAMPLE */
@@ -130,8 +130,8 @@ Tested with:
     /* There's no WiFi/Ethernet on the Due. Requires Ethernet Shield.
     /* Needs "Ethernet by Various" library to be installed. Tested with V2.0.2 */
     #include <Ethernet.h>
-    EthernetClient server(WOLFSSL_PORT);
     EthernetClient client;
+    EthernetClient server(WOLFSSL_PORT);
 #elif defined(ARDUINO_SAMD_NANO_33_IOT)
     #define USING_WIFI
     #include <SPI.h>
@@ -164,7 +164,6 @@ Tested with:
 
 /* Only for syntax highlighters to show interesting options enabled: */
 #if defined(HAVE_SNI)                           \
-   || defined(WOLFSSL_LWIP) \
    || defined(HAVE_MAX_FRAGMENT)                  \
    || defined(HAVE_TRUSTED_CA)                    \
    || defined(HAVE_TRUNCATED_HMAC)                \
@@ -177,6 +176,7 @@ Tested with:
    || defined(HAVE_SERVER_RENEGOTIATION_INFO)
 #endif
 
+
 /* we expect our IP address from DHCP */
 const int serial_baud = SERIAL_BAUD; /* local serial port to monitor */
 
@@ -188,7 +188,7 @@ char errBuf[80];
 #if defined(MEMORY_STRESS_TEST)
     #define MEMORY_STRESS_ITERATIONS 100
     #define MEMORY_STRESS_BLOCK_SIZE 1024
-    #define MEMORY_STRESS_INITIAL (91760-(35*1024))
+    #define MEMORY_STRESS_INITIAL (4*1024)
     char* memory_stress[MEMORY_STRESS_ITERATIONS]; /* typically 1K per item */
     int mem_ctr        = 0;
 #endif
@@ -197,8 +197,6 @@ static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 static int reconnect = RECONNECT_ATTEMPTS;
 static int lng_index PROGMEM = 0; /* 0 = English */
-
-
 
 #if defined(__arm__)
     #include <malloc.h>
@@ -211,13 +209,14 @@ static int lng_index PROGMEM = 0; /* 0 = English */
 /*****************************************************************************/
 /* fail_wait - in case of unrecoverable error                                */
 /*****************************************************************************/
-static void fail_wait(void) {
+int fail_wait(void) {
     show_memory();
 
     Serial.println(F("Failed. Halt."));
     while (1) {
         delay(1000);
     }
+    return 0;
 }
 
 /*****************************************************************************/
@@ -225,11 +224,11 @@ static void fail_wait(void) {
 /*****************************************************************************/
 int show_memory(void)
 {
-
 #if defined(__arm__)
-	struct mallinfo mi=mallinfo();
-	char *heapend=sbrk(0);
-	register char * stack_ptr asm("sp");
+    struct mallinfo mi = mallinfo();
+
+    char *heapend=sbrk(0);
+    register char * stack_ptr asm("sp");
     #if defined(DEBUG_WOLFSSL_VERBOSE)
         Serial.print("    arena=");
         Serial.println(mi.arena);
@@ -249,17 +248,20 @@ int show_memory(void)
         Serial.println(F(" bytes"));
     #endif
 
-    //	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
-    //	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
-    //	Serial.print("Heap End %lx\n", (unsigned long)heapend);
-    //	Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
-    //	Serial.print("RAM End %lx\n", (unsigned long)ramend);
+    #if (0)
+        /* Experimental: not supported on all devices: */
+        Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
+        Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
+        Serial.print("Heap End %lx\n", (unsigned long)heapend);
+        Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
+        Serial.print("RAM End %lx\n", (unsigned long)ramend);
 
-    //	Serial.print("Heap RAM Used: ",mi.uordblks);
-    //	Serial.print("Program RAM Used ",&_end - ramstart);
-    //	Serial.print("Stack RAM Used ",ramend - stack_ptr);
+        Serial.print("Heap RAM Used: ",mi.uordblks);
+        Serial.print("Program RAM Used ",&_end - ramstart);
+        Serial.print("Stack RAM Used ",ramend - stack_ptr);
 
-    //	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+        Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+    #endif
 #else
     Serial.println(F("show_memory() not implemented for this platform"));
 #endif
@@ -295,18 +297,18 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
 /*****************************************************************************/
 /* Arduino setup_hardware()                                                  */
 /*****************************************************************************/
-static int setup_hardware(void) {
+int setup_hardware(void) {
     int ret = 0;
 
 #if defined(ARDUINO_SAMD_NANO_33_IOT)
-
+    Serial.println(F("Detected known tested and working Arduino Nano 33 IoT"));
 #elif defined(ARDUINO_ARCH_RP2040)
-
-#elif defined(__arm__)
+    Serial.println(F("Detected known tested and working Arduino RP-2040"));
+#elif defined(__arm__) && defined(ID_TRNG) && defined(TRNG)
     /* need to manually turn on random number generator on Arduino Due, etc. */
-    Serial.println(F("Enabled ARM TRNG"));
     pmc_enable_periph_clk(ID_TRNG);
     trng_enable(TRNG);
+    Serial.println(F("Enabled ARM TRNG"));
 #endif
 
     show_memory();
@@ -318,7 +320,7 @@ static int setup_hardware(void) {
 /* Arduino setup_datetime()                                                  */
 /*   The device needs to have a valid date within the valid range of certs.  */
 /*****************************************************************************/
-static int setup_datetime(void) {
+int setup_datetime(void) {
     int ret = 0;
     int ntp_tries = 20;
 
@@ -347,7 +349,8 @@ static int setup_datetime(void) {
 #if defined(ESP32)
     /* see esp32-hal-time.c */
     ntp_tries = 5;
-    configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
+    /* Replace "pool.ntp.org" with your preferred NTP server */
+    configTime(0, 0, "pool.ntp.org");
 
     /* Wait for time to be set */
     while ((time(nullptr) <= 100000) && ntp_tries > 0) {
@@ -363,7 +366,7 @@ static int setup_datetime(void) {
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
 /*****************************************************************************/
-static int setup_network(void) {
+int setup_network(void) {
     int ret = 0;
 
 #if defined(USING_WIFI)
@@ -371,7 +374,7 @@ static int setup_network(void) {
 
     if (WiFi.status() == WL_NO_MODULE) {
         Serial.println("Communication with WiFi module failed!");
-        // don't continue
+        /* don't continue if no network */
         while (true) ;
     }
 
@@ -380,20 +383,20 @@ static int setup_network(void) {
         Serial.println("Please upgrade the firmware");
     }
 
-    /* Connect to WiFi */
+    /* The ESP8266 & ESP32 support both AP and STA. We'll use STA: */
     #if defined(ESP8266) || defined(ESP32)
         WiFi.mode(WIFI_STA);
     #endif
 
+    Serial.print(F("Connecting to WiFi "));
+    Serial.print(ssid);
     while (status != WL_CONNECTED) {
         status = WiFi.begin(ssid, password);
-        Serial.print(F("Connecting to WiFi "));
-        Serial.println(ssid);
         delay(5000);
+        Serial.print(F("."));
     }
 
-    Serial.print(F("Connected to WiFi "));
-    Serial.println(ssid);
+    Serial.println(F(" Connected!"));
 #else
     /* Newer Ethernet shields have a
      * MAC address printed on a sticker on the shield */
@@ -401,15 +404,15 @@ static int setup_network(void) {
     IPAddress ip(192, 168, 1, 42);
     IPAddress myDns(192, 168, 1, 1);
     Ethernet.init(10); /* Most Arduino shields */
-    /*Ethernet.init(5);   // MKR ETH Shield */
-    /*Ethernet.init(0);   // Teensy 2.0 */
-    /*Ethernet.init(20);  // Teensy++ 2.0 */
-    /*Ethernet.init(15);  // ESP8266 with Adafruit FeatherWing Ethernet */
-    /*Ethernet.init(33);  // ESP32 with Adafruit FeatherWing Ethernet */
+    /* Ethernet.init(5);   * MKR ETH Shield */
+    /* Ethernet.init(0);   * Teensy 2.0 */
+    /* Ethernet.init(20);  * Teensy++ 2.0 */
+    /* Ethernet.init(15);  * ESP8266 with Adafruit FeatherWing Ethernet */
+    /* Ethernet.init(33);  * ESP32 with Adafruit FeatherWing Ethernet */
     Serial.println(F("Initialize Ethernet with DHCP:"));
     if (Ethernet.begin(mac) == 0) {
         Serial.println(F("Failed to configure Ethernet using DHCP"));
-        // Check for Ethernet hardware present
+        /* Check for Ethernet hardware present */
         if (Ethernet.hardwareStatus() == EthernetNoHardware) {
             Serial.println(F("Ethernet shield was not found."));
             while (true) {
@@ -436,12 +439,9 @@ static int setup_network(void) {
 #else
     Serial.println(Ethernet.localIP());
 #endif
-    /* In server mode, there's no host definition. See companion example. */
-    /* wolfssl_client.ino */
+    /* In server mode, there's no host definition. */
+    /* See companion example: wolfssl_client.ino */
     Serial.println(F("********************************************************"));
-
-    /* Delay need to ensure connection to server */
-    // delay(4000);
     Serial.println(F("Setup network complete."));
 
     return ret;
@@ -450,7 +450,7 @@ static int setup_network(void) {
 /*****************************************************************************/
 /* Arduino setup_wolfssl()                                                   */
 /*****************************************************************************/
-static int setup_wolfssl(void) {
+int setup_wolfssl(void) {
     int ret = 0;
     WOLFSSL_METHOD* method;
 
@@ -460,6 +460,13 @@ static int setup_wolfssl(void) {
     Serial.println(F(WOLFSSL_USER_SETTINGS_ID));
 #else
     Serial.println(F("No WOLFSSL_USER_SETTINGS_ID found."));
+#endif
+
+#if defined(NO_WOLFSSL_SERVER)
+    Serial.println(F("wolfSSL server code disabled to save space."));
+#endif
+#if defined(NO_WOLFSSL_CLIENT)
+    Serial.println(F("wolfSSL client code disabled to save space."));
 #endif
 
 #if defined(DEBUG_WOLFSSL)
@@ -498,13 +505,12 @@ static int setup_wolfssl(void) {
         Serial.println("ERROR: wolfSSL_Init failed");
     }
 
-    /* Delay needed to ensure connection to server. TODO: really ? */
-    delay(4000);
-
     /* See companion server example with wolfSSLv23_server_method here.
      * method = wolfSSLv23_client_method());   SSL 3.0 - TLS 1.3.
      * method = wolfTLSv1_2_client_method();   only TLS 1.2
-     * method = wolfTLSv1_3_client_method();   only TLS 1.3  */
+     * method = wolfTLSv1_3_client_method();   only TLS 1.3
+     *
+     * see Arduino\libraries\wolfssl\src\user_settings.h */
 
     Serial.println("Here we go!");
 
@@ -525,7 +531,7 @@ static int setup_wolfssl(void) {
 /*****************************************************************************/
 /* Arduino setup_certificates()                                              */
 /*****************************************************************************/
-static int setup_certificates(void) {
+int setup_certificates(void) {
     int ret = 0;
 
     Serial.println(F("Initializing certificates..."));
@@ -567,11 +573,6 @@ static int setup_certificates(void) {
         fail_wait();
     }
 
-    Serial.print("Size of ctx:");
-    Serial.println(sizeof(WOLFSSL_CTX));
-    Serial.print("Size of ssl:");
-    Serial.println(sizeof(WOLFSSL));
-
     return ret;
 } /* Arduino setup */
 
@@ -580,7 +581,7 @@ static int setup_certificates(void) {
 /* Arduino setup()                                                           */
 /*****************************************************************************/
 /*****************************************************************************/
-int setup(void) {
+void setup(void) {
     Serial.begin(SERIAL_BAUD);
     while (!Serial) {
         /* wait for serial port to connect. Needed for native USB port only */
@@ -598,7 +599,9 @@ int setup(void) {
     /* Optionally pre-allocate a large block of memory for testing */
 #if defined(MEMORY_STRESS_TEST)
     Serial.println(F("WARNING: Memory Stress Test Active!"));
-    show_memory();
+    Serial.print(F("Allocating extra memory: "));
+    Serial.print(MEMORY_STRESS_INITIAL);
+    Serial.println(F(" bytes..."));
     memory_stress[mem_ctr] = (char*)malloc(MEMORY_STRESS_INITIAL);
     show_memory();
 #endif
@@ -630,15 +633,15 @@ int setup(void) {
 
     server.begin();
     Serial.println("Begin Server... (waiting for remote client to connect)");
-    delay(1000); // TODO needed?
+
     /* See companion wolfssl_client.ino code */
-    return 0;
-} /* setup */
+    return;
+} /* Arduino setup */
 
 /*****************************************************************************/
 /* wolfSSL error_check()                                                     */
 /*****************************************************************************/
-static int error_check(int this_ret, bool halt_on_error,
+int error_check(int this_ret, bool halt_on_error,
                       const __FlashStringHelper* message) {
     int ret = 0;
     if (this_ret == WOLFSSL_SUCCESS) {
@@ -658,7 +661,7 @@ static int error_check(int this_ret, bool halt_on_error,
     show_memory();
 
     return ret;
-}
+} /* error_check */
 
 /*****************************************************************************/
 /* wolfSSL error_check_ssl                                                   */
@@ -667,7 +670,7 @@ static int error_check(int this_ret, bool halt_on_error,
 /*     halt_on_error set to true to suspend operations for critical error    */
 /*     message       is expected to be a memory-efficient F("") macro string */
 /*****************************************************************************/
-static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
+int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
                            const __FlashStringHelper* message) {
     int err = 0;
 
@@ -704,7 +707,6 @@ static int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
             }
         }
     }
-    show_memory();
 
     return err;
 }

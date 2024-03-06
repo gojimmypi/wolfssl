@@ -45,7 +45,7 @@ Tested with:
 /* Edit this with your other TLS host server address to connect to: */
 #define WOLFSSL_TLS_SERVER_HOST "192.168.1.34"
 
-/* wolfssl TLS examples communciate on port 11111 */
+/* wolfssl TLS examples communicate on port 11111 */
 #define WOLFSSL_PORT 11111
 
 /* Choose a monitor serial baud rate: 9600, 14400, 19200, 57600, 74880, etc. */
@@ -188,7 +188,7 @@ char errBuf[80];
 #if defined(MEMORY_STRESS_TEST)
     #define MEMORY_STRESS_ITERATIONS 100
     #define MEMORY_STRESS_BLOCK_SIZE 1024
-    #define MEMORY_STRESS_INITIAL ((4*1024))
+    #define MEMORY_STRESS_INITIAL (4*1024)
     char* memory_stress[MEMORY_STRESS_ITERATIONS]; /* typically 1K per item */
     int mem_ctr        = 0;
 #endif
@@ -197,7 +197,6 @@ static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 static int reconnect = RECONNECT_ATTEMPTS;
 static int lng_index PROGMEM = 0; /* 0 = English */
-
 
 #if defined(__arm__)
     #include <malloc.h>
@@ -249,17 +248,20 @@ int show_memory(void)
         Serial.println(F(" bytes"));
     #endif
 
-    //	Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
-    //	Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
-    //	Serial.print("Heap End %lx\n", (unsigned long)heapend);
-    //	Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
-    //	Serial.print("RAM End %lx\n", (unsigned long)ramend);
+    #if (0)
+        /* Experimental: not supported on all devices: */
+        Serial.print("RAM Start %lx\n", (unsigned long)ramstart);
+        Serial.print("Data/Bss end %lx\n", (unsigned long)&_end);
+        Serial.print("Heap End %lx\n", (unsigned long)heapend);
+        Serial.print("Stack Ptr %lx\n",(unsigned long)stack_ptr);
+        Serial.print("RAM End %lx\n", (unsigned long)ramend);
 
-    //	Serial.print("Heap RAM Used: ",mi.uordblks);
-    //	Serial.print("Program RAM Used ",&_end - ramstart);
-    //	Serial.print("Stack RAM Used ",ramend - stack_ptr);
+        Serial.print("Heap RAM Used: ",mi.uordblks);
+        Serial.print("Program RAM Used ",&_end - ramstart);
+        Serial.print("Stack RAM Used ",ramend - stack_ptr);
 
-    //	Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+        Serial.print("Estimated Free RAM: %d\n\n",stack_ptr - heapend + mi.fordblks);
+    #endif
 #else
     Serial.println(F("show_memory() not implemented for this platform"));
 #endif
@@ -347,7 +349,8 @@ int setup_datetime(void) {
 #if defined(ESP32)
     /* see esp32-hal-time.c */
     ntp_tries = 5;
-    configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
+    /* Replace "pool.ntp.org" with your preferred NTP server */
+    configTime(0, 0, "pool.ntp.org");
 
     /* Wait for time to be set */
     while ((time(nullptr) <= 100000) && ntp_tries > 0) {
@@ -358,7 +361,7 @@ int setup_datetime(void) {
 #endif
 
     return ret;
-} /* setup_datetime*/
+} /* setup_datetime */
 
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
@@ -371,7 +374,7 @@ int setup_network(void) {
 
     if (WiFi.status() == WL_NO_MODULE) {
         Serial.println("Communication with WiFi module failed!");
-        // don't continue
+        /* don't continue if no network */
         while (true) ;
     }
 
@@ -401,15 +404,15 @@ int setup_network(void) {
     IPAddress ip(192, 168, 1, 42);
     IPAddress myDns(192, 168, 1, 1);
     Ethernet.init(10); /* Most Arduino shields */
-    /*Ethernet.init(5);   // MKR ETH Shield */
-    /*Ethernet.init(0);   // Teensy 2.0 */
-    /*Ethernet.init(20);  // Teensy++ 2.0 */
-    /*Ethernet.init(15);  // ESP8266 with Adafruit FeatherWing Ethernet */
-    /*Ethernet.init(33);  // ESP32 with Adafruit FeatherWing Ethernet */
+    /* Ethernet.init(5);   * MKR ETH Shield */
+    /* Ethernet.init(0);   * Teensy 2.0 */
+    /* Ethernet.init(20);  * Teensy++ 2.0 */
+    /* Ethernet.init(15);  * ESP8266 with Adafruit FeatherWing Ethernet */
+    /* Ethernet.init(33);  * ESP32 with Adafruit FeatherWing Ethernet */
     Serial.println(F("Initialize Ethernet with DHCP:"));
     if (Ethernet.begin(mac) == 0) {
         Serial.println(F("Failed to configure Ethernet using DHCP"));
-        // Check for Ethernet hardware present
+        /* Check for Ethernet hardware present */
         if (Ethernet.hardwareStatus() == EthernetNoHardware) {
             Serial.println(F("Ethernet shield was not found."));
             while (true) {
@@ -439,9 +442,6 @@ int setup_network(void) {
     Serial.print(F("   Configured Server Host to connect to: "));
     Serial.println(host);
     Serial.println(F("********************************************************"));
-
-    /* Delay need to ensure connection to server */
-    delay(4000);
     Serial.println(F("Setup network complete."));
 
     return ret;
@@ -505,13 +505,12 @@ int setup_wolfssl(void) {
         Serial.println("ERROR: wolfSSL_Init failed");
     }
 
-    /* TODO - mataching delay here (see server) */
-
-
     /* See companion server example with wolfSSLv23_server_method here.
      * method = wolfSSLv23_client_method());   SSL 3.0 - TLS 1.3.
      * method = wolfTLSv1_2_client_method();   only TLS 1.2
-     * method = wolfTLSv1_3_client_method();   only TLS 1.3  */
+     * method = wolfTLSv1_3_client_method();   only TLS 1.3
+     *
+     * see Arduino\libraries\wolfssl\src\user_settings.h */
 
     Serial.println("Here we go!");
 
@@ -591,7 +590,7 @@ int setup_certificates(void) {
 
 
     return ret;
-}
+} /* Arduino setup */
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -642,6 +641,7 @@ void setup(void) {
      * Any other server will work. See also:
      * https://github.com/wolfSSL/wolfssl/tree/master/examples/client
      */
+    /* See companion wolfssl_server.ino code */
     return;
 } /* Arduino setup */
 
@@ -680,6 +680,7 @@ int error_check(int this_ret, bool halt_on_error,
 int error_check_ssl(WOLFSSL* ssl, int this_ret, bool halt_on_error,
                            const __FlashStringHelper* message) {
     int err = 0;
+
     if (ssl == NULL) {
         Serial.println(F("ssl is Null; Unable to allocate SSL object?"));
 #ifndef DEBUG_WOLFSSL
@@ -744,7 +745,7 @@ void loop() {
         Serial.print(host);
         Serial.print(F(":"));
         Serial.println(port);
-        // IPAddress server(192,168,1,37);
+        /* can also use: IPAddress server(192,168,1,37); */
         Serial.println(F("Here we go..."));
         ret = client.connect(host, port);
         Serial.println(F("Ok, checking..."));
@@ -771,12 +772,8 @@ void loop() {
                     Serial.println(F("Failed connection, checking error."));
                     err = error_check_ssl(ssl, ret, true,
                                     F("Create WOLFSSL object from ctx"));
-                Serial.print("err =");
-                Serial.println(err);
-                    //err = wolfSSL_get_error(ssl, 0);
-                    //wolfSSL_ERR_error_string(ret, errBuf);
-                    //Serial.print(F("TLS Connect Error: "));
-                    //Serial.println(errBuf);
+                    Serial.print("err =");
+                    Serial.println(err);
                 }
                 else {
                    Serial.print(PROGRESS_DOT);
@@ -806,6 +803,7 @@ void loop() {
 
                 while (!client.available()) {
                     /* wait for data */
+                    delay(1); /* 1 ms delay */
                 }
 
                 Serial.print(F("Reading response.."));
@@ -815,10 +813,6 @@ void loop() {
                     if (ret < 0) {
                         error_check_ssl(ssl, ret, false,
                                         F("during TLS Read"));
-                        //err = wolfSSL_get_error(ssl, 0);
-                        //wolfSSL_ERR_error_string(err, errBuf);
-                        //Serial.print(F("ERROR during TLS Read: "));
-                        //Serial.println(errBuf);
                     }
                     else {
                         Serial.print(PROGRESS_DOT);
@@ -834,10 +828,6 @@ void loop() {
             else {
                 error_check_ssl(ssl, ret, false,
                     F("during TLS Write"));
-                //err = wolfSSL_get_error(ssl, 0);
-                //wolfSSL_ERR_error_string(err, errBuf);
-                //Serial.print(F("ERROR: during TLS Write "));
-                //Serial.println(errBuf);
             }  /* any wolfSSL_write message size mismatch is an error */
 
             Serial.print(F("Shutting down.."));
