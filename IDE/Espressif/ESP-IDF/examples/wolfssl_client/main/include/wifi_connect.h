@@ -90,7 +90,7 @@
         #include "/workspace/my_private_config.h"
     #else
         #warning "default private config using /workspace/my_private_config.h"
-        #include "/workspace/my_private_config.h"
+        #include "/mnt/c/workspace/my_private_config.h"
     #endif
 #else
 
