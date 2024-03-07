@@ -77,4 +77,5 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args);
 #else
     WOLFSSL_ESP_TASK tls_smp_client_init(void* args);
 #endif
+
 #endif /* _SERVER_TLS_ */

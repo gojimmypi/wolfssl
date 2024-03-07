@@ -136,6 +136,7 @@ void my_atmel_free(int slotId)
 /* the following are needed by benchmark.c with args */
 #ifdef WOLFSSL_BENCH_ARGV
 char* __argv[WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS];
+#define ARG_BUFF_SIZE 16
 
 int construct_argv()
 {

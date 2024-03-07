@@ -558,6 +558,8 @@ extern "C"
 #ifndef NO_AES
     #if ESP_IDF_VERSION_MAJOR >= 4
         #include "esp32/rom/aes.h"
+    #elif defined(CONFIG_IDF_TARGET_ESP8266)
+        /* no hardware includes for ESP8266*/
     #else
        // #include "rom/aes.h"
     #endif
