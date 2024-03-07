@@ -16975,6 +16975,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
     word32 inLen = (word32)XSTRLEN((char*)in);
     byte   out[RSA_TEST_BYTES];
 
+    WOLFSSL_ENTER("rsa_sig_test");
     /* Parameter Validation testing. */
     ret = wc_SignatureGetSize(WC_SIGNATURE_TYPE_NONE, key, keyLen);
     if (ret != BAD_FUNC_ARG)
@@ -16984,6 +16985,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
         return WC_TEST_RET_ENC_EC(ret);
 
     sigSz = (word32)modLen;
+    WOLFSSL_MSG_EX("rsa_sig_test size = %d", sigSz);
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA, NULL,
                                inLen, out, &sigSz, key, keyLen, rng);
     if (ret != BAD_FUNC_ARG)
@@ -17033,6 +17035,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
 #endif
         return WC_TEST_RET_ENC_EC(ret);
     sigSz = 0;
+    WOLFSSL_MSG_EX("rsa_sig_test size = %d", sigSz);
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA, in,
                                inLen, out, &sigSz, key, keyLen, rng);
     if (ret != BAD_FUNC_ARG)
@@ -17080,6 +17083,8 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
         return WC_TEST_RET_ENC_EC(ret);
 
     sigSz = (word32)ret;
+    WOLFSSL_MSG_EX("rsa_sig_test size = ret (%d)", sigSz);
+
 #if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(WOLFSSL_RSA_VERIFY_ONLY)
     XMEMSET(out, 0, sizeof(out));
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA, in,
@@ -17093,6 +17098,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
         return WC_TEST_RET_ENC_EC(ret);
 
     sigSz = (word32)sizeof(out);
+    WOLFSSL_MSG_EX("rsa_sig_test size = size of out #1 (%d)", sigSz);
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA_W_ENC,
                                in, inLen, out, &sigSz, key, keyLen, rng);
     if (ret != 0)
@@ -17111,6 +17117,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
 
     /* check hash functions */
     sigSz = (word32)sizeof(out);
+    WOLFSSL_MSG_EX("rsa_sig_test size = size of out #2 (%d)", sigSz);
     ret = wc_SignatureGenerateHash(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA,
         hash, (int)sizeof(hash), out, &sigSz, key, keyLen, rng);
     if (ret != 0)
@@ -17122,6 +17129,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
         return WC_TEST_RET_ENC_EC(ret);
 
     sigSz = (word32)sizeof(out);
+    WOLFSSL_MSG_EX("rsa_sig_test size = size of out #3 (%d)", sigSz);
     ret = wc_SignatureGenerateHash(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA_W_ENC,
         hashEnc, (int)sizeof(hashEnc), out, &sigSz, key, keyLen, rng);
     if (ret != 0)
