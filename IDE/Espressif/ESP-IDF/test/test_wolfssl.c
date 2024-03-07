@@ -14,14 +14,26 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/sha.h>
-#include <wolfssl/wolfcrypt/sha256.h>
-#include <wolfssl/wolfcrypt/sha512.h>
-#include <wolfssl/wolfcrypt/wc_port.h>
-#include <wolfssl/wolfcrypt/logging.h>
-#include <wolfssl/wolfcrypt/types.h>
-#include <wolfssl/wolfcrypt/wolfmath.h>
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/wolfcrypt/sha.h>
+    #include <wolfssl/wolfcrypt/sha256.h>
+    #include <wolfssl/wolfcrypt/sha512.h>
+    #include <wolfssl/wolfcrypt/wc_port.h>
+    #include <wolfssl/wolfcrypt/logging.h>
+    #include <wolfssl/wolfcrypt/types.h>
+    #include <wolfssl/wolfcrypt/wolfmath.h>
+#else
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile: \
+CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
 
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
