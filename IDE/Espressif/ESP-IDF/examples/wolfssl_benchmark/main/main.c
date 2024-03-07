@@ -24,19 +24,24 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
-/* Do not explicitly include wolfSSL user_settings.h */
-#include <wolfssl/version.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-#ifndef WOLFSSL_ESPIDF
-    #error "Problem with wolfSSL user_settings. "           \
-           "Check components/wolfssl/include "              \
-           "and confirm WOLFSSL_USER_SETTINGS is defined, " \
-           "typically in the component CMakeLists.txt"
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/version.h>
+    #include <wolfssl/wolfcrypt/types.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+    #include <wolfcrypt/benchmark/benchmark.h>
+#else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
-
-#include <wolfssl/wolfcrypt/types.h>
-#include <wolfcrypt/benchmark/benchmark.h>
 
 /* set to 0 for one benchmark,
 ** set to 1 for continuous benchmark loop */

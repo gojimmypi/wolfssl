@@ -24,19 +24,26 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
 #ifdef WOLFSSL_USER_SETTINGS
-    #include <wolfssl/wolfcrypt/settings.h> /* << references user_settings.h */
-    /* Do not explicitly include wolfSSL user_settings.h here. */
-    #include <user_settings.h>
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
     #include <wolfssl/version.h>
     #include <wolfssl/wolfcrypt/types.h>
     #include <wolfcrypt/test/test.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
-    CFLAGS +=-DWOLFSSL_USER_SETTINGS  See also components/wolfssl/include"
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
+/* TODO does this app really use the UART? */
 #include "driver/uart.h"
 
 

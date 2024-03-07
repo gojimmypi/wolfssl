@@ -24,14 +24,21 @@
 #include "sdkconfig.h"
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/settings.h>
-#include <user_settings.h>
-#include <wolfssl/version.h>
-#ifndef WOLFSSL_ESPIDF
-#warning "problem with wolfSSL user settings. Check components/wolfssl/include"
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfcrypt/benchmark/benchmark.h>
+    #include <wolfssl/version.h>
+    #include <wolfcrypt/test/test.h>
+#else
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile: \
+CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
-
-#include <wolfcrypt/test/test.h>
 
 /*
 ** the wolfssl component can be installed in either:

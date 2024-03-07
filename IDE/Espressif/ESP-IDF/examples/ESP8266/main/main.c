@@ -14,12 +14,21 @@
 #include <esp_spi_flash.h>
 #include <esp_log.h>
 
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
 #ifdef WOLFSSL_USER_SETTINGS
     #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
     #include <wolfcrypt/benchmark/benchmark.h>
 #else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
-CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
 const char * TAG = "main";
