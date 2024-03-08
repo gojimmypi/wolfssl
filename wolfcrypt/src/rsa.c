@@ -3369,6 +3369,9 @@ static int RsaPublicEncryptEx(const byte* in, word32 inLen, byte* out,
             key->state = RSA_STATE_ENCRYPT_RES;
         }
         if (ret < 0) {
+    #ifdef DEBUG_WOLFSSL
+            WOLFSSL_MSG_EX("wc_RsaFunction failed: %d", ret);
+    #endif
             break;
         }
 
@@ -4186,11 +4189,13 @@ int wc_RsaSSL_Sign(const byte* in, word32 inLen, byte* out, word32 outLen,
                                                    RsaKey* key, WC_RNG* rng)
 {
     int ret;
+    WOLFSSL_ENTER("wc_RsaSSL_Sign");
     SAVE_VECTOR_REGISTERS(return _svr_ret;);
     ret = RsaPublicEncryptEx(in, inLen, out, outLen, key,
         RSA_PRIVATE_ENCRYPT, RSA_BLOCK_TYPE_1, WC_RSA_PKCSV15_PAD,
         WC_HASH_TYPE_NONE, WC_MGF1NONE, NULL, 0, 0, rng);
     RESTORE_VECTOR_REGISTERS();
+    WOLFSSL_LEAVE("wc_RsaSSL_Sign", ret);
     return ret;
 }
 

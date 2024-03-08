@@ -1158,10 +1158,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #if defined(DEBUG_WOLFSSL) && !defined(HAVE_VALGRIND)
-//    wolfSSL_Debugging_ON();
+    wolfSSL_Debugging_ON();
 #endif
 
 #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+    WOLFSSL_MSG_EX("HEAP_HINT = %d", HEAP_HINT);
     wc_SetLoggingHeap(HEAP_HINT);
 #endif
 
@@ -2282,7 +2283,8 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         /* set dummy wallclock time. */
         struct timeval utctime;
         struct timezone tz;
-        utctime.tv_sec = 1521725159; /* dummy time: 2018-03-22T13:25:59+00:00 */
+        /* TODO: How to set time devices such as ESP32-H2 with no WiFi/NTP?  */
+        utctime.tv_sec = 1704448800; /* dummy time: January 5, 2024 10:00 AM */
         utctime.tv_usec = 0;
         tz.tz_minuteswest = 0;
         tz.tz_dsttime = 0;
@@ -5607,11 +5609,13 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
         }
 #endif
+
+#if !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
         if (esp_sha_hw_islocked(&sha.ctx)) {
             ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
         }
-      //  vTaskDelay(100); /* TODO remove timing hack */
-    }
+#endif
+    } /* for */
 
 #ifndef NO_LARGE_HASH_TEST
     /* BEGIN LARGE HASH TEST */ {
@@ -19427,6 +19431,7 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
 
     sigSz = (word32)ret;
 #if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(WOLFSSL_RSA_VERIFY_ONLY)
+    WOLFSSL_MSG("Not RSA Public Only / Verify Only. Additional tests:");
     XMEMSET(out, 0, sizeof(out));
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA, in,
                                inLen, out, &sigSz, key, keyLen, rng);
@@ -19480,6 +19485,13 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
 #else
     (void)hash;
     (void)hashEnc;
+    #if defined(WOLFSSL_RSA_PUBLIC_ONLY)
+        WOLFSSL_MSG("Some tests skipped: found WOLFSSL_RSA_PUBLIC_ONLY")
+    #endif
+
+    #if defined(WOLFSSL_RSA_VERIFY_ONLY)
+        WOLFSSL_MSG("Some tests skipped: found WOLFSSL_RSA_VERIFY_ONLY")
+    #endif
 #endif /* !WOLFSSL_RSA_PUBLIC_ONLY && !WOLFSSL_RSA_VERIFY_ONLY */
 
     return 0;
