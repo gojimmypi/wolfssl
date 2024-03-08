@@ -35,6 +35,7 @@
     #include <wolfssl/version.h>
     #include <wolfssl/wolfcrypt/types.h>
     #include <wolfcrypt/test/test.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
@@ -160,12 +161,12 @@ void app_main(void)
         .stop_bits = UART_STOP_BITS_1,
     };
     esp_err_t ret = 0;
-    int stack_start = 0;
+    uintptr_t stack_start = esp_sdk_stack_pointer();
 
     /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
      *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
 
-    /* Some targets may need to have UART speed set. */
+    /* Some targets may need to have UART speed set. TODO: which? */
     ESP_LOGI(TAG, "UART init");
     uart_param_config(UART_NUM_0, &uart_config);
     uart_driver_install(UART_NUM_0,
@@ -177,6 +178,7 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
 
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");

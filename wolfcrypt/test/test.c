@@ -19358,6 +19358,8 @@ static wc_test_ret_t rsa_sig_test(RsaKey* key, word32 keyLen, int modLen, WC_RNG
                                inLen, out, &sigSz, key, 0, rng);
     if (ret != BAD_FUNC_ARG)
         return WC_TEST_RET_ENC_EC(ret);
+
+    WOLFSSL_MSG("RSA Test Missing RNG:");
     ret = wc_SignatureGenerate(WC_HASH_TYPE_SHA256, WC_SIGNATURE_TYPE_RSA, in,
                                inLen, out, &sigSz, key, keyLen, NULL);
 #if defined(WOLFSSL_AFALG_XILINX_RSA) || defined(WOLFSSL_XILINX_CRYPT)

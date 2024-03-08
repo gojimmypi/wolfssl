@@ -23,15 +23,21 @@
     #include <config.h>
 #endif
 
-/* Reminder: user_settings.h is needed and included from settings.h
- * Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt */
-#include <wolfssl/wolfcrypt/settings.h>
-
-#ifndef WOLFSSL_USER_SETTINGS
-    #error  "WOLFSSL_USER_SETTINGS must be defined for Espressif targts"
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
 #endif
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+
+#ifndef WOLFSSL_USER_SETTINGS
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
 
 /* Espressif */
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
@@ -39,9 +45,13 @@
 #include <esp_err.h>
 
 /* wolfSSL */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
 static const char* TAG = "mem lib";
+static intptr_t _starting_stack_pointer = 0;
+static int _stack_used = 0;
+
 
 /* see
  * C:\SysGCC\esp8266\rtos-sdk\v3.4\components\esp8266\ld\esp8266.project.ld.in
@@ -220,6 +230,24 @@ esp_err_t sdk_var_whereis(const char* v_name, void* v) {
     return ret;
 }
 
+intptr_t esp_sdk_stack_pointer(void)
+{
+    intptr_t sp = 0;
+#if defined(CONFIG_IDF_TARGET_ARCH_RISCV)
+    if (CONFIG_IDF_TARGET_ARCH_RISCV == 1) {
+        __asm volatile("mv %0, sp" : "=r" (sp));
+    }
+#elif defined(CONFIG_IDF_TARGET_ARCH_XTENSA)
+    if (CONFIG_IDF_TARGET_ARCH_XTENSA == 1) {
+        __asm volatile("mov %0, sp" : "=r"(sp));
+    }
+#endif
+    if (_starting_stack_pointer == 0) {
+        _starting_stack_pointer = sp;
+    }
+    _stack_used = _starting_stack_pointer - sp;
+    return sp;
+}
 
 esp_err_t esp_sdk_mem_lib_init(void)
 {

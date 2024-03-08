@@ -447,6 +447,9 @@
 
         /* WC_RSA_BLINDING takes up extra space! */
         #define WC_RSA_BLINDING
+
+        /* Cache Resistant features are  on by default, but has performance
+         * penalty on embedded systems. May not be needed here. Disabled: */
         #define WC_NO_CACHE_RESISTANT
     #endif /* !WOLFSSL_ESPIDF_NO_DEFAULT */
 
@@ -3416,6 +3419,10 @@ extern void uITRON4_free(void *p) ;
         #error "RFC9325 requires some additional alerts to be sent"
     #endif
     /* Ciphersuite check done in internal.h */
+#endif
+
+#if defined(HAVE_FFDHE) && !defined(HAVE_DH)
+    #error "HAVE_FFDHE requires HAVE_DH"
 #endif
 
 /* Some final sanity checks */

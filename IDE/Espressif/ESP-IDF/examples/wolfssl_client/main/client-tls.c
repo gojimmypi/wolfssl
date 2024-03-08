@@ -35,17 +35,9 @@
 #include <lwip/sockets.h>
 
 /* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
-    #include <wolfssl/wolfcrypt/settings.h>
-    #include <wolfssl/ssl.h>
-#else
-    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
-    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
-    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
-    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
-#endif
+#include <wolfssl/wolfcrypt/settings.h>
+#include "user_settings.h"
+#include <wolfssl/ssl.h>
 
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
@@ -482,17 +474,7 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
-    /* See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html#functions  */
-    if (TLS_SMP_CLIENT_TASK_BYTES < (6 * 1024)) {
-        ESP_LOGW(TAG, "Warning: TLS_SMP_CLIENT_TASK_BYTES < 6KB");
-    }
-#ifndef WOLFSSL_SMALL_STACK
-    ESP_LOGW(TAG, "WARNING: WOLFSSL_SMALL_STACK is not defined. Consider "
-                  "defining that to reduce embedded memory usage.");
-#endif
-
-    /* Note that despite vanilla FreeRTOS using WORDS for a parameter,
-     * Espressif uses BYTES for the task stack size here: */
+    /* http://esp32.info/docs/esp_idf/html/dd/d3c/group__xTaskCreate.html */
     ret = xTaskCreate(tls_smp_client_task,
                       TLS_SMP_CLIENT_TASK_NAME,
                       TLS_SMP_CLIENT_TASK_BYTES,
@@ -501,7 +483,7 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
                       &_handle);
 
     if (ret != pdPASS) {
-        ESP_LOGI(TAG, "create thread %s failed", TLS_SMP_CLIENT_TASK_NAME);
+        ESP_LOGI(TAG, "Create thread %s failed.", TLS_SMP_CLIENT_TASK_NAME);
     }
     return TLS_SMP_CLIENT_TASK_RET;
 }

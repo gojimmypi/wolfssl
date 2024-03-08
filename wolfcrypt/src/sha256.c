@@ -105,8 +105,7 @@ on the specific device platform.
 #endif
 
 #ifdef WOLFSSL_ESPIDF
-    /* Define the ESP_LOGx(TAG, ""...) value for output messages here.
-    */
+    /* Define the ESP_LOGx(TAG, ""...) value for output messages here. */
     #define TAG "wc_sha256"
 #endif
 

@@ -329,6 +329,9 @@ scripts/memtest.txt
 /IDE/ARDUINO/library.properties.tmp
 /IDE/ARDUINO/library.properties.tmp.backup
 /IDE/ARDUINO/PREPENDED_README.md
+/IDE/ARDUINO/Arduino_README_prepend.md.tmp
+/IDE/ARDUINO/sketches/**/.theia/launch.json
+
 
 # Doxygen generated files
 doc/doxygen_warnings
@@ -421,9 +424,14 @@ user_settings_asm.h
 
 # auto-created CMake backups
 **/CMakeLists.txt.old
-/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/components/oqs
 
+/IDE/Espressif/**/components/oqs
 /IDE/Espressif/**/sdkconfig.old
+/IDE/Espressif/**/dependencies.lock
+
+# Always include Espressif Makefile
+!**/Espressif/ESP-IDF/**/Makefile
+
 
 # any installed /include/user_settings.h is specific to an install, so exclude:
 /include/user_settings.h
@@ -486,8 +494,6 @@ debian/control
 /mycerts
 /mycertsSM
 
-# Always include Espressif Makefile
-!**/Espressif/ESP-IDF/**/Makefile
-/IDE/ARDUINO/Arduino_README_prepend.md.tmp
+
+
 /IDE/Espressif/ESP-IDF/examples/z save
-/IDE/ARDUINO/sketches/wolfssl_client/.theia/launch.json

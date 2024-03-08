@@ -89,9 +89,9 @@
     #elif defined(OS_WINDOWS)
         #include "/workspace/my_private_config.h"
     #else
-        #warning "default private config using /workspace/my_private_config.h"
-        #include "/mnt/c/workspace/my_private_config.h"
-    #endif
+        #warning "did not detect environment. using ~/my_private_config.h"
+        #include "~/my_private_config.h"
+	#endif
 #else
 
     /*
