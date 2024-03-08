@@ -91,13 +91,23 @@
     /* #define HAVE_CAMELLIA */
 
     /* DSA requies old SHA */
-    #define HAVE_DSA
+//    #define HAVE_DSA
 
     /* Needs SHA512 ?*/
     #define HAVE_HPKE
 
     /* Not for Espressif? */
-    /* #define WOLFSSL_AES_EAX */
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* TODO AES-EAX not working on this platform */
+
+        /* TODO: DH doesn't work, either?? */
+        #undef HAVE_DH
+        #undef HAVE_FFDHE
+    #else
+        #define WOLFSSL_AES_EAX
+    #endif
 
     /* Only for WOLFSSL_IMX6_CAAM / WOLFSSL_QNX_CAAM ? */
     /* #define WOLFSSL_CAAM      */
@@ -106,7 +116,6 @@
 
     #define WOLFSSL_AES_SIV
     #define WOLFSSL_CMAC
-    #define WOLFSSL_AES_EAX
 
     #define WOLFSSL_CERT_PIV
     #define HAVE_SCRYPT
@@ -128,7 +137,7 @@
 // #define NO_WOLFSSL_SHA256_INTERLEAVE
 
 /* When you don't want to use the old SHA */
-// #define NO_SHA
+/* #define NO_SHA */
 /* #define NO_OLD_TLS */
 
 #define WOLFSSL_ESPIDF_ERROR_PAUSE_DURATION 120
@@ -222,7 +231,14 @@
     #endif
 #endif
 
+/* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
+
+/* WC_NO_CACHE_RESISTANT: slower but more secure */
+/* #define WC_NO_CACHE_RESISTANT */
+
+/* TFM_TIMING_RESISTANT: slower but more secure */
+/* #define TFM_TIMING_RESISTANT */
 
 /* #define WOLFSSL_ATECC508A_DEBUG         */
 
@@ -252,8 +268,8 @@
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
 
-
-// #define WOLFSSL_SMALL_STACK
+/* RSA mod: enable small stack */
+#define WOLFSSL_SMALL_STACK
 
 
 #define HAVE_VERSION_EXTENDED_INFO
@@ -396,8 +412,10 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+    /* no SHA384 HW on C3: */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C3: */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -412,8 +430,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+    /* no SHA384 HW on C6: */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6: */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */

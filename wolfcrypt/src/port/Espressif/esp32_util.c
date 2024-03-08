@@ -526,6 +526,8 @@ int ShowExtendedSystemInfo_config(void)
     show_macro("WOLFSSL_AES_NO_UNROLL",     STR_IFNDEF(WOLFSSL_AES_NO_UNROLL));
     show_macro("TFM_TIMING_RESISTANT",      STR_IFNDEF(TFM_TIMING_RESISTANT));
     show_macro("ECC_TIMING_RESISTANT",      STR_IFNDEF(ECC_TIMING_RESISTANT));
+
+    /* WC_RSA_BLINDING takes up additional space: */
     show_macro("WC_RSA_BLINDING",           STR_IFNDEF(WC_RSA_BLINDING));
     show_macro("NO_WRITEV",                 STR_IFNDEF(NO_WRITEV));
 
