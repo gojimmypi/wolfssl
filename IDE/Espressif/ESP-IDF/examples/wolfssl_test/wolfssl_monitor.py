@@ -36,7 +36,7 @@ ser = serial.Serial(args.port, args.baudrate)
 print("Monitoring until complete: " + args.port)
 with open(file_path, "w") as file:
     while True:
-        line = ser.readline().decode('utf-8').strip()
+        line = ser.readline().decode('utf-8', errors='replace').strip()
 
         # show the text on the console
         print(line)

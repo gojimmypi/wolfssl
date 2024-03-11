@@ -14,6 +14,8 @@
 # Run shell check to ensure this a good script.
 shellcheck "$0"
 
+PUTTY_EXE="/mnt/c/tools/putty.exe"
+
 THIS_HOME_DIR=
 export THIS_HOME_DIR="$(pwd)"
 # export WOLFSSL_ESPIDF="/mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples"
@@ -54,6 +56,7 @@ esp32c6_PUTTY="COM36"
 esp32h2_PUTTY="COM31"
 esp32s2_PUTTY="COM30"
 esp32s3_PUTTY="COM24"
+esp8684_PUTTY="COM49"
 
 echo "esp32_PORT:   $esp32_PORT"
 echo "esp32c2_PORT: $esp32c2_PORT"
@@ -181,6 +184,6 @@ if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
     ./wolfssl_monitor.py --port "${THIS_TARGET_PORT}" --baudrate 115200 --logfile "${THIS_LOG}" &
 else
     echo "Calling putty..."
-    echo "/mnt/c/tools/putty.exe -load \"$THIS_TARGET_PUTTY\""
-    /mnt/c/tools/putty.exe -load "$THIS_TARGET_PUTTY" &
+    echo "$PUTTY_EXE -load \"$THIS_TARGET_PUTTY\""
+    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" &
 fi
