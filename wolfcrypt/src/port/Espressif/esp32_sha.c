@@ -1999,6 +1999,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
 #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     word32* MessageSource;
     word32* AcceleratorMessage;
+    #define MAX_SHA_VALUE SHA_TYPE_MAX
 #elif CONFIG_IDF_TARGET_ESP32
     int i;
     /* Only values 0 .. 3 are valid for ESP32; SHA_INVALID = -1 */
