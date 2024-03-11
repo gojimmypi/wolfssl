@@ -5,6 +5,12 @@ VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_test-IDF_v5_ESP32H2", "wolfssl_test-IDF_v5_ESP32H2.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9E219D27-4DB6-4661-A590-B2A39CAB2347}"
+	ProjectSection(SolutionItems) = preProject
+		..\testAll.sh = ..\testAll.sh
+		..\testMonitor.sh = ..\testMonitor.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

@@ -22,21 +22,24 @@
 
 #define __ESP_SDK_LIB_H__
 
-/* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
 #include <wolfssl/wolfcrypt/settings.h>
 
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
-#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-
-#include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-
+/* WOLFSSL_USER_SETTINGS must be defined, typically in the CMakeLists.txt: */
+/*    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")        */
 #ifndef WOLFSSL_USER_SETTINGS
     #error  "WOLFSSL_USER_SETTINGS must be defined for Espressif targts"
 #endif
 
+/* Espressif */
+#include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
+#include <esp_log.h>
+
+/* wolfSSL  */
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 #define ESP_SDK_MEM_LIB_VERSION 1
 WOLFSSL_LOCAL esp_err_t esp_sdk_time_mem_init(void);
