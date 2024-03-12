@@ -1236,6 +1236,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     else
         TEST_PASS("CAVP selftest passed!\n");
 #endif
+    PRIVATE_KEY_UNLOCK();
+    if ( (ret = ecc_test()) != 0)
+        TEST_FAIL("ECC      test failed!\n", ret);
+    else
+        TEST_PASS("ECC      test passed!\n");
+    PRIVATE_KEY_LOCK();
 
 #ifdef WOLFCRYPT_HAVE_SRP
     ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
@@ -30455,6 +30461,7 @@ static wc_test_ret_t ecc_test_curve_size(WC_RNG* rng, int keySize, int testVerif
 
 #ifdef HAVE_ECC_VERIFY
     for (i=0; i<testVerifyCount; i++) {
+        WOLFSSL_MSG_EX("wc_ecc_verify_hash #%d", i);
         verify = 0;
         do {
         #if defined(WOLFSSL_ASYNC_CRYPT)

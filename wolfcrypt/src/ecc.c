@@ -1651,6 +1651,7 @@ static int wc_ecc_curve_load(const ecc_set_type* dp, ecc_curve_spec** pCurve,
     int x;
 #endif
 
+    WOLFSSL_ENTER("wc_ecc_curve_load");
     if (dp == NULL || pCurve == NULL)
         return BAD_FUNC_ARG;
 
@@ -1750,7 +1751,7 @@ static int wc_ecc_curve_load(const ecc_set_type* dp, ecc_curve_spec** pCurve,
 #if defined(ECC_CACHE_CURVE) && !defined(SINGLE_THREADED)
     wc_UnLockMutex(&ecc_curve_cache_mutex);
 #endif
-
+    WOLFSSL_LEAVE("wc_ecc_curve_load", ret);
     return ret;
 }
 
@@ -8295,12 +8296,14 @@ WOLFSSL_ABI
 int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
                        word32 hashlen, int* res, ecc_key* key)
 {
-    int err;
+    int err = 0;
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_ECC)
     mp_int *r = NULL, *s = NULL;
 #else
+    WOLFSSL_MSG_EX("1 err = %d", err);
     DECL_MP_INT_SIZE_DYN(r, ECC_KEY_MAX_BITS(key), MAX_ECC_BITS_USE);
+    WOLFSSL_MSG_EX("2 err = %d", err);
     DECL_MP_INT_SIZE_DYN(s, ECC_KEY_MAX_BITS(key), MAX_ECC_BITS_USE);
 #endif
 #ifdef WOLFSSL_ASYNC_CRYPT
@@ -8338,11 +8341,13 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
     r = key->r;
     s = key->s;
 #else
+    WOLFSSL_MSG_EX("3 err = %d", err);
     NEW_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
 #ifdef MP_INT_SIZE_CHECK_NULL
     if (r == NULL)
         return MEMORY_E;
 #endif
+    WOLFSSL_MSG_EX("4 err = %d", err);
     NEW_MP_INT_SIZE(s, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
 #ifdef MP_INT_SIZE_CHECK_NULL
     if (s == NULL) {
@@ -8350,12 +8355,15 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
         return MEMORY_E;
     }
 #endif
+    WOLFSSL_MSG_EX("5 err = %d", err);
     err = INIT_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key));
     if (err != 0) {
         FREE_MP_INT_SIZE(s, key->heap, DYNAMIC_TYPE_ECC);
         FREE_MP_INT_SIZE(r, key->heap, DYNAMIC_TYPE_ECC);
         return err;
     }
+    WOLFSSL_MSG_EX("6 err = %d", err);
+
     err = INIT_MP_INT_SIZE(s, ECC_KEY_MAX_BITS_NONULLCHECK(key));
     if (err != 0) {
         FREE_MP_INT_SIZE(s, key->heap, DYNAMIC_TYPE_ECC);
@@ -8364,6 +8372,7 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
     }
 #endif /* WOLFSSL_ASYNC_CRYPT */
 
+    WOLFSSL_MSG_EX("7 err = %d", err);
     switch (key->state) {
         case ECC_STATE_NONE:
         case ECC_STATE_VERIFY_DECODE:
@@ -8381,6 +8390,7 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
             err = DecodeECC_DSA_Sig(sig, siglen, r, s);
         #else
             /* r and s are initialized. */
+            WOLFSSL_MSG_EX("8 err = %d", err);
             err = DecodeECC_DSA_Sig_Ex(sig, siglen, r, s, 0);
         #endif
             if (err < 0) {
@@ -8395,14 +8405,17 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
                 isPrivateKeyOnly = 1;
             }
         #endif
+            WOLFSSL_MSG_EX("9 err = %d", err);
             err = wc_ecc_verify_hash_ex(r, s, hash, hashlen, res, key);
 
         #ifndef WOLFSSL_ASYNC_CRYPT
             /* done with R/S */
+            WOLFSSL_MSG_EX("10 err = %d", err);
             mp_clear(r);
             mp_clear(s);
             FREE_MP_INT_SIZE(s, key->heap, DYNAMIC_TYPE_ECC);
             FREE_MP_INT_SIZE(r, key->heap, DYNAMIC_TYPE_ECC);
+            WOLFSSL_MSG_EX("11 err = %d", err);
         #ifdef MP_INT_SIZE_CHECK_NULL
             r = NULL;
             s = NULL;
@@ -8441,7 +8454,9 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
 #endif
 
     /* make sure required variables are reset */
+    WOLFSSL_MSG_EX("12 err = %d", err);
     wc_ecc_reset(key);
+    WOLFSSL_MSG_EX("13 err = %d", err);
     return err;
 #endif /* !WOLF_CRYPTO_CB_ONLY_ECC */
 }
@@ -8915,6 +8930,7 @@ int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
    DECLARE_CURVE_SPECS(ECC_CURVE_FIELD_COUNT);
 #endif
 
+   WOLFSSL_ENTER("wc_ecc_verify_hash_ex");
    if (r == NULL || s == NULL || hash == NULL || res == NULL || key == NULL)
        return ECC_BAD_ARG_E;
 

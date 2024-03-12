@@ -49,6 +49,13 @@
 
 #define WOLFSSL_ESP32
 
+/* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
+/* #define SINGLE_THREADED */
+
+#define HAVE_ECC
+#define HAVE_CURVE25519
+#define CURVE25519_SMALL
+
 /* Uncommon settings for testing only */
 #define TEST_ESPIDF_ALL_WOLFSSL
 #ifdef  TEST_ESPIDF_ALL_WOLFSSL
@@ -103,10 +110,18 @@
         /* TODO AES-EAX not working on this platform */
 
         /* TODO: DH doesn't work, either?? */
-        #undef HAVE_DH
-        #undef HAVE_FFDHE
+        // resolved?
+        //#undef HAVE_DH
+        //#undef HAVE_FFDHE
+
+        /* ECC_SHAMIR out of memory on ESP32-C2 during ECC  */
+        #ifndef HAVE_ECC
+            #define ECC_SHAMIR
+        #endif
     #else
         #define WOLFSSL_AES_EAX
+
+        #define ECC_SHAMIR
     #endif
 
     /* Only for WOLFSSL_IMX6_CAAM / WOLFSSL_QNX_CAAM ? */
@@ -121,10 +136,9 @@
     #define HAVE_SCRYPT
     #define SCRYPT_TEST_ALL
     #define HAVE_X963_KDF
-    #define HAVE_ECC_CDH
+     #define HAVE_ECC_CDH
 //    #define WC_SRTP_KDF
     #define HAVE_COMP_KEY
-    #define ECC_SHAMIR
     //#define WOLFSSL_HAVE_XMSS
 #endif
 
@@ -132,8 +146,6 @@
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
 
-/* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-// #define SINGLE_THREADED
 // #define NO_WOLFSSL_SHA256_INTERLEAVE
 
 /* When you don't want to use the old SHA */
@@ -175,10 +187,6 @@
 
 /* ED25519 requires SHA512 */
 // #define HAVE_ED25519
-
-#define HAVE_ECC
-#define HAVE_CURVE25519
-#define CURVE25519_SMALL
 
 #define OPENSSL_EXTRA
 /* when you want to use pkcs7 */
