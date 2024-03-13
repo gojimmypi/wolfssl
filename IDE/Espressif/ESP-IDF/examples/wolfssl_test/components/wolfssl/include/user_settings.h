@@ -53,8 +53,12 @@
 /* #define SINGLE_THREADED */
 
 #define HAVE_ECC
+#define HAVE_ECC_CDH
 #define HAVE_CURVE25519
 #define CURVE25519_SMALL
+
+/* No session cache needed when only testing (plus it takes up memory!_ */
+#define NO_SESSION_CACHE
 
 /* Uncommon settings for testing only */
 #define TEST_ESPIDF_ALL_WOLFSSL
@@ -106,7 +110,14 @@
     /* Not for Espressif? */
     #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
         defined(CONFIG_IDF_TARGET_ESP8684) || \
-        defined(CONFIG_IDF_TARGET_ESP32H2)
+        defined(CONFIG_IDF_TARGET_ESP32H2) || \
+        defined(CONFIG_IDF_TARGET_ESP8266)
+
+        #if defined(CONFIG_IDF_TARGET_ESP8266)
+            #undef HAVE_ECC
+            #undef HAVE_ECC_CDH
+            #undef HAVE_CURVE25519
+        #endif
         /* TODO AES-EAX not working on this platform */
 
         /* TODO: DH doesn't work, either?? */
@@ -136,7 +147,6 @@
     #define HAVE_SCRYPT
     #define SCRYPT_TEST_ALL
     #define HAVE_X963_KDF
-     #define HAVE_ECC_CDH
 //    #define WC_SRTP_KDF
     #define HAVE_COMP_KEY
     //#define WOLFSSL_HAVE_XMSS
