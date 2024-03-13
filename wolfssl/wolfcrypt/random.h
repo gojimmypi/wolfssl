@@ -30,12 +30,6 @@
 
 #include <wolfssl/wolfcrypt/types.h>
 
-// TODO: remove
-extern int force_sw;
-
-
-
-
 #if defined(HAVE_FIPS) && \
     defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
     #include <wolfssl/wolfcrypt/fips.h>

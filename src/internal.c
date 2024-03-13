@@ -2314,12 +2314,6 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
             ctx->CBIORecvFrom = uIPRecvFrom;
         }
         #endif
-    #elif defined(ARDUINO)
-        #if defined(__AVR__)
-            /* likely not available here*/
-        #elif defined(ESP32) || defined(ESP8266)
-            /* TODO */
-        #endif /* Arduino */
     #else
         ctx->CBIORecv = EmbedReceive;
         ctx->CBIOSend = EmbedSend;
@@ -37495,7 +37489,6 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                 WOLFSSL_MSG("Found session matching the session id"
                             " found in the ticket");
                 /* Allocate and populate an InternalTicket */
-                /* TODO: fails for WOLFSSL_NO_REALLOC */
                 tmp = (byte*)XREALLOC(psk->identity, sizeof(InternalTicket),
                         ssl->heap, DYNAMIC_TYPE_TLSX);
                 if (tmp != NULL) {

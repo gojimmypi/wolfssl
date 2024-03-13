@@ -447,7 +447,7 @@ enum {
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-     /*  wolfSSL Hardware Acceleration not yet implemented. Note: no WiFi.  */
+    /*  wolfSSL Hardware Acceleration not yet implemented. Note: no WiFi.  */
     #define NO_ESP32_CRYPT
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
