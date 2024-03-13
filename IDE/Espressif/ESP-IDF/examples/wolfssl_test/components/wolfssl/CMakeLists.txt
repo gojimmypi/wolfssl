@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.4.016 for improved manual setting of WOLFSSL_ROOT + ESP8266 support; optional esp-timer / driver components
+# Version 5.6.6.1 template update
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -32,9 +32,10 @@ set(VERBOSE_COMPONENT_MESSAGES 1)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
 set(CMAKE_CURRENT_SOURCE_DIR ".")
+# set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
 
 # Optionally set your source to wolfSSL in your project CMakeLists.txt like this:
-# set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
+# set(WOLFSSL_ROOT "c:/test/my_wolfssl" )
 
 if ( "${WOLFSSL_ROOT}" STREQUAL "")
     set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
@@ -194,16 +195,47 @@ function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
             return()
         endif()
 
+        # Maintain CURRENT_SEARCH_DIR, but check various suffixes with CURRENT_SEARCH_DIR_ALT
         if( THIS_USER )
             # Check for "wolfssl-[username]" subdirectory as we recurse up the directory tree
             set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl-${THIS_USER})
-            message(STATUS "Looking in ${CURRENT_SEARCH_DIR}")
+            message(STATUS "Looking in ${CURRENT_SEARCH_DIR_ALT}")
 
-            #if(EXISTS ${CURRENT_SEARCH_DIR_ALT} AND IS_DIRECTORY ${CURRENT_SEARCH_DIR_ALT} AND EXISTS "${CURRENT_SEARCH_DIR_ALT}/wolfcrypt/src")
             IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
             if ( FOUND_WOLFSSL )
-               message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
-                set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR_ALT} PARENT_SCOPE)
+                message(STATUS "Found wolfssl in user-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
+                set(CURRENT_SEARCH_DIR "${CURRENT_SEARCH_DIR_ALT}")
+                set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
+                return()
+            endif()
+        endif()
+
+        if ( FOUND_WOLFSSL )
+            # if we already found the source, skip attempt of "wolfssl-master"
+        else()
+            set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl-master)
+            message(STATUS "Looking in ${CURRENT_SEARCH_DIR_ALT}")
+
+            IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
+            if ( FOUND_WOLFSSL )
+                message(STATUS "Found wolfssl in master-suffix CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
+                set(CURRENT_SEARCH_DIR "${CURRENT_SEARCH_DIR_ALT}")
+                set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
+                return()
+            endif()
+        endif()
+
+        if ( FOUND_WOLFSSL )
+            # if we already found the source, skip attempt of "wolfssl"
+        else()
+            set(CURRENT_SEARCH_DIR_ALT ${CURRENT_SEARCH_DIR}/wolfssl)
+            message(STATUS "Looking in ${CURRENT_SEARCH_DIR_ALT}")
+
+            IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR_ALT}" FOUND_WOLFSSL )
+            if ( FOUND_WOLFSSL )
+                message(STATUS "Found wolfssl in CURRENT_SEARCH_DIR_ALT = ${CURRENT_SEARCH_DIR_ALT}")
+                set(CURRENT_SEARCH_DIR "${CURRENT_SEARCH_DIR_ALT}")
+                set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
                 return()
             endif()
         endif()
@@ -223,7 +255,8 @@ function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
         get_filename_component(CURRENT_SEARCH_DIR "${CURRENT_SEARCH_DIR}" DIRECTORY)
         message(STATUS "Next CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
         if( "${PRIOR_SEARCH_DIR}" STREQUAL "${CURRENT_SEARCH_DIR}" )
-            # when the search directory is empty, we'll give up
+            # When the parent is current directory, cannot go any further. We didn't find wolfssl.
+            # When the search directory is empty, we'll give up.
             set(CURRENT_SEARCH_DIR "")
         endif()
     endwhile()
@@ -264,8 +297,6 @@ else()
     endif()
 
     # search for wolfSSL
-    # TODO allow for cmake prior def
-
     if(WOLFSSL_ROOT)
         IS_WOLFSSL_SOURCE("${WOLFSSL_ROOT}" FOUND_WOLFSSL)
         if(FOUND_WOLFSSL)
@@ -287,8 +318,8 @@ else()
     else()
         message(STATUS "Failed: wolfssl directory not found.")
         # Abort. We need wolfssl _somewhere_.
-        message(FATAL_ERROR "Could not find wolfssl in ${WOLFSSL_ROOT}.\n"
-                            "Try setting WOLFSSL_ROOT environment variable or git clone.")
+        message(FATAL_ERROR "Could not find wolfssl in any parent directory named wolfssl-${THIS_USER}, wolfssl-master, or wolfssl.\n"
+                            "Try setting WOLFSSL_ROOT environment variable, cmake variable in project, copy source, or use managed components.")
         # Abort CMake after fatal error.
     endif()
 

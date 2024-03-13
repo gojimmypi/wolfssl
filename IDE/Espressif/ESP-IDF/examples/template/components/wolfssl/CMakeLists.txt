@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.6.4.016 for improved manual setting of WOLFSSL_ROOT + ESP8266 support; optional esp-timer / driver components
+# Version 5.6.6.1 template update
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -35,7 +35,7 @@ set(CMAKE_CURRENT_SOURCE_DIR ".")
 # set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
 
 # Optionally set your source to wolfSSL in your project CMakeLists.txt like this:
-# set(WOLFSSL_ROOT "c:/test/blogtest/wolfssl" )
+# set(WOLFSSL_ROOT "c:/test/my_wolfssl" )
 
 if ( "${WOLFSSL_ROOT}" STREQUAL "")
     set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
@@ -297,8 +297,6 @@ else()
     endif()
 
     # search for wolfSSL
-    # TODO allow for cmake prior def
-
     if(WOLFSSL_ROOT)
         IS_WOLFSSL_SOURCE("${WOLFSSL_ROOT}" FOUND_WOLFSSL)
         if(FOUND_WOLFSSL)
