@@ -49,7 +49,7 @@ Testing TLS 1.3 SM:
 
 - The [components/wolfssl/CMakeLists.txt](./components/wolfssl/CMakeLists.txt) typically does not need to be changed.
 
-- Optional [VisualGDB Project](./VisualGDB/wolfssl_template_IDF_v5.1_ESP32.vgdbproj) for Visual Studio using ESP32 and ESP-IDF v5.1.
+- Optional [VisualGDB Project](./VisualGDB/README.md) for Visual Studio using ESP32 and ESP-IDF v5.2. See also [template](../template/VisualGDB/README.md) for other devices.
 
 - Edit the project [CMakeLists.txt](./CMakeLists.txt) to optionally point this project's wolfSSL component source code at a different directory:
 
@@ -67,7 +67,7 @@ Edit your `WRK_IDF_PATH`to point to your ESP-IDF install directory.
 ```
 cd /mnt/C/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF5/examples/wolfssl_dtls13_server
 
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
 
 echo "Run export.sh from ${WRK_IDF_PATH}"
 . ${WRK_IDF_PATH}/export.sh

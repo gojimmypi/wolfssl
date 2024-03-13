@@ -40,7 +40,7 @@ Command:
 
 ```
 cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_server
-. /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
+. /mnt/c/SysGCC/esp32/esp-idf/v5.2/export.sh
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 
 ```

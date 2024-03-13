@@ -42,7 +42,8 @@ Reminder than when building on WSL in `/mnt/c` there will be a noticeable perfor
 Example build on WSL, assuming `git clone` from `c:\workspace`:
 
 ```
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+# WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/master
 
 echo "Run export.sh from ${WRK_IDF_PATH}"
 . ${WRK_IDF_PATH}/export.sh
@@ -50,8 +51,8 @@ echo "Run export.sh from ${WRK_IDF_PATH}"
 # switch to test example
 cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_test
 
-# Pick ESP-IDF install directory, this one for v5.1 in VisualGDB
-. /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
+# Pick ESP-IDF install directory, this one for v5.2 in VisualGDB
+. /mnt/c/SysGCC/esp32/esp-idf/v5.2/export.sh
 
 # set target chipset
 idf.py set-target esp32s3
@@ -81,6 +82,15 @@ cd IDE/Espressif/ESP-IDF/examples/ESP8266
 idf.py menuconfig
 
 idf.py build flash -p /dev/ttyS55 -b 115200
+```
+
+## Putty (via WSL)
+
+Define a non-blank value for `ESPIDF_PUTTY_MONITOR` to launch `testMonitor.sh` output in putty.exe sessions from Windows.
+Assumes `PUTTY_EXE="/mnt/c/tools/putty.exe"`.
+
+```bash
+export ESPIDF_PUTTY_MONITOR=true
 ```
 
 ## Example Output
