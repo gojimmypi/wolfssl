@@ -125,9 +125,9 @@ enum sdk_memory_segment
     SDK_MEMORY_SEGMENT_COUNT
 };
 
-static void*      sdk_memory_segment_start[SDK_MEMORY_SEGMENT_COUNT] = {};
-static void*        sdk_memory_segment_end[SDK_MEMORY_SEGMENT_COUNT] = {};
-static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT] = {
+static void*      sdk_memory_segment_start[SDK_MEMORY_SEGMENT_COUNT + 1] = {};
+static void*        sdk_memory_segment_end[SDK_MEMORY_SEGMENT_COUNT + 1] = {};
+static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT + 1] = {
     "C memory map io ",
     "* thread_local  ",
     "C data          ",
@@ -145,6 +145,7 @@ static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT] = {
     "* text          ",
     "* rodata        ",
     "* rtc data      ",
+    "last item",
 };
 
 /* Given a given memory segment [m]: assign text names, starting and ending
