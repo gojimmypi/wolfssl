@@ -70,6 +70,7 @@ echo "esp32c6_PORT: $esp32c6_PORT"
 echo "esp32s2_PORT: $esp32s2_PORT"
 echo "esp32s3_PORT: $esp32s3_PORT"
 echo "esp32h2_PORT: $esp32h2_PORT"
+echo "esp8266_PORT: $esp8266_PORT"
 echo "esp8684_PORT: $esp8684_PORT"
 
 # given a THIS_TARGET, assign THIS_TARGET_PORT to the respective port.
@@ -160,7 +161,7 @@ if [[ "$THIS_TARGET" == "esp8266" ]]; then
     # idf.py for the ESP8266  does not support --set-target
     echo "Target is $THIS_TARGET"
 else
-    echo "set-target $THIS_TARGET..."
+    echo "idf.py set-target $THIS_TARGET"
     idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
@@ -171,6 +172,7 @@ else
 fi
 
 #---------------------------------------------------------------------
+echo ""
 echo "Build $THIS_TARGET..."
 idf.py build                                    >> "${BUILD_LOG}" 2>&1
 THIS_ERROR_CODE=$?
@@ -181,8 +183,10 @@ if [ $THIS_ERROR_CODE -ne 0 ]; then
 fi
 
 #---------------------------------------------------------------------
+echo ""
 echo "Flash $THIS_TARGET..."
-idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 >> "${FLASH_LOG}" 2>&1
+echo "idf.py flash -p ${THIS_TARGET_PORT} -b 115200"
+idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
 THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then
     echo ""
