@@ -1,19 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.8.34330.188
+VisualStudioVersion = 17.8.34601.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfSSL_ESP8266", "wolfSSL_ESP8266.vgdbproj", "{C9687472-A434-43A7-9026-7914F425B9B4}"
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_test_ESP8266", "wolfssl_test_ESP8266.vgdbproj", "{C9687472-A434-43A7-9026-7914F425B9B4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{146A058D-9C31-432D-A839-22190FAA37D5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D4A6F5E5-807B-4D51-ACD5-8493BCF2E7F0}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
 		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8B08C4F6-BFE3-44AF-8D5A-239A581ED01B}"
-	ProjectSection(SolutionItems) = preProject
-		build\config\sdkconfig.h = build\config\sdkconfig.h
 	EndProjectSection
 EndProject
 Global
@@ -31,6 +25,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BB792BC5-E968-4895-9AFF-F5D984B60018}
+		SolutionGuid = {84F29237-2909-4E98-AD33-2624E2256EF8}
 	EndGlobalSection
 EndGlobal

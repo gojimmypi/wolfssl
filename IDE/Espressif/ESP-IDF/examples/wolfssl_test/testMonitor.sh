@@ -37,26 +37,31 @@ echo "testMonitor current path:"
 pwd
 
 #ESP32c2 monitor is 78800
-
+# These are the WSL Serial Ports for each respective ESP32 SoC Device.
+# Unfortunately they are currently hard coded and computer-specific.
 esp32_PORT="/dev/ttyS9"
-esp32c2_PORT="/dev/ttyS71"
+esp32c2_PORT="/dev/ttyS79"
 esp32c3_PORT="/dev/ttyS35"
 esp32c6_PORT="/dev/ttyS36"
 esp32h2_PORT="/dev/ttyS31"
 esp32s2_PORT="/dev/ttyS30"
 esp32s3_PORT="/dev/ttyS24"
+esp8266_PORT="/dev/ttyS70"
 
 esp8684_PORT="/dev/ttyS49"
 # esp32c2_PORT="/dev/ttyS49" #8684
 
+# Load putty profiles. Note profiles names need to have been previously
+# defined and saved in putty! These are the saved sessions in putty:
 esp32_PUTTY="COM9"
-esp32c2_PUTTY="COM71 - ESP32-C2 74880"
+esp32c2_PUTTY="COM79 - ESP32-C2 74880"
 esp32c3_PUTTY="COM35"
 esp32c6_PUTTY="COM36"
 esp32h2_PUTTY="COM31"
 esp32s2_PUTTY="COM30"
 esp32s3_PUTTY="COM24"
 esp8684_PUTTY="COM49"
+esp8266_PUTTY="COM70 - 74880"
 
 echo "esp32_PORT:   $esp32_PORT"
 echo "esp32c2_PORT: $esp32c2_PORT"
@@ -89,6 +94,8 @@ if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
     echo "Using ESP-IDF monitor"
 else
     # Check that THIS_TARGET_PUTTY is defined.
+    echo ""
+    echo "Using saved putty profile session names:"
     echo "esp32_PUTTY:   $esp32_PUTTY"
     echo "esp32c2_PUTTY: $esp32c2_PUTTY"
     echo "esp32c3_PUTTY: $esp32c3_PUTTY"
@@ -97,6 +104,7 @@ else
     echo "esp32s3_PUTTY: $esp32s3_PUTTY"
     echo "esp32h2_PUTTY: $esp32h2_PUTTY"
     echo "esp8684_PUTTY: $esp8684_PUTTY"
+    echo "esp8266_PUTTY: $esp8266_PUTTY"
     echo ""
 
     if [ -z "$THIS_TARGET_PUTTY" ]; then
@@ -115,7 +123,6 @@ if [[ "$THIS_TARGET" == "esp8684" ]]; then
 fi
 
 
-
 # Assemble some log file names.
 echo ""
 BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
@@ -131,9 +138,14 @@ echo  "THIS_LOG  = ${THIS_LOG}"
 echo  "THIS_CFG  = ${THIS_CFG}"
 
 
-idf.py --version                                > "${BUILD_LOG}" 2>&1
-echo "Full clean for $THIS_TARGET..."
+if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    # idf.py for the ESP8266  does not support --version
+    echo "ESP8266 using $IDF_PATH"
+else
+    idf.py --version                            > "${BUILD_LOG}" 2>&1
+fi
 
+echo "Full clean for $THIS_TARGET..."
 #---------------------------------------------------------------------
 idf.py fullclean                                >> "${BUILD_LOG}" 2>&1
 THIS_ERROR_CODE=$?
@@ -144,13 +156,18 @@ if [ $THIS_ERROR_CODE -ne 0 ]; then
 fi
 
 #---------------------------------------------------------------------
-echo "set-target $THIS_TARGET..."
-idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
-THIS_ERROR_CODE=$?
-if [ $THIS_ERROR_CODE -ne 0 ]; then
-    echo ""
-    echo "Error during set-target"
-    exit 1
+if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    # idf.py for the ESP8266  does not support --set-target
+    echo "Target is $THIS_TARGET"
+else
+    echo "set-target $THIS_TARGET..."
+    idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
+    THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        echo "Error during set-target"
+        exit 1
+    fi
 fi
 
 #---------------------------------------------------------------------

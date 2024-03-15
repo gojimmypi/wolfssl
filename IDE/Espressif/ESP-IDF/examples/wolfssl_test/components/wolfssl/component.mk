@@ -220,6 +220,9 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_aes.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_mp.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_sha.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp32_util.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp_sdk_mem_lib.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp_sdk_time_lib.o
+COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/port/Espressif/esp_sdk_wifi_lib.o
 
 ##
 ## wolfcrypt benchmark  (optional)
