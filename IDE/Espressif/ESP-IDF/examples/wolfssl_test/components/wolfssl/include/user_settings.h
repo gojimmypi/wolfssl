@@ -117,6 +117,12 @@
             #undef HAVE_ECC
             #undef HAVE_ECC_CDH
             #undef HAVE_CURVE25519
+
+            /* TODO See SHA256 __attribute__((aligned(4))); and WC_SHA256_ALIGN */
+
+            /* TODO does CHACHA also need alignment? Failing on ESP8266  */
+            #undef HAVE_XCHACHA
+            #undef HAVE_CHACHA
         #endif
         /* TODO AES-EAX not working on this platform */
 
