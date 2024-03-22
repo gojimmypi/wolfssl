@@ -7,7 +7,7 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_test_ESP8266", "wol
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D4A6F5E5-807B-4D51-ACD5-8493BCF2E7F0}"
 	ProjectSection(SolutionItems) = preProject
-		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
+		..\..\..\..\..\..\wolfssl-gojimmypi-pr\IDE\Espressif\ESP-IDF\examples\wolfssl_test\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\wolfssl-gojimmypi-pr\IDE\Espressif\ESP-IDF\examples\wolfssl_test\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
 Global

@@ -50,7 +50,7 @@ idf.py -b 115200 flash monitor
 or for VisualGDB:
 
 ```bash
-. /mnt/c/SysGCC/esp32/esp-idf/v5.1/export.sh
+. /mnt/c/SysGCC/esp32/esp-idf/v5.2/export.sh
 idf.py create-project-from-example "gojimmypi/mywolfssl^5.6.4-Staging01-2da8811.3"
 cd wolfssl_benchmark
 idf.py -b 115200 flash monitor

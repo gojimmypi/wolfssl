@@ -16,8 +16,7 @@ shellcheck "$0"
 
 PUTTY_EXE="/mnt/c/tools/putty.exe"
 
-THIS_HOME_DIR=
-export THIS_HOME_DIR="$(pwd)"
+THIS_HOME_DIR="$(pwd)"
 # export WOLFSSL_ESPIDF="/mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples"
 
 # the first parameter is expected to be a project name in the WOLFSSL_ESPIDF directory.
@@ -120,9 +119,12 @@ else
 fi
 
 if [[ "$THIS_TARGET" == "esp8684" ]]; then
+    echo "Treating esp8684 like an esp32c2"
     THIS_TARGET=esp32c2
 fi
 
+# Ensure we have a log directory
+mkdir -p "${THIS_HOME_DIR}/logs/" || exit 1
 
 # Assemble some log file names.
 echo ""
@@ -160,6 +162,9 @@ fi
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
     # idf.py for the ESP8266  does not support --set-target
     echo "Target is $THIS_TARGET"
+
+    # Since we don't "set-target" for the ESP8266, ensure the sdkconfig is not present
+    rm ./sdkconfig
 else
     echo "idf.py set-target $THIS_TARGET"
     idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
@@ -174,6 +179,7 @@ fi
 #---------------------------------------------------------------------
 echo ""
 echo "Build $THIS_TARGET..."
+echo "idf.py build"
 idf.py build                                    >> "${BUILD_LOG}" 2>&1
 THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then

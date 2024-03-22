@@ -1,7 +1,7 @@
 # ESP-IDF Port
 
 These Espressif examples have been created and tested with the latest stable release branch of 
-[ESP-IDF V5.1](https://docs.espressif.com/projects/esp-idf/en/release-v5.1/esp32/get-started/index.html).
+[ESP-IDF v5.2](https://docs.espressif.com/projects/esp-idf/en/release-v5.2/esp32/get-started/index.html).
 The prior version 4.4 ESP-IDF is still supported, however version 5.1 or greater is recommended.
 Espressif has [a list of all ESP-IDF versions](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/versions.html).
 
@@ -164,10 +164,10 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
  Note: This is tested with :  
    - OS: Ubuntu 20.04.3 LTS
    - Microsoft Windows 10 Pro 10.0.19041 / Windows 11 Pro 22H2 22621.2715
-   - Visual Studio 2022 17.7.6 with VisualGDB 5.6R9 (build 4777)
+   - Visual Studio 2022 17.8.7 with VisualGDB 5.6R9 (build 4777)
    - WSL 1 Ubuntu 22.04.3 LTS
-   - ESP-IDF: ESP-IDF v5.1
-   - SoC Module : all those supported in ESP-IDF v5.1
+   - ESP-IDF: ESP-IDF v5.2
+   - SoC Module : all those supported in ESP-IDF v5.2
 
 ## JTAG Debugging Notes
 
@@ -203,4 +203,16 @@ ftdi layout_signal nSRST -data 0x0020
 # always enabled.
 reset_config srst_push_pull trst_push_pull
 
+```
+
+## Windows long paths
+
+Check "Long Paths Enabled" in Windows registry.
+
+Please set registry HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled to 1. 
+
+The operation requires Administrator privileges. Command:
+
+```powershell
+powershell -Command "&{ Start-Process -FilePath reg 'ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f' -Verb runAs}"
 ```

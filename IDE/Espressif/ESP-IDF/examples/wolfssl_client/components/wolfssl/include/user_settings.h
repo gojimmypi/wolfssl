@@ -55,7 +55,7 @@
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
  * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
- * When really desparate, try NO_SESSION_CACHE.  */
+ * When really desperate, try NO_SESSION_CACHE.  */
 #define SMALL_SESSION_CACHE
 
 /* optionally turn off SHA512/224 SHA512/256 */

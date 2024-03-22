@@ -29,23 +29,14 @@ Individual project files are included for convenience to new users,
 as there are [difficulties switching between ESP-IDF Versions or Chipsets](https://sysprogs.com/w/forums/topic/difficulties-switching-espressif-esp-idf-version-or-chipset/)
 using the VisualGDB extension.
 
-The naming convention for project files is: `[project name]_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
+The naming convention for project files is: `wolfssl_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
 
-
--------- |------------- |------------- |
-ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.1 |
--------- |------------- |------------- |
-ESP32    |      x       |              |
-ESP32-S2 |              |              |
-ESP32-S3 |      x       |      x       |
-ESP32-C3 |      x       |      x       |
-ESP32-C6 |              |              |
 
 
 The default directories are:
 
 - `C:\SysGCC` - The root directory install of VisualGDB
-- `C:\SysGCC\esp32` - The default for ESP-IDF v5.x
+- `C:\SysGCC\esp32` - The default for ESP-IDF v5.2
 - `C:\SysGCC\esp32-8.4` - Many need to manually select this name for ESP-IDF v4.x install
 - `C:\SysGCC\esp8266`- The default for ESP8266
 
@@ -88,11 +79,27 @@ git submodule update --init --recursive
 # cd /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 cd /mnt/c/workspace/wolfssl-$USER/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark
 
-# Pick ESP-IDF toolchain install directory, this one for v5.1 in VisualGDB
-WRK_IDF_PATH=~/esp/esp-idf
+# The ESP8266 uses a completely different toolchain:
 WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+
+# Pick ESP-IDF toolchain install directory
+WRK_IDF_PATH=~/esp/esp-idf
+
+# ESP-IDF v4.x uses toolchain v8.4
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.1
+
+# ESP-IDF v5.0 with toolchain v12.4
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.0
+
+# ESP-IDF v5.0 to v5.2.1 uses toolchain v12.4 
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.0
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.1
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.2.1
+
+# The most recent version:
+# ESP-IDF v5.2 uses toolchain v13.2
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+
 
 . $WRK_IDF_PATH/export.sh
 
