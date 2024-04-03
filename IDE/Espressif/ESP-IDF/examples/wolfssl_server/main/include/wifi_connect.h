@@ -1,6 +1,6 @@
 /* wifi_connect.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -28,11 +28,13 @@
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
 #define TLS_SMP_SERVER_TASK_NAME         "tls_sever_example"
-#define TLS_SMP_SERVER_TASK_WORDS        22240
+#define TLS_SMP_SERVER_TASK_BYTES        22240
 #define TLS_SMP_SERVER_TASK_PRIORITY     8
 
-//#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
-// #define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
+/* Optionally use ESP-IDF config settings
+#define TLS_SMP_WIFI_SSID                CONFIG_WIFI_SSID
+#define TLS_SMP_WIFI_PASS                CONFIG_WIFI_PASSWORD
+*/
 
 #define USE_WIFI_EXAMPLE
 #ifdef USE_WIFI_EXAMPLE
@@ -49,7 +51,7 @@
 
 /* when using a private config with plain text passwords,
  * file my_private_config.h should be excluded from git updates */
-#define  USE_MY_PRIVATE_CONFIG
+/* #define  USE_MY_PRIVATE_CONFIG */
 
 #ifdef  USE_MY_PRIVATE_CONFIG
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
@@ -77,7 +79,7 @@
         /* tyically from ESP32 with ESP-IDF v4 ot v5 */
         #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
     #elif defined(CONFIG_EXAMPLE_WIFI_SSID)
-        /* tyically from ESP8266 rtos-sdk/v3.4 */
+        /* typically from ESP8266 rtos-sdk/v3.4 */
         #define EXAMPLE_ESP_WIFI_SSID CONFIG_EXAMPLE_WIFI_SSID
     #else
         #define EXAMPLE_ESP_WIFI_SSID "MYSSID_WIFI_CONNECT"
@@ -87,7 +89,7 @@
         /* tyically from ESP32 with ESP-IDF v4 or v5 */
         #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
     #elif defined(CONFIG_EXAMPLE_WIFI_SSID)
-        /* tyically from ESP8266 rtos-sdk/v3.4 */
+        /* typically from ESP8266 rtos-sdk/v3.4 */
         #define EXAMPLE_ESP_WIFI_PASS CONFIG_EXAMPLE_WIFI_PASSWORD
     #else
         #define EXAMPLE_ESP_WIFI_PASS "MYPASSWORD_WIFI_CONNECT"
