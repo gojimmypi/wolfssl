@@ -1,6 +1,6 @@
 /* main.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -26,7 +26,7 @@
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
+#if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
     #ifndef WOLFSSL_ESPIDF
         #warning "Problem with wolfSSL user_settings."
@@ -161,7 +161,7 @@ void app_main(void)
         .stop_bits = UART_STOP_BITS_1,
     };
     esp_err_t ret = 0;
-    uintptr_t stack_start = esp_sdk_stack_pointer();
+    wc_ptr_t stack_start = esp_sdk_stack_pointer();
 
     /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
      *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
