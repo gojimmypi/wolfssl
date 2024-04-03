@@ -1,6 +1,6 @@
 /* benchmark main.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -238,11 +238,11 @@ void app_main(void)
     ** note it is still always called in wolf_benchmark_task.
     */
     stack_start = uxTaskGetStackHighWaterMark(NULL);
-
+    int ret = 0;
     do {
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
-        wolf_benchmark_task();
+        ret = wolf_benchmark_task();
         ESP_LOGI(TAG, "Stack used: %d\n",
                       stack_start - uxTaskGetStackHighWaterMark(NULL));
 
