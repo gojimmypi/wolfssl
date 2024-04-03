@@ -162,6 +162,41 @@ on the specific device platform.
     #define HAVE_INTEL_RORX
 #endif
 
+#if defined(LITTLE_ENDIAN_ORDER)
+    #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
+          defined(CONFIG_IDF_TARGET_ESP8684) || \
+          defined(CONFIG_IDF_TARGET_ESP32C3) || \
+          defined(CONFIG_IDF_TARGET_ESP32C6)    \
+        ) && \
+        defined(WOLFSSL_ESP32_CRYPT) &&         \
+        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
+        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
+        /* For Espressif RISC-V Targets, we *may* need to reverse bytes
+         * depending on if HW is active or not. */
+        #define SHA256_REV_BYTES(ctx) \
+            (esp_sha_need_byte_reversal(ctx))
+    #elif defined(FREESCALE_MMCAU_SHA)
+        #define SHA256_REV_BYTES(ctx)       1 /* reverse needed on final */
+    #endif
+#endif
+#ifndef SHA256_REV_BYTES
+    #if defined(LITTLE_ENDIAN_ORDER)
+        #define SHA256_REV_BYTES(ctx)       1
+    #else
+        #define SHA256_REV_BYTES(ctx)       0
+    #endif
+#endif
+#if defined(LITTLE_ENDIAN_ORDER) && \
+        defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
+        (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
+    #define SHA256_UPDATE_REV_BYTES(ctx) \
+        (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
+#elif defined(FREESCALE_MMCAU_SHA)
+    #define SHA256_UPDATE_REV_BYTES(ctx)    0 /* reverse not needed on update */
+#else
+    #define SHA256_UPDATE_REV_BYTES(ctx)    SHA256_REV_BYTES(ctx)
+#endif
+
 
 #if !defined(WOLFSSL_PIC32MZ_HASH) && !defined(STM32_HASH_SHA2) && \
     (!defined(WOLFSSL_IMX6_CAAM) || defined(NO_IMX6_CAAM_HASH) || \
@@ -826,9 +861,11 @@ static int InitSha256(wc_Sha256* sha256)
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-        /* We know this is a fresh, uninitialized item:
-         * Set to ESP32_SHA_INIT for only possible HW calcs.
-         * Note mode may indicate later fallback to SW. */
+        /* We know this is a fresh, uninitialized item, so set to INIT */
+        if (sha256->ctx.mode != ESP32_SHA_INIT) {
+            ESP_LOGV(TAG, "Set ctx mode from prior value: "
+                               "%d", sha256->ctx.mode);
+        }
         sha256->ctx.mode = ESP32_SHA_INIT;
     #endif
 
@@ -1098,7 +1135,8 @@ static int InitSha256(wc_Sha256* sha256)
     }
 
     /* do block size increments/updates */
-    static WC_INLINE int Sha256Update(wc_Sha256* sha256, const byte* data, word32 len)
+    static WC_INLINE int Sha256Update(wc_Sha256* sha256, const byte* data,
+        word32 len)
     {
         int ret = 0;
         word32 blocksLen;
@@ -1142,34 +1180,13 @@ static int InitSha256(wc_Sha256* sha256)
                 // TODO: Not yet implemented: set_default_digest256(sha256);
             #endif
 
-
-            #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-                #if defined(WOLFSSL_X86_64_BUILD) && \
-                          defined(USE_INTEL_SPEEDUP) && \
-                          (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
-                if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
-                #endif
-                #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-                      defined(CONFIG_IDF_TARGET_ESP8684) || \
-                      defined(CONFIG_IDF_TARGET_ESP32C3) || \
-                      defined(CONFIG_IDF_TARGET_ESP32C6)    \
-                    ) && \
-                    defined(WOLFSSL_ESP32_CRYPT) &&         \
-                   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-                   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-                /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-                 * depending on if HW is active or not. */
-                    if (esp_sha_need_byte_reversal(&sha256->ctx))
-                #endif
-                {
-                    ByteReverseWords(sha256->buffer, sha256->buffer,
-                        WC_SHA256_BLOCK_SIZE);
-                }
-            #endif
+            if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
+                ByteReverseWords(sha256->buffer, sha256->buffer,
+                    WC_SHA256_BLOCK_SIZE);
+            }
 
             #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
                     ESP_LOGV(TAG, "Sha256Update process software");
                     #if defined(WOLFSSL_DEBUG_MUTEX)
@@ -1220,12 +1237,13 @@ static int InitSha256(wc_Sha256* sha256)
         if (Transform_Sha256_Len_p != NULL)
         #endif
         {
-            /* get number of blocks */
-            /* 64-1 = 0x3F (~ Inverted = 0xFFFFFFC0) */
-            /* len (masked by 0xFFFFFFC0) returns block aligned length */
-            blocksLen = len & ~((word32)WC_SHA256_BLOCK_SIZE-1);
-            if (blocksLen > 0) {
-                /* Byte reversal and alignment handled in function if required */
+            if (len >= WC_SHA256_BLOCK_SIZE) {
+                /* get number of blocks */
+                /* 64-1 = 0x3F (~ Inverted = 0xFFFFFFC0) */
+                /* len (masked by 0xFFFFFFC0) returns block aligned length */
+                blocksLen = len & ~((word32)WC_SHA256_BLOCK_SIZE-1);
+                /* Byte reversal and alignment handled in function if required
+                 */
                 XTRANSFORM_LEN(sha256, data, blocksLen);
                 data += blocksLen;
                 len  -= blocksLen;
@@ -1268,28 +1286,9 @@ static int InitSha256(wc_Sha256* sha256)
                 }
             #endif
 
-            #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-                #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-                      defined(CONFIG_IDF_TARGET_ESP8684) || \
-                      defined(CONFIG_IDF_TARGET_ESP32C3) || \
-                      defined(CONFIG_IDF_TARGET_ESP32C6)    \
-                    ) && \
-                    defined(WOLFSSL_ESP32_CRYPT)         && \
-                   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-                   !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-                /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-                 * depending on if HW is active or not. */
-                    if (esp_sha_need_byte_reversal(&sha256->ctx))
-                #endif
-                #if defined(WOLFSSL_X86_64_BUILD) && \
-                          defined(USE_INTEL_SPEEDUP) && \
-                          (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
-                if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
-                #endif
-                {
-                    ByteReverseWords(local32, local32, WC_SHA256_BLOCK_SIZE);
-                }
-            #endif
+            if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
+                ByteReverseWords(local32, local32, WC_SHA256_BLOCK_SIZE);
+            }
 
             #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
@@ -1326,13 +1325,15 @@ static int InitSha256(wc_Sha256* sha256)
 #else
     int wc_Sha256Update(wc_Sha256* sha256, const byte* data, word32 len)
     {
-        if (sha256 == NULL || (data == NULL && len > 0)) {
+        if (sha256 == NULL) {
             return BAD_FUNC_ARG;
         }
-
         if (data == NULL && len == 0) {
             /* valid, but do nothing */
             return 0;
+        }
+        if (data == NULL) {
+            return BAD_FUNC_ARG;
         }
 
     #ifdef WOLF_CRYPTO_CB
@@ -1360,7 +1361,6 @@ static int InitSha256(wc_Sha256* sha256)
 
     static WC_INLINE int Sha256Final(wc_Sha256* sha256)
     {
-
         int ret;
         byte* local;
 
@@ -1385,43 +1385,21 @@ static int InitSha256(wc_Sha256* sha256)
                     WC_SHA256_BLOCK_SIZE - sha256->buffLen);
             }
 
-            sha256->buffLen += WC_SHA256_BLOCK_SIZE - sha256->buffLen;
+        #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
+           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
+            if (sha256->ctx.mode == ESP32_SHA_INIT) {
+                esp_sha_try_hw_lock(&sha256->ctx);
+            }
+        #endif
+
+        if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
+            ByteReverseWords(sha256->buffer, sha256->buffer,
+                WC_SHA256_BLOCK_SIZE);
+        }
 
         #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
             if (sha256->ctx.mode == ESP32_SHA_INIT) {
-                // ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (1)");
-                esp_sha_try_hw_lock(&sha256->ctx); /* TODO remove duplicate lock? */
-            }
-        #endif
-
-        #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-            #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-                  defined(CONFIG_IDF_TARGET_ESP8684) || \
-                  defined(CONFIG_IDF_TARGET_ESP32C3) || \
-                  defined(CONFIG_IDF_TARGET_ESP32C6)    \
-                )  && \
-                defined(WOLFSSL_ESP32_CRYPT) &&         \
-               !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-               !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-            /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-             * depending on if HW is active or not. */
-                if (esp_sha_need_byte_reversal(&sha256->ctx))
-            #endif
-            #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
-                          (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
-            if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
-            #endif
-            {
-                ByteReverseWords(sha256->buffer, sha256->buffer,
-                                                      WC_SHA256_BLOCK_SIZE);
-            }
-        #endif
-
-        #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-            if (sha256->ctx.mode == ESP32_SHA_INIT) {
-                // ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (2)");
                 esp_sha_try_hw_lock(&sha256->ctx);
             }
             if (sha256->ctx.mode == ESP32_SHA_SW) {
@@ -1449,34 +1427,15 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
-             // ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (3)");
-             esp_sha_try_hw_lock(&sha256->ctx); /* TODO aren't we already locked? A: no, not if sha update was small */
+            esp_sha_try_hw_lock(&sha256->ctx);
         }
     #endif
 
         /* store lengths */
-    #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU_SHA)
-        #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP8684) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)    \
-            ) && \
-            defined(WOLFSSL_ESP32_CRYPT) &&         \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-            /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-             * depending on if HW is active or not. */
-            if (esp_sha_need_byte_reversal(&sha256->ctx))
-        #endif
-        #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP) && \
-                          (defined(HAVE_INTEL_AVX1) || defined(HAVE_INTEL_AVX2))
-        if (!IS_INTEL_AVX1(intel_flags) && !IS_INTEL_AVX2(intel_flags))
-        #endif
-        {
+        if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
             ByteReverseWords(sha256->buffer, sha256->buffer,
-                WC_SHA256_BLOCK_SIZE);
+                WC_SHA256_PAD_SIZE);
         }
-    #endif
         /* ! 64-bit length ordering dependent on digest endian type ! */
         XMEMCPY(&local[WC_SHA256_PAD_SIZE], &sha256->hiLen, sizeof(word32));
         XMEMCPY(&local[WC_SHA256_PAD_SIZE + sizeof(word32)], &sha256->loLen,
@@ -1542,6 +1501,7 @@ static int InitSha256(wc_Sha256* sha256)
     #else
         ret = XTRANSFORM(sha256, (const byte*)local);
     #endif
+
         return ret;
     }
 
@@ -1558,23 +1518,10 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #ifdef LITTLE_ENDIAN_ORDER
-        #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP8684) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)    \
-            ) && \
-            defined(WOLFSSL_ESP32_CRYPT) &&         \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-            /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-             * depending on if HW is active or not. */
-            if (esp_sha_need_byte_reversal(&sha256->ctx))
-        #endif
-            {
-                ByteReverseWords((word32*)digest,
-                                 (word32*)sha256->digest,
-                                  WC_SHA256_DIGEST_SIZE);
-            }
+        if (SHA256_REV_BYTES(&sha256->ctx)) {
+            ByteReverseWords((word32*)digest, (word32*)sha256->digest,
+                              WC_SHA256_DIGEST_SIZE);
+        }
         XMEMCPY(hash, digest, WC_SHA256_DIGEST_SIZE);
     #else
         XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE);
@@ -1618,22 +1565,10 @@ static int InitSha256(wc_Sha256* sha256)
         }
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP8684) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)    \
-            )  && \
-            defined(WOLFSSL_ESP32_CRYPT) &&         \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
-           !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
-            /* For Espressif RISC-V Targets, we *may* need to reverse bytes
-             * depending on if HW is active or not. */
-            if (esp_sha_need_byte_reversal(&sha256->ctx))
-        #endif
-            {
-                ByteReverseWords(sha256->digest, sha256->digest,
-                                 WC_SHA256_DIGEST_SIZE);
-            }
+        if (SHA256_REV_BYTES(&sha256->ctx)) {
+            ByteReverseWords(sha256->digest, sha256->digest,
+                WC_SHA256_DIGEST_SIZE);
+        }
     #endif
         XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE); /* dst, src, l */
 
@@ -1645,17 +1580,114 @@ static int InitSha256(wc_Sha256* sha256)
 /* @param sha  a pointer to wc_Sha256 structure           */
 /* @param data data to be applied SHA256 transformation   */
 /* @return 0 on successful, otherwise non-zero on failure */
-    int wc_Sha256Transform(wc_Sha256* sha, const unsigned char* data)
+    int wc_Sha256Transform(wc_Sha256* sha256, const unsigned char* data)
     {
-        if (sha == NULL || data == NULL) {
+        if (sha256 == NULL || data == NULL) {
             return BAD_FUNC_ARG;
         }
-        return (Transform_Sha256(sha, data));
+        return Transform_Sha256(sha256, data);
     }
-    #endif
-#endif /* OPENSSL_EXTRA */
+#endif /* OPENSSL_EXTRA || HAVE_CURL */
 
+#if defined(WOLFSSL_HAVE_LMS) && !defined(WOLFSSL_LMS_FULL_HASH)
+    /* One block will be used from data.
+     * hash must be big enough to hold all of digest output.
+     */
+    int wc_Sha256HashBlock(wc_Sha256* sha256, const unsigned char* data,
+        unsigned char* hash)
+    {
+        int ret;
+
+        if ((sha256 == NULL) || (data == NULL)) {
+            return BAD_FUNC_ARG;
+        }
+
+        if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
+            ByteReverseWords(sha256->buffer, (word32*)data,
+                WC_SHA256_BLOCK_SIZE);
+            data = (unsigned char*)sha256->buffer;
+        }
+        ret = XTRANSFORM(sha256, data);
+
+        if ((ret == 0) && (hash != NULL)) {
+            if (!SHA256_REV_BYTES(&sha256->ctx)) {
+                XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE);
+            }
+            else {
+        #if defined(WOLFSSL_X86_64_BUILD) && defined(USE_INTEL_SPEEDUP)
+                __asm__ __volatile__ (
+                    "mov    0x00(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x00(%[h])\n\t"
+                    "mov    0x04(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x04(%[h])\n\t"
+                    "mov    0x08(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x08(%[h])\n\t"
+                    "mov    0x0c(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x0c(%[h])\n\t"
+                    "mov    0x10(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x10(%[h])\n\t"
+                    "mov    0x14(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x14(%[h])\n\t"
+                    "mov    0x18(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x18(%[h])\n\t"
+                    "mov    0x1c(%[d]), %%esi\n\t"
+                    "movbe  %%esi, 0x1c(%[h])\n\t"
+                    :
+                    : [d] "r" (sha256->digest), [h] "r" (hash)
+                    : "memory", "esi"
+                );
+        #else
+                word32* hash32 = (word32*)hash;
+                word32* digest = (word32*)sha256->digest;
+            #if WOLFSSL_GENERAL_ALIGNMENT < 4
+                ALIGN16 word32 buf[WC_SHA256_DIGEST_SIZE / sizeof(word32)];
+
+                if (((size_t)digest & 0x3) != 0) {
+                    if (((size_t)hash32 & 0x3) != 0) {
+                        XMEMCPY(buf, digest, WC_SHA256_DIGEST_SIZE);
+                        hash32 = buf;
+                        digest = buf;
+                    }
+                    else {
+                        XMEMCPY(hash, digest, WC_SHA256_DIGEST_SIZE);
+                        digest = hash32;
+                    }
+                }
+                else if (((size_t)hash32 & 0x3) != 0) {
+                    hash32 = digest;
+                }
+            #endif
+                hash32[0] = ByteReverseWord32(digest[0]);
+                hash32[1] = ByteReverseWord32(digest[1]);
+                hash32[2] = ByteReverseWord32(digest[2]);
+                hash32[3] = ByteReverseWord32(digest[3]);
+                hash32[4] = ByteReverseWord32(digest[4]);
+                hash32[5] = ByteReverseWord32(digest[5]);
+                hash32[6] = ByteReverseWord32(digest[6]);
+                hash32[7] = ByteReverseWord32(digest[7]);
+            #if WOLFSSL_GENERAL_ALIGNMENT < 4
+                if (hash != (byte*)hash32) {
+                    XMEMCPY(hash, hash32, WC_SHA256_DIGEST_SIZE);
+                }
+            #endif
+        #endif /* WOLFSSL_X86_64_BUILD && USE_INTEL_SPEEDUP */
+            }
+            sha256->digest[0] = 0x6A09E667L;
+            sha256->digest[1] = 0xBB67AE85L;
+            sha256->digest[2] = 0x3C6EF372L;
+            sha256->digest[3] = 0xA54FF53AL;
+            sha256->digest[4] = 0x510E527FL;
+            sha256->digest[5] = 0x9B05688CL;
+            sha256->digest[6] = 0x1F83D9ABL;
+            sha256->digest[7] = 0x5BE0CD19L;
+        }
+
+        return ret;
+    }
+#endif /* WOLFSSL_HAVE_LMS && !WOLFSSL_LMS_FULL_HASH */
 #endif /* !WOLFSSL_KCAPI_HASH */
+
+#endif /* XTRANSFORM */
 
 
 #ifdef WOLFSSL_SHA224
@@ -1880,7 +1912,14 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret;
 
-        if (sha224 == NULL || (data == NULL && len > 0)) {
+        if (sha224 == NULL) {
+            return BAD_FUNC_ARG;
+        }
+        if (data == NULL && len == 0) {
+            /* valid, but do nothing */
+            return 0;
+        }
+        if (data == NULL) {
             return BAD_FUNC_ARG;
         }
 
@@ -1932,18 +1971,7 @@ static int InitSha256(wc_Sha256* sha256)
             return ret;
 
     #if defined(LITTLE_ENDIAN_ORDER)
-        #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP8684) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6)    \
-            )  && \
-            defined(WOLFSSL_ESP32_CRYPT) && \
-           (!defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256) || \
-            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224)    \
-           )
-            if (esp_sha_need_byte_reversal(&sha224->ctx))
-        #endif
-        {
+        if (SHA256_REV_BYTES(&sha224->ctx)) {
             ByteReverseWords(sha224->digest,
                              sha224->digest,
                              WC_SHA224_DIGEST_SIZE);
