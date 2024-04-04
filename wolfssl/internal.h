@@ -343,7 +343,7 @@
         #endif
     #endif
 
-    #if !defined(NO_RSA) && !defined(NO_DES3)
+    #if !defined(NO_RSA) && !defined(NO_DES3) && !defined(NO_DES3_TLS_SUITES)
         #if !defined(NO_SHA)
             #if defined(WOLFSSL_STATIC_RSA)
                 #define BUILD_SSL_RSA_WITH_3DES_EDE_CBC_SHA
@@ -500,7 +500,7 @@
             #if defined(WOLFSSL_AES_256) && defined(HAVE_AES_CBC)
                 #define BUILD_TLS_DHE_RSA_WITH_AES_256_CBC_SHA
             #endif
-            #if !defined(NO_DES3)
+            #if !defined(NO_DES3) && !defined(NO_DES3_TLS_SUITES)
                 #define BUILD_TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
             #endif
         #endif
@@ -686,7 +686,8 @@
             #endif
         #endif
         #if !defined(NO_DES3) && !(defined(WSSL_HARDEN_TLS) && \
-                                           WSSL_HARDEN_TLS > 112)
+                                           WSSL_HARDEN_TLS > 112) && \
+            !defined(NO_DES3_TLS_SUITES)
             /* 3DES offers only 112 bits of security.
              * Using guidance from section 5.6.1
              * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf */
@@ -1560,7 +1561,6 @@ enum Misc {
 #endif
     SIZEOF_SENDER   =  4,       /* clnt or srvr           */
     FINISHED_SZ     = 36,       /* WC_MD5_DIGEST_SIZE + WC_SHA_DIGEST_SIZE */
-    MAX_RECORD_SIZE = 16384,    /* 2^14, max size by standard */
     MAX_PLAINTEXT_SZ   = (1 << 14),        /* Max plaintext sz   */
     MAX_TLS_CIPHER_SZ  = (1 << 14) + 2048, /* Max TLS encrypted data sz */
 #ifdef WOLFSSL_TLS13
@@ -1915,10 +1915,10 @@ enum Misc {
 
 #ifdef HAVE_PQC
 #ifndef MIN_FALCONKEY_SZ
-    #define MIN_FALCONKEY_SZ    897
+    #define MIN_FALCONKEY_SZ    1281
 #endif
 #ifndef MIN_DILITHIUMKEY_SZ
-    #define MIN_DILITHIUMKEY_SZ    1312
+    #define MIN_DILITHIUMKEY_SZ    2528
 #endif
 #endif
 
@@ -2273,6 +2273,8 @@ enum {
 
 
 /* determine maximum record size */
+#define MAX_RECORD_SIZE 16384  /* 2^14, max size by standard */
+
 #ifdef RECORD_SIZE
     /* user supplied value */
     #if RECORD_SIZE < 128 || RECORD_SIZE > MAX_RECORD_SIZE
@@ -2864,7 +2866,7 @@ typedef enum {
     TLSX_KEY_QUIC_TP_PARAMS         = 0x0039, /* RFC 9001, ch. 8.2 */
     #endif
     #ifdef WOLFSSL_DUAL_ALG_CERTS
-    TLSX_CKS                        = 0xff92, /* X9.146; ff indcates personal
+    TLSX_CKS                        = 0xff92, /* X9.146; ff indicates personal
                                                * use and 92 is hex for 146. */
     #endif
 #endif
@@ -3583,8 +3585,11 @@ struct WOLFSSL_CTX {
 
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     DerBuffer*  altPrivateKey;
-    byte        altPrivateKeyType;
+    byte        altPrivateKeyType:6;
+    byte        altPrivateKeyId:1;
+    byte        altPrivateKeyLabel:1;
     int         altPrivateKeySz;
+    int         altPrivateKeyDevId;
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
 #ifdef OPENSSL_ALL
     WOLFSSL_EVP_PKEY* privateKeyPKey;
@@ -4548,15 +4553,18 @@ typedef struct Buffers {
 #ifndef NO_CERTS
     DerBuffer*      certificate;           /* WOLFSSL_CTX owns, unless we own */
     DerBuffer*      key;                   /* WOLFSSL_CTX owns, unless we own */
-    byte            keyType:6;             /* Type of key: RSA, ECC, Ed25519 */
+    byte            keyType:6;             /* Type of key */
     byte            keyId:1;               /* Key data is an id not data */
     byte            keyLabel:1;            /* Key data is a label not data */
     int             keySz;                 /* Size of RSA key */
     int             keyDevId;              /* Device Id for key */
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     DerBuffer*      altKey;                /* WOLFSSL_CTX owns, unless we own */
-    byte            altKeyType;            /* Type of key: dilithium, falcon */
-    int             altKeySz;              /* Size of key */
+    byte            altKeyType:6;          /* Type of alt key */
+    byte            altKeyId:1;            /* Key data is an id not data */
+    byte            altKeyLabel:1;         /* Key data is a label not data */
+    int             altKeySz;              /* Size of alt key */
+    int             altKeyDevId;           /* Device Id for alt key */
 #endif
     DerBuffer*      certChain;             /* WOLFSSL_CTX owns, unless we own */
                  /* chain after self, in DER, with leading size for each cert */

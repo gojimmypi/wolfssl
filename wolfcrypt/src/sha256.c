@@ -217,11 +217,6 @@ on the specific device platform.
 
 static int InitSha256(wc_Sha256* sha256)
 {
-    int ret = 0;
-
-    if (sha256 == NULL)
-        return BAD_FUNC_ARG;
-
     XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
     sha256->digest[0] = 0x6A09E667L;
     sha256->digest[1] = 0xBB67AE85L;
@@ -256,7 +251,7 @@ static int InitSha256(wc_Sha256* sha256)
     sha256->hSession = NULL;
 #endif
 
-    return ret;
+    return 0;
 }
 #endif
 
@@ -1142,15 +1137,6 @@ static int InitSha256(wc_Sha256* sha256)
         word32 blocksLen;
         byte* local;
 
-        if (sha256 == NULL || (data == NULL && len > 0)) {
-            return BAD_FUNC_ARG;
-        }
-
-        if (data == NULL && len == 0) {
-            /* valid, but do nothing */
-            return 0;
-        }
-
         /* check that internal buffLen is valid */
         if (sha256->buffLen >= WC_SHA256_BLOCK_SIZE) {
             return BUFFER_E;
@@ -1220,7 +1206,6 @@ static int InitSha256(wc_Sha256* sha256)
                 WOLFSSL_MSG("Sha256Update process fixed SW");
                 ret = XTRANSFORM(sha256, (const byte*)local);
             #endif
-
                 if (ret == 0)
                     sha256->buffLen = 0;
                 else {
@@ -1363,10 +1348,6 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret;
         byte* local;
-
-        if (sha256 == NULL) {
-            return BAD_FUNC_ARG;
-        }
 
         /* we'll add a 0x80 byte at the end,
         ** so make sure we have appropriate buffer length. */
@@ -1806,10 +1787,6 @@ static int InitSha256(wc_Sha256* sha256)
     static int InitSha224(wc_Sha224* sha224)
     {
         int ret = 0;
-
-        if (sha224 == NULL) {
-            return BAD_FUNC_ARG;
-        }
 
         sha224->digest[0] = 0xc1059ed8;
         sha224->digest[1] = 0x367cd507;

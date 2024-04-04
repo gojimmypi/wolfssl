@@ -138,7 +138,7 @@ static const char* TAG = "wolf_hw_sha";
     #ifdef WOLFSSL_DEBUG_MUTEX
         static portMUX_TYPE sha_crit_sect = portMUX_INITIALIZER_UNLOCKED;
         WC_ESP32SHA* stray_ctx;
-        /* each ctx keeps track of the intializer for HW. when debugging
+        /* each ctx keeps track of the initializer for HW. when debugging
          * we'll have a global variable to indicate which has the lock. */
         static int _sha_lock_count = 0;
         static int _sha_call_count = 0;

@@ -4726,7 +4726,12 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
 #endif /* WOLFSSL_SMALL_STACK */
     int i, failCount, isPrime = 0;
     word32 primeSz;
+#ifndef WOLFSSL_NO_MALLOC
     byte* buf = NULL;
+#else
+    /* RSA_MAX_SIZE is the size of n in bits. */
+    byte buf[RSA_MAX_SIZE/16];
+#endif
 #endif /* !WOLFSSL_CRYPTOCELL && !WOLFSSL_SE050 */
     int err;
 
@@ -4832,12 +4837,14 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
     primeSz = (word32)size / 16; /* size is the size of n in bits.
                             primeSz is in bytes. */
 
+#ifndef WOLFSSL_NO_MALLOC
     /* allocate buffer to work with */
     if (err == MP_OKAY) {
         buf = (byte*)XMALLOC(primeSz, key->heap, DYNAMIC_TYPE_RSA);
         if (buf == NULL)
             err = MEMORY_E;
     }
+#endif
 
     SAVE_VECTOR_REGISTERS(err = _svr_ret;);
 
@@ -4940,10 +4947,14 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
     if (err == MP_OKAY && !isPrime)
         err = PRIME_GEN_E;
 
+#ifndef WOLFSSL_NO_MALLOC
     if (buf) {
         ForceZero(buf, primeSz);
         XFREE(buf, key->heap, DYNAMIC_TYPE_RSA);
     }
+#else
+    ForceZero(buf, primeSz);
+#endif
 
     if (err == MP_OKAY && mp_cmp(p, q) < 0) {
         err = mp_copy(p, tmp1);

@@ -8437,7 +8437,7 @@ static int TLSX_KeyShare_ProcessPqc(WOLFSSL* ssl, KeyShareEntry* keyShareEntry)
         XMEMCPY(ssl->arrays->preMasterSecret, keyShareEntry->ke,
                 keyShareEntry->keLen);
         ssl->arrays->preMasterSz = keyShareEntry->keLen;
-        XFREE(keyShareEntry->ke, ssl->heap, DYNAMIC_TYPE_SECRET)
+        XFREE(keyShareEntry->ke, ssl->heap, DYNAMIC_TYPE_SECRET);
         keyShareEntry->ke = NULL;
         keyShareEntry->keLen = 0;
         return 0;
@@ -9583,7 +9583,7 @@ int TLSX_CKS_Parse(WOLFSSL* ssl, byte* input, word16 length,
             case WOLFSSL_CKS_SIGSPEC_EXTERNAL:
             default:
                 /* All other values (including external) are not. */
-                return WOLFSSL_NOT_IMPLEMENTED;
+                return BAD_FUNC_ARG;
         }
     }
 
@@ -9618,7 +9618,7 @@ int TLSX_CKS_Parse(WOLFSSL* ssl, byte* input, word16 length,
         for (j = 0; j < length; j++) {
             if (ssl->sigSpec[i] == input[j]) {
                 /* Got the match, set to this one. */
-                ret = wolfSSL_UseCKS(ssl, &ssl->peerSigSpec[i], 1);
+                ret = wolfSSL_UseCKS(ssl, &ssl->sigSpec[i], 1);
                 if (ret == WOLFSSL_SUCCESS) {
                     ret = TLSX_UseCKS(&ssl->extensions, ssl, ssl->heap);
                     TLSX_SetResponse(ssl, TLSX_CKS);
@@ -13364,7 +13364,7 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
                         MAX_PSK_ID_LEN, ssl->arrays->psk_key, MAX_PSK_KEY_LEN);
                 }
                 if (
-                #ifndef OPENSSL_EXTRA
+                #ifdef OPENSSL_EXTRA
                     /* OpenSSL treats a PSK key length of 0
                      * to indicate no PSK available.
                      */
@@ -13372,7 +13372,9 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
                 #endif
                          (ssl->arrays->psk_keySz > MAX_PSK_KEY_LEN &&
                      (int)ssl->arrays->psk_keySz != USE_HW_PSK)) {
+                #ifndef OPENSSL_EXTRA
                     ret = PSK_KEY_ERROR;
+                #endif
                 }
                 else {
                     ssl->arrays->client_identity[MAX_PSK_ID_LEN] = '\0';

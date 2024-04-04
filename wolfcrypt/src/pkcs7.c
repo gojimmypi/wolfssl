@@ -2517,7 +2517,7 @@ static int wc_PKCS7_EncodeContentStreamHelper(PKCS7* pkcs7, int cipherType,
 }
 
 
-/* Used for encoding the content, potentially one octet chunck at a time if
+/* Used for encoding the content, potentially one octet chunk at a time if
  * in streaming mode with IO callbacks set.
  * Can handle the cipher types:
  *      - WC_CIPHER_NONE, used for encoding signed bundle where no encryption is
@@ -2596,6 +2596,12 @@ static int wc_PKCS7_EncodeContentStream(PKCS7* pkcs7, ESD* esd, void* aes,
             {
                 int szLeft = BER_OCTET_LENGTH;
 
+                if (in == NULL) {
+                    XFREE(encContentOut, heap, DYNAMIC_TYPE_PKCS7);
+                    XFREE(contentData, heap, DYNAMIC_TYPE_PKCS7);
+                    return BAD_FUNC_ARG;
+                }
+
                 if (szLeft + totalSz > (word32)inSz)
                     szLeft = inSz - totalSz;
 
@@ -2669,6 +2675,10 @@ static int wc_PKCS7_EncodeContentStream(PKCS7* pkcs7, ESD* esd, void* aes,
         XFREE(contentData, heap, DYNAMIC_TYPE_PKCS7);
     }
     else {
+        if (in == NULL || out == NULL) {
+            return BAD_FUNC_ARG;
+        }
+
         switch (cipherType) {
             case WC_CIPHER_NONE:
                 if (!pkcs7->detached) {
@@ -6183,6 +6193,9 @@ static int PKCS7_VerifySignedData(PKCS7* pkcs7, const byte* hashBuf,
                             contentDynamic = (byte*)XMALLOC(contentSz,
                                                pkcs7->heap, DYNAMIC_TYPE_PKCS7);
                             if (contentDynamic == NULL) {
+                            #ifndef NO_PKCS7_STREAM
+                                pkcs7->stream = stream;
+                            #endif
                                 ret = MEMORY_E;
                                 break;
                             }
@@ -8165,12 +8178,15 @@ static int wc_PKCS7_EncryptContent(PKCS7* pkcs7, int encryptOID, byte* key,
                         WOLFSSL_MSG("Not AES-GCM stream support compiled in");
                         ret = NOT_COMPILED_IN;
                     }
-                    ret = wc_AesGcmEncrypt(aes, out, in, inSz, iv, ivSz,
+                    else {
+                        ret = wc_AesGcmEncrypt(aes, out, in, inSz, iv, ivSz,
                                            authTag, authTagSz, aad, aadSz);
-                #ifdef WOLFSSL_ASYNC_CRYPT
-                    /* async encrypt not available here, so block till done */
-                    ret = wc_AsyncWait(ret, &aes->asyncDev, WC_ASYNC_FLAG_NONE);
-                #endif
+                    #ifdef WOLFSSL_ASYNC_CRYPT
+                        /* async encrypt not available here, so block till done */
+                        ret = wc_AsyncWait(ret, &aes->asyncDev,
+                            WC_ASYNC_FLAG_NONE);
+                    #endif
+                    }
                 #else
                     ret = wc_AesGcmEncryptInit(aes, key, keySz, iv, ivSz);
                     if (ret == 0) {
@@ -9730,7 +9746,7 @@ int wc_PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
         StreamOctetString(NULL, encryptedOutSz, NULL, &streamSz, &tmpIdx);
         totalSz += (streamSz - encryptedOutSz);
 
-        /* resize encrytped content buffer */
+        /* resize encrypted content buffer */
         if (encryptedContent != NULL) {
         XFREE(encryptedContent, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
         encryptedContent = (byte*)XMALLOC(streamSz, pkcs7->heap,
