@@ -47,18 +47,32 @@ static const char* const TAG = "My Project";
 
 void app_main(void)
 {
+#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+    int ret = 0;
+#endif
     ESP_LOGI(TAG, "Hello wolfSSL!");
 
 #ifdef HAVE_VERSION_EXTENDED_INFO
-    esp_ShowExtendedSystemInfo();
+    ret = esp_ShowExtendedSystemInfo();
 #endif
 
 #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
-    esp_hw_show_metrics();
+    ret += esp_hw_show_metrics();
 #endif
 
+#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+    if (ret == 0) {
+        ESP_LOGI(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Success!", ret));
+    }
+    else {
+        ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
+    }
+#elif defined(WOLFSSL_ESPIDF_EXIT_MESSAGE)
+    ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+#else
     ESP_LOGI(TAG, "\n\nDone!"
                   "If running from idf.py monitor, press twice: Ctrl+]\n\n"
                   "WOLFSSL_COMPLETE\n" /* exit keyword for wolfssl_monitor.py */
             );
+#endif
 }

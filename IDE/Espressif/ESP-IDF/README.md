@@ -44,6 +44,28 @@ default configuration items in the wolfssl `settings.h`. With the latest version
 wolfSSL, some of these defaults can be disabled with `NO_ESPIDF_DEFAULT` and customized
 in your project `user_settings.h` as desired.
 
+The `user_settings.h` include file should not be explicitly included in an project source files. Be
+sure to include `settings.h` (which pulls in `user_settings.h`) before any other wolfSSL include files.
+
+A new project should also include a compiler option suc as `CFLAGS +=-DWOLFSSL_USER_SETTINGS"` to ensure
+the `user_settings.h` is included properly. See the [template example](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/examples/template/main/main.c).
+
+```
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
+```
+
 See the respective project directory:
 
   `[project-dir]/components/wolfssl/user_settings.h`
@@ -116,7 +138,7 @@ See the specific examples for additional details.
 
 ## Setup for Linux (wolfSSL local copy)
 
-This is a legacy method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
+This is an alternate method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
 
  1. Run `setup.sh` at _/path/to_`/wolfssl/IDE/Espressif/ESP-IDF/` to deploy files into ESP-IDF tree  
  2. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
@@ -124,7 +146,7 @@ This is a legacy method for installation. It is recommended to use the new `CMak
 
 ## Setup for Windows
 
-This is a legacy method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
+This is an alternate method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.
 
  1. Run ESP-IDF Command Prompt (cmd.exe) or Run ESP-IDF PowerShell Environment
  2. Run `setup_win.bat` at `.\IDE\Espressif\ESP-IDF\`
@@ -164,7 +186,7 @@ C:\SysGCC\esp32\esp-idf>git clone -b v5.0.2 --recursive https://github.com/espre
  Note: This is tested with :  
    - OS: Ubuntu 20.04.3 LTS
    - Microsoft Windows 10 Pro 10.0.19041 / Windows 11 Pro 22H2 22621.2715
-   - Visual Studio 2022 17.8.7 with VisualGDB 5.6R9 (build 4777)
+   - Visual Studio 2022 17.7.6 with VisualGDB 5.6R9 (build 4777)
    - WSL 1 Ubuntu 22.04.3 LTS
    - ESP-IDF: ESP-IDF v5.2
    - SoC Module : all those supported in ESP-IDF v5.2

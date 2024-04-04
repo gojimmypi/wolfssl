@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2006-2023 wolfSSL Inc.
+#  Copyright (C) 2006-2024 wolfSSL Inc.
 #
 #  This file is part of wolfSSL.
 #
@@ -117,6 +117,11 @@ else()
 endif()
 message(STATUS "THIS_USER = ${THIS_USER}")
 
+if( "$ENV{IDF_PATH}" STREQUAL "" )
+    message(FATAL_ERROR "IDF_PATH Environment variable not set!")
+else()
+    string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
+endif()
 
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".

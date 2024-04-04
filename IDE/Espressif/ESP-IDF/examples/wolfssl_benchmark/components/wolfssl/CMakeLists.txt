@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2006-2023 wolfSSL Inc.
+#  Copyright (C) 2006-2024 wolfSSL Inc.
 #
 #  This file is part of wolfSSL.
 #
@@ -40,6 +40,13 @@ set(CMAKE_CURRENT_SOURCE_DIR ".")
 if ( "${WOLFSSL_ROOT}" STREQUAL "")
     set(WOLFSSL_ROOT "$ENV{WOLFSSL_ROOT}" )
 endif()
+
+if(  "$ENV{IDF_PATH}" STREQUAL "" )
+     message(FATAL_ERROR "IDF_PATH Environment variable not set!")
+else()
+    string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
+endif()
+
 # Optional compiler definitions to help with system name detection (typically printed by app diagnostics)
 if(VERBOSE_COMPONENT_MESSAGES)
     if(WIN32)
@@ -117,6 +124,11 @@ else()
 endif()
 message(STATUS "THIS_USER = ${THIS_USER}")
 
+if( "$ENV{IDF_PATH}" STREQUAL "" )
+    message(FATAL_ERROR "IDF_PATH Environment variable not set!")
+else()
+    string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
+endif()
 
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
@@ -272,6 +284,35 @@ endfunction()
 #   FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
 #
 
+message(STATUS "CONFIG_TARGET_PLATFORM = ${CONFIG_TARGET_PLATFORM}")
+
+if (0)
+    get_cmake_property(_variableNames VARIABLES)
+    list (SORT _variableNames)
+    message(STATUS "")
+    message(STATUS "ALL VARIABLES BEGIN")
+    message(STATUS "")
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+    message(STATUS "")
+    message(STATUS "ALL VARIABLES END")
+    message(STATUS "")
+endif()
+
+if ( ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266") OR ("${IDF_TARGET}" STREQUAL "esp8266") )
+    # There's no esp_timer, no driver components for the ESP8266
+    message(STATUS "Early expansion EXCLUDES esp_timer: ${THIS_INCLUDE_TIMER}")
+    message(STATUS "Early expansion EXCLUDES driver: ${THIS_INCLUDE_DRIVER}")
+    set(THIS_INCLUDE_TIMER "")
+    set(THIS_INCLUDE_DRIVER "")
+else()
+    message(STATUS "Early expansion includes esp_timer: ${THIS_INCLUDE_TIMER}")
+    message(STATUS "Early expansion includes driver: ${THIS_INCLUDE_DRIVER}")
+    set(THIS_INCLUDE_TIMER "esp_timer")
+    set(THIS_INCLUDE_DRIVER "driver")
+endif()
+
 if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "wolfssl component CMAKE_BUILD_EARLY_EXPANSION:")
     idf_component_register(
@@ -297,6 +338,7 @@ else()
     endif()
 
     # search for wolfSSL
+    FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
     if(WOLFSSL_ROOT)
         IS_WOLFSSL_SOURCE("${WOLFSSL_ROOT}" FOUND_WOLFSSL)
         if(FOUND_WOLFSSL)
@@ -357,6 +399,7 @@ else()
 
     # wolfSSL user_settings.h is in the local project.
     set(WOLFSSL_PROJECT_DIR "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
+    # add_definitions(-DWOLFSSL_USER_SETTINGS_DIR="${WOLFSSL_PROJECT_DIR}/include/user_settings.h")
 
     string(REPLACE "/" "//" STR_WOLFSSL_PROJECT_DIR "${WOLFSSL_PROJECT_DIR}")
     add_definitions(-DWOLFSSL_USER_SETTINGS_DIR="${STR_WOLFSSL_PROJECT_DIR}//include//user_settings.h")
@@ -515,7 +558,7 @@ else()
             message(STATUS "Could not find RTOS path")
         endif()
     endif()
-
+    message(STATUS "THIS_IDF_PATH = $THIS_IDF_PATH")
     # wolfSSL-specific include directories
     set(COMPONENT_ADD_INCLUDEDIRS
         "./include" # this is the location of local project wolfssl user_settings.h
@@ -524,6 +567,10 @@ else()
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif\""
         "\"${RTOS_IDF_PATH}/\""
+        # wolfSSL release after v5.7 includes WiFi, time, and mem/debug helpers
+        "${THIS_IDF_PATH}/components/esp_event/include"
+        "${THIS_IDF_PATH}/components/esp_netif/include"
+        "${THIS_IDF_PATH}/components/esp_wifi/include"
         )
 
     # Optionally include cryptoauthlib if present
@@ -548,6 +595,8 @@ else()
         "\"${WOLFSSL_ROOT}/src/ssl_misc.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # external non-wolfssl Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # external non-wolfssl Kyber disabled by default
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""

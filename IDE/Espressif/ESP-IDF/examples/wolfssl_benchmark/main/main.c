@@ -20,32 +20,44 @@
  */
 
 /* ESP-IDF */
-#include <esp_log.h>
 #include "sdkconfig.h"
+#include <esp_log.h>
 
 /* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
-    #include <wolfssl/wolfcrypt/settings.h>
-    #ifndef WOLFSSL_ESPIDF
-        #warning "Problem with wolfSSL user_settings."
-        #warning "Check components/wolfssl/include"
-    #endif
-    #include <wolfssl/version.h>
-    #include <wolfssl/wolfcrypt/types.h>
-    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-    #include <wolfcrypt/benchmark/benchmark.h>
-#else
-    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
-    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
-    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
-    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+/* The wolfSSL user_settings.h file is automatically included by the settings.h
+ * file and should never be explicitly included in any other source files.
+ * The settings.h should also be listed above wolfssl library include files. */
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/version.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#ifndef WOLFSSL_ESPIDF
+    #error "Problem with wolfSSL user_settings. "           \
+           "Check components/wolfssl/include "              \
+           "and confirm WOLFSSL_USER_SETTINGS is defined, " \
+           "typically in the component CMakeLists.txt"
 #endif
+
+#include <wolfssl/wolfcrypt/types.h>
+#include <wolfcrypt/benchmark/benchmark.h>
+
+/* Hardware; include after other libraries,
+ * particularly after freeRTOS from settings.h */
+#include <driver/uart.h>
 
 /* set to 0 for one benchmark,
 ** set to 1 for continuous benchmark loop */
 #define BENCHMARK_LOOP 0
+
+#define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
+
+#ifdef CONFIG_ESP8266_XTAL_FREQ_26
+    /* 26MHz crystal: 74880 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 74880
+#else
+    /* 40MHz crystal: 115200 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 115200
+#endif
 
 /* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
 #ifdef CONFIG_BENCH_ARGV
@@ -203,17 +215,42 @@ void app_main(void)
 {
     int stack_start = 0;
 
+    uart_config_t uart_config = {
+        .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+    };
+    esp_err_t ret = 0;
+    stack_start = esp_sdk_stack_pointer();
+
+    /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
+     *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
+
+    /* Some targets may need to have UART speed set, such as ESP8266 */
+    ESP_LOGI(TAG, "UART init");
+    uart_param_config(UART_NUM_0, &uart_config);
+    uart_driver_install(UART_NUM_0,
+                        THIS_MONITOR_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
+
     ESP_LOGI(TAG, "---------------- wolfSSL Benchmark Example -------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
+    esp_DisableWatchdog();
+#endif
 
 #if defined(HAVE_VERSION_EXTENDED_INFO) && defined(WOLFSSL_HAS_METRICS)
     esp_ShowExtendedSystemInfo();
 #endif
 
+    /* all platforms: stack high water mark check */
     ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
 
 /* when using atecc608a on esp32-wroom-32se */

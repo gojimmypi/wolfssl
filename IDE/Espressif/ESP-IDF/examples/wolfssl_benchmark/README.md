@@ -19,6 +19,13 @@ other local port to `COM20` as needed:
 change port com20=com23
 ```
 
+## Bulk Testing
+
+If you have a test jig with multiple ESP32 devices and you'd like to run this wolfcrypt benchmark on all of them, check out
+the `testAll.sh` and `testMonitor.sh` scripts in the [../wolfssl_test](../wolfssl_test/README.md) directory. Copy those
+bash script files to this project. See the `esp32[NN]_PORT` and `esp32[NN]_PUTTY` settings in `testMonitor.sh` that will
+be machine-specific.
+
 ## VisualGDB
 
 Open the VisualGDB Visual Studio Project file in the VisualGDB directory and click the "Start" button.
@@ -29,14 +36,23 @@ Individual project files are included for convenience to new users,
 as there are [difficulties switching between ESP-IDF Versions or Chipsets](https://sysprogs.com/w/forums/topic/difficulties-switching-espressif-esp-idf-version-or-chipset/)
 using the VisualGDB extension.
 
-The naming convention for project files is: `wolfssl_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
+The naming convention for project files is: `[project name]_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
 
+
+-------- |------------- |------------- |
+ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.1 |
+-------- |------------- |------------- |
+ESP32    |      x       |              |
+ESP32-S2 |              |              |
+ESP32-S3 |      x       |      x       |
+ESP32-C3 |      x       |      x       |
+ESP32-C6 |              |              |
 
 
 The default directories are:
 
 - `C:\SysGCC` - The root directory install of VisualGDB
-- `C:\SysGCC\esp32` - The default for ESP-IDF v5.2
+- `C:\SysGCC\esp32` - The default for ESP-IDF v5.x
 - `C:\SysGCC\esp32-8.4` - Many need to manually select this name for ESP-IDF v4.x install
 - `C:\SysGCC\esp8266`- The default for ESP8266
 

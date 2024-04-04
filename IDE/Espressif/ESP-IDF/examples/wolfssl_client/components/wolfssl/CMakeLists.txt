@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2006-2023 wolfSSL Inc.
+#  Copyright (C) 2006-2024 wolfSSL Inc.
 #
 #  This file is part of wolfSSL.
 #
@@ -117,6 +117,11 @@ else()
 endif()
 message(STATUS "THIS_USER = ${THIS_USER}")
 
+if( "$ENV{IDF_PATH}" STREQUAL "" )
+    message(FATAL_ERROR "IDF_PATH Environment variable not set!")
+else()
+    string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
+endif()
 
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
@@ -171,12 +176,13 @@ function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
         get_filename_component(CURRENT_SEARCH_DIR "${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}" ABSOLUTE)
         IS_WOLFSSL_SOURCE("${CURRENT_SEARCH_DIR}" FOUND_WOLFSSL)
         if( FOUND_WOLFSSL )
-            message(STATUS "Found WOLFSSL_ROOT via prior specification.")
+            message(STATUS "Found WOLFSSL_ROOT via Environment Variable: ${CURRENT_SEARCH_DIR}")
+            set(${OUTPUT_FOUND_WOLFSSL_DIRECTORY} ${CURRENT_SEARCH_DIR} PARENT_SCOPE)
+            return()
         else()
             message(FATAL_ERROR "WOLFSSL_ROOT Variable defined, but path not found: ${${OUTPUT_FOUND_WOLFSSL_DIRECTORY}}")
         endif()
     endif()
-
 
     # we'll start in the CMAKE_CURRENT_SOURCE_DIR, typically [something]/projectname/components/wolfssl
     message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -297,6 +303,7 @@ else()
     endif()
 
     # search for wolfSSL
+    FIND_WOLFSSL_DIRECTORY(WOLFSSL_ROOT)
     if(WOLFSSL_ROOT)
         IS_WOLFSSL_SOURCE("${WOLFSSL_ROOT}" FOUND_WOLFSSL)
         if(FOUND_WOLFSSL)
@@ -524,6 +531,10 @@ else()
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif\""
         "\"${RTOS_IDF_PATH}/\""
+        # wolfSSL release after v5.7 includes WiFi, time, and mem/debug helpers
+        ${THIS_IDF_PATH}/components/esp_event/include
+        ${THIS_IDF_PATH}/components/esp_netif/include
+        ${THIS_IDF_PATH}/components/esp_wifi/include
         )
 
     # Optionally include cryptoauthlib if present
@@ -548,6 +559,8 @@ else()
         "\"${WOLFSSL_ROOT}/src/ssl_misc.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # external Kyber disabled by default
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""
