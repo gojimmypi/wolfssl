@@ -495,5 +495,10 @@ debian/control
 /mycertsSM
 
 
-
-/IDE/Espressif/ESP-IDF/examples/z save
+/IDE/ARDUINO/**/images
+/IDE/Espressif/ESP8266-RTOS
+/IDE/Espressif/**/logs
+/IDE/Espressif/**/images
+/IDE/Espressif/ESP-IDF/metrics
+/IDE/ARDUINO/keywords1.txt
+/IDE/Espressif/ESP32-C2 JTAG.png
