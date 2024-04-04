@@ -123,8 +123,6 @@ if [[ "$THIS_TARGET" == "esp8684" ]]; then
     THIS_TARGET=esp32c2
 fi
 
-# Ensure we have a log directory
-mkdir -p "${THIS_HOME_DIR}/logs/" || exit 1
 
 # Assemble some log file names.
 echo ""
@@ -160,12 +158,23 @@ fi
 
 #---------------------------------------------------------------------
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    #always start with a fresh sdkconfig-debug (or sdkconfig-release) from defaults
+    rm -f ./sdkconfig-debug
+    rm -f ./sdkconfig-release
+
     # idf.py for the ESP8266  does not support --set-target
     echo "Target is $THIS_TARGET"
 
     # Since we don't "set-target" for the ESP8266, ensure the sdkconfig is not present
-    rm ./sdkconfig
+    rm -f ./sdkconfig
 else
+    # Start with fresh sdkconfig
+    rm -f ./sdkconfig
+
+    # ESP8266 debug and release files not used for non-ESP8266 targets here,delete anyhow:
+    rm -f ./sdkconfig-debug
+    rm -f ./sdkconfig-release
+
     echo "idf.py set-target $THIS_TARGET"
     idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
     THIS_ERROR_CODE=$?
@@ -184,7 +193,9 @@ idf.py build                                    >> "${BUILD_LOG}" 2>&1
 THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then
     echo ""
-    echo "Error during build"
+    echo "Error during build for $THIS_TARGET"
+    echo ""
+    echo ""
     exit 1
 fi
 
