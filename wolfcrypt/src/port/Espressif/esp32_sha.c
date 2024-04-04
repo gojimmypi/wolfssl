@@ -1,6 +1,6 @@
 /* esp32_sha.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -37,8 +37,8 @@
 #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 
 /*****************************************************************************/
-/* this entire file content is included when SHA or SHA256 not turned off
- * (NO_SHA, NO_SHA256) or when using WC_SHA384 or WC_SHA512
+/* this entire file content is excluded when NO_SHA, NO_SHA256
+ * or when using WC_SHA384 or WC_SHA512
  */
 #if !defined(NO_SHA) || !defined(NO_SHA256) || defined(WC_SHA384) || \
      defined(WC_SHA512)
@@ -52,6 +52,7 @@
     defined(CONFIG_IDF_TARGET_ESP32C3) || \
     defined(CONFIG_IDF_TARGET_ESP32C6)
     #include <hal/sha_hal.h>
+
     #include <hal/sha_ll.h>
     #include <hal/clk_gate_ll.h>
 #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
@@ -67,7 +68,9 @@
 #include <wolfssl/wolfcrypt/sha.h>
 #include <wolfssl/wolfcrypt/sha256.h>
 #include <wolfssl/wolfcrypt/sha512.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
+
+#include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
+#include "wolfssl/wolfcrypt/error-crypt.h"
 
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>

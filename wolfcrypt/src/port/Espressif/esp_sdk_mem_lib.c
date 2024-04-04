@@ -32,7 +32,9 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 
-#ifndef WOLFSSL_USER_SETTINGS
+#if defined(WOLFSSL_USER_SETTINGS)
+    #include <wolfssl/wolfcrypt/types.h>
+#else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
@@ -45,7 +47,6 @@
 #include <esp_err.h>
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
 static const char* TAG = "mem lib";
@@ -56,34 +57,34 @@ static int _stack_used = 0;
 /* see
  * C:\SysGCC\esp8266\rtos-sdk\v3.4\components\esp8266\ld\esp8266.project.ld.in
  */
-extern uintptr_t _data_start[];
-extern uintptr_t _data_end[];
-extern uintptr_t _rodata_start[];
-extern uintptr_t _rodata_end[];
-extern uintptr_t _bss_start[];
-extern uintptr_t _bss_end[];
-extern uintptr_t _rtc_data_start[];
-extern uintptr_t _rtc_data_end[];
-extern uintptr_t _rtc_bss_start[];
-extern uintptr_t _rtc_bss_end[];
-extern uintptr_t _iram_start[];
-extern uintptr_t _iram_end[];
+extern wc_ptr_t _data_start[];
+extern wc_ptr_t _data_end[];
+extern wc_ptr_t _rodata_start[];
+extern wc_ptr_t _rodata_end[];
+extern wc_ptr_t _bss_start[];
+extern wc_ptr_t _bss_end[];
+extern wc_ptr_t _rtc_data_start[];
+extern wc_ptr_t _rtc_data_end[];
+extern wc_ptr_t _rtc_bss_start[];
+extern wc_ptr_t _rtc_bss_end[];
+extern wc_ptr_t _iram_start[];
+extern wc_ptr_t _iram_end[];
 #if defined(CONFIG_IDF_TARGET_ESP8266)
-extern uintptr_t _init_start[];
-extern uintptr_t _init_end[];
+extern wc_ptr_t _init_start[];
+extern wc_ptr_t _init_end[];
 #endif
-extern uintptr_t _iram_text_start[];
-extern uintptr_t _iram_text_end[];
-extern uintptr_t _iram_bss_start[];
-extern uintptr_t _iram_bss_end[];
-extern uintptr_t _noinit_start[];
-extern uintptr_t _noinit_end[];
-extern uintptr_t _text_start[];
-extern uintptr_t _text_end[];
-extern uintptr_t _heap_start[];
-extern uintptr_t _heap_end[];
-extern uintptr_t _rtc_data_start[];
-extern uintptr_t _rtc_data_end[];
+extern wc_ptr_t _iram_text_start[];
+extern wc_ptr_t _iram_text_end[];
+extern wc_ptr_t _iram_bss_start[];
+extern wc_ptr_t _iram_bss_end[];
+extern wc_ptr_t _noinit_start[];
+extern wc_ptr_t _noinit_end[];
+extern wc_ptr_t _text_start[];
+extern wc_ptr_t _text_end[];
+extern wc_ptr_t _heap_start[];
+extern wc_ptr_t _heap_end[];
+extern wc_ptr_t _rtc_data_start[];
+extern wc_ptr_t _rtc_data_end[];
 extern void* _thread_local_start;
 extern void* _thread_local_end;
 
@@ -255,6 +256,20 @@ esp_err_t esp_sdk_mem_lib_init(void)
     int ret = ESP_OK;
     sdk_init_meminfo();
     ESP_LOGI(TAG, "esp_sdk_mem_lib_init Ver %d", ESP_SDK_MEM_LIB_VERSION);
+    return ret;
+}
+    #ifndef SINGLE_THREADED
+        #include "semphr.h"
+    #endif
+
+void* wc_debug_pvPortMalloc(size_t size,
+                           const char* file, int line, const char* fname) {
+    void* ret = NULL;
+    ret = pvPortMalloc(size);
+    if (ret == NULL) {
+        ESP_LOGE("malloc", "%s:%d (%s)", file, line, fname);
+        ESP_LOGE("malloc", "Failed Allocating memory of size: %d bytes", size);
+    }
     return ret;
 }
 

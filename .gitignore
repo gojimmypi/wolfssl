@@ -502,3 +502,4 @@ debian/control
 /IDE/Espressif/ESP-IDF/metrics
 /IDE/ARDUINO/keywords1.txt
 /IDE/Espressif/ESP32-C2 JTAG.png
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_IDF_v5.2_ESP32C3.sln

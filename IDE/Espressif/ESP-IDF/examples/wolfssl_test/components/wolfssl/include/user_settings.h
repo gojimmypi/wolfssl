@@ -121,27 +121,33 @@
 
     #define HAVE_FFDHE
     #define HAVE_FFDHE_2048
-    #if defined(CONFIG_IDF_TARGET_ESP8266)
-        /* TODO Full size SRP is disabled on the ESP8266 at this time.
-         * Low memory issue? */
-        #define WOLFCRYPT_HAVE_SRP
-        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
-        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
-    #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
-          defined(CONFIG_IDF_TARGET_ESP32S2) || \
-          defined(CONFIG_IDF_TARGET_ESP32S3)
-        /* TODO: SRP Not enabled, known to fail on this target
-         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
-    #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
-          defined(CONFIG_IDF_TARGET_ESP32H2)
-        /* SRP Known to be working on this target::*/
+
         #define WOLFCRYPT_HAVE_SRP
         #define FP_MAX_BITS (8192 * 2)
-    #else
-        /* For everything else, give a try and see if SRP working: */
-        #define WOLFCRYPT_HAVE_SRP
-        #define FP_MAX_BITS (8192 * 2)
-    #endif
+
+//    #if defined(CONFIG_IDF_TARGET_ESP8266)
+//        /* TODO Full size SRP is disabled on the ESP8266 at this time.
+//         * Low memory issue? */
+//        #define WOLFCRYPT_HAVE_SRP
+//        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
+//        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
+//    #elif defined(CONFIG_IDF_TARGET_ESP32)   ||
+//          defined(CONFIG_IDF_TARGET_ESP32S2) ||
+//          defined(CONFIG_IDF_TARGET_ESP32S3)
+//        /* TODO: SRP Not enabled, known to fail on this target
+//         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
+//        #define WOLFCRYPT_HAVE_SRP
+//        #define FP_MAX_BITS (8192 * 2)
+//    #elif defined(CONFIG_IDF_TARGET_ESP32C3) ||
+//          defined(CONFIG_IDF_TARGET_ESP32H2)
+//        /* SRP Known to be working on this target::*/
+//        #define WOLFCRYPT_HAVE_SRP
+//        #define FP_MAX_BITS (8192 * 2)
+//    #else
+//        /* For everything else, give a try and see if SRP working: */
+//        #define WOLFCRYPT_HAVE_SRP
+//        #define FP_MAX_BITS (8192 * 2)
+//    #endif
 
     #define HAVE_DH
 
@@ -429,8 +435,9 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
+    /* These are defined automatically in esp32-crypt.h, here for clarity:  */
+    /* There's no SHA224 HW on ESP32  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
 
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
@@ -477,8 +484,9 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+    /* There's no SHA384 HW and no SHA512 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -575,13 +583,14 @@
     /* Define USE_FAST_MATH and SMALL_STACK                        */
 
     #ifndef NO_RSA
+        #define ESP32_USE_RSA_PRIMITIVE
+
         #if defined(CONFIG_IDF_TARGET_ESP32)
             #ifdef CONFIG_ESP_MAIN_TASK_STACK_SIZE
                 #if CONFIG_ESP_MAIN_TASK_STACK_SIZE < 10500
                     #warning "RSA may be difficult with less than 10KB Stack "/
                 #endif
             #endif
-            #define ESP32_USE_RSA_PRIMITIVE
 
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */

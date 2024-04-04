@@ -283,7 +283,7 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack used: %d\n",
                       stack_start - uxTaskGetStackHighWaterMark(NULL));
 
-        #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
+        #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
             esp_hw_show_metrics();
         #endif
     } while (BENCHMARK_LOOP);

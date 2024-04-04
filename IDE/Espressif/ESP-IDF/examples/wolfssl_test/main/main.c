@@ -239,7 +239,7 @@ void app_main(void)
     */
     int loops = 0;
     do {
-        #if defined(WOLFSSL_HW_METRICS) && defined(WOLFSSL_HAS_METRICS)
+        #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
             esp_hw_show_metrics();
         #endif
         ret = wolf_test_task();
@@ -258,15 +258,7 @@ void app_main(void)
     ** This is called at the end of wolf_test_task();
     */
 
-    if (ret == 0) {
-        ESP_LOGI(TAG, "wolf_test_task complete success result code = %d", ret);
-    }
-    else {
-        ESP_LOGE(TAG, "wolf_test_task FAIL result code = %d", ret);
-        /* see wolfssl/wolfcrypt/error-crypt.h */
-    }
-
-#if defined(DEBUG_WOLFSSL) && !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
+#if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     esp_hw_show_mp_metrics();
 #endif
 
@@ -278,7 +270,14 @@ void app_main(void)
                                         - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
 
-#ifdef WOLFSSL_ESPIDF_EXIT_MESSAGE
+#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+    if (ret == 0) {
+        ESP_LOGI(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Success!", ret));
+    }
+    else {
+        ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
+    }
+#elif defined(WOLFSSL_ESPIDF_EXIT_MESSAGE)
     ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
 #else
     ESP_LOGI(TAG, "\n\nDone!\n\n"

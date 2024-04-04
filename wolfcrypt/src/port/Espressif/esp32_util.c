@@ -197,7 +197,19 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGI(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG");
 #else
-    ESP_LOGW(TAG, "Watchdog active; missing WOLFSSL_ESP_NO_WATCHDOG definition.");
+    ESP_LOGW(TAG, "Watchdog active; "
+                  "missing WOLFSSL_ESP_NO_WATCHDOG definition.");
+#endif
+
+#if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
+    WOLFSSL_VERSION_PRINTF("CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: %u MHz",
+                           CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+#endif
+
+#if CONFIG_IDF_TARGET_ESP32
+
+    WOLFSSL_VERSION_PRINTF("Xthal_have_ccount: %u",
+                           Xthal_have_ccount);
 #endif
 
     /* this is the legacy stack size */
@@ -476,7 +488,7 @@ static int show_macro(char* s, char* not_defined)
 }
 
 /* Show some interesting settings */
-int ShowExtendedSystemInfo_config(void)
+esp_err_t ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
 
@@ -698,7 +710,7 @@ int ShowExtendedSystemInfo(void)
     return ESP_OK;
 }
 
-int esp_ShowExtendedSystemInfo(void)
+esp_err_t esp_ShowExtendedSystemInfo(void)
 {
     /* Someday the ShowExtendedSystemInfo may be global.
      * See https://github.com/wolfSSL/wolfssl/pull/6149 */
@@ -792,10 +804,10 @@ esp_err_t esp_EnabledWatchdog(void)
  * Note with the right string parameters, the result can be pasted as
  * initialization code.
  */
-int esp_show_mp_attributes(char* c, MATH_INT_T* X)
+esp_err_t esp_show_mp_attributes(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
-    int ret = ESP_OK;
+    esp_err_t ret = ESP_OK;
 
     if (X == NULL) {
         ret = ESP_FAIL;
@@ -816,10 +828,10 @@ int esp_show_mp_attributes(char* c, MATH_INT_T* X)
  * Note with the right string parameters, the result can be pasted as
  * initialization code.
  */
-int esp_show_mp(char* c, MATH_INT_T* X)
+esp_err_t esp_show_mp(char* c, MATH_INT_T* X)
 {
     static const char* MP_TAG = "MATH_INT_T";
-    int ret = MP_OKAY;
+    esp_err_t ret = ESP_OK;
     int words_to_show = 0;
 
     if (X == NULL) {
@@ -861,9 +873,9 @@ int esp_show_mp(char* c, MATH_INT_T* X)
 
 /* Perform a full mp_cmp and binary compare.
  * (typically only used during debugging) */
-int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
+esp_err_t esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
 {
-    int ret = MP_OKAY;
+    esp_err_t ret = ESP_OK;
     int e = memcmp(A, B, sizeof(mp_int));
     if (mp_cmp(A, B) == MP_EQ) {
         if (e == 0) {
@@ -906,6 +918,7 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
     }
 
     if (ret == MP_OKAY) {
+        ret = ESP_OK;
         ESP_LOGV(TAG, "esp_mp_cmp equal for %s and %s!",
                        name_A, name_B);
     }
@@ -916,7 +929,7 @@ int esp_mp_cmp(char* name_A, MATH_INT_T* A, char* name_B, MATH_INT_T* B)
     return ret;
 }
 
-int esp_hw_show_metrics(void)
+esp_err_t esp_hw_show_metrics(void)
 {
 #if  defined(WOLFSSL_HW_METRICS)
     #if defined(WOLFSSL_ESP32_CRYPT)
