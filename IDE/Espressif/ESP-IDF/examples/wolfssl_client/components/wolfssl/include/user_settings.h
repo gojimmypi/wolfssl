@@ -161,7 +161,7 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* when you want to use aes counter mode */
+/* when you want to use AES counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
 
@@ -404,6 +404,7 @@
 #endif /* CONFIG_IDF_TARGET Check */
 
 /* Debug options:
+See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 
 #define ESP_VERIFY_MEMBLOCK
 #define DEBUG_WOLFSSL

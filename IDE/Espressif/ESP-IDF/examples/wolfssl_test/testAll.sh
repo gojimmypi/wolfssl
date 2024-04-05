@@ -51,6 +51,7 @@ echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
 # shellcheck disable=SC1091
 . "$WRK_IDF_PATH"/export.sh
 
+# Tensilica
 ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
 
 
@@ -82,15 +83,15 @@ echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 # This list is not indicative of relative performance.
 
 # Limited hardware acceleration, test slowest first:
-./testMonitor.sh wolfssl_test esp32h2 "$THIS_SUFFIX" || exit 1
+./testMonitor.sh wolfssl_test esp32h2 "$THIS_SUFFIX" || exit 1 #      esp32h2_PUTTY="COM31"
 ./testMonitor.sh wolfssl_test esp8684 "$THIS_SUFFIX" || exit 1 # 1065290
 
 # RISC-V
 ./testMonitor.sh wolfssl_test esp32c2 "$THIS_SUFFIX" || exit 1 # 1133856
-./testMonitor.sh wolfssl_test esp32c3 "$THIS_SUFFIX" || exit 1 # 344677
-./testMonitor.sh wolfssl_test esp32c6 "$THIS_SUFFIX" || exit 1 # 346393
+./testMonitor.sh wolfssl_test esp32c3 "$THIS_SUFFIX" || exit 1 # 344677 esp32c3_PUTTY="COM35"
+./testMonitor.sh wolfssl_test esp32c6 "$THIS_SUFFIX" || exit 1 # 346393 esp32c6_PUTTY="COM36"
 
-# Tensilica
+# Xtensa
 ./testMonitor.sh wolfssl_test esp32   "$THIS_SUFFIX" || exit 1 # 259093
 ./testMonitor.sh wolfssl_test esp32s2 "$THIS_SUFFIX" || exit 1 # 305004
 ./testMonitor.sh wolfssl_test esp32s3 "$THIS_SUFFIX" || exit 1 # 267518

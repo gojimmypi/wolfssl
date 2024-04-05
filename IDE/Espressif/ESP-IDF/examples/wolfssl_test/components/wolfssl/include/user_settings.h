@@ -51,6 +51,7 @@
 
 /* Experimental Kyber */
 #if 0
+    /* Kyber typically needs a minimum 10K stack */
     #define WOLFSSL_EXPERIMENTAL_SETTINGS
     #define WOLFSSL_HAVE_KYBER
     #define WOLFSSL_WC_KYBER
@@ -121,33 +122,27 @@
 
     #define HAVE_FFDHE
     #define HAVE_FFDHE_2048
-
+    #if defined(CONFIG_IDF_TARGET_ESP8266)
+        /* TODO Full size SRP is disabled on the ESP8266 at this time.
+         * Low memory issue? */
+        #define WOLFCRYPT_HAVE_SRP
+        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
+        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
+    #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
+          defined(CONFIG_IDF_TARGET_ESP32S2) || \
+          defined(CONFIG_IDF_TARGET_ESP32S3)
+        /* TODO: SRP Not enabled, known to fail on this target
+         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
+    #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
+          defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* SRP Known to be working on this target::*/
         #define WOLFCRYPT_HAVE_SRP
         #define FP_MAX_BITS (8192 * 2)
-
-//    #if defined(CONFIG_IDF_TARGET_ESP8266)
-//        /* TODO Full size SRP is disabled on the ESP8266 at this time.
-//         * Low memory issue? */
-//        #define WOLFCRYPT_HAVE_SRP
-//        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
-//        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
-//    #elif defined(CONFIG_IDF_TARGET_ESP32)   ||
-//          defined(CONFIG_IDF_TARGET_ESP32S2) ||
-//          defined(CONFIG_IDF_TARGET_ESP32S3)
-//        /* TODO: SRP Not enabled, known to fail on this target
-//         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
-//        #define WOLFCRYPT_HAVE_SRP
-//        #define FP_MAX_BITS (8192 * 2)
-//    #elif defined(CONFIG_IDF_TARGET_ESP32C3) ||
-//          defined(CONFIG_IDF_TARGET_ESP32H2)
-//        /* SRP Known to be working on this target::*/
-//        #define WOLFCRYPT_HAVE_SRP
-//        #define FP_MAX_BITS (8192 * 2)
-//    #else
-//        /* For everything else, give a try and see if SRP working: */
-//        #define WOLFCRYPT_HAVE_SRP
-//        #define FP_MAX_BITS (8192 * 2)
-//    #endif
+    #else
+        /* For everything else, give a try and see if SRP working: */
+        #define WOLFCRYPT_HAVE_SRP
+        #define FP_MAX_BITS (8192 * 2)
+    #endif
 
     #define HAVE_DH
 
@@ -209,7 +204,6 @@
     /* Only for WOLFSSL_IMX6_CAAM / WOLFSSL_QNX_CAAM ? */
     /* #define WOLFSSL_CAAM      */
     /* #define WOLFSSL_CAAM_BLOB */
-    #define WOLFSSL_WOLFSSH
 
     #define WOLFSSL_AES_SIV
     #define WOLFSSL_CMAC
@@ -222,12 +216,9 @@
     #define HAVE_X963_KDF
 #endif
 
-
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
 /* #define WOLFSSL_NOSHA512_256 */
-
-// #define NO_WOLFSSL_SHA256_INTERLEAVE
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
 /* #define SINGLE_THREADED */
@@ -236,7 +227,6 @@
 /* #define NO_SHA */
 /* #define NO_OLD_TLS */
 
-#define WOLFSSL_ESPIDF_ERROR_PAUSE_DURATION 120
 #define BENCH_EMBEDDED
 
 /* TLS 1.3                                 */
@@ -285,24 +275,22 @@
 
 #define HAVE_ED25519
 
+/* Optional OPENSSL compatibility */
 #define OPENSSL_EXTRA
-/* when you want to use pkcs7 */
-/* #define HAVE_PKCS7 */
 
-/* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
+/* #Optional HAVE_PKCS7 */
 #define HAVE_PKCS7
-#define NO_PBKDF2
-
-/*  !defined(NO_PBKDF2) || defined(HAVE_PKCS7) || defined(HAVE_SCRYPT) */
-#define NO_PBKDF2
 
 #if defined(HAVE_PKCS7)
+    /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
+    #define NO_PBKDF2
+
     #define HAVE_AES_KEYWRAP
     #define HAVE_X963_KDF
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* when you want to use aes counter mode */
+/* when you want to use AES counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
 
@@ -388,36 +376,6 @@
 --enable-asn-template
 */
 
-/* WIP Interim fixes: */
-#if defined(HAVE_ED25519)
-
-#endif
-
-#if defined(WOLFCRYPT_HAVE_SRP) && !defined(SINGLE_THREADED)
-    /* TODO Investigate why SRP fails with HW, but passes all tests.
-     * The problem is with SHA512, but SHA384 must also be disabled when
-     * SHA512 is disabled */
-
-    /* SHA1 needed for WC_RC2 */
-    // #define NO_SHA
-
-    /* TODO Cannot turn off only SHA1 HW  */
-    // #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA
-
-    /* TODO: SRP fails with SHA512 HW in non-SINGLE_THREADED mode */
-    /* workaround alternative #1: disable SHA512/384 HW  only*/
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-//    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    /* workaround alternative #2: disable all SHA512 */
-    // #undef WOLFSSL_SHA512
-#endif
-
-#if defined(SINGLE_THREADED)
-    /* TODO Interleaving fix. WIP. PR soon */
-    /* #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 */
-#endif
-
-
 /* Chipset detection from sdkconfig.h
  * Default is HW enabled unless turned off.
  * Uncomment lines to force SW instead of HW acceleration */
@@ -435,9 +393,8 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
-    /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    /* There's no SHA224 HW on ESP32  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
+    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
@@ -484,9 +441,8 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    /* There's no SHA384 HW and no SHA512 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -505,10 +461,8 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    /* no SHA384 HW on C3: */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    /* no SHA512 HW on C3: */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -524,10 +478,8 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    /* no SHA384 HW on C6: */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
-    /* no SHA512 HW on C6: */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -574,13 +526,9 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif /* CONFIG_IDF_TARGET Check */
 
-#define DEBUG_WOLFSSL_SHA_MUTEX
-// #define WOLFSSL_DEBUG_MUTEX
-#define DEBUG_WOLFSSL
-
 /* RSA primitive specific definition, listed AFTER the Chipset detection */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
-    /* Define USE_FAST_MATH and SMALL_STACK                        */
+    /* Consider USE_FAST_MATH and SMALL_STACK                        */
 
     #ifndef NO_RSA
         #define ESP32_USE_RSA_PRIMITIVE
@@ -661,8 +609,9 @@ Turn on timer debugging (used when CPU cycles not available)
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
-#define WOLFSSL_PUBLIC_MP /* used by benchmark */
-#define USE_CERT_BUFFERS_2048
+
+/* used by benchmark: */
+#define WOLFSSL_PUBLIC_MP
 
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE

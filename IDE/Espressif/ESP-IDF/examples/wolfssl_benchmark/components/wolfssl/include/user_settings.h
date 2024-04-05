@@ -89,9 +89,6 @@
 #define USE_CERT_BUFFERS_256
 #define USE_CERT_BUFFERS_2048
 
-
-#define HAVE_ECC
-
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
 
@@ -126,7 +123,8 @@
     #define HAVE_FFDHE
     #define HAVE_FFDHE_2048
     #if defined(CONFIG_IDF_TARGET_ESP8266)
-        /* TODO Full size SRP is disabled on the ESP8266 at this time. */
+        /* TODO Full size SRP is disabled on the ESP8266 at this time.
+         * Low memory issue? */
         #define WOLFCRYPT_HAVE_SRP
         /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
         #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
@@ -169,9 +167,8 @@
             #undef HAVE_ECC_CDH
             #undef HAVE_CURVE25519
 
-    /* TODO See SHA256 __attribute__((aligned(4))); and WC_SHA256_ALIGN */
-
-            /* TODO does CHACHA also need alignment? Failing on ESP8266  */
+            /* TODO does CHACHA also need alignment? Failing on ESP8266
+             * See SHA256 __attribute__((aligned(4))); and WC_SHA256_ALIGN */
             #ifdef HAVE_CHACHA
                 #error "HAVE_CHACHA not supported on ESP8266"
             #endif
@@ -218,7 +215,6 @@
     #define SCRYPT_TEST_ALL
     #define HAVE_X963_KDF
 #endif
-
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -268,8 +264,9 @@
 #define HAVE_ED25519
 
 /* Some features not enabled for ESP8266: */
-#if defined(CONFIG_IDF_TARGET_ESP8266)
-
+#if defined(CONFIG_IDF_TARGET_ESP8266) || \
+    defined(CONFIG_IDF_TARGET_ESP32C2)
+    /* TODO determine low memory configuration for ECC. */
 #else
     #define HAVE_ECC
     #define HAVE_CURVE25519
@@ -280,23 +277,20 @@
 
 /* Optional OPENSSL compatibility */
 #define OPENSSL_EXTRA
-/* when you want to use pkcs7 */
-/* #define HAVE_PKCS7 */
 
-/* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
+/* #Optional HAVE_PKCS7 */
 #define HAVE_PKCS7
-#define NO_PBKDF2
-
-/*  !defined(NO_PBKDF2) || defined(HAVE_PKCS7) || defined(HAVE_SCRYPT) */
-#define NO_PBKDF2
 
 #if defined(HAVE_PKCS7)
+    /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
+    #define NO_PBKDF2
+
     #define HAVE_AES_KEYWRAP
     #define HAVE_X963_KDF
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* when you want to use aes counter mode */
+/* when you want to use AES counter mode */
 /* #define WOLFSSL_AES_DIRECT */
 /* #define WOLFSSL_AES_COUNTER */
 
@@ -534,16 +528,17 @@
 
 /* RSA primitive specific definition, listed AFTER the Chipset detection */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
-    /* Define USE_FAST_MATH and SMALL_STACK                        */
+    /* Consider USE_FAST_MATH and SMALL_STACK                        */
 
     #ifndef NO_RSA
+        #define ESP32_USE_RSA_PRIMITIVE
+
         #if defined(CONFIG_IDF_TARGET_ESP32)
             #ifdef CONFIG_ESP_MAIN_TASK_STACK_SIZE
                 #if CONFIG_ESP_MAIN_TASK_STACK_SIZE < 10500
                     #warning "RSA may be difficult with less than 10KB Stack "/
                 #endif
             #endif
-            #define ESP32_USE_RSA_PRIMITIVE
 
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
@@ -614,8 +609,9 @@ Turn on timer debugging (used when CPU cycles not available)
 ** [Z = X * Y mod M] in esp_mp_mulmod()                         */
 /* #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD                */
 
-#define WOLFSSL_PUBLIC_MP /* used by benchmark */
-#define USE_CERT_BUFFERS_2048
+
+/* used by benchmark: */
+#define WOLFSSL_PUBLIC_MP
 
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE

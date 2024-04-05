@@ -1,26 +1,50 @@
+# sdkconfig.defaults for ESP8266 + ESP32
 # Note that during the build process, settings from sdkconfig.defaults will not override those already in sdkconfig.
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html#custom-sdkconfig-defaults
 CONFIG_BENCH_ARGV="-lng 0"
+CONFIG_FREERTOS_HZ=1000
+CONFIG_ESP32_DEFAULT_CPU_FREQ_240=y
+
 #
-# Default main stack size
-#
-# This is typically way bigger than needed for stack size. See user_settings.h
+# Default main stack size. See user_settings.h
 #
 # For wolfSSL SMALL_STACK, 3072 bytes should be sufficient for benchmark app.
+# When using RSA, assign at least 10500 bytes, otherwise 5500 usually works for others
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=10500
+
+# Legacy stack size for older ESP-IDF versions
+CONFIG_MAIN_TASK_STACK_SIZE=10500
+
 #
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500
+# Benchmark must not have CONFIG_NEWLIB_NANO_FORMAT enabled
+CONFIG_NEWLIB_NANO_FORMAT=n
 #
 # Watchdog Timers
 #
 # We don't want to have the watchdog timeout during tests & benchmarks
 #
 CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
-#
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
 # Panic & Watchdog
 CONFIG_ESP_INT_WDT_TIMEOUT_MS=10000
 CONFIG_ESP_TASK_WDT_EN=n
 CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
 CONFIG_ESP_INT_WDT=n
+
+# ESP8266 WDT
+# CONFIG_ESP_PANIC_PRINT_REBOOT is not set
+CONFIG_ESP_PANIC_PRINT_REBOOT=n
+CONFIG_ESP_PANIC_PRINT_HALT=y
+
+# CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS is not set
+CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=n
+
+# ESP8266 Memory
+CONFIG_FREERTOS_GLOBAL_DATA_LINK_IRAM=y
+CONFIG_HEAP_DISABLE_IRAM=y
+
+# Performance
+# CONFIG_COMPILER_OPTIMIZATION_PERF=y
 
 # Set max COU frequency (falls back as needed for lower maximum)
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
@@ -72,7 +96,3 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp_large.csv"
 CONFIG_PARTITION_TABLE_OFFSET=0x8000
 CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
-
-
-# CONFIG_COMPILER_OPTIMIZATION_PERF=y
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=55500

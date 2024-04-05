@@ -1,6 +1,6 @@
 /* esp32-crypt.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -22,27 +22,27 @@
 
 #define __ESP32_CRYPT_H__
 
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
-#include <wolfssl/wolfcrypt/settings.h>
+/* WOLFSSL_USER_SETTINGS must be defined, typically in the CMakeLists.txt:
+ *
+ * set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS") */
+#include <wolfssl/wolfcrypt/settings.h> /* references user_settings.h */
 
-#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 
-/* WOLFSSL_USER_SETTINGS must be defined, typically in the CMakeLists.txt: */
-/*    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")        */
 #ifndef WOLFSSL_USER_SETTINGS
     #error  "WOLFSSL_USER_SETTINGS must be defined for Espressif targts"
 #endif
 
-/* Espressif */
 #include "sdkconfig.h" /* ensure ESP-IDF settings are available everywhere */
-#include <esp_idf_version.h>
-#include <esp_types.h>
-#include <esp_log.h>
 
 /* wolfSSL  */
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/types.h>    /* for MATH_INT_T */
+
+/* Espressif */
+#include <esp_idf_version.h>
+#include <esp_types.h>
+#include <esp_log.h>
 
 #ifndef _INTPTR_T_DECLARED
     #define intptr_t (void*)
@@ -83,6 +83,13 @@
     "\n\nWOLFSSL_COMPLETE"      \
     "\n\nIf running from idf.py monitor, press twice: Ctrl+]"
 
+#define WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE(s, err) \
+    "\n\nDevice: " FOUND_CONFIG_IDF_TARGET  \
+    "\n\nExit code: %d "        \
+    "\n\n"s                     \
+    "\n\nWOLFSSL_COMPLETE"      \
+    "\n\nIf running from idf.py monitor, press twice: Ctrl+]", \
+    (err)
 
 /* exit codes to be used in tfm.c, sp_int.c, integer.c, etc.
  *
@@ -332,12 +339,16 @@ enum {
 
     /* #define NO_ESP32_CRYPT */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
-
-    /* No AES HW available. */
-    #define NO_WOLFSSL_ESP32_CRYPT_AES
-
-    /* No RSA HW available. */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /* No AES HW */
+    #define NO_WOLFSSL_ESP32_CRYPT_AES 
+    /* No RSA HW:               */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI 
+    /* No RSA, so no mp_mul:    */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL 
+    /* No RSA, so no mp_mulmod: */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD 
+    /* No RSA, no mp_exptmod:   */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
     #include <soc/dport_access.h>
     #include <soc/hwcrypto_reg.h>
@@ -501,7 +512,9 @@ enum {
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     #undef  NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
-#endif
+    /***** END CONFIG_IDF_TARGET_[x] config unknown *****/
+
+#endif /* CONFIG_IDF_TARGET target check */
 
 #ifdef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* With RSA disabled (or not available), explicitly disable each: */

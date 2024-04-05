@@ -130,7 +130,7 @@ BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_v5.1_${THIS_TARGET}_$
 FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-
+THIS_WLOG="logs\\${THIS_TARGET}_output.log"
 # cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
 
 echo  "BUILD_LOG = ${BUILD_LOG}"
@@ -226,5 +226,5 @@ if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
 else
     echo "Calling putty..."
     echo "$PUTTY_EXE -load \"$THIS_TARGET_PUTTY\""
-    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" &
+    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" -logoverwrite -sessionlog "${THIS_WLOG}" &
 fi
