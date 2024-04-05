@@ -83,18 +83,18 @@ echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 # This list is not indicative of relative performance.
 
 # Limited hardware acceleration, test slowest first:
-./testMonitor.sh wolfssl_test esp32h2 "$THIS_SUFFIX" || exit 1 #      esp32h2_PUTTY="COM31"
-./testMonitor.sh wolfssl_test esp8684 "$THIS_SUFFIX" || exit 1 # 1065290
+./testMonitor.sh wolfssl_test esp32h2 "$THIS_SUFFIX" || exit 1 # 1424084 esp32h2 COM31"
+./testMonitor.sh wolfssl_test esp8684 "$THIS_SUFFIX" || exit 1 # 1065290 esp8684 COM49"
 
 # RISC-V
-./testMonitor.sh wolfssl_test esp32c2 "$THIS_SUFFIX" || exit 1 # 1133856
-./testMonitor.sh wolfssl_test esp32c3 "$THIS_SUFFIX" || exit 1 # 344677 esp32c3_PUTTY="COM35"
-./testMonitor.sh wolfssl_test esp32c6 "$THIS_SUFFIX" || exit 1 # 346393 esp32c6_PUTTY="COM36"
+./testMonitor.sh wolfssl_test esp32c2 "$THIS_SUFFIX" || exit 1 # 1133856 esp32c2 COM79"
+./testMonitor.sh wolfssl_test esp32c3 "$THIS_SUFFIX" || exit 1 # 344677  esp32c3 COM35"
+./testMonitor.sh wolfssl_test esp32c6 "$THIS_SUFFIX" || exit 1 # 346393  esp32c6 COM36"
 
 # Xtensa
-./testMonitor.sh wolfssl_test esp32   "$THIS_SUFFIX" || exit 1 # 259093
-./testMonitor.sh wolfssl_test esp32s2 "$THIS_SUFFIX" || exit 1 # 305004
-./testMonitor.sh wolfssl_test esp32s3 "$THIS_SUFFIX" || exit 1 # 267518
+./testMonitor.sh wolfssl_test esp32   "$THIS_SUFFIX" || exit 1 # 259093  esp32   COM9"
+./testMonitor.sh wolfssl_test esp32s2 "$THIS_SUFFIX" || exit 1 # 305004  esp32s2 COM30"
+./testMonitor.sh wolfssl_test esp32s3 "$THIS_SUFFIX" || exit 1 # 267518  esp32s3 COM24"
 
 # Restore the original PATH
 export PATH="$ORIGINAL_PATH"
