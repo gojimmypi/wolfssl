@@ -51,7 +51,7 @@
 #include <wolfssl/wolfcrypt/tfm.h>
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
-
+    #include <wolfcrypt/logging.h>
 #ifdef DEBUG_WOLFSSL
     #include <wolfcrypt/logging.h>
 #endif
@@ -5505,17 +5505,20 @@ int fp_isprime_ex(fp_int *a, int t, int* result)
        *result = FP_NO;
        return FP_OKAY;
    }
-
+   WOLFSSL_MSG_EX("Prime table check: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
    /* check against primes table */
    for (r = 0; r < FP_PRIME_SIZE; r++) {
+       WOLFSSL_MSG_EX("fp_cmp_d for r = %d", r);
        if (fp_cmp_d(a, primes[r]) == FP_EQ) {
            *result = FP_YES;
            return FP_OKAY;
        }
    }
 
+   WOLFSSL_MSG_EX("Trial division: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
    /* do trial division */
    for (r = 0; r < FP_PRIME_SIZE; r++) {
+       WOLFSSL_MSG_EX("fp_mod_d for r = %d", r);
        res = fp_mod_d(a, primes[r], &d);
        if (res != MP_OKAY || d == 0) {
            *result = FP_NO;
@@ -5530,8 +5533,10 @@ int fp_isprime_ex(fp_int *a, int t, int* result)
 #endif
    /* now do 't' miller rabins */
    fp_init(b);
+   WOLFSSL_MSG_EX("miller rabins: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
    for (r = 0; r < t; r++) {
        fp_set(b, primes[r]);
+       WOLFSSL_MSG_EX("fp_prime_miller_rabin for r = %d", r);
        err = fp_prime_miller_rabin(a, b, &res);
        if ((err != FP_OKAY) || (res == FP_NO)) {
           *result = res;

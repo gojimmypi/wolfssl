@@ -1413,16 +1413,18 @@ int wolfSSL_CryptHwMutexUnLock(void)
 
         if (iReturn == 0) {
             int this_heap = esp_get_free_heap_size();
-            ESP_LOGI(TAG, "wc_InitMutex for %p; heap = %d", m, this_heap);
+            WOLFSSL_MSG_EX(TAG, "wc_InitMutex for %p; heap = %d", m, this_heap);
             *m = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
             if (*m != NULL) {
-                ESP_LOGW(TAG, "xSemaphoreCreateMutex success: %p", m);
+                WOLFSSL_MSG_EX(TAG, "xSemaphoreCreateMutex success: %p", m);
+#ifdef WOLFSSL_ESPIDF
                 this_heap = esp_get_free_heap_size();
                 ESP_LOGI(TAG, "wc_InitMutex success heap = %d", this_heap);
+#endif
                 iReturn = 0;
             }
             else {
-                ESP_LOGE(TAG, "xSemaphoreCreateMutex failed: null");
+                WOLFSSL_MSG_EX(TAG, "xSemaphoreCreateMutex failed: null");
                 iReturn = BAD_MUTEX_E;
             }
         }
