@@ -19,6 +19,7 @@ CURRENT_YEAR=$(date +"%Y")
 echo ""
 echo "Files in this commit:"
 git diff-tree --no-commit-id --name-only "$TARGET_COMMIT_ID" -r
+echo ""
 
 # git show --color --unified=0 $TARGET_COMMIT_ID | grep -E '^\+' | grep -Ev '^\+\+\+' | sed 's/^\+//'
 
@@ -26,6 +27,7 @@ git diff-tree --no-commit-id --name-only "$TARGET_COMMIT_ID" -r
 
 # Check that no line exceeds 80 chars
 # awk 'length($0) > 80' $1
+echo "Files that exceed 80 characters:"
 git diff --unified=0 "$TARGET_COMMIT_ID"^ "$TARGET_COMMIT_ID" -- '*.h' '*.c' | grep '^\+' | grep -Ev '^\+\+\+' | awk '{if (length($0) > 80) print NR ": " $0}'
 
 # Check the copyright date is correct
@@ -36,6 +38,7 @@ git show --name-only --pretty=format: "$TARGET_COMMIT_ID" | while read -r file; 
     if git show "$TARGET_COMMIT_ID":"$file" | grep -q "Copyright (C)"; then
         if ! git show "$TARGET_COMMIT_ID":"$file" | grep -q "Copyright (C) [0-9]\{4\}-$CURRENT_YEAR"; then
             echo "Copyright year does not match for $file"
+            echo ""
         fi
     fi
 done
@@ -49,6 +52,7 @@ git show --name-only --pretty=format: "$TARGET_COMMIT_ID" | grep -E '\.(c|h)$' |
     # Check for "//" comments in the file
     if git show "$TARGET_COMMIT_ID":"$file" | grep -n "//" | grep -v "https://" | grep -v "http://"; then
         echo "File contains // comments: $file"
+        echo ""
     fi
 done
 
@@ -59,18 +63,22 @@ git show --name-only --pretty=format: "$TARGET_COMMIT_ID" | grep -E '\.(c|h)$' |
     # Check for uintptr_t in the file
     if git show "$TARGET_COMMIT_ID":"$file" | grep -n "uintptr_t"; then
         echo "File uses wc_ptr_t: $file"
+        echo ""
     fi
 done
 
 echo ""
-echo "Files with uintptr_t that should be wc_ptr_t:"
+echo "Files with TODO text:"
 git show --name-only --pretty=format: "$TARGET_COMMIT_ID" | while IFS= read -r file; do
     # Check for and TODO comments
     if git show "$TARGET_COMMIT_ID":"$file" | grep -n "TODO"; then
-        echo "File uses wc_ptr_t: $file"
+        echo "File has TODO text: $file"
+        echo ""
     fi
 done
 
+echo ""
+echo "Fixing line endings:"
 # Quietly ensure LF line endings
 git show --name-only --pretty=format: "$TARGET_COMMIT_ID" | grep -E '\.(c|h|md)$' | while IFS= read -r file; do
     if file "$file" | grep -q "CRLF"; then
