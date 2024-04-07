@@ -61,8 +61,8 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-/* We don't use WiFi helpers yet, so don't compile in the esp-sdk-lib WiFi */
-#define NO_ESP_SDK_WIFI
+/* Not yet using WiFi lib, so don't compile in the esp-sdk-lib WiFi helpers: */
+/* #define USE_WOLFSSL_ESP_SDK_WIFI */
 
 /*
  * ONE of these Espressif chipsets should be defined:
