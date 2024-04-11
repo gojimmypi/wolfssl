@@ -1,4 +1,4 @@
-/* main.c
+/* test main.c
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
@@ -28,15 +28,18 @@
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
 #if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
-    #ifndef WOLFSSL_ESPIDF
-        #warning "Problem with wolfSSL user_settings."
-        #warning "Check components/wolfssl/include"
+    #if defined(WOLFSSL_ESPIDF)
+        #include <wolfssl/version.h>
+        #include <wolfssl/wolfcrypt/types.h>
+        #include <wolfcrypt/test/test.h>
+        #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+        #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+    #else
+        #error "Problem with wolfSSL user_settings. "           \
+               "Check components/wolfssl/include "              \
+               "and confirm WOLFSSL_USER_SETTINGS is defined, " \
+               "typically in the component CMakeLists.txt"
     #endif
-    #include <wolfssl/version.h>
-    #include <wolfssl/wolfcrypt/types.h>
-    #include <wolfcrypt/test/test.h>
-    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
-    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -44,9 +47,9 @@
     CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
-/* TODO does this app really use the UART? */
-#include "driver/uart.h"
-
+/* Hardware; include after other libraries,
+ * particularly after freeRTOS from settings.h */
+#include <driver/uart.h>
 
 /* set to 0 for one test,
 ** set to 1 for continuous test loop */
@@ -160,13 +163,16 @@ void app_main(void)
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
     };
+    int stack_start = 0;
+    int loops = 0;
     esp_err_t ret = 0;
-    wc_ptr_t stack_start = esp_sdk_stack_pointer();
+
+    stack_start = esp_sdk_stack_pointer();
 
     /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
      *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
 
-    /* Some targets may need to have UART speed set. TODO: which? */
+    /* Some targets may need to have UART speed set, such as ESP8266 */
     ESP_LOGI(TAG, "UART init");
     uart_param_config(UART_NUM_0, &uart_config);
     uart_driver_install(UART_NUM_0,
@@ -184,6 +190,8 @@ void app_main(void)
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
     esp_DisableWatchdog();
 #endif
+
+// TODO move this all to esp_ShowExtendedSystemInfo
 
 #ifdef ESP_TASK_MAIN_STACK
      ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
@@ -206,7 +214,7 @@ void app_main(void)
     ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
 #endif
 
-#ifdef HAVE_VERSION_EXTENDED_INFO
+#if defined(HAVE_VERSION_EXTENDED_INFO)
     esp_ShowExtendedSystemInfo();
 #endif
 
@@ -217,7 +225,7 @@ void app_main(void)
     set_time();
 #endif
 
-/* when using atecc608a on esp32-WROOM-32se */
+/* when using atecc608a on esp32-wroom-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
     #if defined(CUSTOM_SLOT_ALLOCATION)
@@ -235,34 +243,40 @@ void app_main(void)
     ESP_LOGI(TAG, "NO_CRYPT_TEST defined, skipping wolf_test_task");
 #else
     /* Although wolfCrypt_Init() may be explicitly called above,
-    ** Note it is still always called in wolf_test_task.
+    ** note it is still always called in wolf_test_task.
     */
-    int loops = 0;
+    stack_start = uxTaskGetStackHighWaterMark(NULL);
+
     do {
+        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+        ret = wolf_test_task();
         #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
             esp_hw_show_metrics();
         #endif
-        ret = wolf_test_task();
+        loops++; /* count of the number of tests run before fail. */
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
         ESP_LOGI(TAG, "loops = %d", loops);
 
-        loops++;
-    }
-    while (TEST_LOOP && (ret == 0));
+    } while (TEST_LOOP && (ret == 0));
+
+    /* Reminder: wolfCrypt_Cleanup() should always be called at completion,
+    ** and is called in wolf_test_task().  */
 
 #if defined TEST_LOOP && (TEST_LOOP == 1)
     ESP_LOGI(TAG, "Test loops completed: %d", loops);
 #endif
 
-    /* note wolfCrypt_Cleanup() should always be called when finished.
-    ** This is called at the end of wolf_test_task();
-    */
+#if defined(SINGLE_THREADED)
+    /* need stack monitor for single thread */
+#else
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+#endif
 
 #if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     esp_hw_show_mp_metrics();
 #endif
 
-    /* after the test, we'll just wait */
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
         ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
@@ -284,7 +298,7 @@ void app_main(void)
                   "If running from idf.py monitor, press twice: Ctrl+]");
 #endif
 
-    /* done */
+    /* After completion, we'll just wait */
     while (1) {
 #if defined(SINGLE_THREADED)
         while (1);

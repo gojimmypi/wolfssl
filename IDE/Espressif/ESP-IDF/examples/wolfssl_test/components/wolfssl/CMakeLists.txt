@@ -130,6 +130,25 @@ else()
     string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
 endif()
 
+# ENVIRONMENT_VAR_TO_MACRO
+# Check environment variable name EVARPARAM as [name]
+# If defined, and has a value of EVARVALUE as [value],
+# then assign a compiler definition "-D[name]=[value]"
+function(ENVIRONMENT_VAR_TO_MACRO EVARPARAM EVARVALUE)
+    # If the EVARPARAM environment variable name is set to EVARVALUE,
+    # set the compiler flag definition to enable CSV output.
+    if ( "$ENV{${EVARPARAM}}" STREQUAL "${EVARVALUE}")
+        message(STATUS "Appending compile definition: -D${EVARPARAM}=${EVARVALUE}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${EVARPARAM}=${EVARVALUE}")
+    else()
+        if(DEFINED ENV{${EVARPARAM}})
+            message(STATUS "Environment variable ${EVARPARAM} detected but set to $ENV{${EVARPARAM}}, not appending compile definition.")
+        else()
+            message(STATUS "Environment variable ${EVARPARAM} not detected, not appending compile definition.")
+        endif()
+    endif()
+endfunction()
+
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
 # See https://github.com/espressif/esp-idf/issues/8978#issuecomment-1129892685
@@ -286,6 +305,11 @@ endfunction()
 
 message(STATUS "CONFIG_TARGET_PLATFORM = ${CONFIG_TARGET_PLATFORM}")
 
+# Check for environment variable that may be assigned to macros
+ENVIRONMENT_VAR_TO_MACRO("GENERATE_MACHINE_PARSEABLE_REPORT" "1")
+ENVIRONMENT_VAR_TO_MACRO("WOLFSSL_BENCHMARK_FIXED_CSV"       "1")
+
+# Optional variable inspection
 if (0)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
@@ -561,12 +585,12 @@ else()
     message(STATUS "THIS_IDF_PATH = $THIS_IDF_PATH")
     # wolfSSL-specific include directories
     set(COMPONENT_ADD_INCLUDEDIRS
-        "./include" # this is the location of wolfssl user_settings.h
-        "\"${WOLFSSL_ROOT}/\""
-        "\"${WOLFSSL_ROOT}/wolfssl/\""
-        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
-        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif\""
-        "\"${RTOS_IDF_PATH}/\""
+        "include" # this is the location of wolfssl user_settings.h
+        "${WOLFSSL_ROOT}"
+        "${WOLFSSL_ROOT}/wolfssl"
+        "${WOLFSSL_ROOT}/wolfssl/wolfcrypt"
+        "${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif"
+        "${RTOS_IDF_PATH}"
         # wolfSSL release after v5.7 includes WiFi, time, and mem/debug helpers
         "${THIS_IDF_PATH}/components/esp_event/include"
         "${THIS_IDF_PATH}/components/esp_netif/include"
@@ -577,10 +601,6 @@ else()
     if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
         list(APPEND COMPONENT_ADD_INCLUDEDIRS "../cryptoauthlib/lib")
     endif()
-
-    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/\"")
-    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\"")
-
 
     # Some files are known to be included elsewhere, or not used for Espressif
     set(COMPONENT_SRCEXCLUDE
@@ -595,8 +615,8 @@ else()
         "\"${WOLFSSL_ROOT}/src/ssl_misc.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
-      # "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # external Kyber disabled by default
-      # "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # exclude as external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # exclude as external Kyber disabled by default
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""
