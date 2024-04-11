@@ -503,3 +503,6 @@ debian/control
 /IDE/ARDUINO/keywords1.txt
 /IDE/Espressif/ESP32-C2 JTAG.png
 /IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_IDF_v5.2_ESP32C3.sln
+/IDE/PlatformIO/PlatformIO_wolfSSL/src
+/IDE/PlatformIO/PlatformIO_wolfSSL/wolfcrypt
+/IDE/PlatformIO/PlatformIO_wolfSSL/wolfssl
