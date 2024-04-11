@@ -32,6 +32,11 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* Optionally set CSV format */
+/* See also cmake ENVIRONMENT_VAR_TO_MACRO to set at build time */
+/* #define GENERATE_MACHINE_PARSEABLE_REPORT */
+/* #define WOLFSSL_BENCHMARK_FIXED_CSV */
+
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:

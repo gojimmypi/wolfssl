@@ -130,6 +130,25 @@ else()
     string(REPLACE "\\" "/" THIS_IDF_PATH "$ENV{IDF_PATH}")
 endif()
 
+# ENVIRONMENT_VAR_TO_MACRO
+# Check environment variable name EVARPARAM as [name]
+# If defined, and has a value of EVARVALUE as [value],
+# then assign a compiler definition "-D[name]=[value]"
+function(ENVIRONMENT_VAR_TO_MACRO EVARPARAM EVARVALUE)
+    # If the EVARPARAM environment variable name is set to EVARVALUE,
+    # set the compiler flag definition to enable CSV output.
+    if ( "$ENV{${EVARPARAM}}" STREQUAL "${EVARVALUE}")
+        message(STATUS "Appending compile definition: -D${EVARPARAM}=${EVARVALUE}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${EVARPARAM}=${EVARVALUE}")
+    else()
+        if(DEFINED ENV{${EVARPARAM}})
+            message(STATUS "Environment variable ${EVARPARAM} detected but set to $ENV{${EVARPARAM}}, not appending compile definition.")
+        else()
+            message(STATUS "Environment variable ${EVARPARAM} not detected, not appending compile definition.")
+        endif()
+    endif()
+endfunction()
+
 # COMPONENT_NAME = wolfssl
 # The component name is the directory name. "No feature to change this".
 # See https://github.com/espressif/esp-idf/issues/8978#issuecomment-1129892685
@@ -286,6 +305,11 @@ endfunction()
 
 message(STATUS "CONFIG_TARGET_PLATFORM = ${CONFIG_TARGET_PLATFORM}")
 
+# Check for environment variable that may be assigned to macros
+# ENVIRONMENT_VAR_TO_MACRO("GENERATE_MACHINE_PARSEABLE_REPORT" "1")
+# ENVIRONMENT_VAR_TO_MACRO("WOLFSSL_BENCHMARK_FIXED_CSV"       "1")
+
+# Optional variable inspection
 if (0)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)

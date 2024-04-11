@@ -227,7 +227,7 @@ void app_main(void)
         .stop_bits = UART_STOP_BITS_1,
     };
     int stack_start = 0;
-    int loops = 0;
+    word32 loops = 0;
     esp_err_t ret = 0;
 
     stack_start = esp_sdk_stack_pointer();
@@ -295,9 +295,8 @@ void app_main(void)
         ESP_LOGI(TAG, "Stack used: %d\n",
                       stack_start - uxTaskGetStackHighWaterMark(NULL));
 
-        #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-            esp_hw_show_metrics();
-        #endif
+        esp_hw_show_metrics();
+
         loops++; /* count of the number of tests run before fail. */
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
         ESP_LOGI(TAG, "loops = %d", loops);
@@ -308,6 +307,7 @@ void app_main(void)
     ** and is called in wolf_benchmark_task().  */
 
 #if defined BENCHMARK_LOOP && (BENCHMARK_LOOP == 1)
+    /* If BENCHMARK_LOOP enabled and we get here, there was likely an error. */
     ESP_LOGI(TAG, "Benchmark loops completed: %d", loops);
 #endif
 
@@ -317,13 +317,11 @@ void app_main(void)
     ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 #endif
 
-
-
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
-        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL)));
+    ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                    - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
 
 #ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
