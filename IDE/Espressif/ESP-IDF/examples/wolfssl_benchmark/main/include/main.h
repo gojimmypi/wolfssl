@@ -24,7 +24,4 @@
 
 void app_main(void);
 
-/* see wolfssl/wolfcrypt/benchmark/benchmark.h */
-extern void wolf_benchmark_task();
-
 #endif

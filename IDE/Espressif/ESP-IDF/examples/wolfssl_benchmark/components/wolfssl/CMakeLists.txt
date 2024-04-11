@@ -595,8 +595,8 @@ else()
         "\"${WOLFSSL_ROOT}/src/ssl_misc.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
-        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # external non-wolfssl Kyber disabled by default
-        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # external non-wolfssl Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # exclude as external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # exclude as external Kyber disabled by default
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""

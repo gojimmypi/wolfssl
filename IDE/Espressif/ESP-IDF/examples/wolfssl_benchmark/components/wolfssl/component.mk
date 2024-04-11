@@ -52,7 +52,7 @@ CFLAGS +=-DWOLFSSL_USER_SETTINGS
 # the root is 7 directories up from here:
 WOLFSSL_ROOT := ../../../../../../../
 
-# NOTE: The wolfSSL include diretory (e.g. user_settings.h) is
+# NOTE: The wolfSSL include directory (e.g. user_settings.h) is
 # located HERE in THIS project, and *not* in the wolfSSL root.
 COMPONENT_ADD_INCLUDEDIRS := .
 COMPONENT_ADD_INCLUDEDIRS += include
@@ -139,7 +139,7 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ed25519.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ed448.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/error.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/evp.o
-COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ext_kyber.o
+# COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ext_kyber.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ext_lms.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/ext_xmss.o
 COMPONENT_OBJS += $(WOLFSSL_ROOT)wolfcrypt/src/falcon.o
