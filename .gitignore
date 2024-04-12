@@ -494,6 +494,13 @@ debian/control
 /mycerts
 /mycertsSM
 
+# PlatformIO
+
+/IDE/PlatformIO/**/.pio
+/IDE/PlatformIO/**/.vscode/.browse.c_cpp.db*
+/IDE/PlatformIO/**/.vscode/c_cpp_properties.json
+/IDE/PlatformIO/**/.vscode/launch.json
+/IDE/PlatformIO/**/.vscode/ipch
 
 /IDE/ARDUINO/**/images
 /IDE/Espressif/ESP8266-RTOS
@@ -506,3 +513,4 @@ debian/control
 /IDE/PlatformIO/PlatformIO_wolfSSL/src
 /IDE/PlatformIO/PlatformIO_wolfSSL/wolfcrypt
 /IDE/PlatformIO/PlatformIO_wolfSSL/wolfssl
+/IDE/PlatformIO/examples/wolfssl_benchmark/.gitignore
