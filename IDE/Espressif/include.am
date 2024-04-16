@@ -152,10 +152,7 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/component.mk
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/include
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/Kconfig.projbuild
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/main.c
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/time_helper.c
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/time_helper.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/include/main.h
-EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/main/include/time_helper.h
 
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_test-IDF_v5_ESP32.sln
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB/wolfssl_test-IDF_v5_ESP32C3.sln
