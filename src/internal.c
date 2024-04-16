@@ -9696,7 +9696,12 @@ ProtocolVersion MakeDTLSv1_3(void)
 
 #elif defined(FREERTOS)
 
-    #include "task.h"
+    #ifdef PLATFORMIO
+        #include <freertos/FreeRTOS.h>
+        #include <freertos/task.h>
+    #else
+        #include "task.h"
+    #endif
 
     unsigned int LowResTimer(void)
     {
@@ -17206,9 +17211,6 @@ int SendFatalAlertOnly(WOLFSSL *ssl, int error)
     case COMPRESSION_ERROR:
         why = decode_error;
         break;
-    case MATCH_SUITE_ERROR:
-        why = illegal_parameter;
-        break;
     case VERIFY_FINISHED_ERROR:
     case SIG_VERIFY_E:
         why = decrypt_error;
@@ -17221,6 +17223,7 @@ int SendFatalAlertOnly(WOLFSSL *ssl, int error)
     case ECC_OUT_OF_RANGE_E:
         why = bad_record_mac;
         break;
+    case MATCH_SUITE_ERROR:
     case VERSION_ERROR:
     default:
         why = handshake_failure;
@@ -29220,6 +29223,9 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
             if (!ssl->options.downgrade ||
                     ssl->options.minDowngrade <= DTLSv1_3_MINOR)
                 return VERSION_ERROR;
+
+            /* Cannot be DTLS1.3 as HELLO_VERIFY_REQUEST */
+            ssl->options.tls1_3 = 0;
         }
 #endif /* defined(WOLFSSL_DTLS13) && defined(WOLFSSL_TLS13) */
 
