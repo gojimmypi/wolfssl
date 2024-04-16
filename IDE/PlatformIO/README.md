@@ -12,10 +12,12 @@ Note there are two options:
 
 The PlatformIO Core CLI is needed to publish wolfSSL:
 
-See the [Arduino](../ARDUINO/README.md) publishing notes.
+See also the [Arduino](../ARDUINO/README.md) publishing notes.
 
 
 ### Publish PlatformIO Arduino Library with Windows
+
+The wolfSSL publishing is done from the `scripts`. Here are somple examples:
 
 Setup the PlatformIO CLI:
 

@@ -1,4 +1,3 @@
-#include "sdkconfig.h"
 #include <wolfssl/wolfcrypt/settings.h>
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
