@@ -18,34 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-
-/* This user_settings.h is for Espressif ESP-IDF
- *
- * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
- *
- * Do not include any wolfssl headers here
- *
- * When editing this file:
- * ensure wolfssl_test and wolfssl_benchmark settings match.
- */
-
-/* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
-/* Optionally set CSV format */
-/* See also cmake ENVIRONMENT_VAR_TO_MACRO to set at build time */
-/* #define GENERATE_MACHINE_PARSEABLE_REPORT */
-/* #define WOLFSSL_BENCHMARK_FIXED_CSV */
-
-/* The Espressif sdkconfig will have chipset info.
-**
-** Some possible values:
-**
-**   CONFIG_IDF_TARGET_ESP32
-**   CONFIG_IDF_TARGET_ESP32S2
-**   CONFIG_IDF_TARGET_ESP32S3
-**   CONFIG_IDF_TARGET_ESP32C3
-**   CONFIG_IDF_TARGET_ESP32C6
+/* This is a sample Arduino user_settings.h for wolfSSL
 */
 
 #undef  WOLFSSL_ESPIDF
@@ -63,6 +38,10 @@
     #define WOLFSSL_SHA3
 #endif
 
+#define BENCH_EMBEDDED
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+
 /*
  * ONE of these Espressif chip families will be detected from sdkconfig:
  *
@@ -75,7 +54,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 /* SMALL_SESSION_CACHE saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -232,7 +211,7 @@
 /* #define NO_SHA */
 /* #define NO_OLD_TLS */
 
-#define BENCH_EMBEDDED
+
 
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
@@ -242,7 +221,6 @@
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
 
-#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
 
@@ -617,7 +595,6 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* used by benchmark: */
 #define WOLFSSL_PUBLIC_MP
-
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
 #define HAVE_PK_CALLBACKS
