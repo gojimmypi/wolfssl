@@ -1,19 +1,16 @@
-# See https://github.com/espressif/esp-wolfssl/pull/24
+@frankencode 
 
-First, regarding websockets, check out https://github.com/wolfssl/osp, in particular
-[wolfSSL/osp/websocketpp](https://github.com/wolfSSL/osp/tree/master/websocketpp).
+Hi Frank - 
 
-I do not personally have any experience with that, but let me know if you are interested in
-using something outout the `esp-tls` layer.
+First, regarding websockets, check out https://github.com/wolfssl/osp, in particular [wolfSSL/osp/websocketpp](https://github.com/wolfSSL/osp/tree/master/websocketpp).
+
+I do not personally have any experience with that, but let me know if you are interested in using something other than the `esp-tls` layer in your project.
 
 Regarding the esp-tls.... 
 
-My example [wolfssl_client](https://github.com/gojimmypi/wolfssl/tree/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples/wolfssl_client)
-with a [Kconfig](https://github.com/gojimmypi/wolfssl/blob/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples/wolfssl_client/components/wolfssl/Kconfig)
-that has the esp-tls `TLS_STACK_WOLFSSL`.
+My example [wolfssl_client](https://github.com/gojimmypi/wolfssl/tree/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples/wolfssl_client) has been updated with a [Kconfig](https://github.com/gojimmypi/wolfssl/blob/ED25519_SHA2_fix/IDE/Espressif/ESP-IDF/examples/wolfssl_client/components/wolfssl/Kconfig) that has the esp-tls `TLS_STACK_WOLFSSL` capability with wolfSSL in the Espressif components and not a local component.
 
-I would have used the fork at [frankencode/esp-idf](https://github.com/frankencode/esp-idf/tree/master)
-but I got into quite a tangle with the ESP-IDF v5.2 vs the v5.3 in `master`.
+I would have used your ESP-IDF  fork at [frankencode/esp-idf](https://github.com/frankencode/esp-idf/tree/master) but I got into quite a tangle with the ESP-IDF v5.2 vs the v5.3 in `master`.
 
 I do have the `esp-13.2.0_20240305` but it is not found looking in `esp-13.2.0_20230928`:
 
@@ -21,7 +18,6 @@ I do have the `esp-13.2.0_20240305` but it is not found looking in `esp-13.2.0_2
 -- Compiler supported targets: xtensa-esp-elf
 CMake Error at C:/SysGCC/esp32/esp-idf/v5.2-gojimmypi/tools/cmake/tool_version_check.cmake:36 (message):
   
-
   Tool doesn't match supported version from list ['esp-13.2.0_20240305']:
   C:/SysGCC/esp32/tools/xtensa-esp-elf/esp-13.2.0_20230928/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe
 ```
@@ -121,14 +117,14 @@ Include the wolfssl includes after the `#elif  CONFIG_ESP_TLS_USING_WOLFSSL`
 
 ### 7. Special notes
 
-It appears that the `wolfSSL_SHA1` used in `components/esp-tls/esp-tls-crypto/esp_tls_crypto.c:47:26`
-has been deprected and is now only defined when OpenSSL compatibility is enabled. (e.g. #define OPENSSL_EXTRA)
+It appears that the `wolfSSL_SHA1` used in `components/esp-tls/esp-tls-crypto/esp_tls_crypto.c:47:26` has been deprecated and is now only defined when OpenSSL compatibility is enabled. (e.g. #define OPENSSL_EXTRA)
 
-The `#include <wolfssl/wolfcrypt/settings.h>` should be included everywhere wolfSSL is use
-and before any other include. Never include `user_settings.h` directly.
+The `#include <wolfssl/wolfcrypt/settings.h>` should be included everywhere wolfSSL is used and before any other wolfSSL include. Never include `user_settings.h` directly.
 
-It appears there may be some oddity with the wolfSSL `settings.h` file when referenced from
-some of the ESP-IDF components as 
+It appears there may be some oddity with the wolfSSL `settings.h` file when referenced from some of the ESP-IDF components as you may have noticed that I have an explicit #define for `OPENSSL_EXTRA`.
 
-This is not a websockets demo yet, just something that compiles with the Kconfig file
-to enable wolfSSL in the esp-tls layer.
+This is not a websockets demo yet, just something that compiles with the Kconfig file to enable wolfSSL in the esp-tls layer.
+
+Please let me know if this works as desired.
+
+Cheers
