@@ -56,6 +56,23 @@ The wolfSSL library can be installed as a managed component:
 
 ## Notes:
 
+VisualGDB.
+
+There are registry entries with toolchain paths such as `SysGCC-xtensa-esp32-elf-11.2.0`.
+
+Consider adding new entries for testing with a variety of toolchain versions.
+
+```
+Computer\HKEY_USERS\[user GUID]\Software\Free Software Foundation
+Computer\HKEY_USERS\[user GUID]\Software\Sysprogs\GNUToolchains
+```
+
+| --------- | --------------------- |
+| (Default) |                       |
+| BINUTILS  | c:\SysGCC\esp32.12.2  |
+| G++       | c:\SysGCC\esp32.12.2  |
+| GCC       | c:\SysGCC\esp32.12.2  |
+
 WSL environment:
 
 Contents of `/etc/wsl.conf`:
