@@ -741,7 +741,7 @@ OQS, No Experimental
 -- Found Threads: TRUE  
 -- Looking for WOLFSSL_EXPERIMENTAL
 -- Looking for WOLFSSL_EXPERIMENTAL - not found
-CMake Error at CMakeLists.txt:678 (message):
+CMake Error at CMakeLists.txt:621 (message):
   Error: WOLFSSL_OQS requires WOLFSSL_EXPERIMENTAL at this time.
 
 
@@ -1193,7 +1193,7 @@ Kyber, No Experimental
 -- Found Threads: TRUE  
 -- Looking for WOLFSSL_EXPERIMENTAL
 -- Looking for WOLFSSL_EXPERIMENTAL - not found
-CMake Error at CMakeLists.txt:681 (message):
+CMake Error at CMakeLists.txt:624 (message):
   Error: WOLFSSL_KYBER requires WOLFSSL_EXPERIMENTAL at this time.
 
 
@@ -1675,7 +1675,7 @@ OQS, Kyber, Experimental
 -- Enabling WOLFSSL_SHAKE256 - success
 -- Looking for WOLFSSL_KYBER - found
 -- WOLFSSL_EXPERIMENTAL enabled, experimental features enabled.
-CMake Error at CMakeLists.txt:671 (message):
+CMake Error at CMakeLists.txt:614 (message):
   Error: cannot enable both WOLFSSL_OQS and WOLFSSL_KYBER at the same time.
 
 
