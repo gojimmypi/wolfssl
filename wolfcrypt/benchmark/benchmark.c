@@ -944,7 +944,9 @@ static const bench_alg bench_asym_opt[] = {
     { "-rsa-kg",             BENCH_RSA_KEYGEN        },
     #endif
     { "-rsa",                BENCH_RSA               },
+    #ifdef WOLFSSL_KEY_GEN
     { "-rsa-sz",             BENCH_RSA_SZ            },
+    #endif
 #endif
 #ifndef NO_DH
     { "-dh",                 BENCH_DH                },
@@ -9898,8 +9900,8 @@ void bench_lms(void)
 #endif
 
 #if defined(WOLFSSL_WC_LMS) && !defined(LMS_PARAMS_BENCHED)
-    bench_lms_keygen(0x100, pub);
-    bench_lms_sign_verify(0x100, pub);
+    bench_lms_keygen(WC_LMS_PARM_L1_H5_W1, pub);
+    bench_lms_sign_verify(WC_LMS_PARM_L1_H5_W1, pub);
 #endif
 
     return;
@@ -10107,12 +10109,10 @@ exit_xmss_sign_verify:
 
     if (freeRng) {
         wc_FreeRng(&rng);
-        freeRng = 0;
     }
 
     if (freeKey) {
         wc_XmssKey_Free(&key);
-        freeKey = 0;
     }
 
     return;

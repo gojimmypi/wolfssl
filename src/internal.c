@@ -7583,6 +7583,9 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     defined(WOLFSSL_SSLKEYLOGFILE) && defined(WOLFSSL_TLS13)
     (void)wolfSSL_set_tls13_secret_cb(ssl, tls13ShowSecrets, NULL);
 #endif
+#if defined(HAVE_SECRET_CALLBACK) && defined(SHOW_SECRETS)
+    (void)wolfSSL_set_secret_cb(ssl, tlsShowSecrets, NULL);
+#endif
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     ssl->sigSpec = ctx->sigSpec;
     ssl->sigSpecSz = ctx->sigSpecSz;
@@ -11270,7 +11273,13 @@ static int GetRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
             ssl->fuzzerCb(ssl, ssl->buffers.inputBuffer.buffer + *inOutIdx,
                           RECORD_HEADER_SZ, FUZZ_HEAD, ssl->fuzzerCtx);
 #endif
-        XMEMCPY(rh, ssl->buffers.inputBuffer.buffer + *inOutIdx, RECORD_HEADER_SZ);
+        /* Set explicitly rather than make assumptions on struct layout */
+        rh->type      = ssl->buffers.inputBuffer.buffer[*inOutIdx];
+        rh->pvMajor   = ssl->buffers.inputBuffer.buffer[*inOutIdx + 1];
+        rh->pvMinor   = ssl->buffers.inputBuffer.buffer[*inOutIdx + 2];
+        rh->length[0] = ssl->buffers.inputBuffer.buffer[*inOutIdx + 3];
+        rh->length[1] = ssl->buffers.inputBuffer.buffer[*inOutIdx + 4];
+
         *inOutIdx += RECORD_HEADER_SZ;
         ato16(rh->length, size);
     }

@@ -4443,7 +4443,7 @@ int SendTls13ClientHello(WOLFSSL* ssl)
 
     {
 #ifdef WOLFSSL_DTLS_CH_FRAG
-        int maxFrag = wolfSSL_GetMaxFragSize(ssl, MAX_RECORD_SIZE);
+        word16 maxFrag = wolfSSL_GetMaxFragSize(ssl, MAX_RECORD_SIZE);
         word16 lenWithoutExts = args->length;
 #endif
 
@@ -14776,6 +14776,7 @@ int tls13ShowSecrets(WOLFSSL* ssl, int id, const unsigned char* secret,
 
     if (clientRandomSz <= 0) {
         printf("Error getting server random %d\n", clientRandomSz);
+        return BAD_FUNC_ARG;
     }
 
 #if 0

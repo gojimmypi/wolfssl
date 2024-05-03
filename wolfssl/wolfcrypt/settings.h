@@ -388,7 +388,7 @@
          * system or other set of headers included by wolfSSL already defines
          * RNG. Examples are:
          * wolfEngine, wolfProvider and potentially other use-cases */
-        #ifndef RNG
+        #if !defined(RNG) && !defined(NO_OLD_RNGNAME)
             #define RNG WC_RNG
         #endif
     #endif
@@ -2775,7 +2775,9 @@ extern void uITRON4_free(void *p) ;
     #endif
 
     /* Enable ECC_CACHE_CURVE for ASYNC */
-    #if !defined(ECC_CACHE_CURVE)
+    #if !defined(ECC_CACHE_CURVE) && !defined(NO_ECC_CACHE_CURVE)
+        /* Enabled by default for increased async performance,
+         * but not required */
         #define ECC_CACHE_CURVE
     #endif
 #endif /* WOLFSSL_ASYNC_CRYPT */
@@ -2915,6 +2917,9 @@ extern void uITRON4_free(void *p) ;
     #endif
     #ifndef WOLFSSL_SP_DIV_WORD_HALF
         #define WOLFSSL_SP_DIV_WORD_HALF
+    #endif
+    #ifdef __PIE__
+        #define WC_NO_INTERNAL_FUNCTION_POINTERS
     #endif
 #endif
 
@@ -3275,6 +3280,13 @@ extern void uITRON4_free(void *p) ;
  */
 #if defined(HAVE_POLY1305) && !defined(HAVE_ONE_TIME_AUTH)
     #define HAVE_ONE_TIME_AUTH
+#endif
+
+/* This is checked for in configure.ac, so might want to do it in here as well.
+ */
+#if defined(HAVE_SECURE_RENEGOTIATION) && defined(HAVE_RENEGOTIATION_INDICATION)
+    #error HAVE_RENEGOTIATION_INDICATION cannot be defined together with \
+           HAVE_SECURE_RENEGOTIATION
 #endif
 
 /* Check for insecure build combination:

@@ -3577,7 +3577,7 @@ struct WOLFSSL_CTX {
     int         certChainCnt;
 #endif
     DerBuffer*  privateKey;
-    byte        privateKeyType:6;
+    byte        privateKeyType;
     byte        privateKeyId:1;
     byte        privateKeyLabel:1;
     int         privateKeySz;
@@ -3585,7 +3585,7 @@ struct WOLFSSL_CTX {
 
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     DerBuffer*  altPrivateKey;
-    byte        altPrivateKeyType:6;
+    byte        altPrivateKeyType;
     byte        altPrivateKeyId:1;
     byte        altPrivateKeyLabel:1;
     int         altPrivateKeySz;
@@ -4553,14 +4553,14 @@ typedef struct Buffers {
 #ifndef NO_CERTS
     DerBuffer*      certificate;           /* WOLFSSL_CTX owns, unless we own */
     DerBuffer*      key;                   /* WOLFSSL_CTX owns, unless we own */
-    byte            keyType:6;             /* Type of key */
+    byte            keyType;               /* Type of key */
     byte            keyId:1;               /* Key data is an id not data */
     byte            keyLabel:1;            /* Key data is a label not data */
     int             keySz;                 /* Size of RSA key */
     int             keyDevId;              /* Device Id for key */
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     DerBuffer*      altKey;                /* WOLFSSL_CTX owns, unless we own */
-    byte            altKeyType:6;          /* Type of alt key */
+    byte            altKeyType;            /* Type of alt key */
     byte            altKeyId:1;            /* Key data is an id not data */
     byte            altKeyLabel:1;         /* Key data is a label not data */
     int             altKeySz;              /* Size of alt key */
@@ -5869,6 +5869,8 @@ struct WOLFSSL {
 #ifdef HAVE_SECRET_CALLBACK
         SessionSecretCb sessionSecretCb;
         void*           sessionSecretCtx;
+        TlsSecretCb     tlsSecretCb;
+        void*           tlsSecretCtx;
     #ifdef WOLFSSL_TLS13
         Tls13SecretCb   tls13SecretCb;
         void*           tls13SecretCtx;
@@ -6747,6 +6749,11 @@ WOLFSSL_LOCAL int wolfSSL_quic_keys_active(WOLFSSL* ssl, enum encrypt_side side)
 #if defined(SHOW_SECRETS) && defined(WOLFSSL_SSLKEYLOGFILE)
 WOLFSSL_LOCAL int tls13ShowSecrets(WOLFSSL* ssl, int id, const unsigned char* secret,
     int secretSz, void* ctx);
+#endif
+
+#if defined(SHOW_SECRETS)
+WOLFSSL_LOCAL int tlsShowSecrets(WOLFSSL* ssl, void* secret,
+        int secretSz, void* ctx);
 #endif
 
 /* Optional Pre-Master-Secret logging for Wireshark */
