@@ -46,4 +46,16 @@ menu "wolfSSL"
         bool "Enable OCSP (Online Certificate Status Protocol) in wolfSSL"
         default n
 
+    config IGNORE_ESP_IDF_WOLFSSL_COMPONENT
+        bool "Ignore the ESP-IDF component of wolfSSL (if present)"
+        default n
+        help
+            Ignores wolfSSL present in the esp-idf/components directory. Requires wolfssl as a local component.
+
+    config IGNORE_LOCAL_WOLFSSL_COMPONENT
+        bool "Ignore the local component of wolfSSL (if present)"
+        default n
+        help
+            Ignores wolfSSL present in the local project components directory. Requires wolfssl as a ESP-IDF component.
+
 endmenu # wolfSSL

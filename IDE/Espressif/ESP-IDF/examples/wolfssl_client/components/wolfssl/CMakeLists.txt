@@ -26,15 +26,51 @@
 message(STATUS "Begin wolfssl ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT}")
 cmake_minimum_required(VERSION 3.16)
 
+set(VERBOSE_COMPONENT_MESSAGES 1)
+
+
+# function: IS_ESP_IDF_COMPONENT
+#  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
+#             otherwise 0 (false)
+function( IS_ESP_IDF_COMPONENT  RESULT )
+    # NOTE: Component location is based on the location of the CMakeList.txt
+    # and *not* the location of the wolfSSL source code. (which may be anywhere)
+
+    # Normalize the paths to remove any trailing slashes
+    get_filename_component(NORMALIZED_IDF_PATH  "${IDF_PATH}"      REALPATH)
+    get_filename_component(NORMALIZED_TEST_PATH "${COMPONENT_DIR}" REALPATH)
+
+    # Check if the test path starts with the IDF_PATH
+    string(FIND "${NORMALIZED_TEST_PATH}" "${NORMALIZED_IDF_PATH}" pos)
+
+    if(${pos} EQUAL 0)
+        message(STATUS "${COMPONENT_DIR} is within IDF_PATH.")
+        set(${RESULT} 1 PARENT_SCOPE)
+    else()
+        message(STATUS "${COMPONENT_DIR} is not within IDF_PATH.")
+        set(${RESULT} 0 PARENT_SCOPE)
+    endif()
+endfunction()
+
+IS_ESP_IDF_COMPONENT( IS_WOLSSL_ESP_IDF_COMPONENT )
+if( IS_WOLSSL_ESP_IDF_COMPONENT )
+    message(STATUS "This wolfSSL is a component in ESP-IDF.")
+    if ( CONFIG_IGNORE_ESP_IDF_WOLFSSL_COMPONENT )
+        idf_component_register()
+        message(STATUS "Warning: wolfSSL component in ESP-IDF is being ignored.")
+        return()
+    endif()
+endif()
+
+
 if( "${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT}" STREQUAL "" )
+    # nothing to do
 else()
-    # Only forward slashed, or double backslashes are supported.
-    # By the time we get here the sdkconfig file has a.
+    # Only forward slashes, or double backslashes are supported.
+    # By the time we get here the sdkconfig file has a value for wolfSSL source code root.
     string(REPLACE "\\" "/" CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT})
     message(STATUS "Edited wolfssl ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT}")
 endif()
-
-set(VERBOSE_COMPONENT_MESSAGES 1)
 
 # The scope of this CMAKE_C_FLAGS is just this component:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
@@ -145,7 +181,8 @@ endif()
 # function: IS_WOLFSSL_SOURCE
 #  parameter: DIRECTORY_PARAMETER - the directory to test
 #  output:    RESULT = contains contents of DIRECTORY_PARAMETER for wolfssl directory, otherwise blank.
-function(IS_WOLFSSL_SOURCE DIRECTORY_PARAMETER RESULT)
+function( IS_WOLFSSL_SOURCE  DIRECTORY_PARAMETER
+          RESULT )
     if (EXISTS "${DIRECTORY_PARAMETER}/wolfcrypt/src")
         set(${RESULT} "${DIRECTORY_PARAMETER}" PARENT_SCOPE)
     else()
@@ -434,7 +471,7 @@ else()
         message(STATUS "**************************************************************************************")
         message(STATUS "")
 
-        message(FATAL_ERROR "Please use wolfSSL in either local project or Espressif components, but not both.")
+        # message(FATAL_ERROR "Please use wolfSSL in either local project or Espressif components, but not both.")
         # Abort CMake after fatal error.
 
         # Optional: if you change the above FATAL_ERROR to STATUS you can warn at runtime with this macro definition:
@@ -768,7 +805,6 @@ if(WOLFSSL_ROOT)
     else()
         message(STATUS "WARNING: wolfSSL NOT selected for ESP-TLS. Features and performance will be limited.")
     endif()
-
 else()
     message(STATUS "")
     message(STATUS "Consider setting WOLFSSL_ROOT environment variable, use Kconfig setting, or set manually in this cmake file, above.")

@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
- * This file is part of wolfSSL.
+ * This file is part of wolfSSL for the Espressif ESP-IDF.
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,12 @@
 
 #include "sdkconfig.h"
 
+#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
+    /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
+     * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
+     * that here: */
+    #define OPENSSL_EXTRA
+#endif
 /* #define DEBUG_WOLFSSL */
 /* #define DEBUG_WOLFSSL_VERBOSE */
 
