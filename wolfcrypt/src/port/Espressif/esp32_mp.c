@@ -1839,7 +1839,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* do we have an even moduli? */
     if ((M->dp[0] & 1) == 0) {
 #ifndef NO_ESP_MP_MUL_EVEN_ALT_CALC
-        /*  Z = X × Y mod M in mixed HW & SW*/
+    /*  Z = X Ã— Y mod M in mixed HW & SW */
     #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
         ret = mp_mul(X, Y, tmpZ); /* SW X * Y */
     #else
