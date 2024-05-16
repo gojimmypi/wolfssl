@@ -529,6 +529,10 @@ else()
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\""
         "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/port/Espressif\""
         "\"${RTOS_IDF_PATH}/\""
+        # wolfSSL release after v5.7 includes WiFi, time, and mem/debug helpers
+        "${THIS_IDF_PATH}/components/esp_event/include"
+        "${THIS_IDF_PATH}/components/esp_netif/include"
+        "${THIS_IDF_PATH}/components/esp_wifi/include"
         )
 
     # Optionally include cryptoauthlib if present

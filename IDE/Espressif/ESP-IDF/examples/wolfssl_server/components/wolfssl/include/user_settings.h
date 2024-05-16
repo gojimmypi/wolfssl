@@ -25,7 +25,13 @@
 
 #include "sdkconfig.h"
 
-#define DEBUG_WOLFSSL
+#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
+    /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
+     * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
+     * that here: */
+    #define OPENSSL_EXTRA
+#endif
+/* #define DEBUG_WOLFSSL */
 /* #define DEBUG_WOLFSSL_VERBOSE */
 
 /* Experimental Kyber */
@@ -38,6 +44,7 @@
         /* With limited RAM, we'll disable some of the Kyber sizes: */
         #define WOLFSSL_NO_KYBER1024
         #define WOLFSSL_NO_KYBER768
+        #define NO_SESSION_CACHE
     #endif
 #endif
 
@@ -225,7 +232,9 @@
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
 
-#define  HAVE_SESSION_TICKET
+#ifndef NO_SESSION_CACHE
+    #define  HAVE_SESSION_TICKET
+#endif
 
 /* #define HAVE_HASHDRBG */
 
@@ -464,6 +473,12 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
  *
  * There are various certificate examples in this header file:
  * https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/certs_test.h
+ *
+ * To use the sample certificates in code (not recommended for production!):
+ *
+ *    #if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024)
+ *        #include <wolfssl/certs_test.h>
+ *    #endif
  *
  * To use the sets of macros below, define *one* of these:
  *

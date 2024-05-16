@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
- * This file is part of wolfSSL for the Espressif ESP-IDF.
+ * This file is part of wolfSSL.
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,7 +120,9 @@
 #define HAVE_HKDF
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
-
+/* Cauases error in internal.c
+ #define WOLFSSL_NO_REALLOC
+*/
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM

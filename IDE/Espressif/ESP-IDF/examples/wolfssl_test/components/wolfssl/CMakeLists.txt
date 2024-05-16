@@ -595,12 +595,20 @@ else()
         "${THIS_IDF_PATH}/components/esp_event/include"
         "${THIS_IDF_PATH}/components/esp_netif/include"
         "${THIS_IDF_PATH}/components/esp_wifi/include"
+        # wolfSSL release after v5.7 includes WiFi, time, and mem/debug helpers
+        "${THIS_IDF_PATH}/components/esp_event/include"
+        "${THIS_IDF_PATH}/components/esp_netif/include"
+        "${THIS_IDF_PATH}/components/esp_wifi/include"
         )
 
     # Optionally include cryptoauthlib if present
     if(IS_DIRECTORY ${IDF_PATH}/components/cryptoauthlib)
         list(APPEND COMPONENT_ADD_INCLUDEDIRS "../cryptoauthlib/lib")
     endif()
+
+    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/\"")
+    list(APPEND COMPONENT_ADD_INCLUDEDIRS "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/\"")
+
 
     # Some files are known to be included elsewhere, or not used for Espressif
     set(COMPONENT_SRCEXCLUDE
@@ -618,8 +626,8 @@ else()
         "\"${WOLFSSL_ROOT}/src/ssl_sess.c\""    # included by ssl.c
         "\"${WOLFSSL_ROOT}/src/x509.c\""
         "\"${WOLFSSL_ROOT}/src/x509_str.c\""
-        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # exclude as external Kyber disabled by default
-        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # exclude as external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfcrypt/src/ext_kyber.c\""     # external Kyber disabled by default
+        "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt/ext_kyber.h\"" # external Kyber disabled by default
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/evp.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/misc.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_arm32.c\""

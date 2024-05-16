@@ -142,7 +142,7 @@ int esp_CryptHwMutexLock(wolfSSL_Mutex* mutex, TickType_t block_time) {
  * call the ESP-IDF mutex UNlock; xSemaphoreGive
  *
  */
-int esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
+esp_err_t esp_CryptHwMutexUnLock(wolfSSL_Mutex* mutex) {
     int ret = pdTRUE;
     if (mutex == NULL) {
         WOLFSSL_ERROR_MSG("esp_CryptHwMutexLock called with null mutex");
@@ -791,13 +791,10 @@ esp_err_t esp_EnabledWatchdog(void)
                       ESP_IDF_VERSION_MAJOR);
     #endif
 #endif
-
-#ifdef DEBUG_WOLFSSL
-    ESP_LOGI(TAG, "Watchdog enabled.");
-#endif
-
     return ret;
 }
+
+
 
 /* Print a MATH_INT_T attribute list.
  *

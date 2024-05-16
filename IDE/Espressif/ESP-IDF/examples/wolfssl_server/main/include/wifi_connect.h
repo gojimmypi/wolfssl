@@ -82,7 +82,10 @@
         /* typically from ESP8266 rtos-sdk/v3.4 */
         #define EXAMPLE_ESP_WIFI_SSID CONFIG_EXAMPLE_WIFI_SSID
     #else
-        #define EXAMPLE_ESP_WIFI_SSID "MYSSID_WIFI_CONNECT"
+        /* See new esp-sdk-lib.h helpers: */
+        #ifndef EXAMPLE_ESP_WIFI_SSID
+            #define EXAMPLE_ESP_WIFI_SSID "MYSSID_WIFI_CONNECT"
+        #endif
     #endif
 
     #if defined(CONFIG_ESP_WIFI_PASSWORD)
@@ -92,7 +95,10 @@
         /* typically from ESP8266 rtos-sdk/v3.4 */
         #define EXAMPLE_ESP_WIFI_PASS CONFIG_EXAMPLE_WIFI_PASSWORD
     #else
-        #define EXAMPLE_ESP_WIFI_PASS "MYPASSWORD_WIFI_CONNECT"
+        /* See new esp-sdk-lib.h helpers: */
+        #ifndef EXAMPLE_ESP_WIFI_PASS
+            #define EXAMPLE_ESP_WIFI_PASS "MYPASSWORD_WIFI_CONNECT"
+        #endif
     #endif
 #endif
 

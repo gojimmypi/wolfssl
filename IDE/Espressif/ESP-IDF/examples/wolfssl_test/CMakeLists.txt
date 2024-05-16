@@ -3,7 +3,7 @@
 #
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.5)
 
 add_compile_options(-DWOLFSSL_ESP_NO_WATCHDOG=1)
 # The wolfSSL CMake file should be able to find the source code.

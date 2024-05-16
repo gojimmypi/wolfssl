@@ -592,7 +592,7 @@ typedef struct w64wrapper {
     #endif
 
     #define WC_DECLARE_HEAP_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
-        VAR_TYPE* VAR_NAME[VAR_ITEMS]; \
+        VAR_TYPE* VAR_NAME[VAR_ITEMS] = { NULL, }; \
         int idx##VAR_NAME = 0, inner_idx_##VAR_NAME
     #define WC_HEAP_ARRAY_ARG(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE) \
         VAR_TYPE* VAR_NAME[VAR_ITEMS]
@@ -1400,6 +1400,20 @@ typedef struct w64wrapper {
         #endif
         typedef void*            THREAD_TYPE;
         #define WOLFSSL_THREAD
+    #elif defined(WOLFSSL_USER_THREADING)
+        /* User can define user specific threading types
+         *  THREAD_RETURN
+         *  TREAD_TYPE
+         *  WOLFSSL_THREAD
+         * e.g.
+         *  typedef unsigned int  THREAD_RETURN;
+         *  typedef size_t        THREAD_TYPE;
+         *  #define WOLFSSL_THREAD void
+         *
+         * User can also implement their own wolfSSL_NewThread(),
+         * wolfSSL_JoinThread() and wolfSSL_Cond signaling if they want.
+         * Otherwise, those functions are omitted.
+        */
     #elif defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET) || \
           defined(FREESCALE_MQX)
         typedef unsigned int  THREAD_RETURN;
@@ -1422,6 +1436,7 @@ typedef struct w64wrapper {
             k_thread_stack_t* threadStack;
         } THREAD_TYPE;
         #define WOLFSSL_THREAD
+        extern void* wolfsslThreadHeapHint;
     #elif defined(NETOS)
         typedef UINT        THREAD_RETURN;
         typedef struct {

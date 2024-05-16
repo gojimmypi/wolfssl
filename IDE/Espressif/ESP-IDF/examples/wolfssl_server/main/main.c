@@ -36,7 +36,6 @@
         #warning "Check components/wolfssl/include"
     #endif
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-    #include <wolfcrypt/benchmark/benchmark.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -244,24 +243,15 @@ void app_main(void)
 
     /* done */
     while (1) {
-        ESP_LOGV(TAG, "\n\nLoop...\n\n");
-#ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
-
-        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                     - uxTaskGetStackHighWaterMark(NULL));
-        ESP_LOGI(TAG, "Stack delta: %d\n", stack_start
-                                     - uxTaskGetStackHighWaterMark(NULL));
-#endif
 
 #if defined(SINGLE_THREADED)
         ESP_LOGV(TAG, "\n\nDone!\n\n");
         while (1);
 #else
-        vTaskDelay(60000);
+        /* Delete this main task to free up memory */
         ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
         vTaskDelete(NULL);
 #endif
-    } /* done whle */
+    } /* done while */
 
 } /* app_main */

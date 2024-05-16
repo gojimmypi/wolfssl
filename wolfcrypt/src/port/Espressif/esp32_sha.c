@@ -480,7 +480,7 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
         ** reminder XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed in SW mode.
         ** but we need to set our initializer breadcrumb: */
-        dst->ctx.initializer = (uintptr_t)&(dst->ctx); /* assign new breadcrumb to dst */
+        dst->ctx.initializer = (uintptr_t)&(dst->ctx);
         #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
         {
             /* not HW mode for copy, so we are not interested in task owner */
@@ -668,7 +668,8 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
     defined(CONFIG_IDF_TARGET_ESP8684)   || \
     defined(CONFIG_IDF_TARGET_ESP32C3)   || \
     defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* there's no SHA512 HW on the RISC-V SoC so there's nothing to do. */
+    /* There's no SHA512 HW on these RISC-V SoC so there's nothing to do.
+     * (perhaps a future one will?) */
 #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
       defined(CONFIG_IDF_TARGET_ESP32S2) || \
       defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -988,8 +989,10 @@ int esp_sha_hw_in_use()
 */
 uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 {
-    TaskHandle_t mutexHolder;
     uintptr_t ret = 0;
+    #ifndef SINGLE_THREADED
+        TaskHandle_t mutexHolder;
+    #endif
     CTX_STACK_CHECK(ctx);
 
 #ifdef WOLFSSL_DEBUG_MUTEX

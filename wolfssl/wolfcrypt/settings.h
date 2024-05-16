@@ -1116,7 +1116,11 @@ extern void uITRON4_free(void *p) ;
     #endif
 
     #ifndef SINGLE_THREADED
-        #include "semphr.h"
+        #ifdef PLATFORMIO
+            #include <freertos/semphr.h>
+        #else
+            #include "semphr.h"
+        #endif
     #endif
 #endif
 
@@ -2082,9 +2086,16 @@ extern void uITRON4_free(void *p) ;
 #endif /*(WOLFSSL_APACHE_MYNEWT)*/
 
 #ifdef WOLFSSL_ZEPHYR
+    #include <version.h>
+#if KERNEL_VERSION_NUMBER >= 0x30100
     #include <zephyr/kernel.h>
     #include <zephyr/sys/printk.h>
     #include <zephyr/sys/util.h>
+#else
+    #include <kernel.h>
+    #include <sys/printk.h>
+    #include <sys/util.h>
+#endif
     #include <stdlib.h>
 
     #define WOLFSSL_DH_CONST
@@ -3541,6 +3552,24 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* Some final sanity checks */
+#ifdef WOLFSSL_APPLE_HOMEKIT
+    #ifndef WOLFCRYPT_HAVE_SRP
+        #error "WOLFCRYPT_HAVE_SRP is required for Apple Homekit"
+    #endif
+    #ifndef HAVE_CHACHA
+        #error "HAVE_CHACHA is required for Apple Homekit"
+    #endif
+    #ifdef  USE_FAST_MATH
+        #ifdef FP_MAX_BITS
+            #if FP_MAX_BITS < (8192 * 2)
+                #error "HomeKit FP_MAX_BITS must at least (8192 * 2)"
+            #endif
+        #else
+            #error "HomeKit FP_MAX_BITS must be assigned a value (8192 * 2)"
+        #endif
+    #endif
+#endif
+
 #if defined(WOLFSSL_ESPIDF) && defined(ARDUINO)
     #error "Found both ESPIDF and ARDUINO. Pick one."
 #endif

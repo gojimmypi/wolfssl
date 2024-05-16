@@ -656,9 +656,14 @@ int wc_LoadStaticMemory_ex(WOLFSSL_HEAP_HINT** pHint,
 
     WOLFSSL_ENTER("wc_LoadStaticMemory_ex");
 
-    if (pHint == NULL || buf == NULL || listSz > WOLFMEM_MAX_BUCKETS
-            || sizeList == NULL || distList == NULL) {
+    if (pHint == NULL || buf == NULL || sizeList == NULL || distList == NULL) {
         return BAD_FUNC_ARG;
+    }
+
+    /* Cap the listSz to the actual number of items allocated in the list. */
+    if (listSz > WOLFMEM_MAX_BUCKETS) {
+        WOLFSSL_MSG("Truncating the list of memory buckets");
+        listSz = WOLFMEM_MAX_BUCKETS;
     }
 
     if ((sizeof(WOLFSSL_HEAP) + sizeof(WOLFSSL_HEAP_HINT)) > sz - idx) {
@@ -761,9 +766,14 @@ int wolfSSL_StaticBufferSz_ex(unsigned int listSz,
 
     WOLFSSL_ENTER("wolfSSL_StaticBufferSz_ex");
 
-    if (buffer == NULL || listSz > WOLFMEM_MAX_BUCKETS
-            || sizeList == NULL || distList == NULL) {
+    if (buffer == NULL || sizeList == NULL || distList == NULL) {
         return BAD_FUNC_ARG;
+    }
+
+    /* Cap the listSz to the actual number of items allocated in the list. */
+    if (listSz > WOLFMEM_MAX_BUCKETS) {
+        WOLFSSL_MSG("Truncating the list of memory buckets");
+        listSz = WOLFMEM_MAX_BUCKETS;
     }
 
     /* align pt */
@@ -889,6 +899,31 @@ int wolfSSL_GetMemStats(WOLFSSL_HEAP* heap, WOLFSSL_MEM_STATS* stats)
 }
 
 
+/* global heap hint to fall back on when no heap hint is passed to
+ * XMALLOC/XFREE
+ * NOT thread safe, should be set once before any expected XMALLOC XFREE calls
+ */
+static void* globalHeapHint = NULL;
+
+
+/* Used to set a new global heap hint. Returns a pointer to the current global
+ * heap hint before being set. */
+void* wolfSSL_SetGlobalHeapHint(void* heap)
+{
+    void *oldHint = globalHeapHint;
+
+    globalHeapHint = heap;
+    return oldHint;
+}
+
+
+/* returns a pointer to the current global heap hint */
+void* wolfSSL_GetGlobalHeapHint(void)
+{
+    return globalHeapHint;
+}
+
+
 #ifdef WOLFSSL_DEBUG_MEMORY
 void* wolfSSL_Malloc(size_t size, void* heap, int type, const char* func, unsigned int line)
 #else
@@ -907,7 +942,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
 #endif
 
     /* if no heap hint then use dynamic memory*/
-    if (heap == NULL) {
+    if (heap == NULL && globalHeapHint == NULL) {
         #ifdef WOLFSSL_HEAP_TEST
             /* allow using malloc for creating ctx and method */
             if (type == DYNAMIC_TYPE_CTX || type == DYNAMIC_TYPE_METHOD ||
@@ -942,7 +977,15 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
     }
     else {
         WOLFSSL_HEAP_HINT* hint = (WOLFSSL_HEAP_HINT*)heap;
-        WOLFSSL_HEAP*      mem  = hint->memory;
+        WOLFSSL_HEAP*      mem;
+
+        if (hint == NULL) {
+            hint = (WOLFSSL_HEAP_HINT*)globalHeapHint;
+        #ifdef WOLFSSL_DEBUG_MEMORY
+            fprintf(stderr, "(Using global heap hint %p) ", hint);
+        #endif
+        }
+        mem = hint->memory;
 
         if (wc_LockMutex(&(mem->memory_mutex)) != 0) {
             WOLFSSL_MSG("Bad memory_mutex lock");
@@ -982,7 +1025,7 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
                         }
                     #ifdef WOLFSSL_DEBUG_STATIC_MEMORY
                         else {
-                            fprintf(stderr, "Size: %ld, Empty: %d\n", size,
+                            fprintf(stderr, "Size: %lu, Empty: %d\n", (unsigned long) size,
                                                               mem->sizeList[i]);
                         }
                     #endif
@@ -1019,7 +1062,8 @@ void* wolfSSL_Malloc(size_t size, void* heap, int type)
         else {
             WOLFSSL_MSG("ERROR ran out of static memory");
             #ifdef WOLFSSL_DEBUG_MEMORY
-            fprintf(stderr, "Looking for %lu bytes at %s:%d\n", size, func, line);
+                fprintf(stderr, "Looking for %lu bytes at %s:%d\n", (unsigned long) size, func,
+                        line);
             #endif
         }
 
@@ -1062,7 +1106,7 @@ void wolfSSL_Free(void *ptr, void* heap, int type)
         }
     #endif
 
-        if (heap == NULL) {
+        if (heap == NULL && globalHeapHint == NULL) {
         #ifdef WOLFSSL_HEAP_TEST
             /* allow using malloc for creating ctx and method */
             if (type == DYNAMIC_TYPE_CTX || type == DYNAMIC_TYPE_METHOD ||
@@ -1087,8 +1131,20 @@ void wolfSSL_Free(void *ptr, void* heap, int type)
         }
         else {
             WOLFSSL_HEAP_HINT* hint = (WOLFSSL_HEAP_HINT*)heap;
-            WOLFSSL_HEAP*      mem  = hint->memory;
+            WOLFSSL_HEAP*      mem;
             word32 padSz = -(int)sizeof(wc_Memory) & (WOLFSSL_STATIC_ALIGN - 1);
+
+            if (hint == NULL) {
+                hint = (WOLFSSL_HEAP_HINT*)globalHeapHint;
+            #ifdef WOLFSSL_DEBUG_MEMORY
+                fprintf(stderr, "(Using global heap hint %p) ", hint);
+            #endif
+            }
+            mem = hint->memory;
+            if (mem == NULL) {
+                WOLFSSL_MSG("Bad hint pointer to memory");
+                return;
+            }
 
             /* get memory struct and add it to available list */
             pt = (wc_Memory*)((byte*)ptr - sizeof(wc_Memory) - padSz);
@@ -1170,7 +1226,7 @@ void* wolfSSL_Realloc(void *ptr, size_t size, void* heap, int type)
     }
 #endif
 
-    if (heap == NULL) {
+    if (heap == NULL && globalHeapHint == NULL) {
         #ifdef WOLFSSL_HEAP_TEST
             WOLFSSL_MSG("ERROR null heap hint passed in to XREALLOC");
         #endif
@@ -1182,8 +1238,16 @@ void* wolfSSL_Realloc(void *ptr, size_t size, void* heap, int type)
     }
     else {
         WOLFSSL_HEAP_HINT* hint = (WOLFSSL_HEAP_HINT*)heap;
-        WOLFSSL_HEAP*      mem  = hint->memory;
+        WOLFSSL_HEAP*      mem;
         word32 padSz = -(int)sizeof(wc_Memory) & (WOLFSSL_STATIC_ALIGN - 1);
+
+        if (hint == NULL) {
+            hint = (WOLFSSL_HEAP_HINT*)globalHeapHint;
+        #ifdef WOLFSSL_DEBUG_MEMORY
+            fprintf(stderr, "(Using global heap hint %p) ", hint);
+        #endif
+        }
+        mem = hint->memory;
 
         if (ptr == NULL) {
         #ifdef WOLFSSL_DEBUG_MEMORY

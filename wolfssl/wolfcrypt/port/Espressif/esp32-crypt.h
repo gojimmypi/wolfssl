@@ -731,9 +731,9 @@ extern "C"
     #endif
         /* Pointer to object that initialized HW, to track copies: */
         uintptr_t initializer;
-#if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
+    #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
         TaskHandle_t task_owner;
-#endif
+    #endif
 
         /* an ESP32_MODE value; typically:
         **   0 init,
@@ -773,9 +773,9 @@ extern "C"
     WOLFSSL_LOCAL uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx);
 
     /* esp_sha_hw_in_use returns 1 (true) if SHA HW in use, otherwise 0 */
-    WOLFSSL_LOCAL int esp_sha_hw_in_use();
-    WOLFSSL_LOCAL int esp_sha_call_count();
-    WOLFSSL_LOCAL int esp_sha_lock_count();
+    WOLFSSL_LOCAL int esp_sha_hw_in_use(void);
+    WOLFSSL_LOCAL int esp_sha_call_count(void);
+    WOLFSSL_LOCAL int esp_sha_lock_count(void);
     WOLFSSL_LOCAL uintptr_t esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
     WOLFSSL_LOCAL uintptr_t esp_sha_set_stray(WC_ESP32SHA* ctx);
 
@@ -887,7 +887,7 @@ extern "C"
     #define WOLFSSL_HAS_METRICS
 
     /* Allow sha256 code to keep track of SW fallback during active HW */
-    WOLFSSL_LOCAL int esp_sw_sha256_count_add();
+    WOLFSSL_LOCAL int esp_sw_sha256_count_add(void);
 
     /* show MP HW Metrics*/
     WOLFSSL_LOCAL int esp_hw_show_mp_metrics(void);

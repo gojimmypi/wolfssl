@@ -54,6 +54,23 @@ The wolfSSL library can be installed as a managed component:
 
 * [Espressif Managed Component Registry](https://components.espressif.com/components/wolfssl/wolfssl)
 
+
+
+
+## Building wolfSSL for use with other libraries 
+
+```
+# cd /your-wolfssl-repo
+./autogen.h # as necessary
+./configure --prefix=/mnt/c/workspace/my_wolfssl_bin --enable-all
+make install
+
+# then for some other library such as wolfTPM:
+
+# cd /your-wolftpm-repo
+./configure --enable-swtpm --with-wolfcrypt=/mnt/c/workspace/my_wolfssl_bin 
+```
+
 ## Notes:
 
 VisualGDB.

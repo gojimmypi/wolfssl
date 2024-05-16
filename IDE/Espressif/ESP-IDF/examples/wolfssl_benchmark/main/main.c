@@ -20,8 +20,8 @@
  */
 
 /* ESP-IDF */
-#include <esp_log.h>
 #include "sdkconfig.h"
+#include <esp_log.h>
 
 /* wolfSSL */
 /* The wolfSSL user_settings.h file is automatically included by the settings.h
@@ -254,7 +254,7 @@ void app_main(void)
     esp_DisableWatchdog();
 #endif
 
-#if defined(HAVE_VERSION_EXTENDED_INFO)
+#if defined(HAVE_VERSION_EXTENDED_INFO) && defined(WOLFSSL_HAS_METRICS)
     esp_ShowExtendedSystemInfo();
 #endif
 

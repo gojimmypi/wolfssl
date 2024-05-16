@@ -1,6 +1,6 @@
 /* benchmark.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -53,6 +53,8 @@
  * Turn on benchmark timing debugging (CPU Cycles, RTOS ticks, etc)
  * DEBUG_WOLFSSL_BENCHMARK_TIMING
  *
+ * Turn on timer debugging (used when CPU cycles not available)
+ * WOLFSSL_BENCHMARK_TIMER_DEBUG
  */
 
 #ifdef HAVE_CONFIG_H
@@ -310,26 +312,36 @@
 #endif /* WOLFSSL_NO_FLOAT_FMT */
 
 #ifdef WOLFSSL_ESPIDF
-    #include <wolfcrypt/port/Espressif/esp32-crypt.h>
-    #define BCTR_FMT "%llu"
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+
+    /* Benchmark uses 64 bit integer formatting support. When new nanolib is
+     * enabled, all if the values in report are blank. */
+    #ifdef CONFIG_NEWLIB_NANO_FORMAT
+        #if CONFIG_NEWLIB_NANO_FORMAT == 1
+            #error "Nano newlib fomatting must not be enabled for benchmark"
+        #endif
+    #endif
+
     #ifdef configTICK_RATE_HZ
         /* Define CPU clock cycles per tick of FreeRTOS clock
          *   CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ is typically a value like 240
          *   configTICK_RATE_HZ is typically 100 or 1000.
          **/
-        #ifdef CONFIG_IDF_TARGET_ESP8266
-            #define CPU_TICK_CYCLES (                                   \
-                  (CONFIG_ESP8266_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE) \
-                  / configTICK_RATE_HZ                                  \
-                )
-        #else
-            #define CPU_TICK_CYCLES (                               \
-                  (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE) \
-                  / configTICK_RATE_HZ                              \
-                )
-
+        #if defined(CONFIG_IDF_TARGET_ESP8266)
+            #ifndef CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP8266_DEFAULT_CPU_FREQ_MHZ
+            #endif
+            #ifndef CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ configCPU_CLOCK_HZ
+            #endif
         #endif
-    #endif
+        #define CPU_TICK_CYCLES (                               \
+              (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE) \
+              / configTICK_RATE_HZ                              \
+            )
+    #endif /* WOLFSSL_ESPIDF configTICK_RATE_HZ */
+
     #if defined(CONFIG_IDF_TARGET_ESP32C2)
         #include "driver/gptimer.h"
         static gptimer_handle_t esp_gptimer = NULL;
@@ -351,15 +363,20 @@
             static gptimer_config_t esp_timer_config = {
                 .clk_src = GPTIMER_CLK_SRC_DEFAULT,
                 .direction = GPTIMER_COUNT_UP,
-                .resolution_hz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
-                                 * (MILLION_VALUE / RESOLUTION_SCALE),
-            }; /* esp_timer_config */
+                /* CONFIG_XTAL_FREQ = 40,
+                 * CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = 160  */
+                .resolution_hz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ *
+                                 (MILLION_VALUE / RESOLUTION_SCALE),
+                };
         #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
 
     #elif defined(CONFIG_IDF_TARGET_ESP32) || \
           defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
         #include <xtensa/hal.h>
+    #elif defined(CONFIG_IDF_TARGET_ESP8266)
+        /* no CPU HAL for ESP8266, we'll use RTOS tick calc extimates */
+        #include <FreeRTOS.h>
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
 
     #elif defined(CONFIG_IDF_TARGET_ESP8266)
@@ -1305,10 +1322,10 @@ static const char* bench_result_words3[][5] = {
     /* TAG for ESP_LOGx() */
     static const char* TAG = "wolfssl_benchmark";
 
-    static THREAD_LS_T word64 begin_cycles;
-    static THREAD_LS_T word64 begin_cycles_ticks;
-    static THREAD_LS_T word64 end_cycles;
-    static THREAD_LS_T word64 total_cycles;
+    static THREAD_LS_T word64 begin_cycles = 0;
+    static THREAD_LS_T word64 begin_cycles_ticks = 0;
+    static THREAD_LS_T word64 end_cycles = 0;
+    static THREAD_LS_T word64 total_cycles = 0;
 
     /* the return value, as a global var */
     static THREAD_LS_T word64 _esp_get_cycle_count_ex = 0;
@@ -1400,19 +1417,20 @@ static const char* bench_result_words3[][5] = {
         uint64_t thisIncrement = 0; /* The adjusted increment amount.       */
         uint64_t expected_diff = 0; /* FreeRTOS estimated expected CPU diff.*/
     #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-        uint32_t tickCount = 0; /* Current rtos tick counter.               */
-        uint32_t tickDiff = 0;  /* Tick difference from last check.         */
-        uint32_t tickBeginDiff = 0; /* Tick difference from beginning.      */
+        uint64_t tickCount = 0; /* Currrent rtos tick counter.              */
+        uint64_t tickDiff = 0;  /* Tick difference from last check.         */
+        uint64_t tickBeginDiff = 0; /* Tick difference from beginning.      */
     #endif
-
+    #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
+        uint64_t thisTimerVal = 0; /* Timer Value as alternate to compare */
+        uint64_t diffDiff = 0;   /* Difference between CPU & Timer differences:
+                                  * (current - last) */
+    #endif
     #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
         defined(CONFIG_IDF_TARGET_ESP32C3) || \
         defined(CONFIG_IDF_TARGET_ESP32C6)
 
         #ifdef WOLFSSL_BENCHMARK_TIMER_DEBUG
-            uint64_t thisTimerVal = 0; /* Timer Value as alternate to compare */
-            uint64_t diffDiff = 0;     /* Difference between CPU & Timer differences:
-                                        * (current - last) */
             ESP_ERROR_CHECK(gptimer_get_raw_count(esp_gptimer, &thisTimerVal));
             thisTimerVal = thisTimerVal * RESOLUTION_SCALE;
         #endif /* WOLFSSL_BENCHMARK_TIMER_DEBUG */
@@ -1431,9 +1449,19 @@ static const char* bench_result_words3[][5] = {
         /* TODO: Why doesn't esp_cpu_get_cycle_count work for Xtensa?
          * Calling current_time(1) to reset time causes thisVal overflow,
          * on Xtensa, but not on RISC-V architecture. See also, below */
-        #ifndef __XTENSA__
+        #if defined(CONFIG_IDF_TARGET_ESP8266) || (ESP_IDF_VERSION_MAJOR < 5)
+            #ifndef configCPU_CLOCK_HZ
+                /* esp_cpu_get_cycle_count not available in ESP-IDF v4 */
+                #define configCPU_CLOCK_HZ \
+                       (CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE)
+            #endif
+            /* There's no CPU counter on the ESP8266 (Tensilica). Using RTOS */
+            thisVal =  (uint64_t)xTaskGetTickCount() *
+                        (uint64_t)(configCPU_CLOCK_HZ / CONFIG_FREERTOS_HZ);
+        #elif defined(__XTENSA__)
             thisVal = esp_cpu_get_cycle_count();
         #else
+            /* Not Tensilica(ESP8266), not Xtensa(ESP32/-S2/-S3, then RISC-V */
             thisVal = xthal_get_ccount(); /* or esp_cpu_get_cycle_count(); */
         #endif
     #endif
@@ -1470,10 +1498,13 @@ static const char* bench_result_words3[][5] = {
             ** overflow CPU tick count, all will be well.
             */
             #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-                ESP_LOGW(TAG,
-                    "Alert: Detected xthal_get_ccount overflow at " BCTR_FMT ", "
-                              "adding UINT_MAX.",
-                    thisVal);
+                ESP_LOGW(TAG, "Alert: Detected xthal_get_ccount overflow at "
+                              "(%llu < %llu) adding UINT_MAX = %llu.",
+                         thisVal, _esp_cpu_count_last, (uint64_t) UINT_MAX);
+            #endif
+            #if !defined(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ) && \
+                !defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
+                #error "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ not found"
             #endif
 
             /* double check expected diff calc */
@@ -1580,16 +1611,26 @@ static const char* bench_result_words3[][5] = {
              * when resetting CPU cycle counter? FreeRTOS tick collision?
              *    thisVal = esp_cpu_get_cycle_count(); See also, above
              * or thisVal = xthal_get_ccount(); */
-            #if ESP_IDF_VERSION_MAJOR < 5
+            #if defined(CONFIG_IDF_TARGET_ESP8266)
+                /* There's no CPU counter on the ESP8266, so we'll estimate
+                 * cycles based on defined CPU frequency from sdkconfig and
+                 * the RTOS tick frequency */
+                _esp_cpu_count_last = (uint64_t)xTaskGetTickCount() *
+                           (uint64_t)(configCPU_CLOCK_HZ / CONFIG_FREERTOS_HZ);
+            #elif ESP_IDF_VERSION_MAJOR < 5
                 _esp_cpu_count_last = xthal_get_ccount();
             #else
                 _esp_cpu_count_last = esp_cpu_get_cycle_count();
             #endif
         #endif
 
+        #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
+            ESP_LOGI(TAG, "_esp_cpu_count_last = %llu", _esp_cpu_count_last);
+        #endif
+
         /* Return the 64 bit extended total from 32 bit counter. */
         return _esp_get_cycle_count_ex;
-    }
+    } /* esp_get_cycle_count_ex for esp_get_cpu_benchmark_cycles() */
 
 /* implement other architecture cycle counters here */
 
@@ -1956,6 +1997,7 @@ static int    numBlocks  = NUM_BLOCKS;
 static word32 bench_size = BENCH_SIZE;
 static int base2 = 1;
 static int digest_stream = 1;
+static int encrypt_only = 0;
 
 #ifdef MULTI_VALUE_STATISTICS
 static int minimum_runs = 0;
@@ -3004,7 +3046,7 @@ static void* benchmarks_do(void* args)
 
 #ifndef NO_FILESYSTEM
     if (hash_input) {
-        int    rawSz;
+        size_t rawSz;
         XFILE  file;
         file = XFOPEN(hash_input, "rb");
         if (file == XBADFILE)
@@ -3023,7 +3065,7 @@ static void* benchmarks_do(void* args)
 
         XFREE(bench_plain, HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
 
-        rawSz = (int)bench_buf_size;
+        rawSz = (size_t)bench_buf_size;
         if (bench_buf_size % 16)
             bench_buf_size += 16 - (bench_buf_size % 16);
 
@@ -3038,7 +3080,7 @@ static void* benchmarks_do(void* args)
         }
 
         if ((size_t)XFREAD(bench_plain, 1, rawSz, file)
-                != (size_t)rawSz) {
+                != rawSz) {
             XFCLOSE(file);
             goto exit;
         }
@@ -3050,7 +3092,7 @@ static void* benchmarks_do(void* args)
     }
 
     if (cipher_input) {
-        int    rawSz;
+        size_t rawSz;
         XFILE  file;
         file = XFOPEN(cipher_input, "rb");
         if (file == XBADFILE)
@@ -3069,7 +3111,7 @@ static void* benchmarks_do(void* args)
 
         XFREE(bench_cipher, HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
 
-        rawSz = (int)bench_buf_size;
+        rawSz = (size_t)bench_buf_size;
         if (bench_buf_size % 16)
             bench_buf_size += 16 - (bench_buf_size % 16);
 
@@ -3085,7 +3127,7 @@ static void* benchmarks_do(void* args)
         }
 
         if ((size_t)XFREAD(bench_cipher, 1, rawSz, file)
-                != (size_t)rawSz) {
+                != rawSz) {
             XFCLOSE(file);
             goto exit;
         }
@@ -4729,9 +4771,9 @@ static void bench_aesecb_internal(int useDeviceID,
     double start;
     DECLARE_MULTI_VALUE_STATS_VARS()
 #ifdef HAVE_FIPS
-    const int benchSz = AES_BLOCK_SIZE;
+    const word32 benchSz = AES_BLOCK_SIZE;
 #else
-    const int benchSz = (int)bench_size;
+    const word32 benchSz = bench_size;
 #endif
 
     WC_CALLOC_ARRAY(enc, Aes, BENCH_MAX_PENDING,
@@ -4754,7 +4796,7 @@ static void bench_aesecb_internal(int useDeviceID,
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = (((int)bench_size / benchSz) * 10) + 1;
+        int outer_loop_limit = (int)((bench_size / benchSz) * 10) + 1;
         for (times = 0;
              times < outer_loop_limit /* numBlocks */ || pending > 0;
             ) {
@@ -4807,7 +4849,7 @@ exit_aes_enc:
 
     bench_stats_start(&count, &start);
     do {
-        int outer_loop_limit = (10 * ((int)bench_size / benchSz)) + 1;
+        int outer_loop_limit = (int)(10 * (bench_size / benchSz)) + 1;
         for (times = 0; times < outer_loop_limit || pending > 0; ) {
             bench_async_poll(&pending);
 
@@ -5208,6 +5250,7 @@ void bench_aesccm(int useDeviceID)
         goto exit;
     }
 
+#ifdef HAVE_AES_DECRYPT
     RESET_MULTI_VALUE_STATS_VARS();
 
     bench_stats_start(&count, &start);
@@ -5234,6 +5277,7 @@ void bench_aesccm(int useDeviceID)
         printf("wc_AesCcmEncrypt failed, ret = %d\n", ret);
         goto exit;
     }
+#endif
 
   exit:
 
@@ -5574,7 +5618,7 @@ exit:
 #endif
 
 #ifdef WOLFSSL_SM4_CCM
-void bench_sm4_ccm()
+void bench_sm4_ccm(void)
 {
     wc_Sm4 enc;
     double start;
@@ -5807,27 +5851,54 @@ void bench_chacha(void)
     XMEMSET(enc, 0, sizeof(ChaCha));
     wc_Chacha_SetKey(enc, bench_key, 16);
 
-    bench_stats_start(&count, &start);
-    do {
-        for (i = 0; i < numBlocks; i++) {
-            ret = wc_Chacha_SetIV(enc, bench_iv, 0);
-            if (ret < 0) {
-                printf("wc_Chacha_SetIV error: %d\n", ret);
-                goto exit;
-            }
-            ret = wc_Chacha_Process(enc, bench_cipher, bench_plain, bench_size);
-            if (ret < 0) {
-                printf("wc_Chacha_Process error: %d\n", ret);
-                goto exit;
-            }
-            RECORD_MULTI_VALUE_STATS();
+    if (encrypt_only) {
+        ret = wc_Chacha_SetIV(enc, bench_iv, 0);
+        if (ret < 0) {
+            printf("wc_Chacha_SetIV error: %d\n", ret);
+            goto exit;
         }
-        count += i;
-    } while (bench_stats_check(start)
-#ifdef MULTI_VALUE_STATISTICS
-        || runs < minimum_runs
-#endif
-        );
+        bench_stats_start(&count, &start);
+        do {
+            for (i = 0; i < numBlocks; i++) {
+                ret = wc_Chacha_Process(enc, bench_cipher, bench_plain,
+                    bench_size);
+                if (ret < 0) {
+                    printf("wc_Chacha_Process error: %d\n", ret);
+                    goto exit;
+                }
+                RECORD_MULTI_VALUE_STATS();
+            }
+            count += i;
+        } while (bench_stats_check(start)
+    #ifdef MULTI_VALUE_STATISTICS
+            || runs < minimum_runs
+    #endif
+            );
+    }
+    else {
+        bench_stats_start(&count, &start);
+        do {
+            for (i = 0; i < numBlocks; i++) {
+                ret = wc_Chacha_SetIV(enc, bench_iv, 0);
+                if (ret < 0) {
+                    printf("wc_Chacha_SetIV error: %d\n", ret);
+                    goto exit;
+                }
+                ret = wc_Chacha_Process(enc, bench_cipher, bench_plain,
+                    bench_size);
+                if (ret < 0) {
+                    printf("wc_Chacha_Process error: %d\n", ret);
+                    goto exit;
+                }
+                RECORD_MULTI_VALUE_STATS();
+            }
+            count += i;
+        } while (bench_stats_check(start)
+    #ifdef MULTI_VALUE_STATISTICS
+            || runs < minimum_runs
+    #endif
+            );
+    }
 
     bench_stats_sym_finish("CHACHA", 0, count, bench_size, start, 0);
 #ifdef MULTI_VALUE_STATISTICS
@@ -7513,12 +7584,12 @@ void bench_sm3(int useDeviceID)
         bench_stats_start(&count, &start);
         do {
             for (times = 0; times < numBlocks; times++) {
-                ret = wc_InitSm3(hash, HEAP_HINT,
+                ret = wc_InitSm3(hash[0], HEAP_HINT,
                     useDeviceID ? devId: INVALID_DEVID);
                 if (ret == 0)
-                    ret = wc_Sm3Update(hash, bench_plain, bench_size);
+                    ret = wc_Sm3Update(hash[0], bench_plain, bench_size);
                 if (ret == 0)
-                    ret = wc_Sm3Final(hash, digest[0]);
+                    ret = wc_Sm3Final(hash[0], digest[0]);
                 if (ret != 0)
                     goto exit_sm3;
                 RECORD_MULTI_VALUE_STATS();
@@ -8115,6 +8186,7 @@ void bench_pbkdf2(void)
     DECLARE_MULTI_VALUE_STATS_VARS()
 
     bench_stats_start(&count, &start);
+    PRIVATE_KEY_UNLOCK();
     do {
         ret = wc_PBKDF2(derived, (const byte*)passwd32, (int)XSTRLEN(passwd32),
             salt32, (int)sizeof(salt32), 1000, 32, WC_SHA256);
@@ -8125,6 +8197,7 @@ void bench_pbkdf2(void)
        || runs < minimum_runs
 #endif
        );
+    PRIVATE_KEY_LOCK();
 
     bench_stats_sym_finish("PBKDF2", 32, count, 32, start, ret);
 #ifdef MULTI_VALUE_STATISTICS
@@ -8205,6 +8278,7 @@ void bench_srtpkdf(void)
     DECLARE_MULTI_VALUE_STATS_VARS()
 
     bench_stats_start(&count, &start);
+    PRIVATE_KEY_UNLOCK();
     do {
         for (i = 0; i < numBlocks; i++) {
             ret = wc_SRTP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
@@ -8218,6 +8292,7 @@ void bench_srtpkdf(void)
        || runs < minimum_runs
 #endif
        );
+    PRIVATE_KEY_LOCK();
     bench_stats_asym_finish("KDF", 128, "SRTP", 0, count, start, ret);
 #ifdef MULTI_VALUE_STATISTICS
     bench_multi_value_stats(max, min, sum, squareSum, runs);
@@ -8226,6 +8301,7 @@ void bench_srtpkdf(void)
     RESET_MULTI_VALUE_STATS_VARS();
 
     bench_stats_start(&count, &start);
+    PRIVATE_KEY_UNLOCK();
     do {
         for (i = 0; i < numBlocks; i++) {
             ret = wc_SRTP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
@@ -8239,6 +8315,7 @@ void bench_srtpkdf(void)
        || runs < minimum_runs
 #endif
        );
+    PRIVATE_KEY_LOCK();
     bench_stats_asym_finish("KDF", 256, "SRTP", 0, count, start, ret);
 #ifdef MULTI_VALUE_STATISTICS
     bench_multi_value_stats(max, min, sum, squareSum, runs);
@@ -8247,6 +8324,7 @@ void bench_srtpkdf(void)
     RESET_MULTI_VALUE_STATS_VARS();
 
     bench_stats_start(&count, &start);
+    PRIVATE_KEY_UNLOCK();
     do {
         for (i = 0; i < numBlocks; i++) {
             ret = wc_SRTCP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
@@ -8260,6 +8338,7 @@ void bench_srtpkdf(void)
        || runs < minimum_runs
 #endif
        );
+    PRIVATE_KEY_LOCK();
     bench_stats_asym_finish("KDF", 128, "SRTCP", 0, count, start, ret);
 #ifdef MULTI_VALUE_STATISTICS
     bench_multi_value_stats(max, min, sum, squareSum, runs);
@@ -8268,6 +8347,7 @@ void bench_srtpkdf(void)
     RESET_MULTI_VALUE_STATS_VARS();
 
     bench_stats_start(&count, &start);
+    PRIVATE_KEY_UNLOCK();
     do {
         for (i = 0; i < numBlocks; i++) {
             ret = wc_SRTCP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
@@ -8281,6 +8361,7 @@ void bench_srtpkdf(void)
        || runs < minimum_runs
 #endif
        );
+    PRIVATE_KEY_LOCK();
     bench_stats_asym_finish("KDF", 256, "SRTCP", 0, count, start, ret);
 #ifdef MULTI_VALUE_STATISTICS
     bench_multi_value_stats(max, min, sum, squareSum, runs);
@@ -10975,13 +11056,13 @@ exit:
 #ifdef WOLFSSL_SM2
 static void bench_sm2_MakeKey(int useDeviceID)
 {
-    int ret = 0, i, times, count, pending = 0;
+    int ret = 0, i, times, count = 0, pending = 0;
     int deviceID;
     int keySize;
     WC_DECLARE_ARRAY(genKey, ecc_key, BENCH_MAX_PENDING,
                      sizeof(ecc_key), HEAP_HINT);
     char name[BENCH_ECC_NAME_SZ];
-    double start;
+    double start = 0;
     const char**desc = bench_desc_words[lng_index];
     DECLARE_MULTI_VALUE_STATS_VARS()
 
@@ -12909,7 +12990,7 @@ void bench_sphincsKeySign(byte level, byte optim)
       The count of ticks since vTaskStartScheduler was called,
       typiclly in app_startup.c */
 
-#ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
+    #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
         ESP_LOGV(TAG, "tickCount = %d", tickCount);
         if (tickCount == last_tickCount) {
             ESP_LOGW(TAG, "last_tickCount unchanged? %d", tickCount);
@@ -12928,7 +13009,7 @@ void bench_sphincsKeySign(byte level, byte optim)
     }
     else {
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-            ESP_LOGW(TAG, "No Reset last_tickCount = %d", tickCount);
+            ESP_LOGV(TAG, "No Reset last_tickCount = %d", tickCount);
         #endif
     }
 
@@ -13461,6 +13542,8 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
 #endif
         else if (string_matches(argv[1], "-dgst_full"))
             digest_stream = 0;
+        else if (string_matches(argv[1], "-enc_only"))
+            encrypt_only = 1;
 #ifndef NO_RSA
         else if (string_matches(argv[1], "-rsa_sign"))
             rsa_sign_verify = 1;
