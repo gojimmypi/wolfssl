@@ -340,13 +340,13 @@ enum {
     /* #define NO_ESP32_CRYPT */
     /* #define NO_WOLFSSL_ESP32_CRYPT_HASH */
     /* No AES HW */
-    #define NO_WOLFSSL_ESP32_CRYPT_AES 
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
     /* No RSA HW:               */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI 
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /* No RSA, so no mp_mul:    */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL 
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     /* No RSA, so no mp_mulmod: */
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD 
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     /* No RSA, no mp_exptmod:   */
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
@@ -776,8 +776,8 @@ extern "C"
     WOLFSSL_LOCAL int esp_sha_hw_in_use();
     WOLFSSL_LOCAL int esp_sha_call_count();
     WOLFSSL_LOCAL int esp_sha_lock_count();
-    WOLFSSL_LOCAL int esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
-    WOLFSSL_LOCAL int esp_sha_set_stray(WC_ESP32SHA* ctx);
+    WOLFSSL_LOCAL uintptr_t esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx);
+    WOLFSSL_LOCAL uintptr_t esp_sha_set_stray(WC_ESP32SHA* ctx);
 
 #ifndef NO_SHA
     struct wc_Sha;
