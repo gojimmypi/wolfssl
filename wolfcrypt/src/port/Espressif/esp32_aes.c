@@ -48,6 +48,9 @@ static const char* TAG = "wolf_hw_aes";
 /* mutex */
 static wolfSSL_Mutex aes_mutex;
 
+/* Maximum time to wait for AES HW in FreeRTOS ticks */
+#define WOLFSSL_AES_MUTEX_WAIT 5000
+
 /* keep track as to whether esp aes is initialized */
 static int espaes_CryptHwMutexInit = 0;
 
@@ -86,7 +89,7 @@ static int esp_aes_hw_InUse(void)
          * of esp_CryptHwMutexLock(&aes_mutex ...) in code  */
         /* TODO - do we really want to wait?
          *    probably not */
-        ret = esp_CryptHwMutexLock(&aes_mutex, 5000);
+        ret = esp_CryptHwMutexLock(&aes_mutex, WOLFSSL_AES_MUTEX_WAIT);
         if (ret == ESP_OK) {
             ESP_LOGV(TAG, "esp_CryptHwMutexLock aes success");
         }

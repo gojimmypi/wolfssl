@@ -86,9 +86,9 @@ HKEY_CURRENT_USER\Software\Sysprogs\GNUToolchains
 | -------------------------------- |----------------------- |
 | `SysGCC-xtensa-lx106-elf-8.4.0`  | `C:\SysGCC\esp8266`    |
 | `SysGCC-xtensa-esp32-elf-8.4.0`  | `C:\SysGCC\esp32-8.4`  |
-| `SysGCC-xtensa-esp32-elf-11.2.0` | `C:\SysGCC\esp32-11.2` |
-| `SysGCC-xtensa-esp32-elf-12.4.0` | `C:\SysGCC\esp32-12.4` |
 | `SysGCC-xtensa-esp32-elf-13.2.0` | `C:\SysGCC\esp32`      |
+| `SysGCC-xtensa-esp32-elf-12.4.0` | `C:\SysGCC\esp32-12.4` |
+| `SysGCC-xtensa-esp32-elf-11.2.0` | `C:\SysGCC\esp32-11.2` |
 
 Note the latest toolchain value is the default install name of `C:\SysGCC\esp32`.
 

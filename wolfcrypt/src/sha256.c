@@ -105,8 +105,14 @@ on the specific device platform.
 #endif
 
 #ifdef WOLFSSL_ESPIDF
-    /* Define the ESP_LOGx(TAG, ""...) value for output messages here. */
-    #define TAG "wc_sha256"
+    /* Define the ESP_LOGx(TAG,  WOLFSSL_ESPIDF_BLANKLINE_MESSAGE value for output messages here.
+    **
+    ** Beware of possible conflict in test.c (that one now named TEST_TAG)
+    */
+    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
+       !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
+        static const char* TAG = "wc_sha256";
+    #endif
 #endif
 
 #if defined(WOLFSSL_TI_HASH)
@@ -819,7 +825,14 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret = 0;
 
-        if (sha256 == NULL || (data == NULL && len > 0)) {
+        if (sha256 == NULL) {
+            return BAD_FUNC_ARG;
+        }
+        if (data == NULL && len == 0) {
+            /* valid, but do nothing */
+            return 0;
+        }
+        if (data == NULL) {
             return BAD_FUNC_ARG;
         }
 
@@ -870,6 +883,17 @@ static int InitSha256(wc_Sha256* sha256)
 
     int wc_Sha256Update(wc_Sha256* sha256, const byte* data, word32 len)
     {
+        if (sha256 == NULL) {
+            return BAD_FUNC_ARG;
+        }
+        if (data == NULL && len == 0) {
+            /* valid, but do nothing */
+            return 0;
+        }
+        if (data == NULL) {
+            return BAD_FUNC_ARG;
+        }
+
         return se050_hash_update(&sha256->se050Ctx, data, len);
     }
 
@@ -957,62 +981,6 @@ static int InitSha256(wc_Sha256* sha256)
     #define NEED_SOFT_SHA256
 
     /*
-     * we'll set the digest at the last minute,
-     *  just before computing hash.
-     *
-     * Reminder that ESP32-C3 does NOT need initial digest.
-     *
-     *  see page 337 of C3 spec: 16.4.1.3 Setting the Initial Hash Value
-     *
-     * "Before hash task begins for any secure hash algorithms, the initial
-     * Hash value H(0) must be set based on different algorithms. However,
-     * the SHA accelerator uses the initial Hash values (constant C) stored
-     * in the hardware for hash tasks"
-     */
-#ifdef TODO_DEFAULT_DIGEST
-    static int set_default_digest256(wc_Sha256* sha256)
-    {
-
-// TODO
-       /* >>>>>>>>>>> */ return 0;  /* TODO not used at this time. */
-
-
-        int ret = 0;
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-
-        if (sha256->ctx.mode == ESP32_SHA_SW) {
-            ret = 1;
-        }
-#endif
-
-    /* When not ESP32-C3, we'll need digest for SW or HW */
-    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-        defined(CONFIG_IDF_TARGET_ESP8684) || \
-        defined(CONFIG_IDF_TARGET_ESP32C3) || \
-        defined(CONFIG_IDF_TARGET_ESP32C6)
-    #else
-        ret = 1;
-    #endif
-
-
-    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-        if ((ret == 1) && (sha256->ctx.isfirstblock == 1)) {
-            XMEMSET(sha256->digest, 0, sizeof(sha256->digest));
-                sha256->digest[0] = 0x6A09E667L;
-                sha256->digest[1] = 0xBB67AE85L;
-                sha256->digest[2] = 0x3C6EF372L;
-                sha256->digest[3] = 0xA54FF53AL;
-                sha256->digest[4] = 0x510E527FL;
-                sha256->digest[5] = 0x9B05688CL;
-                sha256->digest[6] = 0x1F83D9ABL;
-                sha256->digest[7] = 0x5BE0CD19L;
-        }
-    #endif
-        return ret;
-    } /* set_default_digest256 */
-#endif
-
-    /*
     ** An Espressif-specific InitSha256()
     **
     ** soft SHA needs initialization digest, but HW does not.
@@ -1021,13 +989,8 @@ static int InitSha256(wc_Sha256* sha256)
     {
         int ret = 0; /* zero = success */
 
-        if (sha256 == NULL) {
-            return BAD_FUNC_ARG;
-        }
-
-        /* we may or may not need initial digest.
-         * always needed for SW-only.
-         *  See set_default_digest256() for HW/SW */
+        /* We may or may not need initial digest for HW.
+         * Always needed for SW-only. */
         sha256->digest[0] = 0x6A09E667L;
         sha256->digest[1] = 0xBB67AE85L;
         sha256->digest[2] = 0x3C6EF372L;
@@ -1368,7 +1331,6 @@ static int InitSha256(wc_Sha256* sha256)
                     ESP_LOGV(TAG, "Sha256Update try hardware");
                     esp_sha_try_hw_lock(&sha256->ctx);
                 }
-                // TODO: Not yet implemented: set_default_digest256(sha256);
             #endif
 
             if (SHA256_UPDATE_REV_BYTES(&sha256->ctx)) {
@@ -1379,7 +1341,6 @@ static int InitSha256(wc_Sha256* sha256)
             #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
                !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
                 if (sha256->ctx.mode == ESP32_SHA_SW) {
-                    ESP_LOGV(TAG, "Sha256Update process software");
                     #if defined(WOLFSSL_DEBUG_MUTEX)
                     {
                         ESP_LOGI(TAG, "Sha256Update process software");
@@ -1694,7 +1655,7 @@ static int InitSha256(wc_Sha256* sha256)
             ret = XTRANSFORM(sha256, (const byte*)local);
         }
         else {
-            ret = esp_sha256_digest_process(sha256, TRUE);
+            ret = esp_sha256_digest_process(sha256, 1);
         }
     #else
         ret = XTRANSFORM(sha256, (const byte*)local);
