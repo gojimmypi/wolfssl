@@ -29,11 +29,6 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
-#if defined(WOLFSSL_ESPIDF)
-    #include <esp_log.h>
-    #include <esp_system.h>
-    #define TAG "wc_port"
-#endif
 #ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>
 #endif
@@ -1404,30 +1399,13 @@ int wolfSSL_CryptHwMutexUnLock(void)
 
     int wc_InitMutex(wolfSSL_Mutex* m)
     {
-        int iReturn = 0;
+        int iReturn;
 
-        if (m == NULL) {
-            WOLFSSL_MSG("wc_InitMutex m is NULL");
-            iReturn =  BAD_FUNC_ARG;
-        }
-
-        if (iReturn == 0) {
-            int this_heap = esp_get_free_heap_size();
-            WOLFSSL_MSG_EX(TAG, "wc_InitMutex for %p; heap = %d", m, this_heap);
-            *m = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
-            if (*m != NULL) {
-                WOLFSSL_MSG_EX(TAG, "xSemaphoreCreateMutex success: %p", m);
-#ifdef WOLFSSL_ESPIDF
-                this_heap = esp_get_free_heap_size();
-                ESP_LOGI(TAG, "wc_InitMutex success heap = %d", this_heap);
-#endif
-                iReturn = 0;
-            }
-            else {
-                WOLFSSL_MSG_EX(TAG, "xSemaphoreCreateMutex failed: null");
-                iReturn = BAD_MUTEX_E;
-            }
-        }
+        *m = ( wolfSSL_Mutex ) xSemaphoreCreateMutex();
+        if( *m != NULL )
+            iReturn = 0;
+        else
+            iReturn = BAD_MUTEX_E;
 
         return iReturn;
     }

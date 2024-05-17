@@ -484,7 +484,7 @@ int wc_CryptKey(const char* password, int passwordSz, byte* salt,
             }
             break;
     #endif /* WOLFSSL_AES_128 && !NO_SHA */
-    #if !defined(NO_SHA) && defined(WC_RC2)
+    #ifdef WC_RC2
         case PBE_SHA1_40RC2_CBC:
             typeH = WC_SHA;
             derivedLen = 5;

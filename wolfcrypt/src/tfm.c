@@ -51,10 +51,6 @@
 #include <wolfssl/wolfcrypt/tfm.h>
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
-    #include <wolfcrypt/logging.h>
-#ifdef DEBUG_WOLFSSL
-    #include <wolfcrypt/logging.h>
-#endif
 
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
@@ -1370,7 +1366,7 @@ int fp_invmod(fp_int *a, fp_int *b, fp_int *c)
   }
 
   /* [modified] sanity check on "a" */
-  if (fp_iszero(a) == FP_YES) { /* TODO a.used is checked, not actual values :/ */
+  if (fp_iszero(a) == FP_YES) {
     return FP_VAL; /* can not divide by 0 here */
   }
 
@@ -2464,7 +2460,6 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   M = (fp_int*)XMALLOC(sizeof(fp_int)*((1 << winsize) + 1), NULL,
                                                            DYNAMIC_TYPE_BIGINT);
   if (M == NULL) {
-     //WOLFSSL_MSG_EX("_fp_exptmod_nct XMALLOC failed: %d", (word32)sizeof(fp_int)*((1 << winsize) + 1));
      return FP_MEM;
   }
 #endif
@@ -3310,7 +3305,6 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
    /* handle modulus of zero and prevent overflows */
    if (fp_iszero(P) || (P->used > (FP_SIZE/2))) {
-      //WOLFSSL_MSG("handle modulus of zero");
       return FP_VAL;
    }
    if (fp_isone(P)) {
@@ -3362,13 +3356,8 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 
    #ifdef WOLFSSL_SMALL_STACK
       tmp = (fp_int*)XMALLOC(sizeof(fp_int) * 2, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-       if (tmp == NULL) {
-           //WOLFSSL_MSG_EX("fp_exptmod_nct XMALLOC failed: %d", sizeof(fp_int) * 2);
-           return FP_MEM;
-       }
-       else {
-           //WOLFSSL_MSG_EX("fp_exptmod_nct XMALLOC success: %d", sizeof(fp_int) * 2);
-       }
+      if (tmp == NULL)
+          return FP_MEM;
    #endif
 
       /* yes, copy G and invmod it */
@@ -3376,22 +3365,16 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       fp_init_copy(&tmp[1], P);
       tmp[1].sign = FP_ZPOS;
       err = fp_invmod(&tmp[0], &tmp[1], &tmp[0]);
-       if (err == FP_OKAY) {
-           X->sign = FP_ZPOS;
-           err =  _fp_exptmod_nct(&tmp[0], X, P, Y);
-           if (err != FP_OKAY) {
-               //WOLFSSL_MSG("_fp_exptmod_nct failed");
-           }
-           if (X != Y) {
-               X->sign = FP_NEG;
-           }
-           if ((err == 0) && (P->sign == FP_NEG)) {
-               err = fp_add(Y, P, Y);
-           }
-       }
-       else {
-           //WOLFSSL_MSG_EX("fp_invmod failed");
-       }
+      if (err == FP_OKAY) {
+         X->sign = FP_ZPOS;
+         err =  _fp_exptmod_nct(&tmp[0], X, P, Y);
+         if (X != Y) {
+            X->sign = FP_NEG;
+         }
+         if ((err == 0) && (P->sign == FP_NEG)) {
+            err = fp_add(Y, P, Y);
+         }
+      }
    #ifdef WOLFSSL_SMALL_STACK
       XFREE(tmp, NULL, DYNAMIC_TYPE_BIGINT);
    #endif
@@ -3445,37 +3428,6 @@ int fp_sqr(fp_int *A, fp_int *B)
        goto clean;
     }
 
-#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
-    if (esp_hw_validation_active()) {
-        ESP_LOGV(TAG, "Skipping call to esp_mp_mul "
-                      "during active validation.");
-    }
-    else {
-        err = esp_mp_mul(A, A, B); /* HW accelerated multiply  */
-        switch (err) {
-            case MP_OKAY:
-                goto clean; /* success */
-                break;
-
-            case WC_HW_WAIT_E: /* MP_HW_BUSY math HW busy, fall back */
-            case MP_HW_FALLBACK:    /* forced fallback from HW to SW */
-            case MP_HW_VALIDATION_ACTIVE: /* use SW to compare to HW */
-                /* fall back to software, below */
-                break;
-
-            default:
-                /* Once we've failed, exit without trying to continue.
-                 * We may have mangled operands: (e.g. Z = X * Z)
-                 * Future implementation may consider saving operands,
-                 * but errors should never occur. */
-                goto clean;  /* error */
-                break;
-        }
-    }
-    /* fall through to software calcs */
-#endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
-
-/* TODO check / test */
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
     if (esp_hw_validation_active()) {
         ESP_LOGV(TAG, "Skipping call to esp_mp_mul "
@@ -3758,7 +3710,7 @@ int fp_cmp_mag(fp_int *a, fp_int *b)
 {
    int x;
 
-   if (a->used > b->used) { /* TODO consider zero padding error */
+   if (a->used > b->used) {
       return FP_GT;
    } else if (a->used < b->used) {
       return FP_LT;
@@ -5505,20 +5457,17 @@ int fp_isprime_ex(fp_int *a, int t, int* result)
        *result = FP_NO;
        return FP_OKAY;
    }
-   WOLFSSL_MSG_EX("Prime table check: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
+
    /* check against primes table */
    for (r = 0; r < FP_PRIME_SIZE; r++) {
-       WOLFSSL_MSG_EX("fp_cmp_d for r = %d", r);
        if (fp_cmp_d(a, primes[r]) == FP_EQ) {
            *result = FP_YES;
            return FP_OKAY;
        }
    }
 
-   WOLFSSL_MSG_EX("Trial division: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
    /* do trial division */
    for (r = 0; r < FP_PRIME_SIZE; r++) {
-       WOLFSSL_MSG_EX("fp_mod_d for r = %d", r);
        res = fp_mod_d(a, primes[r], &d);
        if (res != MP_OKAY || d == 0) {
            *result = FP_NO;
@@ -5533,10 +5482,8 @@ int fp_isprime_ex(fp_int *a, int t, int* result)
 #endif
    /* now do 't' miller rabins */
    fp_init(b);
-   WOLFSSL_MSG_EX("miller rabins: FP_PRIME_SIZE = %d", FP_PRIME_SIZE);
    for (r = 0; r < t; r++) {
        fp_set(b, primes[r]);
-       WOLFSSL_MSG_EX("fp_prime_miller_rabin for r = %d", r);
        err = fp_prime_miller_rabin(a, b, &res);
        if ((err != FP_OKAY) || (res == FP_NO)) {
           *result = res;

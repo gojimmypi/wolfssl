@@ -27,11 +27,7 @@
 
 #ifdef WOLFSSL_SM2
 
-    #if defined(WOLFSSL_ESPIDF)
-        /* not used by spressif ESP-IDF */
-    #else
-        #error "See https://github.com/wolfSSL/wolfsm for implementation of this file"
-    #endif
+#error "See https://github.com/wolfSSL/wolfsm for implementation of this file"
 
 #endif
 

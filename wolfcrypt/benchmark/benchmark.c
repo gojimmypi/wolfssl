@@ -318,7 +318,7 @@
      * enabled, all if the values in report are blank. */
     #ifdef CONFIG_NEWLIB_NANO_FORMAT
         #if CONFIG_NEWLIB_NANO_FORMAT == 1
-            #error "Nano newlib fomatting must not be enabled for benchmark"
+            #error "Nano newlib formatting must not be enabled for benchmark"
         #endif
     #endif
 
@@ -1417,7 +1417,7 @@ static const char* bench_result_words3[][5] = {
         uint64_t thisIncrement = 0; /* The adjusted increment amount.       */
         uint64_t expected_diff = 0; /* FreeRTOS estimated expected CPU diff.*/
     #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-        uint64_t tickCount = 0; /* Currrent rtos tick counter.              */
+        uint64_t tickCount = 0; /* Current rtos tick counter.               */
         uint64_t tickDiff = 0;  /* Tick difference from last check.         */
         uint64_t tickBeginDiff = 0; /* Tick difference from beginning.      */
     #endif

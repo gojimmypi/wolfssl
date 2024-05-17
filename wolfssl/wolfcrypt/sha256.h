@@ -159,7 +159,6 @@ enum {
     #include "mcapi_error.h"
 #endif
 
-#define WC_SHA256_ALIGN
 /* wc_Sha256 digest */
 struct wc_Sha256 {
 #ifdef FREESCALE_LTC_SHA
@@ -239,7 +238,7 @@ struct wc_Sha256 {
 #ifdef WOLFSSL_HASH_FLAGS
     word32 flags; /* enum wc_HashFlags in hash.h */
 #endif
-} __attribute__((aligned(4)));
+};
 
 #ifndef WC_SHA256_TYPE_DEFINED
     typedef struct wc_Sha256 wc_Sha256;

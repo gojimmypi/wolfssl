@@ -488,7 +488,6 @@ int wc_SignatureGenerate_ex(
     byte hash_data[MAX_DER_DIGEST_SZ];
 #endif
 
-    WOLFSSL_ENTER("wc_SignatureGenerate_ex");
     /* Check arguments */
     if (data == NULL || data_len == 0 ||
         sig == NULL || sig_len == NULL || *sig_len == 0 ||

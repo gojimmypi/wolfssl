@@ -759,10 +759,6 @@ int wc_InitSha512_ex(wc_Sha512* sha512, void* heap, int devId)
     }
     /* We know this is a fresh, uninitialized item, so set to INIT */
     sha512->ctx.mode = ESP32_SHA_INIT;
-#else
-#ifdef WOLFSSL_ESPIDF
-    WOLFSSL_MSG("wc_InitSha512_ex no HW enabled");
-#endif
 #endif
 
     return InitSha512_Family(sha512, heap, devId, InitSha512);
@@ -1006,7 +1002,7 @@ static WC_INLINE int Sha512Update(wc_Sha512* sha512, const byte* data, word32 le
                 ret = esp_sha512_process(sha512);
             }
     #endif
-            if (ret == ESP_OK)
+            if (ret == 0)
                 sha512->buffLen = 0;
             else
                 len = 0;

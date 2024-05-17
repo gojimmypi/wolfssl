@@ -39,12 +39,6 @@
     #include <wolfcrypt/src/misc.c>
 #endif
 
-#ifdef DEBUG_WOLFSSL
-    #include <wolfcrypt/logging.h>
-#else
-    #define WOLFSSL_MSG(X)
-#endif
-
 /** Computes the session key using the Mask Generation Function 1. */
 static int wc_SrpSetKey(Srp* srp, byte* secret, word32 size);
 
@@ -274,13 +268,10 @@ int wc_SrpInit_ex(Srp* srp, SrpType type, SrpSide side, void* heap, int devId)
     if ((r = SrpHashInit(&srp->client_proof, type, srp->heap)) != 0)
         return r;
 
-    // srp->client_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
     if ((r = SrpHashInit(&srp->server_proof, type, srp->heap)) != 0) {
         SrpHashFree(&srp->client_proof);
         return r;
     }
-    // srp->server_proof.data.sha512.ctx.mode = ESP32_SHA_SW; // TODO hack force SW
-
     if ((r = mp_init_multi(&srp->N,    &srp->g, &srp->auth,
                            &srp->priv, 0, 0)) != 0) {
         SrpHashFree(&srp->client_proof);
@@ -994,10 +985,8 @@ int wc_SrpVerifyPeersProof(Srp* srp, byte* proof, word32 size)
         if (!r) r = SrpHashUpdate(&srp->server_proof, srp->key, srp->keySz);
     }
 
-    if (!r && XMEMCMP(proof, digest, size) != 0) {
-        WOLFSSL_MSG("Verify Peers Proof vs Digest failed");
+    if (!r && XMEMCMP(proof, digest, size) != 0)
         r = SRP_VERIFY_E;
-    }
 
     return r;
 }

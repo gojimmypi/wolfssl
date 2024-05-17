@@ -1646,7 +1646,7 @@ static int InitSha256(wc_Sha256* sha256)
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW) && \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
         if (sha256->ctx.mode == ESP32_SHA_INIT) {
-            // ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (4)");
+            ESP_LOGI(TAG, "SHA256Final LOCK found for INIT (4)");
             esp_sha_try_hw_lock(&sha256->ctx); /* TODO already locked, no? */
         }
         /* depending on architecture and ctx.mode value
@@ -1729,7 +1729,7 @@ static int InitSha256(wc_Sha256* sha256)
                 WC_SHA256_DIGEST_SIZE);
         }
     #endif
-        XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE); /* dst, src, l */
+        XMEMCPY(hash, sha256->digest, WC_SHA256_DIGEST_SIZE);
 
         return InitSha256(sha256);  /* reset state */
     }
@@ -2212,10 +2212,6 @@ void wc_Sha256Free(wc_Sha256* sha256)
 {
     if (sha256 == NULL)
         return;
-
-#ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-    // ESP_LOGI(TAG, "Call wc_Sha256Free for %p", sha256 );
-#endif
 
 #if defined(WOLFSSL_ESP32) && \
     !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
