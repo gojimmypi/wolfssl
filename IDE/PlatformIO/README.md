@@ -19,7 +19,7 @@ There are staging / preview libraries for each of the two types wolfSSL librarie
 
 # Examples
 
-See the [examples directory](./examples/README.md)
+See the [examples directory](./examples/)
 
 ## Publishing
 
