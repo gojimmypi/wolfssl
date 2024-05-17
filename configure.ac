@@ -100,6 +100,9 @@ else
     REPRODUCIBLE_BUILD_DEFAULT=no
 fi
 
+# Fail when an option is passed that is not recognized
+m4_divert_once([DEFAULTS], [enable_option_checking=fatal])
+
 # Allow experimental settings
 AC_ARG_ENABLE([experimental],
     [AS_HELP_STRING([--enable-experimental],[Allow experimental settings in the configuration (default: disabled)])],
@@ -3757,13 +3760,13 @@ then
 fi
 
 # ECC Minimum Key Size
-ENABLED_ECCMINSZ=224
 AC_ARG_WITH([eccminsz],
     [AS_HELP_STRING([--with-eccminsz=BITS],[Sets the ECC minimum key size (default: 224 bits)])],
     [
         ENABLED_ECCMINSZ=$withval
         AM_CFLAGS="$AM_CFLAGS -DECC_MIN_KEY_SZ=$withval"
-    ]
+    ],
+    [ ENABLED_ECCMINSZ=224 ]
 )
 
 # Compressed Key
@@ -5143,6 +5146,9 @@ AS_CASE([$FIPS_VERSION],
 
         AS_IF([test "$ENABLED_SHA224" != "yes" && (test "$FIPS_VERSION" != "v5-dev" || test "$enable_sha224" != "no")],
             [ENABLED_SHA224="yes"; AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SHA224"])
+
+        AS_IF([test "$ENABLED_SHA3" != "yes" && (test "$FIPS_VERSION" != "v5-dev" || test "$enable_sha3" != "no")],
+            [ENABLED_SHA3="yes"; AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SHA3"])
 
         AS_IF([test "$ENABLED_WOLFSSH" != "yes" && (test "$FIPS_VERSION" != "v5-dev" || test "$enable_ssh" != "no")],
             [enable_ssh="yes"])
@@ -8324,7 +8330,7 @@ fi
 AC_ARG_WITH([max-ecc-bits],
     [AS_HELP_STRING([--with-max-ecc-bits=number],[number of bits to support for ECC algorithms])],
     [WITH_MAX_ECC_BITS=$withval],
-    [WITH_MAX_ECC_BITS="$DEFAULT_MAX_ECC_BITS"])
+    )
 
 if test -n "$WITH_MAX_ECC_BITS"; then
    if test "$WITH_MAX_ECC_BITS" -lt 112 -o "$WITH_MAX_ECC_BITS" -gt 1024; then
@@ -10044,3 +10050,10 @@ if test "$MINGW_LIB_WARNING" = "yes"
 then
     AC_MSG_WARN([Building with shared and static library at the same time on this system may cause export/import problems when using non contemporary GNU tools.])
 fi
+
+if test -n "$WITH_MAX_ECC_BITS"; then
+    if test "$WITH_MAX_ECC_BITS" -lt "$ENABLED_ECCMINSZ"; then
+        AC_MSG_ERROR([--with-max-ecc-bits argument ($WITH_MAX_ECC_BITS) must be greater than --with-eccminsz argument ($ENABLED_ECCMINSZ)])
+    fi
+fi
+
