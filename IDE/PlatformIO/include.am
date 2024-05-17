@@ -11,20 +11,15 @@
 
 EXTRA_DIST+= IDE/PlatformIO/README.md
 
-EXTRA_DIST+= IDE/PlatformIO/examples
 EXTRA_DIST+= IDE/PlatformIO/examples/README.md
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_platformio.code-workspace
 
 # wolfssl_benchmark example
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/CMakeLists.txt
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/include
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/lib
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/platformio.ini
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/README.md
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/sdkconfig.defaults
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/src
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/test
+EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/wolfssl_benchmark.code-workspace
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/include/README
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/lib/README
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/src/CMakeLists.txt
@@ -32,18 +27,13 @@ EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/src/main.c
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_benchmark/test/README
 
 # wolfssl_test example
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/CMakeLists.txt
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/include
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/lib
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/platformio.ini
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/README.md
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/sdkconfig.defaults
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/src
-EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/test
+EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/wolfssl_test.code-workspace
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/include/README
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/lib/README
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/src/CMakeLists.txt
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/src/main.c
 EXTRA_DIST+= IDE/PlatformIO/examples/wolfssl_test/test/README
-
