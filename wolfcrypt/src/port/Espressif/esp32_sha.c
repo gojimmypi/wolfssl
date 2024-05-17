@@ -1422,7 +1422,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
                 if (mutex_ctx_owner) {
                 #ifdef WOLFSSL_DEBUG_MUTEX
                     ESP_LOGW(TAG, "revert to SW since mutex_ctx_owner = %x"
-                                    " but we are currenty ctx = %x",
+                                    " but we are currently ctx = %x",
                                     mutex_ctx_owner, (intptr_t)ctx);
                 #endif
                 }

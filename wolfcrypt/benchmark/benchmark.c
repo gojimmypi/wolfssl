@@ -375,7 +375,7 @@
           defined(CONFIG_IDF_TARGET_ESP32S3)
         #include <xtensa/hal.h>
     #elif defined(CONFIG_IDF_TARGET_ESP8266)
-        /* no CPU HAL for ESP8266, we'll use RTOS tick calc extimates */
+        /* no CPU HAL for ESP8266, we'll use RTOS tick calc estimates */
         #include <FreeRTOS.h>
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
 
