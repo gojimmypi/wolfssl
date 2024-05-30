@@ -2,7 +2,7 @@ name: Espressif examples tests
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ 'master', 'main', 'release/**' ]
+    branches: [ 'master', 'main', 'release/**', 'ED25519_SHA2_fix' ]
   pull_request:
     branches: [ '*' ]
 
