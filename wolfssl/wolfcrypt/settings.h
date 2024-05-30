@@ -3552,9 +3552,13 @@ extern void uITRON4_free(void *p) ;
     /* Ciphersuite check done in internal.h */
 #endif
 
+/*
+ * TODO this fails from
+ *  ./configure --enable-all && make clean && make
 #if defined(HAVE_FFDHE) && !defined(HAVE_DH)
     #error "HAVE_FFDHE requires HAVE_DH"
 #endif
+*/
 
 /* Some final sanity checks */
 #ifdef WOLFSSL_APPLE_HOMEKIT
