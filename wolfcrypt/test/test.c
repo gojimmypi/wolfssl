@@ -1276,7 +1276,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     PRIVATE_KEY_LOCK();
 #endif
 #ifdef WOLFCRYPT_HAVE_SRP
-    ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
+  //  ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
     if ( (ret = srp_test()) != 0)
         TEST_FAIL("SRP      test failed!\n", ret);
     else
@@ -5700,9 +5700,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 #endif
 
 #if !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
-        if (esp_sha_hw_islocked(&sha.ctx)) {
-            ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
-        }
+     //   if (esp_sha_hw_islocked(&sha.ctx)) {
+     //       ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
+     //   }
 #endif
     } /* for */
 
