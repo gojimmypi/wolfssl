@@ -303,7 +303,8 @@ typedef struct w64wrapper {
     #ifndef WARN_UNUSED_RESULT
         #if defined(WOLFSSL_LINUXKM) && defined(__must_check)
             #define WARN_UNUSED_RESULT __must_check
-        #elif defined(__GNUC__) && (__GNUC__ >= 4)
+        #elif (defined(__GNUC__) && (__GNUC__ >= 4)) || \
+            (defined(__IAR_SYSTEMS_ICC__) && (__VER__ >= 9040001))
             #define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
         #else
             #define WARN_UNUSED_RESULT
@@ -311,7 +312,7 @@ typedef struct w64wrapper {
     #endif /* WARN_UNUSED_RESULT */
 
     #ifndef WC_MAYBE_UNUSED
-        #if (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)
+        #if (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__) || defined(__IAR_SYSTEMS_ICC__)
             #define WC_MAYBE_UNUSED __attribute__((unused))
         #else
             #define WC_MAYBE_UNUSED
@@ -769,7 +770,7 @@ typedef struct w64wrapper {
                 defined(WOLFSSL_ZEPHYR) || defined(MICROCHIP_PIC24)
             /* XC32 version < 1.0 does not support strncasecmp. */
             #define USE_WOLF_STRNCASECMP
-            #define XSTRNCASECMP(s1,s2) wc_strncasecmp(s1,s2)
+            #define XSTRNCASECMP(s1,s2,n) wc_strncasecmp((s1),(s2),(n))
         #elif defined(USE_WINDOWS_API) || defined(FREERTOS_TCP_WINSIM)
             #define XSTRNCASECMP(s1,s2,n) _strnicmp((s1),(s2),(n))
         #else
@@ -823,6 +824,10 @@ typedef struct w64wrapper {
                         return ret;
                     }
                 #define XSNPRINTF _xsnprintf_
+            #elif defined(FREESCALE_MQX)
+                /* see wc_port.h for fio.h and nio.h includes.  MQX does not
+                   have stdio.h available, so it needs its own section. */
+                #define XSNPRINTF snprintf
             #elif defined(WOLF_C89)
                 #include <stdio.h>
                 #define XSPRINTF sprintf

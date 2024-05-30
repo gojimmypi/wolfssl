@@ -6349,7 +6349,7 @@ int wolfSSL_CTX_check_private_key(const WOLFSSL_CTX* ctx)
     res = check_cert_key(ctx->certificate, ctx->privateKey, ctx->altPrivateKey,
             ctx->heap, ctx->privateKeyDevId, ctx->privateKeyLabel,
             ctx->privateKeyId, ctx->altPrivateKeyDevId, ctx->altPrivateKeyLabel,
-            ctx->altPrivateKeyId) != 0
+            ctx->altPrivateKeyId) != 0;
 #ifdef WOLFSSL_BLIND_PRIVATE_KEY
     {
         int ret;
@@ -21564,7 +21564,10 @@ int set_curves_list(WOLFSSL* ssl, WOLFSSL_CTX *ctx, const char* names,
     for (i = 0; i < groups_len; ++i) {
         /* Switch the bit to off and therefore is enabled. */
         curve = (word16)groups[i];
-        if (curve >= 32) {
+        if (curve >= 64) {
+            WC_DO_NOTHING;
+        }
+        else if (curve >= 32) {
             /* 0 is for invalid and 1-14 aren't used otherwise. */
             disabled &= ~(1U << (curve - 32));
         }

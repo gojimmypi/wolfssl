@@ -2460,19 +2460,25 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
         return MEMORY_E;
     }
     XMEMSET(ctx->param, 0, sizeof(WOLFSSL_X509_VERIFY_PARAM));
-    /* WOLFSSL_X509_LOOKUP and param */
-    if ((ctx->x509_store.lookup.dirs =
-                            (WOLFSSL_BY_DIR*)XMALLOC(sizeof(WOLFSSL_BY_DIR),
-                            heap, DYNAMIC_TYPE_OPENSSL)) == NULL ||
-        (ctx->x509_store.param = (WOLFSSL_X509_VERIFY_PARAM*)XMALLOC(
-                    sizeof(WOLFSSL_X509_VERIFY_PARAM),
-                    heap, DYNAMIC_TYPE_OPENSSL)) == NULL) {
-        WOLFSSL_MSG("ctx-x509_store.lookup.dir or ctx->x509_store.param memory "
-                    "allocation error");
+
+    /* WOLFSSL_X509_LOOKUP */
+    if ((ctx->x509_store.lookup.dirs = (WOLFSSL_BY_DIR*)XMALLOC(
+                           sizeof(WOLFSSL_BY_DIR),
+                           heap, DYNAMIC_TYPE_OPENSSL)) == NULL) {
+        WOLFSSL_MSG("ctx->x509_store.lookup.dirs: allocation error");
         return MEMORY_E;
     }
     XMEMSET(ctx->x509_store.lookup.dirs, 0, sizeof(WOLFSSL_BY_DIR));
+
+    /* param */
+    if ((ctx->x509_store.param = (WOLFSSL_X509_VERIFY_PARAM*)XMALLOC(
+                           sizeof(WOLFSSL_X509_VERIFY_PARAM),
+                           heap, DYNAMIC_TYPE_OPENSSL)) == NULL) {
+        WOLFSSL_MSG("ctx->x509_store.param: allocation error");
+        return MEMORY_E;
+    }
     XMEMSET(ctx->x509_store.param, 0, sizeof(WOLFSSL_X509_VERIFY_PARAM));
+
     if (wc_InitMutex(&ctx->x509_store.lookup.dirs->lock) != 0) {
         WOLFSSL_MSG("Bad mutex init");
         WOLFSSL_ERROR_VERBOSE(BAD_MUTEX_E);
@@ -33521,7 +33527,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
 #ifndef NO_CERTS
 
-#ifdef WOLF_PRIVATE_KEY_ID
+#if defined(WOLF_PRIVATE_KEY_ID) || defined(HAVE_PK_CALLBACKS)
     int GetPrivateKeySigSize(WOLFSSL* ssl)
     {
         int sigSz = 0;
@@ -33562,7 +33568,7 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         }
         return sigSz;
     }
-#endif /* HAVE_PK_CALLBACKS */
+#endif /* WOLF_PRIVATE_KEY_ID || HAVE_PK_CALLBACKS */
 
 #endif /* NO_CERTS */
 
