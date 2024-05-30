@@ -283,9 +283,7 @@ egs:
 	$(MAKE) examples/client/client; \
 	$(MAKE) examples/echoclient/echoclient;\
 	$(MAKE) examples/server/server; \
-	$(MAKE) examples/echoserver/echoserver; \
-	$(MAKE) examples/dtls13_client/client; \
-	$(MAKE) examples/dtls13_server/server;
+	$(MAKE) examples/echoserver/echoserver;
 
 wc_egs:
 	$(MAKE) wolfcrypt/test/testwolfcrypt; \

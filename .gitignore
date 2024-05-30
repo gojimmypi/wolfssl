@@ -541,3 +541,4 @@ debian/control
 /IDE/PlatformIO/PlatformIO_wolfSSL/wolfssl
 /IDE/PlatformIO/examples/wolfssl_benchmark/.gitignore
 
+/examples-extra/dtls
