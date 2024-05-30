@@ -3324,9 +3324,13 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     if (useClientCert && !loadCertKeyIntoSSLObj){
     #if defined(NO_FILESYSTEM) && defined(USE_CERT_BUFFERS_2048)
         if (wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                // client_cert_der_2048, sizeof_client_cert_der_2048,
-                client_sm2, sizeof_client_sm2,
-                WOLFSSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
+                client_cert_der_2048, sizeof_client_cert_der_2048,
+                WOLFSSL_FILETYPE_ASN1) != WOLFSSL_SUCCESS)
+
+//        if (wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+//                // client_cert_der_2048, sizeof_client_cert_der_2048,
+//                client_sm2, sizeof_client_sm2,
+//                WOLFSSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
             err_sys("can't load client cert buffer");
     #elif !defined(TEST_LOAD_BUFFER)
         if (wolfSSL_CTX_use_certificate_chain_file_format(ctx, ourCert, fileFormat)
@@ -3349,10 +3353,13 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
     #endif
     ) {
     #ifdef NO_FILESYSTEM
-        if (wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-            //client_key_der_2048, sizeof_client_key_der_2048,
-            client_sm2_priv, sizeof_client_sm2_priv,
-            SSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
+        if (wolfSSL_CTX_use_PrivateKey_buffer(ctx, client_key_der_2048,
+            sizeof_client_key_der_2048, SSL_FILETYPE_ASN1) != WOLFSSL_SUCCESS)
+
+//        if (wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+//            //client_key_der_2048, sizeof_client_key_der_2048,
+//            client_sm2_priv, sizeof_client_sm2_priv,
+//            SSL_FILETYPE_PEM) != WOLFSSL_SUCCESS)
             err_sys("can't load client private key buffer");
     #elif !defined(TEST_LOAD_BUFFER)
         if (wolfSSL_CTX_use_PrivateKey_file(ctx, ourKey, fileFormat)
@@ -3391,12 +3398,18 @@ THREAD_RETURN WOLFSSL_THREAD client_test(void* args)
         } else {
     #endif
     #ifdef NO_FILESYSTEM
-        if (wolfSSL_CTX_load_verify_buffer(ctx,
-            root_sm2, sizeof_root_sm2,
-            SSL_FILETYPE_PEM) != WOLFSSL_SUCCESS) {
+        if (wolfSSL_CTX_load_verify_buffer(ctx, ca_cert_der_2048,
+            sizeof_ca_cert_der_2048, SSL_FILETYPE_ASN1) != WOLFSSL_SUCCESS) {
             wolfSSL_CTX_free(ctx); ctx = NULL;
             err_sys("can't load ca buffer, Please run from wolfSSL home dir");
         }
+
+//        if (wolfSSL_CTX_load_verify_buffer(ctx,
+//            root_sm2, sizeof_root_sm2,
+//            SSL_FILETYPE_PEM) != WOLFSSL_SUCCESS) {
+//            wolfSSL_CTX_free(ctx); ctx = NULL;
+//            err_sys("can't load ca buffer, Please run from wolfSSL home dir");
+//        }
     #elif !defined(TEST_LOAD_BUFFER)
         unsigned int verify_flags = 0;
     #ifdef TEST_BEFORE_DATE

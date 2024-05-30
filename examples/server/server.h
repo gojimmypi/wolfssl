@@ -22,7 +22,7 @@
 
 #ifndef WOLFSSL_SERVER_H
 #define WOLFSSL_SERVER_H
-#include <wolfssl/ssl.h>
+
 
 THREAD_RETURN WOLFSSL_THREAD server_test(void* args);
 
