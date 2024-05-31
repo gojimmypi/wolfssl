@@ -1276,15 +1276,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
     PRIVATE_KEY_LOCK();
 #endif
 #ifdef WOLFCRYPT_HAVE_SRP
-  //  ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
     if ( (ret = srp_test()) != 0)
         TEST_FAIL("SRP      test failed!\n", ret);
     else
         TEST_PASS("SRP      test passed!\n");
 #endif
-//    if (args)
-//        ((func_args*)args)->return_code = ret;
-//    return ret;
 
     if ( (ret = error_test()) != 0)
         TEST_FAIL("error    test failed!\n", ret);
@@ -1418,15 +1414,11 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif /* WOLFSSL_SHA512 */
 
 #ifdef WOLFCRYPT_HAVE_SRP
- //   ESP_LOGI(ESPIDF_TAG, "Here we go with srp_test!");
     if ( (ret = srp_test()) != 0)
         TEST_FAIL("SRP      test failed!\n", ret);
     else
         TEST_PASS("SRP      test passed!\n");
 #endif
-//    if (args)
-//        ((func_args*)args)->return_code = ret;
-//    return ret;
 
 
 #ifdef WOLFSSL_SHA3
@@ -5699,10 +5691,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
         }
 #endif
 
-#if !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
-     //   if (esp_sha_hw_islocked(&sha.ctx)) {
-     //       ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
-     //   }
+#if defined(WOLFSSL_ESPIDF) && !defined(NO_WOLFSSL_ESP32_CRYPT_HASH)
+        if (esp_sha_hw_islocked(&sha.ctx)) {
+            ESP_LOGW(ESPIDF_TAG, "SHA Not cleaned up!");
+        }
 #endif
     } /* for */
 
@@ -19726,6 +19718,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
         }
     }
 
+#ifndef WOLFSSL_STATIC_MEMORY_LEAN
     /* check that padding size returned is possible */
     if (wolfSSL_MemoryPaddingSz() < WOLFSSL_STATIC_ALIGN) {
         return WC_TEST_RET_ENC_NC; /* no room for wc_Memory struct */
@@ -19790,7 +19783,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
         return WC_TEST_RET_ENC_NC; /* should round to 0
                              since struct + bucket will not fit */
     }
+#endif
 
+    (void)pad;
     (void)dist; /* avoid static analysis warning of variable not used */
 #endif
 

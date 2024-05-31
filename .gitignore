@@ -330,7 +330,7 @@ scripts/memtest.txt
 /IDE/ARDUINO/library.properties.tmp.backup
 /IDE/ARDUINO/PREPENDED_README.md
 # ? /IDE/ARDUINO/Arduino_README_prepend.md.tmp
-# ? /IDE/ARDUINO/sketches/**/.theia/launch.json
+/IDE/ARDUINO/sketches/**/.theia/launch.json
 
 
 # Doxygen generated files
