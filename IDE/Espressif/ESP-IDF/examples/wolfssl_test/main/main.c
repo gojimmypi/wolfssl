@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-// edit test for Vigilant mode 9
+// edit test for Vigilant mode 10
 
 /* ESP-IDF */
 #include <esp_log.h>
