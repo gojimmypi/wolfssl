@@ -780,6 +780,20 @@ extern const WOLFSSL_ObjectInfo wolfssl_object_info[];
     #define WOLFSSL_TLS_FEATURE_SUM 92
 #endif
 
+/* Maximum number of allowed subject alternative names in a certificate.
+ * Any certificate containing more than this number of subject
+ * alternative names will cause an error when attempting to parse. */
+#ifndef WOLFSSL_MAX_ALT_NAMES
+#define WOLFSSL_MAX_ALT_NAMES 128
+#endif
+
+/* Maximum number of allowed name constraints in a certificate.
+ * Any certificate containing more than this number of name constraints
+ * will cause an error when attempting to parse. */
+#ifndef WOLFSSL_MAX_NAME_CONSTRAINTS
+#define WOLFSSL_MAX_NAME_CONSTRAINTS 128
+#endif
+
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
 /* NIDs */
 #define NID_undef 0
@@ -2135,14 +2149,20 @@ WOLFSSL_LOCAL int DecodePolicyOID(char *out, word32 outSz, const byte *in,
                                   word32 inSz);
 WOLFSSL_LOCAL int EncodePolicyOID(byte *out, word32 *outSz,
                                   const char *in, void* heap);
-WOLFSSL_API int CheckCertSignature(const byte*,word32,void*,void* cm);
 WOLFSSL_LOCAL int CheckCertSignaturePubKey(const byte* cert, word32 certSz,
         void* heap, const byte* pubKey, word32 pubKeySz, int pubKeyOID);
-#ifdef OPENSSL_EXTRA
-WOLFSSL_API int wc_CheckCertSigPubKey(const byte* cert, word32 certSz,
-                                      void* heap, const byte* pubKey,
-                                      word32 pubKeySz, int pubKeyOID);
-#endif
+#if defined(OPENSSL_EXTRA) || defined(WOLFSSL_SMALL_CERT_VERIFY)
+    WOLFSSL_API int wc_CheckCertSignature(const byte* cert, word32 certSz,
+                                          void* heap, void* cm);
+    /* Depricated public API name kept for backwards build compatibility */
+    #define CheckCertSignature(cert, certSz, heap, cm) \
+        wc_CheckCertSignature(cert, certSz, heap, cm)
+
+    WOLFSSL_API int wc_CheckCertSigPubKey(const byte* cert, word32 certSz,
+                                        void* heap, const byte* pubKey,
+                                        word32 pubKeySz, int pubKeyOID);
+#endif /* OPENSSL_EXTRA || WOLFSSL_SMALL_CERT_VERIFY */
+
 #ifdef WOLFSSL_DUAL_ALG_CERTS
 WOLFSSL_LOCAL int wc_ConfirmAltSignature(
     const byte* buf, word32 bufSz,
