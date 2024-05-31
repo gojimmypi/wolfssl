@@ -1,5 +1,3 @@
-
-
 # wolfSSL Espressif IDE
 
 This directory contains documentation and examples for the Espressif SoC devices.
