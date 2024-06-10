@@ -18,9 +18,61 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+/* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
-/* This is a sample Arduino user_settings.h for wolfSSL
+/* This user_settings.h is for Espressif ESP-IDF
+ *
+ * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
+ *
+ * Do not include any wolfssl headers here.
+ *
+ * When editing this file:
+ * ensure all examples match. The template example is the reference.
+ */
+
+/* Naming convention: (see also esp32-crypt.h for the reference source).
+ *
+ * CONFIG_
+ *      This prefix indicates the setting came from the sdkconfig / Kconfig.
+ *
+ *      May or may not be related to wolfSSL.
+ *
+ *      The name after this prefix must exactly match that in the Kconfig file.
+ *
+ * WOLFSSL_
+ *      Typical of many, but not all wolfSSL macro names.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      May or may not have a corresponding sdkconfig / Kconfig control.
+ *
+ * ESP_WOLFSSL_
+ *      These are NOT valid wolfSSL macro names. These are names only used in
+ *      the ESP-IDF Kconfig files. When parsed, they will have a "CONFIG_"
+ *      suffix added. See next section.
+ *
+ * CONFIG_ESP_WOLFSSL_
+ *      This is a wolfSSL-specific macro that has been defined in the ESP-IDF
+ *      via the sdkconfig / menuconfig. Any text after this prefix should
+ *      exactly match an existing wolfSSL macro name.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      These macros may also be specific to only the project or environment,
+ *      and possibly not used anywhere else in the wolfSSL libraries.
+ */
+
+/* The Espressif sdkconfig will have chipset info.
+**
+** Some possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S2
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
 */
 
 #undef  WOLFSSL_ESPIDF
@@ -29,34 +81,59 @@
 /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
 /* #define USE_WOLFSSL_ESP_SDK_WIFI */
 
-/* Experimental Kyber */
-#if 0
-    /* Kyber typically needs a minimum 10K stack */
-    #define WOLFSSL_EXPERIMENTAL_SETTINGS
-    #define WOLFSSL_HAVE_KYBER
-    #define WOLFSSL_WC_KYBER
-    #define WOLFSSL_SHA3
+#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
+    /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
+     * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
+     * that here: */
+    #define OPENSSL_EXTRA
 #endif
 
-#define BENCH_EMBEDDED
-#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+/* Pick a cert buffer size: */
+/* #define USE_CERT_BUFFERS_2048 */
+/* #define USE_CERT_BUFFERS_1024 */
+#define USE_CERT_BUFFERS_2048
 
+/* The Espressif sdkconfig will have chipset info.
+**
+** Some possible values:
+**
+**   CONFIG_IDF_TARGET_ESP32
+**   CONFIG_IDF_TARGET_ESP32S2
+**   CONFIG_IDF_TARGET_ESP32S3
+**   CONFIG_IDF_TARGET_ESP32C3
+**   CONFIG_IDF_TARGET_ESP32C6
+*/
+
+#undef  WOLFSSL_ESPIDF
+#define WOLFSSL_ESPIDF
+
+/* Not yet using WiFi lib, so don't compile in the esp-sdk-lib WiFi helpers: */
+/* #define USE_WOLFSSL_ESP_SDK_WIFI */
 
 /*
  * ONE of these Espressif chip families will be detected from sdkconfig:
  *
  * WOLFSSL_ESP32
+ * WOLFSSL_ESPWROOM32SE
  * WOLFSSL_ESP8266
+ *
+ * following ifdef detection only for syntax highlighting:
  */
-#undef WOLFSSL_ESPWROOM32SE
-#undef WOLFSSL_ESP8266
-#undef WOLFSSL_ESP32
+#ifdef WOLFSSL_ESPWROOM32SE
+    #undef WOLFSSL_ESPWROOM32SE
+#endif
+#ifdef WOLFSSL_ESP8266
+    #undef WOLFSSL_ESP8266
+#endif
+#ifdef WOLFSSL_ESP32
+    #undef WOLFSSL_ESP32
+#endif
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
 #define SINGLE_THREADED
 
-/* SMALL_SESSION_CACHE saves a lot of RAM for ClientCache and SessionCache.
+/* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
  * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
  * When really desperate or no TLS used, try NO_SESSION_CACHE.  */
@@ -115,8 +192,6 @@
     #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
           defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
-        /* TODO: SRP Not enabled, known to fail on this target
-         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
     #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
           defined(CONFIG_IDF_TARGET_ESP32H2)
         /* SRP Known to be working on this target::*/
@@ -237,14 +312,18 @@
 /* when you want to use SHA384 */
 #define WOLFSSL_SHA384
 
-/* when you want to use SHA512 */
-#define WOLFSSL_SHA512
+#if defined(CONFIG_IDF_TARGET_ESP8266)
+    /* Some known low-memory devices have features not enabled by default. */
+#else
+    /* when you want to use SHA512 */
+    #define WOLFSSL_SHA512
 
-/* when you want to use SHA3 */
-#define WOLFSSL_SHA3
+    /* when you want to use SHA3 */
+    #define WOLFSSL_SHA3
 
- /* ED25519 requires SHA512 */
-#define HAVE_ED25519
+    /* ED25519 requires SHA512 */
+    #define HAVE_ED25519
+#endif
 
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
@@ -254,6 +333,7 @@
     #define HAVE_ECC
     #define HAVE_CURVE25519
     #define CURVE25519_SMALL
+    #define HAVE_ED25519
 #endif
 
 #define HAVE_ED25519
@@ -264,6 +344,8 @@
 /* #Optional HAVE_PKCS7 */
 #define HAVE_PKCS7
 
+/* when you want to use pkcs7 */
+/* #define HAVE_PKCS7 */
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
     #define NO_PBKDF2
@@ -312,7 +394,7 @@
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-/* #undef USE_FAST_MATH          */
+/* #undef  USE_FAST_MATH          */
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
 /* #define WOLFSSL_SP_RISCV32    */
@@ -321,6 +403,14 @@
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
 
+/* Just syntax highlighting to check math libraries: */
+#if defined(SP_MATH)               || \
+    defined(USE_INTEGER_HEAP_MATH) || \
+    defined(USE_INTEGER_HEAP_MATH) || \
+    defined(USE_FAST_MATH)         || \
+    defined(WOLFSSL_SP_MATH_ALL)   || \
+    defined(WOLFSSL_SP_RISCV32)
+#endif
 
 #define WOLFSSL_SMALL_STACK
 
@@ -328,7 +418,9 @@
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
 
-#define  HAVE_SESSION_TICKET
+#ifndef NO_SESSION_CACHE
+    #define  HAVE_SESSION_TICKET
+#endif
 
 /* #define HAVE_HASHDRBG */
 
@@ -362,7 +454,7 @@
 /* Chipset detection from sdkconfig.h
  * Default is HW enabled unless turned off.
  * Uncomment lines to force SW instead of HW acceleration */
-#if defined(CONFIG_IDF_TARGET_ESP32)
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     #define WOLFSSL_ESP32
     /*  Alternatively, if there's an ECC Secure Element present: */
     /* #define WOLFSSL_ESPWROOM32SE */
@@ -547,10 +639,12 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 #define WOLFSSL_TEST_STRAY 1
-#define USE_ESP_DPORT_ACCESS_READ_BUFFER
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
+#define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
+#define ESP_MONITOR_HW_TASK_LOCK
+#define USE_ESP_DPORT_ACCESS_READ_BUFFER
 
 See wolfcrypt/benchmark/benchmark.c for debug and other settings:
 
@@ -595,6 +689,7 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* used by benchmark: */
 #define WOLFSSL_PUBLIC_MP
+
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
 #define HAVE_PK_CALLBACKS
@@ -687,6 +782,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_BASE16
 #else
     #if defined(USE_CERT_BUFFERS_2048)
+    	#define USE_CERT_BUFFERS_256
     	/* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_2048
