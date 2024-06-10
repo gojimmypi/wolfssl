@@ -40,7 +40,7 @@ The naming convention for project files is: `[project name]_IDF_[Version]_[chips
 
 
 -------- |------------- |------------- |
-ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.1 |
+ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.2 |
 -------- |------------- |------------- |
 ESP32    |      x       |              |
 ESP32-S2 |              |              |
