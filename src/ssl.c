@@ -3973,6 +3973,25 @@ int wolfSSL_recv(WOLFSSL* ssl, void* data, int sz, int flags)
 }
 #endif
 
+int wolfSSL_SendUserCanceled(WOLFSSL* ssl)
+{
+    int ret = WOLFSSL_FAILURE;
+    WOLFSSL_ENTER("wolfSSL_recv");
+
+    if (ssl != NULL) {
+        ssl->error = SendAlert(ssl, alert_warning, user_canceled);
+        if (ssl->error < 0) {
+            WOLFSSL_ERROR(ssl->error);
+        }
+        else {
+            ret = wolfSSL_shutdown(ssl);
+        }
+    }
+
+    WOLFSSL_LEAVE("wolfSSL_SendUserCanceled", ret);
+
+    return ret;
+}
 
 /* WOLFSSL_SUCCESS on ok */
 WOLFSSL_ABI
@@ -20162,16 +20181,9 @@ VerifyCallback wolfSSL_CTX_get_verify_callback(WOLFSSL_CTX* ctx)
     return NULL;
 }
 
-
 #ifdef HAVE_SNI
-
-void wolfSSL_CTX_set_servername_callback(WOLFSSL_CTX* ctx, CallbackSniRecv cb)
-{
-    WOLFSSL_ENTER("wolfSSL_CTX_set_servername_callback");
-    if (ctx)
-        ctx->sniRecvCb = cb;
-}
-
+/* this is a compatibily function, consider using
+ * wolfSSL_CTX_set_servername_callback */
 int wolfSSL_CTX_set_tlsext_servername_callback(WOLFSSL_CTX* ctx,
                                                CallbackSniRecv cb)
 {
@@ -20183,18 +20195,7 @@ int wolfSSL_CTX_set_tlsext_servername_callback(WOLFSSL_CTX* ctx,
     return WOLFSSL_FAILURE;
 }
 
-int wolfSSL_CTX_set_servername_arg(WOLFSSL_CTX* ctx, void* arg)
-{
-    WOLFSSL_ENTER("wolfSSL_CTX_set_servername_arg");
-    if (ctx) {
-        ctx->sniRecvCbArg = arg;
-        return WOLFSSL_SUCCESS;
-    }
-    return WOLFSSL_FAILURE;
-}
-
 #endif /* HAVE_SNI */
-
 
 #ifndef NO_BIO
 void wolfSSL_ERR_load_BIO_strings(void) {
@@ -20230,6 +20231,27 @@ void wolfSSL_THREADID_set_numeric(void* id, unsigned long val)
         * HAVE_LIGHTY || WOLFSSL_HAPROXY || WOLFSSL_OPENSSH ||
         * HAVE_SBLIM_SFCB)) */
 
+#ifdef HAVE_SNI
+
+void wolfSSL_CTX_set_servername_callback(WOLFSSL_CTX* ctx, CallbackSniRecv cb)
+{
+    WOLFSSL_ENTER("wolfSSL_CTX_set_servername_callback");
+    if (ctx)
+        ctx->sniRecvCb = cb;
+}
+
+
+int wolfSSL_CTX_set_servername_arg(WOLFSSL_CTX* ctx, void* arg)
+{
+    WOLFSSL_ENTER("wolfSSL_CTX_set_servername_arg");
+    if (ctx) {
+        ctx->sniRecvCbArg = arg;
+        return WOLFSSL_SUCCESS;
+    }
+    return WOLFSSL_FAILURE;
+}
+
+#endif /* HAVE_SNI */
 
 #if defined(OPENSSL_EXTRA)
 
@@ -23679,9 +23701,18 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
         const char ap[] = "/.rnd";
 
         WOLFSSL_MSG("Environment variable RANDFILE not set");
+
         if ((rt = XGETENV("HOME")) == NULL) {
+            #ifdef XALTHOMEVARNAME
+            if ((rt = XGETENV(XALTHOMEVARNAME)) == NULL) {
+                WOLFSSL_MSG("Environment variable HOME and " XALTHOMEVARNAME
+                            " not set");
+                return NULL;
+            }
+            #else
             WOLFSSL_MSG("Environment variable HOME not set");
             return NULL;
+            #endif
         }
 
         if (len > XSTRLEN(rt) + XSTRLEN(ap)) {
@@ -23691,7 +23722,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
             return fname;
         }
         else {
-            WOLFSSL_MSG("HOME too large for buffer");
+            WOLFSSL_MSG("Path too large for buffer");
             return NULL;
         }
     }
