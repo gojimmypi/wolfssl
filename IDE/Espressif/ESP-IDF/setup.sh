@@ -1,18 +1,10 @@
 #!/bin/bash
 
-# check if INSTALL_PATH is set
+# check if IDF_PATH is set
 if [ -z "$IDF_PATH" ]; then
-    echo "Please follows the instruction of ESP-IDF installation and set $IDF_PATH."
+    echo "Please follows the instruction of ESP-IDF installation and set IDF_PATH."
     exit 1
 fi
-
-# check if INSTALL_PATH is set
-if [ -z "$INSTALL_PATH" ]; then
-    echo "INSTALL_PATH not defined."
-    exit 1
-fi
-
-
 
 RMDCMD='/bin/rm -rf'
 MKDCMD='/bin/mkdir'
@@ -27,8 +19,8 @@ BASEDIR=`cd ${BASEDIR} && pwd -P`
 
 # echo $WOLFSSL_ESPIDFDIR
 
-WOLFSSLLIB_TRG_DIR=${INSTALL_PATH}/components/wolfssl
-WOLFSSLEXP_TRG_DIR=${INSTALL_PATH}/examples/protocols
+WOLFSSLLIB_TRG_DIR=${IDF_PATH}/components/wolfssl
+WOLFSSLEXP_TRG_DIR=${IDF_PATH}/examples/protocols
 
 if [ "$1" == "--verbose" ]; then
   WOLFSSL_SETUP_VERBOSE=true
@@ -44,15 +36,15 @@ if [ "${WOLFSSL_SETUP_VERBOSE}" == "true" ]; then
   echo ""
 fi
 
-if [ ! -d $INSTALL_PATH ]; then
-    echo "ESP-IDF Development Framework doesn't exist.: $INSTALL_PATH"
+if [ ! -d $IDF_PATH ]; then
+    echo "ESP-IDF Development Framework doesn't exist.: $IDF_PATH"
     exit 1
 fi
 
 # Copy files into ESP-IDF development framework
-pushd $INSTALL_PATH > /dev/null
+pushd $IDF_PATH > /dev/null
 
-echo "Copy files into $INSTALL_PATH"
+echo "Copy files into $IDF_PATH"
 
 # Remove/Create directories
 if [ "${WOLFSSL_SETUP_VERBOSE}" == "true" ]; then
