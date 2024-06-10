@@ -563,6 +563,171 @@ enum {
     defined(WOLFSSL_ESP32_CRYPT_DEBUG)
 #endif
 
+/*
+******************************************************************************
+** wolfssl component Kconfig file settings
+******************************************************************************
+ * Naming convention:
+ *
+ * CONFIG_
+ *      This prefix indicates the setting came from the sdkconfig / Kconfig.
+ *
+ *      May or may not be related to wolfSSL.
+ *
+ *      The name after this prefix must exactly match that in the Kconfig file.
+ *
+ * WOLFSSL_
+ *      Typical of many, but not all wolfSSL macro names.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      May or may not have a corresponding sdkconfig / Kconfig control.
+ *
+ * ESP_WOLFSSL_
+ *      These are NOT valid wolfSSL macro names. These are names only used in
+ *      the ESP-IDF Kconfig files. When parsed, they will have a "CONFIG_"
+ *      suffix added. See next section.
+ *
+ * CONFIG_ESP_WOLFSSL_
+ *      This is a wolfSSL-specific macro that has been defined in the ESP-IDF
+ *      via the sdkconfig / menuconfig. Any text after this prefix should
+ *      exactly match an existing wolfSSL macro name.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      These macros may also be specific to only the project or environment,
+ *      and possibly not used anywhere else in the wolfSSL libraries.
+ */
+
+/* Enable benchmark code via menuconfig, or when not otherwise disable: */
+#ifdef CONFIG_ESP_WOLFSSL_ENABLE_BENCHMARK
+    #ifdef NO_CRYPT_BENCHMARK
+        #pragma message("Benchmark conflict:")
+        #pragma message("-- NO_CRYPT_BENCHMARK defined.")
+        #pragma message("-- CONFIG_WOLFSSL_ENABLE_BENCHMARK also defined.")
+        #pragma message("-- NO_CRYPT_BENCHMARK will be undefined.")
+        #undef NO_CRYPT_BENCHMARK
+    #endif
+#endif
+
+#if !defined(NO_CRYPT_BENCHMARK) || defined(CONFIG_ESP_WOLFSSL_ENABLE_BENCHMARK)
+
+    #define BENCH_EMBEDDED
+    #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+    /* See wolfcrypt/benchmark/benchmark.c for debug and other settings: */
+
+    /* Turn on benchmark timing debugging (CPU Cycles, RTOS ticks, etc) */
+    #ifdef CONFIG_ESP_DEBUG_WOLFSSL_BENCHMARK_TIMING
+        #define DEBUG_WOLFSSL_BENCHMARK_TIMING
+    #endif
+
+    /* Turn on timer debugging (used when CPU cycles not available) */
+    #ifdef CONFIG_ESP_WOLFSSL_BENCHMARK_TIMER_DEBUG
+        #define WOLFSSL_BENCHMARK_TIMER_DEBUG
+    #endif
+#endif
+
+/* Optional Apple HomeKit support. See settings.h for related sanity checks. */
+#if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
+    /* SRP is known to need 8K; slow on some devices */
+    #undef  FP_MAX_BITS
+    #define FP_MAX_BITS (8192 * 2)
+    #define WOLFCRYPT_HAVE_SRP
+    #define HAVE_CHACHA
+    #define HAVE_POLY1305
+    #define WOLFSSL_BASE64_ENCODE
+    #define HAVE_HKDF
+    #define WOLFSSL_SHA512
+ #endif
+
+/* Optionally enable some wolfSSH settings via compiler def or Kconfig */
+#if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH)
+    /* The default SSH Windows size is massive for an embedded target. Limit it: */
+    #define DEFAULT_WINDOW_SZ 2000
+
+    /* These may be defined in cmake for other examples: */
+    #undef  WOLFSSH_TERM
+    #define WOLFSSH_TERM
+
+    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSH)
+        /* wolfSSH debugging enabled via Kconfig / menuconfig */
+        #undef  DEBUG_WOLFSSH
+        #define DEBUG_WOLFSSH
+    #endif
+
+    #undef  WOLFSSL_KEY_GEN
+    #define WOLFSSL_KEY_GEN
+
+    #undef  WOLFSSL_PTHREADS
+    #define WOLFSSL_PTHREADS
+
+    #define WOLFSSH_TEST_SERVER
+    #define WOLFSSH_TEST_THREADING
+
+#endif /* ESP_ENABLE_WOLFSSH */
+
+/* Experimental Kyber.  */
+#ifdef CONFIG_ESP_WOLFSSL_ENABLE_KYBER
+    /* Kyber typically needs a minimum 10K stack */
+    #define WOLFSSL_EXPERIMENTAL_SETTINGS
+    #define WOLFSSL_HAVE_KYBER
+    #define WOLFSSL_WC_KYBER
+    #define WOLFSSL_SHA3
+    #if defined(CONFIG_IDF_TARGET_ESP8266)
+        /* With limited RAM, we'll disable some of the Kyber sizes: */
+        #define WOLFSSL_NO_KYBER1024
+        #define WOLFSSL_NO_KYBER768
+        #define NO_SESSION_CACHE
+    #endif
+#endif
+
+/* Pre-set some hardware acceleration from Kconfig / menuconfig settings */
+#ifdef CONFIG_ESP_WOLFSSL_NO_ESP32_CRYPT
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+#endif
+#ifdef CONFIG_ESP_WOLFSSL_NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+#endif
+
+/* debug options */
+#if defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL)
+    /* wolfSSH debugging enabled via Kconfig / menuconfig */
+    #define DEBUG_WOLFSSL
+#else
+    #define NO_ERROR_STRINGS
+#endif
+
+/*
+******************************************************************************
+** END wolfssl component Kconfig file settings
+******************************************************************************
+*/
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -985,6 +1150,29 @@ WOLFSSL_LOCAL int esp_sha_stack_check(WC_ESP32SHA* sha);
 /* end c++ wrapper */
 #ifdef __cplusplus
 }
+#endif
+
+/******************************************************************************
+** Sanity Checks
+******************************************************************************/
+#if defined(CONFIG_ESP_MAIN_TASK_STACK_SIZE)
+    #if defined(WOLFCRYPT_HAVE_SRP)
+        #if defined(FP_MAX_BITS)
+            #if FP_MAX_BITS <  (8192 * 2)
+                #define ESP_SRP_MINIMUM_STACK_8K (24 * 1024)
+            #else
+                #define ESP_SRP_MINIMUM_STACK_8K (28 * 1024)
+            #endif
+        #else
+            #error "Please define FP_MAX_BITS when using WOLFCRYPT_HAVE_SRP."
+        #endif
+
+        #if (CONFIG_ESP_MAIN_TASK_STACK_SIZE < ESP_SRP_MINIMUM_STACK)
+            #warning "WOLFCRYPT_HAVE_SRP enabled with small stack size"
+        #endif
+    #endif
+#else
+    #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
 #endif
 
 /* Compatibility checks */

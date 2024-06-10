@@ -3561,8 +3561,8 @@ extern void uITRON4_free(void *p) ;
 #endif
 */
 
-/* Some final sanity checks */
-#ifdef WOLFSSL_APPLE_HOMEKIT
+/* Some final sanity checks. See esp32-crypt.h for Apple HomeKit config. */
+#if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
     #ifndef WOLFCRYPT_HAVE_SRP
         #error "WOLFCRYPT_HAVE_SRP is required for Apple Homekit"
     #endif
