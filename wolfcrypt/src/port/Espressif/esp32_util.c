@@ -492,6 +492,7 @@ esp_err_t ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
 
+    show_macro("NO_ESP32_CRYPT",            STR_IFNDEF(NO_ESP32_CRYPT));
     show_macro("NO_ESPIDF_DEFAULT",         STR_IFNDEF(NO_ESPIDF_DEFAULT));
 
     show_macro("HW_MATH_ENABLED",           STR_IFNDEF(HW_MATH_ENABLED));
