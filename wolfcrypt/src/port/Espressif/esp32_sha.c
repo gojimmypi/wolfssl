@@ -135,7 +135,11 @@ static const char* TAG = "wolf_hw_sha";
 #endif
 
     static uintptr_t mutex_ctx_owner = NULLPTR;
+
+#if (defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)) \
+    || defined(WOLFSSL_DEBUG_MUTEX)
     static portMUX_TYPE sha_crit_sect = portMUX_INITIALIZER_UNLOCKED;
+#endif
 
 #if defined(ESP_MONITOR_HW_TASK_LOCK)
     #ifdef SINGLE_THREADED
