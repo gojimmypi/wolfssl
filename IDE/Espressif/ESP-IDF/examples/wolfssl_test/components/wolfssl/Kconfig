@@ -43,8 +43,6 @@
 # python -m kconfcheck <path_to_kconfig_file>
 
 menu "wolfSSL"
-    # NO_CRYPT_BENCHMARK
-
     config WOLFSSL_APPLE_HOMEKIT
         bool "Enable Apple HomeKit options"
         default n
