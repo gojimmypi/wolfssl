@@ -714,6 +714,13 @@ enum {
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 #endif
 
+/* wolfCrypt test settings */
+#ifdef CONFIG_ESP_WOLFSSL_ENABLE_TEST
+    #ifdef CONFIG_WOLFSSL_HAVE_WOLFCRYPT_TEST_OPTIONS
+        #define HAVE_WOLFCRYPT_TEST_OPTIONS
+    #endif
+#endif
+
 /* debug options */
 #if defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL)
     /* wolfSSH debugging enabled via Kconfig / menuconfig */
