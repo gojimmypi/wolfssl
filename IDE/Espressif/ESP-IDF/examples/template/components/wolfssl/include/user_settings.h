@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
- * This file is part of wolfSSL.
+ * This file is part of wolfSSL for the Espressif ESP-IDF.
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -309,29 +309,29 @@
 /* when you want to use SHA384 */
 #define WOLFSSL_SHA384
 
-/* when you want to use SHA512 */
-#define WOLFSSL_SHA512
-
-/* when you want to use SHA3 */
-#define WOLFSSL_SHA3
-
- /* ED25519 requires SHA512 */
-#define HAVE_ED25519
-
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
     defined(CONFIG_IDF_TARGET_ESP32C2)
+    /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
+    /* when you want to use SHA512 */
+    #define WOLFSSL_SHA512
+
+    /* when you want to use SHA3 */
+    #define WOLFSSL_SHA3
+
+    /* ED25519 requires SHA512 */
+    #define HAVE_ED25519
+
     #define HAVE_ECC
     #define HAVE_CURVE25519
     #define CURVE25519_SMALL
+    #define HAVE_ED25519
 #endif
 
-#define HAVE_ED25519
-
-/* Optional OPENSSL compatibility */
-#define OPENSSL_EXTRA
+/* Optional OpenSSL compatibility */
+/* #define OPENSSL_EXTRA */
 
 /* #Optional HAVE_PKCS7 */
 /* #define HAVE_PKCS7 */
@@ -629,6 +629,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 #define WOLFSSL_TEST_STRAY 1
+#define USE_ESP_DPORT_ACCESS_READ_BUFFER
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 #define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
