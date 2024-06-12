@@ -83,14 +83,14 @@ menu "wolfSSL"
         help
             Enables wolfcrypt/test/test.c code for testing. Disables NO_CRYPT_TEST.
 
-    menu
+    menu "wolfCrypt tests"
         config WOLFSSL_HAVE_WOLFCRYPT_TEST_OPTIONS
             bool "Enable wolfCrypt Test Options"
             depends on ESP_WOLFSSL_ENABLE_TEST
             default n
             help
                 Enables HAVE_WOLFCRYPT_TEST_OPTIONS
-    endmenu
+    endmenu # wolfCrypt tests
 
     # -----------------------------------------------------------------------------------------------------------------
     # Apple HomeKit Options
@@ -101,7 +101,7 @@ menu "wolfSSL"
             default n
             help
                 Enables FP_MAX_BITS (8192 * 2), SRP, ChaCha, Poly1305, Base64 encoding needed for Apple HomeKit.
-    endmenu
+    endmenu # Apple HomeKit
     # -----------------------------------------------------------------------------------------------------------------
 
     config ESP_ENABLE_WOLFSSH
@@ -164,7 +164,7 @@ menu "wolfSSL"
         config WOLFSSL_HAVE_OCSP
             bool "Enable OCSP (Online Certificate Status Protocol) in wolfSSL"
             default n
-    endmenu
+    endmenu # Protocol Config
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
@@ -289,7 +289,7 @@ menu "wolfSSL"
                 Enter the path using forward slashes (e.g., C:/myfolder/mysubfolder) or double backslashes
                 (e.g., C:\\myfolder\\mysubfolder).
 
-    endmenu
+    endmenu # wolfSSL Customization
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
@@ -307,7 +307,7 @@ menu "wolfSSL"
                 Ignores wolfSSL present in the local project components directory.
                 Requires wolfssl as a ESP-IDF component.
 
-    endmenu
+    endmenu # Component Config
     # -----------------------------------------------------------------------------------------------------------------
 
 endmenu # wolfSSL
