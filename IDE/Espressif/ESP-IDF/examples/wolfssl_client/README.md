@@ -92,6 +92,16 @@ cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_cli
 make
 ```
 
+In a separate directory:
+
+```
+export IDF_PATH=~/esp/ESP8266_RTOS_SDK
+export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
+cp -r /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_client/* /tmp/demo
+cd /tmp/demo
+
+```
+
 
 ## ESP-IDF CMake Commandline (version 3.5 or earlier for the ESP8266)
 
