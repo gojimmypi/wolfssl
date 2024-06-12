@@ -5,6 +5,14 @@ VisualStudioVersion = 17.10.34916.146
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_IDF_v5.4_ESP32", "wolfssl_IDF_v5.4_ESP32.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{20593F9F-9913-4F8F-8689-EF029E5A463B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\CMakeLists.txt = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\CMakeLists.txt
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\Kconfig = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\Kconfig
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\README.md = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\README.md
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
