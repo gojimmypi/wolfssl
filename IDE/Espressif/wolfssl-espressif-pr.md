@@ -34,7 +34,7 @@ wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration,
 | Quality Assurance Testing | API Tests, Peer Review, Static Analysis, Product Specific Testing, Multiple Compilers, Benchmarks, Wrappers, Hardware Accelerated Testing, Security fuzzers (wolfSSL internal fuzzer, AFL, TLS Fuzzer, libFuzzer), known user configurations, external validation, big/little endian, multiple platforms (Embedded IOT Devices, Windows, Many Linux variants, MacOS, XCODE, Android) | Broken scripts |
 | **SUPPORT    DOCUMENTATION    LICENSING**  | 
 | Documentation | YES <br />(complete manual, API reference, build instructions, extensions reference, tutorials, source code, benchmarking, examples) | PARTIAL (build instructions, API reference, source code) | 
-| Vulnerabilities Fixes available within a few days Fixes available few months or not at all
+| Vulnerabilities | Fixes available within a few days | Fixes available few months or not at all | 
 | License Dual (GPLv2 / Commercial) |  Dual (GPLv2 / Apache 2.0) | 
 | Royalty Free | YES | YES | 
 | Up to 24x7 Support |  YES (Full support from native English speakers via email, phone, forums) | NO | 
