@@ -10,7 +10,7 @@ There's a companion issue at Espressif. TBD
 
 For serious commercial applications needing or users simply needing more capable, flexible, and actively supported libraries.
 
-wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration, hardware crypto support and support for the most current standards. wolfSSL is the best tested crypto support, the #1 TLS in IoT and the first embedded TLS 1.3 platform with TPM 2.0, MQTT, FIPS 140 certification, hardware crypto acceleration and secure enclave support. All products are backed by 24/7 support. 	
+wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration, hardware crypto support and support for the most current standards. wolfSSL is the best tested crypto support, the #1 TLS in IoT and the first embedded TLS 1.3 platform with TPM 2.0, MQTT, FIPS 140 certification, hardware crypto acceleration and secure enclave support. All products are backed by 24/7 support.  
 
 |                  | wolfSSL      | mbed TLS |
 | ---------------- | ------------ | -------- |
@@ -18,7 +18,17 @@ wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration,
 | Development Team | Original developers still on project | Based on XySSL/PolarSSL, not maintained by the original developers |
 | Portability      | "Portable Out of the Box <br /> Win32/64, Linux, OS X, Solaris, ThreadX, VxWorks, FreeBSD, NetBSD, OpenBSD, embedded Linux, Haiku, OpenWRT, iPhone (iOS), Android, Nintendo Wii and Gamecube through DevKitPro, QNX, MontaVista, OpenCL, NonStop, TRON/ITRON/µITRON, Micrium's µC OS, FreeRTOS, SafeRTOS, Freescale MQX, Nucleus, TinyOS, HP/UX, Keil RTX, TI-RTOS, Integrity OS" | Win32/64, Linux, OS X, Solaris, FreeBSD, NetBSD, OpenBSD, OpenWRT, iPhone (iOS), Xbox, Android, SeggerOS |
 | Standards Support | SSLv3 - TLS 1.3, DTLS 1.0,1.2, 1.3 | TLS 1.2/TLS 1.3 and DTLS 1.2 |
-
+| Server Support | YES | YES |
+| Performance | Awesome! See our benchmarks page: https://www.wolfssl.com/docs/benchmarks/ | Average |
+| Hardware & Assembly Optimizations | - ARM Assembly Optimizations (Aarch32/Aarch64/Arm32/Cortex-M/Neon) <br >- ARMv8 Cryptography Extensions<br >- RISC-V Assembly<br >- STM32 F2/F4/F7/L4/L5/U5/H5/H7 Hardware Crypto<br >- ATECC608B, ST-SAFEA110, SE050, IoT-Safe<br >- Single Precision Math (C and Assembly) | Some ARM optimizations |
+| Command Line Utility | YES | NO |
+| Certifications | YES (FIPS 140-3, DO-178 DAL-A) NO |
+| Certificate Revocation Support | CRL, OCSP, OCSP Stapling CRL |
+| Crypto Library Abstraction Layer | YES | NO | 
+| SSL Inspection (Sniffer) Support | YES | NO |
+| Compression Support | zlib NO |
+| OpenSSL Compatibility Layer | YES (Actively updated - over 1,600) | YES (Out of date) |
+| Post Quantum Support | Kyber, LMS, XMSS and Dilithum/Falcon| NO |
 ## Getting Started with wolfSSL
 
 If you are new to wolfSSL on the Espressif ESP32, [this video](https://www.youtube.com/watch?v=CzwA3ZBZBZ8)
