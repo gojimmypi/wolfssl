@@ -6,7 +6,26 @@ The wolfSSL libraries are available for a given project, but the integrations wi
 
 There's a companion issue at Espressif. TBA
 
-## Reasons for choosing wolfSSL
+## Features To Do
+
+[ ] Include wolfSSL as an ESP-IDF component. See preview [here](https://github.com/gojimmypi/esp-idf/tree/wolfssl/components/wolfssl).
+[ ] Full wolfSSL [ESP-TLS](https://github.com/espressif/esp-idf/tree/master/components/esp-tls) integration.
+[ ] Add wolfSSL support to [bootloader_support](https://github.com/espressif/esp-idf/tree/master/components/bootloader_support)
+[ ] Add wolfSSL support to [bt](https://github.com/espressif/esp-idf/tree/master/components/bt)
+[ ] Add wolfSSL support to [espcoredump](https://github.com/espressif/esp-idf/tree/master/components/espcoredump)
+[ ] Add wolfSSL support to [esp_http_client example](https://github.com/espressif/esp-idf/tree/master/examples/protocols/esp_http_client)
+[ ] Add wolfSSL support to [esp_https_server](https://github.com/espressif/esp-idf/tree/master/components/esp_https_server)
+[ ] Add wolfSSL support to [esp_http_server](https://github.com/espressif/esp-idf/tree/master/components/esp_http_server)
+[ ] Add wolfSSL support to [esp_rom](https://github.com/espressif/esp-idf/tree/master/components/esp_rom)
+[ ] Add wolfSSL support to [lwip](https://github.com/espressif/esp-idf/tree/master/components/lwip)
+[ ] Add wolfSSL support to [mqtt](https://github.com/espressif/esp-idf/tree/master/components/mqtt)
+[ ] Add wolfSSL support to [openthread](https://github.com/espressif/esp-idf/tree/master/components/openthread)
+[ ] Add wolfSSL support to [protocomm](https://github.com/espressif/esp-idf/tree/master/components/protocomm)
+[ ] Add wolfSSL support to [wpa_supplicant](https://github.com/espressif/esp-idf/tree/master/components/wpa_supplicant)
+[ ] CI/CD, Testing, Jenkins at wolfSSL
+
+ 
+## Reasons for choosing wolfSSL instead of mbedTLS
 
 For serious commercial applications needing or users simply needing more capable, flexible, and actively supported libraries.
 
