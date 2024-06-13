@@ -42,7 +42,7 @@ wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration,
 | Random Entropy | wolfRAND, NIST DRBG (SHA-256) | DRBG SHA-1/SHA2-256 | 
 | Hashing/Cipher Functions |  AES SIV/CFB/OFB, SHAKE, Blake2b/Blake2s, ECIES (ECC Enc/Dec) | NO | 
 | Public Key Options | Single Precision math, ECC Fixed Point cache ECC NIST | "modulo p" speedups | 
-| TLS Extensions SNI, Max Fragment, ALPN, Trusted CA Indication, Truncated HMAC, Secure Renegotiation, Renegotiation Indication, Session Ticket, Extended Master Secret, Encrypt-Then-Mac, Quantum-Safe Hybrid Authentication |  Max Fragment, Encrypt-Then-Mac | 
+| TLS Extensions | SNI, Max Fragment, ALPN, Trusted CA Indication, Truncated HMAC, Secure Renegotiation, Renegotiation Indication, Session Ticket, Extended Master Secret, Encrypt-Then-Mac, Quantum-Safe Hybrid Authentication |  Max Fragment, Encrypt-Then-Mac | 
 
 
 ## Getting Started with wolfSSL
