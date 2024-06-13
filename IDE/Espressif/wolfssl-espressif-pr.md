@@ -2,7 +2,7 @@
 
 This is an anchor GitHub issue to track the various upcoming pull requests and other issues related to improving the [wolfSSL](https://www.wolfssl.com/) cryptographic library integration with the Espressif ESP-IDF.
 
-The wolfSSL libraries are available for a given project, but the integrations with the ESP-IDF core such as ESP-TLS and Supplicant are not as robust as it should be.
+The wolfSSL libraries are available for a given project, but the integration with the ESP-IDF core is not as robust as it should be.
 
 There's a companion issue at Espressif. TBA
 
@@ -112,7 +112,30 @@ For details on [wolfSSL Managed Components](https://components.espressif.com/com
 
 ## PlatformIO
 
+We are providing two different Official wolfSSL libraries for the ESP32: standard and another specifically for Arduino:
+
+- [wolfssl/wolfSSL](https://registry.platformio.org/libraries/wolfssl/wolfSSL)
+
+- [wolfssl/Arduino-wolfSSL](https://registry.platformio.org/libraries/wolfssl/Arduino-wolfSSL)
+
+There are also two different versions: the stable release versions (above) and these staging updates, with the latest post-release changes.
+
+- [wolfssl-staging/wolfSSL](https://registry.platformio.org/libraries/wolfssl-staging/wolfSSL)
+
+- [wolfssl-staging/Arduino-wolfSSL](https://registry.platformio.org/libraries/wolfssl-staging/Arduino-wolfSSL)
+
+See also the [wolfSSL now supported on PlatformIO](https://www.wolfssl.com/wolfssl-now-supported-on-platformio/) blog.
+
+https://github.com/wolfSSL/wolfssl/tree/master/IDE/PlatformIO
+
 ## Arduino
+
+See [Getting Started with wolfSSL on Arduino](https://www.wolfssl.com/getting-started-with-wolfssl-on-arduino/) blog.
+
+https://www.arduino.cc/reference/en/libraries/wolfssl/
+
+https://github.com/wolfSSL/wolfssl/tree/master/IDE/ARDUINO
+
 
 ## wolfSSL for the Apple HomeKit on the ESP32
 
@@ -123,3 +146,5 @@ https://github.com/AchimPieters/esp32-homekit-demo/pull/3
 ## Additional wolfSSL updates related to the Espressif environment
 
 See [ESP32 Espressif Improvements - Roadmap Summary #6234](https://github.com/wolfSSL/wolfssl/issues/6234)
+
+Have an idea for other improvements? Feel free to [open a new issue](https://github.com/wolfSSL/wolfssl/issues/new/choose) or send us an email support@wolfssl.com
