@@ -1,6 +1,6 @@
 # Improving wolfSSL integration with the Espressif ESP-IDF
 
-This is an anchor GutHub issue to track the various upcoming pull requests and other issues related to improving the [wolfSSL](https://www.wolfssl.com/) cryptographic library integration with the Espressif ESP-IDF.
+This is an anchor GitHub issue to track the various upcoming pull requests and other issues related to improving the [wolfSSL](https://www.wolfssl.com/) cryptographic library integration with the Espressif ESP-IDF.
 
 The wolfSSL libraries are available for a given project, but the integrations with the ESP-IDF core such as ESP-TLS and Supplicant are not as robust as it should be.
 
