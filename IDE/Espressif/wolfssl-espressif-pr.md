@@ -12,9 +12,9 @@ For serious commercial applications needing or users simply needing more capable
 
 wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration, hardware crypto support and support for the most current standards. wolfSSL is the best tested crypto support, the #1 TLS in IoT and the first embedded TLS 1.3 platform with TPM 2.0, MQTT, FIPS 140 certification, hardware crypto acceleration and secure enclave support. All products are backed by 24/7 support.  
 
-|                   | *wolfSSL*    | *mbed TLS*  |
-| ----------------- | ------------ | ----------- |
-| TECHNOLOGY        |              |             |
+|                   | **wolfSSL**  | **mbed TLS**    |
+| ----------------- | ------------ | --------------- |
+| **TECHNOLOGY**                                     |
 | Copyright         | wolfSSL Inc. | Multiple Owners | 
 | Development Team  | Original developers still on project | Based on XySSL/PolarSSL, not maintained by the original developers |
 | Portability       | "Portable Out of the Box <br /> Win32/64, Linux, OS X, Solaris, ThreadX, VxWorks, FreeBSD, NetBSD, OpenBSD, embedded Linux, Haiku, OpenWRT, iPhone (iOS), Android, Nintendo Wii and Gamecube through DevKitPro, QNX, MontaVista, OpenCL, NonStop, TRON/ITRON/µITRON, Micrium's µC OS, FreeRTOS, SafeRTOS, Freescale MQX, Nucleus, TinyOS, HP/UX, Keil RTX, TI-RTOS, Integrity OS" | Win32/64, Linux, OS X, Solaris, FreeBSD, NetBSD, OpenBSD, OpenWRT, iPhone (iOS), Xbox, Android, SeggerOS |
@@ -32,13 +32,13 @@ wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration,
 | Post Quantum Support | Kyber, LMS, XMSS and Dilithum/Falcon| NO |
 | Supported Open Source Projects | OpenSSH, Stunnel, WPA Supplicant, lighttpd (lighty), cURL, mongoose, OpenVPN, NGINX and many others | | 
 | Quality Assurance Testing | API Tests, Peer Review, Static Analysis, Product Specific Testing, Multiple Compilers, Benchmarks, Wrappers, Hardware Accelerated Testing, Security fuzzers (wolfSSL internal fuzzer, AFL, TLS Fuzzer, libFuzzer), known user configurations, external validation, big/little endian, multiple platforms (Embedded IOT Devices, Windows, Many Linux variants, MacOS, XCODE, Android) | Broken scripts |
-| SUPPORT |  DOCUMENTATION |  LICENSING  | 
+| **SUPPORT    DOCUMENTATION    LICENSING**  | 
 | Documentation | YES <br />(complete manual, API reference, build instructions, extensions reference, tutorials, source code, benchmarking, examples) | PARTIAL (build instructions, API reference, source code) | 
 | Vulnerabilities Fixes available within a few days Fixes available few months or not at all
 | License Dual (GPLv2 / Commercial) |  Dual (GPLv2 / Apache 2.0) | 
 | Royalty Free | YES | YES | 
 | Up to 24x7 Support |  YES (Full support from native English speakers via email, phone, forums) | NO | 
-| FEATURES  | | | 
+| **FEATURES** | 
 | Random Entropy | wolfRAND, NIST DRBG (SHA-256) | DRBG SHA-1/SHA2-256 | 
 | Hashing/Cipher Functions |  AES SIV/CFB/OFB, SHAKE, Blake2b/Blake2s, ECIES (ECC Enc/Dec) | NO | 
 | Public Key Options | Single Precision math, ECC Fixed Point cache ECC NIST | "modulo p" speedups | 
