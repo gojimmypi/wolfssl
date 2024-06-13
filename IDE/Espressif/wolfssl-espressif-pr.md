@@ -27,9 +27,16 @@ There's a companion issue at Espressif. TBA
  
 ## Reasons for choosing wolfSSL instead of mbedTLS
 
-For serious commercial applications needing or users simply needing more capable, flexible, and actively supported libraries.
+For serious commercial applications needing or users simply needing more capable, flexible, and actively supported libraries developers should choose wolfSSL.
 
-wolfSSL is a TLS library. wolfSSL offers optimal performance, rapid integration, hardware crypto support and support for the most current standards. wolfSSL is the best tested crypto support, the #1 TLS in IoT and the first embedded TLS 1.3 platform with TPM 2.0, MQTT, FIPS 140 certification, hardware crypto acceleration and secure enclave support. All products are backed by 24/7 support.  
+wolfSSL is a TLS library. wolfSSL offers:
+
+- optimal performance
+- rapid integration
+- hardware crypto support
+- support for the most current standards.
+
+wolfSSL is the best tested crypto support, the #1 TLS in IoT and the first embedded TLS 1.3 platform with TPM 2.0, MQTT, FIPS 140 certification, hardware crypto acceleration and secure enclave support. All products are backed by 24/7 support.  
 
 |                   | **wolfSSL**  | **mbed TLS**    |
 | ----------------- | ------------ | --------------- |
