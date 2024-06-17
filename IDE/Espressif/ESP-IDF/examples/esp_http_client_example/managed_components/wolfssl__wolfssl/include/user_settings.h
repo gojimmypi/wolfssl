@@ -40,6 +40,14 @@
 **   CONFIG_IDF_TARGET_ESP32C6
 */
 
+/* ESP-IDF */
+#define HAVE_ALPN
+#define HAVE_SNI
+
+// #define  OPENSSL_EXTRA
+#define OPENSSL_EXTRA_X509_SMALL
+/* end ESP-IDF */
+
 /* Optionally enable Apple HomeKit from compiler directive or Kconfig setting */
 #if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
      /* SRP is known to need 8K; slow on some devices */
