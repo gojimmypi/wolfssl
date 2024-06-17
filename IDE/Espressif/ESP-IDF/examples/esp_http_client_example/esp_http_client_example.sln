@@ -5,6 +5,63 @@ VisualStudioVersion = 17.10.34916.146
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "esp_http_client_example", "esp_http_client_example.vgdbproj", "{A454A763-1D5B-4D2C-945A-8F24D951AD92}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP-IDF", "ESP-IDF", "{A0429FD9-6571-4D11-9C69-D75562F8584D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", "{A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{32B1DC45-8806-48D5-BF6B-73FF0D33D4BD}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_errors.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_errors.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_error_capture.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_error_capture.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_mbedtls.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_mbedtls.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_platform_port.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_platform_port.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_wolfssl.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_wolfssl.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\Kconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tcp_transport", "tcp_transport", "{6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\Kconfig
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_internal.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_internal.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_socks_proxy.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_socks_proxy.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_ssl.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_ssl.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_ws.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\transport_ws.c
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-crypto", "esp-tls-crypto", "{2EBD9AD2-F92A-43C9-8D5D-51B2F75EA128}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp-tls-crypto\esp_tls_crypto.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp-tls-crypto\esp_tls_crypto.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp-tls-crypto\esp_tls_crypto.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp-tls-crypto\esp_tls_crypto.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "private_include", "private_include", "{AE7C597E-73D1-4030-8235-84C74D85C161}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_error_capture_internal.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_error_capture_internal.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_mbedtls.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_mbedtls.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_platform_port.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_platform_port.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_private.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_private.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_wolfssl.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\private_include\esp_tls_wolfssl.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{7591DD83-B295-4A2B-A61E-A6B872316FE3}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_socks_proxy.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_socks_proxy.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_ssl.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_ssl.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_tcp.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_tcp.h
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_ws.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\include\esp_transport_ws.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "private_include", "private_include", "{620B55EF-FF46-4670-B6A4-A7143E182A61}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\private_include\esp_transport_internal.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\private_include\esp_transport_internal.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -24,6 +81,15 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8} = {A0429FD9-6571-4D11-9C69-D75562F8584D}
+		{32B1DC45-8806-48D5-BF6B-73FF0D33D4BD} = {A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8}
+		{6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847} = {A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8}
+		{2EBD9AD2-F92A-43C9-8D5D-51B2F75EA128} = {32B1DC45-8806-48D5-BF6B-73FF0D33D4BD}
+		{AE7C597E-73D1-4030-8235-84C74D85C161} = {32B1DC45-8806-48D5-BF6B-73FF0D33D4BD}
+		{7591DD83-B295-4A2B-A61E-A6B872316FE3} = {6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847}
+		{620B55EF-FF46-4670-B6A4-A7143E182A61} = {6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9D44E15E-CF40-4BB4-9218-88074B906492}
