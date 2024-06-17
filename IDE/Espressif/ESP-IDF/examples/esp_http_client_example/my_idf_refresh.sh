@@ -10,33 +10,21 @@ git submodule update --init --recursive
 
 
 git submodule foreach '
-  # Fetch the remote branches
-  git fetch
+  git fetch origin
 
-  # Try to determine the current branch
-  branch=$(git symbolic-ref --short -q HEAD || git rev-parse --abbrev-ref HEAD)
-
-  # If branch is detached, set default branch (e.g., main or master)
-  if [ "$branch" = "HEAD" ]; then
-    if git rev-parse --verify origin/main > /dev/null 2>&1; then
-      branch="main"
-    elif git rev-parse --verify origin/master > /dev/null 2>&1; then
-      branch="master"
-    else
-      branch="HEAD"
-    fi
-  fi
-
-  # Check if the branch is main or master and pull accordingly
-  if [ "$branch" = "main" ] || [ "$branch" = "origin/main" ]; then
-    git checkout main || git checkout -b main origin/main
-    git pull origin main
-  elif [ "$branch" = "master" ] || [ "$branch" = "origin/master" ]; then
-    git checkout master || git checkout -b master origin/master
-    git pull origin master
+  # Determine the default branch (main or master)
+  if git show-ref --verify --quiet refs/heads/main; then
+    default_branch="main"
+  elif git show-ref --verify --quiet refs/heads/master; then
+    default_branch="master"
   else
-    echo "Unknown branch or detached HEAD in submodule: $branch"
+    echo "No main or master branch found in submodule."
+    exit 1
   fi
+
+  # Check out the default branch and reset to the latest commit
+  git checkout $default_branch
+  git reset --hard origin/$default_branch
 '
 
 git submodule update --recursive --remote
