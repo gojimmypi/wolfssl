@@ -318,6 +318,9 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #include <wolfssl/wolfcrypt/ext_kyber.h>
 #endif
 #endif
+#ifdef HAVE_DILITHIUM
+    #include <wolfssl/wolfcrypt/dilithium.h>
+#endif
 #if defined(WOLFSSL_HAVE_XMSS)
     #include <wolfssl/wolfcrypt/xmss.h>
 #ifdef HAVE_LIBXMSS
@@ -642,6 +645,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t scrypt_test(void);
 #ifdef WOLFSSL_HAVE_KYBER
     WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  kyber_test(void);
 #endif
+#ifdef HAVE_DILITHIUM
+    WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  dilithium_test(void);
+#endif
 #if defined(WOLFSSL_HAVE_XMSS)
     #if !defined(WOLFSSL_SMALL_STACK) && WOLFSSL_XMSS_MIN_HEIGHT <= 10
     WOLFSSL_TEST_SUBROUTINE wc_test_ret_t  xmss_test_verify_only(void);
@@ -864,8 +870,7 @@ static wc_test_ret_t debug_message_value(const char* msg, int val,
 #endif /* #if defined(DEBUG_WOLFSSL) */
     return ret;
 }
-
-static void render_error_message(const char* msg, int es)
+static void render_error_message(const char* msg, wc_test_ret_t es)
 {
     (void)msg;
     (void)es;
@@ -2456,6 +2461,13 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("KYBER    test passed!\n");
 #endif
 
+#ifdef HAVE_DILITHIUM
+    if ( (ret = dilithium_test()) != 0)
+        TEST_FAIL("DILITHIUM test failed!\n", ret);
+    else
+        TEST_PASS("DILITHIUM test passed!\n");
+#endif
+
 #if defined(WOLFSSL_HAVE_XMSS)
     #if !defined(WOLFSSL_SMALL_STACK) && WOLFSSL_XMSS_MIN_HEIGHT <= 10
     if ( (ret = xmss_test_verify_only()) != 0)
@@ -2660,9 +2672,9 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 
 /* If hardware acceleration and respective metrics tracked, show results: */
 #ifdef WOLFSSL_HW_METRICS
-	#if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
-    	esp_hw_show_mp_metrics();
-	#endif
+    #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
+        esp_hw_show_mp_metrics();
+    #endif
 #endif
 
 #if defined(WOLFSSL_STATIC_MEMORY) && !defined(OPENSSL_EXTRA)
@@ -4814,7 +4826,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hw_math_test(void)
 ******************************************************************************
 ******************************************************************************
 */
-WOLFSSL_TEST_SUBROUTINE int error_test(void)
+WOLFSSL_TEST_SUBROUTINE wc_test_ret_t error_test(void)
 {
     const char* errStr;
     char        out[WOLFSSL_MAX_ERROR_SZ];
