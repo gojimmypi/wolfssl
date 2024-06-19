@@ -26,9 +26,9 @@ idf.py build
 There are THREE possible wolfSSL libraries (not including staging instances):
 
 ```
-idf_component_get_property(wolfssl esp-wolfssl COMPONENT_LIB)
-      
 idf_component_get_property(wolfssl wolfssl COMPONENT_LIB)
 
 idf_component_get_property(wolfssl wolfssl__wolfssl COMPONENT_LIB)
+idf_component_get_property(wolfssl esp-wolfssl COMPONENT_LIB)
+      
 ```
