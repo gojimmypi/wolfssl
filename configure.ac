@@ -200,6 +200,28 @@ AS_IF([test "$ax_enable_debug" = "yes"],
       [AM_CCASFLAGS="$DEBUG_CFLAGS $AM_CCASFLAGS"],
       [AM_CCASFLAGS="$AM_CCASFLAGS -DNDEBUG"])
 
+AC_ARG_ENABLE([debug-code-points],
+    [ AS_HELP_STRING([--enable-debug-code-points],[Include source file and line number in --enable-verbose messages.]) ],
+    [ ENABLED_DEBUG_CODEPOINTS=$enableval ],
+    [ ENABLED_DEBUG_CODEPOINTS=no ]
+    )
+
+if test "$ENABLED_DEBUG_CODEPOINTS" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DEBUG_CODEPOINTS"
+fi
+
+AC_ARG_ENABLE([debug-trace-errcodes],
+    [ AS_HELP_STRING([--enable-debug-trace-errcodes],[Print trace messages when library errors are thrown.]) ],
+    [ ENABLED_DEBUG_TRACE_ERRCODES=$enableval ],
+    [ ENABLED_DEBUG_TRACE_ERRCODES=no ]
+    )
+
+if test "$ENABLED_DEBUG_TRACE_ERRCODES" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DEBUG_TRACE_ERROR_CODES"
+fi
+
 # Start without certificates enabled and enable if a certificate algorithm is
 # enabled
 ENABLED_CERTS="no"
@@ -1119,6 +1141,7 @@ AC_ARG_WITH([liboqs],
         AS_IF([ test "$ENABLED_EXPERIMENTAL" != "yes" ],[ AC_MSG_ERROR([LIBOQS requires --enable-experimental.]) ])
         AC_MSG_CHECKING([for liboqs])
         LIBS="$LIBS -loqs"
+        AM_CFLAGS="$AM_CFLAGS -pthread"
 
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <oqs/common.h>]], [[ OQS_init(); ]])], [ liboqs_linked=yes ],[ liboqs_linked=no ])
 
@@ -1160,8 +1183,7 @@ AC_ARG_WITH([liboqs],
 
 # KYBER
 # Used:
-#  - SHA3, Shake128 and Shake256, or
-#  - SHA256, SHA512, AES-CTR
+#  - SHA3, Shake128 and Shake256
 AC_ARG_ENABLE([kyber],
     [AS_HELP_STRING([--enable-kyber],[Enable KYBER (requires --enable-experimental) (default: disabled)])],
     [ ENABLED_KYBER=$enableval ],
@@ -1226,6 +1248,100 @@ then
     fi
 fi
 
+# Dilithium
+#  - SHA3, Shake128, Shake256 and AES-CTR
+AC_ARG_ENABLE([dilithium],
+    [AS_HELP_STRING([--enable-dilithium],[Enable DILITHIUM (requires --enable-experimental) (default: disabled)])],
+    [ ENABLED_DILITHIUM=$enableval ],
+    [ ENABLED_DILITHIUM=no ]
+    )
+
+ENABLED_DILITHIUM_OPTS=$ENABLED_DILITHIUM
+ENABLED_DILITHIUM_MAKE_KEY=no
+ENABLED_DILITHIUM_SIGN=no
+ENABLED_DILITHIUM_VERIFY=no
+for v in `echo $ENABLED_DILITHIUM_OPTS | tr "," " "`
+do
+  case $v in
+  yes)
+    ENABLED_MLDSA44=yes
+    ENABLED_MLDSA65=yes
+    ENABLED_MLDSA87=yes
+    ENABLED_DILITHIUM_MAKE_KEY=yes
+    ENABLED_DILITHIUM_SIGN=yes
+    ENABLED_DILITHIUM_VERIFY=yes
+    ;;
+  no)
+    ;;
+  all)
+    ENABLED_DILITHIUM_MAKE_KEY=yes
+    ENABLED_DILITHIUM_SIGN=yes
+    ENABLED_DILITHIUM_VERIFY=yes
+    ;;
+  make)
+    ENABLED_DILITHIUM_MAKE_KEY=yes
+    ;;
+  sign)
+    ENABLED_DILITHIUM_SIGN=yes
+    ;;
+  verify)
+    ENABLED_DILITHIUM_VERIFY=yes
+    ;;
+  verify-only)
+    ENABLED_DILITHIUM_MAKE_KEY=no
+    ENABLED_DILITHIUM_SIGN=no
+    ENABLED_DILITHIUM_VERIFY=yes
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_VERIFY_ONLY"
+    ;;
+  small)
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_SMALL"
+    ;;
+  44)
+    ENABLED_MLDSA44=yes
+    ;;
+  65)
+    ENABLED_MLDSA65=yes
+    ;;
+  87)
+    ENABLED_MLDSA87=yes
+    ;;
+  *)
+    AC_MSG_ERROR([Invalid choice for DILITHIUM [all,make,sign,verify,verify-only,small,44,65,87]: $ENABLED_DILITHIUM.])
+    break;;
+  esac
+done
+
+if test "$ENABLED_DILITHIUM" != "no"
+then
+    AS_IF([ test "$ENABLED_EXPERIMENTAL" != "yes" ],[ AC_MSG_ERROR([DILITHIUM requires --enable-experimental.]) ])
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_DILITHIUM"
+
+    if test "$ENABLED_MLDSA44" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_DSA_44"
+    fi
+    if test "$ENABLED_MLDSA65" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_DSA_65"
+    fi
+    if test "$ENABLED_MLDSA87" = ""; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_DSA_87"
+    fi
+    if test "$ENABLED_DILITHIUM_MAKE_KEY" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_NO_MAKE_KEY"
+    fi
+    if test "$ENABLED_DILITHIUM_SIGN" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_NO_SIGN"
+    fi
+    if test "$ENABLED_DILITHIUM_VERIFY" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_NO_VERIFY"
+    fi
+
+    if test "$ENABLED_LIBOQS" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_WC_DILITHIUM"
+        test "$enable_sha3" = "" && enable_sha3=yes
+        test "$enable_shake128" = "" && enable_shake128=yes
+        test "$enable_shake256" = "" && enable_shake256=yes
+    fi
+fi
 
 # XMSS
 AC_ARG_ENABLE([xmss],
@@ -2797,7 +2913,7 @@ then
             esac
             AC_MSG_NOTICE([64bit ARMv8 found, setting mcpu to generic+crypto])
             ;;
-        armv7a*)
+        armv7a* | armv7l*)
             AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-a -mfpu=neon -DWOLFSSL_ARM_ARCH=7 -marm"
             # Include options.h
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
@@ -2805,6 +2921,14 @@ then
             ENABLED_AESGCM_STREAM=no # not yet implemented
             ENABLED_ARMASM_NEON=yes
             AC_MSG_NOTICE([32bit ARMv7-a found, setting mfpu to neon])
+            if test "$ENABLED_FIPS" != "no" ||
+                test "$HAVE_FIPS_VERSION_MAJOR" -ge 5;
+            then
+                # Use inline ASM with FIPS because of known "issue" with the
+                # assembly code
+                ENABLED_ARMASM_INLINE=yes
+                AC_MSG_NOTICE([32bit ARMv7-a found, setting inline for FIPS])
+            fi
             ;;
         armv7m*)
             # QEMU doesn't work with armv7-m
@@ -2815,6 +2939,14 @@ then
             ENABLED_AESGCM_STREAM=no # not yet implemented
             ENABLED_ARMASM_NEON=no
             AC_MSG_NOTICE([32bit ARMv7-m found])
+            if test "$ENABLED_FIPS" != "no" ||
+                test "$HAVE_FIPS_VERSION_MAJOR" -ge 5;
+            then
+                # Use inline ASM with FIPS because of known "issue" with the
+                # assembly code
+                ENABLED_ARMASM_INLINE=yes
+                AC_MSG_NOTICE([32bit ARMv7-m found, setting inline for FIPS])
+            fi
             ;;
         armv6*)
             AM_CPPFLAGS="$AM_CPPFLAGS -march=armv6 -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=6"
@@ -8069,7 +8201,7 @@ if test "$ENABLED_SP_ASM" = "yes" && test "$ENABLED_SP" = "yes"; then
     AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SP_ARM64_ASM"
     ENABLED_SP_ARM64_ASM=yes
     ;;
-  *armv7a*)
+  *armv7a* | *armv7l*)
     if test "$ENABLED_ARMASM" = "no"; then
       AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-a -mfpu=neon -DWOLFSSL_ARM_ARCH=7 -marm"
     fi
@@ -9491,6 +9623,7 @@ AM_CONDITIONAL([BUILD_CURVE448_SMALL],[test "x$ENABLED_CURVE448_SMALL" = "xyes" 
 AM_CONDITIONAL([BUILD_WC_LMS],[test "x$ENABLED_WC_LMS" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_WC_XMSS],[test "x$ENABLED_WC_XMSS" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_WC_KYBER],[test "x$ENABLED_WC_KYBER" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
+AM_CONDITIONAL([BUILD_DILITHIUM],[test "x$ENABLED_DILITHIUM" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_ECCSI],[test "x$ENABLED_ECCSI" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SAKKE],[test "x$ENABLED_SAKKE" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_MEMORY],[test "x$ENABLED_MEMORY" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
@@ -9788,6 +9921,11 @@ echo "" >> $OPTION_FILE
 echo "#endif /* WOLFSSL_OPTIONS_H */" >> $OPTION_FILE
 echo "" >> $OPTION_FILE
 
+if test "$ENABLED_DEBUG_TRACE_ERRCODES" = "yes"
+then
+    support/gen-debug-trace-error-codes.sh || AC_MSG_ERROR([Header generation for debug-trace-errcodes failed.])
+fi
+
 if test "$ENABLED_OPENSSLEXTRA" = "yes" && test "$ENABLED_LINUXKM" = "no"
 then
     SAVE_CFLAGS=$CFLAGS
@@ -9986,6 +10124,7 @@ echo "   * XMSS_ROOT:                  $XMSS_ROOT"
 fi
 echo "   * KYBER:                      $ENABLED_KYBER"
 echo "   * KYBER wolfSSL impl:         $ENABLED_WC_KYBER"
+echo "   * DILITHIUM:                  $ENABLED_DILITHIUM"
 echo "   * ECCSI                       $ENABLED_ECCSI"
 echo "   * SAKKE                       $ENABLED_SAKKE"
 echo "   * ASN:                        $ENABLED_ASN"
