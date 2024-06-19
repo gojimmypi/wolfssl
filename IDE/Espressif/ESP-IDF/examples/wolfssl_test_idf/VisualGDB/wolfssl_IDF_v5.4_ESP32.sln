@@ -13,6 +13,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{2059
 		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\include\user_settings.h = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{1FFC4F29-F5F7-4B91-9CB5-9D46A6C3E313}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\CMakeLists.txt
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.h = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls.h
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_errors.h = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_errors.h
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_error_capture.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_error_capture.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_mbedtls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_mbedtls.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_platform_port.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_platform_port.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_wolfssl.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\esp_tls_wolfssl.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\Kconfig = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\esp-tls\Kconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mbedTLS", "mbedTLS", "{0207CFE6-7CAB-4F3D-8B7B-D1FFA65A3787}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
