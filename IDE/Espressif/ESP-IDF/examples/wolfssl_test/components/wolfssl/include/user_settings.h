@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+/* The Espressif project config file. See also sdkconfig.defaults */
+#include "sdkconfig.h"
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
  * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
@@ -29,8 +32,37 @@
  * ensure all examples match. The template example is the reference.
  */
 
-/* The Espressif project config file. See also sdkconfig.defaults */
-#include "sdkconfig.h"
+/* Naming convention: (see also esp32-crypt.h for the reference source).
+ *
+ * CONFIG_
+ *      This prefix indicates the setting came from the sdkconfig / Kconfig.
+ *
+ *      May or may not be related to wolfSSL.
+ *
+ *      The name after this prefix must exactly match that in the Kconfig file.
+ *
+ * WOLFSSL_
+ *      Typical of many, but not all wolfSSL macro names.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      May or may not have a corresponding sdkconfig / Kconfig control.
+ *
+ * ESP_WOLFSSL_
+ *      These are NOT valid wolfSSL macro names. These are names only used in
+ *      the ESP-IDF Kconfig files. When parsed, they will have a "CONFIG_"
+ *      suffix added. See next section.
+ *
+ * CONFIG_ESP_WOLFSSL_
+ *      This is a wolfSSL-specific macro that has been defined in the ESP-IDF
+ *      via the sdkconfig / menuconfig. Any text after this prefix should
+ *      exactly match an existing wolfSSL macro name.
+ *
+ *      Applies to all wolfSSL products such as wolfSSH, wolfMQTT, etc.
+ *
+ *      These macros may also be specific to only the project or environment,
+ *      and possibly not used anywhere else in the wolfSSL libraries.
+ */
 
 /* The Espressif sdkconfig will have chipset info.
 **
@@ -57,7 +89,7 @@
 #endif
 
 /* Experimental Kyber */
-#ifdef CONFIG_WOLFSSL_ENABLE_KYBER 
+#ifdef CONFIG_WOLFSSL_ENABLE_KYBER
     /* Kyber typically needs a minimum 10K stack */
     #define WOLFSSL_EXPERIMENTAL_SETTINGS
     #define WOLFSSL_HAVE_KYBER
@@ -87,8 +119,39 @@
 **   CONFIG_IDF_TARGET_ESP32C6
 */
 
-#undef  WOLFSSL_ESPIDF
-#define WOLFSSL_ESPIDF
+/* Optionally enable Apple HomeKit from compiler directive or Kconfig setting */
+#if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
+     /* SRP is known to need 8K; slow on some devices */
+     #define FP_MAX_BITS (8192 * 2)
+     #define WOLFCRYPT_HAVE_SRP
+     #define HAVE_CHACHA
+     #define HAVE_POLY1305
+     #define WOLFSSL_BASE64_ENCODE
+ #endif /* Apple HoeKit settings */
+
+/* Optionally enable some wolfSSH settings */
+#if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
+    /* The default SSH Windows size is massive for an embedded target. Limit it: */
+    #define DEFAULT_WINDOW_SZ 2000
+
+    /* These may be defined in cmake for other examples: */
+    #undef  WOLFSSH_TERM
+    #define WOLFSSH_TERM
+
+	/* optional debug */
+    /* #undef  DEBUG_WOLFSSH */
+    /* #define DEBUG_WOLFSSH */
+
+    #undef  WOLFSSL_KEY_GEN
+    #define WOLFSSL_KEY_GEN
+
+    #undef  WOLFSSL_PTHREADS
+    #define WOLFSSL_PTHREADS
+
+    #define WOLFSSH_TEST_SERVER
+    #define WOLFSSH_TEST_THREADING
+#endif /* ESP_ENABLE_WOLFSSH */
+
 
 /* Not yet using WiFi lib, so don't compile in the esp-sdk-lib WiFi helpers: */
 /* #define USE_WOLFSSL_ESP_SDK_WIFI */
@@ -298,32 +361,32 @@
 /* when you want to use SHA384 */
 #define WOLFSSL_SHA384
 
-/* when you want to use SHA512 */
-#define WOLFSSL_SHA512
-
-/* when you want to use SHA3 */
-#define WOLFSSL_SHA3
-
- /* ED25519 requires SHA512 */
-#define HAVE_ED25519
-
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
     defined(CONFIG_IDF_TARGET_ESP32C2)
+    /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
-//    #define HAVE_ECC
-//    #define HAVE_CURVE25519
-//    #define CURVE25519_SMALL
+    /* when you want to use SHA512 */
+    #define WOLFSSL_SHA512
+
+    /* when you want to use SHA3 */
+    #define WOLFSSL_SHA3
+
+    /* ED25519 requires SHA512 */
+    #define HAVE_ED25519
+
+    #define HAVE_ECC
+    #define HAVE_CURVE25519
+    #define CURVE25519_SMALL
+    #define HAVE_ED25519
 #endif
 
-#define HAVE_ED25519
-
-/* Optional OPENSSL compatibility */
-#define OPENSSL_EXTRA
+/* Optional OpenSSL compatibility */
+/* #define OPENSSL_EXTRA */
 
 /* #Optional HAVE_PKCS7 */
-#define HAVE_PKCS7
+/* #define HAVE_PKCS7 */
 
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
@@ -618,6 +681,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
 #define WOLFSSL_TEST_STRAY 1
+#define USE_ESP_DPORT_ACCESS_READ_BUFFER
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 #define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
@@ -635,7 +699,8 @@ Turn on timer debugging (used when CPU cycles not available)
 */
 
 /* Pause in a loop rather than exit. */
-#define WOLFSSL_ESPIDF_ERROR_PAUSE
+/* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
+/* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
 
 #define WOLFSSL_HW_METRICS
 
@@ -761,6 +826,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_BASE16
 #else
     #if defined(USE_CERT_BUFFERS_2048)
+    	#define USE_CERT_BUFFERS_256
     	/* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_2048
@@ -782,6 +848,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     #elif defined(USE_CERT_BUFFERS_1024)
+    	#define USE_CERT_BUFFERS_256
     	/* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_1024
@@ -807,6 +874,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
 #endif /* Conditional key and cert constant names */
 
+
 /******************************************************************************
 ** Sanity Checks
 ******************************************************************************/
@@ -829,3 +897,11 @@ Turn on timer debugging (used when CPU cycles not available)
 #else
     #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
 #endif
+/* See settings.h for some of the possible hardening options:
+ *
+ *  #define NO_ESPIDF_DEFAULT
+ *  #define WC_NO_CACHE_RESISTANT
+ *  #define WC_AES_BITSLICED
+ *  #define HAVE_AES_ECB
+ *  #define HAVE_AES_DIRECT
+ */

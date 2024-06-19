@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
- * This file is part of wolfSSL for the Espressif ESP-IDF.
+ * This file is part of wolfSSL.
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,6 +88,21 @@
     #define OPENSSL_EXTRA
 #endif
 
+/* Experimental Kyber */
+#ifdef CONFIG_WOLFSSL_ENABLE_KYBER
+    /* Kyber typically needs a minimum 10K stack */
+    #define WOLFSSL_EXPERIMENTAL_SETTINGS
+    #define WOLFSSL_HAVE_KYBER
+    #define WOLFSSL_WC_KYBER
+    #define WOLFSSL_SHA3
+    #if defined(CONFIG_IDF_TARGET_ESP8266)
+        /* With limited RAM, we'll disable some of the Kyber sizes: */
+        #define WOLFSSL_NO_KYBER1024
+        #define WOLFSSL_NO_KYBER768
+        #define NO_SESSION_CACHE
+    #endif
+#endif
+
 /* Pick a cert buffer size: */
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
@@ -104,8 +119,39 @@
 **   CONFIG_IDF_TARGET_ESP32C6
 */
 
-#undef  WOLFSSL_ESPIDF
-#define WOLFSSL_ESPIDF
+/* Optionally enable Apple HomeKit from compiler directive or Kconfig setting */
+#if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
+     /* SRP is known to need 8K; slow on some devices */
+     #define FP_MAX_BITS (8192 * 2)
+     #define WOLFCRYPT_HAVE_SRP
+     #define HAVE_CHACHA
+     #define HAVE_POLY1305
+     #define WOLFSSL_BASE64_ENCODE
+ #endif /* Apple HoeKit settings */
+
+/* Optionally enable some wolfSSH settings */
+#if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
+    /* The default SSH Windows size is massive for an embedded target. Limit it: */
+    #define DEFAULT_WINDOW_SZ 2000
+
+    /* These may be defined in cmake for other examples: */
+    #undef  WOLFSSH_TERM
+    #define WOLFSSH_TERM
+
+	/* optional debug */
+    /* #undef  DEBUG_WOLFSSH */
+    /* #define DEBUG_WOLFSSH */
+
+    #undef  WOLFSSL_KEY_GEN
+    #define WOLFSSL_KEY_GEN
+
+    #undef  WOLFSSL_PTHREADS
+    #define WOLFSSL_PTHREADS
+
+    #define WOLFSSH_TEST_SERVER
+    #define WOLFSSH_TEST_THREADING
+#endif /* ESP_ENABLE_WOLFSSH */
+
 
 /* Not yet using WiFi lib, so don't compile in the esp-sdk-lib WiFi helpers: */
 /* #define USE_WOLFSSL_ESP_SDK_WIFI */
@@ -131,7 +177,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-#define SINGLE_THREADED
+/* #define SINGLE_THREADED */
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -192,6 +238,8 @@
     #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
           defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
+        #define WOLFCRYPT_HAVE_SRP
+        #define FP_MAX_BITS (8192 * 2)
     #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
           defined(CONFIG_IDF_TARGET_ESP32H2)
         /* SRP Known to be working on this target::*/
@@ -286,6 +334,8 @@
 /* #define NO_SHA */
 /* #define NO_OLD_TLS */
 
+#define BENCH_EMBEDDED
+
 /* TLS 1.3                                 */
 #define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
@@ -293,6 +343,8 @@
 #define HAVE_HKDF
 #define HAVE_AEAD
 #define HAVE_SUPPORTED_CURVES
+
+#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
 
@@ -822,6 +874,29 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
 #endif /* Conditional key and cert constant names */
 
+
+/******************************************************************************
+** Sanity Checks
+******************************************************************************/
+#if defined(CONFIG_ESP_MAIN_TASK_STACK_SIZE)
+    #if defined(WOLFCRYPT_HAVE_SRP)
+        #if defined(FP_MAX_BITS)
+            #if FP_MAX_BITS <  (8192 * 2)
+                #define ESP_SRP_MINIMUM_STACK_8K (24 * 1024)
+            #else
+                #define ESP_SRP_MINIMUM_STACK_8K (28 * 1024)
+            #endif
+        #else
+            #error "Please define FP_MAX_BITS when using WOLFCRYPT_HAVE_SRP."
+        #endif
+
+        #if (CONFIG_ESP_MAIN_TASK_STACK_SIZE < ESP_SRP_MINIMUM_STACK)
+            #warning "WOLFCRYPT_HAVE_SRP enabled with small stack size"
+        #endif
+    #endif
+#else
+    #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
+#endif
 /* See settings.h for some of the possible hardening options:
  *
  *  #define NO_ESPIDF_DEFAULT
