@@ -542,3 +542,16 @@ debian/control
 /IDE/PlatformIO/examples/wolfssl_benchmark/.gitignore
 
 /examples-extra/dtls
+/3.patch.txt
+/AppleHomeKit..md
+/espcoredump.md
+/git_history.txt
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/7210_reply.md
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/TextFile2.txt
+/IDE/Espressif/ESP-IDF/libs/.vsconfig
+/IDE/PlatformIO/Issue85_Reply.md
+/kyber_server.md
+/lib.txt
+/patch7567.txt
+/_wolfSSL_TODO.txt
+/IDE/Espressif/ESP-IDF5/examples/wolfssl_idf
