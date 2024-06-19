@@ -725,8 +725,6 @@ enum {
 #if defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL)
     /* wolfSSH debugging enabled via Kconfig / menuconfig */
     #define DEBUG_WOLFSSL
-#else
-    #define NO_ERROR_STRINGS
 #endif
 
 /*
