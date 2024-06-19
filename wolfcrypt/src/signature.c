@@ -37,9 +37,6 @@
 #ifndef NO_RSA
 #include <wolfssl/wolfcrypt/rsa.h>
 #endif
-#ifdef DEBUG_WOLFSSL
-#include <wolfssl/ssl.h>
-#endif
 
 /* If ECC and RSA are disabled then disable signature wrapper */
 #if (!defined(HAVE_ECC) || (defined(HAVE_ECC) && !defined(HAVE_ECC_SIGN) \
@@ -50,10 +47,6 @@
 
 /* Signature wrapper disabled check */
 #ifndef NO_SIG_WRAPPER
-
-#ifdef DEBUG_WOLFSSL
-    static char errorMsg[WOLFSSL_MAX_ERROR_SZ];
-#endif
 
 #if !defined(NO_RSA) && defined(WOLFSSL_CRYPTOCELL)
     extern int cc310_RsaSSL_Verify(const byte* in, word32 inLen, byte* sig,
@@ -438,12 +431,6 @@ int wc_SignatureGenerateHash_ex(
             if (ret >= 0) {
                 *sig_len = (word32)ret;
                 ret = 0; /* Success */
-            }
-            else {
-    #ifdef DEBUG_WOLFSSL
-                wolfSSL_ERR_error_string(ret, errorMsg);
-                WOLFSSL_MSG_EX("Error %d: %s ", ret, errorMsg);
-    #endif
             }
 #else
             ret = SIG_TYPE_E;
