@@ -62,6 +62,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "private_include", "private_
 		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\private_include\esp_transport_internal.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\tcp_transport\private_include\esp_transport_internal.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{00F54CD7-9272-46DA-9605-E92FB111A6D0}"
+	ProjectSection(SolutionItems) = preProject
+		components\wolfssl\idf_component.yml = components\wolfssl\idf_component.yml
+		components\wolfssl\Kconfig = components\wolfssl\Kconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
