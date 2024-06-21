@@ -19,6 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 
+# Kconfig File Version 5.7.0.001 for wolfssl_test
+
 # Kconfig Format Rules
 #
 # See:
@@ -49,6 +51,28 @@
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
 menu "wolfSSL"
+    config TLS_STACK_WOLFSSL
+        bool "Include wolfSSL in ESP-TLS"
+        default y
+        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
+        help
+            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
+
+    menu "Hardening"
+        config ESP_WOLFSSL_WC_NO_HARDEN
+            bool "Disable wolfSSL hardening"
+            default n
+            help
+                Sets WC_NO_HARDEN
+
+        config ESP_WOLFSSL_TFM_TIMING_RESISTANT
+            bool "Enable TFM Timing Resistant Code"
+            default n
+            help
+                Sets TFM_TIMING_RESISTANT.
+
+    endmenu # Hardening
+
     config ESP_WOLFSSL_ENABLE_BENCHMARK
         bool "Enable wolfSSL Benchmark Library"
         default n
@@ -103,12 +127,6 @@ menu "wolfSSL"
     endmenu # Apple HomeKit
     # -----------------------------------------------------------------------------------------------------------------
 
-    config ESP_ENABLE_WOLFSSH
-        bool "Enable wolfSSH options"
-        default n
-        help
-            Enables WOLFSSH_TERM, WOLFSSL_KEY_GEN, WOLFSSL_PTHREADS, WOLFSSH_TEST_SERVER, WOLFSSH_TEST_THREADING
-
     config ESP_WOLFSSL_DISABLE_MY_ECC
         bool "Disable ECC in my project"
         default "n"
@@ -126,13 +144,6 @@ menu "wolfSSL"
         default n
         help
             Enables user settings relevant to benchmark code
-
-    config TLS_STACK_WOLFSSL
-        bool "Include wolfSSL in ESP-TLS"
-        default y
-        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
-        help
-            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
 
     config ESP_TLS_USING_WOLFSSL_SPECIFIED
         bool "Use the specified wolfssl for ESP-TLS"
@@ -322,11 +333,34 @@ endmenu # wolfSSL
 
 # ---------------------------------------------------------------------------------------------------------------------
 menu "wolfSSH"
-    config ESP_WOLFSSL_DEBUG_WOLFSSH
-        bool "Enable wolfSSH"
+    config ESP_ENABLE_WOLFSSH
+        bool "Enable wolfSSH options"
         default n
         help
-            Enable wolfSSH along with some settings for SSH Server, Terminal, Key Gen, etc. See user_settings.h
+            Enables WOLFSSH_TERM, WOLFSSL_KEY_GEN, WOLFSSL_PTHREADS, WOLFSSH_TEST_SERVER, WOLFSSH_TEST_THREADING
+
+    config ESP_WOLFSSL_DEBUG_WOLFSSH
+        bool "Enable wolfSSH debugging"
+        default n
+        help
+            Enable wolfSSH debugging macro. See user_settings.h
 
 endmenu # wolfSSH
+# ---------------------------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------------------------
+menu "wolfMQTT"
+    config ESP_ENABLE_WOLFMQTT
+        bool "Enable wolfMQTT options"
+        default n
+        help
+            Enables WOLFMQTT
+
+    config ESP_WOLFSSL_DEBUG_WOLFMQTT
+        bool "Enable wolfMQTT debugging"
+        default n
+        help
+            Enable wolfMQTT debugging macro. See user_settings.h
+
+endmenu # wolfMQTT
 # ---------------------------------------------------------------------------------------------------------------------

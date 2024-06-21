@@ -1,4 +1,4 @@
-/* user_settings.h
+/* wolfssl-component include/user_settings.h
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -127,7 +128,14 @@
      #define HAVE_CHACHA
      #define HAVE_POLY1305
      #define WOLFSSL_BASE64_ENCODE
- #endif /* Apple HoeKit settings */
+ #endif /* Apple HomeKit settings */
+
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
+    /* The ESP-TLS */
+    #define  HAVE_ALPN
+    #define  HAVE_SNI
+    #define  OPENSSL_EXTRA_X509_SMALL
+#endif
 
 /* Optionally enable some wolfSSH settings */
 #if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
@@ -375,11 +383,41 @@
 
     /* ED25519 requires SHA512 */
     #define HAVE_ED25519
+#endif
 
-    #define HAVE_ECC
-    #define HAVE_CURVE25519
-    #define CURVE25519_SMALL
-    #define HAVE_ED25519
+#define MY_USE_ECC 1
+#define MY_USE_RSA 0
+
+/* We can use either or both ECC and RSA, but must use at least one. */
+#if MY_USE_ECC || MY_USE_RSA
+    #if MY_USE_ECC
+        /* ---- ECDSA / ECC ---- */
+        #define HAVE_ECC
+        #define HAVE_CURVE25519
+        #define HAVE_ED25519
+
+        /*
+        #define HAVE_ECC384
+        #define CURVE25519_SMALL
+        */
+    #else
+        #define WOLFSSH_NO_ECC
+        /* WOLFSSH_NO_ECDSA is typically defined automatically,
+         * here for clarity: */
+        #define WOLFSSH_NO_ECDSA
+    #endif
+
+    #if MY_USE_RSA
+        /* ---- RSA ----- */
+        /* #define RSA_LOW_MEM */
+
+        /* DH disabled by default, needed if ECDSA/ECC also turned off */
+        #define HAVE_DH
+    #else
+        #define WOLFSSH_NO_RSA
+    #endif
+#else
+    #error "Either RSA or ECC must be enabled"
 #endif
 
 /* Optional OpenSSL compatibility */
@@ -492,6 +530,58 @@
 --enable-certext
 --enable-asn-template
 */
+
+/* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
+/*
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+*/
+
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    /* SM settings, possible cipher suites:
+
+        TLS13-AES128-GCM-SHA256
+        TLS13-CHACHA20-POLY1305-SHA256
+        TLS13-SM4-GCM-SM3
+        TLS13-SM4-CCM-SM3
+
+    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-CCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CBC-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-GCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "ECDHE-ECDSA-SM4-CCM-SM3"
+    #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-SM4-GCM-SM3:" \
+                                       "TLS13-SM4-CCM-SM3:"
+    */
+
+    #undef  WOLFSSL_BASE16
+    #define WOLFSSL_BASE16 /* required for WOLFSSL_SM2 */
+
+    #undef  WOLFSSL_SM4_ECB
+    #define WOLFSSL_SM4_ECB
+
+    #undef  WOLFSSL_SM4_CBC
+    #define WOLFSSL_SM4_CBC
+
+    #undef  WOLFSSL_SM4_CTR
+    #define WOLFSSL_SM4_CTR
+
+    #undef  WOLFSSL_SM4_GCM
+    #define WOLFSSL_SM4_GCM
+
+    #undef  WOLFSSL_SM4_CCM
+    #define WOLFSSL_SM4_CCM
+
+    #define HAVE_POLY1305
+    #define HAVE_CHACHA
+
+    #undef  HAVE_AESGCM
+    #define HAVE_AESGCM
+#else
+    /* default settings */
+    #define USE_CERT_BUFFERS_2048
+#endif
 
 /* Chipset detection from sdkconfig.h
  * Default is HW enabled unless turned off.
