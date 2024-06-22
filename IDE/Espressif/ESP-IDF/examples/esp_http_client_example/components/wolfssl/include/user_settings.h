@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x
+#define USE_WOLFSSL_ESP_SDK_TIME
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -345,12 +346,15 @@
 #define BENCH_EMBEDDED
 
 /* TLS 1.3                                 */
-#define WOLFSSL_TLS13
-#define HAVE_TLS_EXTENSIONS
+#ifdef CONFIG_WOLFSSL_ALLOW_TLS13
+    #define WOLFSSL_TLS13
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+#endif
+
 #define WC_RSA_PSS
 #define HAVE_HKDF
 #define HAVE_AEAD
-#define HAVE_SUPPORTED_CURVES
 
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
@@ -759,7 +763,7 @@
         #endif
     #endif
 #endif
-
+#define DEBUG_WOLFSSL
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 

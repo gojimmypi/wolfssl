@@ -656,7 +656,11 @@ static void https_async(void)
     // Test HTTP_METHOD_HEAD with is_async enabled
     config.url = "https://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/get";
     config.event_handler = _http_event_handler;
+#ifdef CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     config.crt_bundle_attach = esp_crt_bundle_attach;
+#else
+    config.crt_bundle_attach = NULL;
+#endif
     config.is_async = true;
     config.timeout_ms = 5000;
 
@@ -851,7 +855,8 @@ static void http_test_task(void *pvParameters)
     vTaskDelete(NULL);
 #endif
 }
-
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 void app_main(void)
 {
     esp_err_t ret = nvs_flash_init();
@@ -870,10 +875,24 @@ void app_main(void)
      */
     ESP_ERROR_CHECK(example_connect());
     ESP_LOGI(TAG, "Connected to AP, begin http example");
+    struct timeval now;
+    struct tm timeinfo;
 
+    // Set your desired time here
+    timeinfo.tm_year = 2024 - 1900; // Year - 1900
+    timeinfo.tm_mon = 6 - 1;        // Month, where 0 = Jan
+    timeinfo.tm_mday = 21;          // Day of the month
+    timeinfo.tm_hour = 12;
+    timeinfo.tm_min = 0;
+    timeinfo.tm_sec = 0;
+
+    time_t t = mktime(&timeinfo);
+    now.tv_sec = t;
+    now.tv_usec = 0;
+    settimeofday(&now, NULL);
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
 #else
-    xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&http_test_task, "http_test_task", 48192, NULL, 5, NULL);
 #endif
 }

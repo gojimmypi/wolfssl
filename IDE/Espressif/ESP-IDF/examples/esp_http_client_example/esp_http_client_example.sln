@@ -64,6 +64,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "private_include", "private_
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{00F54CD7-9272-46DA-9605-E92FB111A6D0}"
 	ProjectSection(SolutionItems) = preProject
+		components\wolfssl\wolfssl\wolfcrypt\error-crypt.h = components\wolfssl\wolfssl\wolfcrypt\error-crypt.h
+		components\wolfssl\wolfssl\error-ssl.h = components\wolfssl\wolfssl\error-ssl.h
 		components\wolfssl\idf_component.yml = components\wolfssl\idf_component.yml
 		components\wolfssl\Kconfig = components\wolfssl\Kconfig
 	EndProjectSection
