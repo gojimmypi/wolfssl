@@ -70,6 +70,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{00F5
 		components\wolfssl\Kconfig = components\wolfssl\Kconfig
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mbedtls", "mbedtls", "{03637C18-4611-42C5-BE35-D7C7BAFDF0C0}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -98,6 +104,7 @@ Global
 		{AE7C597E-73D1-4030-8235-84C74D85C161} = {32B1DC45-8806-48D5-BF6B-73FF0D33D4BD}
 		{7591DD83-B295-4A2B-A61E-A6B872316FE3} = {6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847}
 		{620B55EF-FF46-4670-B6A4-A7143E182A61} = {6F40E13A-E5EB-4E0A-87AA-A6F10BFD5847}
+		{03637C18-4611-42C5-BE35-D7C7BAFDF0C0} = {A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9D44E15E-CF40-4BB4-9218-88074B906492}

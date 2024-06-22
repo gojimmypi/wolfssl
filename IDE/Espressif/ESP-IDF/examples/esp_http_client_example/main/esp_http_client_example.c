@@ -19,7 +19,8 @@
 #include "protocol_examples_utils.h"
 #include "esp_tls.h"
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
-#include "esp_crt_bundle.h"
+    /* "Certificate Bundles" are specific to mbedTLS and not part of any RFC */
+    #include "esp_crt_bundle.h"
 #endif
 
 #include "freertos/FreeRTOS.h"
@@ -122,7 +123,11 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
             if (err != 0) {
                 ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
-                ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+                #ifdef CONFIG_ESP_TLS_USING_MBEDTLS
+                {
+                    ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+                }
+                #endif
             }
             if (output_buffer != NULL) {
                 free(output_buffer);

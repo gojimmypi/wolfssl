@@ -51,12 +51,12 @@
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
 menu "wolfSSL"
-    config TLS_STACK_WOLFSSL
-        bool "Include wolfSSL in ESP-TLS"
-        default y
-        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
-        help
-            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
+#    config TLS_STACK_WOLFSSL
+#        bool "Include wolfSSL in ESP-TLS"
+#        default y
+#        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
+#        help
+#            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
 
     menu "Hardening"
         config ESP_WOLFSSL_WC_NO_HARDEN
@@ -185,9 +185,18 @@ menu "wolfSSL"
                 Allow TLS to fallback to TLS1.2. Memory footprint will likely be larger for TLS1.2.
                 When disabled HTTPS and MQTT over TLS connections will fail if TLS1.3 not accepted.
 
+        config WOLFSSL_HAVE_TLS_EXTENSIONS
+            bool "Enable TLS Extensions"
+            default y
+            help
+                Sets HAVE_TLS_EXTENSIONS which is needed for TLS 1.3, SNI, ALPN, and more.
+
         config WOLFSSL_HAVE_OCSP
             bool "Enable OCSP (Online Certificate Status Protocol) in wolfSSL"
             default n
+            help
+                Sets HAVE_OCSP
+
     endmenu # Protocol Config
     # -----------------------------------------------------------------------------------------------------------------
 

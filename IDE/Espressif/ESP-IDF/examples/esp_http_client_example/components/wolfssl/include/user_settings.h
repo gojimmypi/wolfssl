@@ -352,6 +352,10 @@
     #define HAVE_SUPPORTED_CURVES
 #endif
 
+#ifdef CONFIG_WOLFSSL_HAVE_TLS_EXTENSIONS
+    #define HAVE_TLS_EXTENSIONS
+#endif
+
 #define WC_RSA_PSS
 #define HAVE_HKDF
 #define HAVE_AEAD
@@ -389,8 +393,8 @@
     #define HAVE_ED25519
 #endif
 
-#define MY_USE_ECC 1
-#define MY_USE_RSA 0
+#define MY_USE_ECC 0
+#define MY_USE_RSA 1
 
 /* We can use either or both ECC and RSA, but must use at least one. */
 #if MY_USE_ECC || MY_USE_RSA
