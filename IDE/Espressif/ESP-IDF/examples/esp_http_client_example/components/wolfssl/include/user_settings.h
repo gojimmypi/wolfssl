@@ -133,9 +133,13 @@
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
-    #define  HAVE_ALPN
-    #define  HAVE_SNI
-    #define  OPENSSL_EXTRA_X509_SMALL
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
 #endif
 
 /* Optionally enable some wolfSSH settings */
@@ -186,7 +190,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -209,7 +213,7 @@
 #define RSA_LOW_MEM
 
 /* Uncommon settings for testing only */
-#define TEST_ESPIDF_ALL_WOLFSSL
+// #define TEST_ESPIDF_ALL_WOLFSSL
 #ifdef  TEST_ESPIDF_ALL_WOLFSSL
     #define WOLFSSL_MD2
     #define HAVE_BLAKE2
@@ -387,14 +391,14 @@
     #define WOLFSSL_SHA512
 
     /* when you want to use SHA3 */
-    #define WOLFSSL_SHA3
+    /* #define WOLFSSL_SHA3 */
 
     /* ED25519 requires SHA512 */
     #define HAVE_ED25519
 #endif
 
-#define MY_USE_ECC 0
-#define MY_USE_RSA 1
+#define MY_USE_ECC 1
+#define MY_USE_RSA 0
 
 /* We can use either or both ECC and RSA, but must use at least one. */
 #if MY_USE_ECC || MY_USE_RSA
@@ -403,10 +407,10 @@
         #define HAVE_ECC
         #define HAVE_CURVE25519
         #define HAVE_ED25519
+        #define CURVE25519_SMALL
 
         /*
         #define HAVE_ECC384
-        #define CURVE25519_SMALL
         */
     #else
         #define WOLFSSH_NO_ECC
@@ -486,6 +490,7 @@
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
 /* #define WOLFSSL_SP_RISCV32    */
+/* #undef  USE_FAST_MATH          */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
@@ -767,7 +772,7 @@
         #endif
     #endif
 #endif
-#define DEBUG_WOLFSSL
+
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 

@@ -660,6 +660,7 @@ static void https_async(void)
 
     // Test HTTP_METHOD_HEAD with is_async enabled
     config.url = "https://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/get";
+    ESP_LOGI(TAG, "config.url = %s", config.url);
     config.event_handler = _http_event_handler;
 #ifdef CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     config.crt_bundle_attach = esp_crt_bundle_attach;
@@ -879,6 +880,8 @@ void app_main(void)
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
+    esp_log_level_set("esp-tls",         ESP_LOG_DEBUG);
+    esp_log_level_set("esp-tls-wolfssl", ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Connected to AP, begin http example");
     struct timeval now;
     struct tm timeinfo;
