@@ -73,7 +73,19 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mbedtls", "mbedtls", "{03637C18-4611-42C5-BE35-D7C7BAFDF0C0}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c
+		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h
 		..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.4-master\components\mbedtls\Kconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PlatformIO", "PlatformIO", "{82C990FA-E109-453A-AF4F-FE7F7D381B3E}"
+	ProjectSection(SolutionItems) = preProject
+		..\espidf-http-request\.pio\build\esp32dev\memory.ld = ..\espidf-http-request\.pio\build\esp32dev\memory.ld
+		..\espidf-http-request\sdkconfig = ..\espidf-http-request\sdkconfig
+		..\espidf-http-request\sdkconfig.defaults = ..\espidf-http-request\sdkconfig.defaults
+		..\espidf-http-request\sdkconfig.esp32dev = ..\espidf-http-request\sdkconfig.esp32dev
+		..\espidf-http-request\.pio\build\esp32dev\config\sdkconfig.h = ..\espidf-http-request\.pio\build\esp32dev\config\sdkconfig.h
+		..\espidf-http-request\.pio\build\esp32dev\sections.ld = ..\espidf-http-request\.pio\build\esp32dev\sections.ld
 	EndProjectSection
 EndProject
 Global
