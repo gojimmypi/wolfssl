@@ -826,6 +826,59 @@ static void http_partial_download(void)
 }
 #endif // CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
 
+#pragma region MyRegion
+void code_seg1() {
+    BZERO(&m_client_config);
+    // We are forced to have something here or program will segfault:
+    m_client_config.url = "https://google.com"; // merely need to
+    indicate https : // even though this is unused
+                    m_client_config.max_redirection_count = 3;
+    m_client_config.event_handler = m_http_client_event_cb;
+    m_client_config.user_data = hcloud;
+    m_client_config.timeout_ms = kAPI_RECV_TIMEOUT_MS;
+    // init
+    hcloud->hclient = esp_http_client_init(&m_client_config);
+}
+
+void code_seg2()
+{
+#include "esp_http_client.h"
+     // esp_http_client stuff
+     esp_http_client_handle_t hclient;
+     esp_http_client_method_t httpmethod;
+     esp_http_client_method_t http_method;
+static esp_http_client_config_t m_client_config;
+static void m_set_header(esp_http_client_handle_t hclient, char const
+*name, char const *value) {
+     ESP_ERROR_CHECK(esp_http_client_set_header(hclient, name, value));
+static void m_header_print(esp_http_client_handle_t hclient, char const
+*name) {
+     ESP_ERROR_CHECK(esp_http_client_get_header(hclient, name, &value));
+static char const *m_method_as_str (esp_http_client_method_t http_method) {
+static esp_err_t m_http_client_event_cb (esp_http_client_event_t *evt) {
+     return esp_http_client_write(hcloud->hclient, str, nch);
+     esp_http_client_cleanup(hcloud->hclient);
+         ESP_ERROR_CHECK(esp_http_client_close(hcloud->hclient));
+         hcloud->hclient = esp_http_client_init(&m_client_config);
+     ESP_ERROR_CHECK(esp_http_client_set_url(hcloud->hclient,
+hcloud->urlinfo.zurl));
+     ESP_ERROR_CHECK(esp_http_client_set_method(hcloud->hclient,
+hcloud->httpmethod));
+         ESP_ERROR_CHECK(err = esp_http_client_open(hcloud->hclient, 0));
+         ESP_ERROR_CHECK(err = esp_http_client_open(hcloud->hclient,
+strlen(pform)));
+         ESP_ERROR_CHECK(err = esp_http_client_open(hcloud->hclient,
+-1));   // we signify -1 so we can send chunked data:
+         nrecv = esp_http_client_fetch_headers(hcloud->hclient); // this
+will be 0 for chunked
+             nrecv = esp_http_client_read_response(hcloud->hclient,
+hcloud->xbuf, hcloud->xbufsize);
+         hcloud->urlinfo.http_status_code =
+esp_http_client_get_status_code(hcloud->hclient);
+         ESP_ERROR_CHECK(esp_http_client_close(hcloud->hclient));
+}
+#pragma endregion
+
 static void http_test_task(void *pvParameters)
 {
     http_rest_with_url();
