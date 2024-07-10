@@ -376,7 +376,7 @@ int EncryptDerKey(byte *der, int *derSz, const EVP_CIPHER* cipher,
             DYNAMIC_TYPE_ENCRYPTEDINFO);
         if (info == NULL) {
             WOLFSSL_MSG("malloc failed");
-            ret = 0;
+            ret = MEMORY_E;
         }
     }
     #endif
@@ -417,7 +417,8 @@ int EncryptDerKey(byte *der, int *derSz, const EVP_CIPHER* cipher,
         (*derSz) += (int)paddingSz;
 
         /* Encrypt DER buffer. */
-        ret = wc_BufferKeyEncrypt(info, der, (word32)*derSz, passwd, passwdSz, WC_MD5);
+        ret = wc_BufferKeyEncrypt(info, der, (word32)*derSz, passwd, passwdSz,
+            WC_MD5);
         if (ret != 0) {
             WOLFSSL_MSG("encrypt key failed");
         }
@@ -2704,7 +2705,7 @@ int SetRsaInternal(WOLFSSL_RSA* rsa)
         }
 
         /* Copy down d mod q-1 if available. */
-        if ((ret == 1) && (rsa->dmp1 != NULL) &&
+        if ((ret == 1) && (rsa->dmq1 != NULL) &&
                 (wolfssl_bn_get_value(rsa->dmq1, &key->dQ) != 1)) {
             WOLFSSL_ERROR_MSG("rsa dQ key error");
             ret = -1;
@@ -3273,6 +3274,7 @@ static int wolfssl_rsa_generate_key_native(WOLFSSL_RSA* rsa, int bits,
 #endif
     int initTmpRng = 0;
     WC_RNG* rng = NULL;
+    long en;
 #endif
 
     (void)cb;
@@ -3286,10 +3288,12 @@ static int wolfssl_rsa_generate_key_native(WOLFSSL_RSA* rsa, int bits,
         /* Something went wrong so return memory error. */
         ret = MEMORY_E;
     }
+    if ((ret == 0) && ((en = (long)wolfSSL_BN_get_word(e)) <= 0)) {
+        ret = BAD_FUNC_ARG;
+    }
     if (ret == 0) {
         /* Generate an RSA key. */
-        ret = wc_MakeRsaKey((RsaKey*)rsa->internal, bits,
-            (long)wolfSSL_BN_get_word(e), rng);
+        ret = wc_MakeRsaKey((RsaKey*)rsa->internal, bits, en, rng);
         if (ret != MP_OKAY) {
             WOLFSSL_ERROR_MSG("wc_MakeRsaKey failed");
         }
@@ -3564,7 +3568,7 @@ int wolfSSL_RSA_padding_add_PKCS1_PSS(WOLFSSL_RSA *rsa, unsigned char *em,
     if (ret == 1) {
         /* Get length of RSA key - encrypted message length. */
         emLen = wolfSSL_RSA_size(rsa);
-        if (ret <= 0) {
+        if (emLen <= 0) {
             WOLFSSL_ERROR_MSG("wolfSSL_RSA_size error");
             ret = 0;
         }
@@ -8730,7 +8734,7 @@ int wolfSSL_DH_compute_key(unsigned char* key, const WOLFSSL_BIGNUM* otherPub,
     if (ret == 0) {
         /* Get the public key into the array. */
         pubSz  = wolfSSL_BN_bn2bin(otherPub, pub);
-        if (privSz <= 0) {
+        if (pubSz <= 0) {
             ret = -1;
         }
     }

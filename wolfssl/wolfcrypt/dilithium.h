@@ -591,10 +591,15 @@ struct dilithium_key {
 #ifndef WOLFSSL_DILITHIUM_VERIFY_ONLY
 WOLFSSL_API
 int wc_dilithium_make_key(dilithium_key* key, WC_RNG* rng);
+WOLFSSL_API
+int wc_dilithium_make_key_from_seed(dilithium_key* key, const byte* seed);
 
 WOLFSSL_API
 int wc_dilithium_sign_msg(const byte* in, word32 inLen, byte* out,
     word32 *outLen, dilithium_key* key, WC_RNG* rng);
+WOLFSSL_API
+int wc_dilithium_sign_msg_with_seed(const byte* in, word32 inLen, byte* out,
+    word32 *outLen, dilithium_key* key, byte* seed);
 #endif
 WOLFSSL_API
 int wc_dilithium_verify_msg(const byte* sig, word32 sigLen, const byte* msg,
@@ -675,8 +680,7 @@ int wc_dilithium_export_key(dilithium_key* key, byte* priv, word32 *privSz,
 #endif
 
 #ifndef WOLFSSL_DILITHIUM_NO_ASN1
-#if defined(WOLFSSL_DILITHIUM_PRIVATE_KEY) && \
-    defined(WOLFSSL_DILITHIUM_PUBLIC_KEY)
+#if defined(WOLFSSL_DILITHIUM_PRIVATE_KEY)
 WOLFSSL_API int wc_Dilithium_PrivateKeyDecode(const byte* input,
     word32* inOutIdx, dilithium_key* key, word32 inSz);
 #endif
@@ -689,8 +693,7 @@ WOLFSSL_API int wc_Dilithium_PublicKeyDecode(const byte* input,
 WOLFSSL_API int wc_Dilithium_PublicKeyToDer(dilithium_key* key, byte* output,
     word32 inLen, int withAlg);
 #endif
-#if defined(WOLFSSL_DILITHIUM_PRIVATE_KEY) && \
-    defined(WOLFSSL_DILITHIUM_PUBLIC_KEY)
+#if defined(WOLFSSL_DILITHIUM_PRIVATE_KEY)
 WOLFSSL_API int wc_Dilithium_KeyToDer(dilithium_key* key, byte* output,
     word32 inLen);
 #endif

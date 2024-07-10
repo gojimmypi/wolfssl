@@ -3612,7 +3612,7 @@ static WOLFSSL_X509* d2i_X509orX509REQ(WOLFSSL_X509** x509,
     #ifdef WOLFSSL_CERT_REQ
         cert->isCSR = (byte)req;
     #endif
-        if (ParseCertRelative(cert, type, 0, NULL) == 0) {
+        if (ParseCertRelative(cert, type, 0, NULL, NULL) == 0) {
             newX509 = wolfSSL_X509_new_ex(heap);
             if (newX509 != NULL) {
                 if (CopyDecodedToX509(newX509, cert) != 0) {
@@ -5254,7 +5254,7 @@ static WOLFSSL_X509* loadX509orX509REQFromBuffer(
     #endif
         {
             InitDecodedCert(cert, der->buffer, der->length, NULL);
-            ret = ParseCertRelative(cert, type, 0, NULL);
+            ret = ParseCertRelative(cert, type, 0, NULL, NULL);
             if (ret == 0) {
                 x509 = (WOLFSSL_X509*)XMALLOC(sizeof(WOLFSSL_X509), NULL,
                                                              DYNAMIC_TYPE_X509);
@@ -8236,7 +8236,8 @@ int wolfSSL_X509_CRL_get_signature(WOLFSSL_X509_CRL* crl,
 {
     WOLFSSL_ENTER("wolfSSL_X509_CRL_get_signature");
 
-    if (crl == NULL || crl->crlList == NULL || bufSz == NULL)
+    if (crl == NULL || crl->crlList == NULL ||
+        crl->crlList->signature == NULL || bufSz == NULL)
         return BAD_FUNC_ARG;
 
     if (buf != NULL)
@@ -12851,6 +12852,7 @@ WOLF_STACK_OF(WOLFSSL_X509_NAME) *wolfSSL_dup_CA_list(
         if (name == NULL || WOLFSSL_SUCCESS != wolfSSL_sk_X509_NAME_push(copy, name)) {
             WOLFSSL_MSG("Memory error");
             wolfSSL_sk_X509_NAME_pop_free(copy, wolfSSL_X509_NAME_free);
+            wolfSSL_X509_NAME_free(name);
             return NULL;
         }
     }
@@ -12972,6 +12974,14 @@ static int get_dn_attr_by_nid(int n, const char** buf)
             str = "UID";
             len = 3;
             break;
+        case NID_serialNumber:
+            str = "serialNumber";
+            len = 12;
+            break;
+        case NID_title:
+            str = "title";
+            len = 5;
+            break;
         default:
             WOLFSSL_MSG("Attribute type not found");
             str = NULL;
@@ -13051,6 +13061,7 @@ static int wolfSSL_EscapeString_RFC2253(char* in, word32 inSz,
  *                                RFC22523 currently implemented.
  *              XN_FLAG_DN_REV  - print name reversed. Automatically done by
  *                                XN_FLAG_RFC2253.
+ *              XN_FLAG_SPC_EQ  - spaces before and after '=' character
  *
  * Returns WOLFSSL_SUCCESS (1) on success, WOLFSSL_FAILURE (0) on failure.
  */
@@ -13058,6 +13069,8 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
                 int indent, unsigned long flags)
 {
     int i, count = 0, nameStrSz = 0, escapeSz = 0;
+    int eqSpace  = 0;
+    char eqStr[4];
     char* tmp = NULL;
     char* nameStr = NULL;
     const char *buf = NULL;
@@ -13069,6 +13082,15 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
 
     if ((name == NULL) || (name->sz == 0) || (bio == NULL))
         return WOLFSSL_FAILURE;
+
+    XMEMSET(eqStr, 0, sizeof(eqStr));
+    if (flags & XN_FLAG_SPC_EQ) {
+        eqSpace = 2;
+        XSTRNCPY(eqStr, " = ", 4);
+    }
+    else {
+        XSTRNCPY(eqStr, "=", 4);
+    }
 
     for (i = 0; i < indent; i++) {
         if (wolfSSL_BIO_write(bio, " ", 1) != 1)
@@ -13114,14 +13136,15 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
         if (len == 0 || buf == NULL)
             return WOLFSSL_FAILURE;
 
-        tmpSz = nameStrSz + len + 4; /* + 4 for '=', comma space and '\0'*/
+        /* + 4 for '=', comma space and '\0'*/
+        tmpSz = nameStrSz + len + 4 + eqSpace;
         tmp = (char*)XMALLOC(tmpSz, NULL, DYNAMIC_TYPE_TMP_BUFFER);
         if (tmp == NULL) {
             return WOLFSSL_FAILURE;
         }
 
         if (i < count - 1) {
-            if (XSNPRINTF(tmp, (size_t)tmpSz, "%s=%s, ", buf, nameStr)
+            if (XSNPRINTF(tmp, (size_t)tmpSz, "%s%s%s, ", buf, eqStr, nameStr)
                 >= tmpSz)
             {
                 WOLFSSL_MSG("buffer overrun");
@@ -13129,17 +13152,17 @@ int wolfSSL_X509_NAME_print_ex(WOLFSSL_BIO* bio, WOLFSSL_X509_NAME* name,
                 return WOLFSSL_FAILURE;
             }
 
-            tmpSz = len + nameStrSz + 3; /* 3 for '=', comma space */
+            tmpSz = len + nameStrSz + 3 + eqSpace; /* 3 for '=', comma space */
         }
         else {
-            if (XSNPRINTF(tmp, (size_t)tmpSz, "%s=%s", buf, nameStr)
+            if (XSNPRINTF(tmp, (size_t)tmpSz, "%s%s%s", buf, eqStr, nameStr)
                 >= tmpSz)
             {
                 WOLFSSL_MSG("buffer overrun");
                 XFREE(tmp, NULL, DYNAMIC_TYPE_TMP_BUFFER);
                 return WOLFSSL_FAILURE;
             }
-            tmpSz = len + nameStrSz + 1; /* 1 for '=' */
+            tmpSz = len + nameStrSz + 1 + eqSpace; /* 1 for '=' */
             if (bio->type != WOLFSSL_BIO_FILE && bio->type != WOLFSSL_BIO_MEMORY)
                 ++tmpSz; /* include the terminating null when not writing to a
                           * file.
@@ -13380,7 +13403,7 @@ int wolfSSL_X509_check_host(WOLFSSL_X509 *x, const char *chk, size_t chklen,
 #endif
 
     InitDecodedCert(dCert, x->derCert->buffer, x->derCert->length, NULL);
-    ret = ParseCertRelative(dCert, CERT_TYPE, 0, NULL);
+    ret = ParseCertRelative(dCert, CERT_TYPE, 0, NULL, NULL);
     if (ret != 0) {
         goto out;
     }
@@ -13451,7 +13474,7 @@ int wolfSSL_X509_check_ip_asc(WOLFSSL_X509 *x, const char *ipasc,
 
     if (ret == WOLFSSL_SUCCESS) {
         InitDecodedCert(dCert, x->derCert->buffer, x->derCert->length, NULL);
-        ret = ParseCertRelative(dCert, CERT_TYPE, 0, NULL);
+        ret = ParseCertRelative(dCert, CERT_TYPE, 0, NULL, NULL);
         if (ret != 0) {
             ret = WOLFSSL_FAILURE;
         }
@@ -13590,7 +13613,7 @@ static int x509GetIssuerFromCM(WOLFSSL_X509 **issuer, WOLFSSL_CERT_MANAGER* cm,
 
     /* Use existing CA retrieval APIs that use DecodedCert. */
     InitDecodedCert(cert, x->derCert->buffer, x->derCert->length, cm->heap);
-    if (ParseCertRelative(cert, CERT_TYPE, 0, NULL) == 0
+    if (ParseCertRelative(cert, CERT_TYPE, 0, NULL, NULL) == 0
             && !cert->selfSigned) {
     #ifndef NO_SKID
         if (cert->extAuthKeyIdSet)

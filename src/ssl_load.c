@@ -942,7 +942,8 @@ static int ProcessBufferTryDecodeFalcon(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 }
 #endif
 
-#if defined(HAVE_DILITHIUM) && !defined(WOLFSSL_DILITHIUM_NO_SIGN)
+#if defined(HAVE_DILITHIUM) && !defined(WOLFSSL_DILITHIUM_NO_SIGN) && \
+    !defined(WOLFSSL_DILITHIUM_NO_ASN1)
 /* See if DER data is an Dilithium private key.
  *
  * Checks size meets minimum Falcon key size.
@@ -962,6 +963,7 @@ static int ProcessBufferTryDecodeDilithium(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     DerBuffer* der, int* keyFormat, void* heap, byte* keyType, int* keySize)
 {
     int ret;
+    word32 idx;
     dilithium_key* key;
 
     /* Allocate a Dilithium key to parse into. */
@@ -996,7 +998,8 @@ static int ProcessBufferTryDecodeDilithium(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 
     if (ret == 0) {
         /* Decode as a Dilithium private key. */
-        ret = wc_dilithium_import_private(der->buffer, der->length, key);
+        idx = 0;
+        ret = wc_Dilithium_PrivateKeyDecode(der->buffer, &idx, key, der->length);
         if (ret == 0) {
             /* Get the minimum Dilithium key size from SSL or SSL context
              * object. */
@@ -1149,7 +1152,8 @@ static int ProcessBufferTryDecode(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
             keyType, keySz);
     }
 #endif /* HAVE_FALCON */
-#if defined(HAVE_DILITHIUM) && !defined(WOLFSSL_DILITHIUM_NO_SIGN)
+#if defined(HAVE_DILITHIUM) && !defined(WOLFSSL_DILITHIUM_NO_SIGN) && \
+    !defined(WOLFSSL_DILITHIUM_NO_ASN1)
     /* Try Falcon if key format is Dilithium level 2k, 3k or 5k or yet unknown.
      */
     if ((ret == 0) && ((*keyFormat == 0) || (*keyFormat == DILITHIUM_LEVEL2k) ||
@@ -1223,8 +1227,13 @@ static int ProcessBufferPrivPkcs8Dec(EncryptedInfo* info, DerBuffer* der,
         der->length = (word32)ret;
     }
 
-    /* Ensure password is zeroized. */
-    ForceZero(password, (word32)passwordSz);
+#ifdef WOLFSSL_SMALL_STACK
+    if (password != NULL)
+#endif
+    {
+        /* Ensure password is zeroized. */
+        ForceZero(password, (word32)passwordSz);
+    }
 #ifdef WOLFSSL_SMALL_STACK
     /* Dispose of password memory. */
     XFREE(password, heap, DYNAMIC_TYPE_STRING);
@@ -5200,6 +5209,8 @@ static int wolfssl_set_tmp_dh(WOLFSSL* ssl, unsigned char* p, int pSz,
 
     /* Allocate space for cipher suites. */
     if ((ret == 1) && (AllocateSuites(ssl) != 0)) {
+        ssl->buffers.serverDH_P.buffer = NULL;
+        ssl->buffers.serverDH_G.buffer = NULL;
         ret = 0;
     }
     if (ret == 1) {
@@ -5247,8 +5258,6 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
         pAlloc = (byte*)XMALLOC(pSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         gAlloc = (byte*)XMALLOC(gSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         if ((pAlloc == NULL) || (gAlloc == NULL)) {
-            XFREE(pAlloc, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
-            XFREE(gAlloc, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
             ret = MEMORY_E;
         }
     }
@@ -5260,7 +5269,7 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
         ret = wolfssl_set_tmp_dh(ssl, pAlloc, pSz, gAlloc, gSz);
     }
 
-    if (ret != 1) {
+    if (ret != 1 && ssl != NULL) {
         /* Free the allocated buffers if not assigned into SSL. */
         XFREE(pAlloc, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         XFREE(gAlloc, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
@@ -5492,7 +5501,7 @@ long wolfSSL_set_tmp_dh(WOLFSSL *ssl, WOLFSSL_DH *dh)
         ret = wolfssl_set_tmp_dh(ssl, p, pSz, g, gSz);
     }
 
-    if (ret != 1) {
+    if (ret != 1 && ssl != NULL) {
         /* Free the allocated buffers if not assigned into SSL. */
         XFREE(p, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         XFREE(g, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
@@ -5559,7 +5568,7 @@ long wolfSSL_CTX_set_tmp_dh(WOLFSSL_CTX* ctx, WOLFSSL_DH* dh)
         ret = wolfssl_ctx_set_tmp_dh(ctx, p, pSz, g, gSz);
     }
 
-    if (ret != 1) {
+    if ((ret != 1) && (ctx != NULL)) {
         /* Free the allocated buffers if not assigned into SSL. */
         XFREE(p, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         XFREE(g, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);

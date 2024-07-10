@@ -7,7 +7,7 @@
 #
 AC_COPYRIGHT([Copyright (C) 2006-2024 wolfSSL Inc.])
 AC_PREREQ([2.69])
-AC_INIT([wolfssl],[5.7.0],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
+AC_INIT([wolfssl],[5.7.2],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
 AC_CONFIG_AUX_DIR([build-aux])
 
 # The following sets CFLAGS to empty if unset on command line.  We do not
@@ -51,7 +51,7 @@ WOLFSSL_LIBRARY_VERSION_FIRST=42
 
 # increment if interfaces have been added
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented
-WOLFSSL_LIBRARY_VERSION_SECOND=1
+WOLFSSL_LIBRARY_VERSION_SECOND=2
 
 # increment if source code has changed
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented or
@@ -1213,6 +1213,9 @@ do
   1024)
     ENABLED_KYBER1024=yes
     ;;
+  ml-kem)
+    ENABLED_ML_KEM=yes
+    ;;
   *)
     AC_MSG_ERROR([Invalid choice for KYBER []: $ENABLED_KYBER.])
     break;;
@@ -1238,6 +1241,9 @@ then
     fi
     if test "$ENABLED_KYBER1024" = ""; then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
+    fi
+    if test "$ENABLED_ML_KEM" = "yes"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ML_KEM"
     fi
 
     if test "$ENABLED_WC_KYBER" = "yes"
@@ -4103,18 +4109,6 @@ AC_ARG_ENABLE([ed448-stream],
     [ ENABLED_ED448_STREAM=no ]
     )
 
-if test "$ENABLED_ED448_STREAM" != "no"
-then
-    if test "$ENABLED_ED448" = "no"
-    then
-        AC_MSG_ERROR([ED448 verify streaming enabled but ED448 is disabled])
-    else
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ED448_STREAMING_VERIFY"
-        AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_ED448_STREAMING_VERIFY"
-    fi
-fi
-
-
 # FP ECC, Fixed Point cache ECC
 AC_ARG_ENABLE([fpecc],
     [AS_HELP_STRING([--enable-fpecc],[Enable Fixed Point cache ECC (default: disabled)])],
@@ -5613,6 +5607,18 @@ then
 
     ENABLED_CERTS=yes
 fi
+
+if test "$ENABLED_ED448_STREAM" != "no"
+then
+    if test "$ENABLED_ED448" = "no"
+    then
+        AC_MSG_ERROR([ED448 verify streaming enabled but ED448 is disabled])
+    else
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ED448_STREAMING_VERIFY"
+        AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_ED448_STREAMING_VERIFY"
+    fi
+fi
+
 
 # SRTP-KDF
 if test "$ENABLED_SRTP" = "yes"

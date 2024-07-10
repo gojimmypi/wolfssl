@@ -3430,7 +3430,8 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
 #ifndef SINGLE_THREADED
 
 /* Environment-specific multi-thread implementation check  */
-#if defined(USE_WINDOWS_API) && !defined(WOLFSSL_PTHREADS)
+#if defined(USE_WINDOWS_API) && !defined(WOLFSSL_PTHREADS) && \
+    !defined(_WIN32_WCE)
     int wolfSSL_NewThread(THREAD_TYPE* thread,
         THREAD_CB cb, void* arg)
     {
@@ -3645,7 +3646,7 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
                            "wolfSSL thread",
                            (entry_functionType)cb, (ULONG)arg,
                            thread->threadStack,
-                           TESTSUITE_THREAD_STACK_SZ,
+                           WOLFSSL_NETOS_STACK_SZ,
                            2, 2,
                            1, TX_AUTO_START);
         if (result != TX_SUCCESS) {

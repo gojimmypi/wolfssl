@@ -1164,9 +1164,9 @@ enum Key_Sum {
     DHk               = 647, /* dhKeyAgreement OID: 1.2.840.113549.1.3.1 */
     FALCON_LEVEL1k    = 273, /* 1.3.9999.3.6 */
     FALCON_LEVEL5k    = 276, /* 1.3.9999.3.9 */
-    DILITHIUM_LEVEL2k = 213,    /* 1.3.6.1.4.1.2.267.7.4.4 */
-    DILITHIUM_LEVEL3k = 216,    /* 1.3.6.1.4.1.2.267.7.6.5 */
-    DILITHIUM_LEVEL5k = 220,    /* 1.3.6.1.4.1.2.267.7.8.7 */
+    DILITHIUM_LEVEL2k = 218,    /* 1.3.6.1.4.1.2.267.12.4.4 */
+    DILITHIUM_LEVEL3k = 221,    /* 1.3.6.1.4.1.2.267.12.6.5 */
+    DILITHIUM_LEVEL5k = 225,    /* 1.3.6.1.4.1.2.267.12.8.7 */
     SPHINCS_FAST_LEVEL1k   = 281, /* 1 3 9999 6 7 4 */
     SPHINCS_FAST_LEVEL3k   = 283, /* 1 3 9999 6 8 3 + 2 (See GetOID() in asn.c) */
     SPHINCS_FAST_LEVEL5k   = 282, /* 1 3 9999 6 9 3 */
@@ -2187,7 +2187,7 @@ WOLFSSL_LOCAL int CheckCSRSignaturePubKey(const byte* cert, word32 certSz,
 WOLFSSL_ASN_API int AddSignature(byte* buf, int bodySz, const byte* sig, int sigSz,
                         int sigAlgoType);
 WOLFSSL_LOCAL int ParseCertRelative(DecodedCert* cert, int type, int verify,
-                                    void* cm);
+                                    void* cm, Signer *extraCa);
 WOLFSSL_LOCAL int DecodeToKey(DecodedCert* cert, int verify);
 #ifdef WOLFSSL_ASN_TEMPLATE
 WOLFSSL_LOCAL int DecodeCert(DecodedCert* cert, int verify, int* criticalExt);
@@ -2196,6 +2196,8 @@ WOLFSSL_LOCAL int TryDecodeRPKToKey(DecodedCert* cert);
 WOLFSSL_LOCAL int wc_GetPubX509(DecodedCert* cert, int verify, int* badDate);
 
 WOLFSSL_LOCAL const byte* OidFromId(word32 id, word32 type, word32* oidSz);
+WOLFSSL_LOCAL Signer* findSignerByName(Signer *list, byte *hash);
+WOLFSSL_LOCAL int FillSigner(Signer* signer, DecodedCert* cert, int type, DerBuffer *der);
 WOLFSSL_LOCAL Signer* MakeSigner(void* heap);
 WOLFSSL_LOCAL void    FreeSigner(Signer* signer, void* heap);
 WOLFSSL_LOCAL void    FreeSignerTable(Signer** table, int rows, void* heap);
@@ -2565,7 +2567,7 @@ struct OcspResponse {
 
     byte*   source;          /* pointer to source buffer, not owned */
     word32  maxIdx;          /* max offset based on init size */
-
+    Signer* pendingCAs;
 #ifdef OPENSSL_EXTRA
     int     verifyError;
 #endif

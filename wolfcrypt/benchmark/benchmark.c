@@ -661,7 +661,6 @@
 #define BENCH_RSA                0x00000002
 #define BENCH_RSA_SZ             0x00000004
 #define BENCH_DH                 0x00000010
-#define BENCH_KYBER              0x00000020
 #define BENCH_ECC_MAKEKEY        0x00001000
 #define BENCH_ECC                0x00002000
 #define BENCH_ECC_ENCRYPT        0x00004000
@@ -688,11 +687,22 @@
 #define BENCH_SAKKE              0x80000000
 
 /* Post-Quantum Asymmetric algorithms. */
+#define BENCH_KYBER512                  0x00000020
+#define BENCH_KYBER768                  0x00000040
+#define BENCH_KYBER1024                 0x00000080
+#define BENCH_KYBER                     (BENCH_KYBER512 | BENCH_KYBER768 | \
+                                         BENCH_KYBER1024)
 #define BENCH_FALCON_LEVEL1_SIGN        0x00000001
 #define BENCH_FALCON_LEVEL5_SIGN        0x00000002
 #define BENCH_DILITHIUM_LEVEL2_SIGN     0x04000000
 #define BENCH_DILITHIUM_LEVEL3_SIGN     0x08000000
 #define BENCH_DILITHIUM_LEVEL5_SIGN     0x10000000
+#define BENCH_ML_DSA_44_SIGN            0x04000000
+#define BENCH_ML_DSA_65_SIGN            0x08000000
+#define BENCH_ML_DSA_87_SIGN            0x10000000
+#define BENCH_ML_DSA_SIGN               (BENCH_ML_DSA_44_SIGN | \
+                                         BENCH_ML_DSA_65_SIGN | \
+                                         BENCH_ML_DSA_87_SIGN)
 
 /* Post-Quantum Asymmetric algorithms. (Part 2) */
 #define BENCH_SPHINCS_FAST_LEVEL1_SIGN  0x00000001
@@ -966,9 +976,6 @@ static const bench_alg bench_asym_opt[] = {
 #ifndef NO_DH
     { "-dh",                 BENCH_DH                },
 #endif
-#ifdef WOLFSSL_HAVE_KYBER
-    { "-kyber",              BENCH_KYBER             },
-#endif
 #ifdef HAVE_ECC
     { "-ecc-kg",             BENCH_ECC_MAKEKEY       },
     { "-ecc",                BENCH_ECC               },
@@ -1067,7 +1074,8 @@ static const bench_pq_hash_sig_alg bench_pq_hash_sig_opt[] = {
 };
 #endif /* BENCH_PQ_STATEFUL_HBS */
 
-#if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
+#if defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_FALCON) || \
+    defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
 /* The post-quantum-specific mapping of command line option to bit values and
  * OQS name. */
 typedef struct bench_pq_alg {
@@ -1080,18 +1088,25 @@ typedef struct bench_pq_alg {
 /* All recognized post-quantum asymmetric algorithm choosing command line
  * options. */
 static const bench_pq_alg bench_pq_asym_opt[] = {
-    { "-pq",                 0xffffffff },
+    { "-pq",                0xffffffff },
+#ifdef WOLFSSL_HAVE_KYBER
+    { "-kyber",             BENCH_KYBER             },
+    { "-kyber512",          BENCH_KYBER512          },
+    { "-kyber768",          BENCH_KYBER768          },
+    { "-kyber1024",         BENCH_KYBER1024         },
+#endif
 #if defined(HAVE_FALCON)
-    { "-falcon_level1", BENCH_FALCON_LEVEL1_SIGN },
-    { "-falcon_level5", BENCH_FALCON_LEVEL5_SIGN },
+    { "-falcon_level1",     BENCH_FALCON_LEVEL1_SIGN },
+    { "-falcon_level5",     BENCH_FALCON_LEVEL5_SIGN },
 #endif
 #if defined(HAVE_DILITHIUM)
-    { "-dilithium_level2", BENCH_DILITHIUM_LEVEL2_SIGN },
-    { "-dilithium_level3", BENCH_DILITHIUM_LEVEL3_SIGN },
-    { "-dilithium_level5", BENCH_DILITHIUM_LEVEL5_SIGN },
-    { "-ml-dsa-44",        BENCH_DILITHIUM_LEVEL2_SIGN },
-    { "-ml-dsa-65",        BENCH_DILITHIUM_LEVEL3_SIGN },
-    { "-ml-dsa-87",        BENCH_DILITHIUM_LEVEL5_SIGN },
+    { "-dilithium_level2",  BENCH_DILITHIUM_LEVEL2_SIGN },
+    { "-dilithium_level3",  BENCH_DILITHIUM_LEVEL3_SIGN },
+    { "-dilithium_level5",  BENCH_DILITHIUM_LEVEL5_SIGN },
+    { "-ml-dsa",            BENCH_ML_DSA_SIGN           },
+    { "-ml-dsa-44",         BENCH_ML_DSA_44_SIGN        },
+    { "-ml-dsa-65",         BENCH_ML_DSA_65_SIGN        },
+    { "-ml-dsa-87",         BENCH_ML_DSA_87_SIGN        },
 #endif
     { NULL, 0 }
 };
@@ -1218,7 +1233,7 @@ static const char* bench_result_words1[][4] = {
     defined(HAVE_CURVE25519) || defined(HAVE_CURVE25519_SHARED_SECRET)  || \
     defined(HAVE_ED25519) || defined(HAVE_CURVE448) || \
     defined(HAVE_CURVE448_SHARED_SECRET) || defined(HAVE_ED448) || \
-    defined(WOLFSSL_HAVE_KYBER)
+    defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_DILITHIUM)
 
 static const char* bench_desc_words[][15] = {
     /* 0           1          2         3        4        5         6            7            8          9        10        11       12          13       14 */
@@ -1703,7 +1718,7 @@ static const char* bench_result_words3[][5] = {
     defined(HAVE_CURVE448) || defined(HAVE_ED448) || \
     defined(HAVE_ECC) || !defined(NO_DH) || \
     !defined(NO_RSA) || defined(HAVE_SCRYPT) || \
-    defined(WOLFSSL_HAVE_KYBER)
+    defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_DILITHIUM)
     #define BENCH_ASYM
 #endif
 
@@ -1711,7 +1726,7 @@ static const char* bench_result_words3[][5] = {
 #if defined(HAVE_ECC) || !defined(NO_RSA) || !defined(NO_DH) || \
     defined(HAVE_CURVE25519) || defined(HAVE_ED25519) || \
     defined(HAVE_CURVE448) || defined(HAVE_ED448) || \
-    defined(WOLFSSL_HAVE_KYBER)
+    defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_DILITHIUM)
 static const char* bench_result_words2[][5] = {
 #ifdef BENCH_MICROSECOND
     { "ops took", "μsec"     , "avg" , "ops/μsec", NULL },   /* 0 English
@@ -2667,7 +2682,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
 #if defined(HAVE_ECC) || !defined(NO_RSA) || !defined(NO_DH) || \
     defined(HAVE_CURVE25519) || defined(HAVE_ED25519) || \
     defined(HAVE_CURVE448) || defined(HAVE_ED448) || \
-    defined(WOLFSSL_HAVE_KYBER)
+    defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_DILITHIUM)
 static void bench_stats_asym_finish_ex(const char* algo, int strength,
     const char* desc, const char* desc_extra, int useDeviceID, int count,
     double start, int ret)
@@ -3604,15 +3619,21 @@ static void* benchmarks_do(void* args)
 #endif
 
 #ifdef WOLFSSL_HAVE_KYBER
-    if (bench_all || (bench_asym_algs & BENCH_KYBER)) {
+    if (bench_all || (bench_pq_asym_algs & BENCH_KYBER)) {
     #ifdef WOLFSSL_KYBER512
-        bench_kyber(KYBER512);
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER512)) {
+            bench_kyber(KYBER512);
+        }
     #endif
     #ifdef WOLFSSL_KYBER768
-        bench_kyber(KYBER768);
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER768)) {
+            bench_kyber(KYBER768);
+        }
     #endif
     #ifdef WOLFSSL_KYBER1024
-        bench_kyber(KYBER1024);
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER1024)) {
+            bench_kyber(KYBER1024);
+        }
     #endif
     }
 #endif
@@ -14193,10 +14214,13 @@ void bench_sphincsKeySign(byte level, byte optim)
     * Use care when repeatedly calling calling. See implementation. */
     double current_time(int reset)
     {
-        portTickType tickCount;
-        /* tick count == ms, if configTICK_RATE_HZ is set to 1000 */
-        tickCount = xTaskGetTickCount();
+        portTickType tickCount = xTaskGetTickCount();
+        /* if configTICK_RATE_HZ is available use if (default is 1000) */
+    #ifdef configTICK_RATE_HZ
+        return (double)tickCount / configTICK_RATE_HZ;
+    #else
         return (double)tickCount / 1000;
+    #endif
     }
 #endif
 
@@ -14555,7 +14579,8 @@ static void Usage(void)
         print_alg(bench_asym_opt[i].str, &line);
     for (i=0; bench_other_opt[i].str != NULL; i++)
         print_alg(bench_other_opt[i].str, &line);
-#if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
+#if defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_FALCON) || \
+    defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
     for (i=0; bench_pq_asym_opt[i].str != NULL; i++)
         print_alg(bench_pq_asym_opt[i].str, &line);
 #if defined(HAVE_SPHINCS)
@@ -14831,8 +14856,8 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
                     optMatched = 1;
                 }
             }
-        #if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM) || \
-            defined(HAVE_SPHINCS)
+        #if defined(WOLFSSL_HAVE_KYBER) || defined(HAVE_FALCON) || \
+            defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
             /* Known asymmetric post-quantum algorithms */
             for (i=0; !optMatched && bench_pq_asym_opt[i].str != NULL; i++) {
                 if (string_matches(argv[1], bench_pq_asym_opt[i].str)) {

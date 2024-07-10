@@ -1087,7 +1087,8 @@ extern void uITRON4_free(void *p) ;
              *     heap_caps_realloc(p, s, MALLOC_CAP_8BIT)
              * There's no pvPortRealloc available:  */
             #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n)))
-        #elif defined(USE_INTEGER_HEAP_MATH) || defined(OPENSSL_EXTRA)
+        #elif defined(USE_INTEGER_HEAP_MATH) || defined(OPENSSL_EXTRA) || \
+              defined(OPENSSL_ALL)
             /* FreeRTOS pvPortRealloc() implementation can be found here:
              * https://github.com/wolfSSL/wolfssl-freertos/pull/3/files */
             #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), pvPortRealloc((p), (n)))
@@ -2032,6 +2033,8 @@ extern void uITRON4_free(void *p) ;
         #define WOLFSSL_NOSHA3_224
         #define WOLFSSL_NOSHA3_256
         #define WOLFSSL_NOSHA3_512
+        #define WOLFSSL_NO_SHAKE128
+        #define WOLFSSL_NO_SHAKE256
     #endif
     #ifdef WOLFSSL_AFALG_XILINX_AES
         #undef  WOLFSSL_AES_DIRECT
@@ -2963,6 +2966,9 @@ extern void uITRON4_free(void *p) ;
     #ifndef HAVE_SNI
         #define HAVE_SNI
     #endif
+    #ifndef WOLFSSL_RSA_KEY_CHECK
+        #define WOLFSSL_RSA_KEY_CHECK
+    #endif
 #endif
 
 /* Make sure setting OPENSSL_ALL also sets OPENSSL_EXTRA. */
@@ -3472,22 +3478,28 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_RSA_KEY_CHECK
 #endif
 
-/* SHAKE - Not allowed in FIPS */
-#if defined(WOLFSSL_SHA3) && !defined(HAVE_SELFTEST) && !defined(HAVE_FIPS)
-    #ifndef WOLFSSL_NO_SHAKE128
-        #undef  WOLFSSL_SHAKE128
-        #define WOLFSSL_SHAKE128
-    #endif
-    #ifndef WOLFSSL_NO_SHAKE256
-        #undef  WOLFSSL_SHAKE256
-        #define WOLFSSL_SHAKE256
-    #endif
-#else
+/* ED448 Requires Shake256 */
+#if defined(HAVE_ED448) && defined(WOLFSSL_SHA3)
+    #undef  WOLFSSL_SHAKE256
+    #define WOLFSSL_SHAKE256
+#endif
+
+/* SHAKE - Not allowed in FIPS v5.2 or older */
+#if defined(WOLFSSL_SHA3) && (defined(HAVE_SELFTEST) || \
+    (defined(HAVE_FIPS) && FIPS_VERSION_LE(5,2)))
     #undef  WOLFSSL_NO_SHAKE128
     #define WOLFSSL_NO_SHAKE128
     #undef  WOLFSSL_NO_SHAKE256
     #define WOLFSSL_NO_SHAKE256
 #endif
+/* SHAKE Disable */
+#ifdef WOLFSSL_NO_SHAKE128
+    #undef WOLFSSL_SHAKE128
+#endif
+#ifdef WOLFSSL_NO_SHAKE256
+    #undef WOLFSSL_SHAKE256
+#endif
+
 
 /* Encrypted Client Hello - requires HPKE */
 #if defined(HAVE_ECH) && !defined(HAVE_HPKE)

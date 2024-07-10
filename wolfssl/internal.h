@@ -1796,11 +1796,11 @@ enum Misc {
     FALCON_LEVEL5_SA_MINOR = 0xB1,
 
     DILITHIUM_LEVEL2_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL2_SA_MINOR = 0xA0,
+    DILITHIUM_LEVEL2_SA_MINOR = 0xD0,
     DILITHIUM_LEVEL3_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL3_SA_MINOR = 0xA3,
+    DILITHIUM_LEVEL3_SA_MINOR = 0xD1,
     DILITHIUM_LEVEL5_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL5_SA_MINOR = 0xA5,
+    DILITHIUM_LEVEL5_SA_MINOR = 0xD2,
 
     MIN_RSA_SHA512_PSS_BITS = 512 * 2 + 8 * 8, /* Min key size */
     MIN_RSA_SHA384_PSS_BITS = 384 * 2 + 8 * 8, /* Min key size */
@@ -2180,7 +2180,7 @@ WOLFSSL_LOCAL int  DoServerHello(WOLFSSL* ssl, const byte* input, word32* inOutI
 WOLFSSL_LOCAL int  CompleteServerHello(WOLFSSL *ssl);
 WOLFSSL_LOCAL int  CheckVersion(WOLFSSL *ssl, ProtocolVersion pv);
 WOLFSSL_LOCAL int  PickHashSigAlgo(WOLFSSL* ssl, const byte* hashSigAlgo,
-                                   word32 hashSigAlgoSz);
+                                   word32 hashSigAlgoSz, int matchSuites);
 #if defined(WOLF_PRIVATE_KEY_ID) && !defined(NO_CHECK_PRIVATE_KEY)
 WOLFSSL_LOCAL int  CreateDevPrivateKey(void** pkey, byte* data, word32 length,
                                        int hsType, int label, int id,
@@ -3194,11 +3194,17 @@ typedef struct CSRIv2 {
         OcspRequest ocsp[1 + MAX_CHAIN_DEPTH];
     } request;
     struct CSRIv2* next;
+    Signer *pendingSigners;
 } CertificateStatusRequestItemV2;
 
 WOLFSSL_LOCAL int   TLSX_UseCertificateStatusRequestV2(TLSX** extensions,
                          byte status_type, byte options, void* heap, int devId);
 #ifndef NO_CERTS
+WOLFSSL_LOCAL int TLSX_CSR2_IsMulti(TLSX *extensions);
+WOLFSSL_LOCAL int TLSX_CSR2_AddPendingSigner(TLSX *extensions, Signer *s);
+WOLFSSL_LOCAL Signer* TLSX_CSR2_GetPendingSigners(TLSX *extensions);
+WOLFSSL_LOCAL int TLSX_CSR2_ClearPendingCA(WOLFSSL *ssl);
+WOLFSSL_LOCAL int TLSX_CSR2_MergePendingCA(WOLFSSL* ssl);
 WOLFSSL_LOCAL int   TLSX_CSR2_InitRequests(TLSX* extensions, DecodedCert* cert,
                                                        byte isPeer, void* heap);
 #endif
@@ -4054,6 +4060,7 @@ int ProcessOldClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                           word32 inSz, word16 sz);
 
 #ifndef NO_CERTS
+    WOLFSSL_LOCAL int AddSigner(WOLFSSL_CERT_MANAGER* cm, Signer *s);
     WOLFSSL_LOCAL
     int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify);
     WOLFSSL_LOCAL
@@ -4474,6 +4481,10 @@ struct WOLFSSL_SESSION {
 #endif
 #ifdef HAVE_EX_DATA
     WOLFSSL_CRYPTO_EX_DATA ex_data;
+#endif
+#ifdef HAVE_MAX_FRAGMENT
+    byte               mfl; /* max fragment length negotiated i.e.
+                             * WOLFSSL_MFL_2_8  (6) */
 #endif
     byte               isSetup:1;
 };

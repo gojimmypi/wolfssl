@@ -129,19 +129,23 @@ enum {
 
 static void wc_RsaCleanup(RsaKey* key)
 {
-#if !defined(WOLFSSL_RSA_VERIFY_INLINE) && !defined(WOLFSSL_NO_MALLOC)
-    if (key && key->data) {
+#if !defined(WOLFSSL_NO_MALLOC) && (defined(WOLFSSL_ASYNC_CRYPT) || \
+    (!defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WOLFSSL_RSA_VERIFY_INLINE)))
+    if (key != NULL) {
+    #ifndef WOLFSSL_RSA_PUBLIC_ONLY
+        /* if private operation zero temp buffer */
+        if ((key->data != NULL && key->dataLen > 0) &&
+            (key->type == RSA_PRIVATE_DECRYPT ||
+             key->type == RSA_PRIVATE_ENCRYPT)) {
+            ForceZero(key->data, key->dataLen);
+        }
+    #endif
         /* make sure any allocated memory is free'd */
         if (key->dataIsAlloc) {
-        #ifndef WOLFSSL_RSA_PUBLIC_ONLY
-            if (key->type == RSA_PRIVATE_DECRYPT ||
-                key->type == RSA_PRIVATE_ENCRYPT) {
-                ForceZero(key->data, key->dataLen);
-            }
-        #endif
             XFREE(key->data, key->heap, DYNAMIC_TYPE_WOLF_BIGINT);
             key->dataIsAlloc = 0;
         }
+
         key->data = NULL;
         key->dataLen = 0;
     }
@@ -163,10 +167,11 @@ int wc_InitRsaKey_ex(RsaKey* key, void* heap, int devId)
     key->type = RSA_TYPE_UNKNOWN;
     key->state = RSA_STATE_NONE;
     key->heap = heap;
-#if !defined(WOLFSSL_RSA_VERIFY_INLINE) && !defined(WOLFSSL_NO_MALLOC)
+#if !defined(WOLFSSL_NO_MALLOC) && (defined(WOLFSSL_ASYNC_CRYPT) || \
+    (!defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WOLFSSL_RSA_VERIFY_INLINE)))
     key->dataIsAlloc = 0;
-    key->data = NULL;
 #endif
+    key->data = NULL;
     key->dataLen = 0;
 #ifdef WC_RSA_BLINDING
     key->rng = NULL;
@@ -668,13 +673,17 @@ static int _ifc_pairwise_consistency_test(RsaKey* key, WC_RNG* rng)
 
 int wc_CheckRsaKey(RsaKey* key)
 {
-    DECL_MP_INT_SIZE_DYN(tmp, mp_bitsused(&key->n), RSA_MAX_SIZE);
 #ifdef WOLFSSL_SMALL_STACK
     WC_RNG *rng = NULL;
 #else
     WC_RNG rng[1];
 #endif
     int ret = 0;
+    DECL_MP_INT_SIZE_DYN(tmp, (key)? mp_bitsused(&key->n) : 0, RSA_MAX_SIZE);
+
+    if (key == NULL) {
+        return BAD_FUNC_ARG;
+    }
 
 #ifdef WOLFSSL_CAAM
     /* can not perform these checks on an encrypted key */
@@ -704,11 +713,6 @@ int wc_CheckRsaKey(RsaKey* key)
     if (ret == 0) {
         if (INIT_MP_INT_SIZE(tmp, mp_bitsused(&key->n)) != MP_OKAY)
             ret = MP_INIT_E;
-    }
-
-    if (ret == 0) {
-        if (key == NULL)
-            ret = BAD_FUNC_ARG;
     }
 
     if (ret == 0)
@@ -3504,6 +3508,7 @@ static int RsaPrivateDecryptEx(const byte* in, word32 inLen, byte* out,
                 break;
             }
             XMEMCPY(key->data, in, inLen);
+            key->dataLen = inLen;
         }
         else {
             key->dataIsAlloc = 0;
@@ -3537,13 +3542,13 @@ static int RsaPrivateDecryptEx(const byte* in, word32 inLen, byte* out,
     case RSA_STATE_DECRYPT_UNPAD:
 #if !defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WOLFSSL_RSA_VERIFY_INLINE) && \
     !defined(WOLFSSL_NO_MALLOC)
-        ret = wc_RsaUnPad_ex(key->data, key->dataLen, &pad, pad_value, pad_type,
-                             hash, mgf, label, labelSz, saltLen,
-                             mp_count_bits(&key->n), key->heap);
+        ret = wc_RsaUnPad_ex(key->data,
+            key->dataLen, &pad, pad_value, pad_type, hash, mgf,
+            label, labelSz, saltLen, mp_count_bits(&key->n), key->heap);
 #else
-        ret = wc_RsaUnPad_ex(out, key->dataLen, &pad, pad_value, pad_type, hash,
-                             mgf, label, labelSz, saltLen,
-                             mp_count_bits(&key->n), key->heap);
+        ret = wc_RsaUnPad_ex(out,
+            key->dataLen, &pad, pad_value, pad_type, hash, mgf, label,
+            labelSz, saltLen, mp_count_bits(&key->n), key->heap);
 #endif
         if (rsa_type == RSA_PUBLIC_DECRYPT && ret > (int)outLen) {
             ret = RSA_BUFFER_E;
@@ -4012,7 +4017,10 @@ int wc_RsaPSS_CheckPadding_ex2(const byte* in, word32 inSz, byte* sig,
 
     /* Sig = Salt | Exp Hash */
     if (ret == 0) {
-        if (sigSz != inSz + (word32)saltLen) {
+        word32 totalSz;
+        if ((WC_SAFE_SUM_WORD32(inSz, (word32)saltLen, totalSz) == 0) ||
+            (sigSz != totalSz))
+        {
             ret = PSS_SALTLEN_E;
         }
     }

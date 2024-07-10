@@ -5283,6 +5283,38 @@ int AddTrustedPeer(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int verify)
 }
 #endif /* WOLFSSL_TRUST_PEER_CERT */
 
+int AddSigner(WOLFSSL_CERT_MANAGER* cm, Signer *s)
+{
+    byte*   subjectHash;
+    Signer* signers;
+    word32  row;
+
+    if (cm == NULL || s == NULL)
+        return BAD_FUNC_ARG;
+
+#ifndef NO_SKID
+    subjectHash = s->subjectKeyIdHash;
+#else
+    subjectHash = s->subjectNameHash;
+#endif
+
+    if (AlreadySigner(cm, subjectHash)) {
+        FreeSigner(s, cm->heap);
+        return 0;
+    }
+
+    row = HashSigner(subjectHash);
+
+    if (wc_LockMutex(&cm->caLock) != 0)
+        return BAD_MUTEX_E;
+
+    signers = cm->caTable[row];
+    s->next = signers;
+    cm->caTable[row] = s;
+
+    wc_UnLockMutex(&cm->caLock);
+    return 0;
+}
 
 /* owns der, internal now uses too */
 /* type flag ids from user or from chain received during verify
@@ -5437,73 +5469,8 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
         if (!signer)
             ret = MEMORY_ERROR;
     }
-#if defined(WOLFSSL_AKID_NAME) || defined(HAVE_CRL)
-    if (ret == 0 && signer != NULL)
-        ret = CalcHashId(cert->serial, cert->serialSz, signer->serialHash);
-#endif
     if (ret == 0 && signer != NULL) {
-    #ifdef WOLFSSL_SIGNER_DER_CERT
-        ret = AllocDer(&signer->derCert, der->length, der->type, NULL);
-    }
-    if (ret == 0 && signer != NULL) {
-        XMEMCPY(signer->derCert->buffer, der->buffer, der->length);
-    #endif
-        signer->keyOID         = cert->keyOID;
-        if (cert->pubKeyStored) {
-            signer->publicKey      = cert->publicKey;
-            signer->pubKeySize     = cert->pubKeySize;
-        }
-
-#ifdef WOLFSSL_DUAL_ALG_CERTS
-        if (cert->extSapkiSet && cert->sapkiLen > 0) {
-            /* Allocated space for alternative public key. */
-            signer->sapkiDer = (byte*)XMALLOC(cert->sapkiLen, cm->heap,
-                                              DYNAMIC_TYPE_PUBLIC_KEY);
-            if (signer->sapkiDer == NULL) {
-                ret = MEMORY_E;
-            }
-            else {
-                XMEMCPY(signer->sapkiDer, cert->sapkiDer, cert->sapkiLen);
-                signer->sapkiLen = cert->sapkiLen;
-                signer->sapkiOID = cert->sapkiOID;
-            }
-        }
-#endif /* WOLFSSL_DUAL_ALG_CERTS */
-
-        if (cert->subjectCNStored) {
-            signer->nameLen        = cert->subjectCNLen;
-            signer->name           = cert->subjectCN;
-        }
-        signer->maxPathLen     = cert->maxPathLen;
-        signer->selfSigned     = cert->selfSigned;
-    #ifndef IGNORE_NAME_CONSTRAINTS
-        signer->permittedNames = cert->permittedNames;
-        signer->excludedNames  = cert->excludedNames;
-    #endif
-    #ifndef NO_SKID
-        XMEMCPY(signer->subjectKeyIdHash, cert->extSubjKeyId,
-                SIGNER_DIGEST_SIZE);
-    #endif
-        XMEMCPY(signer->subjectNameHash, cert->subjectHash,
-                SIGNER_DIGEST_SIZE);
-    #if defined(HAVE_OCSP) || defined(HAVE_CRL)
-        XMEMCPY(signer->issuerNameHash, cert->issuerHash,
-                SIGNER_DIGEST_SIZE);
-    #endif
-    #ifdef HAVE_OCSP
-        XMEMCPY(signer->subjectKeyHash, cert->subjectKeyHash,
-                KEYID_SIZE);
-    #endif
-        signer->keyUsage = cert->extKeyUsageSet ? cert->extKeyUsage
-                                                : 0xFFFF;
-        signer->next    = NULL; /* If Key Usage not set, all uses valid. */
-        cert->publicKey = 0;    /* in case lock fails don't free here.   */
-        cert->subjectCN = 0;
-    #ifndef IGNORE_NAME_CONSTRAINTS
-        cert->permittedNames = NULL;
-        cert->excludedNames = NULL;
-    #endif
-        signer->type = (byte)type;
+        ret = FillSigner(signer, cert, type, der);
 
     #ifndef NO_SKID
         row = HashSigner(signer->subjectKeyIdHash);
@@ -5511,7 +5478,8 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
         row = HashSigner(signer->subjectNameHash);
     #endif
 
-        if (wc_LockMutex(&cm->caLock) == 0) {
+
+        if (ret == 0 && wc_LockMutex(&cm->caLock) == 0) {
             signer->next = cm->caTable[row];
             cm->caTable[row] = signer;   /* takes ownership */
             wc_UnLockMutex(&cm->caLock);
@@ -6243,7 +6211,7 @@ static int check_cert_key(DerBuffer* cert, DerBuffer* key, DerBuffer* altKey,
     size = cert->length;
     buff = cert->buffer;
     InitDecodedCert_ex(der, buff, size, heap, devId);
-    if (ParseCertRelative(der, CERT_TYPE, NO_VERIFY, NULL) != 0) {
+    if (ParseCertRelative(der, CERT_TYPE, NO_VERIFY, NULL, NULL) != 0) {
         FreeDecodedCert(der);
     #ifdef WOLFSSL_SMALL_STACK
         XFREE(der, heap, DYNAMIC_TYPE_DCERT);
@@ -8351,6 +8319,7 @@ int tlsShowSecrets(WOLFSSL* ssl, void* secret, int secretSz,
 /*
  * check if the list has TLS13 and pre-TLS13 suites
  * @param list cipher suite list that user want to set
+ *         (caller required to check for NULL)
  * @return mixed: 0, only pre-TLS13: 1, only TLS13: 2
  */
 static int CheckcipherList(const char* list)
@@ -8373,6 +8342,9 @@ static int CheckcipherList(const char* list)
 
         current_length = (!next) ? (word32)XSTRLEN(current)
                                  : (word32)(next - current);
+        if (current_length == 0) {
+            break;
+        }
 
         if (current_length < length) {
             length = current_length;
@@ -8380,8 +8352,10 @@ static int CheckcipherList(const char* list)
         XMEMCPY(name, current, length);
         name[length] = 0;
 
-        if (XSTRCMP(name, "ALL") == 0 || XSTRCMP(name, "DEFAULT") == 0 ||
-                XSTRCMP(name, "HIGH") == 0) {
+        if (XSTRCMP(name, "ALL") == 0 ||
+            XSTRCMP(name, "DEFAULT") == 0 ||
+            XSTRCMP(name, "HIGH") == 0)
+        {
             findTLSv13Suites = 1;
             findbeforeSuites = 1;
             break;
@@ -8409,7 +8383,7 @@ static int CheckcipherList(const char* list)
                 subStrNext = XSTRSTR(subStr, "+");
 
                 if ((XSTRCMP(subStr, "ECDHE") == 0) ||
-                        (XSTRCMP(subStr, "RSA") == 0)) {
+                    (XSTRCMP(subStr, "RSA") == 0)) {
                     return 0;
                 }
 
@@ -8425,7 +8399,7 @@ static int CheckcipherList(const char* list)
             return 0;
         }
     }
-    while (next++); /* ++ needed to skip ':' */
+    while (next++); /* increment to skip ':' */
 
     if (findTLSv13Suites == 0 && findbeforeSuites == 1) {
         ret = 1;/* only before TLSv13 suites */
@@ -13345,7 +13319,7 @@ size_t wolfSSL_get_client_random(const WOLFSSL* ssl, unsigned char* out,
         /* Create a DecodedCert object and copy fields into WOLFSSL_X509 object.
          */
         InitDecodedCert(cert, (byte*)in, (word32)len, NULL);
-        if ((ret = ParseCertRelative(cert, CERT_TYPE, 0, NULL)) == 0) {
+        if ((ret = ParseCertRelative(cert, CERT_TYPE, 0, NULL, NULL)) == 0) {
         /* Check if x509 was not previously initialized by wolfSSL_X509_new() */
             if (x509->dynamicMemory != TRUE)
                 InitX509(x509, 0, NULL);
@@ -14958,6 +14932,17 @@ int wolfSSL_COMP_add_compression_method(int method, void* data)
     (void)data;
     WOLFSSL_STUB("COMP_add_compression_method");
     return 0;
+}
+#endif
+
+#ifndef NO_WOLFSSL_STUB
+const char* wolfSSL_COMP_get_name(const void* comp)
+{
+    static const char ret[] = "not supported";
+
+    (void)comp;
+    WOLFSSL_STUB("wolfSSL_COMP_get_name");
+    return ret;
 }
 #endif
 
@@ -17777,7 +17762,7 @@ WOLFSSL_X509* wolfSSL_get_chain_X509(WOLFSSL_X509_CHAIN* chain, int idx)
             InitDecodedCert(cert, chain->certs[idx].buffer,
                                   chain->certs[idx].length, NULL);
 
-            if ((ret = ParseCertRelative(cert, CERT_TYPE, 0, NULL)) != 0) {
+            if ((ret = ParseCertRelative(cert, CERT_TYPE, 0, NULL, NULL)) != 0) {
                 WOLFSSL_MSG("Failed to parse cert");
             }
             else {
@@ -20324,7 +20309,7 @@ int wolfSSL_version(WOLFSSL* ssl)
     return WOLFSSL_FAILURE;
 }
 
-WOLFSSL_CTX* wolfSSL_get_SSL_CTX(WOLFSSL* ssl)
+WOLFSSL_CTX* wolfSSL_get_SSL_CTX(const WOLFSSL* ssl)
 {
     WOLFSSL_ENTER("wolfSSL_get_SSL_CTX");
     return ssl->ctx;
@@ -21451,6 +21436,7 @@ int wolfSSL_curve_is_disabled(const WOLFSSL* ssl, word16 curve_id)
 #define CURVE_NAME(c) XSTR_SIZEOF((c)), (c)
 
 const WOLF_EC_NIST_NAME kNistCurves[] = {
+#ifdef HAVE_ECC
     {CURVE_NAME("P-160"),   NID_secp160r1, WOLFSSL_ECC_SECP160R1},
     {CURVE_NAME("P-160-2"), NID_secp160r2, WOLFSSL_ECC_SECP160R2},
     {CURVE_NAME("P-192"),   NID_X9_62_prime192v1, WOLFSSL_ECC_SECP192R1},
@@ -21465,6 +21451,7 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
     {CURVE_NAME("B-256"),   NID_brainpoolP256r1, WOLFSSL_ECC_BRAINPOOLP256R1},
     {CURVE_NAME("B-384"),   NID_brainpoolP384r1, WOLFSSL_ECC_BRAINPOOLP384R1},
     {CURVE_NAME("B-512"),   NID_brainpoolP512r1, WOLFSSL_ECC_BRAINPOOLP512R1},
+#endif
 #ifdef HAVE_CURVE25519
     {CURVE_NAME("X25519"),  NID_X25519, WOLFSSL_ECC_X25519},
 #endif
@@ -21475,7 +21462,7 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
     {CURVE_NAME("KYBER_LEVEL1"), WOLFSSL_KYBER_LEVEL1, WOLFSSL_KYBER_LEVEL1},
     {CURVE_NAME("KYBER_LEVEL3"), WOLFSSL_KYBER_LEVEL3, WOLFSSL_KYBER_LEVEL1},
     {CURVE_NAME("KYBER_LEVEL5"), WOLFSSL_KYBER_LEVEL5, WOLFSSL_KYBER_LEVEL1},
-#if defined(WOLFSSL_WC_KYBER) || defined(HAVE_LIBOQS)
+#if (defined(WOLFSSL_WC_KYBER) || defined(HAVE_LIBOQS)) && defined(HAVE_ECC)
     {CURVE_NAME("P256_KYBER_LEVEL1"), WOLFSSL_P256_KYBER_LEVEL1, WOLFSSL_P256_KYBER_LEVEL1},
     {CURVE_NAME("P384_KYBER_LEVEL3"), WOLFSSL_P384_KYBER_LEVEL3, WOLFSSL_P256_KYBER_LEVEL1},
     {CURVE_NAME("P521_KYBER_LEVEL5"), WOLFSSL_P521_KYBER_LEVEL5, WOLFSSL_P256_KYBER_LEVEL1},
@@ -21484,11 +21471,13 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
 #ifdef WOLFSSL_SM2
     {CURVE_NAME("SM2"),     NID_sm2, WOLFSSL_ECC_SM2P256V1},
 #endif
+#ifdef HAVE_ECC
     /* Alternative curve names */
     {CURVE_NAME("prime256v1"), NID_X9_62_prime256v1, WOLFSSL_ECC_SECP256R1},
     {CURVE_NAME("secp256r1"),  NID_X9_62_prime256v1, WOLFSSL_ECC_SECP256R1},
     {CURVE_NAME("secp384r1"),  NID_secp384r1, WOLFSSL_ECC_SECP384R1},
     {CURVE_NAME("secp521r1"),  NID_secp521r1, WOLFSSL_ECC_SECP521R1},
+#endif
 #ifdef WOLFSSL_SM2
     {CURVE_NAME("sm2p256v1"),  NID_sm2, WOLFSSL_ECC_SM2P256V1},
 #endif
