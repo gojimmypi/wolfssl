@@ -122,15 +122,32 @@ static void http_get_task(void *pvParameters)
 
 void app_main(void)
 {
-    ESP_ERROR_CHECK( nvs_flash_init() );
+
+    ESP_LOGI(TAG, "Flash init");
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_LOGI(TAG, "Flash erase");
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    else {
+        ESP_LOGE(TAG, "Flash init failed error: %d", ret);
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI("APP", "NVS Flash initialized successfully");
+    ESP_LOGI(TAG, "esp_netif_init");
     ESP_ERROR_CHECK(esp_netif_init());
+    ESP_LOGI(TAG, "esp_event_loop_create_default");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
+    ESP_LOGI(TAG, "connect...");
     ESP_ERROR_CHECK(example_connect());
 
+    ESP_LOGI(TAG, "task...");
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
