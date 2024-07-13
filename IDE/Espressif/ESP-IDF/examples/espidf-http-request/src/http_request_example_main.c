@@ -131,7 +131,7 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     else {
-        ESP_LOGE(TAG, "Flash init failed error: %d", ret);
+        ESP_LOGI(TAG, "Flash init not erased: %d", ret);
     }
     ESP_ERROR_CHECK(ret);
 
