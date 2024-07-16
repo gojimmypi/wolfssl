@@ -5,6 +5,37 @@ VisualStudioVersion = 17.10.34916.146
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "esp_http_client_example-v5.2", "esp_http_client_example-v5.2.vgdbproj", "{A454A763-1D5B-4D2C-945A-8F24D951AD92}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B449B-7A61-421F-93FA-AC2093BE0081}"
+	ProjectSection(SolutionItems) = preProject
+		example_log.txt = example_log.txt
+		platformio.ini = platformio.ini
+		README.md = README.md
+		sdkconfig.defaults = sdkconfig.defaults
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{31B96B47-9E33-4B81-A3AC-FAEC848C3811}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.h
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_errors.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_errors.h
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_error_capture.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_error_capture.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_mbedtls.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_mbedtls.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_platform_port.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_platform_port.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_wolfssl.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_wolfssl.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\Kconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif", "Espressif", "{40C53781-8E37-4A8F-A5CF-4E31273BEBCF}"
+	ProjectSection(SolutionItems) = preProject
+		sdkconfig = sdkconfig
+		sdkconfig.ci = sdkconfig.ci
+		sdkconfig.ci.ssldyn = sdkconfig.ci.ssldyn
+		sdkconfig.ci.wifi = sdkconfig.ci.wifi
+		sdkconfig.defaults = sdkconfig.defaults
+		sdkconfig.esp32dev = sdkconfig.esp32dev
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

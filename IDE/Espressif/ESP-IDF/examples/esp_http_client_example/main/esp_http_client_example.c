@@ -7,6 +7,8 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+// #include "esp_idf_version.h"
+
 #include <string.h>
 #include <sys/param.h>
 #include <stdlib.h>
@@ -923,7 +925,7 @@ static esp_err_t new_demo() {
 
 static void http_test_task(void *pvParameters)
 {
-    new_demo();
+    // new_demo();
 
     http_rest_with_url();
     http_rest_with_hostname_path();
@@ -962,6 +964,12 @@ static void http_test_task(void *pvParameters)
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 void app_main(void)
 {
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(5, 2, 2))
+    ESP_LOGI(TAG, "Found esp-IDF v5.2.2");
+#else
+    ESP_LOGW(TAG,"This example is intended for ESP-IDF version 5.2.2")
+#endif
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
