@@ -144,6 +144,14 @@ This is an alternate method for installation. It is recommended to use the new `
  2. Find Wolfssl files at _/path/to/esp_`/esp-idf/components/wolfssl/`
  3. Find [Example Programs](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples) under _/path/to/esp_`/esp-idf/examples/protocols/wolfssl_xxx` (where xxx is the project name)
 
+
+```
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+. $WRK_IDF_PATH/export.sh
+
+./setup.sh
+```
+
 ## Setup for Windows
 
 This is an alternate method for installation. It is recommended to use the new `CMakeLists.txt` to point to wolfSSL source code.

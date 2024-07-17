@@ -36,6 +36,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif", "Espressif", "{
 		sdkconfig.esp32dev = sdkconfig.esp32dev
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "certs", "certs", "{7B118566-4FEE-41C5-A747-DF8E2BBFAECB}"
+	ProjectSection(SolutionItems) = preProject
+		main\howsmyssl_com_root_cert.pem = main\howsmyssl_com_root_cert.pem
+		main\postman_root_cert.pem = main\postman_root_cert.pem
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

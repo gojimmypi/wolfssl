@@ -835,6 +835,8 @@ esp_http_client_handle_t hclient; /* hcloud->hclient */
 esp_http_client_method_t httpmethod; /*  hcloud->httpmethod */
 esp_http_client_method_t http_method;
 
+/* #define NEW_DEMO_CODE */
+#ifdef NEW_DEMO_CODE
 /* m_client_config not defined, using existing example: */
 static esp_http_client_config_t m_client_config = {
 //        .url = "https://www.howsmyssl.com",
@@ -845,6 +847,7 @@ static esp_http_client_config_t m_client_config = {
         .cert_pem = howsmyssl_com_root_cert_pem_start,
 //        .crt_bundle_attach = esp_crt_bundle_attach,
     };
+
 //    esp_http_client_config_t config = {
 //        .url = "https://postman-echo.com/post",
 //        .event_handler = _http_event_handler,
@@ -921,12 +924,13 @@ static esp_err_t new_demo() {
     ESP_ERROR_CHECK(esp_http_client_close(hclient));
     return err;
 }
-#pragma endregion
+#endif
 
 static void http_test_task(void *pvParameters)
 {
-    // new_demo();
-
+#ifdef NEW_DEMO_CODE
+    new_demo();
+#endif
     http_rest_with_url();
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH

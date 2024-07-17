@@ -14,6 +14,52 @@ Although wolfSSL _should_ work on any Espressif device, there's explicit support
 - esp32s3
 - esp32h2
 
+## Special Installation
+
+This is a special example of the `esp_http_client_example`.
+
+The v5.2.2 (`my_522`) branch of the [gojimmypi ESP-IDF Fork](https://github.com/gojimmypi/esp-idf/tree/my_522) is needed.
+This branch contains changes intended for the ESP-IDF but needed before fully tested and integrated with the Espressif ESP-IDF.
+
+Find the root of your ESP-IDF install. In the case of VisualGDB:
+
+```bash
+# WSL
+cd /mnt/c/SysGCC/esp32/esp-idf
+```
+
+or
+
+```dos
+cd C:\SysGCC\esp32-master\esp-idf\
+```
+
+Clone the `gojimmypi` fork of the ESP-IDF:
+
+```
+git clone --recursive https://github.com/gojimmypi/esp-idf.git v5.2-my_522
+cd v5.2-my_522
+git remote add upstream https://github.com/espressif/esp-idf.git
+git fetch --all --tags
+
+# git checkout tags/v5.2.2
+git checkout my_522
+git submodule update --init --recursive
+
+./install.sh
+. ./export.sh
+
+# install wolfSSL as a component to Espressif ESP-IDF
+git clone https://github.com/gojimmypi/wolfssl.git wolfssl-gojimmypi-my_522
+cd wolfssl-gojimmypi-my_522
+git checkout ED25519_SHA2_fix
+cd ./IDE/Espressif/ESP-IDF
+./setup.sh
+
+# Build the example
+cd ./examples/esp_http_client_example
+idf.py build
+```
 
 ## Getting Started
 
@@ -41,6 +87,44 @@ to help get started quickly.
 Although not required, a [JTAG Adapter](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html)
 can be helpful for development. When not using a built-in JTAG from Espressif, the examples typically
 use the open source [Tigard board](https://github.com/tigard-tools/tigard#readme).
+
+## Environments
+
+The preferred usage of wolfSSL for the Espressif ESP32 is with the Espressif ESP-IDF SDK. There are also libraries available
+for use with PlatformIO and Arduino.
+
+There are different installation methods depending on the environment used and project requirements.
+
+| Environment        | no esp-tls          | esp-tls            |
+| ------------------ | ------------------- |------------------- |
+| VisualGDB          | [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl) | [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl), needs WIP ESP-IDF |
+| Espressif ESP-IDF  | [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl) | [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl), needs WIP ESP-IDF |
+| PlatformIO ESP-IDF | [PlatformIO Library](https://registry.platformio.org/libraries/wolfssl/wolfssl)  | [setup.sh](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/setup.sh), [setup_win.bat](https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/setup_win.bat)  |
+| PlatformIO Arduino | [PlatformIO Library](https://registry.platformio.org/libraries/wolfssl/Arduino-wolfSSL)  | Unsupported at this time |
+| Arduino            | [Arduino Library](https://www.arduino.cc/reference/en/libraries/wolfssl/)                | Unsupported at this time  |
+
+Note that all of the above options _install a copy_ of wolfSSL. This copy is static and disconnected from source control.
+
+For the ESP-IDF, wolfssl can either be installed in the local project `./components` (default) or manually installed to the respective ESP-IDF [components directory](https://github.com/espressif/esp-idf/tree/master/components).
+
+VisualGDB:
+
+```
+C:\SysGCC\esp32\esp-idf\v5.2\components
+```
+
+
+Espressif ESP-IDF:
+
+```
+C:\Espressif\frameworks\esp-idf-v5.2\components
+```
+
+PlatformIO:
+
+```
+C:\Users\%USERNAME%\.platformio\packages\framework-espidf\components\
+```
 
 ## Examples:
 
