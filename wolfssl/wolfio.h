@@ -168,6 +168,9 @@
             #include "socket.h"
         #elif defined(NETOS)
             #include <sockapi.h>
+        #elif defined(NUCLEUS_PLUS_2_3)
+            #define SO_TYPE     17  /* Socket type */
+            #define SO_RCVTIMEO 13  /* Recv Timeout */
         #elif !defined(DEVKITPRO) && !defined(WOLFSSL_PICOTCP) \
                 && !defined(WOLFSSL_CONTIKI) && !defined(WOLFSSL_WICED) \
                 && !defined(WOLFSSL_GNRC) && !defined(WOLFSSL_RIOT_OS)
@@ -198,6 +201,9 @@
     #include <sys/filio.h>
 #endif
 
+#define SOCKET_RECEIVING 1
+#define SOCKET_SENDING 2
+
 #ifdef USE_WINDOWS_API
     /* no epipe yet */
     #ifndef WSAEPIPE
@@ -205,6 +211,7 @@
     #endif
     #define SOCKET_EWOULDBLOCK WSAEWOULDBLOCK
     #define SOCKET_EAGAIN      WSAETIMEDOUT
+    #define SOCKET_ETIMEDOUT   WSAETIMEDOUT
     #define SOCKET_ECONNRESET  WSAECONNRESET
     #define SOCKET_EINTR       WSAEINTR
     #define SOCKET_EPIPE       WSAEPIPE
@@ -224,6 +231,7 @@
         /* RTCS old I/O doesn't have an EWOULDBLOCK */
         #define SOCKET_EWOULDBLOCK  EAGAIN
         #define SOCKET_EAGAIN       EAGAIN
+        #define SOCKET_ETIMEDOUT    RTCSERR_TCP_TIMED_OUT
         #define SOCKET_ECONNRESET   RTCSERR_TCP_CONN_RESET
         #define SOCKET_EINTR        EINTR
         #define SOCKET_EPIPE        EPIPE
@@ -232,6 +240,7 @@
     #else
         #define SOCKET_EWOULDBLOCK  NIO_EWOULDBLOCK
         #define SOCKET_EAGAIN       NIO_EAGAIN
+        #define SOCKET_ETIMEDOUT    NIO_ETIMEDOUT
         #define SOCKET_ECONNRESET   NIO_ECONNRESET
         #define SOCKET_EINTR        NIO_EINTR
         #define SOCKET_EPIPE        NIO_EPIPE
@@ -249,6 +258,7 @@
 #elif defined(WOLFSSL_PICOTCP)
     #define SOCKET_EWOULDBLOCK  PICO_ERR_EAGAIN
     #define SOCKET_EAGAIN       PICO_ERR_EAGAIN
+    #define SOCKET_ETIMEDOUT    PICO_ERR_ETIMEDOUT
     #define SOCKET_ECONNRESET   PICO_ERR_ECONNRESET
     #define SOCKET_EINTR        PICO_ERR_EINTR
     #define SOCKET_EPIPE        PICO_ERR_EIO
@@ -257,6 +267,7 @@
 #elif defined(FREERTOS_TCP)
     #define SOCKET_EWOULDBLOCK FREERTOS_EWOULDBLOCK
     #define SOCKET_EAGAIN       FREERTOS_EWOULDBLOCK
+    #define SOCKET_ETIMEDOUT    (-pdFREERTOS_ERRNO_ETIMEDOUT)
     #define SOCKET_ECONNRESET   FREERTOS_SOCKET_ERROR
     #define SOCKET_EINTR        FREERTOS_SOCKET_ERROR
     #define SOCKET_EPIPE        FREERTOS_SOCKET_ERROR
@@ -270,6 +281,14 @@
     #define SOCKET_EPIPE        NU_NOT_CONNECTED
     #define SOCKET_ECONNREFUSED NU_CONNECTION_REFUSED
     #define SOCKET_ECONNABORTED NU_NOT_CONNECTED
+#elif defined(NUCLEUS_PLUS_2_3)
+    #define SOCKET_EWOULDBLOCK  NU_WOULD_BLOCK
+    #define SOCKET_EAGAIN       NU_NO_DATA
+    #define SOCKET_ECONNRESET   NU_RESET
+    #define SOCKET_EINTR        0
+    #define SOCKET_EPIPE        0
+    #define SOCKET_ECONNREFUSED NU_CONNECTION_REFUSED
+    #define SOCKET_ECONNABORTED NU_CONNECTION_REFUSED
 #elif defined(WOLFSSL_DEOS)
     /* `sockaddr_storage` is not defined in DEOS. This workaround will
      * work for IPV4, but not IPV6
@@ -301,6 +320,7 @@
 #elif defined(WOLFSSL_LWIP_NATIVE)
     #define SOCKET_EWOULDBLOCK ERR_WOULDBLOCK
     #define SOCKET_EAGAIN      ERR_WOULDBLOCK
+    #define SOCKET_TIMEDOUT    ERR_TIMEOUT
     #define SOCKET_ECONNRESET  ERR_RST
     #define SOCKET_EINTR       ERR_CLSD
     #define SOCKET_EPIPE       ERR_CLSD
@@ -318,6 +338,7 @@
 #else
     #define SOCKET_EWOULDBLOCK EWOULDBLOCK
     #define SOCKET_EAGAIN      EAGAIN
+    #define SOCKET_ETIMEDOUT   ETIMEDOUT
     #define SOCKET_ECONNRESET  ECONNRESET
     #define SOCKET_EINTR       EINTR
     #define SOCKET_EPIPE       EPIPE
@@ -354,6 +375,11 @@
 #elif defined(WOLFSSL_NUCLEUS_1_2)
     #define SEND_FUNCTION NU_Send
     #define RECV_FUNCTION NU_Recv
+#elif defined(NUCLEUS_PLUS_2_3)
+    #define SEND_FUNCTION          nucyassl_send
+    #define RECV_FUNCTION          nucyassl_recv
+    #define DTLS_RECVFROM_FUNCTION nucyassl_recvfrom
+    #define DTLS_SENDTO_FUNCTION   nucyassl_sendto
 #elif defined(FUSION_RTOS)
     #define SEND_FUNCTION FNS_SEND
     #define RECV_FUNCTION FNS_RECV
@@ -398,6 +424,9 @@
     #ifndef XSOCKLENT
         #ifdef USE_WINDOWS_API
             #define XSOCKLENT int
+        #elif defined(NUCLEUS_PLUS_2_3)
+            typedef int socklen_t;
+            #define XSOCKLENT socklen_t
         #else
             #define XSOCKLENT socklen_t
         #endif
@@ -419,6 +448,10 @@
         typedef struct sockaddr_in      SOCKADDR_IN;
         #ifdef WOLFSSL_IPV6
             typedef struct sockaddr_in6 SOCKADDR_IN6;
+        #endif
+        #if defined(HAVE_SYS_UN_H) && !defined(WOLFSSL_NO_SOCKADDR_UN)
+            #include <sys/un.h>
+            typedef struct sockaddr_un SOCKADDR_UN;
         #endif
         typedef struct hostent          HOSTENT;
     #endif /* HAVE_SOCKADDR */
@@ -444,6 +477,32 @@ WOLFSSL_API int wolfIO_TcpBind(SOCKET_T* sockfd, word16 port);
 WOLFSSL_API  int wolfIO_Send(SOCKET_T sd, char *buf, int sz, int wrFlags);
 WOLFSSL_API  int wolfIO_Recv(SOCKET_T sd, char *buf, int sz, int rdFlags);
 
+#ifdef WOLFSSL_HAVE_BIO_ADDR
+
+#ifdef WOLFSSL_NO_SOCK
+#error WOLFSSL_HAVE_BIO_ADDR and WOLFSSL_NO_SOCK are mutually incompatible.
+#endif
+
+union WOLFSSL_BIO_ADDR {
+    SOCKADDR sa;
+    SOCKADDR_IN sa_in;
+#ifdef WOLFSSL_IPV6
+    SOCKADDR_IN6 sa_in6;
+#endif
+#if defined(HAVE_SYS_UN_H) && !defined(WOLFSSL_NO_SOCKADDR_UN)
+    SOCKADDR_UN sa_un;
+#endif
+};
+
+typedef union WOLFSSL_BIO_ADDR WOLFSSL_BIO_ADDR;
+
+#if defined(WOLFSSL_DTLS) && defined(OPENSSL_EXTRA)
+WOLFSSL_API  int wolfIO_SendTo(SOCKET_T sd, WOLFSSL_BIO_ADDR *addr, char *buf, int sz, int wrFlags);
+WOLFSSL_API  int wolfIO_RecvFrom(SOCKET_T sd, WOLFSSL_BIO_ADDR *addr, char *buf, int sz, int rdFlags);
+#endif
+
+#endif /* WOLFSSL_HAVE_BIO_ADDR */
+
 #endif /* USE_WOLFSSL_IO || HAVE_HTTP_CLIENT */
 
 #ifndef WOLFSSL_NO_SOCK
@@ -465,6 +524,7 @@ WOLFSSL_API  int wolfIO_Recv(SOCKET_T sd, char *buf, int sz, int rdFlags);
                                     FNS_CLOSE(s, &err); \
                                 } while(0)
     #endif
+    #define StartTCP() WC_DO_NOTHING
 #else
     #ifndef CloseSocket
         #define CloseSocket(s) close(s)
@@ -485,6 +545,10 @@ WOLFSSL_API int BioReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx);
     WOLFSSL_API int EmbedSend(WOLFSSL* ssl, char* buf, int sz, void* ctx);
 
     #ifdef WOLFSSL_DTLS
+        #ifdef NUCLEUS_PLUS_2_3
+            #define SELECT_FUNCTION nucyassl_select
+            WOLFSSL_LOCAL int nucyassl_select(INT sd, UINT32 timeout);
+        #endif
         WOLFSSL_API int EmbedReceiveFrom(WOLFSSL *ssl, char *buf, int sz,
                                          void *ctx);
         WOLFSSL_API int EmbedSendTo(WOLFSSL* ssl, char *buf, int sz, void *ctx);

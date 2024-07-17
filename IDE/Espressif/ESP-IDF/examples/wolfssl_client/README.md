@@ -83,9 +83,46 @@ Reminder that we build with `make` and not `cmake` in VisualGDB.
 
 Build files will be created in `[project directory]\build`
 
-## ESP-IDF make Commandline (version 3.5 or earlier for the ESP8266)
+See notes below if building a project in a directory other than the examples.
 
+Problems?
+
+- Try deleting any existing `sdkconfig` file and/or `./build` directory to start fresh.
+- Be sure the RTOS SDK is installed and properly configured.
+
+## ESP-IDF `make` Commandline (version 3.5 or earlier for the ESP8266)
+
+In-place example build:
+
+```bash
+export IDF_PATH=~/esp/ESP8266_RTOS_SDK
+export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
+cd /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_client
+make clean
+make
 ```
+
+When building a in a *different directory*, for example assuming the `wolfssl_client` in the wolfssl examples
+directory is copied to the `C:\test\demo` directory in Windows. (aka ` /mnt/c/test/demo` in WSL),
+with a clone of wolfSSL `master` branch in `C:\workspace\wolfssl-master`:
+
+```bash
+cp -r /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_client/* /mnt/c/test/demo
+```
+
+Modify the project `./components/wolfssl/component.mk` file. Adjust `WOLFSSL_ROOT` setting, in this case to a value of:
+
+`WOLFSSL_ROOT := ../../../../workspace/wolfssl-master`
+
+Ensure the path is *relative* to the project `component.mk` file location and *not* absolute.
+
+Note the location of the component makefile in this case is `c:\test\demo\components\wolfssl\component.mk`.
+Thus we need to navigate up 4 parents to the root of `C:\` to find `/mnt/c` in WSL.
+
+Proceed to run `make` from the project directory as usual:
+
+```bash
+# setup environment as needed
 export IDF_PATH=~/esp/ESP8266_RTOS_SDK
 export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
 cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_client
@@ -100,6 +137,12 @@ export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
 cp -r /mnt/c/workspace/wolfssl-master/IDE/Espressif/ESP-IDF/examples/wolfssl_client/* /tmp/demo
 cd /tmp/demo
 
+```
+*************  wolfssl_client *************
+***********  wolfssl component ************
+WOLFSSL_ROOT defined: ../../../../workspace/wolfssl-master
+WOLFSSL_ROOT actual:  /mnt/c/workspace/wolfssl-master
+********** end wolfssl component **********
 ```
 
 

@@ -531,22 +531,38 @@ void wc_Pkcs11_Finalize(Pkcs11Dev* dev)
 static int Pkcs11Slot_FindByTokenName(Pkcs11Dev* dev,
     const char* tokenName, size_t tokenNameSz)
 {
+    int           ret = -1;
     CK_RV         rv;
     CK_ULONG      slotCnt = 0;
     CK_TOKEN_INFO tinfo;
-    int           slotId = -1;
+    int           index = -1;
+    CK_SLOT_ID*   slot = NULL;
+
     rv = dev->func->C_GetSlotList(CK_TRUE, NULL, &slotCnt);
     if (rv == CKR_OK) {
-        for (slotId = 0; slotId < (int)slotCnt; slotId++) {
-            rv = dev->func->C_GetTokenInfo(slotId, &tinfo);
+        slot = (CK_SLOT_ID*)XMALLOC(slotCnt * sizeof(*slot), dev->heap,
+                                   DYNAMIC_TYPE_TMP_BUFFER);
+        if (slot == NULL)
+            goto out;
+        rv = dev->func->C_GetSlotList(CK_TRUE, slot, &slotCnt);
+        if (rv != CKR_OK)
+            goto out;
+        for (index = 0; index < (int)slotCnt; index++) {
+            rv = dev->func->C_GetTokenInfo(slot[index], &tinfo);
             PKCS11_RV("C_GetTokenInfo", rv);
             if (rv == CKR_OK &&
                 XMEMCMP(tinfo.label, tokenName, tokenNameSz) == 0) {
-                return slotId;
+                ret =  slot[index];
+                break;
             }
         }
     }
-    return -1;
+
+out:
+    if (slot != NULL) {
+        XFREE(slot, dev->heap, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+    return ret;
 }
 
 /* lookup by slotId or tokenName */
@@ -947,7 +963,7 @@ static int Pkcs11CreateSecretKey(CK_OBJECT_HANDLE* key, Pkcs11Session* session,
 }
 #endif
 
-#ifndef NO_RSA
+#if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN)
 /**
  * Create a PKCS#11 object containing the RSA private key data.
  *
@@ -1024,7 +1040,7 @@ static int Pkcs11CreateRsaPrivateKey(CK_OBJECT_HANDLE* privateKey,
 
     return ret;
 }
-#endif
+#endif /* !NO_RSA && WOLFSSL_KEY_GEN */
 
 #ifdef HAVE_ECC
 /**
@@ -1380,7 +1396,7 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                 break;
             }
     #endif
-    #ifndef NO_RSA
+    #if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN)
             case PKCS11_KEY_TYPE_RSA: {
                 RsaKey* rsaKey = (RsaKey*)key;
 
@@ -1774,7 +1790,12 @@ static int Pkcs11RsaPrivateKey(Pkcs11Session* session, RsaKey* rsaKey,
     int     ret;
 
     if (sessionKey) {
+    #ifdef WOLFSSL_KEY_GEN
         ret = Pkcs11CreateRsaPrivateKey(privateKey, session, rsaKey, 0);
+    #else
+        /* RSA Key Generation support not compiled in */
+        ret = NOT_COMPILED_IN;
+    #endif
     }
     else if (rsaKey->labelLen > 0) {
         ret = Pkcs11FindKeyByLabel(privateKey, CKO_PRIVATE_KEY, CKK_RSA,
@@ -1996,7 +2017,8 @@ static int Pkcs11Rsa(Pkcs11Session* session, wc_CryptoInfo* info)
             /* Make a handle to a private key. */
             ret = Pkcs11RsaPrivateKey(session, rsaKey, sessionKey, &key);
         }
-
+    }
+    if (ret == 0) {
         if (type == RSA_PUBLIC_ENCRYPT) {
             WOLFSSL_MSG("PKCS#11: Public Encrypt");
             if ((mechInfo.flags & CKF_ENCRYPT) != 0) {
