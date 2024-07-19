@@ -997,8 +997,8 @@ void app_main(void)
 
     // Set your desired time here
     timeinfo.tm_year = 2024 - 1900; // Year - 1900
-    timeinfo.tm_mon = 6 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 21;          // Day of the month
+    timeinfo.tm_mon = 7 - 1;        // Month, where 0 = Jan
+    timeinfo.tm_mday = 19;          // Day of the month
     timeinfo.tm_hour = 12;
     timeinfo.tm_min = 0;
     timeinfo.tm_sec = 0;
@@ -1007,6 +1007,12 @@ void app_main(void)
     now.tv_sec = t;
     now.tv_usec = 0;
     settimeofday(&now, NULL);
+
+    // date -d @1073455184
+    time_t ltime;
+    ltime = wc_Time(0);
+    ESP_LOGI(TAG, "wc_Time= %llu", ltime);
+
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
 #else
