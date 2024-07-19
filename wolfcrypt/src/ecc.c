@@ -6395,9 +6395,6 @@ static int wc_ecc_get_curve_order_bit_count(const ecc_set_type* dp)
 
 #ifdef HAVE_ECC_SIGN
 
-#ifndef NO_ASN
-
-
 #if defined(WOLFSSL_ATECC508A) || defined(WOLFSSL_ATECC608A) ||  \
     defined(PLUTON_CRYPTO_ECC) || defined(WOLFSSL_CRYPTOCELL) || \
     defined(WOLFSSL_SILABS_SE_ACCEL) || defined(WOLFSSL_KCAPI_ECC) || \
@@ -6722,6 +6719,9 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
     DECL_MP_INT_SIZE_DYN(r, ECC_KEY_MAX_BITS(key), MAX_ECC_BITS_USE);
     DECL_MP_INT_SIZE_DYN(s, ECC_KEY_MAX_BITS(key), MAX_ECC_BITS_USE);
 #endif
+#ifdef NO_ASN
+    word32 keySz;
+#endif
 
     if (in == NULL || out == NULL || outlen == NULL || key == NULL) {
         return ECC_BAD_ARG_E;
@@ -6758,17 +6758,17 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
 #else
 
     NEW_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
-#ifdef MP_INT_SIZE_CHECK_NULL
+    #ifdef MP_INT_SIZE_CHECK_NULL
     if (r == NULL)
         return MEMORY_E;
-#endif
+    #endif
     NEW_MP_INT_SIZE(s, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
-#ifdef MP_INT_SIZE_CHECK_NULL
+    #ifdef MP_INT_SIZE_CHECK_NULL
     if (s == NULL) {
         FREE_MP_INT_SIZE(r, key->heap, DYNAMIC_TYPE_ECC);
         return MEMORY_E;
     }
-#endif
+    #endif
 
     err = INIT_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key));
     if (err != 0) {
@@ -6800,8 +6800,26 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
         return err;
     }
 
+#ifndef NO_ASN
     /* encoded with DSA header */
     err = StoreECC_DSA_Sig(out, outlen, r, s);
+#else
+    /* No support for DSA ASN.1 header.
+     * Signature will be r+s directly. */
+    keySz = 0;
+    if (key->dp != NULL) {
+        keySz = (word32)key->dp->size;
+    }
+    if (keySz <= 0) {
+        WOLFSSL_MSG("Error: ECDSA sign raw signature size");
+        return WC_NO_ERR_TRACE(ECC_BAD_ARG_E);
+    }
+    *outlen = keySz * 2;
+
+    /* Export signature into r,s */
+    mp_to_unsigned_bin_len(r, out, keySz);
+    mp_to_unsigned_bin_len(s, out + keySz, keySz);
+#endif /* !NO_ASN */
 
     /* cleanup */
     mp_clear(r);
@@ -6813,7 +6831,6 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
     return err;
 #endif /* !WOLF_CRYPTO_CB_ONLY_ECC */
 }
-#endif /* !NO_ASN */
 
 #if defined(WOLFSSL_ECDSA_DETERMINISTIC_K) || \
     defined(WOLFSSL_ECDSA_DETERMINISTIC_K_VARIANT)
@@ -7538,7 +7555,7 @@ int wc_ecc_gen_deterministic_k(const byte* hash, word32 hashSz,
 #endif
     word32 xSz, VSz, KSz, h1len, qLen;
     byte intOct;
-    word32 qbits = 0;
+    int qbits = 0;
 
     if (hash == NULL || k == NULL || order == NULL) {
         return BAD_FUNC_ARG;
@@ -7630,11 +7647,15 @@ int wc_ecc_gen_deterministic_k(const byte* hash, word32 hashSz,
         wc_MemZero_Add("wc_ecc_gen_deterministic_k x", x, qLen);
     #endif
         qbits = mp_count_bits(order);
+        if (qbits < 0)
+            ret = MP_VAL;
+    }
 
+    if (ret == 0) {
          /* hash truncate if too long */
-        if (((WOLFSSL_BIT_SIZE) * hashSz) > qbits) {
+        if (((WOLFSSL_BIT_SIZE) * hashSz) > (word32)qbits) {
             /* calculate truncated hash size using bits rounded up byte */
-            hashSz = (qbits + ((WOLFSSL_BIT_SIZE) - 1)) / (WOLFSSL_BIT_SIZE);
+            hashSz = ((word32)qbits + (WOLFSSL_BIT_SIZE - 1)) / WOLFSSL_BIT_SIZE;
         }
         ret = mp_read_unsigned_bin(z1, hash, hashSz);
     }
@@ -7726,7 +7747,7 @@ int wc_ecc_gen_deterministic_k(const byte* hash, word32 hashSz,
                 ret = mp_read_unsigned_bin(k, x, xSz);
             }
 
-            if ((ret == 0) && ((xSz * WOLFSSL_BIT_SIZE) != qbits)) {
+            if ((ret == 0) && ((xSz * WOLFSSL_BIT_SIZE) != (word32)qbits)) {
                 /* handle odd case where shift of 'k' is needed with RFC 6979
                  *  k = bits2int(T) in section 3.2 h.3 */
                 mp_rshb(k, ((int)xSz * WOLFSSL_BIT_SIZE) - qbits);
@@ -7779,7 +7800,8 @@ int wc_ecc_gen_deterministic_k(const byte* hash, word32 hashSz,
 /* Sets the deterministic flag for 'k' generation with sign.
  * returns 0 on success
  */
-int wc_ecc_set_deterministic_ex(ecc_key* key, byte flag, int hashType)
+int wc_ecc_set_deterministic_ex(ecc_key* key, byte flag,
+                                enum wc_HashType hashType)
 {
     if (key == NULL) {
         return BAD_FUNC_ARG;
@@ -7887,7 +7909,9 @@ int wc_ecc_free(ecc_key* key)
         return 0;
     }
 
-#if defined(WOLFSSL_ECDSA_SET_K) || defined(WOLFSSL_ECDSA_SET_K_ONE_LOOP)
+#if defined(WOLFSSL_ECDSA_SET_K) || defined(WOLFSSL_ECDSA_SET_K_ONE_LOOP) || \
+    defined(WOLFSSL_ECDSA_DETERMINISTIC_K) || \
+    defined(WOLFSSL_ECDSA_DETERMINISTIC_K_VARIANT)
 #ifndef WOLFSSL_NO_MALLOC
     if (key->sign_k != NULL)
 #endif
@@ -8451,7 +8475,6 @@ int ecc_mul2add(ecc_point* A, mp_int* kA,
 
 
 #ifdef HAVE_ECC_VERIFY
-#ifndef NO_ASN
 /* verify
  *
  * w  = s^-1 mod n
@@ -8489,6 +8512,9 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
 #ifdef WOLFSSL_ASYNC_CRYPT
     int isPrivateKeyOnly = 0;
 #endif
+#ifdef NO_ASN
+    word32 keySz;
+#endif
 
     if (sig == NULL || hash == NULL || res == NULL || key == NULL) {
         return ECC_BAD_ARG_E;
@@ -8521,18 +8547,20 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
     r = key->r;
     s = key->s;
 #else
-    NEW_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
-#ifdef MP_INT_SIZE_CHECK_NULL
+    NEW_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap,
+        DYNAMIC_TYPE_ECC);
+    #ifdef MP_INT_SIZE_CHECK_NULL
     if (r == NULL)
         return MEMORY_E;
-#endif
-    NEW_MP_INT_SIZE(s, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap, DYNAMIC_TYPE_ECC);
-#ifdef MP_INT_SIZE_CHECK_NULL
+    #endif
+    NEW_MP_INT_SIZE(s, ECC_KEY_MAX_BITS_NONULLCHECK(key), key->heap,
+        DYNAMIC_TYPE_ECC);
+    #ifdef MP_INT_SIZE_CHECK_NULL
     if (s == NULL) {
         FREE_MP_INT_SIZE(r, key->heap, DYNAMIC_TYPE_ECC);
         return MEMORY_E;
     }
-#endif
+    #endif
     err = INIT_MP_INT_SIZE(r, ECC_KEY_MAX_BITS_NONULLCHECK(key));
     if (err != 0) {
         FREE_MP_INT_SIZE(s, key->heap, DYNAMIC_TYPE_ECC);
@@ -8555,6 +8583,7 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
             /* default to invalid signature */
             *res = 0;
 
+    #ifndef NO_ASN
             /* Decode ASN.1 ECDSA signature. */
         #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_ECC)
             /* Note, DecodeECC_DSA_Sig() calls mp_init() on r and s.
@@ -8569,6 +8598,24 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
             if (err < 0) {
                 break;
             }
+    #else
+            /* No support for DSA ASN.1 header.
+             * Signature must be r+s directly. */
+            keySz = 0;
+            if (key->dp != NULL) {
+                keySz = (word32)key->dp->size;
+            }
+            if (siglen != keySz * 2) {
+                WOLFSSL_MSG("Error: ECDSA Verify raw signature size");
+                return WC_NO_ERR_TRACE(ECC_BAD_ARG_E);
+            }
+
+            /* Import signature into r,s */
+            mp_init(r);
+            mp_init(s);
+            mp_read_unsigned_bin(r, sig, keySz);
+            mp_read_unsigned_bin(s, sig + keySz, keySz);
+    #endif /* !NO_ASN */
             FALL_THROUGH;
 
         case ECC_STATE_VERIFY_DO:
@@ -8628,7 +8675,6 @@ int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
     return err;
 #endif /* !WOLF_CRYPTO_CB_ONLY_ECC */
 }
-#endif /* !NO_ASN */
 
 #ifndef WOLF_CRYPTO_CB_ONLY_ECC
 
@@ -9117,7 +9163,7 @@ int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
    keySz = (word32)key->dp->size;
 
 #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_ECC) && \
-       defined(WOLFSSL_ASYNC_CRYPT_SW)
+    defined(WOLFSSL_ASYNC_CRYPT_SW)
     if (key->asyncDev.marker == WOLFSSL_ASYNC_MARKER_ECC) {
         if (wc_AsyncSwInit(&key->asyncDev, ASYNC_SW_ECC_VERIFY)) {
             WC_ASYNC_SW* sw = &key->asyncDev.sw;

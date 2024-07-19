@@ -6107,23 +6107,26 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 #endif /* NO_LARGE_HASH_TEST */
 
 #if defined(WOLFSSL_HAVE_LMS) && !defined(WOLFSSL_LMS_FULL_HASH)
-    unsigned char data_hb[WC_SHA256_BLOCK_SIZE] = {
-        0x61, 0x62, 0x63, 0x80, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18
-    };
+    {
+        WOLFSSL_SMALL_STACK_STATIC const unsigned char
+            data_hb[WC_SHA256_BLOCK_SIZE] = {
+            0x61, 0x62, 0x63, 0x80, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18
+        };
 
-    ret = wc_Sha256HashBlock(&sha, data_hb, hash);
-    if (ret != 0) {
-        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
-    }
-    if (XMEMCMP(hash, b.output, WC_SHA256_DIGEST_SIZE) != 0) {
-        ERROR_OUT(WC_TEST_RET_ENC_NC, exit);
+        ret = wc_Sha256HashBlock(&sha, data_hb, hash);
+        if (ret != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
+        }
+        if (XMEMCMP(hash, b.output, WC_SHA256_DIGEST_SIZE) != 0) {
+            ERROR_OUT(WC_TEST_RET_ENC_NC, exit);
+        }
     }
 #endif
 
@@ -31042,12 +31045,10 @@ typedef struct eccVector {
     const char* curveName;
     word32 msgLen;
     word32 keySize;
-#ifndef NO_ASN
     const byte* r;
     word32      rSz;
     const byte* s;
     word32      sSz;
-#endif
 } eccVector;
 
 #if !defined(WOLF_CRYPTO_CB_ONLY_ECC)
@@ -31099,13 +31100,14 @@ static wc_test_ret_t ecc_test_vector_item(const eccVector* vector)
     if (ret != 0)
         goto done;
 
+#if !defined(NO_ASN)
     XMEMSET(sig, 0, ECC_SIG_SIZE);
     sigSz = ECC_SIG_SIZE;
     ret = wc_ecc_rs_to_sig(vector->R, vector->S, sig, &sigSz);
     if (ret != 0)
         goto done;
 
-#if !defined(NO_ASN) && !defined(HAVE_SELFTEST)
+#if !defined(HAVE_SELFTEST)
     XMEMSET(sigRaw, 0, ECC_SIG_SIZE);
     sigRawSz = ECC_SIG_SIZE;
     ret = wc_ecc_rs_raw_to_sig(vector->r, vector->rSz, vector->s, vector->sSz,
@@ -31125,7 +31127,17 @@ static wc_test_ret_t ecc_test_vector_item(const eccVector* vector)
         ret = WC_TEST_RET_ENC_NC;
         goto done;
     }
-#endif
+#endif /* !HAVE_SELFTEST */
+#else
+    /* Signature will be R+S directly */
+    /* Make sure and zero pad if r or s is less than key size */
+    XMEMSET(sig, 0, ECC_SIG_SIZE);
+    sigSz = vector->keySize * 2;
+    XMEMCPY(sig + (vector->keySize - vector->rSz),
+        vector->r, vector->rSz);
+    XMEMCPY(sig + vector->keySize + (vector->keySize - vector->sSz),
+        vector->s, vector->sSz);
+#endif /* !NO_ASN */
 
 #ifdef HAVE_ECC_VERIFY
     do {
@@ -31213,14 +31225,12 @@ static wc_test_ret_t ecc_test_vector(int keySize)
         vec.R   = "6994d962bdd0d793ffddf855ec5bf2f91a9698b46258a63e";
         vec.S   = "02ba6465a234903744ab02bc8521405b73cf5fc00e1a9f41";
         vec.curveName = "SECP192R1";
-    #ifndef NO_ASN
         vec.r   = (byte*)"\x69\x94\xd9\x62\xbd\xd0\xd7\x93\xff\xdd\xf8\x55"
                          "\xec\x5b\xf2\xf9\x1a\x96\x98\xb4\x62\x58\xa6\x3e";
         vec.rSz = 24;
         vec.s   = (byte*)"\x02\xba\x64\x65\xa2\x34\x90\x37\x44\xab\x02\xbc"
                          "\x85\x21\x40\x5b\x73\xcf\x5f\xc0\x0e\x1a\x9f\x41";
         vec.sSz = 24;
-    #endif
         break;
 #endif /* HAVE_ECC192 */
 
@@ -31249,7 +31259,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
         vec.R   = "147b33758321e722a0360a4719738af848449e2c1d08defebc1671a7";
         vec.S   = "24fc7ed7f1352ca3872aa0916191289e2e04d454935d50fe6af3ad5b";
         vec.curveName = "SECP224R1";
-    #ifndef NO_ASN
         vec.r   = (byte*)"\x14\x7b\x33\x75\x83\x21\xe7\x22\xa0\x36\x0a\x47"
                          "\x19\x73\x8a\xf8\x48\x44\x9e\x2c\x1d\x08\xde\xfe"
                          "\xbc\x16\x71\xa7";
@@ -31258,7 +31267,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
                          "\x61\x91\x28\x9e\x2e\x04\xd4\x54\x93\x5d\x50\xfe"
                          "\x6a\xf3\xad\x5b";
         vec.sSz = 28;
-    #endif
         break;
 #endif /* HAVE_ECC224 */
 
@@ -31291,7 +31299,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
         vec.d   = "be34baa8d040a3b991f9075b56ba292f755b90e4b6dc10dad36715c33cfdac25";
         vec.R   = "2b826f5d44e2d0b6de531ad96b51e8f0c56fdfead3c236892e4d84eacfc3b75c";
         vec.S   = "a2248b62c03db35a7cd63e8a120a3521a89d3d2f61ff99035a2148ae32e3a248";
-    #ifndef NO_ASN
         vec.r   = (byte*)"\x2b\x82\x6f\x5d\x44\xe2\xd0\xb6\xde\x53\x1a\xd9"
                          "\x6b\x51\xe8\xf0\xc5\x6f\xdf\xea\xd3\xc2\x36\x89"
                          "\x2e\x4d\x84\xea\xcf\xc3\xb7\x5c";
@@ -31300,7 +31307,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
                          "\x12\x0a\x35\x21\xa8\x9d\x3d\x2f\x61\xff\x99\x03"
                          "\x5a\x21\x48\xae\x32\xe3\xa2\x48";
         vec.sSz = 32;
-    #endif
         vec.curveName = "SECP256R1";
         break;
 #endif /* !NO_ECC256 */
@@ -31335,7 +31341,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
         vec.R   = "6820b8585204648aed63bdff47f6d9acebdea62944774a7d14f0e14aa0b9a5b99545b2daee6b3c74ebf606667a3f39b7";
         vec.S   = "491af1d0cccd56ddd520b233775d0bc6b40a6255cc55207d8e9356741f23c96c14714221078dbd5c17f4fdd89b32a907";
         vec.curveName = "SECP384R1";
-    #ifndef NO_ASN
         vec.r   = (byte*)"\x68\x20\xb8\x58\x52\x04\x64\x8a\xed\x63\xbd\xff"
                          "\x47\xf6\xd9\xac\xeb\xde\xa6\x29\x44\x77\x4a\x7d"
                          "\x14\xf0\xe1\x4a\xa0\xb9\xa5\xb9\x95\x45\xb2\xda"
@@ -31346,7 +31351,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
                          "\x8e\x93\x56\x74\x1f\x23\xc9\x6c\x14\x71\x42\x21"
                          "\x07\x8d\xbd\x5c\x17\xf4\xfd\xd8\x9b\x32\xa9\x07";
         vec.sSz = 48;
-    #endif
         break;
 #endif /* HAVE_ECC384 */
 
@@ -31380,7 +31384,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
         vec.R   = "0bd117b4807710898f9dd7778056485777668f0e78e6ddf5b000356121eb7a220e9493c7f9a57c077947f89ac45d5acb6661bbcd17abb3faea149ba0aa3bb1521be";
         vec.S   = "019cd2c5c3f9870ecdeb9b323abdf3a98cd5e231d85c6ddc5b71ab190739f7f226e6b134ba1d5889ddeb2751dabd97911dff90c34684cdbe7bb669b6c3d22f2480c";
         vec.curveName = "SECP521R1";
-    #ifndef NO_ASN
         vec.r   = (byte*)"\xbd\x11\x7b\x48\x07\x71\x08\x98\xf9\xdd\x77\x78"
                          "\x05\x64\x85\x77\x76\x68\xf0\xe7\x8e\x6d\xdf\x5b"
                          "\x00\x03\x56\x12\x1e\xb7\xa2\x20\xe9\x49\x3c\x7f"
@@ -31395,7 +31398,6 @@ static wc_test_ret_t ecc_test_vector(int keySize)
                          "\xdf\xf9\x0c\x34\x68\x4c\xdb\xe7\xbb\x66\x9b\x6c"
                          "\x3d\x22\xf2\x48\x0c";
         vec.sSz = 65;
-    #endif
         break;
 #endif /* HAVE_ECC521 */
     default:
@@ -31417,8 +31419,9 @@ static wc_test_ret_t ecc_test_vector(int keySize)
     (!defined(HAVE_FIPS) || FIPS_VERSION_GE(5,3))
 #if (!defined(NO_ECC256) || defined(HAVE_ALL_CURVES)) && ECC_MIN_KEY_SZ <= 256
 
-static wc_test_ret_t ecdsa_test_deterministic_k_sig(ecc_key *key, int hashType,
-    const char* msg, WC_RNG* rng, const byte* expSig, size_t expSigSz)
+static wc_test_ret_t ecdsa_test_deterministic_k_sig(ecc_key *key,
+    enum wc_HashType hashType, const char* msg, WC_RNG* rng, const byte* expSig,
+    size_t expSigSz)
 {
     wc_test_ret_t ret;
     int verify;
@@ -31604,8 +31607,8 @@ done:
 
 #ifdef WOLFSSL_PUBLIC_MP
 
-static wc_test_ret_t ecdsa_test_deterministic_k_rs(ecc_key *key, int hashType,
-    const char* msg, WC_RNG* rng,
+static wc_test_ret_t ecdsa_test_deterministic_k_rs(ecc_key *key,
+    enum wc_HashType hashType, const char* msg, WC_RNG* rng,
     mp_int* r, mp_int* s,
     mp_int* expR, mp_int* expS)
 {
@@ -31663,7 +31666,9 @@ static wc_test_ret_t ecc384_test_deterministic_k(WC_RNG* rng)
     ecc_key key[1];
     mp_int r[1], s[1], expR[1], expS[1];
 #endif
-    int key_inited = 0;
+    int key_inited = 0,
+        tmp_mp_ints_inited = 0;
+
     WOLFSSL_SMALL_STACK_STATIC const char* msg = "sample";
     WOLFSSL_SMALL_STACK_STATIC const char* dIUT =
         "6B9D3DAD2E1B8C1C05B19875B6659F4DE23C3B667BF297BA9AA47740787137D8"
@@ -31721,6 +31726,7 @@ static wc_test_ret_t ecc384_test_deterministic_k(WC_RNG* rng)
     if (ret != MP_OKAY) {
         goto done;
     }
+    tmp_mp_ints_inited = 1;
     ret = wc_ecc_init_ex(key, HEAP_HINT, devId);
     if (ret != 0) {
         goto done;
@@ -31773,6 +31779,12 @@ static wc_test_ret_t ecc384_test_deterministic_k(WC_RNG* rng)
 done:
     if (key_inited)
         wc_ecc_free(key);
+    if (tmp_mp_ints_inited) {
+        mp_free(r);
+        mp_free(s);
+        mp_free(expR);
+        mp_free(expS);
+    }
 #ifdef WOLFSSL_SMALL_STACK
     if (key != NULL)
         XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -31802,7 +31814,8 @@ static wc_test_ret_t ecc521_test_deterministic_k(WC_RNG* rng)
     ecc_key key[1];
     mp_int r[1], s[1], expR[1], expS[1];
 #endif
-    int key_inited = 0;
+    int key_inited = 0,
+        tmp_mp_ints_inited = 0;
     WOLFSSL_SMALL_STACK_STATIC const char* msg = "sample";
     WOLFSSL_SMALL_STACK_STATIC const char* dIUT =
        "0FAD06DAA62BA3B25D2FB40133DA757205DE67F5BB0018FEE8C86E1B68C7E75C"
@@ -31869,6 +31882,7 @@ static wc_test_ret_t ecc521_test_deterministic_k(WC_RNG* rng)
     if (ret != MP_OKAY) {
         goto done;
     }
+    tmp_mp_ints_inited = 1;
     ret = wc_ecc_init_ex(key, HEAP_HINT, devId);
     if (ret != 0) {
         return WC_TEST_RET_ENC_EC(ret);
@@ -31921,6 +31935,12 @@ static wc_test_ret_t ecc521_test_deterministic_k(WC_RNG* rng)
 done:
     if (key_inited)
         wc_ecc_free(key);
+    if (tmp_mp_ints_inited) {
+        mp_free(r);
+        mp_free(s);
+        mp_free(expR);
+        mp_free(expS);
+    }
 #ifdef WOLFSSL_SMALL_STACK
     if (key != NULL)
         XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -32175,6 +32195,15 @@ static wc_test_ret_t ecc_test_make_pub(WC_RNG* rng)
 #ifdef HAVE_ECC_VERIFY
     int verify = 0;
 #endif
+#ifdef NO_ASN
+    /* private d for eccKeyDerFile / ecc_key_der_256 */
+    const byte keyPriv[] = {
+        0x45, 0xB6, 0x69, 0x02,  0x73, 0x9C, 0x6C, 0x85,
+        0xA1, 0x38, 0x5B, 0x72,  0xE8, 0xE8, 0xC7, 0xAC,
+        0xC4, 0x03, 0x8D, 0x53,  0x35, 0x04, 0xFA, 0x6C,
+        0x28, 0xDC, 0x34, 0x8D,  0xE1, 0xA8, 0x09, 0x8C
+    };
+#endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     if ((key == NULL) ||
@@ -32229,6 +32258,7 @@ static wc_test_ret_t ecc_test_make_pub(WC_RNG* rng)
         ERROR_OUT(WC_TEST_RET_ENC_NC, done);
     }
 
+#ifndef NO_ASN
     x = 0;
     ret = wc_EccPrivateKeyDecode(tmp, &x, key, tmpSz);
     if (ret != 0)
@@ -32254,6 +32284,10 @@ static wc_test_ret_t ecc_test_make_pub(WC_RNG* rng)
     }
 
 #endif /* HAVE_ECC_KEY_EXPORT */
+#else
+    /* Load raw private d directly */
+    ret = wc_ecc_import_private_key(keyPriv, sizeof(keyPriv), NULL, 0, key);
+#endif /* !NO_ASN */
 
     ret = wc_ecc_make_pub(NULL, NULL);
     if (ret == 0) {
@@ -32273,7 +32307,7 @@ static wc_test_ret_t ecc_test_make_pub(WC_RNG* rng)
 #endif
     if (ret != 0)
        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
-#endif
+#endif /* !WOLFSSL_CRYPTOCELL */
     TEST_SLEEP();
 
 #ifdef HAVE_ECC_KEY_EXPORT
@@ -33734,7 +33768,7 @@ static wc_test_ret_t ecc_def_curve_test(WC_RNG *rng)
 #else
     ecc_key key[1];
 #endif
-#if !defined(NO_ECC_SECP) && \
+#if !defined(NO_ECC_SECP) && !defined(NO_ASN) && \
     ((defined(HAVE_ECC_KEY_IMPORT) && defined(HAVE_ECC_KEY_EXPORT)) || \
      (defined(HAVE_ECC_KEY_IMPORT) && !defined(WOLFSSL_VALIDATE_ECC_IMPORT)))
     word32 idx = 0;
@@ -33787,7 +33821,7 @@ static wc_test_ret_t ecc_def_curve_test(WC_RNG *rng)
     (void)rng;
 #endif /* !WC_NO_RNG */
 
-#if !defined(NO_ECC_SECP) && \
+#if !defined(NO_ECC_SECP) && !defined(NO_ASN) && \
     ((defined(HAVE_ECC_KEY_IMPORT) && defined(HAVE_ECC_KEY_EXPORT)) || \
      (defined(HAVE_ECC_KEY_IMPORT) && !defined(WOLFSSL_VALIDATE_ECC_IMPORT)))
     /* Use test ECC key - ensure real private "d" exists */

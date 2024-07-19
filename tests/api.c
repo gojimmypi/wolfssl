@@ -1305,7 +1305,7 @@ static int test_dual_alg_support(void)
      * the alternative signature and then set negative_test to true for the
      * call to do_dual_alg_tls13_connection(). Its expecting a failed connection
      * because the signature won't verify. The exception is if
-     * WOLFSSL_TRUST_PEER_CERT is defined. In that case, no verfication happens
+     * WOLFSSL_TRUST_PEER_CERT is defined. In that case, no verification happens
      * and this is no longer a negative test. */
     if (EXPECT_SUCCESS()) {
         rootSz = do_dual_alg_root_certgen(&root, keyFile, sapkiFile,
@@ -3709,6 +3709,7 @@ static int test_wolfSSL_CertManagerCRL(void)
         wolfSSL_CertManagerLoadCRL(cm, crl2, WOLFSSL_FILETYPE_PEM, 0));
     wolfSSL_CertManagerFreeCRL(cm);
 
+#ifndef WOLFSSL_CRL_ALLOW_MISSING_CDP
     ExpectIntEQ(WOLFSSL_SUCCESS,
         wolfSSL_CertManagerLoadCRL(cm, crl1, WOLFSSL_FILETYPE_PEM, 0));
     ExpectIntEQ(WOLFSSL_SUCCESS,
@@ -3717,6 +3718,7 @@ static int test_wolfSSL_CertManagerCRL(void)
         sizeof_server_cert_der_2048), CRL_MISSING);
     ExpectIntEQ(wolfSSL_CertManagerVerifyBuffer(cm, server_cert_der_2048,
         sizeof_server_cert_der_2048, WOLFSSL_FILETYPE_ASN1), CRL_MISSING);
+#endif /* !WOLFSSL_CRL_ALLOW_MISSING_CDP */
 
     ExpectIntEQ(wolfSSL_CertManagerLoadCRLBuffer(cm, crl_buff, sizeof(crl_buff),
         WOLFSSL_FILETYPE_ASN1), 1);
@@ -45087,7 +45089,7 @@ static int test_wolfSSL_PEM_PrivateKey_ecc(void)
     ExpectIntEQ(PEM_write_bio_PrivateKey(bio, pkey, NULL, NULL, 0, NULL, NULL),
         WOLFSSL_SUCCESS);
     ExpectIntGT(BIO_pending(bio), 0);
-    /* No parmeters. */
+    /* No parameters. */
     ExpectIntEQ(BIO_pending(bio), 227);
     /* Check if the pubkey API writes only the public key */
 #ifdef WOLFSSL_KEY_GEN
@@ -48722,13 +48724,15 @@ static int test_wolfSSL_X509_STORE(void)
 
 #ifdef HAVE_CRL
     X509_STORE_CTX *storeCtx = NULL;
-    X509_CRL *crl = NULL;
     X509 *ca = NULL;
     X509 *cert = NULL;
-    const char crlPem[] = "./certs/crl/crl.revoked";
     const char srvCert[] = "./certs/server-revoked-cert.pem";
     const char caCert[] = "./certs/ca-cert.pem";
+#ifndef WOLFSSL_CRL_ALLOW_MISSING_CDP
+    X509_CRL *crl = NULL;
+    const char crlPem[] = "./certs/crl/crl.revoked";
     XFILE fp = XBADFILE;
+#endif /* !WOLFSSL_CRL_ALLOW_MISSING_CDP */
 
     ExpectNotNull(store = (X509_STORE *)X509_STORE_new());
     ExpectNotNull((ca = wolfSSL_X509_load_certificate_file(caCert,
@@ -48748,6 +48752,7 @@ static int test_wolfSSL_X509_STORE(void)
     X509_free(ca);
     ca = NULL;
 
+#ifndef WOLFSSL_CRL_ALLOW_MISSING_CDP
     /* should fail to verify now after adding in CRL */
     ExpectNotNull(store = (X509_STORE *)X509_STORE_new());
     ExpectNotNull((ca = wolfSSL_X509_load_certificate_file(caCert,
@@ -48777,6 +48782,7 @@ static int test_wolfSSL_X509_STORE(void)
     cert = NULL;
     X509_free(ca);
     ca = NULL;
+#endif /* !WOLFSSL_CRL_ALLOW_MISSING_CDP */
 #endif /* HAVE_CRL */
 
 
@@ -51497,7 +51503,7 @@ static int test_wolfSSL_X509_max_altnames(void)
 #if !defined(NO_FILESYSTEM) && !defined(NO_CERTS) && !defined(NO_RSA)
 
     /* Only test if max alt names has not been modified */
-#if WOLFSSL_MAX_ALT_NAMES == 128
+#if WOLFSSL_MAX_ALT_NAMES <= 1024
 
     WOLFSSL_CTX* ctx = NULL;
     /* File contains a certificate encoded with 130 subject alternative names */
@@ -67172,7 +67178,8 @@ static int test_wolfSSL_X509_load_crl_file(void)
 {
     EXPECT_DECLS;
 #if defined(OPENSSL_EXTRA) && defined(HAVE_CRL) && !defined(NO_FILESYSTEM) && \
-    !defined(NO_STDIO_FILESYSTEM) && !defined(NO_RSA) && !defined(NO_BIO)
+    !defined(NO_STDIO_FILESYSTEM) && !defined(NO_RSA) && !defined(NO_BIO) && \
+    !defined(WOLFSSL_CRL_ALLOW_MISSING_CDP)
     int i;
     char pem[][100] = {
         "./certs/crl/crl.pem",
@@ -73703,7 +73710,7 @@ static int test_stubs_are_stubs(void)
     CHECKZERO_RET(wolfSSL_CTX_sess_misses, ctx, ctxN);
     CHECKZERO_RET(wolfSSL_CTX_sess_timeouts, ctx, ctxN);
 
-    /* when implemented this should take WOLFSSL object insted, right now
+    /* when implemented this should take WOLFSSL object instead, right now
      * always returns 0 */
     ExpectPtrEq(SSL_get_current_expansion(NULL), NULL);
 
@@ -73858,7 +73865,8 @@ static int test_wolfSSL_CTX_LoadCRL(void)
     return EXPECT_RESULT();
 }
 
-#if defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && defined(HAVE_CRL)
+#if defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && defined(HAVE_CRL) && \
+    !defined(WOLFSSL_CRL_ALLOW_MISSING_CDP)
 static int test_multiple_crls_same_issuer_ctx_ready(WOLFSSL_CTX* ctx)
 {
     EXPECT_DECLS;
@@ -73872,7 +73880,8 @@ static int test_multiple_crls_same_issuer_ctx_ready(WOLFSSL_CTX* ctx)
 static int test_multiple_crls_same_issuer(void)
 {
     EXPECT_DECLS;
-#if defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && defined(HAVE_CRL)
+#if defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && defined(HAVE_CRL) && \
+    !defined(WOLFSSL_CRL_ALLOW_MISSING_CDP)
     test_ssl_cbf client_cbs, server_cbs;
     struct {
         const char* server_cert;
@@ -81475,7 +81484,8 @@ static int test_certreq_sighash_algos(void)
     return EXPECT_RESULT();
 }
 
-#if defined(HAVE_CRL) && defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES)
+#if defined(HAVE_CRL) && defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && \
+    !defined(WOLFSSL_CRL_ALLOW_MISSING_CDP)
 static int test_revoked_loaded_int_cert_ctx_ready1(WOLFSSL_CTX* ctx)
 {
     EXPECT_DECLS;
@@ -81525,7 +81535,8 @@ static int test_revoked_loaded_int_cert_ctx_ready2(WOLFSSL_CTX* ctx)
 static int test_revoked_loaded_int_cert(void)
 {
     EXPECT_DECLS;
-#if defined(HAVE_CRL) && defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES)
+#if defined(HAVE_CRL) && defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && \
+    !defined(WOLFSSL_CRL_ALLOW_MISSING_CDP)
     test_ssl_cbf client_cbf;
     test_ssl_cbf server_cbf;
     struct {
@@ -81565,7 +81576,6 @@ static int test_revoked_loaded_int_cert(void)
             break;
         printf("\t%s passed\n", test_params[i].certPemFile);
     }
-
 #endif
     return EXPECT_RESULT();
 }

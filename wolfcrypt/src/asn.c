@@ -14775,18 +14775,23 @@ static WC_INLINE int GetTime_Long(long* value, const byte* date, int* idx)
 }
 #endif
 
+/* Extract certTime from date string parameter.
+ * Reminder: idx is incremented in each call to GetTime()
+ * Return 0 on failure, 1 for success.  */
 int ExtractDate(const unsigned char* date, unsigned char format,
-                                                  struct tm* certTime, int* idx)
+                struct tm* certTime, int* idx)
 {
     XMEMSET(certTime, 0, sizeof(struct tm));
 
+    /* Get the first two bytes of the year (century) */
     if (format == ASN_UTC_TIME) {
         if (btoi(date[*idx]) >= 5)
             certTime->tm_year = 1900;
         else
             certTime->tm_year = 2000;
     }
-    else  { /* format == GENERALIZED_TIME */
+    else {
+        /* format == GENERALIZED_TIME */
 #ifdef WOLFSSL_LINUXKM
         if (GetTime_Long(&certTime->tm_year, date, idx) != 0) return 0;
 #else
@@ -14806,11 +14811,7 @@ int ExtractDate(const unsigned char* date, unsigned char format,
     int tm_min  = certTime->tm_min;
     int tm_sec  = certTime->tm_sec;
 
-#ifdef WOLFSSL_LINUXKM
-    if (GetTime_Long(&tm_year, date, idx) != 0) return 0;
-#else
     if (GetTime(&tm_year, date, idx) != 0) return 0;
-#endif
     if (GetTime(&tm_mon , date, idx) != 0) return 0;
     if (GetTime(&tm_mday, date, idx) != 0) return 0;
     if (GetTime(&tm_hour, date, idx) != 0) return 0;
@@ -14824,21 +14825,24 @@ int ExtractDate(const unsigned char* date, unsigned char format,
     certTime->tm_hour = tm_hour;
     certTime->tm_min  = tm_min;
     certTime->tm_sec  = tm_sec;
-#else
-    /* adjust tm_year, tm_mon */
-#ifdef WOLFSSL_LINUXKM
-    if (GetTime_Long(&certTime->tm_year, date, idx) != 0) return 0;
-#else
-    if (GetTime(&certTime->tm_year, date, idx) != 0) return 0;
-#endif
+#else /* !AVR */
+    /* Get the next two bytes of the year. */
+    #ifdef WOLFSSL_LINUXKM
+        if (GetTime_Long(&certTime->tm_year, date, idx) != 0) return 0;
+    #else
+        if (GetTime(&certTime->tm_year, date, idx) != 0) return 0;
+    #endif
     certTime->tm_year -= 1900;
+
+    /* The next fields are expected in specific order in [date] string: */
     if (GetTime(&certTime->tm_mon , date, idx) != 0) return 0;
     certTime->tm_mon  -= 1;
     if (GetTime(&certTime->tm_mday, date, idx) != 0) return 0;
     if (GetTime(&certTime->tm_hour, date, idx) != 0) return 0;
     if (GetTime(&certTime->tm_min , date, idx) != 0) return 0;
     if (GetTime(&certTime->tm_sec , date, idx) != 0) return 0;
-#endif
+
+#endif /* !AVR */
 
     return 1;
 }
@@ -14891,7 +14895,8 @@ int GetTimeString(byte* date, int format, char* buf, int len)
 
     return 1;
 }
-#endif /* OPENSSL_ALL || WOLFSSL_MYSQL_COMPATIBLE || WOLFSSL_NGINX || WOLFSSL_HAPROXY */
+#endif /* OPENSSL_ALL || WOLFSSL_MYSQL_COMPATIBLE ||
+        * OPENSSL_EXTRA || WOLFSSL_NGINX || WOLFSSL_HAPROXY */
 
 /* Check time struct for valid values. Returns 0 for success */
 static int ValidateGmtime(struct tm* inTime)
@@ -21749,13 +21754,17 @@ static int CheckDate(ASNGetData *dataASN, int dateType)
 
 #ifndef NO_ASN_TIME_CHECK
     /* Check date is a valid string and ASN_BEFORE or ASN_AFTER now. */
-    if ((ret == 0) &&
-            (!XVALIDATE_DATE(dataASN->data.ref.data, dataASN->tag, dateType))) {
-        if (dateType == ASN_BEFORE) {
-            ret = ASN_BEFORE_DATE_E;
-        }
-        else {
-            ret = ASN_AFTER_DATE_E;
+    if (ret == 0) {
+        if (!XVALIDATE_DATE(dataASN->data.ref.data, dataASN->tag, dateType)) {
+            if (dateType == ASN_BEFORE) {
+                ret = ASN_BEFORE_DATE_E;
+            }
+            else if (dateType == ASN_AFTER) {
+                ret = ASN_AFTER_DATE_E;
+            }
+            else {
+                ret = ASN_TIME_E;
+            }
         }
     }
 #endif
@@ -24026,6 +24035,8 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm, Signer 
         else {
             /* no signer */
             WOLFSSL_MSG("No CA signer to verify with");
+            /* If you end up here with error -188,
+             * consider using WOLFSSL_ALT_CERT_CHAINS. */
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
             /* ret needs to be self-signer error for Qt compat */
             if (cert->selfSigned) {
@@ -24515,6 +24526,10 @@ wcchar END_ENC_PRIV_KEY     = "-----END ENCRYPTED PRIVATE KEY-----";
     wcchar END_EC_PARAM     = "-----END EC PARAMETERS-----";
 #endif
 #endif
+#ifdef HAVE_PKCS7
+wcchar BEGIN_PKCS7          = "-----BEGIN PKCS7-----";
+wcchar END_PKCS7            = "-----END PKCS7-----";
+#endif
 #if defined(HAVE_ECC) || defined(HAVE_ED25519) || defined(HAVE_ED448) || \
                                                                 !defined(NO_DSA)
     wcchar BEGIN_DSA_PRIV   = "-----BEGIN DSA PRIVATE KEY-----";
@@ -24619,6 +24634,13 @@ int wc_PemGetHeaderFooter(int type, const char** header, const char** footer)
         case CERTREQ_TYPE:
             if (header) *header = BEGIN_CERT_REQ;
             if (footer) *footer = END_CERT_REQ;
+            ret = 0;
+            break;
+    #endif
+    #ifdef HAVE_PKCS7
+        case PKCS7_TYPE:
+            if (header) *header = BEGIN_PKCS7;
+            if (footer) *footer = END_PKCS7;
             ret = 0;
             break;
     #endif
@@ -25659,7 +25681,7 @@ int wc_CertPemToDer(const unsigned char* pem, int pemSz,
     }
 
     if (type != CERT_TYPE && type != CHAIN_CERT_TYPE && type != CA_TYPE &&
-            type != CERTREQ_TYPE) {
+            type != CERTREQ_TYPE && type != PKCS7_TYPE) {
         WOLFSSL_MSG("Bad cert type");
         return BAD_FUNC_ARG;
     }
