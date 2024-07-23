@@ -1,6 +1,6 @@
 /* dh.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -1153,7 +1153,7 @@ static int GeneratePrivateDh186(DhKey* key, WC_RNG* rng, byte* priv,
     }
 
 #ifdef WOLFSSL_CHECK_MEM_ZERO
-    wc_MemZero_Add("GeneratePrivateDh186 cBuf", cBuf, cSz);
+    wc_MemZero_Add("GeneratePrivateDh186 cBuf", cBuf, cSz); /* cppcheck-suppress uninitvar */
     mp_memzero_add("GeneratePrivateDh186 tmpX", tmpX);
 #endif
     do {

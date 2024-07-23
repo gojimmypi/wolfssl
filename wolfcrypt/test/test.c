@@ -2074,10 +2074,12 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 
 #if defined(HAVE_HPKE) && defined(HAVE_ECC) && defined(HAVE_AESGCM)
+    PRIVATE_KEY_UNLOCK();
     if ( (ret = hpke_test()) != 0)
         TEST_FAIL("HPKE     test failed!\n", ret);
     else
         TEST_PASS("HPKE     test passed!\n");
+    PRIVATE_KEY_LOCK();
 #endif
 
 #if defined(WC_SRTP_KDF)
@@ -53503,6 +53505,9 @@ static wc_test_ret_t mp_test_param(mp_int* a, mp_int* b, mp_int* r, WC_RNG* rng)
     ret = mp_unsigned_bin_size(NULL);
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
+
+    /* clear buffer to avoid provoking uninitvar errors. */
+    XMEMSET(buffer, 0, sizeof(buffer));
 
     ret = mp_read_unsigned_bin(NULL, NULL, sizeof(buffer));
     if (ret != MP_VAL)

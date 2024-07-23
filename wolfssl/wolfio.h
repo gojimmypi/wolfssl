@@ -1,6 +1,6 @@
 /* io.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -401,22 +401,6 @@
     #define RECV_FUNCTION recv
     #if !defined(HAVE_SOCKADDR) && !defined(WOLFSSL_NO_SOCK)
         #define HAVE_SOCKADDR
-    #endif
-#endif
-
-#ifdef USE_WINDOWS_API
-    #if defined(__MINGW64__)
-        typedef size_t SOCKET_T;
-    #else
-        typedef unsigned int SOCKET_T;
-    #endif
-    #ifndef SOCKET_INVALID
-        #define SOCKET_INVALID INVALID_SOCKET
-    #endif
-#else
-    typedef int SOCKET_T;
-    #ifndef SOCKET_INVALID
-        #define SOCKET_INVALID (-1)
     #endif
 #endif
 

@@ -1,6 +1,6 @@
 /* wc_port.h
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -147,8 +147,8 @@
 #elif defined(WOLFSSL_ZEPHYR)
     #include <version.h>
     #ifndef SINGLE_THREADED
-        #ifndef CONFIG_PTHREAD_IPC
-            #error "Need CONFIG_PTHREAD_IPC for threading"
+        #if !defined(CONFIG_PTHREAD_IPC) && !defined(CONFIG_POSIX_THREADS)
+            #error "Threading needs CONFIG_PTHREAD_IPC / CONFIG_POSIX_THREADS"
         #endif
     #if KERNEL_VERSION_NUMBER >= 0x30100
         #include <zephyr/kernel.h>
@@ -859,6 +859,25 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XSPRINTF   sprintf
 #endif
 
+#ifdef USE_WINDOWS_API
+    #ifndef SOCKET_T
+        #ifdef __MINGW64__
+            typedef size_t SOCKET_T;
+        #else
+            typedef unsigned int SOCKET_T;
+        #endif
+    #endif
+    #ifndef SOCKET_INVALID
+        #define SOCKET_INVALID INVALID_SOCKET
+    #endif
+#else
+    #ifndef SOCKET_T
+        typedef int SOCKET_T;
+    #endif
+    #ifndef SOCKET_INVALID
+        #define SOCKET_INVALID (-1)
+    #endif
+#endif
 
 /* MIN/MAX MACRO SECTION */
 /* Windows API defines its own min() macro. */

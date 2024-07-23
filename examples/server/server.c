@@ -1,6 +1,6 @@
 /* server.c
  *
- * Copyright (C) 2006-2023 wolfSSL Inc.
+ * Copyright (C) 2006-2024 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -3716,8 +3716,12 @@ THREAD_RETURN WOLFSSL_THREAD server_test(void* args)
                                ((usePskPlus) ? WOLFSSL_VERIFY_FAIL_EXCEPT_PSK :
                                 WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT), 0);
 
-                wolfSSL_request_certificate(ssl);
-
+                if (wolfSSL_request_certificate(ssl) != WOLFSSL_SUCCESS) {
+                    LOG_ERROR("Request for post-hs certificate failed\n");
+                }
+                else {
+                    LOG_ERROR("Successfully requested post-hs certificate\n");
+                }
             }
 
     #endif
