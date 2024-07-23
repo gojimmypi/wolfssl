@@ -38,7 +38,7 @@ pio run -e quantum --target upload
 pio run --target clean
 
 # Upload to COM82
-pio run --target upload --upload-port COM82
+pio run --target upload --upload-port COM19
 
 # monitoe serial port (ctrl-C to exit)
 pio device monitor -p COM19
