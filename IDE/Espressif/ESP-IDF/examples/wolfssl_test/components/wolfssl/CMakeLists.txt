@@ -498,6 +498,7 @@ else()
         endif()
     endif()
 
+    message(STATUS "WOLFSSL_EXTRA_PROJECT_DIR = ${WOLFSSL_EXTRA_PROJECT_DIR}")
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
