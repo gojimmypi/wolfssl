@@ -1,7 +1,5 @@
 # wolfSSL Crypt Test Example
 
-sign test 1
-
 This is the ESP32 Version of the [wolfSSL wolfcrypt test application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/test).
 
 For general information on [wolfSSL examples for Espressif](../README.md), see the
