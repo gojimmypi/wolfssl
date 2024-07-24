@@ -13,6 +13,19 @@
 #==============================================================================
 
 # Run shell check to ensure this a good script.
+# Specify the executable shell checker you want to use:
+MY_SHELLCHECK="shellcheck"
+
+# Check if the executable is available in the PATH
+if command -v "$MY_SHELLCHECK" >/dev/null 2>&1; then
+    # Run your command here
+    shellcheck "$0" || exit 1
+else
+    echo "$MY_SHELLCHECK is not installed. Please install it if changes to this script have been made."
+    exit 1
+fi
+
+# Run shell check to ensure this a good script.
 shellcheck "$0"
 
 if [[ "$PATH" == *"rtos-sdk"* ]]; then
@@ -20,6 +33,15 @@ if [[ "$PATH" == *"rtos-sdk"* ]]; then
     echo "Need to start with clean path (no prior idf.py setup) "
     exit 1
 fi
+
+#******************************************************************************
+# Kill all currently running instances of putty.exe
+# If there are no running instances, taskkill exits with non-zero error code.
+#******************************************************************************
+taskkill.exe /IM putty.exe /F
+
+# Abort on any future errors
+set -e
 
 # Save the current PATH to a temporary variable
 ORIGINAL_PATH="$PATH"
@@ -83,10 +105,15 @@ fi
 #******************************************************************************
 
 echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
+if [ -f "$WRK_IDF_PATH/export.sh" ]; then
+    # shell check should not follow into the ESP-IDF export.sh
+    # shellcheck disable=SC1090
+    . "$WRK_IDF_PATH"/export.sh
+    else
+  echo "File $WRK_IDF_PATH/export.sh not found"
+  exit 1
+fi
 
-# shell check should not follow into the ESP-IDF export.sh
-# shellcheck disable=SC1091
-. "$WRK_IDF_PATH"/export.sh
 
 # Tensilica
 ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
@@ -112,7 +139,7 @@ unset OPENOCD_SCRIPTS
 echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 
 # shell check should not follow into the ESP-IDF export.sh
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "$WRK_IDF_PATH"/export.sh
 
 # Comment numeric values are recently observed runtime durations.

@@ -617,11 +617,11 @@ int ShowExtendedSystemInfo(void)
 
 #if defined(WOLFSSL_MULTI_INSTALL_WARNING)
     /* CMake may have detected undesired multiple installs, so give warning. */
-    WOLFSSL_VERSION_PRINTF("");
+    WOLFSSL_VERSION_PRINTF(WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
     WOLFSSL_VERSION_PRINTF("WARNING: Multiple wolfSSL installs found.");
     WOLFSSL_VERSION_PRINTF("Check ESP-IDF components and "
                            "local project [components] directory.");
-    WOLFSSL_VERSION_PRINTF("");
+    WOLFSSL_VERSION_PRINTF(WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
 #else
     #ifdef WOLFSSL_USER_SETTINGS_DIR
     {
