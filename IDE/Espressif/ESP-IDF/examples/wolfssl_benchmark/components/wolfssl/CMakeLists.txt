@@ -52,6 +52,8 @@ function( IS_ESP_IDF_COMPONENT  RESULT )
     endif()
 endfunction()
 
+# Determine if this cmake file is located in the ESP-IDF component directory or not,
+# and if so, if it is being ignored (allowing the use of a local project one, instead).
 IS_ESP_IDF_COMPONENT( IS_WOLSSL_ESP_IDF_COMPONENT )
 if( IS_WOLSSL_ESP_IDF_COMPONENT )
     message(STATUS "This wolfSSL is a component in ESP-IDF.")
@@ -69,7 +71,7 @@ else()
     # Only forward slashes, or double backslashes are supported.
     # By the time we get here the sdkconfig file has a value for wolfSSL source code root.
     string(REPLACE "\\" "/" CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT})
-    message(STATUS "Edited wolfssl ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT}")
+    message(STATUS "Cleaned wolfssl path: ${CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT}")
 endif()
 
 # The scope of this CMAKE_C_FLAGS is just this component:
@@ -459,7 +461,18 @@ else()
     if(WOLFSSL_ROOT)
         message(STATUS "Confirmed wolfssl directory at: ${WOLFSSL_ROOT}")
     else()
-        message(STATUS "Failed: wolfssl directory not found.")
+        # Try to allow a more intuitive error that the source code was not found in cmake:
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_WARNING_SOURCE_NOT_FOUND")
+
+        message(STATUS "Failed: wolfssl source code directory not found.")
+        # Abort. We need wolfssl _somewhere_.
+        message(STATUS "")
+        message(STATUS "")
+        message(STATUS "Could not find wolfssl in any parent directory named wolfssl-${THIS_USER}, wolfssl-master, or wolfssl.\n"
+                       "Try setting WOLFSSL_ROOT environment variable, cmake variable in project, copy source, or use managed components.")
+        message(STATUS "")
+        message(STATUS "")
+        # Abort CMake after fatal error. (or not?)
     endif()
 
     set(INCLUDE_PATH ${WOLFSSL_ROOT})
@@ -485,6 +498,7 @@ else()
         endif()
     endif()
 
+    message(STATUS "WOLFSSL_EXTRA_PROJECT_DIR = ${WOLFSSL_EXTRA_PROJECT_DIR}")
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
@@ -644,7 +658,7 @@ else()
 	if(WOLFSSL_ROOT)
 	    string(REPLACE "\\" "/" WOLFSSL_ROOT ${WOLFSSL_ROOT})
 	endif()
-	
+
     if(IS_DIRECTORY "${RTOS_IDF_PATH}")
         message(STATUS "Found current RTOS path: ${RTOS_IDF_PATH}")
     else()
@@ -708,6 +722,7 @@ else()
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
+        "\"${WOLFSSL_ROOT}/examples\"" # Examnples are distributed in Managed Components, but not part of a project.
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -861,6 +876,15 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT)
 
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_WOLFSSL_ROOT "${WOLFSSL_ROOT}" "${TMP_RES}")
 
+endif()
+
+# Ensure flag "-DWOLFSSL_ESPIDF" is already in CMAKE_C_FLAGS if not yet found from project
+string(FIND "${CMAKE_C_FLAGS}" "-DWOLFSSL_ESPIDF" FLAG_ALRREADY_FOUND_WOLFSSL_ESPIDF)
+
+if(FLAG_ALRREADY_FOUND_WOLFSSL_ESPIDF EQUAL -1)
+    # Flag not found, append it
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_ESPIDF")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 endif()
 
 if(WOLFSSL_ROOT)
