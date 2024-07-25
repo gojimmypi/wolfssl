@@ -1,0 +1,22 @@
+name: Self-Hosted Runner Test
+
+on:
+  push:
+    branches:
+      - ED25519_SHA2_fix
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          echo "apt-get install shellcheck"
+          ls /mnt/c/SysGCC
+
+      - name: Run tests
+        run: |
+          whoami
