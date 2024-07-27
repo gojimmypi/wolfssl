@@ -16,13 +16,21 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{31B96B47-9E33-4B81-A3AC-FAEC848C3811}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.c
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_errors.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_errors.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_error_capture.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_error_capture.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_error_capture_internal.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_error_capture_internal.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_mbedtls.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_mbedtls.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_mbedtls.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_mbedtls.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_platform_port.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_platform_port.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_platform_port.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_platform_port.h
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_private.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_private.h
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_wolfssl.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\esp_tls_wolfssl.c
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_wolfssl.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\private_include\esp_tls_wolfssl.h
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\gen_crt_bundle.py = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\gen_crt_bundle.py
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\Kconfig = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\Kconfig
 	EndProjectSection
 EndProject
