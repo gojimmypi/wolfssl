@@ -22,9 +22,6 @@
     #include <config.h>
 #endif
 
-#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
-
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
@@ -32,11 +29,16 @@
     #include <wolfssl/wolfcrypt/settings.h>
 #endif
 
-#include <string.h>
-#include <stdbool.h>
-
-#include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 #include "esp_log.h"
+#include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
+
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
+
+
+#include <string.h> /* TODO really? */
+#include <stdbool.h> /* TODO really? */
+
 
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
@@ -242,12 +244,12 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
     }
     else {
         ESP_LOGI(TAG, "No. of certs in the certificate bundle = % d", num_certs);
-        ESP_LOGI(TAG, "Max allowed certificates in the certificate bundle = %d\n", CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+        ESP_LOGI(TAG, "Max allowed certificates in the certificate bundle = %d", CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
     }
 
     const uint8_t **crts = calloc(num_certs, sizeof(x509_bundle));
     if (crts == NULL) {
-        ESP_LOGE(TAG, "Unable to allocate memory for bundle");
+        ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
         return ESP_ERR_NO_MEM;
     }
 
@@ -300,9 +302,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     if (conf) {
         wolfssl_ssl_config *ssl_conf = (wolfssl_ssl_config *)conf;
         wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
-        ESP_LOGE(TAG, "esp_crt_bundle_attach not implemented for wolfSS");
     }
 
+    ESP_LOGI(TAG, "esp_crt_bundle_attach completed for wolfSSL");
     return ret;
 }
 
