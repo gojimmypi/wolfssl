@@ -13,6 +13,19 @@
 #==============================================================================
 
 # Run shell check to ensure this a good script.
+# Specify the executable shell checker you want to use:
+MY_SHELLCHECK="shellcheck"
+
+# Check if the executable is available in the PATH
+if command -v "$MY_SHELLCHECK" >/dev/null 2>&1; then
+    # Run your command here
+    shellcheck "$0" || exit 1
+else
+    echo "$MY_SHELLCHECK is not installed. Please install it if changes to this script have been made."
+    exit 1
+fi
+
+# Run shell check to ensure this a good script.
 shellcheck "$0"
 
 if [[ "$PATH" == *"rtos-sdk"* ]]; then
@@ -21,12 +34,20 @@ if [[ "$PATH" == *"rtos-sdk"* ]]; then
     exit 1
 fi
 
+#******************************************************************************
+# Kill all currently running instances of putty.exe
+# If there are no running instances, taskkill exits with non-zero error code.
+#******************************************************************************
+taskkill.exe /IM putty.exe /F
+
+# Abort on any future errors
+set -e
+
 # Save the current PATH to a temporary variable
 ORIGINAL_PATH="$PATH"
 echo "ORIGINAL_PATH=$PATH"
 
 export ESPIDF_PUTTY_MONITOR="TRUE"
-export WOLFSSL_BENCHMARK_FIXED_CSV="1"
 
 THIS_SUFFIX="$1"
 
@@ -46,11 +67,53 @@ unset IDF_TOOLS_EXPORT_CMD
 unset IDF_TOOLS_INSTALL_CMD
 unset OPENOCD_SCRIPTS
 
-echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
 
-# shell check should not follow into the ESP-IDF export.sh
-# shellcheck disable=SC1091
-. "$WRK_IDF_PATH"/export.sh
+#******************************************************************************
+# Backup existing build and sdkconfig files
+#******************************************************************************
+
+THIS_BUILD_BACKUP="./build.test.bak"
+THIS_CONFIG_BACKUP="./sdkconfig.bak"
+
+if [ -d "$THIS_BUILD_BACKUP" ]; then
+    # If prior backup exists, delete it.
+    rm -rf "$THIS_BUILD_BACKUP" || exit 1
+    echo "Directory $THIS_BUILD_BACKUP has been deleted."
+fi
+
+if [ -d "./build" ]; then
+    # If we already have a build directory, save it.
+    mv "./build" "$THIS_BUILD_BACKUP" || exit 1
+    echo "Directory ./build has been moved to $THIS_BUILD_BACKUP"
+fi
+
+if [ -f "$THIS_CONFIG_BACKUP" ]; then
+  # If a prior config backup exists, delete it.
+  rm "$THIS_CONFIG_BACKUP" || exit 1
+  echo "Config $THIS_CONFIG_BACKUP has been deleted."
+fi
+
+if [ -f "./sdkconfig" ]; then
+    # If we already have a config, save it.
+    mv "./sdkconfig" "$THIS_CONFIG_BACKUP" || exit 1
+    echo "File ./sdkconfig has been moved to $THIS_CONFIG_BACKUP"
+fi
+
+
+#******************************************************************************
+# Setup ESP8266 environment
+#******************************************************************************
+
+echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
+if [ -f "$WRK_IDF_PATH/export.sh" ]; then
+    # shell check should not follow into the ESP-IDF export.sh
+    # shellcheck disable=SC1090
+    . "$WRK_IDF_PATH"/export.sh
+    else
+  echo "File $WRK_IDF_PATH/export.sh not found"
+  exit 1
+fi
+
 
 # Tensilica
 ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
@@ -76,7 +139,7 @@ unset OPENOCD_SCRIPTS
 echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 
 # shell check should not follow into the ESP-IDF export.sh
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "$WRK_IDF_PATH"/export.sh
 
 # Comment numeric values are recently observed runtime durations.
@@ -96,6 +159,27 @@ echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 ./testMonitor.sh wolfssl_test esp32   "$THIS_SUFFIX" || exit 1 # 259093  esp32   COM9"    NT
 ./testMonitor.sh wolfssl_test esp32s2 "$THIS_SUFFIX" || exit 1 # 305004  esp32s2 COM30"   NT
 ./testMonitor.sh wolfssl_test esp32s3 "$THIS_SUFFIX" || exit 1 # 267518  esp32s3 COM24"   NT
+
+#******************************************************************************
+# Restore prior build and sdkconfig files
+#******************************************************************************
+
+if [ -f "$THIS_CONFIG_BACKUP" ]; then
+    echo "Restoring prior sdkconfig..."
+    if [ -f "./sdkconfig" ]; then
+        rm "./sdkconfig" || exit 1
+    fi
+    mv "$THIS_CONFIG_BACKUP" "./sdkconfig"  || exit 1
+    echo "Config file ./sdkconfig has been restored from $THIS_CONFIG_BACKUP"
+fi
+
+if [ -d "$THIS_BUILD_BACKUP" ]; then
+    if [ -d "./build" ]; then
+        rm -rf "./build" || exit 1
+    fi
+    mv "$THIS_BUILD_BACKUP" "./build" || exit 1
+    echo "Build directory has been restored from $THIS_BUILD_BACKUP"
+fi
 
 # Restore the original PATH
 export PATH="$ORIGINAL_PATH"
