@@ -87,6 +87,7 @@
     /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
      * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
      * that here: */
+    // #warning "Defining OPENSSL_EXTRA"
     #define OPENSSL_EXTRA
 #endif
 

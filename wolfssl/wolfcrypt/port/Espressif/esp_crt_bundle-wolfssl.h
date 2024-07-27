@@ -1,0 +1,104 @@
+/* esp_crt_bundle-wolfssl.h
+ *
+ * Copyright (C) 2006-2024 wolfSSL Inc.
+ *
+ * This file is part of wolfSSL.
+ *
+ * wolfSSL is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * wolfSSL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+ */
+#ifndef __ESP_CRT_BUNDLE_wolfssl_LIB_H__
+
+#define __ESP_CRT_BUNDLE_wolfssl_LIB_H__
+
+#include "esp_err.h"
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
+    #include <wolfssl/wolfcrypt/settings.h>
+    #include "wolfssl/ssl.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct wolfssl_ssl_config  wolfssl_ssl_config;
+
+struct wolfssl_ssl_config
+{
+    int i;
+    WOLFSSL_X509* ca_chain;
+    WOLFSSL_X509_CRL* ca_crl;
+    void* f_vrfy;
+    void* p_vrfy;
+
+};
+
+
+void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
+                             int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
+                             void *p_vrfy);
+
+/**
+ * @brief      Attach and enable use of a bundle for certificate verification
+ *
+ * Attach and enable use of a bundle for certificate verification through a verification callback.
+ * If no specific bundle has been set through esp_crt_bundle_set() it will default to the
+ * bundle defined in menuconfig and embedded in the binary.
+ *
+ * @param[in]  conf      The config struct for the SSL connection.
+ *
+ * @return
+ *             - ESP_OK  if adding certificates was successful.
+ *             - Other   if an error occured or an action must be taken by the calling process.
+ */
+esp_err_t esp_crt_bundle_attach(void *conf);
+
+
+/**
+ * @brief      Disable and dealloc the certification bundle
+ *
+ * Removes the certificate verification callback and deallocates used resources
+ *
+ * @param[in]  conf      The config struct for the SSL connection.
+ */
+void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
+
+
+/**
+ * @brief      Set the default certificate bundle used for verification
+ *
+ * Overrides the default certificate bundle only in case of successful initialization. In most use cases the bundle should be
+ * set through menuconfig. The bundle needs to be sorted by subject name since binary search is
+ * used to find certificates.
+ *
+ * @param[in]  x509_bundle     A pointer to the certificate bundle.
+ *
+ * @param[in]  bundle_size     Size of the certificate bundle in bytes.
+ *
+ * @return
+ *             - ESP_OK  if adding certificates was successful.
+ *             - Other   if an error occured or an action must be taken by the calling process.
+ */
+esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
+
+int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
+
+#endif /* __ESP_CRT_BUNDLE_wolfssl_LIB_H__ */
+
