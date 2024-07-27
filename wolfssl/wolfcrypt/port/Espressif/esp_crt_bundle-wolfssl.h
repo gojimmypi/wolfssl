@@ -22,6 +22,12 @@
 
 #define __ESP_CRT_BUNDLE_wolfssl_LIB_H__
 
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
+#include <wolfssl/wolfcrypt/settings.h>
+
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
+
 #include "esp_err.h"
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     #include <wolfssl/wolfcrypt/settings.h>
@@ -100,5 +106,6 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 
-#endif /* __ESP_CRT_BUNDLE_wolfssl_LIB_H__ */
+#endif /* WOLFSSL_ESPIDF */
 
+#endif /* __ESP_CRT_BUNDLE_wolfssl_LIB_H__ */
