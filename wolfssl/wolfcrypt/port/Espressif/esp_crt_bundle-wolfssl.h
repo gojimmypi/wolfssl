@@ -28,9 +28,7 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
-#include "esp_err.h"
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
-    #include <wolfssl/wolfcrypt/settings.h>
     #include "wolfssl/ssl.h"
 
 
@@ -97,6 +95,9 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
  *             - Other   if an error occured or an action must be taken by the calling process.
  */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
+
+
+void wolfssl_x509_crt_init(WOLFSSL_X509 *crt);
 
 int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags);
 
