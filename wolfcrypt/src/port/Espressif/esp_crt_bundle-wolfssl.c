@@ -74,17 +74,33 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
 
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store) {
+    /* TODO */
+    ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb preverify check not implemented");
+//    if (preverify == 0) {
+//        printf("Pre-verification failed.\n");
+//        return WOLFSSL_FAILURE;
+//    }
+    WOLFSSL_X509* cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+    if (cert == NULL) {
+        printf("Failed to get current certificate.\n");
+        return WOLFSSL_FAILURE;
+    }
+
+    char subject[256];
+    wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert), subject, sizeof(subject));
+    printf("Certificate subject: %s\n", subject);
     ESP_LOGI(TAG, "wolfssl_ssl_conf_verify_cb");
-    return 0;
+    return WOLFSSL_SUCCESS;
 }
 
 void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
                              void *p_vrfy)
 {
-    conf->f_vrfy      = f_vrfy;
+    conf->f_vrfy      = f_vrfy; /* used inernally by mbedTLS only */
     conf->p_vrfy      = p_vrfy;
-
+    wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx), WOLFSSL_VERIFY_PEER, wolfssl_ssl_conf_verify_cb);
+    // conf->priv_ctx
     /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 }
 //#endif /* WOLFSSL_X509_CRT_PARSE_C */
