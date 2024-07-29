@@ -31,6 +31,11 @@
 
 #include "esp_http_client.h"
 
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+#endif
+
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 static const char *TAG = "HTTP_CLIENT";
@@ -936,11 +941,13 @@ static void http_test_task(void *pvParameters)
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
 
+// #define SINGLE_TEST
+#ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
 
-#ifdef NO_SKIP
+#else
     http_rest_with_url();
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
@@ -955,7 +962,7 @@ static void http_test_task(void *pvParameters)
     http_relative_redirect();
     http_absolute_redirect();
     http_absolute_redirect_manual();
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
     https_with_hostname_path();
@@ -965,7 +972,7 @@ static void http_test_task(void *pvParameters)
     https_async();
     https_with_invalid_url();
     http_native_request();
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     http_partial_download();
 #endif
 
@@ -975,8 +982,7 @@ static void http_test_task(void *pvParameters)
     vTaskDelete(NULL);
 #endif
 }
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
 void app_main(void)
 {
 #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(5, 2, 2))
