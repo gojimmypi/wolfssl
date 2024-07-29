@@ -213,7 +213,8 @@ menu "wolfSSL"
 
             config WOLFSSL_CERTIFICATE_BUNDLE
                 bool "Enable trusted root certificate bundle"
-                default y
+                default y if TLS_STACK_WOLFSSL
+                default n
                 help
                     Enable support for large number of default root certificates
 
