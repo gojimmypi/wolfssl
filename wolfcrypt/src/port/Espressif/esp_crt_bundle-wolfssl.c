@@ -162,8 +162,8 @@ void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 }
 
 void wolfsslssl_conf_ca_chain(wolfssl_ssl_config *conf,
-                               WOLFSSL_X509 *ca_chain,
-                               WOLFSSL_X509 *ca_crl) /* TODO check crl type */
+                               WOLFSSL_X509      *ca_chain,
+                               WOLFSSL_X509_CRL  *ca_crl) /* TODO check crl type */
 {
     conf->ca_chain   = ca_chain;
     conf->ca_crl     = ca_crl;
