@@ -940,6 +940,7 @@ static void http_test_task(void *pvParameters)
     https_with_url();
 #endif
 
+#ifdef NO_SKIP
     http_rest_with_url();
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
@@ -968,6 +969,7 @@ static void http_test_task(void *pvParameters)
     http_partial_download();
 #endif
 
+#endif
     ESP_LOGI(TAG, "Finish http example");
 #if !CONFIG_IDF_TARGET_LINUX
     vTaskDelete(NULL);
