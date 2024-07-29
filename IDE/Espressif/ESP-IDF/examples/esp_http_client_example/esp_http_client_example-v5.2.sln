@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		platformio.ini = platformio.ini
 		README.md = README.md
 		sdkconfig.defaults = sdkconfig.defaults
+		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{31B96B47-9E33-4B81-A3AC-FAEC848C3811}"
