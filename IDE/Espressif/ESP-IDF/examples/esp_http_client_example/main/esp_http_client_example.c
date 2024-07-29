@@ -932,6 +932,10 @@ static void http_test_task(void *pvParameters)
     new_demo();
 #endif
 
+#ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
+    ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
+#endif
+
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
