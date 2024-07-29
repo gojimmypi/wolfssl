@@ -42,9 +42,11 @@ struct wolfssl_ssl_config
 {
     WOLFSSL_X509* ca_chain;
     WOLFSSL_X509_CRL* ca_crl;
+    void *priv_ctx;
+    void *priv_ssl;
+
     void* f_vrfy;
     void* p_vrfy;
-
 };
 
 
