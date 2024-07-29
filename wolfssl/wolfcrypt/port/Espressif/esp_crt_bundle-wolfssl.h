@@ -29,7 +29,7 @@
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
-    #include "wolfssl/ssl.h"
+    #include <wolfssl/ssl.h>
 
 
 #ifdef __cplusplus
@@ -96,6 +96,9 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
  */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
 
+void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
+                               WOLFSSL_X509 *ca_chain,
+                               WOLFSSL_X509_CRL *ca_crl);
 
 void wolfssl_x509_crt_init(WOLFSSL_X509 *crt);
 

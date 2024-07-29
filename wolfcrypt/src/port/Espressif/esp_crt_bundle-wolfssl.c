@@ -33,11 +33,12 @@
 #include "esp_log.h"
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
+#include <wolfssl/internal.h>
+#include <wolfssl/ssl.h>
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 
-#include <string.h> /* TODO really? */
-#include <stdbool.h> /* TODO really? */
+
 
 
 #define BUNDLE_HEADER_OFFSET 2
@@ -45,11 +46,11 @@
 
 static const char *TAG = "esp-x509-crt-bundle";
 
-//#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
-///* a dummy certificate so that
-// * cacert_ptr passes non-NULL check during handshake */
-//static WOLFSSL_X509 s_dummy_crt;
-//#endif
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
+/* a dummy certificate so that
+ * cacert_ptr passes non-NULL check during handshake */
+static WOLFSSL_X509 s_dummy_crt;
+#endif
 
 /* A "Certificate Bundle" is this array of x509 certs: */
 extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
@@ -156,7 +157,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 {
     /* TODO: do we really need this? so far, only used for dummy cert bumber init */
-    memset(crt, 0, sizeof(WOLFSSL_X509));
+    /* TODO: if we keep this, see if we can ssl->heap param*/
+    InitX509(crt, 0, NULL);
 }
 
 void wolfsslssl_conf_ca_chain(wolfssl_ssl_config *conf,
