@@ -72,12 +72,20 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
 
 // #if defined(WOLFSSL_X509_CRT_PARSE_C)
 
+/* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
+static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store) {
+    ESP_LOGI(TAG, "wolfssl_ssl_conf_verify_cb");
+    return 0;
+}
+
 void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
                              void *p_vrfy)
 {
     conf->f_vrfy      = f_vrfy;
     conf->p_vrfy      = p_vrfy;
+
+    /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 }
 //#endif /* WOLFSSL_X509_CRT_PARSE_C */
 
@@ -105,7 +113,7 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
         return -1;
     }
 
-    ESP_LOGD(TAG, "%d certificates in bundle", s_crt_bundle.num_certs);
+    ESP_LOGI(TAG, "esp_crt_verify_callback: %d certificates in bundle", s_crt_bundle.num_certs);
 
     size_t name_len = 0;
     const uint8_t *crt_name;
@@ -139,7 +147,7 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
     }
 
     if (ret == 0) {
-        ESP_LOGI(TAG, "Certificate validated");
+        ESP_LOGI(TAG, "Certificate validated (2)");
         *flags = 0;
         return 0;
     }
@@ -156,16 +164,18 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
 {
    // wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)tls->priv_ctx, authmode, NULL);
+    ESP_LOGW(TAG, "wolfssl_ssl_conf_authmode not implemented");
 }
 
 void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 {
     /* TODO: do we really need this? so far, only used for dummy cert bundle init */
-    /* TODO: if we keep this, see if we can ssl->heap param*/
+    /* TODO: if we keep this, see if we can/should use ssl->heap param*/
     InitX509(crt, 0, NULL);
 }
 
-void wolfsslssl_conf_ca_chain(wolfssl_ssl_config *conf,
+/* cert buffer compatilbility helper */
+void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
                                WOLFSSL_X509      *ca_chain,
                                WOLFSSL_X509_CRL  *ca_crl) /* TODO check crl type */
 {
@@ -173,8 +183,8 @@ void wolfsslssl_conf_ca_chain(wolfssl_ssl_config *conf,
     conf->ca_crl     = ca_crl;
 
 #if defined(WOLFSSL_X509_TRUSTED_CERTIFICATE_CALLBACK)
-    /* wolfsslssl_ssl_conf_ca_chain() and wolfsslssl_ssl_conf_ca_cb()
-     * cannot be used together. */
+    /* wolfssl_ssl_conf_ca_chain() and wolfsslssl_ssl_conf_ca_cb()
+     * cannot be used together. (TODO: confirm) */
     conf->f_ca_cb = NULL;
     conf->p_ca_cb = NULL;
 #endif /* WOLFSSL_X509_TRUSTED_CERTIFICATE_CALLBACK */
@@ -265,6 +275,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
         /* TODO: do we need a dummy cert? */
         wolfssl_x509_crt_init(&s_dummy_crt);
         wolfssl_ssl_conf_ca_chain(ssl_conf, &s_dummy_crt, NULL);
+
+        /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
+        /* TODO: cb not properly attached here: */
         wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
     }
     ESP_LOGI(TAG, "esp_crt_bundle_attach completed for wolfSSL");
