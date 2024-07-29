@@ -36,11 +36,10 @@
 extern "C" {
 #endif
 
-typedef struct wolfssl_ssl_config  wolfssl_ssl_config;
+typedef struct wolfssl_ssl_config wolfssl_ssl_config;
 
 struct wolfssl_ssl_config
 {
-    int i;
     WOLFSSL_X509* ca_chain;
     WOLFSSL_X509_CRL* ca_crl;
     void* f_vrfy;
@@ -95,6 +94,8 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
  *             - Other   if an error occured or an action must be taken by the calling process.
  */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
+
+void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode);
 
 void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
                                WOLFSSL_X509 *ca_chain,

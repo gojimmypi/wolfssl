@@ -153,10 +153,14 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 #endif
 
 /* Functions common to all cryptographic providers */
+void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
+{
+   // wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)tls->priv_ctx, authmode, NULL);
+}
 
 void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 {
-    /* TODO: do we really need this? so far, only used for dummy cert bumber init */
+    /* TODO: do we really need this? so far, only used for dummy cert bundle init */
     /* TODO: if we keep this, see if we can ssl->heap param*/
     InitX509(crt, 0, NULL);
 }
