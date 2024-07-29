@@ -7,6 +7,8 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "esp_http_client_example-v5.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B449B-7A61-421F-93FA-AC2093BE0081}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h = ..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h
+		..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\wolfssl\error-ssl.h
 		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle-wolfssl.c = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle-wolfssl.c
 		..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle-wolfssl.h = ..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle-wolfssl.h
 		example_log.txt = example_log.txt
