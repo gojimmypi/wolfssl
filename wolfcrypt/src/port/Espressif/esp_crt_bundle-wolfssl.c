@@ -81,7 +81,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     int ret = WOLFSSL_FAILURE;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
-    ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb reverify check not implemented.");
+    // ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb reverify check not implemented.");
 //    if (preverify == 0) {
 //        ESP_LOGE(TAG, "Pre-verification failed.");
 //        return WOLFSSL_FAILURE;
@@ -306,6 +306,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     return ESP_OK;
 }
 
+/* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer. */
 esp_err_t esp_crt_bundle_attach(void *conf)
 {
     esp_err_t ret = ESP_OK;
@@ -342,6 +343,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     return ret;
 }
 
+/* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer. */
 void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
 {
     free(s_crt_bundle.crts);
@@ -353,6 +355,7 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
     ESP_LOGE(TAG, "Not implemented: esp_crt_bundle_detach");
 }
 
+/* esp_crt_bundle_set() used by ESP-IDF esp-tls layer. */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
     return esp_crt_bundle_init(x509_bundle, bundle_size);

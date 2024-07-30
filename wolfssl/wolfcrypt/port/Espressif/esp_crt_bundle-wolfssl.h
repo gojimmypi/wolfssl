@@ -64,6 +64,8 @@ struct wolfssl_ssl_config
 /**
  * @brief      Attach and enable use of a bundle for certificate verification
  *
+ * Used by ESP-IDF esp-tls layer.
+ *
  * Attach and enable use of a bundle for certificate verification through a
  * verification callback.
  * If no specific bundle has been set through esp_crt_bundle_set() it will
@@ -82,6 +84,8 @@ esp_err_t esp_crt_bundle_attach(void *conf);
 /**
  * @brief      Disable and dealloc the certification bundle
  *
+ * Used by ESP-IDF esp-tls layer.
+ *
  * Removes the certificate verification callback and deallocates used resources
  *
  * @param[in]  conf      The config struct for the SSL connection.
@@ -91,6 +95,8 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
 
 /**
  * @brief      Set the default certificate bundle used for verification
+ *
+ * Used by ESP-IDF esp-tls layer.
  *
  * Overrides the default certificate bundle only in case of successful
  * initialization. In most use cases the bundle should be set through
