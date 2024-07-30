@@ -35,29 +35,26 @@
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
 #include <wolfssl/internal.h>
 #include <wolfssl/ssl.h>
+
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 
-
-
+static const char *TAG = "esp_crt_bundle-wolfssl";
 
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
 
-static const char *TAG = "esp-x509-crt-bundle";
-
-#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
 /* a dummy certificate so that
  * cacert_ptr passes non-NULL check during handshake */
+/* TODO: actually used by wolfSSL? */
 static WOLFSSL_X509 s_dummy_crt;
-#endif
 
 /* A "Certificate Bundle" is this array of x509 certs: */
 extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
 extern const uint8_t x509_crt_imported_bundle_bin_end[]   asm("_binary_x509_crt_bundle_end");
 
 /* This crt_bundle_t type must match other providers in esp-tls
- * TODO: move to common header */
+ * TODO: Move to common header in ESP-IDF */
 typedef struct crt_bundle_t {
     const uint8_t **crts;
     uint16_t num_certs;
@@ -68,14 +65,13 @@ static crt_bundle_t s_crt_bundle;
 
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_size);
 
-#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
 
 // #if defined(WOLFSSL_X509_CRT_PARSE_C)
 
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store) {
     /* TODO */
-    ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb preverify check not implemented");
+    ESP_LOGI(TAG, "Enter wolfssl_ssl_conf_verify_cb (preverify check not implemented)");
 //    if (preverify == 0) {
 //        printf("Pre-verification failed.\n");
 //        return WOLFSSL_FAILURE;
@@ -97,11 +93,11 @@ void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
                              void *p_vrfy)
 {
-    conf->f_vrfy      = f_vrfy; /* used inernally by mbedTLS only */
+    conf->f_vrfy      = f_vrfy; /* used internally by non-wolfSSL only */
     conf->p_vrfy      = p_vrfy;
-    wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx), WOLFSSL_VERIFY_PEER, wolfssl_ssl_conf_verify_cb);
-    // conf->priv_ctx
+
     /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
+    wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx), WOLFSSL_VERIFY_PEER, wolfssl_ssl_conf_verify_cb);
 }
 //#endif /* WOLFSSL_X509_CRT_PARSE_C */
 
@@ -113,7 +109,7 @@ void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
 */
 int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags)
 {
-    WOLFSSL_X509 *child = crt;
+    WOLFSSL_X509 *child = crt; /* TODO ? */
 
     /* It's OK for a trusted cert to have a weak signature hash alg.
        as we already trust this certificate */
@@ -172,10 +168,6 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
     return -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
 } /* esp_crt_verify_callback */
 
-#else
-    #warning "No TLS library selected"
-#endif
-
 /* Functions common to all cryptographic providers */
 void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
 {
@@ -186,7 +178,7 @@ void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
 void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 {
     /* TODO: do we really need this? so far, only used for dummy cert bundle init */
-    /* TODO: if we keep this, see if we can/should use ssl->heap param*/
+    /* TODO: if we keep this, see if we can/should use ssl->heap param. */
     InitX509(crt, 0, NULL);
 }
 
@@ -212,12 +204,13 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
  */
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_size)
 {
+    uint16_t num_certs;
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle");
         return ESP_ERR_INVALID_ARG;
     }
 
-    uint16_t num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
+    num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
     if (num_certs > CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS) {
         ESP_LOGE(TAG, "No. of certs in the certificate bundle = %d exceeds\n"
                       "Max allowed certificates in the certificate bundle = %d\n"
@@ -270,10 +263,14 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
 esp_err_t esp_crt_bundle_attach(void *conf)
 {
     esp_err_t ret = ESP_OK;
-    // If no bundle has been set by the user then use the bundle embedded in the binary
+    /* If no bundle has been set by the user,
+     * then use the bundle embedded in the binary */
     if (s_crt_bundle.crts == NULL) {
-        ESP_LOGI(TAG, "No bundle set by user; use the bundle embedded in the binary.");
-        ret = esp_crt_bundle_init(x509_crt_imported_bundle_bin_start, x509_crt_imported_bundle_bin_end - x509_crt_imported_bundle_bin_start);
+        ESP_LOGI(TAG, "No bundle set by user; using the embedded binary.");
+        ret = esp_crt_bundle_init(x509_crt_imported_bundle_bin_start,
+                                  (x509_crt_imported_bundle_bin_end
+                                 - x509_crt_imported_bundle_bin_start)
+                                 );
     }
 
     if (ret != ESP_OK) {
@@ -282,7 +279,6 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     }
 
     if (conf) {
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
         wolfssl_ssl_config *ssl_conf = (wolfssl_ssl_config *)conf;
         /* point to a dummy certificate
          * This is only required so that the
@@ -297,9 +293,6 @@ esp_err_t esp_crt_bundle_attach(void *conf)
         wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
     }
     ESP_LOGI(TAG, "esp_crt_bundle_attach completed for wolfSSL");
-#else
-    ESP_LOGE(TAG, "esp_crt_bundle_attach missing cryptographic provider");
-#endif
     return ret;
 }
 
@@ -313,9 +306,6 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
     }
     ESP_LOGE(TAG, "Not implemented: esp_crt_bundle_detach");
 }
-
-
-
 
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
