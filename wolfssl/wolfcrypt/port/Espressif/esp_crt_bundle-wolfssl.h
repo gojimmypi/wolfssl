@@ -56,8 +56,8 @@ struct wolfssl_ssl_config
     void *priv_ctx;
     void *priv_ssl;
 
-    void* f_vrfy; /* TODO: not used? */
-    void* p_vrfy; /* TODO: not used? */
+    //void* f_vrfy; /* TODO: not used? */
+    //void* p_vrfy; /* TODO: not used? */
 };
 
 

@@ -105,12 +105,16 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     return ret;
 }
 
+/* wolfssl_ssl_conf_verify() patterned after ESP-IDF.
+ * Used locally here only Not used directly by esp-tls. */
 void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
                              void (*p_vrfy) )
 {
-    conf->f_vrfy      = f_vrfy; /* used internally by non-wolfSSL only */
-    conf->p_vrfy      = p_vrfy;
+    /* Other Crytographic providers for reference:
+    conf->f_vrfy      = f_vrfy;  (verification function callback)
+    conf->p_vrfy      = p_vrfy;  (pre-verification value)
+    */
 
     /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
     wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx),
@@ -118,7 +122,10 @@ void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
 }
 //#endif /* WOLFSSL_X509_CRT_PARSE_C */
 
-/* This callback is called for every certificate in the chain. If the chain
+/* esp_crt_verify_callback() patterned after ESP-IDF.
+ * Used locally here only Not used directly by esp-tls.
+ *
+ * This callback is called for every certificate in the chain. If the chain
  * is proper each intermediate certificate is validated through its parent
  * in the x509_crt_verify_chain() function. So this callback should
  * only verify the first untrusted link in the chain is signed by the
@@ -198,7 +205,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
     return -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
 } /* esp_crt_verify_callback */
 
-/* Functions common to all cryptographic providers */
+/* wolfssl_ssl_conf_authmode() patterned after ESP-IDF.
+ * Used locally here only Not used directly by esp-tls. */
 void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
 {
    // wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)tls->priv_ctx, authmode, NULL);
