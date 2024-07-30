@@ -39,22 +39,24 @@
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 
-static const char *TAG = "esp_crt_bundle-wolfssl";
-
+#define X509_MAX_SUBJECT_LEN 255
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
+
+/* A "Certificate Bundle" is this array of x509 certs: */
+extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
+
+extern const uint8_t x509_crt_imported_bundle_bin_end[]   asm("_binary_x509_crt_bundle_end");
+
+static const char *TAG = "esp_crt_bundle-wolfssl";
 
 /* a dummy certificate so that
  * cacert_ptr passes non-NULL check during handshake */
 /* TODO: actually used by wolfSSL? */
 static WOLFSSL_X509 s_dummy_crt;
 
-/* A "Certificate Bundle" is this array of x509 certs: */
-extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
-extern const uint8_t x509_crt_imported_bundle_bin_end[]   asm("_binary_x509_crt_bundle_end");
-
-/* This crt_bundle_t type must match other providers in esp-tls
- * TODO: Move to common header in ESP-IDF */
+/* This crt_bundle_t type must match other providers in esp-tls from ESP-IDF.
+ * TODO: Move to common header in ESP-IDF. (requires ESP-IDF modification) */
 typedef struct crt_bundle_t {
     const uint8_t **crts;
     uint16_t num_certs;
@@ -70,6 +72,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
 
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store) {
+    char subject[X509_MAX_SUBJECT_LEN];
     /* TODO */
     ESP_LOGI(TAG, "Enter wolfssl_ssl_conf_verify_cb (preverify check not implemented)");
 //    if (preverify == 0) {
@@ -82,7 +85,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* sto
         return WOLFSSL_FAILURE;
     }
 
-    char subject[256];
     wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert), subject, sizeof(subject));
     printf("Certificate subject: %s\n", subject);
     ESP_LOGI(TAG, "wolfssl_ssl_conf_verify_cb");
@@ -109,7 +111,17 @@ void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
 */
 int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags)
 {
-    WOLFSSL_X509 *child = crt; /* TODO ? */
+    WOLFSSL_X509 *child;/* TODO ? */
+    const uint8_t *crt_name;
+    int ret = -1;
+    int start = 0;
+    int end  = 0;
+    int middle =0;
+    size_t name_len = 0;
+    size_t key_len  = 0;
+    bool crt_found = false;
+
+    child = crt;
 
     /* It's OK for a trusted cert to have a weak signature hash alg.
        as we already trust this certificate */
@@ -127,13 +139,12 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 
     ESP_LOGI(TAG, "esp_crt_verify_callback: %d certificates in bundle", s_crt_bundle.num_certs);
 
-    size_t name_len = 0;
-    const uint8_t *crt_name;
+    name_len = 0;
 
-    bool crt_found = false;
-    int start = 0;
-    int end = s_crt_bundle.num_certs - 1;
-    int middle = (end - start) / 2;
+    crt_found = false;
+    start = 0;
+    end = s_crt_bundle.num_certs - 1;
+    middle = (end - start) / 2;
 
     /* Look for the certificate using binary search on subject name */
     while (start <= end) {
@@ -152,9 +163,9 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
         middle = (start + end) / 2;
     }
 
-    int ret = -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
+    ret = -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
     if (crt_found) {
-        size_t key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
+        key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
         //ret = esp_crt_check_signature(child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len, key_len);
     }
 
@@ -204,7 +215,12 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
  */
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_size)
 {
+    const uint8_t **crts;
+    const uint8_t *bundle_end;
+    const uint8_t *cur_crt;
     uint16_t num_certs;
+    int i;
+
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle");
         return ESP_ERR_INVALID_ARG;
@@ -222,18 +238,17 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
         ESP_LOGI(TAG, "Max allowed certificates in the certificate bundle = %d", CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
     }
 
-    const uint8_t **crts = calloc(num_certs, sizeof(x509_bundle));
+    crts = calloc(num_certs, sizeof(x509_bundle));
     if (crts == NULL) {
         ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
         return ESP_ERR_NO_MEM;
     }
 
-    const uint8_t *cur_crt;
     /* This is the maximum region that is allowed to access */
-    const uint8_t *bundle_end = x509_bundle + bundle_size;
+    bundle_end = x509_bundle + bundle_size;
     cur_crt = x509_bundle + BUNDLE_HEADER_OFFSET;
 
-    for (int i = 0; i < num_certs; i++) {
+    for (i = 0; i < num_certs; i++) {
         crts[i] = cur_crt;
         if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
             ESP_LOGE(TAG, "Invalid certificate bundle");
