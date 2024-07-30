@@ -39,14 +39,17 @@
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 
+#define WOLFSSL_X509_VERIFY_CALLBACK (void *, WOLFSSL_X509 *, int, uint32_t *)
 #define X509_MAX_SUBJECT_LEN 255
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
 
 /* A "Certificate Bundle" is this array of x509 certs: */
-extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
+extern const uint8_t x509_crt_imported_bundle_bin_start[]
+                     asm("_binary_x509_crt_bundle_start");
 
-extern const uint8_t x509_crt_imported_bundle_bin_end[]   asm("_binary_x509_crt_bundle_end");
+extern const uint8_t x509_crt_imported_bundle_bin_end[]
+                     asm("_binary_x509_crt_bundle_end");
 
 static const char *TAG = "esp_crt_bundle-wolfssl";
 
@@ -65,41 +68,53 @@ typedef struct crt_bundle_t {
 
 static crt_bundle_t s_crt_bundle;
 
-static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_size);
+static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                     size_t bundle_size);
 
 
 // #if defined(WOLFSSL_X509_CRT_PARSE_C)
 
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
-static int wolfssl_ssl_conf_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store) {
+static int wolfssl_ssl_conf_verify_cb(int preverify,
+                                      WOLFSSL_X509_STORE_CTX* store) {
     char subject[X509_MAX_SUBJECT_LEN];
+    int ret = WOLFSSL_FAILURE;
     /* TODO */
-    ESP_LOGI(TAG, "Enter wolfssl_ssl_conf_verify_cb (preverify check not implemented)");
+    WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
+    ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb reverify check not implemented.");
 //    if (preverify == 0) {
-//        printf("Pre-verification failed.\n");
+//        ESP_LOGE(TAG, "Pre-verification failed.");
 //        return WOLFSSL_FAILURE;
 //    }
+
     WOLFSSL_X509* cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
     if (cert == NULL) {
-        printf("Failed to get current certificate.\n");
-        return WOLFSSL_FAILURE;
+        ESP_LOGE(TAG, "Failed to get current certificate.\n");
+        ret = WOLFSSL_FAILURE;
+    }
+    else {
+        ret = WOLFSSL_SUCCESS;
     }
 
-    wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert), subject, sizeof(subject));
-    printf("Certificate subject: %s\n", subject);
-    ESP_LOGI(TAG, "wolfssl_ssl_conf_verify_cb");
-    return WOLFSSL_SUCCESS;
+    if (ret == WOLFSSL_SUCCESS) {
+        wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert),
+                                  subject, sizeof(subject));
+        ESP_LOGI(TAG, "Certificate subject: %s", subject);
+    }
+    WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
+    return ret;
 }
 
 void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
-                             int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
-                             void *p_vrfy)
+                             int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
+                             void (*p_vrfy) )
 {
     conf->f_vrfy      = f_vrfy; /* used internally by non-wolfSSL only */
     conf->p_vrfy      = p_vrfy;
 
     /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
-    wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx), WOLFSSL_VERIFY_PEER, wolfssl_ssl_conf_verify_cb);
+    wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)(conf->priv_ctx),
+                            WOLFSSL_VERIFY_PEER, wolfssl_ssl_conf_verify_cb);
 }
 //#endif /* WOLFSSL_X509_CRT_PARSE_C */
 
@@ -109,7 +124,8 @@ void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
  * only verify the first untrusted link in the chain is signed by the
  * root certificate in the trusted bundle
 */
-int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags)
+int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
+                            uint32_t *flags)
 {
     WOLFSSL_X509 *child;/* TODO ? */
     const uint8_t *crt_name;
@@ -137,7 +153,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
         return -1;
     }
 
-    ESP_LOGI(TAG, "esp_crt_verify_callback: %d certificates in bundle", s_crt_bundle.num_certs);
+    ESP_LOGI(TAG, "esp_crt_verify_callback: %d certificates in bundle",
+                  s_crt_bundle.num_certs);
 
     name_len = 0;
 
@@ -148,7 +165,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 
     /* Look for the certificate using binary search on subject name */
     while (start <= end) {
-        name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
+        name_len = (s_crt_bundle.crts[middle][0] << 8) |
+                   (s_crt_bundle.crts[middle][1]);
         crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
 
         int cmp_res = 0; // memcmp(child->issuer_raw.p, crt_name, name_len );
@@ -165,7 +183,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *f
 
     ret = -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
     if (crt_found) {
-        key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
+        key_len = (s_crt_bundle.crts[middle][2] << 8) |
+                  (s_crt_bundle.crts[middle][3]);
         //ret = esp_crt_check_signature(child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len, key_len);
     }
 
@@ -210,10 +229,12 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
 }
 
 
-/* Initialize the bundle into an array so we can do binary search for certs,
-   the bundle generated by the python utility is already presorted by subject name
+/* Initialize the bundle into an array so we can do binary
+ * search for certs; the bundle generated by the python utility is
+ * already presorted by subject name.
  */
-static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_size)
+static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                     size_t bundle_size)
 {
     const uint8_t **crts;
     const uint8_t *bundle_end;
@@ -229,13 +250,15 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle, size_t bundle_s
     num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
     if (num_certs > CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS) {
         ESP_LOGE(TAG, "No. of certs in the certificate bundle = %d exceeds\n"
-                      "Max allowed certificates in the certificate bundle = %d\n"
-                      "Please update the menuconfig option with appropriate value", num_certs, CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+                      "Max allowed certificates in certificate bundle = %d\n"
+                      "Please update the menuconfig option",
+                      num_certs, CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
         return ESP_ERR_INVALID_ARG;
     }
     else {
-        ESP_LOGI(TAG, "No. of certs in the certificate bundle = % d", num_certs);
-        ESP_LOGI(TAG, "Max allowed certificates in the certificate bundle = %d", CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+        ESP_LOGI(TAG, "No. of certs in certificate bundle = % d", num_certs);
+        ESP_LOGI(TAG, "Max allowed certificates in certificate bundle = %d",
+                      CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
     }
 
     crts = calloc(num_certs, sizeof(x509_bundle));
