@@ -22,6 +22,15 @@
 
 #define __ESP_CRT_BUNDLE_wolfssl_LIB_H__
 
+/* This file is typically NOT directly used by applications utilizing the
+ * wolfSSL libraries. It is used when the wolfssl libary component is configured
+ * to be utilized by the Espressif ESP-IDF, specifically the esp-tls layer.
+ *
+ * See:
+ * https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html
+ * https://github.com/espressif/esp-idf/blob/master/components/esp-tls/esp_tls.h
+ */
+
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -36,6 +45,8 @@
 extern "C" {
 #endif
 
+#define WOLFSSL_X509_VERIFY_CALLBACK (void *, WOLFSSL_X509 *, int, uint32_t *)
+
 typedef struct wolfssl_ssl_config wolfssl_ssl_config;
 
 struct wolfssl_ssl_config
@@ -45,27 +56,25 @@ struct wolfssl_ssl_config
     void *priv_ctx;
     void *priv_ssl;
 
-    void* f_vrfy;
-    void* p_vrfy;
+    void* f_vrfy; /* TODO: not used? */
+    void* p_vrfy; /* TODO: not used? */
 };
 
-
-void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
-                             int (*f_vrfy)(void *, WOLFSSL_X509 *, int, uint32_t *),
-                             void *p_vrfy);
 
 /**
  * @brief      Attach and enable use of a bundle for certificate verification
  *
- * Attach and enable use of a bundle for certificate verification through a verification callback.
- * If no specific bundle has been set through esp_crt_bundle_set() it will default to the
- * bundle defined in menuconfig and embedded in the binary.
+ * Attach and enable use of a bundle for certificate verification through a
+ * verification callback.
+ * If no specific bundle has been set through esp_crt_bundle_set() it will
+ * default to the bundle defined in menuconfig and embedded in the binary.
  *
  * @param[in]  conf      The config struct for the SSL connection.
  *
  * @return
  *             - ESP_OK  if adding certificates was successful.
- *             - Other   if an error occured or an action must be taken by the calling process.
+ *             - Other   if an error occured or an action must be taken by the
+ *                       calling process.
  */
 esp_err_t esp_crt_bundle_attach(void *conf);
 
@@ -83,9 +92,10 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
 /**
  * @brief      Set the default certificate bundle used for verification
  *
- * Overrides the default certificate bundle only in case of successful initialization. In most use cases the bundle should be
- * set through menuconfig. The bundle needs to be sorted by subject name since binary search is
- * used to find certificates.
+ * Overrides the default certificate bundle only in case of successful
+ * initialization. In most use cases the bundle should be set through
+ * menuconfig. The bundle needs to be sorted by subject name since binary
+ * search is used to find certificates.
  *
  * @param[in]  x509_bundle     A pointer to the certificate bundle.
  *
@@ -93,19 +103,27 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
  *
  * @return
  *             - ESP_OK  if adding certificates was successful.
- *             - Other   if an error occured or an action must be taken by the calling process.
+ *             - Other   if an error occured or an action must be taken
+ *                       by the calling process.
  */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
 
-void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode);
 
-void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
-                               WOLFSSL_X509 *ca_chain,
-                               WOLFSSL_X509_CRL *ca_crl);
+WOLFSSL_LOCAL void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
+                             int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
+                             void *p_vrfy);
 
-void wolfssl_x509_crt_init(WOLFSSL_X509 *crt);
+WOLFSSL_LOCAL void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf,
+                                             int authmode);
 
-int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth, uint32_t *flags);
+WOLFSSL_LOCAL void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
+                                             WOLFSSL_X509 *ca_chain,
+                                             WOLFSSL_X509_CRL *ca_crl);
+
+WOLFSSL_LOCAL void wolfssl_x509_crt_init(WOLFSSL_X509 *crt);
+
+WOLFSSL_LOCAL int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt,
+                                          int depth, uint32_t *flags);
 
 #ifdef __cplusplus
 }

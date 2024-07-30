@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
@@ -39,7 +40,6 @@
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 
-#define WOLFSSL_X509_VERIFY_CALLBACK (void *, WOLFSSL_X509 *, int, uint32_t *)
 #define X509_MAX_SUBJECT_LEN 255
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
