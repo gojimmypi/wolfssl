@@ -216,6 +216,10 @@ enum {
 **   Turns on diagnostic messages for SHA mutex. Note that given verbosity,
 **   there may be TLS timing issues encountered. Use with caution.
 **
+** DEBUG_WOLFSSL_ESP32_UNFINISHED_HW
+**   This may be interesting in that HW may have been unnessearily locked
+**   for hash that was never completed. (typically encountered at `free1` time)
+**
 ** LOG_LOCAL_LEVEL
 **   Debugging. Default value is ESP_LOG_DEBUG
 **
