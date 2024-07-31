@@ -2301,7 +2301,7 @@ void wc_Sha256Free(wc_Sha256* sha256)
          * should have already been released (lockDepth = 0)
          */
         (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
-#if defined(WOLFSSL_ESP32_UNFINISHED_HW_DEBUG)
+#if defined(DEBUG_WOLFSSL_ESP32_UNFINISHED_HW)
         ESP_LOGW(TAG, "Alert: hardware unlock needed in wc_Sha256Free.");
 #endif
     }
