@@ -941,7 +941,7 @@ static void http_test_task(void *pvParameters)
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
 
-// #define SINGLE_TEST
+#define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
@@ -1015,7 +1015,7 @@ void app_main(void)
     // Set your desired time here
     timeinfo.tm_year = 2024 - 1900; // Year - 1900
     timeinfo.tm_mon = 7 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 19;          // Day of the month
+    timeinfo.tm_mday = 30;          // Day of the month
     timeinfo.tm_hour = 12;
     timeinfo.tm_min = 0;
     timeinfo.tm_sec = 0;
