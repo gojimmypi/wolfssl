@@ -16,7 +16,7 @@
   <Build xsi:type="com.visualgdb.build.cmake">
     <BuildLogMode xsi:nil="true" />
     <ToolchainID>
-      <ID>SysGCC-xtensa-esp32-elf-master</ID>
+      <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
         <GCC>13.2.0</GCC>
         <GDB>12.1</GDB>
@@ -68,13 +68,12 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>master</Version>
-          <Subdirectory>esp-idf/v5.4-master</Subdirectory>
+          <Subdirectory>/c/SysGCC/esp32/esp-idf/v5.2-master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM82</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>false</UseCCache>
-        <DeviceID>ESP32</DeviceID>
       </ESPIDFExtension>
       <DetectMissingSolutionConfigurations>false</DetectMissingSolutionConfigurations>
     </ProjectModeSettings>

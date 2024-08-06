@@ -119,6 +119,7 @@ Global
 		{03637C18-4611-42C5-BE35-D7C7BAFDF0C0} = {A5E566E1-24DE-4CCC-9AAB-0EF3DB8DBBE8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
+		FileExplorer = ..\..\..\..\..\|..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\
 		SolutionGuid = {9D44E15E-CF40-4BB4-9218-88074B906492}
 	EndGlobalSection
 EndGlobal

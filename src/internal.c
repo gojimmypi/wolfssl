@@ -26,6 +26,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+static const char *TAG = "internal.c";
 
 /*
  * WOLFSSL_SMALL_CERT_VERIFY:
@@ -13391,7 +13392,7 @@ void DoCertFatalAlert(WOLFSSL* ssl, int ret)
         return;
     }
     WOLFSSL_ERROR(ret);
-
+    ESP_LOGE(TAG, "DoCertFatalAlert = %d", ret);
     /* Determine alert reason */
     alertWhy = bad_certificate;
     if (ret == WC_NO_ERR_TRACE(ASN_AFTER_DATE_E) ||
@@ -13612,6 +13613,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
     heap = (ssl != NULL) ? ssl->heap : cm->heap;
 
     /* Determine if verify was okay */
+    ESP_LOGI(TAG, "cert_err == %d", cert_err);
     if (cert_err == 0) {
         verify_ok = 1;
     }
@@ -13714,6 +13716,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
         /* non-zero return code indicates failure override */
         if (cm->verifyCallback != NULL) {
             store->userCtx = cm;
+            ESP_LOGI(TAG, " verify_ok precallback = %d", verify_ok);
             if (cm->verifyCallback(verify_ok, store)) {
                 if (cert_err != 0) {
                     WOLFSSL_MSG("Verify CM callback overriding error!");
@@ -13721,8 +13724,13 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
                 }
             }
             else {
+                WOLFSSL_MSG_EX("Verify CM callback error!");
                 verifyFail = 1;
             }
+            ESP_LOGI(TAG, " verify_ok postcallback = %d", verify_ok);
+        }
+        else {
+            ESP_LOGI(TAG, "cm->verifyCallback == NULL");
         }
     #endif
 
@@ -13742,6 +13750,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
             }
     #endif
             /* non-zero return code indicates failure override */
+            ESP_LOGI(TAG, "verify_ok = %d", verify_ok);
             if (ssl->verifyCallback) {
                 if (ssl->verifyCallback(verify_ok, store)) {
                     if (cert_err != 0) {
@@ -14795,6 +14804,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                     if (ret == WC_NO_ERR_TRACE(WC_PENDING_E))
                         goto exit_ppc;
                 #endif
+                    ESP_LOGI(TAG, "ret = %d", ret);
                     if (ret == 0) {
                         ret = ProcessPeerCertCheckKey(ssl, args);
                     }
@@ -14931,8 +14941,10 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                     if (ret != 0 && args->dCert->isCA) {
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E) ||
                             ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
+                            ESP_LOGI(TAG, "proceed with alt certs...");
                             if (!ssl->options.usingAltCertChain) {
                                 WOLFSSL_MSG("Trying alternate cert chain");
+                                ESP_LOGW(TAG, "Trying alternate cert chain");
                                 ssl->options.usingAltCertChain = 1;
                             }
 
@@ -14944,7 +14956,10 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
 
                             /* do not add to certificate manager */
                             skipAddCA = 1;
-                        }
+                        } /* ASN_NO_SIGNER_E || ASN_SELF_SIGNED_E */
+                    }
+                    else {
+                        ESP_LOGI(TAG, "WOLFSSL_ALT_CERT_CHAINS ret = %d", ret);
                     }
                 #endif /* WOLFSSL_ALT_CERT_CHAINS */
 
