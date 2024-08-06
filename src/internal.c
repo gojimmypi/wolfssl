@@ -13584,7 +13584,8 @@ void CleanupStoreCtxCallback(WOLFSSL_X509_STORE_CTX* store,
 #endif /* SESSION_CERTS */
     XFREE(store->domain, heap, DYNAMIC_TYPE_STRING);
     store->domain = NULL;
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
+#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)\
+    // check this free
     if (x509Free)
         wolfSSL_X509_free(store->current_cert);
     store->current_cert = NULL;
@@ -13613,7 +13614,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
     heap = (ssl != NULL) ? ssl->heap : cm->heap;
 
     /* Determine if verify was okay */
-    ESP_LOGI(TAG, "cert_err == %d", cert_err);
+    ESP_LOGI(TAG, "DoVerifyCallback init cert_err == %d", cert_err);
     if (cert_err == 0) {
         verify_ok = 1;
     }
@@ -13640,6 +13641,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
     /* Perform domain and IP check only for the leaf certificate */
     if (args->certIdx == 0) {
         /* perform domain name check on the peer certificate */
+        ESP_LOGI(TAG, "ssl->param->hostName=%s", ssl->param->hostName);
         if (args->dCertInit && args->dCert && (ssl != NULL) &&
                 ssl->param && ssl->param->hostName[0]) {
             /* If altNames names is present, then subject common name is ignored */
