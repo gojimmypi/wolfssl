@@ -59,22 +59,22 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
     # Generate custom certificate bundle using the generate_cert_bundle utility
     set(GENERATE_CERT_BUNDLEPY ${python} ${COMPONENT_DIR}/esp_crt_bundle/gen_crt_bundle.py)
 
-    if(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL)
+    if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
         list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
-    elseif(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN)
+    elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
         list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
         list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
     endif()
 
     # Add deprecated root certs if enabled. This config is not visible if the default cert
     # bundle is not selected
-    if(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
+    if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
         list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_deprecated.pem)
     endif()
 
-    if(CONFIG_MBEDTLS_CUSTOM_CERTIFICATE_BUNDLE)
+    if(CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE)
         get_filename_component(custom_bundle_path
-        ${CONFIG_MBEDTLS_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
+        ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
         list(APPEND crt_paths ${custom_bundle_path})
 
     endif()
