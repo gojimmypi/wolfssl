@@ -123,20 +123,14 @@ class CertificateBundle:
         bundle = struct.pack('>H', len(self.certificates))
 
         for crt in self.certificates:
-            """ Read the public key as DER format """
-            pub_key = crt.public_key()
-            pub_key_der = pub_key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+            """ Read the certificate as DER format """
+            cert_der = crt.public_bytes(serialization.Encoding.DER)
 
-            """ Read the subject name as DER format """
-            sub_name_der = crt.subject.public_bytes(default_backend())
-
-            name_len = len(sub_name_der)
-            key_len = len(pub_key_der)
-            len_data = struct.pack('>HH', name_len, key_len)
+            cert_der_len = len(cert_der)
+            len_data = struct.pack('>H', cert_der_len)
 
             bundle += len_data
-            bundle += sub_name_der
-            bundle += pub_key_der
+            bundle += cert_der
 
         return bundle
 
