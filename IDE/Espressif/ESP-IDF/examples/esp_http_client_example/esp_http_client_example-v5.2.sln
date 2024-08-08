@@ -53,6 +53,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Espressif", "Espressif", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "certs", "certs", "{7B118566-4FEE-41C5-A747-DF8E2BBFAECB}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_all.pem = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_all.pem
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_deprecated.pem = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_deprecated.pem
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_local.pem = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_local.pem
 		main\howsmyssl_com_root_cert.pem = main\howsmyssl_com_root_cert.pem
 		main\postman_root_cert.pem = main\postman_root_cert.pem
 	EndProjectSection
