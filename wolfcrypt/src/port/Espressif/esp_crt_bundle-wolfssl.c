@@ -44,7 +44,7 @@
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
 
-/* A "Certificate Bundle" is this array of x509 certs: */
+/* A "Certificate Bundle" is this array of x509 CA certs the client trusts: */
 extern const uint8_t x509_crt_imported_bundle_bin_start[]
                      asm("_binary_x509_crt_bundle_start");
 
@@ -73,30 +73,51 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 
 
 // #if defined(WOLFSSL_X509_CRT_PARSE_C)
-
+static int _cert_bundled_loaded = 0;
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 static int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
     char subject[X509_MAX_SUBJECT_LEN];
-    WOLFSSL_X509* cert;
-    int ret = WOLFSSL_FAILURE;
+    WOLFSSL_X509* cert = NULL;
+    int ret = -1;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
+    ESP_LOGI(TAG, "\n\nwolfssl_ssl_conf_verify_cb !\n\n");
 
     /* TODO search cert bundle for CA match */
     // ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb preverify check not implemented.");
-    ret = WOLFSSL_SUCCESS;
-#ifdef NO_SKIP_PREVIEW
+
+#ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
-        ESP_LOGW(TAG, "Pre-verification success.");
-        // ret = WOLFSSL_FAILURE;
+        ESP_LOGW(TAG, "Pre-verification success."); /* or alt certs */
+        /* So far, so good... we need to now check cert against alt */
+        ret = WOLFSSL_SUCCESS;
     }
     else {
-        // ret = WOLFSSL_SUCCESS;
         ESP_LOGE(TAG, "Pre-verification failed.");
+        ret = WOLFSSL_FAILURE;
     }
+#else
+    /* Skip pre-verification, so we'll start with success. */
+    ret = WOLFSSL_SUCCESS;
 #endif
+
+    /* Check how many CA Certs in our bundle. Need at least one to proceed. */
+    if (ret == WOLFSSL_SUCCESS) {
+        if (s_crt_bundle.crts == NULL) {
+            ESP_LOGE(TAG, "No certificates in bundle.");
+            ret = WOLFSSL_FAILURE;
+        }
+        else {
+            ESP_LOGI(TAG, "%d certificates in bundle.", s_crt_bundle.num_certs);
+            ret = WOLFSSL_SUCCESS;
+        }
+    }
+
+
+
+    /* TODO: iterate through all CA certs in bundle (or is the bundle a store?) */
 
     if (ret == WOLFSSL_SUCCESS) {
 #ifdef OPENSSL_EXTRA
@@ -113,13 +134,65 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
     }
 
-
     if (ret == WOLFSSL_SUCCESS) {
         wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert),
                                   subject, sizeof(subject));
         ESP_LOGI(TAG, "Certificate subject: %s", subject);
+        byte* subjectRaw = NULL;
+        int length = wc_GetSubjectRaw(&subjectRaw, cert);
+        ESP_LOGI(TAG, "Subject: %.*s",length, subjectRaw );
     }
+
+    /* When the server presents its certificate, the client checks if this
+     * certificate can be traced back to one of the CA certificates in the
+     * bundle.
+     */
+    /* Find the cert: */
+    if ((ret == WOLFSSL_SUCCESS) && (_cert_bundled_loaded == 0)) {
+        _cert_bundled_loaded = 1;
+        WOLFSSL_X509*child = cert;
+        size_t name_len = 0;
+        const uint8_t *crt_name;
+
+        bool crt_found = false;
+        int start = 0;
+        int end = s_crt_bundle.num_certs - 1;
+        int middle = (end - start) / 2;
+
+        /* Look for the certificate using binary search on subject name */
+        while (start <= end) {
+            name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
+            crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
+            ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
+
+            int cmp_res =  memcmp(subject, crt_name, name_len );
+            if (cmp_res == 0) {
+                ESP_LOGW(TAG, "crt found %s", crt_name);
+                crt_found = true;
+                break;
+            } else if (cmp_res < 0) {
+                end = middle - 1;
+            } else {
+                start = middle + 1;
+            }
+            middle = (start + end) / 2;
+        }
+
+        if (crt_found) {
+            size_t key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
+            // TODO check sig: ret = esp_crt_check_signature(child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len, key_len);
+        }
+        else {
+            ESP_LOGW(TAG, "crt not found!");
+        }
+
+        if (ret == 0) {
+            ESP_LOGI(TAG, "Certificate validated !!!");
+        }
+    }
+
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
+
     return ret;
 }
 
