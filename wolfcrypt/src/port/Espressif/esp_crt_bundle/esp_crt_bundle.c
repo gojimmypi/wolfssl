@@ -1,4 +1,4 @@
-/* esp_crt_bundle-wolfssl.c
+/* esp_crt_bundle.c
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *

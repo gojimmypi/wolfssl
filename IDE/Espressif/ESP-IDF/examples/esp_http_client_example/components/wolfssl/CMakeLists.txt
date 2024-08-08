@@ -52,6 +52,55 @@ function( IS_ESP_IDF_COMPONENT  RESULT )
     endif()
 endfunction()
 
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+    set(bundle_name "x509_crt_bundle")
+    set(DEFAULT_CRT_DIR ${COMPONENT_DIR}/esp_crt_bundle)
+
+    # Generate custom certificate bundle using the generate_cert_bundle utility
+    set(GENERATE_CERT_BUNDLEPY ${python} ${COMPONENT_DIR}/esp_crt_bundle/gen_crt_bundle.py)
+
+    if(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL)
+        list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+    elseif(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN)
+        list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+        list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
+    endif()
+
+    # Add deprecated root certs if enabled. This config is not visible if the default cert
+    # bundle is not selected
+    if(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
+        list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_deprecated.pem)
+    endif()
+
+    if(CONFIG_MBEDTLS_CUSTOM_CERTIFICATE_BUNDLE)
+        get_filename_component(custom_bundle_path
+        ${CONFIG_MBEDTLS_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
+        list(APPEND crt_paths ${custom_bundle_path})
+
+    endif()
+    list(APPEND args --input ${crt_paths} -q)
+
+    get_filename_component(crt_bundle
+        ${bundle_name}
+        ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+    # Generate bundle according to config
+    add_custom_command(OUTPUT ${crt_bundle}
+        COMMAND ${GENERATE_CERT_BUNDLEPY} ${args}
+        DEPENDS ${custom_bundle_path}
+        VERBATIM)
+
+    add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
+
+    # the wolfSSL crtificate bundle is baked into wolfSSL
+    # add_dependencies(wolfssl custom_wolfssl_bundle)
+    # target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY)
+    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        "${crt_bundle}")
+endif()
+
+
 # Determine if this cmake file is located in the ESP-IDF component directory or not,
 # and if so, if it is being ignored (allowing the use of a local project one, instead).
 IS_ESP_IDF_COMPONENT( IS_WOLSSL_ESP_IDF_COMPONENT )
@@ -502,6 +551,7 @@ else()
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel\""
                           "\"${WOLFSSL_EXTRA_PROJECT_DIR}\""
                          ) # COMPONENT_SRCDIRS
