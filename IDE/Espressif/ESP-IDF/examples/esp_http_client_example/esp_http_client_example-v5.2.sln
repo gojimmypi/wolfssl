@@ -62,6 +62,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "certs", "certs", "{7B118566
 		main\postman_root_cert.pem = main\postman_root_cert.pem
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wpa_supplicant", "wpa_supplicant", "{F14F3B6F-E9E0-4311-BA5F-432A0841BF9E}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\CMakeLists.txt
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\README.md = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
