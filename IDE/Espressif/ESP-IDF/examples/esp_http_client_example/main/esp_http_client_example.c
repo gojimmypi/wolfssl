@@ -32,8 +32,11 @@
 #include "esp_http_client.h"
 
 #ifdef CONFIG_ESP_TLS_USING_WOLFSSL
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+    #include <wolfssl/wolfcrypt/settings.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
+    /* TODO: conditional bundle */
+    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
 #endif
 
 #define MAX_HTTP_RECV_BUFFER 512
