@@ -345,8 +345,7 @@ struct PKCS7 {
     word32 plainDigestSz;
     word32 pkcs7DigestSz;
 
-#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
-    && defined(HAVE_OID_DECODING)
+#ifdef WC_ASN_UNKNOWN_EXT_CB
     wc_UnknownExtCallback unknownExtCallback;
 #endif
 
@@ -359,12 +358,12 @@ struct PKCS7 {
     word32 cachedEncryptedContentSz;
     word16 contentCRLF:1; /* have content line endings been converted to CRLF */
     word16 contentIsPkcs7Type:1; /* eContent follows PKCS#7 RFC not CMS */
+    word16 hashParamsAbsent:1;
     /* !! NEW DATA MEMBERS MUST BE ADDED AT END !! */
 };
 
 WOLFSSL_API PKCS7* wc_PKCS7_New(void* heap, int devId);
-#if defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ASN_TEMPLATE) \
-    && defined(HAVE_OID_DECODING)
+#ifdef WC_ASN_UNKNOWN_EXT_CB
     WOLFSSL_API void wc_PKCS7_SetUnknownExtCallback(PKCS7* pkcs7,
         wc_UnknownExtCallback cb);
 #endif
