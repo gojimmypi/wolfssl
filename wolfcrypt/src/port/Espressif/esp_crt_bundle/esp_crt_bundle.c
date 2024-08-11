@@ -38,7 +38,7 @@
 #include <wolfssl/ssl.h>
 
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
-#include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 
 #define X509_MAX_SUBJECT_LEN 255
 #define BUNDLE_HEADER_OFFSET 2

@@ -36,7 +36,7 @@
     #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
     /* TODO: conditional bundle */
-    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle-wolfssl.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #endif
 
 #define MAX_HTTP_RECV_BUFFER 512
