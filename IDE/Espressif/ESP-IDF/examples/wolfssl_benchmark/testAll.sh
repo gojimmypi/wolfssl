@@ -38,7 +38,8 @@ fi
 # Kill all currently running instances of putty.exe
 # If there are no running instances, taskkill exits with non-zero error code.
 #******************************************************************************
-taskkill.exe /IM putty.exe /F
+echo "Closing any running putty.exe sessions..."
+taskkill.exe /IM putty.exe /F  > /dev/null 2>&1
 
 # Abort on any future errors
 set -e

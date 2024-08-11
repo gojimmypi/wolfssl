@@ -38,20 +38,8 @@ pwd
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
 # Unfortunately they are currently hard coded and computer-specific.
-esp32_PORT="/dev/ttyS9"
-esp32c2_PORT="/dev/ttyS79"
-esp32c3_PORT="/dev/ttyS35"
-esp32c6_PORT="/dev/ttyS36"
-esp32h2_PORT="/dev/ttyS31"
-esp32s2_PORT="/dev/ttyS30"
-esp32s3_PORT="/dev/ttyS24"
-esp8266_PORT="/dev/ttyS70"
-
-esp8684_PORT="/dev/ttyS49"
-# esp32c2_PORT="/dev/ttyS49" #8684
-
 esp32_PORT="/dev/ttyS7"
-esp32c2_PORT="/dev/ttyS10"
+esp32c2_PORT="/dev/ttyS3"
 esp32c3_PORT="/dev/ttyS6"
 esp32c6_PORT="/dev/ttyS8"
 esp32h2_PORT="/dev/ttyS9"
@@ -59,7 +47,7 @@ esp32s2_PORT="/dev/ttyS5"
 esp32s3_PORT="/dev/ttyS4"
 
 esp8266_PORT="/dev/ttyS11"
-esp8684_PORT="/dev/ttyS3"
+esp8684_PORT="/dev/ttyS10"
 
 # Load putty profiles. Note profiles names need to have been previously
 # defined and saved in putty! These are the saved sessions in putty:
@@ -70,8 +58,9 @@ esp32c6_PUTTY="COM8"
 esp32h2_PUTTY="COM9"
 esp32s2_PUTTY="COM5"
 esp32s3_PUTTY="COM4"
-esp8684_PUTTY="COM10-74880"
+
 esp8266_PUTTY="COM11-74880"
+esp8684_PUTTY="COM10-74880"
 
 echo "esp32_PORT:   $esp32_PORT"
 echo "esp32c2_PORT: $esp32c2_PORT"
@@ -83,7 +72,8 @@ echo "esp32h2_PORT: $esp32h2_PORT"
 echo "esp8266_PORT: $esp8266_PORT"
 echo "esp8684_PORT: $esp8684_PORT"
 
-# given a THIS_TARGET, assign THIS_TARGET_PORT to the respective port.
+# Given a THIS_TARGET, assign THIS_TARGET_PORT to the respective port.
+# Note here we are actually assembling a variable name. (indirect reference)
 THIS_TARGET_PORT="${THIS_TARGET}_PORT"
 
 # Check that THIS_TARGET_PORT is defined.
@@ -94,6 +84,8 @@ else
     echo "THIS_TARGET_PORT=${THIS_TARGET_PORT}"
 fi
 
+# Indirect reference in Bash. The value of THIS_TARGET_PORT is treated as the
+# name of another variable, and the value of that other variable is retrieved.
 THIS_TARGET_PORT="${!THIS_TARGET_PORT}"
 echo THIS_TARGET_PORT="${THIS_TARGET_PORT}"
 
@@ -139,6 +131,9 @@ else
     echo THIS_TARGET_PUTTY="${THIS_TARGET_PUTTY}"
 fi
 
+# THIS_TARGET_NAME will keep the actual target name to be used in log files.
+# THIS_TARGET may be updated for use in `idf.py set-target` paramater.
+THIS_TARGET_NAME="$THIS_TARGET"
 if [[ "$THIS_TARGET" == "esp8684" ]]; then
     echo "Treating esp8684 like an esp32c2"
     THIS_TARGET=esp32c2
@@ -146,20 +141,26 @@ fi
 
 # Get the ESP-IDF version
 # Run the command and capture its output
-THIS_OUTPUT=$(idf.py --version)
+if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    # The --version is not supported in our ESP8288 SDK
+    THIS_OUTPUT="esp8266"
+else
+    # Everyplace else, get the version of ESP-IDF to use in log file name.
+    THIS_OUTPUT=$(idf.py --version)
+fi
 
 # Extract the version string using grep and sed
 THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
 
-# Print the version variable to verify
-echo $THIS_VERSION
+# Print the version variable to verify.
+echo "This ESP-IDF Version: ${THIS_VERSION}"
 
 # Assemble some log file names.
 echo ""
-BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET_NAME}_${THIS_KEYWORD}.txt"
+FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET_NAME}_${THIS_KEYWORD}.txt"
+THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET_NAME}_${THIS_KEYWORD}.txt"
+THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET_NAME}_${THIS_KEYWORD}.txt"
 THIS_WLOG="logs\\${THIS_TARGET}_output.log"
 # cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
 
@@ -167,7 +168,6 @@ echo  "BUILD_LOG = ${BUILD_LOG}"
 echo  "FLASH_LOG = ${FLASH_LOG}"
 echo  "THIS_LOG  = ${THIS_LOG}"
 echo  "THIS_CFG  = ${THIS_CFG}"
-
 
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
     # idf.py for the ESP8266  does not support --version
@@ -201,9 +201,12 @@ else
     # Start with fresh sdkconfig
     rm -f ./sdkconfig
 
-    # ESP8266 debug and release files not used for non-ESP8266 targets here,delete anyhow:
+    # ESP8266 debug and release files not used for non-ESP8266 targets here, delete anyhow:
     rm -f ./sdkconfig-debug
     rm -f ./sdkconfig-release
+
+    # Any prior ESP32 builds are typically in the ./build directory:
+    rm -rf ./build
 
     echo "idf.py set-target $THIS_TARGET"
     idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
