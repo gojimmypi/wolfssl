@@ -1,6 +1,8 @@
 How to build PlatformIO based project
 =====================================
 
+runner test 1
+
 Modified for no local copy of wolfSSL
 
 1. [Install PlatformIO Core](https://docs.platformio.org/page/core.html)
