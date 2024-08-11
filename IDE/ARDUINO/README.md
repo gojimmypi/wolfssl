@@ -13,7 +13,7 @@ Many of the supported boards are natively built-in to the [Arduino IDE Board Man
 and by adding [additional cores](https://docs.arduino.cc/learn/starting-guide/cores/) as needed.
 
 STM32 Support can be added by including this link in the "Additional Boards Managers URLs" field
-from [stm32duino/Arduino_Core_STM32](https://github.com/stm32duino/Arduino_Core_STM32?tab=readme-ov-file#getting-started)   .
+from [stm32duino/Arduino_Core_STM32](https://github.com/stm32duino/Arduino_Core_STM32?tab=readme-ov-file#getting-started).
 
 ```
 https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
