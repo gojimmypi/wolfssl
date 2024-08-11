@@ -83,11 +83,17 @@
 /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
 /* #define USE_WOLFSSL_ESP_SDK_WIFI */
 
-#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
+#if defined(CONFIG_TLS_STACK_WOLFSSL) // && (CONFIG_TLS_STACK_WOLFSSL)
     /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
      * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
      * that here: */
+    // #warning "Defining OPENSSL_EXTRA"
     #define OPENSSL_EXTRA
+    // #define OPENSSL_ALL
+    #ifndef WOLFSSL_BIO_INCLUDED
+    #endif
+//    #define WOLFSSL_WPAS_SMALL
+//    #define HAVE_EX_DATA_CLEANUP_HOOKS
 #endif
 
 /* Experimental Kyber */
@@ -775,7 +781,7 @@
 
 #define WOLFSSL_MAX_ERROR_SZ 200
 #define WOLFSSL_ALT_CERT_CHAINS
-#define DEBUG_WOLFSSL
+// #define DEBUG_WOLFSSL
 
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options

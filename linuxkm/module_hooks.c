@@ -459,7 +459,13 @@ static int set_up_wolfssl_linuxkm_pie_redirect_table(void) {
 
     wolfssl_linuxkm_pie_redirect_table._ctype = _ctype;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
+    wolfssl_linuxkm_pie_redirect_table.kmalloc_noprof = kmalloc_noprof;
+    wolfssl_linuxkm_pie_redirect_table.krealloc_noprof = krealloc_noprof;
+    wolfssl_linuxkm_pie_redirect_table.kzalloc_noprof = kzalloc_noprof;
+    wolfssl_linuxkm_pie_redirect_table.__kvmalloc_node_noprof = __kvmalloc_node_noprof;
+    wolfssl_linuxkm_pie_redirect_table.__kmalloc_cache_noprof = __kmalloc_cache_noprof;
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0)
     wolfssl_linuxkm_pie_redirect_table.kmalloc_noprof = kmalloc_noprof;
     wolfssl_linuxkm_pie_redirect_table.krealloc_noprof = krealloc_noprof;
     wolfssl_linuxkm_pie_redirect_table.kzalloc_noprof = kzalloc_noprof;
@@ -797,16 +803,11 @@ static int updateFipsHash(void)
 
     if (tfm != NULL)
         crypto_free_shash(tfm);
-    if (desc != NULL)
-        XFREE(desc, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (hash != NULL)
-        XFREE(hash, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (base16_hash != NULL)
-        XFREE(base16_hash, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (binCoreKey != NULL)
-        XFREE(binCoreKey, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (binVerify != NULL)
-        XFREE(binVerify, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(desc, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(hash, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(base16_hash, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(binCoreKey, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(binVerify, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }

@@ -63,8 +63,8 @@ on the specific device platform.
 #endif
 
 
-#if !defined(NO_SHA256) && (!defined(WOLFSSL_ARMASM) && \
-    !defined(WOLFSSL_ARMASM_NO_NEON))
+#if !defined(NO_SHA256) && !(defined(WOLFSSL_ARMASM) || \
+    defined(WOLFSSL_ARMASM_NO_NEON)) && !defined(WOLFSSL_RISCV_ASM)
 
 #if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
     /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
@@ -2301,7 +2301,9 @@ void wc_Sha256Free(wc_Sha256* sha256)
          * should have already been released (lockDepth = 0)
          */
         (void)InitSha256(sha256); /* unlock mutex, set mode to ESP32_SHA_INIT */
+#if defined(DEBUG_WOLFSSL_ESP32_UNFINISHED_HW)
         ESP_LOGW(TAG, "Alert: hardware unlock needed in wc_Sha256Free.");
+#endif
     }
     else {
         ESP_LOGV(TAG, "Hardware unlock not needed in wc_Sha256Free.");
@@ -2506,7 +2508,7 @@ int wc_Sha256GetHash(wc_Sha256* sha256, byte* hash)
     ret = wc_Sha256Copy(sha256, tmpSha256);
     if (ret == 0) {
         ret = wc_Sha256Final(tmpSha256, hash);
-        wc_Sha256Free(tmpSha256); /* TODO move outside brackets? */
+        wc_Sha256Free(tmpSha256);
     }
 
 

@@ -4691,8 +4691,9 @@ int wolfSSL_RSA_GenAdd(WOLFSSL_RSA* rsa)
     mp_clear(t);
 
 #ifdef WOLFSSL_SMALL_STACK
-    if (tmp != NULL)
+    if (rsa != NULL) {
         XFREE(tmp, rsa->heap, DYNAMIC_TYPE_TMP_BUFFER);
+    }
 #endif
 
     return ret;
@@ -5914,8 +5915,7 @@ int wolfSSL_PEM_write_mem_DSAPrivateKey(WOLFSSL_DSA* dsa,
     if (tmp == NULL) {
         WOLFSSL_MSG("malloc failed");
         XFREE(derBuf, NULL, DYNAMIC_TYPE_DER);
-        if (cipherInfo != NULL)
-            XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
+        XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
         return 0;
     }
 
@@ -5926,13 +5926,11 @@ int wolfSSL_PEM_write_mem_DSAPrivateKey(WOLFSSL_DSA* dsa,
         WOLFSSL_MSG("wc_DerToPemEx failed");
         XFREE(derBuf, NULL, DYNAMIC_TYPE_DER);
         XFREE(tmp, NULL, DYNAMIC_TYPE_PEM);
-        if (cipherInfo != NULL)
-            XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
+        XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
         return 0;
     }
     XFREE(derBuf, NULL, DYNAMIC_TYPE_DER);
-    if (cipherInfo != NULL)
-        XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
+    XFREE(cipherInfo, NULL, DYNAMIC_TYPE_STRING);
 
     *pem = (byte*)XMALLOC((size_t)((*pLen)+1), NULL, DYNAMIC_TYPE_KEY);
     if (*pem == NULL) {
@@ -7283,7 +7281,7 @@ WOLFSSL_BIGNUM* wolfSSL_DH_8192_prime(WOLFSSL_BIGNUM* bn)
 
 #ifndef NO_CERTS
 
-/* Load the DER encoded DH parameters/key into DH key.
+/* Load the DER encoded DH parameters into DH key.
  *
  * @param [in, out] dh      DH key to load parameters into.
  * @param [in]      der     Buffer holding DER encoded parameters data.
@@ -7294,7 +7292,7 @@ WOLFSSL_BIGNUM* wolfSSL_DH_8192_prime(WOLFSSL_BIGNUM* bn)
  * @return  0 on success.
  * @return  1 when decoding DER or setting the external key fails.
  */
-static int wolfssl_dh_load_key(WOLFSSL_DH* dh, const unsigned char* der,
+static int wolfssl_dh_load_params(WOLFSSL_DH* dh, const unsigned char* der,
     word32* idx, word32 derSz)
 {
     int err = 0;
@@ -7407,7 +7405,7 @@ WOLFSSL_DH *wolfSSL_d2i_DHparams(WOLFSSL_DH** dh, const unsigned char** pp,
         WOLFSSL_ERROR_MSG("wolfSSL_DH_new() failed");
         err = 1;
     }
-    if ((!err) && (wolfssl_dh_load_key(newDh, *pp, &idx,
+    if ((!err) && (wolfssl_dh_load_params(newDh, *pp, &idx,
             (word32)length) != 0)) {
         WOLFSSL_ERROR_MSG("Loading DH parameters failed");
         err = 1;
@@ -7567,7 +7565,7 @@ int wolfSSL_DH_LoadDer(WOLFSSL_DH* dh, const unsigned char* derBuf, int derSz)
         ret = -1;
     }
 
-    if ((ret == 1) && (wolfssl_dh_load_key(dh, derBuf, &idx,
+    if ((ret == 1) && (wolfssl_dh_load_params(dh, derBuf, &idx,
             (word32)derSz) != 0)) {
         WOLFSSL_ERROR_MSG("DH key decode failed");
         ret = -1;
@@ -7802,9 +7800,7 @@ static int wolfssl_dhparams_to_der(WOLFSSL_DH* dh, unsigned char** out,
         *out = der;
         der = NULL;
     }
-    if (der != NULL) {
-        XFREE(der, heap, DYNAMIC_TYPE_TMP_BUFFER);
-    }
+    XFREE(der, heap, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }

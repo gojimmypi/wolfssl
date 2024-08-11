@@ -1689,18 +1689,6 @@ static const char* bench_result_words3[][5] = {
                                           const char *desc_extra);
 #endif
 
-#if defined(DEBUG_WOLFSSL) && !defined(HAVE_VALGRIND) && \
-        !defined(HAVE_STACK_SIZE)
-#ifdef __cplusplus
-    extern "C" {
-#endif
-    WOLFSSL_API int wolfSSL_Debugging_ON(void);
-    WOLFSSL_API void wolfSSL_Debugging_OFF(void);
-#ifdef __cplusplus
-    }  /* extern "C" */
-#endif
-#endif
-
 #if !defined(WC_NO_RNG) && \
         ((!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) \
         || !defined(NO_DH) || defined(WOLFSSL_KEY_GEN) || defined(HAVE_ECC) \
@@ -2003,7 +1991,9 @@ static int    numBlocks  = NUM_BLOCKS;
 static word32 bench_size = BENCH_SIZE;
 static int base2 = 1;
 static int digest_stream = 1;
+#ifdef HAVE_CHACHA
 static int encrypt_only = 0;
+#endif
 #ifdef HAVE_AES_CBC
 static int cipher_same_buffer = 0;
 #endif
@@ -10228,15 +10218,11 @@ exit_xmss_sign_verify:
     bench_stats_asym_finish(params, (int)sigSz, "verify", 0, count, start, ret);
 
     /* Cleanup everything. */
-    if (sig != NULL) {
-        XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        sig = NULL;
-    }
+    XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    sig = NULL;
 
-    if (sk != NULL) {
-        XFREE(sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        sk = NULL;
-    }
+    XFREE(sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    sk = NULL;
 
     if (freeRng) {
         wc_FreeRng(&rng);
@@ -11096,10 +11082,8 @@ exit:
         wc_ecc_free(userB);
         XFREE(userB, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
-    if (msg)
-        XFREE(msg, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (out)
-        XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(msg, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #else
     wc_ecc_free(userB);
     wc_ecc_free(userA);
@@ -12508,11 +12492,9 @@ void bench_sakke(void)
 
 exit:
 
-    if (iTable)
-        XFREE(iTable, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(iTable, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
-    if (table)
-        XFREE(table, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(table, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     WC_FREE_VAR(genKey, HEAP_HINT);
 }
@@ -14757,8 +14739,10 @@ int wolfcrypt_benchmark_main(int argc, char** argv)
 #endif
         else if (string_matches(argv[1], "-dgst_full"))
             digest_stream = 0;
+#ifdef HAVE_CHACHA
         else if (string_matches(argv[1], "-enc_only"))
             encrypt_only = 1;
+#endif
 #ifndef NO_RSA
         else if (string_matches(argv[1], "-rsa_sign"))
             rsa_sign_verify = 1;

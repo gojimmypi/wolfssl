@@ -1144,7 +1144,9 @@ uintptr_t esp_sha_release_unfinished_lock(WC_ESP32SHA* ctx)
         ESP_LOGW(TAG, "esp_sha_release_unfinished_lock mode = %d", ctx->mode);
 #endif
         if (ctx->mode == ESP32_SHA_HW) {
+#if defined(DEBUG_WOLFSSL_ESP32_UNFINISHED_HW)
             ESP_LOGW(TAG, "esp_sha_release_unfinished_lock HW!");
+#endif
         }
     }
     return ret;

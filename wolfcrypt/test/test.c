@@ -720,9 +720,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mp_test(void);
 #if defined(WOLFSSL_PUBLIC_MP) && defined(WOLFSSL_KEY_GEN)
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t prime_test(void);
 #endif
-#if defined(ASN_BER_TO_DER) && \
-    (defined(WOLFSSL_TEST_CERT) || defined(OPENSSL_EXTRA) || \
-     defined(OPENSSL_EXTRA_X509_SMALL))
+#ifdef ASN_BER_TO_DER
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t berder_test(void);
 #endif
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t logging_test(void);
@@ -7638,8 +7636,7 @@ exit:
     wc_Shake128_Free(&sha);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (large_input != NULL)
-        XFREE(large_input, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -7977,8 +7974,7 @@ exit:
     wc_Shake256_Free(&sha);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (large_input != NULL)
-        XFREE(large_input, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -10089,10 +10085,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t chacha_test(void)
             return WC_TEST_RET_ENC_EC(ret);
 
         if (XMEMCMP(plain_big, input_big, CHACHA_BIG_TEST_SIZE))
-            return WC_TEST_RET_ENC_NC;
+            return WC_TEST_RET_ENC_I(i);
 
         if (XMEMCMP(cipher_big, cipher_big_result, CHACHA_BIG_TEST_SIZE))
-            return WC_TEST_RET_ENC_NC;
+            return WC_TEST_RET_ENC_I(i);
     }
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
@@ -11173,8 +11169,7 @@ static wc_test_ret_t EVP_test(const WOLFSSL_EVP_CIPHER* type, const byte* key,
     }
 
 EVP_TEST_END:
-    if (cipher)
-        XFREE(cipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(cipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     (void)cipherSz;
 
     if (ctx_inited) {
@@ -11559,11 +11554,9 @@ EVP_TEST_END:
         wc_AesFree(dec);
 #endif
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (enc)
-        XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
 #ifdef HAVE_AES_DECRYPT
-    if (dec)
-        XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 #endif
 
@@ -11892,11 +11885,9 @@ EVP_TEST_END:
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (enc)
-        XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
 #ifdef HAVE_AES_DECRYPT
-    if (dec)
-        XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 #endif
 
@@ -12157,11 +12148,9 @@ EVP_TEST_END:
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (enc)
-        XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
 #ifdef HAVE_AES_DECRYPT
-    if (dec)
-        XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 #endif
 
@@ -12372,11 +12361,9 @@ EVP_TEST_END:
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (enc)
-        XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
 #ifdef HAVE_AES_DECRYPT
-    if (dec)
-        XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 #endif
 
@@ -13212,16 +13199,14 @@ static wc_test_ret_t aes_xts_128_test(void)
     #if !defined(BENCH_EMBEDDED) && !defined(HAVE_CAVIUM) && \
         !defined(WOLFSSL_AFALG) && defined(WOLFSSL_SMALL_STACK) && \
         !defined(WOLFSSL_NO_MALLOC)
-    if (large_input)
-        XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #endif
 
     if (aes_inited)
         wc_AesXtsFree(aes);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (aes)
-        XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -13914,16 +13899,14 @@ static wc_test_ret_t aes_xts_192_test(void)
     #if !defined(BENCH_EMBEDDED) && !defined(HAVE_CAVIUM) && \
         !defined(WOLFSSL_AFALG) && defined(WOLFSSL_SMALL_STACK) && \
         !defined(WOLFSSL_NO_MALLOC)
-    if (large_input)
-        XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #endif
 
     if (aes_inited)
         wc_AesXtsFree(aes);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (aes)
-        XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -14371,16 +14354,14 @@ static wc_test_ret_t aes_xts_256_test(void)
     #if !defined(BENCH_EMBEDDED) && !defined(HAVE_CAVIUM) && \
         !defined(WOLFSSL_AFALG) && defined(WOLFSSL_SMALL_STACK) && \
         !defined(WOLFSSL_NO_MALLOC)
-    if (large_input)
-        XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #endif
 
     if (aes_inited)
         wc_AesXtsFree(aes);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (aes)
-        XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -14684,8 +14665,7 @@ out:
         wc_AesXtsFree(aes);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (aes)
-        XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -14794,8 +14774,7 @@ static wc_test_ret_t aes_xts_args_test(void)
         wc_AesXtsFree(aes);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (aes)
-        XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(aes, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -15965,8 +15944,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aes_test(void)
 
         if ((bigCipher == NULL) ||
             (bigPlain == NULL)) {
-            if (bigCipher != NULL)
-                XFREE(bigCipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+            XFREE(bigCipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
         }
 #else
@@ -17752,20 +17730,15 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t aesgcm_test(void)
 
 #if !defined(BENCH_EMBEDDED) && !defined(HAVE_CAVIUM) && \
     !defined(WOLFSSL_NO_MALLOC)
-    if (large_input)
-        XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (large_output)
-        XFREE(large_output, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (large_outdec)
-        XFREE(large_outdec, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_output, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(large_outdec, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (enc)
-        XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
-    if (dec)
-        XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(enc, HEAP_HINT, DYNAMIC_TYPE_AES);
+    XFREE(dec, HEAP_HINT, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -19586,12 +19559,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t XChaCha_test(void) {
   out:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (chacha)
-        XFREE(chacha, HEAP_HINT, DYNAMIC_TYPE_CIPHER);
-    if (buf1)
-        XFREE(buf1, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (buf2)
-        XFREE(buf2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(chacha, HEAP_HINT, DYNAMIC_TYPE_CIPHER);
+    XFREE(buf1, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(buf2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -19682,10 +19652,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t XChaCha20Poly1305_test(void) {
   out:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (buf1 != NULL)
-        XFREE(buf1, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (buf2 != NULL)
-        XFREE(buf2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(buf1, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(buf2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -20220,8 +20188,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
                 b = c;
         }
         #endif
-        if (b)
-            XFREE(b, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        XFREE(b, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
         if (b == NULL
         #ifndef WOLFSSL_NO_REALLOC
                 || c == NULL
@@ -20378,7 +20345,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
 #endif
     static const char* certBadOid =
             CERT_ROOT "test" CERT_PATH_SEP "cert-bad-oid.der";
-#ifndef WOLFSSL_NO_ASN_STRICT
+#if defined(WOLFSSL_ASN_TEMPLATE) && !defined(WOLFSSL_NO_ASN_STRICT)
     static const char* certBadUtf8 =
             CERT_ROOT "test" CERT_PATH_SEP "cert-bad-utf8.der";
 #endif
@@ -20626,8 +20593,7 @@ static wc_test_ret_t cert_asn1_test(void)
     ret = 0;
 
 done:
-    if (badCert != NULL)
-        XFREE(badCert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(badCert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     return ret;
 }
 
@@ -20683,7 +20649,7 @@ static wc_test_ret_t cert_bad_asn1_test(void)
         /* Subject name OID: 55 04 f4. Last byte with top bit set invalid. */
         ret = cert_load_bad(certBadOid, tmp, ASN_PARSE_E);
     }
-#ifndef WOLFSSL_NO_ASN_STRICT
+#if defined(WOLFSSL_ASN_TEMPLATE) && !defined(WOLFSSL_NO_ASN_STRICT)
     if (ret == 0) {
         /* Issuer name UTF8STRING: df 52 4e 44. Top bit of second byte not set.
          */
@@ -22892,8 +22858,7 @@ exit_rsa:
         XFREE(caKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
 #ifdef WOLFSSL_TEST_CERT
-    if (decode != NULL)
-        XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 #else
     wc_FreeRsaKey(caKey);
@@ -23129,8 +23094,7 @@ exit_rsa:
         XFREE(caEccKeyPub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
 #ifdef WOLFSSL_TEST_CERT
-    if (decode != NULL)
-        XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 #else
     wc_FreeRsaKey(caKey);
@@ -23249,10 +23213,8 @@ exit_rsa:
 #endif
 
 #ifndef WOLFSSL_NO_MALLOC
-    if (der != NULL) {
-        XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        der = NULL;
-    }
+    XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    der = NULL;
 #endif
 
     return ret;
@@ -24234,8 +24196,7 @@ exit_rsa:
     }
     #endif
     #ifdef WOLFSSL_TEST_CERT
-    if (cert != NULL)
-        XFREE(cert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(cert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #endif
      XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
      XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -24610,8 +24571,7 @@ exit_gen_test:
         wc_FreeDhKey(smallKey);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (smallKey != NULL)
-        XFREE(smallKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(smallKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -24850,18 +24810,12 @@ done:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC) && \
     !defined(WC_NO_RNG)
-    if (priv)
-        XFREE(priv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (pub)
-        XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (priv2)
-        XFREE(priv2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (pub2)
-        XFREE(pub2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (agree)
-        XFREE(agree, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (agree2)
-        XFREE(agree2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(priv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(priv2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pub2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(agree, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(agree2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (key) {
         wc_FreeDhKey(key);
         XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -25284,20 +25238,13 @@ done:
             wc_FreeDhKey(key2);
         XFREE(key2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
-    if (tmp)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (priv)
-        XFREE(priv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (pub)
-        XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (priv2)
-        XFREE(priv2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (pub2)
-        XFREE(pub2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (agree)
-        XFREE(agree, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (agree2)
-        XFREE(agree2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(priv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(priv2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pub2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(agree, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(agree2, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #else
     if (keyInit)
         wc_FreeDhKey(key);
@@ -25474,13 +25421,11 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dsa_test(void)
   out:
 
 #ifdef WOLFSSL_KEY_GEN
-    if (der)
-        XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (tmp)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (key) {
         if (key_inited)
             wc_FreeDsaKey(key);
@@ -25674,14 +25619,10 @@ static wc_test_ret_t srp_test_digest(SrpType dgstType)
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
   out:
 
-    if (cli)
-        XFREE(cli, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (srv)
-        XFREE(srv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (clientProof)
-        XFREE(clientProof, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (serverProof)
-        XFREE(serverProof, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(cli, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(srv, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(clientProof, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(serverProof, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return r;
@@ -28445,12 +28386,9 @@ openssl_pkey1_test_done:
     }
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (cipher != NULL)
-        XFREE(cipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (plain != NULL)
-        XFREE(plain, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(cipher, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(plain, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 #endif
 
@@ -30369,8 +30307,7 @@ static wc_test_ret_t hpke_test_single(Hpke* hpke)
         wc_HpkeFreeKey(hpke, hpke->kem, receiverKey, hpke->heap);
 
 #ifdef WOLFSSL_SMALL_STACK
-    if (pubKey != NULL)
-        XFREE(pubKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pubKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     if (rngRet == 0)
@@ -31788,16 +31725,11 @@ done:
         mp_free(expS);
     }
 #ifdef WOLFSSL_SMALL_STACK
-    if (key != NULL)
-        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (r != NULL)
-        XFREE(r, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (s != NULL)
-        XFREE(s, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (expR != NULL)
-        XFREE(expR, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (expS != NULL)
-        XFREE(expS, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(r, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(s, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(expR, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(expS, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -31944,16 +31876,11 @@ done:
         mp_free(expS);
     }
 #ifdef WOLFSSL_SMALL_STACK
-    if (key != NULL)
-        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (r != NULL)
-        XFREE(r, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (s != NULL)
-        XFREE(s, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (expR != NULL)
-        XFREE(expR, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (expS != NULL)
-        XFREE(expS, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(r, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(s, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(expR, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(expS, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -32452,13 +32379,10 @@ done:
         XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
 #if defined(HAVE_ECC_DHE) && defined(HAVE_ECC_KEY_EXPORT)
-    if (pub != NULL)
-        XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
-    if (exportBuf != NULL)
-        XFREE(exportBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(exportBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #else
     wc_ecc_free(key);
 #endif
@@ -32537,8 +32461,7 @@ static wc_test_ret_t ecc_test_key_decode(WC_RNG* rng, int keySize)
         wc_ecc_free(eccKey);
         XFREE(eccKey, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
-    if (tmpBuf != NULL)
-        XFREE(tmpBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmpBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #else
     wc_ecc_free(eccKey);
 #endif
@@ -32642,8 +32565,7 @@ static wc_test_ret_t ecc_test_key_gen(WC_RNG* rng, int keySize)
 done:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (der != NULL)
-        XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(der, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (userA != NULL) {
         wc_ecc_free(userA);
         XFREE(userA, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -33877,9 +33799,7 @@ done:
 
     wc_ecc_free(key);
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (key != NULL) {
-        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    }
+    XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -35000,11 +34920,9 @@ exit:
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (myCert != NULL)
-        XFREE(myCert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(myCert, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #ifdef WOLFSSL_TEST_CERT
-    if (decode != NULL)
-        XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decode, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
     if (caEccKey != NULL) {
         wc_ecc_free(caEccKey);
@@ -35478,9 +35396,7 @@ static wc_test_ret_t ecc_test_nonblock_ecdsa(int curveId, word32 curveSz,
                   sigSz, curveSz, curveId);
     }
 
-    if (sig != NULL) {
-        XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_SIGNATURE);
-    }
+    XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_SIGNATURE);
 
     return ret;
 }
@@ -36199,13 +36115,9 @@ static wc_test_ret_t ecc_encrypt_kat(WC_RNG *rng)
         wc_ecc_free(userA);
 #endif
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (userB != NULL) {
-        XFREE(userB, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    }
+    XFREE(userB, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #ifdef WOLFSSL_ECIES_OLD
-    if (userA != NULL) {
-        XFREE(userA, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    }
+    XFREE(userA, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 #endif
 
@@ -37481,8 +37393,7 @@ static wc_test_ret_t ed25519_test_cert(void)
 #endif /* HAVE_ED25519_VERIFY */
 
 done:
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #ifdef HAVE_ED25519_VERIFY
     wc_ed25519_free(pubKey);
 #endif /* HAVE_ED25519_VERIFY */
@@ -37555,8 +37466,7 @@ static wc_test_ret_t ed25519_test_make_cert(void)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
 
 done:
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     wc_ed25519_free(privKey);
     wc_FreeRng(&rng);
     return ret;
@@ -38997,8 +38907,7 @@ static wc_test_ret_t ed448_test_cert(void)
 #endif /* HAVE_ED448_VERIFY */
 
 done:
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #ifdef HAVE_ED448_VERIFY
     wc_ed448_free(pubKey);
 #endif /* HAVE_ED448_VERIFY */
@@ -39071,8 +38980,7 @@ static wc_test_ret_t ed448_test_make_cert(void)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
 
 done:
-    if (tmp != NULL)
-        XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(tmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     wc_ed448_free(privKey);
     wc_FreeRng(&rng);
     return ret;
@@ -44983,20 +44891,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t xmss_test(void)
     }
 
     /* Cleanup everything. */
-    if (sig != NULL) {
-        XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        sig = NULL;
-    }
+    XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    sig = NULL;
 
-    if (sk != NULL) {
-        XFREE(sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        sk = NULL;
-    }
+    XFREE(sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    sk = NULL;
 
-    if (old_sk != NULL) {
-        XFREE(old_sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        old_sk = NULL;
-    }
+    XFREE(old_sk, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    old_sk = NULL;
 
     wc_XmssKey_Free(&signingKey);
     wc_FreeRng(&rng);
@@ -47641,10 +47543,8 @@ static wc_test_ret_t sakke_kat_derive_test(SakkeKey* key, ecc_point* rsk)
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
     /* Dispose of tables */
-    if (iTable != NULL)
-        XFREE(iTable, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (table != NULL)
-        XFREE(table, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(iTable, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(table, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     /* Make sure the key public key is exportable - convert to Montgomery form
      * in Validation.
@@ -48139,8 +48039,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sakke_test(void)
     }
     if (rng_inited)
         wc_FreeRng(&rng);
-    if (key != NULL)
-        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (pub != NULL) {
         wc_FreeSakkeKey(pub);
         XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
@@ -48411,8 +48310,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t cmac_test(void)
   out:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (cmac)
-        XFREE(cmac, HEAP_HINT, DYNAMIC_TYPE_CMAC);
+    XFREE(cmac, HEAP_HINT, DYNAMIC_TYPE_CMAC);
 #endif
 
     return ret;
@@ -49067,8 +48965,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t compress_test(void)
     ret = 0; /* success */
 
 exit:
-    if (c) XFREE(c, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (d) XFREE(d, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(c, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(d, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -50111,12 +50009,9 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
     (void)rsaPrivKeySz;
 
   out:
-    if (testVectors)
-        XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (enveloped)
-        XFREE(enveloped, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (decoded)
-        XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(enveloped, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -50819,12 +50714,9 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
 #endif
 
   out:
-    if (testVectors)
-        XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (enveloped)
-        XFREE(enveloped, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (decoded)
-        XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(enveloped, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -51287,12 +51179,10 @@ static wc_test_ret_t verifyBundle(byte* derBuf, word32 derSz, int keyHint)
 
   out:
 
-    if (decoded)
-        XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     if (pkcs7)
         wc_PKCS7_Free(pkcs7);
-    if (sid)
-        XFREE(sid, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(sid, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -51349,8 +51239,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7callback_test(byte* cert, word32 cert
     ret = 0;
 
   out:
-    if (derBuf)
-        XFREE(derBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(derBuf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -51619,10 +51508,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7encrypted_test(void)
     }
 
   out:
-    if (encrypted)
-        XFREE(encrypted, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (decoded)
-        XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(encrypted, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
     return ret;
 }
@@ -51745,10 +51632,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7compressed_test(void)
   out:
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    if (compressed)
-        XFREE(compressed, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (decoded)
-        XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(compressed, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(decoded, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
 
     return ret;
@@ -52165,11 +52050,7 @@ static wc_test_ret_t pkcs7signed_run_vectors(
         #endif
 
             for (j = 0, k = 2; j < (int)sizeof(digest); j++, k += 2) {
-                #if defined(WOLF_C89)
-                    XSPRINTF((char*)&transId[k], "%02x", digest[j]);
-                #else
-                    (void)XSNPRINTF((char*)&transId[k], 3, "%02x", digest[j]);
-                #endif
+                (void)XSNPRINTF((char*)&transId[k], 3, "%02x", digest[j]);
             }
         }
 
@@ -52275,10 +52156,8 @@ static wc_test_ret_t pkcs7signed_run_vectors(
 
     if (pkcs7 != NULL)
         wc_PKCS7_Free(pkcs7);
-    if (out != NULL)
-        XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    if (testVectors != NULL)
-        XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     wc_FreeRng(&rng);
 
     if (ret > 0)
@@ -52809,15 +52688,12 @@ static wc_test_ret_t pkcs7signed_run_SingleShotVectors(
 
     if (pkcs7 != NULL)
         wc_PKCS7_Free(pkcs7);
-    if (out != NULL)
-        XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #if defined(HAVE_LIBZ) && !defined(NO_PKCS7_COMPRESSED_DATA) && \
         !defined(NO_PKCS7_ENCRYPTED_DATA)
-    if (encryptedTmp != NULL)
-        XFREE(encryptedTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(encryptedTmp, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #endif
-    if (testVectors != NULL)
-        XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(testVectors, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     wc_FreeRng(&rng);
 
     if (ret > 0)
@@ -56320,9 +56196,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t prime_test(void)
 #endif /* WOLFSSL_PUBLIC_MP */
 
 
-#if defined(ASN_BER_TO_DER) && \
-    (defined(WOLFSSL_TEST_CERT) || defined(OPENSSL_EXTRA) || \
-     defined(OPENSSL_EXTRA_X509_SMALL))
+#ifdef ASN_BER_TO_DER
 /* wc_BerToDer is only public facing in the case of test cert or opensslextra */
 typedef struct berDerTestData {
     const byte *in;
@@ -56438,7 +56312,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t berder_test(void)
 
     return 0;
 }
-#endif
+#endif /* ASN_BER_TO_DER */
 
 #ifdef DEBUG_WOLFSSL
 static THREAD_LS_T int log_cnt = 0;
@@ -57263,12 +57137,8 @@ exit_onlycb:
         wc_ecc_free(key);
         XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     }
-    if (pub != NULL) {
-        XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    }
-    if (out != NULL) {
-        XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    }
+    XFREE(pub, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(out, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     #ifdef OPENSSL_EXTRA
     if (check) {
         FREE(check, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);

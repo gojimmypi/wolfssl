@@ -65,6 +65,11 @@ if ! [ "$CP_CMD" = "cp " ]; then
     fi
 fi
 
+if [ "$ROOT_DIR" = "" ]; then
+    echo "ERROR: ROOT_DIR cannot be blank"
+    exit 1
+fi
+
 # Check environment
 if [ -n "$WSL_DISTRO_NAME" ]; then
     # we found a non-blank WSL environment distro name
@@ -83,6 +88,11 @@ if [ $# -gt 0 ]; then
     THIS_OPERATION="$1"
     if [ "$THIS_OPERATION" = "INSTALL" ]; then
         THIS_INSTALL_DIR=$2
+
+        if [ "$THIS_INSTALL_DIR" = "/" ]; then
+            echo "ERROR: THIS_INSTALL_DIR cannot be /"
+            exit 1
+        fi
 
         echo "Install is active."
 
@@ -312,8 +322,11 @@ if [ "$THIS_OPERATION" = "INSTALL" ]; then
     if [ "$THIS_INSTALL_IS_GITHUB" = "true" ]; then
         echo "Installing to GitHub directory: $THIS_INSTALL_DIR"
         cp -r ."$ROOT_DIR"/* "$THIS_INSTALL_DIR" || exit 1
+        echo "Removing workspace library directory: .$ROOT_DIR"
+        rm -rf ".$ROOT_DIR"
     else
-        echo "Install:"
+
+        echo "Installing to local directory:"
         if [ "$THIS_INSTALL_DIR" = "" ]; then
             echo "mv .$ROOT_DIR $ARDUINO_ROOT"
             mv  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1

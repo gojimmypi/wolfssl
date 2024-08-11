@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 
-# Kconfig File Version 5.7.0.001 for wolfssl_test
+# Kconfig File Version 5.7.0.002 for wolfssl_test
 
 # Kconfig Format Rules
 #
@@ -213,7 +213,8 @@ menu "wolfSSL"
 
             config WOLFSSL_CERTIFICATE_BUNDLE
                 bool "Enable trusted root certificate bundle"
-                default y
+                default y if TLS_STACK_WOLFSSL
+                default n
                 help
                     Enable support for large number of default root certificates
 

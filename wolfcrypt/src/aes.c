@@ -8308,7 +8308,10 @@ int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
     int ret;
 
     /* argument checks */
-    if (aes == NULL || authTagSz > AES_BLOCK_SIZE || ivSz == 0) {
+    if (aes == NULL || authTagSz > AES_BLOCK_SIZE || ivSz == 0 ||
+        ((authTagSz > 0) && (authTag == NULL)) ||
+        ((authInSz > 0) && (authIn == NULL)))
+    {
         return BAD_FUNC_ARG;
     }
 
@@ -8437,8 +8440,8 @@ int  wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
      * in and out are don't cares, as this is is the GMAC case. */
     if (aes == NULL || iv == NULL || (sz != 0 && (in == NULL || out == NULL)) ||
         authTag == NULL || authTagSz > AES_BLOCK_SIZE || authTagSz == 0 ||
-        ivSz == 0) {
-
+        ivSz == 0 || ((authInSz > 0) && (authIn == NULL)))
+    {
         return BAD_FUNC_ARG;
     }
 
@@ -11304,10 +11307,8 @@ void wc_AesFree(Aes* aes)
 #endif
 #if defined(WOLFSSL_AESGCM_STREAM) && defined(WOLFSSL_SMALL_STACK) && \
     !defined(WOLFSSL_AESNI)
-    if (aes->streamData != NULL) {
-        XFREE(aes->streamData, aes->heap, DYNAMIC_TYPE_AES);
-        aes->streamData = NULL;
-    }
+    XFREE(aes->streamData, aes->heap, DYNAMIC_TYPE_AES);
+    aes->streamData = NULL;
 #endif
 
 #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_CRYPT)
@@ -12167,8 +12168,7 @@ int wc_AesKeyWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
 
   out:
 #ifdef WOLFSSL_SMALL_STACK
-    if (aes != NULL)
-        XFREE(aes, NULL, DYNAMIC_TYPE_AES);
+    XFREE(aes, NULL, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -12286,8 +12286,7 @@ int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
 
   out:
 #ifdef WOLFSSL_SMALL_STACK
-    if (aes)
-        XFREE(aes, NULL, DYNAMIC_TYPE_AES);
+    XFREE(aes, NULL, DYNAMIC_TYPE_AES);
 #endif
 
     return ret;
@@ -13693,9 +13692,7 @@ static WARN_UNUSED_RESULT int S2V(
                 }
             }
         #ifdef WOLFSSL_SMALL_STACK
-            if (cmac != NULL) {
-                XFREE(cmac, NULL, DYNAMIC_TYPE_CMAC);
-            }
+            XFREE(cmac, NULL, DYNAMIC_TYPE_CMAC);
         #elif defined(WOLFSSL_CHECK_MEM_ZERO)
             wc_MemZero_Check(cmac, sizeof(Cmac));
         #endif

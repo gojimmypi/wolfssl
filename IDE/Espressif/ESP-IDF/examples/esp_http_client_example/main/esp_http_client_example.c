@@ -31,6 +31,14 @@
 
 #include "esp_http_client.h"
 
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
+    #include <wolfssl/wolfcrypt/settings.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
+    /* TODO: conditional bundle */
+    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
+#endif
+
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 static const char *TAG = "HTTP_CLIENT";
@@ -423,7 +431,7 @@ static void http_auth_digest_sha256(void)
 }
 #endif
 
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 static void https_with_url(void)
 {
     esp_http_client_config_t config = {
@@ -443,7 +451,7 @@ static void https_with_url(void)
     }
     esp_http_client_cleanup(client);
 }
-#endif // CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#endif /* CONFIG_[PROVIDER]_CERTIFICATE_BUNDLE */
 
 static void https_with_hostname_path(void)
 {
@@ -931,6 +939,18 @@ static void http_test_task(void *pvParameters)
 #ifdef NEW_DEMO_CODE
     new_demo();
 #endif
+
+#ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
+    ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
+#endif
+
+#define SINGLE_TEST
+#ifdef SINGLE_TEST
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    https_with_url();
+#endif
+
+#else
     http_rest_with_url();
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
@@ -945,7 +965,7 @@ static void http_test_task(void *pvParameters)
     http_relative_redirect();
     http_absolute_redirect();
     http_absolute_redirect_manual();
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
     https_with_hostname_path();
@@ -955,23 +975,23 @@ static void http_test_task(void *pvParameters)
     https_async();
     https_with_invalid_url();
     http_native_request();
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     http_partial_download();
 #endif
 
+#endif
     ESP_LOGI(TAG, "Finish http example");
 #if !CONFIG_IDF_TARGET_LINUX
     vTaskDelete(NULL);
 #endif
 }
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
 void app_main(void)
 {
 #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(5, 2, 2))
     ESP_LOGI(TAG, "Found esp-IDF v5.2.2");
 #else
-    ESP_LOGW(TAG,"This example is intended for ESP-IDF version 5.2.2")
+    ESP_LOGW(TAG, "This example is intended for ESP-IDF version 5.2.2");
 #endif
 
     esp_err_t ret = nvs_flash_init();
@@ -998,7 +1018,7 @@ void app_main(void)
     // Set your desired time here
     timeinfo.tm_year = 2024 - 1900; // Year - 1900
     timeinfo.tm_mon = 7 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 19;          // Day of the month
+    timeinfo.tm_mday = 30;          // Day of the month
     timeinfo.tm_hour = 12;
     timeinfo.tm_min = 0;
     timeinfo.tm_sec = 0;
@@ -1009,9 +1029,10 @@ void app_main(void)
     settimeofday(&now, NULL);
 
     // date -d @1073455184
-    time_t ltime;
-    ltime = wc_Time(0);
-    ESP_LOGI(TAG, "wc_Time= %llu", ltime);
+    // TODO this does not work when mbedTLS enabled?
+    // time_t ltime;
+    // ltime = wc_Time(0);
+    // ESP_LOGI(TAG, "wc_Time= %llu", ltime);
 
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
