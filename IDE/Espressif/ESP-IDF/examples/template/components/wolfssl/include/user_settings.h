@@ -79,8 +79,72 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-/* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
-/* #define USE_WOLFSSL_ESP_SDK_WIFI */
+/* Test various user_settings between applications by selecting example apps
+ * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
+
+/* wolfSSL Examples */
+#ifdef CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TEST
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_test */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+    #define TEST_ESPIDF_ALL_WOLFSSL
+
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfSSH Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_echoserver */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP32/ESP32-SSH-Server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfMQTT Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/AWS_IoT_MQTT */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfTPM Examples */
+#elif CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF
+    /* See https://github.com/wolfSSL/wolfTPM/tree/master/IDE/Espressif */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* Apple HomeKit Examples */
+#elif CONFIG_WOLFSSL_APPLE_HOMEKIT
+    /* See https://github.com/AchimPieters/esp32-homekit-demo */
+
+/* no example selected */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_NONE
+    /* We'll assume the app needs to use wolfSSL sdk lib function */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* Unknown config */
+#else
+    /* the code is older or does not have application name defined. */
+#endif /* Example wolfSSL Configuration app settings */
+
 
 #if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
     /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
@@ -208,8 +272,7 @@
 #define RSA_LOW_MEM
 
 /* Uncommon settings for testing only */
-#define TEST_ESPIDF_ALL_WOLFSSL
-#ifdef  TEST_ESPIDF_ALL_WOLFSSL
+#ifdef TEST_ESPIDF_ALL_WOLFSSL
     #define WOLFSSL_MD2
     #define HAVE_BLAKE2
     #define HAVE_BLAKE2B
@@ -839,6 +902,12 @@ Turn on timer debugging (used when CPU cycles not available)
  * There are various certificate examples in this header file:
  * https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/certs_test.h
  *
+ * To use the sample certificates in code (not recommended for production!):
+ *
+ *    #if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024)
+ *        #include <wolfssl/certs_test.h>
+ *    #endif
+ *
  * To use the sets of macros below, define *one* of these:
  *
  *    USE_CERT_BUFFERS_1024  - ECC 1024 bit encoded ASN1
@@ -963,7 +1032,6 @@ Turn on timer debugging (used when CPU cycles not available)
         #error "Must define USE_CERT_BUFFERS_2048 or USE_CERT_BUFFERS_1024"
     #endif
 #endif /* Conditional key and cert constant names */
-
 
 /******************************************************************************
 ** Sanity Checks

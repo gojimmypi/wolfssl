@@ -46,6 +46,43 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+/* wolfSSL Examples */
+#ifdef CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TEST
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_test */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
+
+/* wolfSSH Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_echoserver */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP32/ESP32-SSH-Server */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
+
+/* wolfMQTT Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/AWS_IoT_MQTT */
+
+/* wolfTPM Examples */
+#elif CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF
+
+/* no example selected */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_NONE
+#else
+    /* the code is older or does not have application name defined */
+#endif
+
 /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
 /* #define USE_WOLFSSL_ESP_SDK_WIFI */
 
