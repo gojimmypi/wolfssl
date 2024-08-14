@@ -1,14 +1,18 @@
 name: Self-Hosted Runner Test
 
+# START OF COMMON SECTION
 on:
   push:
     branches:
       - ED25519_SHA2_fix
+# END OF COMMON SECTION
 
 jobs:
   test:
+    # Don't run this on downstream forks:
     if: github.repository_owner == 'gojimmypi'
     runs-on: self-hosted
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
