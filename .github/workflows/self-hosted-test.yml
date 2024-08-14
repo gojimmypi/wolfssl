@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           echo "apt-get install shellcheck"
-          ls /mnt/c/SysGCC
+          ls /mnt/c/github
 
       - name: Run tests
         run: |
