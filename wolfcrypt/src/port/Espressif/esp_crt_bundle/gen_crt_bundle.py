@@ -130,6 +130,7 @@ class CertificateBundle:
             len_data = struct.pack('>H', cert_der_len)
 
             bundle += len_data
+            # bundle += sub_name_der reminder mbedTLS stuff the name here, then only the public key cert NOT the entire cert after:
             bundle += cert_der
 
         return bundle

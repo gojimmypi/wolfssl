@@ -41,8 +41,14 @@
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 
 #define X509_MAX_SUBJECT_LEN 255
-#define BUNDLE_HEADER_OFFSET 2
-#define CRT_HEADER_OFFSET 4
+
+#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
+    #define BUNDLE_HEADER_OFFSET 2
+    #define CRT_HEADER_OFFSET 4
+#else
+    #define BUNDLE_HEADER_OFFSET 2
+    #define CRT_HEADER_OFFSET 2
+#endif
 
 /* A "Certificate Bundle" is this array of x509 CA certs the client trusts: */
 extern const uint8_t x509_crt_imported_bundle_bin_start[]
@@ -135,8 +141,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     }
 
     if (ret == WOLFSSL_SUCCESS) {
-        wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert),
-                                  subject, sizeof(subject));
+
         ESP_LOGI(TAG, "Certificate subject: %s", subject);
         byte* subjectRaw = NULL;
         int length = wc_GetSubjectRaw(&subjectRaw, cert);
@@ -161,11 +166,44 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         /* Look for the certificate using binary search on subject name */
         while (start <= end) {
+#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
-
             int cmp_res =  memcmp(subject, crt_name, name_len );
+#else
+            WOLFSSL_X509* cert = NULL;
+            WOLFSSL_X509_NAME* subject = NULL;
+            char subjectName[256];
+            int derCertLength = 0;
+            const unsigned char* p = s_crt_bundle.crts[0] + 2;
+            cert = wolfSSL_d2i_X509(NULL, &p, derCertLength);
+            if (cert == NULL) {
+                printf("Error loading DER certificate.\n");
+            }
+            subject = wolfSSL_X509_get_subject_name(cert);
+            if (subject == NULL) {
+                printf("Error getting subject name.\n");
+                wolfSSL_X509_free(cert);
+                return -1;
+            }
+            if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+                printf("Error converting subject name to string.\n");
+                wolfSSL_X509_free(cert);
+                return -1;
+            }
+
+            printf("Subject Name: %s\n", subjectName);
+            // Free the certificate
+            wolfSSL_X509_free(cert);
+
+            byte* subjectRaw = NULL;
+            int length = wc_GetSubjectRaw(&subjectRaw, (Cert*)s_crt_bundle.crts[middle]);
+            ESP_LOGI(TAG, "String: %.*s", length, subjectRaw);
+            /* no name! */
+            int cmp_res = 1;
+#endif
+
             if (cmp_res == 0) {
                 ESP_LOGW(TAG, "crt found %s", crt_name);
                 crt_found = true;
@@ -349,7 +387,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     WOLFSSL_ENTER(esp_crt_bundle_init);
 
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
-        ESP_LOGE(TAG, "Invalid certificate bundle");
+        ESP_LOGE(TAG, "Invalid certificate bundle size");
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -374,23 +412,32 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     }
 
     /* This is the maximum region that is allowed to access */
+    ESP_LOGV(TAG, "Bundle Start 0x%x", (intptr_t)x509_bundle);
+    ESP_LOGV(TAG, "Bundle Size  %d", bundle_size);
     bundle_end = x509_bundle + bundle_size;
+    ESP_LOGV(TAG, "Bundle End   0x%x", (intptr_t)bundle_end);
     cur_crt = x509_bundle + BUNDLE_HEADER_OFFSET;
 
     for (i = 0; i < num_certs; i++) {
+        ESP_LOGV(TAG, "Init Cert %d", i);
         crts[i] = cur_crt;
         if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
-            ESP_LOGE(TAG, "Invalid certificate bundle");
+            ESP_LOGE(TAG, "Invalid certificate bundle current offset");
             free(crts);
             return ESP_ERR_INVALID_ARG;
         }
+#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
         size_t name_len = cur_crt[0] << 8 | cur_crt[1];
         size_t key_len = cur_crt[2] << 8 | cur_crt[3];
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
+#else
+        size_t key_len = cur_crt[0] << 8 | cur_crt[1];
+        cur_crt = cur_crt + CRT_HEADER_OFFSET + key_len;
+#endif
     }
 
     if (cur_crt > bundle_end) {
-        ESP_LOGE(TAG, "Invalid certificate bundle");
+        ESP_LOGE(TAG, "Invalid certificate bundle after end");
         free(crts);
         return ESP_ERR_INVALID_ARG;
     }
@@ -414,6 +461,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
      * then use the bundle embedded in the binary */
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGI(TAG, "No bundle set by user; using the embedded binary.");
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_bin_start 0x%x", (intptr_t)x509_crt_imported_bundle_bin_start);
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_bin_end 0x%x", (intptr_t)x509_crt_imported_bundle_bin_end);
         ret = esp_crt_bundle_init(x509_crt_imported_bundle_bin_start,
                                   (x509_crt_imported_bundle_bin_end
                                  - x509_crt_imported_bundle_bin_start)
