@@ -68,6 +68,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wpa_supplicant", "wpa_suppl
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\README.md = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\wpa_supplicant\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-bundles", "esp-tls-bundles", "{97019E62-2BE4-494B-B734-520892B2719E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

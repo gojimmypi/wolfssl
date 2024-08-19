@@ -755,6 +755,27 @@ else()
 
     if(WOLFSSL_ROOT)
 #        wolfssl_init_cert_bundle()
+
+        # Only register the component if we found wolfSSL source.
+        # This is important to allow Cmake to finish to completion, otherwise the UI
+        # may not be able to display the Kconfig settings to fix a bad or missing source.
+        idf_component_register(
+                                SRC_DIRS "${COMPONENT_SRCDIRS}"
+                                INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
+                                REQUIRES "${COMPONENT_REQUIRES}"
+                                EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
+                                PRIV_REQUIRES
+                                  "${THIS_INCLUDE_TIMER}"
+                                  "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
+                               )
+    else()
+        # Register the component simply to allow CMake to complete, but there's no wolfSSL source.
+        # Expect many other errors, but the project should at least be loadable and UI can edit Kconfig settings.
+        idf_component_register()
+        message(STATUS "Warning: wolfSSL component not registered as no source code found (WOLFSSL_ROOT is blank)")
+    endif()
+
+#        wolfssl_init_cert_bundle()
 # function(WOLFSSL_INIT_CERT_BUNDLE)
 if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
     # reminder: we need a value for wolfSSL root first!
@@ -764,7 +785,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
     set(WOLFSSL_ESP_CRT_BUNDLE_DIR ${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle)
     message(STATUS "WOLFSSL_ESP_CRT_BUNDLE_DIR=${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
     if(EXISTS "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
-        set(bundle_name "x509_crt_bundle")
+        set(bundle_name "x509_crt_bundle_wolfssl")
 
         # For now the certs are in the same directory
         set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
@@ -806,10 +827,10 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
         add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
 
         # the wolfSSL crtificate bundle is baked into wolfSSL
-#        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle) # TODO why is COMPONENT_LIB empty here?
+        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle) # TODO why is COMPONENT_LIB empty here?
 #        add_dependencies(__idf_wolfssl custom_wolfssl_bundle)
 
-#        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY) # TODO why is COMPONENT_LIB empty here?
+        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY) # TODO why is COMPONENT_LIB empty here?
 #        target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
         set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
             APPEND PROPERTY ADDITIONAL_CLEAN_FILES
@@ -819,24 +840,6 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
     endif()
 endif()
 # endfunction() # WOLFSSL_INIT_CERT_BUNDLE
-        # Only register the component if we found wolfSSL source.
-        # This is important to allow Cmake to finish to completion, otherwise the UI
-        # may not be able to display the Kconfig settings to fix a bad or missing source.
-        idf_component_register(
-                                SRC_DIRS "${COMPONENT_SRCDIRS}"
-                                INCLUDE_DIRS "${COMPONENT_ADD_INCLUDEDIRS}"
-                                REQUIRES "${COMPONENT_REQUIRES}"
-                                EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
-                                PRIV_REQUIRES
-                                  "${THIS_INCLUDE_TIMER}"
-                                  "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
-                               )
-    else()
-        # Register the component simply to allow CMake to complete, but there's no wolfSSL source.
-        # Expect many other errors, but the project should at least be loadable and UI can edit Kconfig settings.
-        idf_component_register()
-        message(STATUS "Warning: wolfSSL component not registered as no source code found (WOLFSSL_ROOT is blank)")
-    endif()
 
     # Some optional diagnostics. Verbose ones are truncated.
     if (VERBOSE_COMPONENT_MESSAGES)

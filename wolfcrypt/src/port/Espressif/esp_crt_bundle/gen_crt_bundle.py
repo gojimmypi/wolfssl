@@ -31,7 +31,7 @@ except ImportError:
           'setting up the required packages.')
     raise
 
-ca_bundle_bin_file = 'x509_crt_bundle'
+ca_bundle_bin_file = 'x509_crt_bundle_wolfssl'
 
 quiet = False
 

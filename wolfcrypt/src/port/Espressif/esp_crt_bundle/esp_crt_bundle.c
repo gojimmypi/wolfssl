@@ -46,10 +46,10 @@
 
 /* A "Certificate Bundle" is this array of x509 CA certs the client trusts: */
 extern const uint8_t x509_crt_imported_bundle_bin_start[]
-                     asm("_binary_x509_crt_bundle_start");
+                     asm("_binary_x509_crt_bundle_wolfssl_start");
 
 extern const uint8_t x509_crt_imported_bundle_bin_end[]
-                     asm("_binary_x509_crt_bundle_end");
+                     asm("_binary_x509_crt_bundle_wolfssl_end");
 
 static const char *TAG = "esp_crt_bundle-wolfssl";
 
@@ -63,7 +63,7 @@ static const char *TAG = "esp_crt_bundle-wolfssl";
 typedef struct crt_bundle_t {
     const uint8_t **crts;
     uint16_t num_certs;
-    size_t x509_crt_bundle_len;
+    size_t x509_crt_bundle_wolfssl_len;
 } crt_bundle_t;
 
 static crt_bundle_t s_crt_bundle;
@@ -420,7 +420,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
                                  );
     }
     else {
-        ESP_LOGI(TAG, "Cert bundle set by user.");
+        ESP_LOGI(TAG, "Cert bundle set by user at 0x%x.",
+                       (intptr_t)s_crt_bundle.crts);
     }
 
     if (ret != ESP_OK) {
