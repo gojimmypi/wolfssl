@@ -139,6 +139,9 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+#if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
+    ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
+#endif
 #ifdef ESP_SDK_MEM_LIB_VERSION
     sdk_init_meminfo();
 #endif
