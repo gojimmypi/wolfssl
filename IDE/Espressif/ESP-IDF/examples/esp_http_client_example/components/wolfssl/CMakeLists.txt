@@ -794,7 +794,8 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
         set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
 
         if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
-            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+#           list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem)
         elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
             list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
             list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
@@ -808,9 +809,11 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
 
         if(CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE)
             get_filename_component(custom_bundle_path
-            ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
+              ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
             list(APPEND crt_paths ${custom_bundle_path})
-
+            message(STATUS "Using a custom wolfSSL bundle path: ${custom_bundle_path}")
+        else()
+            message(STATUS "Not using a custom wolfSSL bundle path.")
         endif()
         list(APPEND args --input ${crt_paths} -q)
 
@@ -818,11 +821,16 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
             ${bundle_name}
             ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
+        message(STATUS "Setting up bundle generate: ${GENERATE_CERT_BUNDLEPY} ${args}")
+        message(STATUS "Depends on custom bundle path: ${custom_bundle_path}")
         # Generate bundle according to config
         add_custom_command(OUTPUT ${crt_bundle}
-            COMMAND ${GENERATE_CERT_BUNDLEPY} ${args}
+            COMMAND ${GENERATE_CERT_BUNDLEPY} ARGS ${args}
             DEPENDS ${custom_bundle_path}
             VERBATIM)
+
+        # Reminder the file is generated at build time, not cmake load time.
+        message(STATUS "wolfSSL Cert Bundle File to be greated at build time in: ${crt_bundle}")
 
         add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
 

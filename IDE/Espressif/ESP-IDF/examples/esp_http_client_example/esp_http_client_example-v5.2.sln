@@ -7,6 +7,8 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "esp_http_client_example-v5.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B449B-7A61-421F-93FA-AC2093BE0081}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem
+		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem
 		components\wolfssl\CMakeLists.txt = components\wolfssl\CMakeLists.txt
 		..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h = ..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h
 		..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\wolfssl\error-ssl.h
@@ -20,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		README.md = README.md
 		sdkconfig.defaults = sdkconfig.defaults
 		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
+		build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl = build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{31B96B47-9E33-4B81-A3AC-FAEC848C3811}"

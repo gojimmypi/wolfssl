@@ -5,8 +5,13 @@
 # Converts PEM and DER certificates to a custom bundle format which stores just the
 # subject name and public key to reduce space
 #
-# The bundle will have the format: number of certificates; crt 1 subject name length; crt 1 public key length;
-# crt 1 subject name; crt 1 public key; crt 2...
+# The bundle will have the format:
+# number of certificates;
+# crt 1 subject name length;
+# crt 1 public key length;
+# crt 1 subject name;
+# crt 1 public key;
+# crt 2...
 #
 # SPDX-FileCopyrightText: 2018-2022 Espressif Systems (Shanghai) CO LTD
 # SPDX-License-Identifier: Apache-2.0
@@ -118,7 +123,7 @@ class CertificateBundle:
 
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
-        self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
 
         bundle = struct.pack('>H', len(self.certificates))
 

@@ -173,27 +173,34 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             int cmp_res =  memcmp(subject, crt_name, name_len );
 #else
             WOLFSSL_X509* cert = NULL;
+            WOLFSSL_X509* x509 = NULL;
             WOLFSSL_X509_NAME* subject = NULL;
             char subjectName[256];
-            int derCertLength = 0;
-            const unsigned char* p = s_crt_bundle.crts[0] + 2;
-            cert = wolfSSL_d2i_X509(NULL, &p, derCertLength);
+            int derCertLength = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];;
+            const unsigned char* p = &(s_crt_bundle.crts[0]) + BUNDLE_HEADER_OFFSET;
+            const unsigned char* cert_data = (const unsigned char*)s_crt_bundle.crts[0] + BUNDLE_HEADER_OFFSET;
+
+            ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)&cert_data);
+            ESP_LOGI(TAG, "derCertLength = %d", derCertLength);
+// *((s_crt_bundle).crts)
+            const unsigned char* testval = (const unsigned char*)0x3f41af54;
+            cert = wolfSSL_d2i_X509(&x509,  &cert_data, derCertLength);
             if (cert == NULL) {
-                printf("Error loading DER certificate.\n");
+                ESP_LOGE(TAG, "Error loading DER certificate.");
             }
             subject = wolfSSL_X509_get_subject_name(cert);
             if (subject == NULL) {
-                printf("Error getting subject name.\n");
+                ESP_LOGE(TAG, "Error getting subject name.");
                 wolfSSL_X509_free(cert);
                 return -1;
             }
             if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
-                printf("Error converting subject name to string.\n");
+                ESP_LOGE(TAG, "Error converting subject name to string.");
                 wolfSSL_X509_free(cert);
                 return -1;
             }
 
-            printf("Subject Name: %s\n", subjectName);
+            ESP_LOGI(TAG, "Subject Name: %s", subjectName);
             // Free the certificate
             wolfSSL_X509_free(cert);
 
@@ -217,6 +224,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
 
         if (crt_found) {
+            // derCertLength
             size_t key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
             // TODO check sig: ret = esp_crt_check_signature(child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len, key_len);
         }
