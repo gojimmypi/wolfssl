@@ -60,6 +60,10 @@ struct wolfssl_ssl_config
     //void* p_vrfy; /* TODO: not used? */
 };
 
+/* TODO Move ESP-IDF ini here. Reminder: Name conflict.
+esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                     size_t bundle_size);
+ */
 
 /**
  * @brief      Attach and enable use of a bundle for certificate verification

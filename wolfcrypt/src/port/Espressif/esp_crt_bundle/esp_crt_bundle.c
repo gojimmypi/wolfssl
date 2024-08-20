@@ -169,8 +169,11 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         bool crt_found = false;
         int start = 0;
         int end = s_crt_bundle.num_certs - 1;
+#ifdef IS_PRESORTED
         int middle = (end - start) / 2;
-
+#else
+        int middle = 0;
+#endif
         /* Look for the certificate using binary search on subject name */
         while (start <= end) {
             ESP_LOGW(TAG, "Looking at CA #%d; Start = %d, end = %d", middle, start, end);
@@ -183,10 +186,14 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 #else
             int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
                                  s_crt_bundle.crts[middle][1];
-            const unsigned char* cert_data = (const unsigned char*)s_crt_bundle.crts[middle] + BUNDLE_HEADER_OFFSET;
+            intptr_t this_addr = 0;
+            this_addr = (intptr_t)s_crt_bundle.crts[middle];
+            ESP_LOGI(TAG, "This addr = 0x%x", this_addr);
 
-            ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)&cert_data);
-            ESP_LOGI(TAG, "derCertLength = %d", derCertLength);
+            const unsigned char* cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
+
+            ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)cert_data);
+            ESP_LOGI(TAG, "derCertLength    = %d", derCertLength);
 
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
@@ -228,6 +235,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
 #endif
 
+#ifdef IS_PRESORTED
+            /* If the list is presorted, we can use a binary search */
             if (cmp_res == 0) {
                 ESP_LOGW(TAG, "crt found %s", issuer->name );
                 crt_found = true;
@@ -238,6 +247,19 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 start = middle + 1;
             }
             middle = (start + end) / 2;
+#else
+            /* Typically during debug, we may wish to simply step though
+             * all the certs in the order found. */
+            if (cmp_res == 0) {
+                ESP_LOGW(TAG, "crt found %s", issuer->name);
+                crt_found = true;
+                break;
+            }
+            else {
+                middle++;
+                start = middle;
+            }
+#endif
         }
 
         if (crt_found) {
@@ -497,6 +519,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     WOLFSSL_LEAVE(esp_crt_bundle_init, ret);
     return ESP_OK;
 }
+
 
 /* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer. */
 esp_err_t esp_crt_bundle_attach(void *conf)
