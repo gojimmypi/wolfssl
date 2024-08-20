@@ -50,11 +50,12 @@
     #define CRT_HEADER_OFFSET 2
 #endif
 
-/* A "Certificate Bundle" is this array of x509 CA certs the client trusts: */
-extern const uint8_t x509_crt_imported_bundle_bin_start[]
+/* A "Certificate Bundle" is this array of [size] + [x509 CA]
+ * certs the client trusts: */
+extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_start[]
                      asm("_binary_x509_crt_bundle_wolfssl_start");
 
-extern const uint8_t x509_crt_imported_bundle_bin_end[]
+extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_end[]
                      asm("_binary_x509_crt_bundle_wolfssl_end");
 
 static const char *TAG = "esp_crt_bundle-wolfssl";
@@ -73,6 +74,7 @@ typedef struct crt_bundle_t {
 } crt_bundle_t;
 
 static crt_bundle_t s_crt_bundle;
+static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                                      size_t bundle_size);
@@ -90,13 +92,12 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_X509_NAME* issuer = NULL;
 
     WOLFSSL_X509* cert = NULL;
+    int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
+
     int ret = -1;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nwolfssl_ssl_conf_verify_cb !\n\n");
-
-    /* TODO search cert bundle for CA match */
-    // ESP_LOGW(TAG, "wolfssl_ssl_conf_verify_cb preverify check not implemented.");
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
@@ -125,8 +126,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
     }
 
-
-
     /* TODO: iterate through all CA certs in bundle (or is the bundle a store?) */
 
     if (ret == WOLFSSL_SUCCESS) {
@@ -144,53 +143,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
     }
 
-    /* Get Cert Chain */
-//    WOLFSSL_STACK *chain;
-//    chain = wolfSSL_X509_STORE_CTX_get_chain(store);
-//    if (chain == NULL) {
-//        ESP_LOGE(TAG, "No certificate chain found.\n");
-//        return 0; // Fail verification
-//    }
-
-//    int certCount, i;
-//    // wolfSSL_X509_get_serial_number()
-//    int cert_count = wolfSSL_X509_STORE_CTX_get_error_depth(store);
-//    for (int i = 0; i <= cert_count; i++) {
-//       WOLFSSL_X509* cert = (WOLFSSL_X509*)wolfSSL_sk_value(certs, i);
-//
-//        if (cert) {
-//            // Handle the certificate (e.g., print or save it)
-//            printf("Certificate %d:\n", i + 1);
-//            wolfSSL_X509_print_fp(stdout, cert);
-//
-//            // Free the certificate when done
-//            wolfSSL_X509_free(cert);
-//        } else {
-//            printf("Failed to extract certificate at index %d\n", i);
-//        }
-//    }
-
-//    WOLFSSL_X509 *this_cert;
-//    for (i = 0; i < certCount; i++) {
-//        this_cert = wolfSSL_sk_X509_value(chain, i);
-//        if (this_cert == NULL) {
-//            continue;
-//        }
-//
-//        // Print out the subject and issuer names
-//        char *subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(this_cert), NULL, 0);
-//        char *issuer = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(this_cert), NULL, 0);
-//
-//        printf("Certificate %d:\n", i);
-//        printf("  Subject: %s\n", subject);
-//        printf("  Issuer: %s\n", issuer);
-//
-//        // Free the subject and issuer strings if needed
-//        OPENSSL_free(subject);
-//        OPENSSL_free(issuer);
-//    }
-
-
     if (ret == WOLFSSL_SUCCESS) {
         subject = wolfSSL_X509_get_subject_name(cert);
             if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
@@ -199,8 +151,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 return -1;
             }
         issuer = wolfSSL_X509_get_issuer_name(cert);
-        ESP_LOGI(TAG, "Store Cert Subject: %s",subjectName );
-        ESP_LOGI(TAG, "Store Cert Issuer:  %s",issuer->name );
+        ESP_LOGI(TAG, "Store Cert Subject: %s", subjectName );
+        ESP_LOGI(TAG, "Store Cert Issuer:  %s", issuer->name );
     }
 
     /* When the server presents its certificate, the client checks if this
@@ -221,6 +173,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         /* Look for the certificate using binary search on subject name */
         while (start <= end) {
+            ESP_LOGW(TAG, "Looking at CA #%d; Start = %d, end = %d", middle, start, end);
+
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
@@ -229,7 +183,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 #else
             int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
                                  s_crt_bundle.crts[middle][1];
-            const unsigned char* cert_data = (const unsigned char*)s_crt_bundle.crts[0] + BUNDLE_HEADER_OFFSET;
+            const unsigned char* cert_data = (const unsigned char*)s_crt_bundle.crts[middle] + BUNDLE_HEADER_OFFSET;
 
             ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)&cert_data);
             ESP_LOGI(TAG, "derCertLength = %d", derCertLength);
@@ -239,29 +193,39 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             cert = wolfSSL_d2i_X509(&x509,  &cert_data, derCertLength);
             if (cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
-                              "from bundle.");
+                              "from bundle #%d.", middle);
+                ret = ESP_FAIL;
             }
             else {
                 ESP_LOGI(TAG, "Successfully loaded DER certificate!");
-            }
-            subject = wolfSSL_X509_get_subject_name(cert);
-            if (subject == NULL) {
-                ESP_LOGE(TAG, "Error getting subject name.");
-                wolfSSL_X509_free(cert);
-                return -1;
-            }
-            if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
-                ESP_LOGE(TAG, "Error converting subject name to string.");
-                wolfSSL_X509_free(cert);
-                return -1;
+                ret = ESP_OK;
             }
 
-            ESP_LOGI(TAG, "Subject Name: %s", subjectName);
+            if (ret == ESP_OK) {
+                subject = wolfSSL_X509_get_subject_name(cert);
+                if (subject == NULL) {
+                    ESP_LOGE(TAG, "Error getting subject name.");
+                    ret = ESP_FAIL;
+                }
+                if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+                    ESP_LOGE(TAG, "Error converting subject name to string.");
+                    ret = ESP_FAIL;
+                }
+                ESP_LOGI(TAG, "Subject Name: %s", subjectName);
+            }
+
             // Free the certificate
             wolfSSL_X509_free(cert);
 
             /* subject == issuer */
-            int cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name) );
+            if (ret == ESP_OK) {
+                cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name));
+                last_cmp = cmp_res;
+            }
+            else {
+                ESP_LOGW(TAG, "Skipping CA #%d", middle);
+                cmp_res = last_cmp;
+            }
 #endif
 
             if (cmp_res == 0) {
@@ -431,6 +395,10 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
 #endif /* WOLFSSL_X509_TRUSTED_CERTIFICATE_CALLBACK */
 }
 
+static esp_err_t esp_crt_bundle_is_valid()
+{
+    return _esp_crt_bundle_is_valid;
+}
 
 /* Initialize the bundle into an array so we can do binary
  * search for certs; the bundle generated by the python utility is
@@ -487,14 +455,31 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
             free(crts);
             return ESP_ERR_INVALID_ARG;
         }
+
+//char subjectName[X509_MAX_SUBJECT_LEN];
+//    WOLFSSL_X509_NAME* subject = NULL;
+//    WOLFSSL_X509_NAME* issuer = NULL;
+//
+//    WOLFSSL_X509* cert = cur_crt;
+//        subject = wolfSSL_X509_get_subject_name(cert);
+//            if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+//                ESP_LOGE(TAG, "Error converting subject name to string.");
+//                wolfSSL_X509_free(cert);
+//                return -1;
+//            }
+//        issuer = wolfSSL_X509_get_issuer_name(cert);
+//        ESP_LOGI(TAG, "init Store Cert Subject: %s", subjectName );
+//        ESP_LOGI(TAG, "init Store Cert Issuer:  %s", issuer->name );
+
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
         size_t name_len = cur_crt[0] << 8 | cur_crt[1];
         size_t key_len = cur_crt[2] << 8 | cur_crt[3];
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
 #else
         size_t key_len = cur_crt[0] << 8 | cur_crt[1];
-        cur_crt = cur_crt + CRT_HEADER_OFFSET + key_len;
+        cur_crt = cur_crt + (CRT_HEADER_OFFSET + key_len);
 #endif
+
     }
 
     if (cur_crt > bundle_end) {
@@ -522,11 +507,11 @@ esp_err_t esp_crt_bundle_attach(void *conf)
      * then use the bundle embedded in the binary */
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGI(TAG, "No bundle set by user; using the embedded binary.");
-        ESP_LOGI(TAG, "x509_crt_imported_bundle_bin_start 0x%x", (intptr_t)x509_crt_imported_bundle_bin_start);
-        ESP_LOGI(TAG, "x509_crt_imported_bundle_bin_end 0x%x", (intptr_t)x509_crt_imported_bundle_bin_end);
-        ret = esp_crt_bundle_init(x509_crt_imported_bundle_bin_start,
-                                  (x509_crt_imported_bundle_bin_end
-                                 - x509_crt_imported_bundle_bin_start)
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_start 0x%x", (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x", (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
+        ret = esp_crt_bundle_init(x509_crt_imported_bundle_wolfssl_bin_start,
+                                  (x509_crt_imported_bundle_wolfssl_bin_end
+                                 - x509_crt_imported_bundle_wolfssl_bin_start)
                                  );
     }
     else {
@@ -534,26 +519,31 @@ esp_err_t esp_crt_bundle_attach(void *conf)
                        (intptr_t)s_crt_bundle.crts);
     }
 
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to attach bundle");
-        return ret;
+    if (ret == ESP_OK) {
+        if (conf) {
+            wolfssl_ssl_config *ssl_conf = (wolfssl_ssl_config *)conf;
+            /* point to a dummy certificate
+             * This is only required so that the
+             * cacert_ptr passes non-NULL check during handshake
+             */
+             /* TODO: do we need a dummy cert? */
+             //wolfssl_x509_crt_init(&s_dummy_crt);
+             //wolfssl_ssl_conf_ca_chain(ssl_conf, &s_dummy_crt, NULL);
+
+             /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
+             /* TODO: cb not properly attached here: */
+            wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
+        }
+        else {
+            ESP_LOGI(TAG, "esp_crt_bundle_attach no conf object supplied");
+        }
     }
-
-    if (conf) {
-        wolfssl_ssl_config *ssl_conf = (wolfssl_ssl_config *)conf;
-        /* point to a dummy certificate
-         * This is only required so that the
-         * cacert_ptr passes non-NULL check during handshake
-         */
-        /* TODO: do we need a dummy cert? */
-        //wolfssl_x509_crt_init(&s_dummy_crt);
-        //wolfssl_ssl_conf_ca_chain(ssl_conf, &s_dummy_crt, NULL);
-
-        /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
-        /* TODO: cb not properly attached here: */
-        wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
+    else {
+        ESP_LOGE(TAG, "Failed to attach bundle");
     }
     ESP_LOGI(TAG, "esp_crt_bundle_attach completed for wolfSSL");
+
+    _esp_crt_bundle_is_valid = ret;
     return ret;
 }
 
@@ -567,6 +557,9 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
         ESP_LOGE(TAG, "esp_crt_bundle_detach not implemented for wolfSSL");
     }
     ESP_LOGE(TAG, "Not implemented: esp_crt_bundle_detach");
+
+    /* If there's no cert bundle attached, it is not valid */
+    _esp_crt_bundle_is_valid = ESP_FAIL;
 }
 
 /* esp_crt_bundle_set() used by ESP-IDF esp-tls layer. */
