@@ -84,7 +84,11 @@ static int _cert_bundled_loaded = 0;
 static int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
-    char subject[X509_MAX_SUBJECT_LEN];
+    char subjectName[X509_MAX_SUBJECT_LEN];
+    WOLFSSL_X509* x509 = NULL;
+    WOLFSSL_X509_NAME* subject = NULL;
+    WOLFSSL_X509_NAME* issuer = NULL;
+
     WOLFSSL_X509* cert = NULL;
     int ret = -1;
     /* TODO */
@@ -140,12 +144,63 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
     }
 
-    if (ret == WOLFSSL_SUCCESS) {
+    /* Get Cert Chain */
+//    WOLFSSL_STACK *chain;
+//    chain = wolfSSL_X509_STORE_CTX_get_chain(store);
+//    if (chain == NULL) {
+//        ESP_LOGE(TAG, "No certificate chain found.\n");
+//        return 0; // Fail verification
+//    }
 
-        ESP_LOGI(TAG, "Certificate subject: %s", subject);
-        byte* subjectRaw = NULL;
-        int length = wc_GetSubjectRaw(&subjectRaw, cert);
-        ESP_LOGI(TAG, "Subject: %.*s",length, subjectRaw );
+//    int certCount, i;
+//    // wolfSSL_X509_get_serial_number()
+//    int cert_count = wolfSSL_X509_STORE_CTX_get_error_depth(store);
+//    for (int i = 0; i <= cert_count; i++) {
+//       WOLFSSL_X509* cert = (WOLFSSL_X509*)wolfSSL_sk_value(certs, i);
+//
+//        if (cert) {
+//            // Handle the certificate (e.g., print or save it)
+//            printf("Certificate %d:\n", i + 1);
+//            wolfSSL_X509_print_fp(stdout, cert);
+//
+//            // Free the certificate when done
+//            wolfSSL_X509_free(cert);
+//        } else {
+//            printf("Failed to extract certificate at index %d\n", i);
+//        }
+//    }
+
+//    WOLFSSL_X509 *this_cert;
+//    for (i = 0; i < certCount; i++) {
+//        this_cert = wolfSSL_sk_X509_value(chain, i);
+//        if (this_cert == NULL) {
+//            continue;
+//        }
+//
+//        // Print out the subject and issuer names
+//        char *subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(this_cert), NULL, 0);
+//        char *issuer = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(this_cert), NULL, 0);
+//
+//        printf("Certificate %d:\n", i);
+//        printf("  Subject: %s\n", subject);
+//        printf("  Issuer: %s\n", issuer);
+//
+//        // Free the subject and issuer strings if needed
+//        OPENSSL_free(subject);
+//        OPENSSL_free(issuer);
+//    }
+
+
+    if (ret == WOLFSSL_SUCCESS) {
+        subject = wolfSSL_X509_get_subject_name(cert);
+            if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+                ESP_LOGE(TAG, "Error converting subject name to string.");
+                wolfSSL_X509_free(cert);
+                return -1;
+            }
+        issuer = wolfSSL_X509_get_issuer_name(cert);
+        ESP_LOGI(TAG, "Store Cert Subject: %s",subjectName );
+        ESP_LOGI(TAG, "Store Cert Issuer:  %s",issuer->name );
     }
 
     /* When the server presents its certificate, the client checks if this
@@ -172,21 +227,22 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
             int cmp_res =  memcmp(subject, crt_name, name_len );
 #else
-            WOLFSSL_X509* cert = NULL;
-            WOLFSSL_X509* x509 = NULL;
-            WOLFSSL_X509_NAME* subject = NULL;
-            char subjectName[256];
-            int derCertLength = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];;
-            const unsigned char* p = &(s_crt_bundle.crts[0]) + BUNDLE_HEADER_OFFSET;
+            int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
+                                 s_crt_bundle.crts[middle][1];
             const unsigned char* cert_data = (const unsigned char*)s_crt_bundle.crts[0] + BUNDLE_HEADER_OFFSET;
 
             ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)&cert_data);
             ESP_LOGI(TAG, "derCertLength = %d", derCertLength);
-// *((s_crt_bundle).crts)
-            const unsigned char* testval = (const unsigned char*)0x3f41af54;
+
+            /* Convert the DER format in the Cert Bundle to x509.
+             * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
             cert = wolfSSL_d2i_X509(&x509,  &cert_data, derCertLength);
             if (cert == NULL) {
-                ESP_LOGE(TAG, "Error loading DER certificate.");
+                ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
+                              "from bundle.");
+            }
+            else {
+                ESP_LOGI(TAG, "Successfully loaded DER certificate!");
             }
             subject = wolfSSL_X509_get_subject_name(cert);
             if (subject == NULL) {
@@ -204,15 +260,12 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             // Free the certificate
             wolfSSL_X509_free(cert);
 
-            byte* subjectRaw = NULL;
-            int length = wc_GetSubjectRaw(&subjectRaw, (Cert*)s_crt_bundle.crts[middle]);
-            ESP_LOGI(TAG, "String: %.*s", length, subjectRaw);
-            /* no name! */
-            int cmp_res = 1;
+            /* subject == issuer */
+            int cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name) );
 #endif
 
             if (cmp_res == 0) {
-                ESP_LOGW(TAG, "crt found %s", crt_name);
+                ESP_LOGW(TAG, "crt found %s", issuer->name );
                 crt_found = true;
                 break;
             } else if (cmp_res < 0) {
