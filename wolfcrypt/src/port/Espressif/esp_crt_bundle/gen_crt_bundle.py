@@ -30,6 +30,8 @@ try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization
+    from cryptography.x509.oid import NameOID
+
 except ImportError:
     print('The cryptography package is not installed.'
           'Please refer to the Get Started section of the ESP-IDF Programming Guide for '
@@ -124,6 +126,9 @@ class CertificateBundle:
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '')
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
 
         bundle = struct.pack('>H', len(self.certificates))
 
@@ -135,7 +140,7 @@ class CertificateBundle:
             len_data = struct.pack('>H', cert_der_len)
 
             bundle += len_data
-            # bundle += sub_name_der reminder mbedTLS stuff the name here, then only the public key cert NOT the entire cert after:
+            # bundle += sub_name_der # reminder mbedTLS stuff the name here, then only the public key cert NOT the entire cert after:
             bundle += cert_der
 
         return bundle
