@@ -100,18 +100,59 @@ int wolfssl_found_zero_serial()
 /* Returns:
  *   1 if the cert has a non-zero serial number
  *   0 if the cert as a zero serial number
- *  -1 if an error was encountered  */
+ * < 0 for wolfssl\wolfcrypt\error-crypt.h values  */
 static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     DecodedCert cert;
-    int ret;
+    int ret = 0;
 
     wc_InitDecodedCert(&cert, der_cert, sz, NULL);
 
     ret = wc_ParseCert(&cert, CERT_TYPE, NO_VERIFY, 0);
+
+    /* Check the special case of parse error with strict checking. */
+    if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
+        /* If we find a zero serial number, a parse error may still occur. */
+        if (ret == ASN_PARSE_E) {
+#if defined(WOLFSSL_NO_ASN_STRICT)
+            /* Issuer amd subject will only be non-blank with relaxed check */
+            ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
+            ESP_LOGI(TAG, "Subject: %s", cert.subject);
+
+            /* We'll force the return result to zero for a "valid"
+             * parsing result, but not strict and found zero serial num. */
+            ret = 0;
+#else
+            ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
+            ESP_LOGE(TAG, "Define WOLFSSL_NO_ASN_STRICT to relax checks.");
+            ret = -1;
+#endif
+        } /* special ASN_PARSE_E handling */
+        else {
+            /* Not an ASN Parse Error */
+            ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number. %d", ret);
+
+            /* If we found a zero, and the result of wc_ParseCert is zero,
+             * we'll return that zero as "cert as a zero serial number". */
+        }
+    }
+    else {
+        ESP_LOGV(TAG, "Not a special case zero serial number.");
+    }
+
+    if (ret > -1) {
+        ESP_LOGV(TAG, "Issuer: %s", cert.issuer);
+        ESP_LOGV(TAG, "Subject: %s", cert.subject);
+        ESP_LOGV(TAG, "Serial Number: %.*s", cert.serialSz, cert.serial);
+    }
+    else {
+        ESP_LOGE(TAG, "wolfssl_is_nonzero_serial_number exit error = %d", ret);
+    }
+
+    return ret;
+
     if (ret == ASN_PARSE_E) {
         if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
-            ret = 0;
-            _wolfssl_found_zero_serial = ESP_FAIL;
+            ret = 0; /* return zero when zero found */
 #if defined(WOLFSSL_NO_ASN_STRICT)
             ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number.");
 #else
@@ -119,8 +160,14 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
 #endif
             ESP_LOGI(TAG, "Define WOLFSSL_NO_ASN_STRICT to relax checks.");
         }
+        else {
+            ESP_LOGE(TAG, "ERROR: Unable to parse the DER encoded ASN cert.");
+            _wolfssl_found_zero_serial = -1; /* error, unknown if zero. */
+            ret = ESP_FAIL;
+        } /* ASN Parse error, zero check */
     } else if (ret != 0) {
         ESP_LOGE(TAG, "Failed to parse certificate, ret = %d\n", ret);
+        _wolfssl_found_zero_serial = -1; /* error, unknown if zero. */
         ret = ESP_FAIL;
     } else {
         ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
