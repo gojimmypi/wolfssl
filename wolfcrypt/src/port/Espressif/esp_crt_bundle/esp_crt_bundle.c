@@ -37,10 +37,16 @@
 #include <wolfssl/internal.h>
 #include <wolfssl/ssl.h>
 
+#include <wolfssl/wolfcrypt/asn.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/logging.h>
+
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 
-#define X509_MAX_SUBJECT_LEN 255
+#ifndef X509_MAX_SUBJECT_LEN
+    #define X509_MAX_SUBJECT_LEN 255
+#endif
 
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
     #define BUNDLE_HEADER_OFFSET 2
@@ -86,7 +92,7 @@ static int _cert_bundled_loaded = 0;
 
 /* Returns ESP_OK if there are no zero serial numbers in the bundle,
  * OR there may be zeros, but */
-static int wolfssl_found_zero_serial()
+int wolfssl_found_zero_serial()
 {
     return _wolfssl_found_zero_serial;
 }
@@ -95,97 +101,38 @@ static int wolfssl_found_zero_serial()
  *   1 if the cert has a non-zero serial number
  *   0 if the cert as a zero serial number
  *  -1 if an error was encountered  */
-static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz)
-{
-    int ret = 1; /* Assume nonzero serial unless proven otherwise. */
-    int i = 0;
-    int this_len = 0;
-    int seq_bytes = 0;
+static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
+    DecodedCert cert;
+    int ret;
 
-    /* Example:
-     * 30 82 04 00 30 82 02 E8  A0 03 02 01 02 02 01 00
-     * 30 0D 06 09 2A 86 48 86  F7 0D 01 01 05 05 00 30
-     *
-     * Skip the initial SEQUENCE header
-     * (assumes the certificate starts with SEQUENCE) */
-    if (der_cert[i++] != 0x30) {
-        return -1; /* Not a SEQUENCE */
-    }
+    wc_InitDecodedCert(&cert, der_cert, sz, NULL);
 
-    /* Skip the header bytes */
-    if (der_cert[i] & 0x80) {
-        seq_bytes = der_cert[i] & 0x7F;
-        i += seq_bytes + 1;
-    }
-    else {
-        i++;
-    }
-
-    /* possibly another another SEQUENCE
-     * (the TBS certificate, i.e., "to be signed").*/
-    if (der_cert[i] == 0x30) {
-        i++; /* Skip tag */
-        if (der_cert[i] & 0x80) {
-            seq_bytes = der_cert[i] & 0x7F;
-            i += seq_bytes + 1;
-        }
-        else {
-            i++;
-        }
-    }
-
-    /* Skip version if present (optional, starts with [0] EXPLICIT) */
-    if (der_cert[i] == 0xA0) {
-        i++; /* Skip tag */
-        if (der_cert[i] & 0x80) {
-            seq_bytes = der_cert[i] & 0x7F;
-            i += seq_bytes + 1;
-        }
-        else {
-            i++;
-        }
-        i++; /* Skip INTEGER tag */
-        if (der_cert[i] & 0x80) {
-            seq_bytes = der_cert[i] & 0x7F;
-            i += seq_bytes + 1;
-        }
-        else {
-            i++;
-        }
-    }
-
-    /* We should now be at the serial number */
-    if (der_cert[i++] != 0x02) {
-        ESP_LOGE(TAG, "Error when processing cert serial number");
-        _wolfssl_found_zero_serial = ESP_FAIL;
-        ret = -1; /* Not an INTEGER (serial number) */
-    }
-
-    else {
-        /* Check the length of the serial number */
-        this_len = der_cert[i++];
-        if (this_len <= 0 || i + this_len > sz) {
-            return -1; /* Invalid length */
-        }
-
-        /* Check if the serial number is zero */
-        for (int j = 0; j < this_len; j++) {
-            if (der_cert[i + j] != 0x00) {
-                return 1; /* Non-zero serial number */
-            }
-        }
-
-        ret = 0; /* Serial number is zero */
-    #if !defined(WOLFSSL_NO_ASN_STRICT)
-            /* Zero valued serial numbers are only problematic when
-             * found and WOLFSSL_NO_ASN_STRICT is not defined. */
+    ret = wc_ParseCert(&cert, CERT_TYPE, NO_VERIFY, 0);
+    if (ret == ASN_PARSE_E) {
+        if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
+            ret = 0;
             _wolfssl_found_zero_serial = ESP_FAIL;
-    #endif
+#if defined(WOLFSSL_NO_ASN_STRICT)
+            ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number.");
+#else
+            ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
+#endif
+            ESP_LOGI(TAG, "Define WOLFSSL_NO_ASN_STRICT to relax checks.");
+        }
+    } else if (ret != 0) {
+        ESP_LOGE(TAG, "Failed to parse certificate, ret = %d\n", ret);
+        ret = ESP_FAIL;
+    } else {
+        ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
+        ESP_LOGI(TAG, "Subject: %s", cert.subject);
+        ESP_LOGI(TAG, "Serial Number: %.*s", cert.serialSz, cert.serial);
     }
+
+    /* Clean up and exit */
+    wc_FreeDecodedCert(&cert);
 
     return ret;
-} /* wolfssl_is_nonzero_serial_number */
-
+}
 
 /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
 static int wolfssl_ssl_conf_verify_cb(int preverify,
