@@ -136,7 +136,13 @@ class CertificateBundle:
             """ Read the certificate as DER format """
             cert_der = crt.public_bytes(serialization.Encoding.DER)
 
+            # serial_number = crt.serial_number
+            # if serial_number == 0:
+            #     cert_der_len = 0
+            # else:
+
             cert_der_len = len(cert_der)
+
             len_data = struct.pack('>H', cert_der_len)
 
             bundle += len_data
