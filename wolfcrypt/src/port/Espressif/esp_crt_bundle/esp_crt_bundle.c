@@ -169,6 +169,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_X509_NAME* issuer = NULL;
 
     WOLFSSL_X509* cert = NULL;
+    WOLFSSL_X509* peer_cert = NULL;
     intptr_t this_addr = 0;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
@@ -360,6 +361,27 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
             else {
                 ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
+            }
+
+            WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+            if (peer_cert && wolfSSL_X509_check_issued(cert, peer_cert) == X509_V_OK) {
+                ret = wolfSSL_X509_verify_cert(store);
+                if (ret == WOLFSSL_SUCCESS) {
+                    ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
+                }
+                else {
+                    ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                }
+            }
+            else {
+                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
+            }
+
+            if (ret == WOLFSSL_SUCCESS) {
+                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
+            }
+            else {
+                ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
             }
 
         }
