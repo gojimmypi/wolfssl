@@ -802,6 +802,13 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define ESP_DISABLE_HW_TASK_LOCK
 #define ESP_MONITOR_HW_TASK_LOCK
 #define USE_ESP_DPORT_ACCESS_READ_BUFFER
+#define WOLFSSL_DEBUG_ASN_TEMPLATE
+#define WOLFSSL_DEBUG_STATIC_MEMORY
+#define WOLFSSL_DEBUG_MEMORY
+#define WOLFSSL_DEBUG_MEMORY_PRINT
+#define WOLFSSL_DEBUG_MATH
+#define WOLFSSL_DEBUG_MUTEX
+#define WOLFSSL_DEBUG_TLS
 
 See wolfcrypt/benchmark/benchmark.c for debug and other settings:
 
