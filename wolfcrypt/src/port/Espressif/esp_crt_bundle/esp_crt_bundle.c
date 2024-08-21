@@ -148,33 +148,6 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
         ESP_LOGE(TAG, "wolfssl_is_nonzero_serial_number exit error = %d", ret);
     }
 
-    return ret;
-
-    if (ret == ASN_PARSE_E) {
-        if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
-            ret = 0; /* return zero when zero found */
-#if defined(WOLFSSL_NO_ASN_STRICT)
-            ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number.");
-#else
-            ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
-#endif
-            ESP_LOGI(TAG, "Define WOLFSSL_NO_ASN_STRICT to relax checks.");
-        }
-        else {
-            ESP_LOGE(TAG, "ERROR: Unable to parse the DER encoded ASN cert.");
-            _wolfssl_found_zero_serial = -1; /* error, unknown if zero. */
-            ret = ESP_FAIL;
-        } /* ASN Parse error, zero check */
-    } else if (ret != 0) {
-        ESP_LOGE(TAG, "Failed to parse certificate, ret = %d\n", ret);
-        _wolfssl_found_zero_serial = -1; /* error, unknown if zero. */
-        ret = ESP_FAIL;
-    } else {
-        ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
-        ESP_LOGI(TAG, "Subject: %s", cert.subject);
-        ESP_LOGI(TAG, "Serial Number: %.*s", cert.serialSz, cert.serial);
-    }
-
     /* Clean up and exit */
     wc_FreeDecodedCert(&cert);
 
