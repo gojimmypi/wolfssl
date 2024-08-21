@@ -169,21 +169,20 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_X509_NAME* issuer = NULL;
 
     WOLFSSL_X509* cert = NULL;
+    intptr_t this_addr = 0;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
-
     int ret = WOLFSSL_SUCCESS;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
-    ESP_LOGI(TAG, "\n\nwolfssl_ssl_conf_verify_cb !\n\n");
+    ESP_LOGI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb !\n");
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
-        ESP_LOGW(TAG, "Pre-verification success."); /* or alt certs */
+        ESP_LOGI(TAG, "Detected prior Pre-verification Success.");
         /* So far, so good... we need to now check cert against alt */
     }
     else {
-        ESP_LOGE(TAG, "Pre-verification failed.");
-        // ret = WOLFSSL_FAILURE;
+        ESP_LOGW(TAG, "Detected prior Pre-verification Failure.");
     }
 #else
     /* Skip pre-verification, so we'll start with success. */
@@ -236,10 +235,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
      */
     /* Find the cert: */
     if (ret == WOLFSSL_SUCCESS) {
-        _cert_bundled_loaded = 1;
-        WOLFSSL_X509*child = cert;
-        size_t name_len = 0;
-        const uint8_t *crt_name;
+        _cert_bundled_loaded = 1; /* TODO detect in out store */
 
         bool crt_found = false;
         int start = 0;
@@ -261,7 +257,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 #else
             int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
                                  s_crt_bundle.crts[middle][1];
-            intptr_t this_addr = 0;
             this_addr = (intptr_t)s_crt_bundle.crts[middle];
             ESP_LOGI(TAG, "This addr = 0x%x", this_addr);
 
