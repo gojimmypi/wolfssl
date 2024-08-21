@@ -75,6 +75,7 @@ typedef struct crt_bundle_t {
 
 static crt_bundle_t s_crt_bundle;
 static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
+static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                                      size_t bundle_size);
@@ -82,6 +83,13 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 
 // #if defined(WOLFSSL_X509_CRT_PARSE_C)
 static int _cert_bundled_loaded = 0;
+
+/* Returns ESP_OK if there are no zero serial numbers in the bundle,
+ * OR there may be zeros, but */
+static int wolfssl_found_zero_serial()
+{
+    return _wolfssl_found_zero_serial;
+}
 
 /* Returns:
  *   1 if the cert has a non-zero serial number
@@ -92,30 +100,87 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz)
     int ret = 1; /* Assume nonzero serial unless proven otherwise. */
     int i = 0;
     int this_len = 0;
+    int seq_bytes = 0;
 
-    /* Skip the initial SEQUENCE header
+    /* Example:
+     * 30 82 04 00 30 82 02 E8  A0 03 02 01 02 02 01 00
+     * 30 0D 06 09 2A 86 48 86  F7 0D 01 01 05 05 00 30
+     *
+     * Skip the initial SEQUENCE header
      * (assumes the certificate starts with SEQUENCE) */
-    if (der_cert[i++] != 0x30) return -1; // Not a SEQUENCE
-    if (der_cert[i] & 0x80) i += (der_cert[i] & 0x7F) + 1; else i++;
+    if (der_cert[i++] != 0x30) {
+        return -1; /* Not a SEQUENCE */
+    }
+
+    /* Skip the header bytes */
+    if (der_cert[i] & 0x80) {
+        seq_bytes = der_cert[i] & 0x7F;
+        i += seq_bytes + 1;
+    }
+    else {
+        i++;
+    }
+
+    /* possibly another another SEQUENCE
+     * (the TBS certificate, i.e., "to be signed").*/
+    if (der_cert[i] == 0x30) {
+        i++; /* Skip tag */
+        if (der_cert[i] & 0x80) {
+            seq_bytes = der_cert[i] & 0x7F;
+            i += seq_bytes + 1;
+        }
+        else {
+            i++;
+        }
+    }
 
     /* Skip version if present (optional, starts with [0] EXPLICIT) */
     if (der_cert[i] == 0xA0) {
-        i++; // Skip tag
-        if (der_cert[i] & 0x80) i += (der_cert[i] & 0x7F) + 1; else i++;
-        i++; // Skip INTEGER tag
-        if (der_cert[i] & 0x80) i += (der_cert[i] & 0x7F) + 1; else i++;
+        i++; /* Skip tag */
+        if (der_cert[i] & 0x80) {
+            seq_bytes = der_cert[i] & 0x7F;
+            i += seq_bytes + 1;
+        }
+        else {
+            i++;
+        }
+        i++; /* Skip INTEGER tag */
+        if (der_cert[i] & 0x80) {
+            seq_bytes = der_cert[i] & 0x7F;
+            i += seq_bytes + 1;
+        }
+        else {
+            i++;
+        }
     }
 
     /* We should now be at the serial number */
     if (der_cert[i++] != 0x02) {
         ESP_LOGE(TAG, "Error when processing cert serial number");
+        _wolfssl_found_zero_serial = ESP_FAIL;
         ret = -1; /* Not an INTEGER (serial number) */
     }
+
     else {
+        /* Check the length of the serial number */
         this_len = der_cert[i++];
-        if (this_len == 1 && der_cert[i] == 0x00) {
-            ret = 0; /* Serial number is zero */
+        if (this_len <= 0 || i + this_len > sz) {
+            return -1; /* Invalid length */
         }
+
+        /* Check if the serial number is zero */
+        for (int j = 0; j < this_len; j++) {
+            if (der_cert[i + j] != 0x00) {
+                return 1; /* Non-zero serial number */
+            }
+        }
+
+        ret = 0; /* Serial number is zero */
+    #if !defined(WOLFSSL_NO_ASN_STRICT)
+            /* Zero valued serial numbers are only problematic when
+             * found and WOLFSSL_NO_ASN_STRICT is not defined. */
+            _wolfssl_found_zero_serial = ESP_FAIL;
+    #endif
     }
 
     return ret;
@@ -233,7 +298,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             const unsigned char* cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
 
             if (wolfssl_is_nonzero_serial_number((WOLFSSL_X509*)cert_data, derCertLength)) {
-
+                ESP_LOGE(TAG, "Error: serial number with value = zero");
             }
 
             ESP_LOGI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)cert_data);
@@ -245,6 +310,12 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             if (cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
                               "from bundle #%d.", middle);
+        #if !defined(WOLFSSL_NO_ASN_STRICT)
+                /* Suggestion only when relevant: */
+                if (wolfssl_found_zero_serial()) {
+                    ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT");
+                }
+        #endif
                 ret = ESP_FAIL;
             }
             else {
@@ -434,7 +505,7 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
  * Used locally here only. Not used directly by esp-tls. */
 void wolfssl_ssl_conf_authmode(wolfssl_ssl_config *conf, int authmode)
 {
-   // wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)tls->priv_ctx, authmode, NULL);
+   // TODO wolfSSL_CTX_set_verify( (WOLFSSL_CTX *)tls->priv_ctx, authmode, NULL);
     ESP_LOGW(TAG, "wolfssl_ssl_conf_authmode not implemented");
 }
 
@@ -447,8 +518,8 @@ void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 
 /* cert buffer compatilbility helper */
 void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
-                               WOLFSSL_X509      *ca_chain,
-                               WOLFSSL_X509_CRL  *ca_crl) /* TODO check crl type */
+                               WOLFSSL_X509       *ca_chain,
+                               WOLFSSL_X509_CRL   *ca_crl) /* TODO check crl type */
 {
     conf->ca_chain   = ca_chain;
     conf->ca_crl     = ca_crl;
@@ -477,7 +548,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     const uint8_t *bundle_end;
     const uint8_t *cur_crt;
     uint16_t num_certs;
-    int i;
+    uint16_t i;
     size_t cert_len;
 
     WOLFSSL_ENTER(esp_crt_bundle_init);
@@ -516,27 +587,30 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 
     for (i = 0; i < num_certs; i++) {
         ESP_LOGV(TAG, "Init Cert %d", i);
-#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
-        size_t name_len = cur_crt[0] << 8 | cur_crt[1];
-        size_t key_len = cur_crt[2] << 8 | cur_crt[3];
-#else
-        cert_len = cur_crt[0] << 8 | cur_crt[1];
-#endif
-        crts[i] = cur_crt;
-
-#if !defined(WOLFSSL_NO_ASN_STRICT)
-        if (wolfssl_is_nonzero_serial_number(cur_crt, cert_len)) {
-            ESP_LOGW(TAG, "Warning: found zero value for serial number in "
-                          "certificate #%d", i);
-            ESP_LOGW(TAG, "Enable WOLFSSL_NO_ASN_STRICT to allow zero in "
-                          "serial number.");
-        }
-#endif
         if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
             ESP_LOGE(TAG, "Invalid certificate bundle current offset");
             free(crts);
             return ESP_ERR_INVALID_ARG;
         }
+
+        crts[i] = cur_crt;
+
+#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
+        size_t name_len = cur_crt[0] << 8 | cur_crt[1];
+        size_t key_len = cur_crt[2] << 8 | cur_crt[3];
+        cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
+#else
+        cert_len = cur_crt[0] << 8 | cur_crt[1];
+    #if !defined(WOLFSSL_NO_ASN_STRICT)
+        if (wolfssl_is_nonzero_serial_number(cur_crt + CRT_HEADER_OFFSET,
+                                             cert_len) > 0) {
+            ESP_LOGW(TAG, "Warning: found zero value for serial number in "
+                          "certificate #%d", i);
+            ESP_LOGW(TAG, "Enable WOLFSSL_NO_ASN_STRICT to allow zero in "
+                          "serial number.");
+        }
+    #endif
+        cur_crt = cur_crt + (CRT_HEADER_OFFSET + cert_len);
 
 //char subjectName[X509_MAX_SUBJECT_LEN];
 //    WOLFSSL_X509_NAME* subject = NULL;
@@ -552,12 +626,10 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 //        issuer = wolfSSL_X509_get_issuer_name(cert);
 //        ESP_LOGI(TAG, "init Store Cert Subject: %s", subjectName );
 //        ESP_LOGI(TAG, "init Store Cert Issuer:  %s", issuer->name );
-#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
-        cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
-#else
-        cur_crt = cur_crt + (CRT_HEADER_OFFSET + cert_len);
+
+        /* Point to the next cert in our loop. */
 #endif
-    } /* for all certs */
+    } /* for certs 0 to num_certs */
 
     if (cur_crt > bundle_end) {
         ESP_LOGE(TAG, "Invalid certificate bundle after end");
@@ -585,9 +657,11 @@ esp_err_t esp_crt_bundle_attach(void *conf)
      * then use the bundle embedded in the binary */
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGI(TAG, "No bundle set by user; using the embedded binary.");
-        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_start 0x%x", (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
-        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x", (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
-        ret = esp_crt_bundle_init(x509_crt_imported_bundle_wolfssl_bin_start,
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_start 0x%x",
+             (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
+        ESP_LOGI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x",
+             (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
+        ret = esp_crt_bundle_init( x509_crt_imported_bundle_wolfssl_bin_start,
                                   (x509_crt_imported_bundle_wolfssl_bin_end
                                  - x509_crt_imported_bundle_wolfssl_bin_start)
                                  );
@@ -636,7 +710,7 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
     }
     ESP_LOGE(TAG, "Not implemented: esp_crt_bundle_detach");
 
-    /* If there's no cert bundle attached, it is not valid */
+    /* If there's no cert bundle attached, it is not valid: */
     _esp_crt_bundle_is_valid = ESP_FAIL;
 }
 
