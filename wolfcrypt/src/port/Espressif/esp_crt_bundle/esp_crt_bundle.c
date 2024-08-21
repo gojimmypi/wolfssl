@@ -171,7 +171,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_X509* cert = NULL;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
 
-    int ret = 0;
+    int ret = WOLFSSL_SUCCESS;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nwolfssl_ssl_conf_verify_cb !\n\n");
@@ -180,7 +180,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     if (preverify == WOLFSSL_SUCCESS) {
         ESP_LOGW(TAG, "Pre-verification success."); /* or alt certs */
         /* So far, so good... we need to now check cert against alt */
-        ret = WOLFSSL_SUCCESS;
     }
     else {
         ESP_LOGE(TAG, "Pre-verification failed.");
@@ -236,7 +235,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
      * bundle.
      */
     /* Find the cert: */
-    if ((ret == WOLFSSL_SUCCESS) && (_cert_bundled_loaded == 0)) {
+    if (ret == WOLFSSL_SUCCESS) {
         _cert_bundled_loaded = 1;
         WOLFSSL_X509*child = cert;
         size_t name_len = 0;
@@ -359,20 +358,13 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         }
 
         if (ret == 0) {
-            ESP_LOGI(TAG, "Certificate validated !!!");
-            /* TODO actually test */
-            // WOLFSSL_CTX* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
-            //WOLFSSL_CERT_MANAGER* cm = wolfSSL_CertManagerNew();
-            //wolfSSL_CertManagerSetVerify(cm, wolfssl_ssl_conf_verify_cb);
+            /* TODO confirm: */
             ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
-            if (ret == 0) {
+            if (ret == WOLFSSL_SUCCESS) {
                 ESP_LOGI(TAG, "Successfully added Certificate!");
-                ret = WOLFSSL_SUCCESS;
             }
             else {
                 ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
-                ret = WOLFSSL_FAILURE;
-
             }
 
         }
@@ -390,7 +382,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
     /* Clean up and exit */
     wolfSSL_X509_free(cert);
-
+    ESP_LOGI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
 
