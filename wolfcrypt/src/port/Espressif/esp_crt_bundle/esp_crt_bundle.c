@@ -154,11 +154,16 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     return ret;
 }
 
-/* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
+/* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
+ *
+ * Returns:
+ * 0 if the verification process should stop immediately with an error.
+ * 1 if the verification process should continue with the rest of handshake. */
 static int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
+    const unsigned char* cert_data = NULL;
     WOLFSSL_X509* x509 = NULL;
     WOLFSSL_X509_NAME* subject = NULL;
     WOLFSSL_X509_NAME* issuer = NULL;
@@ -166,7 +171,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_X509* cert = NULL;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
 
-    int ret = -1;
+    int ret = 0;
     /* TODO */
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nwolfssl_ssl_conf_verify_cb !\n\n");
@@ -179,7 +184,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     }
     else {
         ESP_LOGE(TAG, "Pre-verification failed.");
-        ret = WOLFSSL_FAILURE;
+        // ret = WOLFSSL_FAILURE;
     }
 #else
     /* Skip pre-verification, so we'll start with success. */
@@ -217,11 +222,10 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
     if (ret == WOLFSSL_SUCCESS) {
         subject = wolfSSL_X509_get_subject_name(cert);
-            if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
-                ESP_LOGE(TAG, "Error converting subject name to string.");
-                wolfSSL_X509_free(cert);
-                return -1;
-            }
+        if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+            ESP_LOGE(TAG, "Error converting subject name to string.");
+            wolfSSL_X509_free(cert);
+        }
         issuer = wolfSSL_X509_get_issuer_name(cert);
         ESP_LOGI(TAG, "Store Cert Subject: %s", subjectName );
         ESP_LOGI(TAG, "Store Cert Issuer:  %s", issuer->name );
@@ -254,7 +258,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
-            int cmp_res =  memcmp(subject, crt_name, name_len );
+            int cmp_res =  memcmp(subject, crt_name, name_len);
 #else
             int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
                                  s_crt_bundle.crts[middle][1];
@@ -262,7 +266,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             this_addr = (intptr_t)s_crt_bundle.crts[middle];
             ESP_LOGI(TAG, "This addr = 0x%x", this_addr);
 
-            const unsigned char* cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
+            cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
 
             if (wolfssl_is_nonzero_serial_number((WOLFSSL_X509*)cert_data, derCertLength)) {
                 ESP_LOGE(TAG, "Error: serial number with value = zero");
@@ -273,10 +277,12 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
-            cert = wolfSSL_d2i_X509(&x509,  &cert_data, derCertLength);
+            cert = wolfSSL_d2i_X509(&x509, &cert_data, derCertLength);
             if (cert == NULL) {
-                ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
-                              "from bundle #%d.", middle);
+                ESP_LOGE(TAG,
+                    "Error loading DER Certificate Authority (CA)"
+                              "from bundle #%d.",
+                    middle);
         #if !defined(WOLFSSL_NO_ASN_STRICT)
                 /* Suggestion only when relevant: */
                 if (wolfssl_found_zero_serial()) {
@@ -303,9 +309,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 ESP_LOGI(TAG, "Subject Name: %s", subjectName);
             }
 
-            // Free the certificate
-            wolfSSL_X509_free(cert);
-
             /* subject == issuer */
             if (ret == ESP_OK) {
                 cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name));
@@ -320,12 +323,14 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 #ifdef IS_PRESORTED
             /* If the list is presorted, we can use a binary search */
             if (cmp_res == 0) {
-                ESP_LOGW(TAG, "crt found %s", issuer->name );
+                ESP_LOGW(TAG, "crt found %s", issuer->name);
                 crt_found = true;
                 break;
-            } else if (cmp_res < 0) {
+            }
+            else if (cmp_res < 0) {
                 end = middle - 1;
-            } else {
+            }
+            else {
                 start = middle + 1;
             }
             middle = (start + end) / 2;
@@ -355,8 +360,37 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         if (ret == 0) {
             ESP_LOGI(TAG, "Certificate validated !!!");
+            /* TODO actually test */
+            // WOLFSSL_CTX* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
+            //WOLFSSL_CERT_MANAGER* cm = wolfSSL_CertManagerNew();
+            //wolfSSL_CertManagerSetVerify(cm, wolfssl_ssl_conf_verify_cb);
+            ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
+            if (ret == 0) {
+                ESP_LOGI(TAG, "Successfully added Certificate!");
+                ret = WOLFSSL_SUCCESS;
+            }
+            else {
+                ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
+                ret = WOLFSSL_FAILURE;
+
+            }
+
         }
+        else {
+            /* not successful, so return zero */
+            ret = WOLFSSL_FAILURE;
+        }
+
     }
+    else {
+        /* not successful, so return zero */
+        ret = WOLFSSL_FAILURE;
+    }
+
+
+    /* Clean up and exit */
+    wolfSSL_X509_free(cert);
+
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
 
@@ -685,6 +719,52 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
     return esp_crt_bundle_init(x509_bundle, bundle_size);
+}
+
+int nope() {
+    int ret = 0;
+
+    Cert newCert;
+
+    FILE* file;
+    char certToUse[] = "./ca-ecc-cert.der";
+    char caKeyFile[] = "./ca-ecc-key.der";
+    char newCertOutput[] = "./newCert.der";
+
+    int derBufSz;
+    int caKeySz;
+
+    byte* derBuf   = NULL;
+    byte* pemBuf   = NULL;
+    byte* caKeyBuf = NULL;
+
+    /* for MakeCert and SignCert */
+    WC_RNG rng;
+    ecc_key caKey;
+    RsaKey newKey;
+    word32 idx = 0;
+    int initRng = 0, initCaKey = 0, initNewKey = 0;
+
+    /*------------------------------------------------------------------------*/
+    /* Generate new private key to go with our new cert */
+    /*------------------------------------------------------------------------*/
+    ret = wc_InitRng(&rng);
+    if (ret != 0) goto exit;
+    initRng = 1;
+
+    printf("Generating a new RSA key\n");
+    ret = wc_InitRsaKey(&newKey, NULL);
+    if (ret != 0) goto exit;
+    initNewKey = 1;
+
+    wc_MakeRsaKey(&newKey, 2048, WC_RSA_EXPONENT, &rng);
+    if (ret != 0) goto exit;
+
+    printf("Successfully created new RSA key\n\n");
+
+
+exit:
+    return ret;
 }
 
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
