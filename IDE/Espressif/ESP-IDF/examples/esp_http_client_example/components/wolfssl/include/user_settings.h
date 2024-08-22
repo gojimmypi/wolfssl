@@ -783,6 +783,8 @@
 #define WOLFSSL_MAX_ERROR_SZ 200
 #define WOLFSSL_ALT_CERT_CHAINS
 // #define DEBUG_WOLFSSL
+// #define DEBUG_WOLFSSL
+// #define WOLFSSL_DEBUG_ASN_TEMPLATE
 
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options

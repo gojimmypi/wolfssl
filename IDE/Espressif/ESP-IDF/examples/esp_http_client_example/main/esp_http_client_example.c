@@ -947,6 +947,8 @@ static void http_test_task(void *pvParameters)
 #define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    wolfSSL_Debugging_ON();
+
     https_with_url();
 #endif
 
