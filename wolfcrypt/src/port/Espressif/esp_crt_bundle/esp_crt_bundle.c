@@ -288,28 +288,28 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                     ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT");
                 }
         #endif
-                ret = ESP_FAIL;
+                ret = WOLFSSL_FAILURE;
             }
             else {
                 ESP_LOGI(TAG, "Successfully loaded DER certificate!");
-                ret = ESP_OK;
+                ret = WOLFSSL_SUCCESS;
             }
 
-            if (ret == ESP_OK) {
+            if (ret == WOLFSSL_SUCCESS) {
                 subject = wolfSSL_X509_get_subject_name(cert);
                 if (subject == NULL) {
                     ESP_LOGE(TAG, "Error getting subject name.");
-                    ret = ESP_FAIL;
+                    ret = WOLFSSL_FAILURE;
                 }
                 if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
                     ESP_LOGE(TAG, "Error converting subject name to string.");
-                    ret = ESP_FAIL;
+                    ret = WOLFSSL_FAILURE;
                 }
                 ESP_LOGI(TAG, "Subject Name: %s", subjectName);
             }
 
             /* subject == issuer */
-            if (ret == ESP_OK) {
+            if (ret == WOLFSSL_SUCCESS) {
                 cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name));
                 last_cmp = cmp_res;
                 crt_found = 1;
@@ -352,14 +352,17 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
             ESP_LOGW(TAG, "Found a Matching Certificate Name in the bundle!");
-        }
+            if (ret == WOLFSSL_FAILURE) {
+                ESP_LOGW(TAG, "Warning: found a matching cert, but error: %d",
+                              ret);
+            }
+        } /* crt found */
         else {
             ESP_LOGW(TAG, "Matching Certificate Name not found in bundle!");
-        }
+            ret = WOLFSSL_FAILURE;
+        } /* crt search result */
 
-        /* TODO change this to wolfSSL ret values */
-        if (ret == 0) {
-            ret = WOLFSSL_SUCCESS;
+        if (ret == WOLFSSL_SUCCESS) {
             /* TODO confirm: */
 
             WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
@@ -391,18 +394,16 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
                 ret = WOLFSSL_FAILURE;
             }
-
-        }
+        } /* check if successfully found a matching cert */
         else {
-            /* not successful, so return zero */
+            /* Found a cert but encountered error. */
             ret = WOLFSSL_FAILURE;
         }
-
-    }
+    } /* Did not find a cert */
     else {
         /* not successful, so return zero */
         ret = WOLFSSL_FAILURE;
-    }
+    } /* Failed to init, didn't even try to search. */
 
 
     /* Clean up and exit */
