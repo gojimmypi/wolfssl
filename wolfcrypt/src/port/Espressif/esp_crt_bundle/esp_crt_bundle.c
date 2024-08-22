@@ -355,26 +355,33 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         if (ret == 0) {
             /* TODO confirm: */
-            ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
+            // ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
             if (ret == WOLFSSL_SUCCESS) {
                 ESP_LOGI(TAG, "Successfully added Certificate!");
             }
             else {
-                ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
+                //ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
             }
+            ret = WOLFSSL_SUCCESS;
 
-            WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
-            if (peer_cert && wolfSSL_X509_check_issued(cert, peer_cert) == X509_V_OK) {
-                ret = wolfSSL_X509_verify_cert(store);
-                if (ret == WOLFSSL_SUCCESS) {
-                    ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
+            if (ret == WOLFSSL_SUCCESS) {
+                WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+                if (peer_cert && wolfSSL_X509_check_issued(peer_cert, cert) == X509_V_OK) {
+                    ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
+                    ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
+                    ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
+                    ret = wolfSSL_X509_verify_cert(store);
+                    if (ret == WOLFSSL_SUCCESS) {
+                        ESP_LOGI(TAG, "Successfully verified cert in updated store!");
+                    }
+                    else {
+                        ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                    }
                 }
                 else {
-                    ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                    ret = WOLFSSL_FAILURE;
+                    ESP_LOGE(TAG, "Failed wolfSSL_X509_check_issued");
                 }
-            }
-            else {
-                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
             }
 
             if (ret == WOLFSSL_SUCCESS) {
@@ -382,6 +389,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
             else {
                 ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
+                ret = WOLFSSL_FAILURE;
             }
 
         }
