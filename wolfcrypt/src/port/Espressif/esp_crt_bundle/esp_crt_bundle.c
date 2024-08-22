@@ -115,6 +115,8 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
         if (ret == ASN_PARSE_E) {
 #if defined(WOLFSSL_NO_ASN_STRICT)
             /* Issuer amd subject will only be non-blank with relaxed check */
+            ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial and "
+                          "WOLFSSL_NO_ASN_STRICT enabled.");
             ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
             ESP_LOGI(TAG, "Subject: %s", cert.subject);
 
@@ -173,8 +175,10 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     intptr_t this_addr = 0;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
-    /* TODO */
+
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_TLS)
     wolfSSL_Debugging_ON();
+#endif
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb !\n");
@@ -238,7 +242,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
      */
     /* Find the cert: */
     if (ret == WOLFSSL_SUCCESS) {
-        _cert_bundled_loaded = 1; /* TODO detect in out store */
+        _cert_bundled_loaded = 1; /* TODO detect in our store */
 
         bool crt_found = false;
         int start = 0;
@@ -276,10 +280,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
             cert = wolfSSL_d2i_X509(&x509, &cert_data, derCertLength);
             if (cert == NULL) {
-                ESP_LOGE(TAG,
-                    "Error loading DER Certificate Authority (CA)"
-                              "from bundle #%d.",
-                    middle);
+                ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
+                              "from bundle #%d.", middle);
         #if !defined(WOLFSSL_NO_ASN_STRICT)
                 /* Suggestion only when relevant: */
                 if (wolfssl_found_zero_serial()) {
@@ -310,6 +312,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             if (ret == ESP_OK) {
                 cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name));
                 last_cmp = cmp_res;
+                crt_found = 1;
             }
             else {
                 ESP_LOGW(TAG, "Skipping CA #%d", middle);
@@ -344,27 +347,20 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 start = middle;
             }
 #endif
-        }
+        } /* searching bundle */
 
+        /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
-            // derCertLength
-            size_t key_len = s_crt_bundle.crts[middle][2] << 8 | s_crt_bundle.crts[middle][3];
-            // TODO check sig: ret = esp_crt_check_signature(child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len, key_len);
+            ESP_LOGW(TAG, "Found a Matching Certificate Name in the bundle!");
         }
         else {
-            ESP_LOGW(TAG, "crt not found!");
+            ESP_LOGW(TAG, "Matching Certificate Name not found in bundle!");
         }
 
+        /* TODO change this to wolfSSL ret values */
         if (ret == 0) {
-            /* TODO confirm: */
-            // ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
-            if (ret == WOLFSSL_SUCCESS) {
-                ESP_LOGI(TAG, "Successfully added Certificate!");
-            }
-            else {
-                //ESP_LOGE(TAG, "Failed to add CA! ret = %d", ret);
-            }
             ret = WOLFSSL_SUCCESS;
+            /* TODO confirm: */
 
             WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
             if (peer_cert && wolfSSL_X509_check_issued(peer_cert, cert) == X509_V_OK) {
