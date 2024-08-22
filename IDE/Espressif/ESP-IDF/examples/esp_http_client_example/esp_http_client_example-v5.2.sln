@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h = ..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h
 		example_log.txt = example_log.txt
 		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py
+		components\wolfssl\Kconfig = components\wolfssl\Kconfig
 		platformio.ini = platformio.ini
 		README.md = README.md
 		sdkconfig.defaults = sdkconfig.defaults

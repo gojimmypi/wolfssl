@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x
+#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 #define USE_WOLFSSL_ESP_SDK_TIME
 
 /* The Espressif project config file. See also sdkconfig.defaults */
@@ -109,6 +109,14 @@
         #define WOLFSSL_NO_KYBER768
         #define NO_SESSION_CACHE
     #endif
+#endif
+
+/* Check if we'll relax ASN checking. For instance, there have been certs
+ * inthe the Espressif Bundle that are missing a serial number. This causes
+ * an error in wolfSSL unless WOLFSSL_NO_ASN_STRICT is defined. */
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
+    #undef  WOLFSSL_NO_ASN_STRICT
+    #define WOLFSSL_NO_ASN_STRICT
 #endif
 
 /* Pick a cert buffer size: */

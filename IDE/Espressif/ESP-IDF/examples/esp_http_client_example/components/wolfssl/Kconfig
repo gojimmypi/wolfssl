@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 
-# Kconfig File Version 5.7.0.002 for wolfssl_test
+# Kconfig File Version 5.7.2.001 for esp-idf integration
 
 # Kconfig Format Rules
 #
@@ -222,6 +222,14 @@ menu "wolfSSL"
                     as customer specific root certificates in compressed format rather
                     than storing full certificate. For the root certificates the public key and the subject name
                     will be stored.
+
+            config WOLFSSL_NO_ASN_STRICT
+                bool "Relax Certificate ASN Strict Checks"
+                default n
+                help
+                    Allows sub-optimal certificate ASN checks. In particular, this allows
+                    for missing serial numbers that may be found in the Espressif cacert_all.pem
+                    file. Unless using a bundle with known issues, it is recommended to NOT enable this.
 
             choice WOLFSSL_DEFAULT_CERTIFICATE_BUNDLE
                 bool "Default certificate bundle options"
