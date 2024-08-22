@@ -174,6 +174,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
     /* TODO */
+    wolfSSL_Debugging_ON();
+
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb !\n");
 
@@ -364,12 +366,15 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
             ret = WOLFSSL_SUCCESS;
 
-            if (ret == WOLFSSL_SUCCESS) {
-                WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
-                if (peer_cert && wolfSSL_X509_check_issued(peer_cert, cert) == X509_V_OK) {
-                    ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
-                    ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
-                    ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
+            WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+            if (peer_cert && wolfSSL_X509_check_issued(peer_cert, cert) == X509_V_OK) {
+                ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
+                int ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
+                ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
+
+                if (ret == WOLFSSL_SUCCESS) {
+                    /* TODO consider reinitialize the store context */
+
                     ret = wolfSSL_X509_verify_cert(store);
                     if (ret == WOLFSSL_SUCCESS) {
                         ESP_LOGI(TAG, "Successfully verified cert in updated store!");
@@ -379,8 +384,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                     }
                 }
                 else {
-                    ret = WOLFSSL_FAILURE;
-                    ESP_LOGE(TAG, "Failed wolfSSL_X509_check_issued");
+                    ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
                 }
             }
 
@@ -568,8 +572,9 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     uint16_t num_certs;
     uint16_t i;
     size_t cert_len;
+    int ret = ESP_OK;
 
-    WOLFSSL_ENTER(esp_crt_bundle_init);
+    WOLFSSL_ENTER("esp_crt_bundle_init");
 
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle size");
@@ -661,7 +666,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     free(s_crt_bundle.crts);
     s_crt_bundle.num_certs = num_certs;
     s_crt_bundle.crts = crts;
-    WOLFSSL_LEAVE(esp_crt_bundle_init, ret);
+    WOLFSSL_LEAVE("esp_crt_bundle_init", ret);
     return ESP_OK;
 }
 
