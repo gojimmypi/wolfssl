@@ -1005,7 +1005,6 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
 #endif /* Conditional key and cert constant names */
 
-
 /******************************************************************************
 ** Sanity Checks
 ******************************************************************************/
@@ -1028,6 +1027,13 @@ Turn on timer debugging (used when CPU cycles not available)
 #else
     #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
 #endif
+
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
+    /* The settings.h and/or user_settings.h should have detected config
+     * valuse from Kconfig and set the appropriate wolfSSL macro: */
+    #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
+#endif
+
 /* See settings.h for some of the possible hardening options:
  *
  *  #define NO_ESPIDF_DEFAULT

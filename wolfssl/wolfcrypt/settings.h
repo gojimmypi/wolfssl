@@ -3735,6 +3735,12 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif
 
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
+    /* The settings.h and/or user_settings.h should have detected config
+     * valuse from Kconfig and set the appropriate wolfSSL macro: */
+    #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
+#endif
+
 #if defined(WOLFSSL_ESPIDF) && defined(ARDUINO)
     #error "Found both ESPIDF and ARDUINO. Pick one."
 #endif
