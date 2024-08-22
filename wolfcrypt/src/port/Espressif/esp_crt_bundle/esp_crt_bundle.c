@@ -68,7 +68,7 @@ static const char *TAG = "esp_crt_bundle-wolfssl";
 
 /* a dummy certificate so that
  * cacert_ptr passes non-NULL check during handshake */
-/* TODO: actually used by wolfSSL? */
+/* TODO: actually used by wolfSSL? no, probably not.*/
 // static WOLFSSL_X509 s_dummy_crt;
 
 /* This crt_bundle_t type must match other providers in esp-tls from ESP-IDF.
@@ -113,7 +113,7 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
         /* If we find a zero serial number, a parse error may still occur. */
         if (ret == ASN_PARSE_E) {
-#if defined(WOLFSSL_NO_ASN_STRICT)
+#if defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
             /* Issuer amd subject will only be non-blank with relaxed check */
             ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial and "
                           "WOLFSSL_NO_ASN_STRICT enabled.");
@@ -282,7 +282,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             if (cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
                               "from bundle #%d.", middle);
-        #if !defined(WOLFSSL_NO_ASN_STRICT)
+        #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
                 /* Suggestion only when relevant: */
                 if (wolfssl_found_zero_serial()) {
                     ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT");
@@ -621,7 +621,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
 #else
         cert_len = cur_crt[0] << 8 | cur_crt[1];
-    #if !defined(WOLFSSL_NO_ASN_STRICT)
+    #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
         if (wolfssl_is_nonzero_serial_number(cur_crt + CRT_HEADER_OFFSET,
                                              cert_len) > 0) {
             ESP_LOGW(TAG, "Warning: found zero value for serial number in "
@@ -719,7 +719,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     return ret;
 }
 
-/* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer. */
+/* esp_crt_bundle_detach() used by ESP-IDF esp-tls layer. */
 void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
 {
     free(s_crt_bundle.crts);
@@ -734,57 +734,20 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
     _esp_crt_bundle_is_valid = ESP_FAIL;
 }
 
-/* esp_crt_bundle_set() used by ESP-IDF esp-tls layer. */
+/* The name esp_crt_bundle_set() used by ESP-IDF esp-tls layer,
+ * but called esp_crt_bundle_init here. */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
     return esp_crt_bundle_init(x509_bundle, bundle_size);
 }
 
-int nope() {
-    int ret = 0;
+/* Sanity checks: */
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
+    /* The settings.h and/or user_settings.h should have detected config
+     * valuse from Kconfig and set the appropriate wolfSSL macro: */
+    #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
+#endif
 
-    Cert newCert;
-
-    FILE* file;
-    char certToUse[] = "./ca-ecc-cert.der";
-    char caKeyFile[] = "./ca-ecc-key.der";
-    char newCertOutput[] = "./newCert.der";
-
-    int derBufSz;
-    int caKeySz;
-
-    byte* derBuf   = NULL;
-    byte* pemBuf   = NULL;
-    byte* caKeyBuf = NULL;
-
-    /* for MakeCert and SignCert */
-    WC_RNG rng;
-    ecc_key caKey;
-    RsaKey newKey;
-    word32 idx = 0;
-    int initRng = 0, initCaKey = 0, initNewKey = 0;
-
-    /*------------------------------------------------------------------------*/
-    /* Generate new private key to go with our new cert */
-    /*------------------------------------------------------------------------*/
-    ret = wc_InitRng(&rng);
-    if (ret != 0) goto exit;
-    initRng = 1;
-
-    printf("Generating a new RSA key\n");
-    ret = wc_InitRsaKey(&newKey, NULL);
-    if (ret != 0) goto exit;
-    initNewKey = 1;
-
-    wc_MakeRsaKey(&newKey, 2048, WC_RSA_EXPONENT, &rng);
-    if (ret != 0) goto exit;
-
-    printf("Successfully created new RSA key\n\n");
-
-
-exit:
-    return ret;
-}
 
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 #endif /* WOLFSSL_ESPIDF */
