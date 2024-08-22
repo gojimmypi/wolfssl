@@ -55,7 +55,7 @@
 /* This flag allows wolfSSL to include options.h instead of having client
  * projects do it themselves. This should *NEVER* be defined when building
  * wolfSSL as it can cause hard to debug problems. */
-#ifdef EXTERNAL_OPTS_OPENVPN
+#if defined(EXTERNAL_OPTS_OPENVPN) || defined(WOLFSSL_USE_OPTIONS_H)
 #include <wolfssl/options.h>
 #endif
 
@@ -3258,6 +3258,11 @@ extern void uITRON4_free(void *p) ;
  || defined(HAVE_LIGHTY)
     #undef  KEEP_PEER_CERT
     #define KEEP_PEER_CERT
+#endif
+
+#if defined(OPENSSL_ALL) && !defined(WOLFSSL_NO_COPY_CERT)
+    #undef WOLFSSL_COPY_CERT
+    #define WOLFSSL_COPY_CERT
 #endif
 
 /*

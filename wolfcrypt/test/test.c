@@ -744,7 +744,7 @@ void printOutput(const char *strName, unsigned char *data, unsigned int dataSz);
 WOLFSSL_TEST_SUBROUTINE int ariagcm_test(MC_ALGID);
 #endif
 
-#ifdef WOLF_CRYPTO_CB
+#if defined(WOLF_CRYPTO_CB) && !defined(WC_TEST_NO_CRYPTOCB_SW_TEST)
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t cryptocb_test(void);
 #endif
 #ifdef WOLFSSL_CERT_PIV
@@ -2628,7 +2628,7 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
         TEST_PASS("blob     test passed!\n");
 #endif
 
-#if defined(WOLF_CRYPTO_CB) && \
+#if defined(WOLF_CRYPTO_CB) && !defined(WC_TEST_NO_CRYPTOCB_SW_TEST) && \
     !(defined(HAVE_INTEL_QAT_SYNC) || defined(HAVE_CAVIUM_OCTEON_SYNC) || \
       defined(WOLFSSL_QNX_CAAM) || defined(HAVE_RENESAS_SYNC))
     if ( (ret = cryptocb_test()) != 0)
@@ -4847,40 +4847,53 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t error_test(void)
     int i;
     int j = 0;
     /* Values that are not or no longer error codes. */
-    int missing[] = { -124, -166, -167, -168, -169,   0 };
+    static const struct {
+        int first;
+        int last;
+    } missing[] = {
+        { -124, -124 },
+        { -166, -169 }
+    };
 
     /* Check that all errors have a string and it's the same through the two
      * APIs. Check that the values that are not errors map to the unknown
      * string.
      */
-    for (i = MAX_CODE_E-1; i >= WC_LAST_E; i--) {
+    for (i = WC_FIRST_E; i >= WC_LAST_E; i--) {
+        int this_missing = 0;
+        for (j = 0; j < (int)XELEM_CNT(missing); ++j) {
+            if ((i <= missing[j].first) && (i >= missing[j].last)) {
+                this_missing = 1;
+                break;
+            }
+        }
         errStr = wc_GetErrorString(i);
         wc_ErrorString(i, out);
 
-        if (i != missing[j]) {
+        if (! this_missing) {
             if (XSTRCMP(errStr, unknownStr) == 0) {
                 WOLFSSL_MSG("errStr unknown");
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
             }
             if (XSTRCMP(out, unknownStr) == 0) {
                 WOLFSSL_MSG("out unknown");
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
             }
             if (XSTRCMP(errStr, out) != 0) {
                 WOLFSSL_MSG("errStr does not match output");
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
             }
             if (XSTRLEN(errStr) >= WOLFSSL_MAX_ERROR_SZ) {
                 WOLFSSL_MSG("errStr too long");
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
             }
         }
         else {
             j++;
             if (XSTRCMP(errStr, unknownStr) != 0)
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
             if (XSTRCMP(out, unknownStr) != 0)
-                return WC_TEST_RET_ENC_NC;
+                return WC_TEST_RET_ENC_I(-i);
         }
     }
 
@@ -57931,6 +57944,7 @@ static int myCryptoCbFind(int currentId, int algoType)
 #endif /* WOLF_CRYPTO_CB_FIND */
 
 
+#if !defined(WC_TEST_NO_CRYPTOCB_SW_TEST)
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t cryptocb_test(void)
 {
     wc_test_ret_t ret = 0;
@@ -58059,6 +58073,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t cryptocb_test(void)
 
     return ret;
 }
+#endif /* ! WC_TEST_NO_CRYPTOCB_SW_TEST */
 #endif /* WOLF_CRYPTO_CB */
 
 #ifdef WOLFSSL_CERT_PIV
