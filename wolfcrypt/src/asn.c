@@ -56,6 +56,8 @@ ASN Options:
  * WOLFSSL_CERT_GEN: Cert generation. Saves extra certificate info in GetName.
  * WOLFSSL_NO_ASN_STRICT: Disable strict RFC compliance checks to
     restore 3.13.0 behavior.
+ * WOLFSSL_ASN_ALLOW_0_SERIAL: Even if WOLFSSL_NO_ASN_STRICT is not defined,
+    allow a length=1, but zero value serial numnber.
  * WOLFSSL_NO_OCSP_OPTIONAL_CERTS: Skip optional OCSP certs (responder issuer
     must still be trusted)
  * WOLFSSL_NO_TRUSTED_CERTS_VERIFY: Workaround for situation where entire cert
@@ -13992,7 +13994,7 @@ static int GetCertName(DecodedCert* cert, char* full, byte* hash, int nameType,
             }
 
         #ifndef WOLFSSL_NO_ASN_STRICT
-            /* RFC 5280 section 4.1.2.4 lists a DirecotryString as being
+            /* RFC 5280 section 4.1.2.4 lists a DirectoryString as being
              * 1..MAX in length */
             if (strLen < 1) {
                 WOLFSSL_MSG("Non conforming DirectoryString of length 0 was"
@@ -14634,7 +14636,7 @@ static int GetCertName(DecodedCert* cert, char* full, byte* hash, int nameType,
                 GetASN_GetRef(&dataASN[RDNASN_IDX_ATTR_VAL], &str, &strLen);
 
             #ifndef WOLFSSL_NO_ASN_STRICT
-                /* RFC 5280 section 4.1.2.4 lists a DirecotryString as being
+                /* RFC 5280 section 4.1.2.4 lists a DirectoryString as being
                  * 1..MAX in length */
                 if (ret == 0 && strLen < 1) {
                     WOLFSSL_MSG("Non conforming DirectoryString of length 0 was"
@@ -22005,7 +22007,8 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
         cert->version = version;
         cert->serialSz = (int)serialSz;
 
-    #if !defined(WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_PYTHON)
+    #if !defined(WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_PYTHON) && \
+        !defined(WOLFSSL_ASN_ALLOW_0_SERIAL)
         /* RFC 5280 section 4.1.2.2 states that non-conforming CAs may issue
          * a negative or zero serial number and should be handled gracefully.
          * Since it is a non-conforming CA that issues a serial of 0 then we
@@ -22016,6 +22019,11 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
             ret = ASN_PARSE_E;
         }
     #endif
+        if (cert->serialSz == 0) {
+            WOLFSSL_MSG("Error serial size is zero. Should be at least one "
+                        "even with no serial number.");
+            ret = ASN_PARSE_E;
+        }
 
         cert->signatureOID = dataASN[X509CERTASN_IDX_TBS_ALGOID_OID].data.oid.sum;
         cert->keyOID = dataASN[X509CERTASN_IDX_TBS_SPUBKEYINFO_ALGO_OID].data.oid.sum;
