@@ -325,7 +325,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                     ret = WOLFSSL_FAILURE;
                 }
                 else {
-                    ESP_LOGI(TAG, "This Bundle Item Issuer Name: %s",
+                    ESP_LOGI(TAG, "This Bundle Item Issuer Name:  %s",
                                   this_issuer->name);
                 }
 
@@ -352,9 +352,9 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                  * match this bundle item issuer with the store certificate
                  * subject name, as later we'll call wolfSSL_X509_check_issued()
                  * which compares these fields. */
-                cmp_res = memcmp(store_cert_subject->name,
-                                 this_issuer->name,
-                                 strlen((const char*)store_cert_subject->name));
+                cmp_res = memcmp(store_cert_issuer->name,
+                                 this_subject->name,
+                                 strlen((const char*)store_cert_issuer->name));
                 last_cmp = cmp_res; /* in case we have to skip an item, save */
             }
             else {
@@ -386,7 +386,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 start = middle;
             }
 #endif
-        } /* searching bundle */
+        } /* while (start <= end) searching bundle */
 
         /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
@@ -412,30 +412,32 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 //            }
 
             wolfSSL_Debugging_ON();
+
+            ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, store_cert)");
+            if (store_cert && wolfSSL_X509_check_issued(bundle_cert, store_cert) == X509_V_OK) {
+                ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
+
+            }
+            else {
+                ESP_LOGW(TAG, "ERROR: wolfSSL_X509_check_issued failed.");
+            }
+
             if (_added_cert == 0) {
-                ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(store_cert, bundle_cert)");
-                if (store_cert && wolfSSL_X509_check_issued(store_cert, bundle_cert) == X509_V_OK) {
-                    ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
+                //bundle_cert->isCa = 1; /* TODO: do we really need to manually set this? */
 
-                    bundle_cert->isCa = 1; /* TODO: do we really need to manually set this? */
-
-                    ESP_LOGI(TAG, "\n\nAdding Cert!\n");
-                    ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
-                    if (ret == WOLFSSL_SUCCESS) {
-                        ESP_LOGI(TAG, "Successfully added cert to store! ret = %d", ret);
-                        _added_cert = 1;
-                    }
-                    else {
-                        ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
-                    }
+                ESP_LOGI(TAG, "\n\nAdding Cert!\n");
+                ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
+                if (ret == WOLFSSL_SUCCESS) {
+                    ESP_LOGI(TAG, "Successfully added cert to store! ret = %d", ret);
+                    _added_cert = 1;
                 }
                 else {
-                    ESP_LOGW(TAG, "peer check failed.");
+                    ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
                 }
             }
-            else{
+            else {
                 ESP_LOGI(TAG, "Already added matching cert!");
-            }
+            } /* _added_cert */
 
             ESP_LOGI(TAG, "wolfSSL_X509_verify_cert(store)");
             ret = wolfSSL_X509_verify_cert(store); /* <<<<<<<<<<< still failing here */
@@ -447,19 +449,10 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 ESP_LOGW(TAG, "Ignoring error...");
                 ret = WOLFSSL_SUCCESS; /* TODO */
             }
-
-
-//            if (ret == WOLFSSL_SUCCESS) {
-//                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
-//            }
-//            else {
-//                ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
-//                ret = WOLFSSL_FAILURE;
-//            }
-        } /* check if successfully found a matching cert */
+        } /* crt_found */
         else {
-            /* Found a cert but encountered error. */
-            // ret = WOLFSSL_FAILURE;
+            ESP_LOGW(TAG, "Did not find a matching crt");
+            // ret = WOLFSSL_FAILURE; TODO?
         }
     } /* Did not find a cert */
     else {
