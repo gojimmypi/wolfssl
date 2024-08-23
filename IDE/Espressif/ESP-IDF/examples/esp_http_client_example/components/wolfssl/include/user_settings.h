@@ -537,7 +537,8 @@
 #define WOLFSSL_CERT_EXT
 #define WOLFSSL_SYS_CA_CERTS
 
-#define WOLFSSL_NO_ASN_STRICT
+// #define WOLFSSL_NO_ASN_STRICT
+#define WOLFSSL_ASN_ALLOW_0_SERIAL
 
 #define WOLFSSL_CERT_TEXT
 
@@ -790,7 +791,7 @@
 
 #define WOLFSSL_MAX_ERROR_SZ 200
 #define WOLFSSL_ALT_CERT_CHAINS
-// #define DEBUG_WOLFSSL
+
 #define DEBUG_WOLFSSL
 // #define WOLFSSL_DEBUG_ASN_TEMPLATE
 
@@ -819,6 +820,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define WOLFSSL_DEBUG_MATH
 #define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_TLS
+#define WOLFSSL_DEBUG_CERT_BUNDLE
 
 See wolfcrypt/benchmark/benchmark.c for debug and other settings:
 

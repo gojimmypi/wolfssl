@@ -113,7 +113,9 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
         /* If we find a zero serial number, a parse error may still occur. */
         if (ret == ASN_PARSE_E) {
-#if defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
+#if defined(WOLFSSL_NO_ASN_STRICT) || defined(WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+    defined(CONFIG_WOLFSSL_NO_ASN_STRICT)                                 || \
+    defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL)
             /* Issuer amd subject will only be non-blank with relaxed check */
             ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial and "
                           "WOLFSSL_NO_ASN_STRICT enabled.");
@@ -156,7 +158,16 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     return ret;
 }
 
-/* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
+static bool crt_found = false;
+static int _added_cert = 0;
+
+/* wolfssl_ssl_conf_verify_cb
+ *   for reference:
+ *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
+ *
+ * This callback is called FOR EACH cert in the store.
+ * Not all certs in the store will have a match for a cert in the bundle,
+ * but we NEED ONE to match.
  *
  * Returns:
  * 0 if the verification process should stop immediately with an error.
@@ -167,17 +178,19 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     char subjectName[X509_MAX_SUBJECT_LEN];
     const unsigned char* cert_data = NULL;
     WOLFSSL_X509* x509 = NULL;
-    WOLFSSL_X509_NAME* subject = NULL;
-    WOLFSSL_X509_NAME* issuer = NULL;
+    WOLFSSL_X509_NAME* store_cert_subject = NULL;
+    WOLFSSL_X509_NAME* this_subject = NULL;
+    WOLFSSL_X509_NAME* store_cert_issuer = NULL;
+    WOLFSSL_X509_NAME* this_issuer = NULL;
 
-    WOLFSSL_X509* cert = NULL;
-    WOLFSSL_X509* peer_cert = NULL;
+    WOLFSSL_X509* store_cert = NULL;
+    WOLFSSL_X509* bundle_cert = NULL;
     intptr_t this_addr = 0;
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
 
-#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_TLS)
-    wolfSSL_Debugging_ON();
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_TLS) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+   // wolfSSL_Debugging_ON();
 #endif
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
@@ -211,12 +224,14 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     /* TODO: iterate through all CA certs in bundle (or is the bundle a store?) */
 
     if (ret == WOLFSSL_SUCCESS) {
+        /* Get the current certificate being verified during the certificate
+         * chain validation process. */
 #ifdef OPENSSL_EXTRA
-        cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+        store_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
 #else
-        cert = store->current_cert;
+        store_cert = store->current_cert;
 #endif
-        if (cert == NULL) {
+        if (store_cert == NULL) {
             ESP_LOGE(TAG, "Failed to get current certificate.\n");
             ret = WOLFSSL_FAILURE;
         }
@@ -226,25 +241,29 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     }
 
     if (ret == WOLFSSL_SUCCESS) {
-        subject = wolfSSL_X509_get_subject_name(cert);
-        if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
+        store_cert_subject = wolfSSL_X509_get_subject_name(store_cert);
+        if (wolfSSL_X509_NAME_oneline(store_cert_subject, subjectName, sizeof(subjectName)) == NULL) {
             ESP_LOGE(TAG, "Error converting subject name to string.");
-            wolfSSL_X509_free(cert);
+            wolfSSL_X509_free(store_cert); /* TODO check future references */
         }
-        issuer = wolfSSL_X509_get_issuer_name(cert);
+        store_cert_issuer = wolfSSL_X509_get_issuer_name(store_cert);
+        ESP_LOGI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
         ESP_LOGI(TAG, "Store Cert Subject: %s", subjectName );
-        ESP_LOGI(TAG, "Store Cert Issuer:  %s", issuer->name );
     }
 
     /* When the server presents its certificate, the client checks if this
      * certificate can be traced back to one of the CA certificates in the
      * bundle.
-     */
-    /* Find the cert: */
+     *
+     * NOTE: To save memory, the store `cert` from above is overwritten below.
+     * Any details needed from the store `cert` should have been saved.
+     *
+     * We'll proceed by assiging `cert` to each of the respective items in
+     * bundle as we attempt to find the desired cert: */
     if (ret == WOLFSSL_SUCCESS) {
         _cert_bundled_loaded = 1; /* TODO detect in our store */
 
-        bool crt_found = false;
+        /* TODO move declarations */
         int start = 0;
         int end = s_crt_bundle.num_certs - 1;
 #ifdef IS_PRESORTED
@@ -278,14 +297,18 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
-            cert = wolfSSL_d2i_X509(&x509, &cert_data, derCertLength);
-            if (cert == NULL) {
+            bundle_cert = wolfSSL_d2i_X509(&x509, &cert_data, derCertLength);
+            if (bundle_cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
                               "from bundle #%d.", middle);
-        #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
+        #if (!defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      && \
+             !defined(       WOLFSSL_NO_ASN_STRICT)      && \
+             !defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) && \
+             !defined(       WOLFSSL_ASN_ALLOW_0_SERIAL)  )
                 /* Suggestion only when relevant: */
                 if (wolfssl_found_zero_serial()) {
-                    ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT");
+                    ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT "
+                                  "or WOLFSSL_ASN_ALLOW_0_SERIAL");
                 }
         #endif
                 ret = WOLFSSL_FAILURE;
@@ -296,37 +319,58 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
 
             if (ret == WOLFSSL_SUCCESS) {
-                subject = wolfSSL_X509_get_subject_name(cert);
-                if (subject == NULL) {
+                this_issuer = wolfSSL_X509_get_issuer_name(bundle_cert);
+                if (this_issuer == NULL) {
+                    ESP_LOGE(TAG, "Error getting issuer name.");
+                    ret = WOLFSSL_FAILURE;
+                }
+                else {
+                    ESP_LOGI(TAG, "This Bundle Item Issuer Name: %s",
+                                  this_issuer->name);
+                }
+
+                this_subject = wolfSSL_X509_get_subject_name(bundle_cert);
+                if (this_subject == NULL) {
                     ESP_LOGE(TAG, "Error getting subject name.");
                     ret = WOLFSSL_FAILURE;
                 }
-                if (wolfSSL_X509_NAME_oneline(subject, subjectName, sizeof(subjectName)) == NULL) {
-                    ESP_LOGE(TAG, "Error converting subject name to string.");
-                    ret = WOLFSSL_FAILURE;
+                else {
+                    if (wolfSSL_X509_NAME_oneline(this_subject, subjectName,
+                                                  sizeof(subjectName)) == NULL) {
+                        ESP_LOGE(TAG, "Error converting subject name to string.");
+                        ret = WOLFSSL_FAILURE;
+                    }
+                    ESP_LOGI(TAG, "This Bundle Item Subject Name: %s",
+                                   subjectName);
                 }
-                ESP_LOGI(TAG, "Subject Name: %s", subjectName);
             }
 
             /* subject == issuer */
             if (ret == WOLFSSL_SUCCESS) {
-                cmp_res = memcmp(issuer->name, subject->name, strlen((const char*)subject->name));
-                last_cmp = cmp_res;
-                crt_found = 1;
+                /* Compare the current store cert issuer saved above, to the
+                 * current one being inspected in the bundle loop. We want to
+                 * match this bundle item issuer with the store certificate
+                 * subject name, as later we'll call wolfSSL_X509_check_issued()
+                 * which compares these fields. */
+                cmp_res = memcmp(store_cert_subject->name,
+                                 this_issuer->name,
+                                 strlen((const char*)store_cert_subject->name));
+                last_cmp = cmp_res; /* in case we have to skip an item, save */
             }
             else {
-                ESP_LOGW(TAG, "Skipping CA #%d", middle);
+                ESP_LOGW(TAG, "Skipping CA #%d due to failure", middle);
                 cmp_res = last_cmp;
             }
 #endif
 
-#ifdef IS_PRESORTED
-            /* If the list is presorted, we can use a binary search */
             if (cmp_res == 0) {
-                ESP_LOGW(TAG, "crt found %s", issuer->name);
-                crt_found = true;
+                ESP_LOGI(TAG, "Found a cert issuer match: %s",
+                                this_issuer->name);
+                crt_found = 1;
                 break;
             }
+#ifdef IS_PRESORTED
+            /* If the list is presorted, we can use a binary search. */
             else if (cmp_res < 0) {
                 end = middle - 1;
             }
@@ -335,13 +379,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
             middle = (start + end) / 2;
 #else
-            /* Typically during debug, we may wish to simply step though
-             * all the certs in the order found. */
-            if (cmp_res == 0) {
-                ESP_LOGW(TAG, "crt found %s", issuer->name);
-                crt_found = true;
-                break;
-            }
+            /* When the list is NOT presorted, typically during debugging,
+             * just step though in the order found until one is found: */
             else {
                 middle++;
                 start = middle;
@@ -359,45 +398,68 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         } /* crt found */
         else {
             ESP_LOGW(TAG, "Matching Certificate Name not found in bundle!");
-            ret = WOLFSSL_FAILURE;
+            // ret = WOLFSSL_FAILURE;
         } /* crt search result */
 
-        if (ret == WOLFSSL_SUCCESS) {
+        if (crt_found) {
             /* TODO confirm: */
+            ret = wolfSSL_X509_verify_cert(store);
+            if (ret == WOLFSSL_SUCCESS) {
+                ESP_LOGI(TAG, "Successfully verified store before making changes");
+            }
+            else {
+                ESP_LOGE(TAG, "Failed to verified store before making changes! ret = %d", ret);
+            }
 
-            WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
-            if (peer_cert && wolfSSL_X509_check_issued(peer_cert, cert) == X509_V_OK) {
-                ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
-                int ret = wolfSSL_X509_STORE_add_cert(store->store, cert);
-                ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
+            wolfSSL_Debugging_ON();
+            if (_added_cert == 0) {
+                ESP_LOGI(TAG, "Adding Cert");
+                ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
+                ESP_LOGI(TAG, "Getting peer from store");
+                WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+                ESP_LOGI(TAG, "peer cert  0x%x", (intptr_t)peer_cert);
+                ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(peer_cert, bundle_cert)");
+                if (peer_cert && wolfSSL_X509_check_issued(peer_cert, bundle_cert) == X509_V_OK) {
+                    ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
+                    ESP_LOGI(TAG, "\n\nAdding Cert!\n");
+                    _added_cert = 1;
+                    ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
 
-                if (ret == WOLFSSL_SUCCESS) {
-                    /* TODO consider reinitialize the store context */
-
-                    ret = wolfSSL_X509_verify_cert(store);
                     if (ret == WOLFSSL_SUCCESS) {
-                        ESP_LOGI(TAG, "Successfully verified cert in updated store!");
+                        /* TODO consider reinitialize the store context */
+                        ESP_LOGI(TAG, "wolfSSL_X509_verify_cert after cert add");
+                        ret = wolfSSL_X509_verify_cert(store);
+                        if (ret == WOLFSSL_SUCCESS) {
+                            ESP_LOGI(TAG, "Successfully verified cert in updated store!");
+                        }
+                        else {
+                            ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                        }
                     }
                     else {
-                        ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                        ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
                     }
                 }
                 else {
-                    ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
+                    ESP_LOGW(TAG, "peer check failed");
                 }
             }
+            else{
+                ESP_LOGI(TAG, "Already added matching cert!");
+            }
 
-            if (ret == WOLFSSL_SUCCESS) {
-                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
-            }
-            else {
-                ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
-                ret = WOLFSSL_FAILURE;
-            }
+
+//            if (ret == WOLFSSL_SUCCESS) {
+//                ESP_LOGI(TAG, "Successfully verfied cert in updated store!");
+//            }
+//            else {
+//                ESP_LOGE(TAG, "Failed to verify cert in udpated store! ret = %d", ret);
+//                ret = WOLFSSL_FAILURE;
+//            }
         } /* check if successfully found a matching cert */
         else {
             /* Found a cert but encountered error. */
-            ret = WOLFSSL_FAILURE;
+            // ret = WOLFSSL_FAILURE;
         }
     } /* Did not find a cert */
     else {
@@ -407,7 +469,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
 
     /* Clean up and exit */
-    wolfSSL_X509_free(cert);
+    wolfSSL_X509_free(store_cert);
+    wolfSSL_X509_free(bundle_cert);
     ESP_LOGI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
@@ -621,7 +684,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
 #else
         cert_len = cur_crt[0] << 8 | cur_crt[1];
-    #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
+    #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT) || defined(WOLFSSL_ASN_ALLOW_0_SERIAL) || defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL)
         if (wolfssl_is_nonzero_serial_number(cur_crt + CRT_HEADER_OFFSET,
                                              cert_len) > 0) {
             ESP_LOGW(TAG, "Warning: found zero value for serial number in "

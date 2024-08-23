@@ -231,6 +231,14 @@ menu "wolfSSL"
                     for missing serial numbers that may be found in the Espressif cacert_all.pem
                     file. Unless using a bundle with known issues, it is recommended to NOT enable this.
 
+            config WOLFSSL_ASN_ALLOW_0_SERIAL
+                bool "Allow cert missing an ASN Serial Number"
+                default y
+                help
+                    Although not recommended, there may be certificates in the bundle that are missing
+                    a serial number. This option allows the missing value without having to fully
+                    disable strict ASN checking with WOLFSSL_NO_ASN_STRICT.
+
             choice WOLFSSL_DEFAULT_CERTIFICATE_BUNDLE
                 bool "Default certificate bundle options"
                 depends on WOLFSSL_CERTIFICATE_BUNDLE
