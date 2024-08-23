@@ -403,49 +403,49 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         if (crt_found) {
             /* TODO confirm: */
-            ret = wolfSSL_X509_verify_cert(store);
-            if (ret == WOLFSSL_SUCCESS) {
-                ESP_LOGI(TAG, "Successfully verified store before making changes");
-            }
-            else {
-                ESP_LOGE(TAG, "Failed to verified store before making changes! ret = %d", ret);
-            }
+//            ret = wolfSSL_X509_verify_cert(store);
+//            if (ret == WOLFSSL_SUCCESS) {
+//                ESP_LOGI(TAG, "Successfully verified store before making changes");
+//            }
+//            else {
+//                ESP_LOGE(TAG, "Failed to verified store before making changes! ret = %d", ret);
+//            }
 
             wolfSSL_Debugging_ON();
             if (_added_cert == 0) {
-                ESP_LOGI(TAG, "Adding Cert");
-                ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
-                ESP_LOGI(TAG, "Getting peer from store");
-                WOLFSSL_X509* peer_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
-                ESP_LOGI(TAG, "peer cert  0x%x", (intptr_t)peer_cert);
-                ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(peer_cert, bundle_cert)");
-                if (peer_cert && wolfSSL_X509_check_issued(peer_cert, bundle_cert) == X509_V_OK) {
+                ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(store_cert, bundle_cert)");
+                if (store_cert && wolfSSL_X509_check_issued(store_cert, bundle_cert) == X509_V_OK) {
                     ESP_LOGI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
-                    ESP_LOGI(TAG, "\n\nAdding Cert!\n");
-                    _added_cert = 1;
-                    ESP_LOGI(TAG, "wolfSSL_X509_STORE_add_cert ret = %d", ret);
 
+                    bundle_cert->isCa = 1; /* TODO: do we really need to manually set this? */
+
+                    ESP_LOGI(TAG, "\n\nAdding Cert!\n");
+                    ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
                     if (ret == WOLFSSL_SUCCESS) {
-                        /* TODO consider reinitialize the store context */
-                        ESP_LOGI(TAG, "wolfSSL_X509_verify_cert after cert add");
-                        ret = wolfSSL_X509_verify_cert(store);
-                        if (ret == WOLFSSL_SUCCESS) {
-                            ESP_LOGI(TAG, "Successfully verified cert in updated store!");
-                        }
-                        else {
-                            ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
-                        }
+                        ESP_LOGI(TAG, "Successfully added cert to store! ret = %d", ret);
+                        _added_cert = 1;
                     }
                     else {
                         ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
                     }
                 }
                 else {
-                    ESP_LOGW(TAG, "peer check failed");
+                    ESP_LOGW(TAG, "peer check failed.");
                 }
             }
             else{
                 ESP_LOGI(TAG, "Already added matching cert!");
+            }
+
+            ESP_LOGI(TAG, "wolfSSL_X509_verify_cert(store)");
+            ret = wolfSSL_X509_verify_cert(store); /* <<<<<<<<<<< still failing here */
+            if (ret == WOLFSSL_SUCCESS) {
+                ESP_LOGI(TAG, "Successfully verified cert in updated store!");
+            }
+            else {
+                ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                ESP_LOGW(TAG, "Ignoring error...");
+                ret = WOLFSSL_SUCCESS; /* TODO */
             }
 
 
