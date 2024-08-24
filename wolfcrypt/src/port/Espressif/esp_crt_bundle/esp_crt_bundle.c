@@ -487,23 +487,22 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
                 ESP_LOGW(TAG, "Warning: found a matching cert, but error: %d",
                               ret);
             }
-        } /* crt found */
+        }
         else {
             ESP_LOGW(TAG, "Matching Certificate Name not found in bundle!");
-            // ret = WOLFSSL_FAILURE;
+            ret = WOLFSSL_FAILURE;
         } /* crt search result */
 
         if (crt_found) {
             /* TODO confirm: */
-//            ret = wolfSSL_X509_verify_cert(store);
-//            if (ret == WOLFSSL_SUCCESS) {
-//                ESP_LOGI(TAG, "Successfully verified store before making changes");
-//            }
-//            else {
-//                ESP_LOGE(TAG, "Failed to verified store before making changes! ret = %d", ret);
-//            }
-
-            wolfSSL_Debugging_ON();
+            ret = wolfSSL_X509_verify_cert(store);
+            if (ret == WOLFSSL_SUCCESS) {
+                ESP_LOGI(TAG, "Successfully verified store before making changes");
+            }
+            else {
+                ESP_LOGE(TAG, "Failed to verify store before making changes! "
+                              "ret = %d", ret);
+            }
 
             ESP_LOGI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, store_cert)");
             if (store_cert && wolfSSL_X509_check_issued(bundle_cert, store_cert) == X509_V_OK) {
@@ -511,6 +510,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
             }
             else {
+                /* This is ok, we may have others */
                 ESP_LOGW(TAG, "ERROR: wolfSSL_X509_check_issued failed.");
             }
 
@@ -556,8 +556,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     /* Clean up and exit */
 
     /* We don't clean up the store_cert and x509 as we are in a callback,
-     * and it is just a pointer into the actual ctx store cert  */
-    //wolfSSL_X509_free(bundle_cert);
+     * and it is just a pointer into the actual ctx store cert.  */
     ESP_LOGI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
