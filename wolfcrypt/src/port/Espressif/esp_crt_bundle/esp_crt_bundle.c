@@ -161,6 +161,72 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
 static bool crt_found = false;
 static int _added_cert = 0;
 
+static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
+                           const unsigned char * der, long derSz)
+{
+    int ret;
+    const char *issuer = NULL, *subject = NULL;
+    WOLFSSL_X509* peer = store->current_cert;
+
+    /* Verify Callback Arguments:
+     * preverify:           1=Verify Okay, 0=Failure
+     * store->error:        Failure error code (0 indicates no failure)
+     * store->current_cert: Current WOLFSSL_X509 object (only with OPENSSL_EXTRA)
+     * store->error_depth:  Current Index
+     * store->domain:       Subject CN as string (null term)
+     * store->totalCerts:   Number of certs presented by peer
+     * store->certs[i]:     A `WOLFSSL_BUFFER_INFO` with plain DER for each cert
+     * store->store:        WOLFSSL_X509_STORE with CA cert chain
+     * store->store->cm:    WOLFSSL_CERT_MANAGER
+     * store->ex_data:      The WOLFSSL object pointer
+     * store->discardSessionCerts: When set to non-zero value session certs
+        will be discarded (only with SESSION_CERTS)
+     */
+
+    /* lookup certificate issuer */
+    if (peer != NULL) {
+        issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
+        subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
+    }
+    printf("Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
+        store->error_depth,
+        issuer != NULL ? issuer : "[none]",
+        subject != NULL ? subject : "[none]");
+
+    /* if no signer error */
+    if (preverify == 0 && issuer != NULL && store->error == ASN_NO_SIGNER_E) {
+        WOLFSSL_CERT_MANAGER* cm = NULL; // = (WOLFSSL_CERT_MANAGER*)store->userCtx;
+        if (store->store != NULL)
+            cm = store->store->cm;
+
+        /* Find match for issuer */
+        if (XSTRSTR(issuer, "/CN=ISRG Root X1") != NULL) {
+            /* If match found load to Certificate Manager using: */
+            ret = wolfSSL_CertManagerLoadCABuffer(cm,
+                der, derSz, WOLFSSL_FILETYPE_ASN1);
+            if (ret != WOLFSSL_SUCCESS) {
+                printf("Failed to load CA ISRG_Root_X1\n");
+                return preverify;
+            }
+        }
+
+        /* Attempt to validate the certificate again */
+        ret = wolfSSL_CertManagerVerifyBuffer(cm, der, derSz,
+            WOLFSSL_FILETYPE_ASN1);
+        if (ret == WOLFSSL_SUCCESS) {
+            printf("Successfully validated cert: %s\n", subject);
+
+            /* If verification is successful then override error */
+            preverify = 1;
+        }
+    }
+    XFREE(issuer, 0, DYNAMIC_TYPE_OPENSSL);
+    XFREE(subject, 0, DYNAMIC_TYPE_OPENSSL);
+    return preverify;
+}
+
+static int _need_bundle_cert = 0;
+
 /* wolfssl_ssl_conf_verify_cb
  *   for reference:
  *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
@@ -177,6 +243,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
     const unsigned char* cert_data = NULL;
+    const unsigned char* cert_bundle_data = NULL;
     WOLFSSL_X509* x509 = NULL;
     WOLFSSL_X509_NAME* store_cert_subject = NULL;
     WOLFSSL_X509_NAME* this_subject = NULL;
@@ -185,7 +252,8 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
     WOLFSSL_X509* store_cert = NULL;
     WOLFSSL_X509* bundle_cert = NULL;
-    intptr_t this_addr = 0;
+    intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
+    int derCertLength = 0; /* the [size] value: length of [cert] budnle item */
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
 
@@ -195,10 +263,32 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
     ESP_LOGI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb !\n");
+    if (preverify == 1) {
+        ESP_LOGI(TAG, "preverify == 1\n");
+    }
+    else {
+        ESP_LOGW(TAG, "preverify == %d\n", preverify);
+    }
+    if (store->error == 0) {
+        ESP_LOGI(TAG, "store->error == 0");
+    }
+    else {
+        ESP_LOGI(TAG, "store->error: %d", store->error);
+    }
+
+    if ((preverify == 0) && (store->error == ASN_NO_SIGNER_E)) {
+        ESP_LOGW(TAG, "Setting _need_bundle_cert!");
+        _need_bundle_cert = 1;
+    }
+
+    if (_need_bundle_cert == 0) {
+        ESP_LOGW(TAG, "Nothing to do, exiting");
+        return preverify;
+    }
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
-        ESP_LOGI(TAG, "Detected prior Pre-verification Success.");
+        ESP_LOGI(TAG, "Success: Detected prior Pre-verification == 1.");
         /* So far, so good... we need to now check cert against alt */
     }
     else {
@@ -244,7 +334,6 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
         store_cert_subject = wolfSSL_X509_get_subject_name(store_cert);
         if (wolfSSL_X509_NAME_oneline(store_cert_subject, subjectName, sizeof(subjectName)) == NULL) {
             ESP_LOGE(TAG, "Error converting subject name to string.");
-            wolfSSL_X509_free(store_cert); /* TODO check future references */
         }
         store_cert_issuer = wolfSSL_X509_get_issuer_name(store_cert);
         ESP_LOGI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
@@ -273,7 +362,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 #endif
         /* Look for the certificate using binary search on subject name */
         while (start <= end) {
-            ESP_LOGW(TAG, "Looking at CA #%d; Start = %d, end = %d", middle, start, end);
+            ESP_LOGW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
 
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
@@ -281,7 +370,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
             int cmp_res =  memcmp(subject, crt_name, name_len);
 #else
-            int derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
+            derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
                                  s_crt_bundle.crts[middle][1];
             this_addr = (intptr_t)s_crt_bundle.crts[middle];
             ESP_LOGI(TAG, "This addr = 0x%x", this_addr);
@@ -297,7 +386,9 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
-            bundle_cert = wolfSSL_d2i_X509(&x509, &cert_data, derCertLength);
+            cert_bundle_data = cert_data; /* wolfSSL_d2i_X509 changes address */
+            bundle_cert = wolfSSL_d2i_X509(&x509, &cert_bundle_data, derCertLength);
+
             if (bundle_cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
                               "from bundle #%d.", middle);
@@ -390,6 +481,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
         /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
+            ret = myVerify(preverify, store, cert_data, derCertLength);
             ESP_LOGW(TAG, "Found a Matching Certificate Name in the bundle!");
             if (ret == WOLFSSL_FAILURE) {
                 ESP_LOGW(TAG, "Warning: found a matching cert, but error: %d",
@@ -462,8 +554,10 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
 
     /* Clean up and exit */
-    wolfSSL_X509_free(store_cert);
-    wolfSSL_X509_free(bundle_cert);
+
+    /* We don't clean up the store_cert and x509 as we are in a callback,
+     * and it is just a pointer into the actual ctx store cert  */
+    //wolfSSL_X509_free(bundle_cert);
     ESP_LOGI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
