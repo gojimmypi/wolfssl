@@ -89,6 +89,19 @@
      * that here: */
     // #warning "Defining OPENSSL_EXTRA"
     #define OPENSSL_EXTRA
+
+    /* TODO: these are likely only needed when using cert bundles */
+    #ifndef WOLFSSL_ALWAYS_VERIFY_CB
+       #define WOLFSSL_ALWAYS_VERIFY_CB
+    #endif
+    #ifndef WOLFSSL_VERIFY_CB_ALL_CERTS
+        #define WOLFSSL_VERIFY_CB_ALL_CERTS
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
+
+
     // #define OPENSSL_ALL
     #ifndef WOLFSSL_BIO_INCLUDED
     #endif
@@ -790,7 +803,8 @@
 #endif
 
 #define WOLFSSL_MAX_ERROR_SZ 200
-#define WOLFSSL_ALT_CERT_CHAINS
+
+#define WOLFSSL_DEBUG_CERT_BUNDLE
 
 // #define DEBUG_WOLFSSL
 // #define WOLFSSL_DEBUG_ASN_TEMPLATE
