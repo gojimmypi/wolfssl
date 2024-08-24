@@ -13572,7 +13572,7 @@ void CleanupStoreCtxCallback(WOLFSSL_X509_STORE_CTX* store,
 {
     (void)ssl;
     (void)x509Free;
-
+    ESP_LOGW(TAG, "CleanupStoreCtxCallback");
 #if defined(SESSION_CERTS) && defined(OPENSSL_EXTRA)
     wolfSSL_sk_X509_pop_free(store->chain, NULL);
     store->chain = NULL;
@@ -13588,7 +13588,7 @@ void CleanupStoreCtxCallback(WOLFSSL_X509_STORE_CTX* store,
 #endif /* SESSION_CERTS */
     XFREE(store->domain, heap, DYNAMIC_TYPE_STRING);
     store->domain = NULL;
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)\
+#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
     // check this free
     if (x509Free)
         wolfSSL_X509_free(store->current_cert);
@@ -13722,14 +13722,16 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
         /* non-zero return code indicates failure override */
         if (cm->verifyCallback != NULL) {
             store->userCtx = cm;
-            ESP_LOGI(TAG, " verify_ok precallback = %d", verify_ok);
+            ESP_LOGI(TAG, " cm->verify_ok precallback = %d", verify_ok);
             if (cm->verifyCallback(verify_ok, store)) {
                 if (cert_err != 0) {
+                    ESP_LOGW(TAG, "Verify CM callback overriding error!");
                     WOLFSSL_MSG("Verify CM callback overriding error!");
                     ret = 0;
                 }
             }
             else {
+                ESP_LOGE(TAG, "Verify CM callback error!");
                 WOLFSSL_MSG_EX("Verify CM callback error!");
                 verifyFail = 1;
             }
@@ -13756,15 +13758,21 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
             }
     #endif
             /* non-zero return code indicates failure override */
-            ESP_LOGI(TAG, "verify_ok = %d", verify_ok);
+            ESP_LOGI(TAG, " ssl != NULL verify_ok = %d", verify_ok);
             if (ssl->verifyCallback) {
+                ESP_LOGI(TAG, "ssl != NULL; calling ssl->verifyCallback(verify_ok=%d, store->error=%d)", verify_ok, store->error);
                 if (ssl->verifyCallback(verify_ok, store)) {
                     if (cert_err != 0) {
+                        ESP_LOGE(TAG, "Verify callback overriding error! %d", cert_err);
                         WOLFSSL_MSG("Verify callback overriding error!");
                         ret = 0;
                     }
+                    else {
+                        ESP_LOGI(TAG, "ssl->verifyCallback, cert_err == 0");
+                    }
                 }
                 else {
+                    ESP_LOGE(TAG, "ssl != NULL; no callback, verifyFail = 1");
                     verifyFail = 1;
                 }
             }
