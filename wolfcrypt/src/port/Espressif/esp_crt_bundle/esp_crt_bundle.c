@@ -44,6 +44,22 @@
 /* TODO Check minimum wolfSSL & ESP-IDF version else error */
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 
+/* Bundle debug may come from user_settings.h and/or sdkconfig.h */
+#if defined(CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE) || \
+    defined(       WOLFSSL_DEBUG_CERT_BUNDLE)
+    /* We'll only locally check this one: */
+    #undef         WOLFSSL_DEBUG_CERT_BUNDLE
+    #define        WOLFSSL_DEBUG_CERT_BUNDLE
+    /* Only display certificate bundle debugging messages when enabled: */
+    #define ESP_LOGCBI ESP_LOGI
+    #define ESP_LOGCBW ESP_LOGW
+#else
+    /* Only display certificate bundle messages for most verbosee setting.
+     * Note that the delays will likely cause TLS connection faliures. */
+    #define ESP_LOGCBI ESP_LOGV
+    #define ESP_LOGCBW ESP_LOGV
+#endif
+
 #ifndef X509_MAX_SUBJECT_LEN
     #define X509_MAX_SUBJECT_LEN 255
 #endif
@@ -79,16 +95,22 @@ typedef struct crt_bundle_t {
     size_t x509_crt_bundle_wolfssl_len;
 } crt_bundle_t;
 
+static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                     size_t bundle_size);
+
 static crt_bundle_t s_crt_bundle;
 static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
-static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
-                                     size_t bundle_size);
-
-
-// #if defined(WOLFSSL_X509_CRT_PARSE_C)
+// #if defined(WOLFSSL_X509_CRT_PARSE_C) TODO
 static int _cert_bundled_loaded = 0;
+
+static int crt_found = 0;
+
+static int _added_cert = 0;
+
+static int _need_bundle_cert = 0;
+
 
 /* Returns ESP_OK if there are no zero serial numbers in the bundle,
  * OR there may be zeros, but */
@@ -113,14 +135,15 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
         /* If we find a zero serial number, a parse error may still occur. */
         if (ret == ASN_PARSE_E) {
-#if defined(WOLFSSL_NO_ASN_STRICT) || defined(WOLFSSL_ASN_ALLOW_0_SERIAL) || \
-    defined(CONFIG_WOLFSSL_NO_ASN_STRICT)                                 || \
-    defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL)
+#if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+    defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+    defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
+    defined(       WOLFSSL_NO_ASN_STRICT)
             /* Issuer amd subject will only be non-blank with relaxed check */
             ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial and "
                           "WOLFSSL_NO_ASN_STRICT enabled.");
-            ESP_LOGI(TAG, "Issuer: %s", cert.issuer);
-            ESP_LOGI(TAG, "Subject: %s", cert.subject);
+            ESP_LOGCBI(TAG, "Issuer: %s", cert.issuer);
+            ESP_LOGCBI(TAG, "Subject: %s", cert.subject);
 
             /* We'll force the return result to zero for a "valid"
              * parsing result, but not strict and found zero serial num. */
@@ -136,7 +159,7 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
             ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number. %d", ret);
 
             /* If we found a zero, and the result of wc_ParseCert is zero,
-             * we'll return that zero as "cert as a zero serial number". */
+             * we'll return that zero as "cert has a zero serial number". */
         }
     }
     else {
@@ -157,9 +180,6 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
 
     return ret;
 }
-
-static bool crt_found = false;
-static int _added_cert = 0;
 
 static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
                            const unsigned char * der, long derSz)
@@ -225,8 +245,6 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
     return preverify;
 }
 
-static int _need_bundle_cert = 0;
-
 /* wolfssl_ssl_conf_verify_cb
  *   for reference:
  *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
@@ -244,12 +262,13 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     char subjectName[X509_MAX_SUBJECT_LEN];
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
-    WOLFSSL_X509* x509 = NULL;
+
     WOLFSSL_X509_NAME* store_cert_subject = NULL;
     WOLFSSL_X509_NAME* this_subject = NULL;
     WOLFSSL_X509_NAME* store_cert_issuer = NULL;
     WOLFSSL_X509_NAME* this_issuer = NULL;
 
+    WOLFSSL_X509* x509 = NULL;
     WOLFSSL_X509* store_cert = NULL;
     WOLFSSL_X509* bundle_cert = NULL;
     intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
@@ -258,7 +277,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
     int ret = WOLFSSL_SUCCESS;
 
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_TLS) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
-   // wolfSSL_Debugging_ON();
+    wolfSSL_Debugging_ON();
 #endif
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
@@ -288,11 +307,11 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
-        ESP_LOGI(TAG, "Success: Detected prior Pre-verification == 1.");
+        ESP_LOGCBI(TAG, "Success: Detected prior Pre-verification == 1.");
         /* So far, so good... we need to now check cert against alt */
     }
     else {
-        ESP_LOGW(TAG, "Detected prior Pre-verification Failure.");
+        ESP_LOGCBW(TAG, "Detected prior Pre-verification Failure.");
     }
 #else
     /* Skip pre-verification, so we'll start with success. */
@@ -511,11 +530,16 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             }
             else {
                 /* This is ok, we may have others */
-                ESP_LOGW(TAG, "ERROR: wolfSSL_X509_check_issued failed.");
+                ESP_LOGI(TAG, "wolfSSL_X509_check_issued failed. (there may be others)");
             }
 
             if (_added_cert == 0) {
-                //bundle_cert->isCa = 1; /* TODO: do we really need to manually set this? */
+                if (bundle_cert->isCa == 1) {
+                        ESP_LOGI(TAG, "Adding Certificate Authority.");
+                    }
+                else {
+                        ESP_LOGW(TAG, "Warning: Adding end-entity leaf certificate.");
+                }
 
                 ESP_LOGI(TAG, "\n\nAdding Cert!\n");
                 ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
@@ -532,19 +556,17 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             } /* _added_cert */
 
             ESP_LOGI(TAG, "wolfSSL_X509_verify_cert(store)");
-            ret = wolfSSL_X509_verify_cert(store); /* <<<<<<<<<<< still failing here */
+            ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
                 ESP_LOGI(TAG, "Successfully verified cert in updated store!");
             }
             else {
                 ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
-                ESP_LOGW(TAG, "Ignoring error...");
-                ret = WOLFSSL_SUCCESS; /* TODO */
             }
         } /* crt_found */
         else {
             ESP_LOGW(TAG, "Did not find a matching crt");
-            // ret = WOLFSSL_FAILURE; TODO?
+            ret = WOLFSSL_FAILURE;
         }
     } /* Did not find a cert */
     else {
