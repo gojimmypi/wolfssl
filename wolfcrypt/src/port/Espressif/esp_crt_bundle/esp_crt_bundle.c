@@ -208,7 +208,7 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
         issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
         subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
     }
-    printf("Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
+    ESP_LOGCBI(TAG, "Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
         store->error_depth,
         issuer != NULL ? issuer : "[none]",
         subject != NULL ? subject : "[none]");
@@ -220,12 +220,12 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
             cm = store->store->cm;
 
         /* Find match for issuer */
-        if (XSTRSTR(issuer, "/CN=ISRG Root X1") != NULL) {
+        if (XSTRSTR(issuer, "/CN=ISRG Root X1") != NULL) { /* TODO allow any cert */
             /* If match found load to Certificate Manager using: */
             ret = wolfSSL_CertManagerLoadCABuffer(cm,
                 der, derSz, WOLFSSL_FILETYPE_ASN1);
             if (ret != WOLFSSL_SUCCESS) {
-                printf("Failed to load CA ISRG_Root_X1\n");
+                ESP_LOGE(TAG, "Failed to load CA ISRG_Root_X1\n");
                 return preverify;
             }
         }
@@ -234,7 +234,7 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
         ret = wolfSSL_CertManagerVerifyBuffer(cm, der, derSz,
             WOLFSSL_FILETYPE_ASN1);
         if (ret == WOLFSSL_SUCCESS) {
-            printf("Successfully validated cert: %s\n", subject);
+            ESP_LOGCBI(TAG, "Successfully validated cert: %s\n", subject);
 
             /* If verification is successful then override error */
             preverify = 1;
@@ -244,20 +244,8 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
     XFREE(subject, 0, DYNAMIC_TYPE_OPENSSL);
     return preverify;
 }
-
-/* wolfssl_ssl_conf_verify_cb
- *   for reference:
- *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
- *
- * This callback is called FOR EACH cert in the store.
- * Not all certs in the store will have a match for a cert in the bundle,
- * but we NEED ONE to match.
- *
- * Returns:
- * 0 if the verification process should stop immediately with an error.
- * 1 if the verification process should continue with the rest of handshake. */
-static int wolfssl_ssl_conf_verify_cb(int preverify,
-                                      WOLFSSL_X509_STORE_CTX* store)
+static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
+                                                 WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
     const unsigned char* cert_data = NULL;
@@ -584,7 +572,28 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
     WOLFSSL_LEAVE( "wolfssl_ssl_conf_verify_cb complete", ret);
 
-    return ret;
+    return ret; /* preverify */
+}
+
+/* wolfssl_ssl_conf_verify_cb
+ *   for reference:
+ *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
+ *
+ * This callback is called FOR EACH cert in the store.
+ * Not all certs in the store will have a match for a cert in the bundle,
+ * but we NEED ONE to match.
+ *
+ * Returns:
+ * 0 if the verification process should stop immediately with an error.
+ * 1 if the verification process should continue with the rest of handshake. */
+static int wolfssl_ssl_conf_verify_cb(int preverify,
+                                      WOLFSSL_X509_STORE_CTX* store)
+{
+    if ((preverify == 0) && (store->error == ASN_NO_SIGNER_E)) {
+        preverify = wolfssl_ssl_conf_verify_cb_no_signer(preverify, store);
+    }
+
+    return preverify;
 }
 
 /* wolfssl_ssl_conf_verify() patterned after ESP-IDF.
