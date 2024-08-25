@@ -244,6 +244,10 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
     XFREE(subject, 0, DYNAMIC_TYPE_OPENSSL);
     return preverify;
 }
+
+/* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
+ *  from wolfssl_ssl_conf_verify_cb, handling the special case of
+ *  TLS handshake preverify failure for the "No Signer" condition. */
 static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
@@ -264,34 +268,8 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
 
-#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_TLS) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
-    wolfSSL_Debugging_ON();
-#endif
-
-    WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb");
-    ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb !\n");
-    if (preverify == 1) {
-        ESP_LOGCBI(TAG, "preverify == 1\n");
-    }
-    else {
-        ESP_LOGCBW(TAG, "preverify == %d\n", preverify);
-    }
-    if (store->error == 0) {
-        ESP_LOGCBI(TAG, "store->error == 0");
-    }
-    else {
-        ESP_LOGCBI(TAG, "store->error: %d", store->error);
-    }
-
-    if ((preverify == 0) && (store->error == ASN_NO_SIGNER_E)) {
-        ESP_LOGCBW(TAG, "Setting _need_bundle_cert!");
-        _need_bundle_cert = 1;
-    }
-
-    if (_need_bundle_cert == 0) {
-        ESP_LOGCBW(TAG, "Nothing to do, exiting");
-        return preverify;
-    }
+    WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
+    ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
@@ -589,8 +567,47 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 static int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
+    int initial_preverify;
+    initial_preverify = preverify;
+
+    /* Show the interesting preverify & error state upon entry to callback. */
+    if (preverify == 1) {
+        ESP_LOGCBI(TAG, "preverify == 1\n");
+    }
+    else {
+        ESP_LOGCBW(TAG, "preverify == %d\n", preverify);
+    }
+
+    if (store->error == 0) {
+        ESP_LOGCBI(TAG, "store->error == 0");
+    }
+    else {
+        ESP_LOGCBW(TAG, "store->error: %d", store->error);
+    }
+
+    /* One possible condition is the error "Failed to find signer.
+     * This is where we search the bundle for a matching needed CA cert. */
     if ((preverify == 0) && (store->error == ASN_NO_SIGNER_E)) {
+        ESP_LOGCBW(TAG, "Setting _need_bundle_cert!");
+        _need_bundle_cert = 1;
+
         preverify = wolfssl_ssl_conf_verify_cb_no_signer(preverify, store);
+    }
+
+    /* Insert any other callback handlers here. */
+
+    /* When debugging, show if have we resolved any error. */
+    if (preverify == 1) {
+        ESP_LOGCBI(TAG, "Returning preverify == 1\n");
+        if (preverify != initial_preverify) {
+            /* Here we assume wolfssl_ssl_conf_verify_cb_no_signer
+             * properly found and validated the problem: such as
+             * a new cert from the bundled needed for signing. */
+            ESP_LOGCBW(TAG, "Callback overriding error.");
+        }
+    }
+    else {
+        ESP_LOGCBW(TAG, "Warning; returning preverify == %d\n", preverify);
     }
 
     return preverify;
