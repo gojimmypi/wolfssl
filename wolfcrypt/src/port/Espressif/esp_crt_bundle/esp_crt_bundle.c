@@ -717,7 +717,24 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
  *
  * This callback is called FOR EACH cert in the store.
  * Not all certs in the store will have a match for a cert in the bundle,
- * but we NEED ONE to match.
+ * but we NEED ONE to match when a preverify error occurs.
+ *
+ * See wolfssl_ssl_conf_verify() for setting callback to this function.
+ * Typically set when calling esp_crt_bundle_attach(). Specifically:
+ *    cfg->crt_bundle_attach(&tls->conf) in esp_tls_wolfssl.c
+ *    from the ESP-IDF esp-tls component.
+ *
+ * See esp_tls.h file: esp_err_t (*crt_bundle_attach)(void *conf)
+ *   and initialization in esp_transport_ssl_crt_bundle_attach
+ *       from the tcp_transport component: (transport_ssl.c)
+ *
+ * Functions in esp_crt_bundle are same names as other providers and
+ * gated in as appropriate when enabling CONFIG_ESP_TLS_USING_WOLFSSL.
+ *
+ * Note the wolfSSL component CMakeLists.txt *MUST* be properly linked in the
+ * file to be used within the ESP-IDF. Something like this:
+ *
+ *   target_link_libraries(${COMPONENT_LIB} PUBLIC ${wolfssl})
  *
  * Returns:
  * 0 if the verification process should stop immediately with an error.
@@ -807,7 +824,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
 } /* wolfssl_ssl_conf_verify_cb */
 
 /* wolfssl_ssl_conf_verify() patterned after ESP-IDF.
- * Used locally here only. Not used directly by esp-tls. */
+ * Used locally here only. Not used directly by esp-tls.
+ *
+ * This is typically called during esp_crt_bundle_attach() in
+ * *this* file, which has same-name functions gated with the macro:
+ *   CONFIG_ESP_TLS_USING_WOLFSSL
+ *
+ * See also ESP-IDF transport_ssl component. */
 void CB_INLINE wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
                              void (*p_vrfy) )
@@ -1069,9 +1092,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGCBI(TAG, "No bundle set by user; using the embedded binary.");
         ESP_LOGCBI(TAG, "x509_crt_imported_bundle_wolfssl_bin_start 0x%x",
-             (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
+               (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
         ESP_LOGCBI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x",
-             (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
+               (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
         ret = esp_crt_bundle_init( x509_crt_imported_bundle_wolfssl_bin_start,
                                   (x509_crt_imported_bundle_wolfssl_bin_end
                                  - x509_crt_imported_bundle_wolfssl_bin_start)
