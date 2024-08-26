@@ -1019,11 +1019,11 @@ void app_main(void)
 
     // Set your desired time here
     timeinfo.tm_year = 2024 - 1900; // Year - 1900
-    timeinfo.tm_mon = 7 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 30;          // Day of the month
-    timeinfo.tm_hour = 12;
-    timeinfo.tm_min = 0;
-    timeinfo.tm_sec = 0;
+    timeinfo.tm_mon = 8 - 1;        // Month, where 0 = Jan
+    timeinfo.tm_mday = 26;          // Day of the month
+    timeinfo.tm_hour = 13;
+    timeinfo.tm_min = 1;
+    timeinfo.tm_sec = 5;
 
     time_t t = mktime(&timeinfo);
     now.tv_sec = t;
