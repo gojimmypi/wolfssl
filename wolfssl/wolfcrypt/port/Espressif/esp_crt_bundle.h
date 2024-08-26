@@ -131,7 +131,8 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
  *             - WOLFSSL_SUCCESS (1)
  *             - WOLFSSL_FAILURE (0) if unable to get issues and/or subject.
  */
-int wolfSSL_X509_get_cert_items(WOLFSSL_X509* cert,
+int wolfSSL_X509_get_cert_items(char* CERT_TAG,
+                                WOLFSSL_X509* cert,
                                 WOLFSSL_X509_NAME** issuer,
                                 WOLFSSL_X509_NAME** subject);
 
