@@ -244,6 +244,15 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
 
     WOLFSSL_X509* peer = store->current_cert;
 
+    if (store == NULL) {
+        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb store is null");
+        return 0; /* preverify */
+    }
+    if (der == NULL) {
+        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb der is null");
+        return 0; /* preverify */
+    }
+
     /* Verify Callback Arguments:
      * preverify:           1=Verify Okay, 0=Failure
      * store->error:        Failure error code (0 indicates no failure)
@@ -313,6 +322,39 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
      * pointers to current store->current_cert values. */
     return preverify;
 }
+
+
+#if defined(WOLFSSL_DEBUG_CERT_BUNDLE) && defined(WOLFSSL_DEBUG_IGNORE_ASN_TIME)
+static CB_INLINE int wolfssl_ssl_conf_verify_cb_before_date(int preverify,
+                                                WOLFSSL_X509_STORE_CTX* store)
+{
+    if (store == NULL) {
+        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb_before_date store is null");
+        preverify = 0;
+    }
+    else if ((preverify == 0) && (store->error == ASN_BEFORE_DATE_E)) {
+        ESP_LOGW(TAG, "Overriding ASN_BEFORE_DATE_E!");
+        preverify = 1;
+    }
+
+    return preverify;
+}
+
+static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
+                                                WOLFSSL_X509_STORE_CTX* store)
+{
+    if (store == NULL) {
+        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb_after_date store is null");
+        preverify = 0;
+    }
+    else if ((preverify == 0) && (store->error == ASN_AFTER_DATE_E)) {
+        ESP_LOGW(TAG, "Overriding ASN_AFTER_DATE_E!");
+        preverify = 1;
+    }
+
+    return preverify;
+}
+#endif
 
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
@@ -711,6 +753,22 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
 
         preverify = wolfssl_ssl_conf_verify_cb_no_signer(preverify, store);
     }
+
+
+
+    /* Another common issue is the date/timestamp. During debugging, we
+     * can ignore cert ASN before/after limits: */
+#if defined(WOLFSSL_DEBUG_CERT_BUNDLE) && defined(WOLFSSL_DEBUG_IGNORE_ASN_TIME)
+    esp_show_current_datetime();
+
+    if ((preverify == 0) && (store->error == ASN_BEFORE_DATE_E)) {
+        preverify = wolfssl_ssl_conf_verify_cb_before_date(preverify, store);
+    }
+
+    if ((preverify == 0) && (store->error == ASN_AFTER_DATE_E)) {
+        preverify = wolfssl_ssl_conf_verify_cb_after_date(preverify, store);
+    }
+#endif
 
     /* Insert any other callback handlers here. */
 
