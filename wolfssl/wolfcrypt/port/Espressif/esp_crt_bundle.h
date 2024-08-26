@@ -119,6 +119,22 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
 
 
+/**
+ * @brief      Set the issuer and subject values given the current cert.
+ *
+ * Used internally by ESP-IDF esp-tls layer. Also helpful for debugging
+ * and general visibiity to certificate attributes.
+ *
+ * Turn on WOLFSSL_DEBUG_CERT_BUNDLE to also see ASN1 before/after values.
+ *
+ * @return
+ *             - WOLFSSL_SUCCESS (1)
+ *             - WOLFSSL_FAILURE (0) if unable to get issues and/or subject.
+ */
+int wolfSSL_X509_get_cert_items(WOLFSSL_X509* cert,
+                                WOLFSSL_X509_NAME** issuer,
+                                WOLFSSL_X509_NAME** subject);
+
 WOLFSSL_LOCAL void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
                              void *p_vrfy);
