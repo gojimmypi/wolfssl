@@ -156,13 +156,14 @@ static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
             ret = 0;
 #else
             ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
-            ESP_LOGE(TAG, "Define WOLFSSL_NO_ASN_STRICT to relax checks.");
+            ESP_LOGE(TAG, "Define WOLFSSL_NO_ASN_STRICT or "
+                          "WOLFSSL_ASN_ALLOW_0_SERIALto relax checks.");
             ret = -1;
 #endif
         } /* special ASN_PARSE_E handling */
         else {
-            /* Not an ASN Parse Error */
-            ESP_LOGW(TAG, "WARNING: Certificate has no Serial Number. %d", ret);
+            /* Not an ASN Parse Error; the zero configured to be allowed. */
+            ESP_LOGV(TAG, "WARNING: Certificate has no Serial Number.");
 
             /* If we found a zero, and the result of wc_ParseCert is zero,
              * we'll return that zero as "cert has a zero serial number". */
