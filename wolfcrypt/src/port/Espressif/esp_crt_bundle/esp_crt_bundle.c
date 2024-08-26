@@ -72,7 +72,7 @@
     #define CRT_HEADER_OFFSET 2
 #endif
 
-/* Inline functions for performance hint unless otherwise specified. */
+/* Inline cert bundle functions performance hint unless otherwise specified. */
 #ifndef CB_INLINE
     #define CB_INLINE inline
 #endif
@@ -187,17 +187,60 @@ static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
     return ret;
 }
 
-static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
-                           const unsigned char * der, long derSz)
+/* Public API wolfSSL_X509_get_cert_items() */
+int wolfSSL_X509_get_cert_items(WOLFSSL_X509* cert,
+                                WOLFSSL_X509_NAME** issuer,
+                                WOLFSSL_X509_NAME** subject)
 {
-    int ret;
-    const char *issuer = NULL, *subject = NULL;
-
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
+    char stringVaue[X509_MAX_SUBJECT_LEN];
     char before_str[32];
     char after_str[32];
+    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
 #endif
+    int ret = WOLFSSL_SUCCESS; /* Note ESP value! Success = 1, fail = 0 */
+
+    *issuer  = wolfSSL_X509_get_issuer_name(cert);
+    if (wolfSSL_X509_NAME_oneline(*issuer,
+                                  stringVaue, sizeof(stringVaue)) == NULL) {
+        ESP_LOGE(TAG, "Error converting subject name to string.");
+        ret = WOLFSSL_FAILURE;
+    }
+    else {
+        ESP_LOGCBI(TAG, "Store Cert Issuer: %s", stringVaue );
+    }
+
+    *subject = wolfSSL_X509_get_subject_name(cert);
+    if (wolfSSL_X509_NAME_oneline(*subject,
+                                  stringVaue, sizeof(stringVaue)) == NULL) {
+        ESP_LOGE(TAG, "Error converting subject name to string.");
+        ret = WOLFSSL_FAILURE;
+    }
+    else {
+        ESP_LOGCBI(TAG, "Store Cert Subject: %s", stringVaue );
+    }
+
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+    notBefore = wolfSSL_X509_get_notBefore(cert);
+    wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+    ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+
+    esp_show_current_datetime();
+
+    notAfter = wolfSSL_X509_get_notAfter(cert);
+    wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+    ESP_LOGCBI(TAG, "Not After: %s", after_str);
+#endif
+
+    return ret;
+} /* wolfSSL_X509_show_cert */
+
+
+static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
+                              const unsigned char * der, long derSz)
+{
+    int ret;
+    WOLFSSL_X509_NAME *issuer = NULL, *subject = NULL;
 
     WOLFSSL_X509* peer = store->current_cert;
 
@@ -218,24 +261,25 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
 
     /* lookup certificate issuer */
     if (peer != NULL) {
-        issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
-        subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
+        // issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
+       // subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
+        wolfSSL_X509_get_cert_items(peer, &issuer, &subject);
 
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-        notBefore = wolfSSL_X509_get_notBefore(peer);
-        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
-
-        notAfter = wolfSSL_X509_get_notAfter(peer);
-        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-        ESP_LOGCBI(TAG, "Not After: %s", after_str);
+//        notBefore = wolfSSL_X509_get_notBefore(peer);
+//        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+//        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+//
+//        notAfter = wolfSSL_X509_get_notAfter(peer);
+//        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+//        ESP_LOGCBI(TAG, "Not After: %s", after_str);
 #endif
     }
 
     ESP_LOGCBI(TAG, "Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
         store->error_depth,
-        issuer != NULL ? issuer : "[none]",
-        subject != NULL ? subject : "[none]");
+        issuer->name != NULL ? issuer->name : "[none]",
+        subject->name != NULL ? subject->name : "[none]");
 
     /* if no signer error */
     if (preverify == 0 && issuer != NULL && store->error == ASN_NO_SIGNER_E) {
@@ -244,7 +288,7 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
             cm = store->store->cm;
 
         /* Find match for issuer */
-        if (XSTRSTR(issuer, "/CN=ISRG Root X1") != NULL) { /* TODO allow any cert */
+        if (XSTRSTR(issuer->name, "/CN=ISRG Root X1") != NULL) { /* TODO allow any cert */
             /* If match found load to Certificate Manager using: */
             ret = wolfSSL_CertManagerLoadCABuffer(cm,
                 der, derSz, WOLFSSL_FILETYPE_ASN1);
@@ -258,14 +302,15 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
         ret = wolfSSL_CertManagerVerifyBuffer(cm, der, derSz,
             WOLFSSL_FILETYPE_ASN1);
         if (ret == WOLFSSL_SUCCESS) {
-            ESP_LOGCBI(TAG, "Successfully validated cert: %s\n", subject);
+            ESP_LOGCBI(TAG, "Successfully validated cert: %s\n", subject->name);
 
             /* If verification is successful then override error */
             preverify = 1;
         }
     }
-    XFREE(issuer, 0, DYNAMIC_TYPE_OPENSSL);
-    XFREE(subject, 0, DYNAMIC_TYPE_OPENSSL);
+
+    /* We don't free the issue and subject, as they are
+     * pointers to current store->current_cert values. */
     return preverify;
 }
 
@@ -277,9 +322,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
-    char before_str[32];
-    char after_str[32];
+//    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
+//    char before_str[32];
+//    char after_str[32];
 #endif
 
     const unsigned char* cert_data = NULL;
@@ -369,13 +414,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
 
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-        notBefore = wolfSSL_X509_get_notBefore(store_cert);
-        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
-
-        notAfter = wolfSSL_X509_get_notAfter(store_cert);
-        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-        ESP_LOGCBI(TAG, "Not After: %s", after_str);
+//        notBefore = wolfSSL_X509_get_notBefore(store_cert);
+//        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+//        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+//
+//        notAfter = wolfSSL_X509_get_notAfter(store_cert);
+//        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+//        ESP_LOGCBI(TAG, "Not After: %s", after_str);
 #endif
     }
 
