@@ -29,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{31B96B47-9E33-4B81-A3AC-FAEC848C3811}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_all.pem = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\cacrt_all.pem
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\esp-tls\CMakeLists.txt
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\esp_crt_bundle.c
 		..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h = ..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\components\mbedtls\esp_crt_bundle\include\esp_crt_bundle.h
