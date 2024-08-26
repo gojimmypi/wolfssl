@@ -241,7 +241,9 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
                               const unsigned char * der, long derSz)
 {
     int ret;
-    WOLFSSL_X509_NAME *issuer = NULL, *subject = NULL;
+    WOLFSSL_CERT_MANAGER* cm = NULL;
+    WOLFSSL_X509_NAME *issuer = NULL;
+    WOLFSSL_X509_NAME *subject = NULL;
 
     WOLFSSL_X509* peer = store->current_cert;
 
@@ -293,9 +295,12 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
 
     /* if no signer error */
     if (preverify == 0 && issuer != NULL && store->error == ASN_NO_SIGNER_E) {
-        WOLFSSL_CERT_MANAGER* cm = NULL; // = (WOLFSSL_CERT_MANAGER*)store->userCtx;
-        if (store->store != NULL)
+        if (store->store != NULL) {
             cm = store->store->cm;
+        }
+        else {
+            ret = WOLFSSL_FAILURE;
+        }
 
         /* Find match for issuer */
         if (XSTRSTR(issuer->name, "/CN=ISRG Root X1") != NULL) { /* TODO allow any cert */
