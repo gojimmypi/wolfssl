@@ -199,7 +199,7 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
     char after_str[32];
     WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
 #endif
-    int ret = WOLFSSL_SUCCESS; /* Note ESP value! Success = 1, fail = 0 */
+    int ret = WOLFSSL_SUCCESS; /* Not ESP value! Success = 1, fail = 0 */
 
     *issuer  = wolfSSL_X509_get_issuer_name(cert);
     if (wolfSSL_X509_NAME_oneline(*issuer,
@@ -370,13 +370,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
 
-    WOLFSSL_X509_NAME* store_cert_subject = NULL;
-    WOLFSSL_X509_NAME* this_subject = NULL;
-    WOLFSSL_X509_NAME* store_cert_issuer = NULL;
-    WOLFSSL_X509_NAME* this_issuer = NULL;
+    WOLFSSL_X509* store_cert = NULL; /* will point to existing param valus. */
+    WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed. */
 
-    WOLFSSL_X509* store_cert = NULL;
-    WOLFSSL_X509* bundle_cert = NULL;
+    WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert.  */
+    WOLFSSL_X509_NAME* this_subject = NULL;       /* part of bundle_cert. */
+    WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert.  */
+    WOLFSSL_X509_NAME* this_issuer = NULL;        /* part of bundle_cert. */
+
     intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
     int derCertLength = 0; /* the [size] value: length of [cert] budnle item */
     int cmp_res, last_cmp = -1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
@@ -384,8 +385,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
-    this_issuer = wolfSSL_X509_NAME_new();
-    wolfssl_x509_crt_init(store_cert);
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
@@ -483,13 +482,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             int cmp_res =  memcmp(subject, crt_name, name_len);
 #else
             derCertLength = (s_crt_bundle.crts[middle][0] << 8) |
-                                 s_crt_bundle.crts[middle][1];
+                             s_crt_bundle.crts[middle][1];
             this_addr = (intptr_t)s_crt_bundle.crts[middle];
             ESP_LOGCBI(TAG, "This addr = 0x%x", this_addr);
 
             cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
 
-            if (wolfssl_is_nonzero_serial_number((WOLFSSL_X509*)cert_data, derCertLength)) {
+            if (wolfssl_is_nonzero_serial_number(cert_data, derCertLength)) {
                 ESP_LOGE(TAG, "Error: serial number with value = zero");
             }
 
@@ -596,22 +595,28 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             }
 #endif
             if (!crt_found) {
-                //wolfSSL_X509_NAME_free(this_issuer);
-                //this_issuer = wolfSSL_X509_NAME_new();
-
-                //wolfSSL_X509_NAME_free(this_subject);
-                wolfSSL_X509_free(bundle_cert);
-                bundle_cert=wolfSSL_X509_new();
+                /* this_issuer and this_subject are parts of this bundle_cert
+                 * so we don't need to clean them up explicitly.
+                 *
+                 * However, we'll start over with a freash bundle_cert for the
+                 * next search interation. */
+                if (bundle_cert != NULL) {
+                    wolfSSL_X509_free(bundle_cert);
+                }
+                bundle_cert = wolfSSL_X509_new();
             }
         } /* while (start <= end) searching bundle */
 
         /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
-            ret = cert_manager_load(preverify, store, cert_data, derCertLength);
             ESP_LOGCBW(TAG, "Found a Matching Certificate Name in the bundle!");
+            ret = cert_manager_load(preverify, store, cert_data, derCertLength);
             if (ret == WOLFSSL_FAILURE) {
-                ESP_LOGCBW(TAG, "Warning: found a matching cert, but error: %d",
-                                 ret);
+                ESP_LOGW(TAG, "Warning: found a matching cert, but not added "
+                              "to the Certificate Manager. error: %d", ret);
+            }
+            else {
+                ESP_LOGI(TAG, "New CA added to the Certificate Manager.");
             }
         }
         else {
@@ -619,7 +624,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         } /* crt search result */
 
-        if ((crt_found == 1)&& (ret == WOLFSSL_SUCCESS)) {
+        if ((crt_found == 1) && (ret == WOLFSSL_SUCCESS)) {
             /* TODO confirm: */
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
@@ -648,10 +653,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                         ESP_LOGCBW(TAG, "Warning: Adding end-entity leaf certificate.");
                 }
 
-                ESP_LOGCBI(TAG, "\n\nAdding Cert!\n");
+                /* Note that alrhough we are adding a certificate to the store
+                 * now, it is too late to be used in the current TLS connecton
+                 * that caused the callback. See the Cerfiicate Manager for
+                 * validation and possible overriding of preverify values. */
+                ESP_LOGCBI(TAG, "\n\nAdding Cert for Certificate Store!\n");
                 ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
                 if (ret == WOLFSSL_SUCCESS) {
-                    ESP_LOGCBI(TAG, "Successfully added cert to store! ret = %d", ret);
+                    ESP_LOGI(TAG, "Successfully added cert to wolfSSL Certificate Store!");
                     _added_cert = 1;
                 }
                 else {
@@ -696,7 +705,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     return ret; /* preverify */
 }
 
-/* wolfssl_ssl_conf_verify_cb
+/* wolfssl_ssl_conf_verify_cb()
  *   for reference:
  *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
  *
@@ -715,9 +724,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+    char before_str[32];
+    char after_str[32];
+    WOLFSSL_ASN1_TIME *notBefore = NULL;
+    WOLFSSL_ASN1_TIME *notAfter = NULL;
+
     int initial_preverify;
     initial_preverify = preverify;
-
     /* Show the interesting preverify & error state upon entry to callback. */
     if (preverify == 1) {
         ESP_LOGCBI(TAG, "preverify == 1\n");
@@ -733,10 +747,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
         ESP_LOGCBW(TAG, "store->error: %d", store->error);
     }
 
-#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
-    char before_str[32];
-    char after_str[32];
 
     notBefore = wolfSSL_X509_get_notBefore(store->current_cert);
     wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
@@ -749,7 +759,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
     ESP_LOGCBI(TAG, "Not After: %s", after_str);
 #endif
 
-    /* One possible condition is the error "Failed to find signer.
+    /* One possible condition is the error "Failed to find signer".
      * This is where we search the bundle for a matching needed CA cert. */
     if ((preverify == 0) && (store->error == ASN_NO_SIGNER_E)) {
         ESP_LOGCBW(TAG, "Setting _need_bundle_cert!");
