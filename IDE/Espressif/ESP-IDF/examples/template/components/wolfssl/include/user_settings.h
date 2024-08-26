@@ -203,14 +203,15 @@
 
 /* Optionally enable some wolfSSH settings */
 #if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
-    /* The default SSH Windows size is massive for an embedded target. Limit it: */
+    /* The default SSH Windows size is massive for an embedded target.
+     * Limit it: */
     #define DEFAULT_WINDOW_SZ 2000
 
     /* These may be defined in cmake for other examples: */
     #undef  WOLFSSH_TERM
     #define WOLFSSH_TERM
 
-	/* optional debug */
+    /* optional debug */
     /* #undef  DEBUG_WOLFSSH */
     /* #define DEBUG_WOLFSSH */
 
@@ -537,7 +538,7 @@
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-/* #undef  USE_FAST_MATH          */
+/* #undef  USE_FAST_MATH         */
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
 /* #define WOLFSSL_SP_RISCV32    */
@@ -853,7 +854,6 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* Pause in a loop rather than exit. */
 /* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
-/* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
 
 #define WOLFSSL_HW_METRICS
 
@@ -985,8 +985,8 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_BASE16
 #else
     #if defined(USE_CERT_BUFFERS_2048)
-    	#define USE_CERT_BUFFERS_256
-    	/* Be sure to include in app when using example certs: */
+        #define USE_CERT_BUFFERS_256
+        /* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_2048
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
@@ -1007,8 +1007,8 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     #elif defined(USE_CERT_BUFFERS_1024)
-    	#define USE_CERT_BUFFERS_256
-    	/* Be sure to include in app when using example certs: */
+        #define USE_CERT_BUFFERS_256
+        /* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_1024
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024

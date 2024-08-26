@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
-
 #ifdef HAVE_CONFIG_H
     #include <config.h>
 #endif
@@ -25087,6 +25085,20 @@ static int SendAlert_ex(WOLFSSL* ssl, int severity, int type)
                 return ret;
         }
     #endif
+
+    /*
+     * We check if we are trying to send a
+     * CLOSE_NOTIFY alert.
+     * */
+    if (type == close_notify) {
+        if (!ssl->options.sentNotify) {
+            ssl->options.sentNotify = 1;
+        }
+        else {
+            /* CLOSE_NOTIFY already sent */
+            return 0;
+        }
+    }
 
     ssl->buffers.outputBuffer.length += sendSz;
 
