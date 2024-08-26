@@ -237,55 +237,61 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
 } /* wolfSSL_X509_show_cert */
 
 
-static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
-                              const unsigned char * der, long derSz)
+/*
+ * cert_manager_load()
+ *
+ * WARNING: It is the caller's responsibility to confirm the der cert should be
+ *          added. (Typically during a callback error override).
+ *
+ * Verify Callback Arguments:
+ * preverify:           1=Verify Okay, 0=Failure
+ * store->error:        Failure error code (0 indicates no failure)
+ * store->current_cert: Current WOLFSSL_X509 object (only with OPENSSL_EXTRA)
+ * store->error_depth:  Current Index
+ * store->domain:       Subject CN as string (null term)
+ * store->totalCerts:   Number of certs presented by peer
+ * store->certs[i]:     A `WOLFSSL_BUFFER_INFO` with plain DER for each cert
+ * store->store:        WOLFSSL_X509_STORE with CA cert chain
+ * store->store->cm:    WOLFSSL_CERT_MANAGER
+ * store->ex_data:      The WOLFSSL object pointer
+ * store->discardSessionCerts: When set to non-zero value session certs
+                               will be discarded (only with SESSION_CERTS) */
+static CB_INLINE int cert_manager_load(int preverify,
+                                       WOLFSSL_X509_STORE_CTX* store,
+                                       const unsigned char * der, long derSz)
 {
     int ret;
     WOLFSSL_CERT_MANAGER* cm = NULL;
     WOLFSSL_X509_NAME *issuer = NULL;
     WOLFSSL_X509_NAME *subject = NULL;
 
-    WOLFSSL_X509* peer = store->current_cert;
+    WOLFSSL_X509* peer;
+
+    if (der == NULL) {
+        ESP_LOGE(TAG, "cert_manager_load der is null");
+        return 0; /* preverify */
+    }
 
     if (store == NULL) {
-        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb store is null");
-        return 0; /* preverify */
-    }
-    if (der == NULL) {
-        ESP_LOGE(TAG, "wolfssl_ssl_conf_verify_cb der is null");
+        ESP_LOGE(TAG, "cert_manager_load store is null");
         return 0; /* preverify */
     }
 
-    /* Verify Callback Arguments:
-     * preverify:           1=Verify Okay, 0=Failure
-     * store->error:        Failure error code (0 indicates no failure)
-     * store->current_cert: Current WOLFSSL_X509 object (only with OPENSSL_EXTRA)
-     * store->error_depth:  Current Index
-     * store->domain:       Subject CN as string (null term)
-     * store->totalCerts:   Number of certs presented by peer
-     * store->certs[i]:     A `WOLFSSL_BUFFER_INFO` with plain DER for each cert
-     * store->store:        WOLFSSL_X509_STORE with CA cert chain
-     * store->store->cm:    WOLFSSL_CERT_MANAGER
-     * store->ex_data:      The WOLFSSL object pointer
-     * store->discardSessionCerts: When set to non-zero value session certs
-        will be discarded (only with SESSION_CERTS)
-     */
+    if (store->current_cert == NULL) {
+        ESP_LOGE(TAG, "cert_manager_load store->current_cert is null");
+        return 0; /* preverify */
+    }
 
-    /* lookup certificate issuer */
-    if (peer != NULL) {
-        // issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
-       // subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
-        wolfSSL_X509_get_cert_items("peer", peer, &issuer, &subject);
+    cm = store->store->cm;
+    peer = store->current_cert;
+    wolfSSL_X509_get_cert_items("peer", peer, &issuer, &subject);
 
-#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-//        notBefore = wolfSSL_X509_get_notBefore(peer);
-//        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-//        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
-//
-//        notAfter = wolfSSL_X509_get_notAfter(peer);
-//        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-//        ESP_LOGCBI(TAG, "Not After: %s", after_str);
-#endif
+    /* It is the caller's responsibility to check conditions to add cert. */
+    if ((preverify == 0)  && (store->error == ASN_NO_SIGNER_E)) {
+        ESP_LOGCBI(TAG, "Confirmed call for ASN_NO_SIGNER_E");
+    }
+    else {
+        ESP_LOGW(TAG, "Warning: calling for non ASN_NO_SIGNER_E error.");
     }
 
     ESP_LOGCBI(TAG, "Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
@@ -293,35 +299,26 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
         issuer->name != NULL ? issuer->name : "[none]",
         subject->name != NULL ? subject->name : "[none]");
 
-    /* if no signer error */
-    if (preverify == 0 && issuer != NULL && store->error == ASN_NO_SIGNER_E) {
-        if (store->store != NULL) {
-            cm = store->store->cm;
-        }
-        else {
-            ret = WOLFSSL_FAILURE;
-        }
-
-        /* Find match for issuer */
-        if (XSTRSTR(issuer->name, "/CN=ISRG Root X1") != NULL) { /* TODO allow any cert */
-            /* If match found load to Certificate Manager using: */
-            ret = wolfSSL_CertManagerLoadCABuffer(cm,
-                der, derSz, WOLFSSL_FILETYPE_ASN1);
-            if (ret != WOLFSSL_SUCCESS) {
-                ESP_LOGE(TAG, "Failed to load CA ISRG_Root_X1\n");
-                return preverify;
-            }
-        }
-
+    /* Load the der cert to Certificate Manager:*/
+    ret = wolfSSL_CertManagerLoadCABuffer(cm, der, derSz,
+                                          WOLFSSL_FILETYPE_ASN1);
+    if (ret == WOLFSSL_SUCCESS) {
         /* Attempt to validate the certificate again */
         ret = wolfSSL_CertManagerVerifyBuffer(cm, der, derSz,
             WOLFSSL_FILETYPE_ASN1);
+
         if (ret == WOLFSSL_SUCCESS) {
             ESP_LOGCBI(TAG, "Successfully validated cert: %s\n", subject->name);
 
             /* If verification is successful then override error */
             preverify = 1;
         }
+        else {
+            ESP_LOGE(TAG, "Failed to verify cert after loading new CA.");
+        }
+    }
+    else {
+        ESP_LOGE(TAG, "Failed to load CA");
     }
 
     /* We don't free the issue and subject, as they are
@@ -360,7 +357,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
 
     return preverify;
 }
-#endif
+#endif /* WOLFSSL_DEBUG_CERT_BUNDLE && WOLFSSL_DEBUG_IGNORE_ASN_TIME */
 
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
@@ -369,11 +366,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
-#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-//    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
-//    char before_str[32];
-//    char after_str[32];
-#endif
 
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
@@ -393,7 +385,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
     wolfssl_x509_crt_init(store_cert);
-
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
@@ -459,15 +450,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ESP_LOGCBI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
         }
 
-#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-//        notBefore = wolfSSL_X509_get_notBefore(store_cert);
-//        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-//        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
-//
-//        notAfter = wolfSSL_X509_get_notAfter(store_cert);
-//        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-//        ESP_LOGCBI(TAG, "Not After: %s", after_str);
-#endif
     }
 
     /* When the server presents its certificate, the client checks if this
@@ -612,11 +594,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
         /* After searching the bundle for an appropriate CA, */
         if (crt_found) {
-            ret = myVerify(preverify, store, cert_data, derCertLength);
+            ret = cert_manager_load(preverify, store, cert_data, derCertLength);
             ESP_LOGCBW(TAG, "Found a Matching Certificate Name in the bundle!");
             if (ret == WOLFSSL_FAILURE) {
                 ESP_LOGCBW(TAG, "Warning: found a matching cert, but error: %d",
-                              ret);
+                                 ret);
             }
         }
         else {
@@ -624,7 +606,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         } /* crt search result */
 
-        if (crt_found) {
+        if ((crt_found == 1)&& (ret == WOLFSSL_SUCCESS)) {
             /* TODO confirm: */
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
@@ -665,7 +647,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 }
             }
             else {
-                ESP_LOGCBI(TAG, "Already added matching cert!");
+                ESP_LOGCBI(TAG, "Already added a matching cert!");
             } /* _added_cert */
 
             ESP_LOGCBI(TAG, "wolfSSL_X509_verify_cert(store)");
@@ -674,7 +656,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBI(TAG, "Successfully verified cert in updated store!");
             }
             else {
-                ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                ESP_LOGE(TAG, "Failed to verify cert in updated store! "
+                              "ret = %d", ret);
                 ret = WOLFSSL_FAILURE;
             }
         } /* crt_found */
@@ -684,7 +667,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
     } /* Did not find a cert */
     else {
-        /* not successful, so return zero */
+        /* not successful, so return zero for failure. */
         ret = WOLFSSL_FAILURE;
     } /* Failed to init, didn't even try to search. */
 
@@ -706,6 +689,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
  *
  * This is the callback for TLS handshake verify / valiation. See related:
  *   wolfssl_ssl_conf_verify_cb_no_signer
+ *   wolfssl_ssl_conf_verify_cb_before_date
+ *   wolfssl_ssl_conf_verify_cb_after_date
  *
  * This callback is called FOR EACH cert in the store.
  * Not all certs in the store will have a match for a cert in the bundle,
@@ -739,7 +724,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
     WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
     char before_str[32];
     char after_str[32];
-#endif
+
     notBefore = wolfSSL_X509_get_notBefore(store->current_cert);
     wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
     ESP_LOGCBI(TAG, "Not Before: %s", before_str);
@@ -749,6 +734,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
     notAfter = wolfSSL_X509_get_notAfter(store->current_cert);
     wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
     ESP_LOGCBI(TAG, "Not After: %s", after_str);
+#endif
 
     /* One possible condition is the error "Failed to find signer.
      * This is where we search the bundle for a matching needed CA cert. */
@@ -759,10 +745,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
         preverify = wolfssl_ssl_conf_verify_cb_no_signer(preverify, store);
     }
 
-
-
-    /* Another common issue is the date/timestamp. During debugging, we
-     * can ignore cert ASN before/after limits: */
+    /* Another common issue is the date/timestamp.
+     * During debugging, we can ignore cert ASN before/after limits: */
 #if defined(WOLFSSL_DEBUG_CERT_BUNDLE) && defined(WOLFSSL_DEBUG_IGNORE_ASN_TIME)
     esp_show_current_datetime();
 
@@ -777,6 +761,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
 
     /* Insert any other callback handlers here. */
 
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
     /* When debugging, show if have we resolved any error. */
     if (preverify == 1) {
         ESP_LOGCBI(TAG, "Returning preverify == 1\n");
@@ -792,9 +777,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
     else {
         ESP_LOGCBW(TAG, "Warning; returning preverify == %d\n", preverify);
     }
+#endif
 
     return preverify;
-}
+} /* wolfssl_ssl_conf_verify_cb */
 
 /* wolfssl_ssl_conf_verify() patterned after ESP-IDF.
  * Used locally here only. Not used directly by esp-tls. */
