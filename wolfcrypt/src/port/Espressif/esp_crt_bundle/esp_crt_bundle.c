@@ -72,6 +72,11 @@
     #define CRT_HEADER_OFFSET 2
 #endif
 
+/* Inline functions for performance hint unless otherwise specified. */
+#ifndef CB_INLINE
+    #define CB_INLINE inline
+#endif
+
 /* A "Certificate Bundle" is this array of [size] + [x509 CA]
  * certs the client trusts: */
 extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_start[]
@@ -114,7 +119,7 @@ static int _need_bundle_cert = 0;
 
 /* Returns ESP_OK if there are no zero serial numbers in the bundle,
  * OR there may be zeros, but */
-int wolfssl_found_zero_serial()
+static CB_INLINE int wolfssl_found_zero_serial()
 {
     return _wolfssl_found_zero_serial;
 }
@@ -123,7 +128,8 @@ int wolfssl_found_zero_serial()
  *   1 if the cert has a non-zero serial number
  *   0 if the cert as a zero serial number
  * < 0 for wolfssl\wolfcrypt\error-crypt.h values  */
-static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
+static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
+                                                     int sz) {
     DecodedCert cert;
     int ret = 0;
 
@@ -181,7 +187,7 @@ static int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert, int sz) {
     return ret;
 }
 
-static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
+static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
                            const unsigned char * der, long derSz)
 {
     int ret;
@@ -248,7 +254,7 @@ static inline int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
  *  TLS handshake preverify failure for the "No Signer" condition. */
-static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
+static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
@@ -571,7 +577,7 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
  * Returns:
  * 0 if the verification process should stop immediately with an error.
  * 1 if the verification process should continue with the rest of handshake. */
-static int wolfssl_ssl_conf_verify_cb(int preverify,
+static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
     int initial_preverify;
@@ -624,7 +630,7 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
 
 /* wolfssl_ssl_conf_verify() patterned after ESP-IDF.
  * Used locally here only. Not used directly by esp-tls. */
-void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
+void CB_INLINE wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
                              void (*p_vrfy) )
 {
