@@ -260,7 +260,7 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     WOLFSSL_X509_NAME* store_cert_issuer = NULL;
     WOLFSSL_X509_NAME* this_issuer = NULL;
 
-    WOLFSSL_X509* x509 = NULL;
+//    WOLFSSL_X509* x509 = NULL;
     WOLFSSL_X509* store_cert = NULL;
     WOLFSSL_X509* bundle_cert = NULL;
     intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
@@ -270,6 +270,9 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
+//    wolfssl_x509_crt_init(x509);
+    wolfssl_x509_crt_init(store_cert);
+
 
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
@@ -372,7 +375,8 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
             cert_bundle_data = cert_data; /* wolfSSL_d2i_X509 changes address */
-            bundle_cert = wolfSSL_d2i_X509(&x509, &cert_bundle_data, derCertLength);
+            wolfssl_x509_crt_init(bundle_cert);
+            bundle_cert = wolfSSL_d2i_X509(NULL, &cert_bundle_data, derCertLength);
 
             if (bundle_cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
@@ -557,6 +561,9 @@ static inline int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
  *   for reference:
  *     typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*);
  *
+ * This is the callback for TLS handshake verify / valiation. See related:
+ *   wolfssl_ssl_conf_verify_cb_no_signer
+ *
  * This callback is called FOR EACH cert in the store.
  * Not all certs in the store will have a match for a cert in the bundle,
  * but we NEED ONE to match.
@@ -603,7 +610,9 @@ static int wolfssl_ssl_conf_verify_cb(int preverify,
             /* Here we assume wolfssl_ssl_conf_verify_cb_no_signer
              * properly found and validated the problem: such as
              * a new cert from the bundled needed for signing. */
-            ESP_LOGCBW(TAG, "Callback overriding error.");
+            ESP_LOGCBW(TAG, "Callback overriding error initial preverify = %d, "
+                            "returning preverify = %d",
+                            initial_preverify, preverify );
         }
     }
     else {
