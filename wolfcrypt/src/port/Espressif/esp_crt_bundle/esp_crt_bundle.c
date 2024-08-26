@@ -192,6 +192,13 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
 {
     int ret;
     const char *issuer = NULL, *subject = NULL;
+
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
+    char before_str[32];
+    char after_str[32];
+#endif
+
     WOLFSSL_X509* peer = store->current_cert;
 
     /* Verify Callback Arguments:
@@ -213,7 +220,18 @@ static CB_INLINE int myVerify(int preverify, WOLFSSL_X509_STORE_CTX* store,
     if (peer != NULL) {
         issuer  = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(peer), 0, 0);
         subject = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(peer), 0, 0);
+
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+        notBefore = wolfSSL_X509_get_notBefore(peer);
+        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+
+        notAfter = wolfSSL_X509_get_notAfter(peer);
+        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+        ESP_LOGCBI(TAG, "Not After: %s", after_str);
+#endif
     }
+
     ESP_LOGCBI(TAG, "Cert %d:\n\tIssuer: %s\n\tSubject: %s\n",
         store->error_depth,
         issuer != NULL ? issuer : "[none]",
@@ -258,6 +276,12 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
+    char before_str[32];
+    char after_str[32];
+#endif
+
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
 
@@ -307,6 +331,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     /* TODO: iterate through all CA certs in bundle (or is the bundle a store?) */
 
+    /* Get the current cert from the store. */
     if (ret == WOLFSSL_SUCCESS) {
         /* Get the current certificate being verified during the certificate
          * chain validation process. */
@@ -324,14 +349,34 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
     }
 
+    /* Get the target name and subject from the current_cert(store) */
     if (ret == WOLFSSL_SUCCESS) {
         store_cert_subject = wolfSSL_X509_get_subject_name(store_cert);
         if (wolfSSL_X509_NAME_oneline(store_cert_subject, subjectName, sizeof(subjectName)) == NULL) {
             ESP_LOGE(TAG, "Error converting subject name to string.");
+            ret = WOLFSSL_FAILURE;
+        }
+        else {
+            ESP_LOGCBI(TAG, "Store Cert Subject: %s", subjectName );
         }
         store_cert_issuer = wolfSSL_X509_get_issuer_name(store_cert);
-        ESP_LOGCBI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
-        ESP_LOGCBI(TAG, "Store Cert Subject: %s", subjectName );
+        if (store_cert_issuer == NULL) {
+            ESP_LOGE(TAG, "Error converting Store Cert Issuer to string");
+            ret = WOLFSSL_FAILURE;
+        }
+        else {
+            ESP_LOGCBI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
+        }
+
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+        notBefore = wolfSSL_X509_get_notBefore(store_cert);
+        wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+
+        notAfter = wolfSSL_X509_get_notAfter(store_cert);
+        wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+        ESP_LOGCBI(TAG, "Not After: %s", after_str);
+#endif
     }
 
     /* When the server presents its certificate, the client checks if this
@@ -597,6 +642,21 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
     else {
         ESP_LOGCBW(TAG, "store->error: %d", store->error);
     }
+
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
+    WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
+    char before_str[32];
+    char after_str[32];
+#endif
+    notBefore = wolfSSL_X509_get_notBefore(store->current_cert);
+    wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
+    ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+
+    esp_show_current_datetime();
+
+    notAfter = wolfSSL_X509_get_notAfter(store->current_cert);
+    wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
+    ESP_LOGCBI(TAG, "Not After: %s", after_str);
 
     /* One possible condition is the error "Failed to find signer.
      * This is where we search the bundle for a matching needed CA cert. */
