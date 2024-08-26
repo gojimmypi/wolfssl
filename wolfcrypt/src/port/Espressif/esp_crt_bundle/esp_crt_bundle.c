@@ -193,8 +193,8 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
                                 WOLFSSL_X509_NAME** issuer,
                                 WOLFSSL_X509_NAME** subject)
 {
-#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
     char stringVaue[X509_MAX_SUBJECT_LEN];
+#ifdef WOLFSSL_DEBUG_CERT_BUNDLE
     char before_str[32];
     char after_str[32];
     WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
@@ -384,6 +384,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
+    this_issuer = wolfSSL_X509_NAME_new();
     wolfssl_x509_crt_init(store_cert);
 
 #ifndef NO_SKIP_PREVIEW
@@ -449,7 +450,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         else {
             ESP_LOGCBI(TAG, "Store Cert Issuer:  %s", store_cert_issuer->name );
         }
-
     }
 
     /* When the server presents its certificate, the client checks if this
@@ -499,7 +499,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             /* Convert the DER format in the Cert Bundle to x509.
              * Reminder: Cert PEM files converted to DER by gen_crt_bundle.py */
             cert_bundle_data = cert_data; /* wolfSSL_d2i_X509 changes address */
-            wolfssl_x509_crt_init(bundle_cert);
+
+            /* Ensure we don't keep adding new bundle_certs to the heap. */
+            if (bundle_cert != NULL) {
+                wolfSSL_X509_free(bundle_cert);
+            }
             bundle_cert = wolfSSL_d2i_X509(NULL, &cert_bundle_data, derCertLength);
 
             if (bundle_cert == NULL) {
@@ -568,8 +572,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 #endif
 
             if (cmp_res == 0) {
-                ESP_LOGCBI(TAG, "Found a cert issuer match: %s",
-                                this_issuer->name);
+                ESP_LOGCBI(TAG,
+                    "Found a cert issuer match: %s",
+                    this_issuer->name);
                 crt_found = 1;
                 break;
             }
@@ -590,6 +595,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 start = middle;
             }
 #endif
+            if (!crt_found) {
+                //wolfSSL_X509_NAME_free(this_issuer);
+                //this_issuer = wolfSSL_X509_NAME_new();
+
+                //wolfSSL_X509_NAME_free(this_subject);
+                wolfSSL_X509_free(bundle_cert);
+                bundle_cert=wolfSSL_X509_new();
+            }
         } /* while (start <= end) searching bundle */
 
         /* After searching the bundle for an appropriate CA, */

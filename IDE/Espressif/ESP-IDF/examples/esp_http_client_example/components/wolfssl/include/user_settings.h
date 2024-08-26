@@ -805,7 +805,7 @@
 /* File path depth is typically deeper for ESP-IDF projects; make room in error mes: */
 #define WOLFSSL_MAX_ERROR_SZ 200
 
-#define WOLFSSL_DEBUG_CERT_BUNDLE
+// #define WOLFSSL_DEBUG_CERT_BUNDLE
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 
 // #define DEBUG_WOLFSSL
