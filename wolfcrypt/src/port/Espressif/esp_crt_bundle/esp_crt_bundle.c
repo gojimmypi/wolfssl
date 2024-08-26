@@ -382,12 +382,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     WOLFSSL_X509* bundle_cert = NULL;
     intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
     int derCertLength = 0; /* the [size] value: length of [cert] budnle item */
-    int cmp_res, last_cmp=-1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
+    int cmp_res, last_cmp = -1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
     int ret = WOLFSSL_SUCCESS;
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
-//    wolfssl_x509_crt_init(x509);
     wolfssl_x509_crt_init(store_cert);
 
 
@@ -657,7 +656,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 }
                 else {
                     ESP_LOGE(TAG, "Failed to add cert to store! ret = %d", ret);
-                    /* TODO set error? probably */
+                    ret = WOLFSSL_FAILURE;
                 }
             }
             else {
@@ -671,6 +670,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             }
             else {
                 ESP_LOGE(TAG, "Failed to verify cert in updated store! ret = %d", ret);
+                ret = WOLFSSL_FAILURE;
             }
         } /* crt_found */
         else {
