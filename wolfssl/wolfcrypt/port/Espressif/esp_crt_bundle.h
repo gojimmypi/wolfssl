@@ -55,9 +55,6 @@ struct wolfssl_ssl_config
     WOLFSSL_X509_CRL* ca_crl;
     void *priv_ctx;
     void *priv_ssl;
-
-    //void* f_vrfy; /* TODO: not used? */
-    //void* p_vrfy; /* TODO: not used? */
 };
 
 /* TODO Move ESP-IDF ini here. Reminder: Name conflict.

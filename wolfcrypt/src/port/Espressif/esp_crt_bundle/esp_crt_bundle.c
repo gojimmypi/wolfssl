@@ -68,6 +68,9 @@
     #define BUNDLE_HEADER_OFFSET 2
     #define CRT_HEADER_OFFSET 4
 #else
+    /* Note these are also set in [ESP-IDF]/components/esp-tls/esp_tls_wolfssl.c
+     * to avoid conflicts with other cert bundles.
+     * Ensure they exactly match here: */
     #define BUNDLE_HEADER_OFFSET 2
     #define CRT_HEADER_OFFSET 2
 #endif
