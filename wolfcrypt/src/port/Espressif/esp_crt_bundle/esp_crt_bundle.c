@@ -647,6 +647,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                               "ret = %d", ret);
             }
 
+#if defined(OPENSSL_EXTRA)
             ESP_LOGCBI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, store_cert)");
             if (store_cert && wolfSSL_X509_check_issued(bundle_cert, store_cert) == X509_V_OK) {
                 ESP_LOGCBI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
@@ -656,6 +657,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 /* This is ok, we may have others */
                 ESP_LOGCBI(TAG, "wolfSSL_X509_check_issued failed. (there may be others)");
             }
+#else
+            ESP_LOGW(TAG, "Warning: skipping wolfSSL_X509_check_issued, "
+                          "OPENSSL_EXTRA not enabled.");
+#endif
 
             if (_added_cert == 0) {
                 if (bundle_cert->isCa == 1) {
