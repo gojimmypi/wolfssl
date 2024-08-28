@@ -46,7 +46,7 @@ static const char *TAG = "HTTP_CLIENT";
 /* Root cert for howsmyssl.com, taken from howsmyssl_com_root_cert.pem
 
    The PEM file was extracted from the output of this command:
-   openssl s_client -showcerts -connect www.howsmyssl.com:443 </dev/null
+   openssl s_client -showcerts -connect www.google.com:443 </dev/null
 
    The CA root cert is the last cert given in the chain of certs.
 
@@ -435,7 +435,7 @@ static void http_auth_digest_sha256(void)
 static void https_with_url(void)
 {
     esp_http_client_config_t config = {
-        .url = "https://www.howsmyssl.com",
+        .url = "https://www.google.com",
         .event_handler = _http_event_handler,
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
@@ -456,7 +456,7 @@ static void https_with_url(void)
 static void https_with_hostname_path(void)
 {
     esp_http_client_config_t config = {
-        .host = "www.howsmyssl.com",
+        .host = "www.google.com",
         .path = "/",
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .event_handler = _http_event_handler,
@@ -564,7 +564,7 @@ static void http_absolute_redirect_manual(void)
 static void http_redirect_to_https(void)
 {
     esp_http_client_config_t config = {
-        .url = "http://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/redirect-to?url=https://www.howsmyssl.com",
+        .url = "http://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/redirect-to?url=https://www.google.com",
         .event_handler = _http_event_handler,
         .cert_pem = howsmyssl_com_root_cert_pem_start,
     };
@@ -847,9 +847,9 @@ esp_http_client_method_t http_method;
 #ifdef NEW_DEMO_CODE
 /* m_client_config not defined, using existing example: */
 static esp_http_client_config_t m_client_config = {
-//        .url = "https://www.howsmyssl.com",
+//        .url = "https://www.google.com",
         .event_handler = _http_event_handler,
-        .host = "www.howsmyssl.com",
+        .host = "www.google.com",
         .path = "/",
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .cert_pem = howsmyssl_com_root_cert_pem_start,
@@ -866,7 +866,7 @@ static esp_http_client_config_t m_client_config = {
 
 
 //    esp_http_client_config_t config = {
-//        .host = "www.howsmyssl.com",
+//        .host = "www.google.com",
 //        .path = "/",
 //        .transport_type = HTTP_TRANSPORT_OVER_SSL,
 //        .event_handler = _http_event_handler,
@@ -1013,7 +1013,9 @@ void app_main(void)
 
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
-
+    #ifdef DEBUG_WOLFSSL
+        wolfSSL_Debugging_OFF();
+    #endif
     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
