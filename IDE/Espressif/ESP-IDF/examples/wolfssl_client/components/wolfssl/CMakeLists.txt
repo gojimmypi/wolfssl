@@ -28,6 +28,13 @@ cmake_minimum_required(VERSION 3.16)
 
 set(VERBOSE_COMPONENT_MESSAGES 1)
 
+set(TEST_VAR "hi")
+
+function(SETUP_WOLFSSL TEST_VAR)
+    # Custom setup code
+    message(STATUS "Hello world! ${TEST_VAR}")
+    set(TEST_VAR "bye" PARENT_SCOPE)
+endfunction()
 
 # function: IS_ESP_IDF_COMPONENT
 #  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
@@ -76,6 +83,7 @@ endif()
 
 # The scope of this CMAKE_C_FLAGS is just this component:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 # set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
@@ -255,7 +263,7 @@ function(FIND_WOLFSSL_DIRECTORY OUTPUT_FOUND_WOLFSSL_DIRECTORY)
                 get_filename_component(CURRENT_SEARCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
                 message(STATUS "CURRENT_SEARCH_DIR = ${CURRENT_SEARCH_DIR}")
                 string(LENGTH ${CURRENT_SEARCH_DIR} CURRENT_SEARCH_DIR_LENGTH)
-            endif() # CONFIG_ESP_TLS_USING_WOLFSSL_SPECIFIED
+            endif() # CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT
         endif() # check environment var blank
     else()
         message(STATUS "Parameter found for FIND_WOLFSSL_DIRECTORY")
@@ -501,6 +509,7 @@ else()
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
+                          "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/atmel\""
                           "\"${WOLFSSL_EXTRA_PROJECT_DIR}\""
                          ) # COMPONENT_SRCDIRS
@@ -721,7 +730,7 @@ else()
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
-        "\"${WOLFSSL_ROOT}/examples\"" # Examples are distributed in Managed Components, but not part of a project.
+        "\"${WOLFSSL_ROOT}/examples\"" # Examnples are distributed in Managed Components, but not part of a project.
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -745,6 +754,8 @@ else()
     set(EXTRA_COMPONENT_DIRS "${COMPONENT_SRCDIRS}")
 
     if(WOLFSSL_ROOT)
+#        wolfssl_init_cert_bundle()
+
         # Only register the component if we found wolfSSL source.
         # This is important to allow Cmake to finish to completion, otherwise the UI
         # may not be able to display the Kconfig settings to fix a bad or missing source.
@@ -763,6 +774,80 @@ else()
         idf_component_register()
         message(STATUS "Warning: wolfSSL component not registered as no source code found (WOLFSSL_ROOT is blank)")
     endif()
+
+#        wolfssl_init_cert_bundle()
+# function(WOLFSSL_INIT_CERT_BUNDLE)
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+    # reminder: we need a value for wolfSSL root first!
+    if( "${WOLFSSL_ROOT}" STREQUAL "" )
+        message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")
+    endif()
+    set(WOLFSSL_ESP_CRT_BUNDLE_DIR ${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle)
+    message(STATUS "WOLFSSL_ESP_CRT_BUNDLE_DIR=${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+    if(EXISTS "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+        set(bundle_name "x509_crt_bundle_wolfssl")
+
+        # For now the certs are in the same directory
+        set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+
+        # Generate custom certificate bundle using the generate_cert_bundle utility
+        set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
+
+        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
+#           list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem)
+        elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+            list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
+        endif()
+
+        # Add deprecated root certs if enabled. This config is not visible if the default cert
+        # bundle is not selected
+        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_deprecated.pem)
+        endif()
+
+        if(CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE)
+            get_filename_component(custom_bundle_path
+              ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
+            list(APPEND crt_paths ${custom_bundle_path})
+            message(STATUS "Using a custom wolfSSL bundle path: ${custom_bundle_path}")
+        else()
+            message(STATUS "Not using a custom wolfSSL bundle path.")
+        endif()
+        list(APPEND args --input ${crt_paths} -q)
+
+        get_filename_component(crt_bundle
+            ${bundle_name}
+            ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+        message(STATUS "Setting up bundle generate: ${GENERATE_CERT_BUNDLEPY} ${args}")
+        message(STATUS "Depends on custom bundle path: ${custom_bundle_path}")
+        # Generate bundle according to config
+        add_custom_command(OUTPUT ${crt_bundle}
+            COMMAND ${GENERATE_CERT_BUNDLEPY} ARGS ${args}
+            DEPENDS ${custom_bundle_path}
+            VERBATIM)
+
+        # Reminder the file is generated at build time, not cmake load time.
+        message(STATUS "wolfSSL Cert Bundle File to be greated at build time in: ${crt_bundle}")
+
+        add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
+
+        # the wolfSSL crtificate bundle is baked into wolfSSL
+        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle) # TODO why is COMPONENT_LIB empty here?
+#        add_dependencies(__idf_wolfssl custom_wolfssl_bundle)
+
+        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY) # TODO why is COMPONENT_LIB empty here?
+#        target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
+        set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+            "${crt_bundle}")
+    else()
+        message(STATUS "WARNING: CONFIG_WOLFSSL_CERTIFICATE_BUNDLE enabled but directory not found: ${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+    endif()
+endif()
+# endfunction() # WOLFSSL_INIT_CERT_BUNDLE
 
     # Some optional diagnostics. Verbose ones are truncated.
     if (VERBOSE_COMPONENT_MESSAGES)
@@ -854,23 +939,29 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT)
     message(STATUS "Adding macro definitions:")
 
     # LIBWOLFSSL_VERSION_GIT_ORIGIN: git config --get remote.origin.url
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_ORIGIN "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_BRANCH: git rev-parse --abbrev-ref HEAD
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--abbrev-ref" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--abbrev-ref" "HEAD"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_BRANCH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_HASH: git rev-parse HEAD
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "HEAD"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_SHORT_HASH: git rev-parse --short HEAD
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--short" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--short" "HEAD"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_SHORT_HASH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_HASH_DATE git show --no-patch --no-notes --pretty=\'\%cd\'
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd}
+                    "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
 
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_WOLFSSL_ROOT "${WOLFSSL_ROOT}" "${TMP_RES}")
@@ -888,7 +979,8 @@ endif()
 
 if(WOLFSSL_ROOT)
     message(STATUS "Using wolfSSL in ${WOLFSSL_ROOT}")
-    if(CONFIG_ESP_TLS_USING_WOLFSSL_SPECIFIED)
+    # See esp-tls Kconfig; menu "ESP-TLS", ESP_TLS_LIBRARY_CHOOSE
+    if(CONFIG_ESP_TLS_USING_WOLFSSL)
         message(STATUS "wolfSSL will be used for ESP-TLS")
     else()
         message(STATUS "WARNING: wolfSSL NOT selected for ESP-TLS. Features and performance will be limited.")
