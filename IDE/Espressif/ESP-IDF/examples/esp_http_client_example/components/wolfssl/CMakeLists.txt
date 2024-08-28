@@ -879,6 +879,12 @@ endif()
     endif()
 
     # target_sources(wolfssl PRIVATE  "\"${WOLFSSL_ROOT}/wolfssl/\""  "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt\"")
+    message(STATUS "DETECTED_PROJECT_NAME=${CMAKE_PROJECT_NAME}")
+    message(STATUS "COMPONENT_TARGET=${COMPONENT_TARGET}")
+    target_compile_definitions(${COMPONENT_TARGET} PRIVATE DETECTED_PROJECT_NAME="${CMAKE_PROJECT_NAME}")
+    if( "${CMAKE_PROJECT_NAME}" STREQUAL "esp_http_client_example" )
+        target_compile_definitions(${COMPONENT_TARGET} PRIVATE APP_ESP_HTTP_CLIENT_EXAMPLE="y")
+    endif()
 
 endif() # CMAKE_BUILD_EARLY_EXPANSION
 

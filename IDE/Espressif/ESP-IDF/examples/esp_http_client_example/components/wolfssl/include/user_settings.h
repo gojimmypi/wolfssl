@@ -142,8 +142,14 @@
     /* We'll assume the app needs to use wolfSSL sdk lib function */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
-/* Unknown config */
+/* Other & Unknown configs */
 #else
+    /* Other applications detected by cmake */
+    #ifdef APP_ESP_HTTP_CLIENT_EXAMPLE
+        /* The wolfSSL Version */
+    #elif  defined(APP_ESP_HTTP_CLIENT)
+        /* The ESP-IDF Version */
+    #endif
     /* the code is older or does not have application name defined. */
 #endif /* Example wolfSSL Configuration app settings */
 
