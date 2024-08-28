@@ -142,14 +142,14 @@
     /* We'll assume the app needs to use wolfSSL sdk lib function */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
-/* Other & Unknown configs */
+/* Other applications detected by cmake */
+#elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
+    /* The wolfSSL Version */
+    #define FP_MAX_BITS (8192 * 2)
+#elif defined(APP_ESP_HTTP_CLIENT)
+    /* The ESP-IDF Version */
+    #define FP_MAX_BITS (8192 * 2)
 #else
-    /* Other applications detected by cmake */
-    #ifdef APP_ESP_HTTP_CLIENT_EXAMPLE
-        /* The wolfSSL Version */
-    #elif  defined(APP_ESP_HTTP_CLIENT)
-        /* The ESP-IDF Version */
-    #endif
     /* the code is older or does not have application name defined. */
 #endif /* Example wolfSSL Configuration app settings */
 
@@ -707,7 +707,7 @@
 
     // TODO
 
-#define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD /* TODO */
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD /* TODO */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
