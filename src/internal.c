@@ -21159,6 +21159,7 @@ int ProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     ret = RetrySendAlert(ssl);
     if (ret != 0) {
         WOLFSSL_MSG_EX("RetrySendAlert failed, giving up. err = %d", ret);
+        ESP_LOGE(TAG, "RetrySendAlert failed, giving up. err = %d", ret);
         return ret;
     }
 
