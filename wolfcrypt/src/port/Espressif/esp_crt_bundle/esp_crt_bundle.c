@@ -107,7 +107,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 /* NOTE: Manually edit sort order in gen_crt_bundle.py
  *
  * The default is having the bundle pre-sorted in the python script
- * to allow for rapid binary cert match search at runtime.
+ * to allow for rapid binary cert match search at runtime. The unsorted
+ * seach ALWAYS works, but when expecting a sorted search the python
+ * script MUST presort the data, oherwise the connection will likely fail.
  *
  * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED */
 /* #define CERT_BUNDLE_UNSORTED */
@@ -509,14 +511,19 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         int end = s_crt_bundle.num_certs - 1;
 
 #ifndef CERT_BUNDLE_UNSORTED
+        /* When sorted (not unsorted), binary search: */
         int middle = (end - start) / 2;
 #else
+        /* When not sorted, we start at beginning and look at each: */
         int middle = 0;
 #endif
-        /* Look for the certificate using binary search on subject name */
+        /* Look for the certificate searching on subject name: */
         while (start <= end) {
             ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
 
+            if (middle == 139) {
+                ESP_LOGW(TAG, "Pause for #%d", middle);
+            }
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
@@ -602,8 +609,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                  * match this bundle item issuer with the store certificate
                  * subject name, as later we'll call wolfSSL_X509_check_issued()
                  * which compares these fields. */
-                cmp_res = memcmp(store_cert_issuer->name,
-                                 this_subject->name,
+                cmp_res = memcmp(this_subject->name,
+                                 store_cert_issuer->name,
                                  strlen((const char*)store_cert_issuer->name));
                 last_cmp = cmp_res; /* in case we have to skip an item, save */
             }
@@ -612,7 +619,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 cmp_res = last_cmp;
             }
 #endif
-
+            ESP_LOGI(TAG, "This cmp_res = %d", cmp_res);
             if (cmp_res == 0) {
                 ESP_LOGCBI(TAG,
                     "Found a cert issuer match: %s",
@@ -620,6 +627,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 _crt_found = 1;
                 break;
             }
+
+            /* The next indexed cert item to look at: [middle] value: */
 #ifndef CERT_BUNDLE_UNSORTED
             /* If the list is presorted, we can use a binary search. */
             else if (cmp_res < 0) {
@@ -637,6 +646,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 start = middle;
             }
 #endif
+            ESP_LOGI(TAG, "Item = %d; start: %d, end: %d", middle, start, end );
             if (!_crt_found) {
                 /* this_issuer and this_subject are parts of this bundle_cert
                  * so we don't need to clean them up explicitly.
@@ -1014,7 +1024,7 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
 #endif /* WOLFSSL_X509_TRUSTED_CERTIFICATE_CALLBACK */
 }
 
-static esp_err_t esp_crt_bundle_is_valid()
+esp_err_t esp_crt_bundle_is_valid()
 {
     return _esp_crt_bundle_is_valid;
 }
@@ -1038,9 +1048,11 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     int ret = ESP_OK;
 
     WOLFSSL_ENTER("esp_crt_bundle_init");
+    _esp_crt_bundle_is_valid = ESP_OK; /* Assume valid until proven otherise. */
 
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle size");
+        _esp_crt_bundle_is_valid = ESP_FAIL;
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -1050,6 +1062,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                       "Max allowed certificates in certificate bundle = %d\n"
                       "Please update the menuconfig option",
                       num_certs, CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+        _esp_crt_bundle_is_valid = ESP_FAIL;
         return ESP_ERR_INVALID_ARG;
     }
     else {
@@ -1061,6 +1074,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     crts = calloc(num_certs, sizeof(x509_bundle));
     if (crts == NULL) {
         ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
+        _esp_crt_bundle_is_valid = ESP_FAIL;
         return ESP_ERR_NO_MEM;
     }
 
@@ -1076,6 +1090,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
         if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
             ESP_LOGE(TAG, "Invalid certificate bundle current offset");
             free(crts);
+            _esp_crt_bundle_is_valid = ESP_FAIL;
             return ESP_ERR_INVALID_ARG;
         }
 
@@ -1123,6 +1138,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     if (cur_crt > bundle_end) {
         ESP_LOGE(TAG, "Invalid certificate bundle after end");
         free(crts);
+        _esp_crt_bundle_is_valid = ESP_FAIL;
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -1163,16 +1179,6 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     if (ret == ESP_OK) {
         if (conf) {
             wolfssl_ssl_config *ssl_conf = (wolfssl_ssl_config *)conf;
-            /* point to a dummy certificate
-             * This is only required so that the
-             * cacert_ptr passes non-NULL check during handshake
-             */
-             /* TODO: do we need a dummy cert? */
-             //wolfssl_x509_crt_init(&s_dummy_crt);
-             //wolfssl_ssl_conf_ca_chain(ssl_conf, &s_dummy_crt, NULL);
-
-             /* typedef int (*VerifyCallback)(int, WOLFSSL_X509_STORE_CTX*); */
-             /* TODO: cb not properly attached here: */
             wolfssl_ssl_conf_verify(ssl_conf, esp_crt_verify_callback, NULL);
         }
         else {
