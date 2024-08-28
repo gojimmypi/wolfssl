@@ -777,7 +777,7 @@ else()
 
 #        wolfssl_init_cert_bundle()
 # function(WOLFSSL_INIT_CERT_BUNDLE)
-if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
     # reminder: we need a value for wolfSSL root first!
     if( "${WOLFSSL_ROOT}" STREQUAL "" )
         message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")
@@ -799,6 +799,8 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
         elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
             list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
             list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
+        else()
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_none.pem)
         endif()
 
         # Add deprecated root certs if enabled. This config is not visible if the default cert
@@ -879,6 +881,12 @@ endif()
     endif()
 
     # target_sources(wolfssl PRIVATE  "\"${WOLFSSL_ROOT}/wolfssl/\""  "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt\"")
+    message(STATUS "DETECTED_PROJECT_NAME=${CMAKE_PROJECT_NAME}")
+    message(STATUS "COMPONENT_TARGET=${COMPONENT_TARGET}")
+    target_compile_definitions(${COMPONENT_TARGET} PRIVATE DETECTED_PROJECT_NAME="${CMAKE_PROJECT_NAME}")
+    if( "${CMAKE_PROJECT_NAME}" STREQUAL "esp_http_client_example" )
+        target_compile_definitions(${COMPONENT_TARGET} PRIVATE APP_ESP_HTTP_CLIENT_EXAMPLE="y")
+    endif()
 
 endif() # CMAKE_BUILD_EARLY_EXPANSION
 

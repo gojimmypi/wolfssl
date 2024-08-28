@@ -777,7 +777,7 @@ else()
 
 #        wolfssl_init_cert_bundle()
 # function(WOLFSSL_INIT_CERT_BUNDLE)
-if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND !CMAKE_BUILD_EARLY_EXPANSION)
     # reminder: we need a value for wolfSSL root first!
     if( "${WOLFSSL_ROOT}" STREQUAL "" )
         message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")

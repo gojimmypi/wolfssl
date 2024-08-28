@@ -32,11 +32,22 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 #include "esp_log.h"
+static const char *TAG = "esp_crt_bundle-wolfssl";
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
 #include <wolfssl/wolfcrypt/logging.h>
 
-#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
+    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
+    (CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE == 1)
+
+esp_err_t esp_crt_bundle_attach(void *conf)
+{
+    esp_err_t ret = ESP_OK;
+    ESP_LOGW(TAG, "No certificate bundle was selected");
+    return ret;
+}
+#else
 
 #include <wolfssl/internal.h>
 #include <wolfssl/ssl.h>
@@ -105,8 +116,6 @@ extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_start[]
 
 extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_end[]
                      asm("_binary_x509_crt_bundle_wolfssl_end");
-
-static const char *TAG = "esp_crt_bundle-wolfssl";
 
 /* a dummy certificate so that
  * cacert_ptr passes non-NULL check during handshake */

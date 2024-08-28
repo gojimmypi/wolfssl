@@ -40,8 +40,6 @@
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     #include <wolfssl/ssl.h>
 
-#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,10 +56,9 @@ struct wolfssl_ssl_config
     void *priv_ssl;
 };
 
-/* TODO Move ESP-IDF ini here. Reminder: Name conflict.
-esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
-                                     size_t bundle_size);
- */
+#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
+    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
+    (CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE == 1)
 
 /**
  * @brief      Attach and enable use of a bundle for certificate verification
@@ -81,6 +78,13 @@ esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
  *                       calling process.
  */
 esp_err_t esp_crt_bundle_attach(void *conf);
+
+
+#else
+/* TODO Move ESP-IDF ini here. Reminder: Name conflict.
+esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                     size_t bundle_size);
+ */
 
 
 /**
