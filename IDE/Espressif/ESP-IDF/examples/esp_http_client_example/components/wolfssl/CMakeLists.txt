@@ -775,9 +775,11 @@ else()
         message(STATUS "Warning: wolfSSL component not registered as no source code found (WOLFSSL_ROOT is blank)")
     endif()
 
-#        wolfssl_init_cert_bundle()
 # function(WOLFSSL_INIT_CERT_BUNDLE)
-if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND !CMAKE_BUILD_EARLY_EXPANSION)
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
+    if (CMAKE_BUILD_EARLY_EXPANSION)
+        message(ERROR "Bundle Cert initialization must occur during CMAKE_BUILD_EARLY_EXPANSION")
+    endif()
     # reminder: we need a value for wolfSSL root first!
     if( "${WOLFSSL_ROOT}" STREQUAL "" )
         message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")
@@ -794,8 +796,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND !CMAKE_BUILD_EARLY_EXPANSION)
         set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
 
         if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
-#           list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
-            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
         elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
             list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
             list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
@@ -835,18 +836,19 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND !CMAKE_BUILD_EARLY_EXPANSION)
         add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
 
         # the wolfSSL crtificate bundle is baked into wolfSSL
-        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle) # TODO why is COMPONENT_LIB empty here?
-#        add_dependencies(__idf_wolfssl custom_wolfssl_bundle)
+        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle)
 
-        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY) # TODO why is COMPONENT_LIB empty here?
-#        target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
+        # COMPONENT_LIB may vary: __idf_wolfssl, __idf_esp_wolfssl, etc
+        # target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
+        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY)
         set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-            APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-            "${crt_bundle}")
+                     APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+                     "${crt_bundle}")
     else()
         message(STATUS "WARNING: CONFIG_WOLFSSL_CERTIFICATE_BUNDLE enabled but directory not found: ${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
     endif()
 endif()
+
 # endfunction() # WOLFSSL_INIT_CERT_BUNDLE
 
     # Some optional diagnostics. Verbose ones are truncated.
