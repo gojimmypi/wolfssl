@@ -1,4 +1,4 @@
-/* wolfssl-component include/user_settings.h
+/* user_settings.h
  *
  * Copyright (C) 2006-2024 wolfSSL Inc.
  *
@@ -18,8 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
-#define USE_WOLFSSL_ESP_SDK_TIME
+#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -80,17 +79,78 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-/* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
-/* #define USE_WOLFSSL_ESP_SDK_WIFI */
+/* Test various user_settings between applications by selecting example apps
+ * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
-#if defined(CONFIG_TLS_STACK_WOLFSSL) // && (CONFIG_TLS_STACK_WOLFSSL)
+/* wolfSSL Examples */
+#ifdef CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TEST
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_test */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+    #define TEST_ESPIDF_ALL_WOLFSSL
+
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
+    /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
+    /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER
+    /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfSSH Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER
+    /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_echoserver */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP32/ESP32-SSH-Server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER
+    /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfMQTT Examples */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT
+    /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/AWS_IoT_MQTT */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* wolfTPM Examples */
+#elif CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF
+    /* See https://github.com/wolfSSL/wolfTPM/tree/master/IDE/Espressif */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* Apple HomeKit Examples */
+#elif CONFIG_WOLFSSL_APPLE_HOMEKIT
+    /* See https://github.com/AchimPieters/esp32-homekit-demo */
+
+/* no example selected */
+#elif CONFIG_WOLFSSL_EXAMPLE_NAME_NONE
+    /* We'll assume the app needs to use wolfSSL sdk lib function */
+    #define USE_WOLFSSL_ESP_SDK_WIFI
+
+/* Unknown config */
+#else
+    /* the code is older or does not have application name defined. */
+#endif /* Example wolfSSL Configuration app settings */
+
+
+#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
     /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
      * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
      * that here: */
-    // #warning "Defining OPENSSL_EXTRA"
     #define OPENSSL_EXTRA
-
-    /* TODO: these are likely only needed when using cert bundles */
     #ifndef WOLFSSL_ALWAYS_VERIFY_CB
        #define WOLFSSL_ALWAYS_VERIFY_CB
     #endif
@@ -100,13 +160,6 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-
-
-    // #define OPENSSL_ALL
-    #ifndef WOLFSSL_BIO_INCLUDED
-    #endif
-//    #define WOLFSSL_WPAS_SMALL
-//    #define HAVE_EX_DATA_CLEANUP_HOOKS
 #endif
 
 /* Experimental Kyber */
@@ -124,19 +177,11 @@
     #endif
 #endif
 
-/* Check if we'll relax ASN checking. For instance, there have been certs
- * inthe the Espressif Bundle that are missing a serial number. This causes
- * an error in wolfSSL unless WOLFSSL_NO_ASN_STRICT is defined. */
-#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT)
-    #undef  WOLFSSL_NO_ASN_STRICT
-    #define WOLFSSL_NO_ASN_STRICT
-#endif
-
 /* Pick a cert buffer size: */
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
 #define USE_CERT_BUFFERS_2048
-
+#define USE_WOLFSSL_ESP_SDK_TIME
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -229,7 +274,7 @@
 #define WOLFSSL_SMALL_STACK
 
 /* Full debugging turned off, but show malloc failure detail */
-/* #define DEBUG_WOLFSSL */
+// #define DEBUG_WOLFSSL
 #define DEBUG_WOLFSSL_MALLOC
 
 /* See test.c that sets cert buffers; we'll set them here: */
@@ -240,7 +285,6 @@
 #define RSA_LOW_MEM
 
 /* Uncommon settings for testing only */
-// #define TEST_ESPIDF_ALL_WOLFSSL
 #ifdef  TEST_ESPIDF_ALL_WOLFSSL
     #define WOLFSSL_MD2
     #define HAVE_BLAKE2
@@ -278,8 +322,8 @@
     #elif defined(CONFIG_IDF_TARGET_ESP32)   || \
           defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
-        #define WOLFCRYPT_HAVE_SRP
-        #define FP_MAX_BITS (8192 * 2)
+        /* TODO: SRP Not enabled, known to fail on this target
+         * See https://github.com/wolfSSL/wolfssl/issues/7210 */
     #elif defined(CONFIG_IDF_TARGET_ESP32C3) || \
           defined(CONFIG_IDF_TARGET_ESP32H2)
         /* SRP Known to be working on this target::*/
@@ -376,7 +420,21 @@
 
 #define BENCH_EMBEDDED
 
+#define WOLFSSL_SMALL_STACK
+#define HAVE_ECC
+#define RSA_LOW_MEM
+
 /* TLS 1.3                                 */
+#define WOLFSSL_TLS13
+#define HAVE_TLS_EXTENSIONS
+#define WC_RSA_PSS
+#define HAVE_HKDF
+#define HAVE_AEAD
+#define HAVE_SUPPORTED_CURVES
+/* Cauases error in internal.c
+ #define WOLFSSL_NO_REALLOC
+*/
+
 #ifdef CONFIG_WOLFSSL_ALLOW_TLS13
     #define WOLFSSL_TLS13
     #define HAVE_TLS_EXTENSIONS
@@ -411,7 +469,6 @@
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
     defined(CONFIG_IDF_TARGET_ESP32C2)
-    /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
     /* when you want to use SHA512 */
@@ -420,51 +477,17 @@
     /* when you want to use SHA3 */
     /* #define WOLFSSL_SHA3 */
 
-    /* ED25519 requires SHA512 */
+    #define HAVE_ECC
+    #define HAVE_CURVE25519
+    #define CURVE25519_SMALL
     #define HAVE_ED25519
-#endif
-
-#define MY_USE_ECC 1
-#define MY_USE_RSA 0
-
-/* We can use either or both ECC and RSA, but must use at least one. */
-#if MY_USE_ECC || MY_USE_RSA
-    #if MY_USE_ECC
-        /* ---- ECDSA / ECC ---- */
-        #define HAVE_ECC
-        #define HAVE_CURVE25519
-        #define HAVE_ED25519
-        #define CURVE25519_SMALL
-
-        /*
-        #define HAVE_ECC384
-        */
-    #else
-        #define WOLFSSH_NO_ECC
-        /* WOLFSSH_NO_ECDSA is typically defined automatically,
-         * here for clarity: */
-        #define WOLFSSH_NO_ECDSA
-    #endif
-
-    #if MY_USE_RSA
-        /* ---- RSA ----- */
-        /* #define RSA_LOW_MEM */
-
-        /* DH disabled by default, needed if ECDSA/ECC also turned off */
-        #define HAVE_DH
-    #else
-        #define WOLFSSH_NO_RSA
-    #endif
-#else
-    #error "Either RSA or ECC must be enabled"
 #endif
 
 /* Optional OpenSSL compatibility */
 /* #define OPENSSL_EXTRA */
 
-/* #Optional HAVE_PKCS7 */
+/* when you want to use pkcs7 */
 /* #define HAVE_PKCS7 */
-
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
     #define NO_PBKDF2
@@ -488,11 +511,25 @@
     /* #define CUSTOM_SLOT_ALLOCATION                              */
 #endif
 
-/* WC_NO_CACHE_RESISTANT: slower but more secure */
-/* #define WC_NO_CACHE_RESISTANT */
+/* RSA primitive specific definition */
+#if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
+    /* Define USE_FAST_MATH and SMALL_STACK                        */
+    #define ESP32_USE_RSA_PRIMITIVE
 
-/* TFM_TIMING_RESISTANT: slower but more secure */
-/* #define TFM_TIMING_RESISTANT */
+    #if defined(CONFIG_IDF_TARGET_ESP32)
+
+        /* NOTE HW unreliable for small values! */
+        /* threshold for performance adjustment for HW primitive use   */
+        /* X bits of G^X mod P greater than                            */
+        #undef  ESP_RSA_EXPT_XBITS
+        #define ESP_RSA_EXPT_XBITS 32
+
+        /* X and Y of X * Y mod P greater than                         */
+        #undef  ESP_RSA_MULM_BITS
+        #define ESP_RSA_MULM_BITS  16
+
+    #endif
+#endif
 
 /* #define WOLFSSL_ATECC508A_DEBUG         */
 
@@ -513,24 +550,15 @@
 #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
-/* #undef  USE_FAST_MATH          */
+/* #undef USE_FAST_MATH          */
 /* #define SP_MATH               */
 /* #define WOLFSSL_SP_MATH_ALL   */
 /* #define WOLFSSL_SP_RISCV32    */
-/* #undef  USE_FAST_MATH          */
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
 
-/* Just syntax highlighting to check math libraries: */
-#if defined(SP_MATH)               || \
-    defined(USE_INTEGER_HEAP_MATH) || \
-    defined(USE_INTEGER_HEAP_MATH) || \
-    defined(USE_FAST_MATH)         || \
-    defined(WOLFSSL_SP_MATH_ALL)   || \
-    defined(WOLFSSL_SP_RISCV32)
-#endif
 
 #define WOLFSSL_SMALL_STACK
 
@@ -550,8 +578,6 @@
 #define WOLFSSL_CERT_EXT
 #define WOLFSSL_SYS_CA_CERTS
 
-// #define WOLFSSL_NO_ASN_STRICT
-#define WOLFSSL_ASN_ALLOW_0_SERIAL
 
 #define WOLFSSL_CERT_TEXT
 
@@ -639,7 +665,7 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+         #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD /* TODO */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
@@ -801,16 +827,10 @@
         #endif
     #endif
 #endif
-
-/* File path depth is typically deeper for ESP-IDF projects; make room in error mes: */
 #define WOLFSSL_MAX_ERROR_SZ 200
 
 // #define WOLFSSL_DEBUG_CERT_BUNDLE
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
-
-// #define DEBUG_WOLFSSL
-// #define WOLFSSL_DEBUG_ASN_TEMPLATE
-
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 
@@ -824,19 +844,8 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 #define WOLFSSL_TEST_STRAY 1
 #define USE_ESP_DPORT_ACCESS_READ_BUFFER
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
-#define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
-#define ESP_MONITOR_HW_TASK_LOCK
-#define USE_ESP_DPORT_ACCESS_READ_BUFFER
-#define WOLFSSL_DEBUG_ASN_TEMPLATE
-#define WOLFSSL_DEBUG_STATIC_MEMORY
-#define WOLFSSL_DEBUG_MEMORY
-#define WOLFSSL_DEBUG_MEMORY_PRINT
-#define WOLFSSL_DEBUG_MATH
-#define WOLFSSL_DEBUG_MUTEX
-#define WOLFSSL_DEBUG_TLS
-#define WOLFSSL_DEBUG_CERT_BUNDLE
 
 See wolfcrypt/benchmark/benchmark.c for debug and other settings:
 
@@ -848,8 +857,7 @@ Turn on timer debugging (used when CPU cycles not available)
 */
 
 /* Pause in a loop rather than exit. */
-/* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
-/* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE
 
 #define WOLFSSL_HW_METRICS
 
@@ -882,7 +890,6 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* used by benchmark: */
 #define WOLFSSL_PUBLIC_MP
-
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
 #define HAVE_PK_CALLBACKS
@@ -897,6 +904,12 @@ Turn on timer debugging (used when CPU cycles not available)
  *
  * There are various certificate examples in this header file:
  * https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/certs_test.h
+ *
+ * To use the sample certificates in code (not recommended for production!):
+ *
+ *    #if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024)
+ *        #include <wolfssl/certs_test.h>
+ *    #endif
  *
  * To use the sets of macros below, define *one* of these:
  *
@@ -975,7 +988,6 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_BASE16
 #else
     #if defined(USE_CERT_BUFFERS_2048)
-    	#define USE_CERT_BUFFERS_256
     	/* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_2048
@@ -997,7 +1009,6 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     #elif defined(USE_CERT_BUFFERS_1024)
-    	#define USE_CERT_BUFFERS_256
     	/* Be sure to include in app when using example certs: */
         /* #include <wolfssl/certs_test.h>                     */
         #define CTX_CA_CERT          ca_cert_der_1024
@@ -1045,13 +1056,6 @@ Turn on timer debugging (used when CPU cycles not available)
 #else
     #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
 #endif
-
-#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
-    /* The settings.h and/or user_settings.h should have detected config
-     * valuse from Kconfig and set the appropriate wolfSSL macro: */
-    #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
-#endif
-
 /* See settings.h for some of the possible hardening options:
  *
  *  #define NO_ESPIDF_DEFAULT
