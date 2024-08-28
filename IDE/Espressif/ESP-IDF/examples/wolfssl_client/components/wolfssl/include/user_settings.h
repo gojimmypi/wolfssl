@@ -83,61 +83,61 @@
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
 /* wolfSSL Examples */
-#ifdef CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE
+#if defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TEST
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEST)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_test */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define TEST_ESPIDF_ALL_WOLFSSL
 
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfSSH Examples */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_echoserver */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP32/ESP32-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfMQTT Examples */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/AWS_IoT_MQTT */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfTPM Examples */
-#elif CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF
+#elif defined(CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF)
     /* See https://github.com/wolfSSL/wolfTPM/tree/master/IDE/Espressif */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* Apple HomeKit Examples */
-#elif CONFIG_WOLFSSL_APPLE_HOMEKIT
+#elif defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
     /* See https://github.com/AchimPieters/esp32-homekit-demo */
 
 /* no example selected */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_NONE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_NONE)
     /* We'll assume the app needs to use wolfSSL sdk lib function */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
@@ -214,7 +214,6 @@
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
-
 
 /* Optionally enable Apple HomeKit from compiler directive or Kconfig setting */
 #if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
@@ -466,11 +465,18 @@
 
     /* Required for RSA */
     #define WC_RSA_PSS
+
+    /* TLS 1.3 normally requires HAVE_FFDHE */
+    #ifdef defined(HAVE_FFDHE_2048) || \
+           defined(HAVE_FFDHE_3072) || \
+           defined(HAVE_FFDHE_4096) || \
+           defined(HAVE_FFDHE_6144) || \
+           defined(HAVE_FFDHE_8192)
+    #else
+        // #error "TLS 1.3 requires AVE_FFDHE_[nnnn]"
+    #endif
 #endif
 
-#define WC_RSA_PSS
-#define HAVE_HKDF
-#define HAVE_AEAD
 
 
 #define NO_FILESYSTEM
