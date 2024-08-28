@@ -86,6 +86,13 @@ esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                                      size_t bundle_size);
  */
 
+/**
+ * @brief      Return ESP_OK for valid bunder, otherwise ESP_FAIL.
+ *
+ * Specific to wolfSSL. Not used by ESP-IDF esp-tls layer.
+ */
+esp_err_t esp_crt_bundle_is_valid();
+
 
 /**
  * @brief      Disable and dealloc the certification bundle
