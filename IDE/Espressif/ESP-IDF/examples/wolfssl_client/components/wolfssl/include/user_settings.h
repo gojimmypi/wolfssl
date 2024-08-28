@@ -140,16 +140,15 @@
     /* We'll assume the app needs to use wolfSSL sdk lib function */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
-/* Unknown config */
-#else
-    /* the code is older or does not have application name defined. */
-#endif /* Example wolfSSL Configuration app settings */
-
-#if 0
-#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
-    /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
-     * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
-     * that here: */
+/* Other applications detected by cmake */
+#elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
+    /* The wolfSSL Version */
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
     #define OPENSSL_EXTRA
     #ifndef WOLFSSL_ALWAYS_VERIFY_CB
        #define WOLFSSL_ALWAYS_VERIFY_CB
@@ -160,8 +159,29 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-#endif
-#endif
+
+#elif defined(APP_ESP_HTTP_CLIENT)
+    /* The ESP-IDF Version */
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+    #define OPENSSL_EXTRA
+    #ifndef WOLFSSL_ALWAYS_VERIFY_CB
+       #define WOLFSSL_ALWAYS_VERIFY_CB
+    #endif
+    #ifndef WOLFSSL_VERIFY_CB_ALL_CERTS
+        #define WOLFSSL_VERIFY_CB_ALL_CERTS
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
+#else
+    /* the code is older or does not have application name defined. */
+#endif /* Example wolfSSL Configuration app settings */
+
 
 /* Experimental Kyber */
 #ifdef CONFIG_WOLFSSL_ENABLE_KYBER
@@ -205,18 +225,6 @@
      #define WOLFSSL_BASE64_ENCODE
  #endif /* Apple HomeKit settings */
 
-#if 0
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
-    /* The ESP-TLS */
-    #define FP_MAX_BITS (8192 * 2)
-    #define HAVE_ALPN
-    #define HAVE_SNI
-    #define OPENSSL_EXTRA_X509_SMALL
-
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-#endif
-#endif
 
 
 /* Optionally enable some wolfSSH settings */
