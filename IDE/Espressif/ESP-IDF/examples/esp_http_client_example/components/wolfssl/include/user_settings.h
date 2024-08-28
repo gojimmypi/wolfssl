@@ -83,62 +83,62 @@
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
 /* wolfSSL Examples */
-#ifdef CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE
+#if defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TEST
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEST)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_test */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define TEST_ESPIDF_ALL_WOLFSSL
 
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfSSH Examples */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_ECHOSERVER)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_echoserver */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP32_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP32/ESP32-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfMQTT Examples */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_AWS_IOT_MQTT)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/AWS_IoT_MQTT */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* wolfTPM Examples */
-#elif CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF
+#elif defined(CONFIG_WOLFTPM_EXAMPLE_NAME_ESPRESSIF)
     /* See https://github.com/wolfSSL/wolfTPM/tree/master/IDE/Espressif */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
 /* Apple HomeKit Examples */
-#elif CONFIG_WOLFSSL_APPLE_HOMEKIT
+#elif defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
     /* See https://github.com/AchimPieters/esp32-homekit-demo */
 
 /* no example selected */
-#elif CONFIG_WOLFSSL_EXAMPLE_NAME_NONE
+#elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_NONE)
     /* We'll assume the app needs to use wolfSSL sdk lib function */
     #define USE_WOLFSSL_ESP_SDK_WIFI
 
@@ -146,18 +146,11 @@
 #elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
     /* The wolfSSL Version */
     #define FP_MAX_BITS (8192 * 2)
-#elif defined(APP_ESP_HTTP_CLIENT)
-    /* The ESP-IDF Version */
-    #define FP_MAX_BITS (8192 * 2)
-#else
-    /* the code is older or does not have application name defined. */
-#endif /* Example wolfSSL Configuration app settings */
-
-
-#if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
-    /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
-     * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
-     * that here: */
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
     #define OPENSSL_EXTRA
     #ifndef WOLFSSL_ALWAYS_VERIFY_CB
        #define WOLFSSL_ALWAYS_VERIFY_CB
@@ -168,7 +161,29 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-#endif
+
+#elif defined(APP_ESP_HTTP_CLIENT)
+    /* The ESP-IDF Version */
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+    #define OPENSSL_EXTRA
+    #ifndef WOLFSSL_ALWAYS_VERIFY_CB
+       #define WOLFSSL_ALWAYS_VERIFY_CB
+    #endif
+    #ifndef WOLFSSL_VERIFY_CB_ALL_CERTS
+        #define WOLFSSL_VERIFY_CB_ALL_CERTS
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
+#else
+    /* the code is older or does not have application name defined. */
+#endif /* Example wolfSSL Configuration app settings */
+
 
 /* Experimental Kyber */
 #ifdef CONFIG_WOLFSSL_ENABLE_KYBER
@@ -429,15 +444,9 @@
 
 #define BENCH_EMBEDDED
 
-/* Cauases error in internal.c
+/* Causes error in internal.c
  #define WOLFSSL_NO_REALLOC
 */
-
-
-// 1 #define WOLFSSL_SMALL_STACK
-// 2 #define HAVE_ECC
-// 3 #define RSA_LOW_MEM
-
 /* TLS 1.3                                 */
 #ifdef CONFIG_WOLFSSL_ALLOW_TLS13
     #define WOLFSSL_TLS13
@@ -451,7 +460,7 @@
     /* Required for ECC */
     #define HAVE_SUPPORTED_CURVES
 
-    /* REquired for RSA */
+    /* Required for RSA */
     #define WC_RSA_PSS
 #endif
 
