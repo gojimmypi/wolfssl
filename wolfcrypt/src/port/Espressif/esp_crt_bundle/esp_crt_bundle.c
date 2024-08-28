@@ -144,24 +144,32 @@ static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
     if ((cert.serialSz == 1) && (cert.serial[0] == 0x0)) {
         /* If we find a zero serial number, a parse error may still occur. */
         if (ret == ASN_PARSE_E) {
-#if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
-    defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
-    defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
-    defined(       WOLFSSL_NO_ASN_STRICT)
             /* Issuer amd subject will only be non-blank with relaxed check */
-            ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial and "
-                          "WOLFSSL_NO_ASN_STRICT enabled.");
+            ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial");
             ESP_LOGCBI(TAG, "Issuer: %s", cert.issuer);
             ESP_LOGCBI(TAG, "Subject: %s", cert.subject);
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
+    defined(       WOLFSSL_NO_ASN_STRICT)
+            ESP_LOGW(TAG, "WOLFSSL_NO_ASN_STRICT enabled. Ignoring error.");
 
             /* We'll force the return result to zero for a "valid"
              * parsing result, but not strict and found zero serial num. */
             ret = 0;
 #else
+    #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+        defined(       WOLFSSL_ASN_ALLOW_0_SERIAL)
+            /* Issuer amd subject will only be non-blank with relaxed check */
+            ESP_LOGW(TAG, "WOLFSSL_ASN_ALLOW_0_SERIAL enabled. Ignoring error.");
+
+            /* We'll force the return result to zero for a "valid"
+             * parsing result, but not strict and found zero serial num. */
+            ret = 0;
+    #else
             ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
             ESP_LOGE(TAG, "Define WOLFSSL_NO_ASN_STRICT or "
                           "WOLFSSL_ASN_ALLOW_0_SERIALto relax checks.");
             ret = -1;
+    #endif
 #endif
         } /* special ASN_PARSE_E handling */
         else {

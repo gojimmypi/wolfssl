@@ -151,6 +151,15 @@
      * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
      * that here: */
     #define OPENSSL_EXTRA
+    #ifndef WOLFSSL_ALWAYS_VERIFY_CB
+       #define WOLFSSL_ALWAYS_VERIFY_CB
+    #endif
+    #ifndef WOLFSSL_VERIFY_CB_ALL_CERTS
+        #define WOLFSSL_VERIFY_CB_ALL_CERTS
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
 #endif
 
 /* Experimental Kyber */
@@ -196,9 +205,13 @@
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
-    #define  HAVE_ALPN
-    #define  HAVE_SNI
-    #define  OPENSSL_EXTRA_X509_SMALL
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
 #endif
 
 /* Optionally enable some wolfSSH settings */
@@ -421,6 +434,21 @@
 /* Cauases error in internal.c
  #define WOLFSSL_NO_REALLOC
 */
+
+#ifdef CONFIG_WOLFSSL_ALLOW_TLS13
+    #define WOLFSSL_TLS13
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+#endif
+
+#ifdef CONFIG_WOLFSSL_HAVE_TLS_EXTENSIONS
+    #define HAVE_TLS_EXTENSIONS
+#endif
+
+#define WC_RSA_PSS
+#define HAVE_HKDF
+#define HAVE_AEAD
+
 #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 
 #define NO_FILESYSTEM
@@ -799,7 +827,10 @@
         #endif
     #endif
 #endif
+#define WOLFSSL_MAX_ERROR_SZ 200
 
+// #define WOLFSSL_DEBUG_CERT_BUNDLE
+#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 
