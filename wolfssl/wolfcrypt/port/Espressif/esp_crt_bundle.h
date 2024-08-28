@@ -40,6 +40,7 @@
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     #include <wolfssl/ssl.h>
 
+#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,6 +153,8 @@ WOLFSSL_LOCAL int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt,
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* CONFIG_WOLFSSL_CERTIFICATE_BUNDLE */
 
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 

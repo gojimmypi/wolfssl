@@ -34,14 +34,32 @@
 #include "esp_log.h"
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
+#include <wolfssl/wolfcrypt/logging.h>
+
+#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+
 #include <wolfssl/internal.h>
 #include <wolfssl/ssl.h>
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
-#include <wolfssl/wolfcrypt/logging.h>
 
-/* TODO Check minimum wolfSSL & ESP-IDF version else error */
+/* See the latest code at:
+ * https://github.com/wolfSSL/wolfssl or
+ * https://components.espressif.com/components/wolfssl/wolfssl
+ */
+#if defined(WOLFSSL_ESPIDF_COMPONENT_VERSION)
+    #if (WOLFSSL_ESPIDF_COMPONENT_VERSION > 0)
+        #define WOLFSSL_ESPIDF_COMPONENT_VERSION_VALID 1
+    #else
+        #define WOLFSSL_ESPIDF_COMPONENT_VERSION_VALID 0
+        #warning "This library depends on a recent version of wolfSSL config"
+    #endif
+#else
+    #warning "This library depends on a recent version of wolfSSL config"
+    #define WOLFSSL_ESPIDF_COMPONENT_VERSION_VALID -1
+#endif
+
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 
 /* Bundle debug may come from user_settings.h and/or sdkconfig.h */
@@ -1178,6 +1196,6 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
     #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
 #endif
 
-
+#endif /* #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) */
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 #endif /* WOLFSSL_ESPIDF */
