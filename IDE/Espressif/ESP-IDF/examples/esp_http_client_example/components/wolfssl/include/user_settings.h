@@ -97,6 +97,8 @@
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
+    #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+    #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 #elif CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
@@ -421,15 +423,33 @@
 
 #define BENCH_EMBEDDED
 
-/* TLS 1.3                                 */
-#define WOLFSSL_TLS13
-#define HAVE_TLS_EXTENSIONS
-#define WC_RSA_PSS
-#define HAVE_HKDF
-#define HAVE_AEAD
-#define HAVE_SUPPORTED_CURVES
+/* Cauases error in internal.c
+ #define WOLFSSL_NO_REALLOC
+*/
 
-#define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+
+// 1 #define WOLFSSL_SMALL_STACK
+// 2 #define HAVE_ECC
+// 3 #define RSA_LOW_MEM
+
+/* TLS 1.3                                 */
+#ifdef CONFIG_WOLFSSL_ALLOW_TLS13
+    #define WOLFSSL_TLS13
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_HKDF
+
+    /* May be required */
+    #ifndef HAVE_AEAD
+    #endif
+
+    /* Required for ECC */
+    #define HAVE_SUPPORTED_CURVES
+
+    /* REquired for RSA */
+    #define WC_RSA_PSS
+#endif
+
+
 
 #define NO_FILESYSTEM
 
@@ -581,14 +601,25 @@
 
 /* #define HAVE_HASHDRBG */
 
+#if 0
 #define WOLFSSL_KEY_GEN
-#define WOLFSSL_CERT_REQ
-#define WOLFSSL_CERT_GEN
-#define WOLFSSL_CERT_EXT
-#define WOLFSSL_SYS_CA_CERTS
+    #define WOLFSSL_CERT_REQ
+    #define WOLFSSL_CERT_GEN
+    #define WOLFSSL_CERT_EXT
+    #define WOLFSSL_SYS_CA_CERTS
 
 
-#define WOLFSSL_CERT_TEXT
+    #define WOLFSSL_CERT_TEXT
+
+    /* command-line options
+    --enable-keygen
+    --enable-certgen
+    --enable-certreq
+    --enable-certext
+    --enable-asn-template
+    */
+
+#endif
 
 #define WOLFSSL_ASN_TEMPLATE
 
@@ -600,13 +631,6 @@
 #undef  WOLFSSL_SYS_CA_CERTS
 */
 
-/* command-line options
---enable-keygen
---enable-certgen
---enable-certreq
---enable-certext
---enable-asn-template
-*/
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
 /*
