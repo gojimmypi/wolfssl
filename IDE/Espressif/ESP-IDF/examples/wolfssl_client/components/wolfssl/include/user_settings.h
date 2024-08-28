@@ -273,8 +273,10 @@
 /* Small Stack uses more heap. */
 #define WOLFSSL_SMALL_STACK
 
+#define WOLFSSL_NO_TLS12
+
 /* Full debugging turned off, but show malloc failure detail */
-/* #define DEBUG_WOLFSSL */
+#define DEBUG_WOLFSSL
 #define DEBUG_WOLFSSL_MALLOC
 
 /* See test.c that sets cert buffers; we'll set them here: */
@@ -660,13 +662,14 @@
     /* #define WOLFSSL_ESPWROOM32SE */
 
     /* wolfSSL HW Acceleration supported on ESP32. Uncomment to disable: */
-    /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+//       #define NO_ESP32_CRYPT
+//       #define NO_WOLFSSL_ESP32_CRYPT_HASH
+//       #define NO_WOLFSSL_ESP32_CRYPT_AES
+//       #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+//       #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+       #warning "need to test RSA MULMOD Heap Check"
+       #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+//       #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
 
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
