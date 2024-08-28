@@ -125,6 +125,12 @@ class CertificateBundle:
 
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
+        # NOTE: When sorting, see `esp_crt_bundle.c`;
+        #       Use `#define CERT_BUNDLE_UNSORTED` when not sortin.
+        #
+        self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+
+        # Other sort orders to consider (for reference only)
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '')

@@ -104,26 +104,31 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define CRT_HEADER_OFFSET 2
 #endif
 
+/* NOTE: Manually edit sort order in gen_crt_bundle.py
+ *
+ * The default is having the bundle pre-sorted in the python script
+ * to allow for rapid binary cert match search at runtime.
+ *
+ * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED */
+/* #define CERT_BUNDLE_UNSORTED */
+
+
 /* Inline cert bundle functions performance hint unless otherwise specified. */
 #ifndef CB_INLINE
     #define CB_INLINE inline
 #endif
 
-/* A "Certificate Bundle" is this array of [size] + [x509 CA]
- * certs the client trusts: */
+/* A "Certificate Bundle" is this array of [size] + [x509 CA List]
+ * certs that the client trusts: */
 extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_start[]
                      asm("_binary_x509_crt_bundle_wolfssl_start");
 
 extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_end[]
                      asm("_binary_x509_crt_bundle_wolfssl_end");
 
-/* a dummy certificate so that
- * cacert_ptr passes non-NULL check during handshake */
-/* TODO: actually used by wolfSSL? no, probably not.*/
-// static WOLFSSL_X509 s_dummy_crt;
-
 /* This crt_bundle_t type must match other providers in esp-tls from ESP-IDF.
- * TODO: Move to common header in ESP-IDF. (requires ESP-IDF modification) */
+ * TODO: Move to common header in ESP-IDF. (requires ESP-IDF modification).
+ * For now, it is here: */
 typedef struct crt_bundle_t {
     const uint8_t **crts;
     uint16_t num_certs;
@@ -137,10 +142,9 @@ static crt_bundle_t s_crt_bundle;
 static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
-// #if defined(WOLFSSL_X509_CRT_PARSE_C) TODO
 static int _cert_bundled_loaded = 0;
 
-static int crt_found = 0;
+static int _crt_found = 0;
 
 static int _added_cert = 0;
 
@@ -158,7 +162,7 @@ static CB_INLINE int wolfssl_found_zero_serial()
  *   1 if the cert has a non-zero serial number
  *   0 if the cert as a zero serial number
  * < 0 for wolfssl\wolfcrypt\error-crypt.h values  */
-static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
+static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
                                                      int sz) {
     DecodedCert cert;
     int ret = 0;
@@ -175,7 +179,7 @@ static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
             ESP_LOGW(TAG, "Encountered ASN Parse error with zero serial");
             ESP_LOGCBI(TAG, "Issuer: %s", cert.issuer);
             ESP_LOGCBI(TAG, "Subject: %s", cert.subject);
-#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) || \
     defined(       WOLFSSL_NO_ASN_STRICT)
             ESP_LOGW(TAG, "WOLFSSL_NO_ASN_STRICT enabled. Ignoring error.");
 
@@ -217,7 +221,7 @@ static CB_INLINE int wolfssl_is_nonzero_serial_number(const uint8_t *der_cert,
         ESP_LOGV(TAG, "Serial Number: %.*s", cert.serialSz, cert.serial);
     }
     else {
-        ESP_LOGE(TAG, "wolfssl_is_nonzero_serial_number exit error = %d", ret);
+        ESP_LOGE(TAG, "wolfssl_is_zero_serial_number exit error = %d", ret);
     }
 
     /* Clean up and exit */
@@ -450,8 +454,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
     }
 
-    /* TODO: iterate through all CA certs in bundle (or is the bundle a store?) */
-
     /* Get the current cert from the store. */
     if (ret == WOLFSSL_SUCCESS) {
         /* Get the current certificate being verified during the certificate
@@ -505,7 +507,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         /* TODO move declarations */
         int start = 0;
         int end = s_crt_bundle.num_certs - 1;
-#ifdef IS_PRESORTED
+
+#ifndef CERT_BUNDLE_UNSORTED
         int middle = (end - start) / 2;
 #else
         int middle = 0;
@@ -527,8 +530,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
             cert_data = (const unsigned char*)(this_addr + CRT_HEADER_OFFSET);
 
-            if (wolfssl_is_nonzero_serial_number(cert_data, derCertLength)) {
-                ESP_LOGE(TAG, "Error: serial number with value = zero");
+            if (wolfssl_is_zero_serial_number(cert_data, derCertLength)) {
+                ESP_LOGW(TAG, "Warning: No Certificate Serial Number: "
+                              "for Certificate #%d", middle);
             }
 
             ESP_LOGCBI(TAG, "s_crt_bundle ptr = 0x%x", (intptr_t)cert_data);
@@ -613,10 +617,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBI(TAG,
                     "Found a cert issuer match: %s",
                     this_issuer->name);
-                crt_found = 1;
+                _crt_found = 1;
                 break;
             }
-#ifdef IS_PRESORTED
+#ifndef CERT_BUNDLE_UNSORTED
             /* If the list is presorted, we can use a binary search. */
             else if (cmp_res < 0) {
                 end = middle - 1;
@@ -633,7 +637,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 start = middle;
             }
 #endif
-            if (!crt_found) {
+            if (!_crt_found) {
                 /* this_issuer and this_subject are parts of this bundle_cert
                  * so we don't need to clean them up explicitly.
                  *
@@ -647,7 +651,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         } /* while (start <= end) searching bundle */
 
         /* After searching the bundle for an appropriate CA, */
-        if (crt_found) {
+        if (_crt_found) {
             ESP_LOGCBW(TAG, "Found a Matching Certificate Name in the bundle!");
             ret = cert_manager_load(preverify, store, cert_data, derCertLength);
             if (ret == WOLFSSL_FAILURE) {
@@ -663,7 +667,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         } /* crt search result */
 
-        if ((crt_found == 1) && (ret == WOLFSSL_SUCCESS)) {
+        if ((_crt_found == 1) && (ret == WOLFSSL_SUCCESS)) {
             /* TODO confirm: */
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
@@ -943,14 +947,16 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
                    (s_crt_bundle.crts[middle][1]);
         crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
 
-        int cmp_res = memcmp(child->altNames, crt_name, name_len );
+        int cmp_res = memcmp(child->altNames, crt_name, name_len);
         if (cmp_res == 0) {
             ESP_LOGCBI(TAG, "crt found %s", crt_name);
             crt_found = true;
             break;
-        } else if (cmp_res < 0) {
+        }
+        else if (cmp_res < 0) {
             end = middle - 1;
-        } else {
+        }
+        else {
             start = middle + 1;
         }
         middle = (start + end) / 2;
@@ -974,7 +980,7 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
     }
 
     ESP_LOGE(TAG, "Failed to verify certificate");
-    return -1; // WOLFSSL_ERR_X509_FATAL_ERROR;
+    return -1; /* WOLFSSL_ERR_X509_FATAL_ERROR; */
 } /* esp_crt_verify_callback */
 
 /* wolfssl_ssl_conf_authmode() patterned after ESP-IDF.
@@ -1015,7 +1021,10 @@ static esp_err_t esp_crt_bundle_is_valid()
 
 /* Initialize the bundle into an array so we can do binary
  * search for certs; the bundle generated by the python utility is
- * already presorted by subject name.
+ * normally already presorted by subject name.
+ *
+ * To not sort, see above:
+ *    `#define CERT_BUNDLE_UNSORTED`
  */
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                                      size_t bundle_size)
@@ -1078,8 +1087,11 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
 #else
         cert_len = cur_crt[0] << 8 | cur_crt[1];
-    #if !defined(WOLFSSL_NO_ASN_STRICT) || defined(CONFIG_WOLFSSL_NO_ASN_STRICT) || defined(WOLFSSL_ASN_ALLOW_0_SERIAL) || defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL)
-        if (wolfssl_is_nonzero_serial_number(cur_crt + CRT_HEADER_OFFSET,
+    #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+        defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+        defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
+        defined(       WOLFSSL_NO_ASN_STRICT)
+        if (wolfssl_is_zero_serial_number(cur_crt + CRT_HEADER_OFFSET,
                                              cert_len) > 0) {
             ESP_LOGW(TAG, "Warning: found zero value for serial number in "
                           "certificate #%d", i);
@@ -1121,7 +1133,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     s_crt_bundle.num_certs = num_certs;
     s_crt_bundle.crts = crts;
     WOLFSSL_LEAVE("esp_crt_bundle_init", ret);
-    return ESP_OK;
+    return ret;
 }
 
 
