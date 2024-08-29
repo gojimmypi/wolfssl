@@ -164,6 +164,12 @@ WOLFSSL_LOCAL int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt,
 }
 #endif
 
+/* Detect if wolfSSL is enabled, but so are mbedTLS bundles */
+#if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) && \
+            CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+    #error "wolfSSL cannot use mbedTLS certificate bundles. Please disable them"
+#endif
+
 #endif /* CONFIG_WOLFSSL_CERTIFICATE_BUNDLE */
 
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
