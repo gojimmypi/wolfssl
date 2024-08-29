@@ -138,11 +138,13 @@ typedef struct crt_bundle_t {
     size_t x509_crt_bundle_wolfssl_len;
 } crt_bundle_t;
 
+#ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
                                      size_t bundle_size);
+static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
+#endif
 
 static crt_bundle_t s_crt_bundle;
-static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
 static int _cert_bundled_loaded = 0;
@@ -1020,6 +1022,7 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
 #endif /* WOLFSSL_X509_TRUSTED_CERTIFICATE_CALLBACK */
 }
 
+#ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 esp_err_t esp_crt_bundle_is_valid()
 {
     return _esp_crt_bundle_is_valid;
@@ -1216,6 +1219,7 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
     return esp_crt_bundle_init(x509_bundle, bundle_size);
 }
+#endif
 
 /* Sanity checks: */
 #if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
