@@ -56,29 +56,30 @@ struct wolfssl_ssl_config
     void *priv_ssl;
 };
 
-#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
-    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
-    (CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE == 1)
-
 /**
  * @brief      Attach and enable use of a bundle for certificate verification
  *
- * Used by ESP-IDF esp-tls layer.
+ * Attach and enable use of a bundle for certificate verification through a verification callback.
+ * If no specific bundle has been set through esp_crt_bundle_set() it will default to the
+ * bundle defined in menuconfig and embedded in the binary.
  *
- * Attach and enable use of a bundle for certificate verification through a
- * verification callback.
- * If no specific bundle has been set through esp_crt_bundle_set() it will
- * default to the bundle defined in menuconfig and embedded in the binary.
+ * Note this must be visibile for both the regular bundles, as well as the "none" option.
+ * Other code gated out, below, when the "non" option is selected.
  *
  * @param[in]  conf      The config struct for the SSL connection.
  *
  * @return
  *             - ESP_OK  if adding certificates was successful.
- *             - Other   if an error occured or an action must be taken by the
- *                       calling process.
+ *             - Other   if an error occured or an action must be taken by the calling process.
  */
 esp_err_t esp_crt_bundle_attach(void *conf);
 
+
+#if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
+    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
+    (CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE == 1)
+
+/* Certificate bundles are enabled, but the "none" option selected */
 
 #else
 /* TODO Move ESP-IDF ini here. Reminder: Name conflict.
@@ -93,7 +94,6 @@ esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
  */
 esp_err_t esp_crt_bundle_is_valid();
 
-
 /**
  * @brief      Disable and dealloc the certification bundle
  *
@@ -104,7 +104,6 @@ esp_err_t esp_crt_bundle_is_valid();
  * @param[in]  conf      The config struct for the SSL connection.
  */
 void esp_crt_bundle_detach(wolfssl_ssl_config *conf);
-
 
 /**
  * @brief      Set the default certificate bundle used for verification
