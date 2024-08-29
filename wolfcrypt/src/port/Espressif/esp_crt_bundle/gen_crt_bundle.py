@@ -123,13 +123,29 @@ class CertificateBundle:
         self.certificates.append(x509.load_der_x509_certificate(crt_str, default_backend()))
         status('Successfully added 1 certificate')
 
+    def get_subject_text(self, cert):
+        # Extract subject as a string in the desired format
+        return ", ".join(
+            f"/{attribute.oid._name}={attribute.value}"  # Adjust as necessary to format as "/C=US/O=..."
+            for attribute in cert.subject
+        )
+
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
         # NOTE: When sorting, see `esp_crt_bundle.c`;
         #       Use `#define CERT_BUNDLE_UNSORTED` when not sortin.
         #
-        self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
-
+        # self.certificates = sorted(self.certificates, key=lambda cert: self.get_subject_text(cert))
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject_name)
+        self.certificates = sorted(
+                                self.certificates,
+                                key=lambda cert: (
+                                    cert.subject_name
+                                    if hasattr(cert, 'subject_name') and cert.subject_name is not None
+                                    else ''
+                                )
+                            )
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
         # Other sort orders to consider (for reference only)
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)

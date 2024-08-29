@@ -521,9 +521,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         while (start <= end) {
             ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
 
-            if (middle == 139) {
-                ESP_LOGW(TAG, "Pause for #%d", middle);
-            }
 #ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
@@ -558,10 +555,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             if (bundle_cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
                               "from bundle #%d.", middle);
-        #if (!defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      && \
-             !defined(       WOLFSSL_NO_ASN_STRICT)      && \
-             !defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) && \
-             !defined(       WOLFSSL_ASN_ALLOW_0_SERIAL)  )
+        #if !defined(WOLFSSL_NO_ASN_STRICT) && \
+            !defined(WOLFSSL_ASN_ALLOW_0_SERIAL)
                 /* Suggestion only when relevant: */
                 if (wolfssl_found_zero_serial()) {
                     ESP_LOGE(TAG, "Try turning on WOLFSSL_NO_ASN_STRICT "
@@ -609,9 +604,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                  * match this bundle item issuer with the store certificate
                  * subject name, as later we'll call wolfSSL_X509_check_issued()
                  * which compares these fields. */
-                cmp_res = memcmp(this_subject->name,
-                                 store_cert_issuer->name,
-                                 strlen((const char*)store_cert_issuer->name));
+
+                cmp_res = strcmp(this_subject->name,
+                                 store_cert_issuer->name);
                 last_cmp = cmp_res; /* in case we have to skip an item, save */
             }
             else {
@@ -632,12 +627,12 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 #ifndef CERT_BUNDLE_UNSORTED
             /* If the list is presorted, we can use a binary search. */
             else if (cmp_res < 0) {
-                end = middle - 1;
-            }
-            else {
                 start = middle + 1;
             }
-            middle = (start + end) / 2;
+            else {
+                end = middle - 1;
+            }
+            middle = start + ((end - start) / 2);
 #else
             /* When the list is NOT presorted, typically during debugging,
              * just step though in the order found until one is found: */
@@ -753,6 +748,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
 
     /* Clean up and exit */
+    // wolfSSL_X509_free(bundle_cert);
 
     /* We don't clean up the store_cert and x509 as we are in a callback,
      * and it is just a pointer into the actual ctx store cert.  */
@@ -964,10 +960,10 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
             break;
         }
         else if (cmp_res < 0) {
-            end = middle - 1;
+            end = middle + 1;
         }
         else {
-            start = middle + 1;
+            start = middle - 1;
         }
         middle = (start + end) / 2;
     }
