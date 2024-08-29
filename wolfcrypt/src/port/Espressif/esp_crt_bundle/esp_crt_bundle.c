@@ -84,9 +84,10 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define ESP_LOGCBW ESP_LOGW
 #else
     /* Only display certificate bundle messages for most verbosee setting.
-     * Note that the delays will likely cause TLS connection faliures. */
+     * Note that the delays will likely cause TLS connection failures. */
     #define ESP_LOGCBI ESP_LOGV
     #define ESP_LOGCBW ESP_LOGV
+    #define ESP_LOGCBV ESP_LOGV
 #endif
 
 #ifndef X509_MAX_SUBJECT_LEN
@@ -112,7 +113,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
  * script MUST presort the data, oherwise the connection will likely fail.
  *
  * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED */
-/* #define CERT_BUNDLE_UNSORTED */
+#define CERT_BUNDLE_UNSORTED
 
 
 /* Inline cert bundle functions performance hint unless otherwise specified. */
@@ -614,11 +615,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 cmp_res = last_cmp;
             }
 #endif
-            ESP_LOGI(TAG, "This cmp_res = %d", cmp_res);
+            ESP_LOGCBV(TAG, "This cmp_res = %d", cmp_res);
             if (cmp_res == 0) {
-                ESP_LOGCBI(TAG,
-                    "Found a cert issuer match: %s",
-                    this_issuer->name);
+                ESP_LOGCBI(TAG, "Found a cert issuer match: %s",
+                                this_issuer->name);
                 _crt_found = 1;
                 break;
             }
@@ -641,7 +641,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 start = middle;
             }
 #endif
-            ESP_LOGI(TAG, "Item = %d; start: %d, end: %d", middle, start, end );
+            ESP_LOGCBV(TAG, "Item = %d; start: %d, end: %d", middle, start, end );
             if (!_crt_found) {
                 /* this_issuer and this_subject are parts of this bundle_cert
                  * so we don't need to clean them up explicitly.
@@ -1045,6 +1045,11 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 
     WOLFSSL_ENTER("esp_crt_bundle_init");
     _esp_crt_bundle_is_valid = ESP_OK; /* Assume valid until proven otherise. */
+
+    _cert_bundled_loaded = 0;
+    _crt_found = 0;
+    _added_cert = 0;
+    _need_bundle_cert = 0;
 
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle size");

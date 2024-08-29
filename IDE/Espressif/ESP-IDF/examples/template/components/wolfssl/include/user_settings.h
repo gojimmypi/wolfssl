@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x
+#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -151,6 +151,15 @@
      * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
      * that here: */
     #define OPENSSL_EXTRA
+    #ifndef WOLFSSL_ALWAYS_VERIFY_CB
+       #define WOLFSSL_ALWAYS_VERIFY_CB
+    #endif
+    #ifndef WOLFSSL_VERIFY_CB_ALL_CERTS
+        #define WOLFSSL_VERIFY_CB_ALL_CERTS
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
 #endif
 
 /* Experimental Kyber */
@@ -172,7 +181,7 @@
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
 #define USE_CERT_BUFFERS_2048
-
+#define USE_WOLFSSL_ESP_SDK_TIME
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -196,9 +205,13 @@
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
-    #define  HAVE_ALPN
-    #define  HAVE_SNI
-    #define  OPENSSL_EXTRA_X509_SMALL
+    #define FP_MAX_BITS (8192 * 2)
+    #define HAVE_ALPN
+    #define HAVE_SNI
+    #define OPENSSL_EXTRA_X509_SMALL
+
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
 #endif
 
 /* Optionally enable some wolfSSH settings */
@@ -250,7 +263,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -443,7 +456,7 @@
     #define WOLFSSL_SHA512
 
     /* when you want to use SHA3 */
-    #define WOLFSSL_SHA3
+    /* #define WOLFSSL_SHA3 */
 
     /* ED25519 requires SHA512 */
     #define HAVE_ED25519
@@ -823,7 +836,10 @@
         #endif
     #endif
 #endif
+#define WOLFSSL_MAX_ERROR_SZ 200
 
+// #define WOLFSSL_DEBUG_CERT_BUNDLE
+#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 
@@ -853,7 +869,7 @@ Turn on timer debugging (used when CPU cycles not available)
 */
 
 /* Pause in a loop rather than exit. */
-/* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
+#define WOLFSSL_ESPIDF_ERROR_PAUSE
 
 #define WOLFSSL_HW_METRICS
 
@@ -886,7 +902,6 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* used by benchmark: */
 #define WOLFSSL_PUBLIC_MP
-
 /* when turning on ECC508 / ECC608 support
 #define WOLFSSL_ESPWROOM32SE
 #define HAVE_PK_CALLBACKS
