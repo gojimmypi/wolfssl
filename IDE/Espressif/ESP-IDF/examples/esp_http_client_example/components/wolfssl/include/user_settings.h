@@ -79,6 +79,14 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+/* Parse any menuconfig items into wolfSSL equivalents */
+#if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) && CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL
+    #define WOLFSSL_ASN_ALLOW_0_SERIAL
+#endif
+#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && CONFIG_WOLFSSL_NO_ASN_STRICT
+    #define WOLFSSL_NO_ASN_STRICT
+#endif
+
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -182,7 +190,6 @@
 #else
     /* the code is older or does not have application name defined. */
 #endif /* Example wolfSSL Configuration app settings */
-
 
 /* Experimental Kyber */
 #ifdef CONFIG_WOLFSSL_ENABLE_KYBER
