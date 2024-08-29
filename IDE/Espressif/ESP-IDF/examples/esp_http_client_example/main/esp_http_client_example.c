@@ -20,9 +20,17 @@
 #include "protocol_examples_common.h"
 #include "protocol_examples_utils.h"
 #include "esp_tls.h"
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+
+#if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) && defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+    #error "Both mbedTLS and wolfSSL Certificate Bundles Enabled. Pick one."
+#elif CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     /* "Certificate Bundles" are specific to mbedTLS and not part of any RFC */
     #include "esp_crt_bundle.h"
+#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+    #include <wolfssl/wolfcrypt/settings.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
+    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #endif
 
 #include "freertos/FreeRTOS.h"
@@ -30,14 +38,6 @@
 #include "esp_system.h"
 
 #include "esp_http_client.h"
-
-#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
-    #include <wolfssl/wolfcrypt/settings.h>
-    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
-
-    /* TODO: conditional bundle */
-    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
-#endif
 
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
@@ -789,7 +789,7 @@ static void http_native_request(void)
     esp_http_client_cleanup(client);
 }
 
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 static void http_partial_download(void)
 {
     esp_http_client_config_t config = {
