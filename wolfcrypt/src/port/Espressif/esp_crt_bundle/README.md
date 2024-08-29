@@ -77,6 +77,22 @@ See the comments for adding certificate data, copied here for reference:
 >To embed it in the app binary, the PEM file is named
    in the component.mk COMPONENT_EMBED_TXTFILES variable.
 
+## Timeout
+
+Occasionally there may be connection timeouts. This is not specific to wolfSSL. The root cause is likely CDN related.
+
+See the `.timeout_ms` and make adjustments as necessary in the `esp_http_client_config_t`:.
+
+```
+    esp_http_client_config_t config = {
+        .url = "https://postman-echo.com/post",
+        .event_handler = _http_event_handler,
+        .cert_pem = postman_root_cert_pem_start,
+        .is_async = true,
+        .timeout_ms = 5000,
+    };
+```
+
 ## Failed to load CA
 
 This is expected to be a common error to encounter:
