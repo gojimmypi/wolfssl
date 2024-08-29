@@ -13761,7 +13761,7 @@ int DoVerifyCallback(WOLFSSL_CERT_MANAGER* cm, WOLFSSL* ssl, int cert_err,
                 ESP_LOGI(TAG, "ssl != NULL; calling ssl->verifyCallback(verify_ok=%d, store->error=%d)", verify_ok, store->error);
                 if (ssl->verifyCallback(verify_ok, store)) {
                     if (cert_err != 0) {
-                        ESP_LOGE(TAG, "Verify callback overriding error! %d", cert_err);
+                        ESP_LOGI(TAG, "Verify callback overriding error! %d", cert_err);
                         WOLFSSL_MSG("Verify callback overriding error!");
                         ret = 0;
                     }
