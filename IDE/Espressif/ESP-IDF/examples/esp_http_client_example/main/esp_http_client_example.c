@@ -46,7 +46,7 @@ static const char *TAG = "HTTP_CLIENT";
 /* Root cert for howsmyssl.com, taken from howsmyssl_com_root_cert.pem
 
    The PEM file was extracted from the output of this command:
-   openssl s_client -showcerts -connect www.google.com:443 </dev/null
+   openssl s_client -showcerts -connect www.howsmyssl.com:443 </dev/null
 
    The CA root cert is the last cert given in the chain of certs.
 
@@ -435,7 +435,7 @@ static void http_auth_digest_sha256(void)
 static void https_with_url(void)
 {
     esp_http_client_config_t config = {
-        .url = "https://www.google.com",
+        .url = "https://www.howsmyssl.com",
         .event_handler = _http_event_handler,
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
@@ -456,7 +456,7 @@ static void https_with_url(void)
 static void https_with_hostname_path(void)
 {
     esp_http_client_config_t config = {
-        .host = "www.google.com",
+        .host = "www.howsmyssl.com",
         .path = "/",
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .event_handler = _http_event_handler,
@@ -564,7 +564,7 @@ static void http_absolute_redirect_manual(void)
 static void http_redirect_to_https(void)
 {
     esp_http_client_config_t config = {
-        .url = "http://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/redirect-to?url=https://www.google.com",
+        .url = "http://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/redirect-to?url=https://www.howsmyssl.com",
         .event_handler = _http_event_handler,
         .cert_pem = howsmyssl_com_root_cert_pem_start,
     };
@@ -847,9 +847,9 @@ esp_http_client_method_t http_method;
 #ifdef NEW_DEMO_CODE
 /* m_client_config not defined, using existing example: */
 static esp_http_client_config_t m_client_config = {
-//        .url = "https://www.google.com",
+//        .url = "https://www.howsmyssl.com",
         .event_handler = _http_event_handler,
-        .host = "www.google.com",
+        .host = "www.howsmyssl.com",
         .path = "/",
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .cert_pem = howsmyssl_com_root_cert_pem_start,
@@ -866,7 +866,7 @@ static esp_http_client_config_t m_client_config = {
 
 
 //    esp_http_client_config_t config = {
-//        .host = "www.google.com",
+//        .host = "www.howsmyssl.com",
 //        .path = "/",
 //        .transport_type = HTTP_TRANSPORT_OVER_SSL,
 //        .event_handler = _http_event_handler,
@@ -875,7 +875,7 @@ static esp_http_client_config_t m_client_config = {
 char xbuf[100] = { };
 int xbufsize; /* hcloud->xbufsize */
 int http_status_code; /* hcloud->urlinfo.http_status_code */
-char* zurl = "https://google.com\0"; /* hcloud->urlinfo.zurl */
+char* zurl = "https://howsmyssl.com\0"; /* hcloud->urlinfo.zurl */
 const char* pform = "{\"field1\":\"value1\"}";
 char* value;
 
@@ -944,12 +944,12 @@ static void http_test_task(void *pvParameters)
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
 
-#define SINGLE_TEST
+//#define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     wolfSSL_Debugging_ON();
 
-    https_with_url();
+    http_redirect_to_https();
 #endif
 
 #else
