@@ -269,6 +269,10 @@ int wolfSSL_X509_verify_cert(WOLFSSL_X509_STORE_CTX* ctx)
                 ctx->current_cert->derCert->length,
                 WOLFSSL_FILETYPE_ASN1);
         SetupStoreCtxError(ctx, ret);
+    #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
+        if (ctx->store && ctx->store->verify_cb)
+            ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0, ctx) == 1 ? 0 : ret;
+    #endif
 
     #ifndef NO_ASN_TIME
         if (ret != WC_NO_ERR_TRACE(ASN_BEFORE_DATE_E) &&
@@ -289,12 +293,12 @@ int wolfSSL_X509_verify_cert(WOLFSSL_X509_STORE_CTX* ctx)
                 ret = ASN_BEFORE_DATE_E;
             }
             SetupStoreCtxError(ctx, ret);
+        #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
+            if (ctx->store && ctx->store->verify_cb)
+                ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0,
+                                            ctx) == 1 ? 0 : -1;
+        #endif
         }
-    #endif
-
-    #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
-        if (ctx->store && ctx->store->verify_cb)
-            ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0, ctx) == 1 ? 0 : -1;
     #endif
 
         return ret >= 0 ? WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
@@ -1007,7 +1011,7 @@ WOLFSSL_X509_LOOKUP* wolfSSL_X509_STORE_add_lookup(WOLFSSL_X509_STORE* store,
 
 int wolfSSL_X509_STORE_add_cert(WOLFSSL_X509_STORE* store, WOLFSSL_X509* x509)
 {
-    int result = WOLFSSL_FATAL_ERROR;
+    int result = WC_NO_ERR_TRACE(WOLFSSL_FATAL_ERROR);
 
     WOLFSSL_ENTER("wolfSSL_X509_STORE_add_cert");
     if (store != NULL && store->cm != NULL && x509 != NULL

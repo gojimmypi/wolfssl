@@ -4455,8 +4455,17 @@ int SendTls13ClientHello(WOLFSSL* ssl)
         if (ret != 0)
             return ret;
 
+        /* Total message size. */
+        args->sendSz =
+                (int)(args->length + HANDSHAKE_HEADER_SZ + RECORD_HEADER_SZ);
+
+#ifdef WOLFSSL_DTLS13
+        if (ssl->options.dtls)
+            args->sendSz += DTLS_RECORD_EXTRA + DTLS_HANDSHAKE_EXTRA;
+#endif /* WOLFSSL_DTLS13 */
+
 #ifdef WOLFSSL_DTLS_CH_FRAG
-        if (ssl->options.dtls && args->length > maxFrag &&
+        if (ssl->options.dtls && args->sendSz > maxFrag &&
                 TLSX_Find(ssl->extensions, TLSX_COOKIE) == NULL) {
             /* Try again with an empty key share if we would be fragmenting
              * without a cookie */
@@ -4467,7 +4476,9 @@ int SendTls13ClientHello(WOLFSSL* ssl)
             ret = TLSX_GetRequestSize(ssl, client_hello, &args->length);
             if (ret != 0)
                 return ret;
-            if (args->length > maxFrag) {
+            args->sendSz = (int)(args->length +
+                    DTLS_HANDSHAKE_HEADER_SZ + DTLS_RECORD_HEADER_SZ);
+            if (args->sendSz > maxFrag) {
                 WOLFSSL_MSG("Can't fit first CH in one fragment.");
                 return BUFFER_ERROR;
             }
@@ -4475,14 +4486,6 @@ int SendTls13ClientHello(WOLFSSL* ssl)
         }
 #endif
     }
-
-    /* Total message size. */
-    args->sendSz = (int)(args->length + HANDSHAKE_HEADER_SZ + RECORD_HEADER_SZ);
-
-#ifdef WOLFSSL_DTLS13
-    if (ssl->options.dtls)
-        args->sendSz += DTLS_RECORD_EXTRA + DTLS_HANDSHAKE_EXTRA;
-#endif /* WOLFSSL_DTLS13 */
 
     /* Check buffers are big enough and grow if needed. */
     if ((ret = CheckAvailableSize(ssl, args->sendSz)) != 0)
@@ -8459,12 +8462,13 @@ static int SendTls13Certificate(WOLFSSL* ssl)
     int    ret = 0;
     word32 certSz, certChainSz, headerSz, listSz, payloadSz;
     word16 extSz = 0;
-    word32 length, maxFragment;
+    word32 maxFragment;
     word32 len = 0;
     word32 idx = 0;
     word32 offset = OPAQUE16_LEN;
     byte*  p = NULL;
     byte   certReqCtxLen = 0;
+    sword32 length;
 #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
     byte*  certReqCtx = NULL;
 #endif
@@ -8510,7 +8514,7 @@ static int SendTls13Certificate(WOLFSSL* ssl)
         listSz = 0;
     }
     else {
-        if (!ssl->buffers.certificate) {
+        if (!ssl->buffers.certificate || !ssl->buffers.certificate->buffer) {
             WOLFSSL_MSG("Send Cert missing certificate buffer");
             return NO_CERT_ERROR;
         }
@@ -8601,7 +8605,7 @@ static int SendTls13Certificate(WOLFSSL* ssl)
 #endif /* WOLFSSL_DTLS13 */
         }
         else {
-            fragSz = min(length, maxFragment);
+            fragSz = min((word32)length, maxFragment);
             sendSz += fragSz;
         }
 
@@ -8722,7 +8726,7 @@ static int SendTls13Certificate(WOLFSSL* ssl)
         }
     }
 
-    if (ret != WANT_WRITE) {
+    if (ret != WC_NO_ERR_TRACE(WANT_WRITE)) {
         /* Clean up the fragment offset. */
         ssl->options.buildingMsg = 0;
         ssl->fragOffset = 0;
@@ -10903,7 +10907,7 @@ static int SendTls13Finished(WOLFSSL* ssl)
         dtlsRet = Dtls13HandshakeSend(ssl, output, (word16)outputSz,
             (word16)(Dtls13GetRlHeaderLength(ssl, 1) + headerSz + finishedSz), finished,
             1);
-        if (dtlsRet != 0 && dtlsRet != WANT_WRITE)
+        if (dtlsRet != 0 && dtlsRet != WC_NO_ERR_TRACE(WANT_WRITE))
             return ret;
 
     } else
@@ -11141,7 +11145,7 @@ static int SendTls13KeyUpdate(WOLFSSL* ssl)
         ret = SendBuffered(ssl);
 
 
-        if (ret != 0 && ret != WANT_WRITE)
+        if (ret != 0 && ret != WC_NO_ERR_TRACE(WANT_WRITE))
             return ret;
     }
 
@@ -12932,7 +12936,7 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
     #ifdef WOLFSSL_ASYNC_CRYPT
         /* do not send buffered or advance state if last error was an
             async pending operation */
-        && ssl->error != WC_PENDING_E
+        && ssl->error != WC_NO_ERR_TRACE(WC_PENDING_E)
     #endif
     ) {
         if ((ret = SendBuffered(ssl)) == 0) {
@@ -13614,7 +13618,7 @@ int wolfSSL_update_keys(WOLFSSL* ssl)
 {
     int ret;
     ret = Tls13UpdateKeys(ssl);
-    if (ret == WANT_WRITE)
+    if (ret == WC_NO_ERR_TRACE(WANT_WRITE))
         ret = WOLFSSL_ERROR_WANT_WRITE;
     else if (ret == 0)
         ret = WOLFSSL_SUCCESS;
@@ -13715,7 +13719,7 @@ int wolfSSL_request_certificate(WOLFSSL* ssl)
     ssl->msgsReceived.got_finished = 0;
 
     ret = SendTls13CertificateRequest(ssl, &certReqCtx->ctx, certReqCtx->len);
-    if (ret == WANT_WRITE)
+    if (ret == WC_NO_ERR_TRACE(WANT_WRITE))
         ret = WOLFSSL_ERROR_WANT_WRITE;
     else if (ret == 0)
         ret = WOLFSSL_SUCCESS;
@@ -14070,7 +14074,7 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
     #ifdef WOLFSSL_ASYNC_CRYPT
         /* do not send buffered or advance state if last error was an
             async pending operation */
-        && ssl->error != WC_PENDING_E
+        && ssl->error != WC_NO_ERR_TRACE(WC_PENDING_E)
     #endif
     ) {
 
@@ -14682,7 +14686,7 @@ int wolfSSL_read_early_data(WOLFSSL* ssl, void* data, int sz, int* outSz)
         ret = ReceiveData(ssl, (byte*)data, sz, FALSE);
         if (ret > 0)
             *outSz = ret;
-        if (ssl->error == ZERO_RETURN) {
+        if (ssl->error == WC_NO_ERR_TRACE(ZERO_RETURN)) {
             ssl->error = WOLFSSL_ERROR_NONE;
 #ifdef WOLFSSL_DTLS13
             if (ssl->options.dtls) {
