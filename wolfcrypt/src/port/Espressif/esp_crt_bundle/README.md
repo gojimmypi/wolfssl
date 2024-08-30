@@ -8,6 +8,12 @@ file is needed. The [template example](https://github.com/wolfSSL/wolfssl/tree/m
 can be use for creating a project-specific [wolfSSL component](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template/components/wolfssl)
 when not using a [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl).
 
+## Getting Started
+
+Use the `idf.py menuconfig`, 
+
+When in doubt, delete the `./build` directory. This is particularly important when changing Certificate Bundle PEM files.
+
 ## Certificate Inspection
 
 The certificates in the bundle are in PEM format. The [gen_crt_bundle.py script](./gen_crt_bundle.py)
@@ -34,6 +40,16 @@ Here are the areas that may need attention. Most are related to older published 
 that may not yet have wolfSSL integration. An updated ESP-IDF is required to use wolfSSL component _in_ the ESP-IDF.
 There's a [gojimmypi V5.2.2 WIP Branch](https://github.com/gojimmypi/esp-idf/tree/my_522/components/lwip) for reference
 until a PR is created for upstream support.
+
+### Time
+
+The wolfSSL libraries are by default considerably more robust and strict. As such, it is important to have an accurate
+time and date setting for the certficate date ranges.. The wolfssL libraries include some
+[time helper functions](https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h).
+These can be enabled with `#define USE_WOLFSSL_ESP_SDK_TIME` in the `user_settings.h`.
+
+Alternatively, the `WOLFSSL_DEBUG_IGNORE_ASN_TIME` can be used to ignore the time. This is strongly discouraged is anything
+other than a development / test environment.
 
 ### Examples may need to have wolfSSL Certificate Bundles enabled.
 
