@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		components\wolfssl\Kconfig = components\wolfssl\Kconfig
 		platformio.ini = platformio.ini
 		README.md = README.md
+		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md
 		sdkconfig.defaults = sdkconfig.defaults
 		build\VisualGDB\Debug\config\sdkconfig.h = build\VisualGDB\Debug\config\sdkconfig.h
 		..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\wolfssl\wolfcrypt\settings.h
