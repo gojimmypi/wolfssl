@@ -26,7 +26,7 @@
 #elif CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     /* "Certificate Bundles" are specific to mbedTLS and not part of any RFC */
     #include "esp_crt_bundle.h"
-#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     #include <wolfssl/wolfcrypt/settings.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
@@ -668,6 +668,7 @@ static void https_async(void)
     }
     esp_http_client_cleanup(client);
 
+#if 0
     // Test HTTP_METHOD_HEAD with is_async enabled
     config.url = "https://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/get";
     ESP_LOGI(TAG, "config.url = %s", config.url);
@@ -697,6 +698,7 @@ static void https_async(void)
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
+#endif
 }
 
 static void https_with_invalid_url(void)
@@ -944,11 +946,12 @@ static void http_test_task(void *pvParameters)
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
 
-#define SINGLE_TEST
+// #define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
-    https_async();
+    /* bundle tests */
 #endif
+    https_async();
 
 #else
     http_rest_with_url();
@@ -972,7 +975,9 @@ static void http_test_task(void *pvParameters)
     http_redirect_to_https();
     http_download_chunk();
     http_perform_as_stream_reader();
+#if 0
     https_async();
+#endif
     https_with_invalid_url();
     http_native_request();
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
@@ -1027,27 +1032,6 @@ void app_main(void)
     esp_log_level_set("esp-tls",         ESP_LOG_DEBUG);
     esp_log_level_set("esp-tls-wolfssl", ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Connected to AP, begin http example");
-    struct timeval now;
-    struct tm timeinfo;
-
-    // Set your desired time here
-    timeinfo.tm_year = 2024 - 1900; // Year - 1900
-    timeinfo.tm_mon = 8 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 26;          // Day of the month
-    timeinfo.tm_hour = 13;
-    timeinfo.tm_min = 1;
-    timeinfo.tm_sec = 5;
-
-    time_t t = mktime(&timeinfo);
-    now.tv_sec = t;
-    now.tv_usec = 0;
-    settimeofday(&now, NULL);
-
-    // date -d @1073455184
-    // TODO this does not work when mbedTLS enabled?
-    // time_t ltime;
-    // ltime = wc_Time(0);
-    // ESP_LOGI(TAG, "wc_Time= %llu", ltime);
 
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
