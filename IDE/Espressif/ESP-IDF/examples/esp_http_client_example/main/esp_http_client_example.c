@@ -638,6 +638,9 @@ static void http_perform_as_stream_reader(void)
 
 static void https_async(void)
 {
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) && !defined(WOLFSSL_ALT_CERT_CHAINS)
+    #warning "The strict wolfSSL default certificate handling may cause failure without WOLFSSL_ALT_CERT_CHAINS"
+#endif
     esp_http_client_config_t config = {
         .url = "https://postman-echo.com/post",
         .event_handler = _http_event_handler,
@@ -855,6 +858,7 @@ static void http_test_task(void *pvParameters)
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     /* bundle tests */
+    https_async();
 #endif
     https_async();
 

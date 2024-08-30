@@ -191,6 +191,14 @@ menu "wolfSSL"
             help
                 Sets HAVE_TLS_EXTENSIONS which is needed for TLS 1.3, SNI, ALPN, and more.
 
+        config WOLFSSL_ALT_CERT_CHAINS
+            bool "Enable Alternate Certificate Chains"
+            default n
+            help
+                The option relaxes the default strict wolfSSL certificate chain processing. This
+                will typically need to be enabled when loading only a CA file. Typically solves
+                the -188 ASN_NO_SIGNER_E error. Use with cuation.
+
         config WOLFSSL_HAVE_OCSP
             bool "Enable OCSP (Online Certificate Status Protocol) in wolfSSL"
             default n

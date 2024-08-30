@@ -89,6 +89,9 @@
 #if defined(CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE) && CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
     #define WOLFSSL_DEBUG_CERT_BUNDLE
 #endif
+#if defined(CONFIG_WOLFSSL_ALT_CERT_CHAINS) && CONFIG_WOLFSSL_ALT_CERT_CHAINS
+    #define WOLFSSL_ALT_CERT_CHAINS
+#endif
 
 
 /* Test various user_settings between applications by selecting example apps
@@ -885,7 +888,7 @@
         #if defined(CONFIG_IDF_TARGET_ESP32)
             #ifdef CONFIG_ESP_MAIN_TASK_STACK_SIZE
                 #if CONFIG_ESP_MAIN_TASK_STACK_SIZE < 10500
-                    #warning "RSA may be difficult with less than 10KB Stack "/
+//                    #warning "RSA may be difficult with less than 10KB Stack "/
                 #endif
             #endif
 
