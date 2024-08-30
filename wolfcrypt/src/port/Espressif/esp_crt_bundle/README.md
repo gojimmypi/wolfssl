@@ -60,6 +60,37 @@ the "or" needs to be added for `CONFIG_WOLFSSL_CERTIFICATE_BUNDLE` option like t
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 ```
 
+### Adding Embedded Certificates
+
+The `main` app directory has a [CMakeLists.txt](https://github.com/espressif/esp-idf/blob/6e5414b6c4f265a0adfb56a15fbfbe6beb1f8373/examples/protocols/esp_http_client/main/CMakeLists.txt#L10)
+with the `idf_component_register` function:
+
+```
+idf_component_register(SRCS "esp_http_client_example.c"
+                      INCLUDE_DIRS "."
+                      REQUIRES ${requires}
+                      EMBED_TXTFILES howsmyssl_com_root_cert.pem
+                                     postman_root_cert.pem)
+```
+
+This data ends up in the [extern const char](https://github.com/espressif/esp-idf/blob/6e5414b6c4f265a0adfb56a15fbfbe6beb1f8373/examples/protocols/esp_http_client/main/esp_http_client_example.c#L45)
+arrays:
+
+```
+extern const char howsmyssl_com_root_cert_pem_start[] asm("_binary_howsmyssl_com_root_cert_pem_start");
+extern const char howsmyssl_com_root_cert_pem_end[]   asm("_binary_howsmyssl_com_root_cert_pem_end");
+
+extern const char postman_root_cert_pem_start[] asm("_binary_postman_root_cert_pem_start");
+extern const char postman_root_cert_pem_end[]   asm("_binary_postman_root_cert_pem_end");
+```
+
+When changing the source files (also located in the `main` directory) - it is usually best to
+delete the `./build` directory to ensure fresh contents get parsed in as desired.
+
+VS Code / PlatformIO users can consider deleting the `./pio` and `./vscode` directories.
+
+Visual Studio/VisualGDB users can remove the `./vs` and `.visualgdb`.
+
 ### TLS 1.3 issues with howsmyssl.com
 
 Espressif is using the well known https://www.howsmyssl.com/ in the
@@ -140,6 +171,8 @@ app _does not work_ immediately out of the box unless changes are made to the so
     #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #endif
 ```
+
+` openssl s_client -connect postman-echo.com:443 -CAfile ./postman.pem`
 
 ## Manual Testing
 
