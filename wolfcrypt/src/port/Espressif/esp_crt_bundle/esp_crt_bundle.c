@@ -41,6 +41,8 @@ static const char *TAG = "esp_crt_bundle-wolfssl";
     defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
     (CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE == 1)
 
+/* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer.
+ * When there's no bundle selected, but a call is made, return a warning: */
 esp_err_t esp_crt_bundle_attach(void *conf)
 {
     esp_err_t ret = ESP_OK;
@@ -48,14 +50,16 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     return ret;
 }
 #else
-
+/* Certificate Bundles are enabled, and something other than NONE selected. */
 #include <wolfssl/internal.h>
 #include <wolfssl/ssl.h>
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-/* See the latest code at:
+/* There's a minimum version of wolfSSL needed for Certificate Bundle Support.
+ *
+ * See the latest code at:
  * https://github.com/wolfSSL/wolfssl or
  * https://components.espressif.com/components/wolfssl/wolfssl
  */
@@ -94,12 +98,17 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define X509_MAX_SUBJECT_LEN 255
 #endif
 
-#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
+#define IS_WOLFSSL_CERT_BUNDLE_FORMAT
+#ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
+    /* For reference only, the other cert bundles are structured differently!
+     * The others contain only a PARTIAL certificate, along with a name. */
     #define BUNDLE_HEADER_OFFSET 2
     #define CRT_HEADER_OFFSET 4
 #else
     /* Note these are also set in [ESP-IDF]/components/esp-tls/esp_tls_wolfssl.c
-     * to avoid conflicts with other cert bundles.
+     * to avoid conflicts with other cert bundles that may, in theory,
+     * be enabled concurrently (NOT recommeneded).
+     *
      * Ensure they exactly match here: */
     #define BUNDLE_HEADER_OFFSET 2
     #define CRT_HEADER_OFFSET 2
@@ -524,7 +533,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         while (start <= end) {
             ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
 
-#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
+#ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
+            /* For reference only */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
@@ -1100,7 +1110,8 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
 
         crts[i] = cur_crt;
 
-#ifdef IS_MBEDTLS_CERT_BUNDLE /* TODO needs better gate */
+#ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
+        /* For reference only */
         size_t name_len = cur_crt[0] << 8 | cur_crt[1];
         size_t key_len = cur_crt[2] << 8 | cur_crt[3];
         cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
