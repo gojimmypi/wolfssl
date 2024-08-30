@@ -227,9 +227,8 @@ menu "wolfSSL"
                 bool "Relax Certificate ASN Strict Checks"
                 default n
                 help
-                    Allows sub-optimal certificate ASN checks. In particular, this allows
-                    for missing serial numbers that may be found in the Espressif cacert_all.pem
-                    file. Unless using a bundle with known issues, it is recommended to NOT enable this.
+                    Allows sub-optimal certificate ASN checks. Unless using a bundle with known issues,
+                    it is recommended to NOT enable this.
 
             config WOLFSSL_ASN_ALLOW_0_SERIAL
                 bool "Allow cert missing an ASN Serial Number"
