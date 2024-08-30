@@ -172,7 +172,7 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-
+    #define WOLFSSL_CERT_EXT /* TODO: investigate */
 #elif defined(APP_ESP_HTTP_CLIENT)
     /* The ESP-IDF Version */
     #define FP_MAX_BITS (8192 * 2)
@@ -192,6 +192,9 @@
         #define KEEP_PEER_CERT
     #endif
 #else
+    #ifdef WOLFSSL_ESPIDF
+        // #warning "App config undetected"
+	#endif
     /* the code is older or does not have application name defined. */
 #endif /* Example wolfSSL Configuration app settings */
 
@@ -904,6 +907,10 @@
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
+
+Turn debugging on/off:
+    wolfSSL_Debugging_ON();
+    wolfSSL_Debugging_OFF();
 
 #define ESP_VERIFY_MEMBLOCK
 #define DEBUG_WOLFSSL
