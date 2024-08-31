@@ -130,37 +130,35 @@ class CertificateBundle:
             for attribute in cert.subject
         )
 
-    def parse_dn_reverse_order(self, dn_str):
-        """
-        Parse a distinguished name (DN) and return it in reverse order of elements.
-        """
-        # Split the DN string by commas and strip leading/trailing spaces
-        dn_elements = [element.strip() for element in dn_str.split(",")]
-        # Reverse the order of the elements
-        dn_elements.reverse()
-        # Join the elements back together
-        reversed_dn_str = ", ".join(dn_elements)
-        return reversed_dn_str
+    desired_dn_order = ["/C=", "/OU=", "/O=", "/CN="]
 
-    def extract_and_reverse_subject_elements(self, cert):
+    def extract_dn_elements(self, subject):
         """
-        Extract the distinguished name (DN) from the certificate and reverse the order of the subject elements.
+        Extract DN elements based on the desired order.
         """
-        subject = cert.subject
-        # Extract the DN as a string
-        dn_str = ", ".join([f"{attribute.oid._name}={attribute.value}" for attribute in subject])
-        # Reverse the order of the DN elements
-        reversed_dn = self.parse_dn_reverse_order(dn_str)
-        reversed_dn = self.parse_dn_reverse_order(dn_str)
-        return reversed_dn
+        dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": ""}
 
-    def sort_certificates_by_reversed_dn(self, certificates):
+        # Map DN elements to their respective values
+        for attribute in subject:
+            if attribute.oid == x509.NameOID.COUNTRY_NAME:
+                dn_dict["/C="] = attribute.value
+            elif attribute.oid == x509.NameOID.ORGANIZATIONAL_UNIT_NAME:
+                dn_dict["/OU="] = attribute.value
+            elif attribute.oid == x509.NameOID.ORGANIZATION_NAME:
+                dn_dict["/O="] = attribute.value
+            elif attribute.oid == x509.NameOID.COMMON_NAME:
+                dn_dict["/CN="] = attribute.value
+
+        # Return values in the desired order
+        return tuple(dn_dict[key] for key in self.desired_dn_order)
+
+    def sort_certificates_by_specific_dn_order(self, certificates):
         """
-        Sort a list of certificates by their distinguished name (DN) in reverse order.
+        Sort a list of certificates based on the specific DN order.
         """
         sorted_certs = sorted(
             certificates,
-            key=lambda cert: self.extract_and_reverse_subject_elements(cert)
+            key=lambda cert: self.extract_dn_elements(cert.subject)
         )
         return sorted_certs
 
@@ -188,7 +186,8 @@ class CertificateBundle:
         # self.certificates = sorted(self.certificates, key=lambda cert: cert['issuer_name'])
         # self.certificates = self.certificates = sorted(self.certificates, key=lambda cert: cert['subject_name'])
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
-        self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
+        # self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
+        self.certificates = self.sort_certificates_by_specific_dn_order(self.certificates)
 
         bundle = struct.pack('>H', len(self.certificates))
 
