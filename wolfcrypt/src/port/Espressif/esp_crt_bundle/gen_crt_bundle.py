@@ -130,13 +130,13 @@ class CertificateBundle:
             for attribute in cert.subject
         )
 
-    desired_dn_order = ["/C=", "/OU=", "/O=", "/CN="]
+    desired_dn_order = ["/C=", "/OU=", "/O=", "/CN=", "/L=", "/ST="]
 
     def extract_dn_elements(self, subject):
         """
         Extract DN elements based on the desired order and return them as concatenated strings.
         """
-        dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": ""}
+        dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": "", "/L=": "", "/ST=": ""}
 
         # Map DN elements to their respective values
         for attribute in subject:
@@ -148,6 +148,10 @@ class CertificateBundle:
                 dn_dict["/O="] = attribute.value
             elif attribute.oid == x509.NameOID.COMMON_NAME:
                 dn_dict["/CN="] = attribute.value
+            elif attribute.oid == x509.NameOID.LOCATION:
+                dn_dict["/L="] = attribute.value
+            elif attribute.oid == x509.NameOID.STATE:
+                dn_dict["/ST="] = attribute.value
 
         # Construct the output strings in the desired order
         result = [f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]]
@@ -190,6 +194,8 @@ class CertificateBundle:
         # self.certificates = self.certificates = sorted(self.certificates, key=lambda cert: cert['subject_name'])
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
         # self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
+
+        # We are using a specific order as defined by wolfSSL strings:
         self.certificates = self.sort_certificates_by_specific_dn_order(self.certificates)
 
         bundle = struct.pack('>H', len(self.certificates))

@@ -122,8 +122,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
  * seach ALWAYS works, but when expecting a sorted search the python
  * script MUST presort the data, oherwise the connection will likely fail.
  *
- * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED */
-#define CERT_BUNDLE_UNSORTED
+ * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED
+ * Reminder: the actual sort occurs in gen_crt_bundly.py call from CMake. */
+/* #define CERT_BUNDLE_UNSORTED */
 
 
 /* Inline cert bundle functions performance hint unless otherwise specified. */
@@ -695,6 +696,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBW(TAG, "Skipping CA #%d due to failure", middle);
                 cmp_res = last_cmp;
             }
+    #ifdef CERT_BUNDLE_UNSORTED
+            if (cmp_res != last_cmp) {
+                ESP_LOGE(TAG, "Warning: unsorted!");
+            }
+    #endif
 #endif
             ESP_LOGCBV(TAG, "This cmp_res = %d", cmp_res);
             if (cmp_res == 0) {
