@@ -417,24 +417,20 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
 }
 #endif /* WOLFSSL_DEBUG_CERT_BUNDLE && WOLFSSL_DEBUG_IGNORE_ASN_TIME */
 
-
+#ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
 void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store) {
-    // Access total certificates count
     int totalCerts = store->totalCerts;
 
     for (int i = 0; i < totalCerts; i++) {
-        // Retrieve the WOLFSSL_BUFFER_INFO struct for the certificate at index 'i'
         WOLFSSL_BUFFER_INFO buffer = store->certs[i];
-
-        // Now use wolfSSL_X509_d2i to parse the certificate from DER format
-        WOLFSSL_X509* cert = wolfSSL_X509_d2i(NULL, (const unsigned char*)buffer.buffer, buffer.length);
-
+        WOLFSSL_X509* cert = wolfSSL_X509_d2i(NULL,
+                                            (const unsigned char*)buffer.buffer,
+                                              buffer.length);
         if (cert == NULL) {
-            printf("Failed to parse certificate at index %d\n", i);
+            ESP_LOGCBI(TAG, "Failed to parse certificate at index %d\n", i);
             continue;
         }
 
-        // Extract subject and issuer names
         WOLFSSL_X509_NAME* subject = wolfSSL_X509_get_subject_name(cert);
         WOLFSSL_X509_NAME* issuer = wolfSSL_X509_get_issuer_name(cert);
 
@@ -444,17 +440,19 @@ void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store) {
             wolfSSL_X509_NAME_oneline(subject, subjectStr, sizeof(subjectStr));
             wolfSSL_X509_NAME_oneline(issuer, issuerStr, sizeof(issuerStr));
 
-            printf("Certificate at index %d:\n", i);
-            printf("  Subject: %s\n", subjectStr);
-            printf("  Issuer: %s\n", issuerStr);
-        } else {
-            printf("Failed to extract subject or issuer at index %d\n", i);
+            ESP_LOGCBI(TAG, "Certificate at index %d:\n", i);
+            ESP_LOGCBI(TAG, "  Subject: %s\n", subjectStr);
+            ESP_LOGCBI(TAG, "  Issuer: %s\n", issuerStr);
+        }
+        else {
+            ESP_LOGCBI(TAG, "Failed to extract subject or issuer at index %d\n", i);
         }
 
-        // Free the parsed certificate
+        /* Clean up and exit */
         wolfSSL_X509_free(cert);
     }
-}
+} /* print_cert_subject_and_issuer */
+#endif
 
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
@@ -517,6 +515,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         WOLFSSL_STACK* chain;
         WOLFSSL_X509* cert;
         int numCerts, i;
+    #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
         chain = wolfSSL_X509_STORE_CTX_get_chain(store);
         numCerts = wolfSSL_sk_X509_num(chain);
         if (!chain) {
@@ -524,7 +523,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
         ESP_LOGI(TAG, "Number of certificates in chain: %d", numCerts);
         print_cert_subject_and_issuer(store);
-
+    #endif
 #else
         store_cert = store->current_cert;
 #endif
@@ -534,14 +533,16 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         }
         else {
 #ifdef WOLFSSL_ALT_CERT_CHAINS
-            // Retrieve the WOLFSSL_BUFFER_INFO struct for the certificate at index 'i'
+            /*  Retrieve the last WOLFSSL_BUFFER_INFO struct with alt chains */
             WOLFSSL_BUFFER_INFO buffer = store->certs[store->totalCerts - 1];
-            store_cert = wolfSSL_X509_d2i(NULL, (const unsigned char*)buffer.buffer, buffer.length);
+            store_cert = wolfSSL_X509_d2i(NULL,
+                                          (const unsigned char*)buffer.buffer,
+                                          buffer.length);
 #else
             ret = WOLFSSL_SUCCESS;
 #endif
         }
-    }
+    } /* this (ret == WOLFSSL_SUCCESS) step to get cert from store */
 
 
     /* Get the target name and subject from the current_cert(store) */
