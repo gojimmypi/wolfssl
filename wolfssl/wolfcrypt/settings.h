@@ -272,6 +272,7 @@
 #ifdef PLATFORMIO
     #ifdef ESP_PLATFORM
         /* Turn on the wolfSSL ESPIDF flag for the PlatformIO ESP-IDF detect */
+        #undef  WOLFSSL_ESPIDF
         #define WOLFSSL_ESPIDF
     #endif /* ESP_PLATFORM */
 
