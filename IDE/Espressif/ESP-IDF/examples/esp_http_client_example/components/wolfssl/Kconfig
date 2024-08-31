@@ -197,7 +197,7 @@ menu "wolfSSL"
             help
                 The option relaxes the default strict wolfSSL certificate chain processing. This
                 will typically need to be enabled when loading only a CA file. Typically solves
-                the -188 ASN_NO_SIGNER_E error. Use with cuation.
+                the -188 ASN_NO_SIGNER_E error. Use with caution.
 
         config WOLFSSL_HAVE_OCSP
             bool "Enable OCSP (Online Certificate Status Protocol) in wolfSSL"
