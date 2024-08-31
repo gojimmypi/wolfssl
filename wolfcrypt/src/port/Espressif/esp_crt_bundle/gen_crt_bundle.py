@@ -134,7 +134,7 @@ class CertificateBundle:
 
     def extract_dn_elements(self, subject):
         """
-        Extract DN elements based on the desired order.
+        Extract DN elements based on the desired order and return them as concatenated strings.
         """
         dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": ""}
 
@@ -149,8 +149,11 @@ class CertificateBundle:
             elif attribute.oid == x509.NameOID.COMMON_NAME:
                 dn_dict["/CN="] = attribute.value
 
-        # Return values in the desired order
-        return tuple(dn_dict[key] for key in self.desired_dn_order)
+        # Construct the output strings in the desired order
+        result = [f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]]
+
+        return result
+
 
     def sort_certificates_by_specific_dn_order(self, certificates):
         """
