@@ -97,6 +97,9 @@
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
+/* Turn on messages that are useful to see only in examples. */
+#define WOLFSSL_EXAMPLE_VERBOSITY
+
 /* wolfSSL Examples */
 #if defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
@@ -906,8 +909,6 @@
 #endif
 #define WOLFSSL_MAX_ERROR_SZ 200
 
-/* #define WOLFSSL_DEBUG_CERT_BUNDLE */
-#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 
@@ -919,6 +920,8 @@ Turn debugging on/off:
 #define DEBUG_WOLFSSL
 #define DEBUG_WOLFSSL_VERBOSE
 #define DEBUG_WOLFSSL_SHA_MUTEX
+#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
+#define WOLFSSL_DEBUG_CERT_BUNDLE
 #define WOLFSSL_ESP32_CRYPT_DEBUG
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC

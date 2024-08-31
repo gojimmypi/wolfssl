@@ -95,6 +95,16 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define ESP_LOGCBV ESP_LOGV
 #endif
 
+#if defined(WOLFSSL_EXAMPLE_VERBOSITY)
+    #define ESP_LOGXI ESP_LOGI
+    #define ESP_LOGXW ESP_LOGW
+    #define ESP_LOGXV ESP_LOGW
+#else
+    #define ESP_LOGXI ESP_LOGV
+    #define ESP_LOGXI ESP_LOGV
+    #define ESP_LOGXI ESP_LOGV
+#endif
+
 #ifndef X509_MAX_SUBJECT_LEN
     #define X509_MAX_SUBJECT_LEN 255
 #endif
@@ -199,7 +209,7 @@ static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
     defined(       WOLFSSL_NO_ASN_STRICT)
             ESP_LOGW(TAG, "WOLFSSL_NO_ASN_STRICT enabled. Ignoring error.");
 
-            /* We'll force the return result to zero for a "valid"
+            /* We'll force the return result to one for a "valid"
              * parsing result, but not strict and found zero serial num. */
             ret = 1;
 #else
@@ -300,7 +310,7 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
 /*
  * cert_manager_load()
  *
- * returns preverify vallue.
+ * returns preverify value.
  *
  * WARNING: It is the caller's responsibility to confirm the der cert should be
  *          added. (Typically during a callback error override).
@@ -477,10 +487,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert.  */
     WOLFSSL_X509_NAME* this_issuer = NULL;        /* part of bundle_cert. */
 
-    intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
+    intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert]  */
     int derCertLength = 0; /* the [size] value: length of [cert] budnle item */
     int cmp_res = 0;
-    int last_cmp = -1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
+    int last_cmp = -1;
+#ifdef WOLFSSL_ALT_CERT_CHAINS
+    WOLFSSL_BUFFER_INFO buffer;
+#endif
 #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
     WOLFSSL_STACK* chain;
     WOLFSSL_X509* cert;
@@ -523,7 +536,16 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         /* Get the current certificate being verified during the certificate
          * chain validation process. */
 #ifdef OPENSSL_EXTRA
-        store_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+    #ifdef WOLFSSL_ALT_CERT_CHAINS
+            /*  Retrieve the last WOLFSSL_BUFFER_INFO struct with alt chains */
+            buffer = store->certs[store->totalCerts - 1];
+            store_cert = wolfSSL_X509_d2i(NULL,
+                                          (const unsigned char*)buffer.buffer,
+                                          buffer.length);
+    #else
+            store_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+    #endif
+
     #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
         chain = wolfSSL_X509_STORE_CTX_get_chain(store);
         numCerts = wolfSSL_sk_X509_num(chain);
@@ -541,15 +563,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         }
         else {
-#ifdef WOLFSSL_ALT_CERT_CHAINS
-            /*  Retrieve the last WOLFSSL_BUFFER_INFO struct with alt chains */
-            WOLFSSL_BUFFER_INFO buffer = store->certs[store->totalCerts - 1];
-            store_cert = wolfSSL_X509_d2i(NULL,
-                                          (const unsigned char*)buffer.buffer,
-                                          buffer.length);
-#else
             ret = WOLFSSL_SUCCESS;
-#endif
         }
     } /* this (ret == WOLFSSL_SUCCESS) step to get cert from store */
 
@@ -600,9 +614,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         /* Look for the certificate searching on subject name: */
         while (start <= end) {
             ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
-            if (middle == 2) {
-                ESP_LOGI(TAG, "72!");
-            }
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
             /* For reference only */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
@@ -751,7 +762,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                               "to the Certificate Manager. error: %d", ret);
             }
             else {
-                ESP_LOGI(TAG, "New CA added to the Certificate Manager.");
+                ESP_LOGCBI(TAG, "New CA added to the Certificate Manager.");
             }
         }
         else {
@@ -805,7 +816,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBI(TAG, "\n\nAdding Cert for Certificate Store!\n");
                 ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
                 if (ret == WOLFSSL_SUCCESS) {
-                    ESP_LOGI(TAG, "Successfully added cert to wolfSSL Certificate Store!");
+                    ESP_LOGCBI(TAG, "Successfully added cert to wolfSSL Certificate Store!");
                     _added_cert = 1;
                 }
                 else {
