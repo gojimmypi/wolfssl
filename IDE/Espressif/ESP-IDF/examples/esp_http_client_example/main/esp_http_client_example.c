@@ -671,7 +671,6 @@ static void https_async(void)
     }
     esp_http_client_cleanup(client);
 
-#if 0
     // Test HTTP_METHOD_HEAD with is_async enabled
     config.url = "https://"CONFIG_EXAMPLE_HTTP_ENDPOINT"/get";
     ESP_LOGI(TAG, "config.url = %s", config.url);
@@ -701,7 +700,6 @@ static void https_async(void)
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
-#endif
 }
 
 static void https_with_invalid_url(void)
@@ -884,9 +882,7 @@ static void http_test_task(void *pvParameters)
     http_redirect_to_https();
     http_download_chunk();
     http_perform_as_stream_reader();
-#if 0
     https_async();
-#endif
     https_with_invalid_url();
     http_native_request();
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
