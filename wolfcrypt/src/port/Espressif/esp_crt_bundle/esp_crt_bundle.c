@@ -174,9 +174,9 @@ static CB_INLINE int wolfssl_found_zero_serial()
 }
 
 /* Returns:
- *   1 if the cert has a non-zero serial number
- *   0 if the cert as a zero serial number
- * < 0 for wolfssl\wolfcrypt\error-crypt.h values  */
+ *   1 if the cert has a zero serial number
+ *   0 if the cert has a non-zero serial number
+ * < 0 for error wolfssl\wolfcrypt\error-crypt.h values  */
 static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
                                                      int sz) {
     DecodedCert cert;
@@ -200,21 +200,22 @@ static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
 
             /* We'll force the return result to zero for a "valid"
              * parsing result, but not strict and found zero serial num. */
-            ret = 0;
+            ret = 1;
 #else
     #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
         defined(       WOLFSSL_ASN_ALLOW_0_SERIAL)
             /* Issuer amd subject will only be non-blank with relaxed check */
-            ESP_LOGW(TAG, "WOLFSSL_ASN_ALLOW_0_SERIAL enabled. Ignoring error.");
+            ESP_LOGCBW(TAG, "WOLFSSL_ASN_ALLOW_0_SERIAL enabled. "
+                            "Ignoring error.");
 
-            /* We'll force the return result to zero for a "valid"
-             * parsing result, but not strict and found zero serial num. */
-            ret = 0;
+            /* We'll force the return result for a "valid" parsing result,
+             * not strict and found zero serial num. */
+            ret = 1;
     #else
             ESP_LOGE(TAG, "ERROR: Certificate must have a Serial Number.");
             ESP_LOGE(TAG, "Define WOLFSSL_NO_ASN_STRICT or "
                           "WOLFSSL_ASN_ALLOW_0_SERIALto relax checks.");
-            ret = -1;
+            /* ret (Keep ASN_PARSE_E)  */
     #endif
 #endif
         } /* special ASN_PARSE_E handling */
@@ -236,7 +237,7 @@ static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
         ESP_LOGV(TAG, "Serial Number: %.*s", cert.serialSz, cert.serial);
     }
     else {
-        ESP_LOGE(TAG, "wolfssl_is_zero_serial_number exit error = %d", ret);
+        ESP_LOGCBV(TAG, "wolfssl_is_zero_serial_number exit  = %d", ret);
     }
 
     /* Clean up and exit */
@@ -298,6 +299,8 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
 /*
  * cert_manager_load()
  *
+ * returns preverify vallue.
+ *
  * WARNING: It is the caller's responsibility to confirm the der cert should be
  *          added. (Typically during a callback error override).
  *
@@ -323,7 +326,7 @@ static CB_INLINE int cert_manager_load(int preverify,
     WOLFSSL_X509_NAME *issuer = NULL;
     WOLFSSL_X509_NAME *subject = NULL;
 
-    WOLFSSL_X509* peer;
+    WOLFSSL_X509* peer = NULL;
 
     if (der == NULL) {
         ESP_LOGE(TAG, "cert_manager_load der is null");
@@ -368,7 +371,7 @@ static CB_INLINE int cert_manager_load(int preverify,
         if (ret == WOLFSSL_SUCCESS) {
             ESP_LOGCBI(TAG, "Successfully validated cert: %s\n", subject->name);
 
-            /* If verification is successful then override error */
+            /* If verification is successful then override error. */
             preverify = 1;
         }
         else {
@@ -475,12 +478,20 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     intptr_t this_addr = 0; /* beginning of the bundle object: [size][cert] */
     int derCertLength = 0; /* the [size] value: length of [cert] budnle item */
-    int cmp_res, last_cmp = -1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
+    int cmp_res = 0;
+    int last_cmp = -1; /* TODO what if first cert checked is bad? last_cmp may be wrong */
+#ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
+    WOLFSSL_STACK* chain;
+    WOLFSSL_X509* cert;
+    int numCerts, i;
+#endif
+
     int ret = WOLFSSL_SUCCESS;
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
     ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
 
+    /* Debugging section for viewing preverify values. */
 #ifndef NO_SKIP_PREVIEW
     if (preverify == WOLFSSL_SUCCESS) {
         ESP_LOGCBI(TAG, "Success: Detected prior Pre-verification == 1.");
@@ -512,9 +523,6 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
          * chain validation process. */
 #ifdef OPENSSL_EXTRA
         store_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
-        WOLFSSL_STACK* chain;
-        WOLFSSL_X509* cert;
-        int numCerts, i;
     #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
         chain = wolfSSL_X509_STORE_CTX_get_chain(store);
         numCerts = wolfSSL_sk_X509_num(chain);
