@@ -86,8 +86,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     /* Only display certificate bundle debugging messages when enabled: */
     #define ESP_LOGCBI ESP_LOGI
     #define ESP_LOGCBW ESP_LOGW
+    #define ESP_LOGCBV ESP_LOGV
 #else
-    /* Only display certificate bundle messages for most verbosee setting.
+    /* Only display certificate bundle messages for most verbose setting.
      * Note that the delays will likely cause TLS connection failures. */
     #define ESP_LOGCBI ESP_LOGV
     #define ESP_LOGCBW ESP_LOGV
@@ -416,6 +417,45 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
 }
 #endif /* WOLFSSL_DEBUG_CERT_BUNDLE && WOLFSSL_DEBUG_IGNORE_ASN_TIME */
 
+
+void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store) {
+    // Access total certificates count
+    int totalCerts = store->totalCerts;
+
+    for (int i = 0; i < totalCerts; i++) {
+        // Retrieve the WOLFSSL_BUFFER_INFO struct for the certificate at index 'i'
+        WOLFSSL_BUFFER_INFO buffer = store->certs[i];
+
+        // Now use wolfSSL_X509_d2i to parse the certificate from DER format
+        WOLFSSL_X509* cert = wolfSSL_X509_d2i(NULL, (const unsigned char*)buffer.buffer, buffer.length);
+
+        if (cert == NULL) {
+            printf("Failed to parse certificate at index %d\n", i);
+            continue;
+        }
+
+        // Extract subject and issuer names
+        WOLFSSL_X509_NAME* subject = wolfSSL_X509_get_subject_name(cert);
+        WOLFSSL_X509_NAME* issuer = wolfSSL_X509_get_issuer_name(cert);
+
+        if (subject != NULL && issuer != NULL) {
+            char subjectStr[256], issuerStr[256];
+
+            wolfSSL_X509_NAME_oneline(subject, subjectStr, sizeof(subjectStr));
+            wolfSSL_X509_NAME_oneline(issuer, issuerStr, sizeof(issuerStr));
+
+            printf("Certificate at index %d:\n", i);
+            printf("  Subject: %s\n", subjectStr);
+            printf("  Issuer: %s\n", issuerStr);
+        } else {
+            printf("Failed to extract subject or issuer at index %d\n", i);
+        }
+
+        // Free the parsed certificate
+        wolfSSL_X509_free(cert);
+    }
+}
+
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
  *  TLS handshake preverify failure for the "No Signer" condition. */
@@ -474,6 +514,17 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
          * chain validation process. */
 #ifdef OPENSSL_EXTRA
         store_cert = wolfSSL_X509_STORE_CTX_get_current_cert(store);
+        WOLFSSL_STACK* chain;
+        WOLFSSL_X509* cert;
+        int numCerts, i;
+        chain = wolfSSL_X509_STORE_CTX_get_chain(store);
+        numCerts = wolfSSL_sk_X509_num(chain);
+        if (!chain) {
+            numCerts = 0; // Verification failed
+        }
+        ESP_LOGI(TAG, "Number of certificates in chain: %d", numCerts);
+        print_cert_subject_and_issuer(store);
+
 #else
         store_cert = store->current_cert;
 #endif
@@ -482,9 +533,16 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         }
         else {
+#ifdef WOLFSSL_ALT_CERT_CHAINS
+            // Retrieve the WOLFSSL_BUFFER_INFO struct for the certificate at index 'i'
+            WOLFSSL_BUFFER_INFO buffer = store->certs[store->totalCerts - 1];
+            store_cert = wolfSSL_X509_d2i(NULL, (const unsigned char*)buffer.buffer, buffer.length);
+#else
             ret = WOLFSSL_SUCCESS;
+#endif
         }
     }
+
 
     /* Get the target name and subject from the current_cert(store) */
     if (ret == WOLFSSL_SUCCESS) {
@@ -532,7 +590,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         /* Look for the certificate searching on subject name: */
         while (start <= end) {
             ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
-
+            if (middle == 2) {
+                ESP_LOGI(TAG, "72!");
+            }
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
             /* For reference only */
             name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
@@ -686,6 +746,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
         if ((_crt_found == 1) && (ret == WOLFSSL_SUCCESS)) {
             /* TODO confirm: */
+#ifdef WOLFSSL_ALT_CERT_CHAINS
+            ESP_LOGCBI(TAG, "Skipping pre-update store verify with "
+                            "WOLFSSL_ALT_CERT_CHAINS enabled.");
+#else
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
                 ESP_LOGCBI(TAG, "Successfully verified store before making changes");
@@ -694,6 +758,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGE(TAG, "Failed to verify store before making changes! "
                               "ret = %d", ret);
             }
+#endif
 
 #if defined(OPENSSL_EXTRA)
             ESP_LOGCBI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, store_cert)");
@@ -718,7 +783,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                         ESP_LOGCBW(TAG, "Warning: Adding end-entity leaf certificate.");
                 }
 
-                /* Note that alrhough we are adding a certificate to the store
+                /* Note that although we are adding a certificate to the store
                  * now, it is too late to be used in the current TLS connecton
                  * that caused the callback. See the Cerfiicate Manager for
                  * validation and possible overriding of preverify values. */
@@ -738,6 +803,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             } /* _added_cert */
 
             ESP_LOGCBI(TAG, "wolfSSL_X509_verify_cert(store)");
+#ifdef WOLFSSL_ALT_CERT_CHAINS
+            ESP_LOGCBI(TAG, "Skipping post-update store verify with "
+                            "WOLFSSL_ALT_CERT_CHAINS enabled.");
+#else
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
                 ESP_LOGCBI(TAG, "Successfully verified cert in updated store!");
@@ -747,6 +816,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                               "ret = %d", ret);
                 ret = WOLFSSL_FAILURE;
             }
+#endif
         } /* crt_found */
         else {
             ESP_LOGE(TAG, "Did not find a matching crt");
@@ -761,7 +831,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     /* Clean up and exit */
     // wolfSSL_X509_free(bundle_cert);
-
+//    free store cert subject
     /* We don't clean up the store_cert and x509 as we are in a callback,
      * and it is just a pointer into the actual ctx store cert.  */
     ESP_LOGCBI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);

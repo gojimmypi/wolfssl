@@ -196,8 +196,8 @@
     #endif
 #else
     #ifdef WOLFSSL_ESPIDF
-        // #warning "App config undetected"
-	#endif
+        /* #warning "App config undetected" */
+    #endif
     /* the code is older or does not have application name defined. */
 #endif /* Example wolfSSL Configuration app settings */
 
@@ -263,7 +263,7 @@
     #undef  WOLFSSH_TERM
     #define WOLFSSH_TERM
 
-	/* optional debug */
+    /* optional debug */
     /* #undef  DEBUG_WOLFSSH */
     /* #define DEBUG_WOLFSSH */
 
@@ -906,7 +906,7 @@
 #endif
 #define WOLFSSL_MAX_ERROR_SZ 200
 
-//#define WOLFSSL_DEBUG_CERT_BUNDLE
+/* #define WOLFSSL_DEBUG_CERT_BUNDLE */
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
