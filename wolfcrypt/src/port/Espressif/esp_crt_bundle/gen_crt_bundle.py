@@ -130,27 +130,65 @@ class CertificateBundle:
             for attribute in cert.subject
         )
 
+    def parse_dn_reverse_order(self, dn_str):
+        """
+        Parse a distinguished name (DN) and return it in reverse order of elements.
+        """
+        # Split the DN string by commas and strip leading/trailing spaces
+        dn_elements = [element.strip() for element in dn_str.split(",")]
+        # Reverse the order of the elements
+        dn_elements.reverse()
+        # Join the elements back together
+        reversed_dn_str = ", ".join(dn_elements)
+        return reversed_dn_str
+
+    def extract_and_reverse_subject_elements(self, cert):
+        """
+        Extract the distinguished name (DN) from the certificate and reverse the order of the subject elements.
+        """
+        subject = cert.subject
+        # Extract the DN as a string
+        dn_str = ", ".join([f"{attribute.oid._name}={attribute.value}" for attribute in subject])
+        # Reverse the order of the DN elements
+        reversed_dn = self.parse_dn_reverse_order(dn_str)
+        reversed_dn = self.parse_dn_reverse_order(dn_str)
+        return reversed_dn
+
+    def sort_certificates_by_reversed_dn(self, certificates):
+        """
+        Sort a list of certificates by their distinguished name (DN) in reverse order.
+        """
+        sorted_certs = sorted(
+            certificates,
+            key=lambda cert: self.extract_and_reverse_subject_elements(cert)
+        )
+        return sorted_certs
+
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
         # NOTE: When sorting, see `esp_crt_bundle.c`;
-        #       Use `#define CERT_BUNDLE_UNSORTED` when not sortin.
+        #       Use `#define CERT_BUNDLE_UNSORTED` when not sorting.
         #
         # self.certificates = sorted(self.certificates, key=lambda cert: self.get_subject_text(cert))
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject_name)
-        self.certificates = sorted(
-                                self.certificates,
-                                key=lambda cert: (
-                                    cert.subject_name
-                                    if hasattr(cert, 'subject_name') and cert.subject_name is not None
-                                    else ''
-                                )
-                            )
+        # self.certificates = sorted(
+        #                         self.certificates,
+        #                         key=lambda cert: (
+        #                             cert.subject_name
+        #                             if hasattr(cert, 'subject_name') and cert.subject_name is not None
+        #                             else ''
+        #                         )
+        #                     )
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
         # Other sort orders to consider (for reference only)
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '')
         # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert['issuer_name'])
+        # self.certificates = self.certificates = sorted(self.certificates, key=lambda cert: cert['subject_name'])
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
+        self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
 
         bundle = struct.pack('>H', len(self.certificates))
 
