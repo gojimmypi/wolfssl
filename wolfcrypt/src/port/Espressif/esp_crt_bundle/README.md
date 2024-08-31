@@ -174,6 +174,21 @@ app _does not work_ immediately out of the box unless changes are made to the so
 
 ` openssl s_client -connect postman-echo.com:443 -CAfile ./postman.pem`
 
+### Component esp-wolfssl needs to be installed
+
+The wrong ESP-IDF toolchain is being used. Use the [gojimmypi my_522 branch](https://github.com/gojimmypi/esp-idf/tree/my_522).
+
+```
+-- Component esp-wolfssl needs to be installed. See api-reference/protocols/esp_tls docs.
+CMake Error at /mnt/c/SysGCC/esp32/esp-idf/v5.2/tools/cmake/component.cmake:382 (message):
+  Component esp-wolfssl not found
+Call Stack (most recent call first):
+  /mnt/c/SysGCC/esp32/esp-idf/v5.2/components/esp-tls/CMakeLists.txt:26 (idf_component_get_property)
+
+
+-- Configuring incomplete, errors occurred!
+```
+
 ## Manual Testing
 
 To test if the `howsmyssl` web site has TLS 1.3 working, use the [wolfSSL client example](https://github.com/wolfSSL/wolfssl/tree/master/examples/client):
