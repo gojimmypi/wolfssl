@@ -160,8 +160,8 @@ typedef struct crt_bundle_t {
 } crt_bundle_t;
 
 #ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
-static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
-                                     size_t bundle_size);
+static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                             size_t bundle_size);
 static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 #endif
 
@@ -1144,8 +1144,8 @@ esp_err_t esp_crt_bundle_is_valid()
  * To used as unsorted list, see above:
  *    `#define CERT_BUNDLE_UNSORTED`
  */
-static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
-                                     size_t bundle_size)
+static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
+                                             size_t bundle_size)
 {
     const uint8_t **crts;
     const uint8_t *bundle_end;
@@ -1155,7 +1155,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     size_t cert_len;
     int ret = ESP_OK;
 
-    WOLFSSL_ENTER("esp_crt_bundle_init");
+    WOLFSSL_ENTER("wolfssl_esp_crt_bundle_init");
     _esp_crt_bundle_is_valid = ESP_OK; /* Assume valid until proven otherise. */
 
     _cert_bundled_loaded = 0;
@@ -1250,7 +1250,7 @@ static esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
     }
     s_crt_bundle.num_certs = num_certs;
     s_crt_bundle.crts = crts;
-    WOLFSSL_LEAVE("esp_crt_bundle_init", ret);
+    WOLFSSL_LEAVE("wolfssl_esp_crt_bundle_init", ret);
     return ret;
 }
 
@@ -1268,7 +1268,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
                (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
         ESP_LOGCBI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x",
                (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
-        ret = esp_crt_bundle_init( x509_crt_imported_bundle_wolfssl_bin_start,
+        ret = wolfssl_esp_crt_bundle_init( x509_crt_imported_bundle_wolfssl_bin_start,
                                   (x509_crt_imported_bundle_wolfssl_bin_end
                                  - x509_crt_imported_bundle_wolfssl_bin_start)
                                  );
@@ -1312,10 +1312,10 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
 }
 
 /* The name esp_crt_bundle_set() used by ESP-IDF esp-tls layer,
- * but called esp_crt_bundle_init here. */
+ * but called wolfssl_esp_crt_bundle_init here. */
 esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
-    return esp_crt_bundle_init(x509_bundle, bundle_size);
+    return wolfssl_esp_crt_bundle_init(x509_bundle, bundle_size);
 }
 #endif
 
