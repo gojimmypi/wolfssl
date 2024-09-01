@@ -1150,10 +1150,10 @@ esp_err_t esp_crt_bundle_is_valid()
 static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
                                              size_t bundle_size)
 {
-    const uint8_t **crts;
-    const uint8_t *bundle_end;
-    const uint8_t *cur_crt;
-    uint16_t num_certs;
+    const uint8_t **crts = NULL;
+    const uint8_t *bundle_end = NULL;
+    const uint8_t *cur_crt = NULL;
+    uint16_t num_certs = 0;
     uint16_t i;
     size_t cert_len;
     int ret = ESP_OK;
@@ -1169,9 +1169,10 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
     if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
         ESP_LOGE(TAG, "Invalid certificate bundle size");
         _esp_crt_bundle_is_valid = ESP_FAIL;
-        return ESP_ERR_INVALID_ARG;
+        ret = ESP_ERR_INVALID_ARG;
     }
 
+    if (ret == ESP_OK) {
     num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
     if (num_certs > CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS) {
         ESP_LOGE(TAG, "No. of certs in the certificate bundle = %d exceeds\n"
@@ -1179,21 +1180,25 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
                       "Please update the menuconfig option",
                       num_certs, CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
         _esp_crt_bundle_is_valid = ESP_FAIL;
-        return ESP_ERR_INVALID_ARG;
+        ret = ESP_ERR_INVALID_ARG;
     }
     else {
         ESP_LOGCBI(TAG, "No. of certs in certificate bundle = % d", num_certs);
         ESP_LOGCBI(TAG, "Max allowed certificates in certificate bundle = %d",
                       CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
     }
+    } /* ret == ESP_OK */
 
+    if (ret == ESP_OK) {
     crts = calloc(num_certs, sizeof(x509_bundle));
     if (crts == NULL) {
         ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
         _esp_crt_bundle_is_valid = ESP_FAIL;
-        return ESP_ERR_NO_MEM;
+        ret = ESP_ERR_NO_MEM;
     }
+    } /* ret == ESP_OK */
 
+    if (ret == ESP_OK) {
     /* This is the maximum region that is allowed to access */
     ESP_LOGV(TAG, "Bundle Start 0x%x", (intptr_t)x509_bundle);
     ESP_LOGV(TAG, "Bundle Size  %d", bundle_size);
@@ -1205,9 +1210,9 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
         ESP_LOGV(TAG, "Init Cert %d", i);
         if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
             ESP_LOGE(TAG, "Invalid certificate bundle current offset");
-            free(crts);
             _esp_crt_bundle_is_valid = ESP_FAIL;
-            return ESP_ERR_INVALID_ARG;
+            ret = ESP_ERR_INVALID_ARG;
+            break;
         }
 
         crts[i] = cur_crt;
@@ -1234,6 +1239,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
         cur_crt = cur_crt + (CRT_HEADER_OFFSET + cert_len);
 #endif
     } /* for certs 0 to num_certs - 1 in the order found */
+    } /* ret == ESP_OK */
 
     /* One final validation check. */
     if (cur_crt > bundle_end) {
@@ -1275,10 +1281,10 @@ esp_err_t esp_crt_bundle_attach(void *conf)
                (intptr_t)x509_crt_imported_bundle_wolfssl_bin_start);
         ESP_LOGCBI(TAG, "x509_crt_imported_bundle_wolfssl_bin_end 0x%x",
                (intptr_t)x509_crt_imported_bundle_wolfssl_bin_end);
-        ret = wolfssl_esp_crt_bundle_init( x509_crt_imported_bundle_wolfssl_bin_start,
-                                  (x509_crt_imported_bundle_wolfssl_bin_end
-                                 - x509_crt_imported_bundle_wolfssl_bin_start)
-                                 );
+        ret = wolfssl_esp_crt_bundle_init(
+                         x509_crt_imported_bundle_wolfssl_bin_start,
+                        (x509_crt_imported_bundle_wolfssl_bin_end
+                       - x509_crt_imported_bundle_wolfssl_bin_start));
     }
     else {
         ESP_LOGCBI(TAG, "Cert bundle set by user at 0x%x.",
