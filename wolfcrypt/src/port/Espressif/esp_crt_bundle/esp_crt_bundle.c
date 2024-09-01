@@ -508,7 +508,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     int ret = WOLFSSL_SUCCESS;
 
     WOLFSSL_ENTER("wolfssl_ssl_conf_verify_cb_no_signer");
-    ESP_LOGCBI(TAG, "\n\nBegin callback: wolfssl_ssl_conf_verify_cb_no_signer !\n");
+    ESP_LOGCBI(TAG, "\n\nBegin callback: "
+                    "wolfssl_ssl_conf_verify_cb_no_signer\n");
 
     /* Debugging section for viewing preverify values. */
 #ifndef NO_SKIP_PREVIEW
@@ -531,7 +532,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         }
         else {
-            ESP_LOGCBI(TAG, "%d certificates in bundle.", s_crt_bundle.num_certs);
+            ESP_LOGCBI(TAG, "%d certificates in bundle.",
+                            s_crt_bundle.num_certs);
             ret = WOLFSSL_SUCCESS;
         }
     }
@@ -576,7 +578,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     /* Get the target name and subject from the current_cert(store) */
     if (ret == WOLFSSL_SUCCESS) {
         store_cert_subject = wolfSSL_X509_get_subject_name(store_cert);
-        if (wolfSSL_X509_NAME_oneline(store_cert_subject, subjectName, sizeof(subjectName)) == NULL) {
+        if (wolfSSL_X509_NAME_oneline(store_cert_subject, subjectName,
+                                      sizeof(subjectName)) == NULL) {
             ESP_LOGE(TAG, "Error converting subject name to string.");
             ret = WOLFSSL_FAILURE;
         }
@@ -612,14 +615,22 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         middle = (end - start) / 2;
 #else
         /* When not sorted, we start at beginning and look at each: */
+        ESP_LOGCBW(TAG, "Looking at CA indexed. Start = %d, end = %d",
+                         start, end);
         middle = 0;
 #endif
         /* Look for the certificate searching on subject name: */
         while (start <= end) {
-            ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d, end = %d", middle, start, end);
+#ifndef CERT_BUNDLE_UNSORTED
+            ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d,"
+                            "end = %d", middle, start, end);
+#else
+            ESP_LOGCBW(TAG, "Looking at CA index #%d", middle);
+#endif
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
             /* For reference only */
-            name_len = s_crt_bundle.crts[middle][0] << 8 | s_crt_bundle.crts[middle][1];
+            name_len = s_crt_bundle.crts[middle][0] << 8 |
+                       s_crt_bundle.crts[middle][1];
             crt_name = s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET;
             ESP_LOGI(TAG, "String: %.*s", name_len, crt_name);
             int cmp_res =  memcmp(subject, crt_name, name_len);
@@ -647,7 +658,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             if (bundle_cert != NULL) {
                 wolfSSL_X509_free(bundle_cert);
             }
-            bundle_cert = wolfSSL_d2i_X509(NULL, &cert_bundle_data, derCertLength);
+            bundle_cert = wolfSSL_d2i_X509(NULL, &cert_bundle_data,
+                                                  derCertLength);
 
             if (bundle_cert == NULL) {
                 ESP_LOGE(TAG, "Error loading DER Certificate Authority (CA)"
@@ -685,8 +697,9 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 }
                 else {
                     if (wolfSSL_X509_NAME_oneline(this_subject, subjectName,
-                                                  sizeof(subjectName)) == NULL) {
-                        ESP_LOGE(TAG, "Error converting subject name to string.");
+                                                 sizeof(subjectName)) == NULL) {
+                        ESP_LOGE(TAG, "Error converting subject name "
+                                      "to string.");
                         ret = WOLFSSL_FAILURE;
                     }
                     ESP_LOGCBI(TAG, "This Bundle Item Subject Name: %s",
@@ -781,7 +794,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 #else
             ret = wolfSSL_X509_verify_cert(store);
             if (ret == WOLFSSL_SUCCESS) {
-                ESP_LOGCBI(TAG, "Successfully verified store before making changes");
+                ESP_LOGCBI(TAG, "Successfully verified store before "
+                                "making changes");
             }
             else {
                 ESP_LOGE(TAG, "Failed to verify store before making changes! "
@@ -790,14 +804,17 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 #endif
 
 #if defined(OPENSSL_EXTRA)
-            ESP_LOGCBI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, store_cert)");
-            if (store_cert && wolfSSL_X509_check_issued(bundle_cert, store_cert) == X509_V_OK) {
+            ESP_LOGCBI(TAG, "Checking wolfSSL_X509_check_issued(bundle_cert, "
+                            "store_cert)");
+            if (store_cert && wolfSSL_X509_check_issued(bundle_cert,
+                                                     store_cert) == X509_V_OK) {
                 ESP_LOGCBI(TAG, "wolfSSL_X509_check_issued == X509_V_OK");
 
             }
             else {
                 /* This is ok, we may have others */
-                ESP_LOGCBI(TAG, "wolfSSL_X509_check_issued failed. (there may be others)");
+                ESP_LOGCBI(TAG, "wolfSSL_X509_check_issued failed. "
+                                "(there may be others)");
             }
 #else
             ESP_LOGW(TAG, "Warning: skipping wolfSSL_X509_check_issued, "
@@ -809,7 +826,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                         ESP_LOGCBI(TAG, "Adding Certificate Authority.");
                     }
                 else {
-                        ESP_LOGCBW(TAG, "Warning: Adding end-entity leaf certificate.");
+                        ESP_LOGCBW(TAG, "Warning: Adding end-entity leaf "
+                                        "certificate.");
                 }
 
                 /* Note that although we are adding a certificate to the store
@@ -819,7 +837,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBI(TAG, "\n\nAdding Cert for Certificate Store!\n");
                 ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
                 if (ret == WOLFSSL_SUCCESS) {
-                    ESP_LOGCBI(TAG, "Successfully added cert to wolfSSL Certificate Store!");
+                    ESP_LOGCBI(TAG, "Successfully added cert to wolfSSL "
+                                    "Certificate Store!");
                     _added_cert = 1;
                 }
                 else {
@@ -1188,9 +1207,10 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
             ret = ESP_ERR_INVALID_ARG;
         }
         else {
-            ESP_LOGCBI(TAG, "No. of certs in certificate bundle = % d", num_certs);
-            ESP_LOGCBI(TAG, "Max allowed certificates in certificate bundle = %d",
-                          CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+            ESP_LOGCBI(TAG, "No. of certs in certificate bundle = % d",
+                            num_certs);
+            ESP_LOGCBI(TAG, "Max allowed certificates in certificate bundle = "
+                            "%d", CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
         }
     } /* ret == ESP_OK */
 
