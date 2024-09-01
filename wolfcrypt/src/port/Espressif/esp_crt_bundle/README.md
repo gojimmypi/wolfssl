@@ -48,8 +48,8 @@ time and date setting for the certficate date ranges.. The wolfssL libraries inc
 [time helper functions](https://github.com/wolfSSL/wolfssl/blob/master/wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h).
 These can be enabled with `#define USE_WOLFSSL_ESP_SDK_TIME` in the `user_settings.h`.
 
-Alternatively, the `WOLFSSL_DEBUG_IGNORE_ASN_TIME` can be used to ignore the time. This is strongly discouraged is anything
-other than a development / test environment.
+Alternatively, the `WOLFSSL_DEBUG_IGNORE_ASN_TIME` can be used to ignore the time. This is strongly discouraged in anything
+other than a development / test environment where the time is known to be incorrect.
 
 ### Examples may need to have wolfSSL Certificate Bundles enabled.
 
