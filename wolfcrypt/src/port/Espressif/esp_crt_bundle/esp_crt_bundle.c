@@ -479,8 +479,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
 
-    WOLFSSL_X509* store_cert = NULL; /* will point to existing param valus. */
-    WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed. */
+    WOLFSSL_X509* store_cert = NULL; /* will point to existing param values. */
+    WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed.  */
 
     WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert.  */
     WOLFSSL_X509_NAME* this_subject = NULL;       /* part of bundle_cert. */
@@ -555,7 +555,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         chain = wolfSSL_X509_STORE_CTX_get_chain(store);
         numCerts = wolfSSL_sk_X509_num(chain);
         if (!chain) {
-            numCerts = 0; // Verification failed
+            numCerts = 0; /* Verification failed. */
         }
         ESP_LOGI(TAG, "Number of certificates in chain: %d", numCerts);
         print_cert_subject_and_issuer(store);
@@ -860,8 +860,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
 
     /* Clean up and exit */
-    // wolfSSL_X509_free(bundle_cert);
-//    free store cert subject
+//    if ((_crt_found == 0) && (bundle_cert != NULL)) {
+//        wolfSSL_X509_free(bundle_cert);
+//        wolfSSL_X509_NAME_free(this_subject);
+//        wolfSSL_X509_NAME_free(this_issuer);
+//    }
     /* We don't clean up the store_cert and x509 as we are in a callback,
      * and it is just a pointer into the actual ctx store cert.  */
     ESP_LOGCBI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
@@ -1116,7 +1119,7 @@ void wolfssl_x509_crt_init(WOLFSSL_X509 *crt)
 /* cert buffer compatilbility helper */
 void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
                                WOLFSSL_X509       *ca_chain,
-                               WOLFSSL_X509_CRL   *ca_crl) /* TODO check crl type */
+                               WOLFSSL_X509_CRL   *ca_crl)
 {
     conf->ca_chain   = ca_chain;
     conf->ca_crl     = ca_crl;
@@ -1232,24 +1235,28 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
 #endif
     } /* for certs 0 to num_certs - 1 in the order found */
 
+    /* One final validation check. */
     if (cur_crt > bundle_end) {
         ESP_LOGE(TAG, "Invalid certificate bundle after end");
         _esp_crt_bundle_is_valid = ESP_FAIL;
         ret = ESP_ERR_INVALID_ARG;
     }
 
-    /* The previous crt bundle is only updated when initialization of the
-     * current crt_bundle is successful */
-    /* Free previous crt_bundle */
-    if (crts != NULL) {
-        free(crts);
+    if (_esp_crt_bundle_is_valid ==  ESP_FAIL) {
+        if (crts == NULL) {
+            free(crts);
+            s_crt_bundle.num_certs = 0;
+            s_crt_bundle.crts = NULL;
+        }
     }
-    if (s_crt_bundle.crts != NULL)
-    {
+    else {
+        /* The previous crt bundle is only updated when initialization of the
+         * current crt_bundle is successful */
+        /* Free previous crt_bundle */
         free(s_crt_bundle.crts);
+        s_crt_bundle.num_certs = num_certs;
+        s_crt_bundle.crts = crts;
     }
-    s_crt_bundle.num_certs = num_certs;
-    s_crt_bundle.crts = crts;
     WOLFSSL_LEAVE("wolfssl_esp_crt_bundle_init", ret);
     return ret;
 }
