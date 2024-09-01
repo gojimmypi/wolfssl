@@ -12,6 +12,12 @@
       <GroupSourcesByPaths>true</GroupSourcesByPaths>
       <HeaderScanMode>SourceDirs</HeaderScanMode>
     </ProjectModeSettings>
+    <TestSettings>
+      <InitializationTimeout>30</InitializationTimeout>
+      <DefaultTestTimeout>60</DefaultTestTimeout>
+      <ApptraceInitializationTimeout>5</ApptraceInitializationTimeout>
+      <FinalizationTimeout>5</FinalizationTimeout>
+    </TestSettings>
   </Project>
   <Build xsi:type="com.visualgdb.build.cmake">
     <BuildLogMode xsi:nil="true" />
@@ -28,12 +34,20 @@
     <BinaryDirectory>build/$(PlatformName)/$(ConfigurationName)</BinaryDirectory>
     <MakeCommandTemplate>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>BuildMachine</HostName>
+        <Transport>BuiltinShortcut</Transport>
+      </RemoteHost>
       <Command>$(ToolchainNinja)</Command>
       <WorkingDirectory>$(BuildDir)</WorkingDirectory>
       <BackgroundMode xsi:nil="true" />
     </MakeCommandTemplate>
     <CMakeCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>BuildMachine</HostName>
+        <Transport>BuiltinShortcut</Transport>
+      </RemoteHost>
       <Command>$(SYSPROGS_CMAKE_PATH)</Command>
       <BackgroundMode xsi:nil="true" />
     </CMakeCommand>
