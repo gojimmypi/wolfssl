@@ -100,7 +100,14 @@
 /* Turn on messages that are useful to see only in examples. */
 #define WOLFSSL_EXAMPLE_VERBOSITY
 
-/* wolfSSL Examples */
+/* wolfSSL Examples: set macros used in example applications.
+ *
+ * These Settings NOT available in ESP-IDF (e.g. esp-tls)
+ *
+ * Any settings needed by ESP-IDF components should be explicitly set,
+ * and not by these example-specific settings via CONFIG_WOLFSSL_EXAMPLE_n
+ *
+ * ESP-IDF settings should be Kconfig "CONFIG_[name]" values when possible. */
 #if defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
@@ -245,6 +252,7 @@
      #define WOLFSSL_BASE64_ENCODE
  #endif /* Apple HomeKit settings */
 
+/* Used by ESP-IDF components: */
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
     #define FP_MAX_BITS (8192 * 2)
