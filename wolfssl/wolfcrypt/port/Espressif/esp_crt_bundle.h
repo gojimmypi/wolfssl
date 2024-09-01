@@ -82,11 +82,6 @@ esp_err_t esp_crt_bundle_attach(void *conf);
 /* Certificate bundles are enabled, but the "none" option selected */
 
 #else
-/* TODO Move ESP-IDF ini here. Reminder: Name conflict.
-esp_err_t esp_crt_bundle_init(const uint8_t *x509_bundle,
-                                     size_t bundle_size);
- */
-
 /**
  * @brief      Return ESP_OK for valid bunder, otherwise ESP_FAIL.
  *
