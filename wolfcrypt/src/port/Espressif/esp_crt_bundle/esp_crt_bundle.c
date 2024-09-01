@@ -1166,79 +1166,86 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
     _added_cert = 0;
     _need_bundle_cert = 0;
 
-    if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
-        ESP_LOGE(TAG, "Invalid certificate bundle size");
-        _esp_crt_bundle_is_valid = ESP_FAIL;
-        ret = ESP_ERR_INVALID_ARG;
-    }
-
+    /* Basic check of bundle size. */
     if (ret == ESP_OK) {
-    num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
-    if (num_certs > CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS) {
-        ESP_LOGE(TAG, "No. of certs in the certificate bundle = %d exceeds\n"
-                      "Max allowed certificates in certificate bundle = %d\n"
-                      "Please update the menuconfig option",
-                      num_certs, CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
-        _esp_crt_bundle_is_valid = ESP_FAIL;
-        ret = ESP_ERR_INVALID_ARG;
-    }
-    else {
-        ESP_LOGCBI(TAG, "No. of certs in certificate bundle = % d", num_certs);
-        ESP_LOGCBI(TAG, "Max allowed certificates in certificate bundle = %d",
-                      CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
-    }
-    } /* ret == ESP_OK */
-
-    if (ret == ESP_OK) {
-    crts = calloc(num_certs, sizeof(x509_bundle));
-    if (crts == NULL) {
-        ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
-        _esp_crt_bundle_is_valid = ESP_FAIL;
-        ret = ESP_ERR_NO_MEM;
-    }
-    } /* ret == ESP_OK */
-
-    if (ret == ESP_OK) {
-    /* This is the maximum region that is allowed to access */
-    ESP_LOGV(TAG, "Bundle Start 0x%x", (intptr_t)x509_bundle);
-    ESP_LOGV(TAG, "Bundle Size  %d", bundle_size);
-    bundle_end = x509_bundle + bundle_size;
-    ESP_LOGV(TAG, "Bundle End   0x%x", (intptr_t)bundle_end);
-    cur_crt = x509_bundle + BUNDLE_HEADER_OFFSET;
-
-    for (i = 0; i < num_certs; i++) {
-        ESP_LOGV(TAG, "Init Cert %d", i);
-        if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
-            ESP_LOGE(TAG, "Invalid certificate bundle current offset");
+        if (bundle_size < BUNDLE_HEADER_OFFSET + CRT_HEADER_OFFSET) {
+            ESP_LOGE(TAG, "Invalid certificate bundle size");
             _esp_crt_bundle_is_valid = ESP_FAIL;
             ret = ESP_ERR_INVALID_ARG;
-            break;
         }
+    }
 
-        crts[i] = cur_crt;
+    /* Number of certificates pre-calculated in python script, extract value: */
+    if (ret == ESP_OK) {
+        num_certs = (x509_bundle[0] << 8) | x509_bundle[1];
+        if (num_certs > CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS) {
+            ESP_LOGE(TAG, "Number of certs in the certificate bundle = %d "
+                          "exceeds\nMax allowed certificates in certificate "
+                          "bundle = %d\nPlease update the menuconfig option",
+                          num_certs,
+                          CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+            _esp_crt_bundle_is_valid = ESP_FAIL;
+            ret = ESP_ERR_INVALID_ARG;
+        }
+        else {
+            ESP_LOGCBI(TAG, "No. of certs in certificate bundle = % d", num_certs);
+            ESP_LOGCBI(TAG, "Max allowed certificates in certificate bundle = %d",
+                          CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS);
+        }
+    } /* ret == ESP_OK */
+
+    if (ret == ESP_OK) {
+        /* Contiguous allocation is important to our cert extraction. */
+        crts = calloc(num_certs, sizeof(x509_bundle));
+        if (crts == NULL) {
+            ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
+            _esp_crt_bundle_is_valid = ESP_FAIL;
+            ret = ESP_ERR_NO_MEM;
+        }
+    } /* ret == ESP_OK */
+
+    /* If all is ok, proceed with initialization of Certificate Bundle */
+    if (ret == ESP_OK) {
+        /* This is the maximum region that is allowed to access */
+        ESP_LOGV(TAG, "Bundle Start 0x%x", (intptr_t)x509_bundle);
+        ESP_LOGV(TAG, "Bundle Size  %d", bundle_size);
+        bundle_end = x509_bundle + bundle_size;
+        ESP_LOGV(TAG, "Bundle End   0x%x", (intptr_t)bundle_end);
+        cur_crt = x509_bundle + BUNDLE_HEADER_OFFSET;
+
+        for (i = 0; i < num_certs; i++) {
+            ESP_LOGV(TAG, "Init Cert %d", i);
+            if (cur_crt + CRT_HEADER_OFFSET > bundle_end) {
+                ESP_LOGE(TAG, "Invalid certificate bundle current offset");
+                _esp_crt_bundle_is_valid = ESP_FAIL;
+                ret = ESP_ERR_INVALID_ARG;
+                break;
+            }
+
+            crts[i] = cur_crt;
 
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
-        /* For reference only */
-        size_t name_len = cur_crt[0] << 8 | cur_crt[1];
-        size_t key_len = cur_crt[2] << 8 | cur_crt[3];
-        cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
+            /* For reference only */
+            size_t name_len = cur_crt[0] << 8 | cur_crt[1];
+            size_t key_len = cur_crt[2] << 8 | cur_crt[3];
+            cur_crt = cur_crt + CRT_HEADER_OFFSET + name_len + key_len;
 #else
-        cert_len = cur_crt[0] << 8 | cur_crt[1];
+            cert_len = cur_crt[0] << 8 | cur_crt[1];
     #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
-        defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
-        defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
-        defined(       WOLFSSL_NO_ASN_STRICT)
-        if (wolfssl_is_zero_serial_number(cur_crt + CRT_HEADER_OFFSET,
-                                             cert_len) > 0) {
-            ESP_LOGW(TAG, "Warning: found zero value for serial number in "
-                          "certificate #%d", i);
-            ESP_LOGW(TAG, "Enable WOLFSSL_NO_ASN_STRICT to allow zero in "
-                          "serial number.");
-        }
+            defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+            defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
+            defined(       WOLFSSL_NO_ASN_STRICT)
+            if (wolfssl_is_zero_serial_number(cur_crt + CRT_HEADER_OFFSET,
+                                                 cert_len) > 0) {
+                ESP_LOGW(TAG, "Warning: found zero value for serial number in "
+                              "certificate #%d", i);
+                ESP_LOGW(TAG, "Enable WOLFSSL_NO_ASN_STRICT to allow zero in "
+                              "serial number.");
+            }
     #endif
-        cur_crt = cur_crt + (CRT_HEADER_OFFSET + cert_len);
+            cur_crt = cur_crt + (CRT_HEADER_OFFSET + cert_len);
 #endif
-    } /* for certs 0 to num_certs - 1 in the order found */
+        } /* for certs 0 to num_certs - 1 in the order found */
     } /* ret == ESP_OK */
 
     /* One final validation check. */
@@ -1265,8 +1272,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
     }
     WOLFSSL_LEAVE("wolfssl_esp_crt_bundle_init", ret);
     return ret;
-}
-
+} /* esp_crt_bundle_init */
 
 /* esp_crt_bundle_attach() used by ESP-IDF esp-tls layer. */
 esp_err_t esp_crt_bundle_attach(void *conf)
@@ -1307,7 +1313,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 
     _esp_crt_bundle_is_valid = ret;
     return ret;
-}
+} /* esp_crt_bundle_attach */
 
 /* esp_crt_bundle_detach() used by ESP-IDF esp-tls layer. */
 void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
