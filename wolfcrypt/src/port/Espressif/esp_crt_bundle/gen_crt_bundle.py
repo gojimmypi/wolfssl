@@ -148,9 +148,9 @@ class CertificateBundle:
                 dn_dict["/O="] = attribute.value
             elif attribute.oid == x509.NameOID.COMMON_NAME:
                 dn_dict["/CN="] = attribute.value
-            elif attribute.oid == x509.NameOID.LOCATION:
+            elif attribute.oid == x509.NameOID.LOCALITY_NAME:
                 dn_dict["/L="] = attribute.value
-            elif attribute.oid == x509.NameOID.STATE:
+            elif attribute.oid == x509.NameOID.STATE_OR_PROVINCE_NAME:
                 dn_dict["/ST="] = attribute.value
 
         # Construct the output strings in the desired order
