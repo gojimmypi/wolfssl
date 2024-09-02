@@ -22,7 +22,7 @@
   <Build xsi:type="com.visualgdb.build.cmake">
     <BuildLogMode xsi:nil="true" />
     <ToolchainID>
-      <ID>com.visualgdb.xtensa-esp32-elf</ID>
+      <ID>SysGCC-xtensa-esp32-elf-master</ID>
       <Version>
         <GCC>13.2.0</GCC>
         <GDB>12.1</GDB>
