@@ -128,6 +128,9 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size);
  * Used internally by ESP-IDF esp-tls layer. Also helpful for debugging
  * and general visibiity to certificate attributes.
  *
+ * The CERT_TAG can be used at the esp-tls or application layer to indicate
+ * the usage of the respective cert (e.g. the string "peer").
+ *
  * Turn on WOLFSSL_DEBUG_CERT_BUNDLE to also see ASN1 before/after values.
  *
  * @return
