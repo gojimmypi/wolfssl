@@ -32,10 +32,12 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
 #include "esp_log.h"
-static const char *TAG = "esp_crt_bundle-wolfssl";
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
 #include <wolfssl/wolfcrypt/logging.h>
+
+static const char *TAG = "esp_crt_bundle-wolfssl";
+
 
 #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
     defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE) && \
