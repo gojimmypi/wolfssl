@@ -111,6 +111,10 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define X509_MAX_SUBJECT_LEN 255
 #endif
 
+#ifndef CTC_DATE_SIZE
+    #define CTC_DATE_SIZE 32
+#endif
+
 #define IS_WOLFSSL_CERT_BUNDLE_FORMAT
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
     /* For reference only, the other cert bundles are structured differently!
@@ -170,7 +174,7 @@ static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
 static crt_bundle_t s_crt_bundle;
 static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
-static int _cert_bundled_loaded = 0;
+static int _cert_bundle_loaded = 0;
 
 static int _crt_found = 0;
 
@@ -181,7 +185,7 @@ static int _need_bundle_cert = 0;
 
 /* Returns ESP_OK if there are no zero serial numbers in the bundle,
  * OR there may be zeros, but */
-static CB_INLINE int wolfssl_found_zero_serial()
+static CB_INLINE int wolfssl_found_zero_serial(void)
 {
     return _wolfssl_found_zero_serial;
 }
@@ -191,7 +195,8 @@ static CB_INLINE int wolfssl_found_zero_serial()
  *   0 if the cert has a non-zero serial number
  * < 0 for error wolfssl\wolfcrypt\error-crypt.h values  */
 static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
-                                                     int sz) {
+                                                             int sz)
+{
     DecodedCert cert;
     int ret = 0;
 
@@ -259,6 +264,16 @@ static CB_INLINE int wolfssl_is_zero_serial_number(const uint8_t *der_cert,
     return ret;
 }
 
+int wolfssl_cert_bundle_loaded(void)
+{
+    return _cert_bundle_loaded;
+}
+
+int wolfssl_need_bundle_cert(void)
+{
+    return _need_bundle_cert;
+}
+
 /* Public API wolfSSL_X509_get_cert_items() */
 int wolfSSL_X509_get_cert_items(char* CERT_TAG,
                                 WOLFSSL_X509* cert,
@@ -267,8 +282,8 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
 {
     char stringVaue[X509_MAX_SUBJECT_LEN];
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-    char before_str[32];
-    char after_str[32];
+    char before_str[CTC_DATE_SIZE];
+    char after_str[CTC_DATE_SIZE];
     WOLFSSL_ASN1_TIME *notBefore = NULL, *notAfter = NULL;
 #endif
     int ret = WOLFSSL_SUCCESS; /* Not ESP value! Success = 1, fail = 0 */
@@ -434,10 +449,20 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
 #endif /* WOLFSSL_DEBUG_CERT_BUNDLE && WOLFSSL_DEBUG_IGNORE_ASN_TIME */
 
 #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
-void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store) {
-    int totalCerts = store->totalCerts;
+void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
+{
+    int i;
+    int totalCerts;
 
-    for (int i = 0; i < totalCerts; i++) {
+    if (store == NULL) {
+        ESP_LOGCBI(TAG, "store is NULL");
+        totalCerts = 0;
+    }
+    else {
+        totalCerts = store->totalCerts;
+    }
+
+    for (i = 0; i < totalCerts; i++) {
         WOLFSSL_BUFFER_INFO buffer = store->certs[i];
         WOLFSSL_X509* cert = wolfSSL_X509_d2i(NULL,
                                             (const unsigned char*)buffer.buffer,
@@ -503,8 +528,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 #endif
 #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
     WOLFSSL_STACK* chain;
-    WOLFSSL_X509* cert;
-    int numCerts, i;
+    int numCerts;
 #endif
 
     int ret = WOLFSSL_SUCCESS;
@@ -608,7 +632,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
      * We'll proceed by assiging `cert` to each of the respective items in
      * bundle as we attempt to find the desired cert: */
     if (ret == WOLFSSL_SUCCESS) {
-        _cert_bundled_loaded = 1;
+        _cert_bundle_loaded = 1;
         start = 0;
         end = s_crt_bundle.num_certs - 1;
 
@@ -1048,25 +1072,15 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
 {
     WOLFSSL_X509 *child;
     const uint8_t *crt_name;
-    int ret = -1;
     int start = 0;
+    int middle = 0;
     int end  = 0;
-    int middle =0;
+    int crt_found = 0;
+    int ret = -1;
     size_t name_len = 0;
     size_t key_len  = 0;
-    bool crt_found = false;
 
     child = crt;
-
-#if 0
-    /* It's OK for a trusted cert to have a weak signature hash alg.
-       as we already trust this certificate */
-    uint32_t flags_filtered = *flags & ~(WOLFSSL_X509_BADCERT_BAD_MD);
-
-    if (flags_filtered != WOLFSSL_X509_BADCERT_NOT_TRUSTED) {
-        return 0;
-    }
-#endif
 
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGE(TAG, "No certificates in bundle");
@@ -1182,7 +1196,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
     WOLFSSL_ENTER("wolfssl_esp_crt_bundle_init");
     _esp_crt_bundle_is_valid = ESP_OK; /* Assume valid until proven otherise. */
 
-    _cert_bundled_loaded = 0;
+    _cert_bundle_loaded = 0;
     _crt_found = 0;
     _added_cert = 0;
     _need_bundle_cert = 0;
@@ -1375,6 +1389,6 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
     #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
 #endif
 
-#endif /* #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) */
+#endif /* #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)  and not NONE cert */
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 #endif /* WOLFSSL_ESPIDF */

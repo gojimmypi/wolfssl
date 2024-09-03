@@ -89,6 +89,22 @@ esp_err_t esp_crt_bundle_attach(void *conf);
  */
 esp_err_t esp_crt_bundle_is_valid();
 
+
+/**
+ * @brief      Return 1 if Cert Bundle loaded, otheriwse 0.
+ *
+ * Specific to wolfSSL. Not used by ESP-IDF esp-tls layer.
+ */
+int wolfssl_cert_bundle_loaded(void);
+
+/**
+ * @brief      Return 1 is a cert from the bundle was needed
+ *             at connection time, otherwise 0.
+ *
+ * Specific to wolfSSL. Not used by ESP-IDF esp-tls layer.
+ */
+int wolfssl_need_bundle_cert(void);
+
 /**
  * @brief      Disable and dealloc the certification bundle
  *
