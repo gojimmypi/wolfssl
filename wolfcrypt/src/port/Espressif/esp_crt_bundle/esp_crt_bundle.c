@@ -881,11 +881,11 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
 
     /* Clean up and exit */
-//    if ((_crt_found == 0) && (bundle_cert != NULL)) {
-//        wolfSSL_X509_free(bundle_cert);
-//        wolfSSL_X509_NAME_free(this_subject);
-//        wolfSSL_X509_NAME_free(this_issuer);
-//    }
+    if ((_crt_found == 0) && (bundle_cert != NULL)) {
+        wolfSSL_X509_free(bundle_cert);
+        wolfSSL_X509_NAME_free(this_subject);
+        wolfSSL_X509_NAME_free(this_issuer);
+    }
     /* We don't clean up the store_cert and x509 as we are in a callback,
      * and it is just a pointer into the actual ctx store cert.  */
     ESP_LOGCBI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
