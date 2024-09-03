@@ -189,6 +189,32 @@ Call Stack (most recent call first):
 -- Configuring incomplete, errors occurred!
 ```
 
+## x509_crt_bundle_wolfssl.S not found
+
+It is important to note that PlatformIO components can NOT be used for esp-tls.
+
+The wolfSSL library MUST be used from either the local project `components` or from the ESP-IDF.
+
+```
+*** [.pio\bld_8mb_dbg_wolfssl\.pio\bld_8mb_dbg_wolfssl\x509_crt_bundle_wolfssl.S.o]
+Source `.pio\bld_8mb_dbg_wolfssl\x509_crt_bundle_wolfssl.S' not found,
+needed by target `.pio\bld_8mb_dbg_wolfssl\.pio\bld_8mb_dbg_wolfssl\x509_crt_bundle_wolfssl.S.o'.
+```
+
+
+## Error couldn't get hostname for not.existent.url
+
+This error is as desired, showing that a bad URL will fail.
+
+```
+E (50613) esp-tls: couldn't get hostname for :not.existent.url: getaddrinfo() returns 202, addrinfo=0x0
+E (50613) esp-tls: Failed to open new connection
+E (50613) transport_base: Failed to open a new connection
+E (50623) HTTP_CLIENT: Connection failed, sock < 0
+E (50623) HTTP_CLIENT: Error perform http request ESP_ERR_HTTP_CONNECT
+```
+
+
 ## Manual Testing
 
 To test if the `howsmyssl` web site has TLS 1.3 working, use the [wolfSSL client example](https://github.com/wolfSSL/wolfssl/tree/master/examples/client):
