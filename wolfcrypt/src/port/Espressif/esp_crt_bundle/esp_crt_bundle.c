@@ -1292,6 +1292,14 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
         s_crt_bundle.num_certs = num_certs;
         s_crt_bundle.crts = crts;
     }
+
+    /* Consider using WOLFSSL_ASN_ALLOW_0_SERIAL or WOLFSSL_NO_ASN_STRICT
+     * to relax checks. Use with caution. See wolfSSL documentation. */
+    if (wolfssl_found_zero_serial()) {
+        ESP_LOGCBW(TAG, "Warning: At least one certificate in the bundle "
+                        "is missing a serial number.");
+    }
+
     WOLFSSL_LEAVE("wolfssl_esp_crt_bundle_init", ret);
     return ret;
 } /* esp_crt_bundle_init */
