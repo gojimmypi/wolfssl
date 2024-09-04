@@ -956,8 +956,8 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
                                       WOLFSSL_X509_STORE_CTX* store)
 {
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
-    char before_str[32];
-    char after_str[32];
+    char before_str[CTC_DATE_SIZE];
+    char after_str[CTC_DATE_SIZE];
     WOLFSSL_ASN1_TIME *notBefore = NULL;
     WOLFSSL_ASN1_TIME *notAfter = NULL;
 
