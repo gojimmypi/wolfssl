@@ -29,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		build\VisualGDB\Debug\config\sdkconfig.h = build\VisualGDB\Debug\config\sdkconfig.h
 		..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\wolfssl\wolfcrypt\settings.h
 		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
+		wolfssl_pio_build.bat = wolfssl_pio_build.bat
 		build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl = build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl
 	EndProjectSection
 EndProject
