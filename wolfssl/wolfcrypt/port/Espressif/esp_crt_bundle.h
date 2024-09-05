@@ -37,14 +37,15 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
-    #include <wolfssl/ssl.h>
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define WOLFSSL_X509_VERIFY_CALLBACK (void *, WOLFSSL_X509 *, int, uint32_t *)
+#include <wolfssl/ssl.h>
 
 typedef struct wolfssl_ssl_config wolfssl_ssl_config;
 
@@ -88,7 +89,6 @@ esp_err_t esp_crt_bundle_attach(void *conf);
  * Specific to wolfSSL. Not used by ESP-IDF esp-tls layer.
  */
 esp_err_t esp_crt_bundle_is_valid();
-
 
 /**
  * @brief      Return 1 if Cert Bundle loaded, otheriwse 0.

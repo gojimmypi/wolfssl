@@ -214,6 +214,15 @@ E (50623) HTTP_CLIENT: Connection failed, sock < 0
 E (50623) HTTP_CLIENT: Error perform http request ESP_ERR_HTTP_CONNECT
 ```
 
+## Tool doesn't match supported version from list
+
+Edit the `C:\Users\%USER%\.platformio\packages\framework-espidf\tools\tools.json` and replace
+`13.2.0_20230928` with the desired version, such as `esp-13.2.0_20240530`.
+
+```
+  Tool doesn't match supported version from list ['esp-13.2.0_20230928']:
+  C:/Users/gojimmypi/.platformio/packages/toolchain-xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe
+```
 
 ## Manual Testing
 

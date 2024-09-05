@@ -101,7 +101,7 @@ menu "wolfSSL"
     # wolfCrypt Test
     # -----------------------------------------------------------------------------------------------------------------
     config ESP_WOLFSSL_ENABLE_TEST
-        bool "Enable wolfCrypt test Library"
+        bool "Enable wolfCrypt Test Library"
         default n
         help
             Enables wolfcrypt/test/test.c code for testing. Disables NO_CRYPT_TEST.
@@ -209,20 +209,26 @@ menu "wolfSSL"
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
-    menu "wolfSSL ESP-TLS"
-        config TLS_STACK_WOLFSSL
-            bool "Include wolfSSL in ESP-TLS"
-            default y
-            select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
-            help
-                Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
+    config TLS_STACK_WOLFSSL
+        # Invisible option that locks TLS_STACK_WOLFSSL to ESP_TLS_USING_WOLFSSL
+        bool
+        default n
+        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
+        help
+            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
+            Enabled when wolfSSL is selected in ESP_TLS_LIBRARY_CHOOSE.
+
+    menu "wolfSSL ESP-TLS v2"
+        depends on ESP_TLS_USING_WOLFSSL
 
         menu "Certificate Bundle"
+            depends on ESP_TLS_USING_WOLFSSL
 
             config WOLFSSL_CERTIFICATE_BUNDLE
                 bool "Enable trusted root certificate bundle"
-                default y if TLS_STACK_WOLFSSL
+                default y if ESP_TLS_USING_WOLFSSL
                 default n
+                depends on ESP_TLS_USING_WOLFSSL
                 help
                     Enable support for large number of default root certificates
 
@@ -234,6 +240,7 @@ menu "wolfSSL"
             config WOLFSSL_NO_ASN_STRICT
                 bool "Relax Certificate ASN Strict Checks"
                 default n
+                depends on ESP_TLS_USING_WOLFSSL
                 help
                     Allows sub-optimal certificate ASN checks. Unless using a bundle with known issues,
                     it is recommended to NOT enable this.
@@ -241,6 +248,7 @@ menu "wolfSSL"
             config WOLFSSL_ASN_ALLOW_0_SERIAL
                 bool "Allow cert missing an ASN Serial Number"
                 default y
+                depends on ESP_TLS_USING_WOLFSSL
                 help
                     Although not recommended, there may be certificates in the bundle that are missing
                     a serial number. This option allows the missing value without having to fully
@@ -248,7 +256,7 @@ menu "wolfSSL"
 
             choice WOLFSSL_DEFAULT_CERTIFICATE_BUNDLE
                 bool "Default certificate bundle options"
-                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
                 default WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL
 
                 config WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL
@@ -263,11 +271,11 @@ menu "wolfSSL"
             endchoice
 
             config WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE
-                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
                 default n
                 bool "Add custom certificates to the default bundle"
             config WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH
-                depends on WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE
+                depends on WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
                 string "Custom certificate bundle path"
                 help
                     Name of the custom certificate directory or file. This path is evaluated
@@ -275,7 +283,7 @@ menu "wolfSSL"
 
             config WOLFSSL_CERTIFICATE_BUNDLE_DEPRECATED_LIST
                 bool "Add deprecated root certificates"
-                depends on WOLFSSL_CERTIFICATE_BUNDLE && !WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
+                depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL && !WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
                 help
                     Include the deprecated list of root certificates in the bundle.
                     This list gets updated when a certificate is removed from the Mozilla's
@@ -291,7 +299,7 @@ menu "wolfSSL"
             config WOLFSSL_CERTIFICATE_BUNDLE_MAX_CERTS
                 int "Maximum no of certificates allowed in certificate bundle"
                 default 200
-                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
 
         endmenu
     endmenu # wolfSSL ESP-TLS

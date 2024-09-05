@@ -1,8 +1,6 @@
 How to build PlatformIO based project
 =====================================
 
-runner test 2
-
 Modified for no local copy of wolfSSL
 
 1. [Install PlatformIO Core](https://docs.platformio.org/page/core.html)
@@ -26,6 +24,9 @@ pio run -t clean
 
 # Build project
 pio run
+
+# or verbose build:
+pio run -v
 
 ## Other commands:
 
