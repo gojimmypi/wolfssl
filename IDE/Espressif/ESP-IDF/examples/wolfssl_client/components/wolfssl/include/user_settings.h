@@ -466,14 +466,14 @@
     /* Required for RSA */
     #define WC_RSA_PSS
 
-    /* TLS 1.3 normally requires HAVE_FFDHE */
-    #ifdef defined(HAVE_FFDHE_2048) || \
-           defined(HAVE_FFDHE_3072) || \
-           defined(HAVE_FFDHE_4096) || \
-           defined(HAVE_FFDHE_6144) || \
-           defined(HAVE_FFDHE_8192)
+    /* TLS 1.3 normally requires HAVE_FFDHE. For now just syntax highlight: */
+    #if defined(HAVE_FFDHE_2048) || \
+        defined(HAVE_FFDHE_3072) || \
+        defined(HAVE_FFDHE_4096) || \
+        defined(HAVE_FFDHE_6144) || \
+        defined(HAVE_FFDHE_8192)
     #else
-        // #error "TLS 1.3 requires AVE_FFDHE_[nnnn]"
+        /* #error "TLS 1.3 requires AVE_FFDHE_[nnnn]" */
     #endif
 #endif
 
