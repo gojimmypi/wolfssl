@@ -831,7 +831,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
             VERBATIM)
 
         # Reminder the file is generated at build time, not cmake load time.
-        message(STATUS "wolfSSL Cert Bundle File to be greated at build time in: ${crt_bundle}")
+        message(STATUS "wolfSSL Cert Bundle File to be created at build time in: ${crt_bundle}")
 
         add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
 
