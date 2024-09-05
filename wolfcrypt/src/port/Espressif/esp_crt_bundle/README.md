@@ -224,6 +224,22 @@ Edit the `C:\Users\%USER%\.platformio\packages\framework-espidf\tools\tools.json
   C:/Users/gojimmypi/.platformio/packages/toolchain-xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe
 ```
 
+## ESP_ERROR_CHECK failed: esp_err_t 0xffffffff (ESP_FAIL) at 0x400d3b60
+
+This is a generic `ESP_ERROR_CHECK` result, in this case the default WiFi SSID and password could not connect:
+
+
+```
+I (25970) example_connect: Wi-Fi disconnected, trying to reconnect...
+I (28380) example_connect: WiFi Connect failed 7 times, stop reconnect.
+ESP_ERROR_CHECK failed: esp_err_t 0xffffffff (ESP_FAIL) at 0x400d3b60
+file: "main/esp_http_client_example.c" line 936
+func: app_main
+expression: example_connect()
+
+abort() was called at PC 0x400890e3 on core 0
+```
+
 ## Manual Testing
 
 To test if the `howsmyssl` web site has TLS 1.3 working, use the [wolfSSL client example](https://github.com/wolfSSL/wolfssl/tree/master/examples/client):
