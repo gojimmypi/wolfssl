@@ -50,13 +50,9 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
+#   See ESP-IDF esp-tls component for config TLS_STACK_WOLFSSL
+
 menu "wolfSSL"
-#    config TLS_STACK_WOLFSSL
-#        bool "Include wolfSSL in ESP-TLS"
-#        default y
-#        select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
-#        help
-#            Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
 
     menu "Hardening"
         config ESP_WOLFSSL_WC_NO_HARDEN
@@ -113,6 +109,14 @@ menu "wolfSSL"
             default n
             help
                 Enables HAVE_WOLFCRYPT_TEST_OPTIONS
+
+        config TEST_ESPIDF_ALL_WOLFSSL
+            bool "Enable all features to use in tests"
+            depends on ESP_WOLFSSL_ENABLE_TEST
+            default n
+            help
+                Enables TEST_ESPIDF_ALL_WOLFSSL
+
     endmenu # wolfCrypt tests
 
     # -----------------------------------------------------------------------------------------------------------------
@@ -310,6 +314,9 @@ menu "wolfSSL"
         bool "Modify default hardware acceleration settings"
         default n
         help
+            When disabling all hardware acceleration for smaller memory footprint,
+            disabling TFM fast math provides faster wolfSSL software algorithms in an
+            even smaller flash memory footprint.
             Typically used for debugging, analysis, or optimizations. The default
             hardware acceleration features can be each manually adjusted.
 
