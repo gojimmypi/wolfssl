@@ -21,9 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{C11B
 		..\..\..\include.am = ..\..\..\include.am
 		..\..\..\..\..\wolfcrypt\src\include.am = ..\..\..\..\..\wolfcrypt\src\include.am
 		components\wolfssl\Kconfig = components\wolfssl\Kconfig
-		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py
-		platformio.ini = platformio.ini
-		README.md = README.md
 		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md
 		sdkconfig.defaults = sdkconfig.defaults
 		build\VisualGDB\Debug\config\sdkconfig.h = build\VisualGDB\Debug\config\sdkconfig.h
@@ -81,6 +78,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wpa_supplicant", "wpa_suppl
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-bundles", "esp-tls-bundles", "{97019E62-2BE4-494B-B734-520892B2719E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "platformio", "platformio", "{B75B615F-9CBB-44F5-906F-0150587D660C}"
+	ProjectSection(SolutionItems) = preProject
+		esp_http_client_example.code-workspace = esp_http_client_example.code-workspace
+		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py
+		platformio.ini = platformio.ini
+		README.md = README.md
+		sdkconfig.esp32dev = sdkconfig.esp32dev
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
