@@ -218,7 +218,7 @@ menu "wolfSSL"
             Includes wolfSSL in ESP-TLS so that it can be compiled with wolfSSL as its SSL/TLS library.
             Enabled when wolfSSL is selected in ESP_TLS_LIBRARY_CHOOSE.
 
-    menu "wolfSSL ESP-TLS v2"
+    menu "wolfSSL ESP-TLS"
         depends on ESP_TLS_USING_WOLFSSL
 
         menu "Certificate Bundle"
@@ -437,6 +437,21 @@ menu "wolfSSL"
     endmenu # Component Config
     # -----------------------------------------------------------------------------------------------------------------
 
+    # -----------------------------------------------------------------------------------------------------------------
+    menu "Utility Config"
+        config USE_WOLFSSL_ESP_SDK_TIME
+            bool "Enable wolfSSL time helper functions"
+            default n
+            help
+                Enables use of various time and date setting functions found in the esp-sdk-lib.h file.
+
+        config USE_WOLFSSL_ESP_SDK_WIFI
+            bool "Enable wolfSSL WiFi helper functions"
+            default n
+            help
+                Enables use of various time and date setting functions found in the esp-sdk-lib.h file.
+
+    endmenu # Utility Config
 endmenu # wolfSSL
 # ---------------------------------------------------------------------------------------------------------------------
 
