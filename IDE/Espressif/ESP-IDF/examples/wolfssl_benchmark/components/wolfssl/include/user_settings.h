@@ -79,21 +79,6 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-/* Parse any menuconfig items into wolfSSL equivalents */
-#if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) && CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL
-    #define WOLFSSL_ASN_ALLOW_0_SERIAL
-#endif
-#if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && CONFIG_WOLFSSL_NO_ASN_STRICT
-    #define WOLFSSL_NO_ASN_STRICT
-#endif
-#if defined(CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE) && CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
-    #define WOLFSSL_DEBUG_CERT_BUNDLE
-#endif
-#if defined(CONFIG_WOLFSSL_ALT_CERT_CHAINS) && CONFIG_WOLFSSL_ALT_CERT_CHAINS
-    #define WOLFSSL_ALT_CERT_CHAINS
-#endif
-
-
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -185,7 +170,7 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-    #define WOLFSSL_CERT_EXT /* TODO: investigate */
+    
 #elif defined(APP_ESP_HTTP_CLIENT)
     /* The ESP-IDF Version */
     #define FP_MAX_BITS (8192 * 2)
@@ -1042,12 +1027,6 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
 #else
     #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
-#endif
-#if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) && \
-    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
-            CONFIG_MBEDTLS_CERTIFICATE_BUNDLE  && \
-            CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
-    #error "mbedTLS and wolfSSL Certificate Bundles both enabled. Pick one".
 #endif
 /* See settings.h for some of the possible hardening options:
  *
