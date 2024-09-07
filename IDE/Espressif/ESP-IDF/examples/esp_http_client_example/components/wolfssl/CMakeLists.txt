@@ -506,6 +506,7 @@ else()
         endif()
     endif()
 
+    message(STATUS "WOLFSSL_EXTRA_PROJECT_DIR = ${WOLFSSL_EXTRA_PROJECT_DIR}")
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
@@ -730,7 +731,7 @@ else()
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
-        "\"${WOLFSSL_ROOT}/examples\"" # Examnples are distributed in Managed Components, but not part of a project.
+        "\"${WOLFSSL_ROOT}/examples\"" # Examples are distributed in Managed Components, but not part of a project.
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -794,7 +795,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
 
         # Generate custom certificate bundle using the generate_cert_bundle utility
         # set(GENERATE_CERT_BUNDLEPY ${python} "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/pio_install_cryptography.py" && "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py")
-#        set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
+        set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
 
         if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
             list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
@@ -1003,6 +1004,15 @@ endif()
 
 if(WOLFSSL_ROOT)
     message(STATUS "Using wolfSSL in ${WOLFSSL_ROOT}")
+
+    # PlatformIO does not process script from from the Espressif cmake process.
+    # We need to know where wolfSSL source code was found, so save it in the
+    # PIO_WOLFSSL_ROOT environment variable to later be read by extra_script.py
+
+    set(ENV{PIO_WOLFSSL_ROOT} "${WOLFSSL_ROOT}")
+    message(STATUS "PIO_WOLFSSL_ROOT =  $ENV{PIO_WOLFSSL_ROOT}")
+    message(STATUS "PLATFORMIO_BUILD_DIR = $ENV{PLATFORMIO_BUILD_DIR}")
+    file(WRITE "tada.txt" "${WOLFSSL_ROOT}\n")
     # See esp-tls Kconfig; menu "ESP-TLS", ESP_TLS_LIBRARY_CHOOSE
     if(CONFIG_ESP_TLS_USING_WOLFSSL)
         message(STATUS "wolfSSL will be used for ESP-TLS")
