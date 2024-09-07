@@ -3995,6 +3995,14 @@ extern void uITRON4_free(void *p) ;
     /* Ciphersuite check done in internal.h */
 #endif
 
+/*
+ * TODO this fails from
+ *  ./configure --enable-all && make clean && make
+#if defined(HAVE_FFDHE) && !defined(HAVE_DH)
+    #error "HAVE_FFDHE requires HAVE_DH"
+#endif
+*/
+
 /* Some final sanity checks. See esp32-crypt.h for Apple HomeKit config. */
 #if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
     #ifndef WOLFCRYPT_HAVE_SRP
