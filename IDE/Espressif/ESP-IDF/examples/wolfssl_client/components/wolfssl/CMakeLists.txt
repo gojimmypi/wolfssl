@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.7.1 Espressif ESP-IDF preview
+# Version 5.7.2 Espressif ESP-IDF integration
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -28,13 +28,6 @@ cmake_minimum_required(VERSION 3.16)
 
 set(VERBOSE_COMPONENT_MESSAGES 1)
 
-set(TEST_VAR "hi")
-
-function(SETUP_WOLFSSL TEST_VAR)
-    # Custom setup code
-    message(STATUS "Hello world! ${TEST_VAR}")
-    set(TEST_VAR "bye" PARENT_SCOPE)
-endfunction()
 
 # function: IS_ESP_IDF_COMPONENT
 #  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
@@ -506,6 +499,7 @@ else()
         endif()
     endif()
 
+    message(STATUS "WOLFSSL_EXTRA_PROJECT_DIR = ${WOLFSSL_EXTRA_PROJECT_DIR}")
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
@@ -730,7 +724,7 @@ else()
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
-        "\"${WOLFSSL_ROOT}/examples\"" # Examnples are distributed in Managed Components, but not part of a project.
+        "\"${WOLFSSL_ROOT}/examples\"" # Examples are distributed in Managed Components, but not part of a project.
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -754,8 +748,6 @@ else()
     set(EXTRA_COMPONENT_DIRS "${COMPONENT_SRCDIRS}")
 
     if(WOLFSSL_ROOT)
-#        wolfssl_init_cert_bundle()
-
         # Only register the component if we found wolfSSL source.
         # This is important to allow Cmake to finish to completion, otherwise the UI
         # may not be able to display the Kconfig settings to fix a bad or missing source.
@@ -818,17 +810,31 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
         endif()
         list(APPEND args --input ${crt_paths} -q)
 
+        message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
         get_filename_component(crt_bundle
             ${bundle_name}
             ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
         message(STATUS "Setting up bundle generate: ${GENERATE_CERT_BUNDLEPY} ${args}")
         message(STATUS "Depends on custom bundle path: ${custom_bundle_path}")
+        message(STATUS "crt_bundle ${crt_bundle}")
+        message(STATUS "COMPONENT_LIB ${COMPONENT_LIB}")
+        message(STATUS "GENERATE_CERT_BUNDLEPY ${GENERATE_CERT_BUNDLEPY}")
+        message(STATUS "args ${args}")
+        message(STATUS "cert_bundle ${cert_bundle}")
+
         # Generate bundle according to config
+        # File is generated at build time, not cmake load
         add_custom_command(OUTPUT ${crt_bundle}
             COMMAND ${GENERATE_CERT_BUNDLEPY} ARGS ${args}
             DEPENDS ${custom_bundle_path}
             VERBATIM)
+
+        if(EXISTS "${crt_bundle}")
+            message(STATUS "Bundle file exists from prior build: ${crt_bundle}")
+        else()
+            message(STATUS "Bundle file expected during next build: ${crt_bundle}")
+        endif()
 
         # Reminder the file is generated at build time, not cmake load time.
         message(STATUS "wolfSSL Cert Bundle File to be created at build time in: ${crt_bundle}")
@@ -987,6 +993,15 @@ endif()
 
 if(WOLFSSL_ROOT)
     message(STATUS "Using wolfSSL in ${WOLFSSL_ROOT}")
+
+    # PlatformIO does not process script from from the Espressif cmake process.
+    # We need to know where wolfSSL source code was found, so save it in the
+    # PIO_WOLFSSL_ROOT environment variable to later be read by extra_script.py
+
+    set(ENV{PIO_WOLFSSL_ROOT} "${WOLFSSL_ROOT}")
+    message(STATUS "PIO_WOLFSSL_ROOT =  $ENV{PIO_WOLFSSL_ROOT}")
+    message(STATUS "PLATFORMIO_BUILD_DIR = $ENV{PLATFORMIO_BUILD_DIR}")
+    file(WRITE "tada.txt" "${WOLFSSL_ROOT}\n")
     # See esp-tls Kconfig; menu "ESP-TLS", ESP_TLS_LIBRARY_CHOOSE
     if(CONFIG_ESP_TLS_USING_WOLFSSL)
         message(STATUS "wolfSSL will be used for ESP-TLS")
