@@ -581,6 +581,12 @@
         #define        WOLFSSL_APPLE_HOMEKIT
     #endif
 
+    #if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
+        /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
+         * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
+         * that here: */
+        #define OPENSSL_EXTRA
+    #endif
 
     /* Optional Apple HomeKit support. See below for related sanity checks. */
     #if defined(WOLFSSL_APPLE_HOMEKIT)
@@ -3572,8 +3578,8 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_NO_HASH_RAW
 #endif
 
-/* XChacha not implemented with ARM assembly ChaCha */
-#if defined(WOLFSSL_ARMASM)
+#if defined(HAVE_XCHACHA) && !defined(HAVE_CHACHA)
+    /* XChacha requires ChaCha */
     #undef HAVE_XCHACHA
 #endif
 
@@ -3805,14 +3811,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 #endif
 
-#ifdef HAVE_PQM4
-#define HAVE_PQC
-#define WOLFSSL_HAVE_KYBER
-#define WOLFSSL_KYBER512
-#define WOLFSSL_NO_KYBER768
-#define WOLFSSL_NO_KYBER1024
-#endif
-
 #if (defined(HAVE_LIBOQS) ||                                            \
      defined(HAVE_LIBXMSS) ||                                           \
      defined(HAVE_LIBLMS) ||                                            \
@@ -3821,13 +3819,8 @@ extern void uITRON4_free(void *p) ;
     #error Experimental settings without WOLFSSL_EXPERIMENTAL_SETTINGS
 #endif
 
-#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS) && !defined(HAVE_PQM4) && \
-    !defined(WOLFSSL_HAVE_KYBER)
+#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS) && !defined(WOLFSSL_HAVE_KYBER)
 #error Please do not define HAVE_PQC yourself.
-#endif
-
-#if defined(HAVE_PQC) && defined(HAVE_LIBOQS) && defined(HAVE_PQM4)
-#error Please do not define both HAVE_LIBOQS and HAVE_PQM4.
 #endif
 
 #if defined(HAVE_PQC) && defined(WOLFSSL_DTLS13) && \
@@ -4001,14 +3994,6 @@ extern void uITRON4_free(void *p) ;
     #endif
     /* Ciphersuite check done in internal.h */
 #endif
-
-/*
- * TODO this fails from
- *  ./configure --enable-all && make clean && make
-#if defined(HAVE_FFDHE) && !defined(HAVE_DH)
-    #error "HAVE_FFDHE requires HAVE_DH"
-#endif
-*/
 
 /* Some final sanity checks. See esp32-crypt.h for Apple HomeKit config. */
 #if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
