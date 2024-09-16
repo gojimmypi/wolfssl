@@ -109,7 +109,11 @@ extern void* _thread_local_end;
 #define IRAMF1_END        ((void*)(0x40108000 + 0x4000))
 #define IRAMF2_START      ((void*)(0x4010C000))
 #define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
-//extern void *xPortSupervisorStackPointer;
+
+#if 0
+    /* Optional Stack Debugging */
+    extern void *xPortSupervisorStackPointer;
+#endif
 
 enum sdk_memory_segment
 {

@@ -5,8 +5,13 @@
 # Converts PEM and DER certificates to a custom bundle format which stores just the
 # subject name and public key to reduce space
 #
-# The bundle will have the format: number of certificates; crt 1 subject name length; crt 1 public key length;
-# crt 1 subject name; crt 1 public key; crt 2...
+# The bundle will have the format:
+# number of certificates;
+# crt 1 subject name length;
+# crt 1 public key length;
+# crt 1 subject name;
+# crt 1 public key;
+# crt 2...
 #
 # SPDX-FileCopyrightText: 2018-2022 Espressif Systems (Shanghai) CO LTD
 # SPDX-License-Identifier: Apache-2.0
@@ -25,13 +30,15 @@ try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization
+    from cryptography.x509.oid import NameOID
+
 except ImportError:
     print('The cryptography package is not installed.'
           'Please refer to the Get Started section of the ESP-IDF Programming Guide for '
           'setting up the required packages.')
     raise
 
-ca_bundle_bin_file = 'x509_crt_bundle'
+ca_bundle_bin_file = 'x509_crt_bundle_wolfssl'
 
 quiet = False
 
@@ -116,9 +123,80 @@ class CertificateBundle:
         self.certificates.append(x509.load_der_x509_certificate(crt_str, default_backend()))
         status('Successfully added 1 certificate')
 
+    def get_subject_text(self, cert):
+        # Extract subject as a string in the desired format
+        return ", ".join(
+            f"/{attribute.oid._name}={attribute.value}"  # Adjust as necessary to format as "/C=US/O=..."
+            for attribute in cert.subject
+        )
+
+    desired_dn_order = ["/C=", "/OU=", "/O=", "/CN=", "/L=", "/ST="]
+
+    def extract_dn_elements(self, subject):
+        """
+        Extract DN elements based on the desired order and return them as concatenated strings.
+        """
+        dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": "", "/L=": "", "/ST=": ""}
+
+        # Map DN elements to their respective values
+        for attribute in subject:
+            if attribute.oid == x509.NameOID.COUNTRY_NAME:
+                dn_dict["/C="] = attribute.value
+            elif attribute.oid == x509.NameOID.ORGANIZATIONAL_UNIT_NAME:
+                dn_dict["/OU="] = attribute.value
+            elif attribute.oid == x509.NameOID.ORGANIZATION_NAME:
+                dn_dict["/O="] = attribute.value
+            elif attribute.oid == x509.NameOID.COMMON_NAME:
+                dn_dict["/CN="] = attribute.value
+            elif attribute.oid == x509.NameOID.LOCALITY_NAME:
+                dn_dict["/L="] = attribute.value
+            elif attribute.oid == x509.NameOID.STATE_OR_PROVINCE_NAME:
+                dn_dict["/ST="] = attribute.value
+
+        # Construct the output strings in the desired order
+        result = [f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]]
+
+        return result
+
+
+    def sort_certificates_by_specific_dn_order(self, certificates):
+        """
+        Sort a list of certificates based on the specific DN order.
+        """
+        sorted_certs = sorted(
+            certificates,
+            key=lambda cert: self.extract_dn_elements(cert.subject)
+        )
+        return sorted_certs
+
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
-        self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+        # NOTE: When sorting, see `esp_crt_bundle.c`;
+        #       Use `#define CERT_BUNDLE_UNSORTED` when not sorting.
+        #
+        # self.certificates = sorted(self.certificates, key=lambda cert: self.get_subject_text(cert))
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject_name)
+        # self.certificates = sorted(
+        #                         self.certificates,
+        #                         key=lambda cert: (
+        #                             cert.subject_name
+        #                             if hasattr(cert, 'subject_name') and cert.subject_name is not None
+        #                             else ''
+        #                         )
+        #                     )
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+        # Other sort orders to consider (for reference only)
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '')
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert['issuer_name'])
+        # self.certificates = self.certificates = sorted(self.certificates, key=lambda cert: cert['subject_name'])
+        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
+        # self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
+
+        # We are using a specific order as defined by wolfSSL strings:
+        self.certificates = self.sort_certificates_by_specific_dn_order(self.certificates)
 
         bundle = struct.pack('>H', len(self.certificates))
 
@@ -126,10 +204,17 @@ class CertificateBundle:
             """ Read the certificate as DER format """
             cert_der = crt.public_bytes(serialization.Encoding.DER)
 
+            # serial_number = crt.serial_number
+            # if serial_number == 0:
+            #     cert_der_len = 0
+            # else:
+
             cert_der_len = len(cert_der)
+
             len_data = struct.pack('>H', cert_der_len)
 
             bundle += len_data
+            # bundle += sub_name_der # reminder mbedTLS stuff the name here, then only the public key cert NOT the entire cert after:
             bundle += cert_der
 
         return bundle

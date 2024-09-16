@@ -913,7 +913,7 @@ static int ProcessBufferTryDecodeFalcon(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
         /* Free dynamically allocated data in key. */
         wc_falcon_free(key);
     }
-    else if ((ret == ALGO_ID_E) && (*keyFormat == 0)) {
+    else if ((ret == WC_NO_ERR_TRACE(ALGO_ID_E)) && (*keyFormat == 0)) {
         WOLFSSL_MSG("Not a Falcon key");
         /* Format unknown so keep trying. */
         ret = 0;
@@ -1021,7 +1021,7 @@ static int ProcessBufferTryDecodeDilithium(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
         /* Free dynamically allocated data in key. */
         wc_dilithium_free(key);
     }
-    else if ((ret == ALGO_ID_E) && (*keyFormat == 0)) {
+    else if ((ret == WC_NO_ERR_TRACE(ALGO_ID_E)) && (*keyFormat == 0)) {
         WOLFSSL_MSG("Not a Dilithium key");
         /* Format unknown so keep trying. */
         ret = 0;
@@ -1560,7 +1560,9 @@ static void ProcessBufferCertSetHave(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     }
     #endif
 #ifndef WC_STRICT_SIG
-    wolfssl_set_have_from_key_oid(ctx, ssl, cert->keyOID);
+    if ((ctx != NULL) || (ssl != NULL)) {
+        wolfssl_set_have_from_key_oid(ctx, ssl, (int)cert->keyOID);
+    }
 #else
     /* Set whether ECC is available based on signature available. */
     if (ssl != NULL) {
@@ -2367,7 +2369,7 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff, long sz,
     if (ret == 0) {
         ret = 1;
     }
-    else if (ret == WOLFSSL_FATAL_ERROR) {
+    else if (ret == WC_NO_ERR_TRACE(WOLFSSL_FATAL_ERROR)) {
         ret = 0;
     }
     WOLFSSL_LEAVE("ProcessBuffer", ret);
@@ -4809,7 +4811,8 @@ int wolfSSL_CTX_add1_chain_cert(WOLFSSL_CTX* ctx, WOLFSSL_X509* x509)
         }
         if (ret == 1) {
             /* Push the X509 object onto stack. */
-            ret = wolfSSL_sk_X509_push(ctx->x509Chain, x509);
+            ret = wolfSSL_sk_X509_push(ctx->x509Chain, x509) > 0
+                    ? WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
         }
 
         if (ret != 1) {
@@ -4873,7 +4876,8 @@ int wolfSSL_add0_chain_cert(WOLFSSL* ssl, WOLFSSL_X509* x509)
         }
         if (ret == 1) {
             /* Push X509 object onto stack to be freed. */
-            ret = wolfSSL_sk_X509_push(ssl->ourCertChain, x509);
+            ret = wolfSSL_sk_X509_push(ssl->ourCertChain, x509) > 0
+                    ? WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
             if (ret != 1) {
                 /* Free it now on error. */
                 wolfSSL_X509_free(x509);
@@ -5139,7 +5143,7 @@ int wolfSSL_CTX_set_default_verify_paths(WOLFSSL_CTX* ctx)
     #elif defined(WOLFSSL_SYS_CA_CERTS)
         /* Load the system CA certificates. */
         ret = wolfSSL_CTX_load_system_CA_certs(ctx);
-        if (ret == WOLFSSL_BAD_PATH) {
+        if (ret == WC_NO_ERR_TRACE(WOLFSSL_BAD_PATH)) {
             /* OpenSSL doesn't treat the lack of a system CA cert directory as a
              * failure. We do the same here.
              */
@@ -5268,8 +5272,8 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
 
     if (ret == 1) {
         /* Allocate buffers for p and g to be assigned into SSL. */
-        pAlloc = (byte*)XMALLOC(pSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
-        gAlloc = (byte*)XMALLOC(gSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
+        pAlloc = (byte*)XMALLOC((size_t)pSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
+        gAlloc = (byte*)XMALLOC((size_t)gSz, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         if ((pAlloc == NULL) || (gAlloc == NULL)) {
             /* Memory will be freed below in the (ret != 1) block */
             ret = MEMORY_E;
@@ -5328,7 +5332,7 @@ static int wolfssl_check_dh_key(unsigned char* p, int pSz, unsigned char* g,
         /* Initialize a DH object. */
         if ((ret = wc_InitDhKey(checkKey)) == 0) {
             /* Check DH parameters. */
-            ret = wc_DhSetCheckKey(checkKey, p, (word32)pSz, g, gSz, NULL, 0, 0, &rng);
+            ret = wc_DhSetCheckKey(checkKey, p, (word32)pSz, g, (word32)gSz, NULL, 0, 0, &rng);
             /* Dispose of DH object. */
             wc_FreeDhKey(checkKey);
         }
@@ -5427,8 +5431,8 @@ int wolfSSL_CTX_SetTmpDH(WOLFSSL_CTX* ctx, const unsigned char* p, int pSz,
 
     if (ret == 1) {
         /* Allocate buffers for p and g to be assigned into SSL context. */
-        pAlloc = (byte*)XMALLOC(pSz, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
-        gAlloc = (byte*)XMALLOC(gSz, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
+        pAlloc = (byte*)XMALLOC((size_t)pSz, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
+        gAlloc = (byte*)XMALLOC((size_t)gSz, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         if ((pAlloc == NULL) || (gAlloc == NULL)) {
             ret = MEMORY_E;
         }
@@ -5683,11 +5687,11 @@ static int ws_ctx_ssl_set_tmp_dh(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
         }
         else if (ssl != NULL) {
             /* Set p and g into SSL. */
-            res = wolfssl_set_tmp_dh(ssl, p, (int)pSz, g, gSz);
+            res = wolfssl_set_tmp_dh(ssl, p, (int)pSz, g, (int)gSz);
         }
         else {
             /* Set p and g into SSL context. */
-            res = wolfssl_ctx_set_tmp_dh(ctx, p, (int)pSz, g, gSz);
+            res = wolfssl_ctx_set_tmp_dh(ctx, p, (int)pSz, g, (int)gSz);
         }
     }
 

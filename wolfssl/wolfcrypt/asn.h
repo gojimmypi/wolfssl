@@ -366,7 +366,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Int8Bit(dataASN, num)                                   \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_WORD8;                     \
-        (dataASN)->data.u8  = num;                                     \
+        (dataASN)->data.u8  = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to get a 16-bit number.
@@ -377,7 +377,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Int16Bit(dataASN, num)                                  \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_WORD16;                    \
-        (dataASN)->data.u16 = num;                                     \
+        (dataASN)->data.u16 = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to get a 32-bit number.
@@ -388,7 +388,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Int32Bit(dataASN, num)                                  \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_WORD32;                    \
-        (dataASN)->data.u32 = num;                                     \
+        (dataASN)->data.u32 = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to get data into a buffer of a specific length.
@@ -400,8 +400,8 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Buffer(dataASN, d, l)                                   \
     do {                                                               \
         (dataASN)->dataType           = ASN_DATA_TYPE_BUFFER;          \
-        (dataASN)->data.buffer.data   = d;                             \
-        (dataASN)->data.buffer.length = l;                             \
+        (dataASN)->data.buffer.data   = (d);                           \
+        (dataASN)->data.buffer.length = (l);                           \
     } while (0)
 
 /* Setup ASN data item to check parsed data against expected buffer.
@@ -413,8 +413,8 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_ExpBuffer(dataASN, d, l)                                \
     do {                                                               \
         (dataASN)->dataType        = ASN_DATA_TYPE_EXP_BUFFER;         \
-        (dataASN)->data.ref.data   = d;                                \
-        (dataASN)->data.ref.length = l;                                \
+        (dataASN)->data.ref.data   = (d);                              \
+        (dataASN)->data.ref.length = (l);                              \
     } while (0)
 
 /* Setup ASN data item to get a number into an mp_int.
@@ -425,7 +425,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_MP(dataASN, num)                                        \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_MP;                        \
-        (dataASN)->data.mp  = num;                                     \
+        (dataASN)->data.mp  = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to get a number into an mp_int that is initialized.
@@ -436,7 +436,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_MP_Inited(dataASN, num)                                 \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_MP_INITED;                 \
-        (dataASN)->data.mp  = num;                                     \
+        (dataASN)->data.mp  = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to get a positive or negative number into an mp_int.
@@ -447,7 +447,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_MP_PosNeg(dataASN, num)                                 \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_MP_POS_NEG;                \
-        (dataASN)->data.mp  = num;                                     \
+        (dataASN)->data.mp  = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to be a choice of tags.
@@ -458,7 +458,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Choice(dataASN, options)                                \
     do {                                                               \
         (dataASN)->dataType    = ASN_DATA_TYPE_CHOICE;                 \
-        (dataASN)->data.choice = options;                              \
+        (dataASN)->data.choice = (options);                            \
     } while (0)
 
 /* Setup ASN data item to get a boolean value.
@@ -469,7 +469,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define GetASN_Boolean(dataASN, num)                                   \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_NONE;                      \
-        (dataASN)->data.u8  = num;                                     \
+        (dataASN)->data.u8  = (num);                                   \
     } while (0)
 
 /* Setup ASN data item to be a an OID of a specific type.
@@ -478,7 +478,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
  * @param [in] oidType  Type of OID to expect.
  */
 #define GetASN_OID(dataASN, oidType)                                   \
-    (dataASN)->data.oid.type = oidType
+    (dataASN)->data.oid.type = (oidType)
 
 /* Get the data and length from an ASN data item.
  *
@@ -524,7 +524,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define SetASN_Boolean(dataASN, val)                                   \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_NONE;                      \
-        (dataASN)->data.u8  = val;                                     \
+        (dataASN)->data.u8  = (val);                                   \
     } while (0)
 
 /* Setup an ASN data item to set an 8-bit number.
@@ -535,7 +535,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define SetASN_Int8Bit(dataASN, num)                                   \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_WORD8;                     \
-        (dataASN)->data.u8  = num;                                     \
+        (dataASN)->data.u8  = (num);                                   \
     } while (0)
 
 /* Setup an ASN data item to set a 16-bit number.
@@ -546,7 +546,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define SetASN_Int16Bit(dataASN, num)                                  \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_WORD16;                    \
-        (dataASN)->data.u16 = num;                                     \
+        (dataASN)->data.u16 = (num);                                   \
     } while (0)
 
 /* Setup an ASN data item to set the data in a buffer.
@@ -557,8 +557,8 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
  */
 #define SetASN_Buffer(dataASN, d, l)                                   \
     do {                                                               \
-        (dataASN)->data.buffer.data   = d;                             \
-        (dataASN)->data.buffer.length = l;                             \
+        (dataASN)->data.buffer.data   = (d);                           \
+        (dataASN)->data.buffer.length = (word32)(l);                   \
     } while (0)
 
 /* Setup an ASN data item to set the DER encode data in a buffer.
@@ -570,8 +570,8 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define SetASN_ReplaceBuffer(dataASN, d, l)                            \
     do {                                                               \
         (dataASN)->dataType           = ASN_DATA_TYPE_REPLACE_BUFFER;  \
-        (dataASN)->data.buffer.data   = d;                             \
-        (dataASN)->data.buffer.length = l;                             \
+        (dataASN)->data.buffer.data   = (d);                           \
+        (dataASN)->data.buffer.length = (l);                           \
     } while (0)
 
 /* Setup an ASN data item to set an muli-precision number.
@@ -582,7 +582,7 @@ WOLFSSL_LOCAL void SetASN_OID(ASNSetData *dataASN, int oid, int oidType);
 #define SetASN_MP(dataASN, num)                                        \
     do {                                                               \
         (dataASN)->dataType = ASN_DATA_TYPE_MP;                        \
-        (dataASN)->data.mp  = num;                                     \
+        (dataASN)->data.mp  = (num);                                   \
     } while (0)
 
 /* Setup an ASN data item to set an OID based on id and type.
@@ -1724,7 +1724,9 @@ struct DecodedCert {
     const byte* extCrlInfo;          /* CRL Distribution Points          */
     int     extCrlInfoSz;            /* length of the URI                */
     byte    extSubjKeyId[KEYID_SIZE]; /* Subject Key ID                  */
+    word32  extSubjKeyIdSz;
     byte    extAuthKeyId[KEYID_SIZE]; /* Authority Key ID                */
+    word32  extAuthKeyIdSz;
 #ifdef WOLFSSL_AKID_NAME
     const byte* extAuthKeyIdIssuer;  /* Authority Key ID authorityCertIssuer */
     word32  extAuthKeyIdIssuerSz;    /* Authority Key ID authorityCertIssuer length */
@@ -1751,9 +1753,7 @@ struct DecodedCert {
     word32  extRawAuthKeyIdSz;
 #endif
     const byte* extAuthKeyIdSrc;
-    word32  extAuthKeyIdSz;
     const byte* extSubjKeyIdSrc;
-    word32  extSubjKeyIdSz;
 #endif
 #ifdef OPENSSL_ALL
     const byte* extSubjAltNameSrc;
@@ -2291,6 +2291,8 @@ WOLFSSL_LOCAL int GetLength(const byte* input, word32* inOutIdx, int* len,
                            word32 maxIdx);
 WOLFSSL_LOCAL int GetLength_ex(const byte* input, word32* inOutIdx, int* len,
                            word32 maxIdx, int check);
+WOLFSSL_LOCAL int GetASNHeader(const byte* input, byte tag, word32* inOutIdx,
+                               int* len, word32 maxIdx);
 WOLFSSL_LOCAL int GetSequence(const byte* input, word32* inOutIdx, int* len,
                              word32 maxIdx);
 WOLFSSL_LOCAL int GetSequence_ex(const byte* input, word32* inOutIdx, int* len,
@@ -2332,6 +2334,7 @@ WOLFSSL_LOCAL int GetAlgoIdEx(const byte* input, word32* inOutIdx, word32* oid,
                      word32 oidType, word32 maxIdx, byte *absentParams);
 WOLFSSL_LOCAL int GetASNTag(const byte* input, word32* idx, byte* tag,
                             word32 inputSz);
+WOLFSSL_LOCAL int GetASN_BitString(const byte* input, word32 idx, int length);
 
 WOLFSSL_LOCAL word32 SetASNLength(word32 length, byte* output);
 WOLFSSL_LOCAL word32 SetASNSequence(word32 len, byte* output);
@@ -2343,6 +2346,8 @@ WOLFSSL_LOCAL word32 SetASNSet(word32 len, byte* output);
 
 WOLFSSL_LOCAL word32 SetLength(word32 length, byte* output);
 WOLFSSL_LOCAL word32 SetLengthEx(word32 length, byte* output, byte isIndef);
+WOLFSSL_LOCAL word32 SetHeader(byte tag, word32 len, byte* output,
+                               byte isIndef);
 WOLFSSL_LOCAL word32 SetSequence(word32 len, byte* output);
 WOLFSSL_LOCAL word32 SetSequenceEx(word32 len, byte* output, byte isIndef);
 WOLFSSL_LOCAL word32 SetIndefEnd(byte* output);

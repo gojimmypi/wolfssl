@@ -221,6 +221,10 @@ int GetX509Error(int e)
         case WC_NO_ERR_TRACE(ASN_SIG_HASH_E):
         case WC_NO_ERR_TRACE(ASN_SIG_KEY_E):
             return WOLFSSL_X509_V_ERR_CERT_SIGNATURE_FAILURE;
+        /* We can't disambiguate if its the before or after date that caused
+         * the error. Assume expired. */
+        case WC_NO_ERR_TRACE(CRL_CERT_DATE_ERR):
+            return X509_V_ERR_CRL_HAS_EXPIRED;
         case WC_NO_ERR_TRACE(CRL_CERT_REVOKED):
             return WOLFSSL_X509_V_ERR_CERT_REVOKED;
         case WC_NO_ERR_TRACE(CRL_MISSING):
@@ -265,6 +269,10 @@ int wolfSSL_X509_verify_cert(WOLFSSL_X509_STORE_CTX* ctx)
                 ctx->current_cert->derCert->length,
                 WOLFSSL_FILETYPE_ASN1);
         SetupStoreCtxError(ctx, ret);
+    #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
+        if (ctx->store && ctx->store->verify_cb)
+            ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0, ctx) == 1 ? 0 : ret;
+    #endif
 
     #ifndef NO_ASN_TIME
         if (ret != WC_NO_ERR_TRACE(ASN_BEFORE_DATE_E) &&
@@ -285,12 +293,12 @@ int wolfSSL_X509_verify_cert(WOLFSSL_X509_STORE_CTX* ctx)
                 ret = ASN_BEFORE_DATE_E;
             }
             SetupStoreCtxError(ctx, ret);
+        #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
+            if (ctx->store && ctx->store->verify_cb)
+                ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0,
+                                            ctx) == 1 ? 0 : -1;
+        #endif
         }
-    #endif
-
-    #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
-        if (ctx->store && ctx->store->verify_cb)
-            ret = ctx->store->verify_cb(ret >= 0 ? 1 : 0, ctx) == 1 ? 0 : -1;
     #endif
 
         return ret >= 0 ? WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
@@ -537,7 +545,7 @@ WOLFSSL_STACK* wolfSSL_X509_STORE_CTX_get_chain(WOLFSSL_X509_STORE_CTX* ctx)
                      * signed and that a issuer was found */
                     if (issuer != NULL && wolfSSL_X509_NAME_cmp(&x509->issuer,
                                 &x509->subject) != 0) {
-                        if (wolfSSL_sk_X509_push(sk, issuer) != WOLFSSL_SUCCESS) {
+                        if (wolfSSL_sk_X509_push(sk, issuer) <= 0) {
                             WOLFSSL_MSG("Unable to load CA x509 into stack");
                             error = 1;
                         }
@@ -569,7 +577,7 @@ WOLFSSL_STACK* wolfSSL_X509_STORE_CTX_get_chain(WOLFSSL_X509_STORE_CTX* ctx)
                 break;
             }
 
-            if (wolfSSL_sk_X509_push(sk, x509) != WOLFSSL_SUCCESS) {
+            if (wolfSSL_sk_X509_push(sk, x509) <= 0) {
                 WOLFSSL_MSG("Unable to load x509 into stack");
                 wolfSSL_X509_free(x509);
                 error = 1;
@@ -688,12 +696,12 @@ WOLF_STACK_OF(WOLFSSL_X509)* wolfSSL_X509_STORE_get1_certs(
             if (certToFilterName != NULL) {
                 if (wolfSSL_X509_NAME_cmp(certToFilterName, name) == 0) {
                     filteredCert = wolfSSL_X509_dup(certToFilter->data.x509);
-                    if (filteredCert == NULL) {
+                    if (filteredCert == NULL ||
+                            wolfSSL_sk_X509_push(filteredCerts, filteredCert)
+                                <= 0) {
                         err = 1;
+                        wolfSSL_X509_free(filteredCert);
                         break;
-                    }
-                    else {
-                        wolfSSL_sk_X509_push(filteredCerts, filteredCert);
                     }
                 }
             }
@@ -1003,7 +1011,7 @@ WOLFSSL_X509_LOOKUP* wolfSSL_X509_STORE_add_lookup(WOLFSSL_X509_STORE* store,
 
 int wolfSSL_X509_STORE_add_cert(WOLFSSL_X509_STORE* store, WOLFSSL_X509* x509)
 {
-    int result = WOLFSSL_FATAL_ERROR;
+    int result = WC_NO_ERR_TRACE(WOLFSSL_FATAL_ERROR);
 
     WOLFSSL_ENTER("wolfSSL_X509_STORE_add_cert");
     if (store != NULL && store->cm != NULL && x509 != NULL
@@ -1248,7 +1256,7 @@ WOLFSSL_STACK* wolfSSL_X509_STORE_GetCerts(WOLFSSL_X509_STORE_CTX* s)
 
         if (CopyDecodedToX509(x509, dCert) == 0) {
 
-            if (wolfSSL_sk_X509_push(sk, x509) != WOLFSSL_SUCCESS) {
+            if (wolfSSL_sk_X509_push(sk, x509) <= 0) {
                 WOLFSSL_MSG("Unable to load x509 into stack");
                 wolfSSL_X509_free(x509);
                 goto error;
@@ -1327,7 +1335,7 @@ WOLF_STACK_OF(WOLFSSL_X509_OBJECT)* wolfSSL_X509_STORE_get0_objects(
             WOLFSSL_MSG("wolfSSL_X509_OBJECT_new error");
             goto err_cleanup;
         }
-        if (wolfSSL_sk_X509_OBJECT_push(ret, obj) != WOLFSSL_SUCCESS) {
+        if (wolfSSL_sk_X509_OBJECT_push(ret, obj) <= 0) {
             WOLFSSL_MSG("wolfSSL_sk_X509_OBJECT_push error");
             wolfSSL_X509_OBJECT_free(obj);
             goto err_cleanup;
@@ -1345,7 +1353,7 @@ WOLF_STACK_OF(WOLFSSL_X509_OBJECT)* wolfSSL_X509_STORE_get0_objects(
             WOLFSSL_MSG("wolfSSL_X509_OBJECT_new error");
             goto err_cleanup;
         }
-        if (wolfSSL_sk_X509_OBJECT_push(ret, obj) != WOLFSSL_SUCCESS) {
+        if (wolfSSL_sk_X509_OBJECT_push(ret, obj) <= 0) {
             WOLFSSL_MSG("wolfSSL_sk_X509_OBJECT_push error");
             wolfSSL_X509_OBJECT_free(obj);
             goto err_cleanup;
@@ -1379,6 +1387,16 @@ WOLFSSL_X509_VERIFY_PARAM *wolfSSL_X509_STORE_get0_param(
         return NULL;
     return ctx->param;
 }
+
+#ifdef OPENSSL_EXTRA
+int wolfSSL_X509_STORE_set1_param(WOLFSSL_X509_STORE *ctx,
+        WOLFSSL_X509_VERIFY_PARAM *param)
+{
+    if (ctx == NULL)
+        return WOLFSSL_FAILURE;
+    return wolfSSL_X509_VERIFY_PARAM_set1(ctx->param, param);
+}
+#endif
 #endif
 
 /*******************************************************************************

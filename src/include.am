@@ -286,6 +286,9 @@ src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/armv8-32-sha3-asm
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/thumb2-sha3-asm.S
 endif !BUILD_ARMASM_INLINE
 endif BUILD_ARMASM
+if BUILD_RISCV_ASM
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/riscv/riscv-64-sha3.c
+endif BUILD_RISCV_ASM
 if !BUILD_X86_ASM
 if BUILD_INTELASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/sha3_asm.S
@@ -447,6 +450,9 @@ src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/armv8-32-sha3-asm
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/thumb2-sha3-asm.S
 endif !BUILD_ARMASM_INLINE
 endif BUILD_ARMASM
+if BUILD_RISCV_ASM
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/riscv/riscv-64-sha3.c
+endif BUILD_RISCV_ASM
 if BUILD_INTELASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/sha3_asm.S
 endif
@@ -800,6 +806,9 @@ src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/armv8-32-sha3-asm
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/thumb2-sha3-asm.S
 endif !BUILD_ARMASM_INLINE
 endif BUILD_ARMASM
+if BUILD_RISCV_ASM
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/riscv/riscv-64-sha3.c
+endif BUILD_RISCV_ASM
 if !BUILD_X86_ASM
 if BUILD_INTELASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/sha3_asm.S
@@ -914,6 +923,9 @@ if BUILD_POLY1305
 if BUILD_ARMASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/armv8-poly1305.c
 endif
+if BUILD_RISCV_ASM
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/riscv/riscv-64-poly1305.c
+endif
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/poly1305.c
 if !BUILD_X86_ASM
 if BUILD_INTELASM
@@ -980,14 +992,13 @@ src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/blake2s.c
 endif
 
 if BUILD_CHACHA
+src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/chacha.c
 if BUILD_ARMASM_NEON
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/arm/armv8-chacha.c
 else
 if BUILD_RISCV_ASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/port/riscv/riscv-64-chacha.c
-else
-src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/chacha.c
-endif !BUILD_RISCV_ASM
+endif BUILD_RISCV_ASM
 if !BUILD_X86_ASM
 if BUILD_INTELASM
 src_libwolfssl@LIBSUFFIX@_la_SOURCES += wolfcrypt/src/chacha_asm.S

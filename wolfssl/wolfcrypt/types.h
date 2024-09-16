@@ -420,10 +420,13 @@ typedef struct w64wrapper {
         #define FALL_THROUGH
     #endif
 
-    /* Micrium will use Visual Studio for compilation but not the Win32 API */
+    /* For platforms where the target OS is not Windows, but compilation is
+     * done on Windows/Visual Studio, enable a way to disable USE_WINDOWS_API.
+     * Examples: Micrium, TenAsus INtime, uTasker, FreeRTOS simulator */
     #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) && \
         !defined(FREERTOS_TCP) && !defined(EBSNET) && \
-        !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS)
+        !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS) && \
+        !defined(WOLFSSL_NOT_WINDOWS_API)
         #define USE_WINDOWS_API
     #endif
 
@@ -512,7 +515,9 @@ typedef struct w64wrapper {
         #ifdef WOLFSSL_NO_MALLOC
             /* this platform does not support heap use */
             #ifdef WOLFSSL_MALLOC_CHECK
+                #ifndef NO_STDIO_FILESYSTEM
                 #include <stdio.h>
+                #endif
                 static inline void* malloc_check(size_t sz) {
                     fprintf(stderr, "wolfSSL_malloc failed");
                     return NULL;
@@ -717,10 +722,10 @@ typedef struct w64wrapper {
             #include <string.h>
         #endif
 
-            #define XMEMCPY(d,s,l)    memcpy((d),(s),(l))
-            #define XMEMSET(b,c,l)    memset((b),(c),(l))
-            #define XMEMCMP(s1,s2,n)  memcmp((s1),(s2),(n))
-            #define XMEMMOVE(d,s,l)   memmove((d),(s),(l))
+        #define XMEMCPY(d,s,l)    memcpy((d),(s),(l))
+        #define XMEMSET(b,c,l)    memset((b),(c),(l))
+        #define XMEMCMP(s1,s2,n)  memcmp((s1),(s2),(n))
+        #define XMEMMOVE(d,s,l)   memmove((d),(s),(l))
 
         #define XSTRLEN(s1)       strlen((s1))
         #define XSTRNCPY(s1,s2,n) strncpy((s1),(s2),(n))
@@ -746,7 +751,6 @@ typedef struct w64wrapper {
                 defined(WOLFSSL_ZEPHYR) || defined(MICROCHIP_PIC24)
             /* XC32 version < 1.0 does not support strcasecmp. */
             #define USE_WOLF_STRCASECMP
-            #define XSTRCASECMP(s1,s2) wc_strcasecmp(s1,s2)
         #elif defined(USE_WINDOWS_API) || defined(FREERTOS_TCP_WINSIM)
             #define XSTRCASECMP(s1,s2) _stricmp((s1),(s2))
         #else
@@ -759,12 +763,15 @@ typedef struct w64wrapper {
             #elif defined(WOLFSSL_CMSIS_RTOSv2) || defined(WOLFSSL_AZSPHERE) \
                     || defined(WOLF_C89)
                 #define USE_WOLF_STRCASECMP
-                #define XSTRCASECMP(s1,s2) wc_strcasecmp(s1, s2)
             #elif defined(WOLF_C89)
                 #define XSTRCASECMP(s1,s2) strcmp((s1),(s2))
             #else
                 #define XSTRCASECMP(s1,s2) strcasecmp((s1),(s2))
             #endif
+        #endif
+        #ifdef USE_WOLF_STRCASECMP
+            #undef  XSTRCASECMP
+            #define XSTRCASECMP(s1,s2) wc_strcasecmp((s1), (s2))
         #endif
         #endif /* !XSTRCASECMP */
 
@@ -776,7 +783,6 @@ typedef struct w64wrapper {
                 defined(WOLFSSL_ZEPHYR) || defined(MICROCHIP_PIC24)
             /* XC32 version < 1.0 does not support strncasecmp. */
             #define USE_WOLF_STRNCASECMP
-            #define XSTRNCASECMP(s1,s2,n) wc_strncasecmp((s1),(s2),(n))
         #elif defined(USE_WINDOWS_API) || defined(FREERTOS_TCP_WINSIM)
             #define XSTRNCASECMP(s1,s2,n) _strnicmp((s1),(s2),(n))
         #else
@@ -789,12 +795,15 @@ typedef struct w64wrapper {
             #elif defined(WOLFSSL_CMSIS_RTOSv2) || defined(WOLFSSL_AZSPHERE) \
                     || defined(WOLF_C89)
                 #define USE_WOLF_STRNCASECMP
-                #define XSTRNCASECMP(s1,s2,n) wc_strncasecmp(s1, s2 ,n)
             #elif defined(WOLF_C89)
                 #define XSTRNCASECMP(s1,s2,n) strncmp((s1),(s2),(n))
             #else
                 #define XSTRNCASECMP(s1,s2,n) strncasecmp((s1),(s2),(n))
             #endif
+        #endif
+        #ifdef USE_WOLF_STRNCASECMP
+            #undef  XSTRNCASECMP
+            #define XSTRNCASECMP(s1,s2,n) wc_strncasecmp((s1),(s2),(n))
         #endif
         #endif /* !XSTRNCASECMP */
 
@@ -835,12 +844,16 @@ typedef struct w64wrapper {
                    have stdio.h available, so it needs its own section. */
                 #define XSNPRINTF snprintf
             #elif defined(WOLF_C89)
+                #ifndef NO_STDIO_FILESYSTEM
                 #include <stdio.h>
+                #endif
                 #define XSPRINTF sprintf
                 /* snprintf not available for C89, so remap using macro */
                 #define XSNPRINTF(f, len, ...) sprintf(f, __VA_ARGS__)
             #else
+                #ifndef NO_STDIO_FILESYSTEM
                 #include <stdio.h>
+                #endif
                 #define XSNPRINTF snprintf
             #endif
         #else
@@ -1250,6 +1263,9 @@ typedef struct w64wrapper {
         #undef _WC_PK_TYPE_MAX
         #define _WC_PK_TYPE_MAX WC_PK_TYPE_PQC_SIG_CHECK_PRIV_KEY
     #endif
+        WC_PK_TYPE_RSA_PKCS = 25,
+        WC_PK_TYPE_RSA_PSS = 26,
+        WC_PK_TYPE_RSA_OAEP = 27,
         WC_PK_TYPE_MAX = _WC_PK_TYPE_MAX
     };
 

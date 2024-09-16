@@ -1,21 +1,21 @@
 #
-#  Copyright (C) 2006-2024 wolfSSL Inc.
+# Copyright (C) 2006-2024 wolfSSL Inc.
 #
-#  This file is part of wolfSSL.
+# This file is part of wolfSSL.
 #
-#  wolfSSL is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+# wolfSSL is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-#  wolfSSL is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# wolfSSL is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 # cmake for wolfssl Espressif projects
 #
@@ -506,6 +506,7 @@ else()
         endif()
     endif()
 
+    message(STATUS "WOLFSSL_EXTRA_PROJECT_DIR = ${WOLFSSL_EXTRA_PROJECT_DIR}")
     set(COMPONENT_SRCDIRS "\"${WOLFSSL_ROOT}/src/\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src\""
                           "\"${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif\""
@@ -730,7 +731,7 @@ else()
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_cortexm.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64.c\""
         "\"${WOLFSSL_ROOT}/wolfcrypt/src/sp_sm2_x86_64_asm.S\""
-        "\"${WOLFSSL_ROOT}/examples\"" # Examnples are distributed in Managed Components, but not part of a project.
+        "\"${WOLFSSL_ROOT}/examples\"" # Examples are distributed in Managed Components, but not part of a project.
         "\"${EXCLUDE_ASM}\""
         )
 
@@ -755,70 +756,7 @@ else()
 
     if(WOLFSSL_ROOT)
 #        wolfssl_init_cert_bundle()
-# function(WOLFSSL_INIT_CERT_BUNDLE)
-if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
-    # reminder: we need a value for wolfSSL root first!
-    if( "${WOLFSSL_ROOT}" STREQUAL "" )
-        message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")
-    endif()
-    set(WOLFSSL_ESP_CRT_BUNDLE_DIR ${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle)
-    message(STATUS "WOLFSSL_ESP_CRT_BUNDLE_DIR=${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
-    if(EXISTS "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
-        set(bundle_name "x509_crt_bundle")
 
-        # For now the certs are in the same directory
-        set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
-
-        # Generate custom certificate bundle using the generate_cert_bundle utility
-        set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
-
-        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
-            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
-        elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
-            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
-            list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
-        endif()
-
-        # Add deprecated root certs if enabled. This config is not visible if the default cert
-        # bundle is not selected
-        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
-            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_deprecated.pem)
-        endif()
-
-        if(CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE)
-            get_filename_component(custom_bundle_path
-            ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
-            list(APPEND crt_paths ${custom_bundle_path})
-
-        endif()
-        list(APPEND args --input ${crt_paths} -q)
-
-        get_filename_component(crt_bundle
-            ${bundle_name}
-            ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-
-        # Generate bundle according to config
-        add_custom_command(OUTPUT ${crt_bundle}
-            COMMAND ${GENERATE_CERT_BUNDLEPY} ${args}
-            DEPENDS ${custom_bundle_path}
-            VERBATIM)
-
-        add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
-
-        # the wolfSSL crtificate bundle is baked into wolfSSL
-#        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle) # TODO why is COMPONENT_LIB empty here?
-#        add_dependencies(__idf_wolfssl custom_wolfssl_bundle)
-
-#        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY) # TODO why is COMPONENT_LIB empty here?
-#        target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
-        set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-            APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-            "${crt_bundle}")
-    else()
-        message(STATUS "WARNING: CONFIG_WOLFSSL_CERTIFICATE_BUNDLE enabled but directory not found: ${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
-    endif()
-endif()
-# endfunction() # WOLFSSL_INIT_CERT_BUNDLE
         # Only register the component if we found wolfSSL source.
         # This is important to allow Cmake to finish to completion, otherwise the UI
         # may not be able to display the Kconfig settings to fix a bad or missing source.
@@ -837,6 +775,98 @@ endif()
         idf_component_register()
         message(STATUS "Warning: wolfSSL component not registered as no source code found (WOLFSSL_ROOT is blank)")
     endif()
+
+# function(WOLFSSL_INIT_CERT_BUNDLE)
+if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
+    if (CMAKE_BUILD_EARLY_EXPANSION)
+        message(ERROR "Bundle Cert initialization must occur during CMAKE_BUILD_EARLY_EXPANSION")
+    endif()
+    # reminder: we need a value for wolfSSL root first!
+    if( "${WOLFSSL_ROOT}" STREQUAL "" )
+        message(ERROR "Certificate bundles need a value for WOLFSSL_ROOT")
+    endif()
+    set(WOLFSSL_ESP_CRT_BUNDLE_DIR ${WOLFSSL_ROOT}/wolfcrypt/src/port/Espressif/esp_crt_bundle)
+    message(STATUS "WOLFSSL_ESP_CRT_BUNDLE_DIR=${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+    if(EXISTS "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+        set(bundle_name "x509_crt_bundle_wolfssl")
+
+        # For now the certs are in the same directory
+        set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+
+        # Generate custom certificate bundle using the generate_cert_bundle utility
+        # set(GENERATE_CERT_BUNDLEPY ${python} "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/pio_install_cryptography.py" && "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py")
+        set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
+
+        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+        elseif(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_CMN)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_all.pem ${DEFAULT_CRT_DIR}/cacrt_local.pem)
+            list(APPEND args --filter ${DEFAULT_CRT_DIR}/cmn_crt_authorities.csv)
+        endif()
+
+        # Add deprecated root certs if enabled. This config is not visible if the default cert
+        # bundle is not selected
+        if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEPRECATED_LIST)
+            list(APPEND crt_paths ${DEFAULT_CRT_DIR}/cacrt_deprecated.pem)
+        endif()
+
+        if(CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE)
+            get_filename_component(custom_bundle_path
+              ${CONFIG_WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH} ABSOLUTE BASE_DIR "${project_dir}")
+            list(APPEND crt_paths ${custom_bundle_path})
+            message(STATUS "Using a custom wolfSSL bundle path: ${custom_bundle_path}")
+        else()
+            message(STATUS "Not using a custom wolfSSL bundle path.")
+        endif()
+        list(APPEND args --input ${crt_paths} -q)
+
+        # TODO remove peek
+        message(STATUS "Peek CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
+        get_filename_component(crt_bundle
+            ${bundle_name}
+            ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+        message(STATUS "Setting up bundle generate: ${GENERATE_CERT_BUNDLEPY} ${args}")
+        message(STATUS "Depends on custom bundle path: ${custom_bundle_path}")
+        message(STATUS "crt_bundle ${crt_bundle}")
+        message(STATUS "COMPONENT_LIB ${COMPONENT_LIB}")
+        message(STATUS "GENERATE_CERT_BUNDLEPY ${GENERATE_CERT_BUNDLEPY}")
+        message(STATUS "args ${args}")
+        message(STATUS "cert_bundle ${cert_bundle}")
+
+        # Generate bundle according to config
+        # File is generated at build time, not cmake load
+        add_custom_command(OUTPUT ${crt_bundle}
+            COMMAND ${GENERATE_CERT_BUNDLEPY} ARGS ${args}
+            DEPENDS ${custom_bundle_path}
+            VERBATIM)
+
+        if(EXISTS "${crt_bundle}")
+            message(STATUS "Bundle file exists from prior build: ${crt_bundle}")
+        else()
+            message(STATUS "Bundle file expected during net build: ${crt_bundle}")
+        endif()
+
+        # Reminder the file is generated at build time, not cmake load time.
+        message(STATUS "wolfSSL Cert Bundle File to be created at build time in: ${crt_bundle}")
+
+        add_custom_target(custom_wolfssl_bundle DEPENDS ${cert_bundle})
+
+        # the wolfSSL crtificate bundle is baked into wolfSSL
+        add_dependencies(${COMPONENT_LIB} custom_wolfssl_bundle)
+
+        # COMPONENT_LIB may vary: __idf_wolfssl, __idf_esp_wolfssl, etc
+        # target_add_binary_data(__idf_wolfssl ${crt_bundle} BINARY)
+        target_add_binary_data(${COMPONENT_LIB} ${crt_bundle} BINARY)
+        set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                     APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+                     "${crt_bundle}")
+    else()
+        message(STATUS "WARNING: CONFIG_WOLFSSL_CERTIFICATE_BUNDLE enabled but directory not found: ${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
+    endif()
+endif()
+
+# endfunction() # WOLFSSL_INIT_CERT_BUNDLE
 
     # Some optional diagnostics. Verbose ones are truncated.
     if (VERBOSE_COMPONENT_MESSAGES)
@@ -868,6 +898,12 @@ endif()
     endif()
 
     # target_sources(wolfssl PRIVATE  "\"${WOLFSSL_ROOT}/wolfssl/\""  "\"${WOLFSSL_ROOT}/wolfssl/wolfcrypt\"")
+    message(STATUS "DETECTED_PROJECT_NAME=${CMAKE_PROJECT_NAME}")
+    message(STATUS "COMPONENT_TARGET=${COMPONENT_TARGET}")
+    target_compile_definitions(${COMPONENT_TARGET} PRIVATE DETECTED_PROJECT_NAME="${CMAKE_PROJECT_NAME}")
+    if( "${CMAKE_PROJECT_NAME}" STREQUAL "esp_http_client_example" )
+        target_compile_definitions(${COMPONENT_TARGET} PRIVATE APP_ESP_HTTP_CLIENT_EXAMPLE="y")
+    endif()
 
 endif() # CMAKE_BUILD_EARLY_EXPANSION
 
@@ -968,6 +1004,15 @@ endif()
 
 if(WOLFSSL_ROOT)
     message(STATUS "Using wolfSSL in ${WOLFSSL_ROOT}")
+
+    # PlatformIO does not process script from from the Espressif cmake process.
+    # We need to know where wolfSSL source code was found, so save it in the
+    # PIO_WOLFSSL_ROOT environment variable to later be read by extra_script.py
+
+    set(ENV{PIO_WOLFSSL_ROOT} "${WOLFSSL_ROOT}")
+    message(STATUS "PIO_WOLFSSL_ROOT =  $ENV{PIO_WOLFSSL_ROOT}")
+    message(STATUS "PLATFORMIO_BUILD_DIR = $ENV{PLATFORMIO_BUILD_DIR}")
+    file(WRITE "tada.txt" "${WOLFSSL_ROOT}\n")
     # See esp-tls Kconfig; menu "ESP-TLS", ESP_TLS_LIBRARY_CHOOSE
     if(CONFIG_ESP_TLS_USING_WOLFSSL)
         message(STATUS "wolfSSL will be used for ESP-TLS")

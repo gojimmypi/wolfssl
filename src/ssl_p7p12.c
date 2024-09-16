@@ -229,7 +229,7 @@ WOLFSSL_STACK* wolfSSL_PKCS7_to_stack(PKCS7* pkcs7)
         if (!ret)
             ret = wolfSSL_sk_X509_new_null();
         if (x509) {
-            if (wolfSSL_sk_X509_push(ret, x509) != WOLFSSL_SUCCESS) {
+            if (wolfSSL_sk_X509_push(ret, x509) <= 0) {
                 wolfSSL_X509_free(x509);
                 WOLFSSL_MSG("wolfSSL_sk_X509_push error");
                 goto error;
@@ -294,7 +294,7 @@ WOLFSSL_STACK* wolfSSL_PKCS7_get0_signers(PKCS7* pkcs7, WOLFSSL_STACK* certs,
         return NULL;
     }
 
-    if (wolfSSL_sk_X509_push(signers, x509) != WOLFSSL_SUCCESS) {
+    if (wolfSSL_sk_X509_push(signers, x509) <= 0) {
         wolfSSL_sk_X509_pop_free(signers, NULL);
         return NULL;
     }
@@ -351,7 +351,7 @@ int wolfSSL_i2d_PKCS7(PKCS7 *p7, unsigned char **out)
     int localBuf = 0;
     int len;
     WC_RNG rng;
-    int ret = WOLFSSL_FAILURE;
+    int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
     WOLFSSL_ENTER("wolfSSL_i2d_PKCS7");
 
     if (!out || !p7) {
@@ -396,9 +396,9 @@ cleanup:
         wc_FreeRng(&rng);
         p7->rng = NULL;
     }
-    if (ret == WOLFSSL_FAILURE && localBuf && output)
+    if (ret == WC_NO_ERR_TRACE(WOLFSSL_FAILURE) && localBuf)
         XFREE(output, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (ret != WOLFSSL_FAILURE)
+    if (ret != WC_NO_ERR_TRACE(WOLFSSL_FAILURE))
         *out = output;
     return ret;
 }
@@ -407,7 +407,7 @@ int wolfSSL_i2d_PKCS7_bio(WOLFSSL_BIO *bio, PKCS7 *p7)
 {
     byte* output = NULL;
     int len;
-    int ret = WOLFSSL_FAILURE;
+    int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
     WOLFSSL_ENTER("wolfSSL_i2d_PKCS7_bio");
 
     if (!bio || !p7) {
@@ -415,7 +415,9 @@ int wolfSSL_i2d_PKCS7_bio(WOLFSSL_BIO *bio, PKCS7 *p7)
         return WOLFSSL_FAILURE;
     }
 
-    if ((len = wolfSSL_i2d_PKCS7(p7, &output)) == WOLFSSL_FAILURE) {
+    if ((len = wolfSSL_i2d_PKCS7(p7, &output)) ==
+        WC_NO_ERR_TRACE(WOLFSSL_FAILURE))
+    {
         WOLFSSL_MSG("wolfSSL_i2d_PKCS7 error");
         goto cleanup;
     }
@@ -1152,7 +1154,8 @@ PKCS7* wolfSSL_SMIME_read_PKCS7(WOLFSSL_BIO* in,
             }
             XMEMSET(boundary, 0, (word32)(boundLen+1));
             boundary[0] = boundary[1] = '-';
-            XSTRNCPY(&boundary[2], curParam->value, boundLen-2);
+            /* analyzers have issues with using strncpy and strcpy here */
+            XMEMCPY(&boundary[2], curParam->value, boundLen - 2);
 
             /* Parse up to first boundary, ignore everything here. */
             lineLen = wolfSSL_BIO_gets(in, section, remainLen);
@@ -1473,7 +1476,9 @@ int wolfSSL_SMIME_write_PKCS7(WOLFSSL_BIO* out, PKCS7* pkcs7, WOLFSSL_BIO* in,
 
     if (ret > 0) {
         /* Generate signedData bundle, DER in output (dynamic) */
-        if ((len = wolfSSL_i2d_PKCS7((PKCS7*)p7, &p7out)) == WOLFSSL_FAILURE) {
+        if ((len = wolfSSL_i2d_PKCS7((PKCS7*)p7, &p7out)) ==
+            WC_NO_ERR_TRACE(WOLFSSL_FAILURE))
+        {
             WOLFSSL_MSG("Error in wolfSSL_i2d_PKCS7");
             ret = 0;
         }
@@ -1702,7 +1707,7 @@ WC_PKCS12* wolfSSL_d2i_PKCS12_bio(WOLFSSL_BIO* bio, WC_PKCS12** pkcs12)
  */
 int wolfSSL_i2d_PKCS12_bio(WOLFSSL_BIO *bio, WC_PKCS12 *pkcs12)
 {
-    int ret = WOLFSSL_FAILURE;
+    int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
 
     WOLFSSL_ENTER("wolfSSL_i2d_PKCS12_bio");
 
@@ -1929,7 +1934,7 @@ int wolfSSL_PKCS12_parse(WC_PKCS12* pkcs12, const char* psw,
                 }
                 FreeDecodedCert(DeCert);
 
-                if (wolfSSL_sk_X509_push(*ca, x509) != 1) {
+                if (wolfSSL_sk_X509_push(*ca, x509) <= 0) {
                     WOLFSSL_MSG("Failed to push x509 onto stack");
                     wolfSSL_X509_free(x509);
                     wolfSSL_sk_X509_pop_free(*ca, NULL); *ca = NULL;

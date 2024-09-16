@@ -408,6 +408,10 @@ static int InitSha256(wc_Sha256* sha256)
                        SHA256_SSE2, SHA256_C };
 
 #ifndef WC_C_DYNAMIC_FALLBACK
+    /* note that all write access to this static variable must be idempotent,
+     * as arranged by Sha256_SetTransform(), else it will be susceptible to
+     * data races.
+     */
     static enum sha_methods sha_method = SHA256_UNSET;
 #endif
 
@@ -1251,6 +1255,9 @@ static int InitSha256(wc_Sha256* sha256)
     {
         word32 S[8], t0, t1;
         int i;
+    #ifdef USE_SLOW_SHA256
+        int j;
+    #endif
         word32 W[WC_SHA256_BLOCK_SIZE/sizeof(word32)];
 
         /* Copy digest to working vars */
@@ -1264,6 +1271,16 @@ static int InitSha256(wc_Sha256* sha256)
         S[7] = sha256->digest[7];
 
         i = 0;
+    #ifdef USE_SLOW_SHA256
+        for (j = 0; j < 16; j++) {
+            RND1(j);
+        }
+        for (i = 16; i < 64; i += 16) {
+            for (j = 0; j < 16; j++) {
+                RNDN(j);
+            }
+        }
+    #else
         RND1( 0); RND1( 1); RND1( 2); RND1( 3);
         RND1( 4); RND1( 5); RND1( 6); RND1( 7);
         RND1( 8); RND1( 9); RND1(10); RND1(11);
@@ -1275,6 +1292,7 @@ static int InitSha256(wc_Sha256* sha256)
             RNDN( 8); RNDN( 9); RNDN(10); RNDN(11);
             RNDN(12); RNDN(13); RNDN(14); RNDN(15);
         }
+    #endif
 
         /* Add the working vars back into digest */
         sha256->digest[0] += S[0];

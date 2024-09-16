@@ -103,7 +103,7 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #endif
 
 #ifndef RSA_MIN_SIZE
-#define RSA_MIN_SIZE 512
+#define RSA_MIN_SIZE 1024
 #endif
 
 #ifndef RSA_MAX_SIZE
@@ -273,6 +273,20 @@ struct RsaKey {
 #endif
 
 #endif /* HAVE_FIPS */
+
+#if defined(WOLF_CRYPTO_CB) && defined(WOLF_CRYPTO_CB_RSA_PAD)
+struct RsaPadding {
+    byte pad_value;
+    int pad_type;
+    enum wc_HashType hash;
+    int mgf;
+    byte* label;
+    word32 labelSz;
+    int saltLen;
+    int unpadded;
+};
+typedef struct RsaPadding RsaPadding;
+#endif
 
 WOLFSSL_API int  wc_InitRsaKey(RsaKey* key, void* heap);
 WOLFSSL_API int  wc_InitRsaKey_ex(RsaKey* key, void* heap, int devId);

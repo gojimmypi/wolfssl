@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # google.test
 
@@ -8,6 +8,10 @@ server=www.google.com
 
 if ! test -n "$WOLFSSL_EXTERNAL_TEST"; then
     echo "WOLFSSL_EXTERNAL_TEST not set, won't run"
+    exit 77
+fi
+if test "$WOLFSSL_EXTERNAL_TEST" == "0"; then
+    echo "WOLFSSL_EXTERNAL_TEST is defined to zero, won't run"
     exit 77
 fi
 

@@ -603,88 +603,7 @@ enum {
  *      and possibly not used anywhere else in the wolfSSL libraries.
  */
 
-/* Enable benchmark code via menuconfig, or when not otherwise disable: */
-#ifdef CONFIG_ESP_WOLFSSL_ENABLE_BENCHMARK
-    #ifdef NO_CRYPT_BENCHMARK
-        #pragma message("Benchmark conflict:")
-        #pragma message("-- NO_CRYPT_BENCHMARK defined.")
-        #pragma message("-- CONFIG_WOLFSSL_ENABLE_BENCHMARK also defined.")
-        #pragma message("-- NO_CRYPT_BENCHMARK will be undefined.")
-        #undef NO_CRYPT_BENCHMARK
-    #endif
-#endif
 
-#if !defined(NO_CRYPT_BENCHMARK) || defined(CONFIG_ESP_WOLFSSL_ENABLE_BENCHMARK)
-
-    #define BENCH_EMBEDDED
-    #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
-
-    /* See wolfcrypt/benchmark/benchmark.c for debug and other settings: */
-
-    /* Turn on benchmark timing debugging (CPU Cycles, RTOS ticks, etc) */
-    #ifdef CONFIG_ESP_DEBUG_WOLFSSL_BENCHMARK_TIMING
-        #define DEBUG_WOLFSSL_BENCHMARK_TIMING
-    #endif
-
-    /* Turn on timer debugging (used when CPU cycles not available) */
-    #ifdef CONFIG_ESP_WOLFSSL_BENCHMARK_TIMER_DEBUG
-        #define WOLFSSL_BENCHMARK_TIMER_DEBUG
-    #endif
-#endif
-
-/* Optional Apple HomeKit support. See settings.h for related sanity checks. */
-#if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)
-    /* SRP is known to need 8K; slow on some devices */
-    #undef  FP_MAX_BITS
-    #define FP_MAX_BITS (8192 * 2)
-    #define WOLFCRYPT_HAVE_SRP
-    #define HAVE_CHACHA
-    #define HAVE_POLY1305
-    #define WOLFSSL_BASE64_ENCODE
-    #define HAVE_HKDF
-    #define WOLFSSL_SHA512
- #endif
-
-/* Optionally enable some wolfSSH settings via compiler def or Kconfig */
-#if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH)
-    /* The default SSH Windows size is massive for an embedded target. Limit it: */
-    #define DEFAULT_WINDOW_SZ 2000
-
-    /* These may be defined in cmake for other examples: */
-    #undef  WOLFSSH_TERM
-    #define WOLFSSH_TERM
-
-    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSH)
-        /* wolfSSH debugging enabled via Kconfig / menuconfig */
-        #undef  DEBUG_WOLFSSH
-        #define DEBUG_WOLFSSH
-    #endif
-
-    #undef  WOLFSSL_KEY_GEN
-    #define WOLFSSL_KEY_GEN
-
-    #undef  WOLFSSL_PTHREADS
-    #define WOLFSSL_PTHREADS
-
-    #define WOLFSSH_TEST_SERVER
-    #define WOLFSSH_TEST_THREADING
-
-#endif /* ESP_ENABLE_WOLFSSH */
-
-/* Experimental Kyber.  */
-#ifdef CONFIG_ESP_WOLFSSL_ENABLE_KYBER
-    /* Kyber typically needs a minimum 10K stack */
-    #define WOLFSSL_EXPERIMENTAL_SETTINGS
-    #define WOLFSSL_HAVE_KYBER
-    #define WOLFSSL_WC_KYBER
-    #define WOLFSSL_SHA3
-    #if defined(CONFIG_IDF_TARGET_ESP8266)
-        /* With limited RAM, we'll disable some of the Kyber sizes: */
-        #define WOLFSSL_NO_KYBER1024
-        #define WOLFSSL_NO_KYBER768
-        #define NO_SESSION_CACHE
-    #endif
-#endif
 
 /* Pre-set some hardware acceleration from Kconfig / menuconfig settings */
 #ifdef CONFIG_ESP_WOLFSSL_NO_ESP32_CRYPT
@@ -1183,19 +1102,6 @@ WOLFSSL_LOCAL int esp_sha_stack_check(WC_ESP32SHA* sha);
 #else
     #warning "CONFIG_ESP_MAIN_TASK_STACK_SIZE not defined!"
 #endif
-
-/* Compatibility checks */
-
-// TODO: confirm now fixed.
-
-//#if defined(DEBUG_WOLFSSH) || defined(ESP_ENABLE_WOLFSSH) ||
-//    defined(WOLFSSH_TERM)  || defined(WOLFSSH_TEST_SERVER)
-//    #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256
-//        /* need to add this line to wolfssl component user_settings.h
-//         * #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256 */
-//  //      #error "ESP32_CRYPT_HASH_SHA256 not supported on wolfSSL at this time"
-//    #endif
-//#endif /* SSH SHA256 HW check */
 
 #endif /* WOLFSSL_ESPIDF (entire contents excluded when not Espressif ESP-IDF) */
 

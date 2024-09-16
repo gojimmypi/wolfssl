@@ -64,7 +64,7 @@ COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)/.
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)/wolfssl
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)/wolfssl/wolfcrypt
 COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)/wolfssl/wolfcrypt/port/Espressif
-COMPONENT_ADD_INCLUDEDIRS += $(WOLFSSL_ROOT)wolfssl/wolfcrypt/port/Espressif
+
 # COMPONENT_ADD_INCLUDEDIRS += $ENV(IDF_PATH)/components/freertos/include/freertos
 # COMPONENT_ADD_INCLUDEDIRS += "$ENV(IDF_PATH)/soc/esp32s3/include/soc"
 

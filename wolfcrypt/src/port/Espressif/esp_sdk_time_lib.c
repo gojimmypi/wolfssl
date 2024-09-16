@@ -150,11 +150,11 @@ int set_fixed_default_time(void)
      * but let's set a default time, just in case */
     struct tm timeinfo = {
         .tm_year = 2024 - 1900,
-        .tm_mon  = 07 - 1, /* Month, where 0 = Jan */
-        .tm_mday = 30 ,    /* Day of the month 30  */
+        .tm_mon  =  9 - 1, /* Month, where 0 = Jan */
+        .tm_mday = 16,    /* Day of the month 30  */
         .tm_hour = 13,
-        .tm_min  = 01,
-        .tm_sec  = 05
+        .tm_min  =  1,
+        .tm_sec  =  5
     };
     struct timeval now;
     time_t interim_time;

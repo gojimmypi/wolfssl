@@ -20,9 +20,17 @@
 #include "protocol_examples_common.h"
 #include "protocol_examples_utils.h"
 #include "esp_tls.h"
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+
+#if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) && defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+    #error "Both mbedTLS and wolfSSL Certificate Bundles Enabled. Pick one."
+#elif CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
     /* "Certificate Bundles" are specific to mbedTLS and not part of any RFC */
     #include "esp_crt_bundle.h"
+#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    #include <wolfssl/wolfcrypt/settings.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
+    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #endif
 
 #include "freertos/FreeRTOS.h"
@@ -30,14 +38,6 @@
 #include "esp_system.h"
 
 #include "esp_http_client.h"
-
-#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
-    #include <wolfssl/wolfcrypt/settings.h>
-    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
-
-    /* TODO: conditional bundle */
-    #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
-#endif
 
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
@@ -638,6 +638,9 @@ static void http_perform_as_stream_reader(void)
 
 static void https_async(void)
 {
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) && !defined(WOLFSSL_ALT_CERT_CHAINS)
+    #warning "The strict wolfSSL default certificate handling may cause failure without WOLFSSL_ALT_CERT_CHAINS"
+#endif
     esp_http_client_config_t config = {
         .url = "https://postman-echo.com/post",
         .event_handler = _http_event_handler,
@@ -789,7 +792,7 @@ static void http_native_request(void)
     esp_http_client_cleanup(client);
 }
 
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 static void http_partial_download(void)
 {
     esp_http_client_config_t config = {
@@ -843,112 +846,19 @@ esp_http_client_handle_t hclient; /* hcloud->hclient */
 esp_http_client_method_t httpmethod; /*  hcloud->httpmethod */
 esp_http_client_method_t http_method;
 
-/* #define NEW_DEMO_CODE */
-#ifdef NEW_DEMO_CODE
-/* m_client_config not defined, using existing example: */
-static esp_http_client_config_t m_client_config = {
-//        .url = "https://www.howsmyssl.com",
-        .event_handler = _http_event_handler,
-        .host = "www.howsmyssl.com",
-        .path = "/",
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-        .cert_pem = howsmyssl_com_root_cert_pem_start,
-//        .crt_bundle_attach = esp_crt_bundle_attach,
-    };
-
-//    esp_http_client_config_t config = {
-//        .url = "https://postman-echo.com/post",
-//        .event_handler = _http_event_handler,
-//        .cert_pem = postman_root_cert_pem_start,
-//        .is_async = true,
-//        .timeout_ms = 5000,
-//    };
-
-
-//    esp_http_client_config_t config = {
-//        .host = "www.howsmyssl.com",
-//        .path = "/",
-//        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-//        .event_handler = _http_event_handler,
-//        .cert_pem = howsmyssl_com_root_cert_pem_start,
-//    };
-char xbuf[100] = { };
-int xbufsize; /* hcloud->xbufsize */
-int http_status_code; /* hcloud->urlinfo.http_status_code */
-char* zurl = "https://google.com\0"; /* hcloud->urlinfo.zurl */
-const char* pform = "{\"field1\":\"value1\"}";
-char* value;
-
-/* m_set_header not used? */
-static void m_set_header(esp_http_client_handle_t hclient, char const
-                         *name, char const *value) {
-    ESP_ERROR_CHECK(esp_http_client_set_header(hclient, name, value));
-}
-
-/* m_header_print not used? */
-static void m_header_print(esp_http_client_handle_t hclient, char const *name) {
-    ESP_ERROR_CHECK(esp_http_client_get_header(hclient, name, &value));
-}
-
-/* m_method_as_str unused? */
-static char const *m_method_as_str(esp_http_client_method_t http_method)
-{
-    /* ??  */
-    return NULL;
-}
-
-/* m_http_client_event_cb unused? */
-static esp_err_t m_http_client_event_cb(esp_http_client_event_t *evt) {
-    /* not used? */
-    char* str;
-    int nch = 0;
-    return esp_http_client_write(hclient, str, nch);
-}
-
-static esp_err_t new_demo() {
-    esp_err_t err;
-    int nrecv;
-
-    /* not open so we won't cleanup */
-    /*
-    esp_http_client_cleanup(hclient);
-    ESP_ERROR_CHECK(esp_http_client_close(hclient));
-    */
-
-    hclient = esp_http_client_init(&m_client_config);
-    ESP_ERROR_CHECK(esp_http_client_set_url(hclient, zurl));
-
-    /* httpmethod not defined, using HTTP_METHOD_POST */
-    httpmethod = HTTP_METHOD_POST;
-    ESP_ERROR_CHECK(esp_http_client_set_method(hclient, httpmethod));
-    ESP_ERROR_CHECK(err = esp_http_client_open(hclient, 0));
-    ESP_ERROR_CHECK(err = esp_http_client_open(hclient, strlen(pform)));
-    ESP_ERROR_CHECK(err = esp_http_client_open(hclient, -1)); // we signify -1 so we can send chunked data:
-    nrecv = esp_http_client_fetch_headers(hclient); // this will be 0 for chunked
-    nrecv = esp_http_client_read_response(hclient,
-         xbuf,
-         xbufsize);
-    http_status_code = esp_http_client_get_status_code(hclient);
-    ESP_ERROR_CHECK(esp_http_client_close(hclient));
-    return err;
-}
-#endif
-
 static void http_test_task(void *pvParameters)
 {
-#ifdef NEW_DEMO_CODE
-    new_demo();
-#endif
-
 #ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
 
-#define SINGLE_TEST
+// #define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
-    https_with_url();
+    /* bundle tests */
+    https_async();
 #endif
+    https_async();
 
 #else
     http_rest_with_url();
@@ -995,6 +905,13 @@ void app_main(void)
 #endif
 
     esp_err_t ret = nvs_flash_init();
+
+#ifdef ESP_SDK_MEM_LIB_VERSION
+    /* Set time for cert validation.
+     * Some lwIP APIs, including SNTP functions, are not thread safe. */
+    ret = set_time(); /* need to setup NTP before WiFi */
+#endif
+
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
       ret = nvs_flash_init();
@@ -1004,6 +921,14 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+#ifdef ESP_SDK_MEM_LIB_VERSION
+    /* Once we are connected to the network, start & wait for NTP time */
+    ret = set_time_wait_for_ntp();
+#endif
+    #ifdef DEBUG_WOLFSSL
+        wolfSSL_Debugging_OFF();
+    #endif
+
     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
@@ -1012,27 +937,6 @@ void app_main(void)
     esp_log_level_set("esp-tls",         ESP_LOG_DEBUG);
     esp_log_level_set("esp-tls-wolfssl", ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Connected to AP, begin http example");
-    struct timeval now;
-    struct tm timeinfo;
-
-    // Set your desired time here
-    timeinfo.tm_year = 2024 - 1900; // Year - 1900
-    timeinfo.tm_mon = 7 - 1;        // Month, where 0 = Jan
-    timeinfo.tm_mday = 30;          // Day of the month
-    timeinfo.tm_hour = 12;
-    timeinfo.tm_min = 0;
-    timeinfo.tm_sec = 0;
-
-    time_t t = mktime(&timeinfo);
-    now.tv_sec = t;
-    now.tv_usec = 0;
-    settimeofday(&now, NULL);
-
-    // date -d @1073455184
-    // TODO this does not work when mbedTLS enabled?
-    // time_t ltime;
-    // ltime = wc_Time(0);
-    // ESP_LOGI(TAG, "wc_Time= %llu", ltime);
 
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);

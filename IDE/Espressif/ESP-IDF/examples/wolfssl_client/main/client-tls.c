@@ -204,7 +204,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     size_t len;
 
-    wolfSSL_Debugging_ON();
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
     doPeerCheck = 1;
@@ -238,8 +237,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     /* Create and initialize WOLFSSL_CTX */
     ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
     /*   options:   */
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());      only TLS 1.2 */
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());      only TLS 1.3 */
+    /* ctx = wolfSSL_CTX_new(wolfSSLv1_2_client_method());      only TLS 1.2 */
+    /* ctx = wolfSSL_CTX_new(wolfSSLv1_3_client_method());      only TLS 1.3 */
     /* wolfSSL_CTX_NoTicketTLSv12(); */
     /* wolfSSL_NoTicketTLSv12();     */
     if (ctx == NULL) {
@@ -297,8 +296,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
 /* see user_settings PROJECT_DH for HAVE_DH and HAVE_FFDHE_2048 */
 #ifndef NO_DH
-    ret = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
-     if (ret != WOLFSSL_SUCCESS) {
+    ret_i = wolfSSL_CTX_SetMinDhKey_Sz(ctx, (word16)minDhKeyBits);
+     if (ret_i != WOLFSSL_SUCCESS) {
         ESP_LOGE(TAG, "Error setting minimum DH key size");
     }
 #endif
@@ -460,6 +459,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
 
     ESP_LOGI(TAG, "Connect to wolfSSL server...");
+    #ifdef DEBUG_WOLFSSL
+        wolfSSL_Debugging_ON();
+    #endif
     ret_i = wolfSSL_connect(ssl);
 #ifdef DEBUG_WOLFSSL
     this_heap = esp_get_free_heap_size();

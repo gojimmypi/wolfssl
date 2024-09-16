@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#ifdef HAVE_CONFIG_H
+    #include <config.h>
+#endif
+
 #ifndef WOLFSSL_USER_SETTINGS
 #include <wolfssl/options.h>
 #endif
@@ -41,7 +45,7 @@
 /* This is where you would plug-in calls to your own hardware crypto */
 int AsyncTlsCryptoCb(int devIdArg, wc_CryptoInfo* info, void* ctx)
 {
-    int ret = CRYPTOCB_UNAVAILABLE; /* return this to bypass HW and use SW */
+    int ret = WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE); /* bypass HW by default */
     AsyncTlsCryptoCbCtx* myCtx = (AsyncTlsCryptoCbCtx*)ctx;
 
     if (info == NULL)

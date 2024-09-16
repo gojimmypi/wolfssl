@@ -139,6 +139,9 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+#if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
+    ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
+#endif
 #ifdef ESP_SDK_MEM_LIB_VERSION
     sdk_init_meminfo();
 #endif
@@ -179,7 +182,9 @@ void app_main(void)
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
-
+    #ifdef DEBUG_WOLFSSL
+        wolfSSL_Debugging_OFF();
+    #endif
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     ret = set_time(); /* need to setup NTP before WiFi */

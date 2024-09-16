@@ -613,6 +613,10 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         #define AESNI_ALIGN 16
     #endif
 
+    /* note that all write access to these static variables must be idempotent,
+     * as arranged by Check_CPU_support_AES(), else they will be susceptible to
+     * data races.
+     */
     static int checkedAESNI = 0;
     static int haveAESNI  = 0;
     static word32 intel_flags = 0;
@@ -8858,7 +8862,7 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
     /* now use res as a mask for constant time return of ret, unless tag
      * mismatch, whereupon AES_GCM_AUTH_E is returned.
      */
-    ret = (ret & ~res) | (res & AES_GCM_AUTH_E);
+    ret = (ret & ~res) | (res & WC_NO_ERR_TRACE(AES_GCM_AUTH_E));
 #endif
     return ret;
 }

@@ -445,6 +445,12 @@ debian/changelog
 debian/control
 *.deb
 
+# Ada/Alire files
+wrapper/Ada/alire/
+wrapper/Ada/config/
+wrapper/Ada/lib/
+wrapper/Ada/obj/
+
 # PlatformIO
 /**/.pio
 /**/.vscode/.browse.c_cpp.db*
@@ -563,3 +569,15 @@ debian/control
 /patch7567.txt
 /_wolfSSL_TODO.txt
 /IDE/Espressif/ESP-IDF5/examples/wolfssl_idf
+/IDE/Espressif/ESP-IDF/examples/espidf-http-request/sdkconfig.esp32dev.old
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/build_log.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/log.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/message.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/output_mbedtls.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/output_mbedtls2.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/sdkconfig.esp32dev.old
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/v5.2_master.txt
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/v5.4_master.txt
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig-debug
+/IDE/Espressif/ESP-IDF/examples/esp_http_client_example/sdkconfig.july26_cert_bundle
+/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig-debug

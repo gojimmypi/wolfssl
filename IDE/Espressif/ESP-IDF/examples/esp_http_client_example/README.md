@@ -1,7 +1,31 @@
+How to build WSL ESP-IDF based project
+=====================================
+
+```bash
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
+
+# Confirm 'origin/my_522' branch
+cd $WRK_IDF_PATH
+git status
+
+echo "Run export.sh from ${WRK_IDF_PATH}"
+. ${WRK_IDF_PATH}/export.sh
+
+cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/esp_http_client_example
+
+idf.py set-target esp32c6
+
+idf.py erase-flash -p /dev/ttyS68 -b 115200
+
+idf.py build flash -p /dev/ttyS68 -b 115200 monitor
+
+idf.py build flash -p /dev/ttyS68 -b 230400 monitor -b 115200
+```
+
 How to build PlatformIO based project
 =====================================
 
-runner test 2
+gitrunner test #5
 
 Modified for no local copy of wolfSSL
 
@@ -26,6 +50,9 @@ pio run -t clean
 
 # Build project
 pio run
+
+# or verbose build:
+pio run -v
 
 ## Other commands:
 
@@ -80,5 +107,5 @@ idf_component_get_property(wolfssl wolfssl COMPONENT_LIB)
 
 idf_component_get_property(wolfssl wolfssl__wolfssl COMPONENT_LIB)
 idf_component_get_property(wolfssl esp-wolfssl COMPONENT_LIB)
-      
+
 ```

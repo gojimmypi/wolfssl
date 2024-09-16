@@ -172,7 +172,7 @@
     #ifdef WOLFSSL_WC_KYBER
         #include <wolfssl/wolfcrypt/wc_kyber.h>
     #endif
-    #if defined(HAVE_LIBOQS) || defined(HAVE_PQM4)
+    #if defined(HAVE_LIBOQS)
         #include <wolfssl/wolfcrypt/ext_kyber.h>
     #endif
 #endif
@@ -533,7 +533,7 @@
                wc_GetErrorString(err));
         printf("%shash = %s\n", ok ? info_prefix : err_prefix, hash);
 
-        if (err == IN_CORE_FIPS_E) {
+        if (err == WC_NO_ERR_TRACE(IN_CORE_FIPS_E)) {
             printf("%sIn core integrity hash check failure, copy above hash\n",
                    err_prefix);
             printf("%sinto verifyCore[] in fips_test.c and rebuild\n",
@@ -692,6 +692,11 @@
 #define BENCH_KYBER1024                 0x00000080
 #define BENCH_KYBER                     (BENCH_KYBER512 | BENCH_KYBER768 | \
                                          BENCH_KYBER1024)
+#define BENCH_ML_KEM_512                0x00000020
+#define BENCH_ML_KEM_768                0x00000040
+#define BENCH_ML_KEM_1024               0x00000080
+#define BENCH_ML_KEM                    (BENCH_ML_KEM_512 | BENCH_ML_KEM_768 | \
+                                         BENCH_ML_KEM_1024)
 #define BENCH_FALCON_LEVEL1_SIGN        0x00000001
 #define BENCH_FALCON_LEVEL5_SIGN        0x00000002
 #define BENCH_DILITHIUM_LEVEL2_SIGN     0x04000000
@@ -1094,6 +1099,10 @@ static const bench_pq_alg bench_pq_asym_opt[] = {
     { "-kyber512",          BENCH_KYBER512          },
     { "-kyber768",          BENCH_KYBER768          },
     { "-kyber1024",         BENCH_KYBER1024         },
+    { "-ml-kem",            BENCH_ML_KEM            },
+    { "-ml-kem-512",        BENCH_ML_KEM_512        },
+    { "-ml-kem-768",        BENCH_ML_KEM_768        },
+    { "-ml-kem-1024",       BENCH_ML_KEM_1024       },
 #endif
 #if defined(HAVE_FALCON)
     { "-falcon_level1",     BENCH_FALCON_LEVEL1_SIGN },
@@ -1815,7 +1824,7 @@ static const char* bench_result_words2[][5] = {
     {
         WOLF_EVENT_STATE state = asyncDev->event.state;
 
-        if (*ret == WC_PENDING_E) {
+        if (*ret == WC_NO_ERR_TRACE(WC_PENDING_E)) {
             if (state == WOLF_EVENT_STATE_DONE) {
                 *ret = asyncDev->event.ret;
                 asyncDev->event.state = WOLF_EVENT_STATE_READY;
@@ -3690,7 +3699,7 @@ static void* benchmarks_do(void* args)
             #endif
 
                 if (wc_ecc_get_curve_size_from_id(curveId) !=
-                        ECC_BAD_ARG_E) {
+                        WC_NO_ERR_TRACE(ECC_BAD_ARG_E)) {
                     bench_ecc_curve(curveId);
                     if (csv_format != 1) {
                         printf("\n");
@@ -8975,7 +8984,7 @@ void bench_rsa_key(int useDeviceID, word32 rsaKeySz)
 
             /* create the RSA key */
             ret = wc_MakeRsaKey(rsaKey[i], (int)rsaKeySz, exp, &gRng);
-            if (ret == WC_PENDING_E) {
+            if (ret == WC_NO_ERR_TRACE(WC_PENDING_E)) {
                 isPending[i] = 1;
                 pending      = 1;
             }

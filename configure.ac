@@ -69,7 +69,7 @@ AS_IF([ test -n "$CFLAG_VISIBILITY" ], [
        AM_CFLAGS="$AM_CFLAGS $CFLAG_VISIBILITY"
        ])
 
-WOLFSSL_BUILD_DATE=$(date -R)
+WOLFSSL_BUILD_DATE=$(LC_TIME=C date +"%a, %d %b %Y %T %z")
 AC_SUBST([WOLFSSL_BUILD_DATE])
 
 
@@ -1240,8 +1240,8 @@ do
   1024)
     ENABLED_KYBER1024=yes
     ;;
-  ml-kem)
-    ENABLED_ML_KEM=yes
+  original)
+    ENABLED_ORIGINAL=yes
     ;;
   *)
     AC_MSG_ERROR([Invalid choice for KYBER []: $ENABLED_KYBER.])
@@ -1251,7 +1251,6 @@ done
 
 if test "$ENABLED_KYBER" != "no"
 then
-    AS_IF([ test "$ENABLED_EXPERIMENTAL" != "yes" ],[ AC_MSG_ERROR([KYBER requires --enable-experimental.]) ])
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HAVE_KYBER"
     # Use liboqs if specified.
     if test "$ENABLED_LIBOQS" = "no"; then
@@ -1269,8 +1268,8 @@ then
     if test "$ENABLED_KYBER1024" = ""; then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
     fi
-    if test "$ENABLED_ML_KEM" = "yes"; then
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ML_KEM"
+    if test "$ENABLED_ORIGINAL" = "yes"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_ORIGINAL"
     fi
 
     if test "$ENABLED_WC_KYBER" = "yes"
@@ -1338,6 +1337,9 @@ do
   87)
     ENABLED_MLDSA87=yes
     ;;
+  draft|fips204-draft)
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_DILITHIUM_FIPS204_DRAFT"
+    ;;
   *)
     AC_MSG_ERROR([Invalid choice for DILITHIUM [all,make,sign,verify,verify-only,small,44,65,87]: $ENABLED_DILITHIUM.])
     break;;
@@ -1346,7 +1348,6 @@ done
 
 if test "$ENABLED_DILITHIUM" != "no"
 then
-    AS_IF([ test "$ENABLED_EXPERIMENTAL" != "yes" ],[ AC_MSG_ERROR([DILITHIUM requires --enable-experimental.]) ])
     AM_CFLAGS="$AM_CFLAGS -DHAVE_DILITHIUM"
 
     if test "$ENABLED_MLDSA44" = ""; then
@@ -3066,12 +3067,6 @@ do
     ;;
   no)
     ;;
-  zbkb)
-    # PACK, REV8
-    ENABLED_RISCV_ASM=yes
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_BIT_MANIPULATION"
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_BASE_BIT_MANIPULATION"
-    ;;
   zbb)
     # REV8
     ENABLED_RISCV_ASM=yes
@@ -3082,6 +3077,16 @@ do
     ENABLED_RISCV_ASM=yes
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_CARRYLESS"
     ;;
+  zbkb)
+    # PACK, REV8
+    ENABLED_RISCV_ASM=yes
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_BIT_MANIPULATION"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_BASE_BIT_MANIPULATION"
+    ;;
+  zbt)
+    # FSL, FSR, FSRI, CMOV, CMIX - QEMU doesn't know about these instructions
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_BIT_MANIPULATION_TERNARY"
+    ;;
   zkn|zkned)
     # AES encrypt/decrpyt, SHA-2
     ENABLED_RISCV_ASM=yes
@@ -3091,20 +3096,20 @@ do
     ENABLED_RISCV_ASM=yes
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR"
     ;;
-  zvkg)
-    # VGMUL, VHHSH
+  zvbb|zvkb)
+    # VBREV8
     ENABLED_RISCV_ASM=yes
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR_GCM"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR_BASE_BIT_MANIPULATION"
     ;;
   zvbc)
     # VCLMUL, VCLMULH
     ENABLED_RISCV_ASM=yes
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR_CARRYLESS"
     ;;
-  zvbb|zvkb)
-    # VBREV8
+  zvkg)
+    # VGMUL, VHHSH
     ENABLED_RISCV_ASM=yes
-    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR_BASE_BIT_MANIPULATION"
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_RISCV_VECTOR_GCM"
     ;;
   zvkned)
     # Vector AES, SHA-2
@@ -8475,6 +8480,19 @@ AC_ARG_ENABLE([cryptocb],
     [ ENABLED_CRYPTOCB=no ]
     )
 
+# Enable testing of cryptoCb using software crypto. On platforms where wolfCrypt tests
+# are used to test a custom cryptoCb, it may be desired to disable this so wolfCrypt tests
+# don't also test software implementations of every algorithm
+AC_ARG_ENABLE([cryptocb-sw-test],
+    [AS_HELP_STRING([--disable-cryptocb-sw-test],[Disable wolfCrypt crypto callback tests using software crypto (default: enabled). Only valid with --enable-cryptocb])],
+    [ if test "x$ENABLED_CRYPTOCB" = "xno"; then
+          AC_MSG_ERROR([--disable-cryptocb-sw-test requires --enable-cryptocb])
+      else
+          ENABLED_CRYPTOCB_SW_TEST=$enableval
+      fi ],
+    [ ENABLED_CRYPTOCB_SW_TEST=yes ]
+    )
+
 if test "x$ENABLED_PKCS11" = "xyes" || test "x$ENABLED_WOLFTPM" = "xyes" || test "$ENABLED_CAAM" != "no"
 then
     ENABLED_CRYPTOCB=yes
@@ -8482,6 +8500,11 @@ fi
 if test "$ENABLED_CRYPTOCB" = "yes"
 then
     AM_CFLAGS="$AM_CFLAGS -DWOLF_CRYPTO_CB"
+fi
+
+if test "$ENABLED_CRYPTOCB_SW_TEST" = "no"
+then
+        AM_CFLAGS="$AM_CFLAGS -DWC_TEST_NO_CRYPTOCB_SW_TEST"
 fi
 
 
@@ -9907,7 +9930,7 @@ AX_AM_JOBSERVER([yes])
 
 # See Automake 9.4.1 Built Sources Example
 AC_DEFUN([AX_OUT_OF_TREE_FILE],[
-  AC_CONFIG_COMMANDS([$1], [test ! -f $srcdir/$1 && >> $srcdir/$1])
+  AC_CONFIG_COMMANDS([$1], [test ! -f $srcdir/$1 && echo -n >> $srcdir/$1])
 ])
 
 AX_OUT_OF_TREE_FILE([wolfssl/wolfcrypt/async.h])
@@ -10387,7 +10410,7 @@ fi # $silent != yes
 
 if test "$ENABLED_ASYNCCRYPT" = "yes" && ! test -s $srcdir/wolfcrypt/src/async.c
 then
-    AC_MSG_WARN([Make sure real async files are loaded. Contact wolfSSL for details on using the asynccrypt option.])
+    AC_MSG_WARN([Make sure real async files are loaded. See async-check.sh or the wolfssl/wolfAsyncCrypt GitHub repo.])
 fi
 
 # MinGW static vs shared library
@@ -10414,3 +10437,10 @@ if test -n "$WITH_MAX_ECC_BITS"; then
     fi
 fi
 
+if test "$silent" != "yes"; then
+
+echo "---"
+echo "Note: Make sure your application includes \"wolfssl/options.h\" before any other wolfSSL headers."
+echo "      You can define \"WOLFSSL_USE_OPTIONS_H\" in your application to include this automatically."
+
+fi
