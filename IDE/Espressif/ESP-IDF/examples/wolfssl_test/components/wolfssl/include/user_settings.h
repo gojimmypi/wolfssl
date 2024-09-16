@@ -358,6 +358,7 @@
         defined(HAVE_FFDHE_6144) || \
         defined(HAVE_FFDHE_8192)
     #else
+        #define HAVE_FFDHE_2048
         /* #error "TLS 1.3 requires HAVE_FFDHE_[nnnn]" */
     #endif
 #endif
