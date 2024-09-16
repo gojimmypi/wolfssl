@@ -25,7 +25,7 @@ idf.py build flash -p /dev/ttyS68 -b 230400 monitor -b 115200
 How to build PlatformIO based project
 =====================================
 
-gitrunner test #4
+gitrunner test #5
 
 Modified for no local copy of wolfSSL
 
