@@ -151,7 +151,7 @@ int set_fixed_default_time(void)
     struct tm timeinfo = {
         .tm_year = 2024 - 1900,
         .tm_mon  =  9 - 1, /* Month, where 0 = Jan */
-        .tm_mday =  3 ,    /* Day of the month 30  */
+        .tm_mday = 16,    /* Day of the month 30  */
         .tm_hour = 13,
         .tm_min  =  1,
         .tm_sec  =  5
