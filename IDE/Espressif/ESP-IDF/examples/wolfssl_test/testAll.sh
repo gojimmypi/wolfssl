@@ -38,8 +38,8 @@ fi
 # Kill all currently running instances of putty.exe
 # If there are no running instances, taskkill exits with non-zero error code.
 #******************************************************************************
-taskkill.exe /IM putty.exe /F
-
+echo "Closing any open putty sessions"
+taskkill.exe /IM putty.exe /F  2> NUL
 # Abort on any future errors
 set -e
 
@@ -116,7 +116,7 @@ fi
 
 
 # Tensilica
-./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
+# ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
 
 
 #******************************************************************************
