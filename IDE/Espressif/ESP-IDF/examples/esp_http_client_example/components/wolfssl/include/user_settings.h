@@ -718,14 +718,14 @@
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
     // #define NO_ESP32_CRYPT
-    //#define NO_WOLFSSL_ESP32_CRYPT_HASH
+    // #define NO_WOLFSSL_ESP32_CRYPT_HASH
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
     // #define NO_WOLFSSL_ESP32_CRYPT_AES
     // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
