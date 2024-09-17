@@ -1529,11 +1529,11 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* Make sure we are within capabilities of hardware. */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
+        ESP_LOGW(TAG, "RSA mul result hwWords_sz exceeds max bit length (%d)", hwWords_sz, ESP_HW_MULTI_RSAMAX_BITS);
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
     if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGW(TAG, "result exceeds max bit length(%d)", ESP_HW_RSAMAX_BIT );
+        ESP_LOGW(TAG, "RSA max result hwWords_sz = %d exceeds max bit length (%d)", hwWords_sz, ESP_HW_RSAMAX_BIT );
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
@@ -2193,8 +2193,13 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
-            return MP_VAL; /*  Error: value is not able to be used. */
+            ESP_LOGW(TAG, "mulmod OperandBits = %d result exceeds max bit length %d",
+                           OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
+
+            if (mulmod_lock_called) {
+                ret = esp_mp_hw_unlock();
+            }
+            return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
         /* alt inline calc:
@@ -2286,7 +2291,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
-            return MP_VAL; /*  Error: value is not able to be used. */
+            return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
         /* alt inline calc:
@@ -2532,7 +2537,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     struct esp_mp_helper mph[1]; /* we'll save some mp helper data here */
     int ret = MP_OKAY;
     int exptmod_lock_called = FALSE;
-
+    ESP_LOGI(TAG, "Enter esp_mp_exptmod");
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* different calc */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -2731,7 +2736,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
-            ret = MP_VAL; /*  Error: value is not able to be used. */
+            ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         else {
             WordsForOperand = bits2words(OperandBits);
@@ -2788,6 +2793,20 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* end if CONFIG_IDF_TARGET_ESP32C3 */
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
+    if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
+                       OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
+   if (exptmod_lock_called) {
+        ret = esp_mp_hw_unlock();
+    }
+        ESP_LOGI(TAG, "REturn esp_mp_exptmod fallback");
+        return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
+    }
+    else {
+        WordsForOperand = bits2words(OperandBits);
+    }
+
     /* Steps to perform large number modular exponentiation.
      * Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x,
@@ -2811,17 +2830,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* 1. Wait until hardware is ready. */
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
-    }
-
-    if (ret == MP_OKAY) {
-        OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
-            ret = MP_VAL; /*  Error: value is not able to be used. */
-        }
-        else {
-            WordsForOperand = bits2words(OperandBits);
-        }
     }
 
     if (ret == MP_OKAY) {
@@ -2866,6 +2874,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
     /* 8. clear and release HW                    */
+        ESP_LOGI(TAG, "Unlock esp_mp_exptmod");
     if (exptmod_lock_called) {
         ret = esp_mp_hw_unlock();
     }
@@ -2904,7 +2913,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
-            ret = MP_VAL; /*  Error: value is not able to be used. */
+            ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         else {
             WordsForOperand = bits2words(OperandBits);
@@ -2980,6 +2989,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
     esp_mp_max_used = (Z->used > esp_mp_max_used) ? Z->used : esp_mp_max_used;
 #endif
+    ESP_LOGI(TAG, "Return esp_mp_exptmod %d", ret);
 
     return ret;
 } /* esp_mp_exptmod */
