@@ -243,7 +243,8 @@
     /* The ESP-TLS */
     #ifndef FP_MAX_BITS
         //#define FP_MAX_BITS (2048 * 2)
-        #define FP_MAX_BITS (8192 * 2)
+        // #define FP_MAX_BITS (8192 * 2)
+        #define FP_MAX_BITS (4096 * 2)
     #endif
     #define HAVE_ALPN
     #define HAVE_SNI
@@ -724,9 +725,9 @@
 
     // #define NO_WOLFSSL_ESP32_CRYPT_AES
     // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
