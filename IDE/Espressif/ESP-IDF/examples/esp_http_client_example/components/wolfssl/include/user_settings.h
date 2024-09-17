@@ -85,6 +85,7 @@
 /* Turn on messages that are useful to see only in examples. */
 #define WOLFSSL_EXAMPLE_VERBOSITY
 
+#define  WOLFSSL_ALT_CERT_CHAINS
 /* wolfSSL Examples: set macros used in example applications.
  *
  * These Settings NOT available in ESP-IDF (e.g. esp-tls)
@@ -240,7 +241,10 @@
 /* Used by ESP-IDF components: */
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
-    #define FP_MAX_BITS (8192 * 2)
+    #ifndef FP_MAX_BITS
+        //#define FP_MAX_BITS (2048 * 2)
+        #define FP_MAX_BITS (8192 * 2)
+    #endif
     #define HAVE_ALPN
     #define HAVE_SNI
     #define OPENSSL_EXTRA_X509_SMALL
@@ -298,7 +302,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -712,17 +716,17 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
-    /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    // #define NO_ESP32_CRYPT
+    //#define NO_WOLFSSL_ESP32_CRYPT_HASH
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+    // #define NO_WOLFSSL_ESP32_CRYPT_AES
+    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -789,6 +793,7 @@
         #endif
     #endif
 #endif
+#define WOLFSSL_MAX_ERROR_SZ 500
 
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
