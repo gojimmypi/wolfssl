@@ -69,9 +69,51 @@
     #include <freertos/semphr.h>
 #endif
 
-#define ESP_HW_RSAMAX_BIT           4096
-#define ESP_HW_MULTI_RSAMAX_BITS    2048
 #define ESP_HW_RSAMIN_BIT           512
+#define ESP_HW_RSAMAX_BIT           4096
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    /* See 24.3.2 Large Number Modular Exponentiation:
+     * https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+     * The RSA Accelerator supports specific operand lengths of N
+     * {512, 1024, 1536, 2048, 2560, 3072, 3584, 4096} bits */
+    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* See 18.3.1 Large Number Modular Exponentiation
+     * https://www.espressif.com/sites/default/files/documentation/esp32-s2_technical_reference_manual_en.pdf
+     * RSA Accelerator supports operands of length N = (32 * x),
+     * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
+     * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
+     * must be of the same length. 32 * 128 = 4096 */
+    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    /* See 20.3.1 Large Number Modular Exponentiation
+     * https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+     * RSA Accelerator supports operands of length N = (32 * x),
+     * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
+     * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
+     * must be of the same length. 32 * 128 = 4096 */
+    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    /* See 20.3.1 Large Number Modular Exponentiation
+     * https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
+     * RSA Accelerator supports operands of length N = (32 * x),
+     * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
+     * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
+     * must be of the same length. 32 * 96 = 3072 */
+    #define ESP_HW_MULTI_RSAMAX_BITS    3072
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    /* See 22.3.1 Large-number Modular Exponentiation
+     * https://www.espressif.com/sites/default/files/documentation/esp32-c6_technical_reference_manual_en.pdf
+     * The RSA accelerator supports operands of length N = (32 * x),
+     * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
+     * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
+     * must be of the same length. 32 * 96 = 3072  */
+    #define ESP_HW_MULTI_RSAMAX_BITS    3072
+#else
+    /* N0 HW on ESP8266, but then we'll not even use this lib.
+     * Other ESP32 devices not implemented: */
+    #define ESP_HW_MULTI_RSAMAX_BITS    0
+#endif
 
 /* (s+(4-1))/ 4    */
 #define BYTE_TO_WORDS(s)            (((s+3)>>2))
@@ -2105,7 +2147,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
-            return MP_VAL; /*  Error: value is not able to be used. */
+            return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
         /* alt inline calc:
@@ -2797,11 +2839,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
                        OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
-   if (exptmod_lock_called) {
-        ret = esp_mp_hw_unlock();
-    }
-        ESP_LOGI(TAG, "REturn esp_mp_exptmod fallback");
-        return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
+       if (exptmod_lock_called) {
+            ret = esp_mp_hw_unlock();
+        }
+        ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
+        return MP_HW_FALLBACK; /* HW not capable, return error to fall back to SW */
     }
     else {
         WordsForOperand = bits2words(OperandBits);
