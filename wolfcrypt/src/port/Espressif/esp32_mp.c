@@ -142,8 +142,10 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 #ifdef WOLFSSL_HW_METRICS
         static unsigned long esp_mp_max_used = 0;
 
+    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
         static unsigned long esp_mp_mulmod_small_x_ct = 0;
         static unsigned long esp_mp_mulmod_small_y_ct = 0;
+    #endif
 
         static unsigned long esp_mp_max_timeout = 0;
 
