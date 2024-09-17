@@ -10,7 +10,7 @@ when not using a [Managed Component](https://components.espressif.com/components
 
 ## Getting Started
 
-Use the `idf.py menuconfig`, 
+Use the `idf.py menuconfig`,
 
 When in doubt, delete the `./build` directory. This is particularly important when changing Certificate Bundle PEM files.
 
