@@ -123,6 +123,7 @@
 
 #define BITS_IN_ONE_WORD            32
 
+/* Some minimum operand sizes, fall back to SW if too small: */
 #ifndef ESP_RSA_MULM_BITS
     #define ESP_RSA_MULM_BITS 16
 #endif
@@ -184,15 +185,9 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 #ifdef WOLFSSL_HW_METRICS
         static unsigned long esp_mp_max_used = 0;
 
-    #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-        static unsigned long esp_mp_mulmod_small_x_ct = 0;
-        static unsigned long esp_mp_mulmod_small_y_ct = 0;
-        static unsigned long esp_mp_mulmod_max_exceeded_ct = 0;
-    #endif
-
         static unsigned long esp_mp_max_timeout = 0;
 
-    /* HW Multiplication Metrics*/
+    /* HW Multiplication Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
@@ -201,11 +196,14 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 
     /* HW Modular Multiplication Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+        static unsigned long esp_mp_mulmod_small_x_ct = 0;
+        static unsigned long esp_mp_mulmod_small_y_ct = 0;
+        static unsigned long esp_mp_mulmod_max_exceeded_ct = 0;
         static unsigned long esp_mp_mulmod_usage_ct = 0;
         static unsigned long esp_mp_mulmod_fallback_ct = 0;
         static unsigned long esp_mp_mulmod_even_mod_ct = 0;
         static unsigned long esp_mp_mulmod_error_ct = 0;
-    #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
+     #endif
 
     /* HW Modular Exponentiation Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
@@ -220,7 +218,7 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 #ifdef SINGLE_THREADED
     /* Although freeRTOS is multithreaded, if we know we'll only be in
      * a single thread for wolfSSL, we can avoid the complexity of mutexes. */
-    int single_thread_locked = 0;
+    static int single_thread_locked = 0;
 #else
     static wolfSSL_Mutex mp_mutex;
     static int espmp_CryptHwMutexInit = 0;
@@ -3059,6 +3057,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #endif /* !NO_RSA || HAVE_ECC */
 
+/* Some optional metrics when using RSA HW Accleration */
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI) && defined(WOLFSSL_HW_METRICS)
 int esp_hw_show_mp_metrics(void)
 {
