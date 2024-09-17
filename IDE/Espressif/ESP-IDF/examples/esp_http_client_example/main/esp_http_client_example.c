@@ -921,6 +921,12 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+     * Read "Establishing Wi-Fi or Ethernet Connection" section in
+     * examples/protocols/README.md for more information about this function.
+     */
+    ESP_ERROR_CHECK(example_connect());
+
 #ifdef ESP_SDK_MEM_LIB_VERSION
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
@@ -929,11 +935,6 @@ void app_main(void)
         wolfSSL_Debugging_OFF();
     #endif
 
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    ESP_ERROR_CHECK(example_connect());
     esp_log_level_set("esp-tls",         ESP_LOG_DEBUG);
     esp_log_level_set("esp-tls-wolfssl", ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Connected to AP, begin http example");
