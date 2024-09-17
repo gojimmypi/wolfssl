@@ -187,15 +187,19 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
         static unsigned long esp_mp_mulmod_small_x_ct = 0;
         static unsigned long esp_mp_mulmod_small_y_ct = 0;
+        static unsigned long esp_mp_mulmod_max_exceeded_ct = 0;
     #endif
 
         static unsigned long esp_mp_max_timeout = 0;
 
+    /* HW Multiplication Metrics*/
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
+        static unsigned long esp_mp_mul_max_exceeded_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
+    /* HW Modular Multiplication Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
         static unsigned long esp_mp_mulmod_usage_ct = 0;
         static unsigned long esp_mp_mulmod_fallback_ct = 0;
@@ -203,15 +207,19 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
         static unsigned long esp_mp_mulmod_error_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD */
 
+    /* HW Modular Exponentiation Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         static unsigned long esp_mp_exptmod_usage_ct = 0;
         static unsigned long esp_mp_exptmod_error_ct = 0;
+        static unsigned long esp_mp_exptmod_max_exceeded_ct = 0;
         static unsigned long esp_mp_exptmod_fallback_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
-#endif
+#endif /* WOLFSSL_HW_METRICS */
 
 /* mutex */
 #ifdef SINGLE_THREADED
+    /* Although freeRTOS is multithreaded, if we know we'll only be in
+     * a single thread for wolfSSL, we can avoid the complexity of mutexes. */
     int single_thread_locked = 0;
 #else
     static wolfSSL_Mutex mp_mutex;
@@ -1352,8 +1360,12 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         resultWords_sz = bits2words(Xs + Ys);
         /* sanity check */
         if ( (hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "exceeds max bit length(2048) (a)");
-            ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
+            ESP_LOGW(TAG, "mp-mul exceeds max bit length (%d)",
+                           ESP_HW_MULTI_RSAMAX_BITS);
+    #if defined(WOLFSSL_HW_METRICS)
+            esp_mp_mul_max_exceeded_ct++;
+    #endif
+            ret = MP_HW_FALLBACK; /*  Fallback to use SW */
         }
     }
 
@@ -1571,11 +1583,13 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* Make sure we are within capabilities of hardware. */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "RSA mul result hwWords_sz exceeds max bit length (%d)", hwWords_sz, ESP_HW_MULTI_RSAMAX_BITS);
+        ESP_LOGW(TAG, "RSA mul result hwWords_sz %d exceeds max bit length %d",
+                       hwWords_sz, ESP_HW_MULTI_RSAMAX_BITS);
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
     if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGW(TAG, "RSA max result hwWords_sz = %d exceeds max bit length (%d)", hwWords_sz, ESP_HW_RSAMAX_BIT );
+        ESP_LOGW(TAG, "RSA max result hwWords_sz %d exceeds max bit length %d",
+                       hwWords_sz, ESP_HW_RSAMAX_BIT );
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
@@ -2837,8 +2851,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
     if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+    #ifdef WOLFSSL_HW_METRICS
         ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
                        OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
+        esp_mp_mulmod_max_exceeded_ct++;
+    #endif
        if (exptmod_lock_called) {
             ret = esp_mp_hw_unlock();
         }
@@ -3058,6 +3075,8 @@ int esp_hw_show_mp_metrics(void)
     ESP_LOGI(TAG, "esp_mp_mul HW acceleration enabled.");
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
                    esp_mp_mul_usage_ct);
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mul HW operand exceeded: %lu",
+                   esp_mp_mul_max_exceeded_ct);
     if (esp_mp_mul_error_ct == 0) {
         ESP_LOGI(TAG, "Success: no esp_mp_mul() errors.");
     }
@@ -3079,6 +3098,8 @@ int esp_hw_show_mp_metrics(void)
     /* Metrics: esp_mp_mulmod() */
     ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod: %lu",
                    esp_mp_mulmod_usage_ct);
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mulmod HW operand exceeded: %lu",
+                   esp_mp_mulmod_max_exceeded_ct);
     ESP_LOGI(TAG, "Number of fallback to SW mp_mulmod: %lu",
                    esp_mp_mulmod_fallback_ct);
 
@@ -3119,6 +3140,8 @@ int esp_hw_show_mp_metrics(void)
 
     ESP_LOGI(TAG, "Number of calls to esp_mp_exptmod: %lu",
                    esp_mp_exptmod_usage_ct);
+    ESP_LOGI(TAG, "Number of calls to esp_mp_exptmod HW operand exceeded: %lu",
+                   esp_mp_exptmod_max_exceeded_ct);
     ESP_LOGI(TAG, "Number of fallback to SW mp_exptmod: %lu",
                    esp_mp_exptmod_fallback_ct);
     if (esp_mp_exptmod_error_ct == 0) {
