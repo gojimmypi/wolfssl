@@ -59,6 +59,7 @@ extern const char howsmyssl_com_root_cert_pem_end[]   asm("_binary_howsmyssl_com
 extern const char postman_root_cert_pem_start[] asm("_binary_postman_root_cert_pem_start");
 extern const char postman_root_cert_pem_end[]   asm("_binary_postman_root_cert_pem_end");
 
+static esp_err_t ret = ESP_OK;
 esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 {
     static char *output_buffer;  // Buffer to store response of http request from event handler
@@ -129,13 +130,14 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             break;
         case HTTP_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            int mbedtls_err = 0;
-            esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
+            int esp_tls_err = 0;
+            esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &esp_tls_err, NULL);
             if (err != 0) {
+                /* ret = err; disconnected; this is not a hard error */
                 ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
                 #ifdef CONFIG_ESP_TLS_USING_MBEDTLS
                 {
-                    ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+                    ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", esp_tls_err);
                 }
                 #endif
             }
@@ -184,6 +186,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
     }
     ESP_LOG_BUFFER_HEX(TAG, local_response_buffer, strlen(local_response_buffer));
@@ -200,6 +203,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
 
@@ -212,6 +216,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP PUT request failed: %s", esp_err_to_name(err));
     }
 
@@ -225,6 +230,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP PATCH request failed: %s", esp_err_to_name(err));
     }
 
@@ -237,6 +243,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP DELETE request failed: %s", esp_err_to_name(err));
     }
 
@@ -249,6 +256,7 @@ static void http_rest_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP HEAD request failed: %s", esp_err_to_name(err));
     }
 
@@ -272,6 +280,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
     }
 
@@ -286,6 +295,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
 
@@ -298,6 +308,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP PUT request failed: %s", esp_err_to_name(err));
     }
 
@@ -311,6 +322,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP PATCH request failed: %s", esp_err_to_name(err));
     }
 
@@ -323,6 +335,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP DELETE request failed: %s", esp_err_to_name(err));
     }
 
@@ -335,6 +348,7 @@ static void http_rest_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP HEAD request failed: %s", esp_err_to_name(err));
     }
 
@@ -365,6 +379,7 @@ static void http_auth_basic(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -384,6 +399,7 @@ static void http_auth_basic_redirect(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -405,6 +421,7 @@ static void http_auth_digest_md5(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error performing http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -425,6 +442,7 @@ static void http_auth_digest_sha256(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error performing http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -447,6 +465,7 @@ static void https_with_url(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -470,6 +489,7 @@ static void https_with_hostname_path(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -499,6 +519,7 @@ static void http_encoded_query(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
     }
 }
@@ -517,6 +538,7 @@ static void http_relative_redirect(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -536,6 +558,7 @@ static void http_absolute_redirect(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -556,6 +579,7 @@ static void http_absolute_redirect_manual(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -576,6 +600,7 @@ static void http_redirect_to_https(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -596,6 +621,7 @@ static void http_download_chunk(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -614,6 +640,7 @@ static void http_perform_as_stream_reader(void)
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err;
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
+        ret = err;
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         free(buffer);
         return;
@@ -667,6 +694,7 @@ static void https_async(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -697,6 +725,7 @@ static void https_async(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -712,10 +741,12 @@ static void https_with_invalid_url(void)
     esp_err_t err = esp_http_client_perform(client);
 
     if (err == ESP_OK) {
+        //ret = ESP_FAIL; /* an invalid URL should never be successful! */
         ESP_LOGI(TAG, "HTTPS Status = %d, content_length = %"PRId64,
                  esp_http_client_get_status_code(client),
                  esp_http_client_get_content_length(client));
     } else {
+        /* ret = err; we expect an error here, as it is an invalid URL! */
         ESP_LOGE(TAG, "Error perform http request %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
@@ -742,6 +773,7 @@ static void http_native_request(void)
     esp_http_client_set_method(client, HTTP_METHOD_GET);
     esp_err_t err = esp_http_client_open(client, 0);
     if (err != ESP_OK) {
+        ret = err;
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
     } else {
         content_length = esp_http_client_fetch_headers(client);
@@ -768,6 +800,7 @@ static void http_native_request(void)
     esp_http_client_set_header(client, "Content-Type", "application/json");
     err = esp_http_client_open(client, strlen(post_data));
     if (err != ESP_OK) {
+        ret = err;
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
     } else {
         int wlen = esp_http_client_write(client, post_data, strlen(post_data));
@@ -810,6 +843,7 @@ static void http_partial_download(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
     }
 
@@ -821,6 +855,7 @@ static void http_partial_download(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
     }
 
@@ -832,6 +867,7 @@ static void http_partial_download(void)
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
+        ret = err;
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
     }
 
@@ -848,6 +884,7 @@ esp_http_client_method_t http_method;
 
 static void http_test_task(void *pvParameters)
 {
+    ret = ESP_OK;
 #ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
@@ -890,11 +927,31 @@ static void http_test_task(void *pvParameters)
 #endif
 
 #endif
+
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
+    esp_hw_show_mp_metrics();
+#endif
+
     ESP_LOGI(TAG, "Finish http example");
+
+#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+    if (ret == 0) {
+        ESP_LOGI(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Success!", ret));
+    }
+    else {
+        ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
+    }
+#elif defined(WOLFSSL_ESPIDF_EXIT_MESSAGE)
+    ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+#else
+    ESP_LOGI(TAG, "\n\nDone!\n\n"
+                  "If running from idf.py monitor, press twice: Ctrl+]");
+#endif
 #if !CONFIG_IDF_TARGET_LINUX
     vTaskDelete(NULL);
 #endif
-}
+
+} /* http_test_task */
 
 void app_main(void)
 {
@@ -927,7 +984,7 @@ void app_main(void)
      */
     ESP_ERROR_CHECK(example_connect());
 
-#ifdef ESP_SDK_MEM_LIB_VERSION
+#ifdef USE_WOLFSSL_ESP_SDK_TIME
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
 #endif
@@ -944,4 +1001,7 @@ void app_main(void)
 #else
     xTaskCreate(&http_test_task, "http_test_task", 48192, NULL, 5, NULL);
 #endif
+
+    /* Done in main task, cleanp and free memory. */
+    vTaskDelete(NULL);
 }
