@@ -926,6 +926,8 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         }
     }
 #endif /* else; not RISC-V */
+
+    /* All architectures: */
     if (ret == 0) {
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
