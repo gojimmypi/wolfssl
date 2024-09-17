@@ -75,8 +75,14 @@
     /* See 24.3.2 Large Number Modular Exponentiation:
      * https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
      * The RSA Accelerator supports specific operand lengths of N
-     * {512, 1024, 1536, 2048, 2560, 3072, 3584, 4096} bits */
-    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+     * {512, 1024, 1536, 2048, 2560, 3072, 3584, 4096} bits
+     *
+     * 24.3.4 Large Number Multiplication
+     * The length of Z is twice that of X and Y . Therefore, the RSA Accelerator
+     * supports large-number multiplication with only four operand lengths of
+     * N in {512, 1024, 1536, 2048} */
+    #define ESP_HW_MOD_RSAMAX_BITS      4096
+    #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     /* See 18.3.1 Large Number Modular Exponentiation
      * https://www.espressif.com/sites/default/files/documentation/esp32-s2_technical_reference_manual_en.pdf
@@ -84,7 +90,8 @@
      * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
      * must be of the same length. 32 * 128 = 4096 */
-    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+    #define ESP_HW_MOD_RSAMAX_BITS      4096
+    #define ESP_HW_MULTI_RSAMAX_BITS    2048 TODO
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* See 20.3.1 Large Number Modular Exponentiation
      * https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
@@ -92,7 +99,8 @@
      * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
      * must be of the same length. 32 * 128 = 4096 */
-    #define ESP_HW_MULTI_RSAMAX_BITS    4096
+    #define ESP_HW_MOD_RSAMAX_BITS      4096
+    #define ESP_HW_MULTI_RSAMAX_BITS    2048 TODO
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* See 20.3.1 Large Number Modular Exponentiation
      * https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
@@ -100,18 +108,25 @@
      * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
      * must be of the same length. 32 * 96 = 3072 */
-    #define ESP_HW_MULTI_RSAMAX_BITS    3072
+    #define ESP_HW_MOD_RSAMAX_BITS      4096
+    #define ESP_HW_MULTI_RSAMAX_BITS    3072 TODO
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /* See 22.3.1 Large-number Modular Exponentiation
      * https://www.espressif.com/sites/default/files/documentation/esp32-c6_technical_reference_manual_en.pdf
      * The RSA accelerator supports operands of length N = (32 * x),
      * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
-     * must be of the same length. 32 * 96 = 3072  */
-    #define ESP_HW_MULTI_RSAMAX_BITS    3072
+     * must be of the same length. 32 * 96 = 3072 */
+    #define ESP_HW_MOD_RSAMAX_BITS      3072
+    /* The length of result Z is twice that of operand X and operand Y.
+     * Therefore, the RSA accelerator only supports large-number multiplication
+     * with operand length N = 32 * x, where x in {1, 2, 3, . . . , 48}.
+     * 32 * (96/2) = 32 * (48/2) = 1536 */
+    #define ESP_HW_MULTI_RSAMAX_BITS    1536
 #else
-    /* N0 HW on ESP8266, but then we'll not even use this lib.
+    /* No HW on ESP8266, but then we'll not even use this lib.
      * Other ESP32 devices not implemented: */
+    #define ESP_HW_MOD_RSAMAX_BITS      0
     #define ESP_HW_MULTI_RSAMAX_BITS    0
 #endif
 
@@ -191,6 +206,7 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         static unsigned long esp_mp_mul_usage_ct = 0;
         static unsigned long esp_mp_mul_error_ct = 0;
+        static unsigned long esp_mp_mul_tiny_ct = 0;
         static unsigned long esp_mp_mul_max_exceeded_ct = 0;
     #endif /* !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL */
 
@@ -1335,17 +1351,34 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
     Zs = Xs + Ys;
 
     /* RSA Accelerator only supports Large Number Multiplication
-     * with operand length N = 32 * x,
-     * where x in {1, 2, 3, . . . , 64} */
-    if (Xs > 64 || Ys > 64) {
-        return MP_HW_FALLBACK; /* TODO add count metric on size fallback */
+     * with certain operand lengths N = (32 * x); See above. */
+    if (Xs > ESP_HW_MULTI_RSAMAX_BITS) {
+#if defined(WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS)
+        ESP_LOGW(TAG, "mp-mul X %d bits exceeds max bit length (%d)",
+                        Xs, ESP_HW_MULTI_RSAMAX_BITS);
+#endif
+        esp_mp_mul_max_exceeded_ct++;
+        return MP_HW_FALLBACK;
+    }
+    if (Ys > ESP_HW_MULTI_RSAMAX_BITS) {
+#if defined(WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS)
+        ESP_LOGW(TAG, "mp-mul Y %d bits exceeds max bit length (%d)",
+                        Ys, ESP_HW_MULTI_RSAMAX_BITS);
+#endif
+        esp_mp_mul_max_exceeded_ct++;
+        return MP_HW_FALLBACK;
     }
 
-    if (Zs <= sizeof(mp_digit)*8) {
+    /* sizeof(mp_digit) is typically 4 bytes.
+     * If the total Zs fits into a 4 * 8 = 32 bit word, just do regular math: */
+    if (Zs <= sizeof(mp_digit) * 8) {
         Z->dp[0] = X->dp[0] * Y->dp[0];
         Z->used = 1;
 #if defined(WOLFSSL_SP_INT_NEGATIVE) || defined(USE_FAST_MATH)
         Z->sign = res_sign; /* See above mp_isneg() for negative detection */
+#endif
+#if defined(WOLFSSL_HW_METRICS)
+        esp_mp_mul_tiny_ct++;
 #endif
         return MP_OKAY;
     }
@@ -1356,17 +1389,21 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         hwWords_sz  = words2hwords(maxWords_sz);
 
         resultWords_sz = bits2words(Xs + Ys);
-        /* sanity check */
+
+        /* Final parameter sanity check */
         if ( (hwWords_sz << 5) > ESP_HW_MULTI_RSAMAX_BITS) {
+    #if defined(WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS)
             ESP_LOGW(TAG, "mp-mul exceeds max bit length (%d)",
                            ESP_HW_MULTI_RSAMAX_BITS);
+    #endif
     #if defined(WOLFSSL_HW_METRICS)
             esp_mp_mul_max_exceeded_ct++;
     #endif
-            ret = MP_HW_FALLBACK; /*  Fallback to use SW */
+            return MP_HW_FALLBACK; /*  Fallback to use SW */
         }
     }
 
+    /* If no initial exit, proceed to hardware multiplication calculations: */
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* assumed to be regular ESP32 Xtensa here */
 
@@ -1571,15 +1608,19 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /* Unlike the ESP32 that is limited to only four operand lengths,
      * the ESP32-C6 The RSA Accelerator supports large-number modular
-     * multiplication with operands of 128 different lengths.
+     * multiplication with operands of 96 different lengths. (1 .. 96 words)
      *
      * X & Y must be represented by the same number of bits. Must be
-     * enough to represent the larger one. */
+     * enough to represent the larger one.
+     *
+     * Multiplication is limited to 48 different lengths (1 .. 48 words) */
 
     /* Figure out how many words we need to
      * represent each operand & the result. */
 
     /* Make sure we are within capabilities of hardware. */
+
+    /* TODO confirm this can be removed: */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
         ESP_LOGW(TAG, "RSA mul result hwWords_sz %d exceeds max bit length %d",
                        hwWords_sz, ESP_HW_MULTI_RSAMAX_BITS);
@@ -1990,10 +2031,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         }
         #endif
         ret = MP_HW_FALLBACK;
-        /* TODO add debug metrics */
         #ifdef WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
         {
-            ESP_LOGV(TAG, "esp_mp_mulmod falling back for ESP_RSA_MULM_BITS!");
+            ESP_LOGW(TAG, "esp_mp_mulmod falling back for ESP_RSA_MULM_BITS!");
         }
         #endif
     }
@@ -2157,7 +2197,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
             return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
@@ -2246,9 +2286,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
             ESP_LOGW(TAG, "mulmod OperandBits = %d result exceeds max bit length %d",
-                           OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
+                           OperandBits, ESP_HW_MOD_RSAMAX_BITS);
 
             if (mulmod_lock_called) {
                 ret = esp_mp_hw_unlock();
@@ -2343,7 +2383,7 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
             return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
@@ -2788,7 +2828,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (ret == MP_OKAY) {
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
             ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
@@ -2848,10 +2888,10 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-    if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+    if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
     #ifdef WOLFSSL_HW_METRICS
         ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
-                       OperandBits, ESP_HW_MULTI_RSAMAX_BITS);
+                       OperandBits, ESP_HW_MOD_RSAMAX_BITS);
         esp_mp_mulmod_max_exceeded_ct++;
     #endif
        if (exptmod_lock_called) {
@@ -2968,7 +3008,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 
     if (ret == MP_OKAY) {
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MULTI_RSAMAX_BITS) {
+        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
             ESP_LOGW(TAG, "result exceeds max bit length");
             ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
@@ -3074,6 +3114,8 @@ int esp_hw_show_mp_metrics(void)
     ESP_LOGI(TAG, "esp_mp_mul HW acceleration enabled.");
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul: %lu",
                    esp_mp_mul_usage_ct);
+    ESP_LOGI(TAG, "Number of calls to esp_mp_mul with tiny operands: %lu",
+                   esp_mp_mul_tiny_ct);
     ESP_LOGI(TAG, "Number of calls to esp_mp_mul HW operand exceeded: %lu",
                    esp_mp_mul_max_exceeded_ct);
     if (esp_mp_mul_error_ct == 0) {
