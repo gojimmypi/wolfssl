@@ -3234,7 +3234,7 @@ int esp_hw_show_mp_metrics(void)
 
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
     ESP_LOGI(TAG, "Max hw wait timeout: esp_mp_max_wait_timeout = %lu", esp_mp_max_wait_timeout);
-    ESP_LOGI(TAG, "Max calc timeout: esp_mp_max_timeout = %lu", esp_mp_max_timeout);
+    ESP_LOGI(TAG, "Max calc timeout: esp_mp_max_timeout = 0x%08lx", esp_mp_max_timeout);
 
 #else
     /* no HW math, no HW math metrics */
