@@ -382,6 +382,24 @@ menu "wolfSSL"
                 Hardware acceleration enabled by default.
                 Select this option to force disable: NO_HW_RSA_PRI_EXPTMOD
 
+        config ESP_WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+            bool "Enable debugging of RSA Multiplication operand length"
+            default n
+            help
+                Prints an esp log warning to the default console UART when one of the
+                multiplication operands exceeds the maximum size supported by hardware,
+                requiring fallback to software. This can be helpful to pick key sizes
+                when performance is critical. See also metrics for counting instances.
+
+        config ESP_WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+            bool "Enable debugging of RSA Modular operand length"
+            default n
+            help
+                Prints an esp log warning to the default console UART when one of the
+                modular math operands exceeds the maximum size supported by hardware,
+                requiring fallback to software. This can be helpful to pick key sizes
+                when performance is critical. See also metrics for counting instances.
+
     endmenu # wolfSSL Hardware Acceleration
     # -----------------------------------------------------------------------------------------------------------------
 

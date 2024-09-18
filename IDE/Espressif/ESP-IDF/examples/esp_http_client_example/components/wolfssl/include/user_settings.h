@@ -85,6 +85,9 @@
 /* Turn on messages that are useful to see only in examples. */
 #define WOLFSSL_EXAMPLE_VERBOSITY
 
+#define WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+#define WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+
 #define  WOLFSSL_ALT_CERT_CHAINS
 /* wolfSSL Examples: set macros used in example applications.
  *

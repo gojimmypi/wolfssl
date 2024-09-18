@@ -580,6 +580,14 @@
                 CONFIG_WOLFSSL_APPLE_HOMEKIT
         #define        WOLFSSL_APPLE_HOMEKIT
     #endif
+    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS) && \
+                CONFIG_ESP_WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+        #define            WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+    #endif
+    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS) && \
+                CONFIG_ESP_WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+        #define            WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+    #endif
 
     #if defined(CONFIG_TLS_STACK_WOLFSSL) && (CONFIG_TLS_STACK_WOLFSSL)
         /* When using ESP-TLS, some old algoritms such as SHA1 are no longer
