@@ -170,7 +170,7 @@
     #ifndef KEEP_PEER_CERT
         #define KEEP_PEER_CERT
     #endif
-    
+
 #elif defined(APP_ESP_HTTP_CLIENT)
     /* The ESP-IDF Version */
     #define FP_MAX_BITS (8192 * 2)
@@ -298,7 +298,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-/* #define SINGLE_THREADED */
+#define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -318,9 +318,7 @@
 #define USE_CERT_BUFFERS_2048
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
-#define RSA_LOW_MEM
-
-/* Uncommon settings for testing only */
+/* #define RSA_LOW_MEM  */
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -351,7 +349,7 @@
     /* Required for RSA */
     #define WC_RSA_PSS
 
-    /* TLS 1.3 normally requires HAVE_FFDHE */
+    /* TLS 1.3 normally requires HAVE_FFDHE. For now just syntax highlight: */
     #if defined(HAVE_FFDHE_2048) || \
         defined(HAVE_FFDHE_3072) || \
         defined(HAVE_FFDHE_4096) || \
@@ -480,7 +478,7 @@
 
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x349F00
+#define ESP_RSA_TIMEOUT_CNT    0x449F00
 
 /* hash limit for test.c */
 #define HASH_SIZE_LIMIT
