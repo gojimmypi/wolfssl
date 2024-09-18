@@ -151,7 +151,17 @@
     #define ESP_RSA_EXPT_YBITS 8
 #endif
 
+/* RSA math calculation timeout */
+#ifndef ESP_RSA_TIMEOUT_CNT
+    #define ESP_RSA_TIMEOUT_CNT 0x5000000
+#endif
 #define ESP_TIMEOUT(cnt)         (cnt >= ESP_RSA_TIMEOUT_CNT)
+
+/* Hardware Ready Timeout */
+#ifndef ESP_RSA_WAIT_TIMEOUT_CNT
+    #define ESP_RSA_WAIT_TIMEOUT_CNT 0x20
+#endif
+#define ESP_WAIT_TIMEOUT(cnt)    (cnt >= ESP_RSA_WAIT_TIMEOUT_CNT)
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     #include <soc/system_reg.h>
@@ -200,7 +210,8 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 #ifdef WOLFSSL_HW_METRICS
         static unsigned long esp_mp_max_used = 0;
 
-        static unsigned long esp_mp_max_timeout = 0;
+        static unsigned long esp_mp_max_timeout = 0; /* Calc duration */
+        static unsigned long esp_mp_max_wait_timeout; /* HW wait duration */
 
     /* HW Multiplication Metrics */
     #ifndef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
@@ -304,14 +315,23 @@ static int esp_mp_hw_wait_clean(void)
     /* no HW timeout if we don't know the platform. assumes no HW */
 #endif
 
-    #if defined(WOLFSSL_HW_METRICS)
+#if defined(WOLFSSL_HW_METRICS)
+    if (timeout > esp_mp_max_wait_timeout) {
+        esp_mp_max_wait_timeout = timeout;
+    }
     {
+        // TODO this is the wait clean timeout
         esp_mp_max_timeout = (timeout > esp_mp_max_timeout) ? timeout :
                                                         esp_mp_max_timeout;
     }
-    #endif
+#endif
 
     if (ESP_TIMEOUT(timeout)) {
+        /* This is highly unusual and will likely only occur in multi-threaded
+         * application. wolfSSL ctx is not thread safe. */
+    #ifndef SINGLE_THREADED
+        ESP_LOG(TAG, "Consider #define SINGLE_THREADED. See docs");
+    #endif
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean waiting HW ready timed out.");
         ret = WC_HW_WAIT_E; /* hardware is busy, MP_HW_BUSY; */
     }
@@ -800,6 +820,12 @@ static int wait_until_done(word32 reg)
     /* clear interrupt */
     DPORT_REG_WRITE(RSA_INTERRUPT_REG, 1);
 
+#endif
+
+#if defined(WOLFSSL_HW_METRICS)
+    if (timeout > esp_mp_max_timeout) {
+        esp_mp_max_timeout = timeout;
+    }
 #endif
 
     if (ESP_TIMEOUT(timeout)) {
@@ -3196,7 +3222,8 @@ int esp_hw_show_mp_metrics(void)
 #endif /* EXPTMOD not disabled !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
-    ESP_LOGI(TAG, "Max timeout: esp_mp_max_timeout = %lu", esp_mp_max_timeout);
+    ESP_LOGI(TAG, "Max hw wait timeout: esp_mp_max_wait_timeout = %lu", esp_mp_max_wait_timeout);
+    ESP_LOGI(TAG, "Max calc timeout: esp_mp_max_timeout = %lu", esp_mp_max_timeout);
 
 #else
     /* no HW math, no HW math metrics */

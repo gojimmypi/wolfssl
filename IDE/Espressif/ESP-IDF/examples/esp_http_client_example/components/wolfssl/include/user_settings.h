@@ -374,7 +374,7 @@
 #endif
 
     // TODO
-    #define HAVE_FFDHE_8192
+    #define HAVE_FFDHE_4096
 
 
 #define NO_FILESYSTEM
@@ -493,7 +493,7 @@
 
 
 /* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x349F00
+// #define ESP_RSA_TIMEOUT_CNT    0x349F00
 
 /* hash limit for test.c */
 #define HASH_SIZE_LIMIT
