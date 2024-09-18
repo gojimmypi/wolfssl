@@ -492,8 +492,9 @@
 /* #define XTIME time */
 
 
-/* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-// #define ESP_RSA_TIMEOUT_CNT    0x349F00
+/* Adjust wait-timeout count if you see timeout in RSA HW acceleration.
+ * Set to very large number and enable WOLFSSL_HW_METRICS to determine max. */
+#define ESP_RSA_TIMEOUT_CNT 0xFF0000
 
 /* hash limit for test.c */
 #define HASH_SIZE_LIMIT
