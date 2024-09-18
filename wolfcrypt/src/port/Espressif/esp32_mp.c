@@ -2754,6 +2754,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             #ifdef DEBUG_WOLFSSL
                 esp_mp_exptmod_depth_counter--;
             #endif
+            return MP_HW_FALLBACK; /* If we can't lock HW, fall back to SW */
         }
     } /* the only thing we expect is success or busy */
 
@@ -2831,6 +2832,23 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     }
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
+    if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
+    #ifdef WOLFSSL_HW_METRICS
+        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
+                       OperandBits, ESP_HW_MOD_RSAMAX_BITS);
+        esp_mp_mulmod_max_exceeded_ct++;
+    #endif
+       if (exptmod_lock_called) {
+            ret = esp_mp_hw_unlock();
+        }
+        ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
+        return MP_HW_FALLBACK; /* HW not capable, return error to fall back to SW */
+    }
+    else {
+        WordsForOperand = bits2words(OperandBits);
+    }
+
     /* Steps to perform large number modular exponentiation.
      * Calculates Z = (X ^ Y) modulo M.
      * The number of bits in the operands (X, Y) is N. N can be 32x,
@@ -2854,17 +2872,6 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     /* 1. Wait until hardware is ready. */
     if (ret == MP_OKAY) {
         ret = esp_mp_hw_wait_clean();
-    }
-
-    if (ret == MP_OKAY) {
-        OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
-        if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
-            ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
-        }
-        else {
-            WordsForOperand = bits2words(OperandBits);
-        }
     }
 
     if (ret == MP_OKAY) {
