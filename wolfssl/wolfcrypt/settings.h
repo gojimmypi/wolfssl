@@ -915,7 +915,8 @@
 
 #endif /* defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE) */
     /* Final device-specific hardware settings. user_settings.h loaded above. */
-    #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
+   #define ESP_RSA_WAIT_TIMEOUT_CNT 0x000020
+   #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
         #ifndef ESP_RSA_TIMEOUT_CNT
             #define ESP_RSA_TIMEOUT_CNT      0x349F00
         #endif
