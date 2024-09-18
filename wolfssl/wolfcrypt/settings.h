@@ -915,8 +915,10 @@
 
 #endif /* defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE) */
     /* Final device-specific hardware settings. user_settings.h loaded above. */
-   #define ESP_RSA_WAIT_TIMEOUT_CNT 0x000020
-   #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
+
+    /* Counters for RSA wait timeout. CPU and frequency specific. */
+    #define ESP_RSA_WAIT_TIMEOUT_CNT          0x000020
+    #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
         #ifndef ESP_RSA_TIMEOUT_CNT
             #define ESP_RSA_TIMEOUT_CNT      0x349F00
         #endif
@@ -935,11 +937,13 @@
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32C3)
         #ifndef ESP_RSA_TIMEOUT_CNT
-            #define ESP_RSA_TIMEOUT_CNT      0x449F00
+            /* Observed: 2624B2 @ 80MHz */
+            #define ESP_RSA_TIMEOUT_CNT      0x280000
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         #ifndef ESP_RSA_TIMEOUT_CNT
-            #define ESP_RSA_TIMEOUT_CNT      0x349F00
+            /* Observed: 144323 @ 80MHz */
+            #define ESP_RSA_TIMEOUT_CNT      0x160000
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         #ifndef ESP_RSA_TIMEOUT_CNT
