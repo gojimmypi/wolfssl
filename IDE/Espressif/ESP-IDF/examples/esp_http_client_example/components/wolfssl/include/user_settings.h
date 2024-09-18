@@ -157,8 +157,13 @@
 
 /* Other applications detected by cmake */
 #elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
-    /* The wolfSSL Version */
-    #define FP_MAX_BITS (8192 * 2)
+    /* The wolfSSL Version if the client example */
+    #if defined(CONFIG_IDF_TARGET_ESP32S2)
+        /* Less memory available, so smaller key sizes: */
+        #define FP_MAX_BITS (4096 * 2)
+    #else
+        #define FP_MAX_BITS (8192 * 2)
+    #endif
     #define HAVE_ALPN
     #define HAVE_SNI
     #define OPENSSL_EXTRA_X509_SMALL
@@ -723,17 +728,17 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
-    // #define NO_ESP32_CRYPT
-    // #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    /*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
-    // #define NO_WOLFSSL_ESP32_CRYPT_AES
-    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-    // #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
