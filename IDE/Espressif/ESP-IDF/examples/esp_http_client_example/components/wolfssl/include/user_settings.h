@@ -160,7 +160,7 @@
     /* The wolfSSL Version if the client example */
     #if defined(CONFIG_IDF_TARGET_ESP32S2)
         /* Less memory available, so smaller key sizes: */
-        #define FP_MAX_BITS (4096 * 2)
+        #define FP_MAX_BITS (2048 * 2)
     #else
         #define FP_MAX_BITS (8192 * 2)
     #endif
