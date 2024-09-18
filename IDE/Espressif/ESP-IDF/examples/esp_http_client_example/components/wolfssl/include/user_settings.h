@@ -373,6 +373,8 @@
     #endif
 #endif
 
+    // TODO
+    #define HAVE_FFDHE_8192
 
 
 #define NO_FILESYSTEM
