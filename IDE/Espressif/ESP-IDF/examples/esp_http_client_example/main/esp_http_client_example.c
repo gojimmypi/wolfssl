@@ -987,8 +987,15 @@ void app_main(void)
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
+#if defined(CONFIG_IDF_TARGET_ESP32H2)
+    ESP_LOGI(TAG, "There's no WiFi on the ESP32-H2");
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+#else
     ESP_LOGI(TAG, "example connect...");
     ESP_ERROR_CHECK(example_connect());
+#endif
 
 #ifdef USE_WOLFSSL_ESP_SDK_TIME
     /* Once we are connected to the network, start & wait for NTP time */
