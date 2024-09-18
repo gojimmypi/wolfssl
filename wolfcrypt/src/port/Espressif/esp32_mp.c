@@ -108,8 +108,12 @@
      * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
      * must be of the same length. 32 * 96 = 3072 */
-    #define ESP_HW_MOD_RSAMAX_BITS      4096
-    #define ESP_HW_MULTI_RSAMAX_BITS    3072
+    #define ESP_HW_MOD_RSAMAX_BITS      3072
+    /* The length of result Z is twice that of operand X and operand Y.
+     * Therefore, the RSA accelerator only supports large-number multiplication
+     * with operand length N = 32 * x, where x in {1, 2, 3, . . . , 48}.
+     * 32 * (96/2) = 32 * (48/2) = 1536 */
+    #define ESP_HW_MULTI_RSAMAX_BITS    1536
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /* See 22.3.1 Large-number Modular Exponentiation
      * https://www.espressif.com/sites/default/files/documentation/esp32-c6_technical_reference_manual_en.pdf
