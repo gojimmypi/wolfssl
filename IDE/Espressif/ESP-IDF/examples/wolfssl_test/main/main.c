@@ -195,11 +195,6 @@ void app_main(void)
 
 // TODO move this all to esp_ShowExtendedSystemInfo
 
-#ifdef WOLFSSL_ESP_NO_WATCHDOG
-    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
-    esp_DisableWatchdog();
-#endif
-
 #ifdef ESP_TASK_MAIN_STACK
      ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
 #endif
