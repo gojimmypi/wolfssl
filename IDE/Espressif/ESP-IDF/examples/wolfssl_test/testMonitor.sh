@@ -38,40 +38,51 @@ pwd
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
 # Unfortunately they are currently hard coded and computer-specific.
-esp32_PORT="/dev/ttyS9"
-esp32c2_PORT="/dev/ttyS79"
-esp32c3_PORT="/dev/ttyS35"
-esp32c6_PORT="/dev/ttyS36"
-esp32h2_PORT="/dev/ttyS31"
-esp32s2_PORT="/dev/ttyS30"
-esp32s3_PORT="/dev/ttyS24"
-esp8266_PORT="/dev/ttyS70"
 
-esp8684_PORT="/dev/ttyS49"
-# esp32c2_PORT="/dev/ttyS49" #8684
 
-esp32_PORT="/dev/ttyS7"
-esp32c2_PORT="/dev/ttyS10"
-esp32c3_PORT="/dev/ttyS6"
-esp32c6_PORT="/dev/ttyS8"
-esp32h2_PORT="/dev/ttyS9"
-esp32s2_PORT="/dev/ttyS5"
-esp32s3_PORT="/dev/ttyS4"
+if [[ "$TESTHOST" == "" ]]; then
+    echo "Please set TESTHOST name: NOTEBOOK_HOST, DESKTOP_HOST, DESKTOP_VMHOST or add new host."
+    exit 1
 
-esp8266_PORT="/dev/ttyS11"
-esp8684_PORT="/dev/ttyS3"
+elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
+    esp32_PORT="/dev/ttyS9"
+    esp32c2_PORT="/dev/ttyS79"
+    esp32c3_PORT="/dev/ttyS35"
+    esp32c6_PORT="/dev/ttyS36"
+    esp32h2_PORT="/dev/ttyS31"
+    esp32s2_PORT="/dev/ttyS30"
+    esp32s3_PORT="/dev/ttyS24"
+    esp8266_PORT="/dev/ttyS70"
 
-# Load putty profiles. Note profiles names need to have been previously
-# defined and saved in putty! These are the saved sessions in putty:
-esp32_PUTTY="COM7"
-esp32c2_PUTTY="COM3-74880"
-esp32c3_PUTTY="COM6"
-esp32c6_PUTTY="COM8"
-esp32h2_PUTTY="COM9"
-esp32s2_PUTTY="COM5"
-esp32s3_PUTTY="COM4"
-esp8684_PUTTY="COM10-74880"
-esp8266_PUTTY="COM11-74880"
+    esp8684_PORT="/dev/ttyS49"
+    # esp32c2_PORT="/dev/ttyS49" #8684
+elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
+    esp32_PORT="/dev/ttyS7"
+    esp32c2_PORT="/dev/ttyS10"
+    esp32c3_PORT="/dev/ttyS6"
+    esp32c6_PORT="/dev/ttyS8"
+    esp32h2_PORT="/dev/ttyS9"
+    esp32s2_PORT="/dev/ttyS5"
+    esp32s3_PORT="/dev/ttyS4"
+
+    esp8266_PORT="/dev/ttyS11"
+    esp8684_PORT="/dev/ttyS3"
+
+    # Load putty profiles. Note profiles names need to have been previously
+    # defined and saved in putty! These are the saved sessions in putty:
+    esp32_PUTTY="COM7"
+    esp32c2_PUTTY="COM3-74880"
+    esp32c3_PUTTY="COM6"
+    esp32c6_PUTTY="COM8"
+    esp32h2_PUTTY="COM9"
+    esp32s2_PUTTY="COM5"
+    esp32s3_PUTTY="COM4"
+    esp8684_PUTTY="COM10-74880"
+    esp8266_PUTTY="COM11-74880"
+else
+    echo "Error unknown TESTHOST=$TESTHOST"
+    exit 1
+fi
 
 echo "esp32_PORT:   $esp32_PORT"
 echo "esp32c2_PORT: $esp32c2_PORT"
@@ -144,16 +155,6 @@ if [[ "$THIS_TARGET" == "esp8684" ]]; then
     THIS_TARGET=esp32c2
 fi
 
-# Get the ESP-IDF version
-# Run the command and capture its output
-THIS_OUTPUT=$(idf.py --version)
-
-# Extract the version string using grep and sed
-THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
-
-# Print the version variable to verify
-echo $THIS_VERSION
-
 # Assemble some log file names.
 echo ""
 BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
@@ -172,8 +173,20 @@ echo  "THIS_CFG  = ${THIS_CFG}"
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
     # idf.py for the ESP8266  does not support --version
     echo "ESP8266 using $IDF_PATH"
+    THIS_VERSION="ESP8266"
 else
     idf.py --version                            > "${BUILD_LOG}" 2>&1
+    # Get the ESP-IDF version
+    # Run the command and capture its output
+    THIS_OUTPUT=$(idf.py --version)
+
+    # Extract the version string using grep and sed
+    THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
+
+    # Print the version variable to verify
+    echo "idf.py THIS_VERSION=$THIS_VERSION"
+
+
 fi
 
 echo "Full clean for $THIS_TARGET..."
