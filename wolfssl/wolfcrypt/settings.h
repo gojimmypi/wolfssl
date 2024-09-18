@@ -928,7 +928,8 @@
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         #ifndef ESP_RSA_TIMEOUT_CNT
-            #define ESP_RSA_TIMEOUT_CNT      0x449F00
+            /* Observed: 0xAE8C8F @ 80MHz */
+            #define ESP_RSA_TIMEOUT_CNT      0xAF0000
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32C2)
         /* See also CONFIG_IDF_TARGET_ESP8684 equivalent */
@@ -937,7 +938,7 @@
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32C3)
         #ifndef ESP_RSA_TIMEOUT_CNT
-            /* Observed: 2624B2 @ 80MHz */
+            /* Observed: 0x2624B2 @ 80MHz */
             #define ESP_RSA_TIMEOUT_CNT      0x280000
         #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
