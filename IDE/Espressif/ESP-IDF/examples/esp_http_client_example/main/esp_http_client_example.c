@@ -39,6 +39,12 @@
 
 #include "esp_http_client.h"
 
+/* set to 0 for one test,
+** set to 1 for continuous test loop */
+#ifndef  WOLFSSL_TEST_LOOP
+    #define WOLFSSL_TEST_LOOP 0
+#endif
+
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 static const char *TAG = "HTTP_CLIENT";
@@ -972,6 +978,7 @@ void app_main(void)
 #else
     ESP_LOGW(TAG, "This example is intended for ESP-IDF version 5.2.2");
 #endif
+    int loops = 0;
     stack_start = esp_sdk_stack_pointer();
     stack_current = esp_sdk_stack_pointer();
     ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
@@ -1039,7 +1046,18 @@ void app_main(void)
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
 #else
-    xTaskCreate(&http_test_task, "http_test_task", 30192, NULL, 5, NULL);
+    do {
+        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+        xTaskCreate(&http_test_task, "http_test_task", 30192, NULL, 5, NULL);
+        #if defined(WOLFSSL_HW_METRICS)
+            esp_hw_show_metrics();
+        #endif
+        loops++; /* count of the number of tests run before fail. */
+        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "loops = %d", loops);
+
+    } while (WOLFSSL_TEST_LOOP && (ret == 0));
 #endif
     stack_current = esp_sdk_stack_pointer();
     ESP_LOGI(TAG, "Stack current (end main): 0x%x", stack_current);

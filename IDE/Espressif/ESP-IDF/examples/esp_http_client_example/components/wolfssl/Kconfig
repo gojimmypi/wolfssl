@@ -428,6 +428,13 @@ menu "wolfSSL"
             default n
             help
                 Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
+
+        config ESP_WOLFSSL_TEST_LOOP
+            bool "Run test apps in a loop until failure"
+            default y
+            help
+                Enable a loop wrapper for benchmark, http_client, and wolfssl test apps.
+
     endmenu # wolfSSL Debug Options
     # -----------------------------------------------------------------------------------------------------------------
 
