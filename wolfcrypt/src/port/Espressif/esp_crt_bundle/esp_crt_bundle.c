@@ -403,7 +403,8 @@ static CB_INLINE int cert_manager_load(int preverify,
             preverify = 1;
         }
         else {
-            ESP_LOGE(TAG, "Failed to verify cert after loading new CA.");
+            ESP_LOGE(TAG, "Failed to verify cert after loading new CA. "
+                          "err = %d", ret);
         }
     }
     else {
