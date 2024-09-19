@@ -29,7 +29,7 @@
 #elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     #include <wolfssl/wolfcrypt/settings.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
-
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #endif
 
@@ -58,6 +58,8 @@ extern const char howsmyssl_com_root_cert_pem_end[]   asm("_binary_howsmyssl_com
 
 extern const char postman_root_cert_pem_start[] asm("_binary_postman_root_cert_pem_start");
 extern const char postman_root_cert_pem_end[]   asm("_binary_postman_root_cert_pem_end");
+static unsigned int stack_start = 0;
+static unsigned int stack_current = 0;
 
 static esp_err_t ret = ESP_OK;
 esp_err_t _http_event_handler(esp_http_client_event_t *evt)
@@ -899,6 +901,8 @@ static void http_test_task(void *pvParameters)
 
 #else
     http_rest_with_url();
+    stack_current = esp_sdk_stack_pointer();
+    ESP_LOGI(TAG, "Stack current 1: 0x%x", stack_current);
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
     http_auth_basic();
@@ -915,10 +919,18 @@ static void http_test_task(void *pvParameters)
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
+    ESP_LOGI(TAG, "Stack current 2: 0x%x", stack_current);
+    http_rest_with_hostname_path();
     https_with_hostname_path();
+    ESP_LOGI(TAG, "Stack current 3: 0x%x", stack_current);
+    http_rest_with_hostname_path();
     http_redirect_to_https();
+    ESP_LOGI(TAG, "Stack current 4: 0x%x", stack_current);
+    http_rest_with_hostname_path();
     http_download_chunk();
     http_perform_as_stream_reader();
+    ESP_LOGI(TAG, "Stack current 5: 0x%x", stack_current);
+    http_rest_with_hostname_path();
     https_async();
     https_with_invalid_url();
     http_native_request();
@@ -928,7 +940,7 @@ static void http_test_task(void *pvParameters)
 
 #endif
 
-#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
+#if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     esp_hw_show_mp_metrics();
 #endif
 
@@ -960,7 +972,22 @@ void app_main(void)
 #else
     ESP_LOGW(TAG, "This example is intended for ESP-IDF version 5.2.2");
 #endif
-
+    stack_start = esp_sdk_stack_pointer();
+    stack_current = esp_sdk_stack_pointer();
+    ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
+    esp_DisableWatchdog();
+#endif
+#if defined(HAVE_VERSION_EXTENDED_INFO)
+    esp_ShowExtendedSystemInfo();
+#endif
 #ifdef ESP_SDK_MEM_LIB_VERSION
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
@@ -1012,8 +1039,10 @@ void app_main(void)
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
 #else
-    xTaskCreate(&http_test_task, "http_test_task", 48192, NULL, 5, NULL);
+    xTaskCreate(&http_test_task, "http_test_task", 30192, NULL, 5, NULL);
 #endif
+    stack_current = esp_sdk_stack_pointer();
+    ESP_LOGI(TAG, "Stack current (end main): 0x%x", stack_current);
 
     /* Done in main task, cleanp and free memory. */
     vTaskDelete(NULL);
