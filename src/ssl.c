@@ -6007,6 +6007,17 @@ int wolfSSL_SetCRL_Cb(WOLFSSL* ssl, CbMissingCRL cb)
         return BAD_FUNC_ARG;
 }
 
+int wolfSSL_SetCRL_ErrorCb(WOLFSSL* ssl, crlErrorCb cb, void* ctx)
+{
+    WOLFSSL_ENTER("wolfSSL_SetCRL_Cb");
+    if (ssl) {
+        SSL_CM_WARNING(ssl);
+        return wolfSSL_CertManagerSetCRL_ErrorCb(SSL_CM(ssl), cb, ctx);
+    }
+    else
+        return BAD_FUNC_ARG;
+}
+
 #ifdef HAVE_CRL_IO
 int wolfSSL_SetCRL_IOCb(WOLFSSL* ssl, CbCrlIO cb)
 {
@@ -6068,6 +6079,15 @@ int wolfSSL_CTX_SetCRL_Cb(WOLFSSL_CTX* ctx, CbMissingCRL cb)
     WOLFSSL_ENTER("wolfSSL_CTX_SetCRL_Cb");
     if (ctx)
         return wolfSSL_CertManagerSetCRL_Cb(ctx->cm, cb);
+    else
+        return BAD_FUNC_ARG;
+}
+
+int wolfSSL_CTX_SetCRL_ErrorCb(WOLFSSL_CTX* ctx, crlErrorCb cb, void* cbCtx)
+{
+    WOLFSSL_ENTER("wolfSSL_CTX_SetCRL_ErrorCb");
+    if (ctx)
+        return wolfSSL_CertManagerSetCRL_ErrorCb(ctx->cm, cb, cbCtx);
     else
         return BAD_FUNC_ARG;
 }
@@ -8412,6 +8432,8 @@ static int CheckcipherList(const char* list)
         char   name[MAX_SUITE_NAME + 1];
         word32 length = MAX_SUITE_NAME;
         word32 current_length;
+        byte major = INVALID_BYTE;
+        byte minor = INVALID_BYTE;
 
         next   = XSTRSTR(next, ":");
 
@@ -8436,10 +8458,10 @@ static int CheckcipherList(const char* list)
             break;
         }
 
-        ret = wolfSSL_get_cipher_suite_from_name(name, &cipherSuite0,
-                                                        &cipherSuite1, &flags);
+        ret = GetCipherSuiteFromName(name, &cipherSuite0,
+                &cipherSuite1, &major, &minor, &flags);
         if (ret == 0) {
-            if (cipherSuite0 == TLS13_BYTE) {
+            if (cipherSuite0 == TLS13_BYTE || minor == TLSv1_3_MINOR) {
                 /* TLSv13 suite */
                 findTLSv13Suites = 1;
             }
@@ -14297,7 +14319,8 @@ int wolfSSL_get_cipher_suite_from_name(const char* name, byte* cipherSuite0,
         (cipherSuite == NULL) ||
         (flags == NULL))
         return BAD_FUNC_ARG;
-    return GetCipherSuiteFromName(name, cipherSuite0, cipherSuite, flags);
+    return GetCipherSuiteFromName(name, cipherSuite0, cipherSuite, NULL, NULL,
+                                  flags);
 }
 
 
