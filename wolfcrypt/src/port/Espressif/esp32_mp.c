@@ -2661,7 +2661,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     struct esp_mp_helper mph[1]; /* we'll save some mp helper data here */
     int ret = MP_OKAY;
     int exptmod_lock_called = FALSE;
-    ESP_LOGI(TAG, "Enter esp_mp_exptmod");
+    ESP_LOGV(TAG, "Enter esp_mp_exptmod");
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* different calc */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -3123,7 +3123,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
 #ifdef WOLFSSL_HW_METRICS
     esp_mp_max_used = (Z->used > esp_mp_max_used) ? Z->used : esp_mp_max_used;
 #endif
-    ESP_LOGI(TAG, "Return esp_mp_exptmod %d", ret);
+    ESP_LOGV(TAG, "Return esp_mp_exptmod %d", ret);
 
     return ret;
 } /* esp_mp_exptmod */
