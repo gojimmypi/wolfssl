@@ -540,7 +540,9 @@
      */
     #if defined(CONFIG_ESP_WOLFSSL_TEST_LOOP) && \
                 CONFIG_ESP_WOLFSSL_TEST_LOOP
-        #define            WOLFSSL_TEST_LOOP
+        #define            WOLFSSL_TEST_LOOP 1
+    #else
+        #define            WOLFSSL_TEST_LOOP 0
     #endif
     #if (defined(CONFIG_DEBUG_WOLFSSL) &&             \
                  CONFIG_DEBUG_WOLFSSL) ||             \
