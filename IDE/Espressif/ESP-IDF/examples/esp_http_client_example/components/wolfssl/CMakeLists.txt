@@ -160,7 +160,7 @@ if( ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_benchmark") OR ("${CMAKE_PROJECT_
     message(STATUS "Not including lwip for ${CMAKE_PROJECT_NAME}")
 else()
     # benchmark and test do not need wifi, everything else probably does:
-    set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+    set(COMPONENT_REQUIRES lwip esp-tls)  # we typically don't need lwip directly in wolfssl component
 endif()
 
 # find the user name to search for possible "wolfssl-username"
@@ -427,6 +427,7 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
     idf_component_register(
                             REQUIRES "${COMPONENT_REQUIRES}"
                             PRIV_REQUIRES # esp_hw_support
+                                          "esp-tls"
                                           "${THIS_INCLUDE_TIMER}"
                                           "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
@@ -766,6 +767,7 @@ else()
                                 REQUIRES "${COMPONENT_REQUIRES}"
                                 EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                                 PRIV_REQUIRES
+                                  "esp-tls"
                                   "${THIS_INCLUDE_TIMER}"
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
