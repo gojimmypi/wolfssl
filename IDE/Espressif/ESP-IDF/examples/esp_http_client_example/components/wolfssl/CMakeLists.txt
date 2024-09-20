@@ -36,6 +36,10 @@ function(SETUP_WOLFSSL TEST_VAR)
     set(TEST_VAR "bye" PARENT_SCOPE)
 endfunction()
 
+# Optional requires include:
+# set(THIS_ESP_TLS "esp-tls")
+set(THIS_ESP_TLS "")
+
 # function: IS_ESP_IDF_COMPONENT
 #  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
 #             otherwise 0 (false)
@@ -427,7 +431,7 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
     idf_component_register(
                             REQUIRES "${COMPONENT_REQUIRES}"
                             PRIV_REQUIRES # esp_hw_support
-                                          "esp-tls"
+                                          "${THIS_ESP_TLS}"
                                           "${THIS_INCLUDE_TIMER}"
                                           "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
@@ -767,7 +771,7 @@ else()
                                 REQUIRES "${COMPONENT_REQUIRES}"
                                 EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                                 PRIV_REQUIRES
-                                  "esp-tls"
+                                  "${THIS_ESP_TLS}"
                                   "${THIS_INCLUDE_TIMER}"
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
