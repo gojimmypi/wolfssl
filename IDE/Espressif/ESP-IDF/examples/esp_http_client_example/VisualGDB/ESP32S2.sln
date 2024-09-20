@@ -44,6 +44,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{55A315
 		..\..\..\..\..\..\.github\workflows\self-hosted-test.yml = ..\..\..\..\..\..\.github\workflows\self-hosted-test.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cert_bundle", "cert_bundle", "{DB324D68-702C-448F-8D2A-979B9FC40725}"
+	ProjectSection(SolutionItems) = preProject
+		..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log = ..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log
+		..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl = ..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -65,7 +71,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {12097ED7-EACF-4A8E-8534-78512F55EC93}
 		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\
+		SolutionGuid = {12097ED7-EACF-4A8E-8534-78512F55EC93}
 	EndGlobalSection
 EndGlobal
