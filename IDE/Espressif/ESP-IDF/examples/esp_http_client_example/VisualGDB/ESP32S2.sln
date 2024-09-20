@@ -46,8 +46,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{55A315
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cert_bundle", "cert_bundle", "{DB324D68-702C-448F-8D2A-979B9FC40725}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_deprecated.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_deprecated.pem
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem
 		..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log = ..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\esp_crt_bundle.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\esp_crt_bundle.c
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md
 		..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl = ..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{8C37C5C3-37D9-4DCC-8F06-FEB8E7FFC061}"
+	ProjectSection(SolutionItems) = preProject
+		..\device_list.sh = ..\device_list.sh
+		..\my_idf_refresh.sh = ..\my_idf_refresh.sh
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\testAll.sh = ..\testAll.sh
+		..\testMonitor.sh = ..\testMonitor.sh
+		..\logs\wolfssl_test_build_IDF__esp8266_.txt = ..\logs\wolfssl_test_build_IDF__esp8266_.txt
 	EndProjectSection
 EndProject
 Global
