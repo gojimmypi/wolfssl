@@ -654,14 +654,14 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-S2. Uncomment to disable: */
-      #define NO_ESP32_CRYPT
-      #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    /*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /* Note: There's no AES192 HW on the ESP32-S2; falls back to SW */
-      #define NO_WOLFSSL_ESP32_CRYPT_AES
-      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
     /***** END CONFIG_IDF_TARGET_ESP32S2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -821,6 +821,7 @@ Turn debugging on/off:
 #define DEBUG_WOLFSSL_SHA_MUTEX
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 #define WOLFSSL_DEBUG_CERT_BUNDLE
+#define WOLFSSL_DEBUG_CERT_BUNDLE_NAME
 #define WOLFSSL_ESP32_CRYPT_DEBUG
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
