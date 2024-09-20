@@ -157,6 +157,7 @@ fi
 
 # Assemble some log file names.
 echo ""
+mkdir -p "${THIS_HOME_DIR}/logs"
 BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
