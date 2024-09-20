@@ -926,6 +926,14 @@ loop:
     // Get the amount of free memory in internal RAM
     free_internal_heap_size = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     ESP_LOGI(TAG, "Free internal heap size: %u bytes", free_internal_heap_size);
+    http_partial_download();
+
+//    while (1) {
+//        vTaskDelay(pdMS_TO_TICKS(1000));
+//    }
+//    goto loop;
+
+
     // https_async();
     https_with_url();
 // #define SINGLE_TEST
@@ -973,7 +981,6 @@ loop:
     https_async();
     https_with_invalid_url();
     http_native_request();
-    goto loop;
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     http_partial_download();
 #endif
