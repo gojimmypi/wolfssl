@@ -108,6 +108,7 @@ echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
 if [ -f "$WRK_IDF_PATH/export.sh" ]; then
     # shell check should not follow into the ESP-IDF export.sh
     # shellcheck disable=SC1090
+    # shellcheck disable=SC1091
     . "$WRK_IDF_PATH"/export.sh
     else
   echo "File $WRK_IDF_PATH/export.sh not found"
@@ -117,7 +118,8 @@ fi
 
 # Tensilica
 # ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
-echo "Skipping ESP8266, gives this error:"
+
+echo "Skipping ESP8266, gives this error: (wolfSSL not supported in esp-tls)"
 echo "CMake Error at /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/tools/cmake/component.cmake:343 (__component_get_property)"
 
 #******************************************************************************
@@ -142,6 +144,7 @@ echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 
 # shell check should not follow into the ESP-IDF export.sh
 # shellcheck disable=SC1090
+# shellcheck disable=SC1091
 . "$WRK_IDF_PATH"/export.sh
 
 # Comment numeric values are recently observed runtime durations.
