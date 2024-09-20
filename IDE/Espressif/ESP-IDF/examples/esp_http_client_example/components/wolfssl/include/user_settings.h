@@ -654,14 +654,14 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-S2. Uncomment to disable: */
-    /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+      #define NO_ESP32_CRYPT
+      #define NO_WOLFSSL_ESP32_CRYPT_HASH
     /* Note: There's no AES192 HW on the ESP32-S2; falls back to SW */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES     */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
+      #define NO_WOLFSSL_ESP32_CRYPT_AES
+      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+      #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
     /***** END CONFIG_IDF_TARGET_ESP32S2 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -845,7 +845,7 @@ Turn on timer debugging (used when CPU cycles not available)
 /* Pause in a loop rather than exit. */
 /* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
 /* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
-
+//#define WOLFSSL_STATIC_MEMORY
 #define WOLFSSL_HW_METRICS
 
 /* for test.c */

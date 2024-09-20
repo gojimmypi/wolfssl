@@ -59,6 +59,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
+#include <esp_tls.h> /* needed only for esp_tls_free_global_ca_store() */
+
 /* There's a minimum version of wolfSSL needed for Certificate Bundle Support.
  *
  * See the latest code at:
@@ -89,12 +91,27 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     #define ESP_LOGCBI ESP_LOGI
     #define ESP_LOGCBW ESP_LOGW
     #define ESP_LOGCBV ESP_LOGV
+    /* Always show bundle name debugging when cert bundle debugging. */
+    #define ESP_LOGCBNI ESP_LOGI
+    #define ESP_LOGCBNW ESP_LOGW
+    #define ESP_LOGCBNV ESP_LOGV
 #else
     /* Only display certificate bundle messages for most verbose setting.
      * Note that the delays will likely cause TLS connection failures. */
     #define ESP_LOGCBI ESP_LOGV
     #define ESP_LOGCBW ESP_LOGV
     #define ESP_LOGCBV ESP_LOGV
+    /* Optionally debug only certificate bundle names: */
+    /* #define WOLFSSL_DEBUG_CERT_BUNDLE_NAME          */
+    #ifdef WOLFSSL_DEBUG_CERT_BUNDLE_NAME
+        #define ESP_LOGCBNI ESP_LOGI
+        #define ESP_LOGCBNW ESP_LOGW
+        #define ESP_LOGCBNV ESP_LOGV
+    #else
+        #define ESP_LOGCBNI ESP_LOGV
+        #define ESP_LOGCBNW ESP_LOGV
+        #define ESP_LOGCBNV ESP_LOGV
+    #endif
 #endif
 
 #if defined(WOLFSSL_EXAMPLE_VERBOSITY)
@@ -140,8 +157,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
  *
  * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED
  * Reminder: the actual sort occurs in gen_crt_bundly.py call from CMake. */
-/* #define CERT_BUNDLE_UNSORTED */
-
+#define CERT_BUNDLE_UNSORTED
 
 /* Inline cert bundle functions performance hint unless otherwise specified. */
 #ifndef CB_INLINE
@@ -165,13 +181,16 @@ typedef struct crt_bundle_t {
     size_t x509_crt_bundle_wolfssl_len;
 } crt_bundle_t;
 
+/* Found in <esp_tls.h> TODO: do we really want this as a requires in cmake? */
+void esp_tls_free_global_ca_store(void);
+
 #ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
 static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
                                              size_t bundle_size);
 static esp_err_t _esp_crt_bundle_is_valid = ESP_FAIL;
-#endif
+#endif /* CONFIG_WOLFSSL_CERTIFICATE_BUNDLE */
 
-static crt_bundle_t s_crt_bundle;
+static crt_bundle_t s_crt_bundle = { 0 };
 static esp_err_t _wolfssl_found_zero_serial = ESP_OK;
 
 static int _cert_bundle_loaded = 0;
@@ -499,21 +518,21 @@ void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
 /* wolfssl_ssl_conf_verify_cb_no_signer() should only be called
  *  from wolfssl_ssl_conf_verify_cb, handling the special case of
  *  TLS handshake preverify failure for the "No Signer" condition. */
+    static const unsigned char* cert_data = NULL;
+    static const unsigned char* cert_bundle_data = NULL;
+    static WOLFSSL_X509* store_cert = NULL; /* will point to existing param values. */
+    static WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed.  */
+
+    static WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert.  */
+    static WOLFSSL_X509_NAME* this_subject = NULL;       /* part of bundle_cert. */
+    static WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert.  */
+    static WOLFSSL_X509_NAME* this_issuer = NULL;        /* part of bundle_cert. */
+
 static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
 
-    const unsigned char* cert_data = NULL;
-    const unsigned char* cert_bundle_data = NULL;
-
-    WOLFSSL_X509* store_cert = NULL; /* will point to existing param values. */
-    WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed.  */
-
-    WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert.  */
-    WOLFSSL_X509_NAME* this_subject = NULL;       /* part of bundle_cert. */
-    WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert.  */
-    WOLFSSL_X509_NAME* this_issuer = NULL;        /* part of bundle_cert. */
 
     intptr_t this_addr = 0; /* Beginning of the bundle object: [size][cert]  */
     int derCertLength = 0; /* The [size] value: length of [cert] budnle item */
@@ -611,7 +630,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             ret = WOLFSSL_FAILURE;
         }
         else {
-            ESP_LOGCBI(TAG, "Store Cert Subject: %s", subjectName );
+            ESP_LOGCBNI(TAG, "Store Cert Subject: %s", subjectName );
         }
         store_cert_issuer = wolfSSL_X509_get_issuer_name(store_cert);
         if (store_cert_issuer == NULL) {
@@ -649,10 +668,10 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
         /* Look for the certificate searching on subject name: */
         while (start <= end) {
 #ifndef CERT_BUNDLE_UNSORTED
-            ESP_LOGCBW(TAG, "Looking at CA #%d; Binary Search start = %d,"
+            ESP_LOGCBNW(TAG, "Looking at CA #%d; Binary Search start = %d,"
                             "end = %d", middle, start, end);
 #else
-            ESP_LOGCBW(TAG, "Looking at CA index #%d", middle);
+            ESP_LOGCBNW(TAG, "Looking at CA index #%d", middle);
 #endif
 #ifndef IS_WOLFSSL_CERT_BUNDLE_FORMAT
             /* For reference only */
@@ -713,7 +732,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                     ret = WOLFSSL_FAILURE;
                 }
                 else {
-                    ESP_LOGCBI(TAG, "This Bundle Item Issuer Name:  %s",
+                    ESP_LOGCBNI(TAG, "This Bundle Item Issuer Name:  %s",
                                   this_issuer->name);
                 }
 
@@ -907,10 +926,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 
     /* Clean up and exit */
     if ((_crt_found == 0) && (bundle_cert != NULL)) {
+        ESP_LOGW(TAG, "Cert not found, free bundle_cert");
         wolfSSL_X509_free(bundle_cert);
+        /* this_subject and this_issuer are pointers into cert used.
+         * Don't free if the cert was found. */
         wolfSSL_X509_NAME_free(this_subject);
         wolfSSL_X509_NAME_free(this_issuer);
     }
+
     /* We don't clean up the store_cert and x509 as we are in a callback,
      * and it is just a pointer into the actual ctx store cert.  */
     ESP_LOGCBI(TAG, "Exit wolfssl_ssl_conf_verify_cb ret = %d", ret);
@@ -1183,13 +1206,14 @@ esp_err_t esp_crt_bundle_is_valid()
  * To used as unsorted list, see above:
  *    `#define CERT_BUNDLE_UNSORTED`
  */
+static const uint8_t **crts = NULL;
+static uint16_t num_certs = 0;
+
 static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
                                              size_t bundle_size)
 {
-    const uint8_t **crts = NULL;
     const uint8_t *bundle_end = NULL;
     const uint8_t *cur_crt = NULL;
-    uint16_t num_certs = 0;
     uint16_t i;
     size_t cert_len;
     int ret = ESP_OK;
@@ -1233,6 +1257,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
 
     if (ret == ESP_OK) {
         /* Contiguous allocation is important to our cert extraction. */
+        ESP_LOGW(TAG, "calloc certs");
         crts = calloc(num_certs, sizeof(x509_bundle));
         if (crts == NULL) {
             ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
@@ -1303,7 +1328,9 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
         /* The previous crt bundle is only updated when initialization of the
          * current crt_bundle is successful */
         /* Free previous crt_bundle */
-        free(s_crt_bundle.crts);
+        if (s_crt_bundle.crts != NULL) {
+            free(s_crt_bundle.crts);
+        }
         s_crt_bundle.num_certs = num_certs;
         s_crt_bundle.crts = crts;
     }
@@ -1323,7 +1350,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
 esp_err_t esp_crt_bundle_attach(void *conf)
 {
     esp_err_t ret = ESP_OK;
-
+    ESP_LOGCBI(TAG, "Enter esp_crt_bundle_attach");
     /* If no bundle has been set by the user,
      * then use the bundle embedded in the binary */
     if (s_crt_bundle.crts == NULL) {
@@ -1363,7 +1390,16 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 /* esp_crt_bundle_detach() used by ESP-IDF esp-tls layer. */
 void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
 {
-    free(s_crt_bundle.crts);
+    ESP_LOGI(TAG, "esp_crt_bundle_detach");
+    _wolfssl_found_zero_serial = ESP_OK;
+    _cert_bundle_loaded = 0;
+    _crt_found = 0;
+    _added_cert = 0;
+    _need_bundle_cert = 0;
+
+    if (s_crt_bundle.crts != NULL) {
+        free(s_crt_bundle.crts);
+    }
     s_crt_bundle.crts = NULL;
     if (conf) {
         wolfssl_ssl_conf_verify(conf, NULL, NULL);
@@ -1381,15 +1417,72 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 {
     return wolfssl_esp_crt_bundle_init(x509_bundle, bundle_size);
 }
-#endif
+
+/*
+    static const unsigned char* cert_data = NULL;
+    static const unsigned char* cert_bundle_data = NULL;
+    static WOLFSSL_X509* store_cert = NULL;    will point to existing param values.
+    static WOLFSSL_X509* bundle_cert = NULL;    the iterating cert being reviewed.
+
+    static WOLFSSL_X509_NAME* store_cert_subject = NULL;  part of store_cert.
+    static WOLFSSL_X509_NAME* this_subject = NULL;        part of bundle_cert.
+    static WOLFSSL_X509_NAME* store_cert_issuer = NULL;    part of store_cert.
+    static WOLFSSL_X509_NAME* this_issuer = NULL;         part of bundle_cert.
+
+ **/
+
+esp_err_t wolfSSL_bundle_cleanup()
+{
+    ESP_LOGW(TAG, "wolfSSL_bundle_cleanup");
+
+
+//    if (crts != NULL) {
+//        for (int i = 0; i < num_certs; i++) {
+//            if (crts[i] != NULL) {
+//                free((void*)crts[i]);  // Cast to void* to match free's argument type
+//            }
+//        }
+//        free(crts);
+//    }
+//    num_certs = 0;
+    if (s_crt_bundle.crts != NULL) {
+        free(s_crt_bundle.crts);
+    }
+    s_crt_bundle.crts = NULL;
+
+    esp_tls_free_global_ca_store();
+    /* Be sure to free the bundle_cert first, as it may be part of store. */
+    if (bundle_cert != NULL) {
+        wolfSSL_X509_free(bundle_cert);
+    }
+    if (store_cert != NULL) {
+        wolfSSL_X509_free(store_cert);
+    }
+    memset(&s_crt_bundle, 0, sizeof(s_crt_bundle));
+
+    // Get total free heap size
+    size_t free_heap_size = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "Free heap size: %u bytes", free_heap_size);
+
+    // Get minimum ever free heap size (since boot)
+    size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+    ESP_LOGI(TAG, "Minimum ever free heap size: %u bytes", min_free_heap_size);
+
+    // Get the amount of free memory in internal RAM
+    size_t free_internal_heap_size = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    ESP_LOGI(TAG, "Free internal heap size: %u bytes", free_internal_heap_size);
+
+    return ESP_OK;
+}
+#endif /* CONFIG_WOLFSSL_CERTIFICATE_BUNDLE */
 
 /* Sanity checks: */
 #if defined(CONFIG_WOLFSSL_NO_ASN_STRICT) && !defined(WOLFSSL_NO_ASN_STRICT)
     /* The settings.h and/or user_settings.h should have detected config
      * valuse from Kconfig and set the appropriate wolfSSL macro: */
     #error "CONFIG_WOLFSSL_NO_ASN_STRICT found without WOLFSSL_NO_ASN_STRICT"
-#endif
+#endif /* CONFIG_WOLFSSL_NO_ASN_STRICT && ! WOLFSSL_NO_ASN_STRICT */
 
-#endif /* #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)  and not NONE cert */
+#endif /* CONFIG_WOLFSSL_CERTIFICATE_BUNDLE && !(NONE cert) */
 #endif /* CONFIG_ESP_TLS_USING_WOLFSSL */
 #endif /* WOLFSSL_ESPIDF */

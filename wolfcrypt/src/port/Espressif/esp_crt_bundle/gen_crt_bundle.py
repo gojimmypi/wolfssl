@@ -129,17 +129,19 @@ class CertificateBundle:
             f"/{attribute.oid._name}={attribute.value}"  # Adjust as necessary to format as "/C=US/O=..."
             for attribute in cert.subject
         )
+    # /C=TW/O=TAIWAN-CA/OU=Root CA/CN=TWCA Global Root CA
+    #/C=US/ST=Illinois/L=Chicago/O=Trustwave Holdings, Inc./CN=Trustwave
+    desired_dn_order = ["/C=", "/ST=", "/L=", "/O=", "/OU=", "/CN="]
 
-    desired_dn_order = ["/C=", "/OU=", "/O=", "/CN=", "/L=", "/ST="]
-
-    def extract_dn_elements(self, subject):
+    def extract_dn_components(self, cert):
         """
-        Extract DN elements based on the desired order and return them as concatenated strings.
+        Extract the DN components based on the desired order and return the assembled string.
         """
-        dn_dict = {"/C=": "", "/OU=": "", "/O=": "", "/CN=": "", "/L=": "", "/ST=": ""}
+        #dn_dict = {"/C=": "/C=", "/ST=": "/ST=", "/L=": "/L=", "/O=": "/O=", "/OU=": "/OU=", "/CN=": "/CN="}
+        dn_dict = {"/C=": "", "/ST=": "", "/L=": "", "/O=": "", "/OU=": "", "/CN=": ""}
 
-        # Map DN elements to their respective values
-        for attribute in subject:
+        # Map the actual DN elements to the correct keys in the desired order
+        for attribute in cert.subject:
             if attribute.oid == x509.NameOID.COUNTRY_NAME:
                 dn_dict["/C="] = attribute.value
             elif attribute.oid == x509.NameOID.ORGANIZATIONAL_UNIT_NAME:
@@ -153,21 +155,50 @@ class CertificateBundle:
             elif attribute.oid == x509.NameOID.STATE_OR_PROVINCE_NAME:
                 dn_dict["/ST="] = attribute.value
 
-        # Construct the output strings in the desired order
-        result = [f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]]
+        #return ''.join([f"{key}{dn_dict[key]}" for key in self.desired_dn_order])
+        return dn_dict
 
-        return result
-
-
-    def sort_certificates_by_specific_dn_order(self, certificates):
+    def sorting_key(self, cert):
         """
-        Sort a list of certificates based on the specific DN order.
+        Create a tuple for sorting, where each component is sorted in the order defined by `desired_dn_order`.
+        If a component is missing, it is replaced with a value that will ensure proper sorting (empty string).
         """
-        sorted_certs = sorted(
-            certificates,
-            key=lambda cert: self.extract_dn_elements(cert.subject)
-        )
-        return sorted_certs
+        dn_dict = self.extract_dn_components(cert)
+
+        return ''.join([f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]])
+
+
+    def sort_certificates_by_dn_order(self, certificates):
+        """
+        Sort the list of certificates based on the DN string assembled in the specified order.
+        """
+        return sorted(certificates, key=self.sorting_key)
+
+#        sorted_certificates = sorted(
+#            certificates,
+#            key=lambda cert: self.extract_dn_string_in_order(cert)
+#        )
+#        return sorted_certificates
+
+    def extract_dn_components_as_is(self, cert):
+        """
+        Extract the DN components exactly as they appear in the certificate.
+        """
+        dn_string = ', '.join([f"{attribute.oid._name}={attribute.value}" for attribute in cert.subject])
+        return dn_string
+
+    def sorting_key_as_is(self, cert):
+        """
+        Use the DN string as found in the certificate as the sorting key.
+        """
+        dn_string = self.extract_dn_components_as_is(cert)
+        return dn_string
+
+    def sort_certificates_by_as_is(self, certificates):
+        """
+        Sort the list of certificates based on the DN string assembled in the specified order.
+        """
+        return sorted(certificates, key=self.sorting_key_as_is)
 
     def create_bundle(self):
         # Sort certificates in order to do binary search when looking up certificates
@@ -196,25 +227,17 @@ class CertificateBundle:
         # self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
 
         # We are using a specific order as defined by wolfSSL strings:
-        self.certificates = self.sort_certificates_by_specific_dn_order(self.certificates)
+        self.certificates = self.sort_certificates_by_as_is(self.certificates)
+
 
         bundle = struct.pack('>H', len(self.certificates))
 
         for crt in self.certificates:
-            """ Read the certificate as DER format """
             cert_der = crt.public_bytes(serialization.Encoding.DER)
-
-            # serial_number = crt.serial_number
-            # if serial_number == 0:
-            #     cert_der_len = 0
-            # else:
-
             cert_der_len = len(cert_der)
 
             len_data = struct.pack('>H', cert_der_len)
-
             bundle += len_data
-            # bundle += sub_name_der # reminder mbedTLS stuff the name here, then only the public key cert NOT the entire cert after:
             bundle += cert_der
 
         return bundle

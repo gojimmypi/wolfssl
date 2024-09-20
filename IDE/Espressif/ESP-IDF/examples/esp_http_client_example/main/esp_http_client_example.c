@@ -41,6 +41,9 @@
 
 /* set to 0 for one test,
 ** set to 1 for continuous test loop */
+#undef WOLFSSL_TEST_LOOP
+#define WOLFSSL_TEST_LOOP 1
+
 #ifndef  WOLFSSL_TEST_LOOP
     #define WOLFSSL_TEST_LOOP 0
 #endif
@@ -49,6 +52,13 @@
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 static const char *TAG = "HTTP_CLIENT";
 
+#if defined(WOLFSSL_TEST_LOOP) && WOLFSSL_TEST_LOOP
+    SemaphoreHandle_t task_semaphore;
+#endif
+
+/* The original example uses 8K WORDS (32K bytes) wolfSSL uses only 9K bytes */
+#define EXAMPLE_TASK_STACK_SIZE_BYTES 10240 + 2048
+#define EXAMPLE_TASK_STACK_SIZE_WORDS (EXAMPLE_TASK_STACK_SIZE_BYTES / 4)
 /* Root cert for howsmyssl.com, taken from howsmyssl_com_root_cert.pem
 
    The PEM file was extracted from the output of this command:
@@ -109,6 +119,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
                     int content_len = esp_http_client_get_content_length(evt->client);
                     if (output_buffer == NULL) {
                         // We initialize output_buffer with 0 because it is used by strlen() and similar functions therefore should be null terminated.
+                        // ESP_LOGI(TAG, "event handler calloc");
                         output_buffer = (char *) calloc(content_len + 1, sizeof(char));
                         output_len = 0;
                         if (output_buffer == NULL) {
@@ -131,6 +142,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 #if CONFIG_EXAMPLE_ENABLE_RESPONSE_BUFFER_DUMP
                 ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
 #endif
+                // ESP_LOGI(TAG, "event handler free 1");
                 free(output_buffer);
                 output_buffer = NULL;
             }
@@ -150,6 +162,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
                 #endif
             }
             if (output_buffer != NULL) {
+                ESP_LOGI(TAG, "event handler free 2");
                 free(output_buffer);
                 output_buffer = NULL;
             }
@@ -530,6 +543,7 @@ static void http_encoded_query(void)
         ret = err;
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
     }
+    esp_http_client_cleanup(client);
 }
 
 static void http_relative_redirect(void)
@@ -892,11 +906,28 @@ esp_http_client_method_t http_method;
 
 static void http_test_task(void *pvParameters)
 {
+    size_t free_heap_size;
+    size_t min_free_heap_size;
+    size_t free_internal_heap_size;
+loop:
     ret = ESP_OK;
+    ESP_LOGI(TAG, "\n\n\nBegin http_test_task\n\n");
 #ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
     ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
 #endif
+    http_rest_with_url();
+    free_heap_size = esp_get_free_heap_size();
+    ESP_LOGI(TAG, "Free heap size: %u bytes", free_heap_size);
 
+    // Get minimum ever free heap size (since boot)
+    min_free_heap_size = esp_get_minimum_free_heap_size();
+    ESP_LOGI(TAG, "Minimum ever free heap size: %u bytes", min_free_heap_size);
+
+    // Get the amount of free memory in internal RAM
+    free_internal_heap_size = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    ESP_LOGI(TAG, "Free internal heap size: %u bytes", free_internal_heap_size);
+    // https_async();
+    https_with_url();
 // #define SINGLE_TEST
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
@@ -907,7 +938,9 @@ static void http_test_task(void *pvParameters)
 
 #else
     http_rest_with_url();
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     stack_current = esp_sdk_stack_pointer();
+#endif
     ESP_LOGI(TAG, "Stack current 1: 0x%x", stack_current);
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
@@ -940,6 +973,7 @@ static void http_test_task(void *pvParameters)
     https_async();
     https_with_invalid_url();
     http_native_request();
+    goto loop;
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     http_partial_download();
 #endif
@@ -950,21 +984,32 @@ static void http_test_task(void *pvParameters)
     esp_hw_show_mp_metrics();
 #endif
 
-    ESP_LOGI(TAG, "Finish http example");
+    ESP_LOGI(TAG, "\n\n\nFinish http example\n\n\n");
+    goto loop;
 
-#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
-    if (ret == 0) {
-        ESP_LOGI(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Success!", ret));
-    }
-    else {
-        ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
-    }
-#elif defined(WOLFSSL_ESPIDF_EXIT_MESSAGE)
-    ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+#if WOLFSSL_TEST_LOOP
+    #ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+        if (ret != 0) {
+            ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
+        }
+    #endif
+    xSemaphoreGive(task_semaphore);
 #else
-    ESP_LOGI(TAG, "\n\nDone!\n\n"
-                  "If running from idf.py monitor, press twice: Ctrl+]");
+    #ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
+        if (ret == 0) {
+            ESP_LOGI(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Success!", ret));
+        }
+        else {
+            ESP_LOGE(TAG, WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE("Failed!", ret));
+        }
+    #elif defined(WOLFSSL_ESPIDF_EXIT_MESSAGE)
+        ESP_LOGI(TAG, WOLFSSL_ESPIDF_EXIT_MESSAGE);
+    #else
+        ESP_LOGI(TAG, "\n\nDone!\n\n"
+                      "If running from idf.py monitor, press twice: Ctrl+]");
+    #endif
 #endif
+
 #if !CONFIG_IDF_TARGET_LINUX
     vTaskDelete(NULL);
 #endif
@@ -973,14 +1018,19 @@ static void http_test_task(void *pvParameters)
 
 void app_main(void)
 {
+    int loops = 0;
+#if WOLFSSL_TEST_LOOP
+    task_semaphore =  xSemaphoreCreateBinary();
+#endif
 #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(5, 2, 2))
     ESP_LOGI(TAG, "Found esp-IDF v5.2.2");
 #else
     ESP_LOGW(TAG, "This example is intended for ESP-IDF version 5.2.2");
 #endif
-    int loops = 0;
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     stack_start = esp_sdk_stack_pointer();
     stack_current = esp_sdk_stack_pointer();
+#endif
     ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -1047,21 +1097,29 @@ void app_main(void)
     http_test_task(NULL);
 #else
     do {
-        ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        ESP_LOGI(TAG, "Main Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
-        xTaskCreate(&http_test_task, "http_test_task", 30192, NULL, 5, NULL);
-        #if defined(WOLFSSL_HW_METRICS)
-            esp_hw_show_metrics();
-        #endif
+        xTaskCreate(&http_test_task, "http_test_task",
+                    EXAMPLE_TASK_STACK_SIZE_WORDS, NULL, 5, NULL);
+        ESP_LOGI(TAG, "Task created!");
+    #if WOLFSSL_TEST_LOOP
+        if (xSemaphoreTake(task_semaphore, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI(TAG, "Task completed!");
+        }
+    #endif
+    #if defined(WOLFSSL_HW_METRICS)
+        esp_hw_show_metrics();
+    #endif
         loops++; /* count of the number of tests run before fail. */
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-        ESP_LOGI(TAG, "loops = %d", loops);
-
+        ESP_LOGI(TAG, "loops = %d; ret = %d", loops, ret);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     } while (WOLFSSL_TEST_LOOP && (ret == 0));
 #endif
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     stack_current = esp_sdk_stack_pointer();
     ESP_LOGI(TAG, "Stack current (end main): 0x%x", stack_current);
-
+#endif
     /* Done in main task, cleanp and free memory. */
     vTaskDelete(NULL);
 }

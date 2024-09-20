@@ -158,6 +158,8 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
                                 WOLFSSL_X509_NAME** issuer,
                                 WOLFSSL_X509_NAME** subject);
 
+esp_err_t wolfSSL_bundle_cleanup();
+
 WOLFSSL_LOCAL void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
                              void *p_vrfy);
