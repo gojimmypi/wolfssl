@@ -22,6 +22,7 @@ import argparse
 import csv
 import os
 import re
+import unicodedata
 import struct
 import sys
 from io import open
@@ -186,9 +187,49 @@ class CertificateBundle:
         """
         # dn_string = ', '.join([f"{attribute.oid._name}={attribute.value}" for attribute in cert.subject])
         dn_string = ""
-        for attribute in cert.subject:
-            dn_string += f"/{attribute.oid._name}={attribute.value}"
-        return dn_string
+        result_string = ""
+
+        # Mapping of known OIDs to their short names
+        oid_short_names = {
+            'commonName': '/CN',
+            'countryName': '/C',
+            'stateOrProvinceName': '/ST',
+            'localityName': '/L',
+            'organizationName': '/O',
+            'organizationalUnitName': '/OU'
+        }
+
+        with open("cert_bundle.log", "a") as file:
+            # Write to the file
+            file.write("\nNew cert\n\n")
+            for attribute in cert.subject:
+                # Use a predefined map for known OIDs, and fallback to the dotted string if not found
+                oid_full_name  = attribute.oid._name if attribute.oid._name else attribute.oid.dotted_string
+
+                # The common string uses "/CN" and not "commonName"
+                oid_name = oid_short_names.get(oid_full_name, oid_full_name)
+                file.write(f"oid_name={oid_name}\n")
+
+                normalized_string = unicodedata.normalize('NFKD', attribute.value)
+
+                # Encode to ASCII bytes, ignoring any characters that can't be converted
+                ascii_bytes = normalized_string.encode('ascii', 'ignore')
+
+                # Decode back to ASCII string
+                ascii_string = ascii_bytes.decode('ascii')
+                file.write(f"attribute_value={ascii_string}\n")
+
+                # assemble the dn string for this cert
+                dn_string += f"/{oid_name}={ascii_string}"
+                file.write(f"dn_string={dn_string}\n")
+
+
+            cleaned_string = re.sub(r'[^\x20-\x7E]', ' ', dn_string)
+            file.write(f"cleaned_string={cleaned_string}\n")
+            result_string = cleaned_string.replace("=", " ")
+            file.write(f"result_string={result_string}\n")
+
+        return result_string
 
     def sorting_key_as_is(self, cert):
         """
@@ -208,28 +249,9 @@ class CertificateBundle:
         # NOTE: When sorting, see `esp_crt_bundle.c`;
         #       Use `#define CERT_BUNDLE_UNSORTED` when not sorting.
         #
-        # self.certificates = sorted(self.certificates, key=lambda cert: self.get_subject_text(cert))
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject_name)
-        # self.certificates = sorted(
-        #                         self.certificates,
-        #                         key=lambda cert: (
-        #                             cert.subject_name
-        #                             if hasattr(cert, 'subject_name') and cert.subject_name is not None
-        #                             else ''
-        #                         )
-        #                     )
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
-        # Other sort orders to consider (for reference only)
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.public_bytes(default_backend()))
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '')
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert['issuer_name'])
-        # self.certificates = self.certificates = sorted(self.certificates, key=lambda cert: cert['subject_name'])
-        # self.certificates = sorted(self.certificates, key=lambda cert: cert.subject.rfc4514_string())
-        # self.certificates = self.sort_certificates_by_reversed_dn(self.certificates)
-
-        # We are using a specific order as defined by wolfSSL strings:
+        with open("cert_bundle.log", "w") as file:
+            # Write to the file
+            file.write("init.\n")
         self.certificates = self.sort_certificates_by_as_is(self.certificates)
 
 
