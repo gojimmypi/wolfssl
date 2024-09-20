@@ -909,7 +909,7 @@ static void http_test_task(void *pvParameters)
     size_t free_heap_size;
     size_t min_free_heap_size;
     size_t free_internal_heap_size;
-loop:
+
     ret = ESP_OK;
     ESP_LOGI(TAG, "\n\n\nBegin http_test_task\n\n");
 #ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
@@ -926,17 +926,8 @@ loop:
     // Get the amount of free memory in internal RAM
     free_internal_heap_size = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     ESP_LOGI(TAG, "Free internal heap size: %u bytes", free_internal_heap_size);
-    http_partial_download();
 
-//    while (1) {
-//        vTaskDelay(pdMS_TO_TICKS(1000));
-//    }
-//    goto loop;
-
-
-    // https_async();
-    https_with_url();
-// #define SINGLE_TEST
+/* #define SINGLE_TEST */
 #ifdef SINGLE_TEST
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     /* bundle tests */
@@ -946,10 +937,6 @@ loop:
 
 #else
     http_rest_with_url();
-#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
-    stack_current = esp_sdk_stack_pointer();
-#endif
-    ESP_LOGI(TAG, "Stack current 1: 0x%x", stack_current);
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
     http_auth_basic();
@@ -966,18 +953,10 @@ loop:
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
-    ESP_LOGI(TAG, "Stack current 2: 0x%x", stack_current);
-    http_rest_with_hostname_path();
     https_with_hostname_path();
-    ESP_LOGI(TAG, "Stack current 3: 0x%x", stack_current);
-    http_rest_with_hostname_path();
     http_redirect_to_https();
-    ESP_LOGI(TAG, "Stack current 4: 0x%x", stack_current);
-    http_rest_with_hostname_path();
     http_download_chunk();
     http_perform_as_stream_reader();
-    ESP_LOGI(TAG, "Stack current 5: 0x%x", stack_current);
-    http_rest_with_hostname_path();
     https_async();
     https_with_invalid_url();
     http_native_request();
@@ -985,14 +964,11 @@ loop:
     http_partial_download();
 #endif
 
-#endif
+#endif /* SINGLE_TEST */
 
 #if defined(DEBUG_WOLFSSL) && defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     esp_hw_show_mp_metrics();
 #endif
-
-    ESP_LOGI(TAG, "\n\n\nFinish http example\n\n\n");
-    goto loop;
 
 #if WOLFSSL_TEST_LOOP
     #ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
