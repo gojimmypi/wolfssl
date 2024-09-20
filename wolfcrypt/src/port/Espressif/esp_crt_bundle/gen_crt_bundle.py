@@ -184,7 +184,10 @@ class CertificateBundle:
         """
         Extract the DN components exactly as they appear in the certificate.
         """
-        dn_string = ', '.join([f"{attribute.oid._name}={attribute.value}" for attribute in cert.subject])
+        # dn_string = ', '.join([f"{attribute.oid._name}={attribute.value}" for attribute in cert.subject])
+        dn_string = ""
+        for attribute in cert.subject:
+            dn_string += f"/{attribute.oid._name}={attribute.value}"
         return dn_string
 
     def sorting_key_as_is(self, cert):
