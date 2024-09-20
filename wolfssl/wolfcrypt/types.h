@@ -730,7 +730,6 @@ typedef struct w64wrapper {
         #define XMEMSET(b,c,l)    memset((b),(c),(l))
         #define XMEMCMP(s1,s2,n)  memcmp((s1),(s2),(n))
         #define XMEMMOVE(d,s,l)   memmove((d),(s),(l))
-        #define XMEMMEM(h,hl,n,nl) mymemmem((h),(hl),(n),(nl))
 
         #define XSTRLEN(s1)       strlen((s1))
         #define XSTRNCPY(s1,s2,n) strncpy((s1),(s2),(n))
@@ -1692,6 +1691,36 @@ typedef struct w64wrapper {
     #endif
     #ifndef PRAGMA_DIAG_POP
         #define PRAGMA_DIAG_POP /* null expansion */
+    #endif
+
+    #define WC_CPP_CAT_(a, b) a ## b
+    #define WC_CPP_CAT(a, b) WC_CPP_CAT_(a, b)
+    #if defined(__cplusplus) && (__cplusplus >= 201103L)
+        #ifndef static_assert2
+            #define static_assert2 static_assert
+        #endif
+    #elif !defined(static_assert)
+        #if !defined(__cplusplus) &&                \
+                !defined(__STRICT_ANSI__) &&        \
+                !defined(WOLF_C89) &&               \
+                defined(__STDC_VERSION__) &&        \
+                (__STDC_VERSION__ >= 201112L) &&    \
+                ((defined(__GNUC__) &&              \
+                  (__GNUC__ >= 5)) ||               \
+                 defined(__clang__))
+            #define static_assert(expr) _Static_assert(expr, #expr)
+            #ifndef static_assert2
+                #define static_assert2(expr, msg) _Static_assert(expr, msg)
+            #endif
+        #else
+            #define static_assert(expr) \
+                struct WC_CPP_CAT(wc_dummy_struct_L, __LINE__)
+            #ifndef static_assert2
+                #define static_assert2(expr, msg) static_assert(expr)
+            #endif
+        #endif
+    #elif !defined(static_assert2)
+         #define static_assert2(expr, msg) static_assert(expr)
     #endif
 
     #ifndef SAVE_VECTOR_REGISTERS
