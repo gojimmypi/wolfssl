@@ -157,7 +157,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
  *
  * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED
  * Reminder: the actual sort occurs in gen_crt_bundly.py call from CMake. */
-#define CERT_BUNDLE_UNSORTED
+/* #define CERT_BUNDLE_UNSORTED */
 
 /* Inline cert bundle functions performance hint unless otherwise specified. */
 #ifndef CB_INLINE
