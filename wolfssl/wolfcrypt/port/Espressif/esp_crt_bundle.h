@@ -29,6 +29,27 @@
  * See:
  * https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html
  * https://github.com/espressif/esp-idf/blob/master/components/esp-tls/esp_tls.h
+ *
+ *******************************************************************************
+ ** Optional Settings:
+ *******************************************************************************
+ * WOLFSSL_DEBUG_CERT_BUNDLE_NAME
+ *   Optionally show certificate bundle debugging info.
+ *
+ * WOLFSSL_DEBUG_CERT_BUNDLE_NAME
+ *   Optionally show certificate bundle name debugging info.
+ *
+ * WOLFSSL_EXAMPLE_VERBOSITY
+ *   Optionally print example application information that may be interesting.
+ *
+ * IS_WOLFSSL_CERT_BUNDLE_FORMAT
+ *   This should be left on, as no other bundle format is supported at this time.
+ *
+ * CB_INLINE
+ *   Normally on, this uses the compiler `inline` decorator for bundle functions
+ *   to be optimized, since they are called during a TLS connection.
+ *
+ * See Kconfig file (or use idy.py menufconfig) for other bundle settings.
  */
 
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
