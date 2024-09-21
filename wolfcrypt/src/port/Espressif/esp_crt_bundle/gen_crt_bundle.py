@@ -1,5 +1,25 @@
 #!/usr/bin/env python
 #
+#  gen_crt_bundle.py
+#
+#  Copyright (C) 2006-2024 wolfSSL Inc.
+#
+#  This file is part of wolfSSL.
+#
+#  wolfSSL is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  wolfSSL is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+#
 # ESP32 x509 certificate bundle generation utility
 #
 # Converts PEM and DER certificates to a custom bundle format which stores just the
@@ -12,9 +32,7 @@
 # crt 1 subject name;
 # crt 1 public key;
 # crt 2...
-#
-# SPDX-FileCopyrightText: 2018-2022 Espressif Systems (Shanghai) CO LTD
-# SPDX-License-Identifier: Apache-2.0
+
 
 from __future__ import with_statement
 
@@ -130,8 +148,12 @@ class CertificateBundle:
             f"/{attribute.oid._name}={attribute.value}"  # Adjust as necessary to format as "/C=US/O=..."
             for attribute in cert.subject
         )
+
+    # We are currently sorting in AS FOUND order. wolfSSL does this in wolfSSL_X509_NAME_oneline()
+    # But for reference, if desired:
+    #
     # /C=TW/O=TAIWAN-CA/OU=Root CA/CN=TWCA Global Root CA
-    #/C=US/ST=Illinois/L=Chicago/O=Trustwave Holdings, Inc./CN=Trustwave
+    # /C=US/ST=Illinois/L=Chicago/O=Trustwave Holdings, Inc./CN=Trustwave
     desired_dn_order = ["/C=", "/ST=", "/L=", "/O=", "/OU=", "/CN="]
 
     def extract_dn_components(self, cert):
@@ -168,18 +190,11 @@ class CertificateBundle:
 
         return ''.join([f"{key}{dn_dict[key]}" for key in self.desired_dn_order if dn_dict[key]])
 
-
     def sort_certificates_by_dn_order(self, certificates):
         """
         Sort the list of certificates based on the DN string assembled in the specified order.
         """
         return sorted(certificates, key=self.sorting_key)
-
-#        sorted_certificates = sorted(
-#            certificates,
-#            key=lambda cert: self.extract_dn_string_in_order(cert)
-#        )
-#        return sorted_certificates
 
     def extract_dn_components_as_is(self, cert):
         """
@@ -206,10 +221,11 @@ class CertificateBundle:
                 # Use a predefined map for known OIDs, and fallback to the dotted string if not found
                 oid_full_name  = attribute.oid._name if attribute.oid._name else attribute.oid.dotted_string
 
-                # The common string uses "/CN" and not "commonName"
+                # The common string uses "/CN" and not "commonName", so we need to swap out keywords such as commonName:
                 oid_name = oid_short_names.get(oid_full_name, oid_full_name)
                 file.write(f"oid_name={oid_name}\n")
 
+                # Strip unicode
                 normalized_string = unicodedata.normalize('NFKD', attribute.value)
 
                 # Encode to ASCII bytes, ignoring any characters that can't be converted
@@ -223,12 +239,13 @@ class CertificateBundle:
                 dn_string += f"/{oid_name}={ascii_string}"
                 file.write(f"dn_string={dn_string}\n")
 
-
+            # Remove any unprintable characters
             cleaned_string = re.sub(r'[^\x20-\x7E]', ' ', dn_string)
             file.write(f"cleaned_string={cleaned_string}\n")
             result_string = cleaned_string.replace("=", " ")
             file.write(f"result_string={result_string}\n")
 
+        # Reminder this is a sort order only; cert NOT modified.
         return result_string
 
     def sorting_key_as_is(self, cert):
