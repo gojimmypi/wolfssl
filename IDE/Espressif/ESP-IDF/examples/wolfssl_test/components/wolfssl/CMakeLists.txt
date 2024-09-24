@@ -156,7 +156,7 @@ if( ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_benchmark") OR ("${CMAKE_PROJECT_
     message(STATUS "Not including lwip for ${CMAKE_PROJECT_NAME}")
 else()
     # benchmark and test do not need wifi, everything else probably does:
-    set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
+    set(COMPONENT_REQUIRES lwip esp-tls)  # we typically don't need lwip directly in wolfssl component
 endif()
 
 # find the user name to search for possible "wolfssl-username"
