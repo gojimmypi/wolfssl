@@ -58,7 +58,7 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || \ 
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || \
     defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
 
 
