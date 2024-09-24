@@ -375,6 +375,7 @@
         defined(HAVE_FFDHE_6144) || \
         defined(HAVE_FFDHE_8192)
     #else
+        #define HAVE_FFDHE_2048
         /* #error "TLS 1.3 requires HAVE_FFDHE_[nnnn]" */
     #endif
 #endif
@@ -503,7 +504,9 @@
 
 /* Adjust wait-timeout count if you see timeout in RSA HW acceleration.
  * Set to very large number and enable WOLFSSL_HW_METRICS to determine max. */
-#define ESP_RSA_TIMEOUT_CNT 0xFF0000
+#ifndef ESP_RSA_TIMEOUT_CNT
+	#define ESP_RSA_TIMEOUT_CNT 0xFF0000
+#endif
 
 /* hash limit for test.c */
 #define HASH_SIZE_LIMIT
@@ -854,7 +857,7 @@ Turn on timer debugging (used when CPU cycles not available)
 /* Pause in a loop rather than exit. */
 /* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
 /* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
-//#define WOLFSSL_STATIC_MEMORY
+
 #define WOLFSSL_HW_METRICS
 
 /* for test.c */

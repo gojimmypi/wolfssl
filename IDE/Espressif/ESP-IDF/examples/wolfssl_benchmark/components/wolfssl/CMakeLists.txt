@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.7.1 Espressif ESP-IDF preview
+# Version 5.7.2 Espressif ESP-IDF integration
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -28,6 +28,9 @@ cmake_minimum_required(VERSION 3.16)
 
 set(VERBOSE_COMPONENT_MESSAGES 1)
 
+# Optional requires include:
+# set(THIS_ESP_TLS "esp-tls")
+set(THIS_ESP_TLS "")
 
 # function: IS_ESP_IDF_COMPONENT
 #  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
@@ -404,8 +407,8 @@ endif()
 
 if ( ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266") OR ("${IDF_TARGET}" STREQUAL "esp8266") )
     # There's no esp_timer, no driver components for the ESP8266
-    message(STATUS "Early expansion EXCLUDES esp_timer: ${THIS_INCLUDE_TIMER}")
-    message(STATUS "Early expansion EXCLUDES driver: ${THIS_INCLUDE_DRIVER}")
+    message(STATUS "Early expansion EXCLUDES esp_timer for esp8266: ${THIS_INCLUDE_TIMER}")
+    message(STATUS "Early expansion EXCLUDES driver for esp8266: ${THIS_INCLUDE_DRIVER}")
     set(THIS_INCLUDE_TIMER "")
     set(THIS_INCLUDE_DRIVER "")
 else()
@@ -420,6 +423,7 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
     idf_component_register(
                             REQUIRES "${COMPONENT_REQUIRES}"
                             PRIV_REQUIRES # esp_hw_support
+                                          "${THIS_ESP_TLS}"
                                           "${THIS_INCLUDE_TIMER}"
                                           "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
@@ -757,6 +761,7 @@ else()
                                 REQUIRES "${COMPONENT_REQUIRES}"
                                 EXCLUDE_SRCS "${COMPONENT_SRCEXCLUDE}"
                                 PRIV_REQUIRES
+                                  "${THIS_ESP_TLS}"
                                   "${THIS_INCLUDE_TIMER}"
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
@@ -768,7 +773,10 @@ else()
     endif()
 
 # function(WOLFSSL_INIT_CERT_BUNDLE)
-if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
+if( CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
+    AND NOT ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266")
+  )
     if (CMAKE_BUILD_EARLY_EXPANSION)
         message(ERROR "Bundle Cert initialization must occur during CMAKE_BUILD_EARLY_EXPANSION")
     endif()
@@ -785,7 +793,6 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
         set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
 
         # Generate custom certificate bundle using the generate_cert_bundle utility
-        # set(GENERATE_CERT_BUNDLEPY ${python} "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/pio_install_cryptography.py" && "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py")
         set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
 
         if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
@@ -811,8 +818,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
         endif()
         list(APPEND args --input ${crt_paths} -q)
 
-        # TODO remove peek
-        message(STATUS "Peek CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
+        message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
         get_filename_component(crt_bundle
             ${bundle_name}
             ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -835,7 +841,7 @@ if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_D
         if(EXISTS "${crt_bundle}")
             message(STATUS "Bundle file exists from prior build: ${crt_bundle}")
         else()
-            message(STATUS "Bundle file expected during net build: ${crt_bundle}")
+            message(STATUS "Bundle file expected during next build: ${crt_bundle}")
         endif()
 
         # Reminder the file is generated at build time, not cmake load time.
@@ -1006,7 +1012,11 @@ if(WOLFSSL_ROOT)
     file(WRITE "tada.txt" "${WOLFSSL_ROOT}\n")
     # See esp-tls Kconfig; menu "ESP-TLS", ESP_TLS_LIBRARY_CHOOSE
     if(CONFIG_ESP_TLS_USING_WOLFSSL)
-        message(STATUS "wolfSSL will be used for ESP-TLS")
+        if ( ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266") OR ("${IDF_TARGET}" STREQUAL "esp8266") )
+            message(FATAL_ERROR "This version of wolfSSL is not supported on the ESP8266 esp-tls at this time. Check ESP-TLS config")
+        else()
+            message(STATUS "wolfSSL will be used for ESP-TLS")
+        endif()
     else()
         message(STATUS "WARNING: wolfSSL NOT selected for ESP-TLS. Features and performance will be limited.")
     endif()

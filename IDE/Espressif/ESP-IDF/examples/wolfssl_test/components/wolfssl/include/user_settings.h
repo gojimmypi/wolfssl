@@ -153,8 +153,13 @@
 
 /* Other applications detected by cmake */
 #elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
-    /* The wolfSSL Version */
-    #define FP_MAX_BITS (8192 * 2)
+    /* The wolfSSL Version if the client example */
+    #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32C2)
+        /* Less memory available, so smaller key sizes: */
+        #define FP_MAX_BITS (4096 * 2)
+    #else
+        #define FP_MAX_BITS (8192 * 2)
+    #endif
     #define HAVE_ALPN
     #define HAVE_SNI
     #define OPENSSL_EXTRA_X509_SMALL
@@ -240,7 +245,15 @@
 /* Used by ESP-IDF components: */
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
-    #define FP_MAX_BITS (8192 * 2)
+    #ifndef FP_MAX_BITS
+        #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+            defined(CONFIG_IDF_TARGET_ESP8684)
+            /* Optionally set smaller size here */
+            #define FP_MAX_BITS (4096 * 2)
+        #else
+            #define FP_MAX_BITS (4096 * 2)
+        #endif
+    #endif
     #define HAVE_ALPN
     #define HAVE_SNI
     #define OPENSSL_EXTRA_X509_SMALL
@@ -318,7 +331,7 @@
 #define USE_CERT_BUFFERS_2048
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
-/* #define RSA_LOW_MEM  */
+#define RSA_LOW_MEM
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -349,7 +362,7 @@
     /* Required for RSA */
     #define WC_RSA_PSS
 
-    /* TLS 1.3 normally requires HAVE_FFDHE. For now just syntax highlight: */
+    /* TLS 1.3 normally requires HAVE_FFDHE */
     #if defined(HAVE_FFDHE_2048) || \
         defined(HAVE_FFDHE_3072) || \
         defined(HAVE_FFDHE_4096) || \
@@ -361,7 +374,13 @@
     #endif
 #endif
 
-
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+    defined(CONFIG_IDF_TARGET_ESP8684)
+    /* Optionally set smaller size here */
+    #define HAVE_FFDHE_4096
+#else
+    #define HAVE_FFDHE_4096
+#endif
 
 #define NO_FILESYSTEM
 
@@ -379,8 +398,7 @@
 #define WOLFSSL_SHA384
 
 /* Some features not enabled for ESP8266: */
-#if defined(CONFIG_IDF_TARGET_ESP8266) || \
-    defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(CONFIG_IDF_TARGET_ESP8266)
     /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
@@ -394,7 +412,7 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(CONFIG_IDF_TARGET_ESP8266)
     #define MY_USE_ECC 0
     #define MY_USE_RSA 1
 #else
@@ -478,8 +496,11 @@
 /* #define XTIME time */
 
 
-/* adjust wait-timeout count if you see timeout in RSA HW acceleration */
-#define ESP_RSA_TIMEOUT_CNT    0x449F00
+/* Adjust wait-timeout count if you see timeout in RSA HW acceleration.
+ * Set to very large number and enable WOLFSSL_HW_METRICS to determine max. */
+#ifndef ESP_RSA_TIMEOUT_CNT
+	#define ESP_RSA_TIMEOUT_CNT 0xFF0000
+#endif
 
 /* hash limit for test.c */
 #define HASH_SIZE_LIMIT
@@ -709,7 +730,7 @@
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
@@ -785,6 +806,7 @@
         #endif
     #endif
 #endif
+#define WOLFSSL_MAX_ERROR_SZ 500
 
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
@@ -802,6 +824,7 @@ Turn debugging on/off:
 #define DEBUG_WOLFSSL_SHA_MUTEX
 #define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 #define WOLFSSL_DEBUG_CERT_BUNDLE
+#define WOLFSSL_DEBUG_CERT_BUNDLE_NAME
 #define WOLFSSL_ESP32_CRYPT_DEBUG
 #define WOLFSSL_ESP32_CRYPT_HASH_SHA224_DEBUG
 #define NO_RECOVER_SOFTWARE_CALC
@@ -810,6 +833,8 @@ Turn debugging on/off:
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 #define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
+#define WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+#define WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
 #define ESP_MONITOR_HW_TASK_LOCK
 #define USE_ESP_DPORT_ACCESS_READ_BUFFER

@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.7.1 Espressif ESP-IDF preview
+# Version 5.7.2 Espressif ESP-IDF integration
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #
@@ -803,7 +803,6 @@ if( CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
         set(DEFAULT_CRT_DIR "${WOLFSSL_ESP_CRT_BUNDLE_DIR}")
 
         # Generate custom certificate bundle using the generate_cert_bundle utility
-        # set(GENERATE_CERT_BUNDLEPY ${python} "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/pio_install_cryptography.py" && "${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py")
         set(GENERATE_CERT_BUNDLEPY ${python} ${WOLFSSL_ESP_CRT_BUNDLE_DIR}/gen_crt_bundle.py)
 
         if(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_FULL)
@@ -829,8 +828,7 @@ if( CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
         endif()
         list(APPEND args --input ${crt_paths} -q)
 
-        # TODO remove peek
-        message(STATUS "Peek CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
+        message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
         get_filename_component(crt_bundle
             ${bundle_name}
             ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -853,7 +851,7 @@ if( CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
         if(EXISTS "${crt_bundle}")
             message(STATUS "Bundle file exists from prior build: ${crt_bundle}")
         else()
-            message(STATUS "Bundle file expected during net build: ${crt_bundle}")
+            message(STATUS "Bundle file expected during next build: ${crt_bundle}")
         endif()
 
         # Reminder the file is generated at build time, not cmake load time.

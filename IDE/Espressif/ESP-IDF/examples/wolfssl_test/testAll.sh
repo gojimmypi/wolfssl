@@ -17,7 +17,7 @@
 MY_SHELLCHECK="shellcheck"
 
 # Check if the executable is available in the PATH
-if command -v "$MY_SHELLCHECK" >/dev/null 2>&1; then
+if command -v "$MY_SHELLCHECK" > /dev/null 2>&1; then
     # Run your command here
     shellcheck "$0" || exit 1
 else
@@ -39,7 +39,8 @@ fi
 # If there are no running instances, taskkill exits with non-zero error code.
 #******************************************************************************
 echo "Closing any open putty sessions"
-taskkill.exe /IM putty.exe /F  2> NUL
+taskkill.exe /IM putty.exe /F  > /dev/null 2>&1;
+
 # Abort on any future errors
 set -e
 
@@ -108,6 +109,7 @@ echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
 if [ -f "$WRK_IDF_PATH/export.sh" ]; then
     # shell check should not follow into the ESP-IDF export.sh
     # shellcheck disable=SC1090
+    # shellcheck disable=SC1091
     . "$WRK_IDF_PATH"/export.sh
     else
   echo "File $WRK_IDF_PATH/export.sh not found"
@@ -118,10 +120,13 @@ fi
 # Tensilica
 # ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
 
+echo "Skipping ESP8266, gives this error: (wolfSSL not supported in esp-tls)"
+echo "CMake Error at /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/tools/cmake/component.cmake:343 (__component_get_property)"
 
 #******************************************************************************
 # ESP32[-N] uses esp-idf/v5.2 toolchain
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+# WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
 #******************************************************************************
 # Restore the original PATH
 export PATH="$ORIGINAL_PATH"
@@ -140,6 +145,7 @@ echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
 
 # shell check should not follow into the ESP-IDF export.sh
 # shellcheck disable=SC1090
+# shellcheck disable=SC1091
 . "$WRK_IDF_PATH"/export.sh
 
 # Comment numeric values are recently observed runtime durations.

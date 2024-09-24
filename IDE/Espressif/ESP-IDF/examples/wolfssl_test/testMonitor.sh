@@ -58,7 +58,7 @@ elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
     # esp32c2_PORT="/dev/ttyS49" #8684
 elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
     esp32_PORT="/dev/ttyS7"
-    esp32c2_PORT="/dev/ttyS10"
+    esp32c2_PORT="/dev/ttyS12"
     esp32c3_PORT="/dev/ttyS6"
     esp32c6_PORT="/dev/ttyS8"
     esp32h2_PORT="/dev/ttyS9"
@@ -66,12 +66,12 @@ elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
     esp32s3_PORT="/dev/ttyS4"
 
     esp8266_PORT="/dev/ttyS11"
-    esp8684_PORT="/dev/ttyS3"
+    esp8684_PORT="/dev/ttyS10"
 
     # Load putty profiles. Note profiles names need to have been previously
     # defined and saved in putty! These are the saved sessions in putty:
     esp32_PUTTY="COM7"
-    esp32c2_PUTTY="COM3-74880"
+    esp32c2_PUTTY="COM12-74880"
     esp32c3_PUTTY="COM6"
     esp32c6_PUTTY="COM8"
     esp32h2_PUTTY="COM9"
@@ -157,6 +157,7 @@ fi
 
 # Assemble some log file names.
 echo ""
+mkdir -p "${THIS_HOME_DIR}/logs"
 BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
@@ -244,6 +245,12 @@ if [ $THIS_ERROR_CODE -ne 0 ]; then
     grep -i "error" "${BUILD_LOG}"
     exit 1
 fi
+
+
+echo ""
+echo "Flash $THIS_TARGET..."
+echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
+idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
 
 #---------------------------------------------------------------------
 echo ""
