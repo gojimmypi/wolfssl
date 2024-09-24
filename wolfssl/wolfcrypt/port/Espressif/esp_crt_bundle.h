@@ -58,7 +58,8 @@
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
 
-#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
+#if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || \ 
+    defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
 
 
 #ifdef __cplusplus
@@ -81,18 +82,22 @@ struct wolfssl_ssl_config
 /**
  * @brief      Attach and enable use of a bundle for certificate verification
  *
- * Attach and enable use of a bundle for certificate verification through a verification callback.
- * If no specific bundle has been set through esp_crt_bundle_set() it will default to the
- * bundle defined in menuconfig and embedded in the binary.
+ * Attach and enable use of a bundle for certificate verification through a
+ * verification callback.If no specific bundle has been set through
+ * esp_crt_bundle_set() it will default to the bundle defined in menuconfig
+ * and embedded in the binary.
  *
- * Note this must be visibile for both the regular bundles, as well as the "none" option.
- * Other code gated out, below, when the "non" option is selected.
+ * Note this must be visible for both the regular bundles, as well as the
+ *"none" option.
+ *
+ * Other code gated out, below, when the "none" option is selected.
  *
  * @param[in]  conf      The config struct for the SSL connection.
  *
  * @return
  *             - ESP_OK  if adding certificates was successful.
- *             - Other   if an error occured or an action must be taken by the calling process.
+ *             - Other   if an error occurred or an action must be taken by the
+ *                       calling process.
  */
 esp_err_t esp_crt_bundle_attach(void *conf);
 
