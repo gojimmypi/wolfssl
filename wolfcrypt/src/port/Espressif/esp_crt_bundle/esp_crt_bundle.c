@@ -534,13 +534,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
 {
     char subjectName[X509_MAX_SUBJECT_LEN];
 
-    static const unsigned char* cert_data = NULL;
-    static const unsigned char* cert_bundle_data = NULL;
+    const unsigned char* cert_data = NULL;
+    const unsigned char* cert_bundle_data = NULL;
 
-    static WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert*/
-    static WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert*/
-    static WOLFSSL_X509_NAME* this_subject = NULL;     /* part of bundle_cert.*/
-    static WOLFSSL_X509_NAME* this_issuer = NULL;      /* part of bundle_cert.*/
+    WOLFSSL_X509_NAME* store_cert_subject = NULL; /* part of store_cert*/
+    WOLFSSL_X509_NAME* store_cert_issuer = NULL;  /* part of store_cert*/
+    WOLFSSL_X509_NAME* this_subject = NULL;     /* part of bundle_cert.*/
+    WOLFSSL_X509_NAME* this_issuer = NULL;      /* part of bundle_cert.*/
 
     intptr_t this_addr = 0; /* Beginning of the bundle object: [size][cert]  */
     int derCertLength = 0; /* The [size] value: length of [cert] budnle item */
