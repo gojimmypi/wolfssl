@@ -2036,7 +2036,8 @@ extern void uITRON4_free(void *p) ;
     defined(WOLFSSL_STM32L4) || defined(WOLFSSL_STM32L5) || \
     defined(WOLFSSL_STM32WB) || defined(WOLFSSL_STM32H7) || \
     defined(WOLFSSL_STM32G0) || defined(WOLFSSL_STM32U5) || \
-    defined(WOLFSSL_STM32H5) || defined(WOLFSSL_STM32WL)
+    defined(WOLFSSL_STM32H5) || defined(WOLFSSL_STM32WL) || \
+    defined(WOLFSSL_STM32G4)
 
     #define SIZEOF_LONG_LONG 8
     #ifndef CHAR_BIT
@@ -2092,6 +2093,8 @@ extern void uITRON4_free(void *p) ;
             #include "stm32wlxx_hal.h"
         #elif defined(WOLFSSL_STM32G0)
             #include "stm32g0xx_hal.h"
+        #elif defined(WOLFSSL_STM32G4)
+            #include "stm32g4xx_hal.h"
         #elif defined(WOLFSSL_STM32U5)
             #include "stm32u5xx_hal.h"
         #elif defined(WOLFSSL_STM32H5)
@@ -2150,10 +2153,7 @@ extern void uITRON4_free(void *p) ;
             #include "stm32f1xx.h"
         #endif
     #endif /* WOLFSSL_STM32_CUBEMX */
-#endif /* WOLFSSL_STM32F2 || WOLFSSL_STM32F4 || WOLFSSL_STM32L4 ||
-          WOLFSSL_STM32L5 || WOLFSSL_STM32F7 || WOLFSSL_STMWB ||
-          WOLFSSL_STM32H7 || WOLFSSL_STM32G0 || WOLFSSL_STM32U5 ||
-          WOLFSSL_STM32H5 */
+#endif /* WOLFSSL_STM32* */
 #ifdef WOLFSSL_DEOS
     #include <deos.h>
     #include <timeout.h>
