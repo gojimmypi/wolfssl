@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
-# testAll.sh [keyword suffix]
+# testAll.sh [keyword suffix] [ESP32 toolchain dir] [ESP8266 toolchain dir]
+#
+# Example:
+#
+#   testAll.sh http_test  /mnt/c/SysGCC/esp32/esp-idf/v5.2-master  /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 #
 # Build and compile the wolfssl_test for all platforms.
 #
@@ -34,6 +38,32 @@ if [[ "$PATH" == *"rtos-sdk"* ]]; then
     exit 1
 fi
 
+# ESP32 Path for ESP-IDF: fixed value or param #2
+WRK_IDF_PATH_ESP32=$2
+if [[ "$WRK_IDF_PATH_ESP32" == "" ]]; then
+    WRK_IDF_PATH_ESP32=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
+fi
+
+if [[ -d "$WRK_IDF_PATH_ESP32" ]]; then
+    echo "Using IDF Path for ESP32: $WRK_IDF_PATH_ESP32"
+else
+    echo "Path not found for ESP32: $WRK_IDF_PATH_ESP32"
+    exit 1
+fi
+
+# ESP32 Path for ESP-IDF: fixed value or param #3
+WRK_IDF_PATH_ESP8266=$3
+if [[ "$WRK_IDF_PATH_ESP8266" == "" ]]; then
+    WRK_IDF_PATH_ESP8266=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+fi
+
+if [[ -d "$WRK_IDF_PATH_ESP8266" ]]; then
+    echo "Using IDF Path for ESP8266: $WRK_IDF_PATH_ESP8266"
+else
+    echo "Path not found for ESP8266: $WRK_IDF_PATH_ESP8266"
+    exit 1
+fi
+
 #******************************************************************************
 # Kill all currently running instances of putty.exe
 # If there are no running instances, taskkill exits with non-zero error code.
@@ -55,7 +85,7 @@ THIS_SUFFIX="$1"
 
 #******************************************************************************
 # ESP8266 uses rtos-sdk/v3.4 toolchain. Test this first, as it is slowest.
-WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+# WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 #******************************************************************************
 
 # Clear ESP-IDF environment variables to ensure clean start for export.sh
@@ -105,15 +135,21 @@ fi
 # Setup ESP8266 environment
 #******************************************************************************
 
-echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
-if [ -f "$WRK_IDF_PATH/export.sh" ]; then
+echo "Run ESP8266 export.sh from ${WRK_IDF_PATH_ESP8266}"
+if [ -f "$WRK_IDF_PATH_ESP8266/export.sh" ]; then
     # shell check should not follow into the ESP-IDF export.sh
     # shellcheck disable=SC1090
     # shellcheck disable=SC1091
-    . "$WRK_IDF_PATH"/export.sh
-    else
-  echo "File $WRK_IDF_PATH/export.sh not found"
-  exit 1
+    . "$WRK_IDF_PATH_ESP8266"/export.sh
+    THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        echo "Error during export.sh"
+        exit $THIS_ERROR_CODE
+    fi
+else
+    echo "File $WRK_IDF_PATH_ESP8266/export.sh not found"
+    exit 1
 fi
 
 
@@ -126,7 +162,6 @@ echo "CMake Error at /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/tools/cmake/component.c
 #******************************************************************************
 # ESP32[-N] uses esp-idf/v5.2 toolchain
 # WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
-WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
 #******************************************************************************
 # Restore the original PATH
 export PATH="$ORIGINAL_PATH"
@@ -141,12 +176,12 @@ unset IDF_TOOLS_EXPORT_CMD
 unset IDF_TOOLS_INSTALL_CMD
 unset OPENOCD_SCRIPTS
 
-echo "Run ESP32 export.sh from ${WRK_IDF_PATH}"
+echo "Run ESP32 export.sh from ${WRK_IDF_PATH_ESP32}"
 
 # shell check should not follow into the ESP-IDF export.sh
 # shellcheck disable=SC1090
 # shellcheck disable=SC1091
-. "$WRK_IDF_PATH"/export.sh
+. "$WRK_IDF_PATH_ESP32"/export.sh
 
 # Comment numeric values are recently observed runtime durations.
 # Different tests may be enabled for each device.
