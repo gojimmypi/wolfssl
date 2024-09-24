@@ -1274,9 +1274,10 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
     } /* ret == ESP_OK */
 
     if (ret == ESP_OK) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+        ESP_LOGW(TAG, "calloc certs: %d  bytes", sizeof(x509_bundle));
+#endif
         /* Contiguous allocation is important to our cert extraction. */
-
-        ESP_LOGW(TAG, "calloc certs");
         crts = calloc(num_certs, sizeof(x509_bundle));
         if (crts == NULL) {
             ESP_LOGE(TAG, "Unable to allocate memory for bundle pointers");
@@ -1338,6 +1339,9 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
 
     if (_esp_crt_bundle_is_valid ==  ESP_FAIL) {
         if (crts == NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+            ESP_LOGW(TAG, "Free certs after invalid bundle");
+#endif
             free(crts);
             crts = NULL;
             s_crt_bundle.num_certs = 0;
@@ -1349,6 +1353,9 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
          * current crt_bundle is successful */
         /* Free previous crt_bundle */
         if (s_crt_bundle.crts != NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+            ESP_LOGI(TAG, "Free crts");
+#endif
             free(s_crt_bundle.crts);
         }
         s_crt_bundle.num_certs = num_certs;
@@ -1418,6 +1425,9 @@ void esp_crt_bundle_detach(wolfssl_ssl_config *conf)
     _need_bundle_cert = 0;
 
     if (s_crt_bundle.crts != NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+        ESP_LOGI(TAG, "Free s_crt_bundle.crts");
+#endif
         free(s_crt_bundle.crts);
         s_crt_bundle.crts = NULL;
     }
@@ -1450,6 +1460,9 @@ esp_err_t wolfSSL_bundle_cleanup()
     ESP_LOGV(TAG, "Enter wolfSSL_bundle_cleanup");
 
     if (s_crt_bundle.crts != NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+        ESP_LOGI(TAG, "Free s_crt_bundle.crts in wolfSSL_bundle_cleanup");
+#endif
         free(s_crt_bundle.crts);
         s_crt_bundle.crts = NULL;
     }
@@ -1457,11 +1470,17 @@ esp_err_t wolfSSL_bundle_cleanup()
     esp_tls_free_global_ca_store();
     /* Be sure to free the bundle_cert first, as it may be part of store. */
     if (bundle_cert != NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+        ESP_LOGI(TAG, "Free bundle_cert in wolfSSL_bundle_cleanup");
+#endif
         wolfSSL_X509_free(bundle_cert);
         bundle_cert = NULL;
     }
 
     if (store_cert != NULL) {
+#ifdef DEBUG_WOLFSSL_MALLOC
+        ESP_LOGI(TAG, "Free store_cert in wolfSSL_bundle_cleanup");
+#endif
         wolfSSL_X509_free(store_cert);
         store_cert = NULL;
     }
