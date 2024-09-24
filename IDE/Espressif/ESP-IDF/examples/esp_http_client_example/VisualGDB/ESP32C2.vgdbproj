@@ -82,7 +82,7 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>master</Version>
-          <Subdirectory>esp-idf/master</Subdirectory>
+          <Subdirectory>esp-idf/v5.2-master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM3</COMPort>
