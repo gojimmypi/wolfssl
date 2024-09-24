@@ -158,7 +158,7 @@
 /* Other applications detected by cmake */
 #elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
     /* The wolfSSL Version if the client example */
-    #if defined(CONFIG_IDF_TARGET_ESP32S2)
+    #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32C2)
         /* Less memory available, so smaller key sizes: */
         #define FP_MAX_BITS (4096 * 2)
     #else
@@ -250,7 +250,13 @@
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
     /* The ESP-TLS */
     #ifndef FP_MAX_BITS
-        #define FP_MAX_BITS (4096 * 2)
+        #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+            defined(CONFIG_IDF_TARGET_ESP8684)
+            /* Optionally set smaller size here */
+            #define FP_MAX_BITS (4096 * 2)
+        #else
+            #define FP_MAX_BITS (4096 * 2)
+        #endif
     #endif
     #define HAVE_ALPN
     #define HAVE_SNI
@@ -376,9 +382,13 @@
     #endif
 #endif
 
-    // TODO
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+    defined(CONFIG_IDF_TARGET_ESP8684)
+    /* Optionally set smaller size here */
     #define HAVE_FFDHE_4096
-
+#else
+    #define HAVE_FFDHE_4096
+#endif
 
 #define NO_FILESYSTEM
 
@@ -396,8 +406,7 @@
 #define WOLFSSL_SHA384
 
 /* Some features not enabled for ESP8266: */
-#if defined(CONFIG_IDF_TARGET_ESP8266) || \
-    defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(CONFIG_IDF_TARGET_ESP8266)
     /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
@@ -411,7 +420,7 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(CONFIG_IDF_TARGET_ESP8266)
     #define MY_USE_ECC 0
     #define MY_USE_RSA 1
 #else

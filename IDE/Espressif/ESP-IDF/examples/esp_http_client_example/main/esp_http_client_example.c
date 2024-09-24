@@ -43,7 +43,7 @@
 ** set to 1 for continuous test loop */
 #undef WOLFSSL_TEST_LOOP
 #define WOLFSSL_TEST_LOOP 1
-
+#define MAX_LOOPS 1000
 #ifndef  WOLFSSL_TEST_LOOP
     #define WOLFSSL_TEST_LOOP 0
 #endif
@@ -904,28 +904,47 @@ esp_http_client_handle_t hclient; /* hcloud->hclient */
 esp_http_client_method_t httpmethod; /*  hcloud->httpmethod */
 esp_http_client_method_t http_method;
 
-static void http_test_task(void *pvParameters)
-{
+static esp_err_t heap_peek(int i) {
     size_t free_heap_size;
     size_t min_free_heap_size;
     size_t free_internal_heap_size;
+    static size_t last_min_free_heap_size;
 
-    ret = ESP_OK;
-    ESP_LOGI(TAG, "\n\n\nBegin http_test_task\n\n");
-#ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
-    ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
-#endif
-    http_rest_with_url();
+    ESP_LOGI(TAG, "Heap Peek #%d", i);
     free_heap_size = esp_get_free_heap_size();
     ESP_LOGI(TAG, "Free heap size: %u bytes", free_heap_size);
 
     // Get minimum ever free heap size (since boot)
     min_free_heap_size = esp_get_minimum_free_heap_size();
-    ESP_LOGI(TAG, "Minimum ever free heap size: %u bytes", min_free_heap_size);
+    if (min_free_heap_size != last_min_free_heap_size) {
+        ESP_LOGI(TAG, "Minimum ever free heap size: %u bytes; last: %u; d: %d",
+                       min_free_heap_size, last_min_free_heap_size,
+                       min_free_heap_size - last_min_free_heap_size);
+
+    }
+    else {
+        ESP_LOGW(TAG, "Minimum ever free heap size: %u bytes", min_free_heap_size);
+    }
 
     // Get the amount of free memory in internal RAM
     free_internal_heap_size = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     ESP_LOGI(TAG, "Free internal heap size: %u bytes", free_internal_heap_size);
+
+    last_min_free_heap_size = min_free_heap_size;
+    return ESP_OK;
+}
+
+static void http_test_task(void *pvParameters)
+{
+
+loop:
+    ret = ESP_OK;
+    ESP_LOGI(TAG, "\n\n\nBegin http_test_task\n\n");
+#ifdef CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY
+    ESP_LOGW(TAG, "Warning: CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY set");
+#endif
+    heap_peek(1);
+    http_rest_with_url();
 
 /* #define SINGLE_TEST */
 #ifdef SINGLE_TEST
@@ -936,7 +955,9 @@ static void http_test_task(void *pvParameters)
     https_async();
 
 #else
+    heap_peek(2);
     http_rest_with_url();
+    heap_peek(3);
     http_rest_with_hostname_path();
 #if CONFIG_ESP_HTTP_CLIENT_ENABLE_BASIC_AUTH
     http_auth_basic();
@@ -946,21 +967,37 @@ static void http_test_task(void *pvParameters)
     http_auth_digest_md5();
     http_auth_digest_sha256();
 #endif
+    heap_peek(4);
     http_encoded_query();
+    heap_peek(5);
     http_relative_redirect();
+    heap_peek(6);
     http_absolute_redirect();
+    heap_peek(7);
     http_absolute_redirect_manual();
+    heap_peek(8);
+
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     https_with_url();
 #endif
+    heap_peek(9);
     https_with_hostname_path();
+    heap_peek(10);
     http_redirect_to_https();
+    heap_peek(11);
     http_download_chunk();
+    heap_peek(12);
     http_perform_as_stream_reader();
+    heap_peek(13);
     https_async();
+    heap_peek(14);
     https_with_invalid_url();
+    heap_peek(15);
     http_native_request();
+    goto loop;
+
 #if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE || CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    heap_peek(16);
     http_partial_download();
 #endif
 
@@ -992,7 +1029,10 @@ static void http_test_task(void *pvParameters)
                       "If running from idf.py monitor, press twice: Ctrl+]");
     #endif
 #endif
-
+#if defined(WOLFSSL_HW_METRICS)
+    esp_hw_show_metrics();
+#endif
+    vTaskDelay(pdMS_TO_TICKS(1000));
 #if !CONFIG_IDF_TARGET_LINUX
     vTaskDelete(NULL);
 #endif
@@ -1079,6 +1119,9 @@ void app_main(void)
 #if CONFIG_IDF_TARGET_LINUX
     http_test_task(NULL);
 #else
+
+    /* Assume success in the test task unless proven otherwise. */
+    ret = ESP_OK;
     do {
         ESP_LOGI(TAG, "Main Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
@@ -1090,14 +1133,11 @@ void app_main(void)
             ESP_LOGI(TAG, "Task completed!");
         }
     #endif
-    #if defined(WOLFSSL_HW_METRICS)
-        esp_hw_show_metrics();
-    #endif
         loops++; /* count of the number of tests run before fail. */
         ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
         ESP_LOGI(TAG, "loops = %d; ret = %d", loops, ret);
         vTaskDelay(pdMS_TO_TICKS(1000));
-    } while (WOLFSSL_TEST_LOOP && (ret == 0));
+    } while (WOLFSSL_TEST_LOOP && (ret == 0) && loops < MAX_LOOPS);
 #endif
 #ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     stack_current = esp_sdk_stack_pointer();
