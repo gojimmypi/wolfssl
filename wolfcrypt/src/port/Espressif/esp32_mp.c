@@ -320,13 +320,13 @@ static int esp_mp_hw_wait_clean(void)
 #endif
 
 #if defined(WOLFSSL_HW_METRICS)
+    /* The wait timeout in separate from the overall max calc timeout. */
     if (timeout > esp_mp_max_wait_timeout) {
         esp_mp_max_wait_timeout = timeout;
     }
-    {
-        // TODO this is the wait clean timeout
-        esp_mp_max_timeout = (timeout > esp_mp_max_timeout) ? timeout :
-                                                        esp_mp_max_timeout;
+    /* Also see if the overall timeout has been increased. */
+    if (timeout > esp_mp_max_timeout) {
+        esp_mp_max_timeout = timeout;
     }
 #endif
 
