@@ -85,9 +85,6 @@
 /* Turn on messages that are useful to see only in examples. */
 #define WOLFSSL_EXAMPLE_VERBOSITY
 
-#define WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
-#define WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
-
 #define  WOLFSSL_ALT_CERT_CHAINS
 /* wolfSSL Examples: set macros used in example applications.
  *
@@ -839,6 +836,8 @@ Turn debugging on/off:
 #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 #define WOLFSSL_DEBUG_MUTEX
 #define WOLFSSL_DEBUG_ESP_RSA_MULM_BITS
+#define WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+#define WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
 #define ESP_DISABLE_HW_TASK_LOCK
 #define ESP_MONITOR_HW_TASK_LOCK
 #define USE_ESP_DPORT_ACCESS_READ_BUFFER
