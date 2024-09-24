@@ -619,7 +619,9 @@ static int esp_mp_hw_unlock(void)
         ESP_LOGV(TAG, "exit esp_mp_hw_unlock");
     }
     else {
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
         ESP_LOGW(TAG, "Warning: esp_mp_hw_unlock called when not locked.");
+#endif
     }
 
     return ret;
@@ -1180,12 +1182,17 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
                 mph->hwWords_sz  = words2hwords(mph->maxWords_sz);
 
                 if ((mph->hwWords_sz << 5) > ESP_HW_RSAMAX_BIT) {
+            #if defined(WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS) || \
+                defined(WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS)
                     ESP_LOGW(TAG, "Warning: hwWords_sz = %d (%d bits)"
                                   " exceeds HW maximum bits (%d), "
                                   " falling back to SW.",
                         mph->hwWords_sz,
                         mph->hwWords_sz << 5,
                         ESP_HW_RSAMAX_BIT);
+            #endif
+                    /* The fallback error code is expected to be handled by
+                     * caller to perform software instead. */
                     ret = MP_HW_FALLBACK;
                 } /* hwWords_sz check  */
             } /* X and Y size ok */
@@ -1561,11 +1568,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* Make sure we are within capabilities of hardware. */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
-        ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+        ESP_LOGW(TAG, "exceeds max bit length(%d)",
+                       ESP_HW_MULTI_RSAMAX_BITS);
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
     if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
-        ESP_LOGW(TAG, "result exceeds max bit length(%d)", ESP_HW_RSAMAX_BIT );
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
+        ESP_LOGW(TAG, "result exceeds max bit length(%d) * 2",
+                       ESP_HW_RSAMAX_BIT );
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
@@ -1652,13 +1665,17 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* TODO confirm this can be removed: */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
         ESP_LOGW(TAG, "RSA mul result hwWords_sz %d exceeds max bit length %d",
                        hwWords_sz, ESP_HW_MULTI_RSAMAX_BITS);
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
     if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
         ESP_LOGW(TAG, "RSA max result hwWords_sz %d exceeds max bit length %d",
                        hwWords_sz, ESP_HW_RSAMAX_BIT );
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
@@ -1754,11 +1771,15 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
 
     /* Make sure we are within capabilities of hardware. */
     if ((hwWords_sz * BITS_IN_ONE_WORD) > ESP_HW_MULTI_RSAMAX_BITS) {
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
         ESP_LOGW(TAG, "exceeds max bit length(%d)", ESP_HW_MULTI_RSAMAX_BITS);
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
     if ((hwWords_sz * BITS_IN_ONE_WORD * 2) > ESP_HW_RSAMAX_BIT) {
+#ifdef WOLFSSL_DEBUG_ESP_HW_MULTI_RSAMAX_BITS
         ESP_LOGW(TAG, "result exceeds max bit length(%d)", ESP_HW_RSAMAX_BIT );
+#endif
         ret = MP_HW_FALLBACK; /* let SW figure out how to deal with it */
     }
 
@@ -2228,7 +2249,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
+    #ifdef WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
             ESP_LOGW(TAG, "result exceeds max bit length");
+    #endif
             return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
@@ -2317,9 +2340,11 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "mulmod OperandBits = %d result exceeds max bit length %d",
+    #ifdef WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+            ESP_LOGW(TAG, "mulmod OperandBits = %d "
+                          "result exceeds max bit length %d",
                            OperandBits, ESP_HW_MOD_RSAMAX_BITS);
-
+    #endif
             if (mulmod_lock_called) {
                 ret = esp_mp_hw_unlock();
             }
@@ -2414,7 +2439,10 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         /* 3. Write (N_result_bits/32 - 1) to the RSA_MODE_REG. */
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
+    #ifdef WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+            ESP_LOGW(TAG, "mp_mulmod OperandBits %d exceeds max bit length %d.",
+                           OperandBits, ESP_HW_MOD_RSAMAX_BITS);
+    #endif
             return MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         WordsForOperand = bits2words(OperandBits);
@@ -2477,7 +2505,9 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ESP_LOGV(TAG, "Lock not called due to no-lock MP_HW_FALLBACK");
         }
         else {
-            ESP_LOGW(TAG, "Lock unexpectedly not called");
+    #ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
+            ESP_LOGW(TAG, "Lock unexpectedly not called for mp_mulmod");
+    #endif
         }
     }
 
@@ -2661,7 +2691,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     struct esp_mp_helper mph[1]; /* we'll save some mp helper data here */
     int ret = MP_OKAY;
     int exptmod_lock_called = FALSE;
-    ESP_LOGV(TAG, "Enter esp_mp_exptmod");
+
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* different calc */
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -2843,7 +2873,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ret = esp_mp_hw_unlock();
         }
         ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
-        return MP_HW_FALLBACK; /* HW not capable, return error to fall back to SW */
+
+        /* HW not capable for this size, return error to fall back to SW: */
+        return MP_HW_FALLBACK;
     }
     else {
         WordsForOperand = bits2words(OperandBits);
@@ -2935,7 +2967,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
             ret = esp_mp_hw_unlock();
         }
         ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
-        return MP_HW_FALLBACK; /* HW not capable, return error to fall back to SW */
+
+        /* HW not capable for this size, return error to fall back to SW: */
+        return MP_HW_FALLBACK;
     }
     else {
         WordsForOperand = bits2words(OperandBits);
@@ -3046,7 +3080,10 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     if (ret == MP_OKAY) {
         OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
         if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
-            ESP_LOGW(TAG, "result exceeds max bit length");
+    #ifdef WOLFSSL_DEBUG_ESP_HW_MOD_RSAMAX_BITS
+            ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
+                           OperandBits, ESP_HW_MOD_RSAMAX_BITS);
+    #endif
             ret = MP_HW_FALLBACK; /*  Error: value is not able to be used. */
         }
         else {
@@ -3233,8 +3270,10 @@ int esp_hw_show_mp_metrics(void)
 #endif /* EXPTMOD not disabled !NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
 
     ESP_LOGI(TAG, "Max N->used: esp_mp_max_used = %lu", esp_mp_max_used);
-    ESP_LOGI(TAG, "Max hw wait timeout: esp_mp_max_wait_timeout = %lu", esp_mp_max_wait_timeout);
-    ESP_LOGI(TAG, "Max calc timeout: esp_mp_max_timeout = 0x%08lx", esp_mp_max_timeout);
+    ESP_LOGI(TAG, "Max hw wait timeout: esp_mp_max_wait_timeout = %lu",
+                   esp_mp_max_wait_timeout);
+    ESP_LOGI(TAG, "Max calc timeout: esp_mp_max_timeout = 0x%08lx", /* TODO  long long long*/
+                   esp_mp_max_timeout);
 
 #else
     /* no HW math, no HW math metrics */
