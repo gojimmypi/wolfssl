@@ -23,15 +23,17 @@
     #include <config.h>
 #endif
 
+#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
+
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; Don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
-    #include <wolfssl/wolfcrypt/settings.h>
-#endif
+/* Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt  */
+/* Reminder: settings.h pulls in user_settings.h                         */
+/*   Do not explicitly include user_settings.h here.                     */
+#include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-#include "esp_log.h"
+/* Espressif */
+#include <esp_log.h>
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
 #include <wolfssl/wolfcrypt/logging.h>
@@ -308,7 +310,7 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
                                 WOLFSSL_X509_NAME** issuer,
                                 WOLFSSL_X509_NAME** subject)
 {
-    char stringVaue[X509_MAX_SUBJECT_LEN];
+    char stringVaue[X509_MAX_SUBJECT_LEN + 1];
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
     char before_str[CTC_DATE_SIZE];
     char after_str[CTC_DATE_SIZE];
@@ -481,8 +483,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_after_date(int preverify,
 #ifdef CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE
 void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
 {
-    int i;
+    char subjectStr[X509_MAX_SUBJECT_LEN + 1];
+    char issuerStr[X509_MAX_SUBJECT_LEN + 1];
+    WOLFSSL_BUFFER_INFO buffer;
+    WOLFSSL_X509_NAME* subject;
+    WOLFSSL_X509_NAME* issuer;
+    WOLFSSL_X509* cert;
     int totalCerts;
+    int i;
 
     if (store == NULL) {
         ESP_LOGCBI(TAG, "store is NULL");
@@ -493,8 +501,8 @@ void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
     }
 
     for (i = 0; i < totalCerts; i++) {
-        WOLFSSL_BUFFER_INFO buffer = store->certs[i];
-        WOLFSSL_X509* cert = wolfSSL_X509_d2i(NULL,
+        buffer = store->certs[i];
+        cert = wolfSSL_X509_d2i(NULL,
                                             (const unsigned char*)buffer.buffer,
                                               buffer.length);
         if (cert == NULL) {
@@ -502,12 +510,10 @@ void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
             continue;
         }
 
-        WOLFSSL_X509_NAME* subject = wolfSSL_X509_get_subject_name(cert);
-        WOLFSSL_X509_NAME* issuer = wolfSSL_X509_get_issuer_name(cert);
+        subject = wolfSSL_X509_get_subject_name(cert);
+        issuer = wolfSSL_X509_get_issuer_name(cert);
 
         if (subject != NULL && issuer != NULL) {
-            char subjectStr[256], issuerStr[256];
-
             wolfSSL_X509_NAME_oneline(subject, subjectStr, sizeof(subjectStr));
             wolfSSL_X509_NAME_oneline(issuer, issuerStr, sizeof(issuerStr));
 
@@ -532,7 +538,7 @@ void print_cert_subject_and_issuer(WOLFSSL_X509_STORE_CTX* store)
 static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                                                  WOLFSSL_X509_STORE_CTX* store)
 {
-    char subjectName[X509_MAX_SUBJECT_LEN];
+    char subjectName[X509_MAX_SUBJECT_LEN + 1];
 
     const unsigned char* cert_data = NULL;
     const unsigned char* cert_bundle_data = NULL;
@@ -1213,7 +1219,7 @@ void wolfssl_ssl_conf_ca_chain(wolfssl_ssl_config *conf,
 }
 
 #ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
-esp_err_t esp_crt_bundle_is_valid()
+esp_err_t esp_crt_bundle_is_valid(void)
 {
     return _esp_crt_bundle_is_valid;
 }
@@ -1449,7 +1455,7 @@ esp_err_t esp_crt_bundle_set(const uint8_t *x509_bundle, size_t bundle_size)
 }
 
 /* Clean up bundle when closing connection from ESP-TLS layer. */
-esp_err_t wolfSSL_bundle_cleanup()
+esp_err_t wolfSSL_bundle_cleanup(void)
 {
 #ifdef DEBUG_WOLFSSL_MALLOC
     size_t free_heap_size;

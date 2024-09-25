@@ -18,6 +18,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+#ifdef HAVE_CONFIG_H
+    #include <config.h>
+#endif
+
 #ifndef __ESP_CRT_BUNDLE_wolfssl_LIB_H__
 
 #define __ESP_CRT_BUNDLE_wolfssl_LIB_H__
@@ -52,11 +57,18 @@
  * See Kconfig file (or use idy.py menufconfig) for other bundle settings.
  */
 
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Be sure to define WOLFSSL_USER_SETTINGS, typically in CMakeLists.txt  */
+/* Reminder: settings.h pulls in user_settings.h                         */
+/*   Do not explicitly include user_settings.h here.                     */
 #include <wolfssl/wolfcrypt/settings.h>
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF   */
+
+#ifndef WOLFSSL_USER_SETTINGS
+    #error "WOLFSSL_USER_SETTINGS must be defined for Espressif targts"
+#endif
 
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL) || \
     defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
@@ -114,7 +126,7 @@ esp_err_t esp_crt_bundle_attach(void *conf);
  *
  * Specific to wolfSSL. Not used by ESP-IDF esp-tls layer.
  */
-esp_err_t esp_crt_bundle_is_valid();
+esp_err_t esp_crt_bundle_is_valid(void);
 
 /**
  * @brief      Return 1 if Cert Bundle loaded, otheriwse 0.
@@ -184,7 +196,7 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
                                 WOLFSSL_X509_NAME** issuer,
                                 WOLFSSL_X509_NAME** subject);
 
-esp_err_t wolfSSL_bundle_cleanup();
+esp_err_t wolfSSL_bundle_cleanup(void);
 
 WOLFSSL_LOCAL void wolfssl_ssl_conf_verify(wolfssl_ssl_config *conf,
                              int (*f_vrfy) WOLFSSL_X509_VERIFY_CALLBACK,
