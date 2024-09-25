@@ -57385,6 +57385,7 @@ static wc_test_ret_t mp_test_cmp(mp_int* a, mp_int* b)
     if (ret != MP_GT)
         return WC_TEST_RET_ENC_NC;
 
+#if defined(OPENSSL_EXTRA) || !defined(NO_DSA) || defined(HAVE_ECC)
     mp_read_radix(b, "1234567890123456789", MP_RADIX_HEX);
     ret = mp_cmp_d(b, -1);
     if (ret != MP_GT)
@@ -57399,9 +57400,12 @@ static wc_test_ret_t mp_test_cmp(mp_int* a, mp_int* b)
     ret = mp_cmp(b, b);
     if (ret != MP_EQ)
         return WC_TEST_RET_ENC_NC;
+#endif
 
 #if (!defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)) || \
     defined(WOLFSSL_SP_INT_NEGATIVE)
+
+#if defined(OPENSSL_EXTRA) || !defined(NO_DSA) || defined(HAVE_ECC)
     mp_read_radix(a, "-1", MP_RADIX_HEX);
     mp_read_radix(a, "1", MP_RADIX_HEX);
     ret = mp_cmp(a, b);
@@ -57418,11 +57422,14 @@ static wc_test_ret_t mp_test_cmp(mp_int* a, mp_int* b)
     ret = mp_cmp(b, a);
     if (ret != MP_LT)
         return WC_TEST_RET_ENC_NC;
+#endif
 
+#if defined(OPENSSL_EXTRA) || !defined(NO_DSA) || defined(HAVE_ECC)
     mp_read_radix(a, "-2", MP_RADIX_HEX);
     ret = mp_cmp(a, b);
     if (ret != MP_EQ)
         return WC_TEST_RET_ENC_NC;
+#endif
 #endif
 
 #if defined(HAVE_ECC) && !defined(WC_NO_RNG) && \
@@ -58183,10 +58190,14 @@ static wc_test_ret_t mp_test_invmod(mp_int* a, mp_int* m, mp_int* r)
 #endif
 
 #if !defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_INT_NEGATIVE)
+
+#if defined(OPENSSL_EXTRA) || !defined(NO_DSA) || defined(HAVE_ECC)
     mp_read_radix(a, "-3", 16);
     ret = mp_invmod(a, m, r);
     if (ret != MP_OKAY)
         return WC_TEST_RET_ENC_EC(ret);
+#endif
+
 #endif
 
 #if defined(WOLFSSL_SP_MATH_ALL) && defined(HAVE_ECC)
