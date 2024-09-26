@@ -119,7 +119,8 @@ esp_err_t esp_sdk_time_lib_init(void)
     #define CONFIG_LWIP_SNTP_MAX_SERVERS NTP_SERVER_COUNT
 #endif
 
-/* When reproducible builds are enabled in ESP-IDF (starting from version 4.0 and above),
+/* When reproducible builds are enabled in ESP-IDF
+ * (starting from version 4.0 and above),
  * the __DATE__ and __TIME__ macros are deliberately disabled. */
 #ifndef  __DATE__
     #define YEAR  2024
@@ -145,7 +146,7 @@ esp_err_t esp_sdk_time_lib_init(void)
       : __DATE__[2] == 't' ? 10 \
       : __DATE__[2] == 'v' ? 11 \
       : 12 \
-	    )
+    )
 
     #define DAY ( \
         ((__DATE__)[4]  - '0') * 10 + \

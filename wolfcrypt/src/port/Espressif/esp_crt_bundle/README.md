@@ -110,7 +110,7 @@ attempting to simply change `www.howsmyssl.com` to `www.google.com`.
 ### postman
 
 Beware there's a hard-coded PEM certificate for the [postman root cert](https://github.com/espressif/esp-idf/blob/c9df77efbf871d4c3ae9fb828778ff8c4ab36804/examples/protocols/esp_http_client/main/esp_http_client_example.c#L48)
-(not in the bundle). If you see a failure, the data may ned to be updated.
+(not in the bundle). If you see a failure, the data may need to be updated.
 
 See the comments for adding certificate data, copied here for reference:
 

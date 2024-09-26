@@ -668,7 +668,13 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
     if (ret == WOLFSSL_SUCCESS) {
         _cert_bundle_loaded = 1;
         start = 0;
-        end = s_crt_bundle.num_certs - 1;
+        if (s_crt_bundle.num_certs > 0) {
+            end = s_crt_bundle.num_certs - 1;
+        }
+        else {
+            ESP_LOGCBW(TAG, "The certificate bundle is empty.");
+            end = -1;
+        }
 
 #ifndef CERT_BUNDLE_UNSORTED
         /* When sorted (not unsorted), binary search: */
@@ -1013,6 +1019,12 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
 
     int initial_preverify;
     initial_preverify = preverify;
+
+    if (store == NULL) {
+        ESP_LOGCBW(TAG, "wolfssl_ssl_conf_verify_cb store is Null. Abort");
+        return initial_preverify;
+    }
+
     /* Show the interesting preverify & error state upon entry to callback. */
     if (preverify == 1) {
         ESP_LOGCBI(TAG, "preverify == 1\n");
@@ -1028,16 +1040,25 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb(int preverify,
         ESP_LOGCBW(TAG, "store->error: %d", store->error);
     }
 
-
     notBefore = wolfSSL_X509_get_notBefore(store->current_cert);
-    wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-    ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+    if (wolfSSL_ASN1_TIME_to_string(notBefore, before_str,
+                                    sizeof(before_str)) == NULL) {
+        ESP_LOGCBW(TAG, "Not Before value not valid");
+    }
+    else {
+        ESP_LOGCBI(TAG, "Not Before: %s", before_str);
+    }
 
     esp_show_current_datetime();
 
     notAfter = wolfSSL_X509_get_notAfter(store->current_cert);
-    wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-    ESP_LOGCBI(TAG, "Not After: %s", after_str);
+    if (wolfSSL_ASN1_TIME_to_string(notAfter, after_str,
+                                    sizeof(after_str)) == NULL) {
+        ESP_LOGCBW(TAG, "Not After value not valid");
+    }
+    else {
+        ESP_LOGCBI(TAG, "Not After: %s", after_str);
+    }
 #endif
 
     /* One possible condition is the error "Failed to find signer".
@@ -1144,9 +1165,14 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
 
     crt_found = false;
     start = 0;
-    end = s_crt_bundle.num_certs - 1;
-    middle = (end - start) / 2;
-
+    if (s_crt_bundle.num_certs > 0) {
+        end = s_crt_bundle.num_certs - 1;
+        middle = (end - start) / 2;
+    }
+    else {
+        end = -1;
+        middle = -1;
+    }
     /* Look for the certificate using binary search on subject name */
     while (start <= end) {
         name_len = (s_crt_bundle.crts[middle][0] << 8) |
@@ -1175,6 +1201,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
         /* This is the wolfssl_ssl_conf_verify callback to attach bundle.
          * We'll verify at certificate attachment time. */
         ESP_LOGV(TAG, "Found key. Len = %d", key_len);
+        /* Optional validation not implemented at this time. */
+        /* See wolfssl_ssl_conf_verify_cb() */
     }
     else {
         ESP_LOGW(TAG, "crt not found!");
@@ -1186,6 +1214,8 @@ int esp_crt_verify_callback(void *buf, WOLFSSL_X509 *crt, int depth,
         return 0;
     }
 
+    ESP_LOGW(TAG, "Deprecated; this API for compiler compatibility only.");
+    ESP_LOGW(TAG, "Please use wolfssl_ssl_conf_verify_cb() .");
     ESP_LOGE(TAG, "Failed to verify certificate");
     return -1; /* WOLFSSL_ERR_X509_FATAL_ERROR; */
 } /* esp_crt_verify_callback */
@@ -1281,7 +1311,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
 
     if (ret == ESP_OK) {
 #ifdef DEBUG_WOLFSSL_MALLOC
-        ESP_LOGW(TAG, "calloc certs: %d  bytes", sizeof(x509_bundle));
+        ESP_LOGW(TAG, "calloc certs: %d bytes", (uint)sizeof(x509_bundle));
 #endif
         /* Contiguous allocation is important to our cert extraction. */
         crts = calloc(num_certs, sizeof(x509_bundle));

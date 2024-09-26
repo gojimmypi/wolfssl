@@ -35,7 +35,6 @@
  *
  * Also, beware: "we have uint32_t == unsigned long for both Xtensa and RISC-V"
  * see https://github.com/espressif/esp-idf/issues/9511#issuecomment-1207342464
- * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/migration-guides/release-5.x/5.0/gcc.html
  */
 
 #ifdef HAVE_CONFIG_H
@@ -73,7 +72,7 @@
 #define ESP_HW_RSAMAX_BIT           4096
 #if defined(CONFIG_IDF_TARGET_ESP32)
     /* See 24.3.2 Large Number Modular Exponentiation:
-     * https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+     *     esp32_technical_reference_manual_en.pdf
      * The RSA Accelerator supports specific operand lengths of N
      * {512, 1024, 1536, 2048, 2560, 3072, 3584, 4096} bits
      *
@@ -85,7 +84,7 @@
     #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     /* See 18.3.1 Large Number Modular Exponentiation
-     * https://www.espressif.com/sites/default/files/documentation/esp32-s2_technical_reference_manual_en.pdf
+     *     esp32-s2_technical_reference_manual_en.pdf
      * RSA Accelerator supports operands of length N = (32 * x),
      * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
@@ -94,7 +93,7 @@
     #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     /* See 20.3.1 Large Number Modular Exponentiation
-     * https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+     *     esp32-s3_technical_reference_manual_en.pdf
      * RSA Accelerator supports operands of length N = (32 * x),
      * where x in {1, 2, 3, . . . , 128}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
@@ -103,7 +102,7 @@
     #define ESP_HW_MULTI_RSAMAX_BITS    2048
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     /* See 20.3.1 Large Number Modular Exponentiation
-     * https://www.espressif.com/sites/default/files/documentation/esp32-c3_technical_reference_manual_en.pdf
+     *     esp32-c3_technical_reference_manual_en.pdf
      * RSA Accelerator supports operands of length N = (32 * x),
      * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
@@ -116,7 +115,7 @@
     #define ESP_HW_MULTI_RSAMAX_BITS    1536
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     /* See 22.3.1 Large-number Modular Exponentiation
-     * https://www.espressif.com/sites/default/files/documentation/esp32-c6_technical_reference_manual_en.pdf
+     *   esp32-c6_technical_reference_manual_en.pdf
      * The RSA accelerator supports operands of length N = (32 * x),
      * where x in {1, 2, 3, . . . , 96}. The bit lengths of arguments
      * Z, X, Y , M, and r can be arbitrary N, but all numbers in a calculation
@@ -266,7 +265,7 @@ static portMUX_TYPE wc_rsa_reg_lock = portMUX_INITIALIZER_UNLOCKED;
 * check if the HW is ready before accessing it
 *
 * See 24.3.1 Initialization of ESP32 Technical Reference Manual
-* https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+*   esp32_technical_reference_manual_en.pdf
 *
 * The RSA Accelerator is activated by enabling the corresponding peripheral
 * clock, and by clearing the DPORT_RSA_PD bit in the DPORT_RSA_PD_CTRL_REG
@@ -320,7 +319,7 @@ static int esp_mp_hw_wait_clean(void)
 #endif
 
 #if defined(WOLFSSL_HW_METRICS)
-    /* The wait timeout in separate from the overall max calc timeout. */
+    /* The wait timeout is separate from the overall max calc timeout. */
     if (timeout > esp_mp_max_wait_timeout) {
         esp_mp_max_wait_timeout = timeout;
     }
@@ -334,7 +333,7 @@ static int esp_mp_hw_wait_clean(void)
         /* This is highly unusual and will likely only occur in multi-threaded
          * application. wolfSSL ctx is not thread safe. */
     #ifndef SINGLE_THREADED
-        ESP_LOG(TAG, "Consider #define SINGLE_THREADED. See docs");
+        ESP_LOGI(TAG, "Consider #define SINGLE_THREADED. See docs");
     #endif
         ESP_LOGE(TAG, "esp_mp_hw_wait_clean waiting HW ready timed out.");
         ret = WC_HW_WAIT_E; /* hardware is busy, MP_HW_BUSY; */
@@ -383,7 +382,7 @@ static int esp_mp_hw_islocked(void)
 * Returns 0 (ESP_OK) if the HW lock was initialized and mutex lock.
 *
 * See Chapter 24:
-*  https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
+*   esp32_technical_reference_manual_en.pdf
 *
 * The RSA Accelerator is activated by enabling the corresponding peripheral
 * clock, and by clearing the DPORT_RSA_PD bit in the DPORT_RSA_PD_CTRL_REG
@@ -2666,8 +2665,8 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
  *
  *    Z = X^Y mod M
  *
- *  ESP32, Section 24.3.2  https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf
- *  ESP32S3, Section 20.3.1, https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+ *  ESP32, Section 24.3.2  esp32_technical_reference_manual_en.pdf
+ *  ESP32S3, Section 20.3.1, esp32-s3_technical_reference_manual_en.pdf
  *
  * The operation is based on Montgomery multiplication. Aside from the
  * arguments X, Y , and M, two additional ones are needed -r and M'
