@@ -340,14 +340,25 @@ int wolfSSL_X509_get_cert_items(char* CERT_TAG,
 
 #ifdef WOLFSSL_DEBUG_CERT_BUNDLE
     notBefore = wolfSSL_X509_get_notBefore(cert);
-    wolfSSL_ASN1_TIME_to_string(notBefore, before_str, sizeof(before_str));
-    ESP_LOGCBI(TAG, "%s Not Before: %s", CERT_TAG, before_str);
+    if (wolfSSL_ASN1_TIME_to_string(notBefore, before_str,
+                                    sizeof(before_str)) == NULL) {
+        ESP_LOGCBW(TAG, "%s Not Before value not valid", CERT_TAG);
+    }
+    else {
+        ESP_LOGCBI(TAG, "%s Not Before: %s", CERT_TAG, before_str);
+    }
 
     esp_show_current_datetime();
 
     notAfter = wolfSSL_X509_get_notAfter(cert);
-    wolfSSL_ASN1_TIME_to_string(notAfter, after_str, sizeof(after_str));
-    ESP_LOGCBI(TAG, "%s Not After: %s", CERT_TAG, after_str);
+    if (wolfSSL_ASN1_TIME_to_string(notAfter, after_str,
+                                    sizeof(after_str)) == NULL) {
+        ESP_LOGCBW(TAG, "%s Not After value not valid", CERT_TAG);
+    }
+    else {
+        ESP_LOGCBI(TAG, "%s Not After: %s", CERT_TAG, after_str);
+    }
+
 #endif
 
     return ret;
