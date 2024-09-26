@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
-
+#define CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE 1
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 

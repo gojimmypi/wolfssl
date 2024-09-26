@@ -43,7 +43,7 @@
 ** set to 1 for continuous test loop */
 #undef WOLFSSL_TEST_LOOP
 #define WOLFSSL_TEST_LOOP 1
-#define MAX_LOOPS 1000
+#define MAX_LOOPS 1
 #ifndef  WOLFSSL_TEST_LOOP
     #define WOLFSSL_TEST_LOOP 0
 #endif
