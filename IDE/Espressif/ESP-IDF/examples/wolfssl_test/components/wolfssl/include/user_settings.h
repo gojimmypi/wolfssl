@@ -762,7 +762,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #ifdef FP_MAX_BITS
+    #ifndef FP_MAX_BITS
         /* FP_MAX_BITS matters in wolfssl_test, not just TLS setting.   */
         /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
         #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
