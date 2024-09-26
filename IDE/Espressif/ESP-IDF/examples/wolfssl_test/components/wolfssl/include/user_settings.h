@@ -247,9 +247,10 @@
     /* The ESP-TLS */
     #ifndef FP_MAX_BITS
         #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-            defined(CONFIG_IDF_TARGET_ESP8684)
+            defined(CONFIG_IDF_TARGET_ESP8684) || \
+            defined(CONFIG_IDF_TARGET_ESP8266)
             /* Optionally set smaller size here */
-            #define FP_MAX_BITS (4096 * 2)
+            #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
         #else
             #define FP_MAX_BITS (4096 * 2)
         #endif
@@ -761,6 +762,11 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #ifdef FP_MAX_BITS
+        /* FP_MAX_BITS matters in wolfssl_test, not just TLS setting.   */
+        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
+        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
+    #endif
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
@@ -779,6 +785,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
 #endif /* CONFIG_IDF_TARGET Check */
+
 
 /* RSA primitive specific definition, listed AFTER the Chipset detection */
 #if defined(WOLFSSL_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
