@@ -71,7 +71,7 @@
           <Subdirectory>esp-idf/v5.2-master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM85</COMPort>
+        <COMPort>COM68</COMPort>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>true</UseCCache>
         <DeviceID>ESP32C6</DeviceID>
@@ -95,7 +95,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM85</ComPortName>
+      <ComPortName>COM68</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
