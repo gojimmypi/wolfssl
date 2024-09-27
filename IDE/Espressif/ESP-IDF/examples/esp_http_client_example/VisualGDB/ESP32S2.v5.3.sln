@@ -71,6 +71,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{8C37C5C3-3
 		..\logs\wolfssl_test_build_IDF__esp8266_.txt = ..\logs\wolfssl_test_build_IDF__esp8266_.txt
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PlatformIO", "PlatformIO", "{ADBDB108-8CC9-4332-84D0-294900E66F50}"
+	ProjectSection(SolutionItems) = preProject
+		..\esp_http_client_example.code-workspace = ..\esp_http_client_example.code-workspace
+		..\partitions_singleapp_large.csv = ..\partitions_singleapp_large.csv
+		..\platformio.ini = ..\platformio.ini
+		..\README.md = ..\README.md
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\sdkconfig.defaults.esp32c2 = ..\sdkconfig.defaults.esp32c2
+		..\sdkconfig.esp32dev = ..\sdkconfig.esp32dev
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -92,7 +103,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.3-master\
 		SolutionGuid = {663BFFA4-4280-4265-BCEE-1509EDFF854C}
+		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.3-master\
 	EndGlobalSection
 EndGlobal
