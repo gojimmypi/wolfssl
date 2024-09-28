@@ -977,6 +977,10 @@ WOLFSSL_API WOLFSSL_METHOD *wolfSSLv23_method(void);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_server_method_ex(void* heap);
     WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_server_method(void);
 #endif
+#if defined(WOLFSSL_EITHER_SIDE) || defined(OPENSSL_EXTRA)
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_method_ex(void* heap);
+    WOLFSSL_API WOLFSSL_METHOD *wolfDTLSv1_3_method(void);
+#endif
     WOLFSSL_API int wolfSSL_dtls13_has_pending_msg(WOLFSSL *ssl);
 #endif /* WOLFSSL_DTLS13 */
 
@@ -3160,7 +3164,8 @@ WOLFSSL_API int wolfSSL_make_eap_keys(WOLFSSL* ssl, void* key, unsigned int len,
               !defined(WOLFSSL_PICOTCP) && !defined(WOLFSSL_ROWLEY_ARM) && \
               !defined(WOLFSSL_EMBOS)   && !defined(WOLFSSL_FROSTED)    && \
               !defined(WOLFSSL_CHIBIOS) && !defined(WOLFSSL_CONTIKI)    && \
-              !defined(WOLFSSL_ZEPHYR)  && !defined(NETOS)
+              !defined(WOLFSSL_ZEPHYR)  && !defined(NETOS) && \
+              !defined(WOLFSSL_NDS)
             #include <sys/uio.h>
         #endif
         /* allow writev style writing */

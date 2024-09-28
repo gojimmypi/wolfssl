@@ -49,7 +49,7 @@
  *   Optionally print example application information that may be interesting.
  *
  * IS_WOLFSSL_CERT_BUNDLE_FORMAT
- *   This should be left on, as no other bundle format is supported at this time.
+ *   This should be left on as no other bundle format is supported at this time.
  *
  * CB_INLINE
  *   Normally on, this uses the compiler `inline` decorator for bundle functions

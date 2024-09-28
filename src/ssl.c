@@ -10197,7 +10197,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
             WOLFSSL_LEAVE("wolfSSL_accept", WOLFSSL_SUCCESS);
             return WOLFSSL_SUCCESS;
 
-        default :
+        default:
             WOLFSSL_MSG("Unknown accept state ERROR");
             return WOLFSSL_FATAL_ERROR;
         }
@@ -11447,7 +11447,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
             WOLFSSL_BIO* bio = NULL;
             WOLFSSL_X509 *cert = NULL;
             WOLFSSL_X509_NAME *nameCopy = NULL;
-            unsigned long err = WOLFSSL_FAILURE;
+            unsigned long err = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
 
             WOLFSSL_ENTER("wolfSSL_load_client_CA_file");
 
