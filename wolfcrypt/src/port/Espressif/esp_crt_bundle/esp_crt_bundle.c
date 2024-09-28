@@ -61,7 +61,14 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#include <esp_tls.h> /* needed only for esp_tls_free_global_ca_store() */
+#ifdef WOLFSSL_CMAKE_REQUIRED_ESP_TLS
+    /* We're already here since CONFIG_ESP_TLS_USING_WOLFSSL is enabled,   */
+    /* but do we have a recent version of CMake to support it? If so:      */
+    #include <esp_tls.h> /* needed only for esp_tls_free_global_ca_store() */
+#else
+    /* If not, the only API we need is this. The linker *should* work it out: */
+    void esp_tls_free_global_ca_store(void);
+#endif
 
 /* There's a minimum version of wolfSSL needed for Certificate Bundle Support.
  *
@@ -186,9 +193,10 @@ typedef struct crt_bundle_t {
 static WOLFSSL_X509* store_cert = NULL; /* will point to existing param values*/
 static WOLFSSL_X509* bundle_cert = NULL; /* the iterating cert being reviewed.*/
 
-static const uint8_t **crts = NULL;
-static uint16_t num_certs = 0;
-
+#ifdef CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+    static const uint8_t **crts = NULL;
+    static uint16_t num_certs = 0;
+#endif
 
 /* Found in <esp_tls.h> */
 void esp_tls_free_global_ca_store(void);
