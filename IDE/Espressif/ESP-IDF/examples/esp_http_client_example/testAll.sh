@@ -51,7 +51,7 @@ else
     exit 1
 fi
 
-# ESP32 Path for ESP-IDF: fixed value or param #3
+# ESP8266 Path for ESP-IDF: fixed value or parameter #3
 WRK_IDF_PATH_ESP8266=$3
 if [[ "$WRK_IDF_PATH_ESP8266" == "" ]]; then
     WRK_IDF_PATH_ESP8266=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
