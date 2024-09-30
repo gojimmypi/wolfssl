@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
-#define CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE 1
+
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
@@ -404,7 +404,8 @@
 #define WOLFSSL_SHA384
 
 /* Some features not enabled for ESP8266: */
-#if defined(CONFIG_IDF_TARGET_ESP8266)
+#if defined(CONFIG_IDF_TARGET_ESP8266) || \
+    defined(CONFIG_IDF_TARGET_ESP32C2)
     /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
 #else
@@ -794,12 +795,6 @@
         #define ESP32_USE_RSA_PRIMITIVE
 
         #if defined(CONFIG_IDF_TARGET_ESP32)
-            #ifdef CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                #if CONFIG_ESP_MAIN_TASK_STACK_SIZE < 10500
-                    #warning "RSA may be difficult with less than 10KB Stack "/
-                #endif
-            #endif
-
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
