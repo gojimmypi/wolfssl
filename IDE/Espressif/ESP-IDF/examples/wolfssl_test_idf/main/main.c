@@ -27,6 +27,10 @@
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
 #ifdef WOLFSSL_USER_SETTINGS
+    /* Unlike other examples with wolfSSL as a local component, this */
+    /* example tests wolSSL *in* the ESP-IDF. If you get an error:   */
+    /*    wolfssl/wolfcrypt/settings.h: No such file or directory    */
+    /* Then wolfSSL is missing from the ESP-IDF components           */
     #include <wolfssl/wolfcrypt/settings.h>
     #ifndef WOLFSSL_ESPIDF
         #warning "Problem with wolfSSL user_settings."

@@ -66,7 +66,8 @@ See the [feature request](https://sysprogs.com/w/forums/topic/feature-request-sh
     1-1. Example Configuration ->
 
     BENCH_ARG : argument that you want to use. Default is "-lng 0"
-    The list of argument can be find in help.
+    The list of arguments can be found in help. See [benchmark/README.md](https://github.com/wolfSSL/wolfssl/blob/master/wolfcrypt/benchmark/README.md)
+    Features to be benchmarked are enabled in the `user_settings.h`.
 
 When you want to run the benchmark program
 
@@ -107,7 +108,7 @@ WRK_IDF_PATH=/mnt/c/SysGCC/esp32-8.4/esp-idf/v4.4.1
 # ESP-IDF v5.0 with toolchain v12.4
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.0
 
-# ESP-IDF v5.0 to v5.2.1 uses toolchain v12.4 
+# ESP-IDF v5.0 to v5.2.1 uses toolchain v12.4
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.0
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.1
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32-12.4/esp-idf/v5.2.1

@@ -27,8 +27,8 @@ No wolfSSL setup is needed. You may need to adjust your specific COM port. The d
 1. `idf.py menuconfig` to configure the program.
     1-1. Example Configuration ->
 
-    TEST_ARG : argument that you want to use. Default is "-lng 0"
-    The list of argument can be find in help.
+    There are no parametric arguments. See [wolfcrypt/test](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/test).
+    All features enabled in the `user_settings.h` will be tested.
 
 When you want to run the test program
 
