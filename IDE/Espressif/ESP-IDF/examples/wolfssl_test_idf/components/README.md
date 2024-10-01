@@ -6,4 +6,4 @@ This example project tests the condition of having wolfSSL installed
 *in* the Espressif ESP-IDF [components directory](https://github.com/espressif/esp-idf/tree/master/components).
 
 The recommended method is to use a local component as shown in
-the [template example](../template/README.md).
+the [template example](../../template/README.md).
