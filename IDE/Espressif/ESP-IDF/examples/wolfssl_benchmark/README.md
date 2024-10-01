@@ -38,8 +38,6 @@ using the VisualGDB extension.
 
 The naming convention for project files is: `[project name]_IDF_[Version]_[chipset].vgdbproj`. The solution files (filename[.sln]) often will contain shortcuts to commonly used source and configuration files used by the respective project.
 
-
--------- |------------- |------------- |
 ChipSet  | ESP-IDF v4.4 | ESP-IDF v5.2 |
 -------- |------------- |------------- |
 ESP32    |      x       |              |
