@@ -154,10 +154,7 @@ fi
 
 
 # Tensilica
-# ./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
-
-echo "Skipping ESP8266, gives this error: (wolfSSL not supported in esp-tls)"
-echo "CMake Error at /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4/tools/cmake/component.cmake:343 (__component_get_property)"
+./testMonitor.sh wolfssl_test esp8266 "$THIS_SUFFIX" || exit 1 # 2715073
 
 #******************************************************************************
 # ESP32[-N] uses esp-idf/v5.2 toolchain
