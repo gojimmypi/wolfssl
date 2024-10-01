@@ -1,5 +1,5 @@
 # wolfSSL Espressif Example Project CMakeLists.txt
-#   v1.2
+#   v1.3
 #
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
@@ -70,6 +70,10 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/managed_components/wolfssl__wolfssl" AND EXI
 else()
     message(STATUS "No conflicting wolfSSL components found.")
 endif()
+
+# Ensure the this wolfSSL component directory is included
+set(WOLFSSL_PATH "${CMAKE_HOME_DIRECTORY}/components/wolfssl")
+list(APPEND EXTRA_COMPONENT_DIRS ${WOLFSSL_PATH})
 
 # Not only is a project-level "set(COMPONENTS" not needed here, this will cause
 # an unintuitive error about  Unknown CMake command "esptool_py_flash_project_args".

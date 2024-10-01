@@ -86,6 +86,10 @@
 #define WOLFSSL_EXAMPLE_VERBOSITY
 
 #define  WOLFSSL_ALT_CERT_CHAINS
+
+/* Paths can be long, ensure the entire value printed during debug */
+#define WOLFSSL_MAX_ERROR_SZ 500
+
 /* wolfSSL Examples: set macros used in example applications.
  *
  * These Settings NOT available in ESP-IDF (e.g. esp-tls)
@@ -154,7 +158,7 @@
 
 /* Other applications detected by cmake */
 #elif defined(APP_ESP_HTTP_CLIENT_EXAMPLE)
-    /* The wolfSSL Version if the client example */
+    /* The wolfSSL Version of the client example */
     #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32C2)
         /* Less memory available, so smaller key sizes: */
         #define FP_MAX_BITS (4096 * 2)
@@ -248,9 +252,10 @@
     /* The ESP-TLS */
     #ifndef FP_MAX_BITS
         #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-            defined(CONFIG_IDF_TARGET_ESP8684)
+            defined(CONFIG_IDF_TARGET_ESP8684) || \
+            defined(CONFIG_IDF_TARGET_ESP8266)
             /* Optionally set smaller size here */
-            #define FP_MAX_BITS (4096 * 2)
+            #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
         #else
             #define FP_MAX_BITS (4096 * 2)
         #endif
@@ -419,7 +424,7 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266)
+#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
     #define MY_USE_ECC 0
     #define MY_USE_RSA 1
 #else
@@ -737,7 +742,7 @@
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
     /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
@@ -768,6 +773,11 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #ifndef FP_MAX_BITS
+        /* FP_MAX_BITS matters in wolfssl_test, not just TLS setting.   */
+        /* MIN_FFDHE_FP_MAX_BITS = (MIN_FFDHE_BITS * 2); see settings.h */
+        #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
+    #endif
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
@@ -807,7 +817,6 @@
         #endif
     #endif
 #endif
-#define WOLFSSL_MAX_ERROR_SZ 500
 
 /* Debug options:
 See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
