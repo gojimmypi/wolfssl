@@ -20410,7 +20410,22 @@ WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
     ssl->buffers.certChainCnt = ctx->certChainCnt;
 #endif
 #ifndef WOLFSSL_BLIND_PRIVATE_KEY
+#ifdef WOLFSSL_COPY_KEY
+    if (ctx->privateKey != NULL) {
+        if (ssl->buffers.key != NULL) {
+            FreeDer(&ssl->buffers.key);
+        }
+        AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
+            ctx->privateKey->length, ctx->privateKey->type,
+            ctx->privateKey->heap);
+        ssl->buffers.weOwnKey = 1;
+    }
+    else {
+        ssl->buffers.key      = ctx->privateKey;
+    }
+#else
     ssl->buffers.key      = ctx->privateKey;
+#endif
 #else
     if (ctx->privateKey != NULL) {
         AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
@@ -23984,7 +23999,7 @@ int wolfSSL_RAND_seed(const void* seed, int len)
  */
 const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 {
-#if !defined(NO_FILESYSTEM) && defined(XGETENV)
+#if !defined(NO_FILESYSTEM) && defined(XGETENV) && !defined(NO_GETENV)
     char* rt;
 
     WOLFSSL_ENTER("wolfSSL_RAND_file_name");
@@ -23995,6 +24010,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 
     XMEMSET(fname, 0, len);
 
+/* // NOLINTBEGIN(concurrency-mt-unsafe) */
     if ((rt = XGETENV("RANDFILE")) != NULL) {
         if (len > XSTRLEN(rt)) {
             XMEMCPY(fname, rt, XSTRLEN(rt));
@@ -24004,6 +24020,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
             rt = NULL;
         }
     }
+/* // NOLINTEND(concurrency-mt-unsafe) */
 
     /* $RANDFILE was not set or is too large, check $HOME */
     if (rt == NULL) {
@@ -24011,6 +24028,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
 
         WOLFSSL_MSG("Environment variable RANDFILE not set");
 
+/* // NOLINTBEGIN(concurrency-mt-unsafe) */
         if ((rt = XGETENV("HOME")) == NULL) {
             #ifdef XALTHOMEVARNAME
             if ((rt = XGETENV(XALTHOMEVARNAME)) == NULL) {
@@ -24023,6 +24041,7 @@ const char* wolfSSL_RAND_file_name(char* fname, unsigned long len)
             return NULL;
             #endif
         }
+/* // NOLINTEND(concurrency-mt-unsafe) */
 
         if (len > XSTRLEN(rt) + XSTRLEN(ap)) {
             fname[0] = '\0';
