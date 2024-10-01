@@ -81,6 +81,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-bundles", "esp-tls-
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "platformio", "platformio", "{B75B615F-9CBB-44F5-906F-0150587D660C}"
 	ProjectSection(SolutionItems) = preProject
+		build.log = build.log
 		esp_http_client_example.code-workspace = esp_http_client_example.code-workspace
 		..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py = ..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py
 		platformio.ini = platformio.ini
