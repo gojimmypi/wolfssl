@@ -322,6 +322,11 @@
             #error "Nano newlib formatting must not be enabled for benchmark"
         #endif
     #endif
+    #if ESP_IDF_VERSION_MAJOR >= 5
+        #define TFMT "%lu"
+    #else
+        #define TFMT "%d"
+    #endif
 
     #ifdef configTICK_RATE_HZ
         /* Define CPU clock cycles per tick of FreeRTOS clock
@@ -1511,7 +1516,7 @@ static const char* bench_result_words3[][5] = {
             expected_diff = CPU_TICK_CYCLES * tickDiff; /* CPU expected count */
             ESP_LOGV(TAG, "CPU_TICK_CYCLES = %d", (int)CPU_TICK_CYCLES);
             ESP_LOGV(TAG, "tickCount           = %llu", tickCount);
-            ESP_LOGV(TAG, "last_tickCount      = %d",   last_tickCount);
+            ESP_LOGV(TAG, "last_tickCount      = " TFMT, last_tickCount);
             ESP_LOGV(TAG, "tickDiff            = %llu", tickDiff);
             ESP_LOGV(TAG, "expected_diff1      = %llu", expected_diff);
         }
@@ -14244,9 +14249,9 @@ void bench_sphincsKeySign(byte level, byte optim)
       typiclly in app_startup.c */
 
     #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-        ESP_LOGV(TAG, "tickCount = %d", tickCount);
+        ESP_LOGV(TAG, "tickCount = " TFMT, tickCount);
         if (tickCount == last_tickCount) {
-            ESP_LOGW(TAG, "last_tickCount unchanged? %d", tickCount);
+            ESP_LOGW(TAG, "last_tickCount unchanged?" TFMT, tickCount);
 
         }
         if (tickCount < last_tickCount) {
@@ -14256,13 +14261,13 @@ void bench_sphincsKeySign(byte level, byte optim)
 
     if (reset) {
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-            ESP_LOGW(TAG, "Assign last_tickCount = %d", tickCount);
+            ESP_LOGW(TAG, "Assign last_tickCount = " TFMT, tickCount);
         #endif
         last_tickCount = tickCount;
     }
     else {
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-            ESP_LOGV(TAG, "No Reset last_tickCount = %d", tickCount);
+            ESP_LOGV(TAG, "No Reset last_tickCount = " TFMT, tickCount);
         #endif
     }
 
