@@ -1489,10 +1489,10 @@ static const char* bench_result_words3[][5] = {
             tickDiff = tickCount - last_tickCount; /* ticks since bench start */
             expected_diff = CPU_TICK_CYCLES * tickDiff; /* CPU expected count */
             ESP_LOGV(TAG, "CPU_TICK_CYCLES = %d", (int)CPU_TICK_CYCLES);
-            ESP_LOGV(TAG, "tickCount           = %d", tickCount);
-            ESP_LOGV(TAG, "last_tickCount      = %d", last_tickCount);
-            ESP_LOGV(TAG, "tickDiff            = %d", tickDiff);
-            ESP_LOGV(TAG, "expected_diff1      = " BCTR_FMT , expected_diff);
+            ESP_LOGV(TAG, "tickCount           = %llu", tickCount);
+            ESP_LOGV(TAG, "last_tickCount      = %d",   last_tickCount);
+            ESP_LOGV(TAG, "tickDiff            = %llu", tickDiff);
+            ESP_LOGV(TAG, "expected_diff1      = %llu", expected_diff);
         }
         #endif
 
@@ -1535,7 +1535,7 @@ static const char* bench_result_words3[][5] = {
                                     * tickDiff / configTICK_RATE_HZ;
 
                 #endif
-                ESP_LOGI(TAG, "expected_diff2      = " BCTR_FMT, expected_diff);
+                ESP_LOGI(TAG, "expected_diff2      = %llu", expected_diff);
             #endif
             if (expected_diff > UINT_MAX) {
                 /* The number of cycles expected from FreeRTOS ticks is
@@ -1554,10 +1554,10 @@ static const char* bench_result_words3[][5] = {
             {
                 tickBeginDiff = tickCount - begin_cycles_ticks;
 
-                ESP_LOGI(TAG, "begin_cycles_ticks  = " BCTR_FMT, begin_cycles_ticks);
-                ESP_LOGI(TAG, "tickDiff            = %d", tickDiff);
-                ESP_LOGI(TAG, "expected_diff       = " BCTR_FMT, expected_diff);
-                ESP_LOGI(TAG, "tickBeginDiff       = %d", tickBeginDiff);
+                ESP_LOGI(TAG, "begin_cycles_ticks  = %llu", begin_cycles_ticks);
+                ESP_LOGI(TAG, "tickDiff            = %llu", tickDiff);
+                ESP_LOGI(TAG, "expected_diff       = %llu", expected_diff);
+                ESP_LOGI(TAG, "tickBeginDiff       = %llu", tickBeginDiff);
 
                 ESP_LOGW(TAG, WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
             }
@@ -1565,7 +1565,7 @@ static const char* bench_result_words3[][5] = {
         }
         else {
             #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-                ESP_LOGI(TAG, "thisVal, read CPU   = " BCTR_FMT, thisVal);
+                ESP_LOGI(TAG, "thisVal, read CPU   = %llu", thisVal);
             #endif
         } /* if thisVal adjustment check */
 
@@ -1586,7 +1586,7 @@ static const char* bench_result_words3[][5] = {
         thisIncrement = (thisVal - _esp_cpu_count_last);
 
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-            ESP_LOGI(TAG, "thisIncrement       = " BCTR_FMT, thisIncrement);
+            ESP_LOGI(TAG, "thisIncrement       = %llu", thisIncrement);
         #endif
 
         /* Add our adjustment, taking into account overflows (see above) */
@@ -2268,7 +2268,7 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
 
 #ifdef WOLFSSL_ESPIDF
     #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-        ESP_LOGI(TAG, "bench_stats_start total_cycles = " BCTR_FMT
+        ESP_LOGI(TAG, "bench_stats_start total_cycles = %llu"
                       ", start=" FLT_FMT,
                       total_cycles, FLT_FMT_ARGS(*start) );
     #endif
@@ -2477,7 +2477,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     total = current_time(0) - start;
 
 #if defined(WOLFSSL_ESPIDF) && defined(DEBUG_WOLFSSL_BENCHMARK_TIMING)
-    ESP_LOGI(TAG, "%s total_cycles = " BCTR_FMT, desc, total_cycles);
+    ESP_LOGI(TAG, "%s total_cycles = %llu", desc, total_cycles);
 #endif
 
 #ifdef LINUX_RUSAGE_UTIME
@@ -2600,7 +2600,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
     #ifdef WOLFSSL_ESPIDF
         SHOW_ESP_CYCLES_CSV(msg, sizeof(msg), countSz);
         #ifdef DEBUG_WOLFSSL_BENCHMARK_TIMING
-            ESP_LOGI(TAG, "bench_stats_sym_finish total_cycles = " BCTR_FMT,
+            ESP_LOGI(TAG, "bench_stats_sym_finish total_cycles = %llu",
                            total_cycles);
         #endif
 
