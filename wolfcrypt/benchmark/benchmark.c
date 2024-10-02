@@ -382,7 +382,7 @@
         #include <esp_timer.h>
         #include <xtensa/hal.h>
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-
+        /* TODO add ESP32-H2 benchmark support */
     #else
         /* Other platform */
     #endif
