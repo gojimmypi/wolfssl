@@ -863,7 +863,7 @@ Turn on timer debugging (used when CPU cycles not available)
 /* Pause in a loop rather than exit. */
 /* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
 /* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
-
+#define DEBUG_WOLFSSL_BENCHMARK_TIMING
 #define WOLFSSL_HW_METRICS
 
 /* for test.c */
