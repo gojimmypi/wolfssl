@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Syntax:
 #   ./testMonitor.sh <example_name> <target> <keyword>
@@ -38,29 +38,51 @@ pwd
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
 # Unfortunately they are currently hard coded and computer-specific.
-esp32_PORT="/dev/ttyS9"
-esp32c2_PORT="/dev/ttyS79"
-esp32c3_PORT="/dev/ttyS35"
-esp32c6_PORT="/dev/ttyS36"
-esp32h2_PORT="/dev/ttyS31"
-esp32s2_PORT="/dev/ttyS30"
-esp32s3_PORT="/dev/ttyS24"
-esp8266_PORT="/dev/ttyS70"
 
-esp8684_PORT="/dev/ttyS49"
-# esp32c2_PORT="/dev/ttyS49" #8684
 
-# Load putty profiles. Note profiles names need to have been previously
-# defined and saved in putty! These are the saved sessions in putty:
-esp32_PUTTY="COM9"
-esp32c2_PUTTY="COM79 - ESP32-C2 74880"
-esp32c3_PUTTY="COM35"
-esp32c6_PUTTY="COM36"
-esp32h2_PUTTY="COM31"
-esp32s2_PUTTY="COM30"
-esp32s3_PUTTY="COM24"
-esp8684_PUTTY="COM49"
-esp8266_PUTTY="COM70 - 74880"
+if [[ "$TESTHOST" == "" ]]; then
+    echo "Please set TESTHOST name: NOTEBOOK_HOST, DESKTOP_HOST, DESKTOP_VMHOST or add new host."
+    exit 1
+
+elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
+    esp32_PORT="/dev/ttyS9"
+    esp32c2_PORT="/dev/ttyS79"
+    esp32c3_PORT="/dev/ttyS35"
+    esp32c6_PORT="/dev/ttyS36"
+    esp32h2_PORT="/dev/ttyS31"
+    esp32s2_PORT="/dev/ttyS30"
+    esp32s3_PORT="/dev/ttyS24"
+    esp8266_PORT="/dev/ttyS70"
+
+    esp8684_PORT="/dev/ttyS49"
+    # esp32c2_PORT="/dev/ttyS49" #8684
+elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
+    esp32_PORT="/dev/ttyS7"
+    esp32c2_PORT="/dev/ttyS12"
+    esp32c3_PORT="/dev/ttyS6"
+    esp32c6_PORT="/dev/ttyS8"
+    esp32h2_PORT="/dev/ttyS9"
+    esp32s2_PORT="/dev/ttyS5"
+    esp32s3_PORT="/dev/ttyS4"
+
+    esp8266_PORT="/dev/ttyS11"
+    esp8684_PORT="/dev/ttyS10"
+
+    # Load putty profiles. Note profiles names need to have been previously
+    # defined and saved in putty! These are the saved sessions in putty:
+    esp32_PUTTY="COM7"
+    esp32c2_PUTTY="COM12-74880"
+    esp32c3_PUTTY="COM6"
+    esp32c6_PUTTY="COM8"
+    esp32h2_PUTTY="COM9"
+    esp32s2_PUTTY="COM5"
+    esp32s3_PUTTY="COM4"
+    esp8684_PUTTY="COM10-74880"
+    esp8266_PUTTY="COM11-74880"
+else
+    echo "Error unknown TESTHOST=$TESTHOST"
+    exit 1
+fi
 
 echo "esp32_PORT:   $esp32_PORT"
 echo "esp32c2_PORT: $esp32c2_PORT"
@@ -89,6 +111,16 @@ echo THIS_TARGET_PORT="${THIS_TARGET_PORT}"
 
 # The use of putty is optional
 THIS_TARGET_PUTTY="${THIS_TARGET}_PUTTY"
+
+
+if [ -f "$PUTTY_EXE" ]; then
+    echo "Using putty.exe in $PUTTY_EXE"
+else
+    echo "putty.exe not found in $PUTTY_EXE"
+    echo "Defining ESPIDF_PUTTY_MONITOR to use ESP-IDF monitor."
+    ESPIDF_PUTTY_MONITOR=1
+fi
+
 
 if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
     echo "Using ESP-IDF monitor"
@@ -123,16 +155,14 @@ if [[ "$THIS_TARGET" == "esp8684" ]]; then
     THIS_TARGET=esp32c2
 fi
 
-# Ensure we have a log directory
-mkdir -p "${THIS_HOME_DIR}/logs/" || exit 1
-
 # Assemble some log file names.
 echo ""
-BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_v5.1_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-
+mkdir -p "${THIS_HOME_DIR}/logs"
+BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_WLOG="logs\\${THIS_TARGET}_output.log"
 # cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
 
 echo  "BUILD_LOG = ${BUILD_LOG}"
@@ -144,8 +174,20 @@ echo  "THIS_CFG  = ${THIS_CFG}"
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
     # idf.py for the ESP8266  does not support --version
     echo "ESP8266 using $IDF_PATH"
+    THIS_VERSION="ESP8266"
 else
     idf.py --version                            > "${BUILD_LOG}" 2>&1
+    # Get the ESP-IDF version
+    # Run the command and capture its output
+    THIS_OUTPUT=$(idf.py --version)
+
+    # Extract the version string using grep and sed
+    THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
+
+    # Print the version variable to verify
+    echo "idf.py THIS_VERSION=$THIS_VERSION"
+
+
 fi
 
 echo "Full clean for $THIS_TARGET..."
@@ -160,17 +202,29 @@ fi
 
 #---------------------------------------------------------------------
 if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    #always start with a fresh sdkconfig-debug (or sdkconfig-release) from defaults
+    rm -f ./sdkconfig-debug
+    rm -f ./sdkconfig-release
+
     # idf.py for the ESP8266  does not support --set-target
     echo "Target is $THIS_TARGET"
 
     # Since we don't "set-target" for the ESP8266, ensure the sdkconfig is not present
-    rm ./sdkconfig
+    rm -f ./sdkconfig
 else
+    # Start with fresh sdkconfig
+    rm -f ./sdkconfig
+
+    # ESP8266 debug and release files not used for non-ESP8266 targets here,delete anyhow:
+    rm -f ./sdkconfig-debug
+    rm -f ./sdkconfig-release
+
     echo "idf.py set-target $THIS_TARGET"
     idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""
+        tail -n 5 "${BUILD_LOG}"
         echo "Error during set-target"
         exit 1
     fi
@@ -184,9 +238,20 @@ idf.py build                                    >> "${BUILD_LOG}" 2>&1
 THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then
     echo ""
-    echo "Error during build"
+    tail -n 5 "${BUILD_LOG}"
+    echo "Error during build for $THIS_TARGET"
+    echo ""
+    echo ""
+    grep -i "error" "${BUILD_LOG}"
     exit 1
 fi
+
+
+# echo ""
+# echo "Erase $THIS_TARGET..."
+# echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
+# idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+echo "Pre-flash erase not supported on the ESP8266 at this time."
 
 #---------------------------------------------------------------------
 echo ""
@@ -196,7 +261,11 @@ idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
 THIS_ERROR_CODE=$?
 if [ $THIS_ERROR_CODE -ne 0 ]; then
     echo ""
+    tail -n 5 "${FLASH_LOG}"
     echo "Error during flash"
+    echo ""
+    echo ""
+    grep -i "error" "${FLASH_LOG}"
     exit 1
 fi
 
@@ -212,5 +281,5 @@ if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
 else
     echo "Calling putty..."
     echo "$PUTTY_EXE -load \"$THIS_TARGET_PUTTY\""
-    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" &
+    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" -logoverwrite -sessionlog "${THIS_WLOG}" &
 fi

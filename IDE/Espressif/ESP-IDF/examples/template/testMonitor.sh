@@ -247,10 +247,11 @@ if [ $THIS_ERROR_CODE -ne 0 ]; then
 fi
 
 
-echo ""
-echo "Flash $THIS_TARGET..."
-echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
-idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+# echo ""
+# echo "Erase $THIS_TARGET..."
+# echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
+# idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+echo "Pre-flash erase not supported on the ESP8266 at this time."
 
 #---------------------------------------------------------------------
 echo ""
