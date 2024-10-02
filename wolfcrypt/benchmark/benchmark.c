@@ -337,6 +337,27 @@
                 #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ configCPU_CLOCK_HZ
             #endif
         #endif
+        #ifndef CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+            /* This section is for pre-v5 ESP-IDF */
+            #if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ)
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ
+            #elif defined(CONFIG_ESP32C2_DEFAULT_CPU_FREQ_MHZ)
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP32C2_DEFAULT_CPU_FREQ_MHZ
+            #elif defined(CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ)
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ
+            #elif defined(CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ)
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ
+            #elif defined(CONFIG_ESP32H2_DEFAULT_CPU_FREQ_MHZ)
+                #define CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ \
+                        CONFIG_ESP32H2_DEFAULT_CPU_FREQ_MHZ
+            #else
+                /* TODO unsupported */
+            #endif /* older CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ */
+        #endif
         #define CPU_TICK_CYCLES (                               \
               (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ * MILLION_VALUE) \
               / configTICK_RATE_HZ                              \
