@@ -378,12 +378,11 @@
     #elif defined(CONFIG_IDF_TARGET_ESP8266)
         /* no CPU HAL for ESP8266, we'll use RTOS tick calc estimates */
         #include <FreeRTOS.h>
-    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-
-    #elif defined(CONFIG_IDF_TARGET_ESP8266)
         #include <esp_system.h>
         #include <esp_timer.h>
         #include <xtensa/hal.h>
+    #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+
     #else
         /* Other platform */
     #endif
