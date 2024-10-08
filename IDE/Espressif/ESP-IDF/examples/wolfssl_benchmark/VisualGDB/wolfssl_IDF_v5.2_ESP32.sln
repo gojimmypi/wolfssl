@@ -7,6 +7,7 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_IDF_v5.2_ESP32", "w
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{05B61C14-9895-4E3E-BB6B-3EB5B8FC2DFD}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.c = ..\..\..\..\..\..\wolfcrypt\benchmark\benchmark.c
 		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
 		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
 	EndProjectSection
