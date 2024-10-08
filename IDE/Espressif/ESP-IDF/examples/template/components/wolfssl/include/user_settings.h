@@ -823,7 +823,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 optionally increase error message size for very long paths.
 #define WOLFSSL_MAX_ERROR_SZ 500
 
-Turn debugging on/off:
+Turn wolfSSL debugging on/off:
     wolfSSL_Debugging_ON();
     wolfSSL_Debugging_OFF();
 

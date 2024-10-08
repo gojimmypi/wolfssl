@@ -281,10 +281,10 @@ void app_main(void)
 #endif
 
 #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
 
-        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL)));
+    ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                    - (uxTaskGetStackHighWaterMark(NULL)));
 #endif
 
 #ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE

@@ -83,7 +83,7 @@ Component config  --->
 
 All settings for wolfSSL are adjusted in the [include/user_settings.h](./include/user_settings.h) file.
 
-The `user_settings.h` file should not be included directly. Instead, `#include <wolfssl/wolfcrypt/settings.h>` 
+The `user_settings.h` file should not be included directly. Instead, `#include <wolfssl/wolfcrypt/settings.h>`
 before any other wolfSSL headers, like this:
 
 
