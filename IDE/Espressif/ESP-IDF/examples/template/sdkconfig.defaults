@@ -1,27 +1,71 @@
 # Set the known example app config to template example (see user_settings.h)
 CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE=y
 
+# Some wolfSSL helpers
+CONFIG_USE_WOLFSSL_ESP_SDK_TIME=y
+
+# FreeRTOS ticks at 1ms interval
+CONFIG_FREERTOS_UNICORE=y
 CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP32_DEFAULT_CPU_FREQ_240=y
 
 #
 # Default main stack size
 #
-# This is typically way bigger than needed for stack size.
+# This is typically bigger than needed for stack size.
 # Units are words, not bytes. See user_settings.h
 #
+# For wolfSSL SMALL_STACK, 3072 bytes should be sufficient for benchmark app.
+# When using RSA, assign at least 10500 bytes, otherwise 5500 usually works for others
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=3584
 # Legacy stack size for older ESP-IDF versions
 CONFIG_MAIN_TASK_STACK_SIZE=3584
 
+#
+# Benchmark must not have CONFIG_NEWLIB_NANO_FORMAT enabled
+CONFIG_NEWLIB_NANO_FORMAT=n
+#
+# Watchdog Timers
+#
+# We don't want to have the watchdog timeout during tests & benchmarks
+#
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+# Panic & Watchdog
+CONFIG_ESP_INT_WDT_TIMEOUT_MS=10000
+CONFIG_ESP_TASK_WDT_EN=n
 CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
+CONFIG_ESP_INT_WDT=n
+
+# ESP8266 Watchdog:
+CONFIG_TASK_WDT=n
+CONFIG_TASK_WDT_PANIC=n
+
+# ESP8266 WDT
+# CONFIG_ESP_PANIC_PRINT_REBOOT is not set
+CONFIG_ESP_PANIC_PRINT_REBOOT=n
+CONFIG_ESP_PANIC_PRINT_HALT=y
+
+# CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS is not set
+CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=n
+
+# ESP8266 Memory
+CONFIG_FREERTOS_GLOBAL_DATA_LINK_IRAM=y
+CONFIG_HEAP_DISABLE_IRAM=y
+
+# Performance
+# CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Set max CPU frequency (falls back as needed for lower maximum)
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 
 # Enable wolfSSL TLS in esp-tls
 CONFIG_ESP_TLS_USING_WOLFSSL=y
 CONFIG_TLS_STACK_WOLFSSL=y
 
 # Bundles take up flash space and are disabled unless otherwise known to be needed
-CONFIG_WOLFSSL_CERTIFICATE_BUNDLE=y
+CONFIG_WOLFSSL_CERTIFICATE_BUNDLE=n
+# CONFIG_WOLFSSL_CERTIFICATE_BUNDLE=y
 # CONFIG_ESP_WOLFSSL_SMALL_CERT_VERIFY=y
 # CONFIG_ESP_TLS_INSECURE=y
 
@@ -29,8 +73,6 @@ CONFIG_WOLFSSL_CERTIFICATE_BUNDLE=y
 CONFIG_ESP_TLS_USING_MBEDTLS=n
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=n
 
-# Some wolfSSL helpers
-CONFIG_USE_WOLFSSL_ESP_SDK_TIME=y
 
 # Ensure mbedTLS options are disabled
 # CONFIG_MBEDTLS_TLS_SERVER_AND_CLIENT=n
@@ -95,8 +137,3 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp_large.csv"
 CONFIG_PARTITION_TABLE_OFFSET=0x8000
 CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
-
-# There may not be a TLS 1.3 listening server, so disable wolfSSL TLS 1.3
-# and enable TLS 1.2 be default.
-CONFIG_WOLFSSL_ALLOW_TLS13=n
-CONFIG_WOLFSSL_ALLOW_TLS12=y
