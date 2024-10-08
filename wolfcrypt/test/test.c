@@ -922,11 +922,11 @@ static void render_error_message(const char* msg, wc_test_ret_t es)
  * stores an error string in the supplied buffer.  this is all most
  * infelicitous...
  */
-#if !defined(STRING_USER) && !defined(NO_ERROR_STRINGS) &&      \
+#if !defined(STRING_USER) && !defined(NO_ERROR_STRINGS) &&              \
     (defined(__STDC_VERSION__) && (__STDC_VERSION__ > 199901L)) &&      \
-    ((defined(__GLIBC__) && (__GLIBC__ >= 2)) ||                \
-     (defined(__USE_XOPEN2K) &&                                 \
-      defined(_POSIX_C_SOURCE) &&                               \
+    ((defined(__GLIBC__) && (__GLIBC__ >= 2) && defined(__USE_GNU)) ||  \
+     (defined(__USE_XOPEN2K) &&                                         \
+      defined(_POSIX_C_SOURCE) &&                                       \
       (_POSIX_C_SOURCE >= 200112L)))
 
         char errno_buf[64], *errno_string;
@@ -6407,7 +6407,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
     /* Unaligned memory access test */
     for (i = 1; i < 16; i++) {
         ret = wc_Sha512Update(&sha, (byte*)large_input + i,
-            (word32)sizeof(large_input) - i);
+            LARGE_HASH_TEST_INPUT_SZ - (word32)i);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
         ret = wc_Sha512Final(&sha, hash);
@@ -6585,7 +6585,7 @@ See https://github.com/wolfSSL/wolfssl/pull/6134
     /* Unaligned memory access test */
     for (i = 1; i < 16; i++) {
         ret = wc_Sha512_224Update(&sha, (byte*)large_input + i,
-            (word32)sizeof(large_input) - i);
+            (word32)sizeof(large_input) - (word32)i);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
         ret = wc_Sha512_224Final(&sha, hash);
@@ -6738,7 +6738,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_256_test(void)
     /* Unaligned memory access test */
     for (i = 1; i < 16; i++) {
         ret = wc_Sha512_256Update(&sha, (byte*)large_input + i,
-            (word32)sizeof(large_input) - i);
+            (word32)sizeof(large_input) - (word32)i);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
         ret = wc_Sha512_256Final(&sha, hash);
@@ -8320,14 +8320,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
             return WC_TEST_RET_ENC_I(i);
         if (exp_ret == 0) {
             ret = wc_Hash(typesGood[i], data, sizeof(data), hashOut,
-                                                                  digestSz - 1);
+                                                        (word32)digestSz - 1);
             if (ret != WC_NO_ERR_TRACE(BUFFER_E))
                 return WC_TEST_RET_ENC_I(i);
         }
         ret = wc_Hash(typesGood[i], data, sizeof(data), hashOut, (word32)digestSz);
         if (ret != exp_ret)
             return WC_TEST_RET_ENC_I(i);
-        if (exp_ret == 0 && XMEMCMP(out, hashOut, digestSz) != 0)
+        if (exp_ret == 0 && XMEMCMP(out, hashOut, (word32)digestSz) != 0)
             return WC_TEST_RET_ENC_I(i);
 
         ret = wc_HashGetBlockSize(typesGood[i]);
@@ -10125,10 +10125,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t chacha_test(void)
         if (ret != 0)
             return ret;
 
-        if (XMEMCMP(plain_big, input_big, block_size))
+        if (XMEMCMP(plain_big, input_big, (word32)block_size))
             return WC_TEST_RET_ENC_I(i);
 
-        if (XMEMCMP(cipher_big, cipher_big_result, block_size))
+        if (XMEMCMP(cipher_big, cipher_big_result, (word32)block_size))
             return WC_TEST_RET_ENC_I(i);
     }
 
@@ -16918,18 +16918,18 @@ static wc_test_ret_t aesgcm_default_test_helper(byte* key, int keySz, byte* iv, 
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
 
     /* AES-GCM encrypt and decrypt both use AES encrypt internally */
-    ret = wc_AesGcmEncrypt(enc, resultC, plain, (word32)plainSz, iv, ivSz,
-                                     resultT, (word32)tagSz, aad, aadSz);
+    ret = wc_AesGcmEncrypt(enc, resultC, plain, (word32)plainSz, iv, (word32)ivSz,
+                                     resultT, (word32)tagSz, aad, (word32)aadSz);
 #if defined(WOLFSSL_ASYNC_CRYPT)
     ret = wc_AsyncWait(ret, &enc->asyncDev, WC_ASYNC_FLAG_NONE);
 #endif
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (cipher != NULL) {
-        if (XMEMCMP(cipher, resultC, cipherSz))
+        if (XMEMCMP(cipher, resultC, (word32)cipherSz))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
-    if (XMEMCMP(tag, resultT, tagSz))
+    if (XMEMCMP(tag, resultT, (unsigned long)tagSz))
         ERROR_OUT(WC_TEST_RET_ENC_NC, out);
 
 #if defined(DEBUG_VECTOR_REGISTER_ACCESS) && defined(WC_C_DYNAMIC_FALLBACK)
@@ -16943,7 +16943,7 @@ static wc_test_ret_t aesgcm_default_test_helper(byte* key, int keySz, byte* iv, 
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (cipher != NULL) {
-        if (XMEMCMP(cipher, resultC, cipherSz))
+        if (XMEMCMP(cipher, resultC, (unsigned long)cipherSz))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
     if (XMEMCMP(tag, resultT, tagSz))
@@ -16956,14 +16956,14 @@ static wc_test_ret_t aesgcm_default_test_helper(byte* key, int keySz, byte* iv, 
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
 
     ret = wc_AesGcmDecrypt(dec, resultP, resultC, (word32)cipherSz,
-                   iv, (word32)ivSz, resultT, tagSz, aad, aadSz);
+                   iv, (word32)ivSz, resultT, (word32)tagSz, aad, (word32)aadSz);
 #if defined(WOLFSSL_ASYNC_CRYPT)
     ret = wc_AsyncWait(ret, &dec->asyncDev, WC_ASYNC_FLAG_NONE);
 #endif
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (plain != NULL) {
-        if (XMEMCMP(plain, resultP, plainSz))
+        if (XMEMCMP(plain, resultP, (unsigned long)plainSz))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 
@@ -16978,7 +16978,7 @@ static wc_test_ret_t aesgcm_default_test_helper(byte* key, int keySz, byte* iv, 
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (plain != NULL) {
-        if (XMEMCMP(plain, resultP, plainSz))
+        if (XMEMCMP(plain, resultP, (unsigned long)plainSz))
             ERROR_OUT(WC_TEST_RET_ENC_NC, out);
     }
 #endif
@@ -20173,7 +20173,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t random_test(void)
 #endif
 
 #if defined(WOLFSSL_STATIC_MEMORY) || !defined(WOLFSSL_NO_MALLOC)
-static int simple_mem_test(int sz)
+static int simple_mem_test(size_t sz)
 {
     int ret = 0;
     byte* b;
@@ -20184,11 +20184,11 @@ static int simple_mem_test(int sz)
         return WC_TEST_RET_ENC_NC;
     }
     /* utilize memory */
-    for (i = 0; i < sz; i++) {
+    for (i = 0; i < (int)sz; i++) {
         b[i] = (byte)i;
     }
     /* read back and verify */
-    for (i = 0; i < sz; i++) {
+    for (i = 0; i < (int)sz; i++) {
         if (b[i] != (byte)i) {
             ret = WC_TEST_RET_ENC_NC;
             break;
@@ -20348,7 +20348,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
 
 #if defined(WOLFSSL_STATIC_MEMORY) || !defined(WOLFSSL_NO_MALLOC)
     /* simple test */
-    ret = simple_mem_test(MEM_TEST_SZ);
+    ret = simple_mem_test((size_t)MEM_TEST_SZ);
     if (ret != 0)
         return ret;
 #endif
@@ -20356,7 +20356,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t memory_test(void)
 #ifdef COMPLEX_MEM_TEST
     /* test various size blocks */
     for (i = 1; i < MEM_TEST_SZ; i*=2) {
-        ret = simple_mem_test(i);
+        ret = simple_mem_test((size_t)i);
         if (ret != 0)
             return ret;
     }
@@ -22265,7 +22265,7 @@ static wc_test_ret_t rsa_pss_test(WC_RNG* rng, RsaKey* key)
     #endif
         if (ret >= 0) {
             ret = wc_RsaPSS_Sign_ex(digest, digestSz, out, outSz, hash[0],
-                mgf[0], digestSz + 1, key, rng);
+                mgf[0], (int)digestSz + 1, key, rng);
         }
     } while (ret == WC_NO_ERR_TRACE(WC_PENDING_E));
     if (ret != WC_NO_ERR_TRACE(PSS_SALTLEN_E))
@@ -22293,7 +22293,7 @@ static wc_test_ret_t rsa_pss_test(WC_RNG* rng, RsaKey* key)
     #endif
         if (ret >= 0) {
             ret = wc_RsaPSS_VerifyInline_ex(sig, outSz, &plain, hash[0], mgf[0],
-                digestSz + 1, key);
+                (int)digestSz + 1, key);
         }
     } while (ret == WC_NO_ERR_TRACE(WC_PENDING_E));
     if (ret != WC_NO_ERR_TRACE(PSS_SALTLEN_E))
@@ -29022,7 +29022,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs12_pbkdf_test(void)
     if (ret < 0)
         return WC_TEST_RET_ENC_EC(ret);
 
-    if (XMEMCMP(derived, verify, kLen) != 0)
+    if (XMEMCMP(derived, verify, (unsigned long)kLen) != 0)
         return WC_TEST_RET_ENC_NC;
 
     iterations = 1000;
@@ -29307,7 +29307,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hkdf_test(void)
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
 
-    if (XMEMCMP(okm1, res1, L) != 0)
+    if (XMEMCMP(okm1, res1, (unsigned long)L) != 0)
         return WC_TEST_RET_ENC_NC;
 
 #ifndef HAVE_FIPS
@@ -29318,7 +29318,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hkdf_test(void)
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
 
-    if (XMEMCMP(okm1, res2, L) != 0)
+    if (XMEMCMP(okm1, res2, (unsigned long)L) != 0)
         return WC_TEST_RET_ENC_NC;
 #endif /* HAVE_FIPS */
 #endif /* !NO_SHA */
@@ -29329,7 +29329,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hkdf_test(void)
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
 
-    if (XMEMCMP(okm1, res3, L) != 0)
+    if (XMEMCMP(okm1, res3, (unsigned long)L) != 0)
         return WC_TEST_RET_ENC_NC;
 
 #ifndef HAVE_FIPS
@@ -29339,7 +29339,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hkdf_test(void)
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
 
-    if (XMEMCMP(okm1, res4, L) != 0)
+    if (XMEMCMP(okm1, res4, (unsigned long)L) != 0)
         return WC_TEST_RET_ENC_NC;
 #endif /* HAVE_FIPS */
 #endif /* !NO_SHA256 */
@@ -29546,7 +29546,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t prf_test(void)
     int lblsdL = LBSL;
     int hash_type = sha384_mac;
 
-    ret = wc_PRF(dig, (word32)digL, secret, secL, lablSd, lblsdL, hash_type,
+    ret = wc_PRF(dig, (word32)digL, secret, (word32)secL, lablSd,
+                 (word32)lblsdL, hash_type,
                  HEAP_HINT, INVALID_DEVID);
     if (ret != 0) {
         printf("Failed w/ code: %d\n", ret);
@@ -30197,111 +30198,117 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t tls13_kdf_test(void)
 
         ret = wc_Tls13_HKDF_Extract(secret, NULL, 0,
                 (tv->pskSz == 0) ? zeroes : (byte*)tv->psk,
-                tv->pskSz, tv->hashAlg);
+                tv->pskSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)ceTrafficLabel, (word32)XSTRLEN(ceTrafficLabel),
-                tv->hashHello1, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashHello1, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->clientEarlyTrafficSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->clientEarlyTrafficSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)eExpMasterLabel, (word32)XSTRLEN(eExpMasterLabel),
-                tv->hashHello1, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashHello1, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->earlyExporterMasterSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->earlyExporterMasterSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(salt, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)derivedLabel, (word32)XSTRLEN(derivedLabel),
-                hashZero, (word32)hashAlgSz, tv->hashAlg);
+                hashZero, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Extract(secret, salt, (word32)(word32)hashAlgSz,
                 (tv->dheSz == 0) ? zeroes : (byte*)tv->dhe,
-                tv->dheSz, tv->hashAlg);
+                tv->dheSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)cHsTrafficLabel, (word32)XSTRLEN(cHsTrafficLabel),
-                tv->hashHello2, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashHello2, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = XMEMCMP(tv->clientHandshakeTrafficSecret,
-                output, hashAlgSz);
+                output, (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)sHsTrafficLabel, (word32)XSTRLEN(sHsTrafficLabel),
-                tv->hashHello2, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashHello2, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->serverHandshakeTrafficSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->serverHandshakeTrafficSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(salt, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)derivedLabel, (word32)XSTRLEN(derivedLabel),
-                hashZero, (word32)hashAlgSz, tv->hashAlg);
+                hashZero, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Extract(secret, salt, (word32)(word32)hashAlgSz,
-                zeroes, (word32)(word32)hashAlgSz, tv->hashAlg);
+                zeroes, (word32)(word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)cAppTrafficLabel, (word32)XSTRLEN(cAppTrafficLabel),
-                tv->hashFinished1, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashFinished1, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->clientApplicationTrafficSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->clientApplicationTrafficSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)sAppTrafficLabel, (word32)XSTRLEN(sAppTrafficLabel),
-                tv->hashFinished1, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashFinished1, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->serverApplicationTrafficSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->serverApplicationTrafficSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)expMasterLabel, (word32)XSTRLEN(expMasterLabel),
-                tv->hashFinished1, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashFinished1, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->exporterMasterSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->exporterMasterSecret, output, (unsigned long)hashAlgSz);
         if (ret != 0) break;
 
         ret = wc_Tls13_HKDF_Expand_Label(output, (word32)hashAlgSz,
                 secret, (word32)hashAlgSz,
                 (byte*)protocolLabel, (word32)XSTRLEN(protocolLabel),
                 (byte*)resMasterLabel, (word32)XSTRLEN(resMasterLabel),
-                tv->hashFinished2, (word32)hashAlgSz, tv->hashAlg);
+                tv->hashFinished2, (word32)hashAlgSz, (int)tv->hashAlg);
         if (ret != 0) break;
 
-        ret = XMEMCMP(tv->resumptionMasterSecret, output, hashAlgSz);
+        ret = XMEMCMP(tv->resumptionMasterSecret, output,
+                (unsigned long)hashAlgSz);
         if (ret != 0) break;
     }
 
@@ -44469,13 +44476,22 @@ static wc_test_ret_t dilithium_param_vfy_test(int param, const byte* pubKey,
 {
     byte msg[512];
     dilithium_key* key;
+    byte * pubExported = NULL;
     wc_test_ret_t ret;
     int i;
     int res = 0;
+    word32 lenExported = pubKeyLen;
+    int n_diff = 0;
 
     key = (dilithium_key*)XMALLOC(sizeof(*key), HEAP_HINT,
         DYNAMIC_TYPE_TMP_BUFFER);
     if (key == NULL) {
+        ERROR_OUT(WC_TEST_RET_ENC_ERRNO, out);
+    }
+
+    pubExported = (byte*)XMALLOC(pubKeyLen, HEAP_HINT,
+        DYNAMIC_TYPE_TMP_BUFFER);
+    if (pubExported == NULL) {
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, out);
     }
 
@@ -44497,20 +44513,42 @@ static wc_test_ret_t dilithium_param_vfy_test(int param, const byte* pubKey,
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
 
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
-    ret = wc_dilithium_verify_ctx_msg(sig, sigLen, NULL, 0, msg,
-        (word32)sizeof(msg), &res, key);
-#else
-    ret = wc_dilithium_verify_msg(sig, sigLen, msg, (word32)sizeof(msg), &res,
-        key);
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    if (param >= WC_ML_DSA_DRAFT) {
+        ret = wc_dilithium_verify_msg(sig, sigLen, msg, (word32)sizeof(msg),
+            &res, key);
+    }
+    else
 #endif
+    {
+        ret = wc_dilithium_verify_ctx_msg(sig, sigLen, NULL, 0, msg,
+            (word32)sizeof(msg), &res, key);
+    }
     if (ret != 0)
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     if (res != 1)
         ERROR_OUT(WC_TEST_RET_ENC_EC(res), out);
+
+    /* Now test the export pub raw API, verify we recover the original pub. */
+    ret = wc_dilithium_export_public(key, pubExported, &lenExported);
+    if (ret != 0) {
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+    }
+
+    if (lenExported <= 0 || lenExported != pubKeyLen) {
+        ERROR_OUT(WC_TEST_RET_ENC_EC(lenExported), out);
+    }
+
+    n_diff = XMEMCMP(pubExported, pubKey, pubKeyLen);
+
+    if (n_diff) {
+        ERROR_OUT(WC_TEST_RET_ENC_EC(n_diff), out);
+    }
+
 out:
     wc_dilithium_free(key);
     XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    XFREE(pubExported, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
     return ret;
 }
 
@@ -44518,7 +44556,6 @@ out:
 static wc_test_ret_t dilithium_param_44_vfy_test(void)
 {
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_44_pub_key[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0xd8, 0xac, 0xaf, 0xd8, 0x2e, 0x14, 0x23, 0x78, 0xf7, 0x0d, 0x9a, 0x04,
         0x2b, 0x92, 0x48, 0x67, 0x60, 0x55, 0x34, 0xd9, 0xac, 0x0b, 0xc4, 0x1f,
         0x46, 0xe8, 0x85, 0xb9, 0x2e, 0x1b, 0x10, 0x3a, 0x75, 0x7a, 0xc2, 0xbc,
@@ -44629,7 +44666,9 @@ static wc_test_ret_t dilithium_param_44_vfy_test(void)
         0x21, 0x53, 0xeb, 0xd3, 0xa6, 0xec, 0x7d, 0x3c, 0xb8, 0xcd, 0x91, 0x4c,
         0x2f, 0x4b, 0x2e, 0x23, 0x4c, 0x0f, 0x0f, 0xe0, 0x14, 0xa5, 0xe7, 0xe5,
         0x70, 0x8d, 0x8b, 0x9c
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_44_draft_pub_key[] = {
     0xea, 0x05, 0x24, 0x0d, 0x80, 0x72, 0x25, 0x55, 0xf4, 0x5b,
     0xc2, 0x13, 0x8b, 0x87, 0x5d, 0x31, 0x99, 0x2f, 0x1d, 0xa9,
     0x41, 0x09, 0x05, 0x76, 0xa7, 0xb7, 0x5e, 0x8c, 0x44, 0xe2,
@@ -44762,10 +44801,9 @@ static wc_test_ret_t dilithium_param_44_vfy_test(void)
     0xca, 0x7a, 0x54, 0xe5, 0x06, 0xe3, 0xda, 0x05, 0xf7, 0x77,
     0x36, 0x8b, 0x81, 0x26, 0x99, 0x92, 0x42, 0xda, 0x45, 0xb1,
     0xfe, 0x4b
-#endif
     };
+#endif
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_44_sig[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0x27, 0x3b, 0x58, 0xa0, 0xcf, 0x00, 0x29, 0x5e, 0x1a, 0x63, 0xbf, 0xb4,
         0x97, 0x16, 0xa1, 0x9c, 0x78, 0xd1, 0x33, 0xdc, 0x72, 0xde, 0xa3, 0xfc,
         0xf4, 0x09, 0xb1, 0x09, 0x16, 0x3f, 0x80, 0x72, 0x22, 0x68, 0x65, 0x68,
@@ -44968,7 +45006,9 @@ static wc_test_ret_t dilithium_param_44_vfy_test(void)
         0xe5, 0xea, 0x0b, 0x16, 0x3b, 0x3c, 0x3e, 0x45, 0x58, 0x63, 0x6a, 0x6f,
         0x7c, 0x8c, 0x8d, 0x92, 0x99, 0x9c, 0xad, 0xb5, 0xb7, 0xce, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x16, 0x23, 0x36, 0x4a
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_44_draft_sig[] = {
     0x5e, 0xc1, 0xce, 0x0e, 0x31, 0xea, 0x10, 0x52, 0xa3, 0x7a,
     0xfe, 0x4d, 0xac, 0x07, 0x89, 0x5a, 0x45, 0xbd, 0x5a, 0xe5,
     0x22, 0xed, 0x98, 0x4d, 0x2f, 0xc8, 0x27, 0x00, 0x99, 0x40,
@@ -45211,12 +45251,22 @@ static wc_test_ret_t dilithium_param_44_vfy_test(void)
     0x35, 0x38, 0x3f, 0x4c, 0x7f, 0x80, 0x81, 0x8b, 0x9b, 0x9c,
     0x9d, 0xa7, 0xa9, 0xcb, 0xe9, 0xf0, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x20, 0x32, 0x46
-#endif
     };
+#endif
+    wc_test_ret_t ret;
 
-    return dilithium_param_vfy_test(WC_ML_DSA_44, ml_dsa_44_pub_key,
+    ret = dilithium_param_vfy_test(WC_ML_DSA_44, ml_dsa_44_pub_key,
         (word32)sizeof(ml_dsa_44_pub_key), ml_dsa_44_sig,
         (word32)sizeof(ml_dsa_44_sig));
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    if (ret == 0) {
+        ret = dilithium_param_vfy_test(WC_ML_DSA_44_DRAFT,
+            ml_dsa_44_draft_pub_key, (word32)sizeof(ml_dsa_44_draft_pub_key),
+            ml_dsa_44_draft_sig, (word32)sizeof(ml_dsa_44_draft_sig));
+    }
+#endif
+
+    return ret;
 }
 #endif
 
@@ -45224,7 +45274,6 @@ static wc_test_ret_t dilithium_param_44_vfy_test(void)
 static wc_test_ret_t dilithium_param_65_vfy_test(void)
 {
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_65_pub_key[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0x2c, 0x32, 0xfa, 0x59, 0x71, 0x16, 0x4a, 0x0e, 0x45, 0x0f, 0x21, 0xfd,
         0x65, 0xee, 0x50, 0xb0, 0xbf, 0xea, 0x8e, 0x4e, 0xa2, 0x55, 0x71, 0xa6,
         0x65, 0x48, 0x56, 0x20, 0x8a, 0x48, 0x9d, 0xd7, 0xc9, 0x2c, 0x80, 0x62,
@@ -45388,7 +45437,9 @@ static wc_test_ret_t dilithium_param_65_vfy_test(void)
         0x09, 0x5b, 0xfd, 0x52, 0x6f, 0xd9, 0x3c, 0x1c, 0x02, 0x3b, 0x77, 0xb8,
         0xa1, 0xe9, 0xa4, 0xb7, 0x42, 0x62, 0xee, 0xea, 0x43, 0xf3, 0xd8, 0xd0,
         0x7a, 0x53, 0x91, 0x34, 0x7f, 0xe7, 0x9a, 0xc6
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_65_draft_pub_key[] = {
     0x15, 0xc9, 0xe5, 0x53, 0x2f, 0xd8, 0x1f, 0xb4, 0xa3, 0x9f,
     0xae, 0xad, 0xb3, 0x10, 0xd0, 0x72, 0x69, 0xd3, 0x02, 0xf3,
     0xdf, 0x67, 0x5a, 0x31, 0x52, 0x19, 0xca, 0x39, 0x27, 0x77,
@@ -45585,10 +45636,9 @@ static wc_test_ret_t dilithium_param_65_vfy_test(void)
     0xd8, 0x57, 0x9d, 0x48, 0x80, 0x6a, 0xef, 0x0c, 0xdd, 0x27,
     0x99, 0xf9, 0xe7, 0xd0, 0xd2, 0x36, 0xd8, 0xed, 0x41, 0x14,
     0x1b, 0x10
-#endif
     };
+#endif
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_65_sig[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0xb1, 0xd1, 0x8e, 0x83, 0x0b, 0x0d, 0xd2, 0x71, 0xb2, 0xaa, 0x31, 0x38,
         0x16, 0xf0, 0xb4, 0xbc, 0x64, 0x2b, 0x97, 0xa1, 0x08, 0x19, 0x4f, 0x52,
         0xfe, 0x99, 0x1a, 0xa9, 0xd4, 0x08, 0x93, 0x99, 0x88, 0xfd, 0x6a, 0xd6,
@@ -45865,7 +45915,9 @@ static wc_test_ret_t dilithium_param_65_vfy_test(void)
         0x96, 0x0d, 0x23, 0x2b, 0x37, 0x87, 0x8d, 0xc8, 0xf7, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x03, 0x0b, 0x13, 0x1a, 0x1d, 0x25
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_65_draft_sig[] = {
     0x3e, 0xff, 0xf4, 0x48, 0x80, 0x2d, 0x88, 0x87, 0xf4, 0xcc,
     0xa4, 0x61, 0xe1, 0x27, 0x20, 0x55, 0x66, 0xc8, 0xfe, 0x3e,
     0xdd, 0xf5, 0x5c, 0x70, 0x6c, 0x54, 0xba, 0x50, 0x8a, 0xa2,
@@ -46197,12 +46249,22 @@ static wc_test_ret_t dilithium_param_65_vfy_test(void)
     0xba, 0xdd, 0x02, 0x45, 0x7e, 0xc1, 0xdd, 0xeb, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x03, 0x0c, 0x15, 0x1c, 0x22, 0x28
-#endif
     };
+#endif
+    wc_test_ret_t ret;
 
-    return dilithium_param_vfy_test(WC_ML_DSA_65, ml_dsa_65_pub_key,
+    ret = dilithium_param_vfy_test(WC_ML_DSA_65, ml_dsa_65_pub_key,
         (word32)sizeof(ml_dsa_65_pub_key), ml_dsa_65_sig,
         (word32)sizeof(ml_dsa_65_sig));
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    if (ret == 0) {
+        ret = dilithium_param_vfy_test(WC_ML_DSA_65_DRAFT,
+            ml_dsa_65_draft_pub_key, (word32)sizeof(ml_dsa_65_draft_pub_key),
+            ml_dsa_65_draft_sig, (word32)sizeof(ml_dsa_65_draft_sig));
+    }
+#endif
+
+    return ret;
 }
 #endif
 
@@ -46210,7 +46272,6 @@ static wc_test_ret_t dilithium_param_65_vfy_test(void)
 static wc_test_ret_t dilithium_param_87_vfy_test(void)
 {
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_87_pub_key[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0x8a, 0x66, 0xe3, 0x6e, 0x3c, 0x11, 0x70, 0x9f, 0x82, 0xdd, 0xeb, 0x9e,
         0xc0, 0xd7, 0x25, 0x87, 0x0c, 0x65, 0x07, 0x9d, 0x47, 0x39, 0x5d, 0x04,
         0x42, 0x5c, 0xd6, 0x0a, 0xdc, 0x39, 0x44, 0x04, 0xd9, 0x79, 0x43, 0x87,
@@ -46427,7 +46488,9 @@ static wc_test_ret_t dilithium_param_87_vfy_test(void)
         0xf5, 0xdc, 0x9f, 0x3c, 0x6c, 0x69, 0x0d, 0x61, 0x49, 0xb2, 0xe0, 0xb2,
         0xe5, 0xef, 0x19, 0xbe, 0x04, 0xf6, 0x6b, 0xad, 0x41, 0x4c, 0x5a, 0x50,
         0xf6, 0xac, 0x1b, 0x25, 0x8a, 0xdd, 0xe3, 0x57, 0xab, 0x7c, 0x92, 0xe4
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_87_draft_pub_key[] = {
     0xef, 0x49, 0x79, 0x47, 0x15, 0xc4, 0x8a, 0xa9, 0x74, 0x2a,
     0xf0, 0x36, 0x94, 0x5c, 0x91, 0x1c, 0x5d, 0xff, 0x2c, 0x83,
     0xf2, 0x8b, 0x04, 0xfc, 0x5d, 0x64, 0xbd, 0x49, 0x73, 0xcd,
@@ -46688,10 +46751,9 @@ static wc_test_ret_t dilithium_param_87_vfy_test(void)
     0x2e, 0xfa, 0xcb, 0x5f, 0x5b, 0xd8, 0x09, 0x83, 0xe9, 0x40,
     0xe9, 0x0e, 0x42, 0xdd, 0x17, 0xd7, 0x6e, 0x19, 0x8d, 0x95,
     0x0a, 0x93
-#endif
     };
+#endif
     WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_87_sig[] = {
-#ifndef WOLFSSL_DILITHIUM_FIPS204_DRAFT
         0x20, 0xff, 0x12, 0xe1, 0x87, 0xf6, 0x11, 0x38, 0xff, 0x41, 0xd0, 0x8f,
         0xcd, 0x7e, 0xd1, 0xf6, 0x21, 0x17, 0xd0, 0x46, 0xe9, 0x86, 0x83, 0x1b,
         0xaf, 0xe5, 0x2b, 0x59, 0x21, 0xd1, 0x6b, 0xc9, 0xdb, 0x34, 0xdc, 0xba,
@@ -47078,7 +47140,9 @@ static wc_test_ret_t dilithium_param_87_vfy_test(void)
         0x51, 0x68, 0x89, 0xad, 0xae, 0xc7, 0xd1, 0xde, 0xe2, 0xf9, 0xfe, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
         0x0c, 0x18, 0x20, 0x24, 0x2f, 0x33, 0x3f
-#else
+    };
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    WOLFSSL_SMALL_STACK_STATIC const byte ml_dsa_87_draft_sig[] = {
     0x78, 0xed, 0x1a, 0x3f, 0x41, 0xab, 0xf8, 0x93, 0x80, 0xf0,
     0xc6, 0xbf, 0x4a, 0xde, 0xaf, 0x29, 0x93, 0xe5, 0x9a, 0xbf,
     0x38, 0x08, 0x18, 0x33, 0xca, 0x7d, 0x5e, 0x65, 0xa4, 0xd2,
@@ -47542,12 +47606,22 @@ static wc_test_ret_t dilithium_param_87_vfy_test(void)
     0x02, 0x6a, 0x70, 0xc8, 0xcd, 0xd0, 0xe2, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
     0x12, 0x1c, 0x22, 0x2b, 0x33, 0x38, 0x3f
-#endif
     };
+#endif
+    wc_test_ret_t ret;
 
-    return dilithium_param_vfy_test(WC_ML_DSA_87, ml_dsa_87_pub_key,
+    ret = dilithium_param_vfy_test(WC_ML_DSA_87, ml_dsa_87_pub_key,
         (word32)sizeof(ml_dsa_87_pub_key), ml_dsa_87_sig,
         (word32)sizeof(ml_dsa_87_sig));
+#ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT
+    if (ret == 0) {
+        ret = dilithium_param_vfy_test(WC_ML_DSA_87_DRAFT,
+            ml_dsa_87_draft_pub_key, (word32)sizeof(ml_dsa_87_draft_pub_key),
+            ml_dsa_87_draft_sig, (word32)sizeof(ml_dsa_87_draft_sig));
+    }
+#endif
+
+    return ret;
 }
 #endif
 #endif

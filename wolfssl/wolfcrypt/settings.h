@@ -20,24 +20,17 @@
  */
 
 /*
- *   ************************************************************************
+ *   Note, this file should not be edited to activate/deactivate features.
  *
- *   ******************************** NOTICE ********************************
- *
- *   ************************************************************************
- *
- *   This method of uncommenting a line in settings.h is outdated.
- *
- *   Please use user_settings.h / WOLFSSL_USER_SETTINGS
+ *   Instead, add/edit user_settings.h, and compile with -DWOLFSSL_USER_SETTINGS
  *
  *         or
  *
- *   ./configure CFLAGS="-DFLAG"
+ *   ./configure CFLAGS="-DFEATURE_FLAG_TO_DEFINE -UFEATURE_FLAG_TO_CLEAR [...]"
  *
  *   For more information see:
  *
  *   https://www.wolfssl.com/how-do-i-manage-the-build-configuration-of-wolfssl/
- *
  */
 
 
@@ -2399,7 +2392,10 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* Detect Cortex M3 (no UMAAL) */
-#if defined(WOLFSSL_SP_ARM_CORTEX_M_ASM) && defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) && !defined(WOLFSSL_ARM_ARCH_7M)
+    #define WOLFSSL_ARM_ARCH_7M
+#endif
+#if defined(WOLFSSL_SP_ARM_CORTEX_M_ASM) && defined(WOLFSSL_ARM_ARCH_7M)
     #undef  WOLFSSL_SP_NO_UMAAL
     #define WOLFSSL_SP_NO_UMAAL
 #endif
