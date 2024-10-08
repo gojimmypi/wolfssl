@@ -2318,7 +2318,7 @@ static WC_INLINE int bench_stats_check(double start)
     int ret = 0;
     double this_current_time = 0.0;
     this_current_time = current_time(0); /* get the timestamp, no reset */
-#if defined(DEBUG_WOLFSSL_BENCHMARK_TIMING)
+#if defined(DEBUG_WOLFSSL_BENCHMARK_TIMING) && defined(WOLFSSL_ESPIDF)
     #if defined(WOLFSSL_ESPIDF)
         ESP_LOGI(TAG, "bench_stats_check Current time = %f, start = %f",
                        this_current_time, start );
