@@ -259,7 +259,10 @@
         #endif
     #endif
     #define HAVE_ALPN
-    #define HAVE_SNI
+    #ifndef CONFIG_IDF_TARGET_ESP8266
+        /* SNI Not supported on ESP8266 at this time */
+        #define HAVE_SNI
+    #endif
     #define OPENSSL_EXTRA_X509_SMALL
 
     #define HAVE_TLS_EXTENSIONS
@@ -823,7 +826,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 optionally increase error message size for very long paths.
 #define WOLFSSL_MAX_ERROR_SZ 500
 
-Turn debugging on/off:
+Turn wolfSSL debugging on/off:
     wolfSSL_Debugging_ON();
     wolfSSL_Debugging_OFF();
 

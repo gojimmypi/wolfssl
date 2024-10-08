@@ -259,7 +259,10 @@
         #endif
     #endif
     #define HAVE_ALPN
-    #define HAVE_SNI
+    #ifndef CONFIG_IDF_TARGET_ESP8266
+        /* SNI Not supported on ESP8266 at this time */
+        #define HAVE_SNI
+    #endif
     #define OPENSSL_EXTRA_X509_SMALL
 
     #define HAVE_TLS_EXTENSIONS

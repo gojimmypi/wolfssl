@@ -826,7 +826,7 @@ See wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h for details on debug options
 optionally increase error message size for very long paths.
 #define WOLFSSL_MAX_ERROR_SZ 500
 
-Turn debugging on/off:
+Turn wolfSSL debugging on/off:
     wolfSSL_Debugging_ON();
     wolfSSL_Debugging_OFF();
 
@@ -863,7 +863,7 @@ Turn on timer debugging (used when CPU cycles not available)
 /* Pause in a loop rather than exit. */
 /* #define WOLFSSL_ESPIDF_ERROR_PAUSE */
 /* #define WOLFSSL_ESP32_HW_LOCK_DEBUG */
-#define DEBUG_WOLFSSL_BENCHMARK_TIMING
+
 #define WOLFSSL_HW_METRICS
 
 /* for test.c */
