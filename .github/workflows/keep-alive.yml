@@ -1,0 +1,15 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Runs every hour
+    - cron: "0 * * * *"
+
+jobs:
+  keep-alive:
+    runs-on: self-hosted  # Ensure this runs on your self-hosted runner
+
+    steps:
+      - name: Run keep-alive task
+        run: |
+          echo "Running periodic keep-alive task."
