@@ -6421,7 +6421,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
 #endif /* NO_LARGE_HASH_TEST */
 
 exit:
-
     wc_Sha512Free(&sha);
     wc_Sha512Free(&shaCopy);
 #ifndef NO_WOLFSSL_SHA256_INTERLEAVE
@@ -6555,7 +6554,7 @@ See https://github.com/wolfSSL/wolfssl/pull/6134
 #endif
     for (i = 0; i < times; ++i) {
         ret = wc_Sha512_224Update(&sha, (byte*)large_input,
-            LARGE_HASH_TEST_INPUT_SZ);
+            (word32)sizeof(large_input));
         if (ret != 0)
             ERROR_OUT(-22408, exit);
     }
