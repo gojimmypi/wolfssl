@@ -7,6 +7,8 @@ on:
 
 jobs:
   keep-alive:
+    # Don't run this on downstream forks:
+    if: github.repository_owner == 'gojimmypi'
     runs-on: self-hosted  # Ensure this runs on your self-hosted runner
 
     steps:
