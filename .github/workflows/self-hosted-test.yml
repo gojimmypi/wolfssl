@@ -25,3 +25,12 @@ jobs:
       - name: Run tests
         run: |
           whoami
+
+      - name: Send repository dispatch to wolfssl-actions
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.wolfssl_action_token }}" \
+          https://api.github.com/repos/gojimmypi/wolfssl-actions/dispatches \
+          -d '{"event_type":"espressif_test"}'
+
