@@ -6188,9 +6188,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha256_test(void)
 
 exit:
 
-#if !defined(NO_LARGE_HASH_TEST) && defined(WOLFSSL_SMALL_STACK)
-    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
     wc_Sha256Free(&sha);
     wc_Sha256Free(&shaCopy);
 #ifndef NO_WOLFSSL_SHA256_INTERLEAVE
@@ -6220,13 +6217,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
     byte       i_hash[WC_SHA512_DIGEST_SIZE];
     byte       i_hashcopy[WC_SHA512_DIGEST_SIZE];
     testVector interleave_test_sha[3];
-#endif
-#ifndef NO_LARGE_HASH_TEST
-#ifdef WOLFSSL_SMALL_STACK
-    byte *large_input = NULL;
-#else
-    byte large_input[LARGE_HASH_TEST_INPUT_SZ];
-#endif
 #endif
 
     int times = sizeof(test_sha) / sizeof(struct testVector), i;
@@ -6365,6 +6355,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
 
 #ifndef NO_LARGE_HASH_TEST
     /* BEGIN LARGE HASH TEST */ {
+    byte large_input[1024];
 #ifdef HASH_SIZE_LIMIT
     WOLFSSL_SMALL_STACK_STATIC const char* large_digest =
         "\x30\x9B\x96\xA6\xE9\x43\x78\x30\xA3\x71\x51\x61\xC1\xEB\xE1\xBE"
@@ -6379,16 +6370,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
         "\xa5\xdc\xfc\xfa\x9d\x1a\x4d\xc0\xfa\x3a\x14\xf6\x01\x51\x90\xa4";
 #endif
 
-#ifdef WOLFSSL_SMALL_STACK
-    large_input = (byte *)XMALLOC(LARGE_HASH_TEST_INPUT_SZ, HEAP_HINT,
-                                  DYNAMIC_TYPE_TMP_BUFFER);
-
-    if (large_input == NULL) {
-        ERROR_OUT(WC_TEST_RET_ENC_EC(MEMORY_E), exit);
-    }
-#endif
-
-    for (i = 0; i < LARGE_HASH_TEST_INPUT_SZ; i++) {
+    for (i = 0; i < (int)sizeof(large_input); i++) {
         large_input[i] = (byte)(i & 0xFF);
     }
 #ifdef HASH_SIZE_LIMIT
@@ -6398,7 +6380,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
 #endif
     for (i = 0; i < times; ++i) {
         ret = wc_Sha512Update(&sha, (byte*)large_input,
-            LARGE_HASH_TEST_INPUT_SZ);
+            (word32)sizeof(large_input));
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
 #ifndef NO_WOLFSSL_SHA512_INTERLEAVE
@@ -6440,9 +6422,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
 
 exit:
 
-#if !defined(NO_LARGE_HASH_TEST) && defined(WOLFSSL_SMALL_STACK)
-    XFREE(large_input, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
     wc_Sha512Free(&sha);
     wc_Sha512Free(&shaCopy);
 #ifndef NO_WOLFSSL_SHA256_INTERLEAVE
@@ -6576,7 +6555,7 @@ See https://github.com/wolfSSL/wolfssl/pull/6134
 #endif
     for (i = 0; i < times; ++i) {
         ret = wc_Sha512_224Update(&sha, (byte*)large_input,
-            (word32)sizeof(large_input));
+            LARGE_HASH_TEST_INPUT_SZ);
         if (ret != 0)
             ERROR_OUT(-22408, exit);
     }
