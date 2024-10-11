@@ -183,9 +183,15 @@ void app_main(void)
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
-    #ifdef DEBUG_WOLFSSL
-        wolfSSL_Debugging_OFF();
-    #endif
+#ifdef DEBUG_WOLFSSL
+    wolfSSL_Debugging_OFF();
+#endif
+#ifdef CONFIG_IDF_TARGET_ESP32H2
+    ESP_LOGE(TAG, "No WiFi on the ESP32-H2 and ethernet not yet supported");
+    while (1) {
+        vTaskDelay(60000)
+    }
+#endif
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     ret = set_time(); /* need to setup NTP before WiFi */
