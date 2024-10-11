@@ -311,8 +311,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
                                         - uxTaskGetStackHighWaterMark(NULL) );
         WOLFSSL_MSG("Waiting for a connection...");
+#if ESP_IDF_VERSION_MAJOR >=4
+        /* TODO: IP Address is problematic in RTOS SDK 3.4 */
         wifi_show_ip();
-
+#endif
         /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
