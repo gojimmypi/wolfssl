@@ -71,8 +71,12 @@ extern wc_ptr_t _rodata_start[];
 extern wc_ptr_t _rodata_end[];
 extern wc_ptr_t _bss_start[];
 extern wc_ptr_t _bss_end[];
+#ifdef CONFIG_IDF_TARGET_ESPC2
+/* no rtc on ESP32-C2*/
+#else
 extern wc_ptr_t _rtc_data_start[];
 extern wc_ptr_t _rtc_data_end[];
+#endif
 extern wc_ptr_t _rtc_bss_start[];
 extern wc_ptr_t _rtc_bss_end[];
 extern wc_ptr_t _iram_start[];
@@ -213,7 +217,11 @@ int sdk_init_meminfo(void) {
     sdk_log_meminfo(init,          _init_start,         _init_end);
 #endif
     sdk_log_meminfo(text,          _text_start,         _text_end);
+#if defined(CONFIG_IDF_TARGET_ESPC2)
+    /* No rtc_data on ESP32-C2 at this time. TODO: something equivlent? */
+#else
     sdk_log_meminfo(rtc_data,      _rtc_data_start,     _rtc_data_end);
+#endif
     ESP_LOGI(TAG, "-----------------------------------------------------");
     sample_heap_var = malloc(1);
     if (sample_heap_var == NULL) {
