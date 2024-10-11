@@ -189,7 +189,7 @@ void app_main(void)
 #ifdef CONFIG_IDF_TARGET_ESP32H2
     ESP_LOGE(TAG, "No WiFi on the ESP32-H2 and ethernet not yet supported");
     while (1) {
-        vTaskDelay(60000)
+        vTaskDelay(60000);
     }
 #endif
     /* Set time for cert validation.
