@@ -71,12 +71,6 @@ extern wc_ptr_t _rodata_start[];
 extern wc_ptr_t _rodata_end[];
 extern wc_ptr_t _bss_start[];
 extern wc_ptr_t _bss_end[];
-#ifdef CONFIG_IDF_TARGET_ESPC2
-/* no rtc on ESP32-C2*/
-#else
-extern wc_ptr_t _rtc_data_start[];
-extern wc_ptr_t _rtc_data_end[];
-#endif
 extern wc_ptr_t _rtc_bss_start[];
 extern wc_ptr_t _rtc_bss_end[];
 extern wc_ptr_t _iram_start[];
@@ -95,8 +89,12 @@ extern wc_ptr_t _text_start[];
 extern wc_ptr_t _text_end[];
 extern wc_ptr_t _heap_start[];
 extern wc_ptr_t _heap_end[];
-extern wc_ptr_t _rtc_data_start[];
-extern wc_ptr_t _rtc_data_end[];
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+    /* no rtc_data on ESP32-C2*/
+#else
+    extern wc_ptr_t _rtc_data_start[];
+    extern wc_ptr_t _rtc_data_end[];
+#endif
 
 #if defined(CONFIG_IDF_TARGET_ARCH_XTENSA) && CONFIG_IDF_TARGET_ARCH_XTENSA == 1
     extern void* _thread_local_start;
@@ -217,7 +215,7 @@ int sdk_init_meminfo(void) {
     sdk_log_meminfo(init,          _init_start,         _init_end);
 #endif
     sdk_log_meminfo(text,          _text_start,         _text_end);
-#if defined(CONFIG_IDF_TARGET_ESPC2)
+#if defined(CONFIG_IDF_TARGET_ESP32C2)
     /* No rtc_data on ESP32-C2 at this time. TODO: something equivlent? */
 #else
     sdk_log_meminfo(rtc_data,      _rtc_data_start,     _rtc_data_end);
