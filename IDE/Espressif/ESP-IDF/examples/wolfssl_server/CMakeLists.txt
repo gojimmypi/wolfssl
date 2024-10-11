@@ -3,7 +3,8 @@
 #
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
-Begin project ${CMAKE_PROJECT_NAME}")
+message(STATUS "Begin project ${CMAKE_PROJECT_NAME}")
+
 cmake_minimum_required(VERSION 3.16)
 
 # The wolfSSL CMake file should be able to find the source code.
@@ -96,6 +97,6 @@ if(0)
     endif()
 endif()
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-wifi_show_ip
+message(STATUS "end include")
 project(wolfssl_server)
 message(STATUS "end project")
