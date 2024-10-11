@@ -81,8 +81,12 @@ extern wc_ptr_t _init_end[];
 #endif
 extern wc_ptr_t _iram_text_start[];
 extern wc_ptr_t _iram_text_end[];
-extern wc_ptr_t _iram_bss_start[];
-extern wc_ptr_t _iram_bss_end[];
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* TODO: Find ESP32-S2 equivalent */
+#else
+    extern wc_ptr_t _iram_bss_start[];
+    extern wc_ptr_t _iram_bss_end[];
+#endif
 extern wc_ptr_t _noinit_start[];
 extern wc_ptr_t _noinit_end[];
 extern wc_ptr_t _text_start[];
@@ -201,7 +205,11 @@ int sdk_init_meminfo(void) {
 #endif
     sdk_log_meminfo(data,          _data_start,         _data_end);
     sdk_log_meminfo(user_data_ram, USER_DATA_START,     USER_DATA_END);
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* TODO: Find ESP32-S2 equivalent of bss */
+#else
     sdk_log_meminfo(bss,           _bss_start,          _bss_end);
+#endif
     sdk_log_meminfo(noinit,        _noinit_start,       _noinit_end);
     sdk_log_meminfo(ets_system,    ETS_SYS_START,       ETS_SYS_END);
     sdk_log_meminfo(rodata,        _rodata_start,       _rodata_end);
@@ -210,13 +218,17 @@ int sdk_init_meminfo(void) {
     sdk_log_meminfo(iramf2,        IRAMF2_START,        IRAMF2_END);
     sdk_log_meminfo(iram,          _iram_start,         _iram_end);
     sdk_log_meminfo(iram_text,     _iram_text_start,    _iram_text_end);
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+    /* No iram_bss on ESP32-C2 at this time. TODO: something equivalent? */
+#else
     sdk_log_meminfo(iram_bss,      _iram_bss_start,     _iram_bss_end);
+#endif
 #if defined(CONFIG_IDF_TARGET_ESP8266)
     sdk_log_meminfo(init,          _init_start,         _init_end);
 #endif
     sdk_log_meminfo(text,          _text_start,         _text_end);
 #if defined(CONFIG_IDF_TARGET_ESP32C2)
-    /* No rtc_data on ESP32-C2 at this time. TODO: something equivlent? */
+    /* No rtc_data on ESP32-C2 at this time. TODO: something equivalent? */
 #else
     sdk_log_meminfo(rtc_data,      _rtc_data_start,     _rtc_data_end);
 #endif
