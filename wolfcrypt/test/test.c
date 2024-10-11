@@ -6464,7 +6464,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t sha512_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_EC(ret), exit);
 #ifndef NO_WOLFSSL_SHA512_INTERLEAVE
         ret = wc_Sha512Update(&i_sha, (byte*)large_input,
-           (word32)sizeof(large_input));
+            LARGE_HASH_TEST_INPUT_SZ);
         if (ret != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), exit);
 #endif
