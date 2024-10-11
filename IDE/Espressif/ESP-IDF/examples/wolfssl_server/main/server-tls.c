@@ -306,8 +306,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     #endif
 #endif
 #ifdef WOLFSSL_EXAMPLE_VERBOSITY
-    ESP_LOGI(TAG, "Initial stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
-#endif                                    - uxTaskGetStackHighWaterMark(NULL) );
+    ESP_LOGI(TAG, "Initial stack used: %d\n",
+             TLS_SMP_SERVER_TASK_BYTES  - uxTaskGetStackHighWaterMark(NULL) );
+#endif
     ESP_LOGI(TAG, "accept clients...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
@@ -385,8 +386,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         wolfSSL_free(ssl);      /* Free the wolfSSL object              */
         close(connd);           /* Close the connection to the client   */
 #ifdef WOLFSSL_EXAMPLE_VERBOSITY
-        ESP_LOGI(TAG, "Stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
-                                        - uxTaskGetStackHighWaterMark(NULL) );
+        ESP_LOGI(TAG, "Stack used: %d\n",
+                TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
     } /* !shutdown */
     /* Cleanup and return */
