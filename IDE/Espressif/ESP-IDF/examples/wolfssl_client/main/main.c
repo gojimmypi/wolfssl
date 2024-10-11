@@ -47,10 +47,11 @@
 #include "client-tls.h"
 #include "time_helper.h"
 
-#ifndef CONFIG_IDF_TARGET_ESP32H2
+#ifdef CONFIG_IDF_TARGET_ESP32H2
     /* There's no WiFi on ESP32-H2.
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
+#else
     #include "wifi_connect.h"
     /*
      * Note ModBus TCP cannot be disabled on ESP8266 tos-sdk/v3.4
@@ -182,9 +183,15 @@ void app_main(void)
 #ifdef HAVE_VERSION_EXTENDED_INFO
     esp_ShowExtendedSystemInfo();
 #endif
-    #ifdef DEBUG_WOLFSSL
-        wolfSSL_Debugging_OFF();
-    #endif
+#ifdef DEBUG_WOLFSSL
+    wolfSSL_Debugging_OFF();
+#endif
+#ifdef CONFIG_IDF_TARGET_ESP32H2
+    ESP_LOGE(TAG, "No WiFi on the ESP32-H2 and ethernet not yet supported");
+    while (1) {
+        vTaskDelay(60000);
+    }
+#endif
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     ret = set_time(); /* need to setup NTP before WiFi */
@@ -279,7 +286,6 @@ void app_main(void)
                    - (uxTaskGetStackHighWaterMark(NULL))
             );
     ESP_LOGI(TAG, "Starting TLS Client task ...\n");
-
     ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d",
                   &this_heap, this_heap);
     tls_smp_client_init(args);
