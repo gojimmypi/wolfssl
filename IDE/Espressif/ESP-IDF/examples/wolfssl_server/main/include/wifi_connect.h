@@ -21,9 +21,6 @@
 #ifndef _WIFI_CONNECT_H_
 #define _WIFI_CONNECT_H_
 
-#include <esp_idf_version.h>
-#include <esp_log.h>
-
 /* ESP lwip */
 #define EXAMPLE_ESP_MAXIMUM_RETRY       CONFIG_ESP_MAXIMUM_RETRY
 
@@ -38,6 +35,7 @@
 
 #define USE_WIFI_EXAMPLE
 #ifdef USE_WIFI_EXAMPLE
+    #include "esp_netif.h"
     #include "protocol_examples_common.h" /* see project CMakeLists.txt */
 #endif
 
@@ -53,19 +51,54 @@
  * file my_private_config.h should be excluded from git updates */
 /* #define  USE_MY_PRIVATE_CONFIG */
 
-#ifdef  USE_MY_PRIVATE_CONFIG
+/* Note that IntelliSense may not work properly in the next section for the
+ * Espressif SDK 3.4 on the ESP8266. Macros should still be defined.
+ * See the project-level Makefile. Example found in:
+ * https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template
+ *
+ * The USE_MY_PRIVATE_[OS]_CONFIG is typically an environment variable that
+ * triggers the make (not cmake) to add compiler defines.
+ */
+#if defined(USE_MY_PRIVATE_WINDOWS_CONFIG)
+    #include "/workspace/my_private_config.h"
+#elif defined(USE_MY_PRIVATE_WSL_CONFIG)
+    #include "/mnt/c/workspace/my_private_config.h"
+#elif defined(USE_MY_PRIVATE_LINUX_CONFIG)
+    #include "~/workspace/my_private_config.h"
+#elif defined(USE_MY_PRIVATE_MAC_CONFIG)
+    #include "~/Documents/my_private_config.h"
+#elif defined(USE_MY_PRIVATE_CONFIG)
+    /* This section works best with cmake & non-environment variable setting */
     #if defined(WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS)
+        #define WOLFSSL_CMAKE
+        #include "/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_WINDOWS)
+        #define WOLFSSL_MAKE
         #include "/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_WSL)
+        #define WOLFSSL_CMAKE
+        #include "/mnt/c/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_WSL)
+        #define WOLFSSL_MAKE
         #include "/mnt/c/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_LINUX)
+        #define WOLFSSL_CMAKE
+        #include "~/workspace/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_LINUX)
+        #define WOLFSSL_MAKE
         #include "~/workspace/my_private_config.h"
     #elif defined(WOLFSSL_CMAKE_SYSTEM_NAME_APPLE)
         #include "~/Documents/my_private_config.h"
+    #elif defined(WOLFSSL_MAKE_SYSTEM_NAME_APPLE)
+        #define WOLFSSL_MAKE
+        #include "~/Documents/my_private_config.h"
+    #elif defined(OS_WINDOWS)
+        #include "/workspace/my_private_config.h"
     #else
-        #warning "did not detect environment. using ~/my_private_config.h"
-        #include "~/my_private_config.h"
-	#endif
+        /* Edit as needed for your private config: */
+        #warning "default private config using /workspace/my_private_config.h"
+        #include "/workspace/my_private_config.h"
+    #endif
 #else
 
     /*

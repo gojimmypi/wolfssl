@@ -259,7 +259,12 @@
         #endif
     #endif
     #define HAVE_ALPN
-    #define HAVE_SNI
+    #ifndef CONFIG_IDF_TARGET_ESP8266
+        /* Unless installed in the ESP8266 RTOS SDK locally, the wolfSSL
+         * API for SNI will not be seen in the components/esp-tls layer.
+         * Only enable SNI for non-ESP8266 targets by default: */
+        #define HAVE_SNI
+    #endif
     #define OPENSSL_EXTRA_X509_SMALL
 
     #define HAVE_TLS_EXTENSIONS
