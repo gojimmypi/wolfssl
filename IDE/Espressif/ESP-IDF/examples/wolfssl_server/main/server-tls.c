@@ -305,11 +305,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
     #endif
 #endif
+#ifdef WOLFSSL_EXAMPLE_VERBOSITY
+    ESP_LOGI(TAG, "Initial stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
+#endif                                    - uxTaskGetStackHighWaterMark(NULL) );
     ESP_LOGI(TAG, "accept clients...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        ESP_LOGI(TAG, "Stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
-                                        - uxTaskGetStackHighWaterMark(NULL) );
         WOLFSSL_MSG("Waiting for a connection...");
 #if ESP_IDF_VERSION_MAJOR >=4
         /* TODO: IP Address is problematic in RTOS SDK 3.4 */
@@ -339,7 +340,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             }
         }
 #else
-        ESP_LOGI(TAG, "WOLFSSL_HAVE_KYBER is not enabled");
+        ESP_LOGI(TAG, "WOLFSSL_HAVE_KYBER is not enabled, not using PQ.");
 #endif
         /* show what cipher connected for this WOLFSSL* object */
         ShowCiphers(ssl);
@@ -383,6 +384,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         /* Cleanup after this connection */
         wolfSSL_free(ssl);      /* Free the wolfSSL object              */
         close(connd);           /* Close the connection to the client   */
+#ifdef WOLFSSL_EXAMPLE_VERBOSITY
+        ESP_LOGI(TAG, "Stack used: %d\n", TLS_SMP_SERVER_TASK_BYTES
+                                        - uxTaskGetStackHighWaterMark(NULL) );
+#endif
     } /* !shutdown */
     /* Cleanup and return */
     wolfSSL_free(ssl);      /* Free the wolfSSL object                  */
