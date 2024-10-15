@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-// edit test for Vigilant mode 14
-
 /* ESP-IDF */
 #include <esp_log.h>
 #include "sdkconfig.h"
@@ -193,8 +191,6 @@ void app_main(void)
     esp_DisableWatchdog();
 #endif
 
-// TODO move this all to esp_ShowExtendedSystemInfo
-
 #ifdef ESP_TASK_MAIN_STACK
      ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
 #endif
@@ -211,7 +207,7 @@ void app_main(void)
      * the minimum free stack space there has been (in bytes not words, unlike
      * vanilla FreeRTOS) since the task started. The smaller the returned
      * number the closer the task has come to overflowing its stack.
-     * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+     * see Espressif esp32/api-reference/system/freertos_idf.html
      */
     stack_start = uxTaskGetStackHighWaterMark(NULL);
     ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
@@ -228,7 +224,7 @@ void app_main(void)
     set_time();
 #endif
 
-/* when using atecc608a on esp32-wroom-32se */
+/* when using atecc608a on esp32-WROOM-32se */
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
     #if defined(CUSTOM_SLOT_ALLOCATION)
