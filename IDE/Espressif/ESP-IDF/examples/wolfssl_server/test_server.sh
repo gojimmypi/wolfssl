@@ -39,21 +39,23 @@ tls_test() {
 until [ $count -gt "$LOOPS" ] || [ $failed -gt 0 ]; do
     echo "Count: $count"
 
-    tls_test "ESP8266"  "192.168.1.47"
+    # COM9 SP32-H2, no WiFi
 
-    tls_test "ESP32-C2" "192.168.1.48"
+    tls_test "COM11 ESP8266"  "192.168.1.47"
 
-    tls_test "ESP32-C2" "192.168.1.53"
+    tls_test "COM10 ESP8684 (C2)" "192.168.1.48"
 
-    tls_test "ESP32-C3" "192.168.1.26"
+    tls_test "COM12 ESP32-C2" "192.168.1.53"
 
-    tls_test "ESP32-C6" "192.168.1.127"
+    tls_test "COM6 ESP32-C3" "192.168.1.26"
 
-    tls_test "ESP32"    "192.168.1.27"
+    tls_test "COM8 ESP32-C6" "192.168.1.127"
 
-    tls_test "ESP32-S2" "192.168.1.79"
+    tls_test "COM7 ESP32"    "192.168.1.27"
 
-    tls_test "ESP32-S3" "192.168.1.236"
+    tls_test "COM5 ESP32-S2" "192.168.1.78"
+
+    tls_test "COM4 ESP32-S3" "192.168.1.236"
 
     count=$((count + 1))
 done
