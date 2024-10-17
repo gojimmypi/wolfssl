@@ -32,8 +32,7 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 #ifdef WOLFSSL_ARMASM
-#if !defined(__aarch64__) && defined(__arm__) && (!defined(__thumb__) || \
-        defined(__THUMB_INTERWORK__))
+#if !defined(__aarch64__) && !defined(WOLFSSL_ARMASM_THUMB2)
 #include <stdint.h>
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -270,8 +269,8 @@ void poly1305_blocks_arm32_16(Poly1305* ctx_p, const byte* m_p, word32 len_p,
         "\n"
     "L_poly1305_arm32_16_done_%=: \n\t"
         "add	sp, sp, #28\n\t"
-        : [ctx] "+r" (ctx),  [m] "+r" (m),  [len] "+r" (len),
-             [notLast] "+r" (notLast)
+        : [ctx] "+r" (ctx), [m] "+r" (m), [len] "+r" (len),
+          [notLast] "+r" (notLast)
         :
         : "memory", "cc", "r12", "lr", "r4", "r5", "r6", "r7", "r8", "r9",
             "r10", "r11"
@@ -321,8 +320,8 @@ void poly1305_set_key(Poly1305* ctx_p, const byte* key_p)
         "stm	lr, {r5, r6, r7, r8, r12}\n\t"
         /* Zero leftover */
         "str	r5, [%[ctx], #52]\n\t"
-        : [ctx] "+r" (ctx),  [key] "+r" (key),
-            [L_poly1305_arm32_clamp] "+r" (L_poly1305_arm32_clamp_c)
+        : [ctx] "+r" (ctx), [key] "+r" (key),
+          [L_poly1305_arm32_clamp] "+r" (L_poly1305_arm32_clamp_c)
         :
         : "memory", "cc", "r3", "r12", "lr", "r4", "r5", "r6", "r7", "r8"
     );
@@ -377,7 +376,7 @@ void poly1305_final(Poly1305* ctx_p, byte* mac_p)
         /* Zero out padding. */
         "add	r9, %[ctx], #36\n\t"
         "stm	r9, {r4, r5, r6, r7}\n\t"
-        : [ctx] "+r" (ctx),  [mac] "+r" (mac)
+        : [ctx] "+r" (ctx), [mac] "+r" (mac)
         :
         : "memory", "cc", "r2", "r3", "r12", "lr", "r4", "r5", "r6", "r7", "r8",
             "r9"
@@ -385,7 +384,7 @@ void poly1305_final(Poly1305* ctx_p, byte* mac_p)
 }
 
 #endif /* HAVE_POLY1305 */
-#endif /* !__aarch64__ && __arm__ && (!__thumb__ || __THUMB_INTERWORK__) */
+#endif /* !__aarch64__ && !WOLFSSL_ARMASM_THUMB2 */
 #endif /* WOLFSSL_ARMASM */
 
 #endif /* WOLFSSL_ARMASM_INLINE */

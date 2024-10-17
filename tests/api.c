@@ -55178,8 +55178,8 @@ static int test_wolfSSL_i2d_ASN1_TYPE(void)
 #if defined(OPENSSL_EXTRA)
     /* Taken from one of sssd's certs othernames */
     unsigned char str_bin[] = {
-      0x04, 0x10, 0xa4, 0x9b, 0xc8, 0xf4, 0x85, 0x8e, 0x89, 0x4d, 0x85, 0x8d,
-      0x27, 0xbd, 0x63, 0xaa, 0x93, 0x93
+        0x04, 0x10, 0xa4, 0x9b, 0xc8, 0xf4, 0x85, 0x8e, 0x89, 0x4d, 0x85, 0x8d,
+        0x27, 0xbd, 0x63, 0xaa, 0x93, 0x93
     };
     ASN1_TYPE* asn1type = NULL;
     unsigned char* der = NULL;
@@ -55190,10 +55190,12 @@ static int test_wolfSSL_i2d_ASN1_TYPE(void)
         ExpectNotNull(str = ASN1_STRING_type_new(V_ASN1_SEQUENCE));
         ExpectIntEQ(ASN1_STRING_set(str, str_bin, sizeof(str_bin)), 1);
         ExpectNotNull(asn1type = ASN1_TYPE_new());
-        if (EXPECT_FAIL()) {
+        if (asn1type != NULL) {
+            ASN1_TYPE_set(asn1type, V_ASN1_SEQUENCE, str);
+        }
+        else {
             ASN1_STRING_free(str);
         }
-        ASN1_TYPE_set(asn1type, V_ASN1_SEQUENCE, str);
     }
 
     ExpectIntEQ(i2d_ASN1_TYPE(asn1type, NULL), sizeof(str_bin));
@@ -61623,6 +61625,11 @@ static int test_wolfSSL_BN_enc_dec(void)
     ExpectNull(BN_bn2hex(&emptyBN));
     ExpectNull(BN_bn2dec(NULL));
     ExpectNull(BN_bn2dec(&emptyBN));
+
+    ExpectNotNull(c = BN_bin2bn(NULL, 0, NULL));
+    BN_clear(c);
+    BN_free(c);
+    c = NULL;
 
     ExpectNotNull(BN_bin2bn(NULL, sizeof(binNum), a));
     BN_free(a);
@@ -87640,6 +87647,7 @@ static void test_AEAD_limit_client(WOLFSSL* ssl)
         /* Test the sending limit for AEAD ciphers */
         Dtls13GetEpoch(ssl, ssl->dtls13Epoch)->nextSeqNumber = sendLimit;
         test_AEAD_seq_num = 1;
+        XMEMSET(msgBuf, 0, sizeof(msgBuf));
         ret = wolfSSL_write(ssl, msgBuf, sizeof(msgBuf));
         AssertIntGT(ret, 0);
         didReKey = 0;
@@ -90805,12 +90813,13 @@ static int test_wolfSSL_dtls_stateless_maxfrag(void)
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
     ExpectIntEQ(test_memio_setup(&test_ctx, &ctx_c, &ctx_s, &ssl_c, &ssl_s,
         wolfDTLSv1_2_client_method, wolfDTLSv1_2_server_method), 0);
+    ExpectNotNull(ssl_s);
     ExpectNotNull(ssl_c2 = wolfSSL_new(ctx_c));
     ExpectIntEQ(wolfSSL_UseMaxFragment(ssl_c2, WOLFSSL_MFL_2_8),
         WOLFSSL_SUCCESS);
     wolfSSL_SetIOWriteCtx(ssl_c2, &test_ctx);
     wolfSSL_SetIOReadCtx(ssl_c2, &test_ctx);
-    if (ssl_s != NULL) {
+    if (EXPECT_SUCCESS()) {
         max_fragment = ssl_s->max_fragment;
     }
     /* send CH */
@@ -95166,11 +95175,12 @@ static int test_dtls_frag_ch(void)
     /* Limit options to make the CH a fixed length */
     /* See wolfSSL_parse_cipher_list for reason why we provide 1.3 AND 1.2
      * ciphersuite. This is only necessary when building with OPENSSL_EXTRA. */
-    ExpectTrue(wolfSSL_set_cipher_list(ssl_c, "TLS13-AES256-GCM-SHA384"
 #ifdef OPENSSL_EXTRA
-            ":DHE-RSA-AES256-GCM-SHA384"
+    ExpectTrue(wolfSSL_set_cipher_list(ssl_c, "TLS13-AES256-GCM-SHA384"
+                                       ":DHE-RSA-AES256-GCM-SHA384"));
+#else
+    ExpectTrue(wolfSSL_set_cipher_list(ssl_c, "TLS13-AES256-GCM-SHA384"));
 #endif
-            ));
 
     /* CH1 */
     ExpectIntEQ(wolfSSL_negotiate(ssl_c), -1);

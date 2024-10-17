@@ -32,8 +32,7 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 #ifdef WOLFSSL_ARMASM
-#if !defined(__aarch64__) && defined(__arm__) && (!defined(__thumb__) || \
-        defined(__THUMB_INTERWORK__))
+#if !defined(__aarch64__) && !defined(WOLFSSL_ARMASM_THUMB2)
 #include <stdint.h>
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -7601,8 +7600,8 @@ void Transform_Sha512_Len(wc_Sha512* sha512_p, const byte* data_p, word32 len_p)
         "bne	L_SHA512_transform_len_begin_%=\n\t"
         "eor	r0, r0, r0\n\t"
         "add	sp, sp, #0xc0\n\t"
-        : [sha512] "+r" (sha512),  [data] "+r" (data),  [len] "+r" (len),
-            [L_SHA512_transform_len_k] "+r" (L_SHA512_transform_len_k_c)
+        : [sha512] "+r" (sha512), [data] "+r" (data), [len] "+r" (len),
+          [L_SHA512_transform_len_k] "+r" (L_SHA512_transform_len_k_c)
         :
         : "memory", "cc", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
             "r12"
@@ -9154,8 +9153,8 @@ void Transform_Sha512_Len(wc_Sha512* sha512_p, const byte* data_p, word32 len_p)
         "subs	%[len], %[len], #0x80\n\t"
         "sub	r3, r3, #0x280\n\t"
         "bne	L_SHA512_transform_neon_len_begin_%=\n\t"
-        : [sha512] "+r" (sha512),  [data] "+r" (data),  [len] "+r" (len),
-            [L_SHA512_transform_neon_len_k] "+r" (L_SHA512_transform_neon_len_k_c)
+        : [sha512] "+r" (sha512), [data] "+r" (data), [len] "+r" (len),
+          [L_SHA512_transform_neon_len_k] "+r" (L_SHA512_transform_neon_len_k_c)
         :
         : "memory", "cc", "r12", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
             "d8", "d9", "d10", "d11", "d12", "d13", "d14", "d15", "q8", "q9",
@@ -9165,7 +9164,7 @@ void Transform_Sha512_Len(wc_Sha512* sha512_p, const byte* data_p, word32 len_p)
 
 #endif /* !WOLFSSL_ARMASM_NO_NEON */
 #endif /* WOLFSSL_SHA512 */
-#endif /* !__aarch64__ && __arm__ && (!__thumb__ || __THUMB_INTERWORK__) */
+#endif /* !__aarch64__ && !WOLFSSL_ARMASM_THUMB2 */
 #endif /* WOLFSSL_ARMASM */
 
 #endif /* WOLFSSL_ARMASM_INLINE */
