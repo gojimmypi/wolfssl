@@ -151,6 +151,11 @@
   <ItemGroup>
     <ClCompile Include="test.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\wolfssl-VS2022.vcxproj">
+      <Project>{12226dbe-7278-4dfa-a119-5a0294cf0b33}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
