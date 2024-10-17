@@ -108,9 +108,9 @@
     #endif
 #endif /* HAVE_FIPS */
 
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
+// #define WOLFSSL_SM2
+// #define WOLFSSL_SM3
+// #define WOLFSSL_SM4
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
 
