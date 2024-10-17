@@ -582,3 +582,6 @@ debian/control
 /IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig-debug
 /IDE/Espressif/ESP-IDF/examples/esp_http_client_example/sdkconfig.july26_cert_bundle
 /IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig-debug
+/IDE/Espressif/ESP-IDF/examples/wolfssl_server/sdkconfig-debug
+/IDE/Espressif/ESP-IDF/examples/wolfssl_client/sdkconfig-debug
+/IDE/Espressif/ESP-IDF/libs/Exported-2024-09-13.vssettings
