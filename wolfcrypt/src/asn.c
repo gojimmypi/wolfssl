@@ -20858,7 +20858,7 @@ static const ASNItem subjDirAttrASN[] = {
 enum {
     SUBJDIRATTRASN_IDX_SEQ = 0,
     SUBJDIRATTRASN_IDX_OID,
-    SUBJDIRATTRASN_IDX_SET,
+    SUBJDIRATTRASN_IDX_SET
 };
 
 /* Number of items in ASN.1 template for BasicConstraints. */
@@ -23526,9 +23526,9 @@ typedef struct DecodeInstr {
     /* Tag expected. */
     byte tag;
     /* Operation to perform: step in or go over */
-    byte op:1;
+    WC_BITFIELD op:1;
     /* ASN.1 item is optional. */
-    byte optional:1;
+    WC_BITFIELD optional:1;
 } DecodeInstr;
 
 /* Step into ASN.1 item. */
@@ -25402,9 +25402,9 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
 {
     const char* header      = NULL;
     const char* footer      = NULL;
-    const char* headerEnd;
-    const char* footerEnd;
-    const char* consumedEnd;
+    const char* headerEnd   = NULL;
+    const char* footerEnd   = NULL;
+    const char* consumedEnd = NULL;
     const char* bufferEnd   = (const char*)(buff + longSz);
     long        neededSz;
     int         ret         = 0;
@@ -40761,7 +40761,7 @@ enum {
     HOLDER_IDX_ISSUERSERIAL_SEQ,
     HOLDER_IDX_GN_SEQ,
     HOLDER_IDX_SERIAL_INT,
-    HOLDER_IDX_GN_SEQ_OPT1,
+    HOLDER_IDX_GN_SEQ_OPT1
 };
 
 /* Number of items in ASN template for an X509 Acert. */
@@ -40885,7 +40885,7 @@ static const ASNItem AttCertIssuerASN[] =
 };
 
 enum {
-    ATTCERTISSUER_IDX_GN_SEQ,
+    ATTCERTISSUER_IDX_GN_SEQ
 };
 
 /* Number of items in ASN template for an X509 Acert. */
@@ -41444,6 +41444,31 @@ int VerifyX509Acert(const byte* der, word32 derSz,
     FREE_ASNGETDATA(dataASN, heap);
     return ret;
 }
+
+void wc_InitDecodedAcert(DecodedAcert* acert, const byte* source, word32 inSz,
+                         void* heap)
+{
+    InitDecodedAcert(acert, source, inSz, heap);
+}
+
+void wc_FreeDecodedAcert(DecodedAcert * acert)
+{
+    FreeDecodedAcert(acert);
+}
+
+int wc_ParseX509Acert(DecodedAcert* acert, int verify)
+{
+    return ParseX509Acert(acert, verify);
+}
+
+int wc_VerifyX509Acert(const byte* acert, word32 acertSz,
+                       const byte* pubKey, word32 pubKeySz,
+                       int pubKeyOID, void * heap)
+{
+    return VerifyX509Acert(acert, acertSz, pubKey, pubKeySz,
+                           pubKeyOID, heap);
+}
+
 #endif /* WOLFSSL_ACERT && WOLFSSL_ASN_TEMPLATE */
 
 #ifdef WOLFSSL_SEP

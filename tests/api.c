@@ -5031,7 +5031,7 @@ static int test_wolfSSL_CTX_use_certificate_chain_buffer_format(void)
     WOLFSSL* ssl = NULL;
     const char* cert = "./certs/server-cert.pem";
     unsigned char* buf = NULL;
-    size_t len;
+    size_t len = 0;
 
     ExpectIntEQ(load_file(cert, &buf, &len), 0);
 
@@ -14004,6 +14004,154 @@ static int test_wolfSSL_X509_ACERT_misc_api(void)
     return EXPECT_RESULT();
 }
 
+static int test_wolfSSL_X509_ACERT_buffer(void)
+{
+    EXPECT_DECLS;
+#if defined(WOLFSSL_ACERT) && !defined(NO_CERTS) && \
+    !defined(NO_RSA) && defined(WC_RSA_PSS) && \
+    (defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA))
+    const byte acert_ietf[] = \
+    "-----BEGIN ATTRIBUTE CERTIFICATE-----\n"
+    "MIICPTCCASUCAQEwN6AWMBGkDzANMQswCQYDVQQDDAJDQQIBAqEdpBswGTEXMBUG\n"
+    "A1UEAwwOc2VydmVyLmV4YW1wbGWgLTArpCkwJzElMCMGA1UEAwwcQXR0cmlidXRl\n"
+    "IENlcnRpZmljYXRlIElzc3VlcjANBgkqhkiG9w0BAQsFAAIUA7WQWQKiqrVAIUS4\n"
+    "LE/ZgBtfV8IwIhgPMjAyMTA2MTUxMjM1MDBaGA8yMDMxMDYxMzEyMzUwMFowQTAj\n"
+    "BggrBgEFBQcKBDEXMBWgCYYHVGVzdHZhbDAIDAZncm91cDEwGgYDVQRIMRMwEaEP\n"
+    "gw1hZG1pbmlzdHJhdG9yMCwwHwYDVR0jBBgwFoAUYm7JaGdsZLtTgt0tqoCK2MrI\n"
+    "i10wCQYDVR04BAIFADANBgkqhkiG9w0BAQsFAAOCAQEAlIOJ2Dj3TEUj6BIv6vUs\n"
+    "GqFWms05i+d10XSzWrunlUTQPoJcUjYkifOWp/7RpZ2XnRl+6hH+nIbmwSmXWwBn\n"
+    "ERw2bQMmw/""/nWuN4Qv9t7ltuovWC0pJX6VMT1IRTuTV4SxuZpFL37vkmnFlPBlb+\n"
+    "mn3ESSxLTjThWFIq1tip4IaxE/i5Uh32GlJglatFHM1PCGoJtyLtYb6KHDlvknw6\n"
+    "coDyjIcj0FZwtQw41jLwxI8jWNmrpt978wdpprB/URrRs+m02HmeQoiHFi/qvdv8\n"
+    "d+5vHf3Pi/ulhz/+dvr0p1vEQSoFnYxLXuty2p5m3PJPZCFmT3gURgmgR3BN9d7A\n"
+    "Bw==\n"
+    "-----END ATTRIBUTE CERTIFICATE-----\n";
+    X509_ACERT * x509 = NULL;
+    int          rc = 0;
+    byte         ietf_serial[] = {0x03, 0xb5, 0x90, 0x59, 0x02,
+                                  0xa2, 0xaa, 0xb5, 0x40, 0x21,
+                                  0x44, 0xb8, 0x2c, 0x4f, 0xd9,
+                                  0x80, 0x1b, 0x5f, 0x57, 0xc2};
+    byte         serial[64];
+    int          serial_len = sizeof(serial);
+    const byte * raw_attr = NULL;
+    word32       attr_len = 0;
+
+    x509 = wolfSSL_X509_ACERT_load_certificate_buffer_ex(acert_ietf,
+                                                         sizeof(acert_ietf),
+                                                         WOLFSSL_FILETYPE_PEM,
+                                                         HEAP_HINT);
+
+    rc = wolfSSL_X509_ACERT_get_serial_number(x509, serial, &serial_len);
+    ExpectIntEQ(rc, SSL_SUCCESS);
+
+    ExpectIntEQ(serial_len, 20);
+    ExpectIntEQ(XMEMCMP(serial, ietf_serial, sizeof(ietf_serial)), 0);
+
+    /* Get the attributes buffer. */
+    rc = wolfSSL_X509_ACERT_get_attr_buf(x509, &raw_attr, &attr_len);
+    ExpectIntEQ(rc, SSL_SUCCESS);
+
+    /* This cert has a 65 byte attributes field. */
+    ExpectNotNull(raw_attr);
+    ExpectIntEQ(attr_len, 65);
+
+    ExpectNotNull(x509);
+
+    if (x509 != NULL) {
+        wolfSSL_X509_ACERT_free(x509);
+        x509 = NULL;
+    }
+#endif
+    return EXPECT_RESULT();
+}
+
+/* Test ACERT support, but with ASN functions only.
+ * */
+static int test_wolfSSL_X509_ACERT_asn(void)
+{
+    EXPECT_DECLS;
+#if defined(WOLFSSL_ACERT) && !defined(NO_CERTS)
+    const byte acert_ietf[] = \
+    "-----BEGIN ATTRIBUTE CERTIFICATE-----\n"
+    "MIICPTCCASUCAQEwN6AWMBGkDzANMQswCQYDVQQDDAJDQQIBAqEdpBswGTEXMBUG\n"
+    "A1UEAwwOc2VydmVyLmV4YW1wbGWgLTArpCkwJzElMCMGA1UEAwwcQXR0cmlidXRl\n"
+    "IENlcnRpZmljYXRlIElzc3VlcjANBgkqhkiG9w0BAQsFAAIUA7WQWQKiqrVAIUS4\n"
+    "LE/ZgBtfV8IwIhgPMjAyMTA2MTUxMjM1MDBaGA8yMDMxMDYxMzEyMzUwMFowQTAj\n"
+    "BggrBgEFBQcKBDEXMBWgCYYHVGVzdHZhbDAIDAZncm91cDEwGgYDVQRIMRMwEaEP\n"
+    "gw1hZG1pbmlzdHJhdG9yMCwwHwYDVR0jBBgwFoAUYm7JaGdsZLtTgt0tqoCK2MrI\n"
+    "i10wCQYDVR04BAIFADANBgkqhkiG9w0BAQsFAAOCAQEAlIOJ2Dj3TEUj6BIv6vUs\n"
+    "GqFWms05i+d10XSzWrunlUTQPoJcUjYkifOWp/7RpZ2XnRl+6hH+nIbmwSmXWwBn\n"
+    "ERw2bQMmw/""/nWuN4Qv9t7ltuovWC0pJX6VMT1IRTuTV4SxuZpFL37vkmnFlPBlb+\n"
+    "mn3ESSxLTjThWFIq1tip4IaxE/i5Uh32GlJglatFHM1PCGoJtyLtYb6KHDlvknw6\n"
+    "coDyjIcj0FZwtQw41jLwxI8jWNmrpt978wdpprB/URrRs+m02HmeQoiHFi/qvdv8\n"
+    "d+5vHf3Pi/ulhz/+dvr0p1vEQSoFnYxLXuty2p5m3PJPZCFmT3gURgmgR3BN9d7A\n"
+    "Bw==\n"
+    "-----END ATTRIBUTE CERTIFICATE-----\n";
+    int            rc = 0;
+    byte           ietf_serial[] = {0x03, 0xb5, 0x90, 0x59, 0x02,
+                                    0xa2, 0xaa, 0xb5, 0x40, 0x21,
+                                    0x44, 0xb8, 0x2c, 0x4f, 0xd9,
+                                    0x80, 0x1b, 0x5f, 0x57, 0xc2};
+    DerBuffer *    der = NULL;
+    #ifdef WOLFSSL_SMALL_STACK
+    DecodedAcert * acert = NULL;
+    #else
+    DecodedAcert   acert[1];
+    #endif
+
+    rc = wc_PemToDer(acert_ietf, sizeof(acert_ietf), ACERT_TYPE, &der,
+                     HEAP_HINT, NULL, NULL);
+
+    ExpectIntEQ(rc, 0);
+    ExpectNotNull(der);
+
+    if (der != NULL) {
+        ExpectNotNull(der->buffer);
+    }
+
+    #ifdef WOLFSSL_SMALL_STACK
+    acert = (DecodedAcert*)XMALLOC(sizeof(DecodedAcert), HEAP_HINT,
+                                   DYNAMIC_TYPE_DCERT);
+    ExpectNotNull(acert);
+    #endif
+
+    #ifdef WOLFSSL_SMALL_STACK
+    if (acert != NULL)
+    #endif
+    {
+        if (der != NULL && der->buffer != NULL) {
+            wc_InitDecodedAcert(acert, der->buffer, der->length, HEAP_HINT);
+            rc = wc_ParseX509Acert(acert, VERIFY_SKIP_DATE);
+            ExpectIntEQ(rc, 0);
+        }
+
+        ExpectIntEQ(acert->serialSz, 20);
+        ExpectIntEQ(XMEMCMP(acert->serial, ietf_serial, sizeof(ietf_serial)),
+                    0);
+
+        /* This cert has a 65 byte attributes field. */
+        ExpectNotNull(acert->rawAttr);
+        ExpectIntEQ(acert->rawAttrLen, 65);
+
+        wc_FreeDecodedAcert(acert);
+    }
+
+    #ifdef WOLFSSL_SMALL_STACK
+    if (acert != NULL) {
+        XFREE(acert, HEAP_HINT, DYNAMIC_TYPE_DCERT);
+        acert = NULL;
+    }
+    #endif
+
+    if (der != NULL) {
+        wc_FreeDer(&der);
+    }
+
+#endif
+    return EXPECT_RESULT();
+}
+
 #if !defined(NO_DH) && !defined(NO_AES) && defined(WOLFSSL_CERT_GEN) && \
          defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && \
          defined(OPENSSL_EXTRA) && !defined(NO_ASN_TIME)
@@ -20866,7 +21014,7 @@ static int test_RsaDecryptBoundsCheck(void)
     WC_RNG rng;
     RsaKey key;
     byte flatC[256];
-    word32 flatCSz;
+    word32 flatCSz = 0;
     byte out[256];
     word32 outSz = sizeof(out);
 
@@ -23284,7 +23432,7 @@ static int test_wc_DsaSignVerify(void)
     byte   hash[WC_SHA_DIGEST_SIZE];
     word32 idx = 0;
     word32 bytes;
-    int    answer;
+    int    answer = 0;
 #ifdef USE_CERT_BUFFERS_1024
     byte   tmp[ONEK_BUF];
 
@@ -25630,7 +25778,7 @@ static int test_wc_ecc_params(void)
 #if !defined(NO_ECC256) && !defined(NO_ECC_SECP)
     /* Test for SECP256R1 curve */
     int curve_id = ECC_SECP256R1;
-    int curve_idx;
+    int curve_idx = 0;
 
     ExpectIntNE(curve_idx = wc_ecc_get_curve_idx(curve_id), ECC_CURVE_INVALID);
     ExpectNotNull(ecc_set = wc_ecc_get_curve_params(curve_idx));
@@ -34819,15 +34967,6 @@ static int test_wc_dilithium_der(void)
     ExpectIntEQ(len = wc_Dilithium_PublicKeyToDer(key, der,
         DILITHIUM_MAX_DER_SIZE, 1), pubDerLen);
     idx = 0;
-{
-    fprintf(stderr, "\n");
-    for (int ii = 0; ii < pubDerLen; ii++) {
-        if ((ii % 8) == 0) fprintf(stderr, "    ");
-        fprintf(stderr, "0x%02x,", der[ii]);
-        if ((ii % 8) == 7) fprintf(stderr, "\n");
-        else               fprintf(stderr, " ");
-    }
-}
     ExpectIntEQ(wc_Dilithium_PublicKeyDecode(der, &idx, key, len), 0);
 
     ExpectIntEQ(len = wc_Dilithium_PrivateKeyToDer(key, der,
@@ -49034,6 +49173,7 @@ static int test_wc_PKCS7_EncodeSignedData(void)
     word32 badOutSz = 0;
     byte   data[] = "Test data to encode.";
 #ifndef NO_RSA
+    int    encryptOid = RSAk;
     #if defined(USE_CERT_BUFFERS_2048)
         byte        key[sizeof(client_key_der_2048)];
         byte        cert[sizeof(client_cert_der_2048)];
@@ -49076,6 +49216,7 @@ static int test_wc_PKCS7_EncodeSignedData(void)
             XFCLOSE(fp);
     #endif
 #elif defined(HAVE_ECC)
+    int    encryptOid = ECDSAk;
     #if defined(USE_CERT_BUFFERS_256)
         unsigned char    cert[sizeof(cliecc_cert_der_256)];
         unsigned char    key[sizeof(ecc_clikey_der_256)];
@@ -49123,7 +49264,7 @@ static int test_wc_PKCS7_EncodeSignedData(void)
         pkcs7->contentSz = (word32)sizeof(data);
         pkcs7->privateKey = key;
         pkcs7->privateKeySz = (word32)sizeof(key);
-        pkcs7->encryptOID = RSAk;
+        pkcs7->encryptOID = encryptOid;
     #ifdef NO_SHA
         pkcs7->hashOID = SHA256h;
     #else
@@ -49140,8 +49281,9 @@ static int test_wc_PKCS7_EncodeSignedData(void)
     ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, NULL, 0), 0);
     ExpectIntEQ(wc_PKCS7_VerifySignedData(pkcs7, output, outputSz), 0);
 
-#ifdef ASN_BER_TO_DER
+#if defined(ASN_BER_TO_DER) && !defined(NO_RSA)
     wc_PKCS7_Free(pkcs7);
+    pkcs7 = NULL;
 
     /* reinitialize and test setting stream mode */
     {
@@ -49158,7 +49300,7 @@ static int test_wc_PKCS7_EncodeSignedData(void)
             pkcs7->contentSz = (word32)sizeof(data);
             pkcs7->privateKey = key;
             pkcs7->privateKeySz = (word32)sizeof(key);
-            pkcs7->encryptOID = RSAk;
+            pkcs7->encryptOID = encryptOid;
         #ifdef NO_SHA
             pkcs7->hashOID = SHA256h;
         #else
@@ -49181,7 +49323,8 @@ static int test_wc_PKCS7_EncodeSignedData(void)
         ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, NULL, 0), 0);
 
         /* use exact signed buffer size since BER encoded */
-        ExpectIntEQ(wc_PKCS7_VerifySignedData(pkcs7, output, (word32)signedSz), 0);
+        ExpectIntEQ(wc_PKCS7_VerifySignedData(pkcs7, output, (word32)signedSz),
+            0);
         wc_PKCS7_Free(pkcs7);
 
         /* now try with using callbacks for IO */
@@ -49194,7 +49337,7 @@ static int test_wc_PKCS7_EncodeSignedData(void)
             pkcs7->contentSz  = FOURK_BUF*2;
             pkcs7->privateKey = key;
             pkcs7->privateKeySz = (word32)sizeof(key);
-            pkcs7->encryptOID = RSAk;
+            pkcs7->encryptOID = encryptOid;
         #ifdef NO_SHA
             pkcs7->hashOID = SHA256h;
         #else
@@ -51551,10 +51694,10 @@ static int test_wc_PKCS7_BER(void)
     byte   decoded[2048];
 #endif
     word32 derSz = 0;
-#ifndef NO_PKCS7_STREAM
+#if !defined(NO_PKCS7_STREAM) && !defined(NO_RSA)
     word32 z;
     int ret;
-#endif /* !NO_PKCS7_STREAM */
+#endif /* !NO_PKCS7_STREAM && !NO_RSA */
 
     ExpectTrue((f = XFOPEN(fName, "rb")) != XBADFILE);
     ExpectTrue((derSz = (word32)XFREAD(der, 1, sizeof(der), f)) > 0);
@@ -54923,8 +55066,14 @@ static int test_wolfSSL_IMPLEMENT_ASN1_FUNCTIONS(void)
         group_obj = OBJ_nid2obj(NID_secp256k1);
         ExpectIntEQ(X509_ALGOR_set0(nested_asn1->key->alg, ec_obj,
                 V_ASN1_OBJECT, group_obj), 1);
-        ec_obj = NULL;
-        group_obj = NULL;
+        if (EXPECT_SUCCESS()) {
+            ec_obj = NULL;
+            group_obj = NULL;
+        }
+        else {
+            wolfSSL_ASN1_OBJECT_free(ec_obj);
+            wolfSSL_ASN1_OBJECT_free(group_obj);
+        }
         ExpectIntEQ(ASN1_BIT_STRING_set_bit(nested_asn1->key->pub_key, 50, 1),
                 1);
         /* nested_asn1->asn1_obj->key */
@@ -54932,8 +55081,14 @@ static int test_wolfSSL_IMPLEMENT_ASN1_FUNCTIONS(void)
         group_obj = OBJ_nid2obj(NID_secp256k1);
         ExpectIntEQ(X509_ALGOR_set0(nested_asn1->asn1_obj->key->alg, ec_obj,
                 V_ASN1_OBJECT, group_obj), 1);
-        ec_obj = NULL;
-        group_obj = NULL;
+        if (EXPECT_SUCCESS()) {
+            ec_obj = NULL;
+            group_obj = NULL;
+        }
+        else {
+            wolfSSL_ASN1_OBJECT_free(ec_obj);
+            wolfSSL_ASN1_OBJECT_free(group_obj);
+        }
         ExpectIntEQ(ASN1_BIT_STRING_set_bit(nested_asn1->asn1_obj->key->pub_key,
                 500, 1), 1);
         /* nested_asn1->asn1_obj->asnNum */
@@ -54951,13 +55106,18 @@ static int test_wolfSSL_IMPLEMENT_ASN1_FUNCTIONS(void)
             ExpectIntGT(
                     sk_ASN1_GENERALSTRING_push(nested_asn1->asn1_obj->strList,
                             genStr), 0);
+            if (EXPECT_FAIL()) {
+                ASN1_GENERALSTRING_free(genStr);
+            }
         }
         /* nested_asn1->asn1_obj->str */
         ExpectNotNull(nested_asn1->asn1_obj->str->d.str2
                 = ASN1_BIT_STRING_new());
         ExpectIntEQ(ASN1_BIT_STRING_set_bit(nested_asn1->asn1_obj->str->d.str2,
                 150, 1), 1);
-        nested_asn1->asn1_obj->str->type = 2;
+        if (nested_asn1 != NULL) {
+            nested_asn1->asn1_obj->str->type = 2;
+        }
 
         der = NULL;
         ExpectIntEQ(i2d_TEST_ASN1_NEST2(nested_asn1, &der), 285);
@@ -54988,6 +55148,9 @@ static int test_wolfSSL_IMPLEMENT_ASN1_FUNCTIONS(void)
             ExpectNotNull(asn1_num = ASN1_INTEGER_new());
             ExpectIntEQ(ASN1_INTEGER_set(asn1_num, i), 1);
             ExpectIntGT(wolfSSL_sk_insert(asn1_item, asn1_num, -1), 0);
+            if (EXPECT_FAIL()) {
+                ASN1_INTEGER_free(asn1_num);
+            }
         }
 
         der = NULL;
@@ -55015,8 +55178,8 @@ static int test_wolfSSL_i2d_ASN1_TYPE(void)
 #if defined(OPENSSL_EXTRA)
     /* Taken from one of sssd's certs othernames */
     unsigned char str_bin[] = {
-      0x04, 0x10, 0xa4, 0x9b, 0xc8, 0xf4, 0x85, 0x8e, 0x89, 0x4d, 0x85, 0x8d,
-      0x27, 0xbd, 0x63, 0xaa, 0x93, 0x93
+        0x04, 0x10, 0xa4, 0x9b, 0xc8, 0xf4, 0x85, 0x8e, 0x89, 0x4d, 0x85, 0x8d,
+        0x27, 0xbd, 0x63, 0xaa, 0x93, 0x93
     };
     ASN1_TYPE* asn1type = NULL;
     unsigned char* der = NULL;
@@ -55027,7 +55190,12 @@ static int test_wolfSSL_i2d_ASN1_TYPE(void)
         ExpectNotNull(str = ASN1_STRING_type_new(V_ASN1_SEQUENCE));
         ExpectIntEQ(ASN1_STRING_set(str, str_bin, sizeof(str_bin)), 1);
         ExpectNotNull(asn1type = ASN1_TYPE_new());
-        ASN1_TYPE_set(asn1type, V_ASN1_SEQUENCE, str);
+        if (asn1type != NULL) {
+            ASN1_TYPE_set(asn1type, V_ASN1_SEQUENCE, str);
+        }
+        else {
+            ASN1_STRING_free(str);
+        }
     }
 
     ExpectIntEQ(i2d_ASN1_TYPE(asn1type, NULL), sizeof(str_bin));
@@ -61458,8 +61626,14 @@ static int test_wolfSSL_BN_enc_dec(void)
     ExpectNull(BN_bn2dec(NULL));
     ExpectNull(BN_bn2dec(&emptyBN));
 
+    ExpectNotNull(c = BN_bin2bn(NULL, 0, NULL));
+    BN_clear(c);
+    BN_free(c);
+    c = NULL;
+
     ExpectNotNull(BN_bin2bn(NULL, sizeof(binNum), a));
     BN_free(a);
+    a = NULL;
     ExpectNotNull(a = BN_new());
     ExpectIntEQ(BN_set_word(a, 2), 1);
     ExpectNull(BN_bin2bn(binNum, -1, a));
@@ -65547,7 +65721,9 @@ static int test_wolfSSL_ERR_print_errors(void)
     defined(DEBUG_WOLFSSL)
 static int test_wolfSSL_error_cb(const char *str, size_t len, void *u)
 {
-    wolfSSL_BIO_write((BIO*)u, str, (int)len);
+    if (u != NULL) {
+        wolfSSL_BIO_write((BIO*)u, str, (int)len);
+    }
     return 0;
 }
 #endif
@@ -68330,7 +68506,7 @@ static int test_GENERAL_NAME_set0_othername(void) {
     defined(WOLFSSL_CERT_GEN) && defined(WOLFSSL_CERT_REQ) && \
     defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ALT_NAMES) && \
     defined(WOLFSSL_CERT_EXT) && !defined(NO_FILESYSTEM) && \
-    defined(WOLFSSL_FPKI)
+    defined(WOLFSSL_FPKI) && !defined(NO_RSA)
     /* ./configure --enable-opensslall --enable-certgen --enable-certreq
      *  --enable-certext --enable-debug 'CPPFLAGS=-DWOLFSSL_CUSTOM_OID
      *  -DWOLFSSL_ALT_NAMES  -DWOLFSSL_FPKI' */
@@ -68414,7 +68590,7 @@ static int test_othername_and_SID_ext(void) {
     defined(WOLFSSL_CERT_GEN) && defined(WOLFSSL_CERT_REQ) && \
     defined(WOLFSSL_CUSTOM_OID) && defined(WOLFSSL_ALT_NAMES) && \
     defined(WOLFSSL_CERT_EXT) && !defined(NO_FILESYSTEM) && \
-    defined(WOLFSSL_FPKI) && defined(WOLFSSL_ASN_TEMPLATE)
+    defined(WOLFSSL_FPKI) && defined(WOLFSSL_ASN_TEMPLATE) && !defined(NO_RSA)
     /* ./configure --enable-opensslall --enable-certgen --enable-certreq
      *  --enable-certext --enable-debug 'CPPFLAGS=-DWOLFSSL_CUSTOM_OID
      *  -DWOLFSSL_ALT_NAMES  -DWOLFSSL_FPKI' */
@@ -68526,6 +68702,7 @@ static int test_othername_and_SID_ext(void) {
     exts = NULL;
     ASN1_OBJECT_free(upn_oid);
     ASN1_OBJECT_free(sid_oid);
+    sid_oid = NULL;
     ASN1_OCTET_STRING_free(sid_data);
     X509_REQ_free(x509);
     EVP_PKEY_free(priv);
@@ -75539,7 +75716,8 @@ static int test_wolfSSL_OCSP_parse_url(void)
 }
 
 #if defined(OPENSSL_ALL) && defined(HAVE_OCSP) && \
-    defined(WOLFSSL_SIGNER_DER_CERT) && !defined(NO_FILESYSTEM)
+    defined(WOLFSSL_SIGNER_DER_CERT) && !defined(NO_FILESYSTEM) && \
+    !defined(NO_ASN_TIME)
 static time_t test_wolfSSL_OCSP_REQ_CTX_time_cb(time_t* t)
 {
     if (t != NULL) {
@@ -75761,10 +75939,12 @@ static int test_wolfSSL_OCSP_REQ_CTX(void)
     ExpectIntEQ(OCSP_sendreq_nbio(&rsp, ctx), -1);
     ExpectIntEQ(BIO_write(bio2, ocspRespBin, sizeof(ocspRespBin)),
             sizeof(ocspRespBin));
+#ifndef NO_ASN_TIME
     ExpectIntEQ(wc_SetTimeCb(test_wolfSSL_OCSP_REQ_CTX_time_cb), 0);
     ExpectIntEQ(OCSP_sendreq_nbio(&rsp, ctx), 1);
     ExpectIntEQ(wc_SetTimeCb(NULL), 0);
     ExpectNotNull(rsp);
+#endif
 
     OCSP_REQ_CTX_free(ctx);
     OCSP_REQUEST_free(req);
@@ -82290,6 +82470,14 @@ static int test_wolfSSL_RSA(void)
         unsigned char hash[SHA256_DIGEST_LENGTH];
         unsigned char signature[2048/8];
         unsigned int signatureLen = 0;
+        BIGNUM* n2 = NULL;
+        BIGNUM* e2 = NULL;
+        BIGNUM* d2 = NULL;
+        BIGNUM* p2 = NULL;
+        BIGNUM* q2 = NULL;
+        BIGNUM* dmp12 = NULL;
+        BIGNUM* dmq12 = NULL;
+        BIGNUM* iqmp2 = NULL;
 
         XMEMSET(hash, 0, sizeof(hash));
         RSA_get0_key(rsa, &n, &e, &d);
@@ -82303,42 +82491,121 @@ static int test_wolfSSL_RSA(void)
             signatureLen, rsa), 1);
 
         /* Verifying */
+        ExpectNotNull(n2 = BN_dup(n));
+        ExpectNotNull(e2 = BN_dup(e));
+        ExpectNotNull(p2 = BN_dup(p));
+        ExpectNotNull(q2 = BN_dup(q));
+        ExpectNotNull(dmp12 = BN_dup(dmp1));
+        ExpectNotNull(dmq12 = BN_dup(dmq1));
+        ExpectNotNull(iqmp2 = BN_dup(iqmp));
+
         ExpectNotNull(rsa2 = RSA_new());
-        ExpectIntEQ(RSA_set0_key(rsa2, BN_dup(n), BN_dup(e), NULL), 1);
+        ExpectIntEQ(RSA_set0_key(rsa2, n2, e2, NULL), 1);
+        if (EXPECT_SUCCESS()) {
+            n2 = NULL;
+            e2 = NULL;
+        }
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa2), 1);
-        ExpectIntEQ(RSA_set0_factors(rsa2, BN_dup(p), BN_dup(q)), 1);
+        ExpectIntEQ(RSA_set0_factors(rsa2, p2, q2), 1);
+        if (EXPECT_SUCCESS()) {
+            p2 = NULL;
+            q2 = NULL;
+        }
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa2), 1);
-        ExpectIntEQ(RSA_set0_crt_params(rsa2, BN_dup(dmp1), BN_dup(dmq1),
-                BN_dup(iqmp)), 1);
+        ExpectIntEQ(RSA_set0_crt_params(rsa2, dmp12, dmq12, iqmp2), 1);
+        if (EXPECT_SUCCESS()) {
+            dmp12 = NULL;
+            dmq12 = NULL;
+            iqmp2 = NULL;
+        }
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa2), 1);
         RSA_free(rsa2);
         rsa2 = NULL;
 
+        BN_free(iqmp2);
+        iqmp2 = NULL;
+        BN_free(dmq12);
+        dmq12 = NULL;
+        BN_free(dmp12);
+        dmp12 = NULL;
+        BN_free(q2);
+        q2 = NULL;
+        BN_free(p2);
+        p2 = NULL;
+        BN_free(e2);
+        e2 = NULL;
+        BN_free(n2);
+        n2 = NULL;
+
+        ExpectNotNull(n2 = BN_dup(n));
+        ExpectNotNull(e2 = BN_dup(e));
+        ExpectNotNull(d2 = BN_dup(d));
+        ExpectNotNull(p2 = BN_dup(p));
+        ExpectNotNull(q2 = BN_dup(q));
+        ExpectNotNull(dmp12 = BN_dup(dmp1));
+        ExpectNotNull(dmq12 = BN_dup(dmq1));
+        ExpectNotNull(iqmp2 = BN_dup(iqmp));
+
         /* Signing */
         XMEMSET(signature, 0, sizeof(signature));
         ExpectNotNull(rsa2 = RSA_new());
-        ExpectIntEQ(RSA_set0_key(rsa2, BN_dup(n), BN_dup(e), BN_dup(d)), 1);
+        ExpectIntEQ(RSA_set0_key(rsa2, n2, e2, d2), 1);
+        if (EXPECT_SUCCESS()) {
+            n2 = NULL;
+            e2 = NULL;
+            d2 = NULL;
+        }
+#if defined(WOLFSSL_SP_MATH) && !defined(RSA_LOW_MEM)
+        /* SP is not support signing without CRT parameters. */
+        ExpectIntEQ(RSA_sign(NID_sha256, hash, sizeof(hash), signature,
+            &signatureLen, rsa2), 0);
+        ExpectIntEQ(RSA_set0_factors(rsa2, p2, q2), 1);
+        if (EXPECT_SUCCESS()) {
+            p2 = NULL;
+            q2 = NULL;
+        }
+        ExpectIntEQ(RSA_sign(NID_sha256, hash, sizeof(hash), signature,
+            &signatureLen, rsa2), 0);
+#else
         ExpectIntEQ(RSA_sign(NID_sha256, hash, sizeof(hash), signature,
             &signatureLen, rsa2), 1);
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa), 1);
-        ExpectIntEQ(RSA_set0_factors(rsa2, BN_dup(p), BN_dup(q)), 1);
+        ExpectIntEQ(RSA_set0_factors(rsa2, p2, q2), 1);
+        if (EXPECT_SUCCESS()) {
+            p2 = NULL;
+            q2 = NULL;
+        }
         XMEMSET(signature, 0, sizeof(signature));
         ExpectIntEQ(RSA_sign(NID_sha256, hash, sizeof(hash), signature,
             &signatureLen, rsa2), 1);
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa), 1);
-        ExpectIntEQ(RSA_set0_crt_params(rsa2, BN_dup(dmp1), BN_dup(dmq1),
-                BN_dup(iqmp)), 1);
+#endif
+        ExpectIntEQ(RSA_set0_crt_params(rsa2, dmp12, dmq12, iqmp2), 1);
+        if (EXPECT_SUCCESS()) {
+            dmp12 = NULL;
+            dmq12 = NULL;
+            iqmp2 = NULL;
+        }
         ExpectIntEQ(RSA_sign(NID_sha256, hash, sizeof(hash), signature,
             &signatureLen, rsa2), 1);
         ExpectIntEQ(RSA_verify(NID_sha256, hash, sizeof(hash), signature,
             signatureLen, rsa), 1);
         RSA_free(rsa2);
         rsa2 = NULL;
+
+        BN_free(iqmp2);
+        BN_free(dmq12);
+        BN_free(dmp12);
+        BN_free(q2);
+        BN_free(p2);
+        BN_free(d2);
+        BN_free(e2);
+        BN_free(n2);
     }
 #endif
 
@@ -89100,7 +89367,6 @@ static int error_test(void)
         { -346, -349 },
         { -356, -356 },
         { -358, -358 },
-        { -372, -372 },
         { -384, -384 },
         { -466, -499 },
         { WOLFSSL_LAST_E-1, WOLFSSL_LAST_E-1 }
@@ -92032,7 +92298,7 @@ static int test_override_alt_cert_chain_ocsp_cb(void* ioCtx, const char* url,
     (void)request;
     (void)requestSz;
     (void)response;
-    return -1;
+    return WOLFSSL_CBIO_ERR_GENERAL;
 }
 
 static int test_override_alt_cert_chain_client_ctx_ready(WOLFSSL_CTX* ctx)
@@ -92513,8 +92779,7 @@ static int test_tls13_rpk_handshake(void)
      *  expecting default settings works and no negotiation performed.
      */
 
-    if (test_memio_do_handshake(ssl_c, ssl_s, 10, NULL) != 0)
-        return TEST_FAIL;
+    ExpectIntEQ(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL), 0);
 
     /* confirm no negotiation occurred */
     ExpectIntEQ(wolfSSL_get_negotiated_client_cert_type(ssl_c, &tp),
@@ -92571,8 +92836,7 @@ static int test_tls13_rpk_handshake(void)
      *  expecting default settings works and no negotiation performed.
      */
 
-    if (test_memio_do_handshake(ssl_c, ssl_s, 10, NULL) != 0)
-        return TEST_FAIL;
+    ExpectIntEQ(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL), 0);
 
     /* confirm no negotiation occurred */
     ExpectIntEQ(wolfSSL_get_negotiated_client_cert_type(ssl_c, &tp),
@@ -92641,8 +92905,7 @@ static int test_tls13_rpk_handshake(void)
     ExpectIntEQ(wolfSSL_set_server_cert_type(ssl_s, certType_s, typeCnt_s),
                                                         WOLFSSL_SUCCESS);
 
-    if (test_memio_do_handshake(ssl_c, ssl_s, 10, NULL) != 0)
-        return TEST_FAIL;
+    ExpectIntEQ(test_memio_do_handshake(ssl_c, ssl_s, 10, NULL), 0);
 
     ExpectIntEQ(wolfSSL_get_negotiated_client_cert_type(ssl_c, &tp),
                                                         WOLFSSL_SUCCESS);
@@ -94188,9 +94451,11 @@ static int test_dtls_client_hello_timeout_downgrade(void)
             /* Drop the SH */
             dtlsRH = (DtlsRecordLayerHeader*)(test_ctx.c_buff);
             len = (size_t)((dtlsRH->length[0] << 8) | dtlsRH->length[1]);
-            XMEMMOVE(test_ctx.c_buff, test_ctx.c_buff +
+            if (EXPECT_SUCCESS()) {
+                XMEMMOVE(test_ctx.c_buff, test_ctx.c_buff +
                     sizeof(DtlsRecordLayerHeader) + len, test_ctx.c_len -
                    (sizeof(DtlsRecordLayerHeader) + len));
+            }
             test_ctx.c_len -= sizeof(DtlsRecordLayerHeader) + len;
             /* Read the remainder of the flight */
             ExpectIntEQ(wolfSSL_negotiate(ssl_c), -1);
@@ -94219,9 +94484,11 @@ static int test_dtls_client_hello_timeout_downgrade(void)
             /* Drop the SH */
             dtlsRH = (DtlsRecordLayerHeader*)(test_ctx.c_buff);
             len = (size_t)((dtlsRH->length[0] << 8) | dtlsRH->length[1]);
-            XMEMMOVE(test_ctx.c_buff, test_ctx.c_buff +
+            if (EXPECT_SUCCESS()) {
+                XMEMMOVE(test_ctx.c_buff, test_ctx.c_buff +
                     sizeof(DtlsRecordLayerHeader) + len, test_ctx.c_len -
                    (sizeof(DtlsRecordLayerHeader) + len));
+            }
             test_ctx.c_len -= sizeof(DtlsRecordLayerHeader) + len;
             /* Read the remainder of the flight */
             ExpectIntEQ(wolfSSL_negotiate(ssl_c), -1);
@@ -96538,7 +96805,7 @@ static int test_ocsp_callback_fails_cb(void* ctx, const char* url, int urlSz,
     (void)ocspReqBuf;
     (void)ocspReqSz;
     (void)ocspRespBuf;
-    return -1;
+    return WOLFSSL_CBIO_ERR_GENERAL;
 }
 static int test_ocsp_callback_fails(void)
 {
@@ -97322,6 +97589,8 @@ TEST_CASE testCases[] = {
     /* X509 ACERT tests */
     TEST_DECL(test_wolfSSL_X509_ACERT_verify),
     TEST_DECL(test_wolfSSL_X509_ACERT_misc_api),
+    TEST_DECL(test_wolfSSL_X509_ACERT_buffer),
+    TEST_DECL(test_wolfSSL_X509_ACERT_asn),
 
 #ifndef NO_BIO
     TEST_DECL(test_wolfSSL_X509_INFO_multiple_info),

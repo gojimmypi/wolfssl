@@ -13210,7 +13210,11 @@ size_t wolfSSL_get_client_random(const WOLFSSL* ssl, unsigned char* out,
 #ifdef WOLFSSL_QUIC
         wolfSSL_quic_clear(ssl);
 #endif
-
+#ifdef HAVE_OCSP
+#if defined(WOLFSSL_TLS13) && defined(HAVE_CERTIFICATE_STATUS_REQUEST)
+        ssl->response_idx = 0;
+#endif
+#endif
         return WOLFSSL_SUCCESS;
     }
 
@@ -19789,11 +19793,15 @@ void wolfSSL_certs_clear(WOLFSSL* ssl)
         return;
 
     /* ctx still owns certificate, certChain, key, dh, and cm */
-    if (ssl->buffers.weOwnCert)
+    if (ssl->buffers.weOwnCert) {
         FreeDer(&ssl->buffers.certificate);
+        ssl->buffers.weOwnCert = 0;
+    }
     ssl->buffers.certificate = NULL;
-    if (ssl->buffers.weOwnCertChain)
+    if (ssl->buffers.weOwnCertChain) {
         FreeDer(&ssl->buffers.certChain);
+        ssl->buffers.weOwnCertChain = 0;
+    }
     ssl->buffers.certChain = NULL;
 #ifdef WOLFSSL_TLS13
     ssl->buffers.certChainCnt = 0;
@@ -19803,6 +19811,7 @@ void wolfSSL_certs_clear(WOLFSSL* ssl)
     #ifdef WOLFSSL_BLIND_PRIVATE_KEY
         FreeDer(&ssl->buffers.keyMask);
     #endif
+        ssl->buffers.weOwnKey = 0;
     }
     ssl->buffers.key      = NULL;
 #ifdef WOLFSSL_BLIND_PRIVATE_KEY
@@ -19819,6 +19828,7 @@ void wolfSSL_certs_clear(WOLFSSL* ssl)
     #ifdef WOLFSSL_BLIND_PRIVATE_KEY
         FreeDer(&ssl->buffers.altKeyMask);
     #endif
+        ssl->buffers.weOwnAltKey = 0;
     }
     ssl->buffers.altKey     = NULL;
 #ifdef WOLFSSL_BLIND_PRIVATE_KEY
@@ -20398,30 +20408,32 @@ WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
     if (ctx->certificate != NULL) {
         if (ssl->buffers.certificate != NULL) {
             FreeDer(&ssl->buffers.certificate);
+            ssl->buffers.certificate = NULL;
         }
         ret = AllocCopyDer(&ssl->buffers.certificate, ctx->certificate->buffer,
             ctx->certificate->length, ctx->certificate->type,
             ctx->certificate->heap);
         if (ret != 0) {
+            ssl->buffers.weOwnCert = 0;
             return NULL;
         }
 
         ssl->buffers.weOwnCert = 1;
-        ret = WOLFSSL_SUCCESS;
     }
     if (ctx->certChain != NULL) {
         if (ssl->buffers.certChain != NULL) {
             FreeDer(&ssl->buffers.certChain);
+            ssl->buffers.certChain = NULL;
         }
         ret = AllocCopyDer(&ssl->buffers.certChain, ctx->certChain->buffer,
             ctx->certChain->length, ctx->certChain->type,
             ctx->certChain->heap);
         if (ret != 0) {
+            ssl->buffers.weOwnCertChain = 0;
             return NULL;
         }
 
         ssl->buffers.weOwnCertChain = 1;
-        ret = WOLFSSL_SUCCESS;
     }
 #else
     /* ctx owns certificate, certChain and key */
@@ -20436,10 +20448,15 @@ WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
     if (ctx->privateKey != NULL) {
         if (ssl->buffers.key != NULL) {
             FreeDer(&ssl->buffers.key);
+            ssl->buffers.key = NULL;
         }
-        AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
+        ret = AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
             ctx->privateKey->length, ctx->privateKey->type,
             ctx->privateKey->heap);
+        if (ret != 0) {
+            ssl->buffers.weOwnKey = 0;
+            return NULL;
+        }
         ssl->buffers.weOwnKey = 1;
     }
     else {
@@ -20450,15 +20467,18 @@ WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
 #endif
 #else
     if (ctx->privateKey != NULL) {
-        AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
+        ret = AllocCopyDer(&ssl->buffers.key, ctx->privateKey->buffer,
             ctx->privateKey->length, ctx->privateKey->type,
             ctx->privateKey->heap);
+        if (ret != 0) {
+            return NULL;
+        }
         /* Blind the private key for the SSL with new random mask. */
         wolfssl_priv_der_unblind(ssl->buffers.key, ctx->privateKeyMask);
         ret = wolfssl_priv_der_blind(ssl->rng, ssl->buffers.key,
             &ssl->buffers.keyMask);
         if (ret != 0) {
-            return ret;
+            return NULL;
         }
     }
 #endif
@@ -20480,15 +20500,18 @@ WOLFSSL_CTX* wolfSSL_set_SSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx)
     ssl->buffers.altKey   = ctx->altPrivateKey;
 #else
     if (ctx->altPrivateKey != NULL) {
-        AllocCopyDer(&ssl->buffers.altkey, ctx->altPrivateKey->buffer,
+        ret = AllocCopyDer(&ssl->buffers.altkey, ctx->altPrivateKey->buffer,
             ctx->altPrivateKey->length, ctx->altPrivateKey->type,
             ctx->altPrivateKey->heap);
+        if (ret != 0) {
+            return NULL;
+        }
         /* Blind the private key for the SSL with new random mask. */
         wolfssl_priv_der_unblind(ssl->buffers.altKey, ctx->altPrivateKeyMask);
         ret = wolfssl_priv_der_blind(ssl->rng, ssl->buffers.altKey,
             &ssl->buffers.altKeyMask);
         if (ret != 0) {
-            return ret;
+            return NULL;
         }
     }
 #endif
@@ -21807,12 +21830,12 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
 #endif
 #ifdef WOLFSSL_HAVE_KYBER
     {CURVE_NAME("KYBER_LEVEL1"), WOLFSSL_KYBER_LEVEL1, WOLFSSL_KYBER_LEVEL1},
-    {CURVE_NAME("KYBER_LEVEL3"), WOLFSSL_KYBER_LEVEL3, WOLFSSL_KYBER_LEVEL1},
-    {CURVE_NAME("KYBER_LEVEL5"), WOLFSSL_KYBER_LEVEL5, WOLFSSL_KYBER_LEVEL1},
+    {CURVE_NAME("KYBER_LEVEL3"), WOLFSSL_KYBER_LEVEL3, WOLFSSL_KYBER_LEVEL3},
+    {CURVE_NAME("KYBER_LEVEL5"), WOLFSSL_KYBER_LEVEL5, WOLFSSL_KYBER_LEVEL5},
 #if (defined(WOLFSSL_WC_KYBER) || defined(HAVE_LIBOQS)) && defined(HAVE_ECC)
     {CURVE_NAME("P256_KYBER_LEVEL1"), WOLFSSL_P256_KYBER_LEVEL1, WOLFSSL_P256_KYBER_LEVEL1},
-    {CURVE_NAME("P384_KYBER_LEVEL3"), WOLFSSL_P384_KYBER_LEVEL3, WOLFSSL_P256_KYBER_LEVEL1},
-    {CURVE_NAME("P521_KYBER_LEVEL5"), WOLFSSL_P521_KYBER_LEVEL5, WOLFSSL_P256_KYBER_LEVEL1},
+    {CURVE_NAME("P384_KYBER_LEVEL3"), WOLFSSL_P384_KYBER_LEVEL3, WOLFSSL_P384_KYBER_LEVEL3},
+    {CURVE_NAME("P521_KYBER_LEVEL5"), WOLFSSL_P521_KYBER_LEVEL5, WOLFSSL_P521_KYBER_LEVEL5},
 #endif
 #endif
 #ifdef WOLFSSL_SM2
@@ -23649,7 +23672,86 @@ wolfSSL_CTX_keylog_cb_func wolfSSL_CTX_get_keylog_callback(
 
 #endif /* OPENSSL_EXTRA */
 
-#ifndef NO_CERTS
+#ifdef WOLFSSL_THREADED_CRYPT
+int wolfSSL_AsyncEncryptReady(WOLFSSL* ssl, int idx)
+{
+    ThreadCrypt* encrypt;
+
+    if (ssl == NULL) {
+        return 0;
+    }
+
+    encrypt = &ssl->buffers.encrypt[idx];
+    return (encrypt->avail == 0) && (encrypt->done == 0);
+}
+
+int wolfSSL_AsyncEncryptStop(WOLFSSL* ssl, int idx)
+{
+    ThreadCrypt* encrypt;
+
+    if (ssl == NULL) {
+        return 1;
+    }
+
+    encrypt = &ssl->buffers.encrypt[idx];
+    return encrypt->stop;
+}
+
+int wolfSSL_AsyncEncrypt(WOLFSSL* ssl, int idx)
+{
+    int ret = WC_NO_ERR_TRACE(NOT_COMPILED_IN);
+    ThreadCrypt* encrypt = &ssl->buffers.encrypt[idx];
+
+    if (ssl->specs.bulk_cipher_algorithm == wolfssl_aes_gcm) {
+        unsigned char* out = encrypt->buffer.buffer + encrypt->offset;
+        unsigned char* input = encrypt->buffer.buffer + encrypt->offset;
+        word32 encSz = encrypt->buffer.length - encrypt->offset;
+
+        ret =
+#if !defined(NO_GCM_ENCRYPT_EXTRA) && \
+    ((!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)) || \
+    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)))
+              wc_AesGcmEncrypt_ex
+#else
+              wc_AesGcmEncrypt
+#endif
+              (encrypt->encrypt.aes,
+               out + AESGCM_EXP_IV_SZ, input + AESGCM_EXP_IV_SZ,
+               encSz - AESGCM_EXP_IV_SZ - ssl->specs.aead_mac_size,
+               encrypt->nonce, AESGCM_NONCE_SZ,
+               out + encSz - ssl->specs.aead_mac_size,
+               ssl->specs.aead_mac_size,
+               encrypt->additional, AEAD_AUTH_DATA_SZ);
+#if !defined(NO_PUBLIC_GCM_SET_IV) && \
+    ((!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)) || \
+    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)))
+        XMEMCPY(out, encrypt->nonce + AESGCM_IMP_IV_SZ, AESGCM_EXP_IV_SZ);
+#endif
+        encrypt->done = 1;
+    }
+
+    return ret;
+}
+
+int wolfSSL_AsyncEncryptSetSignal(WOLFSSL* ssl, int idx,
+    WOLFSSL_THREAD_SIGNAL signal, void* ctx)
+{
+    int ret = 0;
+
+    if (ssl == NULL) {
+        ret = BAD_FUNC_ARG;
+    }
+    else {
+        ssl->buffers.encrypt[idx].signal = signal;
+        ssl->buffers.encrypt[idx].signalCtx = ctx;
+    }
+
+    return ret;
+}
+#endif
+
+
+#ifndef NO_CERT
 #define WOLFSSL_X509_INCLUDED
 #include "src/x509.c"
 #endif

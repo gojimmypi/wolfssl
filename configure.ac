@@ -1545,6 +1545,12 @@ do
   small)
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_WC_LMS_SMALL"
     ;;
+  no-sha256-256)
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_LMS_SHA256_256"
+    ;;
+  sha256-192)
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_LMS_SHA256_192"
+    ;;
   *)
     AC_MSG_ERROR([Invalid choice for LMS []: $ENABLED_LMS.])
     break;;
@@ -3024,7 +3030,8 @@ then
             ;;
         armv7m*)
             # QEMU doesn't work with armv7-m
-            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -D__thumb__ -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=7"
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ARMASM_THUMB2"
+            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -DWOLFSSL_ARMASM_THUMB2 -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=7"
             # Include options.h
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
             ENABLED_ARMASM_CRYPTO=no
@@ -6001,10 +6008,27 @@ fi
 
 # Certificate Status Request : a.k.a. OCSP Stapling
 AC_ARG_ENABLE([ocspstapling],
-    [AS_HELP_STRING([--enable-ocspstapling],[Enable OCSP Stapling (default: disabled)])],
+    [AS_HELP_STRING([--enable-ocspstapling],[Enable OCSP Stapling ((options: yes, no-multi, no, disabled default: disabled)])],
     [ ENABLED_CERTIFICATE_STATUS_REQUEST=$enableval ],
     [ ENABLED_CERTIFICATE_STATUS_REQUEST=no ]
     )
+AS_CASE([$ENABLED_CERTIFICATE_STATUS_REQUEST],
+    [no],[
+        ENABLED_CERTIFICATE_STATUS_REQUEST="no"
+        ENABLED_TLS_OCSP_MULTI="no"
+    ],
+    [disabled],[
+        ENABLED_CERTIFICATE_STATUS_REQUEST="no"
+        ENABLED_TLS_OCSP_MULTI="no"
+    ],
+    [yes],[
+        ENABLED_CERTIFICATE_STATUS_REQUEST="yes"
+        ENABLED_TLS_OCSP_MULTI="yes"
+    ],
+    [no-multi],[
+        ENABLED_CERTIFICATE_STATUS_REQUEST="yes"
+        ENABLED_TLS_OCSP_MULTI="no"
+    ])
 
 if test "x$ENABLED_NGINX" = "xyes" || test "x$ENABLED_WPAS" = "xyes" || \
    test "x$ENABLED_HAPROXY" = "xyes" || test "x$ENABLED_LIGHTY" = "xyes" || \
@@ -8365,7 +8389,8 @@ if test "$ENABLED_SP_ASM" = "yes" && test "$ENABLED_SP" = "yes"; then
     ;;
   *cortex* | *armv7m*)
     if test "$ENABLED_ARMASM" = "no"; then
-        AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -D__thumb__ -DWOLFSSL_ARM_ARCH=7"
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ARMASM_THUMB2"
+        AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -DWOLFSSL_ARMASM_THUMB2 -DWOLFSSL_ARM_ARCH=7"
     fi
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SP_ARM_CORTEX_M_ASM"
     AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_SP_ARM_CORTEX_M_ASM"
@@ -9586,7 +9611,17 @@ if test "$ENABLED_DH" != "no" && test "$ENABLED_DH" != "const"; then
    LT_LIB_M
 fi
 
-
+# mulitple OCSP stapling for TLS 1.3 Certificate extension
+if test "$ENABLED_CERTIFICATE_STATUS_REQUEST" = "yes"
+then
+    if test "$ENABLED_TLS13" = "yes"
+    then
+        if test "$ENABLED_TLS_OCSP_MULTI" = "yes"
+        then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TLS_OCSP_MULTI"
+        fi
+    fi
+fi
 ################################################################################
 
 # USER SETTINGS
@@ -9841,6 +9876,7 @@ AM_CONDITIONAL([BUILD_SM4],[test "x$ENABLED_SM4" != "xno" || test "x$ENABLED_USE
 AM_CONDITIONAL([BUILD_INLINE],[test "x$ENABLED_INLINE" = "xyes"])
 AM_CONDITIONAL([BUILD_OCSP],[test "x$ENABLED_OCSP" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_OCSP_STAPLING],[test "x$ENABLED_CERTIFICATE_STATUS_REQUEST" = "xyes"])
+AM_CONDITIONAL([BUILD_OCSP_STAPLING_MULTI],[test "x$ENABLED_CERTIFICATE_STATUS_REQUEST" = "xyes" && test "x$ENABLED_TLS13" = "xyes" && test "x$ENABLED_TLS_OCSP_MULTI" = "xyes"])
 AM_CONDITIONAL([BUILD_OCSP_STAPLING_V2],[test "x$ENABLED_CERTIFICATE_STATUS_REQUEST_V2" = "xyes"])
 AM_CONDITIONAL([BUILD_CRL],[test "x$ENABLED_CRL" != "xno" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_CRL_MONITOR],[test "x$ENABLED_CRL_MONITOR" = "xyes"])

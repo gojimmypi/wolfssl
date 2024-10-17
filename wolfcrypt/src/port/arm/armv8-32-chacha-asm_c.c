@@ -32,8 +32,7 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 #ifdef WOLFSSL_ARMASM
-#if !defined(__aarch64__) && defined(__arm__) && (!defined(__thumb__) || \
-        defined(__THUMB_INTERWORK__))
+#if !defined(__aarch64__) && !defined(WOLFSSL_ARMASM_THUMB2)
 #include <stdint.h>
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -71,7 +70,7 @@ void wc_chacha_setiv(word32* x_p, const byte* iv_p, word32 counter_p)
         "rev	lr, lr\n\t"
 #endif /* BIG_ENDIAN_ORDER */
         "stm	r3, {r4, r12, lr}\n\t"
-        : [x] "+r" (x),  [iv] "+r" (iv),  [counter] "+r" (counter)
+        : [x] "+r" (x), [iv] "+r" (iv), [counter] "+r" (counter)
         :
         : "memory", "cc", "r3", "r12", "lr", "r4"
     );
@@ -119,8 +118,8 @@ void wc_chacha_setkey(word32* x_p, const byte* key_p, word32 keySz_p)
         "\n"
     "L_chacha_arm32_setkey_same_keyb_ytes_%=: \n\t"
         "stm	%[x], {r4, r5, r12, lr}\n\t"
-        : [x] "+r" (x),  [key] "+r" (key),  [keySz] "+r" (keySz),
-            [L_chacha_arm32_constants] "+r" (L_chacha_arm32_constants_c)
+        : [x] "+r" (x), [key] "+r" (key), [keySz] "+r" (keySz),
+          [L_chacha_arm32_constants] "+r" (L_chacha_arm32_constants_c)
         :
         : "memory", "cc", "r12", "lr", "r4", "r5"
     );
@@ -484,7 +483,7 @@ void wc_chacha_crypt_bytes(ChaCha* ctx_p, byte* c_p, const byte* m_p,
         "\n"
     "L_chacha_arm32_crypt_done_%=: \n\t"
         "add	sp, sp, #52\n\t"
-        : [ctx] "+r" (ctx),  [c] "+r" (c),  [m] "+r" (m),  [len] "+r" (len)
+        : [ctx] "+r" (ctx), [c] "+r" (c), [m] "+r" (m), [len] "+r" (len)
         :
         : "memory", "cc", "r12", "lr", "r4", "r5", "r6", "r7", "r8", "r9",
             "r10", "r11"
@@ -557,8 +556,8 @@ void wc_chacha_use_over(byte* over_p, byte* output_p, const byte* input_p,
         "b	L_chacha_arm32_over_byte_loop_%=\n\t"
         "\n"
     "L_chacha_arm32_over_done_%=: \n\t"
-        : [over] "+r" (over),  [output] "+r" (output),  [input] "+r" (input),
-             [len] "+r" (len)
+        : [over] "+r" (over), [output] "+r" (output), [input] "+r" (input),
+          [len] "+r" (len)
         :
         : "memory", "cc", "r12", "lr", "r4", "r5", "r6", "r7", "r8", "r9"
     );
@@ -566,7 +565,7 @@ void wc_chacha_use_over(byte* over_p, byte* output_p, const byte* input_p,
 
 #endif /* WOLFSSL_ARMASM_NO_NEON */
 #endif /* HAVE_CHACHA */
-#endif /* !__aarch64__ && __arm__ && (!__thumb__ || __THUMB_INTERWORK__) */
+#endif /* !__aarch64__ && !WOLFSSL_ARMASM_THUMB2 */
 #endif /* WOLFSSL_ARMASM */
 
 #endif /* WOLFSSL_ARMASM_INLINE */
