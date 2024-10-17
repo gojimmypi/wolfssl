@@ -21624,8 +21624,23 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t rsa_test(void)
 #elif !defined(NO_FILESYSTEM)
     file = XFOPEN(clientKey, "rb");
     if (!file) {
+        char buffer[FILENAME_MAX];
+
+        if (_getcwd(buffer, sizeof(buffer)) != NULL) {
+            printf("Current working directory: %s\n", buffer);
+        }
+        else {
+            perror("Error getting current working directory");
+        }
+
+        /* In Visual Studio 2022:
+         * Debug - [Project Name] Debug Properties - Configuration Properties
+         * In Option "Debugging - Working Directory" enter:
+         *   $(ProjectDir)../../
+         * (or wherever your root to wolfSSL with ./certs is found)
+         */
         err_sys("can't open ./certs/client-key.der, "
-                "Please run from wolfSSL home dir", WC_TEST_RET_ENC_ERRNO);
+                "Please run from wolfSSL home dir or set working directory", WC_TEST_RET_ENC_ERRNO);
         ERROR_OUT(WC_TEST_RET_ENC_ERRNO, exit_rsa);
     }
 
