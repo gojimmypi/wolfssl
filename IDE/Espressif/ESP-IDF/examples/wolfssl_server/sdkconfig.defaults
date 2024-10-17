@@ -21,6 +21,7 @@ CONFIG_ESP32_DEFAULT_CPU_FREQ_240=y
 # For wolfSSL SMALL_STACK, 3072 bytes should be sufficient for benchmark app.
 # When using RSA, assign at least 10500 bytes, otherwise 5500 usually works for others
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=10500
+
 # Legacy stack size for older ESP-IDF versions
 CONFIG_MAIN_TASK_STACK_SIZE=10500
 
