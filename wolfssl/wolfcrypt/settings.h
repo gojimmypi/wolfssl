@@ -540,7 +540,7 @@
      * used in the esp-wolfssl or other places in the ESP-IDF. They should
      * be always be included for backward compatibility.
      *
-     * See also: https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/kconfig.html
+     * See also: Espressif api-reference kconfig docs.
      *
      * These settings should be checked and assigned wolfssl equivalents before
      * any others.
@@ -1481,7 +1481,7 @@ extern void uITRON4_free(void *p) ;
     #ifndef NO_WRITEV
         #define NO_WRITEV
     #endif
-    #ifndef HAVE_SHA512
+    #ifndef WOLFSSL_SHA512
         #ifndef NO_SHA512
             #define NO_SHA512
         #endif

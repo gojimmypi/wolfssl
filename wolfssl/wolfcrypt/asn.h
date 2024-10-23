@@ -951,13 +951,14 @@ enum Misc_ASN {
 #else
     KEYID_SIZE          = WC_SHA_DIGEST_SIZE,
 #endif
-#if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && (defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || !defined(RSA_LOW_MEM))
-    RSA_INTS            =   8,     /* RSA ints in private key */
-#elif !defined(WOLFSSL_RSA_PUBLIC_ONLY)
-    RSA_INTS            =   5,     /* RSA ints in private key */
-#else
-    RSA_INTS            =   2,     /* RSA ints in private key */
+    RSA_INTS            =   2      /* RSA ints in private key */
+#ifndef WOLFSSL_RSA_PUBLIC_ONLY
+                            + 3
+#if defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || !defined(RSA_LOW_MEM)
+                            + 3
 #endif
+#endif
+                            ,
     DSA_PARAM_INTS      =   3,     /* DSA parameter ints */
     RSA_PUB_INTS        =   2,     /* RSA ints in public key */
     DSA_PUB_INTS        =   4,     /* DSA ints in public key */
@@ -2382,9 +2383,11 @@ WOLFSSL_LOCAL int GetNameHash(const byte* source, word32* idx, byte* hash,
 WOLFSSL_LOCAL int GetNameHash_ex(const byte* source, word32* idx, byte* hash,
                                  int maxIdx, word32 sigOID);
 WOLFSSL_LOCAL int wc_CheckPrivateKeyCert(const byte* key, word32 keySz,
-                                         DecodedCert* der, int checkAlt);
+                                         DecodedCert* der, int checkAlt,
+                                         void* heap);
 WOLFSSL_LOCAL int wc_CheckPrivateKey(const byte* privKey, word32 privKeySz,
-                                     const byte* pubKey, word32 pubKeySz, enum Key_Sum ks);
+                                     const byte* pubKey, word32 pubKeySz,
+                                     enum Key_Sum ks, void* heap);
 WOLFSSL_LOCAL int StoreDHparams(byte* out, word32* outLen, mp_int* p, mp_int* g);
 #ifdef WOLFSSL_DH_EXTRA
 WOLFSSL_API int wc_DhPublicKeyDecode(const byte* input, word32* inOutIdx,
