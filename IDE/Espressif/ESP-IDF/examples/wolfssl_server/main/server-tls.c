@@ -424,8 +424,7 @@ WOLFSSL_ESP_TASK tls_smp_server_init(void* args)
     xTaskHandle _handle;
 #endif
     /* Note that despite vanilla FreeRTOS using WORDS for a parameter,
-     * Espressif uses BYTES for the task stack size here.
-     * See https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html */
+     * Espressif uses BYTES for the task stack size here. */
     ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
                    TLS_SMP_SERVER_TASK_BYTES);
     ret_i = xTaskCreate(tls_smp_server_task,

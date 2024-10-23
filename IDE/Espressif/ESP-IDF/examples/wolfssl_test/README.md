@@ -9,7 +9,7 @@ For general information on [wolfSSL examples for Espressif](../README.md), see t
 ## ESP Registry
 
 The easiest way to get started with wolfSSL is by using the
-[ESP Registry](https://components.espressif.com/components/wolfssl/wolfssl/) examples.
+[ESP Registry](https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/) examples.
 
 ```
 . ~/esp/esp-idf/export.sh

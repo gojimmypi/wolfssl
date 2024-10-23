@@ -260,7 +260,9 @@
     #endif
     #define HAVE_ALPN
     #ifndef CONFIG_IDF_TARGET_ESP8266
-        /* SNI Not supported on ESP8266 at this time */
+        /* Unless installed in the ESP8266 RTOS SDK locally, the wolfSSL
+         * API for SNI will not be seen in the components/esp-tls layer.
+         * Only enable SNI for non-ESP8266 targets by default: */
         #define HAVE_SNI
     #endif
     #define OPENSSL_EXTRA_X509_SMALL
@@ -763,8 +765,7 @@
     #define WOLFSSL_ESP8266
 
     /* There's no hardware encryption on the ESP8266 */
-    /* Consider using the ESP32-C2/C3/C6
-     * See https://www.espressif.com/en/products/socs/esp32-c2 */
+    /* Consider using the ESP32-C2/C3/C6 */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES

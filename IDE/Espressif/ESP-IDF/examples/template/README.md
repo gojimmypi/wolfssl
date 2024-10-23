@@ -7,7 +7,7 @@ For general information on [wolfSSL examples for Espressif](../README.md), see t
 
 ### Prerequisites
 
-It is assumed the [ESP-IDF environment](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/) has been installed.
+It is assumed the [ESP-IDF environment](Espressifget-started/) has been installed.
 
 ### Files Included
 
@@ -30,7 +30,7 @@ set(WOLFSSL_ROOT "~/workspace/wolfssl-other-source")
 
 ## Getting Started:
 
-Here's an example using the command-line [idf.py](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-py.html).
+Here's an example using the command-line [idf.py](Espressifapi-guides/tools/idf-py.html).
 
 Edit your `WRK_IDF_PATH`to point to your ESP-IDF install directory.
 
@@ -53,7 +53,7 @@ idf.py flash -p /dev/ttyS19 -b 115200
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 ```
 
-Press `Ctrl+]` to exit `idf.py monitor`. See [additional monitor keyboard commands](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-monitor.html).
+Press `Ctrl+]` to exit `idf.py monitor`. See [additional monitor keyboard commands](Espressifapi-guides/tools/idf-monitor.html).
 
 ## Other Examples:
 

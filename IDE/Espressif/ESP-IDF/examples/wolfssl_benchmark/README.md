@@ -7,8 +7,9 @@ For general information on [wolfSSL examples for Espressif](../README.md), see t
 
 ## Espressif ESP Component Registry
 
-See the wolfSSL namespace at [components.espressif.com](https://components.espressif.com/components?q=wolfssl)
+See the wolfSSL namespace and additional details:
 
+https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/
 
 ## Windows COM Port
 

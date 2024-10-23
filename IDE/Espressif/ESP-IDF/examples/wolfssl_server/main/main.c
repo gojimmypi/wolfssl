@@ -166,7 +166,7 @@ void app_main(void)
          * the minimum free stack space there has been (in bytes not words, unlike
          * vanilla FreeRTOS) since the task started. The smaller the returned
          * number the closer the task has come to overflowing its stack.
-         * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+         * see Espressif api-reference/system/freertos_idf
          */
         stack_start = uxTaskGetStackHighWaterMark(NULL);
         #ifdef ESP_SDK_MEM_LIB_VERSION

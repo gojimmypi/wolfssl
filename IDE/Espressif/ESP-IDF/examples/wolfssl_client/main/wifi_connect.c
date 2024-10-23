@@ -39,8 +39,9 @@
         #warning "Problem with wolfSSL user_settings."
         #warning "Check components/wolfssl/include"
     #endif
-    #include <wolfssl/version.h>
-    #include <wolfssl/wolfcrypt/types.h>
+    /* This project not yet using the library */
+    #undef USE_WOLFSSL_ESP_SDK_WIFI
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -207,7 +208,7 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
         ESP_LOGI(TAG, "got ip:%s",
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
     #endif
-        /* see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html */
+        /* see Espressif api-reference/system/freertos_idf */
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:

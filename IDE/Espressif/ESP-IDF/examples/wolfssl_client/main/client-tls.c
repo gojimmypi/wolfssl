@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
- 
+
 #include "client-tls.h"
 
 /* Espressif FreeRTOS */
@@ -37,6 +37,8 @@
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/settings.h>
+/* This project not yet using the library */
+#undef USE_WOLFSSL_ESP_SDK_WIFI
 #include <wolfssl/ssl.h>
 
 #if defined(WOLFSSL_WC_KYBER)
@@ -573,7 +575,7 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
-    /* See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html#functions  */
+    /* See Espressif api-reference/system/freertos_idf.html#functions  */
     if (TLS_SMP_CLIENT_TASK_BYTES < (6 * 1024)) {
         /* Observed approximately 6KB limit for the RTOS task stack size.
          * Reminder parameter is bytes, not words as with generic FreeRTOS. */
@@ -585,8 +587,7 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #endif
 
     /* Note that despite vanilla FreeRTOS using WORDS for a parameter,
-     * Espressif uses BYTES for the task stack size here.
-     * See https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html */
+     * Espressif uses BYTES for the task stack size here. */
     ret = xTaskCreate(tls_smp_client_task,
                       TLS_SMP_CLIENT_TASK_NAME,
                       TLS_SMP_CLIENT_TASK_BYTES,

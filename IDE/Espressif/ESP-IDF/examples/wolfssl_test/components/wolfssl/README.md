@@ -2,12 +2,12 @@
 
 This is the directory for wolfSSL as an Espressif ESP-IDF component.
 
-Other options are available, such as installing wolfSSL as a local _project_ component using the [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl). 
+Other options are available, such as installing wolfSSL as a local _project_ component using the [Managed Component](https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/).
 
 Enabling this wolfSSL ESP-IDF component allows other ESP-IDF libraries such as those that depend on [ESP-TLS](https://github.com/espressif/esp-idf/tree/master/components/esp-tls)
-to also use the wolfSSL library. (See [github.com/wolfSSL/wolfssl](https://github.com/wolfSSL/wolfssl)) 
+to also use the wolfSSL library. (See [github.com/wolfSSL/wolfssl](https://github.com/wolfSSL/wolfssl))
 
-The wolfSSL source code is not included here. Instead, the `idf.py menuconfig` option can be used to configure the 
+The wolfSSL source code is not included here. Instead, the `idf.py menuconfig` option can be used to configure the
 `sdkconfig` file setting: `CONFIG_CUSTOM_SETTING_WOLFSSL_ROOT` to point to the desired wolfSSL code.
 
 ## Directory Contents
@@ -21,7 +21,7 @@ The directory should also contain:
 - `Kconfig`
 - `component.mk`
 
-The directory may contain wolfSSL source, for example with a [Managed Component](https://components.espressif.com/components/wolfssl/wolfssl),
+The directory may contain wolfSSL source, for example with a [Managed Component](https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/),
 or if the `setup.sh` script was used from [wolfSSL/IDE/Espressif/ESP-IDF](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF).
 
 
@@ -41,7 +41,7 @@ While recursing up the directory tree, the following names of wolfSSL directorie
 
 ## Getting Started
 
-See the [Espressif Get STarted Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html).
+See the `Espressif Getting Started Guide`.
 
 ```
 # Set environment variable to ESP-IDF location

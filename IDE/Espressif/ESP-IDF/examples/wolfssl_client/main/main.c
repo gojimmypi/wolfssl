@@ -35,6 +35,8 @@
         #warning "Problem with wolfSSL user_settings."
         #warning "Check components/wolfssl/include"
     #endif
+    /* This project not yet using the library */
+    #undef USE_WOLFSSL_ESP_SDK_WIFI
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
@@ -131,8 +133,12 @@ void my_atmel_free(int slotId)
 /* Entry for FreeRTOS */
 void app_main(void)
 {
+#if !defined(SINGLE_THREADED) && INCLUDE_uxTaskGetStackHighWaterMark
     int stack_start = 0;
+#endif
+#if !defined(SINGLE_THREADED)
     int this_heap = 0;
+#endif
     esp_err_t ret = 0;
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Client Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -166,7 +172,7 @@ void app_main(void)
          * the minimum free stack space there has been (in bytes not words, unlike
          * vanilla FreeRTOS) since the task started. The smaller the returned
          * number the closer the task has come to overflowing its stack.
-         * see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/freertos_idf.html
+         * see Espressif api-reference/system/freertos_idf
          */
         stack_start = uxTaskGetStackHighWaterMark(NULL);
         #ifdef ESP_SDK_MEM_LIB_VERSION

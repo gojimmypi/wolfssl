@@ -71,8 +71,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 /* There's a minimum version of wolfSSL needed for Certificate Bundle Support.
  *
  * See the latest code at:
- * https://github.com/wolfSSL/wolfssl or
- * https://components.espressif.com/components/wolfssl/wolfssl
+ * https://github.com/wolfSSL/wolfssl or Managed Components at
+ * https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/
  */
 #if defined(WOLFSSL_ESPIDF_COMPONENT_VERSION)
     #if (WOLFSSL_ESPIDF_COMPONENT_VERSION > 0)
