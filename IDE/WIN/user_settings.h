@@ -17,13 +17,14 @@
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_DTLS_CID
 
-/* npm */
 #define NPM_WOLFCRYPT
 #ifdef NPM_WOLFCRYPT
     /* Optional debug */
     /* #define DEBUG_WOLFSSL */
 
-    #undef  HAVE_PKCS7
+    /* Optional RNG */
+    /* #define WC_RNG_SEED_CB */
+
     #define HAVE_PKCS7
     #define HAVE_AES_KEYWRAP
     #define WOLFSSL_AES_DIRECT
@@ -41,51 +42,19 @@
     #define WOLFSSL_SHA384
     #define WOLFSSL_SHA3
 
-    /* Optional RNG */
-    /* #define WC_RNG_SEED_CB */
-
-    #undef  NO_OLD_RNGNAME
     #define NO_OLD_RNGNAME
-
-    #undef  TFM_TIMING_RESISTANT
     #define TFM_TIMING_RESISTANT
-
-    #undef  ECC_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
-
-    #undef  WC_RSA_BLINDING
     #define WC_RSA_BLINDING
-
-    #undef  HAVE_ECC
-    #define HAVE_ECC
-
-    #undef  TFM_ECC256
     #define TFM_ECC256
-
-    #undef  ECC_SHAMIR
     #define ECC_SHAMIR
-
-    #undef  ECC_MIN_KEY_SZ
     #define ECC_MIN_KEY_SZ 224
-
-    #undef  HAVE_ECC_BRAINPOOL
     #define HAVE_ECC_BRAINPOOL
-
-    #undef  HAVE_CURVE25519
     #define HAVE_CURVE25519
-
-    #undef  FP_ECC
     #define FP_ECC
-
-    #undef  HAVE_ECC_ENCRYPT
     #define HAVE_ECC_ENCRYPT
-
-    #undef  WOLFCRYPT_HAVE_ECCSI
     #define WOLFCRYPT_HAVE_ECCSI
-
-    #undef  WOLFSSL_CUSTOM_CURVES
     #define WOLFSSL_CUSTOM_CURVES
-
 #endif
 
 /* Configurations */
