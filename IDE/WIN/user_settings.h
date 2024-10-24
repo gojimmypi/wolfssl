@@ -20,6 +20,9 @@
 /* npm */
 #define NPM_WOLFCRYPT
 #ifdef NPM_WOLFCRYPT
+    /* Optional debug */
+    /* #define DEBUG_WOLFSSL */
+
     #undef  HAVE_PKCS7
     #define HAVE_PKCS7
     #define HAVE_AES_KEYWRAP
@@ -37,7 +40,9 @@
     #define WOLFSSL_SHA512
     #define WOLFSSL_SHA384
     #define WOLFSSL_SHA3
-//    #define WC_RNG_SEED_CB
+
+    /* Optional RNG */
+    /* #define WC_RNG_SEED_CB */
 
     #undef  NO_OLD_RNGNAME
     #define NO_OLD_RNGNAME
