@@ -17,6 +17,7 @@
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_DTLS_CID
 
+/* npm */
 #define NPM_WOLFCRYPT
 #ifdef NPM_WOLFCRYPT
     /* Optional debug */
