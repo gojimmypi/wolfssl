@@ -5285,7 +5285,9 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     defined(WOLFSSL_WPAS_SMALL)
             /* Check if client has disabled TLS 1.2 */
             if (args->pv.minor == TLSv1_2_MINOR &&
-                (ssl->options.mask & SSL_OP_NO_TLSv1_2) == SSL_OP_NO_TLSv1_2) {
+                (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_2)
+                == WOLFSSL_OP_NO_TLSv1_2)
+            {
                 WOLFSSL_MSG("\tOption set to not allow TLSv1.2");
                 WOLFSSL_ERROR_VERBOSE(VERSION_ERROR);
                 return VERSION_ERROR;
@@ -8998,7 +9000,7 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
                 return 0;  /* sent blank cert, can't verify */
             }
 
-            args->sendSz = MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA;
+            args->sendSz = WC_MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA;
             /* Always encrypted.  */
             args->sendSz += MAX_MSG_EXTRA;
 
@@ -9655,7 +9657,7 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
             if (ssl->options.dtls) {
                 ssl->options.buildingMsg = 0;
                 ret = Dtls13HandshakeSend(ssl, args->output,
-                    MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA + MAX_MSG_EXTRA,
+                    WC_MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA + MAX_MSG_EXTRA,
                     (word16)args->sendSz, certificate_verify, 1);
                 if (ret != 0)
                     goto exit_scv;
@@ -9666,7 +9668,7 @@ static int SendTls13CertificateVerify(WOLFSSL* ssl)
 
             /* This message is always encrypted. */
             ret = BuildTls13Message(ssl, args->output,
-                                    MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA,
+                                    WC_MAX_CERT_VERIFY_SZ + MAX_MSG_EXTRA,
                                     args->output + RECORD_HEADER_SZ,
                                     args->sendSz - RECORD_HEADER_SZ, handshake,
                                     1, 0, 0);
@@ -12797,7 +12799,7 @@ int DoTls13HandShakeMsgType(WOLFSSL* ssl, byte* input, word32* inOutIdx,
         #ifdef WOLFSSL_QUIC
                 if (WOLFSSL_IS_QUIC(ssl) && ssl->earlyData != no_early_data) {
                     /* QUIC never sends/receives EndOfEarlyData, but having
-                     * early data means the last encrpytion keys had not been
+                     * early data means the last encryption keys had not been
                      * set yet. */
                     if ((ret = SetKeysSide(ssl, ENCRYPT_SIDE_ONLY)) != 0)
                         return ret;
@@ -13033,7 +13035,7 @@ int wolfSSL_connect_TLSv13(WOLFSSL* ssl)
     }
 
     /* make sure this wolfSSL object has arrays and rng setup. Protects
-     * case where the WOLFSSL object is re-used via wolfSSL_clear() */
+     * case where the WOLFSSL object is reused via wolfSSL_clear() */
     if ((ret = ReinitSSL(ssl, ssl->ctx, 0)) != 0) {
         return ret;
     }
@@ -14134,7 +14136,7 @@ int wolfSSL_accept_TLSv13(WOLFSSL* ssl)
     }
 
     /* make sure this wolfSSL object has arrays and rng setup. Protects
-     * case where the WOLFSSL object is re-used via wolfSSL_clear() */
+     * case where the WOLFSSL object is reused via wolfSSL_clear() */
     if ((ret = ReinitSSL(ssl, ssl->ctx, 0)) != 0) {
         return ret;
     }

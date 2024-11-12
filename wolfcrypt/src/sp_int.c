@@ -119,7 +119,7 @@ This library provides single precision (SP) integer math functions.
 #if defined(WOLFSSL_LINUXKM) && !defined(WOLFSSL_SP_ASM)
     /* force off unneeded vector register save/restore. */
     #undef SAVE_VECTOR_REGISTERS
-    #define SAVE_VECTOR_REGISTERS(...) WC_DO_NOTHING
+    #define SAVE_VECTOR_REGISTERS(fail_clause) WC_DO_NOTHING
     #undef RESTORE_VECTOR_REGISTERS
     #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
 #endif
@@ -3458,7 +3458,7 @@ static WC_INLINE sp_int_digit sp_div_word(sp_int_digit hi, sp_int_digit lo,
         :
         : "r3", "r4", "r5", "r6", "r7", "r8", "r9", "cc"
     );
-    return (uint32_t)(size_t)hi;
+    return (sp_uint32)(size_t)hi;
 }
 
 #define SP_ASM_DIV_WORD

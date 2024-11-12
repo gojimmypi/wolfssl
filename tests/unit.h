@@ -23,6 +23,18 @@
 #ifndef TESTS_UNIT_H
 #define TESTS_UNIT_H
 
+#ifdef HAVE_CONFIG_H
+    #include <config.h>
+#endif
+
+#ifndef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/options.h>
+#endif
+#include <wolfssl/wolfcrypt/settings.h>
+
+#undef TEST_OPENSSL_COEXIST /* can't use this option with unit tests */
+#undef OPENSSL_COEXIST /* can't use this option with unit tests */
+
 #include <wolfssl/ssl.h>
 #include <wolfssl/test.h>    /* thread and tcp stuff */
 

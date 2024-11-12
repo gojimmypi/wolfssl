@@ -3067,8 +3067,8 @@ static void* benchmarks_do(void* args)
         bench_buf_size += 16 - (bench_buf_size % 16);
 
 #ifdef WOLFSSL_AFALG_XILINX_AES
-    bench_plain = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16);
-    bench_cipher = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16);
+    bench_plain = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16); /* native heap */
+    bench_cipher = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16); /* native heap */
 #else
     bench_plain = (byte*)XMALLOC((size_t)bench_buf_size + 16,
                                  HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
@@ -3652,6 +3652,24 @@ static void* benchmarks_do(void* args)
 
 #ifdef WOLFSSL_HAVE_KYBER
     if (bench_all || (bench_pq_asym_algs & BENCH_KYBER)) {
+#ifndef WOLFSSL_NO_ML_KEM
+    #ifdef WOLFSSL_KYBER512
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER512)) {
+            bench_kyber(WC_ML_KEM_512);
+        }
+    #endif
+    #ifdef WOLFSSL_KYBER768
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER768)) {
+            bench_kyber(WC_ML_KEM_768);
+        }
+    #endif
+    #ifdef WOLFSSL_KYBER1024
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER1024)) {
+            bench_kyber(WC_ML_KEM_1024);
+        }
+    #endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
     #ifdef WOLFSSL_KYBER512
         if (bench_all || (bench_pq_asym_algs & BENCH_KYBER512)) {
             bench_kyber(KYBER512);
@@ -3667,6 +3685,7 @@ static void* benchmarks_do(void* args)
             bench_kyber(KYBER1024);
         }
     #endif
+#endif
     }
 #endif
 
@@ -9471,6 +9490,27 @@ void bench_kyber(int type)
     int keySize = 0;
 
     switch (type) {
+#ifndef WOLFSSL_NO_ML_KEM
+#ifdef WOLFSSL_WC_ML_KEM_512
+    case WC_ML_KEM_512:
+        name = "ML-KEM 512 ";
+        keySize = 128;
+        break;
+#endif
+#ifdef WOLFSSL_WC_ML_KEM_768
+    case WC_ML_KEM_768:
+        name = "ML-KEM 768 ";
+        keySize = 192;
+        break;
+#endif
+#ifdef WOLFSSL_WC_ML_KEM_1024
+    case WC_ML_KEM_1024:
+        name = "ML-KEM 1024 ";
+        keySize = 256;
+        break;
+#endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
 #ifdef WOLFSSL_KYBER512
     case KYBER512:
         name = "KYBER512 ";
@@ -9488,6 +9528,7 @@ void bench_kyber(int type)
         name = "KYBER1024";
         keySize = 256;
         break;
+#endif
 #endif
     }
 
@@ -14498,7 +14539,15 @@ void bench_sphincsKeySign(byte level, byte optim)
 
         return (double) ticks/TICKS_PER_SECOND;
     }
+#elif defined(WOLFSSL_RPIPICO)
+    #include "pico/stdlib.h"
 
+    double current_time(int reset)
+    {
+        (void)reset;
+
+        return (double) time_us_64() / 1000000;
+    }
 #elif defined(THREADX)
     #include "tx_api.h"
     double current_time(int reset)

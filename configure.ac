@@ -7,8 +7,11 @@
 #
 AC_COPYRIGHT([Copyright (C) 2006-2024 wolfSSL Inc.])
 AC_PREREQ([2.69])
-AC_INIT([wolfssl],[5.7.2],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
+AC_INIT([wolfssl],[5.7.4],[https://github.com/wolfssl/wolfssl/issues],[wolfssl],[https://www.wolfssl.com])
 AC_CONFIG_AUX_DIR([build-aux])
+
+# Inhibit unwanted regeneration of autotools artifacts by Makefile.
+AM_MAINTAINER_MODE([disable])
 
 # The following sets CFLAGS to empty if unset on command line.  We do not
 # want the default "-g -O2" that AC_PROG_CC sets automatically.
@@ -51,7 +54,7 @@ WOLFSSL_LIBRARY_VERSION_FIRST=42
 
 # increment if interfaces have been added
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented
-WOLFSSL_LIBRARY_VERSION_SECOND=2
+WOLFSSL_LIBRARY_VERSION_SECOND=3
 
 # increment if source code has changed
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented or
@@ -893,8 +896,7 @@ then
 fi
 
 
-
-# ALL FEATURES
+# All features, except conflicting or experimental:
 AC_ARG_ENABLE([all],
     [AS_HELP_STRING([--enable-all],[Enable all wolfSSL features, except SSLv3 (default: disabled)])],
     [ ENABLED_ALL=$enableval ],
@@ -902,13 +904,14 @@ AC_ARG_ENABLE([all],
     )
 if test "$ENABLED_ALL" = "yes"
 then
-    enable_all_crypto=yes
+    test "$enable_all_crypto" = "" && enable_all_crypto=yes
+
+    test "$enable_all_osp" = "" && test "$ENABLED_LINUXKM_DEFAULTS" != "yes" && enable_all_osp=yes
 
     test "$enable_dtls" = "" && enable_dtls=yes
     if test "x$FIPS_VERSION" != "xv1"
     then
         test "$enable_tls13" = "" && enable_tls13=yes
-        test "$enable_rsapss" = "" && enable_rsapss=yes
     fi
 
     test "$enable_savesession" = "" && enable_savesession=yes
@@ -916,13 +919,12 @@ then
     test "$enable_postauth" = "" && enable_postauth=yes
     test "$enable_hrrcookie" = "" && enable_hrrcookie=yes
     test "$enable_fallback_scsv" = "" && enable_fallback_scsv=yes
-    test "$enable_webserver" = "" && enable_webserver=yes
     test "$enable_crl_monitor" = "" && enable_crl_monitor=yes
     test "$enable_sni" = "" && enable_sni=yes
     test "$enable_maxfragment" = "" && enable_maxfragment=yes
     test "$enable_alpn" = "" && enable_alpn=yes
     test "$enable_truncatedhmac" = "" && enable_truncatedhmac=yes
-    test "$enable_trusted_ca" = "" && enable_trusted_ca=yes
+    test "$enable_trustedca" = "" && enable_trustedca=yes
     test "$enable_session_ticket" = "" && enable_session_ticket=yes
     test "$enable_earlydata" = "" && enable_earlydata=yes
     test "$enable_ech" = "" && enable_ech=yes
@@ -939,26 +941,9 @@ then
         # linuxkm is incompatible with opensslextra and its dependents.
         if test "$ENABLED_LINUXKM_DEFAULTS" != "yes"
         then
-            if test "$ENABLED_FIPS" = "no"
-            then
-                if test "$ENABLED_32BIT" != "yes"
-                then
-                    test "$enable_openssh" = "" && enable_openssh=yes
-                fi
-                # S/MIME support requires PKCS7, which requires no FIPS.
-                test "$enable_smime" = "" && enable_smime=yes
-            fi
             test "$enable_opensslextra" = "" && enable_opensslextra=yes
             test "$enable_opensslall" = "" && enable_opensslall=yes
             test "$enable_certservice" = "" && enable_certservice=yes
-            test "$enable_lighty" = "" && enable_lighty=yes
-            test "$enable_nginx" = "" && enable_nginx=yes
-            test "$enable_openvpn" = "" && enable_openvpn=yes
-            test "$enable_asio" = "" && enable_asio=yes
-            test "$enable_libwebsockets" = "" && enable_libwebsockets=yes
-            if test "$ENABLED_FIPS" = "no" || test "$HAVE_FIPS_VERSION" -le 5; then
-                test "$enable_qt" = "" && enable_qt=yes
-            fi
         fi
     fi
 
@@ -966,14 +951,6 @@ then
     then
         test "$enable_scep" = "" && enable_scep=yes
         test "$enable_mcast" = "" && enable_mcast=yes
-
-        if test "$ENABLED_LINUXKM_DEFAULTS" != "yes"
-        then
-            # these use DES3:
-            test "$enable_stunnel" = "" && enable_stunnel=yes
-            test "$enable_curl" = "" && enable_curl=yes
-            test "$enable_tcpdump" = "" && enable_tcpdump=yes
-        fi
     fi
 
     if test "$ENABLED_FIPS" = "no" || test "$HAVE_FIPS_VERSION" -ge 6
@@ -991,6 +968,57 @@ then
 
     # More thorough error queue usage.
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_VERBOSE_ERRORS"
+fi
+
+
+# All OSP meta-features:
+AC_ARG_ENABLE([all-osp],
+    [AS_HELP_STRING([--enable-all-osp],[Enable all OSP meta feature sets (default: disabled)])],
+    [ ENABLED_ALL_OSP=$enableval ],
+    [ ENABLED_ALL_OSP=no]
+    )
+
+if test "$ENABLED_ALL_OSP" = "yes"
+then
+    if test "$ENABLED_LINUXKM_DEFAULTS" = "yes"
+    then
+        AC_MSG_ERROR([--enable-all-osp is incompatible with --enable-linuxkm-defaults])
+    fi
+
+    test "$enable_webserver" = "" && enable_webserver=yes
+
+    if test "$ENABLED_SP_MATH" = "no"
+    then
+        if test "$ENABLED_FIPS" = "no"
+        then
+            # S/MIME support requires PKCS7, which requires no FIPS.
+            test "$enable_smime" = "" && enable_smime=yes
+            if test "$ENABLED_32BIT" != "yes"
+            then
+                test "$enable_openssh" = "" && enable_openssh=yes
+            fi
+        fi
+
+        if test "$ENABLED_ALL_OSP" != "no"
+        then
+            test "$enable_lighty" = "" && enable_lighty=yes
+            test "$enable_nginx" = "" && enable_nginx=yes
+            test "$enable_openvpn" = "" && enable_openvpn=yes
+            test "$enable_asio" = "" && enable_asio=yes
+            test "$enable_libwebsockets" = "" && enable_libwebsockets=yes
+            if test "$ENABLED_FIPS" = "no" || test "$HAVE_FIPS_VERSION" -le 5; then
+                test "$enable_qt" = "" && enable_qt=yes
+            fi
+        fi
+    fi
+
+    if test "$ENABLED_FIPS" = "no"
+    then
+        # these use DES3:
+        test "$enable_stunnel" = "" && enable_stunnel=yes
+        test "$enable_curl" = "" && enable_curl=yes
+        test "$enable_tcpdump" = "" && enable_tcpdump=yes
+    fi
 fi
 
 
@@ -1090,7 +1118,7 @@ then
 fi
 
 
-# ALL CRYPTO FEATURES
+# All wolfCrypt features:
 AC_ARG_ENABLE([all-crypto],
     [AS_HELP_STRING([--enable-all-crypto],[Enable all wolfcrypt algorithms (default: disabled)])],
     [ ENABLED_ALL_CRYPT=$enableval ],
@@ -1148,6 +1176,11 @@ then
     test "$enable_md4" = "" && enable_md4=yes
     test "$enable_anon" = "" && enable_anon=yes
     test "$enable_ssh" = "" && test "$enable_hmac" != "no" && enable_ssh=yes
+
+    if test "x$FIPS_VERSION" != "xv1"
+    then
+        test "$enable_rsapss" = "" && enable_rsapss=yes
+    fi
 
     # sp-math is incompatible with opensslextra, ECC custom curves, and DSA.
     if test "$ENABLED_SP_MATH" = "no"
@@ -1276,6 +1309,7 @@ AC_ARG_ENABLE([kyber],
     )
 
 ENABLED_WC_KYBER=no
+ENABLED_ML_KEM=yes
 for v in `echo $ENABLED_KYBER | tr "," " "`
 do
   case $v in
@@ -1301,6 +1335,10 @@ do
   original)
     ENABLED_ORIGINAL=yes
     ;;
+  original-only)
+    ENABLED_ORIGINAL=yes
+    ENABLED_ML_KEM=no
+    ;;
   *)
     AC_MSG_ERROR([Invalid choice for KYBER []: $ENABLED_KYBER.])
     break;;
@@ -1317,17 +1355,30 @@ then
         AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_WC_KYBER"
     fi
 
-    if test "$ENABLED_KYBER512" = ""; then
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER512"
-    fi
-    if test "$ENABLED_KYBER768" = ""; then
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER768"
-    fi
-    if test "$ENABLED_KYBER1024" = ""; then
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
-    fi
     if test "$ENABLED_ORIGINAL" = "yes"; then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_ORIGINAL"
+        if test "$ENABLED_KYBER512" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER512"
+        fi
+        if test "$ENABLED_KYBER768" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER768"
+        fi
+        if test "$ENABLED_KYBER1024" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_KYBER1024"
+        fi
+    fi
+    if test "$ENABLED_ML_KEM" = "yes"; then
+        if test "$ENABLED_KYBER512" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_KEM_512"
+        fi
+        if test "$ENABLED_KYBER768" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_KEM_768"
+        fi
+        if test "$ENABLED_KYBER1024" = ""; then
+            AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_KEM_1024"
+        fi
+    else
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_KEM"
     fi
 
     if test "$ENABLED_WC_KYBER" = "yes"
@@ -5967,6 +6018,19 @@ else
 fi
 
 
+# C89 build
+AC_ARG_ENABLE([c89],
+    [AS_HELP_STRING([--enable-c89],[Build with C89 toolchain (default: disabled)])],
+    [ ENABLED_C89=$enableval ],
+    [ ENABLED_C89=no ]
+    )
+
+if test "$ENABLED_C89" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLF_C89"
+    test "$enable_inline" = "" && enable_inline=no
+fi
+
 # inline Build
 AC_ARG_ENABLE([inline],
     [AS_HELP_STRING([--enable-inline],[Enable inline functions (default: enabled)])],
@@ -7355,7 +7419,7 @@ then
         ENABLED_WOLFSSH="yes"
     fi
 
-    if test "x$ENABLED_OPENSSLEXTRA" = "xno" && test "x$ENABLED_OPENSSLCOEXIST" = "xno"
+    if test "x$ENABLED_OPENSSLEXTRA" = "xno"
     then
         ENABLED_OPENSSLEXTRA="yes"
     fi
@@ -8902,6 +8966,8 @@ AC_ARG_ENABLE([dual-alg-certs],
 
 AS_IF([ test "$ENABLED_DUAL_ALG_CERTS" != "no" && test "$ENABLED_EXPERIMENTAL" != "yes" ],[ AC_MSG_ERROR([dual-alg-certs requires --enable-experimental.]) ])
 
+AS_IF([ test "$ENABLED_DUAL_ALG_CERTS" != "no" && test "$ENABLED_CRYPTONLY" = "yes" ],[ AC_MSG_ERROR([dual-alg-certs is incompatible with --enable-cryptonly.]) ])
+
 # Adds functionality to support Raw Public Key (RPK) RFC7250
 AC_ARG_ENABLE([rpk],
     [AS_HELP_STRING([--enable-rpk],[Enable support for Raw Public Key (RPK) RFC7250 (default: disabled)])],
@@ -9091,6 +9157,12 @@ then
     if test "$ENABLED_DES3" = "no"
     then
         ENABLED_DES3="yes"
+    fi
+
+    # Has support for PKCS7
+    if test "$ENABLED_PKCS7" = "no"
+    then
+        ENABLED_PKCS7=yes
     fi
 
     # Uses alt name
@@ -9349,7 +9421,7 @@ then
     AM_CFLAGS="$AM_CFLAGS -DNO_HMAC"
 fi
 
-if test "$ENABLED_OPENSSLEXTRA" = "yes" && test "x$ENABLED_OPENSSLCOEXIST" = "xno"
+if test "$ENABLED_OPENSSLEXTRA" = "yes"
 then
   AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA"
 fi
@@ -9570,9 +9642,6 @@ if test "x$ENABLED_OPENSSLCOEXIST" = "xyes"; then
     if test "x$ENABLED_OPENSSLALL" = "xyes"; then
         AC_MSG_ERROR([Cannot use --enable-opensslcoexist with --enable-opensslall])
     fi
-    if test "x$ENABLED_OPENSSLEXTRA" = "xyes"; then
-        AC_MSG_ERROR([Cannot use --enable-opensslcoexist with --enable-opensslextra])
-    fi
 fi
 
 if test "$ENABLED_WOLFSSH" = "yes" && test "$ENABLED_HMAC" = "no"
@@ -9612,7 +9681,7 @@ if test "$ENABLED_DH" != "no" && test "$ENABLED_DH" != "const"; then
    LT_LIB_M
 fi
 
-# mulitple OCSP stapling for TLS 1.3 Certificate extension
+# multiple OCSP stapling for TLS 1.3 Certificate extension
 if test "$ENABLED_CERTIFICATE_STATUS_REQUEST" = "yes"
 then
     if test "$ENABLED_TLS13" = "yes"
@@ -9725,8 +9794,8 @@ if test "x$ENABLED_LINUXKM" = "xyes"; then
     AC_SUBST([ASFLAGS_FPUSIMD_DISABLE])
     AC_SUBST([ASFLAGS_FPUSIMD_ENABLE])
 
-    if test "$ENABLED_OPENSSLEXTRA" != "no" && test "$ENABLED_CRYPTONLY" = "no"; then
-        AC_MSG_ERROR([--enable-opensslextra without --enable-cryptonly is incompatible with --enable-linuxkm.])
+    if test "$ENABLED_OPENSSLEXTRA" != "no" && test "$ENABLED_LINUXKM_PIE" = "yes" && test "$ENABLED_CRYPTONLY" = "no"; then
+        AC_MSG_ERROR([--enable-opensslextra with --enable-linuxkm-pie and without --enable-cryptonly is incompatible with --enable-linuxkm.])
     fi
     if test "$ENABLED_FILESYSTEM" = "yes"; then
         AC_MSG_ERROR([--enable-filesystem is incompatible with --enable-linuxkm.])
@@ -9890,7 +9959,7 @@ AM_CONDITIONAL([USE_VALGRIND],[test "x$ENABLED_VALGRIND" = "xyes"])
 AM_CONDITIONAL([BUILD_MD4],[test "x$ENABLED_MD4" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_PWDBASED],[test "x$ENABLED_PWDBASED" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_SCRYPT],[test "x$ENABLED_SCRYPT" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
-AM_CONDITIONAL([BUILD_CRYPTONLY],[test "x$ENABLED_CRYPTONLY" = "xyes" && test "x$ENABLED_OPENSSLEXTRA" = "xno"])
+AM_CONDITIONAL([BUILD_CRYPTONLY],[test "x$ENABLED_CRYPTONLY" = "xyes"])
 AM_CONDITIONAL([BUILD_FASTMATH],[test "x$ENABLED_FASTMATH" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_HEAPMATH],[test "x$ENABLED_HEAPMATH" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_EXAMPLE_SERVERS],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_LEANTLS" = "xno"])
@@ -10459,6 +10528,7 @@ echo "   * ARM ASM SM3/SM4 Crypto      $ENABLED_ARMASM_CRYPTO_SM4"
 echo "   * RISC-V ASM                  $ENABLED_RISCV_ASM"
 echo "   * Write duplicate:            $ENABLED_WRITEDUP"
 echo "   * Xilinx Hardware Acc.:       $ENABLED_XILINX"
+echo "   * C89:                        $ENABLED_C89"
 echo "   * Inline Code:                $ENABLED_INLINE"
 echo "   * Linux AF_ALG:               $ENABLED_AFALG"
 echo "   * Linux KCAPI:                $ENABLED_KCAPI"

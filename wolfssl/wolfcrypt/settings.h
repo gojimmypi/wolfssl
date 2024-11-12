@@ -264,6 +264,9 @@
 /* Uncomment next line if using MAXQ108x */
 /* #define WOLFSSL_MAXQ108X */
 
+/* Uncomment next line if using Raspberry Pi RP2040 or RP2350 */
+/* #define WOLFSSL_RPIPICO */
+
 /* Check PLATFORMIO first, as it may define other known environments. */
 #ifdef PLATFORMIO
     #ifdef ESP_PLATFORM
@@ -1358,10 +1361,13 @@
         #define NO_SESSION_CACHE
 #endif
 
-/* Micrium will use Visual Studio for compilation but not the Win32 API */
+/* For platforms where the target OS is not Windows, but compilation is
+ * done on Windows/Visual Studio, enable a way to disable USE_WINDOWS_API.
+ * Examples: Micrium, TenAsus INtime, uTasker, FreeRTOS simulator */
 #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) && \
     !defined(FREERTOS_TCP) && !defined(EBSNET) && !defined(WOLFSSL_EROAD) && \
-    !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS)
+    !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS) && \
+    !defined(WOLFSSL_NOT_WINDOWS_API)
     #define USE_WINDOWS_API
 #endif
 
@@ -1419,9 +1425,9 @@ extern void uITRON4_free(void *p) ;
 #if defined(WOLFSSL_LEANPSK) && !defined(XMALLOC_USER) && \
         !defined(NO_WOLFSSL_MEMORY) && !defined(WOLFSSL_STATIC_MEMORY)
     #include <stdlib.h>
-    #define XMALLOC(s, h, type)  ((void)(h), (void)(type), malloc((s)))
-    #define XFREE(p, h, type)    ((void)(h), (void)(type), free((p)))
-    #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n)))
+    #define XMALLOC(s, h, type)  ((void)(h), (void)(type), malloc((s))) /* native heap */
+    #define XFREE(p, h, type)    ((void)(h), (void)(type), free((p))) /* native heap */
+    #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n))) /* native heap */
 #endif
 
 #if defined(XMALLOC_USER) && defined(SSN_BUILDING_LIBYASSL)
@@ -1456,18 +1462,18 @@ extern void uITRON4_free(void *p) ;
                            (s), (__FILE__), (__LINE__), (__FUNCTION__) ))
         #else
             #define XMALLOC(s, h, type)  \
-                           ((void)(h), (void)(type), pvPortMalloc((s)))
+                           ((void)(h), (void)(type), pvPortMalloc((s))) /* native heap */
         #endif
 
         /* XFREE */
-        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p)))
+        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p))) /* native heap */
 
         /* XREALLOC */
         #if defined(WOLFSSL_ESPIDF)
             /* In the Espressif EDP-IDF, realloc(p, n) is equivalent to
              *     heap_caps_realloc(p, s, MALLOC_CAP_8BIT)
              * There's no pvPortRealloc available:  */
-            #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n)))
+            #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n))) /* native heap */
         #elif defined(USE_INTEGER_HEAP_MATH) || defined(OPENSSL_EXTRA) || \
               defined(OPENSSL_ALL)
             /* FreeRTOS pvPortRealloc() implementation can be found here:
@@ -1509,8 +1515,8 @@ extern void uITRON4_free(void *p) ;
 #ifdef FREERTOS_TCP
     #if !defined(NO_WOLFSSL_MEMORY) && !defined(XMALLOC_USER) && \
         !defined(WOLFSSL_STATIC_MEMORY)
-        #define XMALLOC(s, h, type)  pvPortMalloc((s))
-        #define XFREE(p, h, type)    vPortFree((p))
+        #define XMALLOC(s, h, type)  pvPortMalloc((s)) /* native heap */
+        #define XFREE(p, h, type)    vPortFree((p)) /* native heap */
     #endif
 
     #define WOLFSSL_GENSEED_FORTEST
@@ -1678,8 +1684,8 @@ extern void uITRON4_free(void *p) ;
     #endif
     #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY) && \
         !defined(WOLFSSL_STATIC_MEMORY)
-        #define XMALLOC(s, h, type)  ((void)(h), (void)(type), pvPortMalloc((s)))
-        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p)))
+        #define XMALLOC(s, h, type)  ((void)(h), (void)(type), pvPortMalloc((s))) /* native heap */
+        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p))) /* native heap */
 
         /* FreeRTOS pvPortRealloc() implementation can be found here:
             https://github.com/wolfSSL/wolfssl-freertos/pull/3/files */
@@ -1797,8 +1803,8 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_CRYPT_HW_MUTEX 1
 
     #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY)
-        #define XMALLOC(s, h, type)  ((void)(h), (void)(type), pvPortMalloc((s)))
-        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p)))
+        #define XMALLOC(s, h, type)  ((void)(h), (void)(type), pvPortMalloc((s))) /* native heap */
+        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p))) /* native heap */
     #endif
 
     /* #define USER_TICKS */
@@ -2747,6 +2753,10 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_SP_NO_DYN_STACK
 #endif
 
+#if defined(__WATCOMC__) && !defined(WOLF_NO_VARIADIC_MACROS)
+    #define WOLF_NO_VARIADIC_MACROS
+#endif
+
 #ifdef __INTEL_COMPILER
     #pragma warning(disable:2259) /* explicit casts to smaller sizes, disable */
 #endif
@@ -3168,6 +3178,14 @@ extern void uITRON4_free(void *p) ;
     #undef NO_DH
 #endif
 
+/* CryptoCell defines */
+#ifdef WOLFSSL_CRYPTOCELL
+    #if defined(HAVE_ECC) && defined(HAVE_ECC_SIGN)
+        /* Don't attempt to sign/verify an all-zero digest in wolfCrypt tests */
+        #define WC_TEST_NO_ECC_SIGN_VERIFY_ZERO_DIGEST
+    #endif /* HAVE_ECC && HAVE_ECC_SIGN */
+#endif
+
 /* Asynchronous Crypto */
 #ifdef WOLFSSL_ASYNC_CRYPT
     #if !defined(HAVE_CAVIUM) && !defined(HAVE_INTEL_QA) && \
@@ -3192,6 +3210,12 @@ extern void uITRON4_free(void *p) ;
          * but not required */
         #define ECC_CACHE_CURVE
     #endif
+
+    #if defined(HAVE_ECC) && defined(HAVE_ECC_SIGN)
+        /* Don't attempt to sign/verify an all-zero digest in wolfCrypt tests */
+        #define WC_TEST_NO_ECC_SIGN_VERIFY_ZERO_DIGEST
+    #endif /* HAVE_ECC && HAVE_ECC_SIGN */
+
 #endif /* WOLFSSL_ASYNC_CRYPT */
 #ifndef WC_ASYNC_DEV_SIZE
     #define WC_ASYNC_DEV_SIZE 0
@@ -3477,6 +3501,7 @@ extern void uITRON4_free(void *p) ;
     #undef HAVE_STRINGS_H
     #undef HAVE_ERRNO_H
     #undef HAVE_THREAD_LS
+    #undef HAVE_ATEXIT
     #undef WOLFSSL_HAVE_MIN
     #undef WOLFSSL_HAVE_MAX
     #define SIZEOF_LONG         8
@@ -3537,7 +3562,7 @@ extern void uITRON4_free(void *p) ;
  * OpenSSL compat layer
  * ---------------------------------------------------------------------------
  */
-#if defined(OPENSSL_EXTRA) && !defined(OPENSSL_COEXIST)
+#ifdef OPENSSL_EXTRA
     #undef  WOLFSSL_ALWAYS_VERIFY_CB
     #define WOLFSSL_ALWAYS_VERIFY_CB
 
@@ -3561,7 +3586,7 @@ extern void uITRON4_free(void *p) ;
 
     #undef WOLFSSL_SESSION_ID_CTX
     #define WOLFSSL_SESSION_ID_CTX
-#endif /* OPENSSL_EXTRA && !OPENSSL_COEXIST */
+#endif /* OPENSSL_EXTRA */
 
 #ifdef OPENSSL_EXTRA_X509_SMALL
     #undef WOLFSSL_NO_OPENSSL_RAND_CB
@@ -4163,9 +4188,8 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif
 
-#if (defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL)) && \
-    defined(OPENSSL_COEXIST)
-    #error "OPENSSL_EXTRA can not be defined with OPENSSL_COEXIST"
+#if defined(OPENSSL_ALL) && defined(OPENSSL_COEXIST)
+    #error "OPENSSL_ALL can not be defined with OPENSSL_COEXIST"
 #endif
 
 #if !defined(NO_DSA) && defined(NO_SHA)

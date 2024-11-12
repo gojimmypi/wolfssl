@@ -36,7 +36,7 @@
 
 #ifdef WOLFSSL_SHA3
 #ifdef WOLFSSL_ARMASM_CRYPTO_SHA3
-static const uint64_t L_SHA3_transform_crypto_r[] = {
+static const word64 L_SHA3_transform_crypto_r[] = {
     0x1UL,
     0x8082UL,
     0x800000000000808aUL,
@@ -63,7 +63,7 @@ static const uint64_t L_SHA3_transform_crypto_r[] = {
     0x8000000080008008UL,
 };
 
-void BlockSha3(unsigned long* state)
+void BlockSha3(word64* state)
 {
     __asm__ __volatile__ (
 #ifdef __APPLE__
@@ -182,7 +182,7 @@ void BlockSha3(unsigned long* state)
 }
 
 #else
-static const uint64_t L_SHA3_transform_base_r[] = {
+static const word64 L_SHA3_transform_base_r[] = {
     0x1UL,
     0x8082UL,
     0x800000000000808aUL,
@@ -209,7 +209,7 @@ static const uint64_t L_SHA3_transform_base_r[] = {
     0x8000000080008008UL,
 };
 
-void BlockSha3(unsigned long* state)
+void BlockSha3(word64* state)
 {
     __asm__ __volatile__ (
         "stp	x29, x30, [sp, #-64]!\n\t"
@@ -370,7 +370,7 @@ void BlockSha3(unsigned long* state)
         "eor	x25, x25, x28\n\t"
         "eor	x24, x24, %x[state]\n\t"
         "eor	x26, x26, x30\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x27, x28, [x29, #48]\n\t"
         "ldr	%x[state], [x27], #8\n\t"
         "subs	x28, x28, #1\n\t"

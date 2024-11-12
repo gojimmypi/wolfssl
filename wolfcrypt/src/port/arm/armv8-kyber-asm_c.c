@@ -32,7 +32,7 @@
 #ifdef WOLFSSL_ARMASM
 #ifdef __aarch64__
 #ifdef WOLFSSL_ARMASM_INLINE
-static const uint16_t L_kyber_aarch64_q[] = {
+static const word16 L_kyber_aarch64_q[] = {
     0xd01,
     0xd01,
     0xd01,
@@ -43,7 +43,7 @@ static const uint16_t L_kyber_aarch64_q[] = {
     0xd01,
 };
 
-static const uint16_t L_kyber_aarch64_consts[] = {
+static const word16 L_kyber_aarch64_consts[] = {
     0xd01,
     0xf301,
     0x4ebf,
@@ -54,7 +54,7 @@ static const uint16_t L_kyber_aarch64_consts[] = {
     0x0,
 };
 
-static const uint64_t L_sha3_aarch64_r[] = {
+static const word64 L_sha3_aarch64_r[] = {
     0x1UL,
     0x8082UL,
     0x800000000000808aUL,
@@ -84,7 +84,7 @@ static const uint64_t L_sha3_aarch64_r[] = {
 #include <wolfssl/wolfcrypt/wc_kyber.h>
 
 #ifdef WOLFSSL_WC_KYBER
-static const uint16_t L_kyber_aarch64_zetas[] = {
+static const word16 L_kyber_aarch64_zetas[] = {
     0x8ed,
     0xa0b,
     0xb9a,
@@ -375,7 +375,7 @@ static const uint16_t L_kyber_aarch64_zetas[] = {
     0x65c,
 };
 
-static const uint16_t L_kyber_aarch64_zetas_qinv[] = {
+static const word16 L_kyber_aarch64_zetas_qinv[] = {
     0xffed,
     0x7b0b,
     0x399a,
@@ -2222,7 +2222,7 @@ void kyber_ntt(sword16* r)
     );
 }
 
-static const uint16_t L_kyber_aarch64_zetas_inv[] = {
+static const word16 L_kyber_aarch64_zetas_inv[] = {
     0x6a5,
     0x6a5,
     0x70f,
@@ -2513,7 +2513,7 @@ static const uint16_t L_kyber_aarch64_zetas_inv[] = {
     0x5a1,
 };
 
-static const uint16_t L_kyber_aarch64_zetas_inv_qinv[] = {
+static const word16 L_kyber_aarch64_zetas_inv_qinv[] = {
     0xa5a5,
     0xa5a5,
     0x440f,
@@ -4596,7 +4596,7 @@ void kyber_invntt(sword16* r)
     );
 }
 
-static const uint16_t L_kyber_aarch64_zetas_mul[] = {
+static const word16 L_kyber_aarch64_zetas_mul[] = {
     0x8b2,
     0xf74e,
     0x1ae,
@@ -7132,7 +7132,7 @@ void kyber_to_mont(sword16* p)
     );
 }
 
-static const uint16_t L_kyber_aarch64_to_msg_neon_low[] = {
+static const word16 L_kyber_aarch64_to_msg_neon_low[] = {
     0x373,
     0x373,
     0x373,
@@ -7143,7 +7143,7 @@ static const uint16_t L_kyber_aarch64_to_msg_neon_low[] = {
     0x373,
 };
 
-static const uint16_t L_kyber_aarch64_to_msg_neon_high[] = {
+static const word16 L_kyber_aarch64_to_msg_neon_high[] = {
     0x9c0,
     0x9c0,
     0x9c0,
@@ -7154,7 +7154,7 @@ static const uint16_t L_kyber_aarch64_to_msg_neon_high[] = {
     0x9c0,
 };
 
-static const uint16_t L_kyber_aarch64_to_msg_neon_bits[] = {
+static const word16 L_kyber_aarch64_to_msg_neon_bits[] = {
     0x1,
     0x2,
     0x4,
@@ -7398,7 +7398,7 @@ void kyber_to_msg_neon(byte* msg, sword16* p)
     );
 }
 
-static const uint16_t L_kyber_aarch64_from_msg_neon_q1half[] = {
+static const word16 L_kyber_aarch64_from_msg_neon_q1half[] = {
     0x681,
     0x681,
     0x681,
@@ -7409,7 +7409,7 @@ static const uint16_t L_kyber_aarch64_from_msg_neon_q1half[] = {
     0x681,
 };
 
-static const uint8_t L_kyber_aarch64_from_msg_neon_bits[] = {
+static const word8 L_kyber_aarch64_from_msg_neon_bits[] = {
     0x1,
     0x2,
     0x4,
@@ -7853,10 +7853,10 @@ int kyber_cmp_neon(const byte* a, const byte* b, int sz)
         : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits)
         : "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "cc"
     );
-    return (uint32_t)(size_t)a;
+    return (word32)(size_t)a;
 }
 
-static const uint16_t L_kyber_aarch64_rej_uniform_neon_mask[] = {
+static const word16 L_kyber_aarch64_rej_uniform_neon_mask[] = {
     0xfff,
     0xfff,
     0xfff,
@@ -7867,7 +7867,7 @@ static const uint16_t L_kyber_aarch64_rej_uniform_neon_mask[] = {
     0xfff,
 };
 
-static const uint16_t L_kyber_aarch64_rej_uniform_neon_bits[] = {
+static const word16 L_kyber_aarch64_rej_uniform_neon_bits[] = {
     0x1,
     0x2,
     0x4,
@@ -7878,7 +7878,7 @@ static const uint16_t L_kyber_aarch64_rej_uniform_neon_bits[] = {
     0x80,
 };
 
-static const uint8_t L_kyber_aarch64_rej_uniform_neon_indeces[] = {
+static const word8 L_kyber_aarch64_rej_uniform_neon_indices[] = {
     0xff,
     0xff,
     0xff,
@@ -12002,11 +12002,11 @@ unsigned int kyber_rej_uniform_neon(sword16* p, unsigned int len, const byte* r,
         "add  x6, x6, %[L_kyber_aarch64_rej_uniform_neon_bits]@PAGEOFF\n\t"
 #endif /* __APPLE__ */
 #ifndef __APPLE__
-        "adrp x7, %[L_kyber_aarch64_rej_uniform_neon_indeces]\n\t"
-        "add  x7, x7, :lo12:%[L_kyber_aarch64_rej_uniform_neon_indeces]\n\t"
+        "adrp x7, %[L_kyber_aarch64_rej_uniform_neon_indices]\n\t"
+        "add  x7, x7, :lo12:%[L_kyber_aarch64_rej_uniform_neon_indices]\n\t"
 #else
-        "adrp x7, %[L_kyber_aarch64_rej_uniform_neon_indeces]@PAGE\n\t"
-        "add  x7, x7, %[L_kyber_aarch64_rej_uniform_neon_indeces]@PAGEOFF\n\t"
+        "adrp x7, %[L_kyber_aarch64_rej_uniform_neon_indices]@PAGE\n\t"
+        "add  x7, x7, %[L_kyber_aarch64_rej_uniform_neon_indices]@PAGEOFF\n\t"
 #endif /* __APPLE__ */
         "eor	v1.16b, v1.16b, v1.16b\n\t"
         "eor	v12.16b, v12.16b, v12.16b\n\t"
@@ -12151,10 +12151,10 @@ unsigned int kyber_rej_uniform_neon(sword16* p, unsigned int len, const byte* r,
     "L_kyber_aarch64_rej_uniform_neon_done_%=: \n\t"
         "mov	x0, x12\n\t"
         : [p] "+r" (p), [len] "+r" (len), [r] "+r" (r), [rLen] "+r" (rLen)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "cc"
     );
-    return (uint32_t)(size_t)p;
+    return (word32)(size_t)p;
 }
 
 #ifdef WOLFSSL_ARMASM_CRYPTO_SHA3
@@ -12411,7 +12411,7 @@ void kyber_sha3_blocksx3_neon(word64* state)
         "eor	x25, x25, x28\n\t"
         "eor	x24, x24, %x[state]\n\t"
         "eor	x26, x26, x30\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x27, x28, [x29, #48]\n\t"
         "ldr	%x[state], [x27], #8\n\t"
         "subs	x28, x28, #1\n\t"
@@ -12452,7 +12452,7 @@ void kyber_sha3_blocksx3_neon(word64* state)
         "str	x26, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
@@ -12732,7 +12732,7 @@ void kyber_shake128_blocksx3_seed_neon(word64* state, byte* seed)
         "eor	x26, x26, x28\n\t"
         "eor	x25, x25, %x[state]\n\t"
         "eor	x27, x27, x30\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x28, %x[seed], [x29, #48]\n\t"
         "ldr	%x[state], [x28], #8\n\t"
         "subs	%x[seed], %x[seed], #1\n\t"
@@ -12773,7 +12773,7 @@ void kyber_shake128_blocksx3_seed_neon(word64* state, byte* seed)
         "str	x27, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state), [seed] "+r" (seed)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
@@ -13053,7 +13053,7 @@ void kyber_shake256_blocksx3_seed_neon(word64* state, byte* seed)
         "eor	x26, x26, x28\n\t"
         "eor	x25, x25, %x[state]\n\t"
         "eor	x27, x27, x30\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x28, %x[seed], [x29, #48]\n\t"
         "ldr	%x[state], [x28], #8\n\t"
         "subs	%x[seed], %x[seed], #1\n\t"
@@ -13094,7 +13094,7 @@ void kyber_shake256_blocksx3_seed_neon(word64* state, byte* seed)
         "str	x27, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state), [seed] "+r" (seed)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
@@ -13438,7 +13438,7 @@ void kyber_sha3_blocksx3_neon(word64* state)
         "eor	v22.16b, v22.16b, v27.16b\n\t"
         "eor	v23.16b, v23.16b, v28.16b\n\t"
         "eor	v24.16b, v24.16b, v29.16b\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x27, x28, [x29, #48]\n\t"
         "ldr	%x[state], [x27], #8\n\t"
         "subs	x28, x28, #1\n\t"
@@ -13479,7 +13479,7 @@ void kyber_sha3_blocksx3_neon(word64* state)
         "str	x26, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
@@ -13844,7 +13844,7 @@ void kyber_shake128_blocksx3_seed_neon(word64* state, byte* seed)
         "eor	v22.16b, v22.16b, v27.16b\n\t"
         "eor	v23.16b, v23.16b, v28.16b\n\t"
         "eor	v24.16b, v24.16b, v29.16b\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x28, %x[seed], [x29, #48]\n\t"
         "ldr	%x[state], [x28], #8\n\t"
         "subs	%x[seed], %x[seed], #1\n\t"
@@ -13885,7 +13885,7 @@ void kyber_shake128_blocksx3_seed_neon(word64* state, byte* seed)
         "str	x27, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state), [seed] "+r" (seed)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
@@ -14250,7 +14250,7 @@ void kyber_shake256_blocksx3_seed_neon(word64* state, byte* seed)
         "eor	v22.16b, v22.16b, v27.16b\n\t"
         "eor	v23.16b, v23.16b, v28.16b\n\t"
         "eor	v24.16b, v24.16b, v29.16b\n\t"
-        /* Done tranforming */
+        /* Done transforming */
         "ldp	x28, %x[seed], [x29, #48]\n\t"
         "ldr	%x[state], [x28], #8\n\t"
         "subs	%x[seed], %x[seed], #1\n\t"
@@ -14291,7 +14291,7 @@ void kyber_shake256_blocksx3_seed_neon(word64* state, byte* seed)
         "str	x27, [%x[state], #192]\n\t"
         "ldp	x29, x30, [sp], #0x40\n\t"
         : [state] "+r" (state), [seed] "+r" (seed)
-        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indeces] "S" (L_kyber_aarch64_rej_uniform_neon_indeces)
+        : [L_kyber_aarch64_q] "S" (L_kyber_aarch64_q), [L_kyber_aarch64_consts] "S" (L_kyber_aarch64_consts), [L_sha3_aarch64_r] "S" (L_sha3_aarch64_r), [L_kyber_aarch64_zetas] "S" (L_kyber_aarch64_zetas), [L_kyber_aarch64_zetas_qinv] "S" (L_kyber_aarch64_zetas_qinv), [L_kyber_aarch64_zetas_inv] "S" (L_kyber_aarch64_zetas_inv), [L_kyber_aarch64_zetas_inv_qinv] "S" (L_kyber_aarch64_zetas_inv_qinv), [L_kyber_aarch64_zetas_mul] "S" (L_kyber_aarch64_zetas_mul), [L_kyber_aarch64_to_msg_neon_low] "S" (L_kyber_aarch64_to_msg_neon_low), [L_kyber_aarch64_to_msg_neon_high] "S" (L_kyber_aarch64_to_msg_neon_high), [L_kyber_aarch64_to_msg_neon_bits] "S" (L_kyber_aarch64_to_msg_neon_bits), [L_kyber_aarch64_from_msg_neon_q1half] "S" (L_kyber_aarch64_from_msg_neon_q1half), [L_kyber_aarch64_from_msg_neon_bits] "S" (L_kyber_aarch64_from_msg_neon_bits), [L_kyber_aarch64_rej_uniform_neon_mask] "S" (L_kyber_aarch64_rej_uniform_neon_mask), [L_kyber_aarch64_rej_uniform_neon_bits] "S" (L_kyber_aarch64_rej_uniform_neon_bits), [L_kyber_aarch64_rej_uniform_neon_indices] "S" (L_kyber_aarch64_rej_uniform_neon_indices)
         : "memory", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "cc"
     );
 }
