@@ -140,7 +140,7 @@ if [ -f "$WRK_IDF_PATH_ESP8266/export.sh" ]; then
     # shell check should not follow into the ESP-IDF export.sh
     # shellcheck disable=SC1090
     # shellcheck disable=SC1091
-    . "$WRK_IDF_PATH_ESP8266/export.sh"
+    . "$WRK_IDF_PATH_ESP8266"/export.sh
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""

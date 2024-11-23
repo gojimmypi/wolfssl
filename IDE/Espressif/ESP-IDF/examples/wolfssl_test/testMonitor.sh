@@ -5,7 +5,7 @@
 #
 # When keyword is "CONNECT_ONLY" the build process will be skipped, and only fresh
 # serial connections established. Usful after Windows decides to reboot during testing.
-# 
+#
 # Example:
 #
 #   ./testMonitor.sh wolfssl_test esp32c6 WIP
@@ -158,25 +158,34 @@ if [[ "$THIS_TARGET" == "esp8684" ]]; then
     THIS_TARGET=esp32c2
 fi
 
+# Assemble some log file names.
+echo ""
+mkdir -p "${THIS_HOME_DIR}/logs"
+BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
+THIS_WLOG="logs\\${THIS_TARGET}_output.log"
+# cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
+
+echo  "BUILD_LOG = ${BUILD_LOG}"
+echo  "FLASH_LOG = ${FLASH_LOG}"
+echo  "THIS_LOG  = ${THIS_LOG}"
+echo  "THIS_CFG  = ${THIS_CFG}"
+
+
+if [[ "$THIS_TARGET" == "esp8266" ]]; then
+    # idf.py for the ESP8266  does not support --version
+    echo "ESP8266 using $IDF_PATH"
+    THIS_VERSION="ESP8266"
+else
+    idf.py --version                            > "${BUILD_LOG}" 2>&1
+    # Get the ESP-IDF version
+    # Run the command and capture its output
+    THIS_OUTPUT=$(idf.py --version)
 
 if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
     echo "Build!"
-
-    # Assemble some log file names.
-    echo ""
-    mkdir -p "${THIS_HOME_DIR}/logs"
-    BUILD_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_build_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-    FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-    THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-    THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
-    THIS_WLOG="logs\\${THIS_TARGET}_output.log"
-    # cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
-
-    echo  "BUILD_LOG = ${BUILD_LOG}"
-    echo  "FLASH_LOG = ${FLASH_LOG}"
-    echo  "THIS_LOG  = ${THIS_LOG}"
-    echo  "THIS_CFG  = ${THIS_CFG}"
-
 
     if [[ "$THIS_TARGET" == "esp8266" ]]; then
         # idf.py for the ESP8266  does not support --version

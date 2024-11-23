@@ -3,6 +3,9 @@
 # Syntax:
 #   ./testMonitor.sh <example_name> <target> <keyword>
 #
+# When keyword is "CONNECT_ONLY" the build process will be skipped, and only fresh
+# serial connections established. Usful after Windows decides to reboot during testing.
+#
 # Example:
 #
 #   ./testMonitor.sh wolfssl_test esp32c6 WIP
@@ -181,92 +184,109 @@ else
     # Run the command and capture its output
     THIS_OUTPUT=$(idf.py --version)
 
-    # Extract the version string using grep and sed
-    THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
+if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
+    echo "Build!"
 
-    # Print the version variable to verify
-    echo "idf.py THIS_VERSION=$THIS_VERSION"
+    if [[ "$THIS_TARGET" == "esp8266" ]]; then
+        # idf.py for the ESP8266  does not support --version
+        echo "ESP8266 using $IDF_PATH"
+        THIS_VERSION="ESP8266"
+    else
+        idf.py --version                            > "${BUILD_LOG}" 2>&1
+        # Get the ESP-IDF version
+        # Run the command and capture its output
+        THIS_OUTPUT=$(idf.py --version)
+
+        # Extract the version string using grep and sed
+        THIS_VERSION=$(echo "$THIS_OUTPUT" | grep -oP 'v[0-9]+\.[0-9]+-[a-z]+-[0-9]+' | sed 's/-dirty//')
+
+        # Print the version variable to verify
+        echo "idf.py THIS_VERSION=$THIS_VERSION"
 
 
-fi
+    fi
 
-echo "Full clean for $THIS_TARGET..."
-#---------------------------------------------------------------------
-idf.py fullclean                                >> "${BUILD_LOG}" 2>&1
-THIS_ERROR_CODE=$?
-if [ $THIS_ERROR_CODE -ne 0 ]; then
+    echo "Full clean for $THIS_TARGET..."
+    #---------------------------------------------------------------------
+    idf.py fullclean                                >> "${BUILD_LOG}" 2>&1
+    THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        echo "Error during fullclean. Deleting build directory."
+        rm -rf ./build
+    fi
+
+    #---------------------------------------------------------------------
+    if [[ "$THIS_TARGET" == "esp8266" ]]; then
+        #always start with a fresh sdkconfig-debug (or sdkconfig-release) from defaults
+        rm -f ./sdkconfig-debug
+        rm -f ./sdkconfig-release
+
+        # idf.py for the ESP8266  does not support --set-target
+        echo "Target is $THIS_TARGET"
+
+        # Since we don't "set-target" for the ESP8266, ensure the sdkconfig is not present
+        rm -f ./sdkconfig
+    else
+        # Start with fresh sdkconfig
+        rm -f ./sdkconfig
+
+        # ESP8266 debug and release files not used for non-ESP8266 targets here,delete anyhow:
+        rm -f ./sdkconfig-debug
+        rm -f ./sdkconfig-release
+
+        echo "idf.py set-target $THIS_TARGET"
+        idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
+        THIS_ERROR_CODE=$?
+        if [ $THIS_ERROR_CODE -ne 0 ]; then
+            echo ""
+            tail -n 5 "${BUILD_LOG}"
+            echo "Error during set-target"
+            exit 1
+        fi
+    fi
+
+    #---------------------------------------------------------------------
     echo ""
-    echo "Error during fullclean. Deleting build directory."
-    rm -rf ./build
-fi
-
-#---------------------------------------------------------------------
-if [[ "$THIS_TARGET" == "esp8266" ]]; then
-    #always start with a fresh sdkconfig-debug (or sdkconfig-release) from defaults
-    rm -f ./sdkconfig-debug
-    rm -f ./sdkconfig-release
-
-    # idf.py for the ESP8266  does not support --set-target
-    echo "Target is $THIS_TARGET"
-
-    # Since we don't "set-target" for the ESP8266, ensure the sdkconfig is not present
-    rm -f ./sdkconfig
-else
-    # Start with fresh sdkconfig
-    rm -f ./sdkconfig
-
-    # ESP8266 debug and release files not used for non-ESP8266 targets here,delete anyhow:
-    rm -f ./sdkconfig-debug
-    rm -f ./sdkconfig-release
-
-    echo "idf.py set-target $THIS_TARGET"
-    idf.py "set-target" "$THIS_TARGET"              >> "${BUILD_LOG}" 2>&1
+    echo "Build $THIS_TARGET..."
+    echo "idf.py build"
+    idf.py build                                    >> "${BUILD_LOG}" 2>&1
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""
         tail -n 5 "${BUILD_LOG}"
-        echo "Error during set-target"
+        echo "Error during build for $THIS_TARGET"
+        echo ""
+        echo ""
+        grep -i "error" "${BUILD_LOG}"
         exit 1
     fi
-fi
-
-#---------------------------------------------------------------------
-echo ""
-echo "Build $THIS_TARGET..."
-echo "idf.py build"
-idf.py build                                    >> "${BUILD_LOG}" 2>&1
-THIS_ERROR_CODE=$?
-if [ $THIS_ERROR_CODE -ne 0 ]; then
-    echo ""
-    tail -n 5 "${BUILD_LOG}"
-    echo "Error during build for $THIS_TARGET"
-    echo ""
-    echo ""
-    grep -i "error" "${BUILD_LOG}"
-    exit 1
-fi
 
 
-# echo ""
-# echo "Erase $THIS_TARGET..."
-# echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
-# idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
-echo "Pre-flash erase not supported on the ESP8266 at this time."
+    # echo ""
+    # echo "Erase $THIS_TARGET..."
+    # echo "idf.py erase-flash -p ${THIS_TARGET_PORT} -b 115200"
+    # idf.py erase-flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+    echo "Pre-flash erase not supported on the ESP8266 at this time."
 
-#---------------------------------------------------------------------
-echo ""
-echo "Flash $THIS_TARGET..."
-echo "idf.py flash -p ${THIS_TARGET_PORT} -b 115200"
-idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
-THIS_ERROR_CODE=$?
-if [ $THIS_ERROR_CODE -ne 0 ]; then
+    #---------------------------------------------------------------------
     echo ""
-    tail -n 5 "${FLASH_LOG}"
-    echo "Error during flash"
-    echo ""
-    echo ""
-    grep -i "error" "${FLASH_LOG}"
-    exit 1
+    echo "Flash $THIS_TARGET..."
+    echo "idf.py flash -p ${THIS_TARGET_PORT} -b 115200"
+    idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+    THIS_ERROR_CODE=$?
+    if [ $THIS_ERROR_CODE -ne 0 ]; then
+        echo ""
+        tail -n 5 "${FLASH_LOG}"
+        echo "Error during flash"
+        echo ""
+        echo ""
+        grep -i "error" "${FLASH_LOG}"
+        exit 1
+    fi
+
+else
+    echo "CONNECT_ONLY"
 fi
 
 # popd || exit 1
