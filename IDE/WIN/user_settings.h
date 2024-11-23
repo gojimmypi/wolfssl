@@ -17,6 +17,14 @@
 #define WOLFSSL_SEND_HRR_COOKIE
 #define WOLFSSL_DTLS_CID
 
+/* Realm */
+#define HAVE_HMAC
+#define WOLFSSL_SHA224
+#define OPENSSL_EXTRA
+#define OPENSSL_ALL
+#define WOLFSSL_CERT_GEN
+#define WOLFSSL_EVP_INCLUDED
+
 /* npm */
 #define NPM_WOLFCRYPT
 #ifdef NPM_WOLFCRYPT
