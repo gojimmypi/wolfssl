@@ -19,7 +19,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
+#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
+// #define ESP_MONITOR_HW_TASK_LOCK
+#define WOLFSSL_ESP32_HW_LOCK_DEBUG
+#define DEBUG_WOLFSSL_ESP32_UNFINISHED_HW
 
+// #define WOLFSSL_DEBUG_MUTEX
+// #define SINGLE_THREADED
+
+// test:
+#define MUTEX_DURING_INIT
+
+// #define ESP_DISABLE_HW_TASK_LOCK
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
@@ -786,7 +797,7 @@
     /***** END CONFIG_IDF_TARGET_ESP8684 *****/
 
 #else
-    /* Anything else encountered, disable HW accleration */
+    /* Anything else encountered, disable HW acceleration */
     #warning "Unexpected CONFIG_IDF_TARGET_NN value"
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH

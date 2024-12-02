@@ -52,7 +52,7 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUPUT THIS_VAR VAR_RESULT )
         message(STATUS "Found ${VAR_OUPUT}=${VAR_VALUE}")
 
         # the interesting part is defining the VAR_OUPUT name a value to use in the app
-        add_definitions(-D${VAR_OUPUT}=\"${VAR_VALUE}\")
+        add_compile_definitions(${VAR_OUPUT}=\"${VAR_VALUE}\")
     else()
         # if we get here, check the execute_process command and parameters.
         message(STATUS "LIBWOLFSSL_SAVE_INFO encountered a non-zero VAR_RESULT")
@@ -60,7 +60,14 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUPUT THIS_VAR VAR_RESULT )
     endif()
 endfunction() # LIBWOLFSSL_SAVE_INFO
 
-if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+execute_process(
+    COMMAND ${git_cmd} "rev-parse" "--is-inside-work-tree"
+    OUTPUT_VARIABLE IS_GIT_REPO
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+
+if(NOT CMAKE_BUILD_EARLY_EXPANSION AND (IS_GIT_REPO STREQUAL "true"))
     # LIBWOLFSSL_VERSION_GIT_HASH
     execute_process(COMMAND ${git_cmd} "rev-parse" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
