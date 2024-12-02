@@ -158,5 +158,3 @@ popd > /dev/null #
 if [ "${WOLFSSL_SETUP_VERBOSE}" == "true" ]; then
   echo "Copy complete!"
 fi
-
-exit 1
