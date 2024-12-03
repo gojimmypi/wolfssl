@@ -159,8 +159,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
  *
  * The default is having the bundle pre-sorted in the python script
  * to allow for rapid binary cert match search at runtime. The unsorted
- * seach ALWAYS works, but when expecting a sorted search the python
- * script MUST presort the data, oherwise the connection will likely fail.
+ * search ALWAYS works, but when expecting a sorted search the python
+ * script MUST presort the data, otherwise the connection will likely fail.
  *
  * When debugging and using an unsorted bundle, define CERT_BUNDLE_UNSORTED
  * Reminder: the actual sort occurs in gen_crt_bundly.py call from CMake. */
