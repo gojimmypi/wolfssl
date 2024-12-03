@@ -476,6 +476,7 @@
     #endif
 #elif defined(WOLFSSL_ZEPHYR)
     #include <stdio.h>
+    #include <stdarg.h>
     #define BENCH_EMBEDDED
     #define printf printfk
     static int printfk(const char *fmt, ...)
@@ -1991,6 +1992,11 @@ static const char* bench_result_words2[][5] = {
 #endif
 
 
+
+#if defined(WOLFSSL_DEVCRYPTO) && defined(WOLFSSL_AUTHSZ_BENCH)
+    #warning Large/Unalligned AuthSz could result in errors with /dev/crypto
+#endif
+
 /* use kB instead of mB for embedded benchmarking */
 #ifdef BENCH_EMBEDDED
     #ifndef BENCH_NTIMES
@@ -2483,7 +2489,7 @@ static void bench_multi_value_stats(double max, double min, double sum,
 #endif
 
 /* countSz is number of bytes that 1 count represents. Normally bench_size,
- * except for AES direct that operates on AES_BLOCK_SIZE blocks */
+ * except for AES direct that operates on WC_AES_BLOCK_SIZE blocks */
 static void bench_stats_sym_finish(const char* desc, int useDeviceID,
                                    int count, word32 countSz,
                                    double start, int ret)
@@ -3066,8 +3072,8 @@ static void* benchmarks_do(void* args)
         bench_buf_size += 16 - (bench_buf_size % 16);
 
 #ifdef WOLFSSL_AFALG_XILINX_AES
-    bench_plain = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16);
-    bench_cipher = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16);
+    bench_plain = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16); /* native heap */
+    bench_cipher = (byte*)aligned_alloc(64, (size_t)bench_buf_size + 16); /* native heap */
 #else
     bench_plain = (byte*)XMALLOC((size_t)bench_buf_size + 16,
                                  HEAP_HINT, DYNAMIC_TYPE_WOLF_BIGINT);
@@ -3651,6 +3657,24 @@ static void* benchmarks_do(void* args)
 
 #ifdef WOLFSSL_HAVE_KYBER
     if (bench_all || (bench_pq_asym_algs & BENCH_KYBER)) {
+#ifndef WOLFSSL_NO_ML_KEM
+    #ifdef WOLFSSL_KYBER512
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER512)) {
+            bench_kyber(WC_ML_KEM_512);
+        }
+    #endif
+    #ifdef WOLFSSL_KYBER768
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER768)) {
+            bench_kyber(WC_ML_KEM_768);
+        }
+    #endif
+    #ifdef WOLFSSL_KYBER1024
+        if (bench_all || (bench_pq_asym_algs & BENCH_KYBER1024)) {
+            bench_kyber(WC_ML_KEM_1024);
+        }
+    #endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
     #ifdef WOLFSSL_KYBER512
         if (bench_all || (bench_pq_asym_algs & BENCH_KYBER512)) {
             bench_kyber(KYBER512);
@@ -3666,6 +3690,7 @@ static void* benchmarks_do(void* args)
             bench_kyber(KYBER1024);
         }
     #endif
+#endif
     }
 #endif
 
@@ -4778,6 +4803,14 @@ void bench_gmac(int useDeviceID)
     const char* gmacStr = "GMAC Default";
 #endif
 
+/* Implementations of /Dev/Crypto will error out if the size of Auth in is */
+/* greater than the system's page size */
+#if defined(WOLFSSL_DEVCRYPTO) && defined(WOLFSSL_AUTHSZ_BENCH)
+    bench_size = WOLFSSL_AUTHSZ_BENCH;
+#elif defined(WOLFSSL_DEVCRYPTO)
+    bench_size = sysconf(_SC_PAGESIZE);
+#endif
+
     /* init keys */
     XMEMSET(bench_plain, 0, bench_size);
     XMEMSET(tag, 0, sizeof(tag));
@@ -4808,7 +4841,13 @@ void bench_gmac(int useDeviceID)
 #ifdef MULTI_VALUE_STATISTICS
     bench_multi_value_stats(max, min, sum, squareSum, runs);
 #endif
-
+#if defined(WOLFSSL_DEVCRYPTO)
+    if (ret != 0 && (bench_size > sysconf(_SC_PAGESIZE))) {
+        printf("authIn Buffer Size[%d] greater than System Page Size[%ld]\n",
+                        bench_size, sysconf(_SC_PAGESIZE));
+    }
+    bench_size = BENCH_SIZE;
+#endif
 }
 
 #endif /* HAVE_AESGCM */
@@ -4825,7 +4864,7 @@ static void bench_aesecb_internal(int useDeviceID,
     double start;
     DECLARE_MULTI_VALUE_STATS_VARS()
 #ifdef HAVE_FIPS
-    const word32 benchSz = AES_BLOCK_SIZE;
+    const word32 benchSz = WC_AES_BLOCK_SIZE;
 #else
     const word32 benchSz = bench_size;
 #endif
@@ -5352,9 +5391,9 @@ static void bench_aessiv_internal(const byte* key, word32 keySz, const char*
 {
     int i;
     int ret = 0;
-    byte assoc[AES_BLOCK_SIZE];
-    byte nonce[AES_BLOCK_SIZE];
-    byte siv[AES_BLOCK_SIZE];
+    byte assoc[WC_AES_BLOCK_SIZE];
+    byte nonce[WC_AES_BLOCK_SIZE];
+    byte siv[WC_AES_BLOCK_SIZE];
     int count = 0;
     double start;
     DECLARE_MULTI_VALUE_STATS_VARS()
@@ -5362,8 +5401,8 @@ static void bench_aessiv_internal(const byte* key, word32 keySz, const char*
     bench_stats_start(&count, &start);
     do {
         for (i = 0; i < numBlocks; i++) {
-            ret = wc_AesSivEncrypt(key, keySz, assoc, AES_BLOCK_SIZE, nonce,
-                                   AES_BLOCK_SIZE, bench_plain, bench_size,
+            ret = wc_AesSivEncrypt(key, keySz, assoc, WC_AES_BLOCK_SIZE, nonce,
+                                   WC_AES_BLOCK_SIZE, bench_plain, bench_size,
                                    siv, bench_cipher);
             if (ret != 0) {
                 printf("wc_AesSivEncrypt failed (%d)\n", ret);
@@ -5388,8 +5427,8 @@ static void bench_aessiv_internal(const byte* key, word32 keySz, const char*
     bench_stats_start(&count, &start);
     do {
         for (i = 0; i < numBlocks; i++) {
-            ret = wc_AesSivDecrypt(key, keySz, assoc, AES_BLOCK_SIZE, nonce,
-                                   AES_BLOCK_SIZE, bench_cipher, bench_size,
+            ret = wc_AesSivDecrypt(key, keySz, assoc, WC_AES_BLOCK_SIZE, nonce,
+                                   WC_AES_BLOCK_SIZE, bench_cipher, bench_size,
                                    siv, bench_plain);
             if (ret != 0) {
                 printf("wc_AesSivDecrypt failed (%d)\n", ret);
@@ -5489,7 +5528,7 @@ void bench_poly1305(void)
 #ifdef HAVE_CAMELLIA
 void bench_camellia(void)
 {
-    Camellia cam;
+    wc_Camellia cam;
     double   start;
     int      ret, i, count;
     DECLARE_MULTI_VALUE_STATS_VARS()
@@ -7905,7 +7944,7 @@ void bench_blake2s(void)
 static void bench_cmac_helper(word32 keySz, const char* outMsg, int useDeviceID)
 {
     Cmac    cmac;
-    byte    digest[AES_BLOCK_SIZE];
+    byte    digest[WC_AES_BLOCK_SIZE];
     word32  digestSz = sizeof(digest);
     double  start;
     int     ret, i, count;
@@ -9470,6 +9509,27 @@ void bench_kyber(int type)
     int keySize = 0;
 
     switch (type) {
+#ifndef WOLFSSL_NO_ML_KEM
+#ifdef WOLFSSL_WC_ML_KEM_512
+    case WC_ML_KEM_512:
+        name = "ML-KEM 512 ";
+        keySize = 128;
+        break;
+#endif
+#ifdef WOLFSSL_WC_ML_KEM_768
+    case WC_ML_KEM_768:
+        name = "ML-KEM 768 ";
+        keySize = 192;
+        break;
+#endif
+#ifdef WOLFSSL_WC_ML_KEM_1024
+    case WC_ML_KEM_1024:
+        name = "ML-KEM 1024 ";
+        keySize = 256;
+        break;
+#endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
 #ifdef WOLFSSL_KYBER512
     case KYBER512:
         name = "KYBER512 ";
@@ -9487,6 +9547,7 @@ void bench_kyber(int type)
         name = "KYBER1024";
         keySize = 256;
         break;
+#endif
 #endif
     }
 
@@ -14496,7 +14557,15 @@ void bench_sphincsKeySign(byte level, byte optim)
 
         return (double) ticks/TICKS_PER_SECOND;
     }
+#elif defined(WOLFSSL_RPIPICO)
+    #include "pico/stdlib.h"
 
+    double current_time(int reset)
+    {
+        (void)reset;
+
+        return (double) time_us_64() / 1000000;
+    }
 #elif defined(THREADX)
     #include "tx_api.h"
     double current_time(int reset)

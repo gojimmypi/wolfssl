@@ -231,7 +231,7 @@ ECC Curve Sizes:
 #if defined(WOLFSSL_LINUXKM) && !defined(WOLFSSL_SP_ASM)
     /* force off unneeded vector register save/restore. */
     #undef SAVE_VECTOR_REGISTERS
-    #define SAVE_VECTOR_REGISTERS(...) WC_DO_NOTHING
+    #define SAVE_VECTOR_REGISTERS(fail_clause) WC_DO_NOTHING
     #undef RESTORE_VECTOR_REGISTERS
     #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
 #endif
@@ -2917,7 +2917,7 @@ done:
    if ((mp_count_bits(modulus) == 256) && (!mp_is_bit_set(modulus, 224))) {
        err = sp_ecc_map_sm2_256(P->x, P->y, P->z);
    }
-#elif defined(WOLFSSL_SP_NO_256)
+#elif !defined(WOLFSSL_SP_NO_256)
    if (mp_count_bits(modulus) == 256) {
        err = sp_ecc_map_256(P->x, P->y, P->z);
    }
@@ -4554,13 +4554,11 @@ int wc_ecc_get_curve_id_from_oid(const byte* oid, word32 len)
     }
 #endif
 
-#if !defined(HAVE_OID_ENCODING) && !defined(HAVE_OID_DECODING)
     if (len == 0) {
         /* SAKKE has zero oidSz and will otherwise match with len==0. */
         WOLFSSL_MSG("zero oidSz");
         return ECC_CURVE_INVALID;
     }
-#endif
 
     for (curve_idx = 0; ecc_sets[curve_idx].size != 0; curve_idx++) {
     #if defined(HAVE_OID_ENCODING) && !defined(HAVE_OID_DECODING)
@@ -14075,12 +14073,12 @@ static int ecc_get_key_sizes(ecEncCtx* ctx, int* encKeySz, int* ivSz,
             case ecAES_128_CBC:
                 *encKeySz = KEY_SIZE_128;
                 *ivSz     = IV_SIZE_128;
-                *blockSz  = AES_BLOCK_SIZE;
+                *blockSz  = WC_AES_BLOCK_SIZE;
                 break;
             case ecAES_256_CBC:
                 *encKeySz = KEY_SIZE_256;
                 *ivSz     = IV_SIZE_128;
-                *blockSz  = AES_BLOCK_SIZE;
+                *blockSz  = WC_AES_BLOCK_SIZE;
                 break;
         #endif
         #if !defined(NO_AES) && defined(WOLFSSL_AES_COUNTER)
@@ -14377,7 +14375,7 @@ int wc_ecc_encrypt_ex(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
             case ecAES_256_CTR:
             {
         #if !defined(NO_AES) && defined(WOLFSSL_AES_COUNTER)
-                byte ctr_iv[AES_BLOCK_SIZE];
+                byte ctr_iv[WC_AES_BLOCK_SIZE];
             #ifndef WOLFSSL_SMALL_STACK
                 Aes aes[1];
             #else
@@ -14392,7 +14390,7 @@ int wc_ecc_encrypt_ex(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
                 /* Include 4 byte counter starting at all zeros. */
                 XMEMCPY(ctr_iv, encIv, WOLFSSL_ECIES_GEN_IV_SIZE);
                 XMEMSET(ctr_iv + WOLFSSL_ECIES_GEN_IV_SIZE, 0,
-                    AES_BLOCK_SIZE - WOLFSSL_ECIES_GEN_IV_SIZE);
+                    WC_AES_BLOCK_SIZE - WOLFSSL_ECIES_GEN_IV_SIZE);
 
                 ret = wc_AesInit(aes, NULL, INVALID_DEVID);
                 if (ret == 0) {
@@ -14854,11 +14852,11 @@ int wc_ecc_decrypt(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
              #endif
                 ret = wc_AesInit(aes, NULL, INVALID_DEVID);
                 if (ret == 0) {
-                    byte ctr_iv[AES_BLOCK_SIZE];
+                    byte ctr_iv[WC_AES_BLOCK_SIZE];
                     /* Make a 16 byte IV from the bytes passed in. */
                     XMEMCPY(ctr_iv, encIv, WOLFSSL_ECIES_GEN_IV_SIZE);
                     XMEMSET(ctr_iv + WOLFSSL_ECIES_GEN_IV_SIZE, 0,
-                        AES_BLOCK_SIZE - WOLFSSL_ECIES_GEN_IV_SIZE);
+                        WC_AES_BLOCK_SIZE - WOLFSSL_ECIES_GEN_IV_SIZE);
                     ret = wc_AesSetKey(aes, encKey, (word32)encKeySz, ctr_iv,
                                                                 AES_ENCRYPTION);
                     if (ret == 0) {

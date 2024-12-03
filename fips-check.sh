@@ -17,6 +17,7 @@ TEST_DIR="${TEST_DIR:-XXX-fips-test}"
 FLAVOR="${FLAVOR:-linux}"
 KEEP="${KEEP:-no}"
 MAKECHECK=${MAKECHECK:-yes}
+DOCONFIGURE=${DOCONFIGURE:-yes}
 FIPS_REPO="${FIPS_REPO:-git@github.com:wolfssl/fips.git}"
 
 Usage() {
@@ -33,6 +34,7 @@ Flavor is one of:
     fips-dev (dev FIPS 140-3)
     wolfrand
     wolfentropy
+    v6.0.0
 Keep (default off) retains the temp dir $TEST_DIR for inspection.
 
 Example:
@@ -43,6 +45,7 @@ usageText
 while [ "$1" ]; do
   if [ "$1" = 'keep' ]; then KEEP='yes';
   elif [ "$1" = 'nomakecheck' ]; then MAKECHECK='no';
+  elif [ "$1" = 'nodoconfigure' ]; then DOCONFIGURE='no';
   else FLAVOR="$1"; fi
   shift
 done
@@ -190,7 +193,7 @@ linuxv5.2.1)
     'wolfcrypt/src/fips_test.c:v5.2.1-stable'
     'wolfcrypt/src/wolfcrypt_first.c:v5.2.1-stable'
     'wolfcrypt/src/wolfcrypt_last.c:v5.2.1-stable'
-    'wolfssl/wolfcrypt/fips.h:v5.2.1-stable'
+    'wolfssl/wolfcrypt/fips.h:v5.2.1-stable-OS_Seed-HdrOnly'
   )
   WOLFCRYPT_FILES=(
     'wolfcrypt/src/aes.c:v5.2.1-stable'
@@ -217,12 +220,104 @@ linuxv5.2.1)
     'wolfssl/wolfcrypt/fips_test.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/hmac.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/kdf.h:v5.2.1-stable'
-    'wolfssl/wolfcrypt/random.h:v5.2.1-stable'
+    'wolfssl/wolfcrypt/random.h:v5.2.1-stable-OS_Seed-HdrOnly'
     'wolfssl/wolfcrypt/rsa.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/sha.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/sha256.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/sha3.h:v5.2.1-stable'
     'wolfssl/wolfcrypt/sha512.h:v5.2.1-stable'
+  )
+  ;;
+v6.0.0)
+  WOLF_REPO_TAG='WCv6.0.0-RC1'
+  FIPS_REPO_TAG='WCv6.0.0-RC1'
+  ASM_PICKUPS_TAG='WCv6.0.0-RC2'
+  FIPS_OPTION='v6'
+  FIPS_FILES=(
+    "wolfcrypt/src/fips.c:${FIPS_REPO_TAG}"
+    "wolfcrypt/src/fips_test.c:${FIPS_REPO_TAG}"
+    "wolfcrypt/src/wolfcrypt_first.c:${FIPS_REPO_TAG}"
+    "wolfcrypt/src/wolfcrypt_last.c:${FIPS_REPO_TAG}"
+    "wolfssl/wolfcrypt/fips.h:${FIPS_REPO_TAG}"
+  )
+  WOLFCRYPT_FILES=(
+    "wolfcrypt/src/aes_asm.asm:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/aes_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/aes_gcm_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/aes_gcm_x86_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/aes_xts_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/aes.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-aes-asm_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-aes-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-curve25519_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-curve25519.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-sha256-asm_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-sha256-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-sha512-asm_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-32-sha512-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-aes.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-curve25519_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-curve25519.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha256.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha3-asm_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha3-asm.S:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha512-asm_c.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha512-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/armv8-sha512.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/cmac.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/curve25519.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/curve448.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/dh.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/ecc.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/ed25519.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/ed448.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/hmac.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/kdf.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/pwdbased.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/random.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/rsa.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha256_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha256.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha3.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha3_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha512_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sha512.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sp_arm32.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_arm64.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_armthumb.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_c32.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_c64.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_cortexm.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/sp_x86_64_asm.asm:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sp_x86_64_asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/sp_x86_64.c:${ASM_PICKUPS_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-aes-asm_c.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-aes-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-curve25519_c.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-curve25519.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-sha256-asm_c.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-sha256-asm.S:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-sha512-asm_c.c:${WOLF_REPO_TAG}"
+    "wolfcrypt/src/port/arm/thumb2-sha512-asm.S:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/aes.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/cmac.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/curve25519.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/curve448.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/dh.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/ecc.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/ed25519.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/ed448.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/fips_test.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/hmac.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/kdf.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/pwdbased.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/random.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/rsa.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/sha.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/sha256.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/sha3.h:${WOLF_REPO_TAG}"
+    "wolfssl/wolfcrypt/sha512.h:${WOLF_REPO_TAG}"
   )
   ;;
 fips-ready|fips-dev)
@@ -368,36 +463,38 @@ fi
 # run the make test
 ./autogen.sh
 
-case "$FIPS_OPTION" in
-cavp-selftest)
-    ./configure --enable-selftest
-    ;;
-cavp-selftest-v2)
-    ./configure --enable-selftest=v2
-    ;;
-*)
-    ./configure --enable-fips=$FIPS_OPTION
-    ;;
-esac
+if [ "$DOCONFIGURE" = "yes" ]; then
+    case "$FIPS_OPTION" in
+    cavp-selftest)
+        ./configure --enable-selftest
+        ;;
+    cavp-selftest-v2)
+        ./configure --enable-selftest=v2
+        ;;
+    *)
+        ./configure --enable-fips=$FIPS_OPTION
+        ;;
+    esac
 
-if ! $MAKE; then
-    echo 'fips-check: Make failed. Debris left for analysis.'
-    exit 3
-fi
-
-if [ -s wolfcrypt/src/fips_test.c ]; then
-    NEWHASH=$(./wolfcrypt/test/testwolfcrypt | sed -n 's/hash = \(.*\)/\1/p')
-    if [ -n "$NEWHASH" ]; then
-        cp wolfcrypt/src/fips_test.c wolfcrypt/src/fips_test.c.bak
-        sed "s/^\".*\";/\"${NEWHASH}\";/" wolfcrypt/src/fips_test.c.bak >wolfcrypt/src/fips_test.c
-        make clean
-    fi
-fi
-
-if [ "$MAKECHECK" = "yes" ]; then
-    if ! $MAKE check; then
-        echo 'fips-check: Test failed. Debris left for analysis.'
+    if ! $MAKE; then
+        echo 'fips-check: Make failed. Debris left for analysis.'
         exit 3
+    fi
+
+    if [ -s wolfcrypt/src/fips_test.c ]; then
+        NEWHASH=$(./wolfcrypt/test/testwolfcrypt | sed -n 's/hash = \(.*\)/\1/p')
+        if [ -n "$NEWHASH" ]; then
+            cp wolfcrypt/src/fips_test.c wolfcrypt/src/fips_test.c.bak
+            sed "s/^\".*\";/\"${NEWHASH}\";/" wolfcrypt/src/fips_test.c.bak >wolfcrypt/src/fips_test.c
+            make clean
+        fi
+    fi
+
+    if [ "$MAKECHECK" = "yes" ]; then
+        if ! $MAKE check; then
+            echo 'fips-check: Test failed. Debris left for analysis.'
+            exit 3
+        fi
     fi
 fi
 

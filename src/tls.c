@@ -3649,7 +3649,7 @@ int TLSX_CSR_InitRequest_ex(TLSX* extensions, DecodedCert* cert,
 
                 request = &csr->request.ocsp[req_cnt];
                 if (request->serial != NULL) {
-                    /* clear request contents before re-use */
+                    /* clear request contents before reuse */
                     FreeOcspRequest(request);
                     if (csr->requests > 0)
                         csr->requests--;
@@ -5905,14 +5905,25 @@ static int TLSX_SessionTicket_Parse(WOLFSSL* ssl, const byte* input,
                     /* SERVER: ticket is peer auth. */
                     ssl->options.peerAuthGood = 1;
                 }
-            } else if (ret == WOLFSSL_TICKET_RET_REJECT) {
+            } else if (ret == WOLFSSL_TICKET_RET_REJECT ||
+                    ret == WC_NO_ERR_TRACE(VERSION_ERROR)) {
                 WOLFSSL_MSG("Process client ticket rejected, not using");
-                ssl->options.rejectTicket = 1;
+                if (ret == WC_NO_ERR_TRACE(VERSION_ERROR))
+                    WOLFSSL_MSG("\tbad TLS version");
                 ret = 0;  /* not fatal */
-            } else if (ret == WC_NO_ERR_TRACE(VERSION_ERROR)) {
-                WOLFSSL_MSG("Process client ticket rejected, bad TLS version");
+
                 ssl->options.rejectTicket = 1;
-                ret = 0;  /* not fatal */
+                /* If we have session tickets enabled then send a new ticket */
+                if (!TLSX_CheckUnsupportedExtension(ssl, TLSX_SESSION_TICKET)) {
+                    ret = TLSX_UseSessionTicket(&ssl->extensions, NULL,
+                                                ssl->heap);
+                    if (ret == WOLFSSL_SUCCESS) {
+                        ret = 0;
+                        TLSX_SetResponse(ssl, TLSX_SESSION_TICKET);
+                        ssl->options.createTicket = 1;
+                        ssl->options.useTicket    = 1;
+                    }
+                }
             } else if (ret == WOLFSSL_TICKET_RET_FATAL) {
                 WOLFSSL_MSG("Process client ticket fatal error, not using");
             } else if (ret < 0) {
@@ -6439,7 +6450,7 @@ static int TLSX_SupportedVersions_GetSize(void* data, byte msgType, word16* pSz)
         if (versionIsLessEqual(isDtls, ssl->options.minDowngrade, tls13Minor)
         #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
             defined(WOLFSSL_WPAS_SMALL)
-            && (ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0
+            && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_3) == 0
         #endif
         ) {
             cnt++;
@@ -6451,7 +6462,7 @@ static int TLSX_SupportedVersions_GetSize(void* data, byte msgType, word16* pSz)
                     isDtls, ssl->options.minDowngrade, tls12Minor)
 #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) ||                       \
     defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_2) == 0
 #endif
             ) {
                 cnt++;
@@ -6462,7 +6473,7 @@ static int TLSX_SupportedVersions_GetSize(void* data, byte msgType, word16* pSz)
                     isDtls, ssl->options.minDowngrade, tls11Minor)
             #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
                 defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_1) == 0
             #endif
             ) {
                 cnt++;
@@ -6471,7 +6482,7 @@ static int TLSX_SupportedVersions_GetSize(void* data, byte msgType, word16* pSz)
             if (!ssl->options.dtls && (ssl->options.minDowngrade <= TLSv1_MINOR)
             #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
                 defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1) == 0
             #endif
             ) {
                 cnt++;
@@ -6536,7 +6547,7 @@ static int TLSX_SupportedVersions_Write(void* data, byte* output,
         if (versionIsLessEqual(isDtls, ssl->options.minDowngrade, tls13minor)
 #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) ||                       \
     defined(WOLFSSL_WPAS_SMALL)
-            && (ssl->options.mask & SSL_OP_NO_TLSv1_3) == 0
+            && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_3) == 0
 #endif
         ) {
             *cnt += OPAQUE16_LEN;
@@ -6556,7 +6567,7 @@ static int TLSX_SupportedVersions_Write(void* data, byte* output,
             if (versionIsLessEqual(isDtls, ssl->options.minDowngrade, tls12minor)
 #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
                 defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1_2) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_2) == 0
             #endif
             ) {
                 *cnt += OPAQUE16_LEN;
@@ -6569,7 +6580,7 @@ static int TLSX_SupportedVersions_Write(void* data, byte* output,
             if (versionIsLessEqual(isDtls, ssl->options.minDowngrade, tls11minor)
             #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
                 defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1_1) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1_1) == 0
             #endif
             ) {
                 *cnt += OPAQUE16_LEN;
@@ -6580,7 +6591,7 @@ static int TLSX_SupportedVersions_Write(void* data, byte* output,
             if (!ssl->options.dtls && (ssl->options.minDowngrade <= TLSv1_MINOR)
             #if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || \
                 defined(WOLFSSL_WPAS_SMALL)
-                && (ssl->options.mask & SSL_OP_NO_TLSv1) == 0
+                && (ssl->options.mask & WOLFSSL_OP_NO_TLSv1) == 0
             #endif
             ) {
                 *cnt += OPAQUE16_LEN;
@@ -7157,15 +7168,16 @@ static int TLSX_CA_Names_Parse(WOLFSSL *ssl, const byte* input,
     return 0;
 }
 
-#define CAN_GET_SIZE  TLSX_CA_Names_GetSize
-#define CAN_WRITE     TLSX_CA_Names_Write
-#define CAN_PARSE     TLSX_CA_Names_Parse
+#define CAN_GET_SIZE(data)      TLSX_CA_Names_GetSize(data)
+#define CAN_WRITE(data, output) TLSX_CA_Names_Write(data, output)
+#define CAN_PARSE(ssl, input, length, isRequest) \
+                                TLSX_CA_Names_Parse(ssl, input, length, isRequest)
 
 #else
 
-#define CAN_GET_SIZE(...)  0
-#define CAN_WRITE(...)     0
-#define CAN_PARSE(...)     0
+#define CAN_GET_SIZE(data)                       0
+#define CAN_WRITE(data, output)                  0
+#define CAN_PARSE(ssl, input, length, isRequest) 0
 
 #endif
 
@@ -7971,6 +7983,24 @@ static int kyber_id2type(int id, int *type)
     int ret = 0;
 
     switch (id) {
+#ifndef WOLFSSL_NO_ML_KEM
+    #ifndef WOLFSSL_NO_ML_KEM_512
+        case WOLFSSL_ML_KEM_512:
+            *type = WC_ML_KEM_512;
+            break;
+    #endif
+    #ifndef WOLFSSL_NO_ML_KEM_768
+        case WOLFSSL_ML_KEM_768:
+            *type = WC_ML_KEM_768;
+            break;
+    #endif
+    #ifndef WOLFSSL_NO_ML_KEM_1024
+        case WOLFSSL_ML_KEM_1024:
+            *type = WC_ML_KEM_1024;
+            break;
+    #endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
     #ifdef WOLFSSL_KYBER512
         case WOLFSSL_KYBER_LEVEL1:
             *type = KYBER512;
@@ -7986,6 +8016,7 @@ static int kyber_id2type(int id, int *type)
             *type = KYBER1024;
             break;
     #endif
+#endif
         default:
             ret = NOT_COMPILED_IN;
             break;
@@ -8001,12 +8032,22 @@ typedef struct PqcHybridMapping {
 } PqcHybridMapping;
 
 static const PqcHybridMapping pqc_hybrid_mapping[] = {
+#ifndef WOLFSSL_NO_ML_KEM
+    {.hybrid = WOLFSSL_P256_ML_KEM_512,     .ecc = WOLFSSL_ECC_SECP256R1,
+     .pqc = WOLFSSL_ML_KEM_512},
+    {.hybrid = WOLFSSL_P384_ML_KEM_768,     .ecc = WOLFSSL_ECC_SECP384R1,
+     .pqc = WOLFSSL_ML_KEM_768},
+    {.hybrid = WOLFSSL_P521_ML_KEM_1024,    .ecc = WOLFSSL_ECC_SECP521R1,
+     .pqc = WOLFSSL_ML_KEM_1024},
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
     {.hybrid = WOLFSSL_P256_KYBER_LEVEL1,     .ecc = WOLFSSL_ECC_SECP256R1,
      .pqc = WOLFSSL_KYBER_LEVEL1},
     {.hybrid = WOLFSSL_P384_KYBER_LEVEL3,     .ecc = WOLFSSL_ECC_SECP384R1,
      .pqc = WOLFSSL_KYBER_LEVEL3},
     {.hybrid = WOLFSSL_P521_KYBER_LEVEL5,     .ecc = WOLFSSL_ECC_SECP521R1,
      .pqc = WOLFSSL_KYBER_LEVEL5},
+#endif
     {.hybrid = 0, .ecc = 0, .pqc = 0}
 };
 
@@ -9651,6 +9692,45 @@ static int TLSX_KeyShare_IsSupported(int namedGroup)
         #endif
     #endif
 #ifdef WOLFSSL_HAVE_KYBER
+#ifndef WOLFSSL_NO_ML_KEM
+    #ifdef WOLFSSL_WC_KYBER
+        #ifndef WOLFSSL_NO_ML_KEM_512
+            case WOLFSSL_ML_KEM_512:
+            case WOLFSSL_P256_ML_KEM_512:
+        #endif
+        #ifndef WOLFSSL_NO_ML_KEM_768
+            case WOLFSSL_ML_KEM_768:
+            case WOLFSSL_P384_ML_KEM_768:
+        #endif
+        #ifndef WOLFSSL_NO_ML_KEM_1024
+            case WOLFSSL_ML_KEM_1024:
+            case WOLFSSL_P521_ML_KEM_1024:
+        #endif
+                break;
+    #elif defined(HAVE_LIBOQS)
+        case WOLFSSL_ML_KEM_512:
+        case WOLFSSL_ML_KEM_768:
+        case WOLFSSL_ML_KEM_1024:
+        case WOLFSSL_P256_ML_KEM_512:
+        case WOLFSSL_P384_ML_KEM_768:
+        case WOLFSSL_P521_ML_KEM_1024:
+        {
+            int ret;
+            int id;
+            findEccPqc(NULL, &namedGroup, namedGroup);
+            ret = kyber_id2type(namedGroup, &id);
+            if (ret == WC_NO_ERR_TRACE(NOT_COMPILED_IN)) {
+                return 0;
+            }
+
+            if (! ext_kyber_enabled(id)) {
+                return 0;
+            }
+            break;
+        }
+    #endif
+#endif
+#ifdef WOLFSSL_KYBER_ORIGINAL
     #ifdef WOLFSSL_WC_KYBER
         #ifdef WOLFSSL_KYBER512
             case WOLFSSL_KYBER_LEVEL1:
@@ -9688,6 +9768,7 @@ static int TLSX_KeyShare_IsSupported(int namedGroup)
         }
     #endif
 #endif
+#endif /* WOLFSSL_HAVE_KYBER */
         default:
             return 0;
     }
@@ -9733,6 +9814,31 @@ static const word16 preferredGroup[] = {
 #if defined(HAVE_FFDHE_8192)
     WOLFSSL_FFDHE_8192,
 #endif
+#ifndef WOLFSSL_NO_ML_KEM
+#ifdef WOLFSSL_WC_KYBER
+    #ifndef WOLFSSL_NO_ML_KEM_512
+    WOLFSSL_ML_KEM_512,
+    WOLFSSL_P256_ML_KEM_512,
+    #endif
+    #ifndef WOLFSSL_NO_ML_KEM_768
+    WOLFSSL_ML_KEM_768,
+    WOLFSSL_P384_ML_KEM_768,
+    #endif
+    #ifndef WOLFSSL_NO_ML_KEM_1024
+    WOLFSSL_ML_KEM_1024,
+    WOLFSSL_P521_ML_KEM_1024,
+    #endif
+#elif defined(HAVE_LIBOQS)
+    /* These require a runtime call to TLSX_KeyShare_IsSupported to use */
+    WOLFSSL_ML_KEM_512,
+    WOLFSSL_ML_KEM_768,
+    WOLFSSL_ML_KEM_1024,
+    WOLFSSL_P256_ML_KEM_512,
+    WOLFSSL_P384_ML_KEM_768,
+    WOLFSSL_P521_ML_KEM_1024,
+#endif
+#endif /* !WOLFSSL_NO_ML_KEM */
+#ifdef WOLFSSL_KYBER_ORIGINAL
 #ifdef WOLFSSL_WC_KYBER
     #ifdef WOLFSSL_KYBER512
     WOLFSSL_KYBER_LEVEL1,
@@ -9755,6 +9861,7 @@ static const word16 preferredGroup[] = {
     WOLFSSL_P384_KYBER_LEVEL3,
     WOLFSSL_P521_KYBER_LEVEL5,
 #endif
+#endif /* WOLFSSL_KYBER_ORIGINAL */
     WOLFSSL_NAMED_GROUP_INVALID
 };
 
@@ -9944,6 +10051,16 @@ int TLSX_CKS_Parse(WOLFSSL* ssl, byte* input, word16 length,
                 /* All other values (including external) are not. */
                 return BAD_FUNC_ARG;
         }
+    }
+
+    /* This could be a situation where the client tried to start with TLS 1.3
+     * when it sent ClientHello and the server down-graded to TLS 1.2. In that
+     * case, erroring out because it is TLS 1.2 is not a reasonable thing to do.
+     * In the case of TLS 1.2, the CKS values will be ignored. */
+    if (!IsAtLeastTLSv1_3(ssl->version)) {
+        ssl->sigSpec = NULL;
+        ssl->sigSpecSz = 0;
+        return 0;
     }
 
     /* Extension data is valid, but if we are the server and we don't have an
@@ -12357,7 +12474,7 @@ static int TLSX_ECH_Parse(WOLFSSL* ssl, const byte* readBuf, word16 size,
         readBuf_p += ech->encLen;
 
         ato16(readBuf_p, &ech->innerClientHelloLen);
-        ech->innerClientHelloLen -= AES_BLOCK_SIZE;
+        ech->innerClientHelloLen -= WC_AES_BLOCK_SIZE;
         readBuf_p += 2;
 
         ech->outerClientPayload = readBuf_p;
@@ -12373,7 +12490,7 @@ static int TLSX_ECH_Parse(WOLFSSL* ssl, const byte* readBuf, word16 size,
 
         /* set the ech payload of the copy to zeros */
         XMEMSET(aadCopy + (readBuf_p - ech->aad), 0,
-            ech->innerClientHelloLen + AES_BLOCK_SIZE);
+            ech->innerClientHelloLen + WC_AES_BLOCK_SIZE);
 
         /* allocate the inner payload buffer */
         ech->innerClientHello =
@@ -13365,6 +13482,52 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
 #endif
 
 #ifdef WOLFSSL_HAVE_KYBER
+#ifndef WOLFSSL_NO_ML_KEM
+#ifdef WOLFSSL_WC_KYBER
+#ifndef WOLFSSL_NO_ML_KEM_512
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_512,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P256_ML_KEM_512,
+                                     ssl->heap);
+#endif
+#ifndef WOLFSSL_NO_ML_KEM_768
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_768,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P384_ML_KEM_768,
+                                     ssl->heap);
+#endif
+#ifndef WOLFSSL_NO_ML_KEM_1024
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_1024,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P521_ML_KEM_1024,
+                                     ssl->heap);
+#endif
+#elif defined(HAVE_LIBOQS)
+    ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_512, ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_768,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_ML_KEM_1024,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P256_ML_KEM_512,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P384_ML_KEM_768,
+                                     ssl->heap);
+    if (ret == WOLFSSL_SUCCESS)
+        ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P521_ML_KEM_1024,
+                                     ssl->heap);
+#endif /* HAVE_LIBOQS */
+#endif /* !WOLFSSL_NO_ML_KEM */
+#ifdef WOLFSSL_KYBER_ORIGINAL
 #ifdef WOLFSSL_WC_KYBER
 #ifdef WOLFSSL_KYBER512
     if (ret == WOLFSSL_SUCCESS)
@@ -13408,6 +13571,7 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
         ret = TLSX_UseSupportedCurve(extensions, WOLFSSL_P521_KYBER_LEVEL5,
                                      ssl->heap);
 #endif /* HAVE_LIBOQS */
+#endif /* WOLFSSL_KYBER_ORIGINAL */
 #endif /* WOLFSSL_HAVE_KYBER */
 
     (void)ssl;
@@ -14751,9 +14915,9 @@ static word16 TLSX_GetMinSize_Client(word16* type)
             return 0;
     }
 }
-    #define TLSX_GET_MIN_SIZE_CLIENT TLSX_GetMinSize_Client
+    #define TLSX_GET_MIN_SIZE_CLIENT(type) TLSX_GetMinSize_Client(type)
 #else
-    #define TLSX_GET_MIN_SIZE_CLIENT(...) 0
+    #define TLSX_GET_MIN_SIZE_CLIENT(type) 0
 #endif
 
 
@@ -14820,9 +14984,9 @@ static word16 TLSX_GetMinSize_Server(const word16 *type)
             return 0;
     }
 }
-    #define TLSX_GET_MIN_SIZE_SERVER TLSX_GetMinSize_Server
+    #define TLSX_GET_MIN_SIZE_SERVER(type) TLSX_GetMinSize_Server(type)
 #else
-    #define TLSX_GET_MIN_SIZE_SERVER(...) 0
+    #define TLSX_GET_MIN_SIZE_SERVER(type) 0
 #endif
 
 
@@ -15027,9 +15191,8 @@ int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length, byte msgType,
 #ifdef WOLFSSL_DUAL_ALG_CERTS
             case TLSX_CKS:
                 WOLFSSL_MSG("CKS extension received");
-                if (!IsAtLeastTLSv1_3(ssl->version) ||
-                    (msgType != client_hello &&
-                     msgType != encrypted_extensions)) {
+                if (msgType != client_hello &&
+                     msgType != encrypted_extensions) {
                         WOLFSSL_ERROR_VERBOSE(EXT_NOT_ALLOWED);
                         return EXT_NOT_ALLOWED;
                 }

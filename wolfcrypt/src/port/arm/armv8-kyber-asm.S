@@ -7058,9 +7058,9 @@ L_kyber_aarch64_rej_uniform_neon_bits:
 	.short	0x0001,0x0002,0x0004,0x0008,0x0010,0x0020,0x0040,0x0080
 #ifndef __APPLE__
 	.text
-	.type	L_kyber_aarch64_rej_uniform_neon_indeces, %object
+	.type	L_kyber_aarch64_rej_uniform_neon_indices, %object
 	.section	.rodata
-	.size	L_kyber_aarch64_rej_uniform_neon_indeces, 4096
+	.size	L_kyber_aarch64_rej_uniform_neon_indices, 4096
 #else
 	.section	__DATA,__data
 #endif /* __APPLE__ */
@@ -7069,7 +7069,7 @@ L_kyber_aarch64_rej_uniform_neon_bits:
 #else
 	.p2align	1
 #endif /* __APPLE__ */
-L_kyber_aarch64_rej_uniform_neon_indeces:
+L_kyber_aarch64_rej_uniform_neon_indices:
 	.byte	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 	.byte	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 	.byte	0x00,0x01,0xff,0xff,0xff,0xff,0xff,0xff
@@ -7621,11 +7621,11 @@ _kyber_rej_uniform_neon:
 	add  x6, x6, :lo12:L_kyber_aarch64_rej_uniform_neon_bits@PAGEOFF
 #endif /* __APPLE__ */
 #ifndef __APPLE__
-	adrp x7, L_kyber_aarch64_rej_uniform_neon_indeces
-	add  x7, x7, :lo12:L_kyber_aarch64_rej_uniform_neon_indeces
+	adrp x7, L_kyber_aarch64_rej_uniform_neon_indices
+	add  x7, x7, :lo12:L_kyber_aarch64_rej_uniform_neon_indices
 #else
-	adrp x7, L_kyber_aarch64_rej_uniform_neon_indeces@PAGE
-	add  x7, x7, :lo12:L_kyber_aarch64_rej_uniform_neon_indeces@PAGEOFF
+	adrp x7, L_kyber_aarch64_rej_uniform_neon_indices@PAGE
+	add  x7, x7, :lo12:L_kyber_aarch64_rej_uniform_neon_indices@PAGEOFF
 #endif /* __APPLE__ */
 	eor	v1.16b, v1.16b, v1.16b
 	eor	v12.16b, v12.16b, v12.16b
@@ -8045,7 +8045,7 @@ L_SHA3_transform_blocksx3_neon_begin:
 	eor	x25, x25, x28
 	eor	x24, x24, x0
 	eor	x26, x26, x30
-	# Done tranforming
+	# Done transforming
 	ldp	x27, x28, [x29, #48]
 	ldr	x0, [x27], #8
 	subs	x28, x28, #1
@@ -8392,7 +8392,7 @@ L_SHA3_shake128_blocksx3_seed_neon_begin:
 	eor	x26, x26, x28
 	eor	x25, x25, x0
 	eor	x27, x27, x30
-	# Done tranforming
+	# Done transforming
 	ldp	x28, x1, [x29, #48]
 	ldr	x0, [x28], #8
 	subs	x1, x1, #1
@@ -8739,7 +8739,7 @@ L_SHA3_shake256_blocksx3_seed_neon_begin:
 	eor	x26, x26, x28
 	eor	x25, x25, x0
 	eor	x27, x27, x30
-	# Done tranforming
+	# Done transforming
 	ldp	x28, x1, [x29, #48]
 	ldr	x0, [x28], #8
 	subs	x1, x1, #1
@@ -9150,7 +9150,7 @@ L_SHA3_transform_blocksx3_neon_begin:
 	eor	v22.16b, v22.16b, v27.16b
 	eor	v23.16b, v23.16b, v28.16b
 	eor	v24.16b, v24.16b, v29.16b
-	# Done tranforming
+	# Done transforming
 	ldp	x27, x28, [x29, #48]
 	ldr	x0, [x27], #8
 	subs	x28, x28, #1
@@ -9582,7 +9582,7 @@ L_SHA3_shake128_blocksx3_seed_neon_begin:
 	eor	v22.16b, v22.16b, v27.16b
 	eor	v23.16b, v23.16b, v28.16b
 	eor	v24.16b, v24.16b, v29.16b
-	# Done tranforming
+	# Done transforming
 	ldp	x28, x1, [x29, #48]
 	ldr	x0, [x28], #8
 	subs	x1, x1, #1
@@ -10014,7 +10014,7 @@ L_SHA3_shake256_blocksx3_seed_neon_begin:
 	eor	v22.16b, v22.16b, v27.16b
 	eor	v23.16b, v23.16b, v28.16b
 	eor	v24.16b, v24.16b, v29.16b
-	# Done tranforming
+	# Done transforming
 	ldp	x28, x1, [x29, #48]
 	ldr	x0, [x28], #8
 	subs	x1, x1, #1

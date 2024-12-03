@@ -32,6 +32,15 @@
 
 #ifndef WOLFCRYPT_ONLY
 
+#if defined(HAVE_ERRNO_H) && defined(WOLFSSL_NO_SOCK) && \
+    (defined(USE_WOLFSSL_IO) || defined(HAVE_HTTP_CLIENT))
+    /* error codes are needed for TranslateIoReturnCode() and
+     * wolfIO_TcpConnect() even if defined(WOLFSSL_NO_SOCK), which inhibits
+     * inclusion of errno.h by wolfio.h.
+     */
+    #include <errno.h>
+#endif
+
 #ifdef _WIN32_WCE
     /* On WinCE winsock2.h must be included before windows.h for socket stuff */
     #include <winsock2.h>
@@ -116,7 +125,7 @@ Possible IO enable options:
  *
  * DTLS_RECEIVEFROM_NO_TIMEOUT_ON_INVALID_PEER: This flag has effect only if
  * ASN_NO_TIME is enabled. If enabled invalid peers messages are ignored
- * indefinetely. If not enabled EmbedReceiveFrom will return timeout after
+ * indefinitely. If not enabled EmbedReceiveFrom will return timeout after
  * DTLS_RECEIVEFROM_MAX_INVALID_PEER number of packets from invalid peers. When
  * enabled, without a timer, EmbedReceivefrom can't check if the timeout is
  * expired and it may never return under a continuous flow of invalid packets.
@@ -251,7 +260,7 @@ static int TranslateIoReturnCode(int err, SOCKET_T sd, int direction)
         NULL);
     WOLFSSL_MSG(errstr);
 #else
-    WOLFSSL_MSG("\tGeneral error");
+    WOLFSSL_MSG_EX("\tGeneral error: %d", err);
 #endif
     return WOLFSSL_CBIO_ERR_GENERAL;
 }
@@ -260,12 +269,12 @@ static int TranslateIoReturnCode(int err, SOCKET_T sd, int direction)
 #ifdef OPENSSL_EXTRA
 #ifndef NO_BIO
 
-int BioSend(WOLFSSL* ssl, char *buf, int sz, void *ctx)
+int wolfSSL_BioSend(WOLFSSL* ssl, char *buf, int sz, void *ctx)
 {
     return SslBioSend(ssl, buf, sz, ctx);
 }
 
-int BioReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx)
+int wolfSSL_BioReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx)
 {
     return SslBioReceive(ssl, buf, sz, ctx);
 }
@@ -1032,7 +1041,7 @@ int EmbedGenerateCookie(WOLFSSL* ssl, byte *buf, int sz, void *ctx)
                 }
                 ((SOCKADDR_IN*)&addr)->sin_port = XHTONS(port);
 
-                /* peer sa is free'd in SSL_ResourceFree */
+                /* peer sa is free'd in wolfSSL_ResourceFree */
                 if ((ret = wolfSSL_dtls_set_peer(ssl, (SOCKADDR_IN*)&addr,
                                           sizeof(SOCKADDR_IN)))!= WOLFSSL_SUCCESS) {
                     WOLFSSL_MSG("Import DTLS peer info error");
@@ -1049,7 +1058,7 @@ int EmbedGenerateCookie(WOLFSSL* ssl, byte *buf, int sz, void *ctx)
                 }
                 ((SOCKADDR_IN6*)&addr)->sin6_port = XHTONS(port);
 
-                /* peer sa is free'd in SSL_ResourceFree */
+                /* peer sa is free'd in wolfSSL_ResourceFree */
                 if ((ret = wolfSSL_dtls_set_peer(ssl, (SOCKADDR_IN6*)&addr,
                                          sizeof(SOCKADDR_IN6)))!= WOLFSSL_SUCCESS) {
                     WOLFSSL_MSG("Import DTLS peer info error");
