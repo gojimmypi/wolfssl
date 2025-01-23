@@ -1393,7 +1393,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGW(TAG, "mp-mul X %d bits exceeds max bit length (%d)",
                         Xs, ESP_HW_MULTI_RSAMAX_BITS);
 #endif
+#if defined(WOLFSSL_HW_METRICS)
         esp_mp_mul_max_exceeded_ct++;
+#endif
         return MP_HW_FALLBACK;
     }
     if (Ys > ESP_HW_MULTI_RSAMAX_BITS) {
@@ -1401,7 +1403,9 @@ int esp_mp_mul(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* Z)
         ESP_LOGW(TAG, "mp-mul Y %d bits exceeds max bit length (%d)",
                         Ys, ESP_HW_MULTI_RSAMAX_BITS);
 #endif
+#if defined(WOLFSSL_HW_METRICS)
         esp_mp_mul_max_exceeded_ct++;
+#endif
         return MP_HW_FALLBACK;
     }
 
