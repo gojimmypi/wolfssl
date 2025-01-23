@@ -1,6 +1,6 @@
 /* esp32_sha.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -537,9 +537,9 @@ int esp_sha_ctx_copy(struct wc_Sha* src, struct wc_Sha* dst)
 #ifndef NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224
 int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
 {
-    /* There's no 224 hardware on ESP32 */
-    /* TODO but there is on ESP32-C3 */
-    dst->ctx.initializer = (uintptr_t)&dst->ctx; /* assign the initializer to dst */
+    /* There's no 224 hardware on ESP32.
+     * Initializer for dst is this ctx address for use as a breadcrumb. */
+    dst->ctx.initializer = (uintptr_t)&dst->ctx;
     #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
     {
         /* Not HW mode for copy, so we are not interested in task owner: */
@@ -547,9 +547,6 @@ int esp_sha224_ctx_copy(struct wc_Sha256* src, struct wc_Sha256* dst)
     }
     #endif
 
-    /* always set to SW, as there's no ESP32 HW for SHA224.
-    ** TODO: add support for ESP32-S2. ESP32-S3, ESP32-C3 here.
-    */
     dst->ctx.mode = ESP32_SHA_SW;
     return ESP_OK;
 } /* esp_sha224_ctx_copy */
@@ -737,11 +734,10 @@ int esp_sha512_ctx_copy(struct wc_Sha512* src, struct wc_Sha512* dst)
         /* reminder this happened in XMEMCOPY, above: dst->ctx = src->ctx;
         ** No special HW init needed when not in active HW mode.
         ** but we need to set our initializer breadcrumb: */
-    /* TODO: instead of what is NOT supported, gate on what IS known to be supported */
     #if !defined(CONFIG_IDF_TARGET_ESP32C2) && \
         !defined(CONFIG_IDF_TARGET_ESP32C3) && \
         !defined(CONFIG_IDF_TARGET_ESP32C6)
-        dst->ctx.initializer = (uintptr_t)&(dst->ctx); /*breadcrumb is this ctx address */
+        dst->ctx.initializer = (uintptr_t)&(dst->ctx);
     #endif
     #if defined(ESP_MONITOR_HW_TASK_LOCK) && !defined(SINGLE_THREADED)
         {
@@ -958,8 +954,6 @@ int esp_unroll_sha_module_enable(WC_ESP32SHA* ctx)
         }
     }
 #endif /* else; not RISC-V */
-
-    /* All architectures: */
     if (ret == 0) {
         if (ctx->lockDepth != actual_unroll_count) {
             /* this could be a warning of wonkiness in RTOS environment.
@@ -1044,6 +1038,7 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
         }
         else {
             ESP_LOGV(TAG, "this object is not the lock owner");
+
         }
     } /* ctx != 0 */
 
@@ -1073,12 +1068,10 @@ uintptr_t esp_sha_hw_islocked(WC_ESP32SHA* ctx)
 
         /* Verbose debug diagnostics */
         if (NULLPTR == mutex_ctx_owner) {
-            ESP_LOGV(TAG, "not esp_sha_hw_islocked");
-            //ret = FALSE; /* TODO review for all */
+            ESP_LOGV(TAG, "not esp_sha_hw_islocked, mutex_ctx_owner is Null");
         }
         else {
             ESP_LOGV(TAG, "esp_sha_hw_islocked for 0x%x", mutex_ctx_owner);
-            //ret = TRUE;  /* TODO review for all */
         }
     }
     #endif
@@ -1207,7 +1200,7 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
     /* thread safe get of global static mutex_ctx_owner: */
     uintptr_t this_mutex_owner;
 
-    /* mutex_ctx_owner choul change in multiple threads, assign once here: */
+    /* mutex_ctx_owner could change in multiple threads, assign once here: */
     this_mutex_owner = esp_sha_mutex_ctx_owner();
 #endif
 
@@ -1583,11 +1576,6 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
         ets_sha_disable(); /* disable also resets active, ongoing hash */
         ESP_LOGV(TAG, "ets_sha_disable in esp_sha_hw_unlock()");
     #else
-        /* Disable AES hardware */
-        // TODO Note: Jim, is there any cost associated with enable/disable hardware here? This seems like
-        // a power saving feature that could be handled at a different level than per-calculation.
-        // ESP_LOGI(TAG, ">> Disable SHA module ctx %p;  for ctx->initializer %x",
-        //               ctx, ctx->initializer);
         periph_module_disable(PERIPH_SHA_MODULE);
     #endif
         ctx->lockDepth--;
@@ -1642,7 +1630,7 @@ int esp_sha_hw_unlock(WC_ESP32SHA* ctx)
     #ifdef WOLFSSL_DEBUG_MUTEX
         taskENTER_CRITICAL(&sha_crit_sect);
         {
-            mutex_ctx_owner = 0; /* TODO: do we really want this conditional assignment? */
+            mutex_ctx_owner = 0;
         }
         taskEXIT_CRITICAL(&sha_crit_sect);
     #endif
@@ -1929,7 +1917,7 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     *  ((word32[16])  (*(volatile uint32_t *)(SHA_TEXT_BASE)))
     */
     if (&data != _active_digest_address) {
-        ESP_LOGV(TAG, "TODO Moving alternate ctx->for_digest");
+        ESP_LOGV(TAG, "Moving alternate ctx->for_digest");
         /* move last known digest into HW reg during interleave */
         /* sha_ll_write_digest(ctx->sha_type, ctx->for_digest,
                                WC_SHA256_BLOCK_SIZE); */
@@ -2109,7 +2097,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         wc_esp_sha_digest_size(ctx->sha_type) / sizeof(word32)
     );
 #else
-    /* not CONFIG_IDF_TARGET_ESP32S3 or Cx TODO make explicit ESP32 check */
+    /* Not CONFIG_IDF_TARGET_ESP32S3  */
     /* wait until idle */
     wc_esp_wait_until_idle();
 
@@ -2118,11 +2106,11 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
     defined(CONFIG_IDF_TARGET_ESP8684) || \
     defined(CONFIG_IDF_TARGET_ESP32C3) || \
     defined(CONFIG_IDF_TARGET_ESP32C6)
-    /* TODO ? ESP32-C3 RISC-V TODO */
+
 #elif  defined(CONFIG_IDF_TARGET_ESP32S2)
-    /* TODO */
+
 #else
-        /* TODO what's this? */
+
     switch (ctx->sha_type) {
         case SHA1:
             DPORT_REG_WRITE(SHA_1_LOAD_REG, 1);
@@ -2185,7 +2173,7 @@ int wc_esp_digest_state(WC_ESP32SHA* ctx, byte* hash)
         SHA_TEXT_BASE,   /* there's a fixed reg addr for all SHA */
         digestSz / sizeof(word32) /* # 4-byte */
     );
-#endif /* TODO is this the end of the ESP32 section? */
+#endif
 
 #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
     if (ctx->sha_type == SHA2_384 || ctx->sha_type == SHA2_512) {

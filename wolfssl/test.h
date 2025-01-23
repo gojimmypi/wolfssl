@@ -1,6 +1,6 @@
 /* test.h
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -2409,7 +2409,7 @@ static WC_INLINE void OCSPRespFreeCb(void* ioCtx, unsigned char* response)
 enum {
     VERIFY_OVERRIDE_ERROR,
     VERIFY_FORCE_FAIL,
-    VERIFY_USE_PREVERFIY,
+    VERIFY_USE_PREVERIFY,
     VERIFY_OVERRIDE_DATE_ERR,
 };
 static THREAD_LS_T int myVerifyAction = VERIFY_OVERRIDE_ERROR;
@@ -2575,7 +2575,7 @@ static WC_INLINE void CRL_CallBack(const char* url)
 #endif
 
 #ifndef NO_DH
-#if defined(WOLFSSL_SP_MATH) && !defined(WOLFSS_SP_MATH_ALL)
+#if defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)
     /* dh2048 p */
     static const unsigned char test_dh_p[] =
     {
@@ -4220,6 +4220,25 @@ static WC_INLINE int myGenMaster(WOLFSSL* ssl, void* ctx)
     return ret;
 }
 
+static WC_INLINE int myGenExtMaster(WOLFSSL* ssl, byte* hash, word32 hashSz,
+                                        void* ctx)
+{
+    int       ret;
+    PkCbInfo* cbInfo = (PkCbInfo*)ctx;
+
+    (void)ssl;
+    (void)cbInfo;
+    (void)hash;
+    (void)hashSz;
+
+    WOLFSSL_PKMSG("Gen Extended Master");
+    /* fall through to original routine */
+    ret = PROTOCOLCB_UNAVAILABLE;
+    WOLFSSL_PKMSG("Gen Extended Master: ret %d\n", ret);
+
+    return ret;
+}
+
 static WC_INLINE int myGenPreMaster(WOLFSSL* ssl, byte *premaster,
                                                   word32 preSz, void* ctx)
 {
@@ -4372,6 +4391,7 @@ static WC_INLINE void SetupPkCallbacks(WOLFSSL_CTX* ctx)
 
     #ifndef NO_CERTS
     wolfSSL_CTX_SetGenMasterSecretCb(ctx, myGenMaster);
+    wolfSSL_CTX_SetGenExtMasterSecretCb(ctx, myGenExtMaster);
     wolfSSL_CTX_SetGenPreMasterCb(ctx, myGenPreMaster);
     wolfSSL_CTX_SetGenSessionKeyCb(ctx, myGenSessionKey);
     wolfSSL_CTX_SetEncryptKeysCb(ctx, mySetEncryptKeys);
@@ -4427,6 +4447,7 @@ static WC_INLINE void SetupPkCallbackContexts(WOLFSSL* ssl, void* myCtx)
 
     #ifndef NO_CERTS
     wolfSSL_SetGenMasterSecretCtx(ssl, myCtx);
+    wolfSSL_SetGenExtMasterSecretCtx(ssl, myCtx);
     wolfSSL_SetGenPreMasterCtx(ssl, myCtx);
     wolfSSL_SetGenSessionKeyCtx(ssl, myCtx);
     wolfSSL_SetEncryptKeysCtx(ssl, myCtx);

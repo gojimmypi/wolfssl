@@ -44,14 +44,26 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_MULTI_INSTALL_WARNING")
 endif()
 
+# The wolfSL component name is named "mywolfssl" on the staging site for Managed Components.
+if( NOT EXISTS "../components/wolfssl" AND ("$ENV{IDF_COMPONENT_REGISTRY_URL}" STREQUAL "https://components-staging.espressif.com") )
+    message(STATUS "WARNING: Using a staging instance of wolfssl.")
+    set(MAIN_WOLFSSL_COMPONENT_NAME "mywolfssl")
+else()
+    message(STATUS "Using release wolfssl component.")
+    set(MAIN_WOLFSSL_COMPONENT_NAME "wolfssl")
+endif()
+
 ## register_component()
 idf_component_register(SRCS main.c
                             wifi_connect.c
                             time_helper.c
                             server-tls.c
                        INCLUDE_DIRS "."
-                                    "./include")
-#
+                            "./include"
+                       PRIV_REQUIRES "${MAIN_WOLFSSL_COMPONENT_NAME}"
+                                     driver
+                                     nvs_flash
+                                     protocol_examples_common)
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)

@@ -1,6 +1,6 @@
 /* benchmark.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -61,7 +61,7 @@
     #include <config.h>
 #endif
 
-#ifndef WOLFSSL_USER_SETTINGS
+#if !defined(WOLFSSL_USER_SETTINGS) && !defined(WOLFSSL_NO_OPTIONS_H)
     #include <wolfssl/options.h>
 #endif
 #include <wolfssl/wolfcrypt/settings.h> /* also picks up user_settings.h */
@@ -228,6 +228,8 @@
 #ifdef WOLFSSL_ASYNC_CRYPT
     #include <wolfssl/wolfcrypt/async.h>
 #endif
+
+#include <wolfssl/wolfcrypt/cpuid.h>
 
 #ifdef USE_FLAT_BENCHMARK_H
     #include "benchmark.h"
@@ -1723,7 +1725,9 @@ static const char* bench_result_words3[][5] = {
 #endif
 
 #ifdef LINUX_RUSAGE_UTIME
-    static void check_for_excessive_stime(const char *desc,
+    static void check_for_excessive_stime(const char *algo,
+                                          int strength,
+                                          const char *desc,
                                           const char *desc_extra);
 #endif
 
@@ -2515,7 +2519,7 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
 #endif
 
 #ifdef LINUX_RUSAGE_UTIME
-    check_for_excessive_stime(desc, "");
+    check_for_excessive_stime(desc, 0, "", "");
 #endif
 
     /* calculate actual bytes */
@@ -2741,7 +2745,7 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
     total = current_time(0) - start;
 
 #ifdef LINUX_RUSAGE_UTIME
-    check_for_excessive_stime(desc, desc_extra);
+    check_for_excessive_stime(algo, strength, desc, desc_extra);
 #endif
 
 #ifdef GENERATE_MACHINE_PARSEABLE_REPORT
@@ -3938,6 +3942,46 @@ exit:
     return NULL;
 }
 
+#if defined(HAVE_CPUID) && defined(WOLFSSL_TEST_STATIC_BUILD)
+static void print_cpu_features(void)
+{
+    word32 cpuid_flags = cpuid_get_flags();
+
+    printf("CPU: ");
+#ifdef HAVE_CPUID_INTEL
+    printf("Intel");
+#ifdef WOLFSSL_X86_64_BUILD
+    printf(" x86_64");
+#else
+    printf(" x86");
+#endif
+    printf(" -");
+    if (IS_INTEL_AVX1(cpuid_flags))   printf(" avx1");
+    if (IS_INTEL_AVX2(cpuid_flags))   printf(" avx2");
+    if (IS_INTEL_RDRAND(cpuid_flags)) printf(" rdrand");
+    if (IS_INTEL_RDSEED(cpuid_flags)) printf(" rdseed");
+    if (IS_INTEL_BMI2(cpuid_flags))   printf(" bmi2");
+    if (IS_INTEL_AESNI(cpuid_flags))  printf(" aesni");
+    if (IS_INTEL_ADX(cpuid_flags))    printf(" adx");
+    if (IS_INTEL_MOVBE(cpuid_flags))  printf(" movbe");
+    if (IS_INTEL_BMI1(cpuid_flags))   printf(" bmi1");
+    if (IS_INTEL_SHA(cpuid_flags))    printf(" sha");
+#endif
+#ifdef __aarch64__
+    printf("Aarch64 -");
+    if (IS_AARCH64_AES(cpuid_flags))    printf(" aes");
+    if (IS_AARCH64_PMULL(cpuid_flags))  printf(" pmull");
+    if (IS_AARCH64_SHA256(cpuid_flags)) printf(" sha256");
+    if (IS_AARCH64_SHA512(cpuid_flags)) printf(" sha512");
+    if (IS_AARCH64_RDM(cpuid_flags))    printf(" rdm");
+    if (IS_AARCH64_SHA3(cpuid_flags))   printf(" sha3");
+    if (IS_AARCH64_SM3(cpuid_flags))    printf(" sm3");
+    if (IS_AARCH64_SM4(cpuid_flags))    printf(" sm4");
+#endif
+    printf("\n");
+}
+#endif
+
 int benchmark_init(void)
 {
     int ret = 0;
@@ -3957,6 +4001,10 @@ int benchmark_init(void)
         printf("%swolfCrypt_Init failed %d\n", err_prefix, ret);
         return EXIT_FAILURE;
     }
+
+#if defined(HAVE_CPUID) && defined(WOLFSSL_TEST_STATIC_BUILD)
+    print_cpu_features();
+#endif
 
 #ifdef HAVE_WC_INTROSPECTION
     printf("Math: %s\n", wc_GetMathInfo());
@@ -14624,7 +14672,9 @@ void bench_sphincsKeySign(byte level, byte optim)
             (double)rusage.ru_utime.tv_usec / MILLION_VALUE;
     }
 
-    static void check_for_excessive_stime(const char *desc,
+    static void check_for_excessive_stime(const char *algo,
+                                          int strength,
+                                          const char *desc,
                                           const char *desc_extra)
     {
         double start_utime = (double)base_rusage.ru_utime.tv_sec +
@@ -14637,11 +14687,20 @@ void bench_sphincsKeySign(byte level, byte optim)
             (double)cur_rusage.ru_stime.tv_usec / MILLION_VALUE;
         double stime_utime_ratio =
             (cur_stime - start_stime) / (cur_utime - start_utime);
-        if (stime_utime_ratio > .1)
-            printf("%swarning, "
-                   "excessive system time ratio for %s%s (" FLT_FMT_PREC "%%).\n",
-                   err_prefix, desc, desc_extra,
-                   FLT_FMT_PREC_ARGS(3, stime_utime_ratio * 100.0));
+        if (stime_utime_ratio > .1) {
+            if (strength > 0) {
+                printf("%swarning, "
+                       "excessive system time ratio for %s-%d-%s%s (" FLT_FMT_PREC "%%).\n",
+                       err_prefix, algo, strength, desc, desc_extra,
+                       FLT_FMT_PREC_ARGS(3, stime_utime_ratio * 100.0));
+            }
+            else {
+                printf("%swarning, "
+                       "excessive system time ratio for %s%s%s (" FLT_FMT_PREC "%%).\n",
+                       err_prefix, algo, desc, desc_extra,
+                       FLT_FMT_PREC_ARGS(3, stime_utime_ratio * 100.0));
+            }
+        }
     }
 
 #elif defined(WOLFSSL_LINUXKM)
@@ -14653,8 +14712,19 @@ void bench_sphincsKeySign(byte level, byte optim)
         return (double)ns / 1000000000.0;
     }
 
+#elif defined(WOLFSSL_GAISLER_BCC)
+
+    #include <bcc/bcc.h>
+    double current_time(int reset)
+    {
+        (void)reset;
+        uint32_t us = bcc_timer_get_us();
+        return (double)us / 1000000.0;
+    }
+
 #else
 
+    #include <time.h>
     #include <sys/time.h>
 
     double current_time(int reset)

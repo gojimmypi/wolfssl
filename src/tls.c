@@ -1,6 +1,6 @@
 /* tls.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -645,12 +645,24 @@ int MakeTlsMasterSecret(WOLFSSL* ssl)
         XMEMSET(handshake_hash, 0, HSHASH_SZ);
         ret = BuildTlsHandshakeHash(ssl, handshake_hash, &hashSz);
         if (ret == 0) {
-            ret = _MakeTlsExtendedMasterSecret(
-                ssl->arrays->masterSecret, SECRET_LEN,
-                ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz,
-                handshake_hash, hashSz,
-                IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
-                ssl->heap, ssl->devId);
+        #if !defined(NO_CERTS) && defined(HAVE_PK_CALLBACKS)
+            ret = PROTOCOLCB_UNAVAILABLE;
+            if (ssl->ctx->GenExtMasterCb) {
+                void* ctx = wolfSSL_GetGenExtMasterSecretCtx(ssl);
+                ret = ssl->ctx->GenExtMasterCb(ssl, handshake_hash, hashSz,
+                                                ctx);
+            }
+            if (!ssl->ctx->GenExtMasterCb ||
+                ret == WC_NO_ERR_TRACE(PROTOCOLCB_UNAVAILABLE))
+        #endif /* (HAVE_SECRET_CALLBACK) && (HAVE_EXT_SECRET_CALLBACK) */
+            {
+                ret = _MakeTlsExtendedMasterSecret(
+                    ssl->arrays->masterSecret, SECRET_LEN,
+                    ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz,
+                    handshake_hash, hashSz,
+                    IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
+                    ssl->heap, ssl->devId);
+            }
             ForceZero(handshake_hash, hashSz);
         }
 
@@ -4315,6 +4327,11 @@ int TLSX_UseCertificateStatusRequestV2(TLSX** extensions, byte status_type,
     if ((extension = TLSX_Find(*extensions, TLSX_STATUS_REQUEST_V2))) {
         CertificateStatusRequestItemV2* last =
                                (CertificateStatusRequestItemV2*)extension->data;
+
+        if (last == NULL) {
+            XFREE(csr2, heap, DYNAMIC_TYPE_TLSX);
+            return BAD_FUNC_ARG;
+        }
 
         for (; last->next; last = last->next);
 
@@ -13607,7 +13624,8 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
             return ret;
 #endif /* HAVE_RPK */
 
-#if defined(HAVE_ENCRYPT_THEN_MAC) && !defined(WOLFSSL_AEAD_ONLY)
+#if defined(HAVE_ENCRYPT_THEN_MAC) && !defined(WOLFSSL_AEAD_ONLY) && \
+    !defined(WOLFSSL_NO_TLS12)
         if (!ssl->options.disallowEncThenMac) {
             ret = TLSX_EncryptThenMac_Use(ssl);
             if (ret != 0)
@@ -13779,11 +13797,6 @@ int TLSX_PopulateExtensions(WOLFSSL* ssl, byte isServer)
             #else
                 word64 now, milli;
             #endif
-
-                if (sess->ticketLen > MAX_PSK_ID_LEN) {
-                    WOLFSSL_MSG("Session ticket length for PSK ext is too large");
-                    return BUFFER_ERROR;
-                }
 
                 /* Determine the MAC algorithm for the cipher suite used. */
                 ssl->options.cipherSuite0 = sess->cipherSuite0;
@@ -15681,7 +15694,7 @@ int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length, byte msgType,
         #elif defined(WOLFSSL_ALLOW_TLSV10)
             InitSSL_Method(method, MakeTLSv1());
         #else
-            #error No TLS version enabled!
+        #error No TLS version enabled! Consider using NO_TLS or WOLFCRYPT_ONLY.
         #endif
 
             method->downgrade = 1;
@@ -16056,7 +16069,7 @@ int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length, byte msgType,
         #elif defined(WOLFSSL_ALLOW_TLSV10)
             InitSSL_Method(method, MakeTLSv1());
         #else
-            #error No TLS version enabled!
+        #error No TLS version enabled! Consider using NO_TLS or WOLFCRYPT_ONLY.
         #endif
 
             method->downgrade = 1;

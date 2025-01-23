@@ -1,6 +1,6 @@
 /* conf.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -202,7 +202,10 @@ long wolfSSL_TXT_DB_write(WOLFSSL_BIO *out, WOLFSSL_TXT_DB *db)
                 return WOLFSSL_FAILURE;
             }
         }
-        idx[-1] = '\n';
+        if (idx > buf)
+            idx[-1] = '\n';
+        else
+            return WOLFSSL_FAILURE;
         sz = (int)(idx - buf);
 
         if (wolfSSL_BIO_write(out, buf, sz) != sz) {

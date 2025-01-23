@@ -1,6 +1,6 @@
 /* wc_port.h
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -1051,9 +1051,11 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
 /* Windows API defines its own min() macro. */
 #if defined(USE_WINDOWS_API)
     #if defined(min) || defined(WOLFSSL_MYSQL_COMPATIBLE)
+        #undef  WOLFSSL_HAVE_MIN
         #define WOLFSSL_HAVE_MIN
     #endif /* min */
     #if defined(max) || defined(WOLFSSL_MYSQL_COMPATIBLE)
+        #undef  WOLFSSL_HAVE_MAX
         #define WOLFSSL_HAVE_MAX
     #endif /* max */
 #endif /* USE_WINDOWS_API */

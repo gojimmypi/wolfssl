@@ -1,6 +1,6 @@
 /* kdf.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -24,6 +24,7 @@
     #include <config.h>
 #endif
 
+#include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
@@ -941,11 +942,11 @@ static void wc_srtp_kdf_first_block(const byte* salt, word32 saltSz, int kdrIdx,
         }
         else {
             /* XOR in as bit shifted index. */
-            block[WC_SRTP_MAX_SALT - indexSz] ^= index[0] >> bits;
+            block[WC_SRTP_MAX_SALT - indexSz] ^= (byte)(index[0] >> bits);
             for (i = 1; i < indexSz; i++) {
                 block[i + WC_SRTP_MAX_SALT - indexSz] ^=
-                    (index[i-1] << (8 - bits)) |
-                    (index[i+0] >>      bits );
+                    (byte)((index[i-1] << (8 - bits)) |
+                           (index[i+0] >>      bits ));
             }
         }
     }

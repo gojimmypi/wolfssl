@@ -1,6 +1,6 @@
 /* dsa.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -173,7 +173,7 @@ int wc_MakeDsaKey(WC_RNG *rng, DsaKey *dsa)
         return MEMORY_E;
     }
 
-    SAVE_VECTOR_REGISTERS();
+    SAVE_VECTOR_REGISTERS(;);
 
 #ifdef WOLFSSL_SMALL_STACK
     if ((tmpQ = (mp_int *)XMALLOC(sizeof(*tmpQ), NULL, DYNAMIC_TYPE_WOLF_BIGINT)) == NULL)

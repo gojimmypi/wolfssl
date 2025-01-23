@@ -1,6 +1,6 @@
 /* ssl.h
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -166,7 +166,7 @@
         #include <openssl/rc5.h>
         #include <openssl/ripemd.h>
         #include <openssl/rsa.h>
-        #if defined(HAVE_FIPS_VERSION) && FIPS_VERSION3_LT(7,0,0)
+        #if defined(HAVE_FIPS_VERSION) && FIPS_VERSION3_LT(6,0,0)
             /* clear conflicting name */
             #undef RSA_PKCS1_PADDING_SIZE
         #endif
@@ -1359,6 +1359,7 @@ WOLFSSL_API const char* wolfSSL_get_shared_ciphers(WOLFSSL* ssl, char* buf,
     int len);
 WOLFSSL_API const char* wolfSSL_get_curve_name(WOLFSSL* ssl);
 WOLFSSL_API int  wolfSSL_get_fd(const WOLFSSL* ssl);
+WOLFSSL_API int wolfSSL_get_wfd(const WOLFSSL* ssl);
 /* please see note at top of README if you get an error from connect */
 WOLFSSL_ABI WOLFSSL_API int  wolfSSL_connect(WOLFSSL* ssl);
 WOLFSSL_ABI WOLFSSL_API int  wolfSSL_write(
@@ -1366,6 +1367,7 @@ WOLFSSL_ABI WOLFSSL_API int  wolfSSL_write(
 WOLFSSL_ABI WOLFSSL_API int  wolfSSL_read(WOLFSSL* ssl, void* data, int sz);
 WOLFSSL_API int  wolfSSL_peek(WOLFSSL* ssl, void* data, int sz);
 WOLFSSL_ABI WOLFSSL_API int  wolfSSL_accept(WOLFSSL* ssl);
+WOLFSSL_API int wolfSSL_inject(WOLFSSL* ssl, const void* data, int sz);
 WOLFSSL_API int  wolfSSL_CTX_mutual_auth(WOLFSSL_CTX* ctx, int req);
 WOLFSSL_API int  wolfSSL_mutual_auth(WOLFSSL* ssl, int req);
 
@@ -1733,8 +1735,16 @@ WOLFSSL_API int  wolfSSL_dtls(WOLFSSL* ssl);
 WOLFSSL_API void* wolfSSL_dtls_create_peer(int port, char* ip);
 WOLFSSL_API int   wolfSSL_dtls_free_peer(void* addr);
 
-WOLFSSL_API int  wolfSSL_dtls_set_peer(WOLFSSL* ssl, void* peer, unsigned int peerSz);
-WOLFSSL_API int  wolfSSL_dtls_get_peer(WOLFSSL* ssl, void* peer, unsigned int* peerSz);
+WOLFSSL_API int  wolfSSL_dtls_set_peer(WOLFSSL* ssl, void* peer,
+                                       unsigned int peerSz);
+WOLFSSL_API int wolfSSL_dtls_set_pending_peer(WOLFSSL* ssl, void* peer,
+                                              unsigned int peerSz);
+WOLFSSL_API int  wolfSSL_dtls_get_peer(WOLFSSL* ssl, void* peer,
+                                       unsigned int* peerSz);
+WOLFSSL_API int  wolfSSL_dtls_get0_peer(WOLFSSL* ssl, const void** peer,
+                                        unsigned int* peerSz);
+
+WOLFSSL_API byte wolfSSL_is_stateful(WOLFSSL* ssl);
 
 #if defined(WOLFSSL_SCTP) && defined(WOLFSSL_DTLS)
 WOLFSSL_API int  wolfSSL_CTX_dtls_set_sctp(WOLFSSL_CTX* ctx);
@@ -2958,23 +2968,49 @@ enum { /* ssl Constants */
             (WOLFSSL_SESS_CACHE_NO_INTERNAL_STORE |
                     WOLFSSL_SESS_CACHE_NO_INTERNAL_LOOKUP),
 
-    /* These values match OpenSSL values for corresponding names. */
+    /* These values match OpenSSL values for corresponding names.*/
     WOLFSSL_ERROR_SSL              =  1,
+
+    /* Operation did not complete; call this API again.*/
     WOLFSSL_ERROR_WANT_READ        =  2,
+
+    /* Operation did not complete; call this API again.*/
     WOLFSSL_ERROR_WANT_WRITE       =  3,
+
+    /* Operation did not complete; callback needs this API to be called again.*/
     WOLFSSL_ERROR_WANT_X509_LOOKUP =  4,
+
+    /* Some sort of system I/O error happened.*/
     WOLFSSL_ERROR_SYSCALL          =  5,
+
+    /* The connection has been closed with a closure alert.*/
     WOLFSSL_ERROR_ZERO_RETURN      =  6,
+
+    /* Underlying protocol connection not started yet, call this API again.*/
     WOLFSSL_ERROR_WANT_CONNECT     =  7,
+
+    /* Underlying protocol connection not started yet, call this API again.*/
     WOLFSSL_ERROR_WANT_ACCEPT      =  8,
 
+    /* Close notify alert was sent to the peer.*/
     WOLFSSL_SENT_SHUTDOWN     = 1,
+
+    /* Close notify or fatal error was received from the peer.*/
     WOLFSSL_RECEIVED_SHUTDOWN = 2,
+
+    /* Let library know that write buffer might move to different addresses.*/
     WOLFSSL_MODE_ACCEPT_MOVING_WRITE_BUFFER = 4,
 
+    /* The handshake failed. */
     WOLFSSL_R_SSL_HANDSHAKE_FAILURE           = 101,
+
+    /* The issuer CA certificate is unknown. */
     WOLFSSL_R_TLSV1_ALERT_UNKNOWN_CA          = 102,
+
+    /* Unable to validate the certificate. */
     WOLFSSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN = 103,
+
+    /* There was a problem parsing the certificate. */
     WOLFSSL_R_SSLV3_ALERT_BAD_CERTIFICATE     = 104,
 
     WOLF_PEM_BUFSIZE = 1024
@@ -3201,6 +3237,24 @@ WOLFSSL_ABI WOLFSSL_API int wolfSSL_check_domain_name(WOLFSSL* ssl, const char* 
 WOLFSSL_ABI WOLFSSL_API int wolfSSL_Init(void);
 /* call when done to cleanup/free session cache mutex / resources  */
 WOLFSSL_ABI WOLFSSL_API int wolfSSL_Cleanup(void);
+
+#if defined(WOLFSSL_SYS_CRYPTO_POLICY)
+#ifndef NO_FILESYSTEM
+WOLFSSL_API int    wolfSSL_crypto_policy_enable(const char * policy);
+#endif /* ! NO_FILESYSTEM */
+WOLFSSL_API int    wolfSSL_crypto_policy_enable_buffer(const char * buf);
+WOLFSSL_API void   wolfSSL_crypto_policy_disable(void);
+WOLFSSL_API int    wolfSSL_crypto_policy_is_enabled(void);
+WOLFSSL_API const char * wolfSSL_crypto_policy_get_ciphers(void);
+WOLFSSL_API int    wolfSSL_crypto_policy_get_level(void);
+WOLFSSL_LOCAL int  wolfSSL_crypto_policy_init_ctx(WOLFSSL_CTX * ctx,
+                                                  WOLFSSL_METHOD * method);
+#endif /* WOLFSSL_SYS_CRYPTO_POLICY */
+/* compat functions. */
+WOLFSSL_API int    wolfSSL_get_security_level(const WOLFSSL * ssl);
+#ifndef NO_WOLFSSL_STUB
+WOLFSSL_API void   wolfSSL_set_security_level(WOLFSSL * ssl, int level);
+#endif /* !NO_WOLFSSL_STUB */
 
 /* which library version do we have */
 WOLFSSL_API const char* wolfSSL_lib_version(void);
@@ -3545,6 +3599,12 @@ WOLFSSL_API int wolfSSL_make_eap_keys(WOLFSSL* ssl, void* key, unsigned int len,
                                                const unsigned char* in, long sz, int format);
     WOLFSSL_API int wolfSSL_CTX_use_certificate_chain_buffer(WOLFSSL_CTX* ctx,
                                                     const unsigned char* in, long sz);
+#if defined(WOLF_CRYPTO_CB)
+    WOLFSSL_API int wolfSSL_CTX_use_certificate_label(WOLFSSL_CTX* ctx,
+                                                const char *label, int devId);
+    WOLFSSL_API int wolfSSL_CTX_use_certificate_id(WOLFSSL_CTX* ctx,
+                                const unsigned char *id, int idLen, int devId);
+#endif
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     WOLFSSL_API int wolfSSL_CTX_use_AltPrivateKey_buffer(WOLFSSL_CTX* ctx,
                                 const unsigned char* in, long sz, int format);
@@ -4024,6 +4084,13 @@ WOLFSSL_API void  wolfSSL_CTX_SetGenMasterSecretCb(WOLFSSL_CTX* ctx,
                                                     CallbackGenMasterSecret cb);
 WOLFSSL_API void  wolfSSL_SetGenMasterSecretCtx(WOLFSSL* ssl, void *ctx);
 WOLFSSL_API void* wolfSSL_GetGenMasterSecretCtx(WOLFSSL* ssl);
+
+typedef int (*CallbackGenExtMasterSecret)(WOLFSSL* ssl, byte* hash,
+                                            word32 hashsz, void* ctx);
+WOLFSSL_API void  wolfSSL_CTX_SetGenExtMasterSecretCb(WOLFSSL_CTX* ctx,
+                                                CallbackGenExtMasterSecret cb);
+WOLFSSL_API void  wolfSSL_SetGenExtMasterSecretCtx(WOLFSSL* ssl, void *ctx);
+WOLFSSL_API void* wolfSSL_GetGenExtMasterSecretCtx(WOLFSSL* ssl);
 
 typedef int (*CallbackGenPreMaster)(WOLFSSL* ssl, byte *premaster,
                                                    word32 preSz, void* ctx);
@@ -4703,6 +4770,7 @@ WOLFSSL_API int wolfSSL_CTX_DisableExtendedMasterSecret(WOLFSSL_CTX* ctx);
 
 
 #if defined(WOLFSSL_DTLS) && !defined(NO_WOLFSSL_SERVER)
+WOLFSSL_API int wolfDTLS_accept_stateless(WOLFSSL* ssl);
 /* notify user we parsed a verified ClientHello is done. This only has an effect
  * on the server end. */
 typedef int (*ClientHelloGoodCb)(WOLFSSL* ssl, void*);
@@ -5427,13 +5495,10 @@ WOLFSSL_API int wolfSSL_CTX_set1_curves_list(WOLFSSL_CTX* ctx, const char* names
 WOLFSSL_API int wolfSSL_set1_curves_list(WOLFSSL* ssl, const char* names);
 #endif
 
-#if defined(OPENSSL_ALL) || \
-    defined(HAVE_STUNNEL) || defined(WOLFSSL_MYSQL_COMPATIBLE) || \
-    defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
-
+#if defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA) || defined(HAVE_STUNNEL) || \
+    defined(WOLFSSL_MYSQL_COMPATIBLE) || defined(WOLFSSL_NGINX)
 WOLFSSL_API int wolfSSL_get_verify_mode(const WOLFSSL* ssl);
 WOLFSSL_API int wolfSSL_CTX_get_verify_mode(const WOLFSSL_CTX* ctx);
-
 #endif
 
 #ifdef WOLFSSL_JNI
@@ -5804,7 +5869,6 @@ WOLFSSL_API int wolfSSL_EVP_PKEY_param_check(WOLFSSL_EVP_PKEY_CTX* ctx);
 #endif
 WOLFSSL_API void wolfSSL_CTX_set_security_level(WOLFSSL_CTX* ctx, int level);
 WOLFSSL_API int wolfSSL_CTX_get_security_level(const WOLFSSL_CTX* ctx);
-
 WOLFSSL_API int wolfSSL_SESSION_is_resumable(const WOLFSSL_SESSION *s);
 
 WOLFSSL_API void wolfSSL_CRYPTO_free(void *str, const char *file, int line);
@@ -5841,11 +5905,15 @@ WOLFSSL_API int wolfSSL_dtls_cid_get_rx_size(WOLFSSL* ssl,
     unsigned int* size);
 WOLFSSL_API int wolfSSL_dtls_cid_get_rx(WOLFSSL* ssl, unsigned char* buffer,
     unsigned int bufferSz);
+WOLFSSL_API int wolfSSL_dtls_cid_get0_rx(WOLFSSL* ssl, unsigned char** cid);
 WOLFSSL_API int wolfSSL_dtls_cid_get_tx_size(WOLFSSL* ssl,
     unsigned int* size);
 WOLFSSL_API int wolfSSL_dtls_cid_get_tx(WOLFSSL* ssl, unsigned char* buffer,
     unsigned int bufferSz);
+WOLFSSL_API int wolfSSL_dtls_cid_get0_tx(WOLFSSL* ssl, unsigned char** cid);
 WOLFSSL_API int wolfSSL_dtls_cid_max_size(void);
+WOLFSSL_API const unsigned char* wolfSSL_dtls_cid_parse(const unsigned char* msg,
+        unsigned int msgSz, unsigned int cidSz);
 #endif /* defined(WOLFSSL_DTLS_CID) */
 
 #ifdef WOLFSSL_DTLS_CH_FRAG

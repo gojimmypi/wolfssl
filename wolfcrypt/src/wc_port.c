@@ -1,6 +1,6 @@
 /* port.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -1186,10 +1186,10 @@ int wc_strcasecmp(const char *s1, const char *s2)
     for (;;++s1, ++s2) {
         c1 = *s1;
         if ((c1 >= 'a') && (c1 <= 'z'))
-            c1 -= ('a' - 'A');
+            c1 = (char)(c1 - ('a' - 'A'));
         c2 = *s2;
         if ((c2 >= 'a') && (c2 <= 'z'))
-            c2 -= ('a' - 'A');
+            c2 = (char)(c2 - ('a' - 'A'));
         if ((c1 != c2) || (c1 == 0))
             break;
     }
@@ -1204,10 +1204,10 @@ int wc_strncasecmp(const char *s1, const char *s2, size_t n)
     for (c1 = 0, c2 = 0; n > 0; --n, ++s1, ++s2) {
         c1 = *s1;
         if ((c1 >= 'a') && (c1 <= 'z'))
-            c1 -= ('a' - 'A');
+            c1 = (char)(c1 - ('a' - 'A'));
         c2 = *s2;
         if ((c2 >= 'a') && (c2 <= 'z'))
-            c2 -= ('a' - 'A');
+            c2 = (char)(c2 - ('a' - 'A'));
         if ((c1 != c2) || (c1 == 0))
             break;
     }
@@ -3966,6 +3966,14 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
 
         XMEMSET(thread, 0, sizeof(*thread));
 
+        thread->tid = (struct k_thread*)XMALLOC(
+                Z_KERNEL_STACK_SIZE_ADJUST(sizeof(struct k_thread)),
+                wolfsslThreadHeapHint, DYNAMIC_TYPE_TMP_BUFFER);
+        if (thread->tid == NULL) {
+            WOLFSSL_MSG("error: XMALLOC thread->tid failed");
+            return MEMORY_E;
+        }
+
         /* TODO: Use the following once k_thread_stack_alloc makes it into a
          * release.
          * thread->threadStack = k_thread_stack_alloc(WOLFSSL_ZEPHYR_STACK_SZ,
@@ -3975,14 +3983,18 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
                 Z_KERNEL_STACK_SIZE_ADJUST(WOLFSSL_ZEPHYR_STACK_SZ),
                 wolfsslThreadHeapHint, DYNAMIC_TYPE_TMP_BUFFER);
         if (thread->threadStack == NULL) {
-            WOLFSSL_MSG("error: XMALLOC failed");
+            XFREE(thread->tid, wolfsslThreadHeapHint,
+                    DYNAMIC_TYPE_TMP_BUFFER);
+            thread->tid = NULL;
+
+            WOLFSSL_MSG("error: XMALLOC thread->threadStack failed");
             return MEMORY_E;
         }
 
         /* k_thread_create does not return any error codes */
         /* Casting to k_thread_entry_t should be fine since we just ignore the
          * extra arguments being passed in */
-        k_thread_create(&thread->tid, thread->threadStack,
+        k_thread_create(thread->tid, thread->threadStack,
                 WOLFSSL_ZEPHYR_STACK_SZ, (k_thread_entry_t)cb, arg, NULL, NULL,
                 5, 0, K_NO_WAIT);
 
@@ -3994,9 +4006,13 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
         int ret = 0;
         int err;
 
-        err = k_thread_join(&thread.tid, K_FOREVER);
+        err = k_thread_join(thread.tid, K_FOREVER);
         if (err != 0)
             ret = MEMORY_E;
+
+        XFREE(thread.tid, wolfsslThreadHeapHint,
+                DYNAMIC_TYPE_TMP_BUFFER);
+        thread.tid = NULL;
 
         /* TODO: Use the following once k_thread_stack_free makes it into a
          * release.

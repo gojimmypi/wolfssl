@@ -1,5 +1,5 @@
 # wolfSSL Espressif Example Project/main CMakeLists.txt
-#   v1.0
+#   v1.1
 #
 # wolfssl client test
 #
@@ -44,14 +44,26 @@ if( EXISTS "${CMAKE_HOME_DIRECTORY}/components/wolfssl/" AND EXISTS "$ENV{IDF_PA
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_MULTI_INSTALL_WARNING")
 endif()
 
+# The wolfSL component name is named "mywolfssl" on the staging site for Managed Components.
+if( NOT EXISTS "../components/wolfssl" AND ("$ENV{IDF_COMPONENT_REGISTRY_URL}" STREQUAL "https://components-staging.espressif.com") )
+    message(STATUS "WARNING: Using a staging instance of wolfssl.")
+    set(MAIN_WOLFSSL_COMPONENT_NAME "mywolfssl")
+else()
+    message(STATUS "Using release wolfssl component.")
+    set(MAIN_WOLFSSL_COMPONENT_NAME "wolfssl")
+endif()
+
 ## register_component()
 idf_component_register(SRCS main.c
                             wifi_connect.c
                             time_helper.c
                             client-tls.c
                        INCLUDE_DIRS "."
-                                    "./include")
-#
+                            "./include"
+                       PRIV_REQUIRES "${MAIN_WOLFSSL_COMPONENT_NAME}"
+                                     driver
+                                     nvs_flash
+                                     protocol_examples_common)
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
@@ -99,19 +111,19 @@ execute_process(
 
 # Save some project-specific details. Repo may be different than component, or may not even be a repo at all:
 if(NOT CMAKE_BUILD_EARLY_EXPANSION AND (IS_GIT_REPO STREQUAL "true"))
-    # WOLFSSL_EXAMPLE_VERSION_GIT_HASH
+    # LIBWOLFSSL_VERSION_GIT_HASH
     execute_process(COMMAND ${git_cmd} "rev-parse" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
-    LIBWOLFSSL_SAVE_INFO(WOLFSSL_EXAMPLE_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
 
-    # WOLFSSL_EXAMPLE_VERSION_GIT_SHORT_HASH
+    # LIBWOLFSSL_VERSION_GIT_SHORT_HASH
     execute_process(COMMAND ${git_cmd} "rev-parse" "--short" "HEAD" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
-    LIBWOLFSSL_SAVE_INFO(WOLFSSL_EXAMPLE_VERSION_GIT_SHORT_HASH "${TMP_OUT}" "${TMP_RES}")
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_SHORT_HASH "${TMP_OUT}" "${TMP_RES}")
 
-    # WOLFSSL_EXAMPLE_VERSION_GIT_HASH_DATE
+    # LIBWOLFSSL_VERSION_GIT_HASH_DATE
     execute_process(COMMAND ${git_cmd} "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'" OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
-    LIBWOLFSSL_SAVE_INFO(WOLFSSL_EXAMPLE_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
 endif()
 
 message(STATUS "")
-message(STATUS "End wolfSSL main CMakeLists.txt")
 
+message(STATUS "End wolfSSL main CMakeLists.txt")

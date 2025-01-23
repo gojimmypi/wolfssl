@@ -1,6 +1,6 @@
 /* keys.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -28,7 +28,7 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#ifndef WOLFCRYPT_ONLY
+#if !defined(WOLFCRYPT_ONLY) && !defined(NO_TLS)
 
 #include <wolfssl/internal.h>
 #include <wolfssl/error-ssl.h>
@@ -4109,4 +4109,4 @@ int MakeMasterSecret(WOLFSSL* ssl)
 #endif
 }
 
-#endif /* WOLFCRYPT_ONLY */
+#endif /* !WOLFCRYPT_ONLY && !NO_TLS */

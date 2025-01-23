@@ -1,6 +1,6 @@
 /* x509_str.c
  *
- * Copyright (C) 2006-2024 wolfSSL Inc.
+ * Copyright (C) 2006-2025 wolfSSL Inc.
  *
  * This file is part of wolfSSL.
  *
@@ -1102,10 +1102,8 @@ WOLFSSL_X509_STORE* wolfSSL_X509_STORE_new(void)
     if ((store->owned = wolfSSL_sk_X509_new_null()) == NULL)
         goto err_exit;
 
-#if !defined(WOLFSSL_SIGNER_DER_CERT)
     if ((store->trusted = wolfSSL_sk_X509_new_null()) == NULL)
         goto err_exit;
-#endif
 #endif
 
 #ifdef HAVE_CRL
@@ -1156,8 +1154,11 @@ static void X509StoreFreeObjList(WOLFSSL_X509_STORE* store,
     WOLFSSL_X509_OBJECT *obj = NULL;
     int cnt = store->numAdded;
 
+    /* -1 here because it is later used as an index value into the object stack.
+     * With there being the chance that the only object in the stack is one from
+     * the numAdded to the store >= is used when comparing to 0. */
     i = wolfSSL_sk_X509_OBJECT_num(objs) - 1;
-    while (cnt > 0 && i > 0) {
+    while (cnt > 0 && i >= 0) {
         /* The inner X509 is owned by somebody else, NULL out the reference */
         obj = (WOLFSSL_X509_OBJECT *)wolfSSL_sk_X509_OBJECT_value(objs, i);
         if (obj != NULL) {
@@ -1196,19 +1197,17 @@ void wolfSSL_X509_STORE_free(WOLFSSL_X509_STORE* store)
             }
 #if defined(OPENSSL_EXTRA)
             if (store->certs != NULL) {
-                wolfSSL_sk_X509_free(store->certs);
+                wolfSSL_sk_X509_pop_free(store->certs, NULL);
                 store->certs = NULL;
             }
             if (store->owned != NULL) {
-                wolfSSL_sk_X509_pop_free(store->owned, wolfSSL_X509_free);
+                wolfSSL_sk_X509_pop_free(store->owned, NULL);
                 store->owned = NULL;
             }
-#if !defined(WOLFSSL_SIGNER_DER_CERT)
             if (store->trusted != NULL) {
-                wolfSSL_sk_X509_free(store->trusted);
+                wolfSSL_sk_X509_pop_free(store->trusted, NULL);
                 store->trusted = NULL;
             }
-#endif
 #endif
 #ifdef OPENSSL_ALL
             if (store->objs != NULL) {
@@ -1406,26 +1405,32 @@ int wolfSSL_X509_STORE_add_cert(WOLFSSL_X509_STORE* store, WOLFSSL_X509* x509)
          * CA=TRUE */
         if (wolfSSL_X509_NAME_cmp(&x509->issuer, &x509->subject) == 0) {
             result = X509StoreAddCa(store, x509, WOLFSSL_USER_CA);
-    #if !defined(WOLFSSL_SIGNER_DER_CERT)
             if (result == WOLFSSL_SUCCESS && store->trusted != NULL) {
-                result = wolfSSL_sk_X509_push(store->trusted, x509);
-                if (result > 0) {
-                    result = WOLFSSL_SUCCESS;
-                }
-                else {
-                    result = WOLFSSL_FATAL_ERROR;
+                result = wolfSSL_X509_up_ref(x509);
+                if (result == WOLFSSL_SUCCESS) {
+                    result = wolfSSL_sk_X509_push(store->trusted, x509);
+                    if (result > 0) {
+                        result = WOLFSSL_SUCCESS;
+                    }
+                    else {
+                        result = WOLFSSL_FATAL_ERROR;
+                        wolfSSL_X509_free(x509);
+                    }
                 }
             }
-    #endif
         }
         else {
             if (store->certs != NULL) {
-                result = wolfSSL_sk_X509_push(store->certs, x509);
-                if (result > 0) {
-                    result = WOLFSSL_SUCCESS;
-                }
-                else {
-                    result = WOLFSSL_FATAL_ERROR;
+                result = wolfSSL_X509_up_ref(x509);
+                if (result == WOLFSSL_SUCCESS) {
+                    result = wolfSSL_sk_X509_push(store->certs, x509);
+                    if (result > 0) {
+                        result = WOLFSSL_SUCCESS;
+                    }
+                    else {
+                        result = WOLFSSL_FATAL_ERROR;
+                        wolfSSL_X509_free(x509);
+                    }
                 }
             }
             else {

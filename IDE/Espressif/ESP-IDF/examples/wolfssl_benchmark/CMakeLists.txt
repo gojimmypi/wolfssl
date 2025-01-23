@@ -89,8 +89,8 @@ else()
     message(STATUS "WARNING: wolfssl component directory not found.")
 endif()
 
-message(STATUS "EXTRA_COMPONENT_DIRS WOLFSSL_PATH: ${WOLFSSL_PATH}")
-list(APPEND EXTRA_COMPONENT_DIRS ${WOLFSSL_PATH})
+# message(STATUS "EXTRA_COMPONENT_DIRS WOLFSSL_PATH: ${WOLFSSL_PATH}")
+# list(APPEND EXTRA_COMPONENT_DIRS ${WOLFSSL_PATH})
 
 # Not only is a project-level "set(COMPONENTS" not needed here, this will cause
 # an unintuitive error about  Unknown CMake command "esptool_py_flash_project_args".
