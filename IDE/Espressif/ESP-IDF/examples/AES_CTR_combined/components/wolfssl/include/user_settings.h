@@ -23,6 +23,10 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* Added for AES_CTR example */
+#define WOLFSSL_AES
+#define WOLFSSL_AES_COUNTER
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
  * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
