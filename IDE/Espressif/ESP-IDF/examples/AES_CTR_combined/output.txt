@@ -1,0 +1,67 @@
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:7140
+load:0x40078000,len:15500
+load:0x40080400,len:4
+load:0x40080404,len:3904
+entry 0x40080640
+I (28) boot: ESP-IDF 5.2.1.2407012 2nd stage bootloader
+I (28) boot: compile time Jan 23 2025 15:14:53
+I (28) boot: Multicore bootloader
+I (33) boot: chip revision: v1.0
+I (37) boot.esp32: SPI Speed      : 40MHz
+I (41) boot.esp32: SPI Mode       : DIO
+I (46) boot.esp32: SPI Flash Size : 2MB
+I (50) boot: Enabling RNG early entropy source...
+I (56) boot: Partition Table:
+I (59) boot: ## Label            Usage          Type ST Offset   Length
+I (67) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (74) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (82) boot:  2 factory          factory app      00 00 00010000 00100000
+I (89) boot: End of partition table
+I (93) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=0b70ch ( 46860) map
+I (118) esp_image: segment 1: paddr=0001b734 vaddr=3ffb0000 size=021f4h (  8692) load
+I (121) esp_image: segment 2: paddr=0001d930 vaddr=40080000 size=026e8h (  9960) load
+I (128) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=1547ch ( 87164) map
+I (162) esp_image: segment 4: paddr=000354a4 vaddr=400826e8 size=09bd8h ( 39896) load
+I (184) boot: Loaded app from partition at offset 0x10000
+I (184) boot: Disabling RNG early entropy source...
+I (196) cpu_start: Multicore app
+I (204) cpu_start: Pro cpu start user code
+I (204) cpu_start: cpu freq: 160000000 Hz
+I (204) cpu_start: Application information:
+I (207) cpu_start: Project name:     hello_world
+I (213) cpu_start: App version:      v5.7.6-stable-3-gf815774f6-dirt
+I (220) cpu_start: Compile time:     Jan 23 2025 15:14:38
+I (226) cpu_start: ELF file SHA256:  0d0cecdde...
+I (231) cpu_start: ESP-IDF:          5.2.1.2407012
+I (237) cpu_start: Min chip rev:     v0.0
+I (241) cpu_start: Max chip rev:     v3.99
+I (246) cpu_start: Chip rev:         v1.0
+I (251) heap_init: Initializing. RAM available for dynamic allocation:
+I (258) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (264) heap_init: At 3FFB2AC0 len 0002D540 (181 KiB): DRAM
+I (270) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (277) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (283) heap_init: At 4008C2C0 len 00013D40 (79 KiB): IRAM
+I (291) spi_flash: detected chip: gd
+I (294) spi_flash: flash io: dio
+W (297) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (311) main_task: Started on CPU0
+I (321) main_task: Calling app_main()
+Hello world!
+This is esp32 chip with 2 CPU core(s), WiFi/BTBLE, silicon revision v1.0, 2MB external flash
+Minimum free heap size: 284476 bytes
+I (321) test: success
+I (321) test: success
+I (321) test: success
+I (331) test: success
+I (331) test: success
+I (331) test: success
+E (341) test: failed
+I (341) test: success
+I (341) test: success
+I (341) test: success
+I (351) main_task: Returned from app_main()
