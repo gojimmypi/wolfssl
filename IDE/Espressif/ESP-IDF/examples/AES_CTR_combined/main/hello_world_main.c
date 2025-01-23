@@ -13,6 +13,34 @@
 #include "esp_flash.h"
 #include "esp_system.h"
 
+#include <esp_log.h>
+
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
+#include <wolfssl/wolfcrypt/aes.h>
+
+/*
+For ExpectIntEQ source:
+https://github.com/wolfSSL/wolfssl/blob/master/tests/unit.h
+*/
+#define ExpectIntEQ(p1, p2) if (p1 == p2) {                   \
+                                ESP_LOGI("test", "success");  \
+                            }                                 \
+                            else {                            \
+                                ESP_LOGE("test", "failed");   \
+                            }
+
 static int test_wc_AesCtrEncryptDecrypt(void) {
   //EXPECT_DECLS;
   Aes aesEnc;
@@ -76,8 +104,9 @@ static int test_wc_AesCtrEncryptDecrypt(void) {
 
   wc_AesFree(&aesEnc);
   wc_AesFree(&aesDec);
-  //return EXPECT_RESULT();
+  return ESP_OK;
 }
+
 
 void app_main(void)
 {
@@ -108,6 +137,5 @@ void app_main(void)
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 
-    test_wc_AesCtrEncryptDecrypt();
-
+  test_wc_AesCtrEncryptDecrypt();
 }
