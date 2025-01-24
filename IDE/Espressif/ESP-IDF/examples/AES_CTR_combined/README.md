@@ -1,9 +1,12 @@
 # AES_CTR Example
 
-This example is based on the "Hello World" example, with the sample [Arduino AES_CTR](./Arduino/AES_CTR_combined_b2.ino) file.
+This example is based on the Espressif [Hello World Example](https://github.com/espressif/esp-idf/tree/release/v5.2/examples/get-started/hello_world), with the sample [Arduino AES_CTR](./Arduino/AES_CTR_combined_b2/AES_CTR_combined_b2.ino) file.
 
-Building on the original app, the wolfSSL component library was added from the [template example](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template),
+Building on the original app, the wolfSSL component library was [added](https://github.com/gojimmypi/wolfssl/commit/a13ba6a1fd814303e435fa4d3314b96f5e517f5e)
+from the [template example](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template),
 see the [components/wolfssl](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template/components/wolfssl) directory.
+
+You can see all my changes in the [commit history](https://github.com/gojimmypi/wolfssl/commits/AES_CTR_Example/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined).
 
 The wolfSSL component directory assumes there's already a clone of wolfSSL in a parent directory:
 
@@ -18,6 +21,9 @@ git checkout v5.7.6-stable
 git checkout AES_CTR_Example
 ```
 
+As shown above, this branch is based on the recent [wolfSSL v5.7.6-stable](https://github.com/wolfSSL/wolfssl/releases/tag/v5.7.6-stable) release.
+
+
 ## User Settings
 
 The key changes from the default `user_settings.h` was to add these two macros for AES CTR:
@@ -28,16 +34,64 @@ The key changes from the default `user_settings.h` was to add these two macros f
 #define WOLFSSL_AES_COUNTER
 ```
 
+
+
+## ExpectIntEQ
+
+The `ExpectIntEQ` from other examples is found in [tests/unit.h](https://github.com/gojimmypi/wolfssl/blob/master/tests/unit.h).
+
+Although it might be an interesting future exercise to integrate the test harness files with the Arduino library,
+it was a bit more than desired for this exercise. Instead, there's a single
+[new ExpectIntEQ macro](https://github.com/gojimmypi/wolfssl/blob/241b81d5d5a54ef4d6ce58a400b5dfcddc49d6d1/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined/main/hello_world_main.c#L37)
+like this for the `ExpectIntEQ`:
+
+```
+#define ExpectIntEQ(p1, p2) if (p1 == p2) {                   \
+                                ESP_LOGI("test", "success");  \
+                            }                                 \
+                            else {                            \
+                                ESP_LOGE("test", "failed");   \
+                            }
+```
+
+# Espressif ESP-IDF
+
+The ESP-IDF example is this root directory at [IDE/Espressif/ESP-IDF/examples/AES_CTR_combined](https://github.com/gojimmypi/wolfssl/tree/AES_CTR_Example/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined).
+
+The instructions for building, shown here using WSL:
+
+```
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
+
+echo "Run export.sh from ${WRK_IDF_PATH}"
+. ${WRK_IDF_PATH}/export.sh
+
+# build the example:
+idf.py build
+
+# optionally erase the flash
+idf.py erase-flash -p /dev/ttyS19 -b 115200
+
+# flash the code onto the serial device at /dev/ttyS19
+idf.py flash -p /dev/ttyS19 -b 115200
+
+# build, flash, and view UART output with one command:
+idf.py flash -p /dev/ttyS19 -b 115200 monitor
+```
+
+There's also an enclosed `AES_CTR_combined.sln` isual Studio file that can be used with the
+[VisualGDB Extension](https://visualgdb.com/).
+
 # Arduino
 
-The enclosed [user_settings.h](./components/wolfssl/user_settings.h)
-was copied to:
+The enclosed [user_settings.h](./components/wolfssl/include/user_settings.h)
+was clightly modified and copied to the installed wolfssl Arduino library here, overwriting the file that was already there:
 
 ```
 C:\Users\%USERNAME%\Documents\Arduino\libraries\wolfssl\src
 ```
 
-With the following lines REMOVED:
+With the following lines REMOVED for Arduino:
 
 ```
 /* The Espressif project config file. See also sdkconfig.defaults */
@@ -45,6 +99,18 @@ With the following lines REMOVED:
 
 #define WOLFSSL_ESPIDF
 ```
+
+Of particular interest is the [wolfSSL include file section](https://github.com/gojimmypi/wolfssl/blob/241b81d5d5a54ef4d6ce58a400b5dfcddc49d6d1/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined/Arduino/AES_CTR_combined_b2/AES_CTR_combined_b2.ino#L30C1-L33C35)
+in this exact order:
+
+```
+#include "wolfssl.h"
+#include <wolfssl/wolfcrypt/settings.h> // Reminder: settings.h includes user_settings.h
+                                        // For ALL settings, see ~\Arduino\libraries\wolfSSL\src\user_settings.h
+#include <wolfssl/wolfcrypt/aes.h>
+```
+
+See also the [IDE/ARDUINO](https://github.com/gojimmypi/wolfssl/tree/AES_CTR_Example/IDE/ARDUINO) examples.
 
 
 
