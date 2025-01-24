@@ -28,28 +28,39 @@ my post on the wolfSSL forum: https://www.wolfssl.com/forums/post8171.html#p8171
 //#include "AES.h"
 // includes per wolfssl_client.ino example
 #include "wolfssl.h"
+#include <wolfssl/wolfcrypt/settings.h> // Reminder: settings.h includes user_settings.h 
+                                        // For ALL settings, see ~\Arduino\libraries\wolfSSL\src\user_settings.h
+#include <wolfssl/wolfcrypt/aes.h>
 
 /*
 // Important: make sure settings.h appears before any other wolfSSL headers 
-#include <wolfssl/wolfcrypt/settings.h> // Reminder: settings.h includes user_settings.h 
-                                        // For ALL settings, see ~\Arduino\libraries\wolfSSL\src\user_settings.h
+
 #include <wolfssl/ssl.h>
 #include <wolfssl/certs_test.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#include <wolfssl/options.h>
-#include <wolfssl/wolfcrypt/aes.h>
 #include <wolfssl/wolfcrypt/sha256.h>
 #include <wolfssl/wolfcrypt/random.h>
 #include <wolfssl/wolfcrypt/pwdbased.h>
+*/
 
 //extern int test_wc_AesCtrEncryptDecrypt(void);
 
 //#include "ZZ.h"
 
 //char *sketch = truncateString(FILENAME,4);
-*/
 
+/* 
+For ExpectIntEQ source:
+https://github.com/wolfSSL/wolfssl/blob/master/tests/unit.h
+*/
+#define ExpectIntEQ(p1, p2) if (p1 == p2) {                   \
+                                ESP_LOGI("test", "success");  \
+                            }                                 \
+                            else {                            \
+                                ESP_LOGE("test", "failed");   \
+                            }
+                            
 static int test_wc_AesCtrEncryptDecrypt(void) {
   //EXPECT_DECLS;
   Aes aesEnc;
@@ -120,7 +131,6 @@ void setup() {
   Serial.begin(115200);
   while (!Serial && millis() < 2000) ;                                          // wait for serial, up to 1 sec
   Serial << "======== AES-CTR_combined.b ========\n";   
-  test_wc_AesCtrEncryptDecrypt();
   Serial << "------ setup() done ------\n";   
 } 
 
