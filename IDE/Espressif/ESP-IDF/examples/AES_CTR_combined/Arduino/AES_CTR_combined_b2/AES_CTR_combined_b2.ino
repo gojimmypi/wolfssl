@@ -1,22 +1,22 @@
-/* This sketch is based on code provided (by Moderator "Anthony") in response to 
+/* This sketch is based on code provided (by Moderator "Anthony") in response to
 my post on the wolfSSL forum: https://www.wolfssl.com/forums/post8171.html#p8171
 */
 
-#if defined(WOLFSSL_CJ_TEST_A) 
+#if defined(WOLFSSL_CJ_TEST_A)
 #warning "WOLFSSL_CJ_TEST_A is defined (sketch - 1)"
 #endif
 
-#if defined(WOLFSSL_CJ_TEST_B) 
+#if defined(WOLFSSL_CJ_TEST_B)
 #warning "WOLFSSL_CJ_TEST_B is defined (sketch - 2)"
 #endif
 
 #define WOLFSSL_CLIENT_EXAMPLE
 
-#if defined(NO_AES) 
+#if defined(NO_AES)
 #error "Missing AES"
 #endif
 /*
-#if !defined(WOLFSSL_AES_COUNTER) 
+#if !defined(WOLFSSL_AES_COUNTER)
 #error "Missing AES-CTR"
 #endif
 
@@ -28,12 +28,12 @@ my post on the wolfSSL forum: https://www.wolfssl.com/forums/post8171.html#p8171
 //#include "AES.h"
 // includes per wolfssl_client.ino example
 #include "wolfssl.h"
-#include <wolfssl/wolfcrypt/settings.h> // Reminder: settings.h includes user_settings.h 
+#include <wolfssl/wolfcrypt/settings.h> // Reminder: settings.h includes user_settings.h
                                         // For ALL settings, see ~\Arduino\libraries\wolfSSL\src\user_settings.h
 #include <wolfssl/wolfcrypt/aes.h>
 
 /*
-// Important: make sure settings.h appears before any other wolfSSL headers 
+// Important: make sure settings.h appears before any other wolfSSL headers
 
 #include <wolfssl/ssl.h>
 #include <wolfssl/certs_test.h>
@@ -50,17 +50,17 @@ my post on the wolfSSL forum: https://www.wolfssl.com/forums/post8171.html#p8171
 
 //char *sketch = truncateString(FILENAME,4);
 
-/* 
+/*
 For ExpectIntEQ source:
 https://github.com/wolfSSL/wolfssl/blob/master/tests/unit.h
 */
-#define ExpectIntEQ(p1, p2) if (p1 == p2) {                   \
-                                ESP_LOGI("test", "success");  \
-                            }                                 \
-                            else {                            \
-                                ESP_LOGE("test", "failed");   \
+#define ExpectIntEQ(p1, p2) if (p1 == p2) {             \
+                                Serial << "success\n";  \
+                            }                           \
+                            else {                      \
+                                Serial << "failed\n";   \
                             }
-                            
+
 static int test_wc_AesCtrEncryptDecrypt(void) {
   //EXPECT_DECLS;
   Aes aesEnc;
@@ -72,7 +72,7 @@ static int test_wc_AesCtrEncryptDecrypt(void) {
       0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
       0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66};
 
-  byte vector[] = { 
+  byte vector[] = {
       0x4e,0x6f,0x77,0x20,0x69,0x73,0x20,0x74,
       0x68,0x65,0x20,0x74,0x69,0x6d,0x65,0x20,
       0x66,0x6f,0x72,0x20,0x61,0x6c,0x6c,0x20 };
@@ -82,15 +82,15 @@ static int test_wc_AesCtrEncryptDecrypt(void) {
 
   // Key 128 bits = 16 bytes
   byte key16[] = {0x55, 0x24, 0xcc, 0x11, 0xd9, 0x51, 0xb6, 0x37,
-                  0x96, 0xd0, 0x5a, 0x9a, 0xcc, 0xe7, 0x31, 0x7 }; 
+                  0x96, 0xd0, 0x5a, 0x9a, 0xcc, 0xe7, 0x31, 0x7 };
 
   // encrypted data [from "RAW fiddle (c).txt"]
   byte vector[] = {0xF8, 0x74, 0x60, 0x1C, 0x3F, 0x86, 0x9B, 0x6A,
                    0x19, 0x62, 0x58, 0xEB, 0x22, 0xED, 0xD3, 0x14};
 
-  // initialisation vector [from "RAW fiddle (c).txt"] Also called or "salt" or "Nonce/Counter" 
+  // initialisation vector [from "RAW fiddle (c).txt"] Also called or "salt" or "Nonce/Counter"
   byte iv[] = {0x5D, 0x97};
-  
+
   byte enc[AES_BLOCK_SIZE * 2];
   byte dec[AES_BLOCK_SIZE * 2];
 
@@ -124,25 +124,21 @@ static int test_wc_AesCtrEncryptDecrypt(void) {
 
   wc_AesFree(&aesEnc);
   wc_AesFree(&aesDec);
-  //return EXPECT_RESULT();
+  return 0;
 }
 
 void setup() {
   Serial.begin(115200);
   while (!Serial && millis() < 2000) ;                                          // wait for serial, up to 1 sec
-  Serial << "======== AES-CTR_combined.b ========\n";   
-  Serial << "------ setup() done ------\n";   
-} 
-
-void loop() {}
-
-/*
-int      delaySecs = 3;
-uint32_t loopCount = 0;
+  Serial << "======== AES-CTR_combined.b ========\n";
+  test_wc_AesCtrEncryptDecrypt();
+  Serial << "------ setup() done ------\n";
+}
 
 void loop() {
-  loopCount++; 
+  int      delaySecs = 3;
+  uint32_t loopCount = 0;
+  loopCount++;
   Serial << "loop: " << loopCount << '\n';
   delay(delaySecs*1000);
 }
-*/
