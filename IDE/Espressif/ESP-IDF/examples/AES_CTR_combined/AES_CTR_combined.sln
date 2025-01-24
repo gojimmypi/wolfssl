@@ -6,6 +6,19 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "AES_CTR_combined", "AES_CTR_combined.vgdbproj", "{FED313E4-4D63-46DD-B862-4EA0986336A1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution Files", "{6DC80815-B7D3-4765-B629-85D692797524}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Arduino", "Arduino", "{7F0ADE2C-FB28-43A3-ACA3-7BFDCAAB54C7}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\AES_CTR_combined_b2\AES_CTR_combined_b2.ino = Arduino\AES_CTR_combined_b2\AES_CTR_combined_b2.ino
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{2C607A84-8DC1-4CFE-BB02-0B886D4E9A02}"
+	ProjectSection(SolutionItems) = preProject
+		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
