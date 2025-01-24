@@ -79,7 +79,11 @@ idf.py flash -p /dev/ttyS19 -b 115200
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 ```
 
-There's also an enclosed `AES_CTR_combined.sln` Visual Studio file that can be used with the
+Sample output of the AES CTR can be found in the [output.txt](https://github.com/gojimmypi/wolfssl/blob/AES_CTR_Example/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined/output.txt).
+
+## VisualGDB Solution File for Visual Studio
+
+There's an enclosed `AES_CTR_combined.sln` Visual Studio file that can be used with the
 [VisualGDB Extension](https://visualgdb.com/).
 
 # Arduino
