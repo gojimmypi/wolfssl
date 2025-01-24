@@ -79,13 +79,16 @@ idf.py flash -p /dev/ttyS19 -b 115200
 idf.py flash -p /dev/ttyS19 -b 115200 monitor
 ```
 
-There's also an enclosed `AES_CTR_combined.sln` isual Studio file that can be used with the
+There's also an enclosed `AES_CTR_combined.sln` Visual Studio file that can be used with the
 [VisualGDB Extension](https://visualgdb.com/).
 
 # Arduino
 
+The [modified](https://github.com/gojimmypi/wolfssl/commits/AES_CTR_Example/IDE/Espressif/ESP-IDF/examples/AES_CTR_combined/Arduino/AES_CTR_combined_b2)
+Arduino sketch is located in [Arduino/AES_CTR_combined_b2](./Arduino/AES_CTR_combined_b2).
+
 The enclosed [user_settings.h](./components/wolfssl/include/user_settings.h)
-was clightly modified and copied to the installed wolfssl Arduino library here, overwriting the file that was already there:
+was slightly modified and copied to the installed wolfssl Arduino library here, overwriting the file that was already there:
 
 ```
 C:\Users\%USERNAME%\Documents\Arduino\libraries\wolfssl\src
