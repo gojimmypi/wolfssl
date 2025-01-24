@@ -11,11 +11,44 @@ The wolfSSL component directory assumes there's already a clone of wolfSSL in a 
 cd /mnt/c/workspace
 git clone https://github.com/gojimmypi/wolfssl.git
 
-# my current dev branch
-git checkout ED25519_SHA2_fix
+# latest release
+git checkout v5.7.6-stable
+
+# my branch based on v5.7.6-stable
+git checkout AES_CTR_Example
 ```
 
-# Original REAME follows:
+## User Settings
+
+The key changes from the default `user_settings.h` was to add these two macros for AES CTR:
+
+```
+/* Added for AES_CTR example */
+#define WOLFSSL_AES
+#define WOLFSSL_AES_COUNTER
+```
+
+# Arduino
+
+The enclosed [user_settings.h](./components/wolfssl/user_settings.h)
+was copied to:
+
+```
+C:\Users\%USERNAME%\Documents\Arduino\libraries\wolfssl\src
+```
+
+With the following lines REMOVED:
+
+```
+/* The Espressif project config file. See also sdkconfig.defaults */
+#include "sdkconfig.h"
+
+#define WOLFSSL_ESPIDF
+```
+
+
+
+# Original "Hello World" README follows:
 
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 | Linux |
 | ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ----- |
