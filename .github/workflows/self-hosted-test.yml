@@ -10,7 +10,8 @@ on:
 jobs:
   test:
     # Don't run this on downstream forks:
-    if: github.repository_owner == 'gojimmypi'
+    # DISABLED See https://github.com/actions/runner/issues/756
+    if: github.repository_owner == 'gojimmypi' && (1 == 0)
     runs-on: self-hosted
 
     steps:
