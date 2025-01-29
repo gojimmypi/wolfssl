@@ -166,6 +166,7 @@ FLASH_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_flash_IDF_${THIS_VERSION}_${THI
 THIS_LOG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_output_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_CFG="${THIS_HOME_DIR}/logs/${THIS_EXAMPLE}_user_settings_IDF_${THIS_VERSION}_${THIS_TARGET}_${THIS_KEYWORD}.txt"
 THIS_WLOG="logs\\${THIS_TARGET}_output.log"
+mkdir -p logs
 # cp ./components/wolfssl/include/user_settings.h "${THIS_CFG}"
 
 echo  "BUILD_LOG = ${BUILD_LOG}"
@@ -183,6 +184,7 @@ else
     # Get the ESP-IDF version
     # Run the command and capture its output
     THIS_OUTPUT=$(idf.py --version)
+fi
 
 if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
     echo "Build!"
@@ -273,7 +275,7 @@ if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
     echo ""
     echo "Flash $THIS_TARGET..."
     echo "idf.py flash -p ${THIS_TARGET_PORT} -b 115200"
-    idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
+    # idf.py flash -p "${THIS_TARGET_PORT}" -b 115200 2>&1 | tee -a "${FLASH_LOG}"
     THIS_ERROR_CODE=$?
     if [ $THIS_ERROR_CODE -ne 0 ]; then
         echo ""
@@ -301,5 +303,5 @@ if [ -z "$ESPIDF_PUTTY_MONITOR" ]; then
 else
     echo "Calling putty..."
     echo "$PUTTY_EXE -load \"$THIS_TARGET_PUTTY\""
-    $PUTTY_EXE -load "$THIS_TARGET_PUTTY" -logoverwrite -sessionlog "${THIS_WLOG}" &
+    # $PUTTY_EXE -load "$THIS_TARGET_PUTTY" -logoverwrite -sessionlog "${THIS_WLOG}" &
 fi

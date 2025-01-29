@@ -23,6 +23,9 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+// #define WC_RNG_SEED_CB
+// #define WOLFSSL_NO_PTHREADS
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
  * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
@@ -223,7 +226,7 @@
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
 #define USE_CERT_BUFFERS_2048
-
+#define HAVE_AES
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -320,7 +323,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-#define SINGLE_THREADED
+// #define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.

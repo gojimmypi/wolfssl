@@ -8,7 +8,12 @@ message(STATUS "Begin project ${CMAKE_PROJECT_NAME}")
 cmake_minimum_required(VERSION 3.16)
 
 # Optional no watchdog typically used for test & benchmark
-add_compile_definitions(WOLFSSL_ESP_NO_WATCHDOG=1)
+if (idf_target STREQUAL "esp8266" OR IDF_TARGET STREQUAL "esp8266" OR IDF_VERSION_MAJOR VERSION_LESS "5.0")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_ESP_NO_WATCHDOG=1")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_HAS_GTHREADS=0")
+else()
+    add_compile_definitions(WOLFSSL_ESP_NO_WATCHDOG=1)
+endif()
 
 # The wolfSSL CMake file should be able to find the source code.
 # Otherwise, assign an environment variable or set it here:

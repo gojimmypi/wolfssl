@@ -713,28 +713,16 @@ extern "C"
 */
 
 #ifndef NO_AES
-    #if ESP_IDF_VERSION_MAJOR > 5 || (ESP_IDF_VERSION_MAJOR == 5 && ESP_IDF_VERSION_MINOR >= 4)
-        #include "rom/aes.h"
-    #elif ESP_IDF_VERSION_MAJOR >= 4
-        /* TODO: aes.h include is chip-specific in some versions of ESP-IDF.
-         * See https://github.com/wolfSSL/wolfssl/pull/8380 */
-        #include "esp32/rom/aes.h"
-    #elif defined(CONFIG_IDF_TARGET_ESP8266)
-        /* no hardware includes for ESP8266*/
-    #else
-        /* TODO: Confirm for older versions: */
-        /* #include "rom/aes.h" */
-    #endif
+    /* wolfSSL does not use Espressif rom/aes.h */
+    struct Aes; /* see wolcrypt/aes.h */
 
-    typedef enum tagES32_AES_PROCESS /* TODO what's this ? */
+    typedef enum tagES32_AES_PROCESS
     {
         ESP32_AES_LOCKHW            = 1,
         ESP32_AES_UPDATEKEY_ENCRYPT = 2,
         ESP32_AES_UPDATEKEY_DECRYPT = 3,
         ESP32_AES_UNLOCKHW          = 4
     } ESP32_AESPROCESS;
-
-    struct Aes; /* see aes.h */
 #if  defined(WOLFSSL_HW_METRICS)
     WOLFSSL_LOCAL int esp_hw_show_aes_metrics(void);
     WOLFSSL_LOCAL int wc_esp32AesUnupportedLengthCountAdd(void);

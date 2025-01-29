@@ -6,6 +6,13 @@
 message(STATUS "Begin wolfSSL main CMakeLists.txt")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
+if (idf_target STREQUAL "esp8266" OR IDF_TARGET STREQUAL "esp8266" OR IDF_VERSION_MAJOR VERSION_LESS "5.0")
+    # `driver` component not available for ESP8266
+    SET(THIS_PRIV_REQUIRES_DRIVER "")
+else()
+    SET(THIS_PRIV_REQUIRES_DRIVER "driver")
+endif()
+
 if(WIN32)
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")
@@ -57,7 +64,8 @@ endif()
 idf_component_register(SRCS main.c
                        INCLUDE_DIRS "."
                             "./include"
-                       PRIV_REQUIRES driver "${MAIN_WOLFSSL_COMPONENT_NAME}")
+                       PRIV_REQUIRES "${THIS_PRIV_REQUIRES_DRIVER}"  "${MAIN_WOLFSSL_COMPONENT_NAME}"
+                       )
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
