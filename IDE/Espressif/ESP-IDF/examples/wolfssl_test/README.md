@@ -1,6 +1,5 @@
 # wolfSSL Crypt Test Example
 
-
 This is the ESP32 Version of the [wolfSSL wolfcrypt test application](https://github.com/wolfSSL/wolfssl/tree/master/wolfcrypt/test).
 
 For general information on [wolfSSL examples for Espressif](../README.md), see the
@@ -11,7 +10,7 @@ For general information on [wolfSSL examples for Espressif](../README.md), see t
 The easiest way to get started with wolfSSL is by using the
 [ESP Registry](https://www.wolfssl.com/wolfssl-now-available-in-espressif-component-registry/) examples.
 
-```
+```bash
 . ~/esp/esp-idf/export.sh
 idf.py create-project-from-example "wolfssl/wolfssl^5.6.0-stable:wolfssl_test"
 cd wolfssl_benchmark
@@ -42,7 +41,7 @@ Reminder than when building on WSL in `/mnt/c` there will be a noticeable perfor
 
 Example build on WSL, assuming `git clone` from `c:\workspace`:
 
-```
+```bash
 WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/v5.2
 # WRK_IDF_PATH=/mnt/c/SysGCC/esp32/esp-idf/master
 
@@ -70,7 +69,7 @@ idf.py build flash -p /dev/ttyS24 -b 115200 monitor
 ## ESP-IDF Commandline (version 3.5 or earlier for the ESP8266)
 
 
-```
+```bash
 WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 . $WRK_IDF_PATH/export.sh
 
@@ -103,7 +102,7 @@ for help in optimizing for your particular application, or see the
 
 Compiled and flashed with `idf.py build  flash -p /dev/ttyS7 -b 115200 monitor`:
 
-```
+```text
 ets Jun  8 2016 00:22:57
 
 rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
