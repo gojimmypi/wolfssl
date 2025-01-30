@@ -22,8 +22,6 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-// void wolf_test_task(void);
-
 void app_main(void);
 
 #endif

@@ -80,7 +80,6 @@ endif()
 # The scope of this CMAKE_C_FLAGS is just this component:
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_HAS_GTHREADS=0")
 
 set(CMAKE_CURRENT_SOURCE_DIR ".")
 # set(COMPONENT_REQUIRES lwip) # we typically don't need lwip directly in wolfssl component
@@ -155,13 +154,13 @@ endif()
 # Don't include lwip requirement for benchmark and test apps.
 if( ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_benchmark") OR ("${CMAKE_PROJECT_NAME}" STREQUAL "wolfssl_test") )
     message(STATUS "Not including lwip for ${CMAKE_PROJECT_NAME}")
-    set(COMPONENT_REQUIRES lwip "${THIS_ESP_TLS}") # we typically don't need lwip directly in wolfssl component
 else()
     # benchmark and test do not need wifi, everything else probably does:
     set(COMPONENT_REQUIRES lwip "${THIS_ESP_TLS}") # we typically don't need lwip directly in wolfssl component
 endif()
 
-# find the user name to search for possible "wolfssl-username"
+# Find the user name to search for possible "wolfssl-username"
+# Reminder: Windows is  %USERNAME%, Linux is $USER
 message(STATUS "USERNAME = $ENV{USERNAME}")
 if(  "$ENV{USER}" STREQUAL "" ) # the bash user
     if(  "$ENV{USERNAME}" STREQUAL "" ) # the Windows user
