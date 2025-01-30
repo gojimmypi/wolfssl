@@ -273,6 +273,8 @@ fi
 # as an Arduino-specific README.md file.
 VERSION_PLACEHOLDER="\${WOLFSSL_VERSION}"
 ARDUINO_VERSION_SUFFIX_PLACEHOLDER="\${WOLFSSL_VERSION_ARUINO_SUFFIX}"
+
+# This is the SOURCE to prepend. Note the OUTPUT is PREPENDED_README.md later copied to README.md
 PREPEND_FILE="Arduino_README_prepend.md"
 PROPERTIES_FILE_TEMPLATE="library.properties.template"
 sed s/"$VERSION_PLACEHOLDER"/"$WOLFSSL_VERSION"/ "$PREPEND_FILE" > "$PREPEND_FILE.tmp"
