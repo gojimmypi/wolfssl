@@ -1,5 +1,5 @@
 # wolfSSL Espressif Example Project/main CMakeLists.txt
-#   v1.1
+#   v1.2
 #
 # wolfssl crypt test
 #

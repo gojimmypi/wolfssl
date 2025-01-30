@@ -67,7 +67,6 @@ CFLAGS +=-DWOLFSSL_USER_SETTINGS
 # When this wolfssl component.mk makefile is in [project]/components/wolfssl
 # The root is 7 directories up from here (the location of of this component.mk):
 #
-# WOLFSSL_ROOT     := ../../../../../../..
 WOLFSSL_ROOT     ?= ../../../../../../..
 THIS_DIR         := $(shell pwd)
 WOLFSSL_ROOT_OBJ := $(THIS_DIR)
@@ -298,7 +297,7 @@ COMPONENT_OBJS += $(WOLFSSL_ROOT)/wolfcrypt/src/port/Espressif/esp_sdk_wifi_lib.
 
 
 ##
-## wolfcrypt test (optional)
+## wolfcrypt test (needed for this test example)
 ##
 COMPONENT_OBJS               += $(WOLFSSL_ROOT)/wolfcrypt/test/test.o
 COMPONENT_SRCDIRS            += $(WOLFSSL_ROOT)/wolfcrypt/test
