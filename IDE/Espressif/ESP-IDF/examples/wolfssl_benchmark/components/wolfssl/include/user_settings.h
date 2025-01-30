@@ -219,6 +219,17 @@
     #endif
 #endif
 
+/* Enable AES for all examples */
+#ifdef NO_AES
+    #warning "Found NO_AES, wolfSSL AES Cannot be enabled. Check config."
+#else
+    #define WOLFSSL_AES
+    #define WOLFSSL_AES_COUNTER
+
+    /* Typically only needed for wolfssl_test, see docs. */
+    #define WOLFSSL_AES_DIRECT
+#endif
+
 /* Pick a cert buffer size: */
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
@@ -765,7 +776,7 @@
     #define WOLFSSL_ESP8266
 
     /* There's no hardware encryption on the ESP8266 */
-    /* Consider using the ESP32-C2/C3/C6 */
+    /* Consider using the ESP32-C2/C3/C6             */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES

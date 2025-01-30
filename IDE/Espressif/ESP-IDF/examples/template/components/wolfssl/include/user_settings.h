@@ -219,6 +219,17 @@
     #endif
 #endif
 
+/* Enable AES for all examples */
+#ifdef NO_AES
+    #warning "Found NO_AES, wolfSSL AES Cannot be enabled. Check config."
+#else
+    #define WOLFSSL_AES
+    #define WOLFSSL_AES_COUNTER
+
+    /* Typically only needed for wolfssl_test, see docs. */
+    #define WOLFSSL_AES_DIRECT
+#endif
+
 /* Pick a cert buffer size: */
 /* #define USE_CERT_BUFFERS_2048 */
 /* #define USE_CERT_BUFFERS_1024 */
