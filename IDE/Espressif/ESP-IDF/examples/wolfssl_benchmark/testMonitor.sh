@@ -41,8 +41,9 @@ pwd
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
 # Unfortunately they are currently hard coded and computer-specific.
-
-
+#
+# See ./device_list.sh to help find and generate updated assignments.
+#
 if [[ "$TESTHOST" == "" ]]; then
     echo "Please set TESTHOST name: NOTEBOOK_HOST, DESKTOP_HOST, DESKTOP_VMHOST or add new host."
     exit 1
@@ -60,28 +61,28 @@ elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
     esp8684_PORT="/dev/ttyS49"
     # esp32c2_PORT="/dev/ttyS49" #8684
 elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
-    esp32_PORT="/dev/ttyS7"
-    esp32c2_PORT="/dev/ttyS12"
+    esp8684_PORT="/dev/ttyS10"
+    esp8266_PORT="/dev/ttyS11"
+    esp32c2_PORT="/dev/ttyS3"
+    esp32s3_PORT="/dev/ttyS4"
+    esp32s2_PORT="/dev/ttyS5"
     esp32c3_PORT="/dev/ttyS6"
+    esp32_PORT="/dev/ttyS7"
     esp32c6_PORT="/dev/ttyS8"
     esp32h2_PORT="/dev/ttyS9"
-    esp32s2_PORT="/dev/ttyS5"
-    esp32s3_PORT="/dev/ttyS4"
-
-    esp8266_PORT="/dev/ttyS11"
-    esp8684_PORT="/dev/ttyS10"
 
     # Load putty profiles. Note profiles names need to have been previously
     # defined and saved in putty! These are the saved sessions in putty:
-    esp32_PUTTY="COM7"
-    esp32c2_PUTTY="COM12-74880"
-    esp32c3_PUTTY="COM6"
-    esp32c6_PUTTY="COM8"
-    esp32h2_PUTTY="COM9"
-    esp32s2_PUTTY="COM5"
-    esp32s3_PUTTY="COM4"
     esp8684_PUTTY="COM10-74880"
     esp8266_PUTTY="COM11-74880"
+    esp32c2_PUTTY="COM3-74880"
+    esp32s3_PUTTY="COM4"
+    esp32s2_PUTTY="COM5"
+    esp32c3_PUTTY="COM6"
+    esp32_PUTTY="COM7"
+    esp32c6_PUTTY="COM8"
+    esp32h2_PUTTY="COM9"
+
 else
     echo "Error unknown TESTHOST=$TESTHOST"
     exit 1
