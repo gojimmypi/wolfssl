@@ -19,18 +19,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
-#define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
-// #define ESP_MONITOR_HW_TASK_LOCK
-#define WOLFSSL_ESP32_HW_LOCK_DEBUG
-#define DEBUG_WOLFSSL_ESP32_UNFINISHED_HW
 
-// #define WOLFSSL_DEBUG_MUTEX
-// #define SINGLE_THREADED
+/* Examples such as test and benchmark are known to cause watchdog timeouts.
+ * Note this is often set in project Makefile:
+ * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
+#define WOLFSSL_ESP_NO_WATCHDOG 1
 
-// test:
-#define MUTEX_DURING_INIT
-
-// #define ESP_DISABLE_HW_TASK_LOCK
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
@@ -228,6 +222,17 @@
         #define WOLFSSL_NO_KYBER768
         #define NO_SESSION_CACHE
     #endif
+#endif
+
+/* Enable AES for all examples */
+#ifdef NO_AES
+    #warning "Found NO_AES, wolfSSL AES Cannot be enabled. Check config."
+#else
+    #define WOLFSSL_AES
+    #define WOLFSSL_AES_COUNTER
+
+    /* Typically only needed for wolfssl_test, see docs. */
+    #define WOLFSSL_AES_DIRECT
 #endif
 
 /* Pick a cert buffer size: */

@@ -20,6 +20,11 @@
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
+/* Examples such as test and benchmark are known to cause watchdog timeouts.
+ * Note this is often set in project Makefile:
+ * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
+#define WOLFSSL_ESP_NO_WATCHDOG 1
+
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
@@ -397,7 +402,10 @@
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684)
     /* Optionally set smaller size here */
-    #define HAVE_FFDHE_4096
+    #ifdef HAVE_FFDHE_4096
+        /* this size may be problematic on the C2 */
+    #endif
+    #define HAVE_FFDHE_2048
 #else
     #define HAVE_FFDHE_4096
 #endif
