@@ -713,18 +713,7 @@ extern "C"
 */
 
 #ifndef NO_AES
-    #if ESP_IDF_VERSION_MAJOR > 5 || (ESP_IDF_VERSION_MAJOR == 5 && ESP_IDF_VERSION_MINOR >= 4)
-        #include "rom/aes.h"
-    #elif ESP_IDF_VERSION_MAJOR >= 4
-        /* TODO: aes.h include is chip-specific in some versions of ESP-IDF.
-         * See https://github.com/wolfSSL/wolfssl/pull/8380 */
-        #include "esp32/rom/aes.h"
-    #elif defined(CONFIG_IDF_TARGET_ESP8266)
-        /* no hardware includes for ESP8266*/
-    #else
-        /* TODO: Confirm for older versions: */
-        /* #include "rom/aes.h" */
-    #endif
+    /* wolfSSL uses registers directly; Espressif rom/aes.h not used. */
 
     typedef enum tagES32_AES_PROCESS /* TODO what's this ? */
     {
