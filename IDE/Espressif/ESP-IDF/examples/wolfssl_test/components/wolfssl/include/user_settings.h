@@ -20,6 +20,11 @@
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
+/* Examples such as test and benchmark are known to cause watchdog timeouts.
+ * Note this is often set in project Makefile:
+ * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
+#define WOLFSSL_ESP_NO_WATCHDOG 1
+
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
