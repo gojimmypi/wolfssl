@@ -24,7 +24,7 @@
 #include "sdkconfig.h"
 
 // #define WC_RNG_SEED_CB
-// #define WOLFSSL_NO_PTHREADS
+#define WOLFSSL_NO_PTHREADS
 
 /* This user_settings.h is for Espressif ESP-IDF
  *

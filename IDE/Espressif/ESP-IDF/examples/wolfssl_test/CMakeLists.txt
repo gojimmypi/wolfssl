@@ -15,6 +15,7 @@ else()
     add_compile_definitions(WOLFSSL_ESP_NO_WATCHDOG=1)
 endif()
 
+
 # The wolfSSL CMake file should be able to find the source code.
 # Otherwise, assign an environment variable or set it here:
 #

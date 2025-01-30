@@ -64,7 +64,9 @@ endif()
 idf_component_register(SRCS main.c
                        INCLUDE_DIRS "."
                             "./include"
-                       PRIV_REQUIRES "${THIS_PRIV_REQUIRES_DRIVER}"  "${MAIN_WOLFSSL_COMPONENT_NAME}"
+                       PRIV_REQUIRES #"${THIS_PRIV_REQUIRES_DRIVER}"
+                                    # pthread
+                                     "${MAIN_WOLFSSL_COMPONENT_NAME}"
                        )
 
 #

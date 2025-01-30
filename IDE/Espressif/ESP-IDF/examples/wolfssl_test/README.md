@@ -84,6 +84,31 @@ idf.py menuconfig
 idf.py build flash -p /dev/ttyS55 -b 115200
 ```
 
+## Espressif ESP8266 RTOS SDK Make Commandline
+
+```bash
+# Find the ESP8266 SDK directory, shown here for WSL (Windows C:\ESP8266\esp\ESP8266_RTOS_SDK)
+cd /mnt/c/ESP8266/esp/ESP8266_RTOS_SDK
+
+# Optionally run install as needed
+./install.sh
+
+# Setup SDK
+. ./export.sh
+
+# Find example to build
+cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test
+
+make clean
+
+make
+
+make flash
+
+# or:
+python /mnt/c/ESP8266/esp/ESP8266_RTOS_SDK/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/ttyUSB0 --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 2MB 0x0 /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build/bootloader/bootloader.bin 0x10000 /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build/wolfssl_test.bin 0x8000 /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/wolfssl_test/build/partitions_singleapp.bin
+```
+
 ## Putty (via WSL)
 
 Define a non-blank value for `ESPIDF_PUTTY_MONITOR` to launch `testMonitor.sh` output in putty.exe sessions from Windows.
