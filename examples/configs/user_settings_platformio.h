@@ -257,7 +257,10 @@
     /* Provide a hint to application that neither WOLFSSL_CLIENT_EXAMPLE
      * or WOLFSSL_SERVER_EXAMPLE macro hint was desired but not found. */
     #define NO_WOLFSSL_SERVER_CLIENT_MISSING
-    /* Both can be disabled in wolfssl test & benchmark */
+
+    /* Both can be disabled in wolfssl test & benchmark. */
+    #define NO_WOLFSSL_SERVER
+    #define NO_WOLFSSL_CLIENT
 #endif
 
 #define NO_OLD_TLS
@@ -309,9 +312,14 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
+/* AES */
+/* See https://www.wolfssl.com/documentation/manuals/wolfssl/group__AES.html */
 /* when you want to use AES counter mode */
-/* #define WOLFSSL_AES_DIRECT */
+/* #define WOLFSSL_AES */
 /* #define WOLFSSL_AES_COUNTER */
+
+/* Optional AES-Direct. See docs: */
+/* #define WOLFSSL_AES_DIRECT */
 
 /* esp32-wroom-32se specific definition */
 #if defined(WOLFSSL_ESPWROOM32SE)
