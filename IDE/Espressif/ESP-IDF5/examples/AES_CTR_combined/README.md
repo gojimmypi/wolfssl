@@ -1,3 +1,22 @@
+# AES_CTR Example
+
+This example is based on the "Hello World" example, with the sample [Arduino AES_CTR](./Arduino/AES_CTR_combined_b2.ino) file.
+
+Building on the original app, the wolfSSL component library was added from the [template example](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template),
+see the [components/wolfssl](https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/template/components/wolfssl) directory.
+
+The wolfSSL component directory assumes there's already a clone of wolfSSL in a parent directory:
+
+```
+cd /mnt/c/workspace
+git clone https://github.com/gojimmypi/wolfssl.git
+
+# my current dev branch
+git checkout ED25519_SHA2_fix
+```
+
+# Original REAME follows:
+
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 | Linux |
 | ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ----- |
 
