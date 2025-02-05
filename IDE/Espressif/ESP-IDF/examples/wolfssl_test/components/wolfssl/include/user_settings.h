@@ -528,7 +528,7 @@
 /* Adjust wait-timeout count if you see timeout in RSA HW acceleration.
  * Set to very large number and enable WOLFSSL_HW_METRICS to determine max. */
 #ifndef ESP_RSA_TIMEOUT_CNT
-	#define ESP_RSA_TIMEOUT_CNT 0xFF0000
+    #define ESP_RSA_TIMEOUT_CNT 0xFF0000
 #endif
 
 /* hash limit for test.c */
