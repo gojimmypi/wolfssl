@@ -429,6 +429,7 @@
     /* TODO determine low memory configuration for ECC. */
 #else
     /* when you want to use SHA512 */
+    //  #767 adds HMAC-SHA2-512, it can be disabled at compile time. We should probably make sure that happens automatically with the 8266.
     #define WOLFSSL_SHA512
 
     /* when you want to use SHA3 */
