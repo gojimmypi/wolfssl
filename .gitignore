@@ -588,3 +588,5 @@ debian/control
 /IDE/Espressif/ESP-IDF/examples/wolfssl_server/sdkconfig-debug
 /IDE/Espressif/ESP-IDF/examples/wolfssl_client/sdkconfig-debug
 /IDE/Espressif/ESP-IDF/libs/Exported-2024-09-13.vssettings
+/DLL Release (options.h)/x64
+/IDE/Espressif/ESP-IDF/examples/**/*.clog
