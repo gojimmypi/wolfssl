@@ -64,6 +64,8 @@ else
     exit 1
 fi
 
+# TODO ESP-IDF v4 only supports: esp32|esp32s2|esp32c3|esp32s3
+
 #******************************************************************************
 # Kill all currently running instances of putty.exe
 # If there are no running instances, taskkill exits with non-zero error code.
