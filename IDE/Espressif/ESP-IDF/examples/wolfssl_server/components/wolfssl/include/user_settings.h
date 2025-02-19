@@ -25,6 +25,8 @@
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
 #define WOLFSSL_ESP_NO_WATCHDOG 1
 
+#define HAVE_AESCCM
+
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 

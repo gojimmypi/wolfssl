@@ -377,11 +377,14 @@
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_HKDF
 
+    /* Add AES CCM support */
+    #define HAVE_AESCCM
+
     /* May be required */
     #ifndef HAVE_AEAD
     #endif
 
-    /* Required for ECC */
+    /* Required only for ECC, ECDHE key exchange */
     #define HAVE_SUPPORTED_CURVES
 
     /* Required for RSA */
