@@ -40,7 +40,6 @@
     #include <esp_task_wdt.h>
 #endif
 
-
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* needed to print MATH_INT_T value */
 #include <wolfssl/wolfcrypt/types.h>
@@ -751,7 +750,7 @@ esp_err_t esp_DisableWatchdog(void)
                     ESP_LOGW(TAG, "esp_task_wdt_deinit not available");
                 #endif
             #else
-                    ESP_LOGW(TAG, "esp_task_wdt_deinit not implmented");
+                    ESP_LOGW(TAG, "esp_task_wdt_deinit not implemented");
             #endif
         #else
             rtc_wdt_protect_off();

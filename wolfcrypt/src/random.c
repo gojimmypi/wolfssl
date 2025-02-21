@@ -87,8 +87,10 @@ This library contains implementation for the random number generator.
     #ifndef _WIN32_WINNT
         #define _WIN32_WINNT 0x0400
     #endif
+    #define _WINSOCKAPI_ /* block inclusion of winsock.h header file */
     #include <windows.h>
     #include <wincrypt.h>
+    #undef _WINSOCKAPI_
 #elif defined(HAVE_WNR)
     #include <wnr.h>
     #include <wolfssl/wolfcrypt/logging.h>
@@ -913,7 +915,8 @@ static WC_INLINE word64 Entropy_TimeHiRes(void)
  * @param [in,out] args  Entropy data including: counter and stop flag.
  * @return  NULL always.
  */
-static THREAD_RETURN WOLFSSL_THREAD_NO_JOIN Entropy_IncCounter(void* args)
+static THREAD_RETURN_NOJOIN WOLFSSL_THREAD_NO_JOIN
+    Entropy_IncCounter(void* args)
 {
     (void)args;
 
@@ -926,8 +929,9 @@ static THREAD_RETURN WOLFSSL_THREAD_NO_JOIN Entropy_IncCounter(void* args)
 #ifdef WOLFSSL_DEBUG_ENTROPY_MEMUSE
     fprintf(stderr, "EXITING ENTROPY COUNTER THREAD\n");
 #endif
+
     /* Exit from thread. */
-    WOLFSSL_RETURN_FROM_THREAD(0);
+    RETURN_FROM_THREAD_NOJOIN(0);
 }
 
 /* Start a thread that increments counter if not one already.

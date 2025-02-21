@@ -168,7 +168,7 @@ static int IsValidCipherSuite(const char* line, char *suite, size_t suite_spc)
     return valid;
 }
 
-#ifdef WOLFSSL_HAVE_KYBER
+#if defined(WOLFSSL_HAVE_KYBER)
 static int IsKyberLevelAvailable(const char* line)
 {
     int available = 0;
@@ -222,7 +222,14 @@ static int IsKyberLevelAvailable(const char* line)
     #endif
     }
 
+#if defined(WOLFSSL_KYBER_NO_MAKE_KEY) || \
+    defined(WOLFSSL_KYBER_NO_ENCAPSULATE) || \
+    defined(WOLFSSL_KYBER_NO_DECAPSULATE)
+    (void)available;
+    return begin == NULL;
+#else
     return (begin == NULL) || available;
+#endif
 }
 #endif
 
@@ -361,8 +368,8 @@ static int execute_test_case(int svr_argc, char** svr_argv,
     func_args cliArgs = {0, NULL, 0, NULL, NULL, NULL};
     func_args svrArgs = {0, NULL, 0, NULL, NULL, NULL};
 #else
-    func_args cliArgs = {cli_argc, cli_argv, 0, NULL, NULL};
-    func_args svrArgs = {svr_argc, svr_argv, 0, NULL, NULL};
+    func_args cliArgs = {0, NULL, 0, NULL, NULL};
+    func_args svrArgs = {0, NULL, 0, NULL, NULL};
 #endif
 
     tcp_ready   ready;
@@ -379,17 +386,14 @@ static int execute_test_case(int svr_argc, char** svr_argv,
 #ifdef WOLFSSL_NO_CLIENT_AUTH
     int         reqClientCert;
 #endif
-
 #if defined(WOLFSSL_SRTP) && defined(WOLFSSL_COND)
     srtp_test_helper srtp_helper;
 #endif
 
-#if defined(WOLFSSL_TIRTOS) || defined(WOLFSSL_SRTP)
     cliArgs.argc = cli_argc;
     cliArgs.argv = cli_argv;
     svrArgs.argc = svr_argc;
     svrArgs.argv = svr_argv;
-#endif
 
     /* Is Valid Cipher and Version Checks */
     /* build command list for the Is checks below */

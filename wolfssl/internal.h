@@ -151,15 +151,25 @@
     #include <signal.h>
 #endif
 
-#ifdef USE_WINDOWS_API
+#ifdef __WATCOMC__
+    #if defined(__OS2__)
+    #elif defined(__NT__)
+        #define _WINSOCKAPI_ /* block inclusion of winsock.h header file */
+        #include <windows.h>
+        #undef _WINSOCKAPI_
+    #elif defined(__LINUX__)
+        #ifndef SINGLE_THREADED
+            #define WOLFSSL_PTHREADS
+            #include <pthread.h>
+        #endif
+    #endif
+#elif defined(USE_WINDOWS_API)
     #ifdef WOLFSSL_GAME_BUILD
         #include "system/xtl.h"
     #else
-        #if defined(_WIN32_WCE) || defined(WIN32_LEAN_AND_MEAN)
-            /* On WinCE winsock2.h must be included before windows.h */
-            #include <winsock2.h>
-        #endif
+        #define _WINSOCKAPI_ /* block inclusion of winsock.h header file */
         #include <windows.h>
+        #undef _WINSOCKAPI_
     #endif
 #elif defined(THREADX)
     #ifndef SINGLE_THREADED
@@ -232,7 +242,7 @@
     #endif
     #if defined(OPENSSL_EXTRA) && !defined(NO_FILESYSTEM)
         #ifdef FUSION_RTOS
-           #include <fclunistd.h>
+            #include <fclunistd.h>
         #else
             #include <unistd.h>      /* for close of BIO */
         #endif
@@ -1827,20 +1837,23 @@ enum Misc {
     SM2_SA_MAJOR        = 7,   /* Most significant byte for SM2 with SM3 */
     SM2_SA_MINOR        = 8,   /* Least significant byte for SM2 with SM3 */
 
-    PQC_SA_MAJOR        = 0xFE,/* Most significant byte used with PQC sig algs */
+    FALCON_SA_MAJOR     = 0xFE,/* Most significant byte used with falcon sig algs */
+    DILITHIUM_SA_MAJOR  = 0x09,/* Most significant byte used with dilithium sig algs */
 
-    /* These values for falcon and dilithium match what OQS has defined. */
+    /* These values for falcon match what OQS has defined. */
     FALCON_LEVEL1_SA_MAJOR = 0xFE,
     FALCON_LEVEL1_SA_MINOR = 0xAE,
     FALCON_LEVEL5_SA_MAJOR = 0xFE,
     FALCON_LEVEL5_SA_MINOR = 0xB1,
 
-    DILITHIUM_LEVEL2_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL2_SA_MINOR = 0xD0,
-    DILITHIUM_LEVEL3_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL3_SA_MINOR = 0xD1,
-    DILITHIUM_LEVEL5_SA_MAJOR = 0xFE,
-    DILITHIUM_LEVEL5_SA_MINOR = 0xD2,
+    /* these values for MLDSA (Dilithium) correspond to what is proposed in the
+     * IETF. */
+    DILITHIUM_LEVEL2_SA_MAJOR = 0x09,
+    DILITHIUM_LEVEL2_SA_MINOR = 0x04,
+    DILITHIUM_LEVEL3_SA_MAJOR = 0x09,
+    DILITHIUM_LEVEL3_SA_MINOR = 0x05,
+    DILITHIUM_LEVEL5_SA_MAJOR = 0x09,
+    DILITHIUM_LEVEL5_SA_MINOR = 0x06,
 
     MIN_RSA_SHA512_PSS_BITS = 512 * 2 + 8 * 8, /* Min key size */
     MIN_RSA_SHA384_PSS_BITS = 384 * 2 + 8 * 8, /* Min key size */
@@ -6120,12 +6133,10 @@ struct WOLFSSL {
         void*       ocspIOCtx;
         byte ocspProducedDate[MAX_DATE_SZ];
         int ocspProducedDateFormat;
-    #ifdef OPENSSL_EXTRA
+    #if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
         byte*       ocspResp;
         int         ocspRespSz;
-        #if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)
-            char*   url;
-        #endif
+        char*   url;
     #endif
 #if defined(WOLFSSL_TLS13) && defined(HAVE_CERTIFICATE_STATUS_REQUEST)
             word32 response_idx;
