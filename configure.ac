@@ -295,6 +295,25 @@ AC_ARG_ENABLE([hmac],
     [ ENABLED_HMAC=yes ]
     )
 
+# enable HMAC hash copying automatically for x86_64 and aarch64 (except Linux kernel module)
+HMAC_COPY_DEFAULT=no
+if test "$ENABLED_LINUXKM_DEFAULTS" = "no"
+then
+    if test "$host_cpu" = "x86_64" || test "$host_cpu" = "aarch64" || test "$host_cpu" = "amd64"
+    then
+        HMAC_COPY_DEFAULT=yes
+    fi
+fi
+AC_ARG_ENABLE([hmac-copy],
+    [AS_HELP_STRING([--enable-hmac-copy],[Enables digest copying implementation for HMAC (default: disabled)])],
+    [ ENABLED_HMAC_COPY=$enableval ],
+    [ ENABLED_HMAC_COPY=$HMAC_COPY_DEFAULT ]
+    )
+if test "$ENABLED_HMAC_COPY" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_HMAC_COPY_HASH"
+fi
+
 AC_ARG_ENABLE([do178],
     [AS_HELP_STRING([--enable-do178],[Enable DO-178, Will NOT work w/o DO178 license (default: disabled)])],
     [ENABLED_DO178=$enableval],
@@ -1379,25 +1398,34 @@ AC_ARG_WITH([liboqs],
 # Used:
 #  - SHA3, Shake128 and Shake256
 AC_ARG_ENABLE([kyber],
-    [AS_HELP_STRING([--enable-kyber],[Enable KYBER (requires --enable-experimental) (default: disabled)])],
+    [AS_HELP_STRING([--enable-kyber],[Enable KYBER (default: disabled)])],
     [ ENABLED_KYBER=$enableval ],
     [ ENABLED_KYBER=no ]
     )
 
 ENABLED_WC_KYBER=no
 ENABLED_ML_KEM=unset
+ENABLED_KYBER_MAKE_KEY=no
+ENABLED_KYBER_ENCAPSULATE=no
+ENABLED_KYBER_DECAPSULATE=no
 for v in `echo $ENABLED_KYBER | tr "," " "`
 do
   case $v in
-  yes | all)
+  yes)
     ENABLED_KYBER512=yes
     ENABLED_KYBER768=yes
     ENABLED_KYBER1024=yes
+    ENABLED_KYBER_MAKE_KEY=yes
+    ENABLED_KYBER_ENCAPSULATE=yes
+    ENABLED_KYBER_DECAPSULATE=yes
     ;;
   no)
     ;;
   small)
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_SMALL"
+    ;;
+  cache-a)
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_MLKEM_CACHE_A"
     ;;
   512)
     ENABLED_KYBER512=yes
@@ -1407,6 +1435,20 @@ do
     ;;
   1024)
     ENABLED_KYBER1024=yes
+    ;;
+  make)
+    ENABLED_KYBER_MAKE_KEY=yes
+    ;;
+  encapsulate|enc)
+    ENABLED_KYBER_ENCAPSULATE=yes
+    ;;
+  decapsulate|dec)
+    ENABLED_KYBER_DECAPSULATE=yes
+    ;;
+  all)
+    ENABLED_KYBER_MAKE_KEY=yes
+    ENABLED_KYBER_ENCAPSULATE=yes
+    ENABLED_KYBER_DECAPSULATE=yes
     ;;
   original)
     ENABLED_ORIGINAL=yes
@@ -1461,6 +1503,15 @@ then
     else
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_ML_KEM"
     fi
+    if test "$ENABLED_KYBER_MAKE_KEY" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_NO_MAKE_KEY"
+    fi
+    if test "$ENABLED_KYBER_ENCAPSULATE" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_NO_ENCAPSULATE"
+    fi
+    if test "$ENABLED_KYBER_DECAPSULATE" = "no"; then
+        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KYBER_NO_DECAPSULATE"
+    fi
 
     if test "$ENABLED_WC_KYBER" = "yes"
     then
@@ -1473,7 +1524,7 @@ fi
 # Dilithium
 #  - SHA3, Shake128, Shake256 and AES-CTR
 AC_ARG_ENABLE([dilithium],
-    [AS_HELP_STRING([--enable-dilithium],[Enable DILITHIUM (requires --enable-experimental) (default: disabled)])],
+    [AS_HELP_STRING([--enable-dilithium],[Enable DILITHIUM (default: disabled)])],
     [ ENABLED_DILITHIUM=$enableval ],
     [ ENABLED_DILITHIUM=no ]
     )
@@ -2732,7 +2783,7 @@ AC_ARG_WITH([se050],
     [
         AC_MSG_CHECKING([for SE050])
 
-        LIBS="$LIBS -lSSS_APIs"
+        LIBS="$LIBS -lSSS_APIs -lex_common"
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <fsl_sss_api.h>]], [[ sss_mac_init(0);]])],[ libse050_linked=yes ],[ libse050_linked=no ])
 
         if test "x$libse050_linked" = "xno" ; then
@@ -5374,8 +5425,7 @@ AC_ARG_ENABLE([wolfEntropy],
     )
 AC_ARG_ENABLE([entropy-memuse],
     [AS_HELP_STRING([--enable-entropy-memuse],[Enable memuse entropy support (default: disabled)])],
-    [ ENABLED_ENTROPY_MEMUSE=$enableval ],
-    [ ENABLED_ENTROPY_MEMUSE=no ]
+    [ ENABLED_ENTROPY_MEMUSE=$enableval ]
     )
 
 # AES key wrap
@@ -9142,7 +9192,6 @@ then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PRIORITIZE_PSK"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_CHECK_ALERT_ON_ERR"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TICKET_HAVE_ID"
-        AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_OCSP_ISSUER_CHECK"
         ENABLED_TRUSTED_PEER_CERT=yes
     else
         CFLAGS=$(printf "%s" "$CFLAGS" | sed 's/-DOPENSSL_COMPATIBLE_DEFAULTS//g')

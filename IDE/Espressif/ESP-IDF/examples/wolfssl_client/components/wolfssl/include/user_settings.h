@@ -289,6 +289,10 @@
 
 /* Optionally enable some wolfSSH settings */
 #if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
+    /* Enable wolfSSH. Espressif examples need a few more settings, below */
+    #undef  WOLFSSL_WOLFSSH
+    #define WOLFSSL_WOLFSSH
+
     /* The default SSH Windows size is massive for an embedded target.
      * Limit it: */
     #define DEFAULT_WINDOW_SZ 2000
@@ -405,7 +409,10 @@
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684)
     /* Optionally set smaller size here */
-    #define HAVE_FFDHE_4096
+    #ifdef HAVE_FFDHE_4096
+        /* this size may be problematic on the C2 */
+    #endif
+    #define HAVE_FFDHE_2048
 #else
     #define HAVE_FFDHE_4096
 #endif

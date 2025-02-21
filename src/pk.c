@@ -1558,7 +1558,11 @@ static int wolfssl_read_der_bio(WOLFSSL_BIO* bio, unsigned char** out)
         WOLFSSL_ERROR_MSG("Malloc failure");
         err = 1;
     }
-    if (!err) {
+    if ((!err) && (derLen <= (int)sizeof(seq))) {
+        /* Copy the previously read data into the buffer. */
+        XMEMCPY(der, seq, derLen);
+    }
+    else if (!err) {
         /* Calculate the unread amount. */
         int len = derLen - (int)sizeof(seq);
         /* Copy the previously read data into the buffer. */
@@ -14663,6 +14667,13 @@ int wolfSSL_EC25519_shared_key(unsigned char *shared, unsigned int *sharedSz,
         res = 0;
     }
     if (res) {
+    #ifdef WOLFSSL_CURVE25519_BLINDING
+        /* An RNG is needed. */
+        if (wc_curve25519_set_rng(&privkey, wolfssl_make_global_rng()) != 0) {
+            res = 0;
+        }
+        else
+    #endif
         /* Initialize public key object. */
         if (wc_curve25519_init(&pubkey) != MP_OKAY) {
             WOLFSSL_MSG("wc_curve25519_init pubkey failed");

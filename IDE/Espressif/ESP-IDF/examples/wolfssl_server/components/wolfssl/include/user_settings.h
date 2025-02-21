@@ -25,8 +25,6 @@
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
 #define WOLFSSL_ESP_NO_WATCHDOG 1
 
-#define HAVE_AESCCM
-
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
@@ -291,6 +289,10 @@
 
 /* Optionally enable some wolfSSH settings */
 #if defined(ESP_ENABLE_WOLFSSH) || defined(CONFIG_ESP_ENABLE_WOLFSSH)
+    /* Enable wolfSSH. Espressif examples need a few more settings, below */
+    #undef  WOLFSSL_WOLFSSH
+    #define WOLFSSL_WOLFSSH
+
     /* The default SSH Windows size is massive for an embedded target.
      * Limit it: */
     #define DEFAULT_WINDOW_SZ 2000
@@ -404,7 +406,10 @@
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684)
     /* Optionally set smaller size here */
-    #define HAVE_FFDHE_4096
+    #ifdef HAVE_FFDHE_4096
+        /* this size may be problematic on the C2 */
+    #endif
+    #define HAVE_FFDHE_2048
 #else
     #define HAVE_FFDHE_4096
 #endif
@@ -527,7 +532,7 @@
 /* Adjust wait-timeout count if you see timeout in RSA HW acceleration.
  * Set to very large number and enable WOLFSSL_HW_METRICS to determine max. */
 #ifndef ESP_RSA_TIMEOUT_CNT
-    #define ESP_RSA_TIMEOUT_CNT 0xFF0000
+	#define ESP_RSA_TIMEOUT_CNT 0xFF0000
 #endif
 
 /* hash limit for test.c */

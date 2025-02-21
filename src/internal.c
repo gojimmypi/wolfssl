@@ -4582,14 +4582,11 @@ void DecodeSigAlg(const byte* input, byte* hashAlgo, byte* hsType)
             }
             break;
     #endif
-#if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM)
-        case PQC_SA_MAJOR:
-            /* Hash performed as part of sign/verify operation.
-             * However, if we want a dual alg signature with a
-             * classic algorithm as alternative, we need an explicit
-             * hash algo here.
-             */
+    /* Hash performed as part of sign/verify operation.
+     * However, if we want a dual alg signature with a classic algorithm as
+     * alternative, we need an explicit hash algo here. */
     #ifdef HAVE_FALCON
+        case FALCON_SA_MAJOR:
             if (input[1] == FALCON_LEVEL1_SA_MINOR) {
                 *hsType = falcon_level1_sa_algo;
                 *hashAlgo = sha256_mac;
@@ -4598,8 +4595,10 @@ void DecodeSigAlg(const byte* input, byte* hashAlgo, byte* hsType)
                 *hsType = falcon_level5_sa_algo;
                 *hashAlgo = sha512_mac;
             }
+            break;
     #endif /* HAVE_FALCON */
     #ifdef HAVE_DILITHIUM
+        case DILITHIUM_SA_MAJOR:
             if (input[1] == DILITHIUM_LEVEL2_SA_MINOR) {
                 *hsType = dilithium_level2_sa_algo;
                 *hashAlgo = sha256_mac;
@@ -4612,9 +4611,8 @@ void DecodeSigAlg(const byte* input, byte* hashAlgo, byte* hsType)
                 *hsType = dilithium_level5_sa_algo;
                 *hashAlgo = sha512_mac;
             }
-    #endif /* HAVE_DILITHIUM */
             break;
-#endif
+    #endif /* HAVE_DILITHIUM */
         default:
             *hashAlgo = input[0];
             *hsType   = input[1];
@@ -6054,8 +6052,14 @@ static int X25519SharedSecret(WOLFSSL* ssl, curve25519_key* priv_key,
     else
 #endif
     {
-        ret = wc_curve25519_shared_secret_ex(priv_key, pub_key, out, outlen,
-                                             EC25519_LITTLE_ENDIAN);
+    #ifdef WOLFSSL_CURVE25519_BLINDING
+        ret = wc_curve25519_set_rng(priv_key, ssl->rng);
+        if (ret == 0)
+    #endif
+        {
+            ret = wc_curve25519_shared_secret_ex(priv_key, pub_key, out, outlen,
+                                                 EC25519_LITTLE_ENDIAN);
+        }
     }
 
     /* Handle async pending response */
@@ -8686,6 +8690,13 @@ void wolfSSL_ResourceFree(WOLFSSL* ssl)
 #ifdef OPENSSL_EXTRA
     XFREE(ssl->param, ssl->heap, DYNAMIC_TYPE_OPENSSL);
 #endif
+#if defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY))
+    if (ssl->ocspResp) {
+        XFREE(ssl->ocspResp, NULL, 0);
+        ssl->ocspResp = NULL;
+        ssl->ocspRespSz = 0;
+    }
+#endif /* defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)) */
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_POST_HANDSHAKE_AUTH)
     while (ssl->certReqCtx != NULL) {
         CertReqCtx* curr = ssl->certReqCtx;
@@ -9009,6 +9020,14 @@ void FreeHandshakeResources(WOLFSSL* ssl)
 #endif /* !HAVE_SNI && && !HAVE_ALPN && !WOLFSSL_DTLS_CID &&
         * !WOLFSSL_POST_HANDSHAKE_AUTH */
 #endif /* HAVE_TLS_EXTENSIONS && !NO_TLS */
+
+#if defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY))
+    if (ssl->ocspResp != NULL) {
+        XFREE(ssl->ocspResp, NULL, 0);
+        ssl->ocspResp = NULL;
+        ssl->ocspRespSz = 0;
+    }
+#endif /* defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)) */
 
 #ifdef WOLFSSL_STATIC_MEMORY
     /* when done with handshake decrement current handshake count */
@@ -11916,7 +11935,7 @@ static int GetRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
                              (!ssl->options.dtls &&
                               rh->pvMinor < ssl->version.minor))
         #else
-                            rh->pvMinor < ssl->version.minor
+                            (rh->pvMinor < ssl->version.minor)
         #endif
                    )) {
             WOLFSSL_MSG("SSL version error");
@@ -13857,7 +13876,7 @@ static int ProcessCSR_ex(WOLFSSL* ssl, byte* input, word32* inOutIdx,
     /* InitOcspResponse sets single and status to response struct. */
     InitOcspResponse(response, single, status, input +*inOutIdx, status_length, ssl->heap);
 
-    if (OcspResponseDecode(response, SSL_CM(ssl), ssl->heap, 0) != 0)
+    if (OcspResponseDecode(response, SSL_CM(ssl), ssl->heap, 0, 0) != 0)
         ret = BAD_CERTIFICATE_STATUS_ERROR;
     else if (CompareOcspReqResp(request, response) != 0)
         ret = BAD_CERTIFICATE_STATUS_ERROR;
@@ -16963,7 +16982,7 @@ static int DoCertificateStatus(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                                      status_length, ssl->heap);
                     response->pendingCAs = pendingCAs;
                     if ((OcspResponseDecode(response, SSL_CM(ssl), ssl->heap,
-                                                                        0) != 0)
+                            0, 0) != 0)
                     ||  (response->responseStatus != OCSP_SUCCESSFUL)
                     ||  (response->single->status->status != CERT_GOOD))
                         ret = BAD_CERTIFICATE_STATUS_ERROR;
@@ -24095,7 +24114,7 @@ int CreateOcspRequest(WOLFSSL* ssl, OcspRequest* request,
         ret = InitOcspRequest(request, cert, 0, ssl->heap);
     if (ret == 0) {
         /* make sure ctx OCSP request is updated */
-        if (!ssl->buffers.weOwnCert) {
+        if (!ssl->buffers.weOwnCert && SSL_CM(ssl) != NULL) {
             wolfSSL_Mutex* ocspLock = &SSL_CM(ssl)->ocsp_stapling->ocspLock;
             if (wc_LockMutex(ocspLock) == 0) {
                 if (ssl->ctx->certOcspRequest == NULL) {
@@ -24836,6 +24855,52 @@ static int BuildCertificateStatus(WOLFSSL* ssl, byte type, buffer* status,
     return ret;
 }
 #endif
+
+#if defined(HAVE_CERTIFICATE_STATUS_REQUEST) &&                                \
+    (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) ||                         \
+    defined(WOLFSSL_HAPROXY))
+static int BuildCertificateStatusWithStatusCB(WOLFSSL* ssl)
+{
+    WOLFSSL_OCSP *ocsp;
+    void *ioCtx = NULL;
+    buffer response;
+    int ret;
+
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
+    ocsp = SSL_CM(ssl)->ocsp_stapling;
+    if (ocsp == NULL || ocsp->statusCb == NULL)
+        return BAD_FUNC_ARG;
+    ioCtx = (ssl->ocspIOCtx != NULL) ?  ssl->ocspIOCtx : ocsp->cm->ocspIOCtx;
+    XMEMSET(&response, 0, sizeof(response));
+    WOLFSSL_MSG("Calling ocsp->statusCb");
+    ret = ocsp->statusCb(ssl, ioCtx);
+    switch (ret) {
+        case SSL_TLSEXT_ERR_OK:
+            if (ssl->ocspResp == NULL || ssl->ocspRespSz == 0) {
+                ret = 0;
+                break;
+            }
+            response.buffer = ssl->ocspResp;
+            response.length = ssl->ocspRespSz;
+            ret = BuildCertificateStatus(ssl, WOLFSSL_CSR_OCSP, &response, 1);
+            break;
+        case SSL_TLSEXT_ERR_NOACK:
+            /* No OCSP response to send */
+            ret = 0;
+            break;
+        case SSL_TLSEXT_ERR_ALERT_FATAL:
+        /* fall through */
+        default:
+            ret = WOLFSSL_FATAL_ERROR;
+            break;
+    }
+    return ret;
+}
+#endif /* HAVE_CERTIFICATE_STATUS_REQUEST && (defined(OPENSSL_ALL) ||
+          defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)) */
 #endif /* NO_WOLFSSL_SERVER */
 
 /* handle generation of certificate_status (22) */
@@ -24847,7 +24912,10 @@ int SendCertificateStatus(WOLFSSL* ssl)
     WOLFSSL_START(WC_FUNC_CERTIFICATE_STATUS_SEND);
     WOLFSSL_ENTER("SendCertificateStatus");
 
-    (void) ssl;
+    if (ssl == NULL || SSL_CM(ssl) == NULL) {
+        WOLFSSL_MSG("SendCertificateStatus bad args");
+        return BAD_FUNC_ARG;
+    }
 
 #ifdef HAVE_CERTIFICATE_STATUS_REQUEST
     status_type = ssl->status_request;
@@ -24855,6 +24923,16 @@ int SendCertificateStatus(WOLFSSL* ssl)
 
 #ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
     status_type = status_type ? status_type : ssl->status_request_v2;
+#endif
+
+#if defined(HAVE_CERTIFICATE_STATUS_REQUEST) && \
+    (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || \
+    defined(WOLFSSL_HAPROXY))
+    if (SSL_CM(ssl)->ocsp_stapling != NULL &&
+            SSL_CM(ssl)->ocsp_stapling->statusCb != NULL) {
+        if (ssl->status_request == WOLFSSL_CSR_OCSP)
+            return BuildCertificateStatusWithStatusCB(ssl);
+    }
 #endif
 
     switch (status_type) {
@@ -25676,6 +25754,9 @@ int SendData(WOLFSSL* ssl, const void* data, size_t sz)
             }
             return error;
         }
+        else {
+            ssl->error = 0; /* Clear any previous errors */
+        }
 
         sent += buffSz;
 
@@ -25852,7 +25933,8 @@ startScr:
 #endif
     }
 
-    size = (int)min_size_t(sz, (size_t)ssl->buffers.clearOutputBuffer.length);
+    size = (sz < (size_t)ssl->buffers.clearOutputBuffer.length) ?
+        (int)sz : (int)ssl->buffers.clearOutputBuffer.length;
 
     XMEMCPY(output, ssl->buffers.clearOutputBuffer.buffer, size);
 
@@ -27818,6 +27900,7 @@ static int ParseCipherList(Suites* suites,
             }
             if (currLen == 0)
                 break;
+            ++next; /* increment to skip ':' */
         }
 
     #if defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL)
@@ -28169,8 +28252,7 @@ static int ParseCipherList(Suites* suites,
                 break;
             }
         }
-    }
-    while (next++); /* increment to skip ':' */
+    } while (next);
 
     if (ret) {
         int keySz = 0;

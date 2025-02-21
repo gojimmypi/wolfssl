@@ -2152,6 +2152,15 @@ static int DtlsSrtpSelProfiles(word16* id, const char* profile_str)
     return WOLFSSL_SUCCESS;
 }
 
+/**
+ * @brief Set the SRTP protection profiles for DTLS.
+ *
+ * @param ctx Pointer to the WOLFSSL_CTX structure representing the SSL/TLS
+ *            context.
+ * @param profile_str A colon-separated string of SRTP profile names.
+ * @return 0 on success to match OpenSSL
+ * @return 1 on error to match OpenSSL
+ */
 int wolfSSL_CTX_set_tlsext_use_srtp(WOLFSSL_CTX* ctx, const char* profile_str)
 {
     int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
@@ -2167,6 +2176,16 @@ int wolfSSL_CTX_set_tlsext_use_srtp(WOLFSSL_CTX* ctx, const char* profile_str)
 
     return ret;
 }
+
+/**
+ * @brief Set the SRTP protection profiles for DTLS.
+ *
+ * @param ssl Pointer to the WOLFSSL structure representing the SSL/TLS
+ *            session.
+ * @param profile_str A colon-separated string of SRTP profile names.
+ * @return 0 on success to match OpenSSL
+ * @return 1 on error to match OpenSSL
+ */
 int wolfSSL_set_tlsext_use_srtp(WOLFSSL* ssl, const char* profile_str)
 {
     int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
@@ -9221,8 +9240,14 @@ static int CheckcipherList(const char* list)
 
         next   = XSTRSTR(next, ":");
 
-        current_length = (!next) ? (word32)XSTRLEN(current)
-                                 : (word32)(next - current);
+        if (next) {
+            current_length = (word32)(next - current);
+            ++next; /* increment to skip ':' */
+        }
+        else {
+            current_length = (word32)XSTRLEN(current);
+        }
+
         if (current_length == 0) {
             break;
         }
@@ -9279,8 +9304,7 @@ static int CheckcipherList(const char* list)
             /* list has mixed suites */
             return 0;
         }
-    }
-    while (next++); /* increment to skip ':' */
+    } while (next);
 
     if (findTLSv13Suites == 0 && findbeforeSuites == 1) {
         ret = 1;/* only before TLSv13 suites */
@@ -17331,7 +17355,7 @@ void wolfSSL_ERR_load_SSL_strings(void)
 }
 #endif
 
-#ifdef HAVE_OCSP
+#if defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY))
 long wolfSSL_get_tlsext_status_ocsp_resp(WOLFSSL *s, unsigned char **resp)
 {
     if (s == NULL || resp == NULL)
@@ -17347,12 +17371,13 @@ long wolfSSL_set_tlsext_status_ocsp_resp(WOLFSSL *s, unsigned char *resp,
     if (s == NULL)
         return WOLFSSL_FAILURE;
 
+    XFREE(s->ocspResp, NULL, 0);
     s->ocspResp   = resp;
     s->ocspRespSz = len;
 
     return WOLFSSL_SUCCESS;
 }
-#endif /* HAVE_OCSP */
+#endif /* defined(HAVE_OCSP) && (defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)) */
 
 #ifdef HAVE_MAX_FRAGMENT
 #if !defined(NO_WOLFSSL_CLIENT) && !defined(NO_TLS)
