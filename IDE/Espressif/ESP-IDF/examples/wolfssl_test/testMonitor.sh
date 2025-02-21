@@ -187,7 +187,7 @@ else
     THIS_OUTPUT=$(idf.py --version)
 fi
 
-if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
+if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" && "${THIS_KEYWORD}" != "DISCONNECT_ALL" ]]; then
     echo "Build!"
 
     if [[ "$THIS_TARGET" == "esp8266" ]]; then
@@ -289,7 +289,7 @@ if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
     fi
 
 else
-    echo "CONNECT_ONLY"
+    echo "Build skipped, special keyword: $THIS_KEYWORD"
 fi
 
 # popd || exit 1
