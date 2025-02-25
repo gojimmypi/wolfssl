@@ -8624,16 +8624,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
             /* re-init to the placeholder value so we can delete it properly */
             ret = wc_HashInit(hash, typesGood[this_type]);
             if (ret < 0) {
-                ESP_LOGE("hash", "wc_HashDelete wc_HashInit ret = %d", ret);
+                WOLFSSL_MSG("ERROR: Failed to initialize placeholder hash.");
+                return WC_TEST_RET_ENC_I(i);
             }
         }
-        if (hash->type == WC_HASH_TYPE_SHA3_224) {
-            ESP_LOGI("hash", "WC_HASH_TYPE_SHA3_224 wc_HashDelete ret = %d", ret);
-        }
-        /* Even for not implemented, we created a known hash, delete always: */
+
+        /* Even for not implemented, we created a known hash, always delete: */
         ret = wc_HashDelete(hash, &hash);
-        if (1 == 1) {
-            ESP_LOGI("hash", "wc_HashDelete ret = %d", ret);
+        if (ret < 0) {
+            WOLFSSL_MSG("ERROR: Failed to delete hash.");
+            return WC_TEST_RET_ENC_I(i);
         }
 #endif
     } /* Valid hash functions */
