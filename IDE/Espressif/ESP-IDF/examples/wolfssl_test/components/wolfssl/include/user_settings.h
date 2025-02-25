@@ -28,6 +28,10 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* WOLFSSL_TRACK_MEMORY_VERBOSE not yet supported on ESP32.
+ * We'll use optional alternative: */
+#define DEBUG_WOLFSSL_ESP32_HEAP
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
  * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
@@ -110,7 +114,7 @@
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define TEST_ESPIDF_ALL_WOLFSSL
-
+    #define WOLFCRYPT_HAVE_SRP
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
