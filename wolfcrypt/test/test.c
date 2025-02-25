@@ -121,19 +121,48 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #endif
 #endif /* WOLFSSL_TRACK_MEMORY_VERBOSE && !WOLFSSL_STATIC_MEMORY */
 
-#ifdef DEBUG_WOLFSSL_ESP32_HEAP
+#ifdef WOLFSSL_ESPIDF
     #undef  PRINT_HEAP_CHECKPOINT
-    #define PRINT_HEAP_CHECKPOINT(b, i)                                          \
-                ESP_LOGI(ESPIDF_TAG, "%s # %d; Heap free: %d",                   \
-                                       ((b) ? (b) : ""),                         \
-                                       ((i) ? (i) : 0),                          \
-                                  (int)heap_caps_get_free_size(MALLOC_CAP_8BIT));
-    #define PRINT_HEAP_ADDRESS(p)                                            \
-            ESP_LOGI(ESPIDF_TAG, "Allocated address: %p", (void *)(p));
-#else
-    #define PRINT_HEAP_CHECKPOINT(b, i) WC_DO_NOTHING;
-    #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING;
+    #undef  PRINT_HEAP_ADDRESS
+    static int esp_start_heap = 0;
+    static int esp_last_heap = 0;
+    static int esp_this_heap = 0;
+
+    #ifdef DEBUG_WOLFSSL_ESP32_HEAP
+        #define PRINT_HEAP_CHECKPOINT(b, i)                                  \
+            esp_last_heap = esp_this_heap;                                   \
+            esp_this_heap = (int)heap_caps_get_free_size(MALLOC_CAP_8BIT);   \
+            if (esp_start_heap == 0) {                                       \
+                esp_start_heap = esp_this_heap;                              \
+            }                                                                \
+            ESP_LOGI(ESPIDF_TAG, "%s #%d; Heap free: %d",                    \
+                                ((b) ? (b) : ""),  /* breadcumb string */    \
+                                ((i) ? (i) : 0),   /* index */               \
+                                 esp_this_heap);
+
+        #define PRINT_HEAP_ADDRESS(p)                                        \
+                ESP_LOGI(ESPIDF_TAG, "Allocated address: %p", (void *)(p));
+    #else
+        #define PRINT_HEAP_CHECKPOINT(b, i)                                  \
+            esp_last_heap = esp_this_heap;                                   \
+            esp_this_heap = (int)heap_caps_get_free_size(MALLOC_CAP_8BIT);   \
+            if (esp_start_heap == 0) {                                       \
+                esp_start_heap = esp_this_heap;                              \
+                esp_last_heap  = esp_this_heap;                              \
+            }                                                                \
+            if (esp_this_heap == esp_last_heap) {                            \
+                ESP_LOGV(ESPIDF_TAG, "Heap constant: %d", esp_this_heap);    \
+            }                                                                \
+            else {                                                           \
+                ESP_LOGI(ESPIDF_TAG, "Breadcrumb: %s", ((b) ? (b) : ""));    \
+                ESP_LOGW(ESPIDF_TAG, "Warning: this heap %d != last %d",     \
+                                     esp_this_heap, esp_last_heap);          \
+            }
+
+        #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING;
+    #endif
 #endif
+
 
 #ifdef USE_FLAT_TEST_H
     #ifdef HAVE_CONFIG_H
@@ -8495,7 +8524,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
         return WC_TEST_RET_ENC_EC(ret);
 
+#ifdef DEBUG_WOLFSSL_ESP32_HEAP
     PRINT_HEAP_CHECKPOINT("Initial hash test", 0);
+#endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     /* Delete the WC_HASH_TYPE_SHA256 type hash for the following tests */
@@ -8513,7 +8544,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
             ESP_LOGE("test", "err 8508");
             return WC_TEST_RET_ENC_I(i);
         }
+#if defined(DEBUG_WOLFSSL_ESP32_HEAP)
+        /* The prior wc_HashNew should have adjusted heap */
         PRINT_HEAP_CHECKPOINT("Check invalid hash init", i);
+#endif
         ret = wc_HashInit(hash, typesBad[i]);
 
         PRINT_HEAP_CHECKPOINT("Check invalid hash update", i);
