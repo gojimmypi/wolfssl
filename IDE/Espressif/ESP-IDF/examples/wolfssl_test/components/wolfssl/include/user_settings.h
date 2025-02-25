@@ -29,8 +29,8 @@
 #include "sdkconfig.h"
 
 /* WOLFSSL_TRACK_MEMORY_VERBOSE not yet supported on ESP32.
- * We'll use optional alternative: */
-#define DEBUG_WOLFSSL_ESP32_HEAP
+ * We can use optional alternative: */
+/* #define DEBUG_WOLFSSL_ESP32_HEAP */
 
 /* This user_settings.h is for Espressif ESP-IDF
  *

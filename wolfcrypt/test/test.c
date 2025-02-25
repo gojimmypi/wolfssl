@@ -115,7 +115,7 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #ifdef WOLFSSL_ESPIDF
         //
     #else
-        // #define PRINT_HEAP_CHECKPOINT() WC_DO_NOTHING
+        // #define PRINT_HEAP_CHECKPOINT() WC_DO_NOTHING;
         struct mallinfo2 mi;
         #define PRINT_HEAP_CHECKPOINT() mi = mallinfo2(); printf("Free memory: %d bytes\n", (int)mi.fordblks);
     #endif
@@ -131,7 +131,8 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #define PRINT_HEAP_ADDRESS(p)                                            \
             ESP_LOGI(ESPIDF_TAG, "Allocated address: %p", (void *)(p));
 #else
-    #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING
+    #define PRINT_HEAP_CHECKPOINT(b, i) WC_DO_NOTHING;
+    #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING;
 #endif
 
 #ifdef USE_FLAT_TEST_H
