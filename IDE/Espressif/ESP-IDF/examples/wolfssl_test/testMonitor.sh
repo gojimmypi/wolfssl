@@ -63,7 +63,7 @@ elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
 elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
     esp8684_PORT="/dev/ttyS10"
     esp8266_PORT="/dev/ttyS11"
-    esp32c2_PORT="/dev/ttyS3"
+    esp32c2_PORT="/dev/ttyS12"
     esp32s3_PORT="/dev/ttyS4"
     esp32s2_PORT="/dev/ttyS5"
     esp32c3_PORT="/dev/ttyS6"
@@ -75,7 +75,7 @@ elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
     # defined and saved in putty! These are the saved sessions in putty:
     esp8684_PUTTY="COM10-74880"
     esp8266_PUTTY="COM11-74880"
-    esp32c2_PUTTY="COM3-74880"
+    esp32c2_PUTTY="COM12-74880"
     esp32s3_PUTTY="COM4"
     esp32s2_PUTTY="COM5"
     esp32c3_PUTTY="COM6"
@@ -187,7 +187,7 @@ else
     THIS_OUTPUT=$(idf.py --version)
 fi
 
-if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
+if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" && "${THIS_KEYWORD}" != "DISCONNECT_ALL" ]]; then
     echo "Build!"
 
     if [[ "$THIS_TARGET" == "esp8266" ]]; then
@@ -289,7 +289,7 @@ if [[ "${THIS_KEYWORD}" != "CONNECT_ONLY" ]]; then
     fi
 
 else
-    echo "CONNECT_ONLY"
+    echo "Build skipped, special keyword: $THIS_KEYWORD"
 fi
 
 # popd || exit 1

@@ -2,6 +2,10 @@
 #
 # testAll.sh [keyword suffix] [ESP32 toolchain dir] [ESP8266 toolchain dir]
 #
+# Special [keyword suffix] values:
+#   CONNECT_ONLY
+#   DISCONNECT_ALL
+#
 # Example:
 #
 #   testAll.sh http_test  /mnt/c/SysGCC/esp32/esp-idf/v5.2-master  /mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
@@ -38,6 +42,11 @@ if [[ "$PATH" == *"rtos-sdk"* ]]; then
     exit 1
 fi
 
+# Sometimes THIS_SUFFIX will be special keywords
+THIS_SUFFIX="$1"
+
+echo "THIS_SUFFIX: $THIS_SUFFIX"
+
 # ESP32 Path for ESP-IDF: fixed value or param #2
 WRK_IDF_PATH_ESP32=$2
 if [[ "$WRK_IDF_PATH_ESP32" == "" ]]; then
@@ -66,12 +75,28 @@ fi
 
 # TODO ESP-IDF v4 only supports: esp32|esp32s2|esp32c3|esp32s3
 
-#******************************************************************************
-# Kill all currently running instances of putty.exe
-# If there are no running instances, taskkill exits with non-zero error code.
-#******************************************************************************
-echo "Closing any open putty sessions"
-taskkill.exe /IM putty.exe /F  > /dev/null 2>&1;
+# Some features, such as those related to putty on Windows, only work on WSL
+if [ -n "$WSL_DISTRO_NAME" ]; then
+    #******************************************************************************
+    # Kill all currently running instances of putty.exe
+    # If there are no running instances, taskkill exits with non-zero error code.
+    #******************************************************************************
+    echo "Closing any open putty sessions"
+    taskkill.exe /IM putty.exe /F  > /dev/null 2>&1;
+
+    # If disconnect only, there's nothing else to do.
+    if [[ "${THIS_SUFFIX}" == "DISCONNECT_ALL" ]]; then
+        echo "Disconnect all putty, done!"
+        exit 0
+    else
+        echo "Continue with THIS_SUFFIX = ${THIS_SUFFIX}"
+    fi
+    export ESPIDF_PUTTY_MONITOR="TRUE"
+
+else
+    echo "Skipping Windows taskkill, WSL not detected."
+    export ESPIDF_PUTTY_MONITOR=
+fi
 
 # Abort on any future errors
 set -e
@@ -79,10 +104,6 @@ set -e
 # Save the current PATH to a temporary variable
 ORIGINAL_PATH="$PATH"
 echo "ORIGINAL_PATH=$PATH"
-
-export ESPIDF_PUTTY_MONITOR="TRUE"
-
-THIS_SUFFIX="$1"
 
 
 #******************************************************************************
