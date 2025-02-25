@@ -111,13 +111,24 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     }
 #else
     #ifdef WOLFSSL_ESPIDF
-        #define PRINT_HEAP_CHECKPOINT() ESP_LOGI("heap", "free %d", (int)heap_caps_get_free_size(MALLOC_CAP_8BIT));
+        //
     #else
         // #define PRINT_HEAP_CHECKPOINT() WC_DO_NOTHING
         struct mallinfo2 mi;
         #define PRINT_HEAP_CHECKPOINT() mi = mallinfo2(); printf("Free memory: %d bytes\n", (int)mi.fordblks);
     #endif
 #endif /* WOLFSSL_TRACK_MEMORY_VERBOSE && !WOLFSSL_STATIC_MEMORY */
+
+#ifdef DEBUG_WOLFSSL_ESP32_HEAP
+    #undef  PRINT_HEAP_CHECKPOINT
+    #define PRINT_HEAP_CHECKPOINT()                                          \
+                ESP_LOGI(ESPIDF_TAG, "Heap free: %d",                        \
+                    (int)heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    #define PRINT_HEAP_ADDRESS(p)                                            \
+            ESP_LOGI(ESPIDF_TAG, "Allocated address: %p", (void *)(p));
+#else
+    #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING
+#endif
 
 #ifdef USE_FLAT_TEST_H
     #ifdef HAVE_CONFIG_H
@@ -1737,19 +1748,6 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
             TEST_FAIL("Hash     test failed!\n", ret);
         else
             TEST_PASS("Hash     test passed!\n");
-//
-//        PRIVATE_KEY_UNLOCK();
-//        if ( (ret = hpke_test()) != 0)
-//            TEST_FAIL("HPKE     test failed!\n", ret);
-//        else
-//            TEST_PASS("HPKE     test passed!\n");
-//        PRIVATE_KEY_LOCK();
-
-//        if ( (ret = rsa_test()) != 0)
-//            TEST_FAIL("RSA      test failed!\n", ret);
-//        else
-//            TEST_PASS("RSA      test passed!\n");
-
         }
 
 
@@ -8452,15 +8450,14 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
                                         WC_HASH_TYPE_NONE };
 
     WOLFSSL_ENTER("hash_test");
-    ESP_LOGI("test", "--test");
+
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     hash = wc_HashNew(WC_HASH_TYPE_SHA256, HEAP_HINT, devId, &ret);
     if (hash == NULL) {
-        ESP_LOGE("test", "fail to wc_HashNew");
         return WC_TEST_RET_ENC_EC(ret);
     }
     else {
-        ESP_LOGE("test", "wc_HashNew ret = %d", ret);
+        PRINT_HEAP_ADDRESS(hash);
     }
 #else
     XMEMSET(hash, 0, sizeof(wc_HashAlg));
@@ -8488,9 +8485,11 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     ret = wc_HashFinal(NULL, WC_HASH_TYPE_SHA256, out);
     if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
         return WC_TEST_RET_ENC_EC(ret);
-    int heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    ESP_LOGI("test", "Free heap 8529 memory: %d bytes; ret = %d",
-                                        heap_current, ret);
+
+    PRINT_HEAP_CHECKPOINT();
+//    int heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+//    ESP_LOGI("test", "Free heap 8529 memory: %d bytes; ret = %d",
+//                                       heap_current, ret);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     /* Delete the WC_HASH_TYPE_SHA256 type hash for the following tests */
@@ -8502,20 +8501,22 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
 
      /* Try invalid hash algorithms. */
     for (i = 0; i < (int)(sizeof(typesBad)/sizeof(*typesBad)); i++) {
-        heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-
+        // heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        PRINT_HEAP_CHECKPOINT();
         hash = wc_HashNew(typesBad[i], HEAP_HINT, devId, &ret);
         if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) {
             ESP_LOGE("test", "err 8508");
             return WC_TEST_RET_ENC_I(i);
         }
         // ret = wc_HashInit(hash, WC_HASH_TYPE_SHA256);
-        ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
-                                         heap_current, ret);
+        //ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
+        //                                 heap_current, ret);
+        PRINT_HEAP_CHECKPOINT();
         ret = wc_HashInit(hash, typesBad[i]);
-        heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-        ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
-                                         heap_current, ret);
+        PRINT_HEAP_CHECKPOINT();
+        //heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        //ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
+        //                                 heap_current, ret);
 
         if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) {
             ESP_LOGE("test", "err 8520");
@@ -8549,9 +8550,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     /* TODO move */
     int this_type = HASH_TYPE_E;
     for (i = 0; i < (int)(sizeof(typesGood)/sizeof(*typesGood)); i++) {
-        heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-        ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
-                                         heap_current, ret);
+        PRINT_HEAP_CHECKPOINT();
+        //heap_current = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        //ESP_LOGI("test", "Free heap memory: %d bytes; ret = %d",
+        //                                 heap_current, ret);
 
         exp_ret = 0;
         this_type = i;
