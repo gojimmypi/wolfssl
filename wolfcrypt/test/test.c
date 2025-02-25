@@ -1560,7 +1560,7 @@ static WOLFSSL_TEST_SUBROUTINE wc_test_ret_t nist_sp80056c_kdf_test(void)
             (max_relative_stack, printf(__VA_ARGS__)) < 0) {    \
             return err_sys("post-test check failed", WC_TEST_RET_ENC_NC);\
         }                                                       \
-        PRINT_HEAP_CHECKPOINT("", 0)                            \
+        PRINT_HEAP_CHECKPOINT("TEST_PASS", 0)                            \
         ASSERT_RESTORED_VECTOR_REGISTERS(exit(1););             \
     }
 #endif
@@ -8524,7 +8524,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
         return WC_TEST_RET_ENC_EC(ret);
 
-#ifdef DEBUG_WOLFSSL_ESP32_HEAP
+#if !defined(WOLFSSL_STATIC_MEMORY) && defined(DEBUG_WOLFSSL_ESP32_HEAP)
     PRINT_HEAP_CHECKPOINT("Initial hash test", 0);
 #endif
 
@@ -8544,7 +8544,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
             ESP_LOGE("test", "err 8508");
             return WC_TEST_RET_ENC_I(i);
         }
-#if defined(DEBUG_WOLFSSL_ESP32_HEAP)
+#if !defined(WOLFSSL_STATIC_MEMORY) && defined(DEBUG_WOLFSSL_ESP32_HEAP)
         /* The prior wc_HashNew should have adjusted heap */
         PRINT_HEAP_CHECKPOINT("Check invalid hash init", i);
 #endif
@@ -8560,7 +8560,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
         ret = wc_HashFinal(hash, typesBad[i], out);
         if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
             return WC_TEST_RET_ENC_I(i);
-        // wc_HashFree(hash, typesBad[i]);
+        ret = wc_HashFree(hash, typesBad[i]);
+        if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
+            return WC_TEST_RET_ENC_I(i);
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         ret = wc_HashDelete(hash, &hash);
