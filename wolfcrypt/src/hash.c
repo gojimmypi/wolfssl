@@ -719,7 +719,7 @@ int wc_HashDelete(wc_HashAlg *hash, wc_HashAlg **hash_p) {
     }
     ret = wc_HashFree(hash, hash->type);
     if (ret < 0) {
-        ESP_LOGI("hash", "failed to free, %d", ret);
+        ESP_LOGE("hash", "failed to free, %d", ret);
         return ret;
     }
     XFREE(hash, hash->heap, DYNAMIC_TYPE_HASHES);
