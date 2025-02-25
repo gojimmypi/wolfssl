@@ -8638,8 +8638,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
 #endif
     } /* Valid hash functions */
 
-    return 0;
-
+    /* non wc_HashAlg hash object tests follow: */
     for (i = 0; i < (int)(sizeof(typesHashBad)/sizeof(*typesHashBad)); i++) {
         ret = wc_Hash(typesHashBad[i], data, sizeof(data), out, sizeof(out));
         if ((ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) &&
@@ -8820,10 +8819,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     ret = wc_GetCTC_HashOID(-1);
     if (ret != 0)
         return WC_TEST_RET_ENC_EC(ret);
-#endif
-
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    (void)wc_HashDelete(hash, &hash);
 #endif
 
     return 0;
