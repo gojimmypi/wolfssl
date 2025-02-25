@@ -121,9 +121,9 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
 
 #ifdef DEBUG_WOLFSSL_ESP32_HEAP
     #undef  PRINT_HEAP_CHECKPOINT
-    #define PRINT_HEAP_CHECKPOINT()                                          \
-                ESP_LOGI(ESPIDF_TAG, "Heap free: %d",                        \
-                    (int)heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    #define PRINT_HEAP_CHECKPOINT(b)                                          \
+                ESP_LOGI(ESPIDF_TAG, "%s Heap free: %d",                        \
+                    ((b) ? (b) : ""), (int)heap_caps_get_free_size(MALLOC_CAP_8BIT));
     #define PRINT_HEAP_ADDRESS(p)                                            \
             ESP_LOGI(ESPIDF_TAG, "Allocated address: %p", (void *)(p));
 #else
@@ -1526,7 +1526,7 @@ static WOLFSSL_TEST_SUBROUTINE wc_test_ret_t nist_sp80056c_kdf_test(void)
             (max_relative_stack, printf(__VA_ARGS__)) < 0) {    \
             return err_sys("post-test check failed", WC_TEST_RET_ENC_NC);\
         }                                                       \
-        PRINT_HEAP_CHECKPOINT();                                \
+        PRINT_HEAP_CHECKPOINT("");                                \
         ASSERT_RESTORED_VECTOR_REGISTERS(exit(1););             \
     }
 #endif
@@ -8490,7 +8490,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
     if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG))
         return WC_TEST_RET_ENC_EC(ret);
 
-    PRINT_HEAP_CHECKPOINT();
+    PRINT_HEAP_CHECKPOINT("Initial hash test");
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     /* Delete the WC_HASH_TYPE_SHA256 type hash for the following tests */
@@ -8502,16 +8502,16 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
 
     /* Try invalid hash algorithms. */
     for (i = 0; i < (int)(sizeof(typesBad)/sizeof(*typesBad)); i++) {
-        PRINT_HEAP_CHECKPOINT();
+        PRINT_HEAP_CHECKPOINT("Check invalid hash new");
         hash = wc_HashNew(typesBad[i], HEAP_HINT, devId, &ret);
         if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) {
             ESP_LOGE("test", "err 8508");
             return WC_TEST_RET_ENC_I(i);
         }
-        PRINT_HEAP_CHECKPOINT();
+        PRINT_HEAP_CHECKPOINT("Check invalid hash init");
         ret = wc_HashInit(hash, typesBad[i]);
-        PRINT_HEAP_CHECKPOINT();
 
+        PRINT_HEAP_CHECKPOINT("Check invalid hash update");
         if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) {
             return WC_TEST_RET_ENC_I(i);
         }
@@ -8525,17 +8525,17 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
         ret = wc_HashDelete(hash, &hash);
-        PRINT_HEAP_CHECKPOINT();
-
-        if (1 == 1) {
-            ESP_LOGI("hash", "wc_HashDelete ret = %d", ret);
+        PRINT_HEAP_CHECKPOINT("Check invalid hash delete");
+        if (ret != WC_NO_ERR_TRACE(BAD_FUNC_ARG)) {
+            WOLFSSL_MSG("ERROR: wc_HashDelete failed, expected BAD_FUNC_ARG.");
+            return WC_TEST_RET_ENC_I(i);
         }
 #endif
     }
 
     /* Try valid hash algorithms. */
     for (i = 0; i < (int)(sizeof(typesGood)/sizeof(*typesGood)); i++) {
-        PRINT_HEAP_CHECKPOINT();
+        PRINT_HEAP_CHECKPOINT("Check valid hashes");
         exp_ret = 0; /* For valid had, we expect return result to be zero */
         this_type = i;
         for(j = 0; j < (int)(sizeof(typesNoImpl) / sizeof(*typesNoImpl)); j++) {
