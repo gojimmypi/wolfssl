@@ -712,16 +712,11 @@ wc_HashAlg* wc_HashNew(enum wc_HashType type, void* heap, int devId,
 
 int wc_HashDelete(wc_HashAlg *hash, wc_HashAlg **hash_p) {
     int ret;
-    ESP_LOGI("hash", "delete");
-    if (hash == NULL) {
-        ESP_LOGI("hash", "delete null");
+    if (hash == NULL)
         return BAD_FUNC_ARG;
-    }
     ret = wc_HashFree(hash, hash->type);
-    if (ret < 0) {
-        ESP_LOGE("hash", "failed to free, %d", ret);
+    if (ret < 0)
         return ret;
-    }
     XFREE(hash, hash->heap, DYNAMIC_TYPE_HASHES);
     if (hash_p != NULL)
         *hash_p = NULL;
@@ -732,13 +727,8 @@ int wc_HashDelete(wc_HashAlg *hash, wc_HashAlg **hash_p) {
 int wc_HashInit_ex(wc_HashAlg* hash, enum wc_HashType type, void* heap,
     int devId)
 {
-    if (type == WC_HASH_TYPE_MD5_SHA || type == WC_HASH_TYPE_MD5_SHA || type == WC_HASH_TYPE_MD4) {
-        return BAD_FUNC_ARG;
-    }
-
-
     int ret = WC_NO_ERR_TRACE(HASH_TYPE_E); /* Default to hash type error */
-    ESP_LOGI("hash", "type = %d", type);
+
     if (hash == NULL)
         return BAD_FUNC_ARG;
 
@@ -747,7 +737,6 @@ int wc_HashInit_ex(wc_HashAlg* hash, enum wc_HashType type, void* heap,
 #ifdef WC_NO_CONSTRUCTORS
     (void)heap;
 #else
-    ESP_LOGW("hash", "old=%d, heap = %d",(uint)(hash->heap), (uint)heap);
     hash->heap = heap;
 #endif
 
@@ -828,9 +817,9 @@ int wc_HashInit_ex(wc_HashAlg* hash, enum wc_HashType type, void* heap,
     #endif
 
         /* not supported */
-        case WC_HASH_TYPE_MD5_SHA: /* 9 */
-        case WC_HASH_TYPE_MD2: /* 1 */
-        case WC_HASH_TYPE_MD4: /* 2 */
+        case WC_HASH_TYPE_MD5_SHA:
+        case WC_HASH_TYPE_MD2:
+        case WC_HASH_TYPE_MD4:
         case WC_HASH_TYPE_BLAKE2B:
         case WC_HASH_TYPE_BLAKE2S:
     #if defined(WOLFSSL_SHA3) && defined(WOLFSSL_SHAKE128)
