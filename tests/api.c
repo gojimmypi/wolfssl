@@ -542,7 +542,7 @@ static int wolfssl_bio_s_fixed_mem_write(WOLFSSL_BIO* bio, const char* data,
         if (bio->wrSz - bio->wrIdx < len) {
             len = bio->wrSz - bio->wrIdx;
         }
-        XMEMCPY(bio->ptr.mem_buf_data + bio->wrIdx, data, len);
+        XMEMCPY(bio->ptr.mem_buf_data + bio->wrIdx, data, (size_t)len);
         bio->wrIdx += len;
     }
 
@@ -558,7 +558,7 @@ static int wolfssl_bio_s_fixed_mem_read(WOLFSSL_BIO* bio, char* data, int len)
         if (bio->wrSz - bio->rdIdx < len) {
             len = bio->wrSz - bio->rdIdx;
         }
-        XMEMCPY(data, bio->ptr.mem_buf_data + bio->rdIdx, len);
+        XMEMCPY(data, bio->ptr.mem_buf_data + bio->rdIdx, (size_t)len);
         bio->rdIdx += len;
     }
 
@@ -2320,7 +2320,7 @@ static int test_wolfSSL_CTX_load_verify_locations(void)
     /* Get cert cache size */
     ExpectIntGT(cacheSz = wolfSSL_CTX_get_cert_cache_memsize(ctx), 0);
 
-    ExpectNotNull(cache = (byte*)XMALLOC(cacheSz, NULL,
+    ExpectNotNull(cache = (byte*)XMALLOC((size_t)cacheSz, NULL,
                             DYNAMIC_TYPE_TMP_BUFFER));
 
     ExpectIntEQ(wolfSSL_CTX_memsave_cert_cache(NULL, NULL, -1, NULL),
@@ -3114,7 +3114,7 @@ static int test_wolfSSL_CertManagerNameConstraint(void)
                 WOLFSSL_FILETYPE_ASN1));
     ExpectNotNull(pt = (byte*)wolfSSL_X509_get_tbs(x509, &derSz));
     if (EXPECT_SUCCESS() && (der != NULL)) {
-        XMEMCPY(der, pt, derSz);
+        XMEMCPY(der, pt, (size_t)derSz);
 
         /* find the name constraint extension and alter it */
         pt = der;
@@ -55756,7 +55756,6 @@ static int test_X509_STORE_get0_objects(void)
             ExpectIntEQ(X509_STORE_add_crl(store_cpy, crl), WOLFSSL_SUCCESS);
 
             ExpectNotNull(crl = X509_OBJECT_get0_X509_CRL(objCopy));
-            X509_CRL_free(crl);
             break;
         }
 #endif
@@ -77198,7 +77197,7 @@ static int test_wolfssl_EVP_aes_gcm(void)
         ciphertxtSz += len;
         ExpectIntEQ(1, EVP_CIPHER_CTX_ctrl(&en[i], EVP_CTRL_GCM_GET_TAG,
             AES_BLOCK_SIZE, tag));
-        ExpectIntEQ(wolfSSL_EVP_CIPHER_CTX_cleanup(&en[i]), 1);
+        wolfSSL_EVP_CIPHER_CTX_cleanup(&en[i]);
 
         EVP_CIPHER_CTX_init(&de[i]);
         if (i == 0) {
@@ -77283,7 +77282,7 @@ static int test_wolfssl_EVP_aes_gcm(void)
         ExpectIntEQ(0, EVP_DecryptFinal_ex(&de[i], decryptedtxt, &len));
         ExpectIntEQ(0, len);
 
-        ExpectIntEQ(wolfSSL_EVP_CIPHER_CTX_cleanup(&de[i]), 1);
+        wolfSSL_EVP_CIPHER_CTX_cleanup(&de[i]);
     }
 #endif /* OPENSSL_EXTRA && !NO_AES && HAVE_AESGCM */
     return EXPECT_RESULT();
@@ -94106,103 +94105,158 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_InitMd5),
     TEST_DECL(test_wc_Md5Update),
     TEST_DECL(test_wc_Md5Final),
+    TEST_DECL(test_wc_Md5_KATs),
+    TEST_DECL(test_wc_Md5_other),
+    TEST_DECL(test_wc_Md5Copy),
+    TEST_DECL(test_wc_Md5GetHash),
+    TEST_DECL(test_wc_Md5Transform),
+    TEST_DECL(test_wc_Md5_Flags),
+
+    /* test_sha.c */
     TEST_DECL(test_wc_InitSha),
     TEST_DECL(test_wc_ShaUpdate),
     TEST_DECL(test_wc_ShaFinal),
+    TEST_DECL(test_wc_ShaFinalRaw),
+    TEST_DECL(test_wc_Sha_KATs),
+    TEST_DECL(test_wc_Sha_other),
+    TEST_DECL(test_wc_ShaCopy),
+    TEST_DECL(test_wc_ShaGetHash),
+    TEST_DECL(test_wc_ShaTransform),
+    TEST_DECL(test_wc_Sha_Flags),
 
     /* test_sha256.c */
     TEST_DECL(test_wc_InitSha256),
     TEST_DECL(test_wc_Sha256Update),
     TEST_DECL(test_wc_Sha256Final),
     TEST_DECL(test_wc_Sha256FinalRaw),
-    TEST_DECL(test_wc_Sha256GetFlags),
-    TEST_DECL(test_wc_Sha256Free),
-    TEST_DECL(test_wc_Sha256GetHash),
+    TEST_DECL(test_wc_Sha256_KATs),
+    TEST_DECL(test_wc_Sha256_other),
     TEST_DECL(test_wc_Sha256Copy),
+    TEST_DECL(test_wc_Sha256GetHash),
+    TEST_DECL(test_wc_Sha256Transform),
+    TEST_DECL(test_wc_Sha256_Flags),
 
     TEST_DECL(test_wc_InitSha224),
     TEST_DECL(test_wc_Sha224Update),
     TEST_DECL(test_wc_Sha224Final),
-    TEST_DECL(test_wc_Sha224SetFlags),
-    TEST_DECL(test_wc_Sha224GetFlags),
-    TEST_DECL(test_wc_Sha224Free),
-    TEST_DECL(test_wc_Sha224GetHash),
+    TEST_DECL(test_wc_Sha224_KATs),
+    TEST_DECL(test_wc_Sha224_other),
     TEST_DECL(test_wc_Sha224Copy),
+    TEST_DECL(test_wc_Sha224GetHash),
+    TEST_DECL(test_wc_Sha224_Flags),
 
     /* test_sha512.c */
     TEST_DECL(test_wc_InitSha512),
     TEST_DECL(test_wc_Sha512Update),
     TEST_DECL(test_wc_Sha512Final),
     TEST_DECL(test_wc_Sha512FinalRaw),
-    TEST_DECL(test_wc_Sha512GetFlags),
-    TEST_DECL(test_wc_Sha512Free),
-    TEST_DECL(test_wc_Sha512GetHash),
+    TEST_DECL(test_wc_Sha512_KATs),
+    TEST_DECL(test_wc_Sha512_other),
     TEST_DECL(test_wc_Sha512Copy),
+    TEST_DECL(test_wc_Sha512GetHash),
+    TEST_DECL(test_wc_Sha512Transform),
+    TEST_DECL(test_wc_Sha512_Flags),
 
     TEST_DECL(test_wc_InitSha512_224),
     TEST_DECL(test_wc_Sha512_224Update),
     TEST_DECL(test_wc_Sha512_224Final),
     TEST_DECL(test_wc_Sha512_224FinalRaw),
-    TEST_DECL(test_wc_Sha512_224GetFlags),
-    TEST_DECL(test_wc_Sha512_224Free),
-    TEST_DECL(test_wc_Sha512_224GetHash),
+    TEST_DECL(test_wc_Sha512_224_KATs),
+    TEST_DECL(test_wc_Sha512_224_other),
     TEST_DECL(test_wc_Sha512_224Copy),
+    TEST_DECL(test_wc_Sha512_224GetHash),
+    TEST_DECL(test_wc_Sha512_224Transform),
+    TEST_DECL(test_wc_Sha512_224_Flags),
 
     TEST_DECL(test_wc_InitSha512_256),
     TEST_DECL(test_wc_Sha512_256Update),
     TEST_DECL(test_wc_Sha512_256Final),
     TEST_DECL(test_wc_Sha512_256FinalRaw),
-    TEST_DECL(test_wc_Sha512_256GetFlags),
-    TEST_DECL(test_wc_Sha512_256Free),
-    TEST_DECL(test_wc_Sha512_256GetHash),
+    TEST_DECL(test_wc_Sha512_256_KATs),
+    TEST_DECL(test_wc_Sha512_256_other),
     TEST_DECL(test_wc_Sha512_256Copy),
+    TEST_DECL(test_wc_Sha512_256GetHash),
+    TEST_DECL(test_wc_Sha512_256Transform),
+    TEST_DECL(test_wc_Sha512_256_Flags),
 
     TEST_DECL(test_wc_InitSha384),
     TEST_DECL(test_wc_Sha384Update),
     TEST_DECL(test_wc_Sha384Final),
     TEST_DECL(test_wc_Sha384FinalRaw),
-    TEST_DECL(test_wc_Sha384GetFlags),
-    TEST_DECL(test_wc_Sha384Free),
-    TEST_DECL(test_wc_Sha384GetHash),
+    TEST_DECL(test_wc_Sha384_KATs),
+    TEST_DECL(test_wc_Sha384_other),
     TEST_DECL(test_wc_Sha384Copy),
+    TEST_DECL(test_wc_Sha384GetHash),
+    TEST_DECL(test_wc_Sha384_Flags),
 
     /* test_sha3.c */
     TEST_DECL(test_wc_InitSha3),
     TEST_DECL(test_wc_Sha3_Update),
-    TEST_DECL(test_wc_Sha3_224_Final),
-    TEST_DECL(test_wc_Sha3_256_Final),
-    TEST_DECL(test_wc_Sha3_384_Final),
-    TEST_DECL(test_wc_Sha3_512_Final),
-    TEST_DECL(test_wc_Sha3_224_Copy),
-    TEST_DECL(test_wc_Sha3_256_Copy),
-    TEST_DECL(test_wc_Sha3_384_Copy),
-    TEST_DECL(test_wc_Sha3_512_Copy),
-    TEST_DECL(test_wc_Sha3_GetFlags),
+    TEST_DECL(test_wc_Sha3_Final),
+    TEST_DECL(test_wc_Sha3_224_KATs),
+    TEST_DECL(test_wc_Sha3_256_KATs),
+    TEST_DECL(test_wc_Sha3_384_KATs),
+    TEST_DECL(test_wc_Sha3_512_KATs),
+    TEST_DECL(test_wc_Sha3_other),
+    TEST_DECL(test_wc_Sha3_Copy),
+    TEST_DECL(test_wc_Sha3_GetHash),
+    TEST_DECL(test_wc_Sha3_Flags),
+
+    TEST_DECL(test_wc_InitShake128),
+    TEST_DECL(test_wc_Shake128_Update),
+    TEST_DECL(test_wc_Shake128_Final),
+    TEST_DECL(test_wc_Shake128_KATs),
+    TEST_DECL(test_wc_Shake128_other),
+    TEST_DECL(test_wc_Shake128_Copy),
+    TEST_DECL(test_wc_Shake128Hash),
+    TEST_DECL(test_wc_Shake128_Absorb),
+    TEST_DECL(test_wc_Shake128_SqueezeBlocks),
+    TEST_DECL(test_wc_Shake128_XOF),
 
     TEST_DECL(test_wc_InitShake256),
     TEST_DECL(test_wc_Shake256_Update),
     TEST_DECL(test_wc_Shake256_Final),
+    TEST_DECL(test_wc_Shake256_KATs),
+    TEST_DECL(test_wc_Shake256_other),
     TEST_DECL(test_wc_Shake256_Copy),
     TEST_DECL(test_wc_Shake256Hash),
+    TEST_DECL(test_wc_Shake256_Absorb),
+    TEST_DECL(test_wc_Shake256_SqueezeBlocks),
+    TEST_DECL(test_wc_Shake256_XOF),
 
     /* test_blake.c */
     TEST_DECL(test_wc_InitBlake2b),
     TEST_DECL(test_wc_InitBlake2b_WithKey),
+    TEST_DECL(test_wc_Blake2bUpdate),
+    TEST_DECL(test_wc_Blake2bFinal),
+    TEST_DECL(test_wc_Blake2b_KATs),
+    TEST_DECL(test_wc_Blake2b_other),
+
+    TEST_DECL(test_wc_InitBlake2s),
     TEST_DECL(test_wc_InitBlake2s_WithKey),
+    TEST_DECL(test_wc_Blake2sUpdate),
+    TEST_DECL(test_wc_Blake2sFinal),
+    TEST_DECL(test_wc_Blake2s_KATs),
+    TEST_DECL(test_wc_Blake2s_other),
 
     /* test_sm3.c: SM3 Digest */
-    TEST_DECL(test_wc_InitSm3Free),
-    TEST_DECL(test_wc_Sm3UpdateFinal),
-    TEST_DECL(test_wc_Sm3GetHash),
-    TEST_DECL(test_wc_Sm3Copy),
+    TEST_DECL(test_wc_InitSm3),
+    TEST_DECL(test_wc_Sm3Update),
+    TEST_DECL(test_wc_Sm3Final),
     TEST_DECL(test_wc_Sm3FinalRaw),
-    TEST_DECL(test_wc_Sm3GetSetFlags),
+    TEST_DECL(test_wc_Sm3_KATs),
+    TEST_DECL(test_wc_Sm3_other),
+    TEST_DECL(test_wc_Sm3Copy),
+    TEST_DECL(test_wc_Sm3GetHash),
+    TEST_DECL(test_wc_Sm3_Flags),
     TEST_DECL(test_wc_Sm3Hash),
 
     /* test_ripemd.c */
     TEST_DECL(test_wc_InitRipeMd),
     TEST_DECL(test_wc_RipeMdUpdate),
     TEST_DECL(test_wc_RipeMdFinal),
+    TEST_DECL(test_wc_RipeMd_KATs),
+    TEST_DECL(test_wc_RipeMd_other),
 
     /* test_hash.c */
     TEST_DECL(test_wc_HashInit),

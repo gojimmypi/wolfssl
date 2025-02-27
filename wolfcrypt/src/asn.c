@@ -6594,16 +6594,16 @@ static int DecodeRsaPssParams(const byte* params, word32 sz,
      defined(WOLFSSL_KCAPI_RSA) || defined(WOLFSSL_SE050)))
 /* Byte offset of numbers in RSA key. */
 size_t rsaIntOffset[] = {
-    OFFSETOF(RsaKey, n),
-    OFFSETOF(RsaKey, e),
+    WC_OFFSETOF(RsaKey, n),
+    WC_OFFSETOF(RsaKey, e),
 #ifndef WOLFSSL_RSA_PUBLIC_ONLY
-    OFFSETOF(RsaKey, d),
-    OFFSETOF(RsaKey, p),
-    OFFSETOF(RsaKey, q),
+    WC_OFFSETOF(RsaKey, d),
+    WC_OFFSETOF(RsaKey, p),
+    WC_OFFSETOF(RsaKey, q),
 #if defined(WOLFSSL_KEY_GEN) || defined(OPENSSL_EXTRA) || !defined(RSA_LOW_MEM)
-    OFFSETOF(RsaKey, dP),
-    OFFSETOF(RsaKey, dQ),
-    OFFSETOF(RsaKey, u)
+    WC_OFFSETOF(RsaKey, dP),
+    WC_OFFSETOF(RsaKey, dQ),
+    WC_OFFSETOF(RsaKey, u)
 #endif
 #endif
 };
@@ -9210,26 +9210,6 @@ int ToTraditionalEnc(byte* input, word32 sz, const char* password,
 
 #ifdef HAVE_PKCS12
 
-#define PKCS8_MIN_BLOCK_SIZE 8
-static int Pkcs8Pad(byte* buf, int sz, int blockSz)
-{
-    int padSz;
-
-    /* calculate pad size */
-    padSz = blockSz - (sz & (blockSz - 1));
-
-    /* pad with padSz value */
-    if (buf) {
-        int i;
-        for (i = 0; i < padSz; i++) {
-            buf[sz+i] = (byte)(padSz & 0xFF);
-        }
-    }
-
-    /* return adjusted length */
-    return sz + padSz;
-}
-
 #ifdef WOLFSSL_ASN_TEMPLATE
 /* ASN.1 template for PKCS #8 encrypted key with PBES1 parameters.
  * PKCS #8: RFC 5958, 3 - EncryptedPrivateKeyInfo
@@ -9339,7 +9319,7 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
 
     /* calculate size */
     /* size of constructed string at end */
-    sz = (word32)Pkcs8Pad(NULL, (int)inputSz, blockSz);
+    sz = wc_PkcsPad(NULL, inputSz, (word32)blockSz);
     totalSz  = ASN_TAG_SZ;
     totalSz += SetLength(sz, seq);
     totalSz += sz;
@@ -9435,7 +9415,7 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
     out[inOutIdx++] = ASN_CONTEXT_SPECIFIC | 0;
 
     /* get pad size and verify buffer room */
-    sz = (word32)Pkcs8Pad(NULL, (int)inputSz, blockSz);
+    sz = wc_PkcsPad(NULL, inputSz, (word32)blockSz);
     if (sz + inOutIdx > *outSz) {
     #ifdef WOLFSSL_SMALL_STACK
         XFREE(saltTmp, heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -9446,7 +9426,7 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
 
     /* copy input to output buffer and pad end */
     XMEMCPY(out + inOutIdx, input, inputSz);
-    sz = (word32)Pkcs8Pad(out + inOutIdx, (int)inputSz, blockSz);
+    sz = wc_PkcsPad(out + inOutIdx, inputSz, (word32)blockSz);
 #ifdef WOLFSSL_SMALL_STACK
     cbcIv = (byte*)XMALLOC(MAX_IV_SIZE, heap, DYNAMIC_TYPE_TMP_BUFFER);
     if (cbcIv == NULL) {
@@ -9520,7 +9500,7 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
                 salt, saltSz);
         SetASN_Int16Bit(&dataASN[P8ENCPBES1ASN_IDX_ENCALGO_PBEPARAM_ITER],
                         (word16)itt);
-        pkcs8Sz = (word32)Pkcs8Pad(NULL, (int)inputSz, blockSz);
+        pkcs8Sz = wc_PkcsPad(NULL, inputSz, (word32)blockSz);
         SetASN_Buffer(&dataASN[P8ENCPBES1ASN_IDX_ENCDATA], NULL, pkcs8Sz);
 
         /* Calculate size of encoding. */
@@ -9558,7 +9538,7 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
         byte* pkcs8 =
             (byte*)dataASN[P8ENCPBES1ASN_IDX_ENCDATA].data.buffer.data;
         XMEMCPY(pkcs8, input, inputSz);
-        Pkcs8Pad(pkcs8, (int)inputSz, blockSz);
+        (void)wc_PkcsPad(pkcs8, inputSz, (word32)blockSz);
 
         /* Encrypt PKCS#8 key inline. */
         ret = wc_CryptKey(password, passwordSz, salt, (int)saltSz, itt, id,
@@ -9577,6 +9557,36 @@ int EncryptContent(byte* input, word32 inputSz, byte* out, word32* outSz,
 
 #endif /* HAVE_PKCS12 */
 #endif /* NO_PWDBASED */
+
+/* Block padding used for PKCS#5, PKCS#7, PKCS#8 and PKCS#12.
+ *
+ * The length of padding is the value of each padding byte.
+ *
+ * When buf is NULL, the padded size is returned.
+ *
+ * @param [in, out] buf      Buffer of data to be padded. May be NULL.
+ * @param [in]      sz       Size of data in bytes.
+ * @param [in]      blockSz  Size of block, in bytes, which buffer size must be
+ *                           a multiple of. Assumed to be less than 256 and
+ *                           a power of 2.
+ * @return  Size of padded buffer in bytes.
+ */
+word32 wc_PkcsPad(byte* buf, word32 sz, word32 blockSz)
+{
+    /* Calculate number of padding bytes. */
+    word32 padSz = blockSz - (sz & (blockSz - 1));
+
+    /* Pad with padSz byte. */
+    if (buf != NULL) {
+        word32 i;
+        for (i = 0; i < padSz; i++) {
+            buf[sz+i] = (byte)(padSz & 0xFF);
+        }
+    }
+
+    /* Return padded buffer size in bytes. */
+    return sz + padSz;
+}
 
 #ifndef NO_RSA
 #ifdef WOLFSSL_ASN_TEMPLATE
@@ -13097,13 +13107,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/CN=", 4,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectCN),
-        OFFSETOF(DecodedCert, subjectCNLen),
-        OFFSETOF(DecodedCert, subjectCNEnc),
+        WC_OFFSETOF(DecodedCert, subjectCN),
+        WC_OFFSETOF(DecodedCert, subjectCNLen),
+        WC_OFFSETOF(DecodedCert, subjectCNEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerCN),
-        OFFSETOF(DecodedCert, issuerCNLen),
-        OFFSETOF(DecodedCert, issuerCNEnc),
+        WC_OFFSETOF(DecodedCert, issuerCN),
+        WC_OFFSETOF(DecodedCert, issuerCNLen),
+        WC_OFFSETOF(DecodedCert, issuerCNEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13114,13 +13124,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/SN=", 4,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectSN),
-        OFFSETOF(DecodedCert, subjectSNLen),
-        OFFSETOF(DecodedCert, subjectSNEnc),
+        WC_OFFSETOF(DecodedCert, subjectSN),
+        WC_OFFSETOF(DecodedCert, subjectSNLen),
+        WC_OFFSETOF(DecodedCert, subjectSNEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerSN),
-        OFFSETOF(DecodedCert, issuerSNLen),
-        OFFSETOF(DecodedCert, issuerSNEnc),
+        WC_OFFSETOF(DecodedCert, issuerSN),
+        WC_OFFSETOF(DecodedCert, issuerSNLen),
+        WC_OFFSETOF(DecodedCert, issuerSNEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13131,13 +13141,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/serialNumber=", 14,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectSND),
-        OFFSETOF(DecodedCert, subjectSNDLen),
-        OFFSETOF(DecodedCert, subjectSNDEnc),
+        WC_OFFSETOF(DecodedCert, subjectSND),
+        WC_OFFSETOF(DecodedCert, subjectSNDLen),
+        WC_OFFSETOF(DecodedCert, subjectSNDEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerSND),
-        OFFSETOF(DecodedCert, issuerSNDLen),
-        OFFSETOF(DecodedCert, issuerSNDEnc),
+        WC_OFFSETOF(DecodedCert, issuerSND),
+        WC_OFFSETOF(DecodedCert, issuerSNDLen),
+        WC_OFFSETOF(DecodedCert, issuerSNDEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13148,13 +13158,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/C=", 3,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectC),
-        OFFSETOF(DecodedCert, subjectCLen),
-        OFFSETOF(DecodedCert, subjectCEnc),
+        WC_OFFSETOF(DecodedCert, subjectC),
+        WC_OFFSETOF(DecodedCert, subjectCLen),
+        WC_OFFSETOF(DecodedCert, subjectCEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerC),
-        OFFSETOF(DecodedCert, issuerCLen),
-        OFFSETOF(DecodedCert, issuerCEnc),
+        WC_OFFSETOF(DecodedCert, issuerC),
+        WC_OFFSETOF(DecodedCert, issuerCLen),
+        WC_OFFSETOF(DecodedCert, issuerCEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13165,13 +13175,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/L=", 3,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectL),
-        OFFSETOF(DecodedCert, subjectLLen),
-        OFFSETOF(DecodedCert, subjectLEnc),
+        WC_OFFSETOF(DecodedCert, subjectL),
+        WC_OFFSETOF(DecodedCert, subjectLLen),
+        WC_OFFSETOF(DecodedCert, subjectLEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerL),
-        OFFSETOF(DecodedCert, issuerLLen),
-        OFFSETOF(DecodedCert, issuerLEnc),
+        WC_OFFSETOF(DecodedCert, issuerL),
+        WC_OFFSETOF(DecodedCert, issuerLLen),
+        WC_OFFSETOF(DecodedCert, issuerLEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13182,13 +13192,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/ST=", 4,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectST),
-        OFFSETOF(DecodedCert, subjectSTLen),
-        OFFSETOF(DecodedCert, subjectSTEnc),
+        WC_OFFSETOF(DecodedCert, subjectST),
+        WC_OFFSETOF(DecodedCert, subjectSTLen),
+        WC_OFFSETOF(DecodedCert, subjectSTEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerST),
-        OFFSETOF(DecodedCert, issuerSTLen),
-        OFFSETOF(DecodedCert, issuerSTEnc),
+        WC_OFFSETOF(DecodedCert, issuerST),
+        WC_OFFSETOF(DecodedCert, issuerSTLen),
+        WC_OFFSETOF(DecodedCert, issuerSTEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13199,9 +13209,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/street=", 8,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectStreet),
-        OFFSETOF(DecodedCert, subjectStreetLen),
-        OFFSETOF(DecodedCert, subjectStreetEnc),
+        WC_OFFSETOF(DecodedCert, subjectStreet),
+        WC_OFFSETOF(DecodedCert, subjectStreetLen),
+        WC_OFFSETOF(DecodedCert, subjectStreetEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13216,13 +13226,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/O=", 3,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectO),
-        OFFSETOF(DecodedCert, subjectOLen),
-        OFFSETOF(DecodedCert, subjectOEnc),
+        WC_OFFSETOF(DecodedCert, subjectO),
+        WC_OFFSETOF(DecodedCert, subjectOLen),
+        WC_OFFSETOF(DecodedCert, subjectOEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerO),
-        OFFSETOF(DecodedCert, issuerOLen),
-        OFFSETOF(DecodedCert, issuerOEnc),
+        WC_OFFSETOF(DecodedCert, issuerO),
+        WC_OFFSETOF(DecodedCert, issuerOLen),
+        WC_OFFSETOF(DecodedCert, issuerOEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13233,13 +13243,13 @@ static const CertNameData certNameSubject[] = {
     {
         "/OU=", 4,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectOU),
-        OFFSETOF(DecodedCert, subjectOULen),
-        OFFSETOF(DecodedCert, subjectOUEnc),
+        WC_OFFSETOF(DecodedCert, subjectOU),
+        WC_OFFSETOF(DecodedCert, subjectOULen),
+        WC_OFFSETOF(DecodedCert, subjectOUEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
-        OFFSETOF(DecodedCert, issuerOU),
-        OFFSETOF(DecodedCert, issuerOULen),
-        OFFSETOF(DecodedCert, issuerOUEnc),
+        WC_OFFSETOF(DecodedCert, issuerOU),
+        WC_OFFSETOF(DecodedCert, issuerOULen),
+        WC_OFFSETOF(DecodedCert, issuerOUEnc),
 #endif
 #endif
 #ifdef WOLFSSL_X509_NAME_AVAILABLE
@@ -13301,9 +13311,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/businessCategory=", 18,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectBC),
-        OFFSETOF(DecodedCert, subjectBCLen),
-        OFFSETOF(DecodedCert, subjectBCEnc),
+        WC_OFFSETOF(DecodedCert, subjectBC),
+        WC_OFFSETOF(DecodedCert, subjectBCLen),
+        WC_OFFSETOF(DecodedCert, subjectBCEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13335,9 +13345,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/postalCode=", 12,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectPC),
-        OFFSETOF(DecodedCert, subjectPCLen),
-        OFFSETOF(DecodedCert, subjectPCEnc),
+        WC_OFFSETOF(DecodedCert, subjectPC),
+        WC_OFFSETOF(DecodedCert, subjectPCLen),
+        WC_OFFSETOF(DecodedCert, subjectPCEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13352,9 +13362,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/userid=", 8,
 #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectUID),
-        OFFSETOF(DecodedCert, subjectUIDLen),
-        OFFSETOF(DecodedCert, subjectUIDEnc),
+        WC_OFFSETOF(DecodedCert, subjectUID),
+        WC_OFFSETOF(DecodedCert, subjectUIDLen),
+        WC_OFFSETOF(DecodedCert, subjectUIDEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13370,9 +13380,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/N=", 3,
     #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectN),
-        OFFSETOF(DecodedCert, subjectNLen),
-        OFFSETOF(DecodedCert, subjectNEnc),
+        WC_OFFSETOF(DecodedCert, subjectN),
+        WC_OFFSETOF(DecodedCert, subjectNLen),
+        WC_OFFSETOF(DecodedCert, subjectNEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13387,9 +13397,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/GN=", 4,
     #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectGN),
-        OFFSETOF(DecodedCert, subjectGNLen),
-        OFFSETOF(DecodedCert, subjectGNEnc),
+        WC_OFFSETOF(DecodedCert, subjectGN),
+        WC_OFFSETOF(DecodedCert, subjectGNLen),
+        WC_OFFSETOF(DecodedCert, subjectGNEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13404,9 +13414,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/initials=", 10,
     #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectI),
-        OFFSETOF(DecodedCert, subjectILen),
-        OFFSETOF(DecodedCert, subjectIEnc),
+        WC_OFFSETOF(DecodedCert, subjectI),
+        WC_OFFSETOF(DecodedCert, subjectILen),
+        WC_OFFSETOF(DecodedCert, subjectIEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -13421,9 +13431,9 @@ static const CertNameData certNameSubject[] = {
     {
         "/dnQualifier=", 13,
     #if defined(WOLFSSL_CERT_GEN) || defined(WOLFSSL_CERT_EXT)
-        OFFSETOF(DecodedCert, subjectDNQ),
-        OFFSETOF(DecodedCert, subjectDNQLen),
-        OFFSETOF(DecodedCert, subjectDNQEnc),
+        WC_OFFSETOF(DecodedCert, subjectDNQ),
+        WC_OFFSETOF(DecodedCert, subjectDNQLen),
+        WC_OFFSETOF(DecodedCert, subjectDNQEnc),
 #ifdef WOLFSSL_HAVE_ISSUER_NAMES
         0,
         0,
@@ -17272,6 +17282,10 @@ int ConfirmSignature(SignatureCtx* sigCtx,
                         level = WC_ML_DSA_87_DRAFT;
                     }
                 #endif
+                    else {
+                        WOLFSSL_MSG("Invalid Dilithium key OID");
+                        goto exit_cs;
+                    }
                     sigCtx->verify = 0;
                     sigCtx->key.dilithium = (dilithium_key*)XMALLOC(
                         sizeof(dilithium_key), sigCtx->heap,

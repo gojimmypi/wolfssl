@@ -156,7 +156,7 @@
     #elif defined(__NT__)
         #define _WINSOCKAPI_ /* block inclusion of winsock.h header file */
         #include <windows.h>
-        #undef _WINSOCKAPI_
+        #undef _WINSOCKAPI_ /* undefine it for MINGW winsock2.h header file */
     #elif defined(__LINUX__)
         #ifndef SINGLE_THREADED
             #define WOLFSSL_PTHREADS
@@ -169,7 +169,7 @@
     #else
         #define _WINSOCKAPI_ /* block inclusion of winsock.h header file */
         #include <windows.h>
-        #undef _WINSOCKAPI_
+        #undef _WINSOCKAPI_ /* undefine it for MINGW winsock2.h header file */
     #endif
 #elif defined(THREADX)
     #ifndef SINGLE_THREADED
@@ -1906,14 +1906,16 @@ enum Misc {
 #define AEAD_AUTH_DATA_SZ 13
 #endif
 
-#define WOLFSSL_NAMED_GROUP_IS_FFHDE(group) \
-    (MIN_FFHDE_GROUP <= (group) && (group) <= MAX_FFHDE_GROUP)
+#define WOLFSSL_NAMED_GROUP_IS_FFDHE(group) \
+    (WOLFSSL_FFDHE_START <= (group) && (group) <= WOLFSSL_FFDHE_END)
 #ifdef WOLFSSL_HAVE_KYBER
-#define WOLFSSL_NAMED_GROUP_IS_PQC(group) \
-    ((WOLFSSL_PQC_SIMPLE_MIN <= (group) && (group) <= WOLFSSL_PQC_SIMPLE_MAX) || \
-     (WOLFSSL_PQC_HYBRID_MIN <= (group) && (group) <= WOLFSSL_PQC_HYBRID_MAX))
+WOLFSSL_LOCAL int NamedGroupIsPqc(int group);
+WOLFSSL_LOCAL int NamedGroupIsPqcHybrid(int group);
+#define WOLFSSL_NAMED_GROUP_IS_PQC(group) NamedGroupIsPqc(group)
+#define WOLFSSL_NAMED_GROUP_IS_PQC_HYBRID(group) NamedGroupIsPqcHybrid(group)
 #else
-#define WOLFSSL_NAMED_GROUP_IS_PQC(group)    ((void)(group), 0)
+#define WOLFSSL_NAMED_GROUP_IS_PQC(group)        ((void)(group), 0)
+#define WOLFSSL_NAMED_GROUP_IS_PQC_HYBRID(group) ((void)(group), 0)
 #endif /* WOLFSSL_HAVE_KYBER */
 
 /* minimum Downgrade Minor version */
@@ -2635,6 +2637,9 @@ struct WOLFSSL_CRL {
     THREAD_TYPE           tid;           /* monitoring thread */
     wolfSSL_CRL_mfd_t     mfd;
     int                   setup;         /* thread is setup predicate */
+#endif
+#ifdef OPENSSL_ALL
+    wolfSSL_Ref           ref;
 #endif
     void*                 heap;          /* heap hint for dynamic memory */
 };
@@ -3603,8 +3608,8 @@ typedef struct KeyShareEntry {
     byte*                 pubKey;    /* Public key                        */
     word32                pubKeyLen; /* Public key length                 */
 #if !defined(NO_DH) || defined(WOLFSSL_HAVE_KYBER)
-    byte*                 privKey;   /* Private key - DH and PQ KEMs only */
-    word32                privKeyLen;/* Only for PQ KEMs. */
+    byte*                 privKey;   /* Private key                       */
+    word32                privKeyLen;/* Private key length - PQC only     */
 #endif
 #ifdef WOLFSSL_ASYNC_CRYPT
     int                   lastRet;
