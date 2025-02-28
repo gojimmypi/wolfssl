@@ -139,7 +139,7 @@ void setup() {
 
     Serial.println();
     Serial.println();
-    Serial.println(F("===== wolfSSL example: AES Counter mode!! ====="));
+    Serial.println(F("===== wolfSSL example: AES Counter mode ====="));
     Serial.print(F("wolfSSL library version: "));
     Serial.println(LIBWOLFSSL_VERSION_STRING);
     Serial.println();
@@ -192,7 +192,6 @@ void loop() {
     Serial.print(F("encryption done: "));
     ExpectIntEQ(wc_AesCtrEncrypt(&aesEnc, cipher,
                                  input, sizeof(input) / sizeof(byte) ), 0);
-
 
     Serial.println();
     Serial.println(F("--- Decryption ..."));
