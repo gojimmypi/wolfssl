@@ -52,7 +52,7 @@ Teensy 4.1 (ARM Cortex M7)
 
 #if defined(NO_AES) or !defined(WOLFSSL_AES_COUNTER) or !defined(WOLFSSL_AES_128)
     /* edit user_settings.h in ~\Arduino\libraries\wolfssl\src
-     *   e,g, for Windows:
+     *   e.g. for Windows:
      *      C:\Users\%USERNAME%\Documents\Arduino\libraries\wolfssl\src
      */
     #error "Missing AES, WOLFSSL_AES_COUNTER or WOLFSSL_AES_128"
@@ -79,7 +79,8 @@ byte encKey[] = {0x33,0x9a,0x28,0x9d,0x08,0x61,0xe8,0x34,
                  0x16,0xe5,0x8d,0xb7,0x58,0x33,0xdc,0x0a}; /* 16 bytes  */
 byte     iv[] = {0x43,0x05,   0,   0,   0,   0,   0,   0,  /* Padded to */
                     0,   0,   0,   0,   0,   0,   0,   0}; /* 16 bytes  */
-byte  input[] = {0x05,0x00,0x8c,0x0a,0x21,0x00,0x6a,0x00,0x5c,0x00,0xff,0xff,0xc1,0xfc,0x25,0xc4};  // 16 bytes
+byte  input[] = {0x05,0x00,0x8c,0x0a,0x21,0x00,0x6a,0x00,
+                 0x5c,0x00,0xff,0xff,0xc1,0xfc,0x25,0xc4}; /* 16 bytes  */
 
 /*
  * Example data set 2
@@ -120,127 +121,131 @@ void reportData(byte * data, int sz){
 /* Required Arduino setup() function                                         */
 /*****************************************************************************/
 void setup() {
-  Serial.begin(115200);
-  while (!Serial && millis() < 1000) ; /* wait for serial, up to 1 sec       */
+    Serial.begin(115200);
+    while (!Serial && millis() < 1000) ; /* wait for serial, up to 1 sec     */
 
-
+    Serial.println();
+    Serial.println();
+    Serial.println(F("===== wolfSSL example: AES Counter mode!!! ====="));
+    Serial.print(F("wolfSSL library version: "));
+    Serial.println(LIBWOLFSSL_VERSION_STRING);
+    Serial.println();
 }
 
 
 /*****************************************************************************/
-/* Required Arduino loop()                                                   */
+/* Required Arduino loop() function                                          */
 /*****************************************************************************/
 void loop() {
-  Serial.println();
-  Serial.println();
-  Serial.println(F("===== wolfSSL example: AES Counter mode!!! ====="));
-  Serial.print(F("wolfSSL library version: "));
-  Serial.println(LIBWOLFSSL_VERSION_STRING);
-  Serial.println();
+    memset(&aesEnc, 0, sizeof(Aes)); /* fill aesEnc with zeros               */
+    memset(&aesDec, 0, sizeof(Aes)); /* ditto aesDec                         */
 
-  memset(&aesEnc,0, sizeof(Aes));        /* fill aesEnc with zeros           */
-  memset(&aesDec,0, sizeof(Aes));        /* ditto aesDec                     */
+    /* --------------------------------------------------------------------- */
+    /* Choose blkSize of be 16, 24, 32 or larger multiples of 8, based       */
+    /* on sizeof(input) data. Uncomment the relevant lines from following:   */
 
-  /* ----------------------------------------------------------------------- */
-  /* Choose blkSize of be 16, 24, 32 or larger multiples of 8, based         */
-  /* on sizeof(input) data. Uncomment the relevant lines from following:     */
+    Serial.print(F("data set 1 ["));
+    uint32_t blkSize = AES_BLOCK_SIZE * 1;   /* 16 bytes (for data set 1)    */
 
-  Serial.print(F("data set 1 ["));
-  uint32_t blkSize = AES_BLOCK_SIZE * 1;     /* 16 bytes (for data set 1)    */
+    /* Serial.print(F("data set 2 - "));                                     */
+    /* uint32_t blkSize = AES_BLOCK_SIZE * 1.5; // 24 bytes (for data set 2) */
 
-/* Serial.print(F("data set 2 - "));                                         */
-/* uint32_t blkSize = AES_BLOCK_SIZE * 1.5;  // 24 bytes (for data set 2)    */
+    /* Serial.print(F("my data set - "));                                    */
+    /* uint32_t blkSize = AES_BLOCK_SIZE * n;   // choose an approriate n    */
 
-/* Serial.print(F("my data set - "));                                        */
-/* uint32_t blkSize = AES_BLOCK_SIZE * n;    // choose an approriate n       */
+    Serial.print(F("blkSize: "));
+    Serial.print(blkSize);
+    Serial.println(F(" bytes]"));
+    Serial.println();
+    /* ----------------------------------------------------------------------*/
 
-  Serial.print(F("blkSize: "));
-  Serial.print(blkSize);
-  Serial.println(F(" bytes]"));
-  Serial.println();
-  /* ------------------------------------------------------------------------*/
+    byte cipher[blkSize]; /* for the encrypted data (or "cipher")            */
+    byte output[blkSize]; /* for the deciphered data                         */
+    memset(cipher, 0, blkSize); /* fill with zeros                           */
+    memset(output, 0, blkSize); /* fill with zeros                           */
 
-  byte cipher[blkSize];              /* for the encrypted data (or "cipher") */
-  byte output[blkSize];              /* for the deciphered data              */
-  memset(cipher, 0, blkSize);        /* fill with zeros                      */
-  memset(output, 0, blkSize);        /* fill with zeros                      */
+    /* initialise structures for encryption and decryption.                  */
+    Serial.println(F("--- Encryption ..."));
+    Serial.print(F("init aes (enc) : "));
 
-  /* initialise structures for encryption and decryption.                    */
-  Serial.println(F("--- Encryption ..."));
-  Serial.print(F("init aes (enc) : "));
+    /* init aesEnc structure, with NULL heap hint, dev id not used.          */
+    ExpectIntEQ(wc_AesInit(&aesEnc, NULL, INVALID_DEVID), 0);
 
-  /* init aesEnc structure, with NULL heap hint, dev id not used.            */
-  ExpectIntEQ(wc_AesInit(&aesEnc, NULL, INVALID_DEVID), 0);
+    /* set up the key + salt in the AES encryption structure.                */
+    Serial.print(F("load key (enc) : "));
+    ExpectIntEQ(wc_AesSetKey(&aesEnc, encKey, blkSize, iv, AES_ENCRYPTION), 0);
 
-  /* set up the key + salt in the AES encryption structure.                  */
-  Serial.print(F("load key (enc) : "));
-  ExpectIntEQ(wc_AesSetKey(&aesEnc, encKey, blkSize, iv, AES_ENCRYPTION), 0);
+    /* encrypt */
+    Serial.print(F("encryption done: "));
+    ExpectIntEQ(wc_AesCtrEncrypt(&aesEnc, cipher,
+                                 input, sizeof(input) / sizeof(byte) ), 0);
 
-  /* encrypt */
-  Serial.print(F("encryption done: "));
-  ExpectIntEQ(wc_AesCtrEncrypt(&aesEnc, cipher,
-                              input, sizeof(input)/sizeof(byte) ), 0);
 
-  Serial.println();
-  Serial.println(F("--- Decryption ..."));
-  /* set up the key + salt in the AES decryption structure.                  */
-  Serial.print(F("init aes (dec) : "));
+    Serial.println();
+    Serial.println(F("--- Decryption ..."));
+    /* set up the key + salt in the AES decryption structure.                */
+    Serial.print(F("init aes (dec) : "));
 
-  /* init aesDec structure, with NULL heap hint, dev id not used.            */
-  ExpectIntEQ(wc_AesInit(&aesDec, NULL, INVALID_DEVID), 0);
+    /* init aesDec structure, with NULL heap hint, dev id not used.          */
+    ExpectIntEQ(wc_AesInit(&aesDec, NULL, INVALID_DEVID), 0);
 
-  /* set up the key + salt in an AES decryption structure.                   */
-  Serial.print(F("load key (dec) : "));
-  ExpectIntEQ(wc_AesSetKey(&aesDec, encKey, blkSize, iv, AES_ENCRYPTION), 0);
+    /* set up the key + salt in an AES decryption structure.                 */
+    Serial.print(F("load key (dec) : "));
+    ExpectIntEQ(wc_AesSetKey(&aesDec, encKey, blkSize, iv, AES_ENCRYPTION), 0);
 
-  /* decrypt                                                                 */
-  Serial.print(F("decryption done: "));
-  ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, output, cipher,
-              sizeof(cipher)/sizeof(byte)),0);
-  Serial.println();
+    /* decrypt                                                               */
+    Serial.print(F("decryption done: "));
+    ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, output,
+                                 cipher,  sizeof(cipher) / sizeof(byte)), 0);
+    Serial.println();
 
-  /* Test for bad args                                                       */
-  Serial.println(F("--- Check for bad arguments ..."));
-  Serial.print(F("Bad arguments 1: "));
-  ExpectIntEQ(wc_AesCtrEncrypt(   NULL, output, cipher,
-              sizeof(cipher)/sizeof(byte)), WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    /* Test for bad args                                                     */
+    Serial.println(F("--- Check for bad arguments ..."));
+    Serial.print(F("Bad arguments 1: "));
+    ExpectIntEQ(wc_AesCtrEncrypt(NULL,  output,
+                                 cipher, sizeof(cipher) / sizeof(byte)),
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-  Serial.print(F("Bad arguments 2: "));
-  ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, NULL,   cipher,
-              sizeof(cipher)/sizeof(byte)), WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    Serial.print(F("Bad arguments 2: "));
+    ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, NULL,
+                                 cipher,  sizeof(cipher) / sizeof(byte)),
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-  Serial.print(F("Bad arguments 3: "));
-  ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, output, NULL,
-              sizeof(cipher)/sizeof(byte)), WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    Serial.print(F("Bad arguments 3: "));
+    ExpectIntEQ(wc_AesCtrEncrypt(&aesDec, output,
+                                 NULL,    sizeof(cipher) / sizeof(byte)),
+                WC_NO_ERR_TRACE(BAD_FUNC_ARG));
 
-  /* Display data and results.                                                */
-  Serial.println();
-  Serial.println(F("--- Inputs ..."));
-  Serial.print(F("key     : ")); reportData(encKey, sizeof(encKey));
-  Serial.print(F("salt/iv : ")); reportData(iv, sizeof(iv));
-  Serial.print(F("data in : ")); reportData(input, sizeof(input));
+    /* Display data and results.                                             */
+    Serial.println();
+    Serial.println(F("--- Inputs ..."));
+    Serial.print(F("key     : ")); reportData(encKey, sizeof(encKey));
+    Serial.print(F("salt/iv : ")); reportData(iv,     sizeof(iv));
+    Serial.print(F("data in : ")); reportData(input,  sizeof(input));
 
-  Serial.println();
-  Serial.println(F("--- Outputs ..."));
-  Serial.print(F("cipher  : "));
-  reportData(cipher, sizeof(cipher));
-  Serial.print(F("decipher: "));
-  reportData(output, sizeof(output));
-  Serial.println();
+    Serial.println();
+    Serial.println(F("--- Outputs ..."));
+    Serial.print(F("cipher  : "));
+    reportData(cipher, sizeof(cipher));
+    Serial.print(F("decipher: "));
+    reportData(output, sizeof(output));
+    Serial.println();
 
-  if (memcmp(input, output, sizeof(input)) == 0) {
-    Serial.println(F("** SUCCESS ** deciphered data matches input data."));
-  }
-  else {
-   Serial.print(F(" *** FAILED *** deciphered & input data DO NOT MATCH."));
-  }
-  Serial.println();
+    if (memcmp(input, output, sizeof(input)) == 0) {
+        Serial.println(F("** SUCCESS ** deciphered data matches input data."));
+    }
+    else {
+        Serial.print(F("*** FAILED *** deciphered & input data DO NOT MATCH."));
+    }
+    Serial.println();
 
-  /* Free up resources associated with the Aes structures.                   */
-  wc_AesFree(&aesEnc);
-  wc_AesFree(&aesDec);
+    /* Free up resources associated with the Aes structures.                 */
+    wc_AesFree(&aesEnc);
+    wc_AesFree(&aesDec);
 
-  Serial.println(F("===== end ====="));
+    Serial.println(F("===== end ====="));
 
-    while (1) { }
+    while (1) {
+        /* nothing */
+    }
 }
