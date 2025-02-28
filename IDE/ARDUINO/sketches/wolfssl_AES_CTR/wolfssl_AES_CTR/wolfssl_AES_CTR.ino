@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
- * This file is part of the wolfSSL library for Arduino.
+ * This file is part of wolfSSL.
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation Inc.
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
+ */
 
+/*
 The Advanced Encryption Standard (AES) is a specification for the encryption of electronic
 data established by the U.S. National Institute of Standards and Technology (NIST) in 2001.
 
@@ -59,15 +61,22 @@ Teensy 4.1 (ARM Cortex M7)
 #endif
 
 /* macro to check for expected results */
-#define ExpectIntEQ(p1, p2) if (p1 == p2) {Serial.println(F("OK"));} else {Serial.println(F("FAIL"));}
+#define ExpectIntEQ(p1, p2) if (p1 == p2) {                     \
+                                Serial.println(F("OK"));        \
+                             }                                  \
+                             else {                             \
+                                Serial.println(F("FAIL"));      \
+                             }
 
 
 /* USER INPUTS:
- * The Encryption Key (encKey) is confidential and must only be shared with the intended
- * recipient of the data. Length must be 16, 24, 32 or larger multiples of AES_BLOCK_SIZE
+ * The Encryption Key (encKey) is confidential and must only be shared with
+ * the intended recipient of the data. Length must be 16, 24, 32 or larger
+ * multiples of AES_BLOCK_SIZE
  *
- * The invitialization Vector (iv) is a nonce/counter (or 'salt') that is incremented between each encryption
- * to ensures no two ciphers are identical, even if the input data is unchanged. Can be any length.
+ * The invitialization Vector (iv) is a nonce/counter (or 'salt') that is
+ * incremented between each encryption to ensures no two ciphers are identical,
+ * even if the input data is unchanged. Can be any length.
  *
  * The input data ("input") provides the bytes to be encyrpted.
  * Must be 16, 24, 32 bytes, or larger multiples of AES_BLOCK_SIZE
@@ -102,21 +111,25 @@ Aes aesEnc;
 Aes aesDec;
 
 /* Print out the data as HEX bytes with breaks every 8 bytes */
-void reportData(byte * data, int sz){
-  for (int i = 0; i < sz; i++) {
-    if (data[i] < 0x10) Serial.print(F("0"));
-    Serial.print(data[i],HEX);
-    if (i < sz-1) {
-      if ( ((i+1) % 8) == 0) {
-        Serial.print(F(" | "));
-      }
-      else {
-        Serial.print(F(" "));
-      }
+void reportData(byte * data, int sz) {
+    int i;
+    for (i = 0; i < sz; i++) {
+        if (data[i] < 0x10) {
+            Serial.print(F("0"));
+        }
+        Serial.print(data[i], HEX);
+        if (i < sz - 1) {
+            if (((i + 1) % 8) == 0) {
+                Serial.print(F(" | "));
+            }
+            else {
+                Serial.print(F(" "));
+            }
+        }
     }
-  }
-  Serial.println();
+    Serial.println();
 }
+
 /*****************************************************************************/
 /* Required Arduino setup() function                                         */
 /*****************************************************************************/
@@ -126,7 +139,7 @@ void setup() {
 
     Serial.println();
     Serial.println();
-    Serial.println(F("===== wolfSSL example: AES Counter mode!!! ====="));
+    Serial.println(F("===== wolfSSL example: AES Counter mode!! ====="));
     Serial.print(F("wolfSSL library version: "));
     Serial.println(LIBWOLFSSL_VERSION_STRING);
     Serial.println();
