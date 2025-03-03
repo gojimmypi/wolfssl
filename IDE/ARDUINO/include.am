@@ -10,6 +10,7 @@ EXTRA_DIST+= IDE/ARDUINO/README.md
 EXTRA_DIST+= IDE/ARDUINO/Arduino_README_prepend.md
 
 EXTRA_DIST+= IDE/ARDUINO/wolfssl.h
+EXTRA_DIST+= IDE/ARDUINO/wolfssl-arduino.cpp
 
 EXTRA_DIST+= IDE/ARDUINO/keywords.txt
 EXTRA_DIST+= IDE/ARDUINO/library.properties.template

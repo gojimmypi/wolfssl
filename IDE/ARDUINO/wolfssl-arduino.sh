@@ -235,7 +235,8 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
     $CP_CMD "${OPENSSL_DIR_TOP}"/* ."${OPENSSL_DIR}"                                          || exit 1
 
     # Finally, copy the Arduino-specific wolfssl library files into place: [lib]/src
-    $CP_CMD ./wolfssl.h ".${ROOT_SRC_DIR}"/wolfssl.h
+    $CP_CMD ./wolfssl.h           ".${ROOT_SRC_DIR}"/wolfssl.h           || exit 1
+    $CP_CMD ./wolfssl-arduino.cpp ".${ROOT_SRC_DIR}"/wolfssl-arduino.cpp || exit 1
 
     echo "Copy examples...."
     # Copy examples
