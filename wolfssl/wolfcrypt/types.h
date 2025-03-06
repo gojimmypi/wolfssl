@@ -922,6 +922,13 @@ typedef struct w64wrapper {
             /* use only Thread Safe version of strtok */
             #if defined(USE_WOLF_STRTOK)
                 #define XSTRTOK(s1,d,ptr) wc_strtok((s1),(d),(ptr))
+            #elif defined(__WATCOMC__)
+                #if __WATCOMC__ < 1300
+                    #define USE_WOLF_STRTOK
+                    #define XSTRTOK(s1,d,ptr) wc_strtok((s1),(d),(ptr))
+                #else
+                    #define XSTRTOK(s1,d,ptr) strtok_r((s1),(d),(ptr))
+                #endif
             #elif defined(USE_WINDOWS_API) || defined(INTIME_RTOS)
                 #define XSTRTOK(s1,d,ptr) strtok_s((s1),(d),(ptr))
             #else
@@ -1240,6 +1247,16 @@ typedef struct w64wrapper {
     #endif /* HAVE_SELFTEST */
     };
 
+    enum wc_HashFlags {
+        WC_HASH_FLAG_NONE =     0x00000000,
+        WC_HASH_FLAG_WILLCOPY = 0x00000001, /* flag to indicate hash will be copied */
+        WC_HASH_FLAG_ISCOPY =   0x00000002, /* hash is copy */
+    #ifdef WOLFSSL_SHA3
+        WC_HASH_SHA3_KECCAK256 =0x00010000, /* Older KECCAK256 */
+    #endif
+        WOLF_ENUM_DUMMY_LAST_ELEMENT(WC_HASH)
+    };
+
     /* cipher types */
     enum wc_CipherType {
         WC_CIPHER_NONE = 0,
@@ -1503,6 +1520,7 @@ typedef struct w64wrapper {
             #define WOLFSSL_THREAD __stdcall
             #define WOLFSSL_THREAD_NO_JOIN _WCCALLBACK
         #elif defined(__OS2__)
+            #define WOLFSSL_THREAD_VOID_RETURN
             typedef void          THREAD_RETURN;
             typedef TID           THREAD_TYPE;
             typedef struct COND_TYPE {

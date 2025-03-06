@@ -2427,12 +2427,15 @@ target_include_directories(wolfssl
 
 target_link_libraries(wolfssl PUBLIC ${WOLFSSL_LINK_LIBS})
 
-if (WIN32 OR ${CMAKE_SYSTEM_NAME} MATCHES "^MSYS" OR ${CMAKE_SYSTEM_NAME} MATCHES "^MINGW")
+if(CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        target_link_libraries(wolfssl PUBLIC ws2_32 crypt32)
+    endif()
+elseif (WIN32 OR ${CMAKE_SYSTEM_NAME} MATCHES "^MSYS" OR ${CMAKE_SYSTEM_NAME} MATCHES "^MINGW")
     # For Windows link required libraries
     message("Building on Windows/MSYS/MINGW")
     target_link_libraries(wolfssl PUBLIC
         ws2_32 crypt32 advapi32)
-elseif(CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom")
 elseif(APPLE)
     message("Building on Apple")
     if(WOLFSSL_SYS_CA_CERTS)
@@ -2509,7 +2512,6 @@ if(WOLFSSL_EXAMPLES)
     # Build unit tests
     add_executable(unit_test
         tests/api.c
-        tests/api/test_dtls.c
         tests/api/test_md5.c
         tests/api/test_sha.c
         tests/api/test_sha256.c
@@ -2519,9 +2521,23 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_sm3.c
         tests/api/test_ripemd.c
         tests/api/test_hash.c
+        tests/api/test_hmac.c
+        tests/api/test_cmac.c
+        tests/api/test_des3.c
+        tests/api/test_chacha.c
+        tests/api/test_poly1305.c
+        tests/api/test_chacha20_poly1305.c
+        tests/api/test_camellia.c
+        tests/api/test_arc4.c
+        tests/api/test_rc2.c
+        tests/api/test_aes.c
         tests/api/test_ascon.c
+        tests/api/test_sm4.c
+        tests/api/test_wc_encrypt.c
         tests/api/test_mlkem.c
+        tests/api/test_dtls.c
         tests/api/test_ocsp.c
+        tests/api/test_evp.c
         tests/hash.c
         tests/srp.c
         tests/suites.c

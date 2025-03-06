@@ -8379,7 +8379,7 @@ void FreeKeyExchange(WOLFSSL* ssl)
 /* Free up all memory used by Suites structure from WOLFSSL */
 void FreeSuites(WOLFSSL* ssl)
 {
-#ifdef OPENSSL_ALL
+#ifdef OPENSSL_EXTRA
     if (ssl->suitesStack != NULL) {
         /* Enough to free stack structure since WOLFSSL_CIPHER
          * isn't allocated separately. */
@@ -8392,8 +8392,6 @@ void FreeSuites(WOLFSSL* ssl)
         wolfSSL_sk_SSL_CIPHER_free(ssl->clSuitesStack);
         ssl->clSuitesStack = NULL;
     }
-#endif
-#ifdef OPENSSL_EXTRA
     XFREE(ssl->clSuites, ssl->heap, DYNAMIC_TYPE_SUITES);
     ssl->clSuites = NULL;
 #endif
@@ -25348,10 +25346,12 @@ int SendAsyncData(WOLFSSL* ssl)
  * 2 in SCR and we have plain data ready
  * Early data logic may bypass this logic in TLSv1.3 when appropriate.
  */
-static int ssl_in_handshake(WOLFSSL *ssl, int send)
+static int ssl_in_handshake(WOLFSSL *ssl, int sending_data)
 {
+int SendAsyncData = 1;
+(void)SendAsyncData;
     if (IsSCR(ssl)) {
-        if (send) {
+        if (sending_data) {
             /* allow sending data in SCR */
             return 0;
         } else {
@@ -41793,7 +41793,7 @@ static int DefTicketEncCb(WOLFSSL* ssl, byte key_name[WOLFSSL_TICKET_NAME_SZ],
                         ret = args->lastErr;
                         args->lastErr = 0; /* reset */
                         /* On error 'ret' will be negative */
-                        mask = (byte)((ret >> ((sizeof(ret) * 8) - 1)) & 0xFF) - 1;
+                        mask = (byte)(((unsigned int)ret >> ((sizeof(ret) * 8) - 1)) - 1);
 
                         /* build PreMasterSecret */
                         ssl->arrays->preMasterSecret[0] = ssl->chVersion.major;
