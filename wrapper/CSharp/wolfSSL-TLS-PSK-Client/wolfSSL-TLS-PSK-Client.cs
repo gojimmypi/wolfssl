@@ -49,6 +49,7 @@ public class wolfSSL_TLS_PSK_Client
     /// <returns>size of key set</returns>
     public static uint my_psk_client_cb(IntPtr ssl, string hint, IntPtr identity, uint id_max, IntPtr key, uint max_key)
     {
+        Console.WriteLine("Hello my_psk_client_cb!");
         /* C# client */
         byte[] id = { 67, 35, 32, 99, 108, 105, 101, 110, 116 };
         if (id_max < 9)

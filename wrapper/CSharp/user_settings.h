@@ -46,6 +46,9 @@
 #define WOLFSSL_ASN_TEMPLATE /* default */
 #define WOLFSSL_SHA3
 
+
+#define HAVE_AESCCM
+
 #if 0
     #define OPENSSL_EXTRA
 #endif
@@ -83,7 +86,19 @@
 #define HAVE_COMP_KEY
 
 /* Disable features */
-#define NO_PSK
+/* #define NO_PSK */
+#define HAVE_PSK
+#define WOLFSSL_ALLOW_PSK
+#ifdef NO_PSK
+    #error "Cannot use NO_PSK"
+#endif
+
+#define WOLFSSL_AES
+#define WOLFSSL_CBC
+#define WOLFSSL_SHA
+
+
+
 
 /* Disable Algorithms */
 #define NO_DES3
