@@ -31,13 +31,49 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using wolfSSL.CSharp;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
+public class DtlsConnection
+{
+    private IntPtr ssl;
+    private IntPtr ctx;
+    private Task readTask;
+    public DtlsConnection(IntPtr ssl, IntPtr ctx)
+    {
+        this.ssl = ssl;
+        this.ctx = ctx;
+        readTask = new Task(Read);
+    }
+    private void Read()
+    {
+        Console.WriteLine("Entro en ReadConnection");
+        
+        bool ok = true;
+        while (true)
+        {
+            StringBuilder buff = new StringBuilder(1024);
 
+            if (wolfssl.read(ssl, buff, 1023) <= 0)
+            {
+                Console.WriteLine("Error reading message");
+                Console.WriteLine(wolfssl.get_error(ssl));
+                ok = false;
+                //clean(ssl, ctx);
+                break;
+            }
+            Console.WriteLine("Leído: " + buff);
+        }
+        Console.WriteLine("Salgo de ReadConnection");
+    }
+    public void Start()
+    {
+        readTask.Start();
+    }
+}
 
 public class wolfSSL_DTLS_PSK_Server
 {
-
-
     /// <summary>
     /// Example of a PSK function call back
     /// </summary>
@@ -55,14 +91,15 @@ public class wolfSSL_DTLS_PSK_Server
 
         /* Use desired key, note must be a key smaller than max key size parameter
             Replace this with desired key. Is trivial one for testing */
-        if (max_key < 4)
+        if (max_key < 16)
             return 0;
-        byte[] tmp = { 26, 43, 60, 77 };
-        Marshal.Copy(tmp, 0, key, 4);
+        byte[] tmp = { 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30 };
+        Marshal.Copy(tmp, 0, key, 16);
 
-        return (uint)4;
+        return (uint)16;
     }
 
+    static Dictionary<IntPtr, DtlsConnection> dConnections = new Dictionary<IntPtr, DtlsConnection>();
 
     private static void clean(IntPtr ssl, IntPtr ctx)
     {
@@ -71,11 +108,13 @@ public class wolfSSL_DTLS_PSK_Server
         wolfssl.Cleanup();
     }
 
-
+    static IntPtr ctx;
+    static IntPtr ssl;
+    static UdpClient udp;
+    static IPEndPoint ep;
     public static void Main(string[] args)
     {
-        IntPtr ctx;
-        IntPtr ssl;
+
 
         /* These paths should be changed according to use */
         string fileCert = wolfssl.setPath("server-cert.pem");
@@ -88,8 +127,7 @@ public class wolfSSL_DTLS_PSK_Server
         }
 
         wolfssl.psk_delegate psk_cb = new wolfssl.psk_delegate(my_psk_server_cb);
-
-        StringBuilder buff = new StringBuilder(1024);
+        
         StringBuilder reply = new StringBuilder("Hello, this is the wolfSSL C# wrapper");
 
         wolfssl.Init();
@@ -144,10 +182,12 @@ public class wolfSSL_DTLS_PSK_Server
         }
         wolfssl.CTX_set_psk_server_callback(ctx, psk_cb);
 
+
+
         short minDhKey = 128;
         wolfssl.CTX_SetMinDhKey_Sz(ctx, minDhKey);
         Console.Write("Setting cipher suite to ");
-        StringBuilder set_cipher = new StringBuilder("DHE-PSK-AES128-CBC-SHA256");
+        StringBuilder set_cipher = new StringBuilder("PSK-AES128-CBC-SHA");
         Console.WriteLine(set_cipher);
         if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS)
         {
@@ -157,78 +197,63 @@ public class wolfSSL_DTLS_PSK_Server
         }
 
         IPAddress ip = IPAddress.Parse("0.0.0.0");
-        UdpClient udp = new UdpClient(11111);
-        IPEndPoint ep = new IPEndPoint(ip, 11111);
+        udp = new UdpClient(2256);
+        ep = new IPEndPoint(ip, 2256);
         Console.WriteLine("Started UDP and waiting for a connection");
 
-        ssl = wolfssl.new_ssl(ctx);
-        if (ssl == IntPtr.Zero)
-        {
-            Console.WriteLine("Error creating ssl object");
-            udp.Close();
-            wolfssl.CTX_free(ctx);
-            return;
-        }
+        //while (true)
+        //{
+            ssl = wolfssl.new_ssl(ctx);
+            if (ssl == IntPtr.Zero)
+            {
+                Console.WriteLine("Error creating ssl object");
+                udp.Close();
+                wolfssl.CTX_free(ctx);
+                return;
+            }
 
-        if (wolfssl.SetTmpDH_file(ssl, dhparam, wolfssl.SSL_FILETYPE_PEM) != wolfssl.SUCCESS)
-        {
-            Console.WriteLine("Error in setting dhparam");
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
+            if (wolfssl.set_dtls_fd(ssl, udp, ep) != wolfssl.SUCCESS)
+            {
+                Console.WriteLine(wolfssl.get_error(ssl));
+                udp.Close();
+                clean(ssl, ctx);
+                return;
+            }
 
-        if (wolfssl.set_dtls_fd(ssl, udp, ep) != wolfssl.SUCCESS)
-        {
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
+            Console.WriteLine($"ssl = {ssl}");
 
-        if (wolfssl.accept(ssl) != wolfssl.SUCCESS)
-        {
-           Console.WriteLine(wolfssl.get_error(ssl));
-           udp.Close();
-           clean(ssl, ctx);
-           return;
-        }
+            if (wolfssl.accept(ssl) != wolfssl.SUCCESS)
+            {
+                Console.WriteLine(wolfssl.get_error(ssl));
 
-        /* print out results of TLS/SSL accept */
-        Console.WriteLine("SSL version is " + wolfssl.get_version(ssl));
-        Console.WriteLine("SSL cipher suite is " + wolfssl.get_current_cipher(ssl));
+                clean(ssl, ctx);
+                return;
+            }
+            //wolfssl.SetIORecv(ssl, rcv_cb);
+            //wolfssl.SetIOSend(ssl, snd_cb);
 
-        /* get connection information and print ip - port */
-        wolfssl.DTLS_con con = wolfssl.get_dtls_fd(ssl);
-        Console.Write("Connected to ip ");
-        Console.Write(con.ep.Address.ToString());
-        Console.Write(" on port ");
-        Console.WriteLine(con.ep.Port.ToString());
 
-        /* read information sent and send a reply */
-        if (wolfssl.read(ssl, buff, 1023) < 0)
-        {
-            Console.WriteLine("Error reading message");
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
-        Console.WriteLine(buff);
+            /* print out results of TLS/SSL accept */
+            Console.WriteLine("SSL version is " + wolfssl.get_version(ssl));
+            Console.WriteLine("SSL cipher suite is " + wolfssl.get_current_cipher(ssl));
 
-        if (wolfssl.write(ssl, reply, reply.Length) != reply.Length)
-        {
-            Console.WriteLine("Error writing message");
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
+            /* get connection information and print ip - port */
+            wolfssl.DTLS_con con = wolfssl.get_dtls_fd(ssl);
+            Console.Write("Connected to ip ");
+            Console.Write(con.ep.Address.ToString());
+            Console.Write(" on port ");
+            Console.WriteLine(con.ep.Port.ToString());
 
-        Console.WriteLine("At the end freeing stuff");
-        wolfssl.shutdown(ssl);
-        udp.Close();
-        clean(ssl, ctx);
+
+
+            /* read information sent and send a reply */
+
+            DtlsConnection conn = new DtlsConnection(ssl, ctx);
+            dConnections[ssl] = conn;
+            conn.Start();
+        //}
+        Console.ReadLine();
     }
+    
+
 }
