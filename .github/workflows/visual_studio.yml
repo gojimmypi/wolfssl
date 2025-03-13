@@ -29,6 +29,12 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
+      - name: Build wolfSSL (DLL Debug, x64)
+        working-directory: wolfssl
+        run: |
+          msbuild wolfssl.vcxproj /p:Configuration="DLL Debug" /p:Platform=x64 /m /verbosity:minimal
+        shell: cmd
+
       - name: Build wolfSSL-TLS-Client
         working-directory: wrapper/CSharp/wolfSSL-TLS-Client
         run: msbuild wolfSSL-TLS-Client.csproj /p:TargetFrameworkVersion=v3.5
