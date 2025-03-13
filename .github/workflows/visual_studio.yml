@@ -1,0 +1,34 @@
+name: Build for .NET 3.5
+
+on:
+  push:
+    branches:
+      - dev-35  # Trigger only on commits to dev-35 in your repo
+  pull_request:
+    branches:
+      - dev-35
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2019  # .NET 3.5 is available here
+
+    steps:
+      - name: Checkout Repository (dev-35 branch)
+        uses: actions/checkout@v3
+        with:
+          ref: dev-35  # Ensures correct branch is checked out
+
+      - name: Checkout wolfSSL (dev-35 branch)
+        uses: actions/checkout@v3
+        with:
+          repository: gojimmypi/wolfssl
+          ref: dev-35
+          path: wolfssl  # Clone wolfSSL into the "wolfssl" subdirectory
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Build wolfSSL-TLS-Client
+        working-directory: wrapper/CSharp/wolfSSL-TLS-Client
+        run: msbuild wolfSSL-TLS-Client.csproj /p:TargetFrameworkVersion=v3.5
