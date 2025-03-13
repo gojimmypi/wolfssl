@@ -246,13 +246,26 @@ namespace wolfSSL.CSharp
             }
         }
 
-        private static string WriteDebugString(string hintText, string s)
+        private static string WriteDebugString(string s, string hintText)
         {
             string ret = string.Empty;
 #if DEBUG
-            if (!string.IsNullOrEmpty(hintText))
+            if (string.IsNullOrEmpty(hintText))
             {
-                ret = hintText + s;
+                ret = s;
+                Console.WriteLine(ret);
+            }
+            else
+            {
+                if (s.Contains("%s"))
+                {
+                    ret = s.Replace("%s", hintText);
+                }
+                else
+                {
+                    ret = hintText + s;
+                }
+
                 Console.WriteLine(ret);
             }
 #endif
@@ -326,7 +339,7 @@ namespace wolfSSL.CSharp
 
             if (string.IsNullOrEmpty(thisPath))
             {
-                WriteDebugString(hintText, " is not defined, not used to search for wolfssl.");
+                WriteDebugString("%s is not defined, not used to search for wolfssl.", hintText);
             }
             else
             {
@@ -339,38 +352,22 @@ namespace wolfSSL.CSharp
 
                     if (string.IsNullOrEmpty(thisFullPath))
                     {
-#if DEBUG
-                        if (!string.IsNullOrEmpty(hintText))
-                        {
-                            Console.WriteLine(hintText + " path empty");
-                        }
-#endif
+                        WriteDebugString("path empty:", hintText);
                     }
                     else
                     {
-
                         if (File.Exists(thisFullPath))
                         {
-#if DEBUG
-                            if (!string.IsNullOrEmpty(hintText))
-                            {
-                                Console.WriteLine("Found wolfssl.dll from " + hintText + ":");
-                            }
-                            Console.WriteLine("File: " + thisFullPath);
-#endif
+                            WriteDebugString("Found wolfssl.dll from " + hintText + ":\r\n" + thisFullPath, hintText);
                             foundLib = true;
                             ret = thisFullPath;
                         }
                         else
                         {
-#if DEBUG
-                            if (!string.IsNullOrEmpty(hintText))
-                            {
-                                Console.WriteLine("WARNING: wolfssl.dll not found from " +
-                                                   hintText + " = " + thisPath);
-                            }
-                            Console.WriteLine("Tried file: " + thisFullPath);
-#endif
+                            WriteDebugString("WARNING: wolfssl.dll not found from " +
+                                             " = " + thisPath + "\r\n" +
+                                             "Tried file: " + thisFullPath,
+                                             hintText);
                         }
                     }
 
