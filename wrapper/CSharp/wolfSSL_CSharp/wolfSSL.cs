@@ -337,9 +337,13 @@ namespace wolfSSL.CSharp
             processorArch = GetArchitecture();
             configAttr = GetBuildConfiguration();
 
+            WriteDebugString("Enter CheckWolfSSLPath()", "");
+            WriteDebugString(" - thisPath:'%s`", thisPath);
+            WriteDebugString(" - hintText:'%s`", hintText);
+
             if (string.IsNullOrEmpty(thisPath))
             {
-                WriteDebugString("%s is not defined, not used to search for wolfssl.", hintText);
+                WriteDebugString(" - %s is not defined, not used to search for wolfssl.", hintText);
             }
             else
             {
@@ -352,22 +356,27 @@ namespace wolfSSL.CSharp
 
                     if (string.IsNullOrEmpty(thisFullPath))
                     {
-                        WriteDebugString("path empty:", hintText);
+                        WriteDebugString(" - path empty:", hintText);
                     }
                     else
                     {
                         if (File.Exists(thisFullPath))
                         {
-                            WriteDebugString("Found wolfssl.dll from " + hintText + ":\r\n" + thisFullPath, hintText);
+                            WriteDebugString(" - Found wolfssl.dll from " + hintText + ":\r\n" + thisFullPath, hintText);
                             foundLib = true;
                             ret = thisFullPath;
                         }
                         else
                         {
-                            WriteDebugString("WARNING: wolfssl.dll not found from " +
-                                             " = " + thisPath + "\r\n" +
-                                             "Tried file: " + thisFullPath,
-                                             hintText);
+                            if (searchAlternates)
+                            {
+                                WriteDebugString(" - %s: '" + altPath + "'", "Tried alternate");
+                            }
+                            else
+                            {
+                                WriteDebugString(" - WARNING: wolfssl.dll not found from %s = " + thisPath, hintText);
+
+                            }
                         }
                     }
 
@@ -407,7 +416,7 @@ namespace wolfSSL.CSharp
                                                    configAttr.ToString() + Path.DirectorySeparatorChar +
                                                    processorArch.ToString();
 
-                                Console.WriteLine("New alt = " + thisStartingPath);
+                                Console.WriteLine(" - New alt = " + thisStartingPath);
                             }
                         }
                         else
