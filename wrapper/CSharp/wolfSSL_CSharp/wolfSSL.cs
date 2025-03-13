@@ -247,8 +247,17 @@ namespace wolfSSL.CSharp {
         /* Helper to check for wolfssl.dll in a specific location */
         private static string CheckWolfSSLPath(string thisPath, string hintText)
         {
-            string ret = null;
-            string thisFullPath = Path.GetFullPath(thisPath) + Path.DirectorySeparatorChar + wolfssl_dll;
+            string ret = "";
+            string thisFullPath;
+            if (string.IsNullOrEmpty(thisPath))
+            {
+                thisFullPath = Path.GetFullPath(".") + Path.DirectorySeparatorChar + wolfssl_dll;
+            }
+            else
+            {
+                thisFullPath = Path.GetFullPath(thisPath) + Path.DirectorySeparatorChar + wolfssl_dll;
+            }
+
 
             if (string.IsNullOrEmpty(thisFullPath))
             {
@@ -266,11 +275,21 @@ namespace wolfSSL.CSharp {
 #if DEBUG
                     if (!string.IsNullOrEmpty(hintText))
                     {
-                        Console.WriteLine("Found wolfssl.dll from " + hintText);
+                        Console.WriteLine("Found wolfssl.dll from " + hintText + ":");
                     }
                     Console.WriteLine(thisFullPath);
 #endif
                     ret = thisFullPath;
+                }
+                else
+                {
+#if DEBUG
+                    if (!string.IsNullOrEmpty(hintText))
+                    {
+                        Console.WriteLine("WARNING: wolfssl.dll not found from " + hintText + ":");
+                    }
+                    Console.WriteLine(thisFullPath);
+#endif
                 }
             }
 
