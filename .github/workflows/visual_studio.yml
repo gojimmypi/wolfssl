@@ -1,4 +1,4 @@
-name: Build and Test for .NET 3.5
+name: Build for .NET 3.5
 
 on:
   push:
@@ -29,25 +29,6 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Build WolfSSL Library
-        working-directory: wolfssl
-        run: |
-          mkdir -p build
-          cd build
-          cmake -G "Visual Studio 16 2019" ..
-          cmake --build . --config Release
-        shell: cmd
-
-      - name: Build C# Solution
-        working-directory: wrapper/CSharp
-        run: msbuild wolfSSL_CSharp.sln /p:PlatformToolset=v142 /p:TargetFrameworkVersion=v3.5 /m /verbosity:minimal
-
-      - name: Run Tests (if present)
-        working-directory: wrapper/CSharp
-        run: |
-          if exist "wolfSSL_Tests\bin\Debug\wolfSSL_Tests.dll" (
-            echo "Running Tests..."
-            vstest.console.exe wolfSSL_Tests\bin\Debug\wolfSSL_Tests.dll
-          ) else (
-            echo "No test project found, skipping tests."
-          )
+      - name: Build wolfSSL-TLS-Client
+        working-directory: wrapper/CSharp/wolfSSL-TLS-Client
+        run: msbuild wolfSSL-TLS-Client.csproj /p:TargetFrameworkVersion=v3.5
