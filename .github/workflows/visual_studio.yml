@@ -32,7 +32,7 @@ jobs:
       - name: Build wolfSSL (DLL Debug, x64)
         working-directory: wolfssl
         run: |
-          msbuild wolfssl.vcxproj /p:Configuration="DLL Debug" /p:Platform=x64 /m /verbosity:minimal
+          msbuild wolfssl.vcxproj /p:Configuration="DLL Debug" /p:Platform=x64 /p:PlatformToolset=v142 /m /verbosity:normal
         shell: cmd
 
       - name: Build wolfSSL-TLS-Client
