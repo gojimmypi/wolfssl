@@ -73,7 +73,16 @@ public class wolfSSL_DTLS_Server
         //example of function used for setting logging
         wolfssl.SetLogging(standard_log);
 
-        wolfssl.Init();
+        Console.WriteLine("Initializing wolfssl...");
+        if (wolfssl.Init() == wolfssl.SUCCESS)
+        {
+            Console.WriteLine("Successfully initialized wolfssl");
+        }
+        else
+        {
+            Console.WriteLine("ERROR: Failed to initialize wolfssl");
+            Environment.Exit(1);
+        }
 
         Console.WriteLine("Calling ctx Init from wolfSSL");
         ctx = wolfssl.CTX_dtls_new(wolfssl.useDTLSv1_2_server());
