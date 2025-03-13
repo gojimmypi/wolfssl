@@ -764,6 +764,17 @@ namespace wolfSSL.CSharp
                 Console.WriteLine("WARNING: Platform not detected. Looking for certs in local directory.");
                 pathPrefix = "";
             }
+
+            if (!Directory.Exists(pathPrefix))
+            {
+                /* Client example solution is one directory deeper */
+                pathPrefix = "../" + pathPrefix;
+                if (!Directory.Exists(pathPrefix))
+                {
+                    Console.WriteLine("Path not found: " + pathPrefix);
+                }
+            }
+
             Console.WriteLine(Path.GetFullPath(pathPrefix + file));
             return Path.GetFullPath(pathPrefix + file);
         }
