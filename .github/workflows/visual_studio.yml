@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Solution
         working-directory: wrapper/CSharp
-        run: msbuild wolfSSL_CSharp.sln /p:TargetFrameworkVersion=v3.5 /m /verbosity:minimal
+        run: msbuild wolfSSL_CSharp.sln /p:PlatformToolset=v142 /p:TargetFrameworkVersion=v3.5 /m /verbosity:minimal
 
       - name: Run Tests (if present)
         working-directory: wrapper/CSharp
