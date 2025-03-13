@@ -29,7 +29,16 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Build Solution
+      - name: Build WolfSSL Library
+        working-directory: wolfssl
+        run: |
+          mkdir -p build
+          cd build
+          cmake -G "Visual Studio 16 2019" ..
+          cmake --build . --config Release
+        shell: cmd
+
+      - name: Build C# Solution
         working-directory: wrapper/CSharp
         run: msbuild wolfSSL_CSharp.sln /p:PlatformToolset=v142 /p:TargetFrameworkVersion=v3.5 /m /verbosity:minimal
 
