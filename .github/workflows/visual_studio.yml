@@ -35,6 +35,18 @@ jobs:
           msbuild wolfssl.vcxproj /p:Configuration="DLL Debug" /p:Platform=x64 /p:PlatformToolset=v142 /m /verbosity:normal
         shell: cmd
 
+      - name: Build wolfSSL_CSharp
+        working-directory: wrapper/CSharp/wolfSSL_CSharp
+        run: msbuild wolfSSL_CSharp.csproj /p:TargetFrameworkVersion=v3.5
+
+      - name: Build wolfSSL-DTLS-PSK-Server
+        working-directory: wrapper/CSharp/wolfSSL-DTLS-PSK-Server
+        run: msbuild wolfSSL-DTLS-PSK-Server.csproj /p:TargetFrameworkVersion=v3.5
+
+      - name: Build wolfSSL-DTLS-Server
+        working-directory: wrapper/CSharp/wolfSSL-DTLS-Server
+        run: msbuild wolfSSL-DTLS-Server.csproj /p:TargetFrameworkVersion=v3.5
+
       - name: Build wolfSSL-TLS-Client
         working-directory: wrapper/CSharp/wolfSSL-TLS-Client
         run: msbuild wolfSSL-TLS-Client.csproj /p:TargetFrameworkVersion=v3.5
