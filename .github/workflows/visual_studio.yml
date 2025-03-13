@@ -38,3 +38,7 @@ jobs:
       - name: Build wolfSSL-TLS-Client
         working-directory: wrapper/CSharp/wolfSSL-TLS-Client
         run: msbuild wolfSSL-TLS-Client.csproj /p:TargetFrameworkVersion=v3.5
+
+      - name: Build wolfSSL-TLS-Server
+        working-directory: wrapper/CSharp/wolfSSL-TLS-Server
+        run: msbuild wolfSSL-TLS-Server.csproj /p:TargetFrameworkVersion=v3.5
