@@ -21,12 +21,13 @@
 
 
 using System;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Configuration;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 /* using System.Threading; not supported in older frameworks */
 
 #if USE_STDCALL
@@ -34,7 +35,8 @@ using System.Configuration;
 #error "__stdcall is not allowed. Use CallingConvention.Cdecl instead."
 #endif
 
-namespace wolfSSL.CSharp {
+namespace wolfSSL.CSharp
+{
     public class wolfssl
     {
         private const string wolfssl_dll = "wolfssl.dll";
@@ -244,54 +246,168 @@ namespace wolfSSL.CSharp {
             }
         }
 
+        private static string WriteDebugString(string hintText, string s)
+        {
+            string ret = string.Empty;
+#if DEBUG
+            if (!string.IsNullOrEmpty(hintText))
+            {
+                ret = hintText + s;
+                Console.WriteLine(ret);
+            }
+#endif
+            return ret;
+        }
+
+        static string GetBuildConfiguration()
+        {
+            //var configAttr = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(
+            //    Assembly.GetExecutingAssembly(), typeof(AssemblyConfigurationAttribute));
+
+            //return configAttr?.Configuration ?? "Unknown";
+#if DEBUG
+            return "Debug";
+#else
+            return "Release";
+#endif
+        }
+
+        static string GetArchitecture()
+        {
+            string ret = "Unknown";
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            ProcessorArchitecture arch = assembly.GetName().ProcessorArchitecture;
+
+            switch (arch)
+            {
+                case ProcessorArchitecture.MSIL:
+                    ret = "AnyCPU";
+                    break;
+                case ProcessorArchitecture.X86:
+                    ret = "x86";
+                    break;
+                case ProcessorArchitecture.Amd64:
+                    ret = "x64";
+                    break;
+#if ARM
+                case ProcessorArchitecture.Arm:
+                    ret = "Arm";
+                    break
+                case ProcessorArchitecture.Arm64:
+                    ret = "Arm64";
+                    break;
+#endif
+                default: return "Unknown";
+            }
+
+            return ret;
+        }
+
         /* Helper to check for wolfssl.dll in a specific location */
         private static string CheckWolfSSLPath(string thisPath, string hintText)
         {
             string ret = "";
+            string thisName;
             string thisFullPath;
+            string thisStartingPath;
+            string altPath;
+            string originalPath;
+
+            string processorArch = GetArchitecture();
+
+            string configAttr = GetBuildConfiguration();
+
+            bool foundLib = false;
+            bool isRootPath = false;
+            originalPath = thisPath;
+
+
             if (string.IsNullOrEmpty(thisPath))
             {
-                thisFullPath = Path.GetFullPath(".") + Path.DirectorySeparatorChar + wolfssl_dll;
+                WriteDebugString(hintText, " is not defined, not used to search for wolfssl.");
             }
             else
             {
-                thisFullPath = Path.GetFullPath(thisPath) + Path.DirectorySeparatorChar + wolfssl_dll;
-            }
+                thisStartingPath = thisPath;
+                altPath = thisPath;
 
+                while (!foundLib && !isRootPath)
+                {
+                    thisFullPath = Path.GetFullPath(thisStartingPath) + Path.DirectorySeparatorChar + wolfssl_dll;
 
-            if (string.IsNullOrEmpty(thisFullPath))
-            {
-#if DEBUG
-                if (!string.IsNullOrEmpty(hintText))
-                {
-                    Console.WriteLine(hintText + " path empty");
-                }
-#endif
-            }
-            else
-            {
-                if (File.Exists(thisFullPath))
-                {
-#if DEBUG
-                    if (!string.IsNullOrEmpty(hintText))
+                    if (string.IsNullOrEmpty(thisFullPath))
                     {
-                        Console.WriteLine("Found wolfssl.dll from " + hintText + ":");
-                    }
-                    Console.WriteLine(thisFullPath);
-#endif
-                    ret = thisFullPath;
-                }
-                else
-                {
 #if DEBUG
-                    if (!string.IsNullOrEmpty(hintText))
-                    {
-                        Console.WriteLine("WARNING: wolfssl.dll not found from " + hintText + ":");
-                    }
-                    Console.WriteLine(thisFullPath);
+                        if (!string.IsNullOrEmpty(hintText))
+                        {
+                            Console.WriteLine(hintText + " path empty");
+                        }
 #endif
-                }
-            }
+                    }
+                    else
+                    {
+
+                        if (File.Exists(thisFullPath))
+                        {
+#if DEBUG
+                            if (!string.IsNullOrEmpty(hintText))
+                            {
+                                Console.WriteLine("Found wolfssl.dll from " + hintText + ":");
+                            }
+                            Console.WriteLine("File: " + thisFullPath);
+#endif
+                            foundLib = true;
+                            ret = thisFullPath;
+                        }
+                        else
+                        {
+#if DEBUG
+                            if (!string.IsNullOrEmpty(hintText))
+                            {
+                                Console.WriteLine("WARNING: wolfssl.dll not found from " +
+                                                   hintText + " = " + thisPath);
+                            }
+                            Console.WriteLine("Tried file: " + thisFullPath);
+#endif
+                        }
+                    }
+
+                    if (!foundLib)
+                    {
+                        thisName = Path.GetFileName(thisStartingPath).ToString();
+                        if (thisName == processorArch)
+                        {
+                            /* get the [dir] parent 2 levels up from [dir]\\Debug\\AnyCPU */
+                            altPath = Directory.GetParent(thisStartingPath).FullName;
+                            altPath = Directory.GetParent(altPath).FullName;
+                        }
+                        thisName = Path.GetFileName(thisStartingPath).ToString();
+                        if (thisName == configAttr)
+                        {
+                            /* get the [dir] parent from [dir]\\Debug */
+                            altPath = Directory.GetParent(thisStartingPath).FullName;
+                        }
+
+                        /* see if the next iteration would be the root directory */
+                        if (Directory.GetParent(Directory.GetParent(altPath).FullName) is null)
+                        {
+                            /* We'll never find the dll someplace like C:\Debug\AnyCPU\wolfssl.dll */
+                            isRootPath = true;
+                        }
+                        else
+                        {
+                            altPath = Directory.GetParent(altPath).FullName; /* get the parent */
+
+                            thisStartingPath = altPath + Path.DirectorySeparatorChar +
+                                               configAttr.ToString() + Path.DirectorySeparatorChar +
+                                               processorArch.ToString();
+
+                            Console.WriteLine("New alt = " + thisStartingPath);
+                        }
+                    }
+                } /* while not found */
+            } /*  thisPath is not empty */
 
             return ret;
         }
@@ -1666,6 +1782,7 @@ namespace wolfSSL.CSharp {
                     {
                         Console.WriteLine("File not found: " + this_wolfssl_path);
                     }
+                    /* We could throw an exception here, but GetProcAddress should throw one, below */
                 }
                 else
                 {
@@ -1677,7 +1794,7 @@ namespace wolfSSL.CSharp {
                     {
                         /* Alternatively check the Project Build Configuration */
 #if DEBUG
-                        Console.WriteLine("Successfully loaded wolfssl: " + this_wolfssl_path);
+                    Console.WriteLine("Successfully loaded wolfssl: " + this_wolfssl_path);
 #endif
                     }
                 }
