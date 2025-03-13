@@ -31,6 +31,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wolfSSL-TLS-PSK-Client", "w
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wolfCrypt-Test", "wolfCrypt-Test\wolfCrypt-Test.csproj", "{A4F4A244-1306-47F4-A168-31F78D7362FA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl Files", "wolfssl Files", "{FF2B4F87-2F25-4123-BCF6-8A20089B965A}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		user_settings.h = user_settings.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,8 +179,8 @@ Global
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.Debug|Win32.Build.0 = Debug|Win32
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.Debug|x64.ActiveCfg = DLL Debug|x64
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.Debug|x64.Build.0 = DLL Debug|x64
-		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Any CPU.ActiveCfg = DLL Debug|Win32
-		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Any CPU.Build.0 = DLL Debug|Win32
+		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Any CPU.ActiveCfg = DLL Debug|x64
+		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Any CPU.Build.0 = DLL Debug|x64
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Win32.ActiveCfg = DLL Debug|Win32
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|Win32.Build.0 = DLL Debug|Win32
 		{67932048-D67E-4C86-B55F-90899B9BDA64}.DLL Debug|x64.ActiveCfg = DLL Debug|x64
