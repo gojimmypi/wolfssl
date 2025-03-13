@@ -40,6 +40,8 @@ namespace wolfSSL.CSharp
     public class wolfssl
     {
         private const string wolfssl_dll = "wolfssl.dll";
+        private const string WOLFSSL_CERTS_PATH_KEY = "WOLFSSL_CERTS_PATH";
+
         /* See also optional hints to find wolfSSL binary:
          *    WOLFSSL_ROOT environment setting
          *    WOLFSSL_DLL_PATH App.config setting
@@ -750,36 +752,72 @@ namespace wolfSSL.CSharp
         /// </summary>
         public static string setPath(string file) {
             string pathPrefix = "";
+            bool foundCertFile = false;
             PlatformID platform = Environment.OSVersion.Platform;
 
-            if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
+            pathPrefix = ConfigurationManager.AppSettings[WOLFSSL_CERTS_PATH_KEY];
+            if (string.IsNullOrEmpty(pathPrefix))
             {
-                pathPrefix = @"../../certs/";
-                Console.Write("Linux cert path: ");
-            }
-            else if (platform == PlatformID.Win32NT ||
-                     platform == PlatformID.Win32Windows ||
-                     platform == PlatformID.Win32S ||
-                     platform == PlatformID.WinCE )
-            {
-                pathPrefix = @"../../../../certs/";
-                Console.Write("Windows cert path: ");
+                WriteDebugString("No App.config setting found for %s", WOLFSSL_CERTS_PATH_KEY);
             }
             else
             {
-                Console.WriteLine("WARNING: Platform not detected. Looking for certs in local directory.");
-                pathPrefix = "";
-            }
-
-            if (!Directory.Exists(pathPrefix))
-            {
-                /* Client example solution is one directory deeper */
-                pathPrefix = "../" + pathPrefix;
-                if (!Directory.Exists(pathPrefix))
+                pathPrefix = ConfigurationManager.AppSettings[WOLFSSL_CERTS_PATH_KEY];
+                if (string.IsNullOrEmpty(pathPrefix))
                 {
-                    Console.WriteLine("Path not found: " + pathPrefix);
+                    WriteDebugString("SetPath App.config " + WOLFSSL_CERTS_PATH_KEY + " is not configured.", "");
+                }
+                else
+                {
+                    WriteDebugString("Found App.config WOLFSSL_CERTS_PATH_KEY: '%s'", pathPrefix);
+                    pathPrefix += Path.DirectorySeparatorChar;
+                    foundCertFile = (File.Exists(pathPrefix + file));
+                    if (foundCertFile)
+                    {
+                        WriteDebugString("Found cert file: '%s'", pathPrefix + file);
+                    }
+                    else
+                    {
+                        WriteDebugString("Not found: '%s'", pathPrefix + file);
+                    }
                 }
             }
+
+            if (!foundCertFile)
+            {
+                if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
+                {
+                    pathPrefix = @"../../certs/";
+                    Console.Write("Linux cert path: ");
+                }
+                else if (platform == PlatformID.Win32NT ||
+                         platform == PlatformID.Win32Windows ||
+                         platform == PlatformID.Win32S ||
+                         platform == PlatformID.WinCE)
+                {
+                    pathPrefix = @"../../../../certs/";
+                    Console.Write("Windows cert path: ");
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: Platform not detected. Looking for certs in local directory.");
+                    pathPrefix = "";
+                }
+                foundCertFile = (File.Exists(pathPrefix + Path.DirectorySeparatorChar + file));
+
+                /* Not found with App config, nor usual example directory structure, try one parent up. */
+                if (!foundCertFile)
+                {
+                    /* Client example solution is one directory deeper */
+                    pathPrefix = "../" + pathPrefix;
+                    if (!Directory.Exists(pathPrefix))
+                    {
+                        Console.WriteLine("Path not found: " + pathPrefix);
+                    }
+                }
+            } /* !foundCertFile with App.config */
+
+
 
             Console.WriteLine(Path.GetFullPath(pathPrefix + file));
             return Path.GetFullPath(pathPrefix + file);
@@ -1833,6 +1871,7 @@ namespace wolfSSL.CSharp
                 {
                     Console.WriteLine("Error: Could not find function wolfSSL_Init.");
                     Console.WriteLine("Check for build preprocessor option: WOLFSSL_DLL");
+                    Console.WriteLine("Try building with the 'DLL Debug' configuration.");
                     FreeLibrary(_dllHandle);
                 }
                 return wolfSSL_Init();
