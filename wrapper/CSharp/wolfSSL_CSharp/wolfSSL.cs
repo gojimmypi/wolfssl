@@ -307,21 +307,22 @@ namespace wolfSSL.CSharp
         /* Helper to check for wolfssl.dll in a specific location */
         private static string CheckWolfSSLPath(string thisPath, string hintText)
         {
-            string ret = "";
+            string processorArch;
+            string configAttr;
             string thisName;
             string thisFullPath;
             string thisStartingPath;
             string altPath;
             string originalPath;
-
-            string processorArch = GetArchitecture();
-
-            string configAttr = GetBuildConfiguration();
+            string ret = "";
 
             bool foundLib = false;
-            bool isRootPath = false;
-            originalPath = thisPath;
+            bool isSearchDone = false;
+            bool searchAlternates = false;
 
+            originalPath = thisPath;
+            processorArch = GetArchitecture();
+            configAttr = GetBuildConfiguration();
 
             if (string.IsNullOrEmpty(thisPath))
             {
@@ -332,7 +333,7 @@ namespace wolfSSL.CSharp
                 thisStartingPath = thisPath;
                 altPath = thisPath;
 
-                while (!foundLib && !isRootPath)
+                while (!foundLib && !isSearchDone)
                 {
                     thisFullPath = Path.GetFullPath(thisStartingPath) + Path.DirectorySeparatorChar + wolfssl_dll;
 
@@ -381,29 +382,40 @@ namespace wolfSSL.CSharp
                             /* get the [dir] parent 2 levels up from [dir]\\Debug\\AnyCPU */
                             altPath = Directory.GetParent(thisStartingPath).FullName;
                             altPath = Directory.GetParent(altPath).FullName;
+                            searchAlternates = true;
                         }
                         thisName = Path.GetFileName(thisStartingPath).ToString();
                         if (thisName == configAttr)
                         {
                             /* get the [dir] parent from [dir]\\Debug */
                             altPath = Directory.GetParent(thisStartingPath).FullName;
+                            searchAlternates = true;
                         }
 
-                        /* see if the next iteration would be the root directory */
-                        if (Directory.GetParent(Directory.GetParent(altPath).FullName) is null)
+                        /* We'll search alternates only if the path started in [configAttr][processorArch] (e.g. Debug\AnyCPU)
+                         * as we will never want to search in something like C:\windows\system32\Debug\AnyCPU */
+                        if (searchAlternates)
                         {
-                            /* We'll never find the dll someplace like C:\Debug\AnyCPU\wolfssl.dll */
-                            isRootPath = true;
+                            /* see if the next iteration would be the root directory */
+                            if (Directory.GetParent(Directory.GetParent(altPath).FullName) is null)
+                            {
+                                /* We'll never find the dll someplace like C:\Debug\AnyCPU\wolfssl.dll */
+                                isSearchDone = true;
+                            }
+                            else
+                            {
+                                altPath = Directory.GetParent(altPath).FullName; /* get the parent */
+
+                                thisStartingPath = altPath + Path.DirectorySeparatorChar +
+                                                   configAttr.ToString() + Path.DirectorySeparatorChar +
+                                                   processorArch.ToString();
+
+                                Console.WriteLine("New alt = " + thisStartingPath);
+                            }
                         }
                         else
                         {
-                            altPath = Directory.GetParent(altPath).FullName; /* get the parent */
-
-                            thisStartingPath = altPath + Path.DirectorySeparatorChar +
-                                               configAttr.ToString() + Path.DirectorySeparatorChar +
-                                               processorArch.ToString();
-
-                            Console.WriteLine("New alt = " + thisStartingPath);
+                            isSearchDone = true;
                         }
                     }
                 } /* while not found */
