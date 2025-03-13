@@ -23,15 +23,27 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Configuration;
+/* using System.Threading; not supported in older frameworks */
+
+#if USE_STDCALL
+    /* See wolfssl visibiliity.h */
+#error "__stdcall is not allowed. Use CallingConvention.Cdecl instead."
+#endif
 
 namespace wolfSSL.CSharp {
     public class wolfssl
     {
         private const string wolfssl_dll = "wolfssl.dll";
+        /* See also optional hints to find wolfSSL binary:
+         *    WOLFSSL_ROOT environment setting
+         *    WOLFSSL_DLL_PATH App.config setting
+         */
+
+        private static bool _DEBUG_WOLFSSL = false;
 
         /* wait for 6 seconds default on TCP socket state poll if timeout not set */
         private const int WC_WAIT = 6000000;
@@ -232,6 +244,95 @@ namespace wolfSSL.CSharp {
             }
         }
 
+        /* Helper to check for wolfssl.dll in a specific location */
+        private static string CheckWolfSSLPath(string thisPath, string hintText)
+        {
+            string ret = null;
+            string thisFullPath = Path.GetFullPath(thisPath) + Path.DirectorySeparatorChar + wolfssl_dll;
+
+            if (string.IsNullOrEmpty(thisFullPath))
+            {
+#if DEBUG
+                if (!string.IsNullOrEmpty(hintText))
+                {
+                    Console.WriteLine(hintText + " path empty");
+                }
+#endif
+            }
+            else
+            {
+                if (File.Exists(thisFullPath))
+                {
+#if DEBUG
+                    if (!string.IsNullOrEmpty(hintText))
+                    {
+                        Console.WriteLine("Found wolfssl.dll from " + hintText);
+                    }
+                    Console.WriteLine(thisFullPath);
+#endif
+                    ret = thisFullPath;
+                }
+            }
+
+            return ret;
+        }
+
+        /* Helper to find wolfSSL in the usual locations */
+        private static string GetWolfSSLPath(string default_path)
+        {
+            string wolfsslPath;
+            string dllPath;
+
+            if (default_path == wolfssl_dll)
+            {
+                /* this will typically be [WOLFSSL_ROOT]\\wrapper\\CSharp\\Debug\\x64" */
+                wolfsslPath = Environment.CurrentDirectory; /* no path specified */
+            }
+            else
+            {
+                /* some other path specified */
+                wolfsslPath = default_path;
+            }
+
+            wolfsslPath = CheckWolfSSLPath(wolfsslPath, "Default location" );
+
+            if (string.IsNullOrEmpty(wolfsslPath))
+            {
+                wolfsslPath =CheckWolfSSLPath(
+                    ConfigurationManager.AppSettings["WOLFSSL_DLL_PATH"],
+                    "App.config WOLFSSL_DLL_PATH setting");
+            }
+
+            if (string.IsNullOrEmpty(wolfsslPath))
+            {
+                wolfsslPath = CheckWolfSSLPath(
+                    Environment.GetEnvironmentVariable("WOLFSSL_ROOT"),
+                    "Environment Variable WOLFSSL_ROOT setting");
+            }
+
+            /* Did we find wolfSSL specified anywhere? */
+            if (string.IsNullOrEmpty(wolfsslPath))
+            {
+                /* Just use the name, search using path */
+                wolfsslPath = "";
+                dllPath = Path.Combine(wolfsslPath, "wolfssl.dll");
+            }
+            else
+            {
+                dllPath = wolfsslPath;
+            }
+
+
+            if (!File.Exists(dllPath))
+            {
+#if DEBUG
+                Console.WriteLine("Will try to find wolfSSL in system path");
+#endif
+                dllPath = "wolfssl.dll";
+            }
+
+            return dllPath;
+        } /* GetWolfSSLPath */
 
         /********************************
          * Init wolfSSL library
@@ -500,22 +601,24 @@ namespace wolfSSL.CSharp {
 
             if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
             {
-                Console.WriteLine("Linux - " + file);
-                pathPrefix = @"../../certs/" + file;
+                pathPrefix = @"../../certs/";
+                Console.Write("Linux cert path: ");
             }
             else if (platform == PlatformID.Win32NT ||
                      platform == PlatformID.Win32Windows ||
                      platform == PlatformID.Win32S ||
                      platform == PlatformID.WinCE )
             {
-                Console.WriteLine("Windows - " + file);
-                pathPrefix = @"../../../../certs/" + file;
+                pathPrefix = @"../../../../certs/";
+                Console.Write("Windows cert path: ");
             }
             else
             {
+                Console.WriteLine("WARNING: Platform not detected. Looking for certs in local directory.");
                 pathPrefix = "";
             }
-            return pathPrefix + file;
+            Console.WriteLine(Path.GetFullPath(pathPrefix + file));
+            return Path.GetFullPath(pathPrefix + file);
         }
 
 
@@ -1509,6 +1612,18 @@ namespace wolfSSL.CSharp {
         }
 
 
+        // Import necessary Windows API functions
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr LoadLibrary(string dllPath);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool FreeLibrary(IntPtr hModule);
+
+        private static IntPtr _dllHandle;
+
         /// <summary>
         /// Initialize wolfSSL library
         /// </summary>
@@ -1517,6 +1632,44 @@ namespace wolfSSL.CSharp {
         {
             try
             {
+                string this_wolfssl_path;
+                this_wolfssl_path = GetWolfSSLPath(wolfssl_dll);
+
+                _dllHandle = LoadLibrary(this_wolfssl_path);
+                if (_dllHandle == IntPtr.Zero)
+                {
+                    Console.WriteLine("Warning: Could not load " + this_wolfssl_path);
+                    if (File.Exists(this_wolfssl_path))
+                    {
+                        Console.WriteLine("File found, check contents or security settings");
+                    }
+                    else
+                    {
+                        Console.WriteLine("File not found: " + this_wolfssl_path);
+                    }
+                }
+                else
+                {
+                    if (_DEBUG_WOLFSSL)
+                    {
+                        Console.WriteLine("Successfully loaded wolfssl: " + this_wolfssl_path);
+                    }
+                    else
+                    {
+                        /* Alternatively check the Project Build Configuration */
+#if DEBUG
+                        Console.WriteLine("Successfully loaded wolfssl: " + this_wolfssl_path);
+#endif
+                    }
+                }
+
+                IntPtr initPtr = GetProcAddress(_dllHandle, "wolfSSL_Init");
+                if (initPtr == IntPtr.Zero)
+                {
+                    Console.WriteLine("Error: Could not find function wolfSSL_Init.");
+                    Console.WriteLine("Check for build preprocessor option: WOLFSSL_DLL");
+                    FreeLibrary(_dllHandle);
+                }
                 return wolfSSL_Init();
             }
             catch (Exception e)
@@ -2185,6 +2338,7 @@ namespace wolfSSL.CSharp {
         /// </summary>
         public static void Debugging_ON()
         {
+            _DEBUG_WOLFSSL = true;
             wolfSSL_Debugging_ON();
         }
 
@@ -2193,9 +2347,14 @@ namespace wolfSSL.CSharp {
         /// </summary>
         public static void Debugging_OFF()
         {
+            _DEBUG_WOLFSSL = false;
             wolfSSL_Debugging_OFF();
         }
 
+        public static bool DEBUG_WOLFSSL()
+        {
+            return _DEBUG_WOLFSSL;
+        }
         /// <summary>
         /// Set the function to use for logging
         /// </summary>
