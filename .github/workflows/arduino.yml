@@ -51,11 +51,10 @@ jobs:
         run: |
           for BOARD in "esp32:esp32:esp32" "arduino:avr:uno" "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic"; do
             echo "Compiling for $BOARD"
-            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/template/
-            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_AES_CTR/
-            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_client/
-            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_server/
-            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_version/
+            for EXAMPLE in $(find IDE/ARDUINO/sketches -mindepth 1 -maxdepth 1 -type d); do
+              echo "Compiling $EXAMPLE for $BOARD"
+              arduino-cli compile --fqbn $BOARD "$EXAMPLE"
+            done
           done
 
       - name: Upload Compilation Artifacts
