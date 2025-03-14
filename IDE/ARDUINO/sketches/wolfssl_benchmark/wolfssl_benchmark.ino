@@ -66,12 +66,12 @@ Tested with:
     /* the /workspace directory may contain a private config
      * excluded from GitHub with items such as WiFi passwords */
     #include MY_PRIVATE_CONFIG
-    const char* ssid PROGMEM = CONFIG_ESP_WIFI_SSID;
-    const char* password PROGMEM  = CONFIG_ESP_WIFI_PASSWORD;
+    static const char ssid[]     PROGMEM  = MY_ARDUINO_WIFI_SSID;
+    static const char password[] PROGMEM  = MY_ARDUINO_WIFI_PASSWORD;
 #else
     /* when using WiFi capable boards: */
-    const char* ssid PROGMEM  = "your_SSID";
-    const char* password PROGMEM = "your_PASSWORD";
+    static const char ssid[]     PROGMEM  = "your_SSID";
+    static const char password[] PROGMEM  = "your_PASSWORD";
 #endif
 
 #define BROADCAST_ADDRESS "255.255.255.255"

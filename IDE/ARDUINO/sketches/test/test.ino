@@ -110,13 +110,13 @@ Tested with:
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
      * excluded from GitHub with items such as WiFi passwords */
-    #include MY_PRIVATE_CONFIG
-    const char* ssid = CONFIG_ESP_WIFI_SSID;
-    const char* password = CONFIG_ESP_WIFI_PASSWORD;
+#include MY_PRIVATE_CONFIG
+    static const char ssid[]     PROGMEM = MY_ARDUINO_WIFI_SSID;
+    static const char password[] PROGMEM = MY_ARDUINO_WIFI_PASSWORD;
 #else
     /* when using WiFi capable boards: */
-    const char* ssid = "your_SSID";
-    const char* password = "your_PASSWORD";
+    static const char ssid[]     PROGMEM = "your_SSID";
+    static const char password[] PROGMEM = "your_PASSWORD";
 #endif
 
 const char host[] = EXAMPLE_HOST; /* server to connect to */
