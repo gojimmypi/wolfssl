@@ -144,6 +144,7 @@ OPENSSL_DIR_TOP="${WOLFSSL_HEADERS_TOP}/openssl"
 
 WOLFSSL_VERSION=$(grep -i "LIBWOLFSSL_VERSION_STRING" ${TOP_DIR}/wolfssl/version.h | cut -d '"' -f 2)
 if [ "$WOLFSSL_VERSION" = "" ]; then
+    echo "Current user: [$USER]"
     if [ "$USER" = "" ]; then
         # Typically when there's no user, it is a GitHub workflow
         echo "No USER found, no version.h found. Setting Version text to [GitHub] for assumed workflow."
