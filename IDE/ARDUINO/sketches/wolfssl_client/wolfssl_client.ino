@@ -37,7 +37,7 @@ Tested with:
  */
 
 /* If you have a private include, define it here, otherwise edit WiFi params */
-#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
+/* #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h" */
 
 /* set REPEAT_CONNECTION to a non-zero value to continually run the example. */
 #define REPEAT_CONNECTION 0
