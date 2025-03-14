@@ -22,12 +22,14 @@ jobs:
       - name: Ensure Visual Studio project files are UTF-8 with CRLF
         shell: bash
         run: |
+          errors=0
+
           echo "Checking encoding..."
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             encoding=$(file -bi "$file" | grep -o 'charset=.*' | cut -d= -f2)
             if [ "$encoding" != "utf-8" ]; then
               echo "ERROR: $file is not UTF-8 encoded"
-              exit 1
+              ((errors++))
             fi
           done
 
@@ -35,13 +37,20 @@ jobs:
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             if grep -IL . "$file"; then
               echo "ERROR: $file contains non-text content"
-              exit 1
+              ((errors++))
             fi
             if ! grep -q $'\r'$'\n' "$file"; then
               echo "ERROR: $file does not have CRLF line endings"
-              exit 1
+              ((errors++))
             fi
           done
+
+          if [ "$errors" -gt 0 ]; then
+            echo -e "\n=== Validation failed: Found $errors issue(s) in project files ==="
+            exit 1
+          else
+            echo -e "\n All Visual Studio files are correctly formatted."
+          fi
 
       - name: Checkout wolfSSL (dev-35 branch)
         uses: actions/checkout@v3
