@@ -31,6 +31,10 @@ jobs:
           arduino-cli core install esp32:esp32  # Modify for the correct board
           arduino-cli lib install "ArduinoJson"  # Example dependency
           # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
+
+          bash ls /github/home/Arduino/libraries
+          bash ls /usr/local/share/arduino/libraries
+
           bash autogen.sh # needed only to get version.h which is checked by wolfssl-arduino.sh
           bash IDE/ARDUINO/wolfssl-arduino.sh INSTALL  # Install wolfSSL library
 
