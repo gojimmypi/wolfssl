@@ -30,8 +30,11 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32  # Modify for the correct board
           arduino-cli lib install "ArduinoJson"  # Example dependency
-          arduino-cli lib install "wolfSSL"  # Install wolfSSL library
+          # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
+          bash IDE/ARDUINO/wolfssl-arduino.sh INSTALL  # Install wolfSSL library
 
+      # This will fail with Arduino published wolfSSL v5.7.6 and older
+      # See https://github.com/wolfSSL/wolfssl/pull/8514
       - name: Compile Arduino Sketch
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32 IDE/ARDUINO/sketches/template/
