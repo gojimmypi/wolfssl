@@ -1,19 +1,24 @@
 name: Arduino CI Build
 
+# See https://github.com/wolfSSL/Arduino-wolfSSL
+
+# TODO remove '*' om push/ branches, and uncomment github.repository_owner == 'wolfssl'
+
+# START OF COMMON SECTION
 on:
-  # We're only interested in changes in IDE/ARDUINO, as wolfssl is pulled from Arduino published library.
-  # See https://github.com/wolfSSL/Arduino-wolfSSL
   push:
-    paths:
-      # - 'IDE/ARDUINO/**'
-      - '**'
+    branches: [ '*', 'master', 'main', 'release/**' ]
   pull_request:
-    paths:
-      # - 'IDE/ARDUINO/**'
-      - '**'
+    branches: [ '*' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+# END OF COMMON SECTION
 
 jobs:
   build:
+    # if: github.repository_owner == 'wolfssl'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
