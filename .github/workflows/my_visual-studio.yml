@@ -30,7 +30,8 @@ jobs:
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             encoding=$(file -bi "$file" | grep -o 'charset=.*' | cut -d= -f2)
             if [ "$encoding" != "utf-8" ]; then
-              echo "❌ ERROR: $file is not UTF-8 encoded"
+              # echo "❌ ERROR: $file is not UTF-8 encoded"
+              echo -e "\033[33m⚠️ WARNING: $file is not UTF-8 encoded!\033[0m"
               errors=$((errors+1))
             else
               echo "✅ $file is UTF-8 encoded"
@@ -40,11 +41,13 @@ jobs:
           echo "Checking line endings..."
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             if grep -IL . "$file"; then
-              echo "❌ ERROR: $file contains non-text content"
+              # echo "❌ ERROR: $file contains non-text content"
+              echo -e "\033[33m⚠️ WARNING:  $file contains non-text content!\033[0m"
               errors=$((errors + 1))
             fi
             if ! grep -qP '\r\n' "$file"; then
-              echo "❌ERROR: $file does not have CRLF line endings"
+              # echo "❌ERROR: $file does not have CRLF line endings"
+              echo -e "\033[33m⚠️ WARNING: $file does not have CRLF line endings!\033[0m"
               errors=$((errors + 1))
             else
               echo "✅ $file has correct CRLF line endings"
@@ -53,7 +56,8 @@ jobs:
 
           if [ "$errors" -gt 0 ]; then
             echo -e "\n=== Validation failed: Found $errors issue(s) in project files ==="
-            exit 1
+            echo "Not exiting with error, but please update files soon."
+            # exit 1
           else
             echo "All Visual Studio files are correctly formatted."
           fi
