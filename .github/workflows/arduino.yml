@@ -52,7 +52,7 @@ jobs:
       # See https://github.com/wolfSSL/wolfssl/pull/8514
       - name: Compile Arduino Sketches for various boards
         run: |
-          for BOARD in "esp32:esp32:esp32" "arduino:avr:uno" "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic"; do
+          for BOARD in "esp32:esp32:esp32" "arduino:avr:uno" "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic" "teensy:avr:teensy40"; do
             echo "Compiling for $BOARD"
             for EXAMPLE in $(find IDE/ARDUINO/sketches -mindepth 1 -maxdepth 1 -type d); do
               echo "Compiling $EXAMPLE for $BOARD"
