@@ -33,7 +33,9 @@ jobs:
           # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
 
           echo "Checking Arduino library directories..."
-          bash IDE/ARDUINO/wolfssl-arduino.sh INSTALL  # Install wolfSSL library
+          pushd IDE/ARDUINO
+          bash wolfssl-arduino.sh INSTALL  # Install wolfSSL library
+          popd
 
       # This will fail with Arduino published wolfSSL v5.7.6 and older
       # See https://github.com/wolfSSL/wolfssl/pull/8514
