@@ -144,8 +144,15 @@ OPENSSL_DIR_TOP="${WOLFSSL_HEADERS_TOP}/openssl"
 
 WOLFSSL_VERSION=$(grep -i "LIBWOLFSSL_VERSION_STRING" ${TOP_DIR}/wolfssl/version.h | cut -d '"' -f 2)
 if [ "$WOLFSSL_VERSION" = "" ]; then
-    echo "ERROR: Could not find wolfSSL Version in ${TOP_DIR}/wolfssl/version.h"
-    exit 1
+    if [ "$USER" == "" ]; then
+        # Typically when there's no user, it is a GitHub workflow
+        echo "No USER found. Setting Version to `GitHub` for assumed workflow."
+        WOLFSSL_VERSION="GitHub"
+    else
+        echo "ERROR: Could not find wolfSSL Version in ${TOP_DIR}/wolfssl/version.h"
+        echo "Check autogen.sh and configure"
+        exit 1
+    fi
 else
     echo "Found wolfSSL version $WOLFSSL_VERSION"
     echo "# WOLFSSL_VERSION_ARUINO_SUFFIX $WOLFSSL_VERSION_ARUINO_SUFFIX"

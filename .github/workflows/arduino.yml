@@ -35,8 +35,6 @@ jobs:
           echo "Checking Arduino library directories..."
           ls -ld /github/home/Arduino/libraries || echo "Directory not found: /github/home/Arduino/libraries"
           ls -ld /usr/local/share/arduino/libraries || echo "Directory not found: /usr/local/share/arduino/libraries"
-
-          bash autogen.sh # needed only to get version.h which is checked by wolfssl-arduino.sh
           bash IDE/ARDUINO/wolfssl-arduino.sh INSTALL  # Install wolfSSL library
 
       # This will fail with Arduino published wolfSSL v5.7.6 and older
