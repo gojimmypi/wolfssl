@@ -101,12 +101,14 @@ void loop() {
     /* A project-level include.
      * These files typically WILL be visible automatically in the Arduino IDE */
     ret = wolfssl_helper_sample();
-    Serial.printf("- wolfssl_helper_sample ret = %d\r\n", ret);
+    Serial.print("- wolfssl_helper_sample ret = ");
+    Serial.println(ret);
 
     /* A local library directory.
      * These files typically WILL NOT be visible in the Arduino IDE */
     ret = wolfssl_library_sample();
-    Serial.printf("- wolfssl_library_sample ret = %d\r\n", ret);
+    Serial.print("- wolfssl_library_sample ret = ");
+    Serial.println(ret);
 
     /* This next section demonstrates wolfSSL logging. Logging is toggled
      * on or off for each Arduino loop() iteration. WOLFSSL_MSG() only
