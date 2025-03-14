@@ -1,0 +1,41 @@
+name: Arduino CI Build
+
+on:
+  # We're only interested in changes in IDE/ARDUINO, as wolfssl is pulled from Arduino published library.
+  # See https://github.com/wolfSSL/Arduino-wolfSSL
+  push:
+    paths:
+      - 'IDE/ARDUINO/**'
+  pull_request:
+    paths:
+      - 'IDE/ARDUINO/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+
+      - name: Setup Arduino CLI
+        run: |
+          arduino-cli config init
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32  # Modify for the correct board
+          arduino-cli lib install "ArduinoJson"  # Example dependency
+          arduino-cli lib install "wolfSSL"  # Install wolfSSL library
+
+      - name: Compile Arduino Sketch
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32 IDE/ARDUINO/sketches/template/
+
+      - name: Upload Compilation Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-sketch
+          path: IDE/ARDUINO/sketches/template/build/*

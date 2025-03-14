@@ -39,7 +39,6 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 
-
 #ifndef WOLFSSL_ARDUINO_H
 #define WOLFSSL_ARDUINO_H
 
