@@ -51,31 +51,62 @@ Tested with:
 #include <wolfssl/certs_test.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#include <Ethernet.h>
-
-/* There's a 3rd party NTPClient library by Fabrice Weinberg.
- * If it is installed, uncomment define USE_NTP_LIB here: */
-/* #define USE_NTP_LIB */
-#ifdef USE_NTP_LIB
-    #include <NTPClient.h>
-#endif
 
 /* optional board-specific networking includes */
 #if defined(ESP32)
     #define USING_WIFI
     #include <WiFi.h>
     #include <WiFiUdp.h>
+    #ifdef USE_NTP_LIB
+        WiFiUDP ntpUDP;
+    #endif
+    /* Ensure the F() flash macro is defined */
+    #ifndef F
+        #define F
+    #endif
     WiFiClient client;
+
 #elif defined(ESP8266)
     #define USING_WIFI
     #include <ESP8266WiFi.h>
     WiFiClient client;
-/* #elif defined(OTHER_BOARD) */
-    /* TODO define other boards here */
-#else
-    EthernetClient client;
-#endif
 
+#elif defined(ARDUINO_SAM_DUE)
+    #include <SPI.h>
+    /* There's no WiFi/Ethernet on the Due. Requires Ethernet Shield.
+    /* Needs "Ethernet by Various" library to be installed. Tested with V2.0.2 */
+    #include <Ethernet.h>
+    EthernetClient client;
+
+#elif defined(ARDUINO_SAMD_NANO_33_IOT)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h> /* Needs Arduino WiFiNINA library installed manually */
+    WiFiClient client;
+
+#elif defined(ARDUINO_ARCH_RP2040)
+    #define USING_WIFI
+    #include <SPI.h>
+    #include <WiFiNINA.h>
+    WiFiClient client;
+
+#elif defined(USING_WIFI)
+    #define USING_WIFI
+    #include <WiFi.h>
+    #include <WiFiUdp.h>
+    #ifdef USE_NTP_LIB
+        WiFiUDP ntpUDP;
+    #endif
+    WiFiClient client;
+
+/* TODO
+#elif defined(OTHER_BOARD)
+*/
+#else
+    #define USING_WIFI
+    WiFiClient client;
+
+#endif
 #if defined(MY_PRIVATE_CONFIG)
     /* the /workspace directory may contain a private config
      * excluded from GitHub with items such as WiFi passwords */
