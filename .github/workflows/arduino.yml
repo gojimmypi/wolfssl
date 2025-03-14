@@ -5,10 +5,12 @@ on:
   # See https://github.com/wolfSSL/Arduino-wolfSSL
   push:
     paths:
-      - 'IDE/ARDUINO/**'
+      # - 'IDE/ARDUINO/**'
+      - '**'
   pull_request:
     paths:
-      - 'IDE/ARDUINO/**'
+      # - 'IDE/ARDUINO/**'
+      - '**'
 
 jobs:
   build:
