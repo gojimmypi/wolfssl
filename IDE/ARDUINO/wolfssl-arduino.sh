@@ -70,6 +70,9 @@ if [ "$ROOT_DIR" = "" ]; then
     exit 1
 fi
 
+
+ARDUINO_ROOT="$HOME/Arduino/libraries"
+
 # Check environment
 if [ -n "$WSL_DISTRO_NAME" ]; then
     # we found a non-blank WSL environment distro name
@@ -78,8 +81,6 @@ if [ -n "$WSL_DISTRO_NAME" ]; then
     if echo "$current_path" | grep -Eq "^$pattern"; then
         # if we are in WSL and shared Windows file system, 'ln' does not work.
         ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
-    else
-        ARDUINO_ROOT="$HOME/Arduino/libraries"
     fi
 fi
 echo "The Arduino library root is: $ARDUINO_ROOT"
