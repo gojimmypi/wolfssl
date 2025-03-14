@@ -28,10 +28,16 @@ jobs:
         run: |
           arduino-cli config init
           arduino-cli core update-index
-          arduino-cli core install esp32:esp32  # Modify for the correct board
+          arduino-cli core install esp32:esp32  # ESP32
+          arduino-cli core install arduino:avr  # Arduino Uno, Mega, Nano
+          arduino-cli core install arduino:sam  # Arduino Due
+          arduino-cli core install arduino:samd  # Arduino Zero
+          arduino-cli core install esp8266:esp8266  # ESP8266
           arduino-cli lib install "ArduinoJson"  # Example dependency
+
           # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
 
+          # Install current wolfSSL as an Arduino library:
           echo "Checking Arduino library directories..."
           pushd IDE/ARDUINO
           bash wolfssl-arduino.sh INSTALL  # Install wolfSSL library
@@ -39,9 +45,16 @@ jobs:
 
       # This will fail with Arduino published wolfSSL v5.7.6 and older
       # See https://github.com/wolfSSL/wolfssl/pull/8514
-      - name: Compile Arduino Sketch
+      - name: Compile Arduino Sketches for various boards
         run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32 IDE/ARDUINO/sketches/template/
+          for BOARD in "esp32:esp32:esp32" "arduino:avr:uno" "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic"; do
+            echo "Compiling for $BOARD"
+            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/template/
+            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_AES_CTR/
+            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_client/
+            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_server/
+            arduino-cli compile --fqbn $BOARD IDE/ARDUINO/sketches/wolfssl_version/
+          done
 
       - name: Upload Compilation Artifacts
         uses: actions/upload-artifact@v4
