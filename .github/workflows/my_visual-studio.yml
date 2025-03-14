@@ -24,6 +24,7 @@ jobs:
         run: |
           echo "Checking encoding..."
 
+          # initialize error counter to display all failures, then exit if non-zero
           errors=0
 
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
@@ -40,11 +41,11 @@ jobs:
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             if grep -IL . "$file"; then
               echo "❌ ERROR: $file contains non-text content"
-              errors = $((errors + 1))
+              errors=$((errors + 1))
             fi
             if ! grep -qP '\r\n' "$file"; then
               echo "❌ERROR: $file does not have CRLF line endings"
-              errors = $((errors + 1))
+              errors=$((errors + 1))
             else
               echo "✅ $file has correct CRLF line endings"
             fi
