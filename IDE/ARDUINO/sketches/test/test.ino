@@ -30,7 +30,7 @@ Tested with:
 */
 
 /* If you have a private include, define it here, otherwise edit WiFi params */
-#define MY_PRIVATE_CONFIG "/workspace/my_private_config.h"
+/* #define MY_PRIVATE_CONFIG "/workspace/my_private_config.h" */
 
 /* Edit this with your other TLS host server address to connect to: */
 #define EXAMPLE_HOST "192.168.1.38"
