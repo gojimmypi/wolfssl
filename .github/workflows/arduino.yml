@@ -57,13 +57,33 @@ jobs:
       # See https://github.com/wolfSSL/wolfssl/pull/8514
       - name: Compile Arduino Sketches for various boards
         run: |
+          SUCCESS=true
           for BOARD in "esp32:esp32:esp32" "arduino:avr:uno" "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic" "teensy:avr:teensy40"; do
             echo "Compiling for $BOARD"
             for EXAMPLE in $(find IDE/ARDUINO/sketches -mindepth 1 -maxdepth 1 -type d); do
+              if [[ "$BOARD" =~ "arduino:avr:uno"|"arduino:avr:mega"|"arduino:avr:nano" && ( "$EXAMPLE" =~ "wolfssl_server" || "$EXAMPLE" =~ "wolfssl_client" ) ]]; then
+                echo "Skipping $EXAMPLE for $BOARD (No WiFi support)"
+                continue
+              fi
+
               echo "Compiling $EXAMPLE for $BOARD"
               arduino-cli compile --fqbn $BOARD "$EXAMPLE"
+              EXIT_CODE=$?
+              if [ "$EXIT_CODE" -ne 0 ]; then
+                echo "❌ Compilation failed for $EXAMPLE on $BOARD (Exit code: $EXIT_CODE)"
+                SUCCESS=false
+              else
+                echo "✅ Compilation succeeded for $EXAMPLE on $BOARD"
+              fi
             done
           done
+
+          if [ "$SUCCESS" = true ]; then
+            echo "✅ All sketches compiled successfully!"
+          else
+            echo "❌ One or more sketches failed to compile."
+            exit 1
+          fi
 
       - name: Upload Compilation Artifacts
         uses: actions/upload-artifact@v4
