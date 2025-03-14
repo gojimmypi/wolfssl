@@ -22,26 +22,31 @@ jobs:
       - name: Ensure Visual Studio project files are UTF-8 with CRLF
         shell: bash
         run: |
+          echo "Checking encoding..."
+
           errors=0
 
-          echo "Checking encoding..."
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             encoding=$(file -bi "$file" | grep -o 'charset=.*' | cut -d= -f2)
             if [ "$encoding" != "utf-8" ]; then
-              echo "ERROR: $file is not UTF-8 encoded"
-              ((errors++))
+              echo "❌ ERROR: $file is not UTF-8 encoded"
+              errors=$((errors+1))
+            else
+              echo "✅ $file is UTF-8 encoded"
             fi
           done
 
           echo "Checking line endings..."
           for file in $(git ls-files '*.vcxproj' '*.csproj' '*.sln'); do
             if grep -IL . "$file"; then
-              echo "ERROR: $file contains non-text content"
-              ((errors++))
+              echo "❌ ERROR: $file contains non-text content"
+              errors = $((errors + 1))
             fi
-            if ! grep -q $'\r'$'\n' "$file"; then
-              echo "ERROR: $file does not have CRLF line endings"
-              ((errors++))
+            if ! grep -qP '\r\n' "$file"; then
+              echo "❌ERROR: $file does not have CRLF line endings"
+              errors = $((errors + 1))
+            else
+              echo "✅ $file has correct CRLF line endings"
             fi
           done
 
@@ -49,7 +54,7 @@ jobs:
             echo -e "\n=== Validation failed: Found $errors issue(s) in project files ==="
             exit 1
           else
-            echo -e "\n All Visual Studio files are correctly formatted."
+            echo "All Visual Studio files are correctly formatted."
           fi
 
       - name: Checkout wolfSSL (dev-35 branch)
