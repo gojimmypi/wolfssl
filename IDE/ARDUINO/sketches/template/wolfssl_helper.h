@@ -1,4 +1,4 @@
-/* wolfssl-arduino.cpp
+/* wolfssl_helper.h
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
@@ -19,15 +19,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#include <Arduino.h>
-#include "wolfssl.h"
 
-/* Function to allow wolfcrypt to use Arduino Serial.print for debug messages.
- * See wolfssl/wolfcrypt/logging.c */
+#ifndef _WOLFSSL_HELPER_H_
+#define _WOLFSSL_HELPER_H_
 
-int wolfSSL_Arduino_Serial_Print(const char* const s)
-{
-    /* Reminder: Serial.print is only available in C++ */
-    Serial.println(F(s));
-    return 0;
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Sample source code is C, but Arduino is compiling with C++ */
+int wolfssl_helper_sample();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

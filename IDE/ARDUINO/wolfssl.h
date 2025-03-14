@@ -22,6 +22,7 @@
 /* Edit with caution. This is an Arduino-library specific header for wolfSSL */
 
 #ifndef WOLFSSL_USER_SETTINGS
+    /* Should already be defined in settings.h for #if defined(ARDUINO) */
     #define WOLFSSL_USER_SETTINGS
 #endif
 
@@ -45,4 +46,4 @@
 /* Declare a helper function to be used in wolfssl/wolfcrypt/logging.c */
 int wolfSSL_Arduino_Serial_Print(const char* const s);
 
-#endif
+#endif /* WOLFSSL_ARDUINO_H */

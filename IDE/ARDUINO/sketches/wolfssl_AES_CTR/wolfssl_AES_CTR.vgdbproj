@@ -11,11 +11,11 @@
       <GroupSourcesByTypes>true</GroupSourcesByTypes>
       <GroupSourcesByPaths>true</GroupSourcesByPaths>
       <SketchSubdirectory>wolfssl_AES_CTR</SketchSubdirectory>
-      <MainSketchFile>wolfssl_AES_CTR.ino</MainSketchFile>
+      <MainSketchFile>../wolfssl_AES_CTR.ino</MainSketchFile>
       <RootSketchFolder>
         <Subfolders />
         <Files>
-          <string>wolfssl_AES_CTR.ino</string>
+          <string>../wolfssl_AES_CTR.ino</string>
         </Files>
       </RootSketchFolder>
       <OtherFiles />

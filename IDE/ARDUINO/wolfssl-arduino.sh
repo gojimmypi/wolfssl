@@ -116,6 +116,8 @@ if [ $# -gt 0 ]; then
         echo "Error: not a valid operation: $THIS_OPERATION"
         exit 1
     fi
+else
+    echo "INSTALL parameter not specified. Installing to ROOT_DIR=$ROOT_DIR"
 fi
 
 

@@ -1,4 +1,4 @@
-/* wolfssl-arduino.cpp
+/* wolfssl_library.cpp
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
@@ -18,16 +18,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-
 #include <Arduino.h>
-#include "wolfssl.h"
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl.h>
 
-/* Function to allow wolfcrypt to use Arduino Serial.print for debug messages.
- * See wolfssl/wolfcrypt/logging.c */
+/* Arduino source is typically in a `src` directory, with header in parent: */
+#include "../wolfssl_library.h"
 
-int wolfSSL_Arduino_Serial_Print(const char* const s)
+int wolfssl_library_sample()
 {
-    /* Reminder: Serial.print is only available in C++ */
-    Serial.println(F(s));
-    return 0;
-};
+    int ret = 0;
+    Serial.println("\nHello wolfssl_library!");
+
+    printf("- Calling wolfSSL_Init()\r\n");
+    ret = wolfSSL_Init();
+    if (ret == WOLFSSL_SUCCESS) {
+        printf("- Success wolfssl_library!\r\n");
+    }
+    else {
+        printf("- Error initializing wolfSSL!\r\n");
+    }
+    return ret;
+}

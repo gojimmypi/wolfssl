@@ -3,19 +3,19 @@
   <Project xsi:type="com.visualgdb.project.external.arduino">
     <CustomSourceDirectories>
       <Directories />
-      <PathStyle>RemoteUnix</PathStyle>
+      <PathStyle>Unknown</PathStyle>
     </CustomSourceDirectories>
     <AutoProgramSPIFFSPartition>true</AutoProgramSPIFFSPartition>
     <ProjectModeSettings>
-      <ProjectGUID>016472b4-fbff-4d0a-bc2d-4d0a1d19055e</ProjectGUID>
+      <ProjectGUID>db43c533-4ce4-4470-90d2-87277c378cf8</ProjectGUID>
       <GroupSourcesByTypes>true</GroupSourcesByTypes>
       <GroupSourcesByPaths>true</GroupSourcesByPaths>
-      <SketchSubdirectory>../</SketchSubdirectory>
-      <MainSketchFile>wolfssl_client.ino</MainSketchFile>
+      <SketchSubdirectory>template</SketchSubdirectory>
+      <MainSketchFile>../template.ino</MainSketchFile>
       <RootSketchFolder>
         <Subfolders />
         <Files>
-          <string>wolfssl_client.ino</string>
+          <string>../template.ino</string>
         </Files>
       </RootSketchFolder>
       <OtherFiles />
@@ -27,6 +27,10 @@
     <OutputSubdirectory>Output\$(PlatformName.defuse)\$(ConfigurationName.defuse)</OutputSubdirectory>
     <EnableVerboseBuild>false</EnableVerboseBuild>
     <PreprocessorMacros />
+    <ExtraCompilerFlags />
+    <ExtraLinkerFlags>
+      <string>-Wl,-q</string>
+    </ExtraLinkerFlags>
     <AutoBuildSPIFFSPartition>true</AutoBuildSPIFFSPartition>
   </Build>
   <CustomBuild>
@@ -41,18 +45,10 @@
     <PostDebugActions />
     <DebugStopActions />
     <BreakMode>Default</BreakMode>
-    <CustomBreakCommand>
-      <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
-      <RemoteHost>
-        <HostName>BuildMachine</HostName>
-        <Transport>BuiltinShortcut</Transport>
-      </RemoteHost>
-      <BackgroundMode xsi:nil="true" />
-    </CustomBreakCommand>
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM72</ComPortName>
+      <ComPortName>COM102</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -63,8 +59,8 @@
     </Connection>
     <LastConnectionTime>0</LastConnectionTime>
     <EchoTypedCharacters>false</EchoTypedCharacters>
-    <ClearContentsWhenReconnecting>true</ClearContentsWhenReconnecting>
-    <ReconnectAutomatically>true</ReconnectAutomatically>
+    <ClearContentsWhenReconnecting>false</ClearContentsWhenReconnecting>
+    <ReconnectAutomatically>false</ReconnectAutomatically>
     <DisplayMode>ASCII</DisplayMode>
     <Colors>
       <Background>
@@ -133,61 +129,13 @@
     </ExtraSettings>
     <CodeAnalyzerSettings>
       <Enabled>false</Enabled>
-      <SelectedAnalyzers>
-        <string>apiModeling.google.GTest</string>
-        <string>core.builtin.BuiltinFunctions</string>
-        <string>core.builtin.NoReturnFunctions</string>
-        <string>core.CallAndMessage</string>
-        <string>core.DivideZero</string>
-        <string>core.DynamicTypePropagation</string>
-        <string>core.NonnilStringConstants</string>
-        <string>core.NonNullParamChecker</string>
-        <string>core.NullDereference</string>
-        <string>core.StackAddressEscape</string>
-        <string>core.UndefinedBinaryOperatorResult</string>
-        <string>core.uninitialized.ArraySubscript</string>
-        <string>core.uninitialized.Assign</string>
-        <string>core.uninitialized.Branch</string>
-        <string>core.uninitialized.CapturedBlockVariable</string>
-        <string>core.uninitialized.UndefReturn</string>
-        <string>core.VLASize</string>
-        <string>cplusplus.NewDelete</string>
-        <string>cplusplus.NewDeleteLeaks</string>
-        <string>cplusplus.SelfAssignment</string>
-        <string>deadcode.DeadStores</string>
-        <string>nullability.NullPassedToNonnull</string>
-        <string>nullability.NullReturnedFromNonnull</string>
-        <string>security.insecureAPI.getpw</string>
-        <string>security.insecureAPI.gets</string>
-        <string>security.insecureAPI.mkstemp</string>
-        <string>security.insecureAPI.mktemp</string>
-        <string>security.insecureAPI.UncheckedReturn</string>
-        <string>security.insecureAPI.vfork</string>
-        <string>unix.API</string>
-        <string>unix.cstring.BadSizeArg</string>
-        <string>unix.cstring.NullArg</string>
-        <string>unix.Malloc</string>
-        <string>unix.MallocSizeof</string>
-        <string>unix.MismatchedDeallocator</string>
-        <string>unix.StdCLibraryFunctions</string>
-        <string>unix.Vfork</string>
-      </SelectedAnalyzers>
-      <ExtraArguments>
-        <string>-analyzer-store=region</string>
-        <string>-analyzer-opt-analyze-nested-blocks</string>
-        <string>-analyzer-eagerly-assume</string>
-      </ExtraArguments>
     </CodeAnalyzerSettings>
   </CodeSense>
   <Configurations>
     <VisualGDBConfiguration>
-      <PlatformName>Arduino_NANO_33_IoT</PlatformName>
+      <PlatformName>Teensy_4 1</PlatformName>
       <DebugSettingsOverride xsi:type="com.visualgdb.debug.embedded">
-        <AdditionalStartupCommands>
-          <GDBPreStartupCommands />
-          <GDBStartupCommands />
-          <GDBFinalizationCommands />
-        </AdditionalStartupCommands>
+        <AdditionalStartupCommands />
         <AdditionalGDBSettings>
           <Features>
             <DisableAutoDetection>false</DisableAutoDetection>
@@ -217,15 +165,17 @@
           <EnableAsyncExecutionMode>false</EnableAsyncExecutionMode>
           <AsyncModeSupportsBreakpoints>true</AsyncModeSupportsBreakpoints>
           <TemporaryBreakConsolidationTimeout>0</TemporaryBreakConsolidationTimeout>
+          <BacktraceFrameLimit>0</BacktraceFrameLimit>
           <EnableNonStopMode>false</EnableNonStopMode>
           <MaxBreakpointLimit>0</MaxBreakpointLimit>
           <EnableVerboseMode>true</EnableVerboseMode>
           <EnablePrettyPrinters>false</EnablePrettyPrinters>
+          <EnableAbsolutePathReporting>true</EnableAbsolutePathReporting>
         </AdditionalGDBSettings>
         <DebugMethod>
           <ID>com.sysprogs.arm.openocd</ID>
           <Configuration xsi:type="com.visualgdb.edp.openocd.settings">
-            <CommandLine>-f interface/ftdi/tigard.cfg -f target/at91samdXX.cfg -c init -c "reset init"</CommandLine>
+            <CommandLine>-f interface/ftdi/tigard.cfg -f target/imxrt.cfg -c "adapter speed 3000"</CommandLine>
             <ExtraParameters>
               <Frequency xsi:nil="true" />
               <BoostedFrequency xsi:nil="true" />
@@ -235,12 +185,10 @@
             <ProgramMode>Enabled</ProgramMode>
             <StartupCommands>
               <string>set remotetimeout 60</string>
-              <string>target remote :$$SYS:GDB_PORT$$</string>
-              <string>mon reset init</string>
+              <string>target extended-remote :$$SYS:GDB_PORT$$</string>
               <string>load</string>
-              <string>mon reset init</string>
             </StartupCommands>
-            <ProgramFLASHUsingExternalTool>true</ProgramFLASHUsingExternalTool>
+            <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
             <PreferredGDBPort>0</PreferredGDBPort>
             <PreferredTelnetPort>0</PreferredTelnetPort>
             <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
@@ -253,7 +201,7 @@
         <SemihostingPollingDelay>0</SemihostingPollingDelay>
         <StepIntoEntryPoint>false</StepIntoEntryPoint>
         <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>
-        <ValidateEndOfStackAddress>false</ValidateEndOfStackAddress>
+        <ValidateEndOfStackAddress>true</ValidateEndOfStackAddress>
         <StopAtEntryPoint>false</StopAtEntryPoint>
         <EnableVirtualHalts>false</EnableVirtualHalts>
         <DynamicAnalysisSettings />
@@ -261,23 +209,52 @@
         <TimestampProviderTicksPerSecond>0</TimestampProviderTicksPerSecond>
         <KeepConsoleAfterExit>false</KeepConsoleAfterExit>
         <UnusedStackFillPattern xsi:nil="true" />
+        <SoftwareTracingSettings>
+          <TraceWhileDebugging>true</TraceWhileDebugging>
+          <AutoStart>false</AutoStart>
+          <DynamicProgramAreaSize>0</DynamicProgramAreaSize>
+          <SkipInitiallyDisabledTracepoints>false</SkipInitiallyDisabledTracepoints>
+          <TraceProgramOptimization>Size</TraceProgramOptimization>
+          <OutputMode>NonBlocking</OutputMode>
+          <AssumeFramePointerIsValid>true</AssumeFramePointerIsValid>
+          <InstrumentWithNoFeasibleTracepoints>false</InstrumentWithNoFeasibleTracepoints>
+          <MaximumStringLength>255</MaximumStringLength>
+          <DeferVectorTablePatching>true</DeferVectorTablePatching>
+          <ShowAdvancedConfiguration>false</ShowAdvancedConfiguration>
+          <WorkAreaSize>4096</WorkAreaSize>
+          <DisableLiveCodePatching>false</DisableLiveCodePatching>
+        </SoftwareTracingSettings>
+        <RelatedExecutables>
+          <RelatedExecutable>
+            <Program>false</Program>
+            <LoadSymbols>false</LoadSymbols>
+            <ShowInLiveWatch>false</ShowInLiveWatch>
+          </RelatedExecutable>
+        </RelatedExecutables>
         <CheckInterfaceDrivers>true</CheckInterfaceDrivers>
       </DebugSettingsOverride>
       <BuildSettingsExtension xsi:type="com.visualgdb.build.external.arduino.extension">
-        <BoardID>arduino:samd:nano_33_iot</BoardID>
-        <COMPort>COM72</COMPort>
-        <ExplicitToolPaths>
-          <KeyValue>
-            <Key>avrdude</Key>
-            <Value>C:\Users\gojimmypi\AppData\Local\Arduino15\packages\arduino\tools\avrdude\6.3.0-arduino17</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>arduinoOTA</Key>
-            <Value>C:\Users\gojimmypi\AppData\Local\Arduino15\packages\arduino\tools\arduinoOTA\1.3.0</Value>
-          </KeyValue>
-        </ExplicitToolPaths>
+        <BoardID>teensy:avr:teensy41</BoardID>
+        <COMPort>COM102</COMPort>
         <Properties>
-          <Entries />
+          <Entries>
+            <KeyValue>
+              <Key>usb</Key>
+              <Value>serial</Value>
+            </KeyValue>
+            <KeyValue>
+              <Key>speed</Key>
+              <Value>600</Value>
+            </KeyValue>
+            <KeyValue>
+              <Key>opt</Key>
+              <Value>o2std</Value>
+            </KeyValue>
+            <KeyValue>
+              <Key>keys</Key>
+              <Value>en-us</Value>
+            </KeyValue>
+          </Entries>
         </Properties>
         <DebugUnoptimizedComponentTypes>Sketch</DebugUnoptimizedComponentTypes>
       </BuildSettingsExtension>
