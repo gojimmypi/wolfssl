@@ -137,7 +137,8 @@ Tested with:
     #endif
 /* TODO #elif defined(OTHER_BOARD) */
 #else
-    #define USING_WIFI
+    #undef USING_WIFI
+    #undef USING_ETHERNET
 #endif
 
 
@@ -170,9 +171,11 @@ char errBuf[80];
     int mem_ctr        = 0;
 #endif
 
+#if defined(USING_ETHERNET) || defined(USING_WIFI)
 static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 static int reconnect = RECONNECT_ATTEMPTS;
+#endif
 static const int lng_index PROGMEM = 0; /* 0 = English */
 
 
@@ -240,6 +243,7 @@ void show_memory(void)
 #endif
 }
 
+#if defined(USING_ETHERNET) || defined(USING_WIFI)
 /*****************************************************************************/
 /* EthernetSend() to send a message string.                                  */
 /*****************************************************************************/
@@ -265,6 +269,7 @@ int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx) {
     }
     return ret;
 }
+#endif
 
 /*****************************************************************************/
 /* Arduino setup_hardware()                                                  */
@@ -276,9 +281,13 @@ static int setup_hardware(void) {
 
 #elif defined(__arm__)
     /* need to manually turn on random number generator on Arduino Due, etc. */
-    Serial.println(F("Enabled ARM TRNG"));
-    pmc_enable_periph_clk(ID_TRNG);
-    trng_enable(TRNG);
+    #if defined(ARDUINO_ARCH_SAM)
+        Serial.println(F("Enabled ARM TRNG"));
+        pmc_enable_periph_clk(ID_TRNG);
+    #endif
+    #if defined(ARDUINO_ARCH_SAM) || defined(ARDUINO_ARCH_SAMD)
+        trng_enable(TRNG);
+    #endif
 #endif
 
     show_memory();
@@ -291,11 +300,12 @@ static int setup_hardware(void) {
 /*   The device needs to have a valid date within the valid range of certs.  */
 /*****************************************************************************/
 static int setup_datetime(void) {
-    int ret = 0;
-    int ntp_tries = 20;
+    int ret = 1;
 
     /* we need a date in the range of cert expiration */
 #ifdef USE_NTP_LIB
+    ret = 0;
+    int ntp_tries = 20;
     #if defined(ESP32)
         NTPClient timeClient(ntpUDP, "pool.ntp.org");
 
@@ -313,10 +323,6 @@ static int setup_datetime(void) {
         }
         Serial.println(timeClient.getFormattedTime());
         Serial.println(timeClient.getEpochTime());
-    #endif
-#endif
-
-#if defined(ESP32)
     /* see esp32-hal-time.c */
     ntp_tries = 5;
     configTime(0, 0, "pool.ntp.org");  // You can replace "pool.ntp.org" with your preferred NTP server
@@ -327,6 +333,11 @@ static int setup_datetime(void) {
         delay(2000);
         ntp_tries--;
     }
+
+    #endif
+#endif
+
+#if defined(ESP32)
 #endif
 
     return ret;
@@ -334,6 +345,7 @@ static int setup_datetime(void) {
 /*****************************************************************************/
 /* Arduino setup_network()                                                   */
 /*****************************************************************************/
+#if defined(USING_ETHERNET) || defined(USING_WIFI)
 static int setup_network(void) {
     int ret = 0;
 #if defined(USING_WIFI)
@@ -350,7 +362,7 @@ static int setup_network(void) {
 
     Serial.print(F("Connected to WiFi "));
     Serial.println(ssid);
-#else
+#elif defined(USING_ETHERNET)
     /* Newer Ethernet shields have a
      * MAC address printed on a sticker on the shield */
     byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -389,7 +401,7 @@ static int setup_network(void) {
     Serial.print(F("      wolfSSL Example Server IP = "));
 #if defined(USING_WIFI)
     Serial.println(WiFi.localIP());
-#else
+#elif defined(USING_ETHERNET)
     Serial.println(Ethernet.localIP());
 #endif
     /* In server mode, there's no host definition. See companion example. */
@@ -402,6 +414,7 @@ static int setup_network(void) {
 
     return ret;
 }
+#endif
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -421,10 +434,12 @@ void setup(void) {
 
     setup_datetime();
 
+#if defined(USING_ETHERNET) || defined(USING_WIFI)
     setup_network();
 
     wolfSSL_SetIOSend(ctx, EthernetSend);
     wolfSSL_SetIORecv(ctx, EthernetReceive);
+#endif
 
 #if defined THIS_USER_SETTINGS_VERSION
     Serial.print(F("This user_settings.h version:"))
@@ -437,8 +452,10 @@ void setup(void) {
 
     Serial.println(F("Completed Arduino setup()"));
 
+#if defined(USING_ETHERNET) || defined(USING_WIFI)
     server.begin();
     Serial.println("Begin Server... (waiting for remote client to connect)");
+#endif
     delay(1000);
 
     return;
