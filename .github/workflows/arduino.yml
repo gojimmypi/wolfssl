@@ -61,7 +61,7 @@ jobs:
           for BOARD in "arduino:avr:uno" "esp32:esp32:esp32"  "arduino:avr:mega" "arduino:avr:nano" "arduino:sam:arduino_due_x" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic" "teensy:avr:teensy40"; do
             echo "Compiling for $BOARD"
             for EXAMPLE in $(find IDE/ARDUINO/sketches -mindepth 1 -maxdepth 1 -type d); do
-              if [[ "$BOARD" =~ "arduino:avr:uno"|"arduino:avr:mega"|"arduino:avr:nano" && ( "$EXAMPLE" =~ "wolfssl_server" || "$EXAMPLE" =~ "wolfssl_client" ) ]]; then
+              if [[ "$BOARD" =~ "arduino:avr:uno"|"arduino:avr:mega"|"arduino:avr:nano" && ( "$EXAMPLE" =~ "wolfssl_server" || "$EXAMPLE" =~ "wolfssl_client" || "$EXAMPLE" =~ "test" ) ]]; then
                 echo "Skipping $EXAMPLE for $BOARD (No WiFi support)"
                 continue
               fi
