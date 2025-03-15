@@ -33,12 +33,14 @@ int wolfSSL_Arduino_Serial_Print(const char* const s)
 {
     /* Reminder: Serial.print is only available in C++ */
     int is_progmem = 0;
+    const char* t;
+    t = s;
 
 #if defined(__AVR__)
     /* Safely check if `s` is in PROGMEM, 0x8000 is typical for AVR flash */
-    if (reinterpret_cast<uint16_t>(s) >= 0x8000) {
-        while (pgm_read_byte(s)) {
-            Serial.write(pgm_read_byte(s++));
+    if (reinterpret_cast<uint16_t>(t) >= 0x8000) {
+        while (pgm_read_byte(t)) {
+            Serial.write(pgm_read_byte(t++));
         }
         Serial.println();
         is_progmem = 1;
