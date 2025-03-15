@@ -44,6 +44,7 @@ jobs:
           arduino-cli core install teensy:avr       # PJRC Teensy
           arduino-cli core install esp8266:esp8266  # ESP8266
           arduino-cli lib install "ArduinoJson"     # Example dependency
+          arduino-cli lib install "Ethernet"        # Install Ethernet library
 
           # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
 
