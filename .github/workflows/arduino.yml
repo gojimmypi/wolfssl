@@ -66,6 +66,12 @@ jobs:
                 continue
               fi
 
+              if  [[ "$BOARD" =~ "arduino:avr:uno" && ( "$EXAMPLE" != "template" ) && ( "$EXAMPLE" != "wolfssl_version" ) ]]; then
+                echo "Skipping $EXAMPLE for $BOARD (memory limited)"
+                continue
+              fi
+
+
               echo "Compiling $EXAMPLE for $BOARD"
               arduino-cli compile --fqbn $BOARD "$EXAMPLE"
               EXIT_CODE=$?
