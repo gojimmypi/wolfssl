@@ -173,7 +173,7 @@ char errBuf[80];
 static int EthernetSend(WOLFSSL* ssl, char* msg, int sz, void* ctx);
 static int EthernetReceive(WOLFSSL* ssl, char* reply, int sz, void* ctx);
 static int reconnect = RECONNECT_ATTEMPTS;
-static int lng_index PROGMEM = 0; /* 0 = English */
+static const int lng_index PROGMEM = 0; /* 0 = English */
 
 
 #if defined(__arm__)
