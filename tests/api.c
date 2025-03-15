@@ -290,6 +290,8 @@
 #include <tests/api/api.h>
 
 /* Gather test declarations to include them in the testCases array */
+#include <tests/api/test_md2.h>
+#include <tests/api/test_md4.h>
 #include <tests/api/test_md5.h>
 #include <tests/api/test_sha.h>
 #include <tests/api/test_sha256.h>
@@ -8242,7 +8244,7 @@ done:
     if (!sharedCtx)
         wolfSSL_CTX_free(ctx);
 
-    if (clientfd >= 0)
+    if (clientfd != SOCKET_INVALID)
         CloseSocket(clientfd);
 
 #ifdef WOLFSSL_TIRTOS
@@ -39219,6 +39221,95 @@ static int myCEKwrapFunc(PKCS7* pkcs7, byte* cek, word32 cekSz, byte* keyId,
 #endif /* HAVE_PKCS7 && !NO_AES && HAVE_AES_CBC && !NO_AES_256 */
 
 
+#if defined(HAVE_PKCS7) && defined(ASN_BER_TO_DER)
+#define MAX_TEST_DECODE_SIZE 6000
+static int test_wc_PKCS7_DecodeEnvelopedData_stream_decrypt_cb(wc_PKCS7* pkcs7,
+    const byte* output, word32 outputSz, void* ctx) {
+     WOLFSSL_BUFFER_INFO* out = (WOLFSSL_BUFFER_INFO*)ctx;
+
+    if (out == NULL) {
+        return -1;
+    }
+
+    if (outputSz + out->length > MAX_TEST_DECODE_SIZE) {
+        printf("Example buffer size needs increased");
+    }
+
+    /* printf("Decoded in %d bytes\n", outputSz);
+     * for (word32 z = 0; z < outputSz; z++) printf("%02X", output[z]);
+     * printf("\n");
+    */
+
+    XMEMCPY(out->buffer + out->length, output, outputSz);
+    out->length += outputSz;
+
+    (void)pkcs7;
+    return 0;
+}
+#endif /* HAVE_PKCS7 && ASN_BER_TO_DER */
+
+/*
+ * Testing wc_PKCS7_DecodeEnvelopedData with streaming
+ */
+static int test_wc_PKCS7_DecodeEnvelopedData_stream(void)
+{
+#if defined(HAVE_PKCS7) && defined(ASN_BER_TO_DER)
+    EXPECT_DECLS;
+    PKCS7*      pkcs7 = NULL;
+    int ret = 0;
+    XFILE f = XBADFILE;
+    const char* testStream = "./certs/test-stream-dec.p7b";
+    byte testStreamBuffer[100];
+    size_t testStreamBufferSz = 0;
+    byte decodedData[MAX_TEST_DECODE_SIZE]; /* large enough to hold result of decode, which is ca-cert.pem */
+    WOLFSSL_BUFFER_INFO out;
+
+    out.length = 0;
+    out.buffer = decodedData;
+
+    ExpectNotNull(pkcs7 = wc_PKCS7_New(HEAP_HINT, testDevId));
+    ExpectIntEQ(wc_PKCS7_InitWithCert(pkcs7, (byte*)client_cert_der_2048,
+        sizeof_client_cert_der_2048), 0);
+
+    ExpectIntEQ(wc_PKCS7_SetKey(pkcs7, (byte*)client_key_der_2048,
+        sizeof_client_key_der_2048), 0);
+    ExpectIntEQ(wc_PKCS7_SetStreamMode(pkcs7, 1, NULL,
+        test_wc_PKCS7_DecodeEnvelopedData_stream_decrypt_cb, (void*)&out), 0);
+
+    ExpectTrue((f = XFOPEN(testStream, "rb")) != XBADFILE);
+    if (EXPECT_SUCCESS()) {
+        do {
+            testStreamBufferSz = XFREAD(testStreamBuffer, 1,
+                sizeof(testStreamBuffer), f);
+            if (testStreamBufferSz == 0) {
+                break;
+            }
+
+            ret = wc_PKCS7_DecodeEnvelopedData(pkcs7, testStreamBuffer,
+                (word32)testStreamBufferSz, NULL, 0);
+            if (testStreamBufferSz < sizeof(testStreamBuffer)) {
+                break;
+            }
+        } while (ret == WC_NO_ERR_TRACE(WC_PKCS7_WANT_READ_E));
+    #ifdef NO_DES3
+        ExpectIntEQ(ret, ALGO_ID_E);
+    #else
+        ExpectIntGT(ret, 0);
+    #endif
+    }
+
+    if (f != XBADFILE) {
+        XFCLOSE(f);
+        f = XBADFILE;
+    }
+
+    wc_PKCS7_Free(pkcs7);
+    return EXPECT_RESULT();
+#else
+    return TEST_SKIPPED;
+#endif
+} /* END test_wc_PKCS7_DecodeEnvelopedData_stream() */
+
 /*
  * Testing wc_PKCS7_EncodeEnvelopedData()
  */
@@ -50051,7 +50142,7 @@ static int test_wolfSSL_Tls13_ECH_params(void)
     return EXPECT_RESULT();
 }
 
-static int test_wolfSSL_Tls13_ECH(void)
+static int test_wolfSSL_Tls13_ECH_ex(int hrr)
 {
     EXPECT_DECLS;
     tcp_ready ready;
@@ -50122,8 +50213,14 @@ static int test_wolfSSL_Tls13_ECH(void)
     ExpectIntEQ(WOLFSSL_SUCCESS, wolfSSL_UseSNI(ssl, WOLFSSL_SNI_HOST_NAME,
         privateName, privateNameLen));
 
+    /* force hello retry request */
+    if (hrr)
+        ExpectIntEQ(WOLFSSL_SUCCESS, wolfSSL_NoKeyShares(ssl));
+
+    /* connect like normal */
     ExpectIntEQ(wolfSSL_set_fd(ssl, sockfd), WOLFSSL_SUCCESS);
     ExpectIntEQ(wolfSSL_connect(ssl), WOLFSSL_SUCCESS);
+    ExpectIntEQ(ssl->options.echAccepted, 1);
     ExpectIntEQ(wolfSSL_write(ssl, privateName, privateNameLen),
         privateNameLen);
     ExpectIntGT((replyLen = wolfSSL_read(ssl, reply, sizeof(reply))), 0);
@@ -50141,6 +50238,16 @@ static int test_wolfSSL_Tls13_ECH(void)
     FreeTcpReady(&ready);
 
     return EXPECT_RESULT();
+}
+
+static int test_wolfSSL_Tls13_ECH(void)
+{
+    return test_wolfSSL_Tls13_ECH_ex(0);
+}
+
+static int test_wolfSSL_Tls13_ECH_HRR(void)
+{
+    return test_wolfSSL_Tls13_ECH_ex(1);
 }
 #endif /* HAVE_ECH && WOLFSSL_TLS13 */
 
@@ -52614,7 +52721,7 @@ static int test_wolfSSL_BIO(void)
         ExpectIntEQ((int)BIO_set_mem_eof_return(f_bio1, -1), 0);
         ExpectIntEQ((int)BIO_set_mem_eof_return(NULL, -1),   0);
 
-        ExpectTrue((f1 = XFOPEN(svrCertFile, "rwb")) != XBADFILE);
+        ExpectTrue((f1 = XFOPEN(svrCertFile, "rb+")) != XBADFILE);
         ExpectIntEQ((int)BIO_set_fp(f_bio1, f1, BIO_CLOSE), WOLFSSL_SUCCESS);
         ExpectIntEQ(BIO_write_filename(f_bio2, testFile),
                 WOLFSSL_SUCCESS);
@@ -52638,7 +52745,7 @@ static int test_wolfSSL_BIO(void)
         BIO_free(f_bio2);
         f_bio2 = NULL;
 
-        ExpectNotNull(f_bio1 = BIO_new_file(svrCertFile, "rwb"));
+        ExpectNotNull(f_bio1 = BIO_new_file(svrCertFile, "rb+"));
         ExpectIntEQ((int)BIO_set_mem_eof_return(f_bio1, -1), 0);
         ExpectIntEQ(BIO_read(f_bio1, cert, sizeof(cert)), sizeof(cert));
         BIO_free(f_bio1);
@@ -55290,7 +55397,7 @@ static int test_wc_ERR_print_errors_fp(void)
     XFILE fp = XBADFILE;
 
     WOLFSSL_ERROR(WC_NO_ERR_TRACE(BAD_FUNC_ARG));
-    ExpectTrue((fp = XFOPEN("./tests/test-log-dump-to-file.txt", "ar")) !=
+    ExpectTrue((fp = XFOPEN("./tests/test-log-dump-to-file.txt", "a+")) !=
         XBADFILE);
     wc_ERR_print_errors_fp(fp);
 #if defined(DEBUG_WOLFSSL)
@@ -85971,7 +86078,8 @@ static int test_dtls_msg_from_other_peer(void)
         *  !defined(SINGLE_THREADED) && !defined(NO_RSA) */
 #if defined(WOLFSSL_DTLS) && !defined(WOLFSSL_IPV6) &&               \
     !defined(NO_WOLFSSL_CLIENT) && !defined(NO_WOLFSSL_SERVER) &&   \
-    defined(HAVE_IO_TESTS_DEPENDENCIES) && !defined(WOLFSSL_NO_TLS12)
+    defined(HAVE_IO_TESTS_DEPENDENCIES) && !defined(WOLFSSL_NO_TLS12) \
+    && !defined(USE_WINDOWS_API)
 static int test_dtls_ipv6_check(void)
 {
     EXPECT_DECLS;
@@ -86240,7 +86348,8 @@ static int test_TLSX_CA_NAMES_bad_extension(void)
 #if defined(HAVE_MANUAL_MEMIO_TESTS_DEPENDENCIES) && defined(WOLFSSL_TLS13) && \
     !defined(NO_CERTS) && !defined(WOLFSSL_NO_CA_NAMES) && \
     defined(OPENSSL_EXTRA) && defined(WOLFSSL_SHA384) && \
-    defined(HAVE_NULL_CIPHER)
+    defined(HAVE_NULL_CIPHER) && defined(HAVE_CHACHA) && \
+    defined(HAVE_POLY1305)
     /* This test should only fail (with BUFFER_ERROR) when we actually try to
      * parse the CA Names extension. Otherwise it will return other non-related
      * errors. If CA Names will be parsed in more configurations, that should
@@ -89011,6 +89120,21 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_LockMutex_ex),
 
     /* Digests */
+    /* test_md2.c */
+    TEST_DECL(test_wc_InitMd2),
+    TEST_DECL(test_wc_Md2Update),
+    TEST_DECL(test_wc_Md2Final),
+    TEST_DECL(test_wc_Md2_KATs),
+    TEST_DECL(test_wc_Md2_other),
+    TEST_DECL(test_wc_Md2Hash),
+
+    /* test_md4.c */
+    TEST_DECL(test_wc_InitMd4),
+    TEST_DECL(test_wc_Md4Update),
+    TEST_DECL(test_wc_Md4Final),
+    TEST_DECL(test_wc_Md4_KATs),
+    TEST_DECL(test_wc_Md4_other),
+
     /* test_md5.c */
     TEST_DECL(test_wc_InitMd5),
     TEST_DECL(test_wc_Md5Update),
@@ -89159,7 +89283,6 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_Sm3Copy),
     TEST_DECL(test_wc_Sm3GetHash),
     TEST_DECL(test_wc_Sm3_Flags),
-    TEST_DECL(test_wc_Sm3Hash),
 
     /* test_ripemd.c */
     TEST_DECL(test_wc_InitRipeMd),
@@ -89170,8 +89293,17 @@ TEST_CASE testCases[] = {
 
     /* test_hash.c */
     TEST_DECL(test_wc_HashInit),
+    TEST_DECL(test_wc_HashUpdate),
+    TEST_DECL(test_wc_HashFinal),
+    TEST_DECL(test_wc_HashNewDelete),
+    TEST_DECL(test_wc_HashGetDigestSize),
+    TEST_DECL(test_wc_HashGetBlockSize),
+    TEST_DECL(test_wc_Hash),
     TEST_DECL(test_wc_HashSetFlags),
     TEST_DECL(test_wc_HashGetFlags),
+    TEST_DECL(test_wc_Hash_Algs),
+    TEST_DECL(test_wc_HashGetOID),
+    TEST_DECL(test_wc_OidGetHash),
 
     /* HMAC */
     TEST_DECL(test_wc_Md5HmacSetKey),
@@ -89472,6 +89604,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wc_PKCS7_EncodeSignedData_ex),
     TEST_DECL(test_wc_PKCS7_VerifySignedData_RSA),
     TEST_DECL(test_wc_PKCS7_VerifySignedData_ECC),
+    TEST_DECL(test_wc_PKCS7_DecodeEnvelopedData_stream),
     TEST_DECL(test_wc_PKCS7_EncodeDecodeEnvelopedData),
     TEST_DECL(test_wc_PKCS7_EncodeEncryptedData),
     TEST_DECL(test_wc_PKCS7_Degenerate),
@@ -90324,6 +90457,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_Tls13_ECH_params),
     /* Uses Assert in handshake callback. */
     TEST_DECL(test_wolfSSL_Tls13_ECH),
+    TEST_DECL(test_wolfSSL_Tls13_ECH_HRR),
 #endif
 
     TEST_DECL(test_wolfSSL_X509_TLS_version_test_1),

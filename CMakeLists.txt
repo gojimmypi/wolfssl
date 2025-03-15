@@ -2512,6 +2512,8 @@ if(WOLFSSL_EXAMPLES)
     # Build unit tests
     add_executable(unit_test
         tests/api.c
+        tests/api/test_md2.c
+        tests/api/test_md4.c
         tests/api/test_md5.c
         tests/api/test_sha.c
         tests/api/test_sha256.c
@@ -2538,7 +2540,6 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_dtls.c
         tests/api/test_ocsp.c
         tests/api/test_evp.c
-        tests/hash.c
         tests/srp.c
         tests/suites.c
         tests/w64wrapper.c
@@ -2547,7 +2548,8 @@ if(WOLFSSL_EXAMPLES)
         tests/utils.c
         testsuite/utils.c
         examples/server/server.c
-        examples/client/client.c)
+        examples/client/client.c
+        wolfcrypt/test/test.c)
     target_include_directories(unit_test PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR})
     target_compile_options(unit_test PUBLIC "-DNO_MAIN_DRIVER")
