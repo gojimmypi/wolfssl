@@ -2499,7 +2499,7 @@ namespace wolfSSL.CSharp
                 ret = wc_AesGcmSetKey(aes, keyPtr, (uint)key.Length);
                 if (ret != 0)
                 {
-                    throw new Exception("AES-GCM initialization failed with error code {ret}");
+                    throw new Exception("AES-GCM initialization failed with error code ret = " + ret.ToString());
                 }
             }
             finally
@@ -2535,7 +2535,7 @@ namespace wolfSSL.CSharp
                 ret = wc_AesGcmInit(aes, keyPtr, (uint)key.Length, ivPtr, (uint)iv.Length);
                 if (ret != 0)
                 {
-                    throw new Exception("AES-GCM initialization failed with error code {ret}");
+                    throw new Exception("AES-GCM initialization failed with error code ret = " + ret.ToString());
                 }
             }
             finally
@@ -2748,7 +2748,7 @@ namespace wolfSSL.CSharp
                 ret = wc_HashInit(hash, hashType);
                 if (ret != 0)
                 {
-                    throw new Exception("Failed to initialize hash context. Error code: {ret}");
+                    throw new Exception("Failed to initialize hash context. Error code: ret = " + ret.ToString());
                 }
             }
             catch (Exception e)
@@ -2792,7 +2792,7 @@ namespace wolfSSL.CSharp
                 ret = wc_HashUpdate(hash, hashType, dataPtr, (uint)data.Length);
                 if (ret != 0)
                 {
-                    throw new Exception("Failed to update hash. Error code: {ret}");
+                    throw new Exception("Failed to update hash. Error code: ret = " + ret.ToString());
                 }
             }
             catch (Exception e)
@@ -2838,7 +2838,7 @@ namespace wolfSSL.CSharp
                 ret = wc_HashFinal(hash, hashType, outputPtr);
                 if (ret != 0)
                 {
-                    throw new Exception("Failed to finalize hash. Error code: {ret}");
+                    throw new Exception("Failed to finalize hash. Error code: ret = " + ret.ToString());
                 }
 
                 Marshal.Copy(outputPtr, output, 0, hashSize);
@@ -2878,7 +2878,7 @@ namespace wolfSSL.CSharp
                 hash = IntPtr.Zero;
                 if (ret != 0)
                 {
-                    throw new Exception("Failed to free hash context. Error code: {ret}");
+                    throw new Exception("Failed to free hash context. Error code: ret = " + ret.ToString());
                 }
             }
             catch (Exception e)
