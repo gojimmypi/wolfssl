@@ -39,8 +39,21 @@ namespace wolfSSL.CSharp
 {
     public class wolfssl
     {
-        private const string wolfssl_dll = "wolfssl.dll";
+        /* Import necessary Windows API functions to manually load library */
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr LoadLibrary(string dllPath);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool FreeLibrary(IntPtr hModule);
+
+        private static IntPtr _dllHandle;
+
+        private const string wolfssl_dll            = "wolfssl.dll";
         private const string WOLFSSL_CERTS_PATH_KEY = "WOLFSSL_CERTS_PATH";
+        private const string WOLFSSL_DLL_PATH_KEY   = "WOLFSSL_DLL_PATH";
 
         /* See also optional hints to find wolfSSL binary:
          *    WOLFSSL_ROOT environment setting
@@ -276,10 +289,6 @@ namespace wolfSSL.CSharp
 
         static string GetBuildConfiguration()
         {
-            //var configAttr = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(
-            //    Assembly.GetExecutingAssembly(), typeof(AssemblyConfigurationAttribute));
-
-            //return configAttr?.Configuration ?? "Unknown";
 #if DEBUG
             return "Debug";
 #else
@@ -454,8 +463,8 @@ namespace wolfSSL.CSharp
             if (string.IsNullOrEmpty(wolfsslPath))
             {
                 wolfsslPath =CheckWolfSSLPath(
-                    ConfigurationManager.AppSettings["WOLFSSL_DLL_PATH"],
-                    "App.config WOLFSSL_DLL_PATH setting");
+                    ConfigurationManager.AppSettings[WOLFSSL_DLL_PATH_KEY],
+                    "App.config " + WOLFSSL_DLL_PATH_KEY + " setting");
             }
 
             if (string.IsNullOrEmpty(wolfsslPath))
@@ -480,9 +489,7 @@ namespace wolfSSL.CSharp
 
             if (!File.Exists(dllPath))
             {
-#if DEBUG
-                Console.WriteLine("Will try to find wolfSSL in system path");
-#endif
+                WriteDebugString("Will try to find wolfSSL in system path.", "");
                 dllPath = "wolfssl.dll";
             }
 
@@ -1813,19 +1820,6 @@ namespace wolfSSL.CSharp
             }
         }
 
-
-        // Import necessary Windows API functions
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr LoadLibrary(string dllPath);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool FreeLibrary(IntPtr hModule);
-
-        private static IntPtr _dllHandle;
-
         /// <summary>
         /// Initialize wolfSSL library
         /// </summary>
@@ -1859,10 +1853,8 @@ namespace wolfSSL.CSharp
                     }
                     else
                     {
-                        /* Alternatively check the Project Build Configuration */
-#if DEBUG
-                    Console.WriteLine("Successfully loaded wolfssl: " + this_wolfssl_path);
-#endif
+                        /* Alternatively check the Project Build Configuration for DEBUG */
+                        WriteDebugString("Successfully loaded wolfssl: %s", this_wolfssl_path);
                     }
                 }
 
