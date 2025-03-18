@@ -65,6 +65,55 @@ namespace wolfSSL.CSharp
         /* wait for 6 seconds default on TCP socket state poll if timeout not set */
         private const int WC_WAIT = 6000000;
 
+        /* GetConfigValue helper since App.config not implemented on all versions of Visual Studio.
+         * When not avilable, fall back to environment variable config */
+        public static string GetConfigValue(string key)
+        {
+            string value = string.Empty;
+            bool foundConfig = false;
+            try
+            {
+                /* Check if ConfigurationManager is available */
+                if (Type.GetType("System.Configuration.ConfigurationManager, System.Configuration") != null)
+                {
+                    value = ConfigurationManager.AppSettings[key];
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        WriteDebugString("ConfigurationManager.AppSettings not found or not implmemented for key = [" + key + "]", "");
+                    }
+                    else
+                    {
+                        foundConfig = true;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                /* Ignore any errors and fallback */
+            }
+
+            if (foundConfig)
+            {
+                WriteDebugString("Found value for ConfigurationManager.AppSettings with key = [" + key + "]", "");
+            }
+            else
+            {
+                WriteDebugString("Falling back to Environment.GetEnvironmentVariable()", "");
+                value = Environment.GetEnvironmentVariable(key) ?? string.Empty;
+            }
+
+            if (value.Equals(string.Empty) {
+                WriteDebugString("No value was found for key = [" + key + "]", "");
+            }
+            else
+            {
+                WriteDebugString("Found found for key = [" + key + "]", "");
+                WriteDebugString("value found = [" + value + "]", "");
+            }
+
+            return value;
+        }
+
         /********************************
          * Class for DTLS connections
          */
@@ -463,7 +512,7 @@ namespace wolfSSL.CSharp
             if (string.IsNullOrEmpty(wolfsslPath))
             {
                 wolfsslPath =CheckWolfSSLPath(
-                    ConfigurationManager.AppSettings[WOLFSSL_DLL_PATH_KEY],
+                     GetConfigValue(WOLFSSL_DLL_PATH_KEY),
                     "App.config " + WOLFSSL_DLL_PATH_KEY + " setting");
             }
 
@@ -762,14 +811,14 @@ namespace wolfSSL.CSharp
             bool foundCertFile = false;
             PlatformID platform = Environment.OSVersion.Platform;
 
-            pathPrefix = ConfigurationManager.AppSettings[WOLFSSL_CERTS_PATH_KEY];
+            pathPrefix = GetConfigValue(WOLFSSL_CERTS_PATH_KEY);
             if (string.IsNullOrEmpty(pathPrefix))
             {
                 WriteDebugString("No App.config setting found for %s", WOLFSSL_CERTS_PATH_KEY);
             }
             else
             {
-                pathPrefix = ConfigurationManager.AppSettings[WOLFSSL_CERTS_PATH_KEY];
+                pathPrefix = GetConfigValue(WOLFSSL_CERTS_PATH_KEY);
                 if (string.IsNullOrEmpty(pathPrefix))
                 {
                     WriteDebugString("SetPath App.config " + WOLFSSL_CERTS_PATH_KEY + " is not configured.", "");
