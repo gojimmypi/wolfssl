@@ -86,6 +86,8 @@ namespace wolfSSL.CSharp
             {
                 value = _WOLFSSL_CERTS_PATH;
             }
+
+            /* If we found a value, this is likely from older versions of Visual Studio */
             if (value == string.Empty) {
             }
             else
