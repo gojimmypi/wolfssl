@@ -22,7 +22,7 @@ namespace wolfSSL.CSharp
             byte[] buffer = new byte[length];
             Marshal.Copy(ptr, buffer, 0, length);
 
-            return Encoding.UTF8.GetString(buffer); // Use UTF-8 decoding for X.509 fields
+            return Encoding.UTF8.GetString(buffer, 0, buffer.Length); // Use UTF-8 decoding for X.509 fields
         }
 
         [DllImport(wolfssl_dll)]

@@ -28,7 +28,12 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-/* using System.Threading; not supported in older frameworks */
+
+#if COMPACT_FRAMEWORK
+    using System.Collections.Generic;
+#else
+    /* using System.Threading; */
+#endif
 
 #if USE_STDCALL
     /* See wolfssl visibiliity.h */
@@ -66,6 +71,48 @@ namespace wolfSSL.CSharp
 
         /* wait for 6 seconds default on TCP socket state poll if timeout not set */
         private const int WC_WAIT = 6000000;
+
+#if COMPACT_FRAMEWORK
+    public static string PtrToStringAnsiCE(IntPtr ptr)
+    {
+        if (ptr == IntPtr.Zero) return null;
+
+        // Estimate string length
+        int len = 0;
+        while (Marshal.ReadByte(ptr, len) != 0) len++;
+
+        if (len == 0) return string.Empty;
+
+        byte[] buffer = new byte[len];
+        Marshal.Copy(ptr, buffer, 0, len);
+
+        return Encoding.ASCII.GetString(buffer, 0, len);
+    }
+
+    public static class ContextManager
+    {
+        public static Dictionary<IntPtr, ctx_handle> ctxMap = new Dictionary<IntPtr, ctx_handle>();
+
+        public static void RegisterContext(IntPtr ctx, ctx_handle handle)
+        {
+            if (!ctxMap.ContainsKey(ctx))
+            {
+                ctxMap[ctx] = handle;
+            }
+        }
+
+        public static ctx_handle GetContext(IntPtr ctx)
+        {
+            ctx_handle handles;
+            if (!ctxMap.TryGetValue(ctx, out handles))
+            {
+                throw new Exception("Invalid context pointer.");
+            }
+            return handles;
+        }
+    }
+
+#endif
 
         /* GetConfigValue helper since App.config not implemented on all versions of Visual Studio.
          * When not avilable, fall back to environment variable config */
@@ -193,7 +240,11 @@ namespace wolfSSL.CSharp
          * Class for keeping ctx handles alive
          */
         [StructLayout(LayoutKind.Sequential)]
+#if COMPACT_FRAMEWORK
+        public class ctx_handle
+#else
         private class ctx_handle
+#endif
         {
             private GCHandle rec_cb;
             private GCHandle snd_cb;
@@ -684,10 +735,11 @@ namespace wolfSSL.CSharp
 
 
         /********************************
-         * Call backs
+         * Callbacks
          */
 #if COMPACT_FRAMEWORK
         public delegate int CallbackIORecv_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
+        // TODO check init
         static CallbackIORecv_delegate callbackIORecv = Marshal.GetDelegateForFunctionPointer<CallbackIORecv_delegate>(yourFunctionPtr);
 
         [DllImport(wolfssl_dll)]
@@ -711,7 +763,7 @@ namespace wolfSSL.CSharp
 
 #if COMPACT_FRAMEWORK
         public delegate int CallbackIOSend_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
-        static CallbackIOSend_delegate callbackIOSend = Marshal.GetDelegateForFunctionPointer<CallbackIOSend_delegate>(yourFunctionPtr);
+        static CallbackIOSend_delegate callbackIOSend; // Marshal.GetDelegateForFunctionPointer<CallbackIOSend_delegate>(yourFunctionPtr);
 
         [DllImport(wolfssl_dll)]
         private extern static int wolfSSL_CTX_SetIOSend(IntPtr ctx, CallbackIOSend_delegate send);
@@ -765,10 +817,12 @@ namespace wolfSSL.CSharp
          */
 #if COMPACT_FRAMEWORK
         public delegate uint psk_delegate(IntPtr ssl, string identity, IntPtr key, uint max_sz);
-        static psk_delegate pskCallback = Marshal.GetDelegateForFunctionPointer<psk_delegate>(yourFunctionPtr);
+        // TODO check init
+        static psk_delegate pskCallback; // = Marshal.GetDelegateForFunctionPointer<psk_delegate>(yourFunctionPtr);
 
         public delegate uint psk_client_delegate(IntPtr ssl, string hint, IntPtr identity, uint id_max_len, IntPtr key, uint max_sz);
-        static psk_client_delegate pskClientCallback = Marshal.GetDelegateForFunctionPointer<psk_client_delegate>(yourFunctionPtr);
+        // TODO check init
+        static psk_client_delegate pskClientCallback; // = Marshal.GetDelegateForFunctionPointer<psk_client_delegate>(yourFunctionPtr);
         [DllImport(wolfssl_dll)]
         private extern static void wolfSSL_set_psk_server_callback(IntPtr ssl, psk_delegate psk_cb);
         [DllImport(wolfssl_dll)]
@@ -799,7 +853,8 @@ namespace wolfSSL.CSharp
          */
 #if COMPACT_FRAMEWORK
         public delegate int sni_delegate(IntPtr ssl, IntPtr ret, IntPtr exArg);
-        static sni_delegate sniCallback = Marshal.GetDelegateForFunctionPointer<sni_delegate>(yourFunctionPtr);
+        // TODO check init
+        static sni_delegate sniCallback; // = (sni_delegate)Marshal.GetDelegateForFunctionPointer(functionPtr, typeof(sni_delegate));
 
         [DllImport(wolfssl_dll)]
         private extern static void wolfSSL_CTX_set_servername_callback(IntPtr ctx, sni_delegate sni_cb);
@@ -878,13 +933,13 @@ namespace wolfSSL.CSharp
         private extern static int wolfSSL_get_ciphers(StringBuilder ciphers, int sz);
         [DllImport(wolfssl_dll)]
         private extern static IntPtr wolfSSL_get_cipher(IntPtr ssl);
-        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(wolfssl_dll, CharSet = CharSet.Auto)]
         private extern static IntPtr wolfSSL_CIPHER_get_name(IntPtr cipher);
         [DllImport(wolfssl_dll)]
         private extern static IntPtr wolfSSL_get_current_cipher(IntPtr ssl);
-        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(wolfssl_dll, CharSet = CharSet.Auto)]
         private extern static IntPtr wolfSSL_get_version(IntPtr ssl);
-        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(wolfssl_dll, CharSet = CharSet.Auto)]
         private extern static IntPtr wolfSSL_get_cipher_list(IntPtr ssl);
 #else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -909,12 +964,13 @@ namespace wolfSSL.CSharp
          * Error logging
          */
 #if COMPACT_FRAMEWORK
-        [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(wolfssl_dll, CharSet = CharSet.Auto)]
         private extern static IntPtr wolfSSL_ERR_error_string(uint err, StringBuilder errOut);
         [DllImport(wolfssl_dll)]
         private extern static int wolfSSL_get_error(IntPtr ssl, int err);
         public delegate void loggingCb(int lvl, StringBuilder msg);
-        private static loggingCb internal_log = Marshal.GetDelegateForFunctionPointer<loggingCb>(yourFunctionPtr);
+        // TODO check init
+        private static loggingCb internal_log; // = Marshal.GetDelegateForFunctionPointer<loggingCb>(yourFunctionPtr);
         [DllImport(wolfssl_dll)]
         private extern static void wolfSSL_Debugging_ON();
         [DllImport(wolfssl_dll)]
@@ -1041,8 +1097,17 @@ namespace wolfSSL.CSharp
         private static IntPtr unwrap_ctx(IntPtr ctx)
         {
             try {
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
                 ctx_handle handles = (ctx_handle)gch.Target;
+#endif
                 return handles.get_ctx();
             } catch (Exception e)
             {
@@ -1103,11 +1168,19 @@ namespace wolfSSL.CSharp
 
             if (!foundCertFile)
             {
+#if COMPACT_FRAMEWORK
+                if (false)
+                {
+                    /* No MacOSX on WindowsCE */
+                }
+#else
                 if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
                 {
                     pathPrefix = @"../../certs/";
                     Console.Write("Linux cert path: ");
                 }
+#endif
+
                 else if (platform == PlatformID.Win32NT ||
                          platform == PlatformID.Win32Windows ||
                          platform == PlatformID.Win32S ||

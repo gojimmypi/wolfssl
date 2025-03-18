@@ -510,7 +510,7 @@ namespace wolfSSL.CSharp
         * Logging
         */
 #if COMPACT_FRAMEWORK
-        [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(wolfssl_dll)]
         private extern static IntPtr wc_GetErrorString(int error);
 #else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
