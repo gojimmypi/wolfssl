@@ -54,6 +54,8 @@ namespace wolfSSL.CSharp
         private const string wolfssl_dll            = "wolfssl.dll";
         private const string WOLFSSL_CERTS_PATH_KEY = "WOLFSSL_CERTS_PATH";
         private const string WOLFSSL_DLL_PATH_KEY   = "WOLFSSL_DLL_PATH";
+        private static string _WOLFSSL_CERTS_PATH = string.Empty;
+        private static string _WOLFSSL_DLL_PATH = string.Empty;
 
         /* See also optional hints to find wolfSSL binary:
          *    WOLFSSL_ROOT environment setting
@@ -69,21 +71,52 @@ namespace wolfSSL.CSharp
          * When not avilable, fall back to environment variable config */
         public static string GetConfigValue(string key)
         {
+            object obj;
             string value = string.Empty;
             bool foundConfig = false;
+
+            /* Special case for WOLFSSL_DLL_PATH on old platforms */
+            if (key == "WOLFSSL_DLL_PATH")
+            {
+                value = _WOLFSSL_DLL_PATH;
+            }
+
+            /* Special case for WOLFSSL_DLL_PATH on old platforms */
+            if (key == "WOLFSSL_CERTS_PATH")
+            {
+                value = _WOLFSSL_CERTS_PATH;
+            }
+            if (value == string.Empty) {
+            }
+            else
+            {
+                WriteDebugString("Found special case config for key = [" + key + "]", "");
+                foundConfig = true;
+            }
+
+
             try
             {
-                /* Check if ConfigurationManager is available */
-                if (Type.GetType("System.Configuration.ConfigurationManager, System.Configuration") != null)
+                Type configManagerType = Type.GetType("System.Configuration.ConfigurationManager, System.Configuration");
+                if (configManagerType == null)
                 {
-                    value = ConfigurationManager.AppSettings[key];
-                    if (string.IsNullOrEmpty(value))
+                    WriteDebugString("Unable to find ConfigurationManager on this platform (old version of Visual Studio?", "");
+                }
+                else 
+                {
+                    PropertyInfo appSettingsProperty = configManagerType.GetProperty("AppSettings");
+                    if (appSettingsProperty != null)
                     {
-                        WriteDebugString("ConfigurationManager.AppSettings not found or not implmemented for key = [" + key + "]", "");
-                    }
-                    else
-                    {
-                        foundConfig = true;
+                        object appSettings = appSettingsProperty.GetValue(null, null);
+                        MethodInfo getItemMethod = appSettings.GetType().GetMethod("get_Item");
+                        if (getItemMethod != null)
+                        {
+                            obj = getItemMethod.Invoke(appSettings, new object[] { key });
+                            if (value != null)
+                            {
+                                value = obj.ToString();
+                            }
+                        }
                     }
                 }
             }
@@ -102,7 +135,7 @@ namespace wolfSSL.CSharp
                 value = Environment.GetEnvironmentVariable(key) ?? string.Empty;
             }
 
-            if (value.Equals(string.Empty) {
+            if (value.Equals(string.Empty)) {
                 WriteDebugString("No value was found for key = [" + key + "]", "");
             }
             else
@@ -112,6 +145,29 @@ namespace wolfSSL.CSharp
             }
 
             return value;
+        }
+
+        /* As not all versions of Visual Studio implement ConfigurationManager, provide an alterative */
+        public static bool set_WOLFSSL_CERTS_PATH(string certPath)
+        {
+            bool ret = false;
+            if (Directory.Exists(certPath)) {
+                _WOLFSSL_CERTS_PATH = certPath;
+                ret = true;
+            }
+            return ret;
+        }
+
+        /* As not all versions of Visual Studio implement ConfigurationManager, provide an alterative */
+        public static bool set_WOLFSSL_DLL_PATH(string dllPath)
+        {
+            bool ret = false;
+            if (Directory.Exists(dllPath))
+            {
+                _WOLFSSL_DLL_PATH = dllPath;
+                ret = true;
+            }
+            return ret;
         }
 
         /********************************
@@ -1878,7 +1934,15 @@ namespace wolfSSL.CSharp
             try
             {
                 string this_wolfssl_path;
-                this_wolfssl_path = GetWolfSSLPath(wolfssl_dll);
+                if (_WOLFSSL_DLL_PATH == string.Empty)
+                {
+                    this_wolfssl_path = GetWolfSSLPath(wolfssl_dll);
+                }
+                else
+                {
+                    /* typically a special case of older versions of Visual Studio, _WOLFSSL_DLL_PATH set with wolfssl.set_WOLFSSL_DLL_PATH */
+                    this_wolfssl_path = _WOLFSSL_DLL_PATH + "\\" + wolfssl_dll;
+                }
 
                 _dllHandle = LoadLibrary(this_wolfssl_path);
                 if (_dllHandle == IntPtr.Zero)
