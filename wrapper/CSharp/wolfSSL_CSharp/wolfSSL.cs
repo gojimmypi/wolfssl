@@ -463,7 +463,7 @@ namespace wolfSSL.CSharp
                         if (searchAlternates)
                         {
                             /* see if the next iteration would be the root directory */
-                            if (Directory.GetParent(Directory.GetParent(altPath).FullName) is null)
+                            if (Directory.GetParent(Directory.GetParent(altPath).FullName) == null)
                             {
                                 /* We'll never find the dll someplace like C:\Debug\AnyCPU\wolfssl.dll */
                                 isSearchDone = true;
