@@ -1097,13 +1097,12 @@ namespace wolfSSL.CSharp
         private static IntPtr unwrap_ctx(IntPtr ctx)
         {
             try {
-#if COMPACT_FRAMEWORK
                 ctx_handle handles;
+#if COMPACT_FRAMEWORK
                 if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-
 #else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
                 ctx_handle handles = (ctx_handle)gch.Target;
@@ -1118,8 +1117,17 @@ namespace wolfSSL.CSharp
         private static IntPtr unwrap_ssl(IntPtr ssl)
         {
             try {
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ssl, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
                 ssl_handle handles = (ssl_handle)gch.Target;
+#endif
                 return handles.get_ssl();
             } catch (Exception e)
             {
@@ -1235,8 +1243,18 @@ namespace wolfSSL.CSharp
 
             try
             {
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+                GCHandle gch = handles.GCHandle;
+#else
                 System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
+#endif
+
                 Socket con = (System.Net.Sockets.Socket)gch.Target;
                 Byte[] msg = new Byte[sz];
                 amtRecv = con.Receive(msg, msg.Length, 0);
@@ -1322,6 +1340,17 @@ namespace wolfSSL.CSharp
 
             try
             {
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+                GCHandle gch = handles.GCHandle;
+#else
+                System.Runtime.InteropServices.GCHandle gch;
+                gch = GCHandle.FromIntPtr(ctx);
+#endif
                 System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
 
@@ -1358,8 +1387,17 @@ namespace wolfSSL.CSharp
 
             try
             {
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+                GCHandle gch = handles.GCHandle;
+#else
                 System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
+#endif
                 DTLS_con con = (DTLS_con)gch.Target;
 
                 Byte[] msg = con.udp.Receive(ref con.ep);
