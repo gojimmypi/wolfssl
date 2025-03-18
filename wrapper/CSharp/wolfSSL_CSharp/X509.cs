@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define COMPACT_FRAMEWORK
+
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -9,6 +11,36 @@ namespace wolfSSL.CSharp
     {
         private const string wolfssl_dll = "wolfssl.dll";
 
+#if COMPACT_FRAMEWORK
+        private static string PtrToStringAnsiCE(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) return string.Empty;
+
+            int length = 0;
+            while (Marshal.ReadByte(ptr, length) != 0) length++; // Find null terminator
+
+            byte[] buffer = new byte[length];
+            Marshal.Copy(ptr, buffer, 0, length);
+
+            return Encoding.UTF8.GetString(buffer); // Use UTF-8 decoding for X.509 fields
+        }
+
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_X509_get_pubkey_buffer(IntPtr x509, IntPtr buf, IntPtr bufSz);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_get_der(IntPtr x509, IntPtr bufSz);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_X509_free(IntPtr x509);
+        [DllImport(wolfssl_dll)]
+        private extern static int wc_DerToPem(IntPtr der, int derSz, IntPtr pem, int pemSz, int type);
+
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_get_name_oneline(IntPtr x509Name, IntPtr buf, int bufSz);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_get_subject_name(IntPtr x509);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_get_issuer_name(IntPtr x509);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_X509_get_pubkey_buffer(IntPtr x509, IntPtr buf, IntPtr bufSz);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -25,6 +57,7 @@ namespace wolfSSL.CSharp
         private extern static IntPtr wolfSSL_X509_get_subject_name(IntPtr x509);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_X509_get_issuer_name(IntPtr x509);
+#endif
 
         private IntPtr x509;
         private int    type;
@@ -51,11 +84,24 @@ namespace wolfSSL.CSharp
             this.x509 = x509;
             ret = wolfSSL_X509_get_name_oneline(
                 wolfSSL_X509_get_issuer_name(this.x509), IntPtr.Zero, 0);
+#if COMPACT_FRAMEWORK
+            /* Only for Unicode: */
+            this.Issuer = Marshal.PtrToStringUni(ret);
+            this.Issuer = PtrToStringAnsiCE(ret);
+#else
             this.Issuer = Marshal.PtrToStringAnsi(ret);
+#endif
 
             ret = wolfSSL_X509_get_name_oneline(
                 wolfSSL_X509_get_subject_name(this.x509), IntPtr.Zero, 0);
+
+#if COMPACT_FRAMEWORK
+            /* Only for Unicode: */
+            this.Subject = Marshal.PtrToStringUni(ret);
+#else
             this.Subject = Marshal.PtrToStringAnsi(ret);
+#endif
+
             this.isDynamic = isDynamic;
         }
 

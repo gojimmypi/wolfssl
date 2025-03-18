@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-
+#define COMPACT_FRAMEWORK
 
 using System;
 using System.Configuration;
@@ -104,7 +104,7 @@ namespace wolfSSL.CSharp
                 {
                     WriteDebugString("Unable to find ConfigurationManager on this platform (old version of Visual Studio?", "");
                 }
-                else 
+                else
                 {
                     PropertyInfo appSettingsProperty = configManagerType.GetProperty("AppSettings");
                     if (appSettingsProperty != null)
@@ -133,8 +133,11 @@ namespace wolfSSL.CSharp
             }
             else
             {
+#if COMPACT_FRAMEWORK
+#else
                 WriteDebugString("Falling back to Environment.GetEnvironmentVariable()", "");
                 value = Environment.GetEnvironmentVariable(key) ?? string.Empty;
+#endif
             }
 
             if (value.Equals(string.Empty)) {
@@ -406,7 +409,9 @@ namespace wolfSSL.CSharp
         static string GetArchitecture()
         {
             string ret = "Unknown";
-
+#if COMPACT_FRAMEWORK
+            ret = "CE";
+#else
             Assembly assembly = Assembly.GetExecutingAssembly();
             ProcessorArchitecture arch = assembly.GetName().ProcessorArchitecture;
 
@@ -431,6 +436,8 @@ namespace wolfSSL.CSharp
 #endif
                 default: return "Unknown";
             }
+#endif
+
 
             return ret;
         }
@@ -440,11 +447,14 @@ namespace wolfSSL.CSharp
         {
             string processorArch;
             string configAttr;
-            string thisName;
             string thisFullPath;
             string thisStartingPath;
             string altPath;
             string originalPath;
+#if COMPACT_FRAMEWORK
+#else
+            string thisName;
+#endif
             string ret = "";
 
             bool foundLib = false;
@@ -498,6 +508,10 @@ namespace wolfSSL.CSharp
                         }
                     }
 
+#if COMPACT_FRAMEWORK
+                    isSearchDone = true;
+                    /* Directory.GetParent not available in CE */
+#else
                     if (!foundLib)
                     {
                         thisName = Path.GetFileName(thisStartingPath).ToString();
@@ -542,6 +556,7 @@ namespace wolfSSL.CSharp
                             isSearchDone = true;
                         }
                     }
+#endif
                 } /* while not found */
             } /*  thisPath is not empty */
 
@@ -556,8 +571,12 @@ namespace wolfSSL.CSharp
 
             if (default_path == wolfssl_dll)
             {
+#if COMPACT_FRAMEWORK
+                wolfsslPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+#else
                 /* this will typically be [WOLFSSL_ROOT]\\wrapper\\CSharp\\Debug\\x64" */
                 wolfsslPath = Environment.CurrentDirectory; /* no path specified */
+#endif
             }
             else
             {
@@ -576,9 +595,13 @@ namespace wolfSSL.CSharp
 
             if (string.IsNullOrEmpty(wolfsslPath))
             {
+#if COMPACT_FRAMEWORK
+#else
+
                 wolfsslPath = CheckWolfSSLPath(
                     Environment.GetEnvironmentVariable("WOLFSSL_ROOT"),
                     "Environment Variable WOLFSSL_ROOT setting");
+#endif
             }
 
             /* Did we find wolfSSL specified anywhere? */
@@ -606,15 +629,41 @@ namespace wolfSSL.CSharp
         /********************************
          * Init wolfSSL library
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_Init();
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_Cleanup();
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_Init();
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_Cleanup();
+#endif
+
 
 
         /********************************
          * Methods of connection
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfTLSv1_2_server_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfTLSv1_3_server_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSLv23_server_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfTLSv1_2_client_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfTLSv1_3_client_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSLv23_client_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfDTLSv1_2_server_method();
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfDTLSv1_2_client_method();
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfTLSv1_2_server_method();
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -631,20 +680,46 @@ namespace wolfSSL.CSharp
         private extern static IntPtr wolfDTLSv1_2_server_method();
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfDTLSv1_2_client_method();
+#endif
 
 
         /********************************
          * Call backs
          */
+#if COMPACT_FRAMEWORK
+        public delegate int CallbackIORecv_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
+        static CallbackIORecv_delegate callbackIORecv = Marshal.GetDelegateForFunctionPointer<CallbackIORecv_delegate>(yourFunctionPtr);
+
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_SetIORecv(IntPtr ctx, CallbackIORecv_delegate recv);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_SetIOReadCtx(IntPtr ssl, IntPtr rctx);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_GetIOReadCtx(IntPtr ssl);
+#else
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int CallbackIORecv_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
+
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_CTX_SetIORecv(IntPtr ctx, CallbackIORecv_delegate recv);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_SetIOReadCtx(IntPtr ssl, IntPtr rctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_GetIOReadCtx(IntPtr ssl);
+#endif
 
+
+#if COMPACT_FRAMEWORK
+        public delegate int CallbackIOSend_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
+        static CallbackIOSend_delegate callbackIOSend = Marshal.GetDelegateForFunctionPointer<CallbackIOSend_delegate>(yourFunctionPtr);
+
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_SetIOSend(IntPtr ctx, CallbackIOSend_delegate send);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_SetIOWriteCtx(IntPtr ssl, IntPtr wctx);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_GetIOWriteCtx(IntPtr ssl);
+#else
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int CallbackIOSend_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -653,11 +728,24 @@ namespace wolfSSL.CSharp
         private extern static int wolfSSL_SetIOWriteCtx(IntPtr ssl, IntPtr wctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_GetIOWriteCtx(IntPtr ssl);
+#endif
 
 
         /********************************
          * CTX structure
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_CTX_new(IntPtr method);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_use_certificate_file(IntPtr ctx, string file, int type);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_load_verify_locations(IntPtr ctx, string file, string path);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_use_PrivateKey_file(IntPtr ctx, string file, int type);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_CTX_free(IntPtr ctx);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_CTX_new(IntPtr method);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -668,16 +756,34 @@ namespace wolfSSL.CSharp
         private extern static int wolfSSL_CTX_use_PrivateKey_file(IntPtr ctx, string file, int type);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_CTX_free(IntPtr ctx);
+#endif
 
 
 
         /********************************
          * PSK
          */
+#if COMPACT_FRAMEWORK
+        public delegate uint psk_delegate(IntPtr ssl, string identity, IntPtr key, uint max_sz);
+        static psk_delegate pskCallback = Marshal.GetDelegateForFunctionPointer<psk_delegate>(yourFunctionPtr);
+
+        public delegate uint psk_client_delegate(IntPtr ssl, string hint, IntPtr identity, uint id_max_len, IntPtr key, uint max_sz);
+        static psk_client_delegate pskClientCallback = Marshal.GetDelegateForFunctionPointer<psk_client_delegate>(yourFunctionPtr);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_set_psk_server_callback(IntPtr ssl, psk_delegate psk_cb);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_CTX_set_psk_server_callback(IntPtr ctx, psk_delegate psk_cb);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_CTX_set_psk_client_callback(IntPtr ctx, psk_client_delegate psk_cb);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_use_psk_identity_hint(IntPtr ctx, StringBuilder identity);
+#else
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate uint psk_delegate(IntPtr ssl, string identity, IntPtr key, uint max_sz);
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate uint psk_client_delegate(IntPtr ssl, string hint, IntPtr identity, uint id_max_len, IntPtr key, uint max_sz);
+
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_set_psk_server_callback(IntPtr ssl, psk_delegate psk_cb);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -686,10 +792,28 @@ namespace wolfSSL.CSharp
         private extern static void wolfSSL_CTX_set_psk_client_callback(IntPtr ctx, psk_client_delegate psk_cb);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_CTX_use_psk_identity_hint(IntPtr ctx, StringBuilder identity);
+#endif
 
         /********************************
          * SNI
          */
+#if COMPACT_FRAMEWORK
+        public delegate int sni_delegate(IntPtr ssl, IntPtr ret, IntPtr exArg);
+        static sni_delegate sniCallback = Marshal.GetDelegateForFunctionPointer<sni_delegate>(yourFunctionPtr);
+
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_CTX_set_servername_callback(IntPtr ctx, sni_delegate sni_cb);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_set_servername_arg(IntPtr ctx, IntPtr arg);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_UseSNI(IntPtr ctx, byte type, IntPtr data, ushort size);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_UseSNI(IntPtr ssl, byte type, IntPtr data, ushort size);
+        [DllImport(wolfssl_dll)]
+        private extern static ushort wolfSSL_SNI_GetRequest(IntPtr ssl, byte type, ref IntPtr data);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_SNI_GetFromBuffer(byte[] clientHello, uint helloSz, byte type, IntPtr sni, IntPtr inOutSz);
+#else
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int sni_delegate(IntPtr ssl, IntPtr ret, IntPtr exArg);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -704,10 +828,27 @@ namespace wolfSSL.CSharp
         private extern static ushort wolfSSL_SNI_GetRequest(IntPtr ssl, byte type, ref IntPtr data);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_SNI_GetFromBuffer(byte[] clientHello, uint helloSz, byte type, IntPtr sni, IntPtr inOutSz);
+#endif
 
         /********************************
          * SSL Structure
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_new(IntPtr ctx);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_accept(IntPtr ssl);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_connect(IntPtr ssl);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_read(IntPtr ssl, IntPtr buf, int sz);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_write(IntPtr ssl, IntPtr buf, int sz);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_shutdown(IntPtr ssl);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_free(IntPtr ssl);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_new(IntPtr ctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -722,12 +863,30 @@ namespace wolfSSL.CSharp
         private extern static int wolfSSL_shutdown(IntPtr ssl);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_free(IntPtr ssl);
-
+#endif
 
         /********************************
          * Cipher lists
          */
         /* only supports full name from cipher_name[] delimited by : */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_set_cipher_list(IntPtr ctx, StringBuilder ciphers);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_set_cipher_list(IntPtr ssl, StringBuilder ciphers);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_get_ciphers(StringBuilder ciphers, int sz);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_get_cipher(IntPtr ssl);
+        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        private extern static IntPtr wolfSSL_CIPHER_get_name(IntPtr cipher);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_get_current_cipher(IntPtr ssl);
+        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        private extern static IntPtr wolfSSL_get_version(IntPtr ssl);
+        [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        private extern static IntPtr wolfSSL_get_cipher_list(IntPtr ssl);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_CTX_set_cipher_list(IntPtr ctx, StringBuilder ciphers);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -744,11 +903,23 @@ namespace wolfSSL.CSharp
         private extern static IntPtr wolfSSL_get_version(IntPtr ssl);
         [DllImport(wolfssl_dll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_get_cipher_list(IntPtr ssl);
-
+#endif
 
         /********************************
          * Error logging
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static IntPtr wolfSSL_ERR_error_string(uint err, StringBuilder errOut);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_get_error(IntPtr ssl, int err);
+        public delegate void loggingCb(int lvl, StringBuilder msg);
+        private static loggingCb internal_log = Marshal.GetDelegateForFunctionPointer<loggingCb>(yourFunctionPtr);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_Debugging_ON();
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_Debugging_OFF();
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private extern static IntPtr wolfSSL_ERR_error_string(uint err, StringBuilder errOut);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -760,33 +931,65 @@ namespace wolfSSL.CSharp
         private extern static void wolfSSL_Debugging_ON();
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_Debugging_OFF();
+#endif
 
 
         /********************************
          * DH
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_SetMinDhKey_Sz(IntPtr ctx, short size);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_SetTmpDH_file(IntPtr ssl, StringBuilder dhParam, int type);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_CTX_SetTmpDH_file(IntPtr ctx, StringBuilder dhParam, int type);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_CTX_SetMinDhKey_Sz(IntPtr ctx, short size);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_SetTmpDH_file(IntPtr ssl, StringBuilder dhParam, int type);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_CTX_SetTmpDH_file(IntPtr ctx, StringBuilder dhParam, int type);
-
+#endif
 
         /********************************
          * Verify Callback
          */
+#if COMPACT_FRAMEWORK
+        public delegate int CallbackVerify_delegate(int ret, IntPtr x509_ctx);
+        static CallbackVerify_delegate callbackVerify;
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_CTX_set_verify(IntPtr ctx, int mode, CallbackVerify_delegate vc);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_set_verify(IntPtr ssl, int mode, CallbackVerify_delegate vc);
+#else
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int CallbackVerify_delegate(int ret, IntPtr x509_ctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_CTX_set_verify(IntPtr ctx, int mode, CallbackVerify_delegate vc);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static void wolfSSL_set_verify(IntPtr ssl, int mode, CallbackVerify_delegate vc);
+#endif
 
 
         /********************************
          * X509 Store
          */
+#if COMPACT_FRAMEWORK
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_STORE_CTX_get_current_cert(IntPtr x509Ctx);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_X509_STORE_CTX_get_error(IntPtr sk);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_X509_STORE_GetCerts(IntPtr x509Ctx);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_sk_X509_num(IntPtr sk);
+        [DllImport(wolfssl_dll)]
+        private extern static void wolfSSL_sk_X509_free(IntPtr sk);
+        [DllImport(wolfssl_dll)]
+        private extern static IntPtr wolfSSL_sk_X509_pop(IntPtr sk);
+#else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_X509_STORE_CTX_get_current_cert(IntPtr x509Ctx);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -799,6 +1002,7 @@ namespace wolfSSL.CSharp
         private extern static void wolfSSL_sk_X509_free(IntPtr sk);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static IntPtr wolfSSL_sk_X509_pop(IntPtr sk);
+#endif
 
 
         /********************************

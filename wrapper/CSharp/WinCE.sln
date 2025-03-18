@@ -1,0 +1,87 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinCE", "WinCE\WinCE.csproj", "{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wolfSSL_CSharp_CE", "wolfSSL_CSharp\wolfSSL_CSharp_CE.csproj", "{314A38DE-7327-4623-81C5-26E98AD168C1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|.NET = Debug|.NET
+		Debug|Any CPU = Debug|Any CPU
+		Debug|LathemCTPX (ARMv4I) = Debug|LathemCTPX (ARMv4I)
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x86 = Debug|x86
+		Release|.NET = Release|.NET
+		Release|Any CPU = Release|Any CPU
+		Release|LathemCTPX (ARMv4I) = Release|LathemCTPX (ARMv4I)
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x86 = Release|x86
+		ZClock|.NET = ZClock|.NET
+		ZClock|Any CPU = ZClock|Any CPU
+		ZClock|LathemCTPX (ARMv4I) = ZClock|LathemCTPX (ARMv4I)
+		ZClock|Mixed Platforms = ZClock|Mixed Platforms
+		ZClock|x86 = ZClock|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|.NET.ActiveCfg = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|LathemCTPX (ARMv4I).ActiveCfg = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|Mixed Platforms.Deploy.0 = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|.NET.ActiveCfg = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|LathemCTPX (ARMv4I).ActiveCfg = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|Mixed Platforms.Deploy.0 = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.Release|x86.ActiveCfg = Release|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|.NET.ActiveCfg = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Any CPU.ActiveCfg = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Any CPU.Build.0 = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Any CPU.Deploy.0 = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|LathemCTPX (ARMv4I).ActiveCfg = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Mixed Platforms.ActiveCfg = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Mixed Platforms.Build.0 = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|Mixed Platforms.Deploy.0 = ZClock|Any CPU
+		{0A61DFC8-702E-4AD2-839F-4F84A7DE2EBC}.ZClock|x86.ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|.NET.ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|LathemCTPX (ARMv4I).ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Mixed Platforms.Deploy.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|.NET.ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|LathemCTPX (ARMv4I).ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Mixed Platforms.Deploy.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|x86.ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|.NET.ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.Build.0 = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.Deploy.0 = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|LathemCTPX (ARMv4I).ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Mixed Platforms.ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Mixed Platforms.Build.0 = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Mixed Platforms.Deploy.0 = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|x86.ActiveCfg = ZClock|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+EndGlobal
