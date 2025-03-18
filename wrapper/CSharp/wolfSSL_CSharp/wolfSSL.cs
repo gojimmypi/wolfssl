@@ -1105,7 +1105,7 @@ namespace wolfSSL.CSharp
                 }
 #else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
-                ctx_handle handles = (ctx_handle)gch.Target;
+                gch = GCHandle.FromIntPtr(ctx);
 #endif
                 return handles.get_ctx();
             } catch (Exception e)
@@ -1243,15 +1243,16 @@ namespace wolfSSL.CSharp
 
             try
             {
+                System.Runtime.InteropServices.GCHandle gch;
 #if COMPACT_FRAMEWORK
                 ctx_handle handles;
                 if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                GCHandle gch = handles.GCHandle;
+                gch =
+
 #else
-                System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
 
@@ -1298,7 +1299,15 @@ namespace wolfSSL.CSharp
             try
             {
                 System.Runtime.InteropServices.GCHandle gch;
+#if COMPACT_FRAMEWORK
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+#else
+                GCHandle gch = GCHandle.FromIntPtr(ctx);
                 gch = GCHandle.FromIntPtr(ctx);
+#endif
 
                 Socket con = (System.Net.Sockets.Socket)gch.Target;
                 Byte[] msg = new Byte[sz];
@@ -1340,19 +1349,18 @@ namespace wolfSSL.CSharp
 
             try
             {
+                System.Runtime.InteropServices.GCHandle gch;
 #if COMPACT_FRAMEWORK
                 ctx_handle handles;
                 if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                GCHandle gch = handles.GCHandle;
+                CHandle gch = handles.GCHandle;
 #else
                 System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
-                System.Runtime.InteropServices.GCHandle gch;
-                gch = GCHandle.FromIntPtr(ctx);
 
                 DTLS_con con = (DTLS_con)gch.Target;
 
@@ -1387,15 +1395,15 @@ namespace wolfSSL.CSharp
 
             try
             {
+                System.Runtime.InteropServices.GCHandle gch;
 #if COMPACT_FRAMEWORK
                 ctx_handle handles;
                 if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                GCHandle gch = handles.GCHandle;
+                gch = handles.GCHandle;
 #else
-                System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
                 DTLS_con con = (DTLS_con)gch.Target;
@@ -1696,8 +1704,15 @@ namespace wolfSSL.CSharp
             try
             {
                 IntPtr sslCtx;
+#if COMPACT_FRAMEWORK
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
                 ssl_handle handles = (ssl_handle)gch.Target;
+#endif
 
                 sslCtx = handles.get_ssl();
                 wolfSSL_free(sslCtx);
@@ -1748,8 +1763,18 @@ namespace wolfSSL.CSharp
         {
             try
             {
+                System.Runtime.InteropServices.GCHandle gch;
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+                gch = handles.GCHandle;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
                 ctx_handle handles = (ctx_handle)gch.Target;
+#endif
 
                 /* check if already stored handle needs freed */
                 gch = handles.get_receive();
@@ -1779,8 +1804,18 @@ namespace wolfSSL.CSharp
         {
             try
             {
+                System.Runtime.InteropServices.GCHandle gch;
+#if COMPACT_FRAMEWORK
+                ctx_handle handles;
+                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                {
+                    throw new Exception("Invalid context pointer.");
+                }
+                gch = handles.GCHandle;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
                 ctx_handle handles = (ctx_handle)gch.Target;
+#endif
 
                 /* check if already stored handle needs freed */
                 gch = handles.get_send();
