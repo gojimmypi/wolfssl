@@ -92,6 +92,7 @@ namespace wolfSSL.CSharp
     public static class ContextManager
     {
         public static Dictionary<IntPtr, ctx_handle> ctxMap = new Dictionary<IntPtr, ctx_handle>();
+        public static Dictionary<IntPtr, ctx_handle> sslMap = new Dictionary<IntPtr, ssl_handle>();
 
         public static void RegisterContext(IntPtr ctx, ctx_handle handle)
         {
@@ -461,7 +462,7 @@ namespace wolfSSL.CSharp
         {
             string ret = "Unknown";
 #if COMPACT_FRAMEWORK
-            ret = "CE";
+            ret = "WinCE";
 #else
             Assembly assembly = Assembly.GetExecutingAssembly();
             ProcessorArchitecture arch = assembly.GetName().ProcessorArchitecture;
@@ -1118,8 +1119,8 @@ namespace wolfSSL.CSharp
         {
             try {
 #if COMPACT_FRAMEWORK
-                ctx_handle handles;
-                if (!ContextManager.ctxMap.TryGetValue(ssl, out handles))
+                ssl_handle handles;
+                if (!ContextManager.sslMap.TryGetValue(ssl, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
@@ -1250,7 +1251,7 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                gch =
+                // TODO gch =
 
 #else
                 gch = GCHandle.FromIntPtr(ctx);
@@ -1298,6 +1299,7 @@ namespace wolfSSL.CSharp
 
             try
             {
+                ctx_handle handles;
                 System.Runtime.InteropServices.GCHandle gch;
 #if COMPACT_FRAMEWORK
                 if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
@@ -1356,7 +1358,7 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                CHandle gch = handles.GCHandle;
+                gch = handles.GCHandle;
 #else
                 System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
@@ -1704,8 +1706,9 @@ namespace wolfSSL.CSharp
             try
             {
                 IntPtr sslCtx;
+                ssl_handle handles;
 #if COMPACT_FRAMEWORK
-                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
+                if (!ContextManager.ctxMap.TryGetValue(ssl, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
