@@ -92,7 +92,7 @@ namespace wolfSSL.CSharp
     public static class ContextManager
     {
         public static Dictionary<IntPtr, ctx_handle> ctxMap = new Dictionary<IntPtr, ctx_handle>();
-        public static Dictionary<IntPtr, ctx_handle> sslMap = new Dictionary<IntPtr, ssl_handle>();
+        public static Dictionary<IntPtr, ssl_handle> sslMap = new Dictionary<IntPtr, ssl_handle>();
 
         public static void RegisterContext(IntPtr ctx, ctx_handle handle)
         {
@@ -353,7 +353,11 @@ namespace wolfSSL.CSharp
          * Class for keeping ssl handle alive
          */
         [StructLayout(LayoutKind.Sequential)]
+#if COMPACT_FRAMEWORK
+        public class ssl_handle
+#else
         private class ssl_handle
+#endif
         {
             private GCHandle fd_pin;
             private GCHandle psk_cb;
@@ -1118,13 +1122,10 @@ namespace wolfSSL.CSharp
         private static IntPtr unwrap_ssl(IntPtr ssl)
         {
             try {
-#if COMPACT_FRAMEWORK
                 ssl_handle handles;
-                if (!ContextManager.sslMap.TryGetValue(ssl, out handles))
-                {
-                    throw new Exception("Invalid context pointer.");
-                }
-
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)(ssl);
+                handles = (ssl_handle)gch.Target;
 #else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
                 ssl_handle handles = (ssl_handle)gch.Target;
@@ -1358,9 +1359,8 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                gch = handles.GCHandle;
+                gch = (GCHandle)(ctx);
 #else
-                System.Runtime.InteropServices.GCHandle gch;
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
 
@@ -1404,7 +1404,7 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                gch = handles.GCHandle;
+                gch = (GCHandle)(ctx);
 #else
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
@@ -1714,14 +1714,15 @@ namespace wolfSSL.CSharp
                 GCHandle gch;
                 ssl_handle handles;
 #if COMPACT_FRAMEWORK
-                if (!ContextManager.ctxMap.TryGetValue(ssl, out handles))
+                if (!ContextManager.sslMap.TryGetValue(ssl, out handles))
                 {
                     throw new Exception("Invalid context pointer.");
                 }
+                gch = (GCHandle)(ssl);
 #else
                 gch = GCHandle.FromIntPtr(ssl);
-                ssl_handle handles = (ssl_handle)gch.Target;
 #endif
+                handles = (ssl_handle)gch.Target;
 
                 sslCtx = handles.get_ssl();
                 wolfSSL_free(sslCtx);
@@ -1774,12 +1775,8 @@ namespace wolfSSL.CSharp
             {
                 System.Runtime.InteropServices.GCHandle gch;
 #if COMPACT_FRAMEWORK
-                ctx_handle handles;
-                if (!ContextManager.ctxMap.TryGetValue(ctx, out handles))
-                {
-                    throw new Exception("Invalid context pointer.");
-                }
-                gch = handles.GCHandle;
+                gch = (GCHandle)(ctx);
+                ctx_handle handles = (ctx_handle)gch.Target;
 #else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
                 ctx_handle handles = (ctx_handle)gch.Target;
@@ -1820,11 +1817,11 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                gch = handles.GCHandle;
+                gch = (GCHandle)ctx;
 #else
-                GCHandle gch = (GCHandle)ctx;
-                ctx_handle handles = (ctx_handle)gch.Target;
+                gch = GCHandle.FromIntPtr(ctx);
 #endif
+                handles = (ctx_handle)gch.Target;
 
                 /* check if already stored handle needs freed */
                 gch = handles.get_send();
@@ -2605,7 +2602,11 @@ namespace wolfSSL.CSharp
 
                 ssl_cipher = wolfSSL_get_current_cipher(sslCtx);
                 ssl_cipher_ptr = wolfSSL_CIPHER_get_name(ssl_cipher);
+#if COMPACT_FRAMEWORK
+                ssl_cipher_str = PtrToStringAnsiCE(ssl_cipher_ptr);
+#else
                 ssl_cipher_str = Marshal.PtrToStringAnsi(ssl_cipher_ptr);
+#endif
 
                 return ssl_cipher_str;
             }
@@ -2694,8 +2695,11 @@ namespace wolfSSL.CSharp
                 }
 
                 version_ptr = wolfSSL_get_version(sslCtx);
+#if COMPACT_FRAMEWORK
+                version = PtrToStringAnsiCE(version_ptr);
+#else
                 version = Marshal.PtrToStringAnsi(version_ptr);
-
+#endif
                 return version;
             }
             catch (Exception e)
@@ -2967,6 +2971,7 @@ namespace wolfSSL.CSharp
 
                 /* pin the verify callback to protect from garbage collection */
                 if (!vc.Equals(null)) {
+                    gch = (GCHandle)ssl; 
 #if COMPACT_FRAMEWORK
                     gch = (GCHandle)(ssl);
 #else

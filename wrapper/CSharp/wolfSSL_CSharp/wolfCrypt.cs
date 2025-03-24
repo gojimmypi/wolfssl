@@ -3173,7 +3173,11 @@ namespace wolfSSL.CSharp
             try
             {
                 IntPtr errStr = wc_GetErrorString(error);
+#if COMPACT_FRAMEWORK
+                return PtrToStringAnsiCE(errStr);
+#else
                 return Marshal.PtrToStringAnsi(errStr);
+#endif
             }
             catch (Exception e)
             {
