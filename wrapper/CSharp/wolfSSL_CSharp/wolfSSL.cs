@@ -741,7 +741,7 @@ namespace wolfSSL.CSharp
 #if COMPACT_FRAMEWORK
         public delegate int CallbackIORecv_delegate(IntPtr ssl, IntPtr buf, int sz, IntPtr ctx);
         // TODO check init
-        static CallbackIORecv_delegate callbackIORecv = Marshal.GetDelegateForFunctionPointer<CallbackIORecv_delegate>(yourFunctionPtr);
+        static CallbackIORecv_delegate callbackIORecv; // = Marshal.GetDelegateForFunctionPointer<CallbackIORecv_delegate>(yourFunctionPtr);
 
         [DllImport(wolfssl_dll)]
         private extern static int wolfSSL_CTX_SetIORecv(IntPtr ctx, CallbackIORecv_delegate recv);
@@ -1459,7 +1459,12 @@ namespace wolfSSL.CSharp
                 }
 
                 /* keep memory pinned to be able to reference by address */
+#if COMPACT_FRAMEWORK
+                GCHandle gch = GCHandle.Alloc(io, GCHandleType.Pinned);
+                return (IntPtr)gch;
+#else
                 return GCHandle.ToIntPtr(GCHandle.Alloc(io, GCHandleType.Pinned));
+#endif
             }
             catch (Exception e)
             {
@@ -1706,6 +1711,7 @@ namespace wolfSSL.CSharp
             try
             {
                 IntPtr sslCtx;
+                GCHandle gch;
                 ssl_handle handles;
 #if COMPACT_FRAMEWORK
                 if (!ContextManager.ctxMap.TryGetValue(ssl, out handles))
@@ -1713,7 +1719,7 @@ namespace wolfSSL.CSharp
                     throw new Exception("Invalid context pointer.");
                 }
 #else
-                GCHandle gch = GCHandle.FromIntPtr(ssl);
+                gch = GCHandle.FromIntPtr(ssl);
                 ssl_handle handles = (ssl_handle)gch.Target;
 #endif
 
@@ -1816,7 +1822,7 @@ namespace wolfSSL.CSharp
                 }
                 gch = handles.GCHandle;
 #else
-                GCHandle gch = GCHandle.FromIntPtr(ctx);
+                GCHandle gch = (GCHandle)ctx;
                 ctx_handle handles = (ctx_handle)gch.Target;
 #endif
 
@@ -1864,7 +1870,13 @@ namespace wolfSSL.CSharp
                 wolfSSL_CTX_SetIOSend(ctx, send);
 
                 /* keep memory pinned */
+#if COMPACT_FRAMEWORK
+                GCHandle gch = GCHandle.Alloc(io, GCHandleType.Pinned);
+
+                return (IntPtr)gch;
+#else
                 return GCHandle.ToIntPtr(GCHandle.Alloc(io, GCHandleType.Pinned));
+#endif
             }
             catch (Exception e)
             {
@@ -1899,7 +1911,11 @@ namespace wolfSSL.CSharp
                 wolfSSL_CTX_SetIOSend(ctx, send);
 
                 /* keep memory pinned */
+#if COMPACT_FRAMEWORK
+                return (IntPtr)(GCHandle.Alloc(io, GCHandleType.Pinned));
+#else
                 return GCHandle.ToIntPtr(GCHandle.Alloc(io, GCHandleType.Pinned));
+#endif
             }
             catch (Exception e)
             {
@@ -1917,7 +1933,11 @@ namespace wolfSSL.CSharp
         {
             try
             {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
                 wolfSSL_CTX_free(handles.get_ctx());
                 handles.free();
@@ -1932,7 +1952,11 @@ namespace wolfSSL.CSharp
         public static void CTX_set_servername_callback(IntPtr ctx, sni_delegate sni_cb)
         {
             try {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
 
                 handles.set_sni(GCHandle.Alloc(sni_cb));
@@ -1946,7 +1970,11 @@ namespace wolfSSL.CSharp
         public static int CTX_set_servername_arg(IntPtr ctx, IntPtr arg)
         {
             try {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
 
                 handles.set_arg(GCHandle.Alloc(arg));
@@ -1961,7 +1989,11 @@ namespace wolfSSL.CSharp
         public static int CTX_UseSNI(IntPtr ctx, byte type, IntPtr data, ushort size)
         {
             try {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
 
                 return  wolfSSL_CTX_UseSNI(handles.get_ctx(), type, data, size);
@@ -1974,7 +2006,11 @@ namespace wolfSSL.CSharp
         public static int UseSNI(IntPtr ssl, byte type, IntPtr data, ushort size)
         {
             try {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ssl;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
+#endif
                 ssl_handle handles = (ssl_handle)gch.Target;
 
                 return  wolfSSL_UseSNI(handles.get_ssl(), type, data, size);
@@ -1987,7 +2023,11 @@ namespace wolfSSL.CSharp
         public static ushort SNI_GetRequest(IntPtr ssl, byte type, ref IntPtr data)
         {
             try {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ssl;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
+#endif
                 ssl_handle handles = (ssl_handle)gch.Target;
 
                 return  wolfSSL_SNI_GetRequest(handles.get_ssl(), type, ref data);
@@ -2043,7 +2083,11 @@ namespace wolfSSL.CSharp
         {
             try
             {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
 
                 handles.set_psk(GCHandle.Alloc(psk_cb));
@@ -2065,7 +2109,11 @@ namespace wolfSSL.CSharp
         {
             try
             {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)ctx;
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ctx);
+#endif
                 ctx_handle handles = (ctx_handle)gch.Target;
 
                 handles.set_psk(GCHandle.Alloc(psk_cb));
@@ -2087,7 +2135,11 @@ namespace wolfSSL.CSharp
         {
             try
             {
+#if COMPACT_FRAMEWORK
+                GCHandle gch = (GCHandle)(ssl);
+#else
                 GCHandle gch = GCHandle.FromIntPtr(ssl);
+#endif
                 ssl_handle handles = (ssl_handle)gch.Target;
 
                 handles.set_psk(GCHandle.Alloc(psk_cb));
@@ -2118,11 +2170,16 @@ namespace wolfSSL.CSharp
             {
                 if (!fd.Equals(null))
                 {
+#if COMPACT_FRAMEWORK
+                    GCHandle gch = (GCHandle)ssl;
+#else
                     GCHandle gch = GCHandle.FromIntPtr(ssl);
+#endif
                     ssl_handle handles = (ssl_handle)gch.Target;
+
                     IntPtr sslCtx = handles.get_ssl();
                     IntPtr ptr;
-                    GCHandle fd_pin = GCHandle.Alloc(fd);
+                    GCHandle fd_pin = GCHandle.Alloc(fd); // NOTE: Pinned only needed for buffers, not simple refs
 
                     if (sslCtx == IntPtr.Zero)
                     {
@@ -2131,7 +2188,12 @@ namespace wolfSSL.CSharp
                     }
 
                     handles.set_fd(fd_pin);
+#if COMPACT_FRAMEWORK
+                    ptr = (IntPtr)fd_pin; // instead of GCHandle.ToIntPtr(fd_pin)
+#else
                     ptr = GCHandle.ToIntPtr(fd_pin);
+#endif
+
                     wolfSSL_SetIOWriteCtx(sslCtx, ptr); //pass along the socket for writing to
                     wolfSSL_SetIOReadCtx(sslCtx, ptr); //pass along the socket for reading from
 
@@ -2168,7 +2230,11 @@ namespace wolfSSL.CSharp
                 ptr = wolfSSL_GetIOReadCtx(sslCtx);
                 if (ptr != IntPtr.Zero)
                 {
+#if COMPACT_FRAMEWORK
+                    GCHandle gch = (GCHandle)(ptr);
+#else
                     GCHandle gch = GCHandle.FromIntPtr(ptr);
+#endif
                     return (System.Net.Sockets.Socket)gch.Target;
                 }
                 return null;
@@ -2203,7 +2269,11 @@ namespace wolfSSL.CSharp
                 {
                     IntPtr ptr;
                     DTLS_con con;
+#if COMPACT_FRAMEWORK
+                    GCHandle gch = (GCHandle)(ssl);
+#else
                     GCHandle gch = GCHandle.FromIntPtr(ssl);
+#endif
                     ssl_handle handles = (ssl_handle)gch.Target;
                     GCHandle fd_pin;
 
@@ -2212,7 +2282,11 @@ namespace wolfSSL.CSharp
                     con.ep = ep;
                     fd_pin = GCHandle.Alloc(con);
                     handles.set_fd(fd_pin);
+#if COMPACT_FRAMEWORK
+                    ptr = (IntPtr)(fd_pin);
+#else
                     ptr = GCHandle.ToIntPtr(fd_pin);
+#endif
                     wolfSSL_SetIOWriteCtx(handles.get_ssl(), ptr); //pass along the socket for writing to
                     wolfSSL_SetIOReadCtx(handles.get_ssl(), ptr); //pass along the socket for reading from
 
@@ -2248,7 +2322,11 @@ namespace wolfSSL.CSharp
                 ptr = wolfSSL_GetIOReadCtx(sslCtx);
                 if (ptr != IntPtr.Zero)
                 {
+#if COMPACT_FRAMEWORK
+                    GCHandle gch = (GCHandle)(ptr);
+#else
                     GCHandle gch = GCHandle.FromIntPtr(ptr);
+#endif
                     return (DTLS_con)gch.Target;
                 }
                 return null;
@@ -2853,7 +2931,7 @@ namespace wolfSSL.CSharp
 
                 /* pin the verify callback to protect from garbage collection */
                 if (!vc.Equals(null)) {
-                    gch = GCHandle.FromIntPtr(ctx);
+                    gch = (GCHandle)ctx;
                     handles = (ctx_handle)gch.Target;
                     handles.set_vrf(GCHandle.Alloc(vc));
                 }
@@ -2889,7 +2967,11 @@ namespace wolfSSL.CSharp
 
                 /* pin the verify callback to protect from garbage collection */
                 if (!vc.Equals(null)) {
+#if COMPACT_FRAMEWORK
+                    gch = (GCHandle)(ssl);
+#else
                     gch = GCHandle.FromIntPtr(ssl);
+#endif
                     handles = (ssl_handle)gch.Target;
                     handles.set_vrf(GCHandle.Alloc(vc));
                 }
