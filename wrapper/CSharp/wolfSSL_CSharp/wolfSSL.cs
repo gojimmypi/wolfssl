@@ -1252,7 +1252,7 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
-                // TODO gch =
+                gch = (GCHandle)(ctx);
 
 #else
                 gch = GCHandle.FromIntPtr(ctx);
@@ -1263,12 +1263,16 @@ namespace wolfSSL.CSharp
                 amtRecv = con.Receive(msg, msg.Length, 0);
                 if (amtRecv == 0)
                 {
+#if COMPACT_FRAMEWORK
+                    throw new Exception("con.ReceiveTimeout not implmented");
+#else
                     /* No data received so check for a response to see if connection is still open */
                     if (con.Poll((con.ReceiveTimeout > 0) ? con.ReceiveTimeout : WC_WAIT, SelectMode.SelectRead))
                     {
                         log(ERROR_LOG, "socket connection issue, suspected connection termination.");
                         return wolfssl.CBIO_ERR_CONN_CLOSE;
                     }
+#endif
                 }
                 Marshal.Copy(msg, 0, buf, sz);
             }
@@ -1307,8 +1311,8 @@ namespace wolfSSL.CSharp
                 {
                     throw new Exception("Invalid context pointer.");
                 }
+                gch = (GCHandle)(ctx);
 #else
-                GCHandle gch = GCHandle.FromIntPtr(ctx);
                 gch = GCHandle.FromIntPtr(ctx);
 #endif
 
@@ -1317,12 +1321,16 @@ namespace wolfSSL.CSharp
                 Marshal.Copy(buf, msg, 0, sz);
                 if (con.Send(msg, 0, msg.Length, SocketFlags.None) == 0 && sz != 0)
                 {
+#if COMPACT_FRAMEWORK
+                    throw new Exception("con.SendTimeout not implmented");
+#else
                     /* no data sent and msg size is larger then 0, check for lost connection */
                     if (con.Poll((con.SendTimeout > 0) ? con.SendTimeout : WC_WAIT, SelectMode.SelectWrite))
                     {
                         log(ERROR_LOG, "socket connection issue, suspect connection termination");
                         return wolfssl.CBIO_ERR_CONN_CLOSE;
                     }
+#endif
                 }
                 return sz;
             }

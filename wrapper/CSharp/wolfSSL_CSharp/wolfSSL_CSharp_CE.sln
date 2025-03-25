@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wolfSSL_CSharp_CE", "wolfSSL_CSharp_CE.csproj", "{314A38DE-7327-4623-81C5-26E98AD168C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wolfssl_main", "..\wolfssl_main\wolfssl_main.csproj", "{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		ZClock|Any CPU = ZClock|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.ActiveCfg = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.Build.0 = ZClock|Any CPU
+		{314A38DE-7327-4623-81C5-26E98AD168C1}.ZClock|Any CPU.Deploy.0 = ZClock|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.ZClock|Any CPU.ActiveCfg = Release|Any CPU
+		{908E84C0-5BCE-42D1-86AC-20C5BAA28AAE}.ZClock|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

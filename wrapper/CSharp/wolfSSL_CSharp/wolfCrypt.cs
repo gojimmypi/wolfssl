@@ -35,6 +35,23 @@ namespace wolfSSL.CSharp
          * Init wolfSSL library
          */
 #if COMPACT_FRAMEWORK
+        public static string PtrToStringAnsiCE(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) return null;
+
+            // Estimate string length
+            int len = 0;
+            while (Marshal.ReadByte(ptr, len) != 0) len++;
+
+            if (len == 0) return string.Empty;
+
+            byte[] buffer = new byte[len];
+            Marshal.Copy(ptr, buffer, 0, len);
+
+            return Encoding.ASCII.GetString(buffer, 0, len);
+        }
+
+
         [DllImport(wolfssl_dll)]
         private extern static int wolfCrypt_Init();
         [DllImport(wolfssl_dll)]
