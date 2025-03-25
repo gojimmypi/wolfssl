@@ -38,7 +38,6 @@
     <ProjectGuid>{67932048-d67e-4c86-b55f-90899b9bda64}</ProjectGuid>
     <RootNamespace>wolfssl</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -82,8 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -163,7 +162,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>./;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_WOLFSSL;WOLFSSL_DLL;WOLFSSL_USER_SETTINGS;DLL_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILDING_WOLFSSL;WOLFSSL_DLL;WOLFSSL_USER_SETTINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -198,7 +197,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>./;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_WOLFSSL;WOLFSSL_DLL;WOLFSSL_USER_SETTINGS;DLL_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILDING_WOLFSSL;WOLFSSL_DLL;WOLFSSL_USER_SETTINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -309,7 +308,7 @@
     <ClCompile Include="..\..\wolfcrypt\src\ed25519.c" />
     <ClCompile Include="..\..\wolfcrypt\src\ed448.c" />
     <ClCompile Include="..\..\wolfcrypt\src\error.c" />
-    <ClCompile Include="..\..\wolfcrypt\src\ext_kyber.c" />
+    <ClCompile Include="..\..\wolfcrypt\src\ext_mlkem.c" />
     <ClCompile Include="..\..\wolfcrypt\src\falcon.c" />
     <ClCompile Include="..\..\wolfcrypt\src\fe_448.c" />
     <ClCompile Include="..\..\wolfcrypt\src\fe_low_mem.c" />
@@ -321,8 +320,8 @@
     <ClCompile Include="..\..\wolfcrypt\src\hmac.c" />
     <ClCompile Include="..\..\wolfcrypt\src\integer.c" />
     <ClCompile Include="..\..\wolfcrypt\src\kdf.c" />
-    <ClCompile Include="..\..\wolfcrypt\src\wc_kyber.c" />
-    <ClCompile Include="..\..\wolfcrypt\src\wc_kyber_poly.c" />
+    <ClCompile Include="..\..\wolfcrypt\src\wc_mlkem.c" />
+    <ClCompile Include="..\..\wolfcrypt\src\wc_mlkem_poly.c" />
     <ClCompile Include="..\..\wolfcrypt\src\logging.c" />
     <ClCompile Include="..\..\wolfcrypt\src\md2.c" />
     <ClCompile Include="..\..\wolfcrypt\src\md4.c" />
@@ -450,9 +449,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

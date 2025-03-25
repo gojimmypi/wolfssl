@@ -21236,10 +21236,11 @@ static int DecodeAltSigAlg(const byte* input, int sz, DecodedCert* cert)
  * like a traditional signature in the certificate. */
 static int DecodeAltSigVal(const byte* input, int sz, DecodedCert* cert)
 {
-    (void)cert;
     int ret = 0;
     word32 idx = 0;
     int len = 0;
+
+    (void)cert;
 
     WOLFSSL_ENTER("DecodeAltSigVal");
 
@@ -21509,16 +21510,19 @@ static int DecodeExtensionType(const byte* input, word32 length, word32 oid,
     #ifdef WOLFSSL_DUAL_ALG_CERTS
         case SUBJ_ALT_PUB_KEY_INFO_OID:
             VERIFY_AND_SET_OID(cert->extSapkiSet);
+            cert->extSapkiCrit = critical ? 1 : 0;
             if (DecodeSubjAltPubKeyInfo(&input[idx], length, cert) < 0)
                 return ASN_PARSE_E;
             break;
         case ALT_SIG_ALG_OID:
             VERIFY_AND_SET_OID(cert->extAltSigAlgSet);
+            cert->extAltSigAlgCrit = critical ? 1 : 0;
             if (DecodeAltSigAlg(&input[idx], length, cert) < 0)
                 return ASN_PARSE_E;
             break;
         case ALT_SIG_VAL_OID:
             VERIFY_AND_SET_OID(cert->extAltSigValSet);
+            cert->extAltSigValCrit = critical ? 1 : 0;
             if (DecodeAltSigVal(&input[idx], length, cert) < 0)
                 return ASN_PARSE_E;
             break;
@@ -28982,6 +28986,7 @@ static const ASNItem static_certExtsASN[] = {
             /* Basic Constraints Extension - 4.2.1.9 */
 /* BC_SEQ        */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* BC_OID        */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
+/* BC_CRIT       */        { 1, ASN_BOOLEAN, 0, 0, 0 },
 /* BC_STR        */        { 1, ASN_OCTET_STRING, 0, 1, 0 },
 /* BC_STR_SEQ    */            { 2, ASN_SEQUENCE, 1, 1, 0 },
                                                    /* cA */
@@ -29030,12 +29035,15 @@ static const ASNItem static_certExtsASN[] = {
 #ifdef WOLFSSL_DUAL_ALG_CERTS
 /* SAPKI_SEQ     */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* SAPKI_OID     */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
+/* SAPKI_CRIT    */        { 1, ASN_BOOLEAN, 0, 0, 0 },
 /* SAPKI_STR     */        { 1, ASN_OCTET_STRING, 0, 0, 0 },
 /* ALTSIGALG_SEQ */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* ALTSIGALG_OID */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
+/* ALTSIGALG_CRIT*/        { 1, ASN_BOOLEAN, 0, 0, 0 },
 /* ALTSIGALG_STR */        { 1, ASN_OCTET_STRING, 0, 0, 0 },
 /* ALTSIGVAL_SEQ */    { 0, ASN_SEQUENCE, 1, 1, 0 },
 /* ALTSIGVAL_OID */        { 1, ASN_OBJECT_ID, 0, 0, 0 },
+/* ALTSIGVAL_CRIT*/        { 1, ASN_BOOLEAN, 0, 0, 0 },
 /* ALTSIGVAL_STR */        { 1, ASN_OCTET_STRING, 0, 0, 0 },
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
 /* CUSTOM_SEQ    */    { 0, ASN_SEQUENCE, 1, 1, 0 },
@@ -29045,6 +29053,7 @@ static const ASNItem static_certExtsASN[] = {
 enum {
     CERTEXTSASN_IDX_BC_SEQ = 0,
     CERTEXTSASN_IDX_BC_OID,
+    CERTEXTSASN_IDX_BC_CRIT,
     CERTEXTSASN_IDX_BC_STR,
     CERTEXTSASN_IDX_BC_STR_SEQ,
     CERTEXTSASN_IDX_BC_CA,
@@ -29084,12 +29093,15 @@ enum {
 #ifdef WOLFSSL_DUAL_ALG_CERTS
     CERTEXTSASN_IDX_SAPKI_SEQ,
     CERTEXTSASN_IDX_SAPKI_OID,
+    CERTEXTSASN_IDX_SAPKI_CRIT,
     CERTEXTSASN_IDX_SAPKI_STR,
     CERTEXTSASN_IDX_ALTSIGALG_SEQ,
     CERTEXTSASN_IDX_ALTSIGALG_OID,
+    CERTEXTSASN_IDX_ALTSIGALG_CRIT,
     CERTEXTSASN_IDX_ALTSIGALG_STR,
     CERTEXTSASN_IDX_ALTSIGVAL_SEQ,
     CERTEXTSASN_IDX_ALTSIGVAL_OID,
+    CERTEXTSASN_IDX_ALTSIGVAL_CRIT,
     CERTEXTSASN_IDX_ALTSIGVAL_STR,
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
     CERTEXTSASN_IDX_CUSTOM_SEQ,
@@ -29181,6 +29193,12 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
             /* Set Basic Constraints to be a Certificate Authority. */
             SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_BC_CA], 1);
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_BC_OID], bcOID, sizeof(bcOID));
+            if (cert->basicConstCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_BC_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_BC_CRIT].noOut = 1;
+            }
             if (cert->pathLenSet
             #ifdef WOLFSSL_CERT_EXT
                 && ((cert->keyUsage & KEYUSE_KEY_CERT_SIGN) || (!cert->keyUsage))
@@ -29197,12 +29215,24 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
         else if (cert->isCaSet) {
             SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_BC_CA], 0);
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_BC_OID], bcOID, sizeof(bcOID));
+            if (cert->basicConstCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_BC_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_BC_CRIT].noOut = 1;
+            }
             dataASN[CERTEXTSASN_IDX_BC_PATHLEN].noOut = 1;
         }
     #endif
         else if (cert->basicConstSet) {
             /* Set Basic Constraints to be a non Certificate Authority. */
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_BC_OID], bcOID, sizeof(bcOID));
+            if (cert->basicConstCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_BC_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_BC_CRIT].noOut = 1;
+            }
             dataASN[CERTEXTSASN_IDX_BC_CA].noOut = 1;
             dataASN[CERTEXTSASN_IDX_BC_PATHLEN].noOut = 1;
         }
@@ -29369,9 +29399,16 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
 
     #ifdef WOLFSSL_DUAL_ALG_CERTS
         if (cert->sapkiDer != NULL) {
-            /* Set subject alternative public key info OID and data. */
+            /* Set subject alternative public key info OID, criticality and
+             * data. */
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_SAPKI_OID], sapkiOID,
                     sizeof(sapkiOID));
+            if (cert->sapkiCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_SAPKI_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_SAPKI_CRIT].noOut = 1;
+            }
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_SAPKI_STR], cert->sapkiDer,
                     cert->sapkiLen);
         }
@@ -29382,9 +29419,15 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
         }
 
         if (cert->altSigAlgDer != NULL) {
-            /* Set alternative signature algorithm OID and data. */
+            /* Set alternative signature algorithm OID, criticality and data. */
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_ALTSIGALG_OID], altSigAlgOID,
                     sizeof(altSigAlgOID));
+            if (cert->altSigAlgCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_ALTSIGALG_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_ALTSIGALG_CRIT].noOut = 1;
+            }
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_ALTSIGALG_STR],
                     cert->altSigAlgDer, cert->altSigAlgLen);
         }
@@ -29395,9 +29438,15 @@ static int EncodeExtensions(Cert* cert, byte* output, word32 maxSz,
         }
 
         if (cert->altSigValDer != NULL) {
-            /* Set alternative signature value OID and data. */
+            /* Set alternative signature value OID, criticality and data. */
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_ALTSIGVAL_OID], altSigValOID,
                     sizeof(altSigValOID));
+            if (cert->altSigValCrit) {
+                SetASN_Boolean(&dataASN[CERTEXTSASN_IDX_ALTSIGVAL_CRIT], 1);
+            }
+            else {
+                dataASN[CERTEXTSASN_IDX_ALTSIGVAL_CRIT].noOut = 1;
+            }
             SetASN_Buffer(&dataASN[CERTEXTSASN_IDX_ALTSIGVAL_STR],
                     cert->altSigValDer, cert->altSigValLen);
         }
@@ -32190,14 +32239,13 @@ int wc_MakeSigWithBitStr(byte *sig, int sigSz, int sType, byte* buf,
     falcon_key*        falconKey = NULL;
     dilithium_key*     dilithiumKey = NULL;
     sphincs_key*       sphincsKey = NULL;
-
-    WOLFSSL_ENTER("wc_MakeSigWithBitStr");
-
     int ret = 0;
     int headerSz;
     void* heap = NULL;
     CertSignCtx  certSignCtx_lcl;
     CertSignCtx* certSignCtx = &certSignCtx_lcl;
+
+    WOLFSSL_ENTER("wc_MakeSigWithBitStr");
 
     if ((sig == NULL) || (sigSz <= 0)) {
         return BAD_FUNC_ARG;

@@ -569,9 +569,9 @@ add_option(WOLFSSL_OQS
     "Enable integration with the OQS (Open Quantum Safe) liboqs library (default: disabled)"
     "no" "yes;no")
 
-# Kyber
-add_option(WOLFSSL_KYBER
-    "Enable the wolfSSL PQ Kyber library (default: disabled)"
+# ML-KEM/Kyber
+add_option(WOLFSSL_MMLKEM
+    "Enable the wolfSSL PQ ML-KEM library (default: disabled)"
     "no" "yes;no")
 
 # Experimental features
@@ -620,8 +620,8 @@ if (WOLFSSL_EXPERIMENTAL)
         set(WOLFSSL_FOUND_EXPERIMENTAL_FEATURE 1)
 
         message(STATUS "Automatically set related requirements for Kyber:")
-        set_wolfssl_definitions("WOLFSSL_HAVE_KYBER" RESUlT)
-        set_wolfssl_definitions("WOLFSSL_WC_KYBER"   RESUlT)
+        set_wolfssl_definitions("WOLFSSL_HAVE_MLKEM" RESUlT)
+        set_wolfssl_definitions("WOLFSSL_WC_MLKEM"   RESUlT)
         set_wolfssl_definitions("WOLFSSL_SHA3"       RESUlT)
         set_wolfssl_definitions("WOLFSSL_SHAKE128"   RESUlT)
         set_wolfssl_definitions("WOLFSSL_SHAKE256"   RESUlT)
@@ -752,7 +752,8 @@ add_option("WOLFSSL_AESCTR"
 
 if(WOLFSSL_OPENVPN OR
    WOLFSSL_LIBSSH2 OR
-   WOLFSSL_AESSIV)
+   WOLFSSL_AESSIV OR
+   WOLFSSL_CLU)
     override_cache(WOLFSSL_AESCTR "yes")
 endif()
 
@@ -1019,7 +1020,7 @@ add_option("WOLFSSL_ED25519"
     "Enable ED25519 (default: disabled)"
     "no" "yes;no")
 
-if(WOLFSSL_OPENSSH)
+if(WOLFSSL_OPENSSH OR WOLFSSL_CLU)
     override_cache(WOLFSSL_ED25519 "yes")
 endif()
 
@@ -1694,6 +1695,9 @@ add_option(WOLFSSL_PKCS7 ${WOLFSSL_PKCS7_HELP_STRING} "no" "yes;no")
 set(WOLFSSL_TPM_HELP_STRING "Enable wolfTPM options (default: disabled)")
 add_option(WOLFSSL_TPM ${WOLFSSL_TPM_HELP_STRING} "no" "yes;no")
 
+set(WOLFSSL_CLU_HELP_STRING "Enable wolfCLU options (default: disabled)")
+add_option(WOLFSSL_CLU ${WOLFSSL_CLU_HELP_STRING} "no" "yes;no")
+
 set(WOLFSSL_AESKEYWRAP_HELP_STRING "Enable AES key wrap support (default: disabled)")
 add_option(WOLFSSL_AESKEYWRAP ${WOLFSSL_AESKEYWRAP_HELP_STRING} "no" "yes;no")
 
@@ -2036,6 +2040,25 @@ if(WOLFSSL_TPM)
     override_cache(WOLFSSL_CERTEXT  "yes")
     override_cache(WOLFSSL_PKCS7    "yes")
     override_cache(WOLFSSL_AESCFB   "yes")
+endif()
+
+if(WOLFSSL_CLU)
+    override_cache(WOLFSSL_CERTGEN  "yes")
+    override_cache(WOLFSSL_CERTREQ  "yes")
+    override_cache(WOLFSSL_CERTEXT  "yes")
+    override_cache(WOLFSSL_MD5      "yes")
+    override_cache(WOLFSSL_AESCTR   "yes")
+    override_cache(WOLFSSL_KEYGEN   "yes")
+    override_cache(WOLFSSL_OPENSSLALL "yes")
+    override_cache(WOLFSSL_ED25519  "yes")
+    override_cache(WOLFSSL_SHA512   "yes")
+    override_cache(WOLFSSL_DES3     "yes")
+    override_cache(WOLFSSL_PKCS7    "yes")
+    list(APPEND WOLFSSL_DEFINITIONS "-DHAVE_OID_ENCODING" "-DWOLFSSL_NO_ASN_STRICT" "-DWOLFSSL_ALT_NAMES")
+    # Add OPENSSL_ALL definition to ensure OpenSSL compatibility functions are available
+    list(APPEND WOLFSSL_DEFINITIONS "-DOPENSSL_ALL")
+    # Remove NO_DES3 from WOLFSSL_DEFINITIONS to ensure DES3 is enabled
+    list(REMOVE_ITEM WOLFSSL_DEFINITIONS "-DNO_DES3")
 endif()
 
 if(WOLFSSL_AESCFB)
@@ -2512,6 +2535,8 @@ if(WOLFSSL_EXAMPLES)
     # Build unit tests
     add_executable(unit_test
         tests/api.c
+        tests/api/test_md2.c
+        tests/api/test_md4.c
         tests/api/test_md5.c
         tests/api/test_sha.c
         tests/api/test_sha256.c
@@ -2534,7 +2559,20 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_ascon.c
         tests/api/test_sm4.c
         tests/api/test_wc_encrypt.c
+        tests/api/test_random.c
+        tests/api/test_wolfmath.c
+        tests/api/test_rsa.c
+        tests/api/test_dsa.c
+        tests/api/test_dh.c
+        tests/api/test_ecc.c
+        tests/api/test_sm2.c
+        tests/api/test_curve25519.c
+        tests/api/test_ed25519.c
+        tests/api/test_curve448.c
+        tests/api/test_ed448.c
         tests/api/test_mlkem.c
+        tests/api/test_mldsa.c
+        tests/api/test_signature.c
         tests/api/test_dtls.c
         tests/api/test_ocsp.c
         tests/api/test_evp.c

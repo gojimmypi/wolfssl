@@ -865,7 +865,7 @@ int wc_CryptoCb_Ed25519Verify(const byte* sig, word32 sigLen,
 }
 #endif /* HAVE_ED25519 */
 
-#if defined(WOLFSSL_HAVE_KYBER)
+#if defined(WOLFSSL_HAVE_MLKEM)
 int wc_CryptoCb_PqcKemGetDevId(int type, void* key)
 {
     int devId = INVALID_DEVID;
@@ -984,7 +984,7 @@ int wc_CryptoCb_PqcDecapsulate(const byte* ciphertext, word32 ciphertextLen,
 
     return wc_CryptoCb_TranslateErrorCode(ret);
 }
-#endif /* WOLFSSL_HAVE_KYBER */
+#endif /* WOLFSSL_HAVE_MLKEM */
 
 #if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM)
 int wc_CryptoCb_PqcSigGetDevId(int type, void* key)
@@ -1882,6 +1882,12 @@ int wc_CryptoCb_DefaultDevID(void)
 {
     int ret;
 
+/* Explicitly disable the "default devId" behavior. Ensures that any devId
+ * will only be used if explicitly passed as an argument to crypto functions,
+ * and never automatically selected. */
+#ifdef WC_NO_DEFAULT_DEVID
+    ret = INVALID_DEVID;
+#else
     /* conditional macro selection based on build */
 #ifdef WOLFSSL_CAAM_DEVID
     ret = WOLFSSL_CAAM_DEVID;
@@ -1893,6 +1899,7 @@ int wc_CryptoCb_DefaultDevID(void)
     /* try first available */
     ret = wc_CryptoCb_GetDevIdAtIndex(0);
 #endif
+#endif /* WC_NO_DEFAULT_DEVID */
 
     return ret;
 }

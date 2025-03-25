@@ -76,6 +76,13 @@ extern ${variable.value} ${variable.name};
     #define WOLFSSL_STM32_PKA
     #undef  NO_STM32_CRYPTO
     #define HAL_CONSOLE_UART huart1
+#elif defined(STM32WBA52xx)
+    #define WOLFSSL_STM32WBA
+    #define WOLFSSL_STM32_PKA
+    #undef  NO_STM32_HASH
+    #undef  NO_STM32_CRYPTO
+    /* NUCLEO-WBA52CG USART1 (TX=PB12 / RX=PA8) */
+    #define HAL_CONSOLE_UART huart1
 #elif defined(STM32WL55xx)
     #define WOLFSSL_STM32WL
     #define WOLFSSL_STM32_PKA
@@ -588,11 +595,11 @@ extern ${variable.value} ${variable.name};
     #undef  WOLFSSL_EXPERIMENTAL_SETTINGS
     #define WOLFSSL_EXPERIMENTAL_SETTINGS
 
-    #undef  WOLFSSL_HAVE_KYBER
-    #define WOLFSSL_HAVE_KYBER
+    #undef  WOLFSSL_HAVE_MLKEM
+    #define WOLFSSL_HAVE_MLKEM
 
-    #undef  WOLFSSL_WC_KYBER
-    #define WOLFSSL_WC_KYBER
+    #undef  WOLFSSL_WC_MLKEM
+    #define WOLFSSL_WC_MLKEM
 
     #undef  WOLFSSL_NO_SHAKE128
     #undef  WOLFSSL_SHAKE128
@@ -705,8 +712,14 @@ extern ${variable.value} ${variable.name};
 #define NO_RC4
 #define NO_MD4
 #define NO_DES3
+
+#ifndef WOLFSSL_SHAKE128
 #define WOLFSSL_NO_SHAKE128
+#endif
+
+#ifndef WOLFSSL_SHAKE256
 #define WOLFSSL_NO_SHAKE256
+#endif
 
 /* In-lining of misc.c functions */
 /* If defined, must include wolfcrypt/src/misc.c in build */
