@@ -8,14 +8,14 @@
 
 #define USE_WOLFSSL_IO
 #define HAVE_AESGCM
-#define WOLFSSL_TLS13
+// #define WOLFSSL_TLS13
 #define HAVE_HKDF
 #define HAVE_FFDHE_4096
 #define WC_RSA_PSS
-#define WOLFSSL_DTLS
-#define WOLFSSL_DTLS13
+// #define WOLFSSL_DTLS
+// #define WOLFSSL_DTLS13
 #define WOLFSSL_SEND_HRR_COOKIE
-#define WOLFSSL_DTLS_CID
+// s#define WOLFSSL_DTLS_CID
 
 /* Configurations */
 #if defined(HAVE_FIPS)
