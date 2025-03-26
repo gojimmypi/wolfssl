@@ -525,7 +525,7 @@ namespace wolfSSL.CSharp
             WriteDebugString(" - thisPath:'%s`", thisPath);
             WriteDebugString(" - hintText:'%s`", hintText);
 
-            if (string.IsNullOrEmpty(thisPath))
+             if (string.IsNullOrEmpty(thisPath))
             {
                 WriteDebugString(" - %s is not defined, not used to search for wolfssl.", hintText);
             }

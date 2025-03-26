@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".;..\.."
-				PreprocessorDefinitions="WOLFSSL_LIB;WOLFSSL_USER_SETTINGS;WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WOLFSSL_DLL;WOLFSSL_USER_SETTINGS;WIN32;_DEBUG;_LIB;WOLFSSL_EXPORTS"
 				RuntimeLibrary="3"
 				WarningLevel="4"
 				DebugInformationFormat="4"
