@@ -628,7 +628,9 @@ namespace wolfSSL.CSharp
             if (default_path == wolfssl_dll)
             {
 #if COMPACT_FRAMEWORK
-                wolfsslPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+                string codeBase = Assembly.GetExecutingAssembly().GetName().CodeBase;
+                string localPath = new Uri(codeBase).LocalPath;
+                wolfsslPath = Path.GetDirectoryName(localPath);
 #else
                 /* this will typically be [WOLFSSL_ROOT]\\wrapper\\CSharp\\Debug\\x64" */
                 wolfsslPath = Environment.CurrentDirectory; /* no path specified */
