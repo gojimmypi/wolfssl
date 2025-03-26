@@ -401,10 +401,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\wolfcrypt\src\ext_kyber.c"
-				>
-			</File>
-			<File
 				RelativePath=".\wolfcrypt\src\falcon.c"
 				>
 			</File>
@@ -570,14 +566,6 @@
 			</File>
 			<File
 				RelativePath=".\wolfcrypt\src\wc_encrypt.c"
-				>
-			</File>
-			<File
-				RelativePath=".\wolfcrypt\src\wc_kyber.c"
-				>
-			</File>
-			<File
-				RelativePath=".\wolfcrypt\src\wc_kyber_poly.c"
 				>
 			</File>
 			<File
