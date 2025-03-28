@@ -630,6 +630,8 @@ namespace wolfSSL.CSharp
 #if COMPACT_FRAMEWORK
                 string codeBase = Assembly.GetExecutingAssembly().GetName().CodeBase;
                 string localPath = new Uri(codeBase).LocalPath;
+
+                /* This will typically be "\\Program Files\\smartdeviceproject1" */
                 wolfsslPath = Path.GetDirectoryName(localPath);
 #else
                 /* this will typically be [WOLFSSL_ROOT]\\wrapper\\CSharp\\Debug\\x64" */
@@ -1266,7 +1268,7 @@ namespace wolfSSL.CSharp
                 if (amtRecv == 0)
                 {
 #if COMPACT_FRAMEWORK
-                    throw new Exception("con.ReceiveTimeout not implmented");
+                    throw new Exception("con.ReceiveTimeout not implemented");
 #else
                     /* No data received so check for a response to see if connection is still open */
                     if (con.Poll((con.ReceiveTimeout > 0) ? con.ReceiveTimeout : WC_WAIT, SelectMode.SelectRead))
@@ -2384,6 +2386,7 @@ namespace wolfSSL.CSharp
                     this_wolfssl_path = _WOLFSSL_DLL_PATH + "\\" + wolfssl_dll;
                 }
 
+                // when not specified, something like "\\Program Files\\smartdeviceproject1\\wolfssl.dll"
                 _dllHandle = LoadLibrary(this_wolfssl_path);
                 if (_dllHandle == IntPtr.Zero)
                 {
