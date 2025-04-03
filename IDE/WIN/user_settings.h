@@ -28,6 +28,9 @@
 extern "C" {
 #endif
 
+#define WOLFSSL_HAVE_MIN
+#define WOLFSSL_HAVE_MAX
+
 #define WOLFSSL_NO_STDIO
 #define USE_WOLFSSL_SNPRINTF
 #define WOLFSSL_NO_VERBOSE_ERROR
