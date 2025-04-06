@@ -1,6 +1,5 @@
 # wolfSSL Espressif IDE
 
-
 This directory contains documentation and examples for the Espressif SoC devices.
 
 Although wolfSSL _should_ work on any Espressif device, there's explicit support for these:
