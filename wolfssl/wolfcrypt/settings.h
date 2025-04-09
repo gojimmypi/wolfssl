@@ -1270,7 +1270,7 @@
             #error "https://www.wolfssl.com/docs/porting-guide/"
         #endif
     #endif
-    #define WOLFSSL_USER_IO
+
     #define HAVE_ECC
     #define NO_DH
     #define NO_SESSION_CACHE
