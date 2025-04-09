@@ -105,18 +105,6 @@
     #define NO_WOLFSSL_SERVER_CLIENT_MISSING
 
     /* By default all examples are enabled; no specific optimizations */
-
-    /* Optionally warn if server or client is disabled */
-    #if 0
-        #ifdef NO_WOLFSSL_CLIENT
-            #warning "Found NO_WOLFSSL_CLIENT"
-        #endif
-
-        #ifdef NO_WOLFSSL_SERVER
-            #warning "Found NO_WOLFSSL_SERVER"
-        #endif
-        /* Both can be disabled in wolfssl test & benchmark */
-    #endif
 #endif
 
 
