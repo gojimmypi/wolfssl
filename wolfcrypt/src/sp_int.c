@@ -26,12 +26,8 @@ DESCRIPTION
 This library provides single precision (SP) integer math functions.
 
 */
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
 
@@ -5272,6 +5268,9 @@ void sp_zero(sp_int* a)
  */
 void sp_clear(sp_int* a)
 {
+#ifdef HAVE_FIPS
+    sp_forcezero(a);
+#else
     /* Clear when valid pointer passed in. */
     if (a != NULL) {
         unsigned int i;
@@ -5284,6 +5283,7 @@ void sp_clear(sp_int* a)
         _sp_zero(a);
         sp_free(a);
     }
+#endif
 }
 
 #if !defined(NO_RSA) || !defined(NO_DH) || defined(HAVE_ECC) || \
