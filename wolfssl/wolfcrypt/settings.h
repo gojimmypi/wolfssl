@@ -4410,6 +4410,13 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif /* HAVE_ENTROPY_MEMUSE */
 
+/* If not server and not client, WOLFCRYPT_ONLY should be defined */
+#if defined(NO_WOLFSSL_CLIENT) && defined(NO_WOLFSSL_SERVER) && \
+   !defined(WOLFCRYPT_ONLY)
+    #warning "Waning: Both NO_WOLFSSL_CLIENT and NO_WOLFSSL_SERVER defined. "\
+"Recommendation: also define WOLFCRYPT_ONLY in user_settings.h"
+#endif
+
 #ifdef __cplusplus
     }   /* extern "C" */
 #endif

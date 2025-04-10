@@ -2589,21 +2589,6 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
             ctx->CBIORecvFrom = uIPRecvFrom;
         }
         #endif
-    #elif defined(ARDUINO) && \
-         !defined(ARDUINO_ARCH_ESP32) && !defined(ARDUINO_ARCH_ESP8266) && \
-         !defined(ARDUINO_ARCH_SAMD)  && !defined(ARDUINO_ARCH_NRF52)   && \
-         !defined(ARDUINO_ARCH_MBED)  && !defined(ARDUINO_ARCH_STM32)   && \
-         !defined(ARDUINO_SEEED_XIAO) && !defined(ARDUINO_TEENSY41)     && \
-         !defined(WIFI_AVAILABLE)     && !defined(ETHERNET_AVAILABLE)
-        /* Unless a known board is detected, assume there's no network */
-        #ifndef NO_WOLFSSL_CLIENT
-            #warning "No known networking on this device."
-            #warning "Please add NO_WOLFSSL_CLIENT to your user_settings.h"
-        #endif
-        #ifndef NO_WOLFSSL_SERVER
-            #warning "No known networking on this device."
-            #warning "Please add NO_WOLFSSL_SERVER to your user_settings.h"
-        #endif
     #else
         ctx->CBIORecv = EmbedReceive;
         ctx->CBIOSend = EmbedSend;
