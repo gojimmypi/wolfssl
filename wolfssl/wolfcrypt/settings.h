@@ -323,7 +323,7 @@
         defined(ARDUINO_ESP8266_ESP01)       || \
         defined(ARDUINO_TEENSY40)            || \
         defined(ARDUINO_TEENSY41)            || \
-        defined(ESP32) || defined(ESP8266)   ||
+        defined(ESP32) || defined(ESP8266)
         /* Known to have networking available. */
     #else
         #define NO_WOLFSSL_CLIENT
