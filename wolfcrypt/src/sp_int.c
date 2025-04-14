@@ -26,12 +26,8 @@ DESCRIPTION
 This library provides single precision (SP) integer math functions.
 
 */
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
 
@@ -39,12 +35,12 @@ This library provides single precision (SP) integer math functions.
     defined(WOLFSSL_SP_NO_MALLOC)
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
     !defined(WOLFSSL_SP_NO_DYN_STACK)
-#pragma GCC diagnostic push
+PRAGMA_GCC_DIAG_PUSH
 /* We are statically declaring a variable smaller than sp_int.
  * We track available memory in the 'size' field.
  * Disable warnings of sp_int being partly outside array bounds of variable.
  */
-#pragma GCC diagnostic ignored "-Warray-bounds"
+PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
 #endif
 #endif
 
@@ -5272,6 +5268,9 @@ void sp_zero(sp_int* a)
  */
 void sp_clear(sp_int* a)
 {
+#ifdef HAVE_FIPS
+    sp_forcezero(a);
+#else
     /* Clear when valid pointer passed in. */
     if (a != NULL) {
         unsigned int i;
@@ -5284,6 +5283,7 @@ void sp_clear(sp_int* a)
         _sp_zero(a);
         sp_free(a);
     }
+#endif
 }
 
 #if !defined(NO_RSA) || !defined(NO_DH) || defined(HAVE_ECC) || \
@@ -19892,7 +19892,7 @@ void sp_memzero_check(sp_int* sp)
     defined(WOLFSSL_SP_NO_MALLOC)
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
     !defined(WOLFSSL_SP_NO_DYN_STACK)
-#pragma GCC diagnostic pop
+PRAGMA_GCC_DIAG_POP
 #endif
 #endif
 

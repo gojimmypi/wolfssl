@@ -19,15 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-#include <wolfssl/wolfcrypt/settings.h>
-
-#include <wolfssl/wolfcrypt/logging.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
 /* avoid adding WANT_READ and WANT_WRITE to error queue */
 #include <wolfssl/error-ssl.h>
@@ -265,7 +258,6 @@ void WOLFSSL_TIME(int count)
     /* the requisite linux/kernel.h is included in wc_port.h, with incompatible warnings masked out. */
 #elif defined(FUSION_RTOS)
     #include <fclstdio.h>
-    #include <wolfssl/wolfcrypt/wc_port.h>
     #define fprintf FCL_FPRINTF
 #else
     #include <stdio.h>  /* for default printf stuff */

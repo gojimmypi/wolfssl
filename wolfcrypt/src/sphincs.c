@@ -19,14 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
+
 /* Based on dilithium.c and Reworked for Sphincs by Anthony Hu. */
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-/* in case user set HAVE_PQC there */
-#include <wolfssl/wolfcrypt/settings.h>
 
 #include <wolfssl/wolfcrypt/asn.h>
 
@@ -37,7 +32,6 @@
 #endif
 
 #include <wolfssl/wolfcrypt/sphincs.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else

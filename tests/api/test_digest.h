@@ -19,22 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#define PRINT_DATA(name, data, len)             \
-do {                                            \
-    int ii;                                     \
-    fprintf(stderr, "%s\n", name);              \
-    for (ii = 0; ii < (int)(len); ii++) {       \
-        if ((ii % 8) == 0)                      \
-            fprintf(stderr, "        \"");      \
-        fprintf(stderr, "\\x%02x", (data)[ii]); \
-        if ((ii % 8) == 7)                      \
-            fprintf(stderr, "\"\n");            \
-    }                                           \
-    if ((ii % 8) != 0)                          \
-        fprintf(stderr, "\"");                  \
-    fprintf(stderr, "\n");                      \
-} while (0)
-
 
 #define DIGEST_INIT_TEST(type, name)                                           \
 do {                                                                           \
@@ -479,8 +463,9 @@ do {                                                                           \
                                                                                \
     XMEMSET(data, 0xa5, sizeof(data));                                         \
                                                                                \
-    ExpectIntEQ(wc_Init##name(&src), 0);                                       \
+    XMEMSET(&src, 0, sizeof(src));                                             \
     XMEMSET(&dst, 0, sizeof(dst));                                             \
+    ExpectIntEQ(wc_Init##name(&src), 0);                                       \
                                                                                \
     /* Tests bad params. */                                                    \
     ExpectIntEQ(wc_##name##Copy(NULL, NULL), WC_NO_ERR_TRACE(BAD_FUNC_ARG));   \
@@ -614,6 +599,7 @@ do {                                                                           \
     const char* emptyHash = emptyHashStr;                                      \
     const char* abcHash = abcHashStr;                                          \
                                                                                \
+    XMEMSET(&dgst, 0, sizeof(dgst));                                           \
     ExpectIntEQ(wc_Init##name(&dgst), 0);                                      \
                                                                                \
     ExpectIntEQ(wc_##name##GetHash(NULL, NULL),                                \
@@ -768,6 +754,7 @@ do {                                                                           \
     type dgst_copy;                                                            \
     word32 flags;                                                              \
                                                                                \
+    XMEMSET(&dgst, 0, sizeof(dgst));                                           \
     XMEMSET(&dgst_copy, 0, sizeof(dgst_copy));                                 \
     ExpectIntEQ(wc_Init##name(&dgst), 0);                                      \
                                                                                \

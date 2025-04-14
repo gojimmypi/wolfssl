@@ -74,12 +74,12 @@
 #if defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
     #include <wolfssl/wolfcrypt/sha512.h>
 #endif
-#ifdef WOLFSSL_HAVE_KYBER
-    #include <wolfssl/wolfcrypt/kyber.h>
-#ifdef WOLFSSL_WC_KYBER
-    #include <wolfssl/wolfcrypt/wc_kyber.h>
+#ifdef WOLFSSL_HAVE_MLKEM
+    #include <wolfssl/wolfcrypt/mlkem.h>
+#ifdef WOLFSSL_WC_MLKEM
+    #include <wolfssl/wolfcrypt/wc_mlkem.h>
 #elif defined(HAVE_LIBOQS)
-    #include <wolfssl/wolfcrypt/ext_kyber.h>
+    #include <wolfssl/wolfcrypt/ext_mlkem.h>
 #endif
 #endif
 #if defined(HAVE_DILITHIUM)
@@ -254,7 +254,7 @@ typedef struct wc_CryptoInfo {
                 byte         contextLen;
             } ed25519verify;
         #endif
-        #if defined(WOLFSSL_HAVE_KYBER)
+        #if defined(WOLFSSL_HAVE_MLKEM)
             struct {
                 WC_RNG*     rng;
                 int         size;
@@ -375,7 +375,7 @@ typedef struct wc_CryptoInfo {
     } cipher;
 #endif /* !NO_AES || !NO_DES3 */
 #if !defined(NO_SHA) || !defined(NO_SHA256) || \
-    defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)
+    defined(WOLFSSL_SHA384) || defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA3)
     struct {
         int type; /* enum wc_HashType */
         const byte* in;
@@ -544,7 +544,7 @@ WOLFSSL_LOCAL int wc_CryptoCb_Ed25519Verify(const byte* sig, word32 sigLen,
     const byte* context, byte contextLen);
 #endif /* HAVE_ED25519 */
 
-#if defined(WOLFSSL_HAVE_KYBER)
+#if defined(WOLFSSL_HAVE_MLKEM)
 WOLFSSL_LOCAL int wc_CryptoCb_PqcKemGetDevId(int type, void* key);
 
 WOLFSSL_LOCAL int wc_CryptoCb_MakePqcKemKey(WC_RNG* rng, int type,
@@ -557,7 +557,7 @@ WOLFSSL_LOCAL int wc_CryptoCb_PqcEncapsulate(byte* ciphertext,
 WOLFSSL_LOCAL int wc_CryptoCb_PqcDecapsulate(const byte* ciphertext,
     word32 ciphertextLen, byte* sharedSecret, word32 sharedSecretLen,
     int type, void* key);
-#endif /* WOLFSSL_HAVE_KYBER */
+#endif /* WOLFSSL_HAVE_MLKEM */
 
 #if defined(HAVE_FALCON) || defined(HAVE_DILITHIUM)
 WOLFSSL_LOCAL int wc_CryptoCb_PqcSigGetDevId(int type, void* key);

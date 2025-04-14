@@ -1,4 +1,4 @@
-/* armv8-32-kyber-asm
+/* armv8-32-mlkem-asm
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
@@ -22,37 +22,36 @@
 /* Generated using (from wolfssl):
  *   cd ../scripts
  *   ruby ./kyber/kyber.rb arm32 \
- *       ../wolfssl/wolfcrypt/src/port/arm/armv8-32-kyber-asm.c
+ *       ../wolfssl/wolfcrypt/src/port/arm/armv8-32-mlkem-asm.c
  */
 
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif /* HAVE_CONFIG_H */
-#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources_asm.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
 #ifdef WOLFSSL_ARMASM
 #if !defined(__aarch64__) && !defined(WOLFSSL_ARMASM_THUMB2)
 #include <stdint.h>
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif /* HAVE_CONFIG_H */
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 #ifdef WOLFSSL_ARMASM_INLINE
 
 #ifdef __IAR_SYSTEMS_ICC__
 #define __asm__        asm
 #define __volatile__   volatile
+#define WOLFSSL_NO_VAR_ASSIGN_REG
 #endif /* __IAR_SYSTEMS_ICC__ */
 #ifdef __KEIL__
 #define __asm__        __asm
 #define __volatile__   volatile
 #endif /* __KEIL__ */
-#include <wolfssl/wolfcrypt/wc_kyber.h>
+#ifdef __ghs__
+#define __asm__        __asm
+#define __volatile__
+#define WOLFSSL_NO_VAR_ASSIGN_REG
+#endif /* __ghs__ */
+#include <wolfssl/wolfcrypt/wc_mlkem.h>
 
-#ifdef WOLFSSL_WC_KYBER
-static const word16 L_kyber_arm32_ntt_zetas[] = {
+#ifdef WOLFSSL_WC_MLKEM
+static const word16 L_mlkem_arm32_ntt_zetas[] = {
     0x08ed, 0x0a0b, 0x0b9a, 0x0714,
     0x05d5, 0x058e, 0x011f, 0x00ca,
     0x0c56, 0x026e, 0x0629, 0x00b6,
@@ -87,14 +86,25 @@ static const word16 L_kyber_arm32_ntt_zetas[] = {
     0x03be, 0x074d, 0x05f2, 0x065c,
 };
 
-void kyber_arm32_ntt(sword16* r_p)
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+void mlkem_arm32_ntt(sword16* r_p)
+#else
+void mlkem_arm32_ntt(sword16* r)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* r asm ("r0") = (sword16*)r_p;
-    register word16* L_kyber_arm32_ntt_zetas_c asm ("r1") =
-        (word16*)&L_kyber_arm32_ntt_zetas;
+    register word16* L_mlkem_arm32_ntt_zetas_c asm ("r1") =
+        (word16*)&L_mlkem_arm32_ntt_zetas;
+#else
+    register word16* L_mlkem_arm32_ntt_zetas_c =
+        (word16*)&L_mlkem_arm32_ntt_zetas;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
         "sub	sp, sp, #8\n\t"
+        "mov	r1, %[L_mlkem_arm32_ntt_zetas]\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH >= 6)
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "mov	r10, #0x1\n\t"
@@ -111,7 +121,7 @@ void kyber_arm32_ntt(sword16* r_p)
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "mov	r2, #16\n\t"
         "\n"
-    "L_kyber_arm32_ntt_loop_123_%=: \n\t"
+    "L_mlkem_arm32_ntt_loop_123_%=: \n\t"
         "str	r2, [sp]\n\t"
         "ldrh	r11, [r1, #2]\n\t"
         "ldr	r2, [%[r]]\n\t"
@@ -1224,17 +1234,17 @@ void kyber_arm32_ntt(sword16* r_p)
         "ldr	r2, [sp]\n\t"
         "subs	r2, r2, #1\n\t"
         "add	%[r], %[r], #4\n\t"
-        "bne	L_kyber_arm32_ntt_loop_123_%=\n\t"
+        "bne	L_mlkem_arm32_ntt_loop_123_%=\n\t"
         "sub	%[r], %[r], #0x40\n\t"
         "mov	r3, #0\n\t"
         "\n"
-    "L_kyber_arm32_ntt_loop_4_j_%=: \n\t"
+    "L_mlkem_arm32_ntt_loop_4_j_%=: \n\t"
         "str	r3, [sp, #4]\n\t"
         "add	r11, r1, r3, lsr #4\n\t"
         "mov	r2, #4\n\t"
         "ldr	r11, [r11, #16]\n\t"
         "\n"
-    "L_kyber_arm32_ntt_loop_4_i_%=: \n\t"
+    "L_mlkem_arm32_ntt_loop_4_i_%=: \n\t"
         "str	r2, [sp]\n\t"
         "ldr	r2, [%[r]]\n\t"
         "ldr	r3, [%[r], #16]\n\t"
@@ -1621,15 +1631,15 @@ void kyber_arm32_ntt(sword16* r_p)
 #endif
         "subs	r2, r2, #1\n\t"
         "add	%[r], %[r], #4\n\t"
-        "bne	L_kyber_arm32_ntt_loop_4_i_%=\n\t"
+        "bne	L_mlkem_arm32_ntt_loop_4_i_%=\n\t"
         "add	r3, r3, #0x40\n\t"
         "rsbs	r12, r3, #0x100\n\t"
         "add	%[r], %[r], #0x70\n\t"
-        "bne	L_kyber_arm32_ntt_loop_4_j_%=\n\t"
+        "bne	L_mlkem_arm32_ntt_loop_4_j_%=\n\t"
         "sub	%[r], %[r], #0x200\n\t"
         "mov	r3, #0\n\t"
         "\n"
-    "L_kyber_arm32_ntt_loop_567_%=: \n\t"
+    "L_mlkem_arm32_ntt_loop_567_%=: \n\t"
         "add	r11, r1, r3, lsr #3\n\t"
         "str	r3, [sp, #4]\n\t"
         "ldrh	r11, [r11, #32]\n\t"
@@ -3078,17 +3088,23 @@ void kyber_arm32_ntt(sword16* r_p)
         "add	r3, r3, #16\n\t"
         "rsbs	r12, r3, #0x100\n\t"
         "add	%[r], %[r], #32\n\t"
-        "bne	L_kyber_arm32_ntt_loop_567_%=\n\t"
+        "bne	L_mlkem_arm32_ntt_loop_567_%=\n\t"
         "add	sp, sp, #8\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [r] "+r" (r),
-          [L_kyber_arm32_ntt_zetas] "+r" (L_kyber_arm32_ntt_zetas_c)
+          [L_mlkem_arm32_ntt_zetas] "+r" (L_mlkem_arm32_ntt_zetas_c)
         :
+#else
+        :
+        : [r] "r" (r),
+          [L_mlkem_arm32_ntt_zetas] "r" (L_mlkem_arm32_ntt_zetas_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r2", "r3", "r12", "lr", "r4", "r5", "r6", "r7", "r8",
             "r9", "r10", "r11"
     );
 }
 
-static const word16 L_kyber_arm32_invntt_zetas_inv[] = {
+static const word16 L_mlkem_invntt_zetas_inv[] = {
     0x06a5, 0x070f, 0x05b4, 0x0943,
     0x0922, 0x091d, 0x0134, 0x006c,
     0x0b23, 0x0366, 0x0356, 0x05e6,
@@ -3123,14 +3139,25 @@ static const word16 L_kyber_arm32_invntt_zetas_inv[] = {
     0x05ed, 0x0167, 0x02f6, 0x05a1,
 };
 
-void kyber_arm32_invntt(sword16* r_p)
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+void mlkem_arm32_invntt(sword16* r_p)
+#else
+void mlkem_arm32_invntt(sword16* r)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* r asm ("r0") = (sword16*)r_p;
-    register word16* L_kyber_arm32_invntt_zetas_inv_c asm ("r1") =
-        (word16*)&L_kyber_arm32_invntt_zetas_inv;
+    register word16* L_mlkem_invntt_zetas_inv_c asm ("r1") =
+        (word16*)&L_mlkem_invntt_zetas_inv;
+#else
+    register word16* L_mlkem_invntt_zetas_inv_c =
+        (word16*)&L_mlkem_invntt_zetas_inv;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
         "sub	sp, sp, #8\n\t"
+        "mov	r1, %[L_mlkem_invntt_zetas_inv]\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH >= 6)
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "mov	r10, #0x1\n\t"
@@ -3147,7 +3174,7 @@ void kyber_arm32_invntt(sword16* r_p)
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "mov	r3, #0\n\t"
         "\n"
-    "L_kyber_arm32_invntt_loop_765_%=: \n\t"
+    "L_mlkem_invntt_loop_765_%=: \n\t"
         "add	r11, r1, r3, lsr #1\n\t"
         "str	r3, [sp, #4]\n\t"
         "ldr	r2, [%[r]]\n\t"
@@ -4744,17 +4771,17 @@ void kyber_arm32_invntt(sword16* r_p)
         "add	r3, r3, #16\n\t"
         "rsbs	r12, r3, #0x100\n\t"
         "add	%[r], %[r], #32\n\t"
-        "bne	L_kyber_arm32_invntt_loop_765_%=\n\t"
+        "bne	L_mlkem_invntt_loop_765_%=\n\t"
         "sub	%[r], %[r], #0x200\n\t"
         "mov	r3, #0\n\t"
         "\n"
-    "L_kyber_arm32_invntt_loop_4_j_%=: \n\t"
+    "L_mlkem_invntt_loop_4_j_%=: \n\t"
         "str	r3, [sp, #4]\n\t"
         "add	r11, r1, r3, lsr #4\n\t"
         "mov	r2, #4\n\t"
         "ldr	r11, [r11, #224]\n\t"
         "\n"
-    "L_kyber_arm32_invntt_loop_4_i_%=: \n\t"
+    "L_mlkem_invntt_loop_4_i_%=: \n\t"
         "str	r2, [sp]\n\t"
         "ldr	r2, [%[r]]\n\t"
         "ldr	r3, [%[r], #16]\n\t"
@@ -5245,15 +5272,15 @@ void kyber_arm32_invntt(sword16* r_p)
 #endif
         "subs	r2, r2, #1\n\t"
         "add	%[r], %[r], #4\n\t"
-        "bne	L_kyber_arm32_invntt_loop_4_i_%=\n\t"
+        "bne	L_mlkem_invntt_loop_4_i_%=\n\t"
         "add	r3, r3, #0x40\n\t"
         "rsbs	r12, r3, #0x100\n\t"
         "add	%[r], %[r], #0x70\n\t"
-        "bne	L_kyber_arm32_invntt_loop_4_j_%=\n\t"
+        "bne	L_mlkem_invntt_loop_4_j_%=\n\t"
         "sub	%[r], %[r], #0x200\n\t"
         "mov	r2, #16\n\t"
         "\n"
-    "L_kyber_arm32_invntt_loop_321_%=: \n\t"
+    "L_mlkem_invntt_loop_321_%=: \n\t"
         "str	r2, [sp]\n\t"
         "ldrh	r11, [r1, #2]\n\t"
         "ldr	r2, [%[r]]\n\t"
@@ -7508,17 +7535,23 @@ void kyber_arm32_invntt(sword16* r_p)
         "ldr	r2, [sp]\n\t"
         "subs	r2, r2, #1\n\t"
         "add	%[r], %[r], #4\n\t"
-        "bne	L_kyber_arm32_invntt_loop_321_%=\n\t"
+        "bne	L_mlkem_invntt_loop_321_%=\n\t"
         "add	sp, sp, #8\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [r] "+r" (r),
-          [L_kyber_arm32_invntt_zetas_inv] "+r" (L_kyber_arm32_invntt_zetas_inv_c)
+          [L_mlkem_invntt_zetas_inv] "+r" (L_mlkem_invntt_zetas_inv_c)
         :
+#else
+        :
+        : [r] "r" (r),
+          [L_mlkem_invntt_zetas_inv] "r" (L_mlkem_invntt_zetas_inv_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r2", "r3", "r12", "lr", "r4", "r5", "r6", "r7", "r8",
             "r9", "r10", "r11"
     );
 }
 
-static const word16 L_kyber_arm32_basemul_mont_zetas[] = {
+static const word16 L_mlkem_basemul_mont_zetas[] = {
     0x08ed, 0x0a0b, 0x0b9a, 0x0714,
     0x05d5, 0x058e, 0x011f, 0x00ca,
     0x0c56, 0x026e, 0x0629, 0x00b6,
@@ -7553,16 +7586,27 @@ static const word16 L_kyber_arm32_basemul_mont_zetas[] = {
     0x03be, 0x074d, 0x05f2, 0x065c,
 };
 
-void kyber_arm32_basemul_mont(sword16* r_p, const sword16* a_p,
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+void mlkem_arm32_basemul_mont(sword16* r_p, const sword16* a_p,
     const sword16* b_p)
+#else
+void mlkem_arm32_basemul_mont(sword16* r, const sword16* a, const sword16* b)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* r asm ("r0") = (sword16*)r_p;
     register const sword16* a asm ("r1") = (const sword16*)a_p;
     register const sword16* b asm ("r2") = (const sword16*)b_p;
-    register word16* L_kyber_arm32_basemul_mont_zetas_c asm ("r3") =
-        (word16*)&L_kyber_arm32_basemul_mont_zetas;
+    register word16* L_mlkem_basemul_mont_zetas_c asm ("r3") =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+#else
+    register word16* L_mlkem_basemul_mont_zetas_c =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
+        "mov	r3, %[L_mlkem_basemul_mont_zetas]\n\t"
         "add	r3, r3, #0x80\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH >= 6)
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
@@ -7580,7 +7624,7 @@ void kyber_arm32_basemul_mont(sword16* r_p, const sword16* a_p,
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "mov	r8, #0\n\t"
         "\n"
-    "L_kyber_arm32_basemul_mont_loop_%=: \n\t"
+    "L_mlkem_basemul_mont_loop_%=: \n\t"
         "ldm	%[a]!, {r4, r5}\n\t"
         "ldm	%[b]!, {r6, r7}\n\t"
         "ldr	lr, [r3, r8]\n\t"
@@ -7832,25 +7876,43 @@ void kyber_arm32_basemul_mont(sword16* r_p, const sword16* a_p,
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "stm	%[r]!, {r4, r5}\n\t"
         "pop	{r8}\n\t"
-        "bne	L_kyber_arm32_basemul_mont_loop_%=\n\t"
+        "bne	L_mlkem_basemul_mont_loop_%=\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [r] "+r" (r), [a] "+r" (a), [b] "+r" (b),
-          [L_kyber_arm32_basemul_mont_zetas] "+r" (L_kyber_arm32_basemul_mont_zetas_c)
+          [L_mlkem_basemul_mont_zetas] "+r" (L_mlkem_basemul_mont_zetas_c)
         :
+#else
+        :
+        : [r] "r" (r), [a] "r" (a), [b] "r" (b),
+          [L_mlkem_basemul_mont_zetas] "r" (L_mlkem_basemul_mont_zetas_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r12", "lr", "r4", "r5", "r6", "r7", "r8", "r9",
             "r10", "r11"
     );
 }
 
-void kyber_arm32_basemul_mont_add(sword16* r_p, const sword16* a_p,
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+void mlkem_arm32_basemul_mont_add(sword16* r_p, const sword16* a_p,
     const sword16* b_p)
+#else
+void mlkem_arm32_basemul_mont_add(sword16* r, const sword16* a,
+    const sword16* b)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* r asm ("r0") = (sword16*)r_p;
     register const sword16* a asm ("r1") = (const sword16*)a_p;
     register const sword16* b asm ("r2") = (const sword16*)b_p;
-    register word16* L_kyber_arm32_basemul_mont_zetas_c asm ("r3") =
-        (word16*)&L_kyber_arm32_basemul_mont_zetas;
+    register word16* L_mlkem_basemul_mont_zetas_c asm ("r3") =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+#else
+    register word16* L_mlkem_basemul_mont_zetas_c =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
+        "mov	r3, %[L_mlkem_basemul_mont_zetas]\n\t"
         "add	r3, r3, #0x80\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH >= 6)
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
@@ -7868,7 +7930,7 @@ void kyber_arm32_basemul_mont_add(sword16* r_p, const sword16* a_p,
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "mov	r8, #0\n\t"
         "\n"
-    "L_kyber_arm32_basemul_mont_add_loop_%=: \n\t"
+    "L_mlkem_arm32_basemul_mont_add_loop_%=: \n\t"
         "ldm	%[a]!, {r4, r5}\n\t"
         "ldm	%[b]!, {r6, r7}\n\t"
         "ldr	lr, [r3, r8]\n\t"
@@ -8154,20 +8216,36 @@ void kyber_arm32_basemul_mont_add(sword16* r_p, const sword16* a_p,
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "stm	%[r]!, {r4, r5}\n\t"
         "pop	{r8}\n\t"
-        "bne	L_kyber_arm32_basemul_mont_add_loop_%=\n\t"
+        "bne	L_mlkem_arm32_basemul_mont_add_loop_%=\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [r] "+r" (r), [a] "+r" (a), [b] "+r" (b),
-          [L_kyber_arm32_basemul_mont_zetas] "+r" (L_kyber_arm32_basemul_mont_zetas_c)
+          [L_mlkem_basemul_mont_zetas] "+r" (L_mlkem_basemul_mont_zetas_c)
         :
+#else
+        :
+        : [r] "r" (r), [a] "r" (a), [b] "r" (b),
+          [L_mlkem_basemul_mont_zetas] "r" (L_mlkem_basemul_mont_zetas_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r12", "lr", "r4", "r5", "r6", "r7", "r8", "r9",
             "r10", "r11"
     );
 }
 
-void kyber_arm32_csubq(sword16* p_p)
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+void mlkem_arm32_csubq(sword16* p_p)
+#else
+void mlkem_arm32_csubq(sword16* p)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* p asm ("r0") = (sword16*)p_p;
-    register word16* L_kyber_arm32_basemul_mont_zetas_c asm ("r1") =
-        (word16*)&L_kyber_arm32_basemul_mont_zetas;
+    register word16* L_mlkem_basemul_mont_zetas_c asm ("r1") =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+#else
+    register word16* L_mlkem_basemul_mont_zetas_c =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
@@ -8198,7 +8276,7 @@ void kyber_arm32_csubq(sword16* p_p)
 #endif
         "mov	r1, #0x100\n\t"
         "\n"
-    "L_kyber_arm32_csubq_loop_%=: \n\t"
+    "L_mlkem_arm32_csubq_loop_%=: \n\t"
         "ldm	%[p], {r2, r3, r4, r5}\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH >= 6)
         "ssub16	r2, r2, lr\n\t"
@@ -8333,24 +8411,41 @@ void kyber_arm32_csubq(sword16* p_p)
 #endif /* WOLFSLS_ARM_ARCH && WOLFSSL_ARM_ARCH >= 6 */
         "stm	%[p]!, {r2, r3, r4, r5}\n\t"
         "subs	r1, r1, #8\n\t"
-        "bne	L_kyber_arm32_csubq_loop_%=\n\t"
+        "bne	L_mlkem_arm32_csubq_loop_%=\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [p] "+r" (p),
-          [L_kyber_arm32_basemul_mont_zetas] "+r" (L_kyber_arm32_basemul_mont_zetas_c)
+          [L_mlkem_basemul_mont_zetas] "+r" (L_mlkem_basemul_mont_zetas_c)
         :
+#else
+        :
+        : [p] "r" (p),
+          [L_mlkem_basemul_mont_zetas] "r" (L_mlkem_basemul_mont_zetas_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r2", "r3", "r12", "lr", "r4", "r5", "r6", "r7", "r8",
             "r9", "r10", "r11"
     );
 }
 
-unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
+unsigned int mlkem_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
     const byte* r_p, unsigned int rLen_p)
+#else
+unsigned int mlkem_arm32_rej_uniform(sword16* p, unsigned int len,
+    const byte* r, unsigned int rLen)
+#endif /* WOLFSSL_NO_VAR_ASSIGN_REG */
 {
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
     register sword16* p asm ("r0") = (sword16*)p_p;
     register unsigned int len asm ("r1") = (unsigned int)len_p;
     register const byte* r asm ("r2") = (const byte*)r_p;
     register unsigned int rLen asm ("r3") = (unsigned int)rLen_p;
-    register word16* L_kyber_arm32_basemul_mont_zetas_c asm ("r4") =
-        (word16*)&L_kyber_arm32_basemul_mont_zetas;
+    register word16* L_mlkem_basemul_mont_zetas_c asm ("r4") =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+#else
+    register word16* L_mlkem_basemul_mont_zetas_c =
+        (word16*)&L_mlkem_basemul_mont_zetas;
+
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
 
     __asm__ __volatile__ (
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
@@ -8361,9 +8456,9 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
 #endif
         "mov	r12, #0\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_loop_no_fail_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_loop_no_fail_%=: \n\t"
         "cmp	%[len], #8\n\t"
-        "blt	L_kyber_arm32_rej_uniform_done_no_fail_%=\n\t"
+        "blt	L_mlkem_arm32_rej_uniform_done_no_fail_%=\n\t"
         "ldm	%[r]!, {r4, r5, r6}\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r4, #20\n\t"
@@ -8467,14 +8562,14 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "sub	%[len], %[len], lr\n\t"
         "add	r12, r12, lr, lsl #1\n\t"
         "subs	%[rLen], %[rLen], #12\n\t"
-        "bne	L_kyber_arm32_rej_uniform_loop_no_fail_%=\n\t"
-        "b	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "bne	L_mlkem_arm32_rej_uniform_loop_no_fail_%=\n\t"
+        "b	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_done_no_fail_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_done_no_fail_%=: \n\t"
         "cmp	%[len], #0\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_loop_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_loop_%=: \n\t"
         "ldm	%[r]!, {r4, r5, r6}\n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r4, #20\n\t"
@@ -8483,13 +8578,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "ubfx	r7, r4, #0, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_0_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_0_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_0_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_0_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r4, #8\n\t"
         "lsr	r7, r7, #20\n\t"
@@ -8497,13 +8592,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "ubfx	r7, r4, #12, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_1_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_1_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_1_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_1_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsr	r7, r4, #24\n\t"
 #else
@@ -8518,13 +8613,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "bfi	r7, r5, #8, #4\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_2_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_2_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_2_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_2_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r5, #16\n\t"
         "lsr	r7, r7, #20\n\t"
@@ -8532,13 +8627,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "ubfx	r7, r5, #4, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_3_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_3_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_3_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_3_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r5, #4\n\t"
         "lsr	r7, r7, #20\n\t"
@@ -8546,13 +8641,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "ubfx	r7, r5, #16, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_4_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_4_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_4_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_4_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsr	r7, r5, #28\n\t"
 #else
@@ -8567,13 +8662,13 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "bfi	r7, r6, #4, #8\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_5_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_5_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_5_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_5_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsl	r7, r6, #12\n\t"
         "lsr	r7, r7, #20\n\t"
@@ -8581,40 +8676,46 @@ unsigned int kyber_arm32_rej_uniform(sword16* p_p, unsigned int len_p,
         "ubfx	r7, r6, #8, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_6_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_6_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_6_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_6_%=: \n\t"
 #if defined(WOLFSSL_ARM_ARCH) && (WOLFSSL_ARM_ARCH < 7)
         "lsr	r7, r6, #20\n\t"
 #else
         "ubfx	r7, r6, #20, #12\n\t"
 #endif
         "cmp	r7, r8\n\t"
-        "bge	L_kyber_arm32_rej_uniform_fail_7_%=\n\t"
+        "bge	L_mlkem_arm32_rej_uniform_fail_7_%=\n\t"
         "strh	r7, [%[p], r12]\n\t"
         "subs	%[len], %[len], #1\n\t"
         "add	r12, r12, #2\n\t"
-        "beq	L_kyber_arm32_rej_uniform_done_%=\n\t"
+        "beq	L_mlkem_arm32_rej_uniform_done_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_fail_7_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_fail_7_%=: \n\t"
         "subs	%[rLen], %[rLen], #12\n\t"
-        "bgt	L_kyber_arm32_rej_uniform_loop_%=\n\t"
+        "bgt	L_mlkem_arm32_rej_uniform_loop_%=\n\t"
         "\n"
-    "L_kyber_arm32_rej_uniform_done_%=: \n\t"
+    "L_mlkem_arm32_rej_uniform_done_%=: \n\t"
         "lsr	r0, r12, #1\n\t"
+#ifndef WOLFSSL_NO_VAR_ASSIGN_REG
         : [p] "+r" (p), [len] "+r" (len), [r] "+r" (r), [rLen] "+r" (rLen),
-          [L_kyber_arm32_basemul_mont_zetas] "+r" (L_kyber_arm32_basemul_mont_zetas_c)
+          [L_mlkem_basemul_mont_zetas] "+r" (L_mlkem_basemul_mont_zetas_c)
         :
+#else
+        :
+        : [p] "r" (p), [len] "r" (len), [r] "r" (r), [rLen] "r" (rLen),
+          [L_mlkem_basemul_mont_zetas] "r" (L_mlkem_basemul_mont_zetas_c)
+#endif /* !WOLFSSL_NO_VAR_ASSIGN_REG */
         : "memory", "cc", "r12", "lr", "r5", "r6", "r7", "r8"
     );
     return (word32)(size_t)p;
 }
 
-#endif /* WOLFSSL_WC_KYBER */
+#endif /* WOLFSSL_WC_MLKEM */
 #endif /* !__aarch64__ && !WOLFSSL_ARMASM_THUMB2 */
 #endif /* WOLFSSL_ARMASM */
 

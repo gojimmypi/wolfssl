@@ -137,7 +137,13 @@
              * fortify_panic().
              */
             extern void __my_fortify_panic(const char *name) __noreturn __cold;
-            #define fortify_panic __my_fortify_panic
+            #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+                /* see linux 3d965b33e40d9 */
+                #define fortify_panic(func, write, avail, size, retfail) \
+                        __my_fortify_panic(#func)
+            #else
+                #define fortify_panic __my_fortify_panic
+            #endif
         #endif
 
         /* the _FORTIFY_SOURCE macros and implementations for several string
@@ -288,6 +294,12 @@
         #include <crypto/scatterwalk.h>
         #include <crypto/internal/aead.h>
         #include <crypto/internal/skcipher.h>
+
+        #if defined(HAVE_ECC) && \
+            (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
+             defined(LINUXKM_LKCAPI_REGISTER_ECDSA))
+             #include <crypto/internal/akcipher.h>
+        #endif /* HAVE_ECC && (REGISTER_ALL || REGISTER_ECDSA) */
 
         /* the LKCAPI assumes that expanded encrypt and decrypt keys will stay
          * loaded simultaneously, and the Linux in-tree implementations have two
@@ -495,10 +507,6 @@
 
     #if defined(__PIE__) && !defined(USE_WOLFSSL_LINUXKM_PIE_REDIRECT_TABLE)
         #error "compiling -fPIE requires PIE redirect table."
-    #endif
-
-    #if defined(HAVE_FIPS) && !defined(HAVE_LINUXKM_PIE_SUPPORT)
-        #error "FIPS build requires PIE support."
     #endif
 
     #ifdef USE_WOLFSSL_LINUXKM_PIE_REDIRECT_TABLE
@@ -859,7 +867,7 @@
     /* remove this multifariously conflicting macro, picked up from
      * Linux arch/<arch>/include/asm/current.h.
      */
-    #ifndef WOLFSSL_NEED_LINUX_CURRENT
+    #ifndef WOLFSSL_LINUXKM_NEED_LINUX_CURRENT
         #undef current
     #endif
 
@@ -874,7 +882,11 @@
      */
     #define key_update wc_key_update
 
-    #define lkm_printf(format, args...) printk(KERN_INFO "wolfssl: %s(): " format, __func__, ## args)
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+        #define lkm_printf(format, args...) _printk(KERN_INFO "wolfssl: %s(): " format, __func__, ## args)
+    #else
+        #define lkm_printf(format, args...) printk(KERN_INFO "wolfssl: %s(): " format, __func__, ## args)
+    #endif
     #define printf(...) lkm_printf(__VA_ARGS__)
 
     #ifdef HAVE_FIPS

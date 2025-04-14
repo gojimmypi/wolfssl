@@ -19,12 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-#include <wolfssl/wolfcrypt/settings.h>
 #ifdef WOLFSSL_QNX_CAAM
 #include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
 #endif
@@ -51,7 +47,6 @@
     #include <wolfcrypt/src/misc.c>
 #endif
 
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/aes.h>
 #include <wolfssl/wolfcrypt/cmac.h>
 

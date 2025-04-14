@@ -130,13 +130,7 @@
  *   shift equivalent.
  */
 
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-/* in case user set HAVE_PQC there */
-#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #ifndef WOLFSSL_DILITHIUM_NO_ASN1
 #include <wolfssl/wolfcrypt/asn.h>
@@ -151,7 +145,6 @@
 #include <wolfssl/wolfcrypt/dilithium.h>
 #include <wolfssl/wolfcrypt/hash.h>
 #include <wolfssl/wolfcrypt/sha3.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else
@@ -8950,8 +8943,9 @@ int wc_dilithium_check_key(dilithium_key* key)
      */
 
     if (ret == 0) {
-        params = key->params;
         unsigned int allocSz;
+
+        params = key->params;
 
         /* s1-L, s2-K, t0-K, t-K, t1-K */
         allocSz = params->s1Sz + 4 * params->s2Sz;

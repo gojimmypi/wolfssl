@@ -53,7 +53,7 @@
 
 /* set to 0 for one test,
 ** set to 1 for continuous test loop */
-#define TEST_LOOP 1
+#define TEST_LOOP 0
 
 #define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
 
@@ -164,7 +164,6 @@ void app_main(void)
         .stop_bits = UART_STOP_BITS_1,
     };
     int stack_start = 0;
-    int stack_current = 0;
     int heap_start = 0;
     int heap_current = 0;
     int loops = 0;

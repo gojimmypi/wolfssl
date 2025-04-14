@@ -110,7 +110,6 @@
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define TEST_ESPIDF_ALL_WOLFSSL
-
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark */
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
@@ -213,8 +212,8 @@
 #ifdef CONFIG_WOLFSSL_ENABLE_KYBER
     /* Kyber typically needs a minimum 10K stack */
     #define WOLFSSL_EXPERIMENTAL_SETTINGS
-    #define WOLFSSL_HAVE_KYBER
-    #define WOLFSSL_WC_KYBER
+    #define WOLFSSL_HAVE_MLKEM
+    #define WOLFSSL_WC_MLKEM
     #define WOLFSSL_SHA3
     #if defined(CONFIG_IDF_TARGET_ESP8266)
         /* With limited RAM, we'll disable some of the Kyber sizes: */

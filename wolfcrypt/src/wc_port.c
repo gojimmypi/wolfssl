@@ -19,20 +19,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #ifdef __APPLE__
     #include <AvailabilityMacros.h>
 #endif
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/types.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
-#include <wolfssl/wolfcrypt/logging.h>
-#include <wolfssl/wolfcrypt/wc_port.h>
 #ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>
 #endif
@@ -2848,6 +2840,11 @@ int wolfSSL_HwPkMutexUnLock(void)
     int wc_InitMutex(wolfSSL_Mutex* m)
     {
         int i;
+
+        if(!osKernelRunning()) {
+            return 0;
+        }
+
         for (i=0; i<CMSIS_NMUTEX; i++) {
             if(CMSIS_mutexID[i] == 0) {
                 CMSIS_mutexID[i] = osMutexCreate(CMSIS_mutex[i]);
@@ -2861,6 +2858,11 @@ int wolfSSL_HwPkMutexUnLock(void)
     int wc_FreeMutex(wolfSSL_Mutex* m)
     {
         int i;
+
+        if(!osKernelRunning()) {
+            return 0;
+        }
+
         osMutexDelete   (*m);
         for (i=0; i<CMSIS_NMUTEX; i++) {
             if(CMSIS_mutexID[i] == (*m)) {
@@ -2873,13 +2875,17 @@ int wolfSSL_HwPkMutexUnLock(void)
 
     int wc_LockMutex(wolfSSL_Mutex* m)
     {
-        osMutexWait(*m, osWaitForever);
+        if(osKernelRunning()) {
+            osMutexWait(*m, osWaitForever);
+        }
         return(0);
     }
 
     int wc_UnLockMutex(wolfSSL_Mutex* m)
     {
-        osMutexRelease (*m);
+        if(osKernelRunning()) {
+            osMutexRelease (*m);
+        }
         return 0;
     }
 

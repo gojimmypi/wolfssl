@@ -19,15 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
+#include <tests/unit.h>
 
-#include <wolfssl/options.h>
-#include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#include <tests/unit.h>
 #include <wolfssl/openssl/evp.h>
 #include <tests/api/test_evp.h>
 
@@ -63,6 +58,41 @@ int test_wolfSSL_EVP_CipherUpdate_Null(void)
 
     /* Clean up */
     wolfSSL_EVP_CIPHER_CTX_free(ctx);
+#endif /* OPENSSL_EXTRA */
+
+    return EXPECT_RESULT();
+}
+
+/* Test for wolfSSL_EVP_CIPHER_type_string() */
+int test_wolfSSL_EVP_CIPHER_type_string(void)
+{
+    EXPECT_DECLS;
+#ifdef OPENSSL_EXTRA
+    const char* cipherStr;
+
+    /* Test with valid cipher types */
+#ifdef HAVE_AES_CBC
+    #ifdef WOLFSSL_AES_128
+    cipherStr = wolfSSL_EVP_CIPHER_type_string(WC_AES_128_CBC_TYPE);
+    ExpectNotNull(cipherStr);
+    ExpectStrEQ(cipherStr, "AES-128-CBC");
+    #endif
+#endif
+
+#ifndef NO_DES3
+    cipherStr = wolfSSL_EVP_CIPHER_type_string(WC_DES_CBC_TYPE);
+    ExpectNotNull(cipherStr);
+    ExpectStrEQ(cipherStr, "DES-CBC");
+#endif
+
+    /* Test with NULL cipher type */
+    cipherStr = wolfSSL_EVP_CIPHER_type_string(WC_NULL_CIPHER_TYPE);
+    ExpectNotNull(cipherStr);
+    ExpectStrEQ(cipherStr, "NULL");
+
+    /* Test with invalid cipher type */
+    cipherStr = wolfSSL_EVP_CIPHER_type_string(0xFFFF);
+    ExpectNull(cipherStr);
 #endif /* OPENSSL_EXTRA */
 
     return EXPECT_RESULT();

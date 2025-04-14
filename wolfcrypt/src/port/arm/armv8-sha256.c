@@ -19,12 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #ifdef WOLFSSL_ARMASM
 #if !defined(NO_SHA256) || defined(WOLFSSL_SHA224)
@@ -47,8 +42,6 @@
         return 0;
     }
 #endif
-#include <wolfssl/wolfcrypt/logging.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/cpuid.h>
 
 #ifdef NO_INLINE
@@ -927,10 +920,10 @@ static WC_INLINE int Sha256Final(wc_Sha256* sha256, byte* hash)
             : [digest] "m" (sha256->digest),
               [buffer] "m" (sha256->buffer),
               "0" (hash)
-                : "cc", "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
-                                  "v8",  "v9",  "v10", "v11", "v12", "v13", "v14",
-                                  "v15", "v16", "v17", "v18", "v19", "v20", "v21",
-                                  "v22", "v23", "v24", "v25"
+                : "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
+                            "v8",  "v9",  "v10", "v11", "v12", "v13", "v14",
+                            "v15", "v16", "v17", "v18", "v19", "v20", "v21",
+                            "v22", "v23", "v24", "v25", "cc"
         );
     }
     else {
@@ -1206,7 +1199,8 @@ static WC_INLINE int Sha256Final(wc_Sha256* sha256, byte* hash)
     if (sha256->buffLen > WC_SHA256_PAD_SIZE) {
         word32* bufPt = sha256->buffer;
         word32* digPt = sha256->digest;
-        XMEMSET(&local[sha256->buffLen], 0, WC_SHA256_BLOCK_SIZE - sha256->buffLen);
+        XMEMSET(&local[sha256->buffLen], 0,
+            WC_SHA256_BLOCK_SIZE - sha256->buffLen);
         sha256->buffLen += WC_SHA256_BLOCK_SIZE - sha256->buffLen;
         __asm__ volatile (
         "#load leftover data\n"
@@ -1645,7 +1639,8 @@ extern void Transform_Sha256_Len(wc_Sha256* sha256, const byte* data,
 #endif
 
 /* ARMv8 hardware acceleration Aarch32 and Thumb2 */
-static WC_INLINE int Sha256Update(wc_Sha256* sha256, const byte* data, word32 len)
+static WC_INLINE int Sha256Update(wc_Sha256* sha256, const byte* data,
+    word32 len)
 {
     int ret = 0;
     /* do block size increments */

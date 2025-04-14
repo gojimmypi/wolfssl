@@ -26,12 +26,8 @@ This library provides the interface to the RSA.
 RSA keys can be used to encrypt, decrypt, sign and verify data.
 
 */
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #ifndef NO_RSA
 
@@ -95,7 +91,6 @@ RSA Key Size Configuration:
 
 
 #include <wolfssl/wolfcrypt/random.h>
-#include <wolfssl/wolfcrypt/logging.h>
 #ifdef WOLF_CRYPTO_CB
     #include <wolfssl/wolfcrypt/cryptocb.h>
 #endif
@@ -3165,11 +3160,12 @@ static int wc_RsaFunction_ex(const byte* in, word32 inLen, byte* out,
                              int checkSmallCt)
 {
     int ret = 0;
-    (void)rng;
-    (void)checkSmallCt;
 #if defined(WOLF_CRYPTO_CB) && defined(WOLF_CRYPTO_CB_RSA_PAD)
     RsaPadding padding;
 #endif
+
+    (void)rng;
+    (void)checkSmallCt;
 
     if (key == NULL || in == NULL || inLen == 0 || out == NULL ||
             outLen == NULL || *outLen == 0 || type == RSA_TYPE_UNKNOWN) {
@@ -3603,6 +3599,9 @@ static int RsaPrivateDecryptEx(const byte* in, word32 inLen, byte* out,
         ret = wc_CryptoCb_RsaPad(in, inLen, out,
                             &outLen, rsa_type, key, rng, &padding);
         if (ret != WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE)) {
+            if (ret == 0) {
+                ret = (int)outLen;
+            }
             break;
         }
     }
@@ -4863,17 +4862,17 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
     #endif
     {
         err = wc_CryptoCb_MakeRsaKey(key, size, e, rng);
-        #ifndef WOLF_CRYPTO_CB_ONLY_RSA
-        if (err != WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE))
-            goto out;
-        /* fall-through when unavailable */
-        #endif
-        #ifdef WOLF_CRYPTO_CB_ONLY_RSA
-        if (err == WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE))
+    #ifdef WOLF_CRYPTO_CB_ONLY_RSA
+        if (err == WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE)) {
             err = NO_VALID_DEVID;
             goto out;
         }
-        #endif
+    #else
+        if (err != WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE)) {
+            goto out;
+        }
+        /* fall-through when unavailable */
+    #endif
     }
 #endif
 

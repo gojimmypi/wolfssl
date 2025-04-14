@@ -19,20 +19,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 /*
  * Based on public domain LibTomMath 0.38 by Tom St Denis, tomstdenis@iahu.ca,
  * http://math.libtomcrypt.com
  */
-
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-/* in case user set USE_FAST_MATH there */
-#include <wolfssl/wolfcrypt/settings.h>
 
 #ifndef NO_BIG_INT
 
@@ -177,6 +169,9 @@ int mp_init (mp_int * a)
 /* clear one (frees)  */
 void mp_clear (mp_int * a)
 {
+#ifdef HAVE_FIPS
+    mp_forcezero(a);
+#else
   int i;
 
   if (a == NULL)
@@ -202,6 +197,7 @@ void mp_clear (mp_int * a)
     a->alloc = a->used = 0;
     a->sign  = MP_ZPOS;
   }
+#endif
 }
 
 void mp_free (mp_int * a)

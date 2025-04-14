@@ -25,15 +25,8 @@ DESCRIPTION
 This library contains implementation for the random number generator.
 
 */
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
 
-#include <wolfssl/wolfcrypt/settings.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
-#if defined(DEBUG_WOLFSSL)
-    #include <wolfssl/wolfcrypt/logging.h>
-#endif
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 /* on HPUX 11 you may need to install /dev/random see
    http://h20293.www2.hp.com/portal/swdepot/displayProductInfo.do?productNumber=KRNG11I
@@ -93,7 +86,6 @@ This library contains implementation for the random number generator.
     #undef _WINSOCKAPI_ /* undefine it for MINGW winsock2.h header file */
 #elif defined(HAVE_WNR)
     #include <wnr.h>
-    #include <wolfssl/wolfcrypt/logging.h>
     wolfSSL_Mutex wnr_mutex WOLFSSL_MUTEX_INITIALIZER_CLAUSE(wnr_mutex);    /* global netRandom mutex */
     int wnr_timeout     = 0;    /* entropy timeout, milliseconds */
     #ifndef WOLFSSL_MUTEX_INITIALIZER
@@ -1725,16 +1717,21 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
 #else
             ret = wc_GenerateSeed(&rng->seed, seed, seedSz);
 #endif /* WC_RNG_SEED_CB */
-            if (ret == 0)
-                ret = wc_RNG_TestSeed(seed, seedSz);
-            else {
+            if (ret != 0) {
     #if defined(DEBUG_WOLFSSL)
-                WOLFSSL_MSG_EX("wc_RNG_TestSeed failed... %d", ret);
+                WOLFSSL_MSG_EX("Seed generation failed... %d", ret);
     #endif
                 ret = DRBG_FAILURE;
                 rng->status = DRBG_FAILED;
             }
 
+            if (ret == 0)
+                ret = wc_RNG_TestSeed(seed, seedSz);
+    #if defined(DEBUG_WOLFSSL)
+            if (ret != 0) {
+                WOLFSSL_MSG_EX("wc_RNG_TestSeed failed... %d", ret);
+            }
+    #endif
             if (ret == DRBG_SUCCESS)
                 ret = Hash_DRBG_Instantiate((DRBG_internal *)rng->drbg,
                             seed + SEED_BLOCK_SZ, seedSz - SEED_BLOCK_SZ,
@@ -2770,7 +2767,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return ret;
     }
 
-#elif defined(MICROCHIP_PIC32)
+#elif defined(MICROCHIP_PIC32) || defined(MICROCHIP_MPLAB_HARMONY)
 
     #ifdef MICROCHIP_MPLAB_HARMONY
         #ifdef MICROCHIP_MPLAB_HARMONY_3

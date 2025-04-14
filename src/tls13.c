@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 /*
  * BUILD_GCM
@@ -88,16 +89,7 @@
  *    Default behavior is to return a signed 64-bit value.
  */
 
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-#include <wolfssl/wolfcrypt/settings.h>
-
-#ifdef WOLFSSL_TLS13
-#ifdef HAVE_SESSION_TICKET
-    #include <wolfssl/wolfcrypt/wc_port.h>
-#endif
+#if !defined(NO_TLS) && defined(WOLFSSL_TLS13)
 
 #ifndef WOLFCRYPT_ONLY
 
@@ -4184,9 +4176,9 @@ static int EchHashHelloInner(WOLFSSL* ssl, WOLFSSL_ECH* ech)
     tmpHashes = ssl->hsHashes;
     ssl->hsHashes = NULL;
     /* init the ech hashes */
-    InitHandshakeHashes(ssl);
-    ssl->hsHashesEch = ssl->hsHashes;
+    ret = InitHandshakeHashes(ssl);
     if (ret == 0) {
+        ssl->hsHashesEch = ssl->hsHashes;
         /* do the handshake header then the body */
         AddTls13HandShakeHeader(falseHeader, realSz, 0, 0, client_hello, ssl);
         ret = HashRaw(ssl, falseHeader, HANDSHAKE_HEADER_SZ);
@@ -4195,19 +4187,24 @@ static int EchHashHelloInner(WOLFSSL* ssl, WOLFSSL_ECH* ech)
             /* init hsHashesEchInner */
             if (ech->innerCount == 0) {
                 ssl->hsHashes = ssl->hsHashesEchInner;
-                InitHandshakeHashes(ssl);
-                ssl->hsHashesEchInner = ssl->hsHashes;
-                ech->innerCount = 1;
+                ret = InitHandshakeHashes(ssl);
+                if (ret == 0) {
+                    ssl->hsHashesEchInner = ssl->hsHashes;
+                    ech->innerCount = 1;
+                }
             }
             else {
                 /* switch back to hsHashes so we have hrr -> echInner2 */
                 ssl->hsHashes = tmpHashes;
-                InitHandshakeHashesAndCopy(ssl, ssl->hsHashes,
-                    &ssl->hsHashesEchInner);
+                ret = InitHandshakeHashesAndCopy(ssl, ssl->hsHashes,
+                                                 &ssl->hsHashesEchInner);
             }
-            ssl->hsHashes = ssl->hsHashesEchInner;
-            ret = HashRaw(ssl, falseHeader, HANDSHAKE_HEADER_SZ);
-            ssl->hsHashes = ssl->hsHashesEch;
+
+            if (ret == 0) {
+                ssl->hsHashes = ssl->hsHashesEchInner;
+                ret = HashRaw(ssl, falseHeader, HANDSHAKE_HEADER_SZ);
+                ssl->hsHashes = ssl->hsHashesEch;
+            }
         }
     }
     /* hash the body */
@@ -13659,7 +13656,7 @@ int wolfSSL_UseKeyShare(WOLFSSL* ssl, word16 group)
     }
 #endif
 
-#if defined(WOLFSSL_HAVE_KYBER)
+#if defined(WOLFSSL_HAVE_MLKEM)
     if (WOLFSSL_NAMED_GROUP_IS_PQC(group) ||
         WOLFSSL_NAMED_GROUP_IS_PQC_HYBRID(group)) {
 
@@ -15080,4 +15077,4 @@ int tls13ShowSecrets(WOLFSSL* ssl, int id, const unsigned char* secret,
 
 #endif /* !WOLFCRYPT_ONLY */
 
-#endif /* WOLFSSL_TLS13 */
+#endif /* !NO_TLS && WOLFSSL_TLS13 */

@@ -19,12 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
-#ifdef HAVE_CONFIG_H
-    #include <config.h>
-#endif
-
-#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
 #if (defined(WOLFSSL_SHA512) || defined(WOLFSSL_SHA384)) && \
     (!defined(WOLFSSL_ARMASM) && !defined(WOLFSSL_ARMASM_NO_NEON)) && \
@@ -56,7 +51,6 @@
 #endif
 
 #include <wolfssl/wolfcrypt/sha512.h>
-#include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/cpuid.h>
 #include <wolfssl/wolfcrypt/hash.h>
 
@@ -72,8 +66,6 @@
 #if defined(USE_SLOW_SHA2) && !defined(USE_SLOW_SHA512)
     #define USE_SLOW_SHA512
 #endif
-
-#include <wolfssl/wolfcrypt/logging.h>
 
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
