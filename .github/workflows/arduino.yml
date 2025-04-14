@@ -72,8 +72,10 @@ jobs:
           set +e
           SUCCESS=true
           ARDUINO_ROOT="$HOME/Arduino/libraries"
+
           for BOARD in "arduino:avr:uno" "esp32:esp32:esp32"  "arduino:avr:mega" "arduino:avr:nano" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic" "teensy:avr:teensy40"; do
             echo "Compiling for $BOARD"
+
             # Reminder we are installing to a temp `wolfssl` directory in IDE/ARDUINO to publish
             # Thus the example have been copied to IDE/ARDUINO/wolfssl/examples during `wolfssl-arduino.sh INSTALL`.
             # The final location upon install is $ARDUINO_ROOT/wolfssl/examples (typically `/home/runner/Arduino/libraries/wolfssl/examples`)
