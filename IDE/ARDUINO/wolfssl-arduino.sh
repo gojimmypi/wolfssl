@@ -299,6 +299,10 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
     else
         NO_ARDUINO_EXAMPLES=1
     fi
+    echo "ls ${EXAMPLES_DIR_REAL_PATH}"
+    ls "${EXAMPLES_DIR_REAL_PATH}"
+    echo "ls .${EXAMPLES_DIR}"
+    ls ".${EXAMPLES_DIR}"
 else
     echo "ERROR: You must be in the IDE/ARDUINO directory to run this script"
     exit 1
