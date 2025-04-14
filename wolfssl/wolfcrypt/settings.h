@@ -314,7 +314,7 @@
         #define WOLFSSL_USER_SETTINGS
     #endif /* WOLFSSL_USER_SETTINGS */
 
-    /* board-specific */
+    /* Board-specific network capability check */
     #if defined(ARDUINO_SAMD_MKRWIFI1010)    || \
         defined(ARDUINO_SAMD_NANO_33_IOT)    || \
         defined(ARDUINO_NANO_RP2040_CONNECT) || \
