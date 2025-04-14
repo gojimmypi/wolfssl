@@ -48,9 +48,18 @@ jobs:
           arduino-cli lib install "Ethernet"        # Install Ethernet library
 
           # arduino-cli lib install "wolfSSL"  # Install wolfSSL library from Arduino
+          # fetch Arduino examples
+          git clone https://github.com/gojimmypi/wolfssl-examples.git
+
+          pushd wolfssl-examples
+          git checkout pr-arduino-examples
+          export WOLFSSL_EXAMPLES_ROOT=$(pwd)
+          echo "WOLFSSL_EXAMPLES_ROOT=$WOLFSSL_EXAMPLES_ROOT"
+          popd
 
           # Install current wolfSSL as an Arduino library:
           echo "Checking Arduino library directories..."
+
           pushd IDE/ARDUINO
           bash wolfssl-arduino.sh INSTALL  # Install wolfSSL library
           popd
