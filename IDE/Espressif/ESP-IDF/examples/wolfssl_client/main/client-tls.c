@@ -61,6 +61,22 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
+
+/*
+ * Optionally define explicit ciphers, for example these TLS 1.3 options.
+ *
+ * TLS13-AES128-GCM-SHA256
+ * TLS13-AES256-GCM-SHA384
+ * TLS13-AES128-CCM-SHA256
+ * TLS13-AES128-CCM-8-SHA256
+ * TLS13-AES128-CCM8-SHA256
+ *
+ * examples:
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
+ */
+
+
 /* Project */
 #include "wifi_connect.h"
 #include "time_helper.h"
@@ -76,7 +92,7 @@
  **/
 #define TAG "client-tls"
 
-#if defined(DEBUG_WOLFSSL)
+#if !defined(DEBUG_WOLFSSL)
 int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
@@ -212,7 +228,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     doPeerCheck = 1;
     sendGet = 0;
 
-#ifdef DEBUG_WOLFSSL
+#ifndef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
     ShowCiphers(NULL);
 #endif
@@ -296,6 +312,25 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - uxTaskGetStackHighWaterMark(NULL));
 #endif
+
+/*
+TLS13-AES128-GCM-SHA256
+TLS13-AES256-GCM-SHA384
+TLS13-AES128-CCM-SHA256
+TLS13-AES128-CCM-8-SHA256
+TLS13-AES128-CCM8-SHA256
+*/
+
+#if defined(WOLFSSL_ESP32_CIPHER_SUITE)
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+            WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+#endif /* WOLFSSL_ESP32_CIPHER_SUITE */
 
 /* see user_settings PROJECT_DH for HAVE_DH and HAVE_FFDHE_2048 */
 #ifndef NO_DH

@@ -74,6 +74,22 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
+
+/*
+ * Optionally define explicit ciphers, for example these TLS 1.3 options.
+ *
+ * TLS13-AES128-GCM-SHA256
+ * TLS13-AES256-GCM-SHA384
+ * TLS13-AES128-CCM-SHA256
+ * TLS13-AES128-CCM-8-SHA256
+ * TLS13-AES128-CCM8-SHA256
+ *
+ * examples:
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
+ */
+
+
 /* Project */
 #include "wifi_connect.h"
 #include "time_helper.h"
@@ -176,18 +192,22 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     }
 #endif
 
+#if defined(WOLFSSL_ESP32_CIPHER_SUITE)
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+            WOLFSSL_ESP32_CIPHER_SUITE);
+    }
+#endif /* WOLFSSL_ESP32_CIPHER_SUITE */
+
+
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM3\n");
 
-    /* Optional set explicit ciphers
-    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-    if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-    }
-    else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
-    }
-    */
     ShowCiphers(NULL);
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
@@ -273,7 +293,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to load privatekey");
     }
 
-#endif
+#endif /* SM */
 
 
     /* TODO when using ECDSA,it loads the provisioned certificate and present it.
