@@ -315,7 +315,25 @@
     #endif /* WOLFSSL_USER_SETTINGS */
 
     /* board-specific */
+    #if defined(ARDUINO_SAMD_MKRWIFI1010)    || \
+        defined(ARDUINO_SAMD_NANO_33_IOT)    || \
+        defined(ARDUINO_NANO_RP2040_CONNECT) || \
+        defined(ARDUINO_UNOWIFIR4)           || \
+        defined(ARDUINO_ESP32_DEV)           || \
+        defined(ARDUINO_ESP8266_ESP01)       || \
+        defined(ARDUINO_TEENSY40)            || \
+        defined(ARDUINO_TEENSY41)            || \
+        defined(ESP32) || defined(ESP8266)   ||
+        /* Known to have networking available. */
+    #else
+        #define NO_WOLFSSL_CLIENT
+        #define NO_WOLFSSL_SERVER
+        #define WOLFCRYPT_ONLY
+        #define NO_TLS
+    #endif
+
     #if defined(__AVR__)
+        #define WOLFSSL_USER_IO
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
     #elif defined(__arm__)
