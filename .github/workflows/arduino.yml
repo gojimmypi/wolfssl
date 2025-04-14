@@ -70,11 +70,12 @@ jobs:
       - name: Compile Arduino Sketches for various boards
         run: |
           SUCCESS=true
+          ARDUINO_ROOT="$HOME/Arduino/libraries"
           for BOARD in "arduino:avr:uno" "esp32:esp32:esp32"  "arduino:avr:mega" "arduino:avr:nano" "arduino:samd:arduino_zero_native" "esp8266:esp8266:generic" "teensy:avr:teensy40"; do
             echo "Compiling for $BOARD"
             # Reminder we are installing to a temp `wolfssl` directory in IDE/ARDUINO to publish
             # Thus the example have been copied to IDE/ARDUINO/wolfssl/examples during `wolfssl-arduino.sh INSTALL`.
-            for EXAMPLE in $(find IDE/ARDUINO/wolfssl/examples -mindepth 1 -maxdepth 1 -type d); do
+            for EXAMPLE in $(find $ARDUINO_ROOT/wolfssl/examples -mindepth 1 -maxdepth 1 -type d); do
               if [[ "$BOARD" =~ "arduino:avr:uno"|"arduino:avr:mega"|"arduino:avr:nano" && ( "$EXAMPLE" =~ "wolfssl_server" || "$EXAMPLE" =~ "wolfssl_client" || "$EXAMPLE" =~ "test" ) ]]; then
                 echo "Skipping $EXAMPLE for $BOARD (No WiFi support)"
                 continue
