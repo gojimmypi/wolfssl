@@ -18,8 +18,8 @@
     <ToolchainID>
       <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
-        <GCC>13.2.0</GCC>
-        <GDB>12.1</GDB>
+        <GCC>14.2.0</GCC>
+        <GDB>14.2</GDB>
         <Revision>1</Revision>
       </Version>
     </ToolchainID>
@@ -67,8 +67,8 @@
       <EnableFastUpToDateCheck>true</EnableFastUpToDateCheck>
       <ESPIDFExtension>
         <IDFCheckout>
-          <Version>master</Version>
-          <Subdirectory>esp-idf/v5.2-master</Subdirectory>
+          <Version>release/v5.4</Version>
+          <Subdirectory>esp-idf/v5.4</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM68</COMPort>
@@ -218,6 +218,7 @@
       <EnableAsyncExecutionMode>false</EnableAsyncExecutionMode>
       <AsyncModeSupportsBreakpoints>true</AsyncModeSupportsBreakpoints>
       <TemporaryBreakConsolidationTimeout>0</TemporaryBreakConsolidationTimeout>
+      <BacktraceFrameLimit>0</BacktraceFrameLimit>
       <EnableNonStopMode>false</EnableNonStopMode>
       <MaxBreakpointLimit>0</MaxBreakpointLimit>
       <EnableVerboseMode>true</EnableVerboseMode>

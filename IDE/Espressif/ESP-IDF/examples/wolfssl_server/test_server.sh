@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# peek_openssl.sh
+# test_server.sh
 #
 
 LOOPS=10000

@@ -673,9 +673,9 @@ else()
     # depending on the environment, we may need to swap backslashes with forward slashes
     string(REPLACE "\\" "/" RTOS_IDF_PATH "$ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos")
 
-	if(WOLFSSL_ROOT)
-	    string(REPLACE "\\" "/" WOLFSSL_ROOT ${WOLFSSL_ROOT})
-	endif()
+    if(WOLFSSL_ROOT)
+        string(REPLACE "\\" "/" WOLFSSL_ROOT ${WOLFSSL_ROOT})
+    endif()
 
     if(IS_DIRECTORY "${RTOS_IDF_PATH}")
         message(STATUS "Found current RTOS path: ${RTOS_IDF_PATH}")
