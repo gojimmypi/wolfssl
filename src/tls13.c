@@ -5580,6 +5580,9 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
                 return ret;
             ssl->options.pskNegotiated = 1;
         }
+#else
+        /* no resumption possible */
+        ssl->options.resuming = 0;
 #endif
 
         /* sanity check on PSK / KSE */
@@ -8689,6 +8692,7 @@ static int SendTls13Certificate(WOLFSSL* ssl)
                 ssl->options.sendVerify = SEND_CERT;
             }
             wolfSSL_X509_free(x509);
+            x509 = NULL;
             wolfSSL_EVP_PKEY_free(pkey);
         }
     }

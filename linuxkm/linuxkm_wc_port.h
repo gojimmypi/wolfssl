@@ -293,13 +293,10 @@
         #include <linux/scatterlist.h>
         #include <crypto/scatterwalk.h>
         #include <crypto/internal/aead.h>
+        #include <crypto/internal/hash.h>
         #include <crypto/internal/skcipher.h>
-
-        #if defined(HAVE_ECC) && \
-            (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
-             defined(LINUXKM_LKCAPI_REGISTER_ECDSA))
-             #include <crypto/internal/akcipher.h>
-        #endif /* HAVE_ECC && (REGISTER_ALL || REGISTER_ECDSA) */
+        #include <crypto/internal/akcipher.h>
+        #include <crypto/internal/kpp.h>
 
         /* the LKCAPI assumes that expanded encrypt and decrypt keys will stay
          * loaded simultaneously, and the Linux in-tree implementations have two

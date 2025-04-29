@@ -4516,6 +4516,19 @@ static const byte extCertPolicyIsrgDomainValid[] =
     static const byte extCertPolicyFpkiPiviAuthOid[] =
             CERT_POLICY_TYPE_OID_BASE(45);
 
+    /* Federal PKI Test OIDs - 2.16.840.1.101.3.2.1.48.x */
+    #define TEST_CERT_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 3, 2, 1, 48, num}
+    static const byte extCertPolicyFpkiAuthTestOid[] =
+        TEST_CERT_POLICY_TYPE_OID_BASE(11);
+    static const byte extCertPolicyFpkiCardauthTestOid[] =
+        TEST_CERT_POLICY_TYPE_OID_BASE(13);
+    static const byte extCertPolicyFpkiPivContentTestOid[] =
+        TEST_CERT_POLICY_TYPE_OID_BASE(86);
+    static const byte extCertPolicyFpkiAuthDerivedTestOid[] =
+        TEST_CERT_POLICY_TYPE_OID_BASE(109);
+    static const byte extCertPolicyFpkiAuthDerivedHwTestOid[] =
+        TEST_CERT_POLICY_TYPE_OID_BASE(110);
+
     /* DoD PKI OIDs - 2.16.840.1.101.2.1.11.X */
     #define DOD_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 2, 1, 11, num}
     static const byte extCertPolicyDodMediumOid[] =
@@ -4584,6 +4597,12 @@ static const byte extCertPolicyIsrgDomainValid[] =
 
     /* Department of State PKI OIDs - 2.16.840.1.101.3.2.1.6.X */
     #define STATE_POLICY_TYPE_OID_BASE(num) {96, 134, 72, 1, 101, 3, 2, 1, 6, num}
+    static const byte extCertPolicyStateBasicOid[] =
+            STATE_POLICY_TYPE_OID_BASE(1);
+    static const byte extCertPolicyStateLowOid[] =
+            STATE_POLICY_TYPE_OID_BASE(2);
+    static const byte extCertPolicyStateModerateOid[] =
+            STATE_POLICY_TYPE_OID_BASE(3);
     static const byte extCertPolicyStateHighOid[] =
             STATE_POLICY_TYPE_OID_BASE(4);
     static const byte extCertPolicyStateMedHwOid[] =
@@ -4747,6 +4766,11 @@ static const byte extCertPolicyIsrgDomainValid[] =
             ADO_POLICY_TYPE_OID_BASE(1, 3);
     static const byte extCertPolicyAdoResourceMediumAssuranceOid[] =
             ADO_POLICY_TYPE_OID_BASE(2, 2);
+
+    /* Comodo Ltd PKI OID  1.3.6.1.4.1.6449.1.2.1.3.4 */
+    #define COMODO_POLICY_TYPE_OID_BASE(num) {43, 6, 1, 4, 1, 178, 49, 1, 2, 1, 3, num}
+    static const byte extCertPolicyComodoLtdOid[] =
+            COMODO_POLICY_TYPE_OID_BASE(4);
 
     /* Netherlands Ministry of Defence PKI OIDs - 2.16.528.1.1003.1.2.5.X */
     #define NL_MOD_POLICY_TYPE_OID_BASE(num) {96, 132, 16, 1, 135, 107, 1, 2, 5, num}
@@ -5596,6 +5620,26 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     oid = extCertPolicyFpkiPiviAuthOid;
                     *oidSz = sizeof(extCertPolicyFpkiPiviAuthOid);
                     break;
+                case CP_FPKI_AUTH_TEST_OID:
+                    oid = extCertPolicyFpkiAuthTestOid;
+                    *oidSz = sizeof(extCertPolicyFpkiAuthTestOid);
+                    break;
+                case CP_FPKI_CARDAUTH_TEST_OID:
+                    oid = extCertPolicyFpkiCardauthTestOid;
+                    *oidSz = sizeof(extCertPolicyFpkiCardauthTestOid);
+                    break;
+                case CP_FPKI_PIV_CONTENT_TEST_OID:
+                    oid = extCertPolicyFpkiPivContentTestOid;
+                    *oidSz = sizeof(extCertPolicyFpkiPivContentTestOid);
+                    break;
+                case CP_FPKI_PIV_AUTH_DERIVED_TEST_OID:
+                    oid = extCertPolicyFpkiAuthDerivedTestOid;
+                    *oidSz = sizeof(extCertPolicyFpkiAuthDerivedTestOid);
+                    break;
+                case CP_FPKI_PIV_AUTH_DERIVED_HW_TEST_OID:
+                    oid = extCertPolicyFpkiAuthDerivedHwTestOid;
+                    *oidSz = sizeof(extCertPolicyFpkiAuthDerivedHwTestOid);
+                    break;
                 case CP_DOD_MEDIUM_OID:
                     oid = extCertPolicyDodMediumOid;
                     *oidSz = sizeof(extCertPolicyDodMediumOid);
@@ -5718,6 +5762,18 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     break;
 
                 /* Department of State PKI OIDs */
+                case CP_STATE_BASIC_OID:
+                    oid = extCertPolicyStateBasicOid;
+                    *oidSz = sizeof(extCertPolicyStateBasicOid);
+                    break;
+                case CP_STATE_LOW_OID:
+                    oid = extCertPolicyStateLowOid;
+                    *oidSz = sizeof(extCertPolicyStateLowOid);
+                    break;
+                case CP_STATE_MODERATE_OID:
+                    oid = extCertPolicyStateModerateOid;
+                    *oidSz = sizeof(extCertPolicyStateModerateOid);
+                    break;
                 case CP_STATE_HIGH_OID:
                     oid = extCertPolicyStateHighOid;
                     *oidSz = sizeof(extCertPolicyStateHighOid);
@@ -5994,6 +6050,11 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     oid = extCertPolicyCertipathVarHighhwOid;
                     *oidSz = sizeof(extCertPolicyCertipathVarHighhwOid);
                     break;
+                case CP_COMODO_OID:
+                    oid = extCertPolicyComodoLtdOid;
+                    *oidSz = sizeof(extCertPolicyComodoLtdOid);
+                    break;
+                /* FPKI OIDs */
                 #endif /* WOLFSSL_FPKI */
                 default:
                     break;
@@ -6620,6 +6681,18 @@ static int DumpOID(const byte* oidData, word32 oidSz, word32 oid,
 static word32 fpkiCertPolOid(const byte* oid, word32 oidSz, word32 oidSum) {
 
     switch (oidSum) {
+        case CP_ADO_MEDIUM_OID:
+            if ((word32)sizeof(extCertPolicyComodoLtdOid) == (word32)oidSz &&
+            XMEMCMP(oid, extCertPolicyComodoLtdOid,
+            sizeof(extCertPolicyComodoLtdOid)) == 0)
+                return CP_COMODO_OID;
+            break;
+        case CP_FPKI_HIGH_ASSURANCE_OID:
+            if ((word32)sizeof(extCertPolicyStateBasicOid) == (word32)oidSz &&
+            XMEMCMP(oid, extCertPolicyStateBasicOid,
+            sizeof(extCertPolicyStateBasicOid)) == 0)
+                return CP_STATE_BASIC_OID;
+            break;
         case CP_FPKI_COMMON_DEVICES_HARDWARE_OID:
             if ((word32)sizeof(extCertPolicyDodPeerInteropOid) == (word32)oidSz &&
             XMEMCMP(oid, extCertPolicyDodPeerInteropOid,
@@ -6647,7 +6720,7 @@ static word32 fpkiCertPolOid(const byte* oid, word32 oidSz, word32 oidSum) {
                 XMEMCMP(oid, extCertPolicyDodMediumHardware112Oid,
                 sizeof(extCertPolicyDodMediumHardware112Oid)) == 0)
                     return CP_DOD_MEDIUM_HARDWARE_112_OID;
-            if ((word32)sizeof(extCertPolicyCertipathHighhwOid) == (word32)oidSz &&
+            else if ((word32)sizeof(extCertPolicyCertipathHighhwOid) == (word32)oidSz &&
                 XMEMCMP(oid, extCertPolicyCertipathHighhwOid,
                 sizeof(extCertPolicyCertipathHighhwOid)) == 0)
                     return CP_CERTIPATH_HIGHHW_OID;
@@ -6721,6 +6794,12 @@ static word32 fpkiCertPolOid(const byte* oid, word32 oidSz, word32 oidSum) {
             XMEMCMP(oid, extCertPolicyCarillonAivcontentOid,
             sizeof(extCertPolicyCarillonAivcontentOid)) == 0)
                 return CP_CARILLON_AIVCONTENT_OID;
+            break;
+        case CP_TREAS_MEDIUMHW_OID:
+            if ((word32)sizeof(extCertPolicyStateModerateOid) == (word32)oidSz &&
+            XMEMCMP(oid, extCertPolicyStateModerateOid,
+            sizeof(extCertPolicyStateModerateOid)) == 0)
+                return CP_STATE_MODERATE_OID;
             break;
         case CP_CIS_ICECAP_HW_OID:
             if ((word32)sizeof(extCertPolicyNlModIrrefutabilityOid) == (word32)oidSz &&
@@ -9155,9 +9234,12 @@ int wc_GetKeyOID(byte* key, word32 keySz, const byte** curveOID, word32* oidSz,
         if (dilithium == NULL)
             return MEMORY_E;
 
-        if (wc_dilithium_init(dilithium) != 0) {
-            tmpIdx = 0;
-            if (wc_dilithium_set_level(dilithium, WC_ML_DSA_44) == 0) {
+        /* wc_dilithium_init() returns 0 on success and a non-zero value on
+         * failure. */
+        if (wc_dilithium_init(dilithium) == 0) {
+            if ((*algoID == 0) &&
+                (wc_dilithium_set_level(dilithium, WC_ML_DSA_44) == 0)) {
+                tmpIdx = 0;
                 if (wc_Dilithium_PrivateKeyDecode(key, &tmpIdx, dilithium,
                         keySz) == 0) {
                     *algoID = ML_DSA_LEVEL2k;
@@ -9166,7 +9248,9 @@ int wc_GetKeyOID(byte* key, word32 keySz, const byte** curveOID, word32* oidSz,
                     WOLFSSL_MSG("Not Dilithium Level 2 DER key");
                 }
             }
-            else if (wc_dilithium_set_level(dilithium, WC_ML_DSA_65) == 0) {
+            if ((*algoID == 0) &&
+                (wc_dilithium_set_level(dilithium, WC_ML_DSA_65) == 0)) {
+                tmpIdx = 0;
                 if (wc_Dilithium_PrivateKeyDecode(key, &tmpIdx, dilithium,
                         keySz) == 0) {
                     *algoID = ML_DSA_LEVEL3k;
@@ -9175,7 +9259,9 @@ int wc_GetKeyOID(byte* key, word32 keySz, const byte** curveOID, word32* oidSz,
                     WOLFSSL_MSG("Not Dilithium Level 3 DER key");
                 }
             }
-            else if (wc_dilithium_set_level(dilithium, WC_ML_DSA_87) == 0) {
+            if ((*algoID == 0) &&
+                (wc_dilithium_set_level(dilithium, WC_ML_DSA_87) == 0)) {
+                tmpIdx = 0;
                 if (wc_Dilithium_PrivateKeyDecode(key, &tmpIdx, dilithium,
                         keySz) == 0) {
                     *algoID = ML_DSA_LEVEL5k;
@@ -36686,6 +36772,9 @@ int wc_Ed25519PublicKeyDecode(const byte* input, word32* inOutIdx,
         return BAD_FUNC_ARG;
     }
 
+    /* init pubKey */
+    XMEMSET(pubKey, 0, sizeof(pubKey));
+
     ret = DecodeAsymKeyPublic(input, inOutIdx, inSz,
         pubKey, &pubKeyLen, ED25519k);
     if (ret == 0) {
@@ -36725,6 +36814,9 @@ int wc_Curve25519PublicKeyDecode(const byte* input, word32* inOutIdx,
     if (input == NULL || inOutIdx == NULL || key == NULL || inSz == 0) {
         return BAD_FUNC_ARG;
     }
+
+    /* init pubKey */
+    XMEMSET(pubKey, 0, sizeof(pubKey));
 
     ret = DecodeAsymKeyPublic(input, inOutIdx, inSz,
         pubKey, &pubKeyLen, X25519k);
@@ -37127,6 +37219,9 @@ int wc_Curve448PublicKeyDecode(const byte* input, word32* inOutIdx,
     if (input == NULL || inOutIdx == NULL || key == NULL || inSz == 0) {
         return BAD_FUNC_ARG;
     }
+
+    /* init pubKey */
+    XMEMSET(pubKey, 0, sizeof(pubKey));
 
     ret = DecodeAsymKeyPublic(input, inOutIdx, inSz,
         pubKey, &pubKeyLen, X448k);
@@ -38392,7 +38487,8 @@ static int DecodeBasicOcspResponse(byte* source, word32* ioIndex,
         if (DecodeCerts(source, &idx, resp, size) < 0)
             return ASN_PARSE_E;
 
-        ret = OcspCheckCert(resp, noVerify, noVerifySignature, cm, heap);
+        ret = OcspCheckCert(resp, noVerify, noVerifySignature,
+            (WOLFSSL_CERT_MANAGER*)cm, heap);
         if (ret == 0) {
             sigValid = 1;
         }
@@ -38407,7 +38503,7 @@ static int DecodeBasicOcspResponse(byte* source, word32* ioIndex,
     if (!noVerifySignature && !sigValid) {
         Signer* ca;
         SignatureCtx sigCtx;
-        ca = OcspFindSigner(resp, cm);
+        ca = OcspFindSigner(resp, (WOLFSSL_CERT_MANAGER*)cm);
         if (ca == NULL)
             return ASN_NO_SIGNER_E;
 

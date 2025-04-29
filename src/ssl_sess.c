@@ -1452,6 +1452,7 @@ int wolfSSL_GetSessionFromCache(WOLFSSL* ssl, WOLFSSL_SESSION* output)
 #if defined(SESSION_CERTS) && defined(OPENSSL_EXTRA)
     if (peer != NULL) {
         wolfSSL_X509_free(peer);
+        peer = NULL;
     }
 #endif
 
@@ -3534,6 +3535,10 @@ int wolfSSL_SESSION_get_master_key_length(const WOLFSSL_SESSION* ses)
 #ifdef WOLFSSL_EARLY_DATA
 unsigned int wolfSSL_SESSION_get_max_early_data(const WOLFSSL_SESSION *session)
 {
+    if (session == NULL) {
+        return BAD_FUNC_ARG;
+    }
+
     return session->maxEarlyDataSz;
 }
 #endif /* WOLFSSL_EARLY_DATA */

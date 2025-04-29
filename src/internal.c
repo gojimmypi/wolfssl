@@ -7328,6 +7328,8 @@ int InitHandshakeHashesAndCopy(WOLFSSL* ssl, HS_Hashes* source,
     ret = InitHandshakeHashes(ssl);
     if (ret != 0) {
         WOLFSSL_MSG_EX("InitHandshakeHashes failed. err = %d", ret);
+        ssl->hsHashes = tmpHashes; /* restore hsHashes pointer to original
+                                    * before returning */
         return ret;
     }
 
@@ -14200,8 +14202,10 @@ mem_error:
     if (store != NULL)
         wolfSSL_X509_STORE_CTX_free(store);
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
-    if (x509 != NULL)
+    if (x509 != NULL) {
         wolfSSL_X509_free(x509);
+        x509 = NULL;
+    }
 #endif
     XFREE(domain, heap, DYNAMIC_TYPE_STRING);
     return MEMORY_E;
@@ -14627,6 +14631,7 @@ int LoadCertByIssuer(WOLFSSL_X509_STORE* store, X509_NAME* issuer, int type)
                     if (x509 != NULL) {
                        ret = wolfSSL_X509_STORE_add_cert(store, x509);
                        wolfSSL_X509_free(x509);
+                       x509 = NULL;
                     } else {
                        WOLFSSL_MSG("failed to load certificate");
                        ret = WOLFSSL_FAILURE;
@@ -21035,6 +21040,16 @@ int DoApplicationData(WOLFSSL* ssl, byte* input, word32* inOutIdx, int sniff)
         isEarlyData = isEarlyData && w64Equal(ssl->keys.curEpoch64,
                 w64From32(0x0, DTLS13_EPOCH_EARLYDATA));
 #endif
+#ifdef WOLFSSL_DTLS13
+    /* Application data should never appear in epoch 0 or 2 */
+    if (ssl->options.tls1_3 && ssl->options.dtls &&
+        (w64Equal(ssl->keys.curEpoch64, w64From32(0x0, DTLS13_EPOCH_HANDSHAKE))
+                || w64Equal(ssl->keys.curEpoch64, w64From32(0x0, 0x0))))
+    {
+        WOLFSSL_ERROR_VERBOSE(SANITY_MSG_E);
+        return SANITY_MSG_E;
+    }
+#endif
 
 #ifdef WOLFSSL_EARLY_DATA
     if (isEarlyData && acceptEarlyData) {
@@ -21584,6 +21599,7 @@ static WC_INLINE int VerifyMacEnc(WOLFSSL* ssl, const byte* input, word32 msgSz,
         WOLFSSL_ERROR_VERBOSE(VERIFY_MAC_ERROR);
         return VERIFY_MAC_ERROR;
     }
+    XMEMSET(verify, 0, WC_MAX_DIGEST_SIZE);
 
     ret  = ssl->hmac(ssl, verify, input, msgSz - digestSz, -1, content, 1, PEER_ORDER);
     ret |= ConstantCompare(verify, input + msgSz - digestSz, (int)digestSz);
@@ -21606,7 +21622,7 @@ static WC_INLINE int VerifyMac(WOLFSSL* ssl, const byte* input, word32 msgSz,
     word32 digestSz = MacSize(ssl);
     byte   verify[WC_MAX_DIGEST_SIZE];
 
-
+    XMEMSET(verify, 0, WC_MAX_DIGEST_SIZE);
     if (ssl->specs.cipher_type == block) {
         pad = input[msgSz - 1];
         padByte = 1;
@@ -31673,6 +31689,7 @@ static int HashSkeData(WOLFSSL* ssl, enum wc_HashType hashType,
                     return CLIENT_CERT_CB_ERROR;
                 }
                 wolfSSL_X509_free(x509);
+                x509 = NULL;
                 wolfSSL_EVP_PKEY_free(pkey);
 
             }

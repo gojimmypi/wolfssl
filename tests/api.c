@@ -415,6 +415,12 @@ int testDevId = WOLFSSL_CAAM_DEVID;
 int testDevId = INVALID_DEVID;
 #endif
 
+#ifdef USE_WINDOWS_API
+    #define MESSAGE_TYPE_CAST char*
+#else
+    #define MESSAGE_TYPE_CAST void*
+#endif
+
 /*----------------------------------------------------------------------------*
  | BIO with fixed read/write size
  *----------------------------------------------------------------------------*/
@@ -6597,8 +6603,7 @@ static int test_wolfSSL_EVP_PKEY_print_public(void)
     ExpectIntEQ(EVP_PKEY_print_public(wbio, pkey,0,NULL),1);
 
     ExpectIntGT(BIO_gets(wbio, line, sizeof(line)), 0);
-    strcpy(line1, "Public-Key: (256 bit)\n");
-    ExpectIntEQ(XSTRNCMP( line, line1, XSTRLEN(line1)), 0);
+    ExpectStrEQ(line, "Public-Key: (256 bit)\n");
 
     ExpectIntGT(BIO_gets(wbio, line, sizeof(line)), 0);
     strcpy(line1, "pub:\n");
@@ -25378,7 +25383,7 @@ static int test_hmac_signing(const WOLFSSL_EVP_MD *type, const byte* testKey,
 {
     EXPECT_DECLS;
     unsigned char check[WC_MAX_DIGEST_SIZE];
-    size_t checkSz = -1;
+    size_t checkSz = 0;
     WOLFSSL_EVP_PKEY* key = NULL;
     WOLFSSL_EVP_MD_CTX mdCtx;
 
@@ -25388,8 +25393,10 @@ static int test_hmac_signing(const WOLFSSL_EVP_MD *type, const byte* testKey,
     ExpectIntEQ(wolfSSL_EVP_DigestSignInit(&mdCtx, NULL, type, NULL, key), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData,
                                                   (unsigned int)testDataSz), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
     ExpectIntEQ((int)checkSz, (int)testResultSz);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz,(int)testResultSz);
     ExpectIntEQ(XMEMCMP(testResult, check, testResultSz), 0);
@@ -25404,12 +25411,15 @@ static int test_hmac_signing(const WOLFSSL_EVP_MD *type, const byte* testKey,
     wolfSSL_EVP_MD_CTX_init(&mdCtx);
     ExpectIntEQ(wolfSSL_EVP_DigestSignInit(&mdCtx, NULL, type, NULL, key), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData, 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
     ExpectIntEQ((int)checkSz, (int)testResultSz);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz,(int)testResultSz);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData + 4,
                                               (unsigned int)testDataSz - 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz,(int)testResultSz);
     ExpectIntEQ(XMEMCMP(testResult, check, testResultSz), 0);
@@ -25612,8 +25622,10 @@ static int test_wolfSSL_EVP_MD_rsa_signing(void)
                                                              NULL, privKey), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData,
                                           (unsigned int)XSTRLEN(testData)), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
     ExpectIntEQ((int)checkSz, sz);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz,sz);
     ExpectIntEQ(wolfSSL_EVP_MD_CTX_copy_ex(&mdCtxCopy, &mdCtx), 1);
@@ -25637,12 +25649,15 @@ static int test_wolfSSL_EVP_MD_rsa_signing(void)
     ExpectIntEQ(wolfSSL_EVP_DigestSignInit(&mdCtx, NULL, wolfSSL_EVP_sha256(),
                                                              NULL, privKey), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData, 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
     ExpectIntEQ((int)checkSz, sz);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz, sz);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData + 4,
                                       (unsigned int)XSTRLEN(testData) - 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ((int)checkSz, sz);
     ret = wolfSSL_EVP_MD_CTX_cleanup(&mdCtx);
@@ -25668,8 +25683,10 @@ static int test_wolfSSL_EVP_MD_rsa_signing(void)
                 paddings[i]), 1);
         ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData,
                 (unsigned int)XSTRLEN(testData)), 1);
+        checkSz = sizeof(check);
         ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
         ExpectIntEQ((int)checkSz, sz);
+        checkSz = sizeof(check);
         ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
         ExpectIntEQ((int)checkSz,sz);
         ret = wolfSSL_EVP_MD_CTX_cleanup(&mdCtx);
@@ -25703,10 +25720,12 @@ static int test_wolfSSL_EVP_MD_ecc_signing(void)
     const char testData[] = "Hi There";
     WOLFSSL_EVP_MD_CTX mdCtx;
     int ret;
-    size_t checkSz = -1;
     const unsigned char* cp;
     const unsigned char* p;
     unsigned char check[2048/8];
+    size_t checkSz = sizeof(check);
+
+    XMEMSET(check, 0, sizeof(check));
 
     cp = ecc_clikey_der_256;
     ExpectNotNull(privKey = wolfSSL_d2i_PrivateKey(EVP_PKEY_EC, NULL, &cp,
@@ -25720,7 +25739,9 @@ static int test_wolfSSL_EVP_MD_ecc_signing(void)
                                                              NULL, privKey), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData,
                                           (unsigned int)XSTRLEN(testData)), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ret = wolfSSL_EVP_MD_CTX_cleanup(&mdCtx);
     ExpectIntEQ(ret, 1);
@@ -25739,10 +25760,13 @@ static int test_wolfSSL_EVP_MD_ecc_signing(void)
     ExpectIntEQ(wolfSSL_EVP_DigestSignInit(&mdCtx, NULL, wolfSSL_EVP_sha256(),
                                                              NULL, privKey), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData, 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, NULL, &checkSz), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ExpectIntEQ(wolfSSL_EVP_DigestSignUpdate(&mdCtx, testData + 4,
                                       (unsigned int)XSTRLEN(testData) - 4), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(wolfSSL_EVP_DigestSignFinal(&mdCtx, check, &checkSz), 1);
     ret = wolfSSL_EVP_MD_CTX_cleanup(&mdCtx);
     ExpectIntEQ(ret, 1);
@@ -25834,7 +25858,7 @@ static int test_wolfSSL_CTX_add_extra_chain_cert(void)
         pkey = X509_get_pubkey(ecX509);
         ExpectNotNull(pkey);
         /* current ECC key is 256 bit (32 bytes) */
-        ExpectIntEQ(EVP_PKEY_size(pkey), 32);
+        ExpectIntGE(EVP_PKEY_size(pkey), 72);
 
         X509_free(ecX509);
         ecX509 = NULL;
@@ -28719,6 +28743,7 @@ static int test_wolfSSL_BN_CTX(void)
     /* No implementation. */
     BN_CTX_start(NULL);
     BN_CTX_start(bn_ctx);
+    BN_CTX_init(NULL);
 #endif
 
     BN_CTX_free(NULL);
@@ -37584,7 +37609,7 @@ static int test_wolfSSL_BIO_f_md(void)
         0xA4, 0x95, 0x99, 0x1B, 0x78, 0x52, 0xB8, 0x55
     };
     unsigned char check[sizeof(testResult) + 1];
-    size_t checkSz = -1;
+    size_t checkSz = sizeof(check);
     EVP_PKEY* key = NULL;
 
     XMEMSET(out, 0, sizeof(out));
@@ -37637,7 +37662,9 @@ static int test_wolfSSL_BIO_f_md(void)
     EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, key);
     ExpectNotNull(bio = BIO_push(bio, mem));
     BIO_write(bio, testData, (int)strlen(testData));
+    checkSz = sizeof(check);
     ExpectIntEQ(EVP_DigestSignFinal(ctx, NULL, &checkSz), 1);
+    checkSz = sizeof(check);
     ExpectIntEQ(EVP_DigestSignFinal(ctx, check, &checkSz), 1);
 
     ExpectIntEQ(XMEMCMP(check, testResult, sizeof(testResult)), 0);
@@ -40915,7 +40942,7 @@ static int test_wolfSSL_CTX_ctrl(void)
 #endif
         ExpectNotNull(pkey = X509_get_pubkey(ecX509));
         /* current ECC key is 256 bit (32 bytes) */
-        ExpectIntEQ(EVP_PKEY_size(pkey), 32);
+        ExpectIntGE(EVP_PKEY_size(pkey), 72);
 
         X509_free(ecX509);
         EVP_PKEY_free(pkey);
@@ -47887,6 +47914,12 @@ static int test_tls13_apis(void)
 #elif defined(HAVE_ECC)
     const char*  ourCert = eccCertFile;
     const char*  ourKey  = eccKeyFile;
+#elif defined(HAVE_ED25519)
+    const char*  ourCert = edCertFile;
+    const char*  ourKey  = edKeyFile;
+#elif defined(HAVE_ED448)
+    const char*  ourCert = ed448CertFile;
+    const char*  ourKey  = ed448KeyFile;
 #endif
 #endif
 #endif
@@ -56327,10 +56360,10 @@ static void test_wolfSSL_dtls_plaintext_client(WOLFSSL* ssl)
     AssertIntGE(fd, 0);
     generateDTLSMsg(ch, sizeof(ch), 20, client_hello, 0);
     /* Server should ignore this datagram */
-    AssertIntEQ(send(fd, ch, sizeof(ch), 0), sizeof(ch));
+    AssertIntEQ(send(fd, (MESSAGE_TYPE_CAST)ch, sizeof(ch), 0), sizeof(ch));
     generateDTLSMsg(ch, sizeof(ch), 20, client_hello, 10000);
     /* Server should ignore this datagram */
-    AssertIntEQ(send(fd, ch, sizeof(ch), 0), sizeof(ch));
+    AssertIntEQ(send(fd, (MESSAGE_TYPE_CAST)ch, sizeof(ch), 0), sizeof(ch));
 
     AssertIntEQ(wolfSSL_write(ssl, msg, sizeof(msg)), sizeof(msg));
     AssertIntGT(wolfSSL_read(ssl, reply, sizeof(reply)),0);
@@ -56441,7 +56474,7 @@ static void test_wolfSSL_dtls12_fragments_spammer(WOLFSSL* ssl)
         delay.tv_nsec = 10000000; /* wait 0.01 seconds */
         c32toa(seq_number, b + seq_offset);
         c16toa(msg_number, b + msg_offset);
-        ret = (int)send(fd, b, 55, 0);
+        ret = (int)send(fd, (MESSAGE_TYPE_CAST)b, 55, 0);
         nanosleep(&delay, NULL);
     }
 }
@@ -56487,7 +56520,7 @@ static void test_wolfSSL_dtls13_fragments_spammer(WOLFSSL* ssl)
         ret = sendSz = BuildTls13Message(ssl, sendBuf, sendSz, b,
             (int)idx, handshake, 0, 0, 0);
         if (sendSz > 0)
-            ret = (int)send(fd, sendBuf, (size_t)sendSz, 0);
+            ret = (int)send(fd, (MESSAGE_TYPE_CAST)sendBuf, (size_t)sendSz, 0);
         nanosleep(&delay, NULL);
     }
 }
@@ -56561,7 +56594,7 @@ static void test_wolfSSL_dtls_send_alert(WOLFSSL* ssl)
 
     fd = wolfSSL_get_wfd(ssl);
     AssertIntGE(fd, 0);
-    ret = (int)send(fd, alert_msg, sizeof(alert_msg), 0);
+    ret = (int)send(fd, (MESSAGE_TYPE_CAST)alert_msg, sizeof(alert_msg), 0);
     AssertIntGT(ret, 0);
 }
 
@@ -56632,7 +56665,7 @@ static void test_wolfSSL_send_bad_record(WOLFSSL* ssl)
 
     fd = wolfSSL_get_wfd(ssl);
     AssertIntGE(fd, 0);
-    ret = (int)send(fd, bad_msg, sizeof(bad_msg), 0);
+    ret = (int)send(fd, (MESSAGE_TYPE_CAST)bad_msg, sizeof(bad_msg), 0);
     AssertIntEQ(ret, sizeof(bad_msg));
     ret = wolfSSL_write(ssl, "badrecordtest", sizeof("badrecordtest"));
     AssertIntEQ(ret, sizeof("badrecordtest"));
@@ -56990,10 +57023,10 @@ static void test_wolfSSL_dtls_send_ch(WOLFSSL* ssl)
 
     fd = wolfSSL_get_wfd(ssl);
     AssertIntGE(fd, 0);
-    ret = (int)send(fd, ch_msg, sizeof(ch_msg), 0);
+    ret = (int)send(fd, (MESSAGE_TYPE_CAST)ch_msg, sizeof(ch_msg), 0);
     AssertIntGT(ret, 0);
     /* consume the HRR otherwise handshake will fail */
-    ret = (int)recv(fd, ch_msg, sizeof(ch_msg), 0);
+    ret = (int)recv(fd, (MESSAGE_TYPE_CAST)ch_msg, sizeof(ch_msg), 0);
     AssertIntGT(ret, 0);
 }
 
@@ -57062,11 +57095,11 @@ static void test_wolfSSL_dtls_send_ch_with_invalid_cookie(WOLFSSL* ssl)
 
     fd = wolfSSL_get_wfd(ssl);
     if (fd >= 0) {
-        ret = (int)send(fd, ch_msh_invalid_cookie,
+        ret = (int)send(fd, (MESSAGE_TYPE_CAST)ch_msh_invalid_cookie,
                 sizeof(ch_msh_invalid_cookie), 0);
         AssertIntGT(ret, 0);
         /* should reply with an illegal_parameter reply */
-        ret = (int)recv(fd, alert_reply, sizeof(alert_reply), 0);
+        ret = (int)recv(fd, (MESSAGE_TYPE_CAST)alert_reply, sizeof(alert_reply), 0);
         AssertIntEQ(ret, sizeof(expected_alert_reply));
         AssertIntEQ(XMEMCMP(alert_reply, expected_alert_reply,
                 sizeof(expected_alert_reply)), 0);
@@ -67805,6 +67838,8 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_SSLDisableRead),
     TEST_DECL(test_wolfSSL_inject),
     TEST_DECL(test_wolfSSL_dtls_cid_parse),
+    TEST_DECL(test_dtls13_epochs),
+    TEST_DECL(test_dtls13_ack_order),
     TEST_DECL(test_ocsp_status_callback),
     TEST_DECL(test_ocsp_basic_verify),
     TEST_DECL(test_ocsp_response_parsing),

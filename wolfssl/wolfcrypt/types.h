@@ -252,7 +252,8 @@ decouple library dependencies with standard string, memory and so on.
          #endif
     #endif
 
-    #if (defined(_MSC_VER) && !defined(WOLFSSL_NOT_WINDOWS_API)) || \
+    #if (defined(_MSC_VER) && (_MSC_VER == 1200)) ||  /* MSVC6 */ \
+        (defined(_MSC_VER) && !defined(WOLFSSL_NOT_WINDOWS_API)) || \
            defined(__BCPLUSPLUS__) || \
            (defined(__WATCOMC__) && defined(__WATCOM_INT64__))
         /* windows types */
@@ -1621,6 +1622,17 @@ typedef struct w64wrapper {
         typedef unsigned int   THREAD_RETURN;
         typedef TaskHandle_t   THREAD_TYPE;
         #define WOLFSSL_THREAD
+    #elif defined(_WIN32_WCE)
+        typedef unsigned      THREAD_RETURN;
+        typedef size_t        THREAD_TYPE;
+        typedef struct COND_TYPE {
+            wolfSSL_Mutex mutex;
+            HANDLE cond;
+        } COND_TYPE;
+        #define WOLFSSL_COND
+        #define INVALID_THREAD_VAL ((THREAD_TYPE)(INVALID_HANDLE_VALUE))
+        #define WOLFSSL_THREAD __stdcall
+        #define WOLFSSL_THREAD_NO_JOIN __cdecl
     #elif defined(USE_WINDOWS_API)
         typedef unsigned      THREAD_RETURN;
         typedef uintptr_t     THREAD_TYPE;
@@ -1884,6 +1896,13 @@ typedef struct w64wrapper {
     #endif
     #ifndef RESTORE_VECTOR_REGISTERS
         #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
+    #endif
+
+    #ifndef WC_SANITIZE_DISABLE
+        #define WC_SANITIZE_DISABLE() WC_DO_NOTHING
+    #endif
+    #ifndef WC_SANITIZE_ENABLE
+        #define WC_SANITIZE_ENABLE() WC_DO_NOTHING
     #endif
 
     #if FIPS_VERSION_GE(5,1)

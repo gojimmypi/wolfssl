@@ -3172,6 +3172,11 @@ extern void uITRON4_free(void *p) ;
         #define WOLFSSL_AES_DIRECT
         #endif
     #endif
+    #ifdef WOLFSSL_AES_CTS
+        #if defined(NO_AES_CBC) || !defined(HAVE_AES_CBC)
+            #error "AES CTS requires AES CBC"
+        #endif
+    #endif
 #endif
 
 #if (defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)) || \
@@ -3670,6 +3675,22 @@ extern void uITRON4_free(void *p) ;
     #endif
     #undef WOLFSSL_MIN_AUTH_TAG_SZ
     #define WOLFSSL_MIN_AUTH_TAG_SZ 4
+
+    #if defined(LINUXKM_LKCAPI_REGISTER) && !defined(WOLFSSL_ASN_INT_LEAD_0_ANY)
+        /* kernel 5.10 crypto manager tests key(s) that fail unless leading
+         * bytes are tolerated in GetASN_Integer().
+         */
+        #define WOLFSSL_ASN_INT_LEAD_0_ANY
+    #endif
+
+    #ifdef CONFIG_KASAN
+        #ifndef WC_SANITIZE_DISABLE
+            #define WC_SANITIZE_DISABLE() kasan_disable_current()
+        #endif
+        #ifndef WC_SANITIZE_ENABLE
+            #define WC_SANITIZE_ENABLE() kasan_enable_current()
+        #endif
+    #endif
 #endif
 
 

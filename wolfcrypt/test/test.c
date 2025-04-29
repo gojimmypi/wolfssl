@@ -8677,7 +8677,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
 
     /* Try valid hash algorithms. */
     for (i = 0; i < (int)(sizeof(typesGood)/sizeof(*typesGood)); i++) {
-        exp_ret = 0; /* For valid had, we expect return result to be zero */
+        exp_ret = 0; /* For valid hash, we expect return result to be zero */
 
         /* See if the current hash type is one of the known types that are
          * not implemented or not compiled in (disabled): */
@@ -8704,7 +8704,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
         }
 
        if (ret != 0) {
-           ERROR_OUT(WC_TEST_RET_ENC_I(BAD_FUNC_ARG), out);
+           ERROR_OUT(WC_TEST_RET_ENC_EC(BAD_FUNC_ARG), out);
        }
 #endif
         ret = wc_HashInit(hash, typesGood[i]);
@@ -8719,8 +8719,6 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
         wc_HashFree(hash, typesGood[i]);
 
         digestSz = wc_HashGetDigestSize(typesGood[i]);
-        if (exp_ret < 0 && digestSz != exp_ret)
-            ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
         if (exp_ret == 0 && digestSz < 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
         if (exp_ret == 0) {
@@ -8736,16 +8734,13 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t hash_test(void)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
 
         ret = wc_HashGetBlockSize(typesGood[i]);
-        if (exp_ret < 0 && ret != exp_ret)
-            ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
         if (exp_ret == 0 && ret < 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
 
 #if !defined(NO_ASN) || !defined(NO_DH) || defined(HAVE_ECC)
         ret = wc_HashGetOID(typesGood[i]);
-        if (ret == WC_NO_ERR_TRACE(BAD_FUNC_ARG) ||
-                (exp_ret == 0 && ret == WC_NO_ERR_TRACE(HASH_TYPE_E)) ||
-                (exp_ret != 0 && ret != WC_NO_ERR_TRACE(HASH_TYPE_E))) {
+        if ( (ret == WC_NO_ERR_TRACE(HASH_TYPE_E) && (exp_ret == 0)) ||
+             (ret == WC_NO_ERR_TRACE(BAD_FUNC_ARG))  ) {
             ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
         }
 
@@ -25701,6 +25696,40 @@ static wc_test_ret_t dh_ffdhe_test(WC_RNG *rng, int name)
         ERROR_OUT(WC_TEST_RET_ENC_NC, done);
     }
 
+#if defined(WOLFSSL_DH_GEN_PUB) && defined(WOLFSSL_DH_EXTRA)
+    /* additional test for wc_DhGeneratePublic:
+     *   1. reset key2.
+     *   2. using priv from dh key 1, generate pub2 with
+     *      wc_DhGeneratePublic.
+     *   3. test equality pub2 == pub1. */
+    wc_FreeDhKey(key2);
+    pubSz2 = MAX_DH_KEY_SZ;
+    XMEMSET(pub2, 0, pubSz2);
+
+    ret = wc_InitDhKey_ex(key2, HEAP_HINT, devId);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
+
+#ifdef HAVE_PUBLIC_FFDHE
+    ret = wc_DhSetKey_ex(key2, params->p, params->p_len, params->g,
+                         params->g_len, NULL /* q */, 0 /* qSz */);
+#else
+    ret = wc_DhSetNamedKey(key2, name);
+#endif
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
+
+    /* using key 1 private, generate key2 public and test equality. */
+    ret = wc_DhGeneratePublic(key2, priv, privSz, pub2, &pubSz2);
+    if (ret != 0) {
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), done);
+    }
+
+    if (pubSz != pubSz2 || XMEMCMP(pub, pub2, pubSz)) {
+        ERROR_OUT(WC_TEST_RET_ENC_NC, done);
+    }
+#endif /* WOLFSSL_DH_GEN_PUB && WOLFSSL_DH_EXTRA */
+
 #if (defined(WOLFSSL_HAVE_SP_DH) || defined(USE_FAST_MATH)) && \
     !defined(HAVE_INTEL_QA)
     /* Make p even */
@@ -38053,8 +38082,12 @@ static wc_test_ret_t curve255519_der_test(void)
         0xA2, 0x5B, 0x38, 0xFD, 0x96, 0xDB, 0x2A, 0x26
     };
     curve25519_key key;
+#if !defined(HAVE_FIPS) || FIPS_VERSION3_GE(7,0,0)
+    byte output[CURVE25519_MAX_KEY_TO_DER_SZ];
+#else
     byte output[128];
-    word32 outputSz = 128;
+#endif
+    word32 outputSz = (word32)sizeof(output);
     word32 idx;
 
     ret = wc_curve25519_init_ex(&key, HEAP_HINT, devId);

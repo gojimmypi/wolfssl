@@ -44,6 +44,7 @@
 
 #define CURVE25519_KEYSIZE 32
 #define CURVE25519_PUB_KEY_SIZE 32
+#define CURVE25519_MAX_KEY_TO_DER_SZ 82 /* for exported DER keys temp buffer */
 
 #ifdef WOLFSSL_NAMES_STATIC
 typedef char curve25519_str[12];
@@ -165,7 +166,6 @@ curve25519_key* wc_curve25519_new(void* heap, int devId, int *result_code);
 WOLFSSL_API
 int wc_curve25519_delete(curve25519_key* key, curve25519_key** key_p);
 #endif
-WOLFSSL_API
 
 /* raw key helpers */
 WOLFSSL_API

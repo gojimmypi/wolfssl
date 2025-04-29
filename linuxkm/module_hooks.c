@@ -27,8 +27,6 @@
 #endif
 #endif
 
-#define FIPS_NO_WRAPPERS
-
 #define WOLFSSL_LINUXKM_NEED_LINUX_CURRENT
 
 #include <wolfssl/wolfcrypt/libwolfssl_sources.h>
@@ -112,9 +110,6 @@ static void lkmFipsCb(int ok, int err, const char* hash)
 #endif
 
 #ifdef WOLFCRYPT_FIPS_CORE_DYNAMIC_HASH_VALUE
-#ifndef CONFIG_MODULE_SIG
-#error WOLFCRYPT_FIPS_CORE_DYNAMIC_HASH_VALUE requires a CONFIG_MODULE_SIG kernel.
-#endif
 static int updateFipsHash(void);
 #endif
 
@@ -139,10 +134,12 @@ static int wolfssl_init(void)
     int ret;
 
 #ifdef WOLFCRYPT_FIPS_CORE_DYNAMIC_HASH_VALUE
+#ifdef CONFIG_MODULE_SIG
     if (THIS_MODULE->sig_ok == false) {
         pr_err("wolfSSL module load aborted -- bad or missing module signature with FIPS dynamic hash.\n");
         return -ECANCELED;
     }
+#endif
     ret = updateFipsHash();
     if (ret < 0) {
         pr_err("wolfSSL module load aborted -- updateFipsHash: %s\n",wc_GetErrorString(ret));
@@ -755,6 +752,8 @@ static int updateFipsHash(void)
         goto out;
     }
 
+    WC_SANITIZE_DISABLE();
+
     ret = crypto_shash_update(desc, (byte *)(wc_ptr_t)first, (word32)code_sz);
     if (ret) {
         pr_err("crypto_shash_update failed: err %d\n", ret);
@@ -780,6 +779,8 @@ static int updateFipsHash(void)
         ret = BAD_STATE_E;
         goto out;
     }
+
+    WC_SANITIZE_ENABLE();
 
     ret = crypto_shash_final(desc, hash);
     if (ret) {
