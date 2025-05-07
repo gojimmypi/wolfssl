@@ -1,5 +1,6 @@
 # Espressif Updates
 
+gpg refresh
 See [#5795]()
 
 ## Changes in November 2022
