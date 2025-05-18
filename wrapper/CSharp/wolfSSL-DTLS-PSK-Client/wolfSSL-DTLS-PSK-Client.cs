@@ -35,7 +35,10 @@ using wolfSSL.CSharp;
 
 public class wolfSSL_DTLS_PSK_Client
 {
-
+    public const int LOOPS = 100000;
+    public const bool IS_BENCHMARK = true;
+    private static DateTime start_time;
+    private static DateTime stop_time;
 
     /// <summary>
     /// Example of a PSK function call back
@@ -82,6 +85,8 @@ public class wolfSSL_DTLS_PSK_Client
         Socket udp;
         StringBuilder dhparam;
 
+        Console.WriteLine("Begin DTLS PSK Client");
+
         wolfssl.psk_client_delegate psk_cb = new wolfssl.psk_client_delegate(my_psk_client_cb);
 
         Console.WriteLine("Current path: " + Environment.CurrentDirectory);
@@ -118,8 +123,7 @@ public class wolfSSL_DTLS_PSK_Client
         /* In order to use static PSK build wolfSSL with the preprocessor flag WOLFSSL_STATIC_PSK */
         StringBuilder set_cipher = new StringBuilder("DHE-PSK-AES128-CBC-SHA256");
         Console.WriteLine(set_cipher);
-        if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS)
-        {
+        if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS) {
             Console.WriteLine("Failed to set cipher suite");
             return;
         }
@@ -131,35 +135,30 @@ public class wolfSSL_DTLS_PSK_Client
         udp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
                               ProtocolType.Udp);
 
-        try
-        {
+        try {
             udp.Connect("localhost", 11111);
         }
-        catch (Exception e)
-        {
-            Console.WriteLine("tcp.Connect() error " + e.ToString());
+        catch (Exception e) {
+            Console.WriteLine("udp.Connect() error " + e.ToString());
             wolfssl.CTX_free(ctx);
             return;
         }
-        if (!udp.Connected)
-        {
+        if (!udp.Connected) {
             Console.WriteLine("udp.Connect() failed!");
             udp.Close();
             wolfssl.CTX_free(ctx);
             return;
         }
 
-        Console.WriteLine("Connected TCP");
+        Console.WriteLine("Connected UDP");
         ssl = wolfssl.new_ssl(ctx);
-        if (ssl == IntPtr.Zero)
-        {
+        if (ssl == IntPtr.Zero) {
             Console.WriteLine("Error in creating ssl object");
             wolfssl.CTX_free(ctx);
             return;
         }
 
-        if (wolfssl.set_fd(ssl, udp) != wolfssl.SUCCESS)
-        {
+        if (wolfssl.set_fd(ssl, udp) != wolfssl.SUCCESS) {
             /* get and print out the error */
             Console.WriteLine(wolfssl.get_error(ssl));
             udp.Close();
@@ -176,8 +175,7 @@ public class wolfSSL_DTLS_PSK_Client
 
         wolfssl.SetTmpDH_file(ssl, dhparam, wolfssl.SSL_FILETYPE_PEM);
 
-        if (wolfssl.connect(ssl) != wolfssl.SUCCESS)
-        {
+        if (wolfssl.connect(ssl) != wolfssl.SUCCESS) {
             /* get and print out the error */
             Console.WriteLine(wolfssl.get_error(ssl));
             udp.Close();
@@ -189,23 +187,40 @@ public class wolfSSL_DTLS_PSK_Client
         Console.WriteLine("SSL version is " + wolfssl.get_version(ssl));
         Console.WriteLine("SSL cipher suite is " + wolfssl.get_current_cipher(ssl));
 
+        int loop = LOOPS;
+        if (IS_BENCHMARK) {
+            Console.WriteLine("Benchmark for " + loop.ToString() + " DTLS packets");
+            start_time = DateTime.Now;
+        }
+        do {
+            if (wolfssl.write(ssl, reply, reply.Length) != reply.Length) {
+                Console.WriteLine("Error in write");
+                udp.Close();
+                clean(ssl, ctx);
+                return;
+            }
 
-        if (wolfssl.write(ssl, reply, reply.Length) != reply.Length)
-        {
-            Console.WriteLine("Error in write");
-            udp.Close();
-            clean(ssl, ctx);
-            return;
+            /* read and print out the message then reply */
+            if (wolfssl.read(ssl, buff, 1023) < 0) {
+                Console.WriteLine("Error in read");
+                udp.Close();
+                clean(ssl, ctx);
+                return;
+            }
+
+            if (buff.Length > 0) {
+                if (!IS_BENCHMARK) {
+                    Console.WriteLine("Received a packet! Loop #" + loop.ToString() + buff);
+                }
+                loop--;
+            }
+        } while (loop > 0);
+
+        if (IS_BENCHMARK) {
+            stop_time = DateTime.Now;
+            Console.WriteLine("Duration: " + (stop_time - start_time).TotalMilliseconds + " ms");
         }
 
-        /* read and print out the message then reply */
-        if (wolfssl.read(ssl, buff, 1023) < 0)
-        {
-            Console.WriteLine("Error in read");
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
         Console.WriteLine(buff);
 
         wolfssl.shutdown(ssl);

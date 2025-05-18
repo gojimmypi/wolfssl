@@ -37,6 +37,9 @@ using wolfSSL.CSharp;
 public class wolfSSL_DTLS_PSK_Server
 {
     public static int SERVER_PORT = 11111;
+    public const int LOOPS = 100000;
+    public const bool IS_BENCHMARK = true;
+
     /// <summary>
     /// Example of a PSK function call back
     /// </summary>
@@ -76,6 +79,8 @@ public class wolfSSL_DTLS_PSK_Server
         IntPtr ctx;
         IntPtr ssl;
 
+        Console.WriteLine("Begin DTLS PSK Server");
+
         /* These paths should be changed according to use */
         string fileCert = wolfssl.setPath("server-cert.pem");
         string fileKey = wolfssl.setPath("server-key.pem");
@@ -89,7 +94,7 @@ public class wolfSSL_DTLS_PSK_Server
         wolfssl.psk_delegate psk_cb = new wolfssl.psk_delegate(my_psk_server_cb);
 
         StringBuilder buff = new StringBuilder(1024);
-        StringBuilder reply = new StringBuilder("Hello, this is the wolfSSL C# wrapper");
+        StringBuilder reply = new StringBuilder("Hello, this is the wolfSSL C# wrapper reply from the server!");
 
         wolfssl.Init();
 
@@ -205,25 +210,40 @@ public class wolfSSL_DTLS_PSK_Server
         Console.Write(" on port ");
         Console.WriteLine(con.ep.Port.ToString());
 
-        /* read information sent and send a reply */
-        if (wolfssl.read(ssl, buff, 1023) < 0)
+        int loop = LOOPS;
+        do
         {
-            Console.WriteLine("Error reading message");
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
-        Console.WriteLine(buff);
+            /* read information sent and send a reply */
+            if (wolfssl.read(ssl, buff, 1023) < 0)
+            {
+                Console.WriteLine("Error reading message");
+                Console.WriteLine(wolfssl.get_error(ssl));
+                udp.Close();
+                clean(ssl, ctx);
+                return;
+            }
+            if (buff.Length > 0)
+            {
+                if (!IS_BENCHMARK) {
+                    Console.WriteLine("Server Loop #" + loop.ToString() + "; buf = \"" + buff + "\"");
+                }
+                if (wolfssl.write(ssl, reply, reply.Length) != reply.Length)
+                {
+                    Console.WriteLine("Error writing message");
+                    Console.WriteLine(wolfssl.get_error(ssl));
+                    udp.Close();
+                    clean(ssl, ctx);
+                    return;
+                }
+                loop--;
+            }
+            else
+            {
+                Console.WriteLine("Nothing...");
+            }
 
-        if (wolfssl.write(ssl, reply, reply.Length) != reply.Length)
-        {
-            Console.WriteLine("Error writing message");
-            Console.WriteLine(wolfssl.get_error(ssl));
-            udp.Close();
-            clean(ssl, ctx);
-            return;
-        }
+        } while (loop > 0);
+        Console.WriteLine(buff);
 
         Console.WriteLine("At the end freeing stuff");
         wolfssl.shutdown(ssl);
