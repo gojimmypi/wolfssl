@@ -36,8 +36,7 @@ using wolfSSL.CSharp;
 
 public class wolfSSL_DTLS_PSK_Server
 {
-
-
+    public static int SERVER_PORT = 11111;
     /// <summary>
     /// Example of a PSK function call back
     /// </summary>
@@ -157,9 +156,9 @@ public class wolfSSL_DTLS_PSK_Server
         }
 
         IPAddress ip = IPAddress.Parse("0.0.0.0");
-        UdpClient udp = new UdpClient(11111);
-        IPEndPoint ep = new IPEndPoint(ip, 11111);
-        Console.WriteLine("Started UDP and waiting for a connection");
+        UdpClient udp = new UdpClient(SERVER_PORT);
+        IPEndPoint ep = new IPEndPoint(ip, SERVER_PORT);
+        Console.WriteLine("Started UDP and waiting for a connection on port " + SERVER_PORT.ToString());
 
         ssl = wolfssl.new_ssl(ctx);
         if (ssl == IntPtr.Zero)
