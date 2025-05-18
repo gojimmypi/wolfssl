@@ -35,8 +35,10 @@ using wolfSSL.CSharp;
 
 public class wolfSSL_DTLS_PSK_Client
 {
+    public const int SERVER_PORT = 2256; /* 11111 */
     public const int LOOPS = 100000;
     public const bool IS_BENCHMARK = true;
+    public const string USE_CIPHERS = "DHE-PSK-AES128-CBC-SHA256";
     private static DateTime start_time;
     private static DateTime stop_time;
 
@@ -121,7 +123,7 @@ public class wolfSSL_DTLS_PSK_Client
         Console.Write("Setting cipher suite to ");
 
         /* In order to use static PSK build wolfSSL with the preprocessor flag WOLFSSL_STATIC_PSK */
-        StringBuilder set_cipher = new StringBuilder("DHE-PSK-AES128-CBC-SHA256");
+        StringBuilder set_cipher = new StringBuilder(USE_CIPHERS);
         Console.WriteLine(set_cipher);
         if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS) {
             Console.WriteLine("Failed to set cipher suite");
@@ -136,7 +138,7 @@ public class wolfSSL_DTLS_PSK_Client
                               ProtocolType.Udp);
 
         try {
-            udp.Connect("localhost", 11111);
+            udp.Connect("localhost", SERVER_PORT);
         }
         catch (Exception e) {
             Console.WriteLine("udp.Connect() error " + e.ToString());
@@ -218,7 +220,9 @@ public class wolfSSL_DTLS_PSK_Client
 
         if (IS_BENCHMARK) {
             stop_time = DateTime.Now;
-            Console.WriteLine("Duration: " + (stop_time - start_time).TotalMilliseconds + " ms");
+            Console.WriteLine("Duration: " + (stop_time - start_time).TotalMilliseconds
+                              + " ms; Packets = "
+                              + (LOOPS - loop).ToString());
         }
 
         Console.WriteLine(buff);

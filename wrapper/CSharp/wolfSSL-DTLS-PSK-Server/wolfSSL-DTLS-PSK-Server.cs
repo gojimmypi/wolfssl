@@ -39,6 +39,7 @@ public class wolfSSL_DTLS_PSK_Server
     public static int SERVER_PORT = 11111;
     public const int LOOPS = 100000;
     public const bool IS_BENCHMARK = true;
+    public const string USE_CIPHERS = "DHE-PSK-AES128-CBC-SHA256";
 
     /// <summary>
     /// Example of a PSK function call back
@@ -151,7 +152,7 @@ public class wolfSSL_DTLS_PSK_Server
         short minDhKey = 128;
         wolfssl.CTX_SetMinDhKey_Sz(ctx, minDhKey);
         Console.Write("Setting cipher suite to ");
-        StringBuilder set_cipher = new StringBuilder("DHE-PSK-AES128-CBC-SHA256");
+        StringBuilder set_cipher = new StringBuilder(USE_CIPHERS);
         Console.WriteLine(set_cipher);
         if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS)
         {
