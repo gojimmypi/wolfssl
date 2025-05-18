@@ -80,14 +80,18 @@ public class wolfSSL_TLS_PSK_Client
         IntPtr ctx;
         IntPtr ssl;
         Socket tcp;
+        StringBuilder dhparam;
 
         wolfssl.psk_client_delegate psk_cb = new wolfssl.psk_client_delegate(my_psk_client_cb);
 
-        StringBuilder dhparam = new StringBuilder(wolfssl.setPath("dh2048.pem"));
+        Console.WriteLine("Current path: " + Environment.CurrentDirectory);
+        dhparam = new StringBuilder(wolfssl.setPath("dh2048.pem"));
+        dhparam = new StringBuilder(Path.GetFullPath(dhparam.ToString()));
         if (dhparam.Length == 0) {
             Console.WriteLine("Platform not supported");
             return;
         }
+        Console.WriteLine("Using cert: " + dhparam.ToString());
 
         StringBuilder buff = new StringBuilder(1024);
         StringBuilder reply = new StringBuilder("Hello, this is the wolfSSL C# client psk wrapper");
@@ -163,7 +167,8 @@ public class wolfSSL_TLS_PSK_Client
         }
 
         if (!File.Exists(dhparam.ToString())) {
-            Console.WriteLine("Could not find dh file");
+            Console.WriteLine("Current path: " + Environment.CurrentDirectory);
+            Console.WriteLine("Could not find dh file: " + dhparam);
             wolfssl.CTX_free(ctx);
             return;
         }
