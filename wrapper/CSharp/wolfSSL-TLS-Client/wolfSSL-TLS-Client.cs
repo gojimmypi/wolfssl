@@ -29,6 +29,8 @@ using wolfSSL.CSharp;
 
 public class wolfSSL_TLS_Client
 {
+    public static string SERVER_NAME = "localhost"; /* "192.168.1.73 */
+    public static string CIPHER_SUITE = "TLS_AES_128_CCM_8_SHA256"
     /// <summary>
     /// Example of a logging function
     /// </summary>
@@ -90,7 +92,7 @@ public class wolfSSL_TLS_Client
 
         if (caCert == "" || dhparam.Length == 0) {
             Console.WriteLine("Platform not supported.");
-            return; 
+            return;
         }
 
         StringBuilder buff = new StringBuilder(1024);
@@ -117,6 +119,15 @@ public class wolfSSL_TLS_Client
             wolfssl.CTX_free(ctx);
             return;
         }
+        StringBuilder sb = new StringBuilder();
+        sb.Append(CIPHER_SUITE);
+        wolfssl.CTX_set_cipher_list(ctx, sb);
+
+
+        StringBuilder ciphers = new StringBuilder(new String(' ', 4096));
+        wolfssl.get_ciphers(ciphers, 4096);
+        Console.WriteLine("Ciphers : " + ciphers.ToString());
+
 
         if (!File.Exists(dhparam.ToString())) {
             Console.WriteLine("Could not find dh file");
@@ -133,24 +144,20 @@ public class wolfSSL_TLS_Client
         }
 
         int sniArg = haveSNI(args);
-        if (sniArg >= 0) 
+        if (sniArg >= 0)
         {
             string sniHostNameString = args[sniArg].Trim();
             sniHostName = Marshal.StringToHGlobalAnsi(sniHostNameString);
 
             ushort size = (ushort)sniHostNameString.Length;
 
-           if (wolfssl.CTX_UseSNI(ctx, (byte)wolfssl.WOLFSSL_SNI_HOST_NAME, sniHostName, size) != wolfssl.SUCCESS) 
+           if (wolfssl.CTX_UseSNI(ctx, (byte)wolfssl.WOLFSSL_SNI_HOST_NAME, sniHostName, size) != wolfssl.SUCCESS)
            {
                Console.WriteLine("UseSNI failed");
                wolfssl.CTX_free(ctx);
                return;
            }
         }
-
-        StringBuilder ciphers = new StringBuilder(new String(' ', 4096));
-        wolfssl.get_ciphers(ciphers, 4096);
-        Console.WriteLine("Ciphers : " + ciphers.ToString());
 
         /* Uncomment Section to enable specific cipher suite */
 #if false
@@ -179,7 +186,7 @@ public class wolfSSL_TLS_Client
                               ProtocolType.Tcp);
         try
         {
-            tcp.Connect("localhost", 11111);
+            tcp.Connect(SERVER_NAME, 11111);
         }
         catch (Exception e)
         {
