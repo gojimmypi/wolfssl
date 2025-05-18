@@ -738,8 +738,11 @@ namespace wolfSSL.CSharp
         /// based on the platform.
         /// <returns>return the platform specific path to the certificate</returns>
         /// </summary>
-        public static string setPath(string file) {
+        public static string setPath(string file)
+        {
             PlatformID platform = Environment.OSVersion.Platform;
+            string cert_path = "./", current_dir = ".";
+            bool found_path = false;
 
 #if !WindowsCE
             if (platform == PlatformID.Unix ||
@@ -755,10 +758,25 @@ namespace wolfSSL.CSharp
                 platform == PlatformID.Win32S ||
                 platform == PlatformID.WinCE)
             {
+                current_dir = Directory.GetCurrentDirectory();
+                while (!string.IsNullOrEmpty(current_dir) && !found_path)
+                {
+                    cert_path = Path.Combine(current_dir, "certs");
+                    if (Directory.Exists(cert_path))
+                    {
+                        Console.WriteLine("Found certs folder at: " + cert_path);
+                        found_path = true;
+                    }
+
+                    current_dir = Directory.GetParent(current_dir)?.FullName;
+                }
+
                 Console.WriteLine("Windows - " + file);
-                return @"../../../../certs/" + file;
-            } else
+                return cert_path + "\\" + file;
+            }
+            else
             {
+                Console.WriteLine("Other environment: " + platform.ToString() + ", no cert file found.");
                 return "";
             }
         }
@@ -2034,6 +2052,7 @@ namespace wolfSSL.CSharp
             catch (Exception e)
             {
                 log(ERROR_LOG, "wolfssl error " + e.ToString());
+                Console.WriteLine(e.Message);
                 return IntPtr.Zero;
             }
         }
