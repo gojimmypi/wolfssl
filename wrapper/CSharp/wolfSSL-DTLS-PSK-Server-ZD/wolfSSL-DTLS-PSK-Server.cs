@@ -48,7 +48,7 @@ public class DtlsConnection
     private void Read()
     {
         Console.WriteLine("Entro en ReadConnection");
-        
+
         bool ok = true;
         while (true)
         {
@@ -114,7 +114,7 @@ public class wolfSSL_DTLS_PSK_Server
     static IPEndPoint ep;
     public static void Main(string[] args)
     {
-
+        int SERVER_PORT = 11111;
 
         /* These paths should be changed according to use */
         string fileCert = wolfssl.setPath("server-cert.pem");
@@ -127,7 +127,7 @@ public class wolfSSL_DTLS_PSK_Server
         }
 
         wolfssl.psk_delegate psk_cb = new wolfssl.psk_delegate(my_psk_server_cb);
-        
+
         StringBuilder reply = new StringBuilder("Hello, this is the wolfSSL C# wrapper");
 
         wolfssl.Init();
@@ -186,20 +186,19 @@ public class wolfSSL_DTLS_PSK_Server
 
         short minDhKey = 128;
         wolfssl.CTX_SetMinDhKey_Sz(ctx, minDhKey);
-        Console.Write("Setting cipher suite to ");
-        StringBuilder set_cipher = new StringBuilder("PSK-AES128-CBC-SHA");
-        Console.WriteLine(set_cipher);
-        if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS)
-        {
-            Console.WriteLine("Failed to set cipher suite");
-            wolfssl.CTX_free(ctx);
-            return;
-        }
-
+        //Console.Write("Setting cipher suite to ");
+        //StringBuilder set_cipher = new StringBuilder("PSK-AES128-CBC-SHA");
+        //Console.WriteLine(set_cipher);
+        //if (wolfssl.CTX_set_cipher_list(ctx, set_cipher) != wolfssl.SUCCESS)
+        //{
+        //    Console.WriteLine("Failed to set cipher suite");
+        //    wolfssl.CTX_free(ctx);
+        //    return;
+        //}
         IPAddress ip = IPAddress.Parse("0.0.0.0");
-        udp = new UdpClient(2256);
-        ep = new IPEndPoint(ip, 2256);
-        Console.WriteLine("Started UDP and waiting for a connection");
+        udp = new UdpClient(SERVER_PORT);
+        ep = new IPEndPoint(ip, SERVER_PORT);
+        Console.WriteLine("Started UDP and waiting for a connection on port " + SERVER_PORT.ToString());
 
         //while (true)
         //{
@@ -254,6 +253,6 @@ public class wolfSSL_DTLS_PSK_Server
         //}
         Console.ReadLine();
     }
-    
+
 
 }

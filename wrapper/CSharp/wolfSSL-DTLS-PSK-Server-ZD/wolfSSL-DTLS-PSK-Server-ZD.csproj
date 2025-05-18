@@ -62,7 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="wolfSSL-DTLS-PSK-Server-ZD.cs" />
+    <Compile Include="wolfSSL-DTLS-PSK-Server.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
