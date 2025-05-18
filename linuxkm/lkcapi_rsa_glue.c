@@ -24,9 +24,43 @@
     #error lkcapi_rsa_glue.c included in non-LINUXKM_LKCAPI_REGISTER project.
 #endif
 
-#if !defined(NO_RSA) && \
-    (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
-     defined(LINUXKM_LKCAPI_REGISTER_RSA))
+#if !defined(NO_RSA)
+    #if (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
+         (defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && defined(CONFIG_CRYPTO_RSA))) && \
+        !defined(LINUXKM_LKCAPI_DONT_REGISTER_RSA) &&                  \
+        !defined(LINUXKM_LKCAPI_REGISTER_RSA)
+        #define LINUXKM_LKCAPI_REGISTER_RSA
+    #endif
+#else
+    #undef LINUXKM_LKCAPI_REGISTER_RSA
+#endif /* !NO_RSA */
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
+    /*
+     * notes:
+     *   - ecdsa supported with linux 6.12 and earlier for now, only.
+     *   - pkcs1pad rsa supported both before and after linux 6.13, but
+     *     without sign/verify after linux 6.13.
+     *
+     * In linux 6.13 the sign/verify callbacks were removed from
+     * akcipher_alg, and ecdsa changed from a struct akcipher_alg type to
+     * struct sig_alg type.
+     *
+     * pkcs1pad rsa remained a struct akcipher_alg, but without sign/verify
+     * functionality.
+     */
+    #if defined (LINUXKM_LKCAPI_REGISTER_RSA)
+        #define LINUXKM_AKCIPHER_NO_SIGNVERIFY
+    #endif /* LINUXKM_LKCAPI_REGISTER_RSA */
+#endif /* linux >= 6.13.0 */
+
+#if defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && \
+    defined(CONFIG_CRYPTO_RSA) && \
+    !defined(LINUXKM_LKCAPI_REGISTER_RSA)
+    #error Config conflict: target kernel has CONFIG_CRYPTO_RSA, but module is missing LINUXKM_LKCAPI_REGISTER_RSA.
+#endif
+
+#ifdef LINUXKM_LKCAPI_REGISTER_RSA
 
 #if defined(WOLFSSL_RSA_VERIFY_ONLY) || \
     defined(WOLFSSL_RSA_PUBLIC_ONLY)
@@ -43,13 +77,33 @@
 #define WOLFKM_RSA_NAME      ("rsa")
 #define WOLFKM_RSA_DRIVER    ("rsa" WOLFKM_DRIVER_FIPS "-wolfcrypt")
 
+#define WOLFKM_PKCS1_SHA224_NAME   ("pkcs1pad(rsa,sha224)")
+#define WOLFKM_PKCS1_SHA224_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
+                                    "-wolfcrypt,sha224)")
+
 #define WOLFKM_PKCS1_SHA256_NAME   ("pkcs1pad(rsa,sha256)")
 #define WOLFKM_PKCS1_SHA256_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
                                     "-wolfcrypt,sha256)")
 
+#define WOLFKM_PKCS1_SHA384_NAME   ("pkcs1pad(rsa,sha384)")
+#define WOLFKM_PKCS1_SHA384_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
+                                    "-wolfcrypt,sha384)")
+
 #define WOLFKM_PKCS1_SHA512_NAME   ("pkcs1pad(rsa,sha512)")
 #define WOLFKM_PKCS1_SHA512_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
                                     "-wolfcrypt,sha512)")
+
+#define WOLFKM_PKCS1_SHA3_256_NAME   ("pkcs1pad(rsa,sha3-256)")
+#define WOLFKM_PKCS1_SHA3_256_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
+                                      "-wolfcrypt,sha3-256)")
+
+#define WOLFKM_PKCS1_SHA3_384_NAME   ("pkcs1pad(rsa,sha3-384)")
+#define WOLFKM_PKCS1_SHA3_384_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
+                                      "-wolfcrypt,sha3-384)")
+
+#define WOLFKM_PKCS1_SHA3_512_NAME   ("pkcs1pad(rsa,sha3-512)")
+#define WOLFKM_PKCS1_SHA3_512_DRIVER ("pkcs1pad(rsa" WOLFKM_DRIVER_FIPS \
+                                      "-wolfcrypt,sha3-512)")
 
 #if defined(WOLFSSL_KEY_GEN)
     #if defined(LINUXKM_DIRECT_RSA)
@@ -62,12 +116,23 @@
 #if defined(LINUXKM_DIRECT_RSA)
     static int direct_rsa_loaded = 0;
 #endif /* LINUXKM_DIRECT_RSA */
+#ifdef WOLFSSL_SHA224
+    static int pkcs1_sha224_loaded = 0;
+#endif /* WOLFSSL_SHA224 */
 #ifndef NO_SHA256
     static int pkcs1_sha256_loaded = 0;
 #endif /* !NO_SHA256 */
+#ifdef WOLFSSL_SHA384
+    static int pkcs1_sha384_loaded = 0;
+#endif /* WOLFSSL_SHA384 */
 #ifdef WOLFSSL_SHA512
     static int pkcs1_sha512_loaded = 0;
 #endif /* WOLFSSL_SHA512 */
+#ifdef WOLFSSL_SHA3
+    static int pkcs1_sha3_256_loaded = 0;
+    static int pkcs1_sha3_384_loaded = 0;
+    static int pkcs1_sha3_512_loaded = 0;
+#endif /* WOLFSSL_SHA3 */
 
 struct km_rsa_ctx {
     WC_RNG       rng;            /* needed for pkcs1 padding, and blinding */
@@ -94,12 +159,23 @@ static unsigned int km_rsa_max_size(struct crypto_akcipher *tfm);
 #endif /* LINUXKM_DIRECT_RSA */
 
 /* pkcs1 callbacks */
+#ifdef WOLFSSL_SHA224
+    static int          km_pkcs1_sha224_init(struct crypto_akcipher *tfm);
+#endif /* WOLFSSL_SHA224 */
 #ifndef NO_SHA256
     static int          km_pkcs1_sha256_init(struct crypto_akcipher *tfm);
 #endif /* !NO_SHA256 */
+#ifdef WOLFSSL_SHA384
+    static int          km_pkcs1_sha384_init(struct crypto_akcipher *tfm);
+#endif /* WOLFSSL_SHA384 */
 #ifdef WOLFSSL_SHA512
     static int          km_pkcs1_sha512_init(struct crypto_akcipher *tfm);
 #endif /* WOLFSSL_SHA512 */
+#ifdef WOLFSSL_SHA3
+    static int          km_pkcs1_sha3_256_init(struct crypto_akcipher *tfm);
+    static int          km_pkcs1_sha3_384_init(struct crypto_akcipher *tfm);
+    static int          km_pkcs1_sha3_512_init(struct crypto_akcipher *tfm);
+#endif /* WOLFSSL_SHA3 */
 #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
     static int          km_pkcs1_sign(struct akcipher_request *req);
     static int          km_pkcs1_verify(struct akcipher_request *req);
@@ -128,6 +204,27 @@ static struct akcipher_alg direct_rsa = {
 };
 #endif /* LINUXKM_DIRECT_RSA */
 
+#ifdef WOLFSSL_SHA224
+static struct akcipher_alg pkcs1_sha224 = {
+    .base.cra_name        = WOLFKM_PKCS1_SHA224_NAME,
+    .base.cra_driver_name = WOLFKM_PKCS1_SHA224_DRIVER,
+    .base.cra_priority    = WOLFSSL_LINUXKM_LKCAPI_PRIORITY,
+    .base.cra_module      = THIS_MODULE,
+    .base.cra_ctxsize     = sizeof(struct km_rsa_ctx),
+    #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
+    .sign                 = km_pkcs1_sign,
+    .verify               = km_pkcs1_verify,
+    #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
+    .encrypt              = km_pkcs1_enc,
+    .decrypt              = km_pkcs1_dec,
+    .set_priv_key         = km_rsa_set_priv,
+    .set_pub_key          = km_rsa_set_pub,
+    .max_size             = km_rsa_max_size,
+    .init                 = km_pkcs1_sha224_init,
+    .exit                 = km_rsa_exit,
+};
+#endif /* WOLFSSL_SHA224 */
+
 #ifndef NO_SHA256
 static struct akcipher_alg pkcs1_sha256 = {
     .base.cra_name        = WOLFKM_PKCS1_SHA256_NAME,
@@ -149,6 +246,27 @@ static struct akcipher_alg pkcs1_sha256 = {
 };
 #endif /* !NO_SHA256 */
 
+#ifdef WOLFSSL_SHA384
+static struct akcipher_alg pkcs1_sha384 = {
+    .base.cra_name        = WOLFKM_PKCS1_SHA384_NAME,
+    .base.cra_driver_name = WOLFKM_PKCS1_SHA384_DRIVER,
+    .base.cra_priority    = WOLFSSL_LINUXKM_LKCAPI_PRIORITY,
+    .base.cra_module      = THIS_MODULE,
+    .base.cra_ctxsize     = sizeof(struct km_rsa_ctx),
+    #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
+    .sign                 = km_pkcs1_sign,
+    .verify               = km_pkcs1_verify,
+    #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
+    .encrypt              = km_pkcs1_enc,
+    .decrypt              = km_pkcs1_dec,
+    .set_priv_key         = km_rsa_set_priv,
+    .set_pub_key          = km_rsa_set_pub,
+    .max_size             = km_rsa_max_size,
+    .init                 = km_pkcs1_sha384_init,
+    .exit                 = km_rsa_exit,
+};
+#endif /* WOLFSSL_SHA384 */
+
 #ifdef WOLFSSL_SHA512
 static struct akcipher_alg pkcs1_sha512 = {
     .base.cra_name        = WOLFKM_PKCS1_SHA512_NAME,
@@ -169,6 +287,65 @@ static struct akcipher_alg pkcs1_sha512 = {
     .exit                 = km_rsa_exit,
 };
 #endif /* WOLFSSL_SHA512 */
+
+#ifdef WOLFSSL_SHA3
+static struct akcipher_alg pkcs1_sha3_256 = {
+    .base.cra_name        = WOLFKM_PKCS1_SHA3_256_NAME,
+    .base.cra_driver_name = WOLFKM_PKCS1_SHA3_256_DRIVER,
+    .base.cra_priority    = WOLFSSL_LINUXKM_LKCAPI_PRIORITY,
+    .base.cra_module      = THIS_MODULE,
+    .base.cra_ctxsize     = sizeof(struct km_rsa_ctx),
+    #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
+    .sign                 = km_pkcs1_sign,
+    .verify               = km_pkcs1_verify,
+    #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
+    .encrypt              = km_pkcs1_enc,
+    .decrypt              = km_pkcs1_dec,
+    .set_priv_key         = km_rsa_set_priv,
+    .set_pub_key          = km_rsa_set_pub,
+    .max_size             = km_rsa_max_size,
+    .init                 = km_pkcs1_sha3_256_init,
+    .exit                 = km_rsa_exit,
+};
+
+static struct akcipher_alg pkcs1_sha3_384 = {
+    .base.cra_name        = WOLFKM_PKCS1_SHA3_384_NAME,
+    .base.cra_driver_name = WOLFKM_PKCS1_SHA3_384_DRIVER,
+    .base.cra_priority    = WOLFSSL_LINUXKM_LKCAPI_PRIORITY,
+    .base.cra_module      = THIS_MODULE,
+    .base.cra_ctxsize     = sizeof(struct km_rsa_ctx),
+    #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
+    .sign                 = km_pkcs1_sign,
+    .verify               = km_pkcs1_verify,
+    #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
+    .encrypt              = km_pkcs1_enc,
+    .decrypt              = km_pkcs1_dec,
+    .set_priv_key         = km_rsa_set_priv,
+    .set_pub_key          = km_rsa_set_pub,
+    .max_size             = km_rsa_max_size,
+    .init                 = km_pkcs1_sha3_384_init,
+    .exit                 = km_rsa_exit,
+};
+
+static struct akcipher_alg pkcs1_sha3_512 = {
+    .base.cra_name        = WOLFKM_PKCS1_SHA3_512_NAME,
+    .base.cra_driver_name = WOLFKM_PKCS1_SHA3_512_DRIVER,
+    .base.cra_priority    = WOLFSSL_LINUXKM_LKCAPI_PRIORITY,
+    .base.cra_module      = THIS_MODULE,
+    .base.cra_ctxsize     = sizeof(struct km_rsa_ctx),
+    #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
+    .sign                 = km_pkcs1_sign,
+    .verify               = km_pkcs1_verify,
+    #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
+    .encrypt              = km_pkcs1_enc,
+    .decrypt              = km_pkcs1_dec,
+    .set_priv_key         = km_rsa_set_priv,
+    .set_pub_key          = km_rsa_set_pub,
+    .max_size             = km_rsa_max_size,
+    .init                 = km_pkcs1_sha3_512_init,
+    .exit                 = km_rsa_exit,
+};
+#endif /* WOLFSSL_SHA3 */
 
 static int km_rsa_init(struct crypto_akcipher *tfm, int hash_oid)
 {
@@ -215,16 +392,37 @@ static int km_rsa_init(struct crypto_akcipher *tfm, int hash_oid)
     case 0:
         ctx->digest_len = 0;
         break;
+    #ifdef WOLFSSL_SHA224
+    case SHA224h:
+        ctx->digest_len = WC_SHA224_DIGEST_SIZE;
+        break;
+    #endif /* WOLFSSL_SHA224 */
     #ifndef NO_SHA256
     case SHA256h:
         ctx->digest_len = WC_SHA256_DIGEST_SIZE;
         break;
     #endif /* !NO_SHA256 */
+    #ifdef WOLFSSL_SHA384
+    case SHA384h:
+        ctx->digest_len = WC_SHA384_DIGEST_SIZE;
+        break;
+    #endif /* WOLFSSL_SHA384 */
     #ifdef WOLFSSL_SHA512
     case SHA512h:
         ctx->digest_len = WC_SHA512_DIGEST_SIZE;
         break;
     #endif /* WOLFSSL_SHA512 */
+    #ifdef WOLFSSL_SHA3
+    case SHA3_256h:
+        ctx->digest_len = WC_SHA3_256_DIGEST_SIZE;
+        break;
+    case SHA3_384h:
+        ctx->digest_len = WC_SHA3_384_DIGEST_SIZE;
+        break;
+    case SHA3_512h:
+        ctx->digest_len = WC_SHA3_512_DIGEST_SIZE;
+        break;
+    #endif /* WOLFSSL_SHA3 */
     default:
         pr_err("%s: init: unhandled hash_oid: %d\n", WOLFKM_RSA_DRIVER,
                hash_oid);
@@ -486,7 +684,7 @@ static int km_rsa_set_priv(struct crypto_akcipher *tfm, const void *key,
     ctx->key_len = (word32) key_len;
 
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_rsa_set_priv\n");
+    pr_info("info: exiting km_rsa_set_priv: %d\n", keylen);
     #endif /* WOLFKM_DEBUG_RSA */
     return err;
 }
@@ -541,7 +739,7 @@ static int km_rsa_set_pub(struct crypto_akcipher *tfm, const void *key,
     ctx->key_len = (word32) key_len;
 
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_rsa_set_pub\n");
+    pr_info("info: exiting km_rsa_set_pub %d\n", keylen);
     #endif /* WOLFKM_DEBUG_RSA */
     return err;
 }
@@ -585,6 +783,13 @@ static void km_rsa_exit(struct crypto_akcipher *tfm)
     return;
 }
 
+#ifdef WOLFSSL_SHA224
+static int km_pkcs1_sha224_init(struct crypto_akcipher *tfm)
+{
+    return km_rsa_init(tfm, SHA224h);
+}
+#endif /* WOLFSSL_SHA224 */
+
 #ifndef NO_SHA256
 static int km_pkcs1_sha256_init(struct crypto_akcipher *tfm)
 {
@@ -592,12 +797,35 @@ static int km_pkcs1_sha256_init(struct crypto_akcipher *tfm)
 }
 #endif /* !NO_SHA256 */
 
+#ifdef WOLFSSL_SHA384
+static int km_pkcs1_sha384_init(struct crypto_akcipher *tfm)
+{
+    return km_rsa_init(tfm, SHA384h);
+}
+#endif /* WOLFSSL_SHA384 */
+
 #ifdef WOLFSSL_SHA512
 static int km_pkcs1_sha512_init(struct crypto_akcipher *tfm)
 {
     return km_rsa_init(tfm, SHA512h);
 }
 #endif /* WOLFSSL_SHA512 */
+#ifdef WOLFSSL_SHA3
+static int km_pkcs1_sha3_256_init(struct crypto_akcipher *tfm)
+{
+    return km_rsa_init(tfm, SHA3_256h);
+}
+
+static int km_pkcs1_sha3_384_init(struct crypto_akcipher *tfm)
+{
+    return km_rsa_init(tfm, SHA3_384h);
+}
+
+static int km_pkcs1_sha3_512_init(struct crypto_akcipher *tfm)
+{
+    return km_rsa_init(tfm, SHA3_512h);
+}
+#endif /* WOLFSSL_SHA3 */
 
 #if !defined(LINUXKM_AKCIPHER_NO_SIGNVERIFY)
 static int km_pkcs1_sign(struct akcipher_request *req)
@@ -691,8 +919,10 @@ pkcs1_sign_out:
     if (sig != NULL) { free(sig); sig = NULL; }
 
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_pkcs1_sign\n");
+    pr_info("info: exiting km_pkcs1_sign msg_len %d, enc_msg_len %d,"
+            " sig_len %d, err %d", req->src_len, enc_len, sig_len, err);
     #endif /* WOLFKM_DEBUG_RSA */
+
     return err;
 }
 
@@ -740,12 +970,20 @@ static int km_pkcs1_verify(struct akcipher_request *req)
 
     hash_enc_len = get_hash_enc_len(ctx->hash_oid);
     if (hash_enc_len <= 0) {
+        #ifdef WOLFKM_DEBUG_RSA
+        pr_err("error: %s: bad hash enc len %d",
+               WOLFKM_RSA_DRIVER, hash_enc_len);
+        #endif /* WOLFKM_DEBUG_RSA */
         err = -EINVAL;
         goto pkcs1_verify_out;
     }
 
     if (msg_len != ctx->digest_len || sig_len != ctx->key_len) {
         /* invalid src or dst args */
+        #ifdef WOLFKM_DEBUG_RSA
+        pr_err("error: %s: got msg_len %d, expected %d",
+               WOLFKM_RSA_DRIVER, msg_len, ctx->digest_len);
+        #endif /* WOLFKM_DEBUG_RSA */
         err = -EINVAL;
         goto pkcs1_verify_out;
     }
@@ -802,7 +1040,8 @@ pkcs1_verify_out:
     if (sig != NULL) { free(sig); sig = NULL; }
 
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_pkcs1_verify\n");
+    pr_info("info: exiting km_pkcs1_verify msg_len %d, enc_msg_len %d,"
+            " sig_len %d, err %d", msg_len, enc_msg_len, sig_len, err);
     #endif /* WOLFKM_DEBUG_RSA */
     return err;
 }
@@ -877,7 +1116,7 @@ pkcs1_enc_out:
     if (enc != NULL) { free(enc); enc = NULL; }
     if (dec != NULL) { free(dec); dec = NULL; }
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_pkcs1_enc\n");
+    pr_info("info: exiting km_pkcs1_enc %d\n", err);
     #endif /* WOLFKM_DEBUG_RSA */
     return err;
 }
@@ -957,7 +1196,7 @@ pkcs1_dec_out:
     if (dec != NULL) { free(dec); dec = NULL; }
 
     #ifdef WOLFKM_DEBUG_RSA
-    pr_info("info: exiting km_pkcs1_dec\n");
+    pr_info("info: exiting km_pkcs1_dec %d", err);
     #endif /* WOLFKM_DEBUG_RSA */
     return err;
 }
@@ -987,7 +1226,7 @@ static int linuxkm_test_rsa(void)
     rc = linuxkm_test_rsa_driver(WOLFKM_RSA_DRIVER, 4096);
     if (rc) { return rc; }
 
-
+    #ifdef WOLFKM_DEBUG_RSA_GENERIC
     /* repeat test against stock linux RSA akcipher. */
     rc = linuxkm_test_rsa_driver("rsa-generic", 2048);
     if (rc) { return rc; }
@@ -997,6 +1236,7 @@ static int linuxkm_test_rsa(void)
 
     rc = linuxkm_test_rsa_driver("rsa-generic", 4096);
     if (rc) { return rc; }
+    #endif /* WOLFKM_DEBUG_RSA_GENERIC */
     #endif /* WOLFKM_DEBUG_RSA */
     #endif /* WOLFSSL_KEY_GEN */
 
@@ -1004,81 +1244,152 @@ static int linuxkm_test_rsa(void)
 }
 #endif /* LINUXKM_DIRECT_RSA */
 
+#if defined(WOLFSSL_KEY_GEN)
+/* Test the given pkcs1 wolfcrypt driver and generic driver for a
+ * hash oid and hash length.
+ * */
+static int linuxkm_test_pkcs1_hash(const char * wc_driver,
+                                   const char * generic_driver,
+                                   int hash_oid, word32 hash_len)
+{
+    int rc = 0;
+
+    rc = linuxkm_test_pkcs1_driver(wc_driver, 2048,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+
+    #ifdef WOLFKM_DEBUG_RSA
+    /* repeat with additional key lengths */
+    rc = linuxkm_test_pkcs1_driver(wc_driver, 3072,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+
+    rc = linuxkm_test_pkcs1_driver(wc_driver, 4096,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+
+    #ifdef WOLFKM_DEBUG_RSA_GENERIC
+    /* repeat tests against stock linux rsa-generic pkcs1pad. */
+    rc = linuxkm_test_pkcs1_driver(generic_driver, 2048,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+
+    rc = linuxkm_test_pkcs1_driver(generic_driver, 3072,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+
+    rc = linuxkm_test_pkcs1_driver(generic_driver, 4096,
+                                   hash_oid, hash_len);
+    if (rc) { return rc; }
+    #endif /* WOLFKM_DEBUG_RSA_GENERIC */
+    #endif /* WOLFKM_DEBUG_RSA */
+
+    (void)generic_driver;
+
+    return rc;
+}
+#endif /* WOLFSSL_KEY_GEN */
+
+#ifdef WOLFSSL_SHA224
+static int linuxkm_test_pkcs1_sha224(void)
+{
+    int rc = 0;
+
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA224_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha224)",
+                                 SHA224h, WC_SHA224_DIGEST_SIZE);
+    #endif /* WOLFSSL_KEY_GEN */
+
+    return rc;
+}
+#endif /* WOLFSSL_SHA224 */
+
 #ifndef NO_SHA256
 static int linuxkm_test_pkcs1_sha256(void)
 {
     int rc = 0;
 
-    #ifdef WOLFSSL_KEY_GEN
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA256_DRIVER, 2048,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-
-    #ifdef WOLFKM_DEBUG_RSA
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA256_DRIVER, 3072,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA256_DRIVER, 4096,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-
-    /* repeat test against stock linux pkcs1pad. */
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha256)", 2048,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha256)", 3072,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha256)", 4096,
-                                   SHA256h, 32);
-    if (rc) { return rc; }
-    #endif /* WOLFKM_DEBUG_RSA */
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA256_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha256)",
+                                 SHA256h, WC_SHA256_DIGEST_SIZE);
     #endif /* WOLFSSL_KEY_GEN */
 
     return rc;
 }
 #endif /* !NO_SHA256 */
 
+#ifdef WOLFSSL_SHA384
+static int linuxkm_test_pkcs1_sha384(void)
+{
+    int rc = 0;
+
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA384_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha384)",
+                                 SHA384h, WC_SHA384_DIGEST_SIZE);
+    #endif /* WOLFSSL_KEY_GEN */
+
+    return rc;
+}
+#endif /* WOLFSSL_SHA384 */
+
 #ifdef WOLFSSL_SHA512
 static int linuxkm_test_pkcs1_sha512(void)
 {
     int rc = 0;
 
-    #ifdef WOLFSSL_KEY_GEN
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA512_DRIVER, 2048,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-
-    #ifdef WOLFKM_DEBUG_RSA
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA512_DRIVER, 3072,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver(WOLFKM_PKCS1_SHA512_DRIVER, 4096,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-
-    /* repeat test against stock linux pkcs1pad. */
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha512)", 2048,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha512)", 3072,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-
-    rc = linuxkm_test_pkcs1_driver("pkcs1pad(rsa-generic,sha512)", 4096,
-                                   SHA512h, 64);
-    if (rc) { return rc; }
-    #endif /* WOLFKM_DEBUG_RSA */
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA512_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha512)",
+                                 SHA512h, WC_SHA512_DIGEST_SIZE);
     #endif /* WOLFSSL_KEY_GEN */
 
     return rc;
 }
 #endif /* WOLFSSL_SHA512 */
+
+#ifdef WOLFSSL_SHA3
+static int linuxkm_test_pkcs1_sha3_256(void)
+{
+    int rc = 0;
+
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA3_256_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha3-256)",
+                                 SHA3_256h, WC_SHA3_256_DIGEST_SIZE);
+    #endif /* WOLFSSL_KEY_GEN */
+
+    return rc;
+}
+
+static int linuxkm_test_pkcs1_sha3_384(void)
+{
+    int rc = 0;
+
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA3_384_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha3-384)",
+                                 SHA3_384h, WC_SHA3_384_DIGEST_SIZE);
+    #endif /* WOLFSSL_KEY_GEN */
+
+    return rc;
+}
+
+static int linuxkm_test_pkcs1_sha3_512(void)
+{
+    int rc = 0;
+
+    #if defined(WOLFSSL_KEY_GEN)
+    rc = linuxkm_test_pkcs1_hash(WOLFKM_PKCS1_SHA3_512_DRIVER,
+                                 "pkcs1pad(rsa-generic,sha3-512)",
+                                 SHA3_512h, WC_SHA3_512_DIGEST_SIZE);
+    #endif /* WOLFSSL_KEY_GEN */
+
+    return rc;
+}
+#endif /* WOLFSSL_SHA3 */
 
 #if defined(LINUXKM_DIRECT_RSA) && defined(WOLFSSL_KEY_GEN)
 /*
@@ -1411,7 +1722,7 @@ test_rsa_end:
 static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
                                      int hash_oid, word32 hash_len)
 {
-    int                       test_rc = -1;
+    int                       test_rc = WC_NO_ERR_TRACE(WC_FAILURE);
     int                       ret = 0;
     struct crypto_akcipher *  tfm = NULL;
     struct akcipher_request * req = NULL;
@@ -1447,23 +1758,28 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
     int                       n_diff = 0;
 
-    hash = malloc(WC_SHA512_DIGEST_SIZE);
+    hash = malloc(hash_len);
     if (! hash) {
         pr_err("error: allocating hash buffer failed.\n");
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
+
+    memset(hash, 0, hash_len);
 
     /* hash the test msg with hash algo. */
     ret = wc_Hash(wc_OidGetHash(hash_oid), p_vector, sizeof(p_vector),
                   hash, hash_len);
     if (ret) {
         pr_err("error: wc_Hash returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
     key = (RsaKey*)malloc(sizeof(RsaKey));
     if (key == NULL) {
         pr_err("error: allocating key(%zu) failed\n", sizeof(RsaKey));
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
 
@@ -1480,6 +1796,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = wc_InitRsaKey(key, NULL);
     if (ret) {
         pr_err("error: init rsa key returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
     init_key = 1;
@@ -1488,6 +1805,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = wc_RsaSetRNG(key, &rng);
     if (ret) {
         pr_err("error: rsa set rng returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
     #endif /* WC_RSA_BLINDING */
@@ -1495,18 +1813,21 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = wc_MakeRsaKey(key, nbits, WC_RSA_EXPONENT, &rng);
     if (ret) {
         pr_err("error: make rsa key returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
     key_len = wc_RsaEncryptSize(key);
     if (key_len <= 0) {
         pr_err("error: rsa encrypt size returned: %d\n", key_len);
+        test_rc = key_len;
         goto test_pkcs1_end;
     }
 
     sig = (byte*)malloc(key_len);
     if (sig == NULL) {
         pr_err("error: allocating sig(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(sig, 0, key_len);
@@ -1514,6 +1835,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     km_sig = (byte*)malloc(key_len);
     if (km_sig == NULL) {
         pr_err("error: allocating km_sig(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(km_sig, 0, key_len);
@@ -1521,6 +1843,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     enc = (byte*)malloc(key_len);
     if (enc == NULL) {
         pr_err("error: allocating enc(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(enc, 0, key_len);
@@ -1528,6 +1851,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     dec = (byte*)malloc(key_len + 1);
     if (dec == NULL) {
         pr_err("error: allocating dec(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(dec, 0, key_len + 1);
@@ -1535,6 +1859,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     enc2 = (byte*)malloc(key_len);
     if (enc2 == NULL) {
         pr_err("error: allocating enc2(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(enc2, 0, key_len);
@@ -1542,6 +1867,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     dec2 = (byte*)malloc(key_len + 1);
     if (dec2 == NULL) {
         pr_err("error: allocating dec2(%d) failed\n", key_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
     memset(dec2, 0, key_len + 1);
@@ -1552,12 +1878,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     priv_len = wc_RsaKeyToDer(key, NULL, 0);
     if (priv_len <= 0) {
         pr_err("error: rsa priv to der returned: %d\n", priv_len);
+        test_rc = priv_len;
         goto test_pkcs1_end;
     }
 
     priv = (byte*)malloc(priv_len);
     if (priv == NULL) {
         pr_err("error: allocating priv(%d) failed\n", priv_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
 
@@ -1566,6 +1894,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     priv_len = wc_RsaKeyToDer(key, priv, priv_len);
     if (priv_len <= 0) {
         pr_err("error: rsa priv to der returned: %d\n", priv_len);
+        test_rc = priv_len;
         goto test_pkcs1_end;
     }
 
@@ -1573,12 +1902,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     pub_len = wc_RsaKeyToPublicDer(key, NULL, 0);
     if (pub_len <= 0) {
         pr_err("error: rsa pub to der returned: %d\n", pub_len);
+        test_rc = pub_len;
         goto test_pkcs1_end;
     }
 
     pub = (byte*)malloc(pub_len);
     if (pub == NULL) {
         pr_err("error: allocating pub(%d) failed\n", pub_len);
+        test_rc = MEMORY_E;
         goto test_pkcs1_end;
     }
 
@@ -1587,6 +1918,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     pub_len = wc_RsaKeyToPublicDer(key, pub, pub_len);
     if (pub_len <= 0) {
         pr_err("error: rsa pub to der returned: %d\n", pub_len);
+        test_rc = pub_len;
         goto test_pkcs1_end;
     }
 
@@ -1598,12 +1930,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     enc_len = wc_EncodeSignature(enc, hash, hash_len, hash_oid);
     if (enc_len <= 0) {
         pr_err("error: wc_EncodeSignature returned: %d\n", enc_len);
+        test_rc = enc_len;
         goto test_pkcs1_end;
     }
 
     sig_len = wc_RsaSSL_Sign(enc, enc_len, sig, key_len, key, &rng);
     if (sig_len <= 0) {
         pr_err("error: wc_RsaSSL_Sign returned: %d\n", sig_len);
+        test_rc = sig_len;
         goto test_pkcs1_end;
     }
 
@@ -1612,6 +1946,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     if (ret <= 0 || ret != (int) enc_len) {
         pr_err("error: wc_RsaSSL_Verify returned %d, expected %d\n" , ret,
                enc_len);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
@@ -1619,6 +1954,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     n_diff = memcmp(dec, enc, enc_len);
     if (n_diff) {
         pr_err("error: decrypt doesn't match plain: %d\n", n_diff);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1630,6 +1966,10 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     if (IS_ERR(tfm)) {
         pr_err("error: allocating akcipher algorithm %s failed: %ld\n",
                driver, PTR_ERR(tfm));
+        if (PTR_ERR(tfm) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         tfm = NULL;
         goto test_pkcs1_end;
     }
@@ -1638,6 +1978,10 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     if (IS_ERR(req)) {
         pr_err("error: allocating akcipher request %s failed\n",
                driver);
+        if (PTR_ERR(req) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         req = NULL;
         goto test_pkcs1_end;
     }
@@ -1649,6 +1993,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_set_priv_key(tfm, priv, priv_len);
     if (ret) {
         pr_err("error: crypto_akcipher_set_priv_key returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1657,6 +2002,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
         if (maxsize != key_len) {
             pr_err("error: crypto_akcipher_maxsize "
                    "returned %d, expected %d\n", maxsize, key_len);
+            test_rc = BAD_FUNC_ARG;
             goto test_pkcs1_end;
         }
     }
@@ -1670,6 +2016,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_sign(req);
     if (ret) {
         pr_err("error: crypto_akcipher_sign returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1677,6 +2024,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_set_pub_key(tfm, pub + 24, pub_len - 24);
     if (ret) {
         pr_err("error: crypto_akcipher_set_pub_key returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1685,17 +2033,19 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
         if (maxsize != key_len) {
             pr_err("error: crypto_akcipher_maxsize "
                    "returned %d, expected %d\n", maxsize, key_len);
+            test_rc = BAD_FUNC_ARG;
             goto test_pkcs1_end;
         }
     }
 
-    /**
+    /*
      * Set sig as src, and null as dst.
      * src_tab is:
      *   src_tab[0]: signature
      *   src_tab[1]: message (digest)
      *
-     * src_len is sig size plus digest size. */
+     * src_len is sig size plus digest size.
+     */
     sg_init_table(src_tab, 2);
     sg_set_buf(&src_tab[0], km_sig, key_len);
     sg_set_buf(&src_tab[1], hash, hash_len);
@@ -1706,6 +2056,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_verify(req);
     if (ret) {
         pr_err("error: crypto_akcipher_verify returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1713,12 +2064,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = wc_RsaSSL_Verify(km_sig, key_len, dec, key_len, key);
     if (ret <= 0) {
         pr_err("error: wc_RsaSSL_Verify returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
     n_diff = memcmp(km_sig, sig, sig_len);
     if (n_diff) {
         pr_err("error: km-sig doesn't match sig: %d\n", n_diff);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1726,13 +2079,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     n_diff = memcmp(dec, enc, enc_len);
     if (n_diff) {
         pr_err("error: decrypt doesn't match plain: %d\n", n_diff);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
     #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
 
-    /**
+    /*
      * pkcs1 encrypt and ecrypt test
-     * */
+     */
     memset(enc, 0, key_len);
     memset(enc2, 0, key_len);
     memset(dec, 0, key_len);
@@ -1750,12 +2104,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_set_pub_key(tfm, pub + 24, pub_len - 24);
     if (ret) {
         pr_err("error: crypto_akcipher_set_pub_key returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
     ret = crypto_akcipher_encrypt(req);
     if (ret) {
         pr_err("error: crypto_akcipher_encrypt returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1764,6 +2120,7 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
 
     if (unlikely(ret != (int) key_len)) {
         pr_err("error: wc_RsaPublicEncrypt returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
@@ -1778,12 +2135,14 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
     ret = crypto_akcipher_set_priv_key(tfm, priv, priv_len);
     if (ret) {
         pr_err("error: crypto_akcipher_set_priv_key returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
     ret = crypto_akcipher_decrypt(req);
     if (ret) {
         pr_err("error: crypto_akcipher_decrypt returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1791,18 +2150,21 @@ static int linuxkm_test_pkcs1_driver(const char * driver, int nbits,
                                sizeof(p_vector), key);
     if (ret != (int) sizeof(p_vector)) {
         pr_err("error: wc_RsaPrivateDecrypt returned: %d\n", ret);
+        test_rc = ret;
         goto test_pkcs1_end;
     }
 
     n_diff = memcmp(dec, dec2, sizeof(p_vector));
     if (n_diff) {
         pr_err("error: decrypt don't match: %d\n", n_diff);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
     n_diff = memcmp(dec, p_vector, sizeof(p_vector));
     if (n_diff) {
         pr_err("error: decrypt doesn't match plaintext: %d\n", n_diff);
+        test_rc = BAD_FUNC_ARG;
         goto test_pkcs1_end;
     }
 
@@ -1847,8 +2209,13 @@ static int get_hash_enc_len(int hash_oid)
     int enc_len = -1;
 
     switch (hash_oid) {
+    case SHA224h:
     case SHA256h:
+    case SHA384h:
     case SHA512h:
+    case SHA3_256h:
+    case SHA3_384h:
+    case SHA3_512h:
         enc_len = 19;
         break;
     default:
@@ -1858,6 +2225,4 @@ static int get_hash_enc_len(int hash_oid)
     return enc_len;
 }
 #endif /* !LINUXKM_AKCIPHER_NO_SIGNVERIFY */
-#endif /* !NO_RSA &&
-        * (LINUXKM_LKCAPI_REGISTER_ALL || LINUXKM_LKCAPI_REGISTER_RSA)
-        */
+#endif /* LINUXKM_LKCAPI_REGISTER_RSA */

@@ -31,19 +31,6 @@ This library provides single precision (SP) integer math functions.
 
 #if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
 
-#if (!defined(WOLFSSL_SMALL_STACK) && !defined(SP_ALLOC)) || \
-    defined(WOLFSSL_SP_NO_MALLOC)
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
-PRAGMA_GCC_DIAG_PUSH
-/* We are statically declaring a variable smaller than sp_int.
- * We track available memory in the 'size' field.
- * Disable warnings of sp_int being partly outside array bounds of variable.
- */
-PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
-#endif
-#endif
-
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else
@@ -112,6 +99,15 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
 
 #include <wolfssl/wolfcrypt/sp_int.h>
 
+#ifdef WOLFSSL_SP_DYN_STACK
+/* We are statically declaring a variable smaller than sp_int.
+ * We track available memory in the 'size' field.
+ * Disable warnings of sp_int being partly outside array bounds of variable.
+ */
+    PRAGMA_GCC_DIAG_PUSH
+    PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
+#endif
+
 #if defined(WOLFSSL_LINUXKM) && !defined(WOLFSSL_SP_ASM)
     /* force off unneeded vector register save/restore. */
     #undef SAVE_VECTOR_REGISTERS
@@ -127,11 +123,10 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
     #define DECL_SP_INT(n, s)   \
         sp_int* n = NULL
 #else
-    #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-        !defined(WOLFSSL_SP_NO_DYN_STACK)
+    #ifdef WOLFSSL_SP_DYN_STACK
         /* Declare a variable on the stack with the required data size. */
-        #define DECL_SP_INT(n, s)               \
-            byte    n##d[MP_INT_SIZEOF(s)];     \
+        #define DECL_SP_INT(n, s)                       \
+            sp_int_digit n##d[MP_INT_SIZEOF_DIGITS(s)]; \
             sp_int* (n) = (sp_int*)n##d
     #else
         /* Declare a variable on the stack. */
@@ -218,11 +213,10 @@ PRAGMA_GCC("GCC diagnostic ignored \"-Warray-bounds\"")
     /* Declare a variable that will be assigned a value on XMALLOC. */
     #define DECL_SP_INT_ARRAY(n, s, c)  \
         DECL_DYN_SP_INT_ARRAY(n, s, c)
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-        !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     /* Declare a variable on the stack with the required data size. */
-    #define DECL_SP_INT_ARRAY(n, s, c)          \
-        byte    n##d[MP_INT_SIZEOF(s) * (c)];   \
+    #define DECL_SP_INT_ARRAY(n, s, c)                    \
+        sp_int_digit n##d[MP_INT_SIZEOF_DIGITS(s) * (c)]; \
         sp_int* (n)[c] = { NULL, }
 #else
     /* Declare a variable on the stack. */
@@ -264,8 +258,7 @@ while (0)
     !defined(WOLFSSL_SP_NO_MALLOC)
     #define ALLOC_SP_INT_ARRAY(n, s, c, err, h) \
         ALLOC_DYN_SP_INT_ARRAY(n, s, c, err, h)
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-        !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     /* Data declared on stack that supports multiple sp_ints of the
      * required size. Use pointers into data to make up array and set sizes.
      */
@@ -7909,28 +7902,30 @@ static int _sp_submod(const sp_int* a, const sp_int* b, const sp_int* m,
     unsigned int used = ((a->used >= m->used) ?
         ((a->used >= b->used) ? (a->used + 1U) : (b->used + 1U)) :
         ((b->used >= m->used)) ? (b->used + 1U) : (m->used + 1U));
-    DECL_SP_INT_ARRAY(t, used, 2);
+    DECL_SP_INT(t0, used);
+    DECL_SP_INT(t1, used);
 
-    ALLOC_SP_INT_ARRAY(t, used, 2, err, NULL);
+    ALLOC_SP_INT_SIZE(t0, used, err, NULL);
+    ALLOC_SP_INT_SIZE(t1, used, err, NULL);
     if (err == MP_OKAY) {
         /* Reduce a to less than m. */
         if (_sp_cmp(a, m) != MP_LT) {
-            err = sp_mod(a, m, t[0]);
-            a = t[0];
+            err = sp_mod(a, m, t0);
+            a = t0;
         }
     }
     if (err == MP_OKAY) {
         /* Reduce b to less than m. */
         if (_sp_cmp(b, m) != MP_LT) {
-            err = sp_mod(b, m, t[1]);
-            b = t[1];
+            err = sp_mod(b, m, t1);
+            b = t1;
         }
     }
     if (err == MP_OKAY) {
         /* Add m to a if a smaller than b. */
         if (_sp_cmp(a, b) == MP_LT) {
-            err = sp_add(a, m, t[0]);
-            a = t[0];
+            err = sp_add(a, m, t0);
+            a = t0;
         }
     }
     if (err == MP_OKAY) {
@@ -7938,7 +7933,8 @@ static int _sp_submod(const sp_int* a, const sp_int* b, const sp_int* m,
         err = sp_sub(a, b, r);
     }
 
-    FREE_SP_INT_ARRAY(t, NULL);
+    FREE_SP_INT(t0, NULL);
+    FREE_SP_INT(t1, NULL);
 #else /* WOLFSSL_SP_INT_NEGATIVE */
     sp_size_t used = ((a->used >= b->used) ? a->used + 1 : b->used + 1);
     DECL_SP_INT(t, used);
@@ -9172,8 +9168,7 @@ static int _sp_mul_nxn(const sp_int* a, const sp_int* b, sp_int* r)
     unsigned int k;
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
     sp_int_digit* t = NULL;
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     sp_int_digit t[a->used];
 #else
     sp_int_digit t[SP_INT_DIGITS / 2];
@@ -9249,8 +9244,7 @@ static int _sp_mul(const sp_int* a, const sp_int* b, sp_int* r)
     sp_size_t k;
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
     sp_int_digit* t = NULL;
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     sp_int_digit t[a->used + b->used];
 #else
     sp_int_digit t[SP_INT_DIGITS];
@@ -9326,8 +9320,7 @@ static int _sp_mul(const sp_int* a, const sp_int* b, sp_int* r)
     sp_size_t k;
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
     sp_int_digit* t = NULL;
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     sp_int_digit t[a->used + b->used];
 #else
     sp_int_digit t[SP_INT_DIGITS];
@@ -14876,8 +14869,7 @@ static int _sp_sqr(const sp_int* a, sp_int* r)
     sp_size_t k;
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
     sp_int_digit* t = NULL;
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     sp_int_digit t[((a->used + 1) / 2) * 2 + 1];
 #else
     sp_int_digit t[(SP_INT_DIGITS + 1) / 2];
@@ -14991,8 +14983,7 @@ static int _sp_sqr(const sp_int* a, sp_int* r)
     sp_size_t k;
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_SP_NO_MALLOC)
     sp_int_digit* t = NULL;
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
+#elif defined(WOLFSSL_SP_DYN_STACK)
     sp_int_digit t[a->used * 2];
 #else
     sp_int_digit t[SP_INT_DIGITS];
@@ -19888,12 +19879,8 @@ void sp_memzero_check(sp_int* sp)
 }
 #endif /* WOLFSSL_CHECK_MEM_ZERO */
 
-#if (!defined(WOLFSSL_SMALL_STACK) && !defined(SP_ALLOC)) || \
-    defined(WOLFSSL_SP_NO_MALLOC)
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !defined(WOLFSSL_SP_NO_DYN_STACK)
-PRAGMA_GCC_DIAG_POP
-#endif
+#ifdef WOLFSSL_SP_DYN_STACK
+    PRAGMA_GCC_DIAG_POP
 #endif
 
 #endif /* WOLFSSL_SP_MATH || WOLFSSL_SP_MATH_ALL */

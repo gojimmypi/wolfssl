@@ -20,11 +20,63 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#if defined(LINUXKM_LKCAPI_REGISTER_DH)
-
 #ifndef LINUXKM_LKCAPI_REGISTER
     #error lkcapi_dh_glue.c included in non-LINUXKM_LKCAPI_REGISTER project.
 #endif
+
+#if (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
+     (defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && defined(CONFIG_CRYPTO_DH))) && \
+    !defined(LINUXKM_LKCAPI_DONT_REGISTER_DH) &&  \
+    !defined(LINUXKM_LKCAPI_REGISTER_DH)
+    #define LINUXKM_LKCAPI_REGISTER_DH
+    #define LINUXKM_DH
+#endif
+
+#if defined(LINUXKM_LKCAPI_REGISTER_DH) && \
+    (!defined(WOLFSSL_DH_EXTRA) ||         \
+     !defined(WOLFSSL_DH_GEN_PUB))
+     /* not supported without WOLFSSL_DH_EXTRA && WOLFSSL_DH_GEN_PUB */
+    #undef LINUXKM_LKCAPI_REGISTER_DH
+
+    #if defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && defined(CONFIG_CRYPTO_DH)
+        #error Config conflict: missing features force off LINUXKM_LKCAPI_REGISTER_DH.
+    #endif
+#endif /* LINUXKM_LKCAPI_REGISTER_DH */
+
+#if defined (LINUXKM_LKCAPI_REGISTER_DH) && defined(CONFIG_CRYPTO_FIPS) && \
+    defined(CONFIG_CRYPTO_MANAGER)
+        /*
+         * note: normal dh not fips_allowed in kernel crypto/testmgr.c,
+         * and will not pass the tests.
+         */
+        #undef LINUXKM_DH
+#endif /* LINUXKM_LKCAPI_REGISTER_DH */
+
+#ifdef NO_DH
+    #undef LINUXKM_LKCAPI_REGISTER_DH
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+    /* Support for FFDHE was added in kernel 5.18, and generic DH support
+     * pre-5.18 used a different binary format for the secret (an additional
+     * slot for q).
+     *
+     * LTS backports of FFDHE go as far back as 4.14.236, using the pre-5.18
+     * binary layout, but other backports, e.g. RHEL 9.5 on kernel
+     * 5.14.0-503.40.1, have the 5.18+ layout.  Best to disable on all pre-5.18
+     * and triage as/if necessary.
+     */
+    #undef LINUXKM_LKCAPI_REGISTER_DH
+#endif
+
+#if defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && \
+    (defined(CONFIG_CRYPTO_DH) || defined(CONFIG_CRYPTO_DH_RFC7919_GROUPS)) && \
+    !defined(LINUXKM_LKCAPI_REGISTER_DH)
+    #error Config conflict: target kernel has CONFIG_CRYPTO_DH and/or \
+        _DH_RFC7919_GROUPS, but module is missing LINUXKM_LKCAPI_REGISTER_DH.
+#endif
+
+#if defined(LINUXKM_LKCAPI_REGISTER_DH)
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/dh.h>
@@ -2804,7 +2856,7 @@ static int linuxkm_test_kpp_driver(const char * driver,
                                    const byte * shared_secret,
                                    word32 shared_s_len)
 {
-    int                  test_rc = -1;
+    int                  test_rc = WC_NO_ERR_TRACE(WC_FAILURE);
     struct crypto_kpp *  tfm = NULL;
     struct kpp_request * req = NULL;
     struct scatterlist   src, dst;
@@ -2821,6 +2873,10 @@ static int linuxkm_test_kpp_driver(const char * driver,
     if (IS_ERR(tfm)) {
         pr_err("error: allocating kpp algorithm %s failed: %ld\n",
                driver, PTR_ERR(tfm));
+        if (PTR_ERR(tfm) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         tfm = NULL;
         goto test_kpp_end;
     }
@@ -2829,6 +2885,10 @@ static int linuxkm_test_kpp_driver(const char * driver,
     if (IS_ERR(req)) {
         pr_err("error: allocating kpp request %s failed\n",
                driver);
+        if (PTR_ERR(req) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         req = NULL;
         goto test_kpp_end;
     }
@@ -2836,6 +2896,7 @@ static int linuxkm_test_kpp_driver(const char * driver,
     err = crypto_kpp_set_secret(tfm, a_secret, secret_len);
     if (err) {
         pr_err("error: crypto_kpp_set_secret returned: %d\n", err);
+        test_rc = BAD_FUNC_ARG;
         goto test_kpp_end;
     }
 
@@ -2843,12 +2904,14 @@ static int linuxkm_test_kpp_driver(const char * driver,
     dst_len = crypto_kpp_maxsize(tfm);
     if (dst_len <= 0) {
         pr_err("error: crypto_kpp_maxsize returned: %d\n", dst_len);
+        test_rc = BAD_FUNC_ARG;
         goto test_kpp_end;
     }
 
     dst_buf = malloc(dst_len);
     if (dst_buf == NULL) {
         pr_err("error: allocating out buf failed");
+        test_rc = MEMORY_E;
         goto test_kpp_end;
     }
 
@@ -2862,17 +2925,20 @@ static int linuxkm_test_kpp_driver(const char * driver,
     err = crypto_kpp_generate_public_key(req);
     if (err) {
         pr_err("error: crypto_kpp_generate_public_key returned: %d", err);
+        test_rc = BAD_FUNC_ARG;
         goto test_kpp_end;
     }
 
     if (memcmp(expected_a_pub, sg_virt(req->dst), pub_len)) {
         pr_err("error: crypto_kpp_generate_public_key: wrong output");
+        test_rc = WC_KEY_MISMATCH_E;
         goto test_kpp_end;
     }
 
     src_buf = malloc(src_len);
     if (src_buf == NULL) {
         pr_err("error: allocating in buf failed");
+        test_rc = MEMORY_E;
         goto test_kpp_end;
     }
 
@@ -2887,11 +2953,13 @@ static int linuxkm_test_kpp_driver(const char * driver,
     err = crypto_kpp_compute_shared_secret(req);
     if (err) {
         pr_err("error: crypto_kpp_compute_shared_secret returned: %d", err);
+        test_rc = BAD_FUNC_ARG;
         goto test_kpp_end;
     }
 
     if (memcmp(shared_secret, sg_virt(req->dst), shared_s_len)) {
         pr_err("error: shared secret does not match");
+        test_rc = BAD_FUNC_ARG;
         goto test_kpp_end;
     }
 

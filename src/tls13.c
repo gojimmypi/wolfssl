@@ -5053,13 +5053,18 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     byte tls12minor;
 #ifdef WOLFSSL_ASYNC_CRYPT
     Dsh13Args* args = NULL;
-    WOLFSSL_ASSERT_SIZEOF_GE(ssl->async->args, *args);
 #else
     Dsh13Args  args[1];
+#endif
+#ifdef WOLFSSL_ASYNC_CRYPT
+    WOLFSSL_ASSERT_SIZEOF_GE(ssl->async->args, *args);
 #endif
 
     WOLFSSL_START(WC_FUNC_SERVER_HELLO_DO);
     WOLFSSL_ENTER("DoTls13ServerHello");
+
+    if (ssl == NULL || ssl->arrays == NULL)
+        return BAD_FUNC_ARG;
 
     tls12minor = TLSv1_2_MINOR;
 
@@ -5067,10 +5072,6 @@ int DoTls13ServerHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     if (ssl->options.dtls)
         tls12minor = DTLSv1_2_MINOR;
 #endif /*  WOLFSSL_DTLS13 */
-
-
-    if (ssl == NULL || ssl->arrays == NULL)
-        return BAD_FUNC_ARG;
 
 #ifdef WOLFSSL_ASYNC_CRYPT
     if (ssl->async == NULL) {
@@ -5963,6 +5964,8 @@ static int FindPsk(WOLFSSL* ssl, PreSharedKey* psk, const byte* suite, int* err)
     byte        foundSuite[SUITE_LEN];
 
     WOLFSSL_ENTER("FindPsk");
+
+    XMEMSET(foundSuite, 0, sizeof(foundSuite));
 
     ret = FindPskSuite(ssl, psk, ssl->arrays->psk_key, &ssl->arrays->psk_keySz,
                        suite, &found, foundSuite);

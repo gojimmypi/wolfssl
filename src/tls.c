@@ -477,20 +477,23 @@ int DeriveTlsKeys(WOLFSSL* ssl)
         return MEMORY_E;
     }
 #endif
+
+    XMEMSET(key_dig, 0, MAX_PRF_DIG);
+
 #if !defined(NO_CERTS) && defined(HAVE_PK_CALLBACKS)
-        ret = PROTOCOLCB_UNAVAILABLE;
-        if (ssl->ctx->GenSessionKeyCb) {
-            void* ctx = wolfSSL_GetGenSessionKeyCtx(ssl);
-            ret = ssl->ctx->GenSessionKeyCb(ssl, ctx);
-        }
-        if (!ssl->ctx->GenSessionKeyCb ||
-            ret == WC_NO_ERR_TRACE(PROTOCOLCB_UNAVAILABLE))
+    ret = PROTOCOLCB_UNAVAILABLE;
+    if (ssl->ctx->GenSessionKeyCb) {
+        void* ctx = wolfSSL_GetGenSessionKeyCtx(ssl);
+        ret = ssl->ctx->GenSessionKeyCb(ssl, ctx);
+    }
+    if (!ssl->ctx->GenSessionKeyCb ||
+        ret == WC_NO_ERR_TRACE(PROTOCOLCB_UNAVAILABLE))
 #endif
-        ret = _DeriveTlsKeys(key_dig, (word32)key_dig_len,
-                         ssl->arrays->masterSecret, SECRET_LEN,
-                         ssl->arrays->serverRandom, ssl->arrays->clientRandom,
-                         IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
-                         ssl->heap, ssl->devId);
+    ret = _DeriveTlsKeys(key_dig, (word32)key_dig_len,
+                     ssl->arrays->masterSecret, SECRET_LEN,
+                     ssl->arrays->serverRandom, ssl->arrays->clientRandom,
+                     IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
+                     ssl->heap, ssl->devId);
     if (ret == 0)
         ret = StoreKeys(ssl, key_dig, PROVISION_CLIENT_SERVER);
 
@@ -7743,8 +7746,11 @@ static int TLSX_KeyShare_GenDhKey(WOLFSSL *ssl, KeyShareEntry* kse)
 
     if (ret != 0) {
         /* Cleanup on error, otherwise data owned by key share entry */
-        XFREE(kse->privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
-        kse->privKey = NULL;
+        if (kse->privKey) {
+            ForceZero(kse->privKey, pvtSz);
+            XFREE(kse->privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
+            kse->privKey = NULL;
+        }
         XFREE(kse->pubKey, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         kse->pubKey = NULL;
     }
@@ -8335,7 +8341,11 @@ static int TLSX_KeyShare_GenPqcKeyClient(WOLFSSL *ssl, KeyShareEntry* kse)
         XFREE(kse->pubKey, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
         kse->pubKey = NULL;
     #ifndef WOLFSSL_TLSX_PQC_MLKEM_STORE_OBJ
-        XFREE(privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
+        if (privKey) {
+            ForceZero(privKey, privSz);
+            XFREE(privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
+            privKey = NULL;
+        }
     #else
         XFREE(kem, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
         kse->key = NULL;
@@ -8804,8 +8814,11 @@ static int TLSX_KeyShare_ProcessDh(WOLFSSL* ssl, KeyShareEntry* keyShareEntry)
         wc_FreeDhKey(dhKey);
     XFREE(keyShareEntry->key, ssl->heap, DYNAMIC_TYPE_DH);
     keyShareEntry->key = NULL;
-    XFREE(keyShareEntry->privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
-    keyShareEntry->privKey = NULL;
+    if (keyShareEntry->privKey) {
+        ForceZero(keyShareEntry->privKey, keyShareEntry->keyLen);
+        XFREE(keyShareEntry->privKey, ssl->heap, DYNAMIC_TYPE_PRIVATE_KEY);
+        keyShareEntry->privKey = NULL;
+    }
     XFREE(keyShareEntry->pubKey, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
     keyShareEntry->pubKey = NULL;
     XFREE(keyShareEntry->ke, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
@@ -13100,7 +13113,7 @@ static int TLSX_ECH_Write(WOLFSSL_ECH* ech, byte msgType, byte* writeBuf,
 static int TLSX_ECH_GetSize(WOLFSSL_ECH* ech, byte msgType)
 {
     int ret;
-    word32 size;
+    word32 size = 0;
 
     if (ech->state == ECH_WRITE_GREASE) {
         size = sizeof(ech->type) + sizeof(ech->cipherSuite) +

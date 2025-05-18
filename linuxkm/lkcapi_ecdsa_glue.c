@@ -20,11 +20,59 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#if defined(LINUXKM_LKCAPI_REGISTER_ECDSA)
-
 #ifndef LINUXKM_LKCAPI_REGISTER
     #error lkcapi_ecdsa_glue.c included in non-LINUXKM_LKCAPI_REGISTER project.
 #endif
+
+#ifdef HAVE_ECC
+    #if (defined(LINUXKM_LKCAPI_REGISTER_ALL) || \
+         (defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && defined(CONFIG_CRYPTO_ECDSA))) && \
+        !defined(LINUXKM_LKCAPI_DONT_REGISTER_ECDSA) &&              \
+        !defined(LINUXKM_LKCAPI_REGISTER_ECDSA)
+        #define LINUXKM_LKCAPI_REGISTER_ECDSA
+    #endif
+#else
+    #undef LINUXKM_LKCAPI_REGISTER_ECDSA
+#endif
+
+#if defined (LINUXKM_LKCAPI_REGISTER_ECDSA)
+    #if (defined(HAVE_ECC192) || defined(HAVE_ALL_CURVES)) && \
+        ECC_MIN_KEY_SZ <= 192 && !defined(CONFIG_CRYPTO_FIPS)
+        /* only register p192 if specifically enabled, and if not fips. */
+        #define LINUXKM_ECC192
+    #endif
+#endif /* LINUXKM_LKCAPI_REGISTER_ECDSA */
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
+    /*
+     * notes:
+     *   - ecdsa supported with linux 6.12 and earlier for now, only.
+     *   - pkcs1pad rsa supported both before and after linux 6.13, but
+     *     without sign/verify after linux 6.13.
+     *
+     * In linux 6.13 the sign/verify callbacks were removed from
+     * akcipher_alg, and ecdsa changed from a struct akcipher_alg type to
+     * struct sig_alg type.
+     *
+     * pkcs1pad rsa remained a struct akcipher_alg, but without sign/verify
+     * functionality.
+     */
+    #if defined (LINUXKM_LKCAPI_REGISTER_ECDSA)
+        #undef LINUXKM_LKCAPI_REGISTER_ECDSA
+    #endif /* LINUXKM_LKCAPI_REGISTER_ECDSA */
+
+    #if defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && defined(CONFIG_CRYPTO_ECDSA)
+        #error Config conflict: missing implementation forces off LINUXKM_LKCAPI_REGISTER_ECDSA.
+    #endif
+#endif
+
+#if defined(LINUXKM_LKCAPI_REGISTER_ALL_KCONFIG) && \
+    defined(CONFIG_CRYPTO_ECDSA) && \
+    !defined(LINUXKM_LKCAPI_REGISTER_ECDSA)
+    #error Config conflict: target kernel has CONFIG_CRYPTO_ECDSA, but module is missing LINUXKM_LKCAPI_REGISTER_ECDSA.
+#endif
+
+#if defined(LINUXKM_LKCAPI_REGISTER_ECDSA)
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/ecc.h>
@@ -650,7 +698,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
                                           const byte * sig, word32 sig_len,
                                           const byte * hash, word32 hash_len)
 {
-    int                       test_rc = -1;
+    int                       test_rc = WC_NO_ERR_TRACE(WC_FAILURE);
     int                       ret = 0;
     struct crypto_akcipher *  tfm = NULL;
     struct akcipher_request * req = NULL;
@@ -664,6 +712,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     param_copy = (byte *)malloc(sig_len + hash_len);
     if (! param_copy) {
         pr_err("error: allocating param_copy buffer failed.\n");
+        test_rc = MEMORY_E;
         goto test_ecdsa_nist_end;
     }
     memcpy(param_copy, sig, sig_len);
@@ -679,6 +728,10 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     if (IS_ERR(tfm)) {
         pr_err("error: allocating akcipher algorithm %s failed: %ld\n",
                driver, PTR_ERR(tfm));
+        if (PTR_ERR(tfm) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         tfm = NULL;
         goto test_ecdsa_nist_end;
     }
@@ -687,6 +740,10 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     if (IS_ERR(req)) {
         pr_err("error: allocating akcipher request %s failed\n",
                driver);
+        if (PTR_ERR(req) == -ENOMEM)
+            test_rc = MEMORY_E;
+        else
+            test_rc = BAD_FUNC_ARG;
         req = NULL;
         goto test_ecdsa_nist_end;
     }
@@ -695,6 +752,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     ret = crypto_akcipher_set_pub_key(tfm, pub, pub_len);
     if (ret) {
         pr_err("error: crypto_akcipher_set_pub_key returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_ecdsa_nist_end;
     }
 
@@ -703,6 +761,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
         if ((int) maxsize <= 0) {
             pr_err("error: crypto_akcipher_maxsize "
                    "returned %d\n", maxsize);
+            test_rc = BAD_FUNC_ARG;
             goto test_ecdsa_nist_end;
         }
     }
@@ -725,6 +784,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     ret = crypto_akcipher_verify(req);
     if (ret) {
         pr_err("error: crypto_akcipher_verify returned: %d\n", ret);
+        test_rc = BAD_FUNC_ARG;
         goto test_ecdsa_nist_end;
     }
 
@@ -732,6 +792,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     bad_sig = malloc(sig_len);
     if (bad_sig == NULL) {
         pr_err("error: alloc sig failed\n");
+        test_rc = MEMORY_E;
         goto test_ecdsa_nist_end;
     }
 
@@ -749,6 +810,7 @@ static int linuxkm_test_ecdsa_nist_driver(const char * driver,
     if (ret != -EBADMSG) {
         pr_err("error: crypto_akcipher_verify returned %d, expected %d\n",
                ret, -EBADMSG);
+        test_rc = BAD_FUNC_ARG;
         goto test_ecdsa_nist_end;
     }
 

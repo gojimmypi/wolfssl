@@ -1124,6 +1124,7 @@ static const bench_pq_hash_sig_alg bench_pq_hash_sig_opt[] = {
 };
 #endif /* BENCH_PQ_STATEFUL_HBS */
 
+#ifndef WOLFSSL_BENCHMARK_ALL
 #if defined(WOLFSSL_HAVE_MLKEM) || defined(HAVE_FALCON) || \
     defined(HAVE_DILITHIUM) || defined(HAVE_SPHINCS)
 /* The post-quantum-specific mapping of command line option to bit values and
@@ -1179,6 +1180,8 @@ static const bench_pq_alg bench_pq_asym_opt2[] = {
     { NULL, 0, }
 };
 #endif /* HAVE_SPHINCS */
+#endif
+
 #endif
 
 #ifdef HAVE_WNR
@@ -1821,10 +1824,12 @@ static const char* bench_result_words2[][5] = {
     #ifndef NO_HW_BENCH
         #define BENCH_DEVID
     #endif
-    #ifndef HAVE_RENESAS_SYNC
-        #define BENCH_DEVID_GET_NAME(useDeviceID) (useDeviceID) ? "HW" : "SW"
-    #else
-        #define BENCH_DEVID_GET_NAME(useDeviceID) ""
+    #if !defined(BENCH_DEVID_GET_NAME)
+        #ifndef HAVE_RENESAS_SYNC
+            #define BENCH_DEVID_GET_NAME(useDeviceID) (useDeviceID) ? "HW" : "SW"
+        #else
+            #define BENCH_DEVID_GET_NAME(useDeviceID) ""
+        #endif
     #endif
 #else
     #define BENCH_DEVID_GET_NAME(useDeviceID) ""
@@ -3259,7 +3264,8 @@ static void* benchmarks_do(void* args)
     #endif
     #if ((defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_3DES)) || \
          defined(HAVE_INTEL_QA_SYNC) || defined(HAVE_CAVIUM_OCTEON_SYNC) || \
-         defined(HAVE_RENESAS_SYNC)  || defined(WOLFSSL_CAAM)) || \
+         defined(HAVE_RENESAS_SYNC)  || defined(WOLFSSL_CAAM) || \
+         defined(BENCH_DEVID)) || \
          ((defined(WOLFSSL_MAX3266X) || defined(WOLFSSL_MAX3266X_OLD)) && \
          defined(WOLF_CRYPTO_CB)) && !defined(NO_HW_BENCH)
         bench_aes_aad_options_wrap(bench_aesgcm, 1);
@@ -3296,7 +3302,9 @@ static void* benchmarks_do(void* args)
 #endif
 #ifdef WOLFSSL_AES_COUNTER
     if (bench_all || (bench_cipher_algs & BENCH_AES_CTR)) {
+    #ifndef NO_SW_BENCH
         bench_aesctr(0);
+    #endif
     #ifdef BENCH_DEVID
         bench_aesctr(1);
     #endif
@@ -3832,7 +3840,9 @@ static void* benchmarks_do(void* args)
 
 #ifdef HAVE_CURVE25519
     if (bench_all || (bench_asym_algs & BENCH_CURVE25519_KEYGEN)) {
+    #ifndef NO_SW_BENCH
         bench_curve25519KeyGen(0);
+    #endif
     #ifdef BENCH_DEVID
         bench_curve25519KeyGen(1);
     #endif
@@ -8629,7 +8639,7 @@ void bench_srtpkdf(void)
     const byte *key = bench_key_buf;
     const byte salt[14] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                            0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e };
-    const byte index[6] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
+    const byte idx[6] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
     int kdrIdx = 0;
     int i;
     DECLARE_MULTI_VALUE_STATS_VARS()
@@ -8639,7 +8649,7 @@ void bench_srtpkdf(void)
     do {
         for (i = 0; i < numBlocks * 1000; i++) {
             ret = wc_SRTP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
-                kdrIdx, index, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
+                kdrIdx, idx, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
                 keyS, sizeof(keyS));
             RECORD_MULTI_VALUE_STATS();
         }
@@ -8662,7 +8672,7 @@ void bench_srtpkdf(void)
     do {
         for (i = 0; i < numBlocks * 1000; i++) {
             ret = wc_SRTP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
-                kdrIdx, index, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
+                kdrIdx, idx, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
                 keyS, sizeof(keyS));
             RECORD_MULTI_VALUE_STATS();
         }
@@ -8685,7 +8695,7 @@ void bench_srtpkdf(void)
     do {
         for (i = 0; i < numBlocks * 1000; i++) {
             ret = wc_SRTCP_KDF(key, AES_128_KEY_SIZE, salt, sizeof(salt),
-                kdrIdx, index, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
+                kdrIdx, idx, keyE, AES_128_KEY_SIZE, keyA, sizeof(keyA),
                 keyS, sizeof(keyS));
             RECORD_MULTI_VALUE_STATS();
         }
@@ -8708,7 +8718,7 @@ void bench_srtpkdf(void)
     do {
         for (i = 0; i < numBlocks * 1000; i++) {
             ret = wc_SRTCP_KDF(key, AES_256_KEY_SIZE, salt, sizeof(salt),
-                kdrIdx, index, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
+                kdrIdx, idx, keyE, AES_256_KEY_SIZE, keyA, sizeof(keyA),
                 keyS, sizeof(keyS));
             RECORD_MULTI_VALUE_STATS();
         }

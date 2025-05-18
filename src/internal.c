@@ -11810,6 +11810,10 @@ static int GetDtlsRecordHeader(WOLFSSL* ssl, word32* inOutIdx,
     *inOutIdx += ENUM_LEN + VERSION_SZ;
     ato16(ssl->buffers.inputBuffer.buffer + *inOutIdx, &ssl->keys.curEpoch);
 
+    if (rh->pvMajor == DTLS_MAJOR && rh->pvMinor == DTLS_BOGUS_MINOR) {
+        return SEQUENCE_ERROR;
+    }
+
 #ifdef WOLFSSL_DTLS_CID
     if (rh->type == dtls12_cid && (cidSz = DtlsGetCidRxSize(ssl)) == 0)
         return DTLS_CID_ERROR;
@@ -19081,7 +19085,7 @@ static int Poly1305TagOld(WOLFSSL* ssl, byte* additional, int additionalSz,
 
     /* length of additional input plus padding */
     XMEMSET(padding, 0, sizeof(padding));
-    padding[0] = additionalSz;
+    padding[0] = (byte)additionalSz;
     if ((ret = wc_Poly1305Update(ssl->auth.poly1305, padding,
                     sizeof(padding))) != 0)
         return ret;
@@ -19163,7 +19167,8 @@ int ChachaAEADEncrypt(WOLFSSL* ssl, byte* out, const byte* input,
     }
 #endif
 
-    addSz = writeAeadAuthData(ssl, msgLen, type, add, 0, &seq, verifyOrder);
+    addSz = writeAeadAuthData(ssl, (word16)msgLen, type, add, 0, &seq,
+        verifyOrder);
     if (addSz < 0)
         return addSz;
 
@@ -19358,7 +19363,8 @@ int ChachaAEADDecrypt(WOLFSSL* ssl, byte* plain, const byte* input,
 #endif
 
 
-    addSz = writeAeadAuthData(ssl, msgLen, no_type, add, 1, &seq, PEER_ORDER);
+    addSz = writeAeadAuthData(ssl, (word16)msgLen, no_type, add, 1, &seq,
+        PEER_ORDER);
     if (addSz < 0)
         return addSz;
 
@@ -20990,6 +20996,7 @@ int TimingPadVerify(WOLFSSL* ssl, const byte* input, int padLen, int macSz,
     byte good;
     int  ret = 0;
 
+    XMEMSET(verify, 0, WC_MAX_DIGEST_SIZE);
     good = MaskPadding(input, pLen, macSz);
     /* 4th argument has potential to underflow, ssl->hmac function should
      * either increment the size by (macSz + padLen + 1) before use or check on
@@ -21623,6 +21630,7 @@ static WC_INLINE int VerifyMac(WOLFSSL* ssl, const byte* input, word32 msgSz,
     byte   verify[WC_MAX_DIGEST_SIZE];
 
     XMEMSET(verify, 0, WC_MAX_DIGEST_SIZE);
+
     if (ssl->specs.cipher_type == block) {
         pad = input[msgSz - 1];
         padByte = 1;
