@@ -31,6 +31,8 @@
 /* Reminder: settings.h pulls in user_settings.h                         */
 /*   Do not explicitly include user_settings.h here.                     */
 #include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
+#include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
 /* Espressif */
 #include <esp_log.h>
@@ -91,6 +93,8 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 /* Bundle debug may come from user_settings.h and/or sdkconfig.h */
 #if defined(CONFIG_WOLFSSL_DEBUG_CERT_BUNDLE) || \
     defined(       WOLFSSL_DEBUG_CERT_BUNDLE)
+    /* someplace to store result of wc_ErrorString(err, string) */
+    char last_esp_crt_bundle_error[WOLFSSL_MAX_ERROR_SZ];
     /* We'll only locally check this one: */
     #undef         WOLFSSL_DEBUG_CERT_BUNDLE
     #define        WOLFSSL_DEBUG_CERT_BUNDLE
@@ -173,7 +177,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
 
 /* A "Certificate Bundle" is this array of [size] + [x509 CA List]
  * certs that the client trusts: */
-#if WOLFSSL_USE_ASM_CERT
+#if !defined(NO_WOLFSSL_USE_ASM_CERT)
     extern const uint8_t x509_crt_imported_bundle_wolfssl_bin_start[]
                          asm("_binary_x509_crt_bundle_wolfssl_start");
 
@@ -457,7 +461,8 @@ static CB_INLINE int cert_manager_load(int preverify,
         }
     }
     else {
-        ESP_LOGE(TAG, "Failed to load CA");
+        ESP_LOGE(TAG, "Failed to load CA, ret = %d", ret);
+        SHOW_WOLFSSL_BUNDLE_ERROR(ret);
     }
 
     /* We don't free the issue and subject, as they are
@@ -865,6 +870,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
             if (ret == WOLFSSL_FAILURE) {
                 ESP_LOGW(TAG, "Warning: found a matching cert, but not added "
                               "to the Certificate Manager. error: %d", ret);
+                SHOW_WOLFSSL_BUNDLE_ERROR(ret);
             }
             else {
                 ESP_LOGCBI(TAG, "New CA added to the Certificate Manager.");
@@ -1456,6 +1462,9 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     ESP_LOGCBI(TAG, "Enter esp_crt_bundle_attach");
     /* If no bundle has been set by the user,
      * then use the bundle embedded in the binary */
+#ifdef PLATFORMIO
+    ESP_LOGW(TAG, "Found PLATFORMIO, beware of alternate cert bundles.");
+#endif
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGCBI(TAG, "No bundle set by user; using the embedded binary.");
         ESP_LOGCBI(TAG, "x509_crt_imported_bundle_wolfssl_bin_start 0x%x",
@@ -1486,6 +1495,13 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     else {
         ESP_LOGCBI(TAG, "Cert bundle set by user at 0x%x.",
                        (intptr_t)s_crt_bundle.crts);
+    }
+
+    if (((uintptr_t)x509_crt_imported_bundle_wolfssl_bin_start % 4) == 0) {
+        ESP_LOGCBI(TAG, "Confirmed alignment x509_crt_imported_bundle_wolfssl");
+    }
+    else {
+        ESP_LOGCBI(TAG, "Not aligned: x509_crt_imported_bundle_wolfssl");
     }
 
     if (ret == ESP_OK) {
