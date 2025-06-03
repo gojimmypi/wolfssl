@@ -42,33 +42,43 @@ namespace wolfSSL.CSharp
          */
 #if WindowsCE
         /// <summary>
-        /// Convert unicode string to ASCII
+        /// Convert MBCS (8-bit single/multi byte) to Wide Char/Unicode (16-bit) character set
         /// </summary>
-        public static string UnicodeToAscii(string msg)
+        public static string MultiByteToWideChar(string msg)
         {
             if (msg == null)
                 return null;
-            /* Convert Unicode to Bytes */
+            /* Convert to Byte Array */
             byte[] bytes = Encoding.Unicode.GetBytes((string)msg.ToString());
-            /* Convert to ASCII */
-            return Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+            /* Convert to String */
+            string ret = Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+            /* Remove possible extra null terminator */
+            int len = 0;
+            while (len < ret.Length && ret[len] != 0) len++;
+            return ret.Substring(0, len);
         }
 
         /// <summary>
-        /// Convert string to Unicode
+        /// Convert Unicode/Wide Char (16-bit) to MBCS (8-bit single/multi byte) character set
         /// </summary>
-        public static string AsciiToUnicode(string msg)
+        public static string WideCharToMultiByte(string msg)
         {
             if (msg == null)
                 return null;
-            /* Convert ASCII to Bytes */
-            byte[] bytes = Encoding.ASCII.GetBytes((string)msg.ToString());
-            /* Convert to Unicode */
+            /* Get length and round up to even for multibyte / unicode */
+            int msgLen = msg.Length;
+            msgLen = ((msgLen + 1) & ~1);
+            byte[] bytes = new byte[msgLen];
+            /* Convert to Byte Array */
+            byte[] msgBytes = Encoding.ASCII.GetBytes((string)msg.ToString());
+            msgBytes.CopyTo(bytes, 0);
+            /* Convert to String */
             return Encoding.Unicode.GetString(bytes, 0, bytes.Length);
         }
 
         /// <summary>
-        /// WinCE version of Marshal for Unicode or Multi-byte pointer to ASCII string
+        /// WinCE version of Marshal for Multi-byte pointer to ASCII string
+        /// Similar conversion used in MultiByteToWideChar, but input is IntPtr
         /// </summary>
         public static string PtrToStringAnsi(IntPtr ptr)
         {
@@ -570,7 +580,7 @@ namespace wolfSSL.CSharp
          */
 #if WindowsCE
         [DllImport(wolfssl_dll)]
-        private extern static IntPtr wolfSSL_ERR_error_string(uint err, StringBuilder errOut);
+        private extern static IntPtr wolfSSL_ERR_reason_error_string(uint err);
         [DllImport(wolfssl_dll)]
         private extern static int wolfSSL_get_error(IntPtr ssl, int err);
         public delegate void loggingCb(int lvl, string msg);
@@ -582,7 +592,7 @@ namespace wolfSSL.CSharp
         private extern static int wolfSSL_SetLoggingCb(loggingCb vc);
 #else
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private extern static IntPtr wolfSSL_ERR_error_string(uint err, StringBuilder errOut);
+        private extern static IntPtr wolfSSL_ERR_reason_error_string(uint err);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_get_error(IntPtr ssl, int err);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -1597,7 +1607,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_use_psk_identity_hint(local_ctx, wolfssl.AsciiToUnicode(hint));
+                return wolfSSL_CTX_use_psk_identity_hint(local_ctx, wolfssl.WideCharToMultiByte(hint));
             #else
                 return wolfSSL_CTX_use_psk_identity_hint(local_ctx, hint);
             #endif
@@ -1888,7 +1898,7 @@ namespace wolfSSL.CSharp
                     return null;
 
         #if WindowsCE
-                return wolfssl.UnicodeToAscii(ciphers);
+                return wolfssl.MultiByteToWideChar(ciphers);
         #else
                 return ciphers.ToString();
         #endif
@@ -2160,7 +2170,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_set_cipher_list(local_ctx, wolfssl.AsciiToUnicode(list));
+                return wolfSSL_CTX_set_cipher_list(local_ctx, wolfssl.WideCharToMultiByte(list));
             #else
                 return wolfSSL_CTX_set_cipher_list(local_ctx, list);
             #endif
@@ -2195,7 +2205,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_set_cipher_list(sslCtx, wolfssl.AsciiToUnicode(list));
+                return wolfSSL_set_cipher_list(sslCtx, wolfssl.WideCharToMultiByte(list));
             #else
                 return wolfSSL_set_cipher_list(sslCtx, list);
             #endif
@@ -2254,10 +2264,6 @@ namespace wolfSSL.CSharp
 
             try
             {
-                int err;
-                StringBuilder err_name;
-                StringBuilder ret;
-
                 IntPtr sslCtx = unwrap_ssl(ssl);
                 if (sslCtx == IntPtr.Zero)
                 {
@@ -2265,14 +2271,10 @@ namespace wolfSSL.CSharp
                     return null;
                 }
 
-                /* wolfSSL max error length is 80 */
-                ret = new StringBuilder(' ', 100);
-                err = wolfSSL_get_error(sslCtx, 0);
-                err_name = new StringBuilder(new String(' ', 80));
-                wolfSSL_ERR_error_string((uint)err, err_name);
-                ret.Append("Error " + err + " " + err_name.ToString());
-
-                return ret.ToString();
+                int err = wolfSSL_get_error(sslCtx, 0);
+                IntPtr err_ptr = wolfSSL_ERR_reason_error_string((uint)err);
+                string err_str = wolfssl.PtrToStringAnsi(err_ptr);
+                return "Error " + err + " " + err_str;
             }
             catch (Exception e)
             {
@@ -2301,7 +2303,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_use_certificate_file(local_ctx, wolfssl.AsciiToUnicode(fileCert), type);
+                return wolfSSL_CTX_use_certificate_file(local_ctx, wolfssl.WideCharToMultiByte(fileCert), type);
             #else
                 return wolfSSL_CTX_use_certificate_file(local_ctx, fileCert, type);
             #endif
@@ -2333,7 +2335,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_load_verify_locations(local_ctx, wolfssl.AsciiToUnicode(fileCert), wolfssl.AsciiToUnicode(path));
+                return wolfSSL_CTX_load_verify_locations(local_ctx, wolfssl.WideCharToMultiByte(fileCert), wolfssl.WideCharToMultiByte(path));
             #else
                 return wolfSSL_CTX_load_verify_locations(local_ctx, fileCert, path);
             #endif
@@ -2364,7 +2366,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_use_PrivateKey_file(local_ctx, wolfssl.AsciiToUnicode(fileKey), type);
+                return wolfSSL_CTX_use_PrivateKey_file(local_ctx, wolfssl.WideCharToMultiByte(fileKey), type);
             #else
                 return wolfSSL_CTX_use_PrivateKey_file(local_ctx, fileKey, type);
             #endif
@@ -2400,7 +2402,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_SetTmpDH_file(sslCtx, wolfssl.AsciiToUnicode(dhparam), file_type);
+                return wolfSSL_SetTmpDH_file(sslCtx, wolfssl.WideCharToMultiByte(dhparam), file_type);
             #else
                 return wolfSSL_SetTmpDH_file(sslCtx, dhparam, file_type);
             #endif
@@ -2435,7 +2437,7 @@ namespace wolfSSL.CSharp
                 }
 
             #if WindowsCE
-                return wolfSSL_CTX_SetTmpDH_file(local_ctx, wolfssl.AsciiToUnicode(dhparam), file_type);
+                return wolfSSL_CTX_SetTmpDH_file(local_ctx, wolfssl.WideCharToMultiByte(dhparam), file_type);
             #else
                 return wolfSSL_CTX_SetTmpDH_file(local_ctx, dhparam, file_type);
             #endif
