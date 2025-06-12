@@ -1,4 +1,4 @@
-/* test_dtls.h
+/* test_x509.h
  *
  * Copyright (C) 2006-2025 wolfSSL Inc.
  *
@@ -19,22 +19,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#ifndef TESTS_API_DTLS_H
-#define TESTS_API_DTLS_H
+#ifndef WOLFCRYPT_TEST_X509_H
+#define WOLFCRYPT_TEST_X509_H
 
-int test_dtls12_basic_connection_id(void);
-int test_dtls13_basic_connection_id(void);
-int test_wolfSSL_dtls_cid_parse(void);
-int test_wolfSSL_dtls_set_pending_peer(void);
-int test_dtls13_epochs(void);
-int test_dtls13_ack_order(void);
-int test_dtls_version_checking(void);
-int test_dtls_short_ciphertext(void);
-int test_dtls12_record_length_mismatch(void);
-int test_dtls12_short_read(void);
-int test_dtls13_longer_length(void);
-int test_dtls13_short_read(void);
-int test_records_span_network_boundaries(void);
-int test_dtls_record_cross_boundaries(void);
-int test_dtls_rtx_across_epoch_change(void);
-#endif /* TESTS_API_DTLS_H */
+int test_x509_rfc2818_verification_callback(void);
+
+#define TEST_X509_DECLS                                                        \
+    TEST_DECL_GROUP("x509", test_x509_rfc2818_verification_callback)
+
+#endif /* WOLFCRYPT_TEST_X509_H */

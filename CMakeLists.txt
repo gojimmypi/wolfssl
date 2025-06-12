@@ -124,6 +124,7 @@ check_function_exists("memset" HAVE_MEMSET)
 check_function_exists("socket" HAVE_SOCKET)
 check_function_exists("strftime" HAVE_STRFTIME)
 check_function_exists("__atomic_fetch_add" HAVE_C___ATOMIC)
+check_function_exists("getpid" HAVE_GETPID)
 
 include(CheckSymbolExists)
 check_symbol_exists(isascii "ctype.h" HAVE_ISASCII)
@@ -2634,6 +2635,7 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_evp.c
         tests/api/test_tls_ext.c
         tests/api/test_tls.c
+        tests/api/test_x509.c
         tests/srp.c
         tests/suites.c
         tests/w64wrapper.c

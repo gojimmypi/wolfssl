@@ -34,6 +34,11 @@
 #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
+#ifndef SHOW_WOLFSSL_BUNDLE_ERROR
+    #define SHOW_WOLFSSL_BUNDLE_ERROR(X) ESP_LOGV(TAG, \
+           "SHOW_WOLFSSL_BUNDLE_ERROR not enabled, details suppressed.");
+#endif
+
 /* Espressif */
 #include <esp_log.h>
 
@@ -1381,7 +1386,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
             /* Useful only for custom cert bundle, known to have no zeros. */
             if (wolfssl_is_zero_serial_number(cur_crt + CRT_HEADER_OFFSET,
                                                  cert_len) > 0) {
-    #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL) || \
+    #if defined(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL)     || \
             defined(       WOLFSSL_ASN_ALLOW_0_SERIAL) || \
             defined(CONFIG_WOLFSSL_NO_ASN_STRICT)      || \
             defined(       WOLFSSL_NO_ASN_STRICT)
@@ -1396,6 +1401,7 @@ static esp_err_t wolfssl_esp_crt_bundle_init(const uint8_t *x509_bundle,
         #elif defined(       WOLFSSL_NO_ASN_STRICT)
                 ESP_LOGCBW(TAG, "Allowing zero serial, no ASN Strict setting.");
         #else
+                /* Unless explicitly allowed, wolfSSL will reject zero serial */
                 ESP_LOGW(TAG, "Certificate has zero serial number!");
         #endif /* zero serial check message, why allowed per setting */
     #else
@@ -1463,7 +1469,7 @@ esp_err_t esp_crt_bundle_attach(void *conf)
     /* If no bundle has been set by the user,
      * then use the bundle embedded in the binary */
 #ifdef PLATFORMIO
-    ESP_LOGW(TAG, "Found PLATFORMIO, beware of alternate cert bundles.");
+    ESP_LOGCBW(TAG, "Found PLATFORMIO, beware of alternate cert bundles.");
 #endif
     if (s_crt_bundle.crts == NULL) {
         ESP_LOGCBI(TAG, "No bundle set by user; using the embedded binary.");
