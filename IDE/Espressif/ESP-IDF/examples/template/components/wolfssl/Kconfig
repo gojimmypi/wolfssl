@@ -455,6 +455,12 @@ menu "wolfSSL"
             help
                 Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
 
+        config WOLFSSL_EXAMPLE_VERBOSITY
+            bool "Enable example verbosity"
+            default n
+            help
+                This is only intended to be used with examples. Excessive verbosity may have undesired effects on timing-critical code.
+
         config ESP_WOLFSSL_NO_STACK_SIZE_BUILD_WARNING
             bool "Suppress build-time warnings for main stack size"
             default n
