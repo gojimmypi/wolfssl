@@ -323,6 +323,13 @@ menu "wolfSSL"
                 default 200
                 depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
 
+            config ESP_WOLFSSL_DEBUG_CERT_BUNDLE
+                bool "Enable certificate bundle debug"
+                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                default n
+                help
+                    View debug messages for cert bundle processing.
+
         endmenu
     endmenu # wolfSSL ESP-TLS
     # -----------------------------------------------------------------------------------------------------------------
