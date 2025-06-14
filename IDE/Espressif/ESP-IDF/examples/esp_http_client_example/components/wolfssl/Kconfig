@@ -1,6 +1,6 @@
 # Kconfig template
 #
-# Copyright (C) 2006-2024 wolfSSL Inc.  All rights reserved.
+# Copyright (C) 2006-2025 wolfSSL Inc.
 #
 # This file is part of wolfSSL.
 #
@@ -41,7 +41,7 @@
 # The maximum length of options is NOT 50 characters as documented.
 #   kconfcheck will complain that options should be 40 at most.
 #
-# Fix option lengths first. Superflous errors on other lines may occur.
+# Fix option lengths first. Superfluous errors on other lines may occur.
 #
 # The maximum length of lines is 120 characters.
 #
@@ -274,10 +274,28 @@ menu "wolfSSL"
                     bool "Do not use the default certificate bundle"
             endchoice
 
+            config WOLFSSL_ALTERNATE_CERTIFICATE_BUNDLE
+                depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
+                default n
+                bool "Use alternate certificate bundle"
+                help
+                    Typically only used for PlatformIO which cannot generate a certificate bundle at build time.
+                    Enable this option to specify a fixed wolfSSL certificate file path and file name.
+
+            config WOLFSSL_ALTERNATE_CERTIFICATE_BUNDLE_PATH_AND_NAME
+                depends on WOLFSSL_ALTERNATE_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
+                string "Default certificate bundle alternate path and name"
+                default "./certs/x509_crt_bundle_wolfssl"
+                help
+                    Name of the default certificate bundle directory. Typically used only with PlatformIO.
+                    Reminder PlatformIO cannot generate a bundle from cmake python script call. Relative
+                    paths are with respect to root of this project.
+
             config WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE
                 depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
                 default n
                 bool "Add custom certificates to the default bundle"
+
             config WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE_PATH
                 depends on WOLFSSL_CUSTOM_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
                 string "Custom certificate bundle path"
@@ -304,6 +322,13 @@ menu "wolfSSL"
                 int "Maximum no of certificates allowed in certificate bundle"
                 default 200
                 depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
+
+            config ESP_WOLFSSL_DEBUG_CERT_BUNDLE
+                bool "Enable certificate bundle debug"
+                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                default n
+                help
+                    View debug messages for cert bundle processing.
 
         endmenu
     endmenu # wolfSSL ESP-TLS
@@ -401,24 +426,25 @@ menu "wolfSSL"
                 when performance is critical. See also metrics for counting instances.
 
     endmenu # wolfSSL Hardware Acceleration
-    # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
-    menu "wolfSSL Experimental Options"
 
-        config ESP_WOLFSSL_EXPERIMENTAL_SETTINGS
-            bool "Enable wolfSSL Experimental Settings"
+    # -----------------------------------------------------------------------------------------------------------------
+    menu "wolfSSL Post Quantum Kyber KEM PQ"
+
+        config ESP_WOLFSSL_ENABLE_MLKEM
+            bool "Enable ML-KEM (Kyber Post Quantum)"
             default n
             help
-                Enables experimental settings for wolfSSL. See documentation.
+                bool "Enable wolfSSL ML-KEM"
 
-        config ESP_WOLFSSL_ENABLE_KYBER
-            bool "Enable wolfSSL Kyber"
+        config WOLFSSL_ENABLE_KYBER
+            bool "Enable Kyber (Round 3)"
             default n
             help
-                Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
+                Enable old compatibility with Kyber Round 3 (enables experimental settings)
 
-    endmenu # wolfSSL Experimental Options
+    endmenu # wolfSSL Post Quantum Kyber KEM PQ
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
@@ -429,12 +455,29 @@ menu "wolfSSL"
             help
                 Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
 
+        config WOLFSSL_EXAMPLE_VERBOSITY
+            bool "Enable example verbosity"
+            default n
+            help
+                This is only intended to be used with examples. Excessive verbosity may have undesired effects on timing-critical code.
+
+        config ESP_WOLFSSL_NO_STACK_SIZE_BUILD_WARNING
+            bool "Suppress build-time warnings for main stack size"
+            default n
+            help
+                Useful only when wolfSSL is running in main task. See FreeRTOS stack size for custom tasks.
+
         config ESP_WOLFSSL_TEST_LOOP
             bool "Run test apps in a loop until failure"
             default y
             help
                 Enable a loop wrapper for benchmark, http_client, and wolfssl test apps.
 
+        config ESP_WOLFSSL_EXPERIMENTAL_SETTINGS
+            bool "Enable wolfSSL Experimental Settings"
+            default n
+            help
+                Enables experimental settings for wolfSSL. See documentation.
     endmenu # wolfSSL Debug Options
     # -----------------------------------------------------------------------------------------------------------------
 

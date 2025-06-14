@@ -1,3 +1,27 @@
+Lastest Master:
+
+```bash
+cd /mnt/c/workspace/wolfssl-gojimmypi/IDE/Espressif/ESP-IDF/examples/esp_http_client_example
+
+# working
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-master/esp-idf/v5.3-master
+
+# PR
+WRK_IDF_PATH=/mnt/c/SysGCC/esp32-master/esp-idf/master-pr
+
+pushd $WRK_IDF_PATH
+# install if needed
+# ./install.sh
+
+. ./export.sh
+popd
+
+idf.py set-target esp32
+idf.py erase-flash -p /dev/ttyS19 -b 230400
+idf.py build flash -p /dev/ttyS19 -b 230400 monitor -b 115200
+```
+
+
 How to build WSL ESP-IDF based project
 =====================================
 

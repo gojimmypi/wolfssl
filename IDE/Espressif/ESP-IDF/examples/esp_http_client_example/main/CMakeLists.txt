@@ -1,6 +1,7 @@
 # Embed the server root certificate into the final binary
 #
 # (If this was a component, we would set COMPONENT_EMBED_TXTFILES here.)
+# For PlatformIO, see platformio.ini for embeds
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
 set(requires "")
