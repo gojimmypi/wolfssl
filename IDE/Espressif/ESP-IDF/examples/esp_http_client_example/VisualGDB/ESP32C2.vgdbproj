@@ -22,7 +22,7 @@
   <Build xsi:type="com.visualgdb.build.cmake">
     <BuildLogMode xsi:nil="true" />
     <ToolchainID>
-      <ID>com.visualgdb.xtensa-esp32-elf</ID>
+      <ID>SysGCC-xtensa-esp32-elf-master</ID>
       <Version>
         <GCC>13.2.0</GCC>
         <GDB>12.1</GDB>
@@ -82,14 +82,14 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>master</Version>
-          <Subdirectory>esp-idf/v5.2-master</Subdirectory>
+          <Subdirectory>esp-idf/v5.3-master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM3</COMPort>
+        <COMPort>COM19</COMPort>
         <BaudRate> 230400</BaudRate>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>true</UseCCache>
-        <DeviceID>ESP32C2</DeviceID>
+        <DeviceID>ESP32</DeviceID>
       </ESPIDFExtension>
       <DetectMissingSolutionConfigurations>false</DetectMissingSolutionConfigurations>
     </ProjectModeSettings>
@@ -110,9 +110,9 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM3</ComPortName>
+      <ComPortName>COM19</ComPortName>
       <AdvancedSettings>
-        <BaudRate>74880</BaudRate>
+        <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
         <Parity>None</Parity>
         <StopBits>One</StopBits>
@@ -235,6 +235,7 @@
       <EnableAsyncExecutionMode>false</EnableAsyncExecutionMode>
       <AsyncModeSupportsBreakpoints>true</AsyncModeSupportsBreakpoints>
       <TemporaryBreakConsolidationTimeout>0</TemporaryBreakConsolidationTimeout>
+      <BacktraceFrameLimit>0</BacktraceFrameLimit>
       <EnableNonStopMode>false</EnableNonStopMode>
       <MaxBreakpointLimit>0</MaxBreakpointLimit>
       <EnableVerboseMode>true</EnableVerboseMode>
