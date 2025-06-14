@@ -48,6 +48,7 @@ set(THIS_ESP_TLS "")
 # LIBWOLFSSL_CMAKE_OUTPUT can be printed at runtime
 set(LIBWOLFSSL_CMAKE_OUTPUT "")
 
+set(git_cmd "git")
 
 if(CMAKE_BUILD_EARLY_EXPANSION)
     message(STATUS "Skipping libwolfssl_output.h update during CMAKE_BUILD_EARLY_EXPANSION")
@@ -1172,6 +1173,13 @@ message(STATUS "Checking for macro definitions:")
 if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT AND (IS_GIT_REPO STREQUAL "true"))
     set (git_cmd "git")
     message(STATUS "Adding macro definitions:")
+
+    # LIBWOLFSSL_VERSION_GIT_TAG: git config describe --tags --abbrev=0
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "describe" "--tags" "--abbrev=0"
+                    OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
+    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_TAG "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_ORIGIN: git config --get remote.origin.url
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url"
