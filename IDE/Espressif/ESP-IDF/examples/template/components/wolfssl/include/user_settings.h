@@ -88,7 +88,17 @@
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
 /* Turn on messages that are useful to see only in examples. */
-#define WOLFSSL_EXAMPLE_VERBOSITY
+#if defined(CONFIG_WOLFSSL_EXAMPLE_VERBOSITY) && \
+            CONFIG_WOLFSSL_EXAMPLE_VERBOSITY
+    #undef         WOLFSSL_EXAMPLE_VERBOSITY
+    #define        WOLFSSL_EXAMPLE_VERBOSITY
+#endif
+
+#if defined(CONFIG_WOLFSSL_ALT_CERT_CHAINS) && \
+            CONFIG_WOLFSSL_ALT_CERT_CHAINS
+    #undef         WOLFSSL_ALT_CERT_CHAINS
+    #define        WOLFSSL_ALT_CERT_CHAINS
+#endif
 
 /* Paths can be long, ensure the entire value printed during debug */
 #define WOLFSSL_MAX_ERROR_SZ 500
@@ -786,8 +796,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
