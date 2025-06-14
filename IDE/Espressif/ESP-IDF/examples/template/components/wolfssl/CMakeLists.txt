@@ -110,50 +110,53 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUTPUT THIS_VAR VAR_RESULT )
     # if we had a successful operation, save the THIS_VAR in VAR_OUTPUT
     if(${IS_VALID_VALUE})
 
-    if(0)
-        # Optional debug
-        message(STATUS "Looking for LF in ${THIS_VAR}")
-    endif()
+        if(0)
+            # Optional debug
+            message(STATUS "Looking for LF in ${THIS_VAR}")
+        endif()
 
-    # Check if the text to print in THIS_VAR is multi-line
-    string(REPLACE "\n" ";" LINES "${THIS_VAR}")
-    list(LENGTH LINES LINE_COUNT)
+        # Check if the text to print in THIS_VAR is multi-line
+        string(REPLACE "\r" ""  THIS_VAR "${THIS_VAR}")
+        string(REPLACE "\n" ";" LINES    "${THIS_VAR}")
+        list(LENGTH LINES LINE_COUNT)
 
-    # Save var to "libwolfssl_output.h" header if multi-line, otherwise a simple compile def
-    if(LINE_COUNT GREATER 1)
-        message(STATUS "Setting HAVE_LIBWOLFSSL_OUTPUT_HEADER=1 for ${VAR_OUTPUT}")
-        add_compile_definitions(HAVE_LIBWOLFSSL_OUTPUT_HEADER=1)
-        file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "#undef  ${VAR_OUTPUT}\n")
-        file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "#define ${VAR_OUTPUT} \\\n")
+        # Save var to "libwolfssl_output.h" header if multi-line, otherwise a simple compile def
+        if(LINE_COUNT GREATER 1)
+            message(STATUS "Setting HAVE_LIBWOLFSSL_OUTPUT_HEADER=1 for ${VAR_OUTPUT}")
+            add_compile_definitions(HAVE_LIBWOLFSSL_OUTPUT_HEADER=1)
+            file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "#undef  ${VAR_OUTPUT}\n")
+            file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "#define ${VAR_OUTPUT} \\\n")
 
-        # Split into lines
-        string(REPLACE "\n" ";" LINES "${THIS_VAR}")
-        foreach(LINE IN LISTS LINES)
-            file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "\"${LINE}\\n\" \\\n")
-        endforeach()
+            # Split into lines
+            string(REPLACE "\n" ";" LINES "${THIS_VAR}")
+            foreach(LINE IN LISTS LINES)
+                file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "\"${LINE}\\n\" \\\n")
+            endforeach()
 
-        # Final empty line to close the macro
-        file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "\n")
+            # Final empty line to close the macro
+            file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "\n")
 
-        message(STATUS "COMPONENT_LIB=${COMPONENT_LIB}")
-        target_include_directories(${COMPONENT_LIB} PRIVATE "${CMAKE_BINARY_DIR}")
-    else()
-        message(STATUS "No HAS_LIBWOLFSSL_OUTPUT_HEADER")
-        # We should not have any, but just to be sure:
-        # Strip newline chars in THIS_VAR parameter and save in VAR_VALUE
-        string(REPLACE "\n" ""  VAR_VALUE  "${THIS_VAR}")
+            message(STATUS "COMPONENT_LIB=${COMPONENT_LIB}")
+            target_include_directories(${COMPONENT_LIB} PRIVATE "${CMAKE_BINARY_DIR}")
+        else()
+            message(STATUS "Result line count=${LINE_COUNT}; Not setting HAS_LIBWOLFSSL_OUTPUT_HEADER")
+            # We should not have any, but just to be sure:
+            # Strip newline chars in THIS_VAR parameter and save in VAR_VALUE
+            string(REPLACE "\n" ""  THIS_VAR   "${THIS_VAR}")
+            string(REPLACE "\r" ""  VAR_VALUE  "${THIS_VAR}")
 
-        # we'll could percolate the value to the parent for possible later use
-        # set(${VAR_OUTPUT} ${VAR_VALUE} PARENT_SCOPE)
 
-        # but we're only using it here in this function
-        set(${VAR_OUTPUT} ${VAR_VALUE})
+            # we'll could percolate the value to the parent for possible later use
+            # set(${VAR_OUTPUT} ${VAR_VALUE} PARENT_SCOPE)
 
-        # we'll print what we found to the console
-        message(STATUS "Found ${VAR_OUTPUT}=${VAR_VALUE}")
+            # but we're only using it here in this function
+            set(${VAR_OUTPUT} ${VAR_VALUE})
 
-        # the interesting part is defining the VAR_OUTPUT name a value to use in the app
-        add_compile_definitions(${VAR_OUTPUT}=\"${VAR_VALUE}\")
+            # we'll print what we found to the console
+            message(STATUS "Found ${VAR_OUTPUT}=${VAR_VALUE}")
+
+            # the interesting part is defining the VAR_OUTPUT name a value to use in the app
+            add_compile_definitions(${VAR_OUTPUT}=\"${VAR_VALUE}\")
 
         endif()
     else()
@@ -1154,16 +1157,18 @@ if( EXISTS "${WOLFSSL_PROJECT_DIR}" AND EXISTS "$ENV{IDF_PATH}/components/wolfss
 endif()
 # end multiple component check
 
-
+message(STATUS "Checking for github with git_cmd='${git_cmd}' ...")
 execute_process(
     COMMAND ${git_cmd} "rev-parse" "--is-inside-work-tree"
     OUTPUT_VARIABLE IS_GIT_REPO
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
 )
+message(STATUS "Checking for github result IS_GIT_REPO='${IS_GIT_REPO}'")
 
 # create some programmatic #define values that will be used by ShowExtendedSystemInfo().
 # see wolfcrypt\src\port\Espressif\esp32_utl.c
+message(STATUS "Checking for macro definitions:")
 if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT AND (IS_GIT_REPO STREQUAL "true"))
     set (git_cmd "git")
     message(STATUS "Adding macro definitions:")
@@ -1171,32 +1176,45 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT AND (IS_GIT_REPO STREQUAL "t
     # LIBWOLFSSL_VERSION_GIT_ORIGIN: git config --get remote.origin.url
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "--get" "remote.origin.url"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_ORIGIN "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_BRANCH: git rev-parse --abbrev-ref HEAD
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--abbrev-ref" "HEAD"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_BRANCH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_HASH: git rev-parse HEAD
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "HEAD"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_SHORT_HASH: git rev-parse --short HEAD
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "rev-parse" "--short" "HEAD"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_SHORT_HASH "${TMP_OUT}" "${TMP_RES}")
 
     # LIBWOLFSSL_VERSION_GIT_HASH_DATE git show --no-patch --no-notes --pretty=\'\%cd\'
     execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd}
                     "show" "--no-patch" "--no-notes" "--pretty=\'\%cd\'"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES  )
+    string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
+    string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
     LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_GIT_HASH_DATE "${TMP_OUT}" "${TMP_RES}")
 
-    LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_WOLFSSL_ROOT "${WOLFSSL_ROOT}" "${TMP_RES}")
-
+else()
+    message(STATUS "CMAKE_BUILD_EARLY_EXPANSION=${CMAKE_BUILD_EARLY_EXPANSION}; WOLFSSL_ROOT=${WOLFSSL_ROOT}; IS_GIT_REPO=${IS_GIT_REPO};")
 endif()
+
+LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_WOLFSSL_ROOT "${WOLFSSL_ROOT}" "0")
+LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_VERSION_IDF_PATH     "${THIS_IDF_PATH}}" "0")
 
 # Ensure flag "-DWOLFSSL_ESPIDF" is already in CMAKE_C_FLAGS if not yet found from project
 string(FIND "${CMAKE_C_FLAGS}" "-DWOLFSSL_ESPIDF" FLAG_ALRREADY_FOUND_WOLFSSL_ESPIDF)
