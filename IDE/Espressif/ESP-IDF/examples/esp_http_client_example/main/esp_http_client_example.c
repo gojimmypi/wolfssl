@@ -37,6 +37,26 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 
+/* Espressif */
+#include <esp_log.h>
+
+/* wolfSSL */
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+#else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
+
 #include "esp_http_client.h"
 
 /* set to 0 for one test,
@@ -1086,11 +1106,13 @@ void app_main(void)
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
     esp_DisableWatchdog();
 #endif
-    ESP_LOGI(TAG, ">>>>>>>>>> 1");
+
 #if defined(HAVE_VERSION_EXTENDED_INFO)
     esp_ShowExtendedSystemInfo();
+#else
+    ESP_LOGW(TAG, "HAVE_VERSION_EXTENDED_INFO not defined");
 #endif
-    ESP_LOGI(TAG, ">>>>>>>>>> 2");
+
 #ifdef ESP_SDK_MEM_LIB_VERSION
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */

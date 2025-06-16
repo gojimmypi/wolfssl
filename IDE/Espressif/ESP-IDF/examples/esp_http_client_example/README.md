@@ -19,6 +19,10 @@ popd
 idf.py set-target esp32
 idf.py erase-flash -p /dev/ttyS19 -b 230400
 idf.py build flash -p /dev/ttyS19 -b 230400 monitor -b 115200
+
+idf.py set-target esp32c6
+idf.py build flash -p /dev/ttyS68 -b 230400 monitor -b 115200
+
 ```
 
 
