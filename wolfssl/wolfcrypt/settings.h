@@ -655,10 +655,16 @@
     #endif
 
     #if defined(CONFIG_TLS_STACK_WOLFSSL)
-        /* When using ESP-TLS, some old algorithms such as SHA1 are no longer
-         * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
-         * that here: */
-        #define OPENSSL_EXTRA
+        #if defined(CONFIG_ESP_WOLFSSL_OPENSSL_EXTRA)
+            /* When using ESP-TLS, some old algorithms such as SHA1 and Base64
+             * are no longer enabled in wolfSSL, except for the OpenSSL
+             * compatibility. So enable that here: */
+            #define OPENSSL_EXTRA
+        #else
+            /* We know that at least the Base64_Encode is needed in ESP-TLS.
+             * See [idf]/components/esp-tls/esp-tls-crypto/esp_tls_crypto.c */
+            #define WOLFSSL_BASE64_ENCODE
+        #endif
     #endif
 
     /* Optional Apple HomeKit support. See below for related sanity checks. */
