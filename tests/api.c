@@ -20906,21 +20906,33 @@ static int test_wolfSSL_ASN1_TIME_adj(void)
     /* offset_sec = -45 * min;*/
     ExpectNotNull(asn_time =
             wolfSSL_ASN1_TIME_adj(s, t, offset_day, offset_sec));
-    ExpectTrue(asn_time->type == asn_utc_time);
-    ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
-        CTC_DATE_SIZE));
-    date_str[CTC_DATE_SIZE] = '\0';
-    ExpectIntEQ(0, XMEMCMP(date_str, "000222211500Z", 13));
+    if (asn_time != NULL) {
+        ExpectTrue(asn_time->type == asn_utc_time);
+        ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
+            CTC_DATE_SIZE));
+        date_str[CTC_DATE_SIZE] = '\0';
+        ExpectIntEQ(0, XMEMCMP(date_str, "000222211500Z", 13));
+        if (asn_time != s) {
+            XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+        }
+        asn_time = NULL;
+    }
 
     /* negative offset */
     offset_sec = -45 * mini;
     asn_time = wolfSSL_ASN1_TIME_adj(s, t, offset_day, offset_sec);
     ExpectNotNull(asn_time);
-    ExpectTrue(asn_time->type == asn_utc_time);
-    ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
-        CTC_DATE_SIZE));
-    date_str[CTC_DATE_SIZE] = '\0';
-    ExpectIntEQ(0, XMEMCMP(date_str, "000222194500Z", 13));
+    if (asn_time != NULL) {
+        ExpectTrue(asn_time->type == asn_utc_time);
+        ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
+            CTC_DATE_SIZE));
+        date_str[CTC_DATE_SIZE] = '\0';
+        ExpectIntEQ(0, XMEMCMP(date_str, "000222194500Z", 13));
+        if (asn_time != s) {
+            XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+        }
+        asn_time = NULL;
+    }
 
     XFREE(s, NULL, DYNAMIC_TYPE_OPENSSL);
     s = NULL;
@@ -20937,11 +20949,17 @@ static int test_wolfSSL_ASN1_TIME_adj(void)
         offset_sec = 10 * mini;
     ExpectNotNull(asn_time = wolfSSL_ASN1_TIME_adj(s, t, offset_day,
         offset_sec));
-    ExpectTrue(asn_time->type == asn_gen_time);
-    ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
-        CTC_DATE_SIZE));
-    date_str[CTC_DATE_SIZE] = '\0';
-    ExpectIntEQ(0, XMEMCMP(date_str, "20550313091000Z", 15));
+    if (asn_time != NULL) {
+        ExpectTrue(asn_time->type == asn_gen_time);
+        ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
+            CTC_DATE_SIZE));
+        date_str[CTC_DATE_SIZE] = '\0';
+        ExpectIntEQ(0, XMEMCMP(date_str, "20550313091000Z", 15));
+        if (asn_time != s) {
+            XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+        }
+        asn_time = NULL;
+    }
 
     XFREE(s, NULL, DYNAMIC_TYPE_OPENSSL);
     s = NULL;
@@ -20956,22 +20974,26 @@ static int test_wolfSSL_ASN1_TIME_adj(void)
     offset_sec = 45 * mini;
     ExpectNotNull(asn_time = wolfSSL_ASN1_TIME_adj(s, t, offset_day,
         offset_sec));
-    ExpectTrue(asn_time->type == asn_utc_time);
-    ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
-        CTC_DATE_SIZE));
-    date_str[CTC_DATE_SIZE] = '\0';
-    ExpectIntEQ(0, XMEMCMP(date_str, "000222211515Z", 13));
-    XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
-    asn_time = NULL;
-
+    if (asn_time != NULL) {
+        ExpectTrue(asn_time->type == asn_utc_time);
+        ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
+            CTC_DATE_SIZE));
+        date_str[CTC_DATE_SIZE] = '\0';
+        ExpectIntEQ(0, XMEMCMP(date_str, "000222211515Z", 13));
+        XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+        asn_time = NULL;
+    }
     ExpectNotNull(asn_time = wolfSSL_ASN1_TIME_adj(NULL, t, offset_day,
         offset_sec));
-    ExpectTrue(asn_time->type == asn_utc_time);
-    ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
-        CTC_DATE_SIZE));
-    date_str[CTC_DATE_SIZE] = '\0';
-    ExpectIntEQ(0, XMEMCMP(date_str, "000222211515Z", 13));
-    XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+    if (asn_time != NULL) {
+        ExpectTrue(asn_time->type == asn_utc_time);
+        ExpectNotNull(XSTRNCPY(date_str, (const char*)&asn_time->data,
+            CTC_DATE_SIZE));
+        date_str[CTC_DATE_SIZE] = '\0';
+        ExpectIntEQ(0, XMEMCMP(date_str, "000222211515Z", 13));
+        XFREE(asn_time, NULL, DYNAMIC_TYPE_OPENSSL);
+        asn_time = NULL;
+    }
 #endif
     return EXPECT_RESULT();
 }
@@ -22132,7 +22154,7 @@ static int test_wolfSSL_X509_NAME_print_ex(void)
     ExpectIntEQ(X509_NAME_print_ex(NULL, NULL, 0, 0), WOLFSSL_FAILURE);
     ExpectIntEQ(X509_NAME_print_ex(membio, NULL, 0, 0), WOLFSSL_FAILURE);
     ExpectIntEQ(X509_NAME_print_ex(NULL, name, 0, 0), WOLFSSL_FAILURE);
-    ExpectIntEQ(X509_NAME_print_ex(membio, empty, 0, 0), WOLFSSL_FAILURE);
+    ExpectIntEQ(X509_NAME_print_ex(membio, empty, 0, 0), WOLFSSL_SUCCESS);
     ExpectIntEQ(X509_NAME_print_ex(membio, name, 0, 0), WOLFSSL_SUCCESS);
     wolfSSL_X509_NAME_free(empty);
     BIO_free(membio);
@@ -22152,6 +22174,24 @@ static int test_wolfSSL_X509_NAME_print_ex(void)
     BIO_free(membio);
     membio = NULL;
 
+    X509_free(x509);
+    BIO_free(bio);
+    name = NULL;
+
+    /* Test with empty issuer cert empty-issuer-cert.pem.
+     * See notes in certs/test/gen-testcerts.sh for how it was generated. */
+    ExpectNotNull(bio = BIO_new(BIO_s_file()));
+    ExpectIntGT(BIO_read_filename(bio, noIssuerCertFile), 0);
+    ExpectNotNull(PEM_read_bio_X509(bio, &x509, NULL, NULL));
+    ExpectNotNull(name = X509_get_subject_name(x509));
+
+    ExpectNotNull(membio = BIO_new(BIO_s_mem()));
+    ExpectIntEQ(X509_NAME_print_ex(membio, name, 0, 0), WOLFSSL_SUCCESS);
+    /* Should be empty string "" */
+    ExpectIntEQ((memSz = BIO_get_mem_data(membio, &mem)), 0);
+
+    BIO_free(membio);
+    membio = NULL;
     X509_free(x509);
     BIO_free(bio);
     name = NULL;
@@ -43248,7 +43288,8 @@ static int test_wolfSSL_X509V3_set_ctx(void)
 {
     EXPECT_DECLS;
 #if (defined(OPENSSL_ALL) || defined(OPENSSL_EXTRA)) && \
-    defined(WOLFSSL_CERT_GEN) && defined(WOLFSSL_CERT_REQ)
+    defined(WOLFSSL_CERT_GEN) && defined(WOLFSSL_CERT_REQ) && \
+    defined(HAVE_CRL)
     WOLFSSL_X509V3_CTX ctx;
     WOLFSSL_X509* issuer = NULL;
     WOLFSSL_X509* subject = NULL;
@@ -56679,7 +56720,7 @@ static void updateCrlCb(CrlInfo* old, CrlInfo* cnew)
 
     AssertTrue((f = XFOPEN(crl1, "rb")) != XBADFILE);
     AssertTrue(XFSEEK(f, 0, XSEEK_END) == 0);
-    AssertIntGE(sz = (size_t) XFTELL(f), 1);
+    AssertIntGE(sz = (word32) XFTELL(f), 1);
     AssertTrue(XFSEEK(f, 0, XSEEK_SET) == 0);
     AssertTrue( \
         (crl1Buff = (byte*)XMALLOC(sz, NULL, DYNAMIC_TYPE_FILE)) != NULL);
@@ -56689,7 +56730,7 @@ static void updateCrlCb(CrlInfo* old, CrlInfo* cnew)
 
     AssertTrue((f = XFOPEN(crlRevoked, "rb")) != XBADFILE);
     AssertTrue(XFSEEK(f, 0, XSEEK_END) == 0);
-    AssertIntGE(sz = (size_t) XFTELL(f), 1);
+    AssertIntGE(sz = (word32) XFTELL(f), 1);
     AssertTrue(XFSEEK(f, 0, XSEEK_SET) == 0);
     AssertTrue( \
         (crlRevBuff = (byte*)XMALLOC(sz, NULL, DYNAMIC_TYPE_FILE)) != NULL);
@@ -56710,7 +56751,8 @@ static void updateCrlCb(CrlInfo* old, CrlInfo* cnew)
     AssertIntEQ(crl1Info.lastDateFormat, old->lastDateFormat);
     AssertIntEQ(crl1Info.nextDateMaxLen, old->nextDateMaxLen);
     AssertIntEQ(crl1Info.nextDateFormat, old->nextDateFormat);
-    AssertIntEQ(crl1Info.crlNumber,      old->crlNumber);
+    AssertIntEQ(XMEMCMP(
+        crl1Info.crlNumber, old->crlNumber, CRL_MAX_NUM_SZ), 0);
     AssertIntEQ(XMEMCMP(
         crl1Info.issuerHash, old->issuerHash, old->issuerHashLen), 0);
     AssertIntEQ(XMEMCMP(
@@ -56724,7 +56766,8 @@ static void updateCrlCb(CrlInfo* old, CrlInfo* cnew)
     AssertIntEQ(crlRevInfo.lastDateFormat, cnew->lastDateFormat);
     AssertIntEQ(crlRevInfo.nextDateMaxLen, cnew->nextDateMaxLen);
     AssertIntEQ(crlRevInfo.nextDateFormat, cnew->nextDateFormat);
-    AssertIntEQ(crlRevInfo.crlNumber,      cnew->crlNumber);
+    AssertIntEQ(XMEMCMP(
+        crlRevInfo.crlNumber, cnew->crlNumber, CRL_MAX_NUM_SZ), 0);
     AssertIntEQ(XMEMCMP(
         crlRevInfo.issuerHash, cnew->issuerHash, cnew->issuerHashLen), 0);
     AssertIntEQ(XMEMCMP(
@@ -66047,8 +66090,7 @@ static int test_dtls13_missing_finished_server(void)
     ExpectIntEQ(wolfSSL_get_error(ssl_c, -1), WOLFSSL_ERROR_WANT_READ);
     /* Let's clear the output */
     test_memio_clear_buffer(&test_ctx, 0);
-    /* We should signal that the handshake is done */
-    ExpectTrue(wolfSSL_is_init_finished(ssl_c));
+    ExpectFalse(wolfSSL_is_init_finished(ssl_c));
     /* Let's send some app data */
     ExpectIntEQ(wolfSSL_write(ssl_c, test_str, sizeof(test_str)),
                 sizeof(test_str));
@@ -68453,6 +68495,7 @@ TEST_CASE testCases[] = {
     TEST_DECL(test_wolfSSL_dtls_cid_parse),
     TEST_DECL(test_dtls13_epochs),
     TEST_DECL(test_dtls_rtx_across_epoch_change),
+    TEST_DECL(test_dtls_drop_client_ack),
     TEST_DECL(test_dtls13_ack_order),
     TEST_DECL(test_dtls_version_checking),
     TEST_DECL(test_ocsp_status_callback),

@@ -25,6 +25,7 @@
     #include <AvailabilityMacros.h>
 #endif
 
+#include <wolfssl/wolfcrypt/cpuid.h>
 #ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>
 #endif
@@ -66,6 +67,10 @@
 #endif
 #if defined(WOLFSSL_STSAFEA100)
     #include <wolfssl/wolfcrypt/port/st/stsafe.h>
+#endif
+
+#if defined(WOLFSSL_TROPIC01)
+    #include <wolfssl/wolfcrypt/port/tropicsquare/tropic01.h>
 #endif
 
 #if (defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)) \
@@ -145,6 +150,10 @@
 /* prevent multiple mutex initializations */
 static volatile int initRefCount = 0;
 
+#if defined(__aarch64__) && defined(WOLFSSL_ARMASM_BARRIER_DETECT)
+int aarch64_use_sb = 0;
+#endif
+
 /* Used to initialize state for wolfcrypt
    return 0 on success
  */
@@ -154,6 +163,10 @@ int wolfCrypt_Init(void)
     int ret = 0;
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Init");
+
+    #if defined(__aarch64__) && defined(WOLFSSL_ARMASM_BARRIER_DETECT)
+        aarch64_use_sb = IS_AARCH64_SB(cpuid_get_flags());
+    #endif
 
     #ifdef WOLFSSL_CHECK_MEM_ZERO
         /* Initialize the mutex for access to the list of memory locations that
@@ -285,7 +298,13 @@ int wolfCrypt_Init(void)
     #if defined(WOLFSSL_STSAFEA100)
         stsafe_interface_init();
     #endif
-
+    #if defined(WOLFSSL_TROPIC01)
+        ret = Tropic01_Init();
+        if (ret != 0) {
+            WOLFSSL_MSG("Tropic01 init failed");
+            return ret;
+        }
+    #endif
     #if defined(WOLFSSL_PSOC6_CRYPTO)
         ret = psoc6_crypto_port_init();
         if (ret != 0) {
@@ -504,6 +523,9 @@ int wolfCrypt_Cleanup(void)
     #endif
     #ifdef WOLFSSL_SILABS_SE_ACCEL
         ret = sl_se_deinit();
+    #endif
+    #if defined(WOLFSSL_TROPIC01)
+        Tropic01_Deinit();
     #endif
     #if defined(WOLFSSL_RENESAS_TSIP)
         tsip_Close();
