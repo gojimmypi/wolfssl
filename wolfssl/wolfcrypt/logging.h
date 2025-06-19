@@ -152,6 +152,24 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     #define WOLFSSL_TIME(n)  WC_DO_NOTHING
 #endif
 
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
+    #define MSG_CERT_INDENT "\t-  "
+    #if defined(XVSNPRINTF)
+        #ifdef __clang__
+        /* tell clang argument 1 is format */
+        __attribute__((__format__ (__printf__, 1, 0)))
+        #endif
+        WOLFSSL_API void WOLFSSL_MSG_CERT(const char* fmt, ...);
+        #define HAVE_WOLFSSL_MSG_CERT
+    #else
+        #ifdef WOLF_NO_VARIADIC_MACROS
+            #define WOLFSSL_MSG_CERT()    WC_DO_NOTHING
+        #else
+            #define WOLFSSL_MSG_CERT(...) WC_DO_NOTHING
+        #endif
+    #endif
+#endif
+
 #if defined(DEBUG_WOLFSSL) && !defined(WOLFSSL_DEBUG_ERRORS_ONLY)
     #if defined(_WIN32)
         #if defined(INTIME_RTOS)
@@ -210,19 +228,29 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     #define WOLFSSL_ENTER(m)      WC_DO_NOTHING
     #define WOLFSSL_LEAVE(m, r)   WC_DO_NOTHING
     #define WOLFSSL_STUB(m)       WC_DO_NOTHING
-    #define WOLFSSL_IS_DEBUG_ON() 0
+    #if defined(WOLFSSL_DEBUG_CERTS)
+        WOLFSSL_API void WOLFSSL_BUFFER(const byte* buffer, word32 length);
+    #else
+        #define WOLFSSL_IS_DEBUG_ON() 0
+    #endif
 
     #ifdef WOLF_NO_VARIADIC_MACROS
-        /* note, modern preprocessors will generate errors with this definition.
-         * "error: macro "WOLFSSL_MSG_EX" passed 2 arguments, but takes just 0"
-         */
+       /* note, modern preprocessors will generate errors with this definition.
+        * "error: macro "WOLFSSL_MSG_EX" passed 2 arguments, but takes just 0"
+        */
         #define WOLFSSL_MSG_EX()    WC_DO_NOTHING
+        #define WOLFSSL_MSG_CERT()  WC_DO_NOTHING
     #else
-        #define WOLFSSL_MSG_EX(...) WC_DO_NOTHING
+        #define WOLFSSL_MSG_EX(...)       WC_DO_NOTHING
+        #ifndef WOLFSSL_DEBUG_CERTS
+            #define WOLFSSL_MSG_CERT(...) WC_DO_NOTHING
+        #endif
     #endif
-    #define WOLFSSL_MSG(m)        WC_DO_NOTHING
-    #define WOLFSSL_BUFFER(b, l)  WC_DO_NOTHING
-
+    #define WOLFSSL_MSG(m)           WC_DO_NOTHING
+    #ifndef WOLFSSL_DEBUG_CERTS
+        /* WOLFSSL_MSG_CERT otherwise has API call for this */
+        #define WOLFSSL_BUFFER(b, l) WC_DO_NOTHING
+    #endif
 #endif /* DEBUG_WOLFSSL && !WOLFSSL_DEBUG_ERRORS_ONLY */
 
 #if defined(DEBUG_WOLFSSL) || defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) ||\

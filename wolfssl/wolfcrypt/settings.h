@@ -314,8 +314,7 @@
         #define WOLFSSL_USER_SETTINGS
     #endif /* WOLFSSL_USER_SETTINGS */
 
-
-
+    /* board-specific */
     #if defined(__AVR__)
         #define WOLFSSL_USER_IO
         #define WOLFSSL_NO_SOCK
@@ -355,6 +354,12 @@
      * defining WOLFSSL_NO_OPTIONS_H or WOLFSSL_CUSTOM_CONFIG as appropriate.
      */
     #warning "No configuration for wolfSSL detected, check header order"
+#endif
+
+/* Ensure WOLFSSL_DEBUG_CERTS is always set when WOLFSSL_DEBUG is enabled */
+#ifdef WOLFSSL_DEBUG
+    #undef  WOLFSSL_DEBUG_CERTS
+    #define WOLFSSL_DEBUG_CERTS
 #endif
 
 #include <wolfssl/wolfcrypt/visibility.h>
@@ -557,11 +562,23 @@
 #endif
 
 #if defined(WOLFSSL_ESPIDF)
+    #ifdef NO_ESP32_CRYPT
+        #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #endif
+
     #define SIZEOF_LONG_LONG 8
 
     #ifndef WOLFSSL_MAX_ERROR_SZ
         /* Espressif paths can be quite long. Ensure error prints full path. */
         #define WOLFSSL_MAX_ERROR_SZ 200
+    #endif
+
+    /* Debug messaged do not need an additional LF for ESP_LOG */
+    #define WOLFSSL_DEBUG_LINE_ENDING ""
+
+    /* NO_ESP32_CRYPT disables ALL hardware acceleration */
+    #ifdef NO_ESP32_CRYPT
+        #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #endif
 
     /* Parse any Kconfig / menuconfig items into wolfSSL macro equivalents.

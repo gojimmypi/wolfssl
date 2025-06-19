@@ -115,7 +115,7 @@ THREAD_LS_T void *StackSizeCheck_stackOffsetPointer = 0;
 
 #endif /* HAVE_STACK_SIZE_VERBOSE */
 
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
 
 /* Set these to default values initially. */
 static wolfSSL_Logging_cb log_function = NULL;
@@ -178,7 +178,7 @@ void wolfSSL_Debugging_OFF(void)
 
 WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix)
 {
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
     log_prefix = prefix;
 #else
     (void)prefix;
@@ -228,7 +228,7 @@ void WOLFSSL_TIME(int count)
 }
 #endif
 
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
 
 
 #ifdef HAVE_STACK_SIZE_VERBOSE
@@ -249,23 +249,32 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
     #ifdef WOLFSSL_MDK_ARM
         fflush(stdout);
     #endif
+    /* see settings.h for platform-specific line endings */
+    #ifndef WOLFSSL_DEBUG_LINE_ENDING
+        #define WOLFSSL_DEBUG_LINE_ENDING "\n"
+    #endif
         if (log_prefix != NULL) {
-            if (file_name != NULL)
+            if (file_name != NULL) {
                 WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
-                        "[%s]: [%s L %d] %s\n",
+                        "[%s]: [%s L %d] %s"WOLFSSL_DEBUG_LINE_ENDING,
                         log_prefix, file_name, line_number, logMessage);
-            else
+            }
+            else {
                 WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
-                        "[%s]: %s\n", log_prefix, logMessage);
-        } else {
-            if (file_name != NULL)
-                WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
-                        "[%s L %d] %s\n",
-                        file_name, line_number, logMessage);
-            else
-                WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
-                        "%s\n", logMessage);
+                   "[%s]: %s"WOLFSSL_DEBUG_LINE_ENDING, log_prefix, logMessage);
+            } /* file_name check */
         }
+        else {
+            if (file_name != NULL) {
+                WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
+                        "[%s L %d] %s"WOLFSSL_DEBUG_LINE_ENDING,
+                        file_name, line_number, logMessage);
+            }
+            else {
+                WOLFSSL_DEBUG_PRINTF_FN(WOLFSSL_DEBUG_PRINTF_FIRST_ARGS
+                        "%s"WOLFSSL_DEBUG_LINE_ENDING, logMessage);
+            } /* file_name check */
+        } /* log_prefix check */
     #ifdef WOLFSSL_MDK_ARM
         fflush(stdout);
     #endif
@@ -323,9 +332,25 @@ void WOLFSSL_MSG_EX2(const char *file, int line, const char* fmt, ...)
             wolfssl_log(INFO_LOG, file, line, msg);
     }
 }
-#endif
+#endif /* WOLFSSL_DEBUG_CODEPOINTS */
 
-#endif
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
+void WOLFSSL_MSG_CERT(const char* fmt, ...)
+{
+    /* Always show cert debug messages, even with loggingEnabled == 0 */
+    char msg[WOLFSSL_MSG_EX_BUF_SZ];
+    int written;
+    va_list args;
+    va_start(args, fmt);
+    written = XVSNPRINTF(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    if (written > 0) {
+        wolfssl_log(INFO_LOG, NULL, 0, msg);
+    }
+}
+#endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
+
+#endif /* XVSNPRINTF && !NO_WOLFSSL_MSG_EX */
 
 #undef WOLFSSL_MSG /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
 void WOLFSSL_MSG(const char* msg)
