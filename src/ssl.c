@@ -5892,7 +5892,21 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
 #endif
 
     ret = ParseCert(cert, CA_TYPE, verify, cm);
-    WOLFSSL_MSG("\tParsed new CA");
+
+    if (ret == 0) {
+        WOLFSSL_MSG_EX("\tParsed new CA issuer: '%s' subject: '%s'",
+                       cert->issuer, cert->subject);
+    }
+    else {
+        if (cert == NULL) {
+            WOLFSSL_MSG("\tFailed to parse new CA (NULL)");
+        }
+        else {
+            WOLFSSL_MSG_EX("\tFailed to parse new CA issuer: '%s' subject: '%s'"
+                            " ret=%d",
+                             cert->issuer, cert->subject, ret);
+        }
+    }
 
 #ifndef NO_SKID
     subjectHash = cert->extSubjKeyId;
@@ -5901,7 +5915,7 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
 #endif
 
     /* check CA key size */
-    if (verify) {
+    if (verify && (ret == 0 )) {
         switch (cert->keyOID) {
         #ifndef NO_RSA
             #ifdef WC_RSA_PSS
@@ -5911,7 +5925,9 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                 if (cm->minRsaKeySz < 0 ||
                                    cert->pubKeySize < (word16)cm->minRsaKeySz) {
                     ret = RSA_KEY_SIZE_E;
-                    WOLFSSL_MSG("\tCA RSA key size error");
+                    WOLFSSL_MSG_EX("\tCA RSA key size error: pubKeySize = %d; "
+                                                            "minRsaKeySz = %d",
+                                   cert->pubKeySize, cm->minRsaKeySz);
                 }
                 break;
         #endif /* !NO_RSA */
@@ -5920,7 +5936,9 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                 if (cm->minEccKeySz < 0 ||
                                    cert->pubKeySize < (word16)cm->minEccKeySz) {
                     ret = ECC_KEY_SIZE_E;
-                    WOLFSSL_MSG("\tCA ECC key size error");
+                    WOLFSSL_MSG_EX("\tCA ECC key size error: pubKeySize = %d; "
+                                                            "minRsaKeySz = %d",
+                                   cert->pubKeySize, cm->minRsaKeySz);
                 }
                 break;
             #endif /* HAVE_ECC */

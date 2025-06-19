@@ -35,12 +35,22 @@
 #define HAVE_X509
 #define WOLFSSL_TLS13
 #define WOLFSSL_TLS12
+#define HAVE_ECC521
+#define HAVE_ECC384
+#define HAVE_ECC256
+#define WOLFSSL_SHA384
+
+#define WOLFSSL_CERT_EXT
+#define WOLFSSL_KEY_GEN
+#define WOLFSSL_KEY_PARSING
 
 /* the root CA is using RSA */
 #define HAVE_RSA
 #define WOLFSSL_KEY_GEN
 #define WC_RSA_BLINDING
 #define FP_MAX_BITS 8192
+
+#define OPENSSL_EXTRA
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -813,7 +823,7 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
-    /*  #define NO_ESP32_CRYPT                 */
+    #define NO_ESP32_CRYPT
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     /* no SHA384 HW on C6  */
@@ -1175,3 +1185,11 @@ Turn on timer debugging (used when CPU cycles not available)
  *  #define HAVE_AES_ECB
  *  #define HAVE_AES_DIRECT
  */
+
+#undef NO_OLD_TLS     // if set, disables SHA-1 and MD5
+#undef NO_SHA
+#undef NO_SHA1
+#undef NO_RSA
+#undef WOLFSSL_NO_RSA
+#undef NO_CERTS
+#undef NO_PWDBASED

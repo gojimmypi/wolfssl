@@ -125,7 +125,7 @@ int ShowCiphers(WOLFSSL* ssl)
 }
 
 void my_log_cb(int level, const char* msg) {
-    ESP_LOGI(TAG, "wolfSSL [%d] %s\n", level, msg);
+    ESP_LOGI(TAG, "wolfSSL [%d] %s", level, msg);
 }
 
 WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
@@ -143,7 +143,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 #define TLS_SMP_CLIENT_TASK_RET
 #endif
     char buff[256];
-    const char sndMsg[] = "GET / HTTP/1.1\r\nAccept: */*\r\n";
+    const char sndMsg[] = "GET / HTTP/1.1\r\n"
+                          "Host: www.google.com\r\n"
+                          "Accept: */*\r\n"
+                          "\r\n";
     const char *ch = TLS_SMP_TARGET_HOST; /* see wifi_connect.h */
     struct sockaddr_in servAddr;
 
@@ -194,10 +197,30 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
         ip4_addr = (struct ip4_addr *)hp->h_addr;
         ESP_LOGI(TAG, "Host name: %s", hp->h_name);
     }
+#ifdef NO_RSA
+    ESP_LOGE(TAG, "Warning: NO_RSA defined");
+#endif
 
     /* Create and initialize WOLFSSL_CTX */
-    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /* SSL 3.0 - TLS 1.3. */
+#ifdef WOLFSSL_TLS13
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+#else
+    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
     wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_2);
+#endif
+
+    ret_i = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, TLS_SMP_TARGET_HOST, strlen(TLS_SMP_TARGET_HOST));
+    if (ret_i != WOLFSSL_SUCCESS)
+    {
+        ESP_LOGE(TAG, "ERROR: failed to use SNI %d, "
+                      "please check the file.\n",
+                 ret_i);
+    }
+    else
+    {
+        ESP_LOGI(TAG, "CA cert Use SNI success");
+    }
+
     /*   options:   */
     /* ctx = wolfSSL_CTX_new(wolfSSLv1_2_client_method());      only TLS 1.2 */
     /* ctx = wolfSSL_CTX_new(wolfSSLv1_3_client_method());      only TLS 1.3 */
@@ -209,10 +232,15 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     }
 
     // load certs
+    int this_size = mozilla_root_certs_pem_end - mozilla_root_certs_pem_start;
+    #define EXPECTED_SIZE 6321
     ESP_LOGI(TAG, "Loading %d bytes of PEM certs", (int)(mozilla_root_certs_pem_end - mozilla_root_certs_pem_start));
+    if (this_size < EXPECTED_SIZE) {
+        ESP_LOGE(TAG, "Expecting %d bytes", EXPECTED_SIZE);
+    }
 
-    wolfSSL_Debugging_ON();
     wolfSSL_SetLoggingCb(my_log_cb);
+    wolfSSL_Debugging_ON();
 
     ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                            mozilla_root_certs_pem_start,
@@ -229,6 +257,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
                       "please check the file.\n",
                  ret_i);
     }
+    else
     {
         ESP_LOGI(TAG, "CA cert loaded successfully");
     }
