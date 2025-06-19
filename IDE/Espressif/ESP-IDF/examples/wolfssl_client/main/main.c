@@ -65,6 +65,14 @@
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
+#if defined(WOLFSSL_TEST_LOOP) && WOLFSSL_TEST_LOOP
+    SemaphoreHandle_t task_semaphore;
+#endif
+
+static unsigned int stack_start = 0;
+// static unsigned int stack_current = 0;
+
+
 static const char* TAG = "main";
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
@@ -133,151 +141,77 @@ void my_atmel_free(int slotId)
 /* Entry for FreeRTOS */
 void app_main(void)
 {
-#if !defined(SINGLE_THREADED) && INCLUDE_uxTaskGetStackHighWaterMark
-    int stack_start = 0;
+#if WOLFSSL_TEST_LOOP
+    task_semaphore =  xSemaphoreCreateBinary();
 #endif
-#if !defined(SINGLE_THREADED)
-    int this_heap = 0;
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(5, 2, 2))
+    ESP_LOGI(TAG, "Found esp-IDF v5.2.2");
+#else
+    ESP_LOGW(TAG, "This example is intended for ESP-IDF version 5.2.2");
 #endif
-    esp_err_t ret = 0;
-    ESP_LOGI(TAG, "---------------- wolfSSL TLS Client Example ------------");
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
+    stack_start = esp_sdk_stack_pointer();
+    stack_current = esp_sdk_stack_pointer();
+#endif
+    ESP_LOGI(TAG, "------------------ wolfSSL Test Example ----------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
-#if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
-    ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
-#endif
-#if defined(ESP_SDK_MEM_LIB_VERSION) && defined(DEBUG_WOLFSSL)
-    sdk_init_meminfo();
-#endif
-#ifdef ESP_TASK_MAIN_STACK
-    ESP_LOGI(TAG, "ESP_TASK_MAIN_STACK: %d", ESP_TASK_MAIN_STACK);
-#endif
-#ifdef TASK_EXTRA_STACK_SIZE
-    ESP_LOGI(TAG, "TASK_EXTRA_STACK_SIZE: %d", TASK_EXTRA_STACK_SIZE);
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
+    esp_DisableWatchdog();
 #endif
 
-#ifdef SINGLE_THREADED
-    ESP_LOGI(TAG, "Single threaded");
-#else
-    ESP_LOGI(TAG, "CONFIG_ESP_MAIN_TASK_STACK_SIZE = %d bytes (%d words)",
-                   CONFIG_ESP_MAIN_TASK_STACK_SIZE,
-             (int)(CONFIG_ESP_MAIN_TASK_STACK_SIZE / sizeof(void*)));
-
-    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-    {
-        /* Returns the high water mark of the stack associated with xTask. That is,
-         * the minimum free stack space there has been (in bytes not words, unlike
-         * vanilla FreeRTOS) since the task started. The smaller the returned
-         * number the closer the task has come to overflowing its stack.
-         * see Espressif api-reference/system/freertos_idf
-         */
-        stack_start = uxTaskGetStackHighWaterMark(NULL);
-        #ifdef ESP_SDK_MEM_LIB_VERSION
-        {
-            sdk_var_whereis("stack_start", &stack_start);
-        }
-        #endif
-
-        ESP_LOGI(TAG, "Stack Start HWM: %d bytes", stack_start);
-    }
-    #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
-#endif /* SINGLE_THREADED */
-
-#ifdef HAVE_VERSION_EXTENDED_INFO
+#if defined(HAVE_VERSION_EXTENDED_INFO)
     esp_ShowExtendedSystemInfo();
+#else
+    ESP_LOGW(TAG, "HAVE_VERSION_EXTENDED_INFO not defined");
 #endif
-#ifdef DEBUG_WOLFSSL
-    wolfSSL_Debugging_OFF();
-#endif
-#ifdef CONFIG_IDF_TARGET_ESP32H2
-    ESP_LOGE(TAG, "No WiFi on the ESP32-H2 and ethernet not yet supported");
-    while (1) {
-        vTaskDelay(60000);
-    }
-#endif
+
+#ifdef ESP_SDK_MEM_LIB_VERSION
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
-    ret = set_time(); /* need to setup NTP before WiFi */
+    // set_time(); /* need to setup NTP before WiFi */
+    set_time_from_string("Wed Jun 18 12:41:45 2025 -0700");
+#endif
 
-    /* Optionally erase flash */
-    /* ESP_ERROR_CHECK(nvs_flash_erase()); */
+    ESP_LOGI(TAG, "nvs flash init..");
+    esp_err_t ret = nvs_flash_init();
 
-#ifdef FOUND_PROTOCOL_EXAMPLES_DIR
-    ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
-    ESP_ERROR_CHECK(nvs_flash_init());
-
-    #if defined(CONFIG_IDF_TARGET_ESP32H2)
-        ESP_LOGE(TAG, "There's no WiFi on ESP32-H2.");
-    #else
-        #ifdef CONFIG_EXAMPLE_WIFI_SSID
-            if (XSTRCMP(CONFIG_EXAMPLE_WIFI_SSID, "myssid") == 0) {
-                ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID is myssid.");
-                ESP_LOGW(TAG, "  Do you have a WiFi AP called myssid, or ");
-                ESP_LOGW(TAG, "  did you forget the ESP-IDF configuration?");
-            }
-        #else
-            #define CONFIG_EXAMPLE_WIFI_SSID "myssid"
-            ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
-        #endif
-        ESP_ERROR_CHECK(esp_netif_init());
-        ESP_ERROR_CHECK(esp_event_loop_create_default());
-        ESP_ERROR_CHECK(example_connect());
-    #endif
-#else
-    ESP_ERROR_CHECK(nvs_flash_init());
-
-    /* Initialize NVS */
-    ret = nvs_flash_init();
-    #if defined(CONFIG_IDF_TARGET_ESP8266)
-    {
-        if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            ret = nvs_flash_init();
-        }
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_LOGI(TAG, "nvs flash erase..");
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_LOGI(TAG, "nvs flash erase..");
+        ret = nvs_flash_init();
     }
-    #else
-    {
-        /* Non-ESP8266 initialization is slightly different */
-        if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-            ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            ret = nvs_flash_init();
-        }
-    }
-    #endif /* else not CONFIG_IDF_TARGET_ESP8266 */
     ESP_ERROR_CHECK(ret);
 
-    #if defined(CONFIG_IDF_TARGET_ESP32H2)
-        ESP_LOGE(TAG, "There's no WiFi on ESP32-H2. ");
-    #else
-        /* Initialize WiFi */
-        ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-        ret = wifi_init_sta();
-        while (ret != 0) {
-            ESP_LOGI(TAG, "Waiting...");
-            vTaskDelay(60000 / portTICK_PERIOD_MS);
-            ESP_LOGI(TAG, "Trying WiFi again...");
-            ret = wifi_init_sta();
-        }
-    #endif /* else not CONFIG_IDF_TARGET_ESP32H2 */
-#endif /* else FOUND_PROTOCOL_EXAMPLES_DIR not found */
+    ESP_LOGI(TAG, "esp netif init...");
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_LOGI(TAG, "esp event loop create default...");
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+#if defined(CONFIG_IDF_TARGET_ESP32H2)
+    ESP_LOGI(TAG, "There's no WiFi on the ESP32-H2");
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+#else
+    ESP_LOGI(TAG, "example connect...");
+    ESP_ERROR_CHECK(example_connect());
+#endif
+
+#ifdef USE_WOLFSSL_ESP_SDK_TIME
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
-
-    if (ret < -1) {
-        /* a value of -1 means there was no NTP server, so no need to wait */
-        ESP_LOGI(TAG, "Waiting 10 more seconds for NTP to complete." );
-        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
-        esp_show_current_datetime();
-    }
+#endif
 
 #if defined(SINGLE_THREADED)
     /* just call the task */
-    tls_smp_client_task((void*)NULL);
+    tls_smp_client_task_2((void*)NULL);
 #else
     tls_args args[1] = {0};
     /* start a thread with the task */

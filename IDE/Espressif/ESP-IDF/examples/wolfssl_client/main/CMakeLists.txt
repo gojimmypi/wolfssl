@@ -21,9 +21,6 @@ endif()
 if(CMAKE_HOST_UNIX)
     message(STATUS "Detected UNIX")
 endif()
-if(APPLE)
-    message(STATUS "Detected APPLE")
-endif()
 if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WSL")
@@ -61,16 +58,17 @@ else()
 endif()
 
 ## register_component()
-idf_component_register(SRCS main.c
-                            wifi_connect.c
-                            time_helper.c
-                            client-tls.c
-                       INCLUDE_DIRS "."
-                            "./include"
-                       PRIV_REQUIRES "${MAIN_WOLFSSL_COMPONENT_NAME}"
-                                     "${THIS_PRIV_REQUIRES_DRIVER}"
-                                     nvs_flash
-                                     protocol_examples_common)
+idf_component_register(
+                            SRCS other.c main.c client-tls.c other.c
+                            INCLUDE_DIRS "." "./include"
+                            PRIV_REQUIRES
+                            	"${MAIN_WOLFSSL_COMPONENT_NAME}"
+                            	"${THIS_PRIV_REQUIRES_DRIVER}"
+                            	nvs_flash
+                            	protocol_examples_common
+                            EMBED_TXTFILES
+                                mozillarootcerts.pem
+                       )
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)

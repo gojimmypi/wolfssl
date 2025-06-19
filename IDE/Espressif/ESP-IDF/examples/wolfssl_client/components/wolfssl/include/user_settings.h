@@ -24,6 +24,23 @@
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
 #define WOLFSSL_ESP_NO_WATCHDOG 1
+#define DEBUG_WOLFSSL
+#define DEBUG_WOLFSSL_VERBOSE
+#define DEBUG_WOLFSSL_SHA_MUTEX
+#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
+#define ASN_ALLOW_0_SERIAL
+#define HAVE_SNI
+#define WOLFSSL_ALT_CERT_CHAINS
+#define HAVE_ECC
+#define HAVE_X509
+#define WOLFSSL_TLS13
+#define WOLFSSL_TLS12
+
+/* the root CA is using RSA */
+#define HAVE_RSA
+#define WOLFSSL_KEY_GEN
+#define WC_RSA_BLINDING
+#define FP_MAX_BITS 8192
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -84,11 +101,23 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+#define USE_WOLFSSL_ESP_SDK_TIME
+
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
 /* Turn on messages that are useful to see only in examples. */
-#define WOLFSSL_EXAMPLE_VERBOSITY
+#if defined(CONFIG_WOLFSSL_EXAMPLE_VERBOSITY) && \
+            CONFIG_WOLFSSL_EXAMPLE_VERBOSITY
+    #undef         WOLFSSL_EXAMPLE_VERBOSITY
+    #define        WOLFSSL_EXAMPLE_VERBOSITY
+#endif
+
+#if defined(CONFIG_WOLFSSL_ALT_CERT_CHAINS) && \
+            CONFIG_WOLFSSL_ALT_CERT_CHAINS
+    #undef         WOLFSSL_ALT_CERT_CHAINS
+    #define        WOLFSSL_ALT_CERT_CHAINS
+#endif
 
 /* Paths can be long, ensure the entire value printed during debug */
 #define WOLFSSL_MAX_ERROR_SZ 500
@@ -613,8 +642,10 @@
 
 #endif
 
-#define WOLFSSL_ASN_TEMPLATE
-
+// #define WOLFSSL_ASN_TEMPLATE
+#ifdef WOLFSSL_ASN_TEMPLATE
+    #warning "WOLFSSL_ASN_TEMPLATE is defined"
+#endif
 /*
 #undef  WOLFSSL_KEY_GEN
 #undef  WOLFSSL_CERT_REQ
@@ -785,8 +816,10 @@
     /*  #define NO_ESP32_CRYPT                 */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */

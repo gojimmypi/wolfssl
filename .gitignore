@@ -596,3 +596,5 @@ debian/control
 /wolfssl-VS2022.vcxproj.user
 /DLL Release (options.h)/x64
 /IDE/Espressif/ESP-IDF/examples/**/*.clog
+/IDE/Espressif/ESP-IDF/examples/espidf-http-request/sdkconfig
+/IDE/Espressif/ESP-IDF/examples/wolfssl_client/main/time_helper.c
