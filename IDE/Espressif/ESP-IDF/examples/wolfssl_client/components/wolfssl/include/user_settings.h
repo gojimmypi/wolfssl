@@ -24,34 +24,21 @@
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
 #define WOLFSSL_ESP_NO_WATCHDOG 1
+#define OPENSSL_EXTRA
+#define ERROR_QUEUE_PER_THREAD
+
 // #define DEBUG_WOLFSSL
-//#define DEBUG_WOLFSSL_VERBOSE
-//#define DEBUG_WOLFSSL_SHA_MUTEX
+// #define DEBUG_WOLFSSL_VERBOSE
+// #define DEBUG_WOLFSSL_SHA_MUTEX
 #define WOLFSSL_DEBUG_CERTS
-#define WOLFSSL_DEBUG_IGNORE_ASN_TIME
 #define ASN_ALLOW_0_SERIAL
 #define HAVE_SNI
 #define WOLFSSL_ALT_CERT_CHAINS
 #define HAVE_ECC
-#define HAVE_X509
-#define WOLFSSL_TLS13
-#define WOLFSSL_TLS12
-#define HAVE_ECC521
-#define HAVE_ECC384
-#define HAVE_ECC256
-#define WOLFSSL_SHA384
-
-#define WOLFSSL_CERT_EXT
-#define WOLFSSL_KEY_GEN
-#define WOLFSSL_KEY_PARSING
 
 /* the root CA is using RSA */
 #define HAVE_RSA
-#define WOLFSSL_KEY_GEN
-#define WC_RSA_BLINDING
-#define FP_MAX_BITS 8192
-
-#define OPENSSL_EXTRA
+#define FP_MAX_BITS 4096
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -411,7 +398,7 @@
 #define NO_SESSION_CACHE
 
 /* Small Stack uses more heap. */
-#define WOLFSSL_SMALL_STACK
+// #define WOLFSSL_SMALL_STACK
 
 /* Full debugging turned off, but show malloc failure detail */
 /* #define DEBUG_WOLFSSL */
@@ -1190,7 +1177,10 @@ Turn on timer debugging (used when CPU cycles not available)
 #undef NO_OLD_TLS     // if set, disables SHA-1 and MD5
 #undef NO_SHA
 #undef NO_SHA1
-#undef NO_RSA
-#undef WOLFSSL_NO_RSA
-#undef NO_CERTS
-#undef NO_PWDBASED
+#ifdef NO_RSA
+    #warning "NO_RSA"
+#endif
+#ifdef NO_CERTS
+    #warning "NO_CERTS"
+#endif
+// #undef NO_PWDBASED
