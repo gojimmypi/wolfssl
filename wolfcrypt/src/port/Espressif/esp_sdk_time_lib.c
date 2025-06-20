@@ -37,6 +37,12 @@
 #include <esp_log.h>
 #include <esp_err.h>
 
+#if (ESP_IDF_VERSION_MAJOR > 5)  ||     \
+    (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 4)
+    /* for ESP-IDF 5.5 or newer: */
+    #include <esp_sntp.h>
+#endif
+
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
@@ -388,8 +394,17 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
-        /* TODO Consider esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);  */
-        sntp_setoperatingmode(SNTP_OPMODE_POLL);
+        #if (ESP_IDF_VERSION_MAJOR > 5)  ||     \
+            (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 4)
+        {
+            esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+        }
+        #else
+        {
+            /* Deprecated as of v5.5 */
+            sntp_setoperatingmode(SNTP_OPMODE_POLL);
+        }
+        #endif
         if (NTP_SERVER_COUNT > CONFIG_LWIP_SNTP_MAX_SERVERS) {
             ESP_LOGW(TAG, "WARNING: %d NTP Servers defined, but "
                           "CONFIG_LWIP_SNTP_MAX_SERVERS = %d",
@@ -403,7 +418,16 @@ int set_time(void)
                 break;
             }
             ESP_LOGI(TAG, "%s", thisServer);
-            sntp_setservername(i, thisServer);
+            #if (ESP_IDF_VERSION_MAJOR  > 5) || \
+                (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 4)
+            {
+                esp_sntp_setservername(i, thisServer);
+            }
+            #else
+            {
+                sntp_setservername(i, thisServer);
+            }
+            #endif
             ret = ESP_OK;
         }
     #ifdef HAS_ESP_NETIF_SNTP
@@ -419,7 +443,16 @@ int set_time(void)
             ESP_LOGE(TAG, "ERROR: esp_netif_sntp_init return = %d", ret);
         }
 
-        sntp_init();
+        #if (ESP_IDF_VERSION_MAJOR  > 5) || \
+            (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 4)
+        {
+            esp_sntp_init();
+        }
+        #else
+        {
+            sntp_init();
+        }
+        #endif
         switch (ret) {
             case ESP_ERR_INVALID_STATE:
                 break;
@@ -450,6 +483,14 @@ int set_time_wait_for_ntp(void)
 
     ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
 #else
+    esp_sntp_init();
+    int ntp_retry = 0;
+
+    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++ntp_retry < NTP_RETRY_COUNT) {
+        ESP_LOGI("ntp", "Waiting for system time to be set... (%d/%d)", ntp_retry, NTP_RETRY_COUNT);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
     ESP_LOGE(TAG, "HAS_ESP_NETIF_SNTP not defined");
 #endif /* HAS_ESP_NETIF_SNTP */
     esp_show_current_datetime();
