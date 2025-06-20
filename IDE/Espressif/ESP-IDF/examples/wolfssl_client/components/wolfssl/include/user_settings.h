@@ -38,7 +38,7 @@
 
 /* the root CA is using RSA */
 #define HAVE_RSA
-#define FP_MAX_BITS 4096
+#define FP_MAX_BITS (2 * 4096)
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
@@ -398,7 +398,7 @@
 #define NO_SESSION_CACHE
 
 /* Small Stack uses more heap. */
-// #define WOLFSSL_SMALL_STACK
+#define WOLFSSL_SMALL_STACK
 
 /* Full debugging turned off, but show malloc failure detail */
 /* #define DEBUG_WOLFSSL */
