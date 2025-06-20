@@ -792,21 +792,21 @@ static int process_start(u_int32_t reg)
     int ret = MP_OKAY;
     /* see 3.16 "software needs to always use the "volatile"
     ** attribute when accessing registers in these two address spaces. */
-    DPORT_REG_WRITE((volatile word32*)reg, 1);
+    DPORT_REG_WRITE((volatile uint32_t *)(uintptr_t)reg, 1);
     ESP_EM__POST_PROCESS_START;
 
     return ret;
 }
 
 /* wait until RSA math register indicates operation completed */
-static int wait_until_done(word32 reg)
+static int wait_until_done(uint32_t reg)
 {
     int ret = MP_OKAY;
     word32 timeout = 0;
 
     /* wait until done && not timeout */
     ESP_EM__MP_HW_WAIT_DONE;
-    while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ(reg) != 1) {
+    while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ((volatile uint32_t)(uintptr_t)reg) != 1) {
         asm volatile("nop"); /* wait */
     }
     ESP_EM__DPORT_FIFO_READ;
@@ -856,7 +856,7 @@ static int esp_memblock_to_mpint(const word32 mem_address,
     for (volatile word32 i = 0;  i < numwords; ++i) {
         ESP_EM__3_16;
         mp->dp[i] = DPORT_SEQUENCE_REG_READ(
-                        (volatile word32)(mem_address + i * 4));
+                        (volatile uint32_t)(uintptr_t)(mem_address + i * 4));
     }
     DPORT_INTERRUPT_RESTORE();
 #endif
@@ -903,8 +903,8 @@ static int esp_zero_memblock(u_int32_t mem_address, int wordSz)
     DPORT_INTERRUPT_DISABLE();
     for (int i=0; i < wordSz; i++) {
         DPORT_REG_WRITE(
-            (volatile u_int32_t *)(mem_address + (i * sizeof(word32))),
-            (u_int32_t)(0) /* zero memory blocks [wordSz] words long */
+           (volatile uint32_t *)(uintptr_t)(mem_address + (i * sizeof(word32))),
+           (u_int32_t)(0) /* zero memory blocks [wordSz] words long */
         );
     }
     DPORT_INTERRUPT_RESTORE();
@@ -2184,29 +2184,39 @@ int esp_mp_mulmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         process_start(RSA_MULT_START_REG);
 
         /* step.5,6 wait until done                       */
-        wait_until_done(RSA_INTERRUPT_REG);
+        ret = wait_until_done(RSA_INTERRUPT_REG);
 
-        /* step.7 Y to MEM_X                              */
-        esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
-                              Y, mph->Ys,
-                              mph->hwWords_sz);
+        /* step.6 read the result form MEM_Z              */
+        if (ret == MP_OKAY) {
+                /* step.7 Y to MEM_X                          */
+            esp_mpint_to_memblock(RSA_MEM_X_BLOCK_BASE,
+                                  Y, mph->Ys,
+                                  mph->hwWords_sz);
 
 #ifdef DEBUG_WOLFSSL
-        /* save value to peek at the result stored in RSA_MEM_Z_BLOCK_BASE */
-        esp_memblock_to_mpint(RSA_MEM_X_BLOCK_BASE,
-                              PEEK,
-                              128);
-        esp_clean_result(PEEK, 0);
+            /* save value to peek at result stored in RSA_MEM_Z_BLOCK_BASE */
+            esp_memblock_to_mpint(RSA_MEM_X_BLOCK_BASE,
+                                  PEEK,
+                                  128);
+            esp_clean_result(PEEK, 0);
 #endif /* DEBUG_WOLFSSL */
 
-        /* step.8 start process                           */
-        process_start(RSA_MULT_START_REG);
+            /* step.8 start process                           */
+            process_start(RSA_MULT_START_REG);
 
-        /* step.9,11 wait until done                      */
-        wait_until_done(RSA_INTERRUPT_REG);
-
-        /* step.12 read the result from MEM_Z             */
-        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, tmpZ, zwords);
+            /* step.9,11 wait until done                      */
+            ret = wait_until_done(RSA_INTERRUPT_REG);
+            if (ret == MP_OKAY) {
+                /* step.12 read the result from MEM_Z             */
+                esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, tmpZ, zwords);
+            }
+            else {
+                ESP_LOGE(TAG, "ERROR: wait_until_done failed in esp32_mp");
+            }
+        }
+        else {
+            ESP_LOGE(TAG, "ERROR: step 7 skip wait_until_done esp32_mp failed");
+        }
     } /* step 1 .. 12 */
 
     /* step.13 clear and release HW                   */
@@ -2851,9 +2861,11 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
                                              * RSA_MODEXP_START_REG in docs? */
 
         /* step.5 wait until done                         */
-        wait_until_done(RSA_INTERRUPT_REG);
-        /* step.6 read a result form memory               */
-        esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+        ret = wait_until_done(RSA_INTERRUPT_REG);
+        if (ret == MP_OKAY) {
+            /* step.6 read a result form memory               */
+            esp_memblock_to_mpint(RSA_MEM_Z_BLOCK_BASE, Z, BITS_TO_WORDS(mph->Ms));
+        }
     }
 
     /* step.7 clear and release expt_mod HW               */
@@ -2962,15 +2974,18 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
     OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
     if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
     #ifdef WOLFSSL_HW_METRICS
-        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
+        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max HW bit length %d",
                        OperandBits, ESP_HW_MOD_RSAMAX_BITS);
         esp_mp_mulmod_max_exceeded_ct++;
     #endif
        if (exptmod_lock_called) {
             ret = esp_mp_hw_unlock();
         }
+   #ifdef DEBUG_WOLFSSL
+        ESP_LOGW(TAG, "Falling back to software");
+        esp_mp_exptmod_depth_counter--;
+   #endif
         ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
-
         /* HW not capable for this size, return error to fall back to SW: */
         return MP_HW_FALLBACK;
     }
