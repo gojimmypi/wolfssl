@@ -24,9 +24,6 @@
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
 #define WOLFSSL_ESP_NO_WATCHDOG 1
-#define OPENSSL_EXTRA
-#define ERROR_QUEUE_PER_THREAD
-
 // #define DEBUG_WOLFSSL
 // #define DEBUG_WOLFSSL_VERBOSE
 // #define DEBUG_WOLFSSL_SHA_MUTEX
@@ -34,6 +31,8 @@
 #define ASN_ALLOW_0_SERIAL
 #define HAVE_SNI
 #define WOLFSSL_ALT_CERT_CHAINS
+
+/* Some certs use ECC */
 #define HAVE_ECC
 
 /* the root CA is using RSA */
