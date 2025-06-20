@@ -124,6 +124,16 @@ int ShowCiphers(WOLFSSL* ssl)
     return ret;
 }
 
+/*
+static int verifyIgnoreDateError(int preverify, WOLFSSL_X509_STORE_CTX* store)
+{
+    if (store->error == ASN_BEFORE_DATE_E)
+        return 1; // override error
+    else
+        return preverify;
+}
+*/
+
 void my_log_cb(int level, const char* msg) {
     ESP_LOGI(TAG, "wolfSSL [%d] %s", level, msg);
 }
@@ -204,22 +214,32 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     /* Create and initialize WOLFSSL_CTX */
 #ifdef WOLFSSL_TLS13
     ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_3);
 #else
     ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
     wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_2);
 #endif
+    if (ctx == NULL) {
+        ret_i = WOLFSSL_FAILURE;
+        ESP_LOGE(TAG, "Failed to create ctx, ret = %d", ret_i);
+    }
+    else {
+        ret_i = WOLFSSL_SUCCESS;
+        ESP_LOGE(TAG, "Create ctx success, ret = %d", ret_i);
+    }
 
+#ifdef HAVE_SNI
     ret_i = wolfSSL_CTX_UseSNI(ctx, WOLFSSL_SNI_HOST_NAME, TLS_SMP_TARGET_HOST, strlen(TLS_SMP_TARGET_HOST));
-    if (ret_i != WOLFSSL_SUCCESS)
-    {
-        ESP_LOGE(TAG, "ERROR: failed to use SNI %d, "
-                      "please check the file.\n",
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to use SNI %d, please check the file.\n",
                  ret_i);
     }
-    else
-    {
+    else {
         ESP_LOGI(TAG, "CA cert Use SNI success");
     }
+#else
+    ESP_LOGI(TAG, "CA cert not using SNI");
+#endif
 
     /*   options:   */
     /* ctx = wolfSSL_CTX_new(wolfSSLv1_2_client_method());      only TLS 1.2 */
@@ -232,15 +252,16 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     }
 
     // load certs
+//
     int this_size = mozilla_root_certs_pem_end - mozilla_root_certs_pem_start;
-    #define EXPECTED_SIZE 6321
+    #define EXPECTED_SIZE 8408
     ESP_LOGI(TAG, "Loading %d bytes of PEM certs", (int)(mozilla_root_certs_pem_end - mozilla_root_certs_pem_start));
     if (this_size < EXPECTED_SIZE) {
         ESP_LOGE(TAG, "Expecting %d bytes", EXPECTED_SIZE);
     }
 
-    wolfSSL_SetLoggingCb(my_log_cb);
-    wolfSSL_Debugging_ON();
+    //wolfSSL_SetLoggingCb(my_log_cb);
+    //wolfSSL_Debugging_ON();
 
     ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                            mozilla_root_certs_pem_start,
