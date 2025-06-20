@@ -2551,7 +2551,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
 
     if (ret == 0) {
         /* blind */
-        ret = mp_rand(rnd, get_digit_count(&key->n), rng);
+        ret = mp_rand(rnd, mp_get_digit_count(&key->n), rng);
     }
     if (ret == 0) {
         /* rndi = 1/rnd mod n */

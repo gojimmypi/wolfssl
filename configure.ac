@@ -213,7 +213,7 @@ AS_IF([test "$ax_enable_debug" = "yes"],
       [AM_CCASFLAGS="$AM_CCASFLAGS -DNDEBUG"])
 
 AC_ARG_ENABLE([debug-code-points],
-    [ AS_HELP_STRING([--enable-debug-code-points],[Include source file and line number in --enable-verbose messages.]) ],
+    [ AS_HELP_STRING([--enable-debug-code-points],[Include source file and line number in --enable-debug messages.]) ],
     [ ENABLED_DEBUG_CODEPOINTS=$enableval ],
     [ ENABLED_DEBUG_CODEPOINTS=no ]
     )
@@ -1665,6 +1665,7 @@ then
         test "$enable_shake128" = "" && enable_shake128=yes
         test "$enable_shake256" = "" && enable_shake256=yes
     fi
+    ENABLED_CERTS=yes
 fi
 
 # XMSS
@@ -3367,7 +3368,7 @@ then
         armv7m*)
             # QEMU doesn't work with armv7-m
             AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ARMASM_THUMB2"
-            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -DWOLFSSL_ARMASM_THUMB2 -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=7"
+            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv7-r -DWOLFSSL_ARMASM_THUMB2 -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=7"
             # Include options.h
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
             ENABLED_ARMASM_CRYPTO=no
@@ -3385,7 +3386,7 @@ then
             fi
             ;;
         armv6*)
-            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv6 -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=6"
+            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv6 -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=6"
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
             ENABLED_ARMASM_CRYPTO=no
             ENABLED_ARMASM_NEON=no
@@ -3393,7 +3394,7 @@ then
             AC_MSG_NOTICE([32bit ARMv6 found])
             ;;
         armv4*)
-            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv4 -fomit-frame-pointer -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=4"
+            AM_CPPFLAGS="$AM_CPPFLAGS -march=armv4 -DWOLFSSL_ARMASM_NO_HW_CRYPTO -DWOLFSSL_ARM_ARCH=4"
             AM_CCASFLAGS="$AM_CCASFLAGS -DEXTERNAL_OPTS_OPENVPN"
             ENABLED_ARMASM_CRYPTO=no
             ENABLED_ARMASM_NEON=no
@@ -4444,6 +4445,7 @@ then
     fi
 
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_SM2 -DWOLFSSL_BASE16"
+    ENABLED_CERTS=yes
 fi
 
 
@@ -6305,6 +6307,7 @@ then
 
     AM_CFLAGS="$AM_CFLAGS -DHAVE_CURVE448"
     ENABLED_FE448=yes
+    ENABLED_CERTS=yes
 fi
 
 # Ed448
@@ -9922,10 +9925,6 @@ then
     AM_CCASFLAGS="$AM_CCASFLAGS -DHAVE_ED25519"
     ENABLED_FEMATH=yes
     ENABLED_GEMATH=yes
-fi
-
-if test "$ENABLED_ED25519" != "no" || test "$ENABLED_ED448" != "no"
-then
     ENABLED_CERTS=yes
 fi
 
