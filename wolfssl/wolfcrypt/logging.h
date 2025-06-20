@@ -42,6 +42,7 @@ enum wc_LogLevels {
     INFO_LOG,
     ENTER_LOG,
     LEAVE_LOG,
+    CERT_LOG,
     OTHER_LOG
 };
 
@@ -224,7 +225,11 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     WOLFSSL_API void WOLFSSL_BUFFER(const byte* buffer, word32 length);
 
 #else
-
+    /* ! (defined(DEBUG_WOLFSSL) && !defined(WOLFSSL_DEBUG_ERRORS_ONLY)) */
+    #define WOLFSSL_ENTER_DO_NOTHING
+    #define WOLFSSL_LEAVE_DO_NOTHING
+    #define WOLFSSL_STUB_DO_NOTHING
+    #define WOLFSSL_IS_DEBUG_ON_DO_NOTHING
     #define WOLFSSL_ENTER(m)      WC_DO_NOTHING
     #define WOLFSSL_LEAVE(m, r)   WC_DO_NOTHING
     #define WOLFSSL_STUB(m)       WC_DO_NOTHING
@@ -234,10 +239,12 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
         #define WOLFSSL_IS_DEBUG_ON() 0
     #endif
 
+    #define WOLFSSL_MSG_EX_DO_NOTHING
     #ifdef WOLF_NO_VARIADIC_MACROS
        /* note, modern preprocessors will generate errors with this definition.
         * "error: macro "WOLFSSL_MSG_EX" passed 2 arguments, but takes just 0"
         */
+        #define WOLFSSL_MSG_CERT_DO_NOTHING
         #define WOLFSSL_MSG_EX()    WC_DO_NOTHING
         #define WOLFSSL_MSG_CERT()  WC_DO_NOTHING
     #else
@@ -246,6 +253,8 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
             #define WOLFSSL_MSG_CERT(...) WC_DO_NOTHING
         #endif
     #endif
+
+    #define WOLFSSL_MSG_DO_NOTHING
     #define WOLFSSL_MSG(m)           WC_DO_NOTHING
     #ifndef WOLFSSL_DEBUG_CERTS
         /* WOLFSSL_MSG_CERT otherwise has API call for this */

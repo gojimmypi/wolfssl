@@ -5901,12 +5901,8 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
     if (cert == NULL) {
         WOLFSSL_MSG_CERT(MSG_CERT_INDENT"Failed; cert is NULL");
     }
-#else
-    if (0) {
-        /* cert is an array on stack, not pointer, so it will never be null */
-    }
-#endif
     else {
+#endif
         if (ret == 0) {
             WOLFSSL_MSG_CERT(MSG_CERT_INDENT"issuer:  '%s'", cert->issuer);
             WOLFSSL_MSG_CERT(MSG_CERT_INDENT"subject: '%s'", cert->subject);
@@ -5918,7 +5914,9 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                 WOLFSSL_MSG_CERT(MSG_CERT_INDENT"error ret: %d; %s", ret, msg);
             #endif
         }
-    } /* cert check */
+#ifdef WOLFSSL_SMALL_STACK
+    } /* cert pointer null check */
+#endif
 
 #ifndef NO_SKID
     subjectHash = cert->extSubjKeyId;

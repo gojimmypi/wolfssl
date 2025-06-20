@@ -25590,7 +25590,7 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                 }
             }
         #endif /* IGNORE_NAME_CONSTRAINTS */
-        }
+        } /* cert->ca */
 #ifdef WOLFSSL_CERT_REQ
         else if (type == CERTREQ_TYPE) {
             /* try to confirm/verify signature */
@@ -25654,7 +25654,7 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
 #endif
         else {
             /* no signer */
-            WOLFSSL_MSG("No CA signer to verify with");
+            WOLFSSL_MSG_CERT("No CA signer to verify with");
             /* If you end up here with error -188,
              * consider using WOLFSSL_ALT_CERT_CHAINS. */
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
@@ -25667,10 +25667,11 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
 #endif
             {
                 WOLFSSL_ERROR_VERBOSE(ASN_NO_SIGNER_E);
+                WOLFSSL_MSG_CERT("Consider using WOLFSSL_ALT_CERT_CHAINS.");
                 return ASN_NO_SIGNER_E;
             }
         }
-    }
+    } /* verify != NO_VERIFY && type != CA_TYPE && type != TRUSTED_PEER_TYPE */
 
 #if defined(WOLFSSL_NO_TRUSTED_CERTS_VERIFY) && !defined(NO_SKID)
 exit_pcr:
@@ -25680,7 +25681,7 @@ exit_pcr:
         if (verify != VERIFY_SKIP_DATE) {
             return cert->badDate;
         }
-        WOLFSSL_MSG("Date error: Verify option is skipping");
+        WOLFSSL_MSG_CERT("Date error: Verify option is skipping");
     }
 
     if (cert->criticalExt != 0)
@@ -31689,7 +31690,7 @@ static int MakeSignature(CertSignCtx* certSignCtx, const byte* buf, word32 sz,
         certSignCtx->state = CERTSIGN_STATE_DO;
         ret = -1; /* default to error, reassigned to ALGO_ID_E below. */
 
-    #ifndef NO_RSA
+    #if !defined(NO_RSA) && !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(WOLFSSL_RSA_VERIFY_ONLY)
         if (rsaKey) {
             /* signature */
             ret = wc_RsaSSL_Sign(certSignCtx->encSig,
@@ -40601,6 +40602,7 @@ static int ParseCRL_Extensions(DecodedCRL* dcrl, const byte* buf, word32 idx,
                     dcrl->crlNumberSet = 1;
                 }
 
+                mp_free(m);
                 FREE_MP_INT_SIZE(m, NULL, DYNAMIC_TYPE_TMP_BUFFER);
             }
             /* TODO: check criticality */

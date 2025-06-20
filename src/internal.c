@@ -15729,7 +15729,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E) ||
                             ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
                             if (!ssl->options.usingAltCertChain) {
-                                WOLFSSL_MSG("Trying alternate cert chain");
+                                WOLFSSL_MSG_CERT("Trying alternate cert chain");
                                 ssl->options.usingAltCertChain = 1;
                             }
 
@@ -15741,8 +15741,22 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
 
                             /* do not add to certificate manager */
                             skipAddCA = 1;
+                        } /* ASN_NO_SIGNER_E || ASN_SELF_SIGNED_E */
+                    } /* ret != 0 && isCA */
+                #else
+                	/* When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
+                    if (ret != 0 && args->dCert->isCA) {
+                        if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E)) {
+                            WOLFSSL_MSG_CERT(
+                                  "Consider enabling WOLFSSL_ALT_CERT_CHAINS"
+                                  " to resolve ASN_NO_SIGNER_E");
                         }
-                    }
+                        if (ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
+                            WOLFSSL_MSG_CERT(
+                                  "Consider enabling WOLFSSL_ALT_CERT_CHAINS"
+                                  " to resolve ASN_SELF_SIGNED_E");
+                        }
+                    } /* check alt-cert possible fixable error codes */
                 #endif /* WOLFSSL_ALT_CERT_CHAINS */
 
                 #if defined(__APPLE__) && defined(WOLFSSL_SYS_CA_CERTS)
@@ -22056,6 +22070,7 @@ static int DoProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
             ssl->error != WC_NO_ERR_TRACE(SOCKET_ERROR_E))
     ) {
         WOLFSSL_MSG("ProcessReply retry in error state, not allowed");
+        printf("ProcessReply retry in error state, not allowed");
         return ssl->error;
     }
 
@@ -22095,9 +22110,11 @@ static int DoProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     }
 #endif
 
+    printf("RetrySendAlert");
     ret = RetrySendAlert(ssl);
     if (ret != 0) {
         WOLFSSL_MSG_EX("RetrySendAlert failed, giving up. err = %d", ret);
+        printf("RetrySendAlert failed");
         return ret;
     }
 
@@ -35749,6 +35766,16 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         XFREE(args->verifySig, ssl->heap, DYNAMIC_TYPE_SIGNATURE);
         args->verifySig = NULL;
     #endif
+
+        if (
+        #ifdef WOLFSSL_ASYNC_IO
+            args != NULL &&
+        #endif
+            args->input != NULL) {
+            XFREE(args->input, ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
+            args->input = NULL;
+        }
+
         (void)args;
     }
 

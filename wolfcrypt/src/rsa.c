@@ -2748,7 +2748,7 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
         case RSA_PUBLIC_ENCRYPT:
         case RSA_PUBLIC_DECRYPT:
             if (mp_exptmod_nct(tmp, &key->e, &key->n, tmp) != MP_OKAY) {
-                WOLFSSL_MSG("mp_exptmod_nct failed");
+                WOLFSSL_MSG_CERT("mp_exptmod_nct failed");
                 ret = MP_EXPTMOD_E;
             }
             break;
@@ -3871,7 +3871,7 @@ int wc_RsaSSL_VerifyInline(byte* in, word32 inLen, byte** out, RsaKey* key)
 }
 #endif
 
-#ifndef WOLFSSL_RSA_VERIFY_ONLY
+#ifndef WOLFSSL_RSA_VERIFY_INLINE
 int wc_RsaSSL_Verify(const byte* in, word32 inLen, byte* out, word32 outLen,
                                                                  RsaKey* key)
 {
@@ -5090,7 +5090,7 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
     /* Blind the inverse operation with a value that is invertable */
     if (err == MP_OKAY) {
         do {
-            err = mp_rand(&key->p, get_digit_count(tmp3), rng);
+            err = mp_rand(&key->p, mp_get_digit_count(tmp3), rng);
             if (err == MP_OKAY)
                 err = mp_set_bit(&key->p, 0);
             if (err == MP_OKAY)

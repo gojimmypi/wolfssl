@@ -21,6 +21,18 @@
 
 #include <wolfssl/wolfcrypt/libwolfssl_sources.h>
 
+/*
+ * Display debug messages:   wolfSSL_Debugging_ON();
+ * Turn off debug messages:  wolfSSL_Debugging_OFF();
+ *
+ * #define WOLFSSL_DEBUG_CERTS
+ *   Define to enable cert-related diagnostic messages.
+ *   Enabled automatically with DEBUG_WOLFSSL but can be use separately.
+ *
+ * Optional user callbacks:
+ *   wolfSSL_SetLoggingCb(my_log_cb);
+ */
+
 #if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
 /* avoid adding WANT_READ and WANT_WRITE to error queue */
 #include <wolfssl/error-ssl.h>
@@ -296,10 +308,14 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
 
 #if defined(XVSNPRINTF) && !defined(NO_WOLFSSL_MSG_EX)
 #include <stdarg.h> /* for var args */
+
 #ifndef WOLFSSL_MSG_EX_BUF_SZ
 #define WOLFSSL_MSG_EX_BUF_SZ 100
 #endif
+
 #undef WOLFSSL_MSG_EX /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
+
+#ifndef WOLFSSL_MSG_EX_DO_NOTHING
 #ifdef __clang__
 /* tell clang argument 1 is format */
 __attribute__((__format__ (__printf__, 1, 0)))
@@ -317,6 +333,7 @@ void WOLFSSL_MSG_EX(const char* fmt, ...)
             wolfssl_log(INFO_LOG, NULL, 0, msg);
     }
 }
+#endif
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_MSG_EX2(const char *file, int line, const char* fmt, ...)
@@ -345,7 +362,7 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     written = XVSNPRINTF(msg, sizeof(msg), fmt, args);
     va_end(args);
     if (written > 0) {
-        wolfssl_log(INFO_LOG, NULL, 0, msg);
+        wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
 }
 #endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
@@ -353,11 +370,13 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
 #endif /* XVSNPRINTF && !NO_WOLFSSL_MSG_EX */
 
 #undef WOLFSSL_MSG /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
+#ifndef WOLFSSL_MSG_DO_NOTHING
 void WOLFSSL_MSG(const char* msg)
 {
     if (loggingEnabled)
         wolfssl_log(INFO_LOG, NULL, 0, msg);
 }
+#endif
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_MSG2(const char *file, int line, const char* msg)
@@ -445,6 +464,7 @@ errout:
 }
 
 #undef WOLFSSL_ENTER /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
+#ifndef WOLFSSL_ENTER_DO_NOTHING
 void WOLFSSL_ENTER(const char* msg)
 {
     if (loggingEnabled) {
@@ -457,6 +477,7 @@ void WOLFSSL_ENTER(const char* msg)
         wolfssl_log(ENTER_LOG, NULL, 0, buffer);
     }
 }
+#endif /* WOLFSSL_ENTER_DO_NOTHING */
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_ENTER2(const char *file, int line, const char* msg)
@@ -474,6 +495,7 @@ void WOLFSSL_ENTER2(const char *file, int line, const char* msg)
 #endif
 
 #undef WOLFSSL_LEAVE /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
+#ifndef WOLFSSL_LEAVE_DO_NOTHING
 void WOLFSSL_LEAVE(const char* msg, int ret)
 {
     if (loggingEnabled) {
@@ -487,6 +509,7 @@ void WOLFSSL_LEAVE(const char* msg, int ret)
         wolfssl_log(LEAVE_LOG, NULL, 0, buffer);
     }
 }
+#endif /* WOLFSSL_LEAVE_DO_NOTHING */
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
@@ -515,14 +538,25 @@ void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
     #endif
 #endif
 
+#ifndef WOLFSSL_IS_DEBUG_ON_DO_NOTHING
 WOLFSSL_API int WOLFSSL_IS_DEBUG_ON(void)
 {
     return loggingEnabled;
 }
+#endif /* WOLFSSL_IS_DEBUG_ON_NO_NOTHING */
 #endif /* !WOLFSSL_DEBUG_ERRORS_ONLY */
 #endif /* DEBUG_WOLFSSL */
 
 #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE) || defined(HAVE_MEMCACHED)
+
+#ifndef DEBUG_WOLFSSL
+    #define WOLFSSL_ENTER_DO_NOTHING
+    #define WOLFSSL_LEAVE_DO_NOTHING
+    #define WOLFSSL_MSG_DO_NOTHING
+    #define WOLFSSL_ENTER(m)      WC_DO_NOTHING
+    #define WOLFSSL_LEAVE(m, r)   WC_DO_NOTHING
+    #define WOLFSSL_MSG(m)        WC_DO_NOTHING
+#endif
 
 #ifdef WOLFSSL_HAVE_ERROR_QUEUE
 
