@@ -5897,26 +5897,29 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
     ret = ParseCert(cert, CA_TYPE, verify, cm);
 
     WOLFSSL_MSG("\tParsed new CA");
-#ifdef WOLFSSL_SMALL_STACK
+#ifdef WOLFSSL_DEBUG_CERTS
+    #ifdef WOLFSSL_SMALL_STACK
     if (cert == NULL) {
-        WOLFSSL_MSG_CERT(MSG_CERT_INDENT"Failed; cert is NULL");
+        WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"Failed; cert is NULL");
     }
-    else {
-#endif
+    else
+    #endif
+    {
         if (ret == 0) {
-            WOLFSSL_MSG_CERT(MSG_CERT_INDENT"issuer:  '%s'", cert->issuer);
-            WOLFSSL_MSG_CERT(MSG_CERT_INDENT"subject: '%s'", cert->subject);
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"issuer:  '%s'",
+                cert->issuer);
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"subject: '%s'",
+                cert->subject);
         }
         else {
-            WOLFSSL_MSG_CERT(MSG_CERT_INDENT"Failed during parse of new CA");
-            #ifdef WOLFSSL_DEBUG_CERTS
-                msg = wc_GetErrorString(ret);
-                WOLFSSL_MSG_CERT(MSG_CERT_INDENT"error ret: %d; %s", ret, msg);
-            #endif
+            WOLFSSL_MSG_CERT(
+                WOLFSSL_MSG_CERT_INDENT"Failed during parse of new CA");
+            msg = wc_GetErrorString(ret);
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"error ret: %d; %s",
+                ret, msg);
         }
-#ifdef WOLFSSL_SMALL_STACK
-    } /* cert pointer null check */
-#endif
+    }
+#endif /* WOLFSSL_DEBUG_CERTS */
 
 #ifndef NO_SKID
     subjectHash = cert->extSubjKeyId;

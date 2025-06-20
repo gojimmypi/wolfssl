@@ -42,6 +42,7 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #endif
 
 #include <wolfssl/wolfcrypt/rsa.h>
+#include <wolfssl/wolfcrypt/logging.h>
 
 #ifdef WOLFSSL_AFALG_XILINX_RSA
 #include <wolfssl/wolfcrypt/port/af_alg/wc_afalg.h>

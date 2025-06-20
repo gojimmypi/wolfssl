@@ -313,9 +313,7 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
 #define WOLFSSL_MSG_EX_BUF_SZ 100
 #endif
 
-#undef WOLFSSL_MSG_EX /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
-
-#ifndef WOLFSSL_MSG_EX_DO_NOTHING
+#ifndef WOLFSSL_MSG_EX
 #ifdef __clang__
 /* tell clang argument 1 is format */
 __attribute__((__format__ (__printf__, 1, 0)))
@@ -364,13 +362,13 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     if (written > 0) {
         wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
+    (void)loggingEnabled;
 }
-#endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
+#endif
 
 #endif /* XVSNPRINTF && !NO_WOLFSSL_MSG_EX */
 
-#undef WOLFSSL_MSG /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
-#ifndef WOLFSSL_MSG_DO_NOTHING
+#ifndef WOLFSSL_MSG
 void WOLFSSL_MSG(const char* msg)
 {
     if (loggingEnabled)
@@ -386,6 +384,7 @@ void WOLFSSL_MSG2(const char *file, int line, const char* msg)
 }
 #endif
 
+#ifndef WOLFSSL_BUFFER
 #ifndef LINE_LEN
 #define LINE_LEN 16
 #endif
@@ -462,9 +461,9 @@ errout:
 
     wolfssl_log(INFO_LOG, NULL, 0, "\t[Buffer error while rendering]");
 }
+#endif
 
-#undef WOLFSSL_ENTER /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
-#ifndef WOLFSSL_ENTER_DO_NOTHING
+#ifndef WOLFSSL_ENTER
 void WOLFSSL_ENTER(const char* msg)
 {
     if (loggingEnabled) {
@@ -477,7 +476,7 @@ void WOLFSSL_ENTER(const char* msg)
         wolfssl_log(ENTER_LOG, NULL, 0, buffer);
     }
 }
-#endif /* WOLFSSL_ENTER_DO_NOTHING */
+#endif
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_ENTER2(const char *file, int line, const char* msg)
@@ -494,8 +493,7 @@ void WOLFSSL_ENTER2(const char *file, int line, const char* msg)
 }
 #endif
 
-#undef WOLFSSL_LEAVE /* undo WOLFSSL_DEBUG_CODEPOINTS wrapper */
-#ifndef WOLFSSL_LEAVE_DO_NOTHING
+#ifndef WOLFSSL_LEAVE
 void WOLFSSL_LEAVE(const char* msg, int ret)
 {
     if (loggingEnabled) {
@@ -509,7 +507,7 @@ void WOLFSSL_LEAVE(const char* msg, int ret)
         wolfssl_log(LEAVE_LOG, NULL, 0, buffer);
     }
 }
-#endif /* WOLFSSL_LEAVE_DO_NOTHING */
+#endif /* WOLFSSL_LEAVE */
 
 #ifdef WOLFSSL_DEBUG_CODEPOINTS
 void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
@@ -538,25 +536,16 @@ void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
     #endif
 #endif
 
-#ifndef WOLFSSL_IS_DEBUG_ON_DO_NOTHING
+#ifndef WOLFSSL_IS_DEBUG_ON
 WOLFSSL_API int WOLFSSL_IS_DEBUG_ON(void)
 {
     return loggingEnabled;
 }
-#endif /* WOLFSSL_IS_DEBUG_ON_NO_NOTHING */
+#endif
 #endif /* !WOLFSSL_DEBUG_ERRORS_ONLY */
 #endif /* DEBUG_WOLFSSL */
 
 #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE) || defined(HAVE_MEMCACHED)
-
-#ifndef DEBUG_WOLFSSL
-    #define WOLFSSL_ENTER_DO_NOTHING
-    #define WOLFSSL_LEAVE_DO_NOTHING
-    #define WOLFSSL_MSG_DO_NOTHING
-    #define WOLFSSL_ENTER(m)      WC_DO_NOTHING
-    #define WOLFSSL_LEAVE(m, r)   WC_DO_NOTHING
-    #define WOLFSSL_MSG(m)        WC_DO_NOTHING
-#endif
 
 #ifdef WOLFSSL_HAVE_ERROR_QUEUE
 

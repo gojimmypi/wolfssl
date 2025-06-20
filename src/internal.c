@@ -15744,7 +15744,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         } /* ASN_NO_SIGNER_E || ASN_SELF_SIGNED_E */
                     } /* ret != 0 && isCA */
                 #else
-                	/* When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
+                    /* When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
                     if (ret != 0 && args->dCert->isCA) {
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E)) {
                             WOLFSSL_MSG_CERT(
