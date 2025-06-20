@@ -260,8 +260,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
         ESP_LOGE(TAG, "Expecting %d bytes", EXPECTED_SIZE);
     }
 
-    //wolfSSL_SetLoggingCb(my_log_cb);
-    //wolfSSL_Debugging_ON();
+    wolfSSL_SetLoggingCb(my_log_cb);
+    wolfSSL_Debugging_ON();
 
     ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                            mozilla_root_certs_pem_start,
