@@ -5950,8 +5950,8 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                                    cert->pubKeySize < (word16)cm->minEccKeySz) {
                     ret = ECC_KEY_SIZE_E;
                     WOLFSSL_MSG_CERT("\tCA ECC key size error: pubKeySize = %d;"
-                                                            " minRsaKeySz = %d",
-                                   cert->pubKeySize, cm->minRsaKeySz);
+                                                            " minEccKeySz = %d",
+                                   cert->pubKeySize, cm->minEccKeySz);
                 }
                 break;
             #endif /* HAVE_ECC */
