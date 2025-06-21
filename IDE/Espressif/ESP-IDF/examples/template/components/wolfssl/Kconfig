@@ -330,6 +330,12 @@ menu "wolfSSL"
                 help
                     View debug messages for cert bundle processing.
 
+            config ESP_WOLFSSL_OPENSSL_EXTRA
+                bool "Enable wolfSSL OpenSSL Extra support"
+                default n
+                help
+                    Enable OpenSSL support: old SHA functions only available with OpenSSLL (not recommended)
+
         endmenu
     endmenu # wolfSSL ESP-TLS
     # -----------------------------------------------------------------------------------------------------------------
