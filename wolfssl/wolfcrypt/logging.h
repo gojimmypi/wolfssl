@@ -160,13 +160,18 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     #define WOLFSSL_MSG_CERT_INDENT "\t-  "
     #endif
 
-    #ifdef __clang__
-    /* tell clang argument 1 is format */
-    __attribute__((__format__ (__printf__, 1, 0)))
+    #if defined(__GNUC__) || defined(__clang__)
+        /* When possible, enforce parameter checking at compile time */
+        #define WOLFSSL_MSG_CERT_FORMAT(fmt_idx, vararg_idx) \
+            __attribute__((format(printf, fmt_idx, vararg_idx)))
+    #else
+        #define WOLFSSL_PRINT_FORMAT(fmt_idx, vararg_idx)
     #endif
-    WOLFSSL_API void WOLFSSL_MSG_CERT(const char* fmt, ...);
+    WOLFSSL_API WOLFSSL_MSG_CERT_FORMAT(1, 2)
+    void WOLFSSL_MSG_CERT(const char* fmt, ...);
 #else
-    #undef WOLFSSL_DEBUG_CERTS
+    #undef  WOLFSSL_DEBUG_CERTS
+    #define WOLFSSL_MSG_CERT_INDENT ""
     #ifdef WOLF_NO_VARIADIC_MACROS
         #define WOLFSSL_MSG_CERT()    WC_DO_NOTHING
     #else

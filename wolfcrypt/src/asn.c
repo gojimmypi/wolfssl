@@ -127,6 +127,7 @@ ASN Options:
 
 #include <wolfssl/wolfcrypt/random.h>
 #include <wolfssl/wolfcrypt/hash.h>
+#include <wolfssl/wolfcrypt/oid_sum.h>
 #ifdef NO_INLINE
     #include <wolfssl/wolfcrypt/misc.h>
 #else
@@ -23384,7 +23385,8 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
     }
     /* Check version is valid/supported - can't be negative. */
     if ((ret == 0) && (version > MAX_X509_VERSION)) {
-        WOLFSSL_MSG("Unexpected certificate version");
+        WOLFSSL_MSG_CERT("Unexpected X.509 certificate version = %d;"
+                         "MAX_X509_VERSION = %d ",version, MAX_X509_VERSION );
         WOLFSSL_ERROR_VERBOSE(ASN_PARSE_E);
         ret = ASN_PARSE_E;
     }
@@ -23403,19 +23405,19 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
          * Since it is a non-conforming CA that issues a serial of 0 then we
          * treat it as an error here. */
         if (cert->serialSz == 1 && cert->serial[0] == 0) {
-            WOLFSSL_MSG("Error serial number of 0, use WOLFSSL_NO_ASN_STRICT "
-                "if wanted");
+            WOLFSSL_MSG_CERT("Error serial number of 0; "
+                             "use WOLFSSL_NO_ASN_STRICT if wanted");
             ret = ASN_PARSE_E;
         }
     #endif
         if (cert->serialSz == 0) {
-            WOLFSSL_MSG("Error serial size is zero. Should be at least one "
-                        "even with no serial number.");
+            WOLFSSL_MSG_CERT("Error serial size is zero. Should be at least one"
+                             " even with no serial number.");
             ret = ASN_PARSE_E;
         }
 
         cert->signatureOID = dataASN[X509CERTASN_IDX_TBS_ALGOID_OID].data.oid.sum;
-        cert->keyOID = dataASN[X509CERTASN_IDX_TBS_SPUBKEYINFO_ALGO_OID].data.oid.sum;
+        cert->keyOID = dataASN[X509CERTASN_IDX_TBS_SPUBKEYINFO_ALGO_OID].data.oid.sum; /* cert->keyOID */
         cert->certBegin = dataASN[X509CERTASN_IDX_TBS_SEQ].offset;
 
         /* No bad date error - don't always care. */
@@ -23426,7 +23428,7 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
                 : X509CERTASN_IDX_TBS_VALIDITY_NOTB_GT;
         if ((CheckDate(&dataASN[i], ASN_BEFORE) < 0) && (verify != NO_VERIFY) &&
                 (verify != VERIFY_SKIP_DATE)) {
-            badDate = ASN_BEFORE_DATE_E;
+            badDate = ASN_BEFORE_DATE_E; /* bad date */
         }
         /* Store reference to ASN_BEFORE date. */
         cert->beforeDate = GetASNItem_Addr(dataASN[i], cert->source);
@@ -23438,7 +23440,7 @@ static int DecodeCertInternal(DecodedCert* cert, int verify, int* criticalExt,
                 : X509CERTASN_IDX_TBS_VALIDITY_NOTA_GT;
         if ((CheckDate(&dataASN[i], ASN_AFTER) < 0) && (verify != NO_VERIFY) &&
                 (verify != VERIFY_SKIP_DATE)) {
-            badDate = ASN_AFTER_DATE_E;
+            badDate = ASN_AFTER_DATE_E;  /* bad date */
         }
         /* Store reference to ASN_AFTER date. */
         cert->afterDate = GetASNItem_Addr(dataASN[i], cert->source);
@@ -25029,6 +25031,25 @@ Signer* findSignerByName(Signer *list, byte *hash)
     return NULL;
 }
 
+
+#define CASE_KEYOID(name, macro)                                      \
+    case name:                                                        \
+        if (cert == NULL) {                                           \
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "cert is NULL"); \
+        }                                                             \
+        else {                                                        \
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT #name " 0x%08x", \
+                             cert->keyOID);                           \
+        }                                                             \
+    macro                                                             \
+        break;
+
+#ifdef NO_RSA
+    #define IF_NO_RSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "DecodeCert encountered NO_RSA");
+#else
+    #define IF_NO_RSA
+#endif
+
 int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                       Signer *extraCAList)
 {
@@ -25041,6 +25062,9 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
 #endif
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_FSPSM_TLS)
     int    idx = 0;
+#endif
+#ifdef WOLFSSL_DEBUG_CERTS
+    const char* msg = NULL;
 #endif
     byte*  sce_tsip_encRsaKeyIdx;
     (void)extraCAList;
@@ -25308,18 +25332,66 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
         }
         else
 #endif
-        {
+        { /* [else cert type] for cert->sigCtx.state == SIG_STATE_BEGIN */
             ret = DecodeCert(cert, verify, &cert->criticalExt);
-            if (ret == WC_NO_ERR_TRACE(ASN_BEFORE_DATE_E) ||
-                ret == WC_NO_ERR_TRACE(ASN_AFTER_DATE_E)) {
-                cert->badDate = ret;
-                if (verify == VERIFY_SKIP_DATE)
-                    ret = 0;
-            }
-            else if (ret < 0) {
-                WOLFSSL_ERROR_VERBOSE(ret);
-                return ret;
-            }
+            switch (ret) {
+                case WC_NO_ERR_TRACE(ASN_BEFORE_DATE_E):
+                case WC_NO_ERR_TRACE(ASN_AFTER_DATE_E):
+                    cert->badDate = ret;
+                    if (verify == VERIFY_SKIP_DATE) {
+                        WOLFSSL_MSG_CERT("DecodeCert ASN Date Error, skipping");
+                        ret = 0;
+                    }
+                    break;
+
+                case WC_NO_ERR_TRACE(ASN_UNKNOWN_OID_E):
+                    /* Disabled algos will typically manifest as bad oid */
+                    msg = wc_GetErrorString(ret);
+                    WOLFSSL_MSG_CERT("DecodeCert error ret: %d; %s;", ret, msg);
+#ifdef WOLFSSL_DEBUG_CERTS
+    #ifdef WOLFSSL_OLD_OID_SUM
+                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                     "ASN Parse using WOLFSSL_OLD_OID_SUM");
+    #else
+                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                     "ASN Parse not using WOLFSSL_OLD_OID_SUM");
+    #endif
+                    msg = wc_GetErrorString(ret);
+                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                     "Found cert->keyOID:");
+
+                    switch(cert->keyOID) {
+                        CASE_KEYOID(RSAk, IF_NO_RSA);
+                        case RSAk:
+                            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                             "RSAk 0x%08x", cert->keyOID);
+    #ifdef NO_RSA
+                            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                            "DecodeCert encountered NO_RSA");
+    #endif
+                            break;
+                        default:
+                            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                             "Unknown keyOID: 0x%08x;"
+                                             "see enum Key_Sum ", cert->keyOID);
+                            break;
+                    }
+
+    #ifdef NO_ECC
+                    WOLFSSL_MSG_CERT("DecodeCert encountered NO_ECC, "
+                                     "may cause this error");
+    #endif
+#endif
+                    WOLFSSL_ERROR_VERBOSE(ret);
+                    return ret;
+
+                default:
+                    if (ret < 0) {
+                        WOLFSSL_ERROR_VERBOSE(ret);
+                        return ret;
+                    }
+                    break;
+            } /* switch case DecodeCert exit values */
 #if defined(HAVE_RPK)
             if (cert->isRPK) {
                 return ret;
@@ -25328,7 +25400,9 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
         }
 #endif
 
-    #ifndef ALLOW_INVALID_CERTSIGN
+    #ifdef ALLOW_INVALID_CERTSIGN
+        WOLFSSL_MSG_CERT("ALLOW_INVALID_CERTSIGN is enabled, skipping check");
+    #else
         /* https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.9
          *   If the cA boolean is not asserted, then the keyCertSign bit in the
          *   key usage extension MUST NOT be asserted. */
