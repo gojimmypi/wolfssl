@@ -44,6 +44,7 @@
 #include <wolfssl/wolfcrypt/tfm.h>
 #include <wolfcrypt/src/asm.c>  /* will define asm MACROS or C ones */
 #include <wolfssl/wolfcrypt/wolfmath.h> /* common functions */
+#include <wolfssl/wolfcrypt/logging.h>
 
 #ifdef WOLFSSL_ESPIDF
     #include <esp_log.h>
@@ -3295,9 +3296,6 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD)
    int retHW = FP_OKAY;
 #endif
-    if (P == NULL) {
-      return FP_VAL;
-    }
 
    /* handle modulus of zero and prevent overflows */
    if  (fp_iszero(P)) {
