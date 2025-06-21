@@ -25031,24 +25031,129 @@ Signer* findSignerByName(Signer *list, byte *hash)
     return NULL;
 }
 
+/* Cert Debug OID inspection select case helper for use in ParseCertRelative: */
+#ifdef WOLFSSL_DEBUG_CERTS
+    #define CASE_KEYOID(name, macro)                                      \
+        case name:                                                        \
+            if (cert == NULL) {                                           \
+                WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "cert is NULL"); \
+            }                                                             \
+            else {                                                        \
+                WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT                  \
+                                 "Found cert->keyOID: " #name " 0x%08x",  \
+                                 cert->keyOID);                           \
+            }                                                             \
+        macro                                                             \
+            break;
 
-#define CASE_KEYOID(name, macro)                                      \
-    case name:                                                        \
-        if (cert == NULL) {                                           \
-            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "cert is NULL"); \
-        }                                                             \
-        else {                                                        \
-            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT #name " 0x%08x", \
-                             cert->keyOID);                           \
-        }                                                             \
-    macro                                                             \
-        break;
+    #ifdef NO_RSA
+        #define IF_NO_RSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT        \
+                "DecodeCert encountered NO_RSA");
+    #else
+        #define IF_NO_RSA /* WARNING: NO_RSA not defined */
+    #endif
 
-#ifdef NO_RSA
-    #define IF_NO_RSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "DecodeCert encountered NO_RSA");
-#else
-    #define IF_NO_RSA
+    #ifdef NO_ANON
+        #define IF_NO_ANON WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
+                "DecodeCert encountered NO_ANON");
+    #else
+        #define IF_NO_ANON /* WARNING: NO_ANON not defined */
+    #endif
+
+    #ifdef NO_DSA
+        #define IF_NO_DSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
+                "DecodeCert encountered NO_DSA");
+    #else
+        #define IF_NO_DSA /* WARNING: NO_DSA not defined */
+    #endif
+
+    #ifdef NO_RSA
+        #define IF_NO_RSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
+                "DecodeCert encountered NO_RSA");
+    #else
+        #define IF_NO_RSA /* WARNING: NO_RSA not defined */
+    #endif
+
+    #ifdef NO_ECC
+        #define IF_NO_ECC WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
+                "DecodeCert encountered NO_ECC");
+    #else
+        #define IF_NO_ECC /* WARNING: NO_ECC not defined */
+    #endif
+
+    #ifdef NO_SM2
+        #define IF_NO_SM2 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
+                "DecodeCert encountered NO_SM2");
+    #else
+        #define IF_NO_SM2 /* WARNING: NO_SM2 not defined */
+    #endif
+
+    #ifdef NO_ED25519
+        #define IF_NO_ED25519 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
+                "DecodeCert encountered NO_ED25519");
+    #else
+        #define IF_NO_ED25519 /* WARNING: NO_ED25519 not defined */
+    #endif
+
+    #ifdef NO_CURVE25519
+        #define IF_NO_CURVE25519 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT \
+                "DecodeCert encountered NO_CURVE25519");
+    #else
+        #define IF_NO_CURVE25519 /* WARNING: NO_CURVE25519 not defined */
+    #endif
+
+    #ifdef NO_ED448
+        #define IF_NO_ED448 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT      \
+                "DecodeCert encountered NO_ED448");
+    #else
+        #define IF_NO_ED448 /* WARNING: NO_ED448 not defined */
+    #endif
+
+    #ifdef NO_CURVE448
+        #define IF_NO_CURVE448 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
+                "DecodeCert encountered NO_CURVE448");
+    #else
+        #define IF_NO_CURVE448 /* WARNING: NO_CURVE448 not defined */
+    #endif
+
+    #ifdef NO_DH
+        #define IF_NO_DH WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT        \
+                "DecodeCert encountered NO_DH");
+    #else
+        #define IF_NO_DH /* WARNING: NO_DH not defined */
+    #endif
+
+    #ifdef NO_FALCON
+        #define IF_NO_FALCON WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT    \
+                "DecodeCert encountered NO_FALCON");
+    #else
+        #define IF_NO_FALCON /* WARNING: NO_FALCON not defined */
+    #endif
+
+    #ifdef NO_DILITHIUM
+        #define IF_NO_DILITHIUM WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT \
+                "DecodeCert encountered NO_DILITHIUM");
+    #else
+        #define IF_NO_DILITHIUM /* WARNING: NO_DILITHIUM not defined */
+    #endif
+
+    #ifdef NO_ML_DSA
+        #define IF_NO_ML_DSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT    \
+                "DecodeCert encountered NO_ML_DSA");
+    #else
+        #define IF_NO_ML_DSA /* WARNING: NO_ML_DSA not defined */
+    #endif
+
+    #ifdef NO_SPHINCS
+        #define IF_NO_SPHINCS WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
+                "DecodeCert encountered NO_SPHINCS");
+    #else
+        #define IF_NO_SPHINCS /* WARNING: NO_SPHINCS not defined */
+    #endif
+
+    #define DEBUG_CERT_NO_MACRO_CHECK
 #endif
+
 
 int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                       Signer *extraCAList)
@@ -25339,7 +25444,8 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                 case WC_NO_ERR_TRACE(ASN_AFTER_DATE_E):
                     cert->badDate = ret;
                     if (verify == VERIFY_SKIP_DATE) {
-                        WOLFSSL_MSG_CERT("DecodeCert ASN Date Error, skipping");
+                        WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                        "DecodeCert ASN Date Error, skipping");
                         ret = 0;
                     }
                     break;
@@ -25347,33 +25453,44 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                 case WC_NO_ERR_TRACE(ASN_UNKNOWN_OID_E):
                     /* Disabled algos will typically manifest as bad oid */
                     msg = wc_GetErrorString(ret);
-                    WOLFSSL_MSG_CERT("DecodeCert error ret: %d; %s;", ret, msg);
+                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                     "DecodeCert error ret: %d; %s;", ret, msg);
 #ifdef WOLFSSL_DEBUG_CERTS
     #ifdef WOLFSSL_OLD_OID_SUM
                     WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                     "ASN Parse using WOLFSSL_OLD_OID_SUM");
-    #else
-                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                     "ASN Parse not using WOLFSSL_OLD_OID_SUM");
+                                     "OLD ASN Parse using WOLFSSL_OLD_OID_SUM");
     #endif
-                    msg = wc_GetErrorString(ret);
-                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                     "Found cert->keyOID:");
-
                     switch(cert->keyOID) {
-                        CASE_KEYOID(RSAk, IF_NO_RSA);
-                        case RSAk:
-                            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                             "RSAk 0x%08x", cert->keyOID);
-    #ifdef NO_RSA
-                            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                            "DecodeCert encountered NO_RSA");
-    #endif
-                            break;
+                        CASE_KEYOID(ANONk, DEBUG_CERT_NO_MACRO_CHECK);
+                        CASE_KEYOID(DSAk,                  IF_NO_DSA);
+                        CASE_KEYOID(RSAk,                  IF_NO_RSA);
+                        CASE_KEYOID(RSAPSSk,               IF_NO_RSA);
+                        CASE_KEYOID(RSAESOAEPk,            IF_NO_RSA);
+                        CASE_KEYOID(ECDSAk,                IF_NO_ECC);
+                        CASE_KEYOID(SM2k,                  IF_NO_SM2);
+                        CASE_KEYOID(ED25519k,              IF_NO_ED25519);
+                        CASE_KEYOID(X25519k,               IF_NO_CURVE25519);
+                        CASE_KEYOID(ED448k,                IF_NO_ED448);
+                        CASE_KEYOID(X448k,                 IF_NO_CURVE448);
+                        CASE_KEYOID(DHk,                   IF_NO_DH);
+                        CASE_KEYOID(FALCON_LEVEL1k,        IF_NO_FALCON);
+                        CASE_KEYOID(FALCON_LEVEL5k,        IF_NO_FALCON);
+                        CASE_KEYOID(DILITHIUM_LEVEL2k,     IF_NO_DILITHIUM);
+                        CASE_KEYOID(DILITHIUM_LEVEL3k,     IF_NO_DILITHIUM);
+                        CASE_KEYOID(DILITHIUM_LEVEL5k,     IF_NO_DILITHIUM);
+                        CASE_KEYOID(ML_DSA_LEVEL2k,        IF_NO_ML_DSA);
+                        CASE_KEYOID(ML_DSA_LEVEL3k,        IF_NO_ML_DSA);
+                        CASE_KEYOID(ML_DSA_LEVEL5k,        IF_NO_ML_DSA);
+                        CASE_KEYOID(SPHINCS_FAST_LEVEL1k,  IF_NO_SPHINCS);
+                        CASE_KEYOID(SPHINCS_FAST_LEVEL3k,  IF_NO_SPHINCS);
+                        CASE_KEYOID(SPHINCS_FAST_LEVEL5k,  IF_NO_SPHINCS);
+                        CASE_KEYOID(SPHINCS_SMALL_LEVEL1k, IF_NO_SPHINCS);
+                        CASE_KEYOID(SPHINCS_SMALL_LEVEL3k, IF_NO_SPHINCS);
+                        CASE_KEYOID(SPHINCS_SMALL_LEVEL5k, IF_NO_SPHINCS);
                         default:
                             WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
                                              "Unknown keyOID: 0x%08x;"
-                                             "see enum Key_Sum ", cert->keyOID);
+                                             "see enum Key_Sum.", cert->keyOID);
                             break;
                     }
 
