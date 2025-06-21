@@ -3305,7 +3305,7 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       /* FP_MAX_BITS too small is a common cert failure cause */
       WOLFSSL_MSG_CERT("TFM fp_exptmod_nct failed: P.used (%d) > (FP_SIZE/2);"
                        " FP_SIZE: %d; FP_MAX_SIZE: %d",
-                       P->used, FP_SIZE, FP_MAX_BITS, FP_MAX_SIZE);
+                       P->used, FP_SIZE, FP_MAX_SIZE);
       WOLFSSL_MSG_CERT("Consider adjusting current FP_MAX_BITS: %d",
                        FP_MAX_BITS);
       return FP_VAL;
