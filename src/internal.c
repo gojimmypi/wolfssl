@@ -22110,11 +22110,9 @@ static int DoProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
     }
 #endif
 
-    printf("RetrySendAlert\n");
     ret = RetrySendAlert(ssl);
     if (ret != 0) {
         WOLFSSL_MSG_EX("RetrySendAlert failed, giving up. err = %d", ret);
-        printf("RetrySendAlert failed\n");
         return ret;
     }
 
