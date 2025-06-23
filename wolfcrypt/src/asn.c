@@ -16617,13 +16617,29 @@ int wc_ValidateDate(const byte* date, byte format, int dateType)
 
     if (dateType == ASN_BEFORE) {
         if (DateLessThan(localTime, &certTime)) {
-            WOLFSSL_MSG("Date BEFORE check failed");
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"Date BEFORE check failed");
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                             "localTime: %04d-%02d-%02d %02d:%02d:%02d",
+                             localTime->tm_year + 1900,
+                             localTime->tm_mon + 1,
+                             localTime->tm_mday,
+                             localTime->tm_hour,
+                             localTime->tm_min,
+                             localTime->tm_sec);
             return 0;
         }
     }
     else {  /* dateType == ASN_AFTER */
         if (DateGreaterThan(localTime, &certTime)) {
-            WOLFSSL_MSG("Date AFTER check failed");
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT"Date AFTER check failed");
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                             "localTime: %04d-%02d-%02d %02d:%02d:%02d",
+                             localTime->tm_year + 1900,
+                             localTime->tm_mon + 1,
+                             localTime->tm_mday,
+                             localTime->tm_hour,
+                             localTime->tm_min,
+                             localTime->tm_sec);
             return 0;
         }
     }
@@ -25046,11 +25062,12 @@ Signer* findSignerByName(Signer *list, byte *hash)
         macro                                                             \
             break;
 
-    #ifdef NO_RSA
+    /* The following are: if [key type missing] then message, else no message */
+    #if defined(NO_RSA)
         #define IF_NO_RSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT        \
                 "DecodeCert encountered NO_RSA");
     #else
-        #define IF_NO_RSA /* WARNING: NO_RSA not defined */
+        #define IF_NO_RSA /* NO_RSA not defined */
     #endif
 
     #ifdef NO_ANON
@@ -25074,46 +25091,46 @@ Signer* findSignerByName(Signer *list, byte *hash)
         #define IF_NO_RSA /* WARNING: NO_RSA not defined */
     #endif
 
-    #ifdef NO_ECC
+    #if defined(NO_ECC) || !defined(HAVE_ECC)
         #define IF_NO_ECC WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
-                "DecodeCert encountered NO_ECC");
+                "DecodeCert encountered NO_ECC || !HAVE_ECC");
     #else
-        #define IF_NO_ECC /* WARNING: NO_ECC not defined */
+        #define IF_NO_ECC /* NO_ECC not defined or HAVE_ECC */
     #endif
 
-    #ifdef NO_SM2
+    #if !defined(SM2)
         #define IF_NO_SM2 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT       \
-                "DecodeCert encountered NO_SM2");
+                "DecodeCert encountered !SM2");
     #else
-        #define IF_NO_SM2 /* WARNING: NO_SM2 not defined */
+        #define IF_NO_SM2 /* SM2 defined */
     #endif
 
-    #ifdef NO_ED25519
+    #if defined(NO_ED25519) || !defined(HAVE_ED25519)
         #define IF_NO_ED25519 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
-                "DecodeCert encountered NO_ED25519");
+                "DecodeCert encountered NO_ED25519 || !HAVE_ED25519");
     #else
-        #define IF_NO_ED25519 /* WARNING: NO_ED25519 not defined */
+        #define IF_NO_ED25519 /* ED25519 compiled in */
     #endif
 
-    #ifdef NO_CURVE25519
+    #if !defined(HAVE_CURVE25519)
         #define IF_NO_CURVE25519 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT \
-                "DecodeCert encountered NO_CURVE25519");
+                "DecodeCert encountered !HAVE_CURVE25519");
     #else
-        #define IF_NO_CURVE25519 /* WARNING: NO_CURVE25519 not defined */
+        #define IF_NO_CURVE25519 /* HAVE_CURVE25519 is defined */
     #endif
 
-    #ifdef NO_ED448
+    #if !defined(HAVE_ED448)
         #define IF_NO_ED448 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT      \
-                "DecodeCert encountered NO_ED448");
+                "DecodeCert encountered !HAVE_ED448");
     #else
-        #define IF_NO_ED448 /* WARNING: NO_ED448 not defined */
+        #define IF_NO_ED448 /* HAVE_ED448 is defined */
     #endif
 
-    #ifdef NO_CURVE448
+    #if !defined(HAVE_CURVE448)
         #define IF_NO_CURVE448 WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
-                "DecodeCert encountered NO_CURVE448");
+                "DecodeCert encountered !HAVE_CURVE448");
     #else
-        #define IF_NO_CURVE448 /* WARNING: NO_CURVE448 not defined */
+        #define IF_NO_CURVE448 /* HAVE_CURVE448 is defined */
     #endif
 
     #ifdef NO_DH
@@ -25123,34 +25140,36 @@ Signer* findSignerByName(Signer *list, byte *hash)
         #define IF_NO_DH /* WARNING: NO_DH not defined */
     #endif
 
-    #ifdef NO_FALCON
+    #if !defined(HAVE_FALCON)
         #define IF_NO_FALCON WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT    \
-                "DecodeCert encountered NO_FALCON");
+                "DecodeCert encountered !HAVE_FALCON");
     #else
-        #define IF_NO_FALCON /* WARNING: NO_FALCON not defined */
+        #define IF_NO_FALCON /* HAVE_FALCON is defined */
     #endif
 
-    #ifdef NO_DILITHIUM
+    #if !defined(HAVE_DILITHIUM)
         #define IF_NO_DILITHIUM WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT \
-                "DecodeCert encountered NO_DILITHIUM");
+                "DecodeCert encountered !HAVE_DILITHIUM");
     #else
-        #define IF_NO_DILITHIUM /* WARNING: NO_DILITHIUM not defined */
+        #define IF_NO_DILITHIUM /* HAVE_DILITHIUM is defined */
     #endif
 
-    #ifdef NO_ML_DSA
+    #if !defined(WOLFSSL_NO_ML_DSA_44) && !defined(WOLFSSL_NO_ML_DSA_65) \
+                                       && !defined(WOLFSSL_NO_ML_DSA_87)
         #define IF_NO_ML_DSA WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT    \
-                "DecodeCert encountered NO_ML_DSA");
+                "DecodeCert encountered WOLFSSL_NO_ML_DSA_[44 || 65 || 87]");
     #else
-        #define IF_NO_ML_DSA /* WARNING: NO_ML_DSA not defined */
+        #define IF_NO_ML_DSA /* WOLFSSL_NO_ML_DSA_[44 || 65 || 87] defined */
     #endif
 
-    #ifdef NO_SPHINCS
+    #if !defined(HAVE_SPHINCS)
         #define IF_NO_SPHINCS WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT   \
-                "DecodeCert encountered NO_SPHINCS");
+                "DecodeCert encountered !HAVE_SPHINCS");
     #else
         #define IF_NO_SPHINCS /* WARNING: NO_SPHINCS not defined */
     #endif
 
+    /*  user supplied expected keyType (OID sum) placeholder: */
     #define DEBUG_CERT_NO_MACRO_CHECK
 #endif
 
@@ -25164,11 +25183,12 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
 #ifdef WOLFSSL_CERT_REQ
     int    len = 0;
 #endif
-#endif
+#endif /* !WOLFSSL_ASN_TEMPLATE */
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_FSPSM_TLS)
     int    idx = 0;
 #endif
 #ifdef WOLFSSL_DEBUG_CERTS
+    /* see WOLFSSL_MSG_EX_BUF_SZ for maximum msg string error length */
     const char* msg = NULL;
 #endif
     byte*  sce_tsip_encRsaKeyIdx;
@@ -25452,16 +25472,19 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
 
                 case WC_NO_ERR_TRACE(ASN_UNKNOWN_OID_E):
                     /* Disabled algos will typically manifest as bad oid */
-                    msg = wc_GetErrorString(ret);
-                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
-                                     "DecodeCert error ret: %d; %s;", ret, msg);
 #ifdef WOLFSSL_DEBUG_CERTS
     #ifdef WOLFSSL_OLD_OID_SUM
                     WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
                                      "OLD ASN Parse using WOLFSSL_OLD_OID_SUM");
     #endif
+                    msg = wc_GetErrorString(ret);
+                    WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                                     "DecodeCert error ret: %d; %s;", ret, msg);
                     switch(cert->keyOID) {
+                        /*  user supplied expected keyType (OID sum) */
                         CASE_KEYOID(ANONk, DEBUG_CERT_NO_MACRO_CHECK);
+
+                        /* known OID sum values; see oid_sum.h definitions:*/
                         CASE_KEYOID(DSAk,                  IF_NO_DSA);
                         CASE_KEYOID(RSAk,                  IF_NO_RSA);
                         CASE_KEYOID(RSAPSSk,               IF_NO_RSA);
@@ -25493,11 +25516,6 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                                              "see enum Key_Sum.", cert->keyOID);
                             break;
                     }
-
-    #ifdef NO_ECC
-                    WOLFSSL_MSG_CERT("DecodeCert encountered NO_ECC, "
-                                     "may cause this error");
-    #endif
 #endif
                     WOLFSSL_ERROR_VERBOSE(ret);
                     return ret;
@@ -25769,13 +25787,16 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
                 }
             #endif /* WOLFSSL_DUAL_ALG_CERTS */
             }
-        #ifndef IGNORE_NAME_CONSTRAINTS
+        #ifdef IGNORE_NAME_CONSTRAINTS
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                          "IGNORE_NAME_CONSTRAINTS is enabled, skipping check");
+        #else
             if (verify == VERIFY || verify == VERIFY_OCSP ||
                         verify == VERIFY_NAME || verify == VERIFY_SKIP_DATE) {
                 /* check that this cert's name is permitted by the signer's
                  * name constraints */
                 if (!ConfirmNameConstraints(cert->ca, cert)) {
-                    WOLFSSL_MSG("Confirm name constraint failed");
+                    WOLFSSL_MSG_CERT("Confirm name constraint failed");
                     WOLFSSL_ERROR_VERBOSE(ASN_NAME_INVALID_E);
                     return ASN_NAME_INVALID_E;
                 }
@@ -25844,8 +25865,9 @@ int ParseCertRelative(DecodedCert* cert, int type, int verify, void* cm,
         }
 #endif
         else {
-            /* no signer */
-            WOLFSSL_MSG_CERT("No CA signer to verify with");
+            /* no signer, !cert->ca */
+            WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                             "No CA signer to verify with.");
             /* If you end up here with error -188,
              * consider using WOLFSSL_ALT_CERT_CHAINS. */
 #if defined(OPENSSL_ALL) || defined(WOLFSSL_QT)
