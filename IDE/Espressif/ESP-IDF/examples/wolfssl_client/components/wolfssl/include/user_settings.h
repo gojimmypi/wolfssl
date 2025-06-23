@@ -1237,3 +1237,28 @@ Turn on timer debugging (used when CPU cycles not available)
     #warning "NO_CERTS"
 #endif
 
+// #define TEST_CASE
+#ifdef TEST_CASE
+    #undef  NO_RSA
+    #define NO_RSA
+#else
+    #undef  NO_RSA
+    #define HAVE_RSA
+    #define HAVE_AES
+    #define FP_MAX_BITS (2 * 4096)
+#endif
+
+#undef NO_OLD_TLS
+#undef NO_SHA
+#undef NO_SHA1
+#undef HAVE_ECC
+#undef HAVE_CURVE25519
+#undef HAVE_CURVE448
+#undef HAVE_ED25519
+#undef HAVE_ED448
+#undef HAVE_SUPPORTED_CURVES
+#undef HAVE_ECC
+#undef HAVE_CURVE25519
+#undef HAVE_CURVE448
+#undef HAVE_ED25519
+#undef HAVE_ED448
