@@ -364,7 +364,7 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     }
     (void)loggingEnabled;
 }
-#endif
+#endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
 
 #endif /* XVSNPRINTF && !NO_WOLFSSL_MSG_EX */
 
