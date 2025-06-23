@@ -455,11 +455,17 @@ menu "wolfSSL"
 
     # -----------------------------------------------------------------------------------------------------------------
     menu "wolfSSL Debug Options"
+        config ESP_WOLFSSL_DEBUG_CERTS
+            bool "Enable wolfSSL Certificate Debugging"
+            default n
+            help
+                Enable debugging messages for wolfSSL certificate processing. See user_settings.h for additional debug options.
+
         config ESP_WOLFSSL_DEBUG_WOLFSSL
             bool "Enable wolfSSL Debugging"
             default n
             help
-                Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
+                Enable debugging messages for wolfSSL. Includes wolfSSL Certificate Debugging (WOLFSSL_DEBUG_CERTS) See user_settings.h for additional debug options.
 
         config WOLFSSL_EXAMPLE_VERBOSITY
             bool "Enable example verbosity"
