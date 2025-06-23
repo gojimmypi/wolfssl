@@ -1071,6 +1071,14 @@
             #define ESP_RSA_TIMEOUT_CNT      0x349F00
         #endif
     #endif
+
+    /* Regardless of prior settings, if RSA is disabled, also disable RSA HW */
+    #ifdef NO_RSA
+        #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #endif
 #endif /* WOLFSSL_ESPIDF */
 
 #if defined(WOLFSSL_RENESAS_TSIP)
