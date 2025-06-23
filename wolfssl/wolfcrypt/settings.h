@@ -626,6 +626,11 @@
                  CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL  )
         #define                     DEBUG_WOLFSSL
     #endif
+
+    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_CERTS) && \
+                CONFIG_ESP_WOLFSSL_DEBUG_CERTS
+        #define            WOLFSSL_DEBUG_CERTS
+    #endif
     #if defined(CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH) && \
                 CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH
         #define            WOLFSSL_ENABLE_WOLFSSH
@@ -884,9 +889,21 @@
         /* Kyber typically needs a minimum 10K stack */
         #define WOLFSSL_HAVE_MLKEM
         #define WOLFSSL_WC_MLKEM
+        #define WOLFSSL_SHAKE128
+        #define WOLFSSL_SHAKE256
         #define WOLFSSL_SHA3
+
+        /* Old code points to keep compatibility with Kyber Round 3. */
+        /*   ./configure --enable-kyber=all --enable-experimental    */
+        #if defined(CONFIG_WOLFSSL_ENABLE_KYBER)
+            #define WOLFSSL_MLKEM_KYBER
+            #define WOLFSSL_EXPERIMENTAL_SETTINGS
+        #endif
+
         #if defined(CONFIG_IDF_TARGET_ESP8266)
             /* With limited RAM, we'll disable some of the Kyber sizes: */
+            #define WOLFSSL_NO_KYBER1024
+            #define WOLFSSL_NO_KYBER768
             #define WOLFSSL_NO_ML_KEM_1024
             #define WOLFSSL_NO_ML_KEM_768
             #define NO_SESSION_CACHE
