@@ -137,7 +137,8 @@ static int verifyIgnoreDateError(int preverify, WOLFSSL_X509_STORE_CTX* store)
 void my_log_cb(int level, const char* msg) {
     ESP_LOGI(TAG, "wolfSSL [%d] %s", level, msg);
 }
-
+#ifdef NO_DH
+#endif
 WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 {
 #undef  TLS_SMP_TARGET_HOST
@@ -346,7 +347,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 
     // wolfSSL_Debugging_ON();
 
-    ESP_LOGI(TAG, "Connect to wolfSSL server...");
+    ESP_LOGI(TAG, "Connect to wolfSSL server...TESTING RSA-ONLY FAILURE");
     ret_i = wolfSSL_connect(ssl);
 
     if (ret_i == WOLFSSL_SUCCESS)
