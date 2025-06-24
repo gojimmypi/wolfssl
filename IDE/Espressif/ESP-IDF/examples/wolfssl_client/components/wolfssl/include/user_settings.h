@@ -232,8 +232,10 @@
 /* Optional MLKEM (Kyber Post Quantum)               */
 /*  ./configure --enable-mlkem                       */
 /* See Kconfig / menuconfig ESP_WOLFSSL_ENABLE_MLKEM */
+#define CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
 #ifdef CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
     /* Kyber typically needs a minimum 10K stack */
+    #define WOLFSSL_MLKEM_KYBER
     #define WOLFSSL_HAVE_MLKEM
     #define WOLFSSL_WC_MLKEM
     #define WOLFSSL_SHAKE128
@@ -491,8 +493,8 @@
     #define MY_USE_ECC 0
     #define MY_USE_RSA 1
 #else
-    #define MY_USE_ECC 1
-    #define MY_USE_RSA 0
+    #define MY_USE_ECC 0
+    #define MY_USE_RSA 1
 #endif
 
 /* We can use either or both ECC and RSA, but must use at least one. */
@@ -1210,16 +1212,16 @@ Turn on timer debugging (used when CPU cycles not available)
 #undef NO_SHA1
 
 /* Some certs use ECC */
-#if 1
-    #define HAVE_ECC
-#else
-    #undef HAVE_ECC
-    #undef HAVE_CURVE25519
-    #undef HAVE_CURVE448
-    #undef HAVE_ED25519
-    #undef HAVE_ED448
-    #undef HAVE_SUPPORTED_CURVES
-#endif
+//#if 1
+//    #define HAVE_ECC
+//#else
+//    #undef HAVE_ECC
+//    #undef HAVE_CURVE25519
+//    #undef HAVE_CURVE448
+//    #undef HAVE_ED25519
+//    #undef HAVE_ED448
+//    #undef HAVE_SUPPORTED_CURVES
+//#endif
 
 
 /* the root CA is using RSA */
@@ -1239,26 +1241,57 @@ Turn on timer debugging (used when CPU cycles not available)
 
 // #define TEST_CASE
 #ifdef TEST_CASE
+    /* when RSA is disabled, certs cannot be decoded:
+    I (16028) wolfssl:      -  DecodeCert error ret: -148; ASN oid error, unknown sum id;
+    I (16029) wolfssl:      -  Found cert->keyOID: RSAk 0x78b67423
+    I (16030) wolfssl:      -  DecodeCert encountered NO_RSA
+    I (16036) client-tls: WOLFSSL* ssl using TLS13-AES256-GCM-SHA384
+     */
     #undef  NO_RSA
     #define NO_RSA
 #else
+    /* Enable RSA, known to be needed in google.com example certs */
     #undef  NO_RSA
     #define HAVE_RSA
     #define HAVE_AES
+    #define HAVE_DH
     #define FP_MAX_BITS (2 * 4096)
+
+    //#define HAVE_SUPPORTED_CURVES
+    #define HAVE_ED25519
+
+    /* No DH, no supported curves */
+    #define NO_DH
+
 #endif
 
-#undef NO_OLD_TLS
-#undef NO_SHA
-#undef NO_SHA1
-#undef HAVE_ECC
-#undef HAVE_CURVE25519
-#undef HAVE_CURVE448
-#undef HAVE_ED25519
-#undef HAVE_ED448
-#undef HAVE_SUPPORTED_CURVES
-#undef HAVE_ECC
-#undef HAVE_CURVE25519
-#undef HAVE_CURVE448
-#undef HAVE_ED25519
-#undef HAVE_ED448
+//#undef NO_OLD_TLS
+//#undef NO_SHA
+//#undef NO_SHA1
+
+
+/* working: needed for google.com*/
+#define HAVE_ECC
+#define HAVE_ED25519
+#define HAVE_CURVE25519
+// #define HAVE_CURVE448
+/* end of google */
+
+//#define HAVE_ECC
+//#define HAVE_CURVE25519
+#define WOLFSSL_SHA512
+
+
+//#undef HAVE_ED25519
+//#undef HAVE_ED448
+//#undef HAVE_SUPPORTED_CURVES
+//#undef HAVE_ECC
+//#undef HAVE_CURVE25519
+//#undef HAVE_ED25519
+//#undef HAVE_ED448
+
+
+
+
+#ifdef NO_DH
+#endif
