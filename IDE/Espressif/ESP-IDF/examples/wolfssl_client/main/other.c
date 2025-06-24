@@ -139,9 +139,23 @@ void my_log_cb(int level, const char* msg) {
 }
 #ifdef NO_DH
 #endif
+
+#if !defined(WOLFSSL_ALLOW_NO_SUITES) && !defined(WOLFCRYPT_ONLY)
+    #if defined(NO_DH) && !defined(HAVE_ECC) && !defined(WOLFSSL_STATIC_RSA) && !defined(WOLFSSL_STATIC_DH) && !defined(WOLFSSL_STATIC_PSK) && !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448) \
+                && defined(NO_RSA)
+        #error "No cipher suites defined because DH disabled, ECC disabled, " \
+               "RSA disabled and no static suites defined. " \
+               "Please see top of README"
+    #endif
+    #ifdef WOLFSSL_CERT_GEN
+        /* need access to Cert struct for creating certificate */
+        #include <wolfssl/wolfcrypt/asn_public.h>
+    #endif
+#endif
 WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 {
 #undef  TLS_SMP_TARGET_HOST
+//#define TLS_SMP_TARGET_HOST "kms.us-west-2.amazonaws.com"
 #define TLS_SMP_TARGET_HOST "www.google.com"
 
 #undef  TLS_SMP_DEFAULT_PORT
@@ -169,7 +183,11 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 #ifndef NO_DH
     int minDhKeyBits = DEFAULT_MIN_DHKEY_BITS;
 #endif
-
+#ifdef WOLFSSL_DEBUG_CERTS
+    /* see WOLFSSL_MSG_EX_BUF_SZ for maximum msg string error length */
+    char msg_buf[200];
+    const char* msg;
+#endif
     /* declare wolfSSL objects */
     WOLFSSL_CTX *ctx;
     WOLFSSL *ssl;
@@ -178,7 +196,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
-#ifdef DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
     WOLFSSL_MSG("Debug ON");
     ShowCiphers(NULL);
 #endif
@@ -190,21 +208,18 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     /* Create a socket that uses an Internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to create the socket\n");
     }
 
     ESP_LOGI(TAG, "get target IP address");
 
     hp = gethostbyname(TLS_SMP_TARGET_HOST);
-    if (!hp)
-    {
+    if (!hp) {
         ESP_LOGE(TAG, "Failed to get host name: '%s'", TLS_SMP_TARGET_HOST);
         ip4_addr = NULL;
     }
-    else
-    {
+    else {
         ip4_addr = (struct ip4_addr *)hp->h_addr;
         ESP_LOGI(TAG, "Host name: %s", hp->h_name);
     }
@@ -214,7 +229,9 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 
     /* Create and initialize WOLFSSL_CTX */
 #ifdef WOLFSSL_TLS13
-    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+
+//    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+        ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /*TLS 1/2 */
 //    wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_3);
 #else
     ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
@@ -297,14 +314,12 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
         WOLFSSL_MSG("inet_pton");
         if ((ret_i = inet_pton(AF_INET,
                                TLS_SMP_TARGET_HOST,
-                               &servAddr.sin_addr)) != 1)
-        {
+                               &servAddr.sin_addr)) != 1) {
             ESP_LOGE(TAG, "ERROR: invalid address ret=%d\n", ret_i);
         }
         ESP_LOGI(TAG, "Using IP address: %s", TLS_SMP_TARGET_HOST);
     }
-    else
-    {
+    else {
         servAddr.sin_addr.s_addr = ip4_addr->addr;
         ESP_LOGI(TAG, "Using host name: %s", TLS_SMP_TARGET_HOST);
     }
@@ -318,30 +333,25 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
 
     if ((ret_i = connect(sockfd,
                          (struct sockaddr *)&servAddr,
-                         sizeof(servAddr))) == -1)
-    {
+                         sizeof(servAddr))) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
     }
 
     WOLFSSL_MSG("Create a WOLFSSL object");
     /* Create a WOLFSSL object */
-    if ((ssl = wolfSSL_new(ctx)) == NULL)
-    {
+    if ((ssl = wolfSSL_new(ctx)) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
     }
-    else
-    {
+    else {
         ESP_LOGI(TAG, "WOLFSSL object created successfully");
     }
 
     /* Attach wolfSSL to the socket */
     ret_i = wolfSSL_set_fd(ssl, sockfd);
-    if (ret_i == WOLFSSL_SUCCESS)
-    {
+    if (ret_i == WOLFSSL_SUCCESS) {
         ESP_LOGI(TAG, "wolfSSL_set_fd success");
     }
-    else
-    {
+    else {
         ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
     }
 
@@ -350,8 +360,12 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     ESP_LOGI(TAG, "Connect to wolfSSL server...TESTING RSA-ONLY FAILURE");
     ret_i = wolfSSL_connect(ssl);
 
-    if (ret_i == WOLFSSL_SUCCESS)
-    {
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
+    WOLFSSL_MSG("Debug ON");
+    ShowCiphers(ssl);
+#endif
+
+    if (ret_i == WOLFSSL_SUCCESS) {
 
         ESP_LOGI(TAG, "Connect success! Sending message...");
         /* Get a message for the server from stdin */
@@ -427,12 +441,21 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
         }
 
     } /* wolfSSL_connect(ssl) == WOLFSSL_SUCCESS) */
-    else
-    {
+    else {
         ESP_LOGE(TAG, "ERROR: wolfSSL_connect failed. ret=%d\n", ret_i);
         int err = wolfSSL_get_error(ssl, 0);
         ESP_LOGE(TAG, "wolfSSL_get_error: %d\n",
                  err);
+        if (err < WOLFSSL_FIRST_E) {
+            SetErrorString(err, msg_buf);
+            msg = msg_buf;
+        }
+        else {
+            wc_ErrorString(err, msg_buf);
+            msg = msg_buf;
+        }
+        WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+                            "other.c wolfSSL_connect error ret: %d; %s;", err, msg);
     }
 
     ESP_LOGI(TAG, "Cleanup and exit");
