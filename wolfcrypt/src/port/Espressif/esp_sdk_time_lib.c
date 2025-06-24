@@ -38,7 +38,7 @@
 #include <esp_err.h>
 
 #if (ESP_IDF_VERSION_MAJOR > 5)  ||     \
-    (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 4)
+    (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 5)
     /* for ESP-IDF 5.5 or newer: */
     #include <esp_sntp.h>
 #endif
@@ -395,7 +395,7 @@ int set_time(void)
          * WARNING: do not set operating mode while SNTP client is running!
          */
         #if (ESP_IDF_VERSION_MAJOR > 5)  ||     \
-            (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 4)
+            (ESP_IDF_VERSION_MAJOR == 5) &&  (ESP_IDF_VERSION_MINOR > 5)
         {
             esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
         }
@@ -419,7 +419,7 @@ int set_time(void)
             }
             ESP_LOGI(TAG, "%s", thisServer);
             #if (ESP_IDF_VERSION_MAJOR  > 5) || \
-                (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 4)
+                (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 5)
             {
                 esp_sntp_setservername(i, thisServer);
             }
@@ -444,7 +444,7 @@ int set_time(void)
         }
 
         #if (ESP_IDF_VERSION_MAJOR  > 5) || \
-            (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 4)
+            (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 5)
         {
             esp_sntp_init();
         }

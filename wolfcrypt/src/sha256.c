@@ -174,7 +174,8 @@ on the specific device platform.
     #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
           defined(CONFIG_IDF_TARGET_ESP8684) || \
           defined(CONFIG_IDF_TARGET_ESP32C3) || \
-          defined(CONFIG_IDF_TARGET_ESP32C6)    \
+          defined(CONFIG_IDF_TARGET_ESP32C6) || \
+          defined(CONFIG_IDF_TARGET_ESP32C61)   \
         ) && \
         defined(WOLFSSL_ESP32_CRYPT) &&         \
         !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \
@@ -1623,7 +1624,8 @@ static int InitSha256(wc_Sha256* sha256)
     #if ( defined(CONFIG_IDF_TARGET_ESP32C2) || \
           defined(CONFIG_IDF_TARGET_ESP8684) || \
           defined(CONFIG_IDF_TARGET_ESP32C3) || \
-          defined(CONFIG_IDF_TARGET_ESP32C6)    \
+          defined(CONFIG_IDF_TARGET_ESP32C6) || \
+          defined(CONFIG_IDF_TARGET_ESP32C61)   \
         ) && \
         defined(WOLFSSL_ESP32_CRYPT) &&         \
        !defined(NO_WOLFSSL_ESP32_CRYPT_HASH) && \

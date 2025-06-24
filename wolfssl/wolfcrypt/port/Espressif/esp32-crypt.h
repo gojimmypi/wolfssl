@@ -436,7 +436,8 @@ enum {
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
+      defined(CONFIG_IDF_TARGET_ESP32C61)
     #include <soc/dport_access.h>
     #include <soc/hwcrypto_reg.h>
 
@@ -793,6 +794,9 @@ extern "C"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32C6)
             #include "esp32c6/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32C61)
+            #include "esp32c61/rom/sha.h"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32H2)
             #include "esp32h2/rom/sha.h"

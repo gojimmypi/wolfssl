@@ -310,6 +310,8 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C6.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32C61)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C61.");
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-H2.");
     #else
@@ -481,17 +483,18 @@ int esp_current_boot_count(void)
     return _boot_count;
 }
 
-/* See macro helpers above; not_defined is macro name when *not* defined */
-static int show_macro(char* s, char* not_defined)
-{
-    const char hd1[] =
+static const char hd1[] =
                   "Macro Name                           Defined   Not Defined";
-          char hd2[] =
+static       char hd2[] =
                   "----------------------------------- --------- -------------";
-          char msg[] =
+static       char msg[] =
                   "...................................                        ";
         /*        01234567890123456789012345678901234567890123456789012345678 */
         /*                  1         2         3         4         5         */
+
+/* See macro helpers above; not_defined is macro name when *not* defined */
+static int show_macro(char* s, char* not_defined)
+{
     size_t i = 0;
     #define MAX_STATUS_NAME_LENGTH 36
     /* Show Macro Status Enabled string Position:  */
@@ -599,6 +602,15 @@ esp_err_t ShowExtendedSystemInfo_config(void)
     show_macro("WOLFSSL_NO_CURRDIR",        STR_IFNDEF(WOLFSSL_NO_CURRDIR));
     show_macro("WOLFSSL_LWIP",              STR_IFNDEF(WOLFSSL_LWIP));
 
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
+    show_macro("NO_DH",                     STR_IFNDEF(NO_DH));
+    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
+    show_macro("HAVE_RSA",                     STR_IFNDEF(HAVE_RSA));
+    show_macro("HAVE_CURVE25519",                     STR_IFNDEF(HAVE_CURVE25519));
+    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
+    show_macro("FP_MAX_BITS",                     STR_IFNDEF(FP_MAX_BITS));
+
     /* esp-tls component related settings */
     show_macro("NO_WOLFSSL_USE_ASM_CERT",
      STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
@@ -614,6 +626,8 @@ esp_err_t ShowExtendedSystemInfo_config(void)
      STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
     show_macro("CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE",
      STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
+
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
 
 #ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     ESP_LOGI(TAG, "ESP-IDF is configured to use wolfSSL in esp-tls");
@@ -748,7 +762,8 @@ int ShowExtendedSystemInfo(void)
                    CONFIG_ESP32C3_DEFAULT_CPU_FREQ_MHZ
             );
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
+      defined(CONFIG_IDF_TARGET_ESP32C61)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );
@@ -818,10 +833,11 @@ esp_err_t esp_DisableWatchdog(void)
         #if defined(CONFIG_IDF_TARGET_ESP32)
             rtc_wdt_protect_off();
             rtc_wdt_disable();
-        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6) || \
-              defined(CONFIG_IDF_TARGET_ESP32H2) || \
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C6)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C61) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)  || \
               defined(CONFIG_IDF_TARGET_ESP32P4)
             #if ESP_IDF_VERSION_MINOR >= 3
                 #if CONFIG_ESP_TASK_WDT
@@ -834,8 +850,14 @@ esp_err_t esp_DisableWatchdog(void)
                     ESP_LOGW(TAG, "esp_task_wdt_deinit not implemented");
             #endif
         #else
-            rtc_wdt_protect_off();
-            rtc_wdt_disable();
+            #if ESP_IDF_VERSION_MINOR >= 4
+                ESP_LOGW(TAG,
+            "rtc_wdt_protect_off not implemented on ESP_IDF v%d.%d",
+                      ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR);
+            #else
+                rtc_wdt_protect_off();
+                rtc_wdt_disable();
+            #endif
         #endif
     }
     #else
@@ -869,10 +891,11 @@ esp_err_t esp_EnabledWatchdog(void)
         #if defined(CONFIG_IDF_TARGET_ESP32)
             rtc_wdt_protect_on();
             rtc_wdt_enable();
-        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6) || \
-              defined(CONFIG_IDF_TARGET_ESP32H2) || \
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C6)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C61) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)  || \
               defined(CONFIG_IDF_TARGET_ESP32P4)
             ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
             esp_task_wdt_config_t twdt_config = {
@@ -884,8 +907,14 @@ esp_err_t esp_EnabledWatchdog(void)
             esp_task_wdt_init(&twdt_config);
             esp_task_wdt_add(NULL);
         #else
-            rtc_wdt_protect_on();
-            rtc_wdt_enable();
+            #if ESP_IDF_VERSION_MINOR >= 4
+                ESP_LOGW(TAG,
+            "rtc_wdt_protect_on not implemented on ESP_IDF v%d.%d",
+                      ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR);
+            #else
+                rtc_wdt_protect_on();
+                rtc_wdt_enable();
+            #endif
         #endif
     }
     #else

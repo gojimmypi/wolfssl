@@ -54,13 +54,14 @@
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     static const char* TAG = "TFM"; /* esp log breadcrumb */
     #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
-        /* Each individual math HW can be turned on or off.
+        /* Each individual math HW can be turned on or off. On by default.
          * Listed in order of complexity and historical difficulty. */
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #endif
 
+    /* Explicit disable takes precedence: */
     #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
         #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     #endif
@@ -76,7 +77,6 @@
     /* Note with HW there's a ESP_RSA_EXPT_XBITS setting
      * as for some small numbers, SW may be faster.
      * See ESP_LOGV messages for ESP_RSA_EXPT_XBITS values. */
-
 #endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 #if defined(FREESCALE_LTC_TFM)

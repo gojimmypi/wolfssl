@@ -2052,8 +2052,9 @@ int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst)
     #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
           defined(CONFIG_IDF_TARGET_ESP8684) || \
           defined(CONFIG_IDF_TARGET_ESP32C3) || \
-          defined(CONFIG_IDF_TARGET_ESP32C6)
-        ESP_LOGV(TAG, "No SHA-512 HW on the ESP32-C3");
+          defined(CONFIG_IDF_TARGET_ESP32C6) || \
+          defined(CONFIG_IDF_TARGET_ESP32C61)
+        ESP_LOGV(TAG, "No SHA-512 HW on the ESP32-C2/C3/C6/C61");
 
     #elif defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -2464,8 +2465,9 @@ int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst)
     #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
           defined(CONFIG_IDF_TARGET_ESP8684) || \
           defined(CONFIG_IDF_TARGET_ESP32C3) || \
-          defined(CONFIG_IDF_TARGET_ESP32C6)
-        ESP_LOGV(TAG, "No SHA-384 HW on the ESP32-C3");
+          defined(CONFIG_IDF_TARGET_ESP32C6) || \
+          defined(CONFIG_IDF_TARGET_ESP32C61)
+        ESP_LOGV(TAG, "No SHA-384 HW on the ESP32-C2/C3/C6/C61");
     #elif defined(CONFIG_IDF_TARGET_ESP32S2) || \
           defined(CONFIG_IDF_TARGET_ESP32S3)
         esp_sha384_ctx_copy(src, dst);

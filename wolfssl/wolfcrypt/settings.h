@@ -984,8 +984,9 @@
     #if defined(WOLFSSL_SP_RISCV32)
         #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
             defined(CONFIG_IDF_TARGET_ESP32C3) || \
-            defined(CONFIG_IDF_TARGET_ESP32C6)
-            /* ok, only the known C2, C3, C6 chips allowed */
+            defined(CONFIG_IDF_TARGET_ESP32C6) || \
+            defined(CONFIG_IDF_TARGET_ESP32C61)
+            /* ok, only the known C2, C3, C6[1] chips allowed */
         #else
             #error "WOLFSSL_SP_RISCV32 can only be used on RISC-V architecture"
         #endif
@@ -1048,7 +1049,8 @@
             /* Observed: 0x2624B2 @ 80MHz */
             #define ESP_RSA_TIMEOUT_CNT      0x280000
         #endif
-    #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
+          defined(CONFIG_IDF_TARGET_ESP32C61)
         #ifndef ESP_RSA_TIMEOUT_CNT
             /* Observed: 144323 @ 80MHz */
             #define ESP_RSA_TIMEOUT_CNT      0x160000
@@ -1075,6 +1077,33 @@
     /* Regardless of prior settings, if RSA is disabled, also disable RSA HW */
     #ifdef NO_RSA
         #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #endif
+
+    #ifdef CONFIG_IDF_TARGET_ESP32C61
+        #ifndef     NO_WOLFSSL_ESP32_CRYPT_AES
+            #define NO_WOLFSSL_ESP32_CRYPT_AES
+            #warning "Disabling AES on ESP32-C61, implementation incomplete"
+        #endif
+        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+            #warning "Disabling RSA on ESP32-C61, implementation incomplete"
+        #endif
+        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+            #warning "Disabling RSA MP on ESP32-C61, implementation incomplete"
+        #endif
+        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+            #warning "Disabling RSA MM on ESP32-C61, implementation incomplete"
+        #endif
+        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+            #warning "Disabling RSA EX on ESP32-C61, implementation incomplete"
+        #endif
+    #endif
+
+    /* If RSA HW is disabled, explicitly disable each of the HW items */
+    #ifdef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
         #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
