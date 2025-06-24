@@ -526,7 +526,11 @@
         #define WOLFSSH_NO_RSA
     #endif
 #else
-    #warning "Both RSA and ECC are disabled"
+	#ifdef WOLFCRYPT_ONLY
+		/* Communications such as (D)TLS not compiled in */
+    #else
+        #warning "Both RSA and ECC are disabled. Consider WOLFCRYPT_ONLY"
+    #endif
 #endif
 
 /* Optional OpenSSL compatibility */
@@ -1239,7 +1243,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #warning "NO_CERTS"
 #endif
 
-// #define TEST_CASE
+#define TEST_CASE
 #ifdef TEST_CASE
     /* when RSA is disabled, certs cannot be decoded:
     I (16028) wolfssl:      -  DecodeCert error ret: -148; ASN oid error, unknown sum id;
@@ -1249,6 +1253,7 @@ Turn on timer debugging (used when CPU cycles not available)
      */
     #undef  NO_RSA
     #define NO_RSA
+    #define NO_DH
 #else
     /* Enable RSA, known to be needed in google.com example certs */
     #undef  NO_RSA
@@ -1271,12 +1276,12 @@ Turn on timer debugging (used when CPU cycles not available)
 
 
 /* working: needed for google.com*/
-#define HAVE_ECC
-#define HAVE_ED25519
-#define HAVE_CURVE25519
-// #define HAVE_CURVE448
+//#define HAVE_ECC
+//#define HAVE_ED25519
+//#define HAVE_CURVE25519
 /* end of google */
 
+// #define HAVE_CURVE448
 //#define HAVE_ECC
 //#define HAVE_CURVE25519
 #define WOLFSSL_SHA512
