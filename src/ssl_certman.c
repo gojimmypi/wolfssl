@@ -1645,6 +1645,8 @@ int wolfSSL_CertManagerEnableCRL(WOLFSSL_CERT_MANAGER* cm, int options)
     if (ret == WOLFSSL_SUCCESS) {
 #ifndef HAVE_CRL
         /* CRL feature not enabled. */
+        WOLFSSL_MSG_CERT(
+                        "Failed: wolfSSL_CertManagerEnableCRL not compiled in");
         ret = NOT_COMPILED_IN;
 #else
         /* Create CRL object if not present. */
@@ -2066,6 +2068,8 @@ int wolfSSL_CertManagerEnableOCSP(WOLFSSL_CERT_MANAGER* cm, int options)
 #ifndef HAVE_OCSP
     if (ret == WOLFSSL_SUCCESS) {
         /* OCSP feature not enabled. */
+        WOLFSSL_MSG_CERT(
+                       "Failed: wolfSSL_CertManagerEnableOCSP not compiled in");
         ret = NOT_COMPILED_IN;
     }
 #else
@@ -2170,6 +2174,8 @@ int wolfSSL_CertManagerEnableOCSPStapling(WOLFSSL_CERT_MANAGER* cm)
     !defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
     if (ret == WOLFSSL_SUCCESS) {
         /* OCSP stapling feature not enabled. */
+        WOLFSSL_MSG_CERT(
+               "Failed: wolfSSL_CertManagerEnableOCSPStapling not compiled in");
         ret = NOT_COMPILED_IN;
     }
 #else
@@ -2240,6 +2246,8 @@ int wolfSSL_CertManagerDisableOCSPStapling(WOLFSSL_CERT_MANAGER* cm)
         cm->ocspStaplingEnabled = 0;
     #else
         /* OCSP stapling feature not enabled. */
+        WOLFSSL_MSG_CERT(
+              "Failed: wolfSSL_CertManagerDisableOCSPStapling not compiled in");
         ret = NOT_COMPILED_IN;
     #endif
     }
@@ -2305,6 +2313,8 @@ int wolfSSL_CertManagerDisableOCSPMustStaple(WOLFSSL_CERT_MANAGER* cm)
     #endif
 #else
         /* OCSP stapling feature not enabled. */
+        WOLFSSL_MSG_CERT(
+            "Failed: wolfSSL_CertManagerDisableOCSPMustStaple not compiled in");
         ret = NOT_COMPILED_IN;
 #endif
     }

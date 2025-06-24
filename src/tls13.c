@@ -229,6 +229,11 @@ static int Tls13HKDFExpandLabel(WOLFSSL* ssl, byte* okm, word32 okmLen,
                                      info, infoLen, digest);
 #endif
     PRIVATE_KEY_LOCK();
+
+    if (ret == WC_NO_ERR_TRACE(NOT_COMPILED_IN)) {
+        WOLFSSL_MSG_CERT("Failed: Tls13HKDFExpandLabel not compiled in");
+    }
+
     return ret;
 }
 

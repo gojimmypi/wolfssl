@@ -21507,6 +21507,8 @@ static int DoAlert(WOLFSSL* ssl, byte* input, word32* inOutIdx, int* type)
     ssl->alert_history.last_rx.level = level;
     *type = code;
     if (level == alert_fatal) {
+        WOLFSSL_MSG_CERT("fatal alert level %d, code %d; set isClosed=1",
+                         level, code);
         ssl->options.isClosed = 1;  /* Don't send close_notify */
     }
 
@@ -32690,6 +32692,7 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
+                    WOLFSSL_MSG_CERT("Failed: DoServerKeyExchange not compiled in");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     enum wc_HashType hashType;
@@ -32882,6 +32885,8 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
+                    WOLFSSL_MSG_CERT(
+                             "Failed: DoServerKeyExchange not compiled in (2)");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     if (ssl->options.usingAnon_cipher) {
@@ -33101,6 +33106,8 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
+                    WOLFSSL_MSG_CERT(
+                             "Failed: DoServerKeyExchange not compiled in (3)");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     if (ssl->options.usingAnon_cipher) {

@@ -152,6 +152,7 @@ int wolfSSL_SetLoggingCb(wolfSSL_Logging_cb f)
     return 0;
 #else
     (void)f;
+    WOLFSSL_MSG_CERT("Failed: wolfSSL_SetLoggingCbnot compiled in");
     return NOT_COMPILED_IN;
 #endif
 }
@@ -176,6 +177,7 @@ int wolfSSL_Debugging_ON(void)
 #endif /* WOLFSSL_APACHE_MYNEWT */
     return 0;
 #else
+    WOLFSSL_MSG_CERT("Failed: wolfSSL_Debugging_ONnot compiled in");
     return NOT_COMPILED_IN;
 #endif
 }

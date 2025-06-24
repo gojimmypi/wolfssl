@@ -14201,6 +14201,7 @@ int CalcHashId_ex(const byte* data, word32 len, byte* hash, int hashAlg)
     (void)hash;
 #endif
     {
+        WOLFSSL_MSG_CERT("Failed: CalcHashId_ex not compiled in");
         ret = NOT_COMPILED_IN;
     }
 

@@ -415,6 +415,8 @@ int wc_MlKemKey_MakeKeyWithRandom(MlKemKey* key, const unsigned char* rand,
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+               "Failed: wc_MlKemKey_MakeKeyWithRandom feature not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -598,6 +600,8 @@ int wc_MlKemKey_CipherTextSize(MlKemKey* key, word32* len)
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                  "Failed: wc_MlKemKey_CipherTextSize feature not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -721,6 +725,8 @@ static int mlkemkey_encapsulate(MlKemKey* key, const byte* m, byte* r, byte* c)
 #endif
     default:
         /* No other values supported. */
+        WOLFSSL_MSG_CERT(
+                        "Failed: mlkemkey_encapsulate feature not compiled in");
         ret = NOT_COMPILED_IN;
         break;
     }
@@ -988,6 +994,9 @@ int wc_MlKemKey_EncapsulateWithRandom(MlKemKey* key, unsigned char* c,
     #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+           "Failed: wc_MlKemKey_EncapsulateWithRandom feature not compiled in");
+
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1201,6 +1210,8 @@ static MLKEM_NOINLINE int mlkemkey_decapsulate(MlKemKey* key, byte* m,
 #endif
     default:
         /* No other values supported. */
+        WOLFSSL_MSG_CERT(
+             "Failed: mlkemkey_decapsulate feature not compiled in");
         ret = NOT_COMPILED_IN;
         break;
     }
@@ -1373,6 +1384,7 @@ int wc_MlKemKey_Decapsulate(MlKemKey* key, unsigned char* ss,
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT("Failed: wc_MlKemKey_Decapsulate not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1581,6 +1593,8 @@ int wc_MlKemKey_DecodePrivateKey(MlKemKey* key, const unsigned char* in,
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                        "Failed: wc_MlKemKey_DecodePrivateKey not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1684,6 +1698,8 @@ int wc_MlKemKey_DecodePublicKey(MlKemKey* key, const unsigned char* in,
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                        "Failed: wc_MlKemKey_DecodePublicKey not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1765,6 +1781,8 @@ int wc_MlKemKey_PrivateKeySize(MlKemKey* key, word32* len)
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                          "Failed: wc_MlKemKey_PrivateKeySize not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1831,6 +1849,8 @@ int wc_MlKemKey_PublicKeySize(MlKemKey* key, word32* len)
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                           "Failed: wc_MlKemKey_PublicKeySize not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -1927,6 +1947,8 @@ int wc_MlKemKey_EncodePrivateKey(MlKemKey* key, unsigned char* out, word32 len)
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                        "Failed: wc_MlKemKey_EncodePrivateKey not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }
@@ -2042,6 +2064,8 @@ int wc_MlKemKey_EncodePublicKey(MlKemKey* key, unsigned char* out, word32 len)
 #endif
         default:
             /* No other values supported. */
+            WOLFSSL_MSG_CERT(
+                 "Failed: wc_MlKemKey_EncodePublicKey feature not compiled in");
             ret = NOT_COMPILED_IN;
             break;
         }

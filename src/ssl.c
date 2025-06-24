@@ -44,7 +44,22 @@
     #include <errno.h>
 #endif
 
+// #define USE_OLD_LOGIC
 
+#ifdef USE_OLD_LOGIC
+#if !defined(WOLFSSL_ALLOW_NO_SUITES) && !defined(WOLFCRYPT_ONLY)
+    #if defined(NO_DH) && !defined(HAVE_ECC) && !defined(WOLFSSL_STATIC_RSA) \
+                && !defined(WOLFSSL_STATIC_DH) && !defined(WOLFSSL_STATIC_PSK) \
+                && !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
+        #error "No cipher suites defined because DH disabled, ECC disabled, " \
+               "and no static suites defined. Please see top of README"
+    #endif
+    #ifdef WOLFSSL_CERT_GEN
+        /* need access to Cert struct for creating certificate */
+        #include <wolfssl/wolfcrypt/asn_public.h>
+    #endif
+#endif
+#else /* Use updated RSA Logic: */
 #if !defined(WOLFSSL_ALLOW_NO_SUITES) && !defined(WOLFCRYPT_ONLY)
     #if defined(NO_DH) && !defined(HAVE_ECC) && !defined(WOLFSSL_STATIC_RSA) \
                 && !defined(WOLFSSL_STATIC_DH) && !defined(WOLFSSL_STATIC_PSK) \
@@ -58,6 +73,7 @@
         /* need access to Cert struct for creating certificate */
         #include <wolfssl/wolfcrypt/asn_public.h>
     #endif
+#endif
 #endif
 
 #if !defined(WOLFCRYPT_ONLY) && (defined(OPENSSL_EXTRA)     \
@@ -10263,7 +10279,7 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
         if ((ret = ReinitSSL(ssl, ssl->ctx, 0)) != 0) {
             return ret;
         }
-
+        WOLFSSL_MSG_CERT("ssl.suites: %d; ssl.clsuites: %d", (uint)ssl->suites, (uint)ssl->clSuites);
 #ifdef WOLFSSL_WOLFSENTRY_HOOKS
         if ((ssl->ConnectFilter != NULL) &&
             (ssl->options.connectState == CONNECT_BEGIN)) {
@@ -11499,6 +11515,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
     ssl->options.usingCompression = 1;
     return WOLFSSL_SUCCESS;
 #else
+    WOLFSSL_MSG_CERT("Failed: wolfSSL_set_compressionnot compiled in");
     return NOT_COMPILED_IN;
 #endif
 }

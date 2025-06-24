@@ -8049,7 +8049,8 @@ static int TLSX_KeyShare_GenDhKey(WOLFSSL *ssl, KeyShareEntry* kse)
 #else
     (void)ssl;
     (void)kse;
-
+    WOLFSSL_MSG_CERT("Failed: TLSX_KeyShare_GenDhKey not compiled in"
+                     "!NO_DH && (!NO_DH || !NO_PSK)");
     ret = NOT_COMPILED_IN;
     WOLFSSL_ERROR_VERBOSE(ret);
 #endif
@@ -8138,6 +8139,7 @@ static int TLSX_KeyShare_GenX25519Key(WOLFSSL *ssl, KeyShareEntry* kse)
     (void)ssl;
     (void)kse;
 
+    WOLFSSL_MSG_CERT("Failed: TLSX_KeyShare_GenX25519Key not compiled");
     ret = NOT_COMPILED_IN;
     WOLFSSL_ERROR_VERBOSE(ret);
 #endif /* HAVE_CURVE25519 */
@@ -8223,6 +8225,8 @@ static int TLSX_KeyShare_GenX448Key(WOLFSSL *ssl, KeyShareEntry* kse)
     (void)ssl;
     (void)kse;
 
+    WOLFSSL_MSG_CERT(
+           "Failed: TLSX_KeyShare_GenX448Key not compiled in (!HAVE_CURVE448)");
     ret = NOT_COMPILED_IN;
     WOLFSSL_ERROR_VERBOSE(ret);
 #endif /* HAVE_CURVE448 */
@@ -8382,6 +8386,8 @@ static int TLSX_KeyShare_GenEccKey(WOLFSSL *ssl, KeyShareEntry* kse)
     (void)ssl;
     (void)kse;
 
+    WOLFSSL_MSG_CERT("Failed: TLSX_KeyShare_GenEccKey not compiled in."
+           " !(HAVE_ECC && HAVE_ECC_KEY_EXPORT)");
     ret = NOT_COMPILED_IN;
     WOLFSSL_ERROR_VERBOSE(ret);
 #endif /* HAVE_ECC && HAVE_ECC_KEY_EXPORT */
@@ -8446,6 +8452,7 @@ static int mlkem_id2type(int id, int *type)
     #endif
 #endif
         default:
+            WOLFSSL_MSG_CERT("Failed: mlkem_id2type not compiled in");
             ret = NOT_COMPILED_IN;
             break;
     }
