@@ -807,6 +807,8 @@
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
+    #define WOLFSSL_ESP32
+
     /*  There's no Hardware Acceleration available on ESP32-C5 */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
@@ -845,12 +847,13 @@
     /* no SHA512 HW on C61  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
-    /***** END CONFIG_IDF_TARGET_ESP32C1 *****/
+    /* HW is temporarily disabled on the ESP32-C61 pending additional dev */
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    /***** END CONFIG_IDF_TARGET_ESP32C61 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     #define WOLFSSL_ESP32
@@ -1243,7 +1246,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #warning "NO_CERTS"
 #endif
 
-#define TEST_CASE
+// #define TEST_CASE
 #ifdef TEST_CASE
     /* when RSA is disabled, certs cannot be decoded:
     I (16028) wolfssl:      -  DecodeCert error ret: -148; ASN oid error, unknown sum id;
@@ -1294,8 +1297,6 @@ Turn on timer debugging (used when CPU cycles not available)
 //#undef HAVE_CURVE25519
 //#undef HAVE_ED25519
 //#undef HAVE_ED448
-
-
 
 
 #ifdef NO_DH
