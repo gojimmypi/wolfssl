@@ -69,6 +69,12 @@ menu "wolfSSL"
 
     endmenu # Hardening
 
+    config ESP_WOLFSSL_WOLFCRYPT_ONLY
+        bool "Use wolfcrypt only"
+        default n
+        help
+            "Enable this option to use cryptographic libraries but disable things like TLS communication. Enables WOLFCRYPT_ONLY"
+
     config ESP_WOLFSSL_ENABLE_BENCHMARK
         bool "Enable wolfSSL Benchmark Library"
         default n
@@ -255,8 +261,8 @@ menu "wolfSSL"
                 depends on ESP_TLS_USING_WOLFSSL
                 help
                     Although not recommended, there may be certificates in the bundle that are missing
-                    a serial number. This option allows the missing value without having to fully
-                    disable strict ASN checking with WOLFSSL_NO_ASN_STRICT.
+                    a serial number. This option allows the missing value (a zero) without having to fully
+                    disable strict ASN checking with WOLFSSL_NO_ASN_STRICT. Note this is disallowed by RFC 5280
 
             choice WOLFSSL_DEFAULT_CERTIFICATE_BUNDLE
                 bool "Default certificate bundle options"
