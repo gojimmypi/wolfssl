@@ -1,0 +1,15 @@
+name: Check Formatting Rules
+
+on: [pull_request]
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Bash format checker
+        run: |
+          bash ./check-format.sh
