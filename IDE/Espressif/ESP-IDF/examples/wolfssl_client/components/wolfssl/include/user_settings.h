@@ -847,7 +847,8 @@
     /* no SHA512 HW on C61  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
-    /* HW is temporarily disabled on the ESP32-C61 pending additional dev */
+    /* HW temporarily disabled on the ESP32-C61 pending additional development.
+     * See also settings.h that should also be disabling these after v5.8.0  */
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
