@@ -454,11 +454,12 @@ int WOLFSSL_MSG_CERT(const char* fmt, ...)
         va_start(args, fmt);
         written = XVSNPRINTF(msg, WOLFSSL_MSG_EX_BUF_SZ, fmt, args);
         va_end(args);
-        if (written > 0) {
+        if (written > 0 && written < WOLFSSL_MSG_EX_BUF_SZ) {
             wolfssl_log(CERT_LOG, NULL, 0, msg);
-            ret = 0;
         }
         else {
+            wolfssl_log(CERT_LOG, NULL, 0,
+                    "WOLFSSL_MSG_CERT Message formatting failed or truncated");
             ret = WC_FAILURE;
         }
     }
