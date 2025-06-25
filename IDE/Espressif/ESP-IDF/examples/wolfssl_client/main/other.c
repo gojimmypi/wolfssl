@@ -230,8 +230,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
     /* Create and initialize WOLFSSL_CTX */
 #ifdef WOLFSSL_TLS13
 
-//    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
-        ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /*TLS 1/2 */
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+//        ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method()); /*TLS 1/2 */
 //    wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_3);
 #else
     ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());

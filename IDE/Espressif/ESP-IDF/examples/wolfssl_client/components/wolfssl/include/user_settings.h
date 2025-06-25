@@ -28,6 +28,7 @@
 // #define DEBUG_WOLFSSL_VERBOSE
 // #define DEBUG_WOLFSSL_SHA_MUTEX
 #define WOLFSSL_DEBUG_CERTS
+#define WOLFSSL_DEBUG_CERTIFICATE_LOADS
 #define ASN_ALLOW_0_SERIAL
 #define HAVE_SNI
 #define WOLFSSL_ALT_CERT_CHAINS
@@ -111,7 +112,7 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #define WOLFSSL_MAX_ERROR_SZ 500
-#define WOLFSSL_MSG_EX_BUF_SZ 200
+#define WOLFSSL_MSG_EX_BUF_SZ 500
 
 /* wolfSSL Examples: set macros used in example applications.
  *
@@ -232,7 +233,7 @@
 /* Optional MLKEM (Kyber Post Quantum)               */
 /*  ./configure --enable-mlkem                       */
 /* See Kconfig / menuconfig ESP_WOLFSSL_ENABLE_MLKEM */
-#define CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
+// #define CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
 #ifdef CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
     /* Kyber typically needs a minimum 10K stack */
     #define WOLFSSL_MLKEM_KYBER
@@ -1280,9 +1281,9 @@ Turn on timer debugging (used when CPU cycles not available)
 
 
 /* working: needed for google.com*/
-//#define HAVE_ECC
-//#define HAVE_ED25519
-//#define HAVE_CURVE25519
+#define HAVE_ECC
+#define HAVE_ED25519
+#define HAVE_CURVE25519
 /* end of google */
 
 // #define HAVE_CURVE448

@@ -5,6 +5,43 @@ VisualStudioVersion = 17.12.35728.132
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_IDF_v5.2_ESP32C6", "wolfssl_IDF_v5.2_ESP32C6.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{77AD4E56-CDD9-4D6E-99F1-6D3632A705FE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfcrypt", "wolfcrypt", "{C5A071FF-7E89-4F8F-AE3D-54FC992D939E}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
+		..\components\wolfssl\idf_component.yml = ..\components\wolfssl\idf_component.yml
+		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
+		..\README.md = ..\README.md
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "espressif", "espressif", "{ED1D36E5-D346-49F1-B235-F7163452A1A7}"
+	ProjectSection(SolutionItems) = preProject
+		..\sdkconfig = ..\sdkconfig
+		..\sdkconfig.ci = ..\sdkconfig.ci
+		..\sdkconfig.ci.ssldyn = ..\sdkconfig.ci.ssldyn
+		..\sdkconfig.ci.wifi = ..\sdkconfig.ci.wifi
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\sdkconfig.esp32dev = ..\sdkconfig.esp32dev
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfcrypt", "wolfcrypt", "{CA8956F8-C5E5-44BD-A06D-AF3F7D318B9C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_time_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_time_lib.c
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{2C70616A-6C63-45FD-8A1C-E20963D47771}"
+	ProjectSection(SolutionItems) = preProject
+		..\main\mozillarootcerts.pem = ..\main\mozillarootcerts.pem
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -24,5 +61,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C5A071FF-7E89-4F8F-AE3D-54FC992D939E} = {77AD4E56-CDD9-4D6E-99F1-6D3632A705FE}
 	EndGlobalSection
 EndGlobal
