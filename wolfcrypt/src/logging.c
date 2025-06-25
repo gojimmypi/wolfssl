@@ -353,20 +353,20 @@ void WOLFSSL_MSG_EX2(const char *file, int line, const char* fmt, ...)
 
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
 void WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, int sz)
-
 {
     /* Always show cert buffer debug messages, even with loggingEnabled == 0 */
     char msg[WOLFSSL_MSG_EX_BUF_SZ];
-
-    if (sz > 1) {
-        if (sz > (WOLFSSL_MSG_EX_BUF_SZ - 1)) {
-            sz = (WOLFSSL_MSG_EX_BUF_SZ - 1);
-            wolfssl_log(CERT_LOG, NULL, 0, "truncated text:\n");
+    int extra_chars = 2; /* leave room for \n at beginning, \0 at the end */
+    if (sz > extra_chars) {
+        if (sz > (WOLFSSL_MSG_EX_BUF_SZ - extra_chars)) {
+            sz = (WOLFSSL_MSG_EX_BUF_SZ - extra_chars);
+            wolfssl_log(CERT_LOG, NULL, 0, "truncated cert preface text:");
         }
         else {
-            wolfssl_log(CERT_LOG, NULL, 0, "text:\n");
+            wolfssl_log(CERT_LOG, NULL, 0, "cert prefeace text:");
         }
-        memcpy(msg, s, sz);
+        msg[0] = '\n';
+        memcpy(msg + 1, s, sz);
         msg[sz] = '\0';
         wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
@@ -377,6 +377,7 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     /* Always show cert debug messages, even with loggingEnabled == 0 */
     char msg[WOLFSSL_MSG_EX_BUF_SZ];
     int written;
+
     va_list args;
     va_start(args, fmt);
     written = XVSNPRINTF(msg, sizeof(msg), fmt, args);
@@ -384,6 +385,7 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     if (written > 0) {
         wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
+    (void)loggingEnabled;
 }
 #endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
 

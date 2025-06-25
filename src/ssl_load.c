@@ -100,7 +100,10 @@
 
 
 #ifndef NO_CERTS
-
+#if defined(WOLFSSL_DEBUG_CERTS)
+    /* The end of a buffer preface is the beginning of cert or key text */
+    #define PREFACE_BUFFER_END "-----BEGIN"
+#endif
 /* Get DER encoding from data in a buffer as a DerBuffer.
  *
  * @param [in]      buff    Buffer containing data.
@@ -2335,8 +2338,9 @@ static int ProcessBufferResetSuites(WOLFSSL_CTX* ctx, WOLFSSL* ssl, int type)
                                    ((type) == ALT_PRIVATEKEY_TYPE))
 #endif
 
-void print_before_dashes(const unsigned char* buff, word32 sz) {
-    const char* pattern = "-----";
+#if defined(WOLFSSL_DEBUG_CERTS)
+static int PrintBufferPreface(const unsigned char* buff, word32 sz) {
+    const char* pattern = PREFACE_BUFFER_END;
     word32 pat_len = strlen(pattern);
     word32 this_size = 0;
     for (word32 i = 0; i + pat_len <= sz; ++i) {
@@ -2346,7 +2350,10 @@ void print_before_dashes(const unsigned char* buff, word32 sz) {
         }
     }
     WOLFSSL_MSG_BUFFER_TEXT(buff, this_size);
+    return WOLFSSL_SUCCESS;
 }
+#endif
+
 /* Process a buffer of data.
  *
  * Data type is a private key or a certificate.
@@ -2426,7 +2433,8 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff, long sz,
         }
     #endif
     #if defined(WOLFSSL_DEBUG_CERTS)
-        print_before_dashes(buff, (word32)sz);
+        /* Show any text prior to the cert start, typically details */
+        PrintBufferPreface(buff, (word32)sz);
     #endif
         /* Get the DER data for a private key or certificate. */
         ret = DataToDerBuffer(buff, (word32)sz, format, type, info, heap, &der,
