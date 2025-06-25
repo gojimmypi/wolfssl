@@ -485,16 +485,15 @@ int esp_current_boot_count(void)
 
 static const char hd1[] =
                   "Macro Name                           Defined   Not Defined";
-static       char hd2[] =
-                  "----------------------------------- --------- -------------";
-static       char msg[] =
-                  "...................................                        ";
-        /*        01234567890123456789012345678901234567890123456789012345678 */
-        /*                  1         2         3         4         5         */
+static const char hd2[] =
+                  "----------------------------------- --------- ------------";
 
 /* See macro helpers above; not_defined is macro name when *not* defined */
 static int show_macro(char* s, char* not_defined)
 {
+char msg[] =      "...................................                        ";
+            /*    01234567890123456789012345678901234567890123456789012345678 */
+            /*              1         2         3         4         5         */
     size_t i = 0;
     #define MAX_STATUS_NAME_LENGTH 36
     /* Show Macro Status Enabled string Position:  */
@@ -739,6 +738,16 @@ int ShowExtendedSystemInfo(void)
     ESP_LOGI(TAG, "----------------------------------------------------------");
 #else
     ESP_LOGW(TAG, "LIBWOLFSSL_CMAKE_OUTPUT: No cmake messages detected");
+#endif
+    ESP_LOGI(TAG, "ESP-IDF SDK Config:");
+
+#if defined(CONFIG_IDF_INIT_VERSION)
+    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_INIT_VERSION = %s",
+                            CONFIG_IDF_INIT_VERSION);
+#endif
+#if defined(CONFIG_IDF_TARGET)
+    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET       = %s",
+                            CONFIG_IDF_TARGET);
 #endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
