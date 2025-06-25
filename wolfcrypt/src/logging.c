@@ -352,41 +352,126 @@ void WOLFSSL_MSG_EX2(const char *file, int line, const char* fmt, ...)
 #endif /* WOLFSSL_DEBUG_CODEPOINTS */
 
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
-void WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, int sz)
+/* Print a string from memory, typically the preface text of cert.
+ *
+ * @param [in]  s       string address to beging printing
+ * @param [in]  sz      length
+ *
+ * Returns 0 if a message was printed, otherwise WC_FAILURE.
+ */
+int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz)
 {
     /* Always show cert buffer debug messages, even with loggingEnabled == 0 */
-    char msg[WOLFSSL_MSG_EX_BUF_SZ];
-    int extra_chars = 2; /* leave room for \n at beginning, \0 at the end */
-    if (sz > extra_chars) {
-        if (sz > (WOLFSSL_MSG_EX_BUF_SZ - extra_chars)) {
-            sz = (WOLFSSL_MSG_EX_BUF_SZ - extra_chars);
-            wolfssl_log(CERT_LOG, NULL, 0, "truncated cert preface text:");
+    int ret = 0;
+    char* msg;
+#ifdef WOLFSSL_SMALL_STACK
+    msg = (char*)XMALLOC(WOLFSSL_MSG_EX_BUF_SZ, NULL,
+                               DYNAMIC_TYPE_TMP_BUFFER);
+    if (msg == NULL) {
+        wolfssl_log(CERT_LOG, NULL, 0,
+                    "Failed: WOLFSSL_MSG_BUFFER_TEXT XMALLOC");
+        ret = MEMORY_E;
+    }
+#else
+    char msg_buf[WOLFSSL_MSG_EX_BUF_SZ];
+    msg = msg_buf;
+#endif
+    int extra_chars;
+    int msg_sz;
+
+    extra_chars = 2; /* leave room for \n at beginning, \0 at the end */
+
+    /* The assigned message buffer size must be appropriate */
+    if ((ret == 0) && (WOLFSSL_MSG_EX_BUF_SZ > extra_chars)) {
+        msg_sz = WOLFSSL_MSG_EX_BUF_SZ - extra_chars;
+    }
+    else {
+        wolfssl_log(CERT_LOG, NULL, 0,
+                    "Failed: WOLFSSL_MSG_EX_BUF_SZ is too small");
+        ret = WC_FAILURE;
+    }
+
+    /* Provided input string is null or empty — nothing to print */
+    if ((ret == 0)  && ( (sz <= 0) || (s == NULL) ))  {
+        ret = WC_FAILURE;
+    }
+
+    /* If we have a string to print, show a notification */
+    if (ret == 0) {
+        if (sz > msg_sz) {
+            sz = msg_sz;
+            wolfssl_log(CERT_LOG, NULL, 0,
+                                   "\tCertificate preface text (truncated):");
         }
         else {
-            wolfssl_log(CERT_LOG, NULL, 0, "cert prefeace text:");
+            wolfssl_log(CERT_LOG, NULL, 0, "\tCertificate preface text:");
         }
-        msg[0] = '\n';
+    }
+
+    if (ret == 0) {
+        msg[0] = '\n';      /* text always starts in column 1 for readability */
         memcpy(msg + 1, s, sz);
-        msg[sz] = '\0';
+        msg[sz + 1] = '\0'; /* typically print from non-zero-terminated mem   */
         wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
+#ifdef WOLFSSL_SMALL_STACK
+    if (msg != NULL) {
+        XFREE(msg, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+#endif
+    return ret;
 } /* WOLFSSL_MSG_BUFFER_TEXT */
 
-void WOLFSSL_MSG_CERT(const char* fmt, ...)
+/* Print a diagnostic certificate processing-related debug message.
+ * Messages are also printed with DEBUG_WOLFSSL.
+ * Enabled as certificate only messages with WOLFSSL_DEBUG_CERTS
+ *
+ * @param [in]  fmt     static string with optional formatting
+ * @param [in]  ...     arbitrary number of parameters
+ *
+ * Returns 0 if a message was printed, otherwise WC_FAILURE.
+ */
+int WOLFSSL_MSG_CERT(const char* fmt, ...)
 {
     /* Always show cert debug messages, even with loggingEnabled == 0 */
-    char msg[WOLFSSL_MSG_EX_BUF_SZ];
-    int written;
-
-    va_list args;
-    va_start(args, fmt);
-    written = XVSNPRINTF(msg, sizeof(msg), fmt, args);
-    va_end(args);
-    if (written > 0) {
-        wolfssl_log(CERT_LOG, NULL, 0, msg);
+    int ret = 0;
+    char* msg;
+#ifdef WOLFSSL_SMALL_STACK
+    msg = (char*)XMALLOC(WOLFSSL_MSG_EX_BUF_SZ, NULL,
+                               DYNAMIC_TYPE_TMP_BUFFER);
+    if (msg == NULL) {
+        wolfssl_log(CERT_LOG, NULL, 0,
+                    "Failed: WOLFSSL_MSG_CERT XMALLOC");
+        ret = MEMORY_E;
     }
-    (void)loggingEnabled;
-}
+#else
+    char msg_buf[WOLFSSL_MSG_EX_BUF_SZ];
+    msg = msg_buf;
+#endif
+    va_list args;
+    int written;
+    if (ret == 0) {
+        va_start(args, fmt);
+        written = XVSNPRINTF(msg, WOLFSSL_MSG_EX_BUF_SZ, fmt, args);
+        va_end(args);
+        if (written > 0) {
+            wolfssl_log(CERT_LOG, NULL, 0, msg);
+            ret = 0;
+        }
+        else {
+            ret = WC_FAILURE;
+        }
+    }
+
+#ifdef WOLFSSL_SMALL_STACK
+    if (msg != NULL) {
+        XFREE(msg, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    }
+#endif
+
+    (void)loggingEnabled; /* to avoid compiler complaining debug not enabled */
+    return ret;
+} /* WOLFSSL_MSG_CERT */
 #endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
 
 #endif /* XVSNPRINTF && !NO_WOLFSSL_MSG_EX */

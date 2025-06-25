@@ -168,8 +168,8 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
         #define WOLFSSL_PRINT_FORMAT(fmt_idx, vararg_idx)
     #endif
     WOLFSSL_API WOLFSSL_MSG_CERT_FORMAT(1, 2)
-    void WOLFSSL_MSG_CERT(const char* fmt, ...);
-    void WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, int sz);
+    int WOLFSSL_MSG_CERT(const char* fmt, ...);
+    int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz);
 #else
     #undef  WOLFSSL_DEBUG_CERTS
     #define WOLFSSL_MSG_CERT_INDENT ""
