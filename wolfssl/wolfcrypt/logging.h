@@ -169,13 +169,16 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     #endif
     WOLFSSL_API WOLFSSL_MSG_CERT_FORMAT(1, 2)
     void WOLFSSL_MSG_CERT(const char* fmt, ...);
+    void WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, int sz);
 #else
     #undef  WOLFSSL_DEBUG_CERTS
     #define WOLFSSL_MSG_CERT_INDENT ""
     #ifdef WOLF_NO_VARIADIC_MACROS
-        #define WOLFSSL_MSG_CERT()    WC_DO_NOTHING
+        #define WOLFSSL_MSG_CERT()         WC_DO_NOTHING
+        #define WOLFSSL_MSG_BUFFER_TEXT()  WC_DO_NOTHING
     #else
-        #define WOLFSSL_MSG_CERT(...) WC_DO_NOTHING
+        #define WOLFSSL_MSG_CERT(...)      WC_DO_NOTHING
+        #define WOLFSSL_MSG_BUFFER_TEXT()  WC_DO_NOTHING
     #endif
 #endif
 

@@ -352,6 +352,26 @@ void WOLFSSL_MSG_EX2(const char *file, int line, const char* fmt, ...)
 #endif /* WOLFSSL_DEBUG_CODEPOINTS */
 
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
+void WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, int sz)
+
+{
+    /* Always show cert buffer debug messages, even with loggingEnabled == 0 */
+    char msg[WOLFSSL_MSG_EX_BUF_SZ];
+
+    if (sz > 1) {
+        if (sz > (WOLFSSL_MSG_EX_BUF_SZ - 1)) {
+            sz = (WOLFSSL_MSG_EX_BUF_SZ - 1);
+            wolfssl_log(CERT_LOG, NULL, 0, "truncated text:\n");
+        }
+        else {
+            wolfssl_log(CERT_LOG, NULL, 0, "text:\n");
+        }
+        memcpy(msg, s, sz);
+        msg[sz] = '\0';
+        wolfssl_log(CERT_LOG, NULL, 0, msg);
+    }
+} /* WOLFSSL_MSG_BUFFER_TEXT */
+
 void WOLFSSL_MSG_CERT(const char* fmt, ...)
 {
     /* Always show cert debug messages, even with loggingEnabled == 0 */
@@ -364,7 +384,6 @@ void WOLFSSL_MSG_CERT(const char* fmt, ...)
     if (written > 0) {
         wolfssl_log(CERT_LOG, NULL, 0, msg);
     }
-    (void)loggingEnabled;
 }
 #endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
 

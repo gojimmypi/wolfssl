@@ -2335,6 +2335,18 @@ static int ProcessBufferResetSuites(WOLFSSL_CTX* ctx, WOLFSSL* ssl, int type)
                                    ((type) == ALT_PRIVATEKEY_TYPE))
 #endif
 
+void print_before_dashes(const unsigned char* buff, word32 sz) {
+    const char* pattern = "-----";
+    word32 pat_len = strlen(pattern);
+    word32 this_size = 0;
+    for (word32 i = 0; i + pat_len <= sz; ++i) {
+        if (memcmp(&buff[i], pattern, pat_len) == 0) {
+            this_size = i;
+            break;
+        }
+    }
+    WOLFSSL_MSG_BUFFER_TEXT(buff, this_size);
+}
 /* Process a buffer of data.
  *
  * Data type is a private key or a certificate.
@@ -2413,7 +2425,9 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff, long sz,
             info->passwd_userdata = ctx->passwd_userdata;
         }
     #endif
-
+    #if defined(WOLFSSL_DEBUG_CERTS)
+        print_before_dashes(buff, (word32)sz);
+    #endif
         /* Get the DER data for a private key or certificate. */
         ret = DataToDerBuffer(buff, (word32)sz, format, type, info, heap, &der,
             &algId);
@@ -2567,7 +2581,7 @@ static int ProcessChainBuffer(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     long used   = 0;
     int  gotOne = 0;
 
-    WOLFSSL_MSG("Processing CA PEM file");
+    WOLFSSL_MSG_CERT("Processing CA PEM file: %lu bytes", sz);
     /* Keep processing file while no errors and data to parse. */
     while ((ret >= 0) && (used < sz)) {
         long consumed = used;
@@ -2592,8 +2606,8 @@ static int ProcessChainBuffer(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
             /* Check whether we made progress. */
             if (consumed > 0) {
                 WOLFSSL_ERROR(ret);
-                WOLFSSL_MSG("CA Parse failed, with progress in file.");
-                WOLFSSL_MSG("Search for other certs in file");
+                WOLFSSL_MSG_CERT("CA Parse failed, with progress in file.");
+                WOLFSSL_MSG_CERT("Search for other certs in file");
                 /* Check if we have more data to parse to recover. */
                 if (used + consumed < sz) {
                     ret = 0;
@@ -2601,22 +2615,22 @@ static int ProcessChainBuffer(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
             }
             else {
                 /* No progress in parsing being made - stop here. */
-                WOLFSSL_MSG("CA Parse failed, no progress in file.");
-                WOLFSSL_MSG("Do not continue search for other certs in file");
+                WOLFSSL_MSG_CERT("CA Parse failed, no progress in file.");
+                WOLFSSL_MSG_CERT("Do not continue search for other certs in file");
             }
         }
         else {
             /* Got a certificate out. */
-            WOLFSSL_MSG("   Processed a CA");
+            WOLFSSL_MSG_CERT("   Processed a CA");
             gotOne = 1;
         }
         /* Update used count. */
         used += consumed;
-    }
+    } /* while no error, not done processing certs*/
 
     /* May have other unparsable data but did we get a certificate? */
     if (gotOne) {
-        WOLFSSL_MSG("Processed at least one valid CA. Other stuff OK");
+        WOLFSSL_MSG_CERT("Processed at least one valid CA. Other stuff OK");
         ret = 1;
     }
     return ret;

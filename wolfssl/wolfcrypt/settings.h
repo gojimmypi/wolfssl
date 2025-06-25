@@ -630,6 +630,8 @@
     #if defined(CONFIG_ESP_WOLFSSL_DEBUG_CERTS) && \
                 CONFIG_ESP_WOLFSSL_DEBUG_CERTS
         #define            WOLFSSL_DEBUG_CERTS
+        /* There's also some programmatic debugging - so enable that, too: */
+        #define WOLFSSL_DEBUG_CERTIFICATE_LOADS
     #endif
     #if defined(CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH) && \
                 CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH
