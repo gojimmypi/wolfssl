@@ -165,7 +165,7 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
         #define WOLFSSL_MSG_CERT_FORMAT(fmt_idx, vararg_idx) \
             __attribute__((format(printf, fmt_idx, vararg_idx)))
     #else
-        #define WOLFSSL_PRINT_FORMAT(fmt_idx, vararg_idx)
+        #define WOLFSSL_MSG_CERT_FORMAT(fmt_idx, vararg_idx)
     #endif
     WOLFSSL_API WOLFSSL_MSG_CERT_FORMAT(1, 2)
     int WOLFSSL_MSG_CERT(const char* fmt, ...);

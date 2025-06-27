@@ -376,14 +376,14 @@ int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz)
     char msg_buf[WOLFSSL_MSG_EX_BUF_SZ];
     msg = msg_buf;
 #endif
-    int extra_chars;
-    int msg_sz;
+    word32 msg_sz = 0;
 
-    extra_chars = 2; /* leave room for \n at beginning, \0 at the end */
+    /* leave room for 2 extra characters:  \n at beginning, \0 at the end */
+    #define EXTRA_CHARS 2
 
     /* The assigned message buffer size must be appropriate */
-    if ((ret == 0) && (WOLFSSL_MSG_EX_BUF_SZ > extra_chars)) {
-        msg_sz = WOLFSSL_MSG_EX_BUF_SZ - extra_chars;
+    if ((ret == 0) && (WOLFSSL_MSG_EX_BUF_SZ > EXTRA_CHARS)) {
+        msg_sz = WOLFSSL_MSG_EX_BUF_SZ - EXTRA_CHARS;
     }
     else {
         wolfssl_log(CERT_LOG, NULL, 0,
