@@ -3253,22 +3253,35 @@ int SetShortInt(byte* output, word32* inOutIdx, word32 number, word32 maxIdx)
     word32 idx = *inOutIdx;
     word32 len;
     int    i;
+    word32 extraByte = 0;
 
     if (number == 0)
         len = 1;
     else
         len = BytePrecision(number);
 
+    /* clarify the len range to prepare for the next right bit shifting */
+    if (len < 1 || len > sizeof(number)) {
+        return ASN_PARSE_E;
+    }
+    if (number >> (WOLFSSL_BIT_SIZE * len - 1)) {
+        /* Need one byte of zero value not to be negative number */
+        extraByte = 1;
+    }
+
     /* check for room for type and length bytes. */
-    if ((idx + 2 + len) > maxIdx)
+    if ((idx + 2 + extraByte + len) > maxIdx)
         return BUFFER_E;
 
     /* check that MAX_SHORT_SZ allows this size of ShortInt. */
-    if (2 + len > MAX_SHORT_SZ)
+    if (2 + extraByte + len > MAX_SHORT_SZ)
         return ASN_PARSE_E;
 
     output[idx++] = ASN_INTEGER;
-    output[idx++] = (byte)len;
+    output[idx++] = (byte)(len + extraByte);
+    if (extraByte) {
+        output[idx++] = 0x00;
+    }
 
     for (i = (int)len - 1; i >= 0; --i)
         output[idx++] = (byte)(number >> (i * WOLFSSL_BIT_SIZE));
@@ -6844,6 +6857,12 @@ word32 wc_oid_sum(const byte* input, int length)
     int shift = 0;
 #endif
 
+    /* Check for valid input. */
+    if (input == NULL || length > MAX_OID_SZ) {
+        WOLFSSL_MSG("wc_oid_sum: invalid args");
+        return 0;
+    }
+
     /* Sum it up for now. */
     for (i = 0; i < length; i++) {
     #ifdef WOLFSSL_OLD_OID_SUM
@@ -9566,6 +9585,8 @@ int wc_EncryptPKCS8Key_ex(byte* key, word32 keySz, byte* out, word32* outSz,
     word32 encIdx = 0;
     const byte* hmacOidBuf = NULL;
     word32 hmacOidBufSz = 0;
+    byte tmpShort[MAX_SHORT_SZ];
+    word32 tmpIdx = 0;
 
     (void)heap;
 
@@ -9588,9 +9609,14 @@ int wc_EncryptPKCS8Key_ex(byte* key, word32 keySz, byte* out, word32* outSz,
     if (ret == 0) {
         padSz = (word32)((blockSz - ((int)keySz & (blockSz - 1))) &
             (blockSz - 1));
-        /* inner = OCT salt INT itt */
-        innerLen = 2 + saltSz + 2 + ((itt < 256) ? 1 : ((itt < 65536) ? 2 : 3));
-
+        ret = SetShortInt(tmpShort, &tmpIdx, (word32)itt, MAX_SHORT_SZ);
+        if (ret > 0) {
+            /* inner = OCT salt INT itt */
+            innerLen = 2 + saltSz + (word32)ret;
+            ret = 0;
+        }
+    }
+    if (ret == 0) {
         if (version != PKCS5v2) {
             pbeOidBuf = OidFromId((word32)pbeId, oidPBEType, &pbeOidBufSz);
             /* pbe = OBJ pbse1 SEQ [ inner ] */
@@ -26387,8 +26413,8 @@ wcchar END_PUB_KEY          = "-----END PUBLIC KEY-----";
 #if defined(HAVE_FALCON)
     wcchar BEGIN_FALCON_LEVEL1_PRIV  = "-----BEGIN FALCON_LEVEL1 PRIVATE KEY-----";
     wcchar END_FALCON_LEVEL1_PRIV    = "-----END FALCON_LEVEL1 PRIVATE KEY-----";
-    wcchar BEGIN_FALCON_LEVEL5_PRIV = "-----BEGIN FALCON_LEVEL5 PRIVATE KEY-----";
-    wcchar END_FALCON_LEVEL5_PRIV   = "-----END FALCON_LEVEL5 PRIVATE KEY-----";
+    wcchar BEGIN_FALCON_LEVEL5_PRIV  = "-----BEGIN FALCON_LEVEL5 PRIVATE KEY-----";
+    wcchar END_FALCON_LEVEL5_PRIV    = "-----END FALCON_LEVEL5 PRIVATE KEY-----";
 #endif /* HAVE_FALCON */
 #if defined(HAVE_DILITHIUM)
     #ifdef WOLFSSL_DILITHIUM_FIPS204_DRAFT

@@ -2981,7 +2981,7 @@ extern void uITRON4_free(void *p) ;
 /* Determine when mp_read_radix with a radix of 10 is required. */
 #if (defined(WOLFSSL_SP_MATH_ALL) && !defined(NO_RSA) && \
     !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(HAVE_ECC) || \
-    !defined(NO_DSA) || defined(OPENSSL_EXTRA)
+    !defined(NO_DSA) || defined(OPENSSL_EXTRA) || defined(WOLFSSL_PUBLIC_MP)
     #define WOLFSSL_SP_READ_RADIX_16
 #endif
 
@@ -2994,7 +2994,7 @@ extern void uITRON4_free(void *p) ;
 /* Determine when mp_invmod is required. */
 #if defined(HAVE_ECC) || !defined(NO_DSA) || defined(OPENSSL_EXTRA) || \
     (!defined(NO_RSA) && !defined(WOLFSSL_RSA_VERIFY_ONLY) && \
-     !defined(WOLFSSL_RSA_PUBLIC_ONLY))
+     !defined(WOLFSSL_RSA_PUBLIC_ONLY)) || defined(OPENSSL_EXTRA)
     #define WOLFSSL_SP_INVMOD
 #endif
 
@@ -3702,6 +3702,9 @@ extern void uITRON4_free(void *p) ;
 
 /* Linux Kernel Module */
 #ifdef WOLFSSL_LINUXKM
+    #ifndef WOLFSSL_NO_GETPID
+        #define WOLFSSL_NO_GETPID
+    #endif /* WOLFSSL_NO_GETPID */
     #ifdef HAVE_CONFIG_H
         #include <config.h>
         #undef HAVE_CONFIG_H

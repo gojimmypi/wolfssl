@@ -332,6 +332,7 @@
 #include <tests/api/test_tls_ext.h>
 #include <tests/api/test_tls.h>
 #include <tests/api/test_x509.h>
+#include <tests/api/test_asn.h>
 
 #if !defined(NO_FILESYSTEM) && !defined(NO_CERTS) && !defined(NO_TLS) && \
     !defined(NO_RSA)        && !defined(SINGLE_THREADED) && \
@@ -19591,6 +19592,7 @@ static int test_wolfSSL_d2i_ASN1_INTEGER(void)
         reEncoded = NULL;
         wolfSSL_ASN1_INTEGER_free(a);
         a = NULL;
+        p2 = NULL;
     }
 #endif /* OPENSSL_EXTRA */
     return EXPECT_RESULT();
@@ -28110,7 +28112,8 @@ static int test_wolfSSL_CTX_set_client_CA_list(void)
 static int test_wolfSSL_CTX_add_client_CA(void)
 {
     EXPECT_DECLS;
-#if defined(OPENSSL_EXTRA) && !defined(NO_RSA) && !defined(NO_CERTS) && \
+#if !defined(WOLFSSL_NO_CA_NAMES) && defined(OPENSSL_EXTRA) && \
+    !defined(NO_RSA) && !defined(NO_CERTS) && \
     !defined(NO_TLS) && !defined(NO_WOLFSSL_CLIENT)
     WOLFSSL_CTX* ctx = NULL;
     WOLFSSL_X509* x509 = NULL;
@@ -32796,7 +32799,7 @@ static int test_wolfSSL_check_domain(void)
 
 #endif /* OPENSSL_EXTRA && HAVE_SSL_MEMIO_TESTS_DEPENDENCIES */
 #if defined(HAVE_SSL_MEMIO_TESTS_DEPENDENCIES) && \
-    !defined(WOLFSSL_SYS_CA_CERTS)
+    defined(WOLFSSL_SYS_CA_CERTS)
 static const char* dn = NULL;
 static int test_wolfSSL_check_domain_basic_client_ctx(WOLFSSL_CTX* ctx)
 {
@@ -33198,7 +33201,8 @@ static int test_wolfSSL_RAND_bytes(void)
     const int size4 = RNG_MAX_BLOCK_LEN * 4;    /* in bytes */
     int  max_bufsize;
     byte *my_buf = NULL;
-#if defined(HAVE_GETPID)
+#if defined(OPENSSL_EXTRA) && defined(HAVE_GETPID) && !defined(__MINGW64__) && \
+    !defined(__MINGW32__)
     byte seed[16] = {0};
     byte randbuf[8] = {0};
     int pipefds[2] = {0};
@@ -33211,7 +33215,7 @@ static int test_wolfSSL_RAND_bytes(void)
 
     max_bufsize = size4;
 
-    ExpectNotNull(my_buf = (byte*)XMALLOC(max_bufsize * sizeof(byte), NULL,
+    ExpectNotNull(my_buf = (byte*)XMALLOC(max_bufsize * sizeof(byte), HEAP_HINT,
         DYNAMIC_TYPE_TMP_BUFFER));
 
     ExpectIntEQ(RAND_bytes(my_buf, 0), 1);
@@ -33222,8 +33226,10 @@ static int test_wolfSSL_RAND_bytes(void)
     ExpectIntEQ(RAND_bytes(my_buf, size2), 1);
     ExpectIntEQ(RAND_bytes(my_buf, size3), 1);
     ExpectIntEQ(RAND_bytes(my_buf, size4), 1);
+    XFREE(my_buf, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
 
-#if defined(OPENSSL_EXTRA) && defined(HAVE_GETPID)
+#if defined(OPENSSL_EXTRA) && defined(HAVE_GETPID) && !defined(__MINGW64__) && \
+    !defined(__MINGW32__)
     XMEMSET(seed, 0, sizeof(seed));
     RAND_cleanup();
 
@@ -33245,25 +33251,23 @@ static int test_wolfSSL_RAND_bytes(void)
     }
     else {
         /* Parent process. */
-        word64 childrand64 = 0;
+        byte childrand[8] = {0};
         int waitstatus = 0;
 
         close(pipefds[1]);
         ExpectIntEQ(RAND_bytes(randbuf, sizeof(randbuf)), 1);
-        ExpectIntEQ(read(pipefds[0], &childrand64, sizeof(childrand64)),
-            sizeof(childrand64));
+        ExpectIntEQ(read(pipefds[0], childrand, sizeof(childrand)),
+            sizeof(childrand));
     #ifdef WOLFSSL_NO_GETPID
-        ExpectBufEQ(randbuf, &childrand64, sizeof(randbuf));
+        ExpectBufEQ(randbuf, childrand, sizeof(randbuf));
     #else
-        ExpectBufNE(randbuf, &childrand64, sizeof(randbuf));
+        ExpectBufNE(randbuf, childrand, sizeof(randbuf));
     #endif
         close(pipefds[0]);
         waitpid(pid, &waitstatus, 0);
     }
     RAND_cleanup();
 #endif
-
-    XFREE(my_buf, NULL, DYNAMIC_TYPE_TMP_BUFFER);
 #endif
     return EXPECT_RESULT();
 }
@@ -38569,7 +38573,7 @@ static int test_wolfSSL_cert_cb_dyn_ciphers(void)
 static int test_wolfSSL_ciphersuite_auth(void)
 {
     EXPECT_DECLS;
-#if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EXTRA)
+#if defined(OPENSSL_EXTRA)
     WOLFSSL_CIPHERSUITE_INFO info;
 
     (void)info;
@@ -38659,7 +38663,7 @@ static int test_wolfSSL_ciphersuite_auth(void)
 static int test_wolfSSL_sigalg_info(void)
 {
     EXPECT_DECLS;
-#if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EXTRA)
+#if defined(OPENSSL_EXTRA)
     byte hashSigAlgo[WOLFSSL_MAX_SIGALGO];
     word16 len = 0;
     word16 idx = 0;
@@ -67443,6 +67447,9 @@ TEST_CASE testCases[] = {
     TEST_SIGNATURE_DECLS,
     /* x509 */
     TEST_X509_DECLS,
+
+    /* ASN */
+    TEST_ASN_DECLS,
 
     /* PEM and DER APIs. */
     TEST_DECL(test_wc_PemToDer),

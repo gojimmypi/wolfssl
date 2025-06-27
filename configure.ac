@@ -160,6 +160,9 @@ fi
 #ifdef HAVE_STDLIB_H
     #include <stdlib.h>
 #endif
+#ifdef HAVE_UNISTD_H
+    #include <unistd.h>
+#endif
 #ifdef HAVE_CTYPE_H
     #include <ctype.h>
 #endif
@@ -1211,6 +1214,11 @@ then
         AC_MSG_ERROR([--enable-all-asm is incompatible with --disable-armasm])
     fi
 
+    if test "$enable_ppc32_asm" = "no"
+    then
+        AC_MSG_ERROR([--enable-all-asm is incompatible with --disable-ppc32-asm])
+    fi
+
     case "$host_cpu" in
         *x86_64*|*amd64*)
             if test "$enable_intelasm" = ""
@@ -1238,6 +1246,14 @@ then
                 then
                     ENABLED_SP=yes
                 fi
+            fi
+            ;;
+        *powerpc64*)
+            ;;
+        *powerpc*)
+            if test "$enable_ppc32_asm" = ""
+            then
+               enable_ppc32_asm=yes
             fi
             ;;
     esac
@@ -1307,6 +1323,7 @@ then
     test "$enable_blake2s" = "" && enable_blake2s=yes
     test "$enable_md2" = "" && enable_md2=yes
     test "$enable_md4" = "" && enable_md4=yes
+    test "$enable_md5" = "" && enable_md5=yes
     test "$enable_anon" = "" && enable_anon=yes
     test "$enable_ssh" = "" && test "$enable_hmac" != "no" && enable_ssh=yes
 
@@ -3525,6 +3542,49 @@ do
 done
 
 
+# PPC32 Assembly
+AC_ARG_ENABLE([ppc32-asm],
+    [AS_HELP_STRING([--enable-ppc32-asm],[Enable wolfSSL PowerPC 32-bit ASM support (default: disabled).])],
+    [ ENABLED_PPC32_ASM=$enableval ],
+    [ ENABLED_PPC32_ASM=no ]
+    )
+
+
+if test "$ENABLED_PPC32_ASM" != "no" && test "$ENABLED_ASM" = "yes"
+then
+    ENABLED_PPC32_ASM_OPTS=$ENABLED_PPC32_ASM
+    for v in `echo $ENABLED_PPC32_ASM_OPTS | tr "," " "`
+    do
+      case $v in
+      yes)
+        ;;
+      inline)
+        ENABLED_PPC32_ASM_INLINE=yes
+        ;;
+      small)
+        ENABLED_PPC32_ASM_SMALL=yes
+        ;;
+      *)
+        AC_MSG_ERROR([Invalid RISC-V option [yes,inline,small]: $ENABLED_PPC32_ASM.])
+        break
+        ;;
+      esac
+    done
+
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PPC32_ASM"
+    AC_MSG_NOTICE([32-bit PowerPC assembly for SHA-256])
+    ENABLED_PPC32_ASM=yes
+fi
+if test "$ENABLED_PPC32_ASM_INLINE" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PPC32_ASM_INLINE"
+else
+    AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_PPC32_ASM"
+fi
+if test "$ENABLED_PPC32_ASM_SMALL" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PPC32_ASM_SMALL"
+    AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_PPC32_ASM_SMALL"
+fi
+
 # Xilinx hardened crypto
 AC_ARG_ENABLE([xilinx],
     [AS_HELP_STRING([--enable-xilinx],[Enable wolfSSL support for Xilinx hardened crypto(default: disabled)])],
@@ -4803,8 +4863,6 @@ then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_NO_TLS12 -DNO_OLD_TLS"
 fi
 
-
-
 # STACK SIZE info for testwolfcrypt and examples
 AC_ARG_ENABLE([stacksize],
     [AS_HELP_STRING([--enable-stacksize],[Enable stack size info on examples (default: disabled)])],
@@ -5417,10 +5475,23 @@ AC_ARG_ENABLE([arc4],
 
 # MD5
 AC_ARG_ENABLE([md5],
-    [AS_HELP_STRING([--enable-md5],[Enable MD5 (default: enabled)])],
+    [AS_HELP_STRING([--enable-md5],[Enable MD5 (default: disabled)])],
     [ ENABLED_MD5=$enableval ],
-    [ ENABLED_MD5=yes ]
+    [ ENABLED_MD5=no ]
     )
+
+# Options that require MD5
+if test "$ENABLED_WPAS" = "yes" || test "$ENABLED_HAPROXY" = "yes" || \
+    test "$ENABLED_KRB" = "yes" || test "$ENABLED_NETSNMP" = "yes" || \
+    test "$ENABLED_NGINX" = "yes" || test "$ENABLED_OPENSSH" = "yes" || \
+    test "$ENABLED_OPENSSLEXTRA" = "yes" || test "$ENABLED_OPENVPN" = "yes" || \
+    test "$ENABLED_TLSV10" = "yes" || test "$ENABLED_OLD_TLS" = "yes" || \
+    test "$ENABLED_FORTRESS" = "yes" || test "$ENABLED_LIGHTY" = "yes" || \
+    test "$ENABLED_DES3" = "yes" || test "$ENABLED_BUMP" = "yes" || \
+    test "$ENABLED_OPENSSLALL" = "yes"
+then
+    ENABLED_MD5=yes
+fi
 
 # SHA
 AC_ARG_ENABLE([sha],
@@ -7184,6 +7255,9 @@ then
 
     # Requires public mp_
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_PUBLIC_MP"
+
+    # Requires allowing CA:FALSE in BasicConstraints
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ALLOW_ENCODING_CA_FALSE"
 fi
 
 if test "x$ENABLED_SMIME" = "xyes"
@@ -7410,6 +7484,7 @@ then
 
     if test "x$ENABLED_OPENSSLEXTRA" = "xno"
     then
+        ENABLED_MD5="yes"
         ENABLED_OPENSSLEXTRA="yes"
         AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA"
     fi
@@ -7768,6 +7843,7 @@ then
     then
         ENABLED_OPENSSLALL="yes"
         ENABLED_OPENSSLEXTRA="yes"
+        ENABLED_MD5="yes"
         AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA -DOPENSSL_ALL"
     fi
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_ASIO -DASIO_USE_WOLFSSL -DWOLFSSL_KEY_GEN"
@@ -7973,6 +8049,11 @@ then
     then
         ENABLED_KEYGEN="yes"
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_KEY_GEN"
+    fi
+
+    if test "x$ENABLED_MD5" = "xno"
+    then
+        ENABLED_MD5="yes"
     fi
 
     AM_CFLAGS="$AM_CFLAGS -DHAVE_STUNNEL -DWOLFSSL_ALWAYS_VERIFY_CB"
@@ -9174,6 +9255,8 @@ then
         # Use the smaller object size implementation
         ENABLED_AESGCM=yes
     fi
+
+    ENABLED_MD5=yes
 fi
 
 if test "$ENABLED_MCAPI" = "yes" && test "$ENABLED_SHA512" = "no"
@@ -10129,7 +10212,7 @@ fi
 
 if test "$ENABLED_OPENSSLEXTRA" = "yes"
 then
-  AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA"
+    AM_CFLAGS="$AM_CFLAGS -DOPENSSL_EXTRA"
 fi
 
 if test "$ENABLED_OPENSSLEXTRA" = "x509small"
@@ -10468,6 +10551,12 @@ then
     AM_CFLAGS="$AM_CFLAGS -DHAVE___UINT128_T=1"
 fi
 
+# Add HAVE_GETPID to AM_CFLAGS for inclusion in options.h
+if test "$ac_cv_func_getpid" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_GETPID=1"
+fi
+
 LIB_SOCKET_NSL
 AX_HARDEN_CC_COMPILER_FLAGS
 
@@ -10599,6 +10688,8 @@ AM_CONDITIONAL([BUILD_ARM_NONTHUMB],[test "$ENABLED_ARM_THUMB" != "yes"  || test
 AM_CONDITIONAL([BUILD_ARM_32],[test "$ENABLED_ARM_32" = "yes"  || test "$ENABLED_USERSETTINGS" = "yes"])
 AM_CONDITIONAL([BUILD_ARM_64],[test "$ENABLED_ARM_64" = "yes"  || test "$ENABLED_USERSETTINGS" = "yes"])
 AM_CONDITIONAL([BUILD_RISCV_ASM],[test "x$ENABLED_RISCV_ASM" = "xyes"])
+AM_CONDITIONAL([BUILD_PPC32_ASM],[test "x$ENABLED_PPC32_ASM" = "xyes"])
+AM_CONDITIONAL([BUILD_PPC32_ASM_INLINE],[test "x$ENABLED_PPC32_ASM_INLINE" = "xyes"])
 AM_CONDITIONAL([BUILD_XILINX],[test "x$ENABLED_XILINX" = "xyes"])
 AM_CONDITIONAL([BUILD_AESNI],[test "x$ENABLED_AESNI" = "xyes"])
 AM_CONDITIONAL([BUILD_INTELASM],[test "x$ENABLED_INTELASM" = "xyes"])
@@ -11253,6 +11344,11 @@ echo "   * ARM ASM:                    $ENABLED_ARMASM"
 echo "   * ARM ASM SHA512/SHA3 Crypto  $ENABLED_ARMASM_SHA3"
 echo "   * ARM ASM SM3/SM4 Crypto      $ENABLED_ARMASM_CRYPTO_SM4"
 echo "   * RISC-V ASM                  $ENABLED_RISCV_ASM"
+if test "$ENABLED_PPC32_ASM_INLINE" = "yes"
+then
+    ENABLED_PPC32_ASM="inline C"
+fi
+echo "   * PPC32 ASM                   $ENABLED_PPC32_ASM"
 echo "   * Write duplicate:            $ENABLED_WRITEDUP"
 echo "   * Xilinx Hardware Acc.:       $ENABLED_XILINX"
 echo "   * C89:                        $ENABLED_C89"

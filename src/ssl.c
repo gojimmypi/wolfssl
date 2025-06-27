@@ -250,8 +250,10 @@ static struct SystemCryptoPolicy crypto_policy;
 static WC_RNG globalRNG;
 static volatile int initGlobalRNG = 0;
 
+#if defined(OPENSSL_EXTRA) || !defined(WOLFSSL_MUTEX_INITIALIZER)
 static WC_MAYBE_UNUSED wolfSSL_Mutex globalRNGMutex
     WOLFSSL_MUTEX_INITIALIZER_CLAUSE(globalRNGMutex);
+#endif
 #ifndef WOLFSSL_MUTEX_INITIALIZER
 static int globalRNGMutex_valid = 0;
 #endif
@@ -12214,7 +12216,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
 #endif /* !NO_BIO */
 #endif /* OPENSSL_EXTRA */
 
-#if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EXTRA)
+#ifndef WOLFSSL_NO_CA_NAMES
     void wolfSSL_CTX_set_client_CA_list(WOLFSSL_CTX* ctx,
                                        WOLF_STACK_OF(WOLFSSL_X509_NAME)* names)
     {
@@ -12235,8 +12237,9 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
             ssl->client_ca_names = names;
         }
     }
+#endif
 
-    #ifdef OPENSSL_EXTRA
+#ifdef OPENSSL_EXTRA
     /* registers client cert callback, called during handshake if server
        requests client auth but user has not loaded client cert/key */
     void wolfSSL_CTX_set_client_cert_cb(WOLFSSL_CTX *ctx, client_cert_cb cb)
@@ -12448,9 +12451,7 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
         }
         return ret;
     }
-    #endif /* OPENSSL_EXTRA */
-
-#endif /* OPENSSL_EXTRA || WOLFSSL_EXTRA || HAVE_WEBSERVER */
+#endif /* OPENSSL_EXTRA */
 
 #ifndef WOLFSSL_NO_CA_NAMES
     WOLF_STACK_OF(WOLFSSL_X509_NAME)* wolfSSL_CTX_get_client_CA_list(
@@ -25565,7 +25566,7 @@ static int wolfSSL_RAND_InitMutex(void)
 #ifdef OPENSSL_EXTRA
 
 #if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
-    defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+    ((defined(HAVE_FIPS) && FIPS_VERSION3_LE(6,0,0)) || defined(HAVE_SELFTEST))
 /* In older FIPS bundles add check for reseed here since it does not exist in
  * the older random.c certified files. */
 static pid_t currentRandPid = 0;
@@ -25584,7 +25585,9 @@ int wolfSSL_RAND_Init(void)
             ret = wc_InitRng(&globalRNG);
             if (ret == 0) {
             #if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
-                defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+                ((defined(HAVE_FIPS) && FIPS_VERSION3_LE(6,0,0)) || \
+                 defined(HAVE_SELFTEST))
+
                 currentRandPid = getpid();
             #endif
                 initGlobalRNG = 1;
@@ -26065,7 +26068,8 @@ int wolfSSL_RAND_bytes(unsigned char* buf, int num)
          */
         if (initGlobalRNG) {
         #if defined(HAVE_GETPID) && !defined(WOLFSSL_NO_GETPID) && \
-                defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
+                ((defined(HAVE_FIPS) && FIPS_VERSION3_LE(6,0,0)) || \
+                 defined(HAVE_SELFTEST))
             pid_t p;
 
             p = getpid();

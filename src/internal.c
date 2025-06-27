@@ -2927,7 +2927,7 @@ void SSL_CtxResourceFree(WOLFSSL_CTX* ctx)
         defined(WOLFSSL_WPAS_SMALL)
         wolfSSL_X509_STORE_free(ctx->x509_store_pt);
     #endif
-    #if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EXTRA) || defined(HAVE_LIGHTY)
+    #ifndef WOLFSSL_NO_CA_NAMES
         wolfSSL_sk_X509_NAME_pop_free(ctx->client_ca_names, NULL);
         ctx->client_ca_names = NULL;
     #endif
@@ -6944,13 +6944,36 @@ int SetSSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     /* If we are setting the ctx on an already initialized SSL object
      * then we possibly already have a side defined. Don't overwrite unless
      * the context has a well defined role. */
-    if (newSSL || ctx->method->side != WOLFSSL_NEITHER_END)
-        ssl->options.side      = (word16)(ctx->method->side);
-    ssl->options.downgrade    = (word16)(ctx->method->downgrade);
-    ssl->options.minDowngrade = ctx->minDowngrade;
-
+    if (newSSL || ctx->method->side != WOLFSSL_NEITHER_END) {
+        ssl->options.side  = (word16)(ctx->method->side);
+    }
+    ssl->options.downgrade        = (word16)(ctx->method->downgrade);
+    ssl->options.minDowngrade     = ctx->minDowngrade;
     ssl->options.haveRSA          = ctx->haveRSA;
     ssl->options.haveDH           = ctx->haveDH;
+#if  !defined(NO_CERTS) && !defined(NO_DH)
+    /* Its possible that DH algorithm parameters were set in the ctx, recalc
+     * cipher suites. */
+    if (ssl->options.haveDH && ctx->serverDH_P.buffer != NULL &&
+        ctx->serverDH_G.buffer != NULL) {
+        if (ssl->suites == NULL) {
+            if (AllocateSuites(ssl) != 0) {
+                return MEMORY_E;
+            }
+        }
+        InitSuites(ssl->suites, ssl->version, ssl->buffers.keySz,
+                   ssl->options.haveRSA,
+#ifdef NO_PSK
+                   0,
+#else
+                   ctx->havePSK,
+#endif
+                   ssl->options.haveDH,
+                   ssl->options.haveECDSAsig, ssl->options.haveECC, TRUE,
+                   ssl->options.haveStaticECC, ssl->options.useAnon,
+                   TRUE, TRUE, TRUE, TRUE, ssl->options.side);
+    }
+#endif /* !NO_CERTS && !NO_DH */
     ssl->options.haveECDSAsig     = ctx->haveECDSAsig;
     ssl->options.haveECC          = ctx->haveECC;
     ssl->options.haveStaticECC    = ctx->haveStaticECC;
@@ -8806,7 +8829,7 @@ void wolfSSL_ResourceFree(WOLFSSL* ssl)
     wolfSSL_sk_X509_pop_free(ssl->ourCertChain, NULL);
     #endif
 #endif
-#if defined(OPENSSL_EXTRA) || defined(WOLFSSL_EXTRA) || defined(HAVE_LIGHTY)
+#ifndef WOLFSSL_NO_CA_NAMES
     wolfSSL_sk_X509_NAME_pop_free(ssl->client_ca_names, NULL);
     ssl->client_ca_names = NULL;
 #endif
@@ -19657,8 +19680,8 @@ static WC_INLINE int EncryptDo(WOLFSSL* ssl, byte* out, const byte* input,
 #endif
 
     (void)out;
-    (void)input;
     (void)sz;
+    (void)type;
 
     if (input == NULL) {
         return BAD_FUNC_ARG;
@@ -19735,8 +19758,8 @@ static WC_INLINE int EncryptDo(WOLFSSL* ssl, byte* out, const byte* input,
             additionalSz = writeAeadAuthData(ssl,
                     /* Length of the plain text minus the explicit
                      * IV length minus the authentication tag size. */
-                    sz - (word16)(AESGCM_EXP_IV_SZ) - ssl->specs.aead_mac_size, type,
-                    ssl->encrypt.additional, 0, NULL, CUR_ORDER);
+                    sz - (word16)(AESGCM_EXP_IV_SZ) - ssl->specs.aead_mac_size,
+                    type, ssl->encrypt.additional, 0, NULL, CUR_ORDER);
             if (additionalSz < 0) {
                 ret = additionalSz;
                 break;
@@ -26527,7 +26550,7 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "peer ip address mismatch";
 
     case WANT_READ :
-    case -WOLFSSL_ERROR_WANT_READ :
+    case WOLFSSL_ERROR_WANT_READ_E :
         return "non-blocking socket wants data to be read";
 
     case NOT_READY_ERROR :
@@ -26537,17 +26560,17 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "record layer version error";
 
     case WANT_WRITE :
-    case -WOLFSSL_ERROR_WANT_WRITE :
+    case WOLFSSL_ERROR_WANT_WRITE_E :
         return "non-blocking socket write buffer full";
 
-    case -WOLFSSL_ERROR_WANT_CONNECT:
-    case -WOLFSSL_ERROR_WANT_ACCEPT:
+    case WOLFSSL_ERROR_WANT_CONNECT_E :
+    case WOLFSSL_ERROR_WANT_ACCEPT_E :
         return "The underlying BIO was not yet connected";
 
-    case -WOLFSSL_ERROR_SYSCALL:
+    case WOLFSSL_ERROR_SYSCALL_E :
         return "fatal I/O error in TLS layer";
 
-    case -WOLFSSL_ERROR_WANT_X509_LOOKUP:
+    case WOLFSSL_ERROR_WANT_X509_LOOKUP_E :
         return "application client cert callback asked to be called again";
 
     case BUFFER_ERROR :
@@ -26587,7 +26610,7 @@ const char* wolfSSL_ERR_reason_error_string(unsigned long e)
         return "can't decode peer key";
 
     case ZERO_RETURN:
-    case -WOLFSSL_ERROR_ZERO_RETURN:
+    case WOLFSSL_ERROR_ZERO_RETURN_E :
         return "peer sent close notify alert";
 
     case ECC_CURVETYPE_ERROR:
@@ -35763,6 +35786,9 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
 
         (void)ssl;
 
+        if (args == NULL)
+            return;
+
     #if defined(HAVE_ECC) || defined(HAVE_CURVE25519) || defined(HAVE_CURVE448)
         XFREE(args->exportBuf, ssl->heap, DYNAMIC_TYPE_DER);
         args->exportBuf = NULL;
@@ -35772,16 +35798,10 @@ static int DoSessionTicket(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
         args->verifySig = NULL;
     #endif
 
-        if (
-        #ifdef WOLFSSL_ASYNC_IO
-            args != NULL &&
-        #endif
-            args->input != NULL) {
+        if (args->input != NULL) {
             XFREE(args->input, ssl->heap, DYNAMIC_TYPE_IN_BUFFER);
             args->input = NULL;
         }
-
-        (void)args;
     }
 
     /* handle generation of server_key_exchange (12) */
