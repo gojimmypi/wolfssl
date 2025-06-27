@@ -10279,7 +10279,8 @@ int wolfSSL_DTLS_SetCookieSecret(WOLFSSL* ssl,
         if ((ret = ReinitSSL(ssl, ssl->ctx, 0)) != 0) {
             return ret;
         }
-        WOLFSSL_MSG_CERT("ssl.suites: %d; ssl.clsuites: %d", (uint)ssl->suites, (uint)ssl->clSuites);
+        WOLFSSL_MSG_CERT("ssl.suites: %p; ssl.clsuites: %p",
+                         (void*)ssl->suites, (void*)ssl->clSuites);
 #ifdef WOLFSSL_WOLFSENTRY_HOOKS
         if ((ssl->ConnectFilter != NULL) &&
             (ssl->options.connectState == CONNECT_BEGIN)) {
