@@ -7,6 +7,8 @@ set EDPATH=%WATCOM%\eddat
 set WIPFC=%WATCOM%\wipfc
 set LIB=%WATCOM%\lib386;%WATCOM%\lib386\nt
 
+:: goto test2:
+
 echo "Config #1"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
@@ -47,7 +49,8 @@ echo ""
 echo "Config #2 building wolfssl DDL"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
-  -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL" ^
+  -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL -DWOLFSSL_DEBUG_CERTS" ^
+  -DWOLFSSL_DEBUG_CERTS=YES ^
   -DCMAKE_SYSTEM_NAME=Windows ^
   -DCMAKE_EXECUTABLE_SUFFIX=.exe ^
   -DCMAKE_SYSTEM_PROCESSOR=i386 ^
@@ -70,9 +73,6 @@ call wlink_dll.bat
 timeout /t 5 >nul
 
 build-watcom\examples\client\client.exe -v 4 -h localhost -p 12345
-
-
-:: exit /b
 
 
 :test2a
@@ -99,6 +99,8 @@ if errorlevel 1 (
 )
 cmake --build build-watcom || (echo "Build 2a failed!" && exit /b)
 call wlink_dll.bat
+
+build-watcom\examples\client\client.exe -v 4 -h localhost -p 12345
 
 echo ""
 echo "Config #3"
