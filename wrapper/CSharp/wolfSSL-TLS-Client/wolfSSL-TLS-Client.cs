@@ -29,8 +29,25 @@ using wolfSSL.CSharp;
 
 public class wolfSSL_TLS_Client
 {
-    public static string SERVER_NAME = "localhost"; /* "192.168.1.73 */
-    public static string CIPHER_SUITE = "TLS_AES_128_CCM_8_SHA256"
+    public const bool ENABLE_ALERT_HISTORY = true;
+
+    // Sample listening server:
+    // See https://github.com/wolfSSL/wolfssl/tree/master/examples/server
+    //
+    // examples disable client cert check with `-d`:
+    //   ./examples/server/server -d -p 11111 -c ./certs/server-cert.pem -k ./certs/server-key.pem
+    //   ./examples/server/server -d -p 12345
+
+    // Ensure the -p [port] matches SERVER_PORT value here:
+    //
+    public static string SERVER_NAME = "localhost"; /* or IP address: "192.168.1.73 */
+    public static int SERVER_PORT = 11111;
+
+    // Optionally set explicit cipher, see wolfssl.CTX_set_cipher_list()
+    public static string CIPHER_SUITE = "ECDHE-ECDSA-AES128-GCM-SHA256";
+
+    private static wolfssl.WOLFSSL_ALERT_HISTORY myHistory = new wolfssl.WOLFSSL_ALERT_HISTORY();
+
     /// <summary>
     /// Example of a logging function
     /// </summary>
@@ -40,7 +57,6 @@ public class wolfSSL_TLS_Client
     {
         Console.WriteLine(msg);
     }
-
 
     private static void clean(IntPtr ssl, IntPtr ctx)
     {
@@ -128,9 +144,6 @@ public class wolfSSL_TLS_Client
             wolfssl.CTX_free(ctx);
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        sb.Append(CIPHER_SUITE);
-        wolfssl.CTX_set_cipher_list(ctx, sb);
 
 
         StringBuilder ciphers = new StringBuilder(new String(' ', 4096));
@@ -170,7 +183,7 @@ public class wolfSSL_TLS_Client
 
         /* Uncomment Section to enable specific cipher suite */
 #if false
-        ciphers = new StringBuilder("ECDHE-ECDSA-AES128-GCM-SHA256");
+        ciphers = new StringBuilder(CIPHER_SUITE);
         if (wolfssl.CTX_set_cipher_list(ctx, ciphers) != wolfssl.SUCCESS)
         {
             Console.WriteLine("ERROR CTX_set_cipher_list()");
@@ -195,7 +208,7 @@ public class wolfSSL_TLS_Client
                               ProtocolType.Tcp);
         try
         {
-            tcp.Connect(SERVER_NAME, 11111);
+            tcp.Connect(SERVER_NAME, SERVER_PORT);
         }
         catch (Exception e)
         {
@@ -236,6 +249,20 @@ public class wolfSSL_TLS_Client
         {
             /* get and print out the error */
             Console.WriteLine(wolfssl.get_error(ssl));
+
+            /* Optional code & level history after initial connection failure */
+            if (ENABLE_ALERT_HISTORY) {
+                if (wolfssl.get_alert_history(ssl, ref myHistory) == wolfssl.SUCCESS) {
+                    Console.WriteLine("wolfssl.get_alert_history success!");
+                    Console.WriteLine("myHistory last_tx.code:  " + myHistory.last_tx.code.ToString());
+                    Console.WriteLine("myHistory last_tx.level: " + myHistory.last_tx.level.ToString());
+                    Console.WriteLine("myHistory last_rx.code:  " + myHistory.last_rx.code.ToString());
+                    Console.WriteLine("myHistory last_rx.level: " + myHistory.last_rx.level.ToString());
+                }
+                else {
+                    Console.WriteLine("Failed: connection and failed get_alert_history");
+                }
+            }
             tcp.Close();
             clean(ssl, ctx);
             return;
@@ -245,6 +272,24 @@ public class wolfSSL_TLS_Client
         Console.WriteLine("SSL version is " + wolfssl.get_version(ssl));
         Console.WriteLine("SSL cipher suite is " + wolfssl.get_current_cipher(ssl));
 
+        /* Optional code & level history */
+        if (ENABLE_ALERT_HISTORY) {
+            Console.WriteLine("myHistory initialization defaults:");
+            Console.WriteLine("myHistory last_tx.code:  " + myHistory.last_tx.code.ToString());
+            Console.WriteLine("myHistory last_tx.level: " + myHistory.last_tx.level.ToString());
+            Console.WriteLine("myHistory last_rx.code:  " + myHistory.last_rx.code.ToString());
+            Console.WriteLine("myHistory last_rx.level: " + myHistory.last_rx.level.ToString());
+            if (wolfssl.get_alert_history(ssl, ref myHistory) == wolfssl.SUCCESS) {
+                Console.WriteLine("wolfssl.get_alert_history call success! Values found:");
+                Console.WriteLine("myHistory last_tx.code:  " + myHistory.last_tx.code.ToString());
+                Console.WriteLine("myHistory last_tx.level: " + myHistory.last_tx.level.ToString());
+                Console.WriteLine("myHistory last_rx.code:  " + myHistory.last_rx.code.ToString());
+                Console.WriteLine("myHistory last_rx.level: " + myHistory.last_rx.level.ToString());
+            }
+            else {
+                Console.WriteLine("Failed: get_alert_history call returned error");
+            }
+        }
 
         if (wolfssl.write(ssl, reply, reply.Length) != reply.Length)
         {

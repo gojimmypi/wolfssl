@@ -301,6 +301,23 @@ namespace wolfSSL.CSharp
             }
         }
 
+        /********************************
+         * The WOLFSSL_ALERT_HISTORY
+         */
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WOLFSSL_ALERT
+        {
+            public int code;
+            public int level;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WOLFSSL_ALERT_HISTORY
+        {
+            public WOLFSSL_ALERT last_rx;
+            public WOLFSSL_ALERT last_tx;
+        }
+
 
         /********************************
          * Init wolfSSL library
@@ -583,6 +600,8 @@ namespace wolfSSL.CSharp
         private extern static IntPtr wolfSSL_ERR_reason_error_string(uint err);
         [DllImport(wolfssl_dll)]
         private extern static int wolfSSL_get_error(IntPtr ssl, int err);
+        [DllImport(wolfssl_dll)]
+        private extern static int wolfSSL_get_alert_history(IntPtr ssl, int err);
         public delegate void loggingCb(int lvl, string msg);
         [DllImport(wolfssl_dll)]
         private extern static void wolfSSL_Debugging_ON();
@@ -595,6 +614,8 @@ namespace wolfSSL.CSharp
         private extern static IntPtr wolfSSL_ERR_reason_error_string(uint err);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
         private extern static int wolfSSL_get_error(IntPtr ssl, int err);
+        [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
+        private extern static int wolfSSL_get_alert_history(IntPtr ssl, ref WOLFSSL_ALERT_HISTORY h);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void loggingCb(int lvl, StringBuilder msg);
         [DllImport(wolfssl_dll, CallingConvention = CallingConvention.Cdecl)]
@@ -2280,6 +2301,32 @@ namespace wolfSSL.CSharp
             {
                 log(ERROR_LOG, "wolfssl get error, error " + e.ToString());
                 return null;
+            }
+        }
+
+
+        /// <summary>
+        /// This function gets the alert history.
+        /// </summary>
+        /// <param name="ssl">SSL struct</param>
+        /// <param name="h">a pointer to a WOLFSSL_ALERT_HISTORY structure that will hold the WOLFSSL struct’s alert_history member’s value.</param>
+        /// <returns>Integer result of wolfSSL_get_alert_history SSL_SUCCESS or FAILURE</returns>
+        public static int get_alert_history(IntPtr ssl, ref WOLFSSL_ALERT_HISTORY h) {
+            if (ssl == IntPtr.Zero)
+                return FAILURE;
+
+            try {
+                IntPtr local_ssl = unwrap_ssl(ssl);
+                if (local_ssl == IntPtr.Zero) {
+                    log(ERROR_LOG, "wolfssl get_error error");
+                    return FAILURE;
+                }
+
+                return wolfSSL_get_alert_history(local_ssl, ref h);
+            }
+            catch (Exception e) {
+                log(ERROR_LOG, "wolfssl get error, error " + e.ToString());
+                return FAILURE;
             }
         }
 
