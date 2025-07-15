@@ -7,16 +7,12 @@ set EDPATH=%WATCOM%\eddat
 set WIPFC=%WATCOM%\wipfc
 set LIB=%WATCOM%\lib386;%WATCOM%\lib386\nt
 
-goto test2
-
 echo "Config #1"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
   -DCMAKE_SYSTEM_NAME=Windows ^
   -DCMAKE_SYSTEM_PROCESSOR=x86 ^
   -DCMAKE_C_COMPILER=wcl386 ^
-  -DCMAKE_C_FLAGS="-bt=nt -mf -zp=1 -5 -dWIN32" ^
-  -DCMAKE_EXE_LINKER_FLAGS="system nt" ^
   -DCMAKE_VERBOSE_MAKEFILE=TRUE ^
   -DWOLFSSL_ASM=NO ^
   -DWOLFSSL_EXAMPLES=NO ^
@@ -33,12 +29,26 @@ cmake --build build-watcom || (echo "Build 1 failed!" && exit /b)
 call wlink_dll.bat
 
 
+::  -DBUILDING_WOLFSSL=YES ^
+::  -DWOLFSSL_DLL=YES ^
+::  -DPOLY130564=YES ^
+::  -DHAVE_THREAD_LS=YES ^
+::   -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL -DPOLY130564 -DHAVE_THREAD_LS" ^
+::   -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DWOLFSSL_KYBER1024 -DWOLFSSL_EXPERIMENTAL -DWOLFSSL_HAVE_MLKEM -DWOLFSSL_MLKEM_KYBER -DWOLFSSL_WC_MLKEM -DWOLFSSL_SHAKE128 -DWOLFSSL_SHAKE256 -DBUILDING_WOLFSSL -DHAVE_THREAD_LS" ^
+::  -DWOLFSSL_MLKEM=YES ^
+::  -DWOLFSSL_EXPERIMENTAL=YES ^
+::  -DWOLFSSL_HAVE_MLKEM=YES ^
+::  -DWOLFSSL_SHAKE128=YES ^
+::  -DWOLFSSL_SHAKE256=YES ^
+
 :test2
-echo "Config #2"
+
+echo ""
+echo "Config #2 building wolfssl DDL"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
+  -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL" ^
   -DCMAKE_SYSTEM_NAME=Windows ^
-  -DWOLFSSL_DLL=NO ^
   -DCMAKE_EXECUTABLE_SUFFIX=.exe ^
   -DCMAKE_SYSTEM_PROCESSOR=i386 ^
   -DCMAKE_VERBOSE_MAKEFILE=TRUE ^
@@ -62,16 +72,16 @@ timeout /t 5 >nul
 build-watcom\examples\client\client.exe -v 4 -h localhost -p 12345
 
 
-exit /b
+:: exit /b
 
 
+:test2a
+::   -DCMAKE_C_FLAGS="-DBUILDING_WOLFSSL -DWOLFSSL_DEBUG_CERTS" ^
 
-
-
+echo ""
 echo "Config #2a"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
-  -DWOLFSSL_DLL=NO ^
   -DWOLFSSL_DEBUG_CERTS=YES ^
   -DCMAKE_SYSTEM_NAME=Windows ^
   -DCMAKE_SYSTEM_PROCESSOR=x86 ^
@@ -88,9 +98,9 @@ if errorlevel 1 (
     exit /b
 )
 cmake --build build-watcom || (echo "Build 2a failed!" && exit /b)
-call wlink.bat
-exit /b
+call wlink_dll.bat
 
+echo ""
 echo "Config #3"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
@@ -111,9 +121,9 @@ if errorlevel 1 (
     exit /b
 )
 cmake --build build-watcom || (echo "Build 3 failed!" && exit /b)
-call wlink.bat
+call wlink_dll.bat
 
-
+echo ""
 echo "Config #4"
 rmdir /s /q .\build-watcom
 cmake -B build-watcom -G "Watcom WMake" ^
@@ -134,11 +144,11 @@ if errorlevel 1 (
     exit /b
 )
 cmake --build build-watcom || (echo "Build 4 failed!" && exit /b)
-call wlink.bat
+call wlink_dll.bat
 
 
-
+echo ""
 echo "Config final"
 :: rmdir /s /q .\build-watcom
 :: cmake --build build-watcom || (echo "Config final failed!" && exit /b)
-::call wlink.bat
+::call wlink_lib.bat
