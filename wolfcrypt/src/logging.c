@@ -233,7 +233,7 @@ void wolfSSL_Debugging_OFF(void)
 #endif
 }
 
-WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix)
+void wolfSSL_SetLoggingPrefix(const char* prefix)
 {
 #if defined(DEBUG_WOLFSSL) || \
    (defined(WOLFSSL_DEBUG_CERTS) && !defined(NO_WOLFSSL_DEBUG_CERTS))
@@ -648,12 +648,10 @@ void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
     #endif
 #endif
 
-#ifndef WOLFSSL_IS_DEBUG_ON
-WOLFSSL_API int WOLFSSL_IS_DEBUG_ON(void)
+int WOLFSSL_IS_DEBUG_ON(void)
 {
     return loggingEnabled;
 }
-#endif /* WOLFSSL_IS_DEBUG_ON */
 #endif /* !WOLFSSL_DEBUG_ERRORS_ONLY */
 
 #else

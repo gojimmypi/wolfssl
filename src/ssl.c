@@ -8761,7 +8761,7 @@ static int isArrayUnique(const char* buf, size_t len)
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
+int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8796,7 +8796,7 @@ WOLFSSL_API int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
+int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
                                                 const char* buf, int bufLen)
 {
     int i;
@@ -8831,7 +8831,7 @@ WOLFSSL_API int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
+int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8868,7 +8868,7 @@ WOLFSSL_API int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
+int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8910,7 +8910,7 @@ WOLFSSL_API int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
  * in case no negotiation performed, it returns WOLFSSL_SUCCESS and -1 is for
  * cert type.
  */
-WOLFSSL_API int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
+int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
 {
     int ret = WOLFSSL_SUCCESS;
 
@@ -8941,7 +8941,7 @@ WOLFSSL_API int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
  * in case no negotiation performed, it returns WOLFSSL_SUCCESS and -1 is for
  * cert type.
  */
-WOLFSSL_API int wolfSSL_get_negotiated_server_cert_type(WOLFSSL* ssl, int* tp)
+int wolfSSL_get_negotiated_server_cert_type(WOLFSSL* ssl, int* tp)
 {
     int ret = WOLFSSL_SUCCESS;
 

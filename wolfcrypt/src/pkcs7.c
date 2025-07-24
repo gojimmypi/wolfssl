@@ -6814,14 +6814,15 @@ static int PKCS7_GenerateContentEncryptionKey(wc_PKCS7* pkcs7, word32 len)
 }
 
 
-/* wrap CEK (content encryption key) with KEK, 0 on success, < 0 on error */
-static int wc_PKCS7_KeyWrap(byte* cek, word32 cekSz, byte* kek,
-                            word32 kekSz, byte* out, word32 outSz,
-                            int keyWrapAlgo, int direction)
+/* wrap CEK (content encryption key) with KEK, returns output size (> 0) on
+ * success, < 0 on error */
+static int wc_PKCS7_KeyWrap(const wc_PKCS7 * pkcs7, const byte * cek,
+        word32 cekSz, const byte * kek, word32 kekSz, byte * out, word32 outSz,
+        int keyWrapAlgo, int direction)
 {
     int ret = 0;
 
-    if (cek == NULL || kek == NULL || out == NULL)
+    if (pkcs7 == NULL || cek == NULL || kek == NULL || out == NULL)
         return BAD_FUNC_ARG;
 
     switch (keyWrapAlgo) {
@@ -6837,14 +6838,24 @@ static int wc_PKCS7_KeyWrap(byte* cek, word32 cekSz, byte* kek,
     #endif
 
             if (direction == AES_ENCRYPTION) {
-
-                ret = wc_AesKeyWrap(kek, kekSz, cek, cekSz,
-                                    out, outSz, NULL);
+                if (pkcs7->aesKeyWrapUnwrapCb != NULL) {
+                    ret = pkcs7->aesKeyWrapUnwrapCb(kek, kekSz, cek, cekSz, 1,
+                                                    out, outSz);
+                }
+                else {
+                    ret = wc_AesKeyWrap(kek, kekSz, cek, cekSz,
+                                        out, outSz, NULL);
+                }
 
             } else if (direction == AES_DECRYPTION) {
-
-                ret = wc_AesKeyUnWrap(kek, kekSz, cek, cekSz,
-                                      out, outSz, NULL);
+                if (pkcs7->aesKeyWrapUnwrapCb != NULL) {
+                    ret = pkcs7->aesKeyWrapUnwrapCb(kek, kekSz, cek, cekSz, 0,
+                                                    out, outSz);
+                }
+                else {
+                    ret = wc_AesKeyUnWrap(kek, kekSz, cek, cekSz,
+                                          out, outSz, NULL);
+                }
             } else {
                 WOLFSSL_MSG("Bad key un/wrap direction");
                 return BAD_FUNC_ARG;
@@ -7548,7 +7559,7 @@ int wc_PKCS7_AddRecipient_KARI(wc_PKCS7* pkcs7, const byte* cert, word32 certSz,
     }
 
     /* encrypt CEK with KEK */
-    keySz = wc_PKCS7_KeyWrap(pkcs7->cek, pkcs7->cekSz, kari->kek,
+    keySz = wc_PKCS7_KeyWrap(pkcs7, pkcs7->cek, pkcs7->cekSz, kari->kek,
                              kari->kekSz, encryptedKey, encryptedKeySz,
                              keyWrapOID, direction);
     if (keySz <= 0) {
@@ -9630,9 +9641,8 @@ int wc_PKCS7_AddRecipient_KEKRI(wc_PKCS7* pkcs7, int keyWrapOID, byte* kek,
         direction = DES_ENCRYPTION;
     #endif
 
-    encryptedKeySz = wc_PKCS7_KeyWrap(pkcs7->cek, pkcs7->cekSz, kek, kekSz,
-                               encryptedKey, (word32)encryptedKeySz, keyWrapOID,
-                               direction);
+    encryptedKeySz = wc_PKCS7_KeyWrap(pkcs7, pkcs7->cek, pkcs7->cekSz, kek,
+            kekSz, encryptedKey, (word32)encryptedKeySz, keyWrapOID, direction);
     if (encryptedKeySz < 0) {
     #ifdef WOLFSSL_SMALL_STACK
         XFREE(encryptedKey, pkcs7->heap, DYNAMIC_TYPE_PKCS7);
@@ -11082,6 +11092,19 @@ int wc_PKCS7_SetWrapCEKCb(wc_PKCS7* pkcs7, CallbackWrapCEK cb)
     return 0;
 }
 
+
+/* return 0 on success */
+int wc_PKCS7_SetAESKeyWrapUnwrapCb(wc_PKCS7* pkcs7, CallbackAESKeyWrapUnwrap aesKeyWrapUnwrapCb)
+{
+    if (pkcs7 == NULL)
+        return BAD_FUNC_ARG;
+
+    pkcs7->aesKeyWrapUnwrapCb = aesKeyWrapUnwrapCb;
+
+    return 0;
+}
+
+
 /* Decrypt ASN.1 OtherRecipientInfo (ori), as defined by:
  *
  *   OtherRecipientInfo ::= SEQUENCE {
@@ -11529,10 +11552,9 @@ static int wc_PKCS7_DecryptKekri(wc_PKCS7* pkcs7, byte* in, word32 inSz,
                                     (int)PKCS7_KEKRI, direction);
             }
             else {
-                keySz = wc_PKCS7_KeyWrap(pkiMsg + *idx, (word32)length,
-                                    pkcs7->privateKey, pkcs7->privateKeySz,
-                                    decryptedKey, *decryptedKeySz,
-                                    (int)keyWrapOID, direction);
+                keySz = wc_PKCS7_KeyWrap(pkcs7, pkiMsg + *idx, (word32)length,
+                        pkcs7->privateKey, pkcs7->privateKeySz, decryptedKey,
+                        *decryptedKeySz, (int)keyWrapOID, direction);
             }
             if (keySz <= 0)
                 return keySz;
@@ -11795,9 +11817,10 @@ static int wc_PKCS7_DecryptKari(wc_PKCS7* pkcs7, byte* in, word32 inSz,
                 }
 
                 /* decrypt CEK with KEK */
-                keySz = wc_PKCS7_KeyWrap(encryptedKey, (word32)encryptedKeySz,
-                    kari->kek, kari->kekSz, decryptedKey, *decryptedKeySz,
-                    (int)keyWrapOID, direction);
+                keySz = wc_PKCS7_KeyWrap(pkcs7, encryptedKey,
+                        (word32)encryptedKeySz, kari->kek, kari->kekSz,
+                        decryptedKey, *decryptedKeySz, (int)keyWrapOID,
+                        direction);
             }
             if (keySz <= 0) {
                 wc_PKCS7_KariFree(kari);
@@ -12308,7 +12331,7 @@ static int wc_PKCS7_ParseToRecipientInfoSet(wc_PKCS7* pkcs7, byte* in,
  * the secret key for decryption a EnvelopedData KEKRI RecipientInfo.
  *
  * Returns 0 on success, negative upon error */
-WOLFSSL_API int wc_PKCS7_SetKey(wc_PKCS7* pkcs7, byte* key, word32 keySz)
+int wc_PKCS7_SetKey(wc_PKCS7* pkcs7, byte* key, word32 keySz)
 {
     if (pkcs7 == NULL || key == NULL || keySz == 0)
         return BAD_FUNC_ARG;
@@ -12358,7 +12381,7 @@ static int PKCS7_CacheEncryptedContent(wc_PKCS7* pkcs7, byte* in, word32 inSz)
 
 
 /* unwrap and decrypt PKCS#7 envelopedData object, return decoded size */
-WOLFSSL_API int wc_PKCS7_DecodeEnvelopedData(wc_PKCS7* pkcs7, byte* in,
+int wc_PKCS7_DecodeEnvelopedData(wc_PKCS7* pkcs7, byte* in,
                                          word32 inSz, byte* output,
                                          word32 outputSz)
 {
@@ -13486,7 +13509,7 @@ int wc_PKCS7_EncodeAuthEnvelopedData(wc_PKCS7* pkcs7, byte* output,
 
 
 /* unwrap and decrypt PKCS#7 AuthEnvelopedData object, return decoded size */
-WOLFSSL_API int wc_PKCS7_DecodeAuthEnvelopedData(wc_PKCS7* pkcs7, byte* in,
+int wc_PKCS7_DecodeAuthEnvelopedData(wc_PKCS7* pkcs7, byte* in,
                                                  word32 inSz, byte* output,
                                                  word32 outputSz)
 {
@@ -15305,6 +15328,129 @@ int wc_PKCS7_DecodeCompressedData(wc_PKCS7* pkcs7, byte* pkiMsg,
 
 #endif /* HAVE_LIBZ && !NO_PKCS7_COMPRESSED_DATA */
 
+static int wc_PKCS7_DecodeSymmetricKeyPackage(const byte * skp, word32 skpSz,
+        size_t index, const byte ** out, word32 * outSz, int getKey)
+{
+    word32 skpIndex = 0;
+    int length = 0;
+    int version = 0;
+    int ret = 0;
+
+    if (skp == NULL || out == NULL || outSz == NULL)
+        ret = BAD_FUNC_ARG;
+
+    /* Expect a SEQUENCE header to start the SymmetricKeyPackage object. */
+    if (ret == 0 && GetSequence(skp, &skpIndex, &length, skpSz) < 0)
+        ret = ASN_PARSE_E;
+
+    /* Expect version v1 */
+    if (ret == 0 && GetMyVersion(skp, &skpIndex, &version, skpSz) < 0)
+        ret = ASN_PARSE_E;
+
+    if (ret == 0 && version != 1)
+        ret = ASN_PARSE_E;
+
+    if (ret == 0 && GetASNHeader(skp, ASN_CONTEXT_SPECIFIC | ASN_CONSTRUCTED,
+            &skpIndex, &length, skpSz) >= 0) {
+        /* sKeyPkgAttrs [0] tag found so there are attributes present. */
+        if (getKey != 0) {
+            /* Key was requested, not attribute, so skip the attributes. */
+            skpIndex += (word32)length;
+        }
+        else {
+            /* sKeyPkgAttrs is present at &skp[skpIndex], length in length */
+            ret = wc_IndexSequenceOf(&skp[skpIndex], (word32)length, index,
+                    out, outSz);
+        }
+    }
+    else if (ret == 0 && getKey == 0) {
+        /* An attribute was requested, but none are present. */
+        ret = BAD_INDEX_E;
+    }
+
+    if (ret == 0 && getKey != 0) {
+        /* sKeys is present at &skp[skpIndex]. */
+        ret = wc_IndexSequenceOf(&skp[skpIndex], skpSz - skpIndex, index,
+                out, outSz);
+    }
+
+    return ret;
+}
+
+int wc_PKCS7_DecodeSymmetricKeyPackageAttribute(const byte * skp,
+        word32 skpSz, size_t index, const byte ** attr, word32 * attrSz)
+{
+    return wc_PKCS7_DecodeSymmetricKeyPackage(skp, skpSz, index, attr, attrSz,
+            0);
+}
+
+int wc_PKCS7_DecodeSymmetricKeyPackageKey(const byte * skp,
+        word32 skpSz, size_t index, const byte ** key, word32 * keySz)
+{
+    return wc_PKCS7_DecodeSymmetricKeyPackage(skp, skpSz, index, key, keySz, 1);
+}
+
+int wc_PKCS7_DecodeOneSymmetricKeyAttribute(const byte * osk,
+        word32 oskSz, size_t index, const byte ** attr, word32 * attrSz)
+{
+    word32 oskIndex = 0;
+    word32 tmpIndex;
+    int length = 0;
+    int ret = 0;
+
+    if (osk == NULL || attr == NULL || attrSz == NULL)
+        ret = BAD_FUNC_ARG;
+
+    /* Expect a SEQUENCE header to start the OneSymmetricKey object. */
+    if (ret == 0 && GetSequence(osk, &oskIndex, &length, oskSz) < 0)
+        ret = ASN_PARSE_E;
+
+    tmpIndex = oskIndex;
+
+    if (ret == 0 && GetSequence(osk, &tmpIndex, &length, oskSz) < 0) {
+        /* sKeyAttrs is not present. */
+        ret = BAD_INDEX_E;
+    }
+
+    /* Index the sKeyAttrs SEQUENCE OF object with the given index. */
+    if (ret == 0)
+        ret = wc_IndexSequenceOf(&osk[oskIndex], oskSz - oskIndex, index, attr,
+            attrSz);
+
+    return ret;
+}
+
+int wc_PKCS7_DecodeOneSymmetricKeyKey(const byte * osk,
+        word32 oskSz, const byte ** key, word32 * keySz)
+{
+    word32 oskIndex = 0;
+    int length = 0;
+    int ret = 0;
+
+    if (osk == NULL || key == NULL || keySz == NULL)
+        ret = BAD_FUNC_ARG;
+
+    /* Expect a SEQUENCE header to start the OneSymmetricKey object. */
+    if (ret == 0 && GetSequence(osk, &oskIndex, &length, oskSz) < 0)
+        ret = ASN_PARSE_E;
+
+    if (ret == 0 && GetSequence(osk, &oskIndex, &length, oskSz) >= 0) {
+        /* sKeyAttrs is present. Skip it. */
+        oskIndex += (word32)length;
+    }
+
+    if (ret == 0 && GetASNHeader(osk, ASN_OCTET_STRING, &oskIndex, &length,
+                oskSz) < 0)
+        ret = ASN_PARSE_E;
+
+    if (ret == 0) {
+        *key = &osk[oskIndex];
+        *keySz = (word32)length;
+    }
+
+    return ret;
+}
+
 #else  /* HAVE_PKCS7 */
 
 
@@ -15315,4 +15461,3 @@ int wc_PKCS7_DecodeCompressedData(wc_PKCS7* pkcs7, byte* pkiMsg,
 
 
 #endif /* HAVE_PKCS7 */
-
