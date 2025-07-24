@@ -648,10 +648,12 @@ void WOLFSSL_LEAVE2(const char *file, int line, const char* msg, int ret)
     #endif
 #endif
 
+#ifndef WOLFSSL_IS_DEBUG_ON
 int WOLFSSL_IS_DEBUG_ON(void)
 {
     return loggingEnabled;
 }
+#endif /* WOLFSSL_IS_DEBUG_ON */
 #endif /* !WOLFSSL_DEBUG_ERRORS_ONLY */
 
 #else

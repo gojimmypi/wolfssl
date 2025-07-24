@@ -421,6 +421,17 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
     int dc_log_printf(char*, ...);
 #endif
 
+/* WOLFSSL_DEBUG_PRINTF_FN is intended to be used only in wolfssl_log(),
+ * but is exposed in header as a customer cross-platform debugging capability.
+ *
+ * All general wolfSSL debugging should use:
+ *   WOLFSSL_MSG and WOLFSSL_MSG_EX
+ *
+ * All wolfSSL certificate-related debugging should use:
+ *   WOLFSSL_MSG_CERT_EX and WOLFSSL_MSG_CERT_EX
+ *
+ * For custom debugging output, define your own WOLFSSL_DEBUG_PRINTF_FN
+ */
 #ifdef WOLFSSL_DEBUG_PRINTF_FN
     /* user-supplied definition */
 #elif defined(ARDUINO)
