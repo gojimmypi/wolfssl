@@ -232,14 +232,16 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
         /* The issue is variadic macros, not function parameters. e.g Watcom
          * Additionally, Watcom needs the empty declaration here: */
         #ifdef __WATCOMC__
-            WOLFSSL_API static inline int WOLFSSL_MSG_CERT(const char* msg)
+            /* don't use WOLFSSL_API nor inline for Watcom stubs */
+            static int WOLFSSL_MSG_CERT(const char* msg)
             {
                 (void)msg;
                 return NOT_COMPILED_IN;
             }
-            WOLFSSL_API static inline int WOLFSSL_MSG_CERT_EX(const char* msg)
+
+            static int WOLFSSL_MSG_CERT_EX(const char* fmt, ...)
             {
-                (void)msg;
+                (void)fmt;
                 return NOT_COMPILED_IN;
             }
         #else
@@ -325,12 +327,13 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
          *
          * We need a do-nothing function with a variable number of parameters: */
         #ifdef __WATCOMC__
-            static inline void WOLFSSL_MSG_EX(const char* fmt, ...)
-                {
-                    (void)fmt;
-                }
+            /* don't use WOLFSSL_API nor inline for Watcom stubs */
+            static void WOLFSSL_MSG_EX(const char* fmt, ...)
+            {
+                (void)fmt;
+            }
         #else
-            WOLFSSL_API  void WOLFSSL_MSG_EX(const char* fmt, ...);
+            WOLFSSL_API void WOLFSSL_MSG_EX(const char* fmt, ...);
         #endif
     #else
         #define WOLFSSL_MSG_EX(...)   WC_DO_NOTHING
@@ -428,7 +431,7 @@ WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix);
  *   WOLFSSL_MSG and WOLFSSL_MSG_EX
  *
  * All wolfSSL certificate-related debugging should use:
- *   WOLFSSL_MSG_CERT_EX and WOLFSSL_MSG_CERT_EX
+ *   WOLFSSL_MSG_CERT and WOLFSSL_MSG_CERT_EX
  *
  * For custom debugging output, define your own WOLFSSL_DEBUG_PRINTF_FN
  */

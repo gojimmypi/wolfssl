@@ -60,6 +60,8 @@
     #endif
 #else
 
+#include <wolfssl/wolfcrypt/logging.h>
+
 #if defined(HAVE_SESSION_TICKET) || !defined(NO_PSK)
     /* PSK field of context when it exists. */
     #define CTX_HAVE_PSK(ctx)   (ctx)->havePSK
@@ -2727,14 +2729,14 @@ int ProcessFile(WOLFSSL_CTX* ctx, const char* fname, int format, int type,
     }
     /* Try to detect type by parsing cert header and footer. */
     if ((ret == 0) && (type == DETECT_CERT_TYPE)) {
+#if !defined(NO_CODING) && !defined(WOLFSSL_NO_PEM)
+        const char* header = NULL;
+        const char* footer = NULL;
 #ifdef HAVE_CRL
         WOLFSSL_MSG_CERT("Detecting cert type... (including CRL_TYPE)");
 #else
         WOLFSSL_MSG_CERT("Detecting cert type... (HAVE_CRL not defined)");
 #endif
-#if !defined(NO_CODING) && !defined(WOLFSSL_NO_PEM)
-        const char* header = NULL;
-        const char* footer = NULL;
 
         /* Look for CA header and footer - same as CERT_TYPE. */
         if (wc_PemGetHeaderFooter(CA_TYPE, &header, &footer) == 0 &&

@@ -409,7 +409,7 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
     /* !(DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS) */
     #ifdef WOLF_NO_VARIADIC_MACROS
         #ifdef  __WATCOMC__
-            /* Do-nothig implementation in header for OW Open Watcom V2 */
+            /* Do-nothing implementation in header for OW Open Watcom V2 */
         #else
             int WOLFSSL_MSG_CERT(const char* msg)
             {
@@ -663,6 +663,7 @@ int WOLFSSL_IS_DEBUG_ON(void)
      * other than Open Watcom V2.
      */
     #ifdef WOLF_NO_VARIADIC_MACROS
+        /* no debug and cannot use variadic macros */
         #ifdef __WATCOMC__
             /* see logging.h for no-op Watcom implementation */
         #else
