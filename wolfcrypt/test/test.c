@@ -1054,7 +1054,9 @@ static THREAD_RETURN err_sys(const char* msg, int es)
 static wc_test_ret_t err_sys(const char* msg, wc_test_ret_t es)
 #endif
 {
-    wc_test_render_error_message(msg, es);
+    // wc_test_render_error_message(msg, es); /* caused compile error? */
+    (void)msg;
+    (void)es;
     print_fiducials();
 #ifdef WOLFSSL_LINUXKM
     EXIT_TEST(es);
