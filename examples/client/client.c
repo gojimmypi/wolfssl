@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -422,44 +422,44 @@ static void SetKeyShare(WOLFSSL* ssl, int onlyKeyShare, int useX25519,
             else
         #endif
         #ifndef WOLFSSL_NO_ML_KEM_512
-            if (XSTRCMP(pqcAlg, "P256_ML_KEM_512") == 0) {
-                group = WOLFSSL_P256_ML_KEM_512;
+            if (XSTRCMP(pqcAlg, "SecP256r1MLKEM512") == 0) {
+                group = WOLFSSL_SECP256R1MLKEM512;
             }
             else
         #endif
         #ifndef WOLFSSL_NO_ML_KEM_768
-            if (XSTRCMP(pqcAlg, "P384_ML_KEM_768") == 0) {
-                group = WOLFSSL_P384_ML_KEM_768;
+            if (XSTRCMP(pqcAlg, "SecP384r1MLKEM768") == 0) {
+                group = WOLFSSL_SECP384R1MLKEM768;
             }
-            else if (XSTRCMP(pqcAlg, "P256_ML_KEM_768") == 0) {
-                group = WOLFSSL_P256_ML_KEM_768;
+            else if (XSTRCMP(pqcAlg, "SecP256r1MLKEM768") == 0) {
+                group = WOLFSSL_SECP256R1MLKEM768;
             }
             else
         #endif
         #ifndef WOLFSSL_NO_ML_KEM_1024
-            if (XSTRCMP(pqcAlg, "P521_ML_KEM_1024") == 0) {
-                group = WOLFSSL_P521_ML_KEM_1024;
+            if (XSTRCMP(pqcAlg, "SecP521r1MLKEM1024") == 0) {
+                group = WOLFSSL_SECP521R1MLKEM1024;
             }
-            else if (XSTRCMP(pqcAlg, "P384_ML_KEM_1024") == 0) {
-                group = WOLFSSL_P384_ML_KEM_1024;
+            else if (XSTRCMP(pqcAlg, "SecP384r1MLKEM1024") == 0) {
+                group = WOLFSSL_SECP384R1MLKEM1024;
             }
             else
         #endif
         #if !defined(WOLFSSL_NO_ML_KEM_512) && defined(HAVE_CURVE25519)
-            if (XSTRCMP(pqcAlg, "X25519_ML_KEM_512") == 0) {
-                group = WOLFSSL_X25519_ML_KEM_512;
+            if (XSTRCMP(pqcAlg, "X25519MLKEM512") == 0) {
+                group = WOLFSSL_X25519MLKEM512;
             }
             else
         #endif
         #if !defined(WOLFSSL_NO_ML_KEM_768) && defined(HAVE_CURVE25519)
-            if (XSTRCMP(pqcAlg, "X25519_ML_KEM_768") == 0) {
-                group = WOLFSSL_X25519_ML_KEM_768;
+            if (XSTRCMP(pqcAlg, "X25519MLKEM768") == 0) {
+                group = WOLFSSL_X25519MLKEM768;
             }
             else
         #endif
         #if !defined(WOLFSSL_NO_ML_KEM_768) && defined(HAVE_CURVE448)
-            if (XSTRCMP(pqcAlg, "X448_ML_KEM_768") == 0) {
-                group = WOLFSSL_X448_ML_KEM_768;
+            if (XSTRCMP(pqcAlg, "X448MLKEM768") == 0) {
+                group = WOLFSSL_X448MLKEM768;
             }
             else
         #endif
@@ -1421,12 +1421,16 @@ static const char* client_usage_msg[][78] = {
 #ifdef HAVE_PQC
         "--pqc <alg> Key Share with specified post-quantum algorithm only:\n"
 #ifndef WOLFSSL_NO_ML_KEM
-            "            ML_KEM_512, ML_KEM_768, ML_KEM_1024, P256_ML_KEM_512,"
-            "\n"
-            "            P384_ML_KEM_768, P256_ML_KEM_768, P521_ML_KEM_1024,\n"
-            "            P384_ML_KEM_1024, X25519_ML_KEM_512, "
-            "X25519_ML_KEM_768,\n"
-            "            X448_ML_KEM_768\n"
+            "            ML_KEM_512, ML_KEM_768, ML_KEM_1024,\n"
+            "            SecP256r1MLKEM512,\n"
+            "            SecP384r1MLKEM768,\n"
+            "            SecP521r1MLKEM1024,\n"
+            "            SecP256r1MLKEM768,\n"
+            "            SecP521r1MLKEM1024,\n"
+            "            SecP384r1MLKEM1024,\n"
+            "            X25519MLKEM512,\n"
+            "            X25519MLKEM768,\n"
+            "            X448MLKEM768\n"
 #endif
 #ifdef WOLFSSL_MLKEM_KYBER
             "            KYBER_LEVEL1, KYBER_LEVEL3, KYBER_LEVEL5, "
@@ -1675,9 +1679,16 @@ static const char* client_usage_msg[][78] = {
 #ifdef HAVE_PQC
         "--pqc <alg> post-quantum 名前付きグループとの鍵共有のみ:\n"
 #ifndef WOLFSSL_NO_ML_KEM
-            "            ML_KEM_512, ML_KEM_768, ML_KEM_1024, P256_ML_KEM_512,"
-            "\n"
-            "            P384_ML_KEM_768, P521_ML_KEM_1024\n"
+            "            ML_KEM_512, ML_KEM_768, ML_KEM_1024,\n"
+            "            SecP256r1MLKEM512,\n"
+            "            SecP384r1MLKEM768,\n"
+            "            SecP521r1MLKEM1024,\n"
+            "            SecP256r1MLKEM768,\n"
+            "            SecP521r1MLKEM1024,\n"
+            "            SecP384r1MLKEM1024,\n"
+            "            X25519MLKEM512,\n"
+            "            X25519MLKEM768,\n"
+            "            X448MLKEM768\n"
 #endif
 #ifdef WOLFSSL_MLKEM_KYBER
             "            KYBER_LEVEL1, KYBER_LEVEL3, KYBER_LEVEL5, "
@@ -1718,7 +1729,8 @@ static const char* client_usage_msg[][78] = {
 
 static void showPeerPEM(WOLFSSL* ssl)
 {
-#if defined(OPENSSL_ALL) && !defined(NO_BIO) && defined(WOLFSSL_CERT_GEN)
+#if defined(OPENSSL_EXTRA) && defined(KEEP_PEER_CERT) && !defined(NO_BIO) && \
+    defined(WOLFSSL_CERT_GEN)
     WOLFSSL_X509* peer = wolfSSL_get_peer_certificate(ssl);
     if (peer) {
         WOLFSSL_BIO* bioOut = wolfSSL_BIO_new(wolfSSL_BIO_s_file());
@@ -1742,7 +1754,7 @@ static void showPeerPEM(WOLFSSL* ssl)
         wolfSSL_BIO_free(bioOut);
     }
     wolfSSL_FreeX509(peer);
-#endif /* OPENSSL_ALL && WOLFSSL_CERT_GEN && !NO_BIO */
+#endif
     (void)ssl;
 }
 

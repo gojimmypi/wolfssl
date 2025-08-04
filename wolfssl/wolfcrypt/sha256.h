@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -141,7 +141,7 @@ enum {
 #elif (defined(WOLFSSL_RENESAS_SCEPROTECT) || \
        defined(WOLFSSL_RENESAS_RSIP))    && \
      !defined(NO_WOLFSSL_RENESAS_FSPSM_HASH)
-    #include "wolfssl/wolfcrypt/port/Renesas/renesas-fspsm-crypt.h"
+    #include "wolfssl/wolfcrypt/port/Renesas/renesas_fspsm_internal.h"
 #elif defined(WOLFSSL_RENESAS_RX64_HASH)
     #include "wolfssl/wolfcrypt/port/Renesas/renesas-rx64-hw-crypt.h"
 #else

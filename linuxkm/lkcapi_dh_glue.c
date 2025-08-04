@@ -7,7 +7,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -81,14 +81,6 @@
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/dh.h>
 #include <crypto/dh.h>
-
-/* need misc.c for ForceZero(). */
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
-    #define WOLFSSL_MISC_INCLUDED
-    #include <wolfcrypt/src/misc.c>
-#endif
 
 #define WOLFKM_DH_NAME    ("dh")
 #define WOLFKM_DH_DRIVER  ("dh" WOLFKM_DRIVER_FIPS \
@@ -451,13 +443,9 @@ static int km_dh_reset_ctx(struct km_dh_ctx * ctx)
         }
     }
 
+reset_ctx_end:
     /* clear old priv and public key arrays. */
     km_dh_clear_keys(ctx);
-
-reset_ctx_end:
-    if (err) {
-        km_dh_clear_keys(ctx);
-    }
 
     return err;
 }
@@ -893,7 +881,6 @@ static int km_dh_gen_pub(struct kpp_request *req)
     #ifdef WOLFKM_DEBUG_DH
     pr_info("info: exiting km_dh_gen_pub: %d", ctx->pub_len);
     #endif /* WOLFKM_DEBUG_DH */
-
     return err;
 }
 

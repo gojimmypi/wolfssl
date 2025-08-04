@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -111,13 +111,7 @@ library files.
     typedef byte           word24[3];
 #endif
 
-
-/* constant pointer to a constant char */
-#ifdef WOLFSSL_NO_CONSTCHARCONST
-    typedef const char*       wcchar;
-#else
-    typedef const char* const wcchar;
-#endif
+typedef const char wcchar[];
 
 #ifndef WC_BITFIELD
     #ifdef WOLF_C89
@@ -1941,8 +1935,32 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
         #define wc_static_assert2(expr, msg) wc_static_assert(expr)
 #endif
 
+#ifndef WC_RELAX_LONG_LOOP
+    #define WC_RELAX_LONG_LOOP() WC_DO_NOTHING
+#endif
+#ifndef WC_CHECK_FOR_INTR_SIGNALS
+    #define WC_CHECK_FOR_INTR_SIGNALS() 0
+    #ifndef SAVE_NO_VECTOR_REGISTERS
+        #define SAVE_NO_VECTOR_REGISTERS(fail_clause) WC_RELAX_LONG_LOOP()
+    #endif
+#else
+    #ifndef SAVE_NO_VECTOR_REGISTERS
+        #define SAVE_NO_VECTOR_REGISTERS(fail_clause) {     \
+                int _svr_ret = WC_CHECK_FOR_INTR_SIGNALS(); \
+                if (_svr_ret != 0) { fail_clause }          \
+                WC_RELAX_LONG_LOOP();                       \
+            }
+    #endif
+#endif
+#ifndef SAVE_NO_VECTOR_REGISTERS2
+    #define SAVE_NO_VECTOR_REGISTERS2() 0
+#endif
+#ifndef RESTORE_NO_VECTOR_REGISTERS
+    #define RESTORE_NO_VECTOR_REGISTERS() WC_RELAX_LONG_LOOP()
+#endif
+
 #ifndef SAVE_VECTOR_REGISTERS
-    #define SAVE_VECTOR_REGISTERS(fail_clause) WC_DO_NOTHING
+    #define SAVE_VECTOR_REGISTERS(fail_clause) SAVE_NO_VECTOR_REGISTERS(fail_clause)
 #endif
 #ifndef SAVE_VECTOR_REGISTERS2
     #define SAVE_VECTOR_REGISTERS2() 0
@@ -1962,7 +1980,24 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
     #define ASSERT_RESTORED_VECTOR_REGISTERS(fail_clause) WC_DO_NOTHING
 #endif
 #ifndef RESTORE_VECTOR_REGISTERS
-    #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
+    #define RESTORE_VECTOR_REGISTERS() RESTORE_NO_VECTOR_REGISTERS()
+#endif
+
+#ifdef WOLFSSL_NO_ASM
+    /* We define fallback no-op definitions for these only if asm is disabled,
+     * otherwise the using code must detect that these macros are undefined and
+     * provide its own non-vector implementation paths.
+     *
+     * Currently these macros are only used in WOLFSSL_LINUXKM code paths, which
+     * are always compiled either with substantive definitions from
+     * linuxkm_wc_port.h, or with WOLFSSL_NO_ASM defined.
+     */
+    #ifndef DISABLE_VECTOR_REGISTERS
+        #define DISABLE_VECTOR_REGISTERS() 0
+    #endif
+    #ifndef REENABLE_VECTOR_REGISTERS
+        #define REENABLE_VECTOR_REGISTERS() WC_DO_NOTHING
+    #endif
 #endif
 
 #ifndef WC_SANITIZE_DISABLE
@@ -2019,7 +2054,12 @@ enum Max_ASN {
 #elif defined(HAVE_FALCON) || defined(HAVE_DILITHIUM)
     MAX_ENCODED_SIG_SZ  = 5120,
 #elif !defined(NO_RSA)
-#ifdef WOLFSSL_HAPROXY
+#if defined(USE_FAST_MATH) && defined(FP_MAX_BITS)
+    MAX_ENCODED_SIG_SZ  = FP_MAX_BITS / 8,
+#elif (defined(WOLFSSL_SP_MATH_ALL) || defined(WOLFSSL_SP_MATH)) && \
+    defined(SP_INT_BITS)
+    MAX_ENCODED_SIG_SZ  = (SP_INT_BITS + 7) / 8,
+#elif defined(WOLFSSL_HAPROXY)
     MAX_ENCODED_SIG_SZ  = 1024,    /* Supports 8192 bit keys */
 #else
     MAX_ENCODED_SIG_SZ  = 512,     /* Supports 4096 bit keys */
@@ -2031,7 +2071,6 @@ enum Max_ASN {
 #else
     MAX_ENCODED_SIG_SZ  =  64,
 #endif
-    MAX_SIG_SZ          = 256,
     MAX_ALGO_SZ         =  20,
     MAX_LENGTH_SZ       = WOLFSSL_ASN_MAX_LENGTH_SZ, /* Max length size for DER encoding */
     MAX_SHORT_SZ        = (1 + 1 + 5), /* asn int + byte len + 5 byte length */
@@ -2087,6 +2126,8 @@ enum Max_ASN {
 #ifndef WC_MAX_BLOCK_SIZE
 #define WC_MAX_BLOCK_SIZE  128
 #endif
+
+#define MAX_SIG_SZ MAX_ENCODED_SIG_SZ
 
 #ifdef WOLFSSL_CERT_GEN
     /* Used in asn.c MakeSignature for ECC and RSA non-blocking/async */

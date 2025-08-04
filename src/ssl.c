@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -3733,14 +3733,14 @@ static int isValidCurveGroup(word16 name)
         case WOLFSSL_ML_KEM_768:
         case WOLFSSL_ML_KEM_1024:
     #if defined(WOLFSSL_WC_MLKEM) || defined(HAVE_LIBOQS)
-        case WOLFSSL_P256_ML_KEM_512:
-        case WOLFSSL_P384_ML_KEM_768:
-        case WOLFSSL_P521_ML_KEM_1024:
-        case WOLFSSL_P384_ML_KEM_1024:
-        case WOLFSSL_X25519_ML_KEM_512:
-        case WOLFSSL_X448_ML_KEM_768:
-        case WOLFSSL_X25519_ML_KEM_768:
-        case WOLFSSL_P256_ML_KEM_768:
+        case WOLFSSL_SECP256R1MLKEM512:
+        case WOLFSSL_SECP384R1MLKEM768:
+        case WOLFSSL_SECP521R1MLKEM1024:
+        case WOLFSSL_SECP384R1MLKEM1024:
+        case WOLFSSL_X25519MLKEM512:
+        case WOLFSSL_X448MLKEM768:
+        case WOLFSSL_X25519MLKEM768:
+        case WOLFSSL_SECP256R1MLKEM768:
     #endif
 #endif /* !WOLFSSL_NO_ML_KEM */
 #ifdef WOLFSSL_MLKEM_KYBER
@@ -3873,7 +3873,7 @@ WOLFSSL_ABI
 int wolfSSL_UseALPN(WOLFSSL* ssl, char *protocol_name_list,
                     word32 protocol_name_listSz, byte options)
 {
-    char    *list, *ptr, **token;
+    char    *list, *ptr = NULL, **token;
     word16  len;
     int     idx = 0;
     int     ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
@@ -7265,9 +7265,8 @@ static int check_cert_key(DerBuffer* cert, DerBuffer* key, DerBuffer* altKey,
 #ifdef WOLF_PRIVATE_KEY_ID
         if (ret == WOLFSSL_SUCCESS && altDevId != INVALID_DEVID) {
             /* We have to decode the public key first */
-            word32 idx = 0;
-            /* Dilithium has the largest public key at the moment */
-            word32 pubKeyLen = DILITHIUM_MAX_PUB_KEY_SIZE;
+            /* Default to max pub key size. */
+            word32 pubKeyLen = MAX_PUBLIC_KEY_SZ;
             byte* decodedPubKey = (byte*)XMALLOC(pubKeyLen, heap,
                                             DYNAMIC_TYPE_PUBLIC_KEY);
             if (decodedPubKey == NULL) {
@@ -7281,9 +7280,14 @@ static int check_cert_key(DerBuffer* cert, DerBuffer* key, DerBuffer* altKey,
                     ret = 0;
                 }
                 else {
+                #if defined(WC_ENABLE_ASYM_KEY_IMPORT)
+                    word32 idx = 0;
                     ret = DecodeAsymKeyPublic(der->sapkiDer, &idx,
                                               der->sapkiLen, decodedPubKey,
                                               &pubKeyLen, der->sapkiOID);
+                #else
+                    ret = NOT_COMPILED_IN;
+                #endif /* WC_ENABLE_ASYM_KEY_IMPORT */
                 }
             }
             if (ret == 0) {
@@ -8771,7 +8775,7 @@ static int isArrayUnique(const char* buf, size_t len)
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
+int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8806,7 +8810,7 @@ WOLFSSL_API int wolfSSL_CTX_set_client_cert_type(WOLFSSL_CTX* ctx,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
+int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
                                                 const char* buf, int bufLen)
 {
     int i;
@@ -8841,7 +8845,7 @@ WOLFSSL_API int wolfSSL_CTX_set_server_cert_type(WOLFSSL_CTX* ctx,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
+int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8878,7 +8882,7 @@ WOLFSSL_API int wolfSSL_set_client_cert_type(WOLFSSL* ssl,
  * Takes byte array containing cert types the caller can provide to its peer.
  * Cert types are in preferred order in the array.
  */
-WOLFSSL_API int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
+int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
                                           const char* buf, int bufLen)
 {
     int i;
@@ -8920,7 +8924,7 @@ WOLFSSL_API int wolfSSL_set_server_cert_type(WOLFSSL* ssl,
  * in case no negotiation performed, it returns WOLFSSL_SUCCESS and -1 is for
  * cert type.
  */
-WOLFSSL_API int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
+int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
 {
     int ret = WOLFSSL_SUCCESS;
 
@@ -8951,7 +8955,7 @@ WOLFSSL_API int wolfSSL_get_negotiated_client_cert_type(WOLFSSL* ssl, int* tp)
  * in case no negotiation performed, it returns WOLFSSL_SUCCESS and -1 is for
  * cert type.
  */
-WOLFSSL_API int wolfSSL_get_negotiated_server_cert_type(WOLFSSL* ssl, int* tp)
+int wolfSSL_get_negotiated_server_cert_type(WOLFSSL* ssl, int* tp)
 {
     int ret = WOLFSSL_SUCCESS;
 
@@ -11497,8 +11501,10 @@ const char *wolfSSL_get0_peername(WOLFSSL *ssl) {
         return (const char *)ssl->buffers.domainName.buffer;
     else if (ssl->session && ssl->session->peer)
         return ssl->session->peer->subjectCN;
+#ifdef KEEP_PEER_CERT
     else if (ssl->peerCert.subjectCN[0])
         return ssl->peerCert.subjectCN;
+#endif
     else {
         ssl->error = NO_PEER_CERT;
         return NULL;
@@ -14685,7 +14691,7 @@ WOLF_STACK_OF(WOLFSSL_X509)* wolfSSL_set_peer_cert_chain(WOLFSSL* ssl)
     return sk;
 }
 
-
+#ifdef KEEP_PEER_CERT
 /**
  * Implemented in a similar way that ngx_ssl_ocsp_validate does it when
  * SSL_get0_verified_chain is not available.
@@ -14746,6 +14752,7 @@ WOLF_STACK_OF(WOLFSSL_X509) *wolfSSL_get0_verified_chain(const WOLFSSL *ssl)
     wolfSSL_X509_STORE_CTX_free(storeCtx);
     return chain;
 }
+#endif /* KEEP_PEER_CERT */
 #endif /* SESSION_CERTS && OPENSSL_EXTRA */
 
 #ifndef NO_CERTS
@@ -15660,48 +15667,48 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
     #ifndef WOLFSSL_NO_ML_KEM_512
         case WOLFSSL_ML_KEM_512:
             return "ML_KEM_512";
-        case WOLFSSL_P256_ML_KEM_512:
-            return "P256_ML_KEM_512";
+        case WOLFSSL_SECP256R1MLKEM512:
+            return "SecP256r1MLKEM512";
 #ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
         case WOLFSSL_P256_ML_KEM_512_OLD:
             return "P256_ML_KEM_512_OLD";
 #endif
         #ifdef HAVE_CURVE25519
-        case WOLFSSL_X25519_ML_KEM_512:
-            return "X25519_ML_KEM_512";
+        case WOLFSSL_X25519MLKEM512:
+            return "X25519MLKEM512";
         #endif
     #endif
     #ifndef WOLFSSL_NO_ML_KEM_768
         case WOLFSSL_ML_KEM_768:
             return "ML_KEM_768";
-        case WOLFSSL_P384_ML_KEM_768:
-            return "P384_ML_KEM_768";
+        case WOLFSSL_SECP384R1MLKEM768:
+            return "SecP384r1MLKEM768";
 #ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
         case WOLFSSL_P384_ML_KEM_768_OLD:
             return "P384_ML_KEM_768_OLD";
 #endif
-        case WOLFSSL_P256_ML_KEM_768:
-            return "P256_ML_KEM_768";
+        case WOLFSSL_SECP256R1MLKEM768:
+            return "SecP256r1MLKEM768";
         #ifdef HAVE_CURVE25519
-        case WOLFSSL_X25519_ML_KEM_768:
-            return "X25519_ML_KEM_768";
+        case WOLFSSL_X25519MLKEM768:
+            return "X25519MLKEM768";
         #endif
         #ifdef HAVE_CURVE448
-        case WOLFSSL_X448_ML_KEM_768:
-            return "X448_ML_KEM_768";
+        case WOLFSSL_X448MLKEM768:
+            return "X448MLKEM768";
         #endif
     #endif
     #ifndef WOLFSSL_NO_ML_KEM_1024
         case WOLFSSL_ML_KEM_1024:
             return "ML_KEM_1024";
-        case WOLFSSL_P521_ML_KEM_1024:
-            return "P521_ML_KEM_1024";
+        case WOLFSSL_SECP521R1MLKEM1024:
+            return "SecP521r1MLKEM1024";
 #ifdef WOLFSSL_ML_KEM_USE_OLD_IDS
         case WOLFSSL_P521_ML_KEM_1024_OLD:
             return "P521_ML_KEM_1024_OLD";
 #endif
-        case WOLFSSL_P384_ML_KEM_1024:
-            return "P384_ML_KEM_1024";
+        case WOLFSSL_SECP384R1MLKEM1024:
+            return "SecP384r1MLKEM1024";
     #endif
 #elif defined(HAVE_LIBOQS)
         case WOLFSSL_ML_KEM_512:
@@ -15710,25 +15717,25 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
             return "ML_KEM_768";
         case WOLFSSL_ML_KEM_1024:
             return "ML_KEM_1024";
-        case WOLFSSL_P256_ML_KEM_512:
-            return "P256_ML_KEM_512";
-        case WOLFSSL_P384_ML_KEM_768:
-            return "P384_ML_KEM_768";
-        case WOLFSSL_P256_ML_KEM_768:
-            return "P256_ML_KEM_768";
-        case WOLFSSL_P521_ML_KEM_1024:
-            return "P521_ML_KEM_1024";
-        case WOLFSSL_P384_ML_KEM_1024:
-            return "P384_ML_KEM_1024";
+        case WOLFSSL_SECP256R1MLKEM512:
+            return "SecP256r1MLKEM512";
+        case WOLFSSL_SECP384R1MLKEM768:
+            return "SecP384r1MLKEM768";
+        case WOLFSSL_SECP256R1MLKEM768:
+            return "SecP256r1MLKEM768";
+        case WOLFSSL_SECP521R1MLKEM1024:
+            return "SecP521r1MLKEM1024";
+        case WOLFSSL_SECP384R1MLKEM1024:
+            return "SecP384r1MLKEM1024";
     #ifdef HAVE_CURVE25519
-        case WOLFSSL_X25519_ML_KEM_512:
-            return "X25519_ML_KEM_512";
-        case WOLFSSL_X25519_ML_KEM_768:
-            return "X25519_ML_KEM_768";
+        case WOLFSSL_X25519MLKEM512:
+            return "X25519MLKEM512";
+        case WOLFSSL_X25519MLKEM768:
+            return "X25519MLKEM768";
     #endif
     #ifdef HAVE_CURVE448
-        case WOLFSSL_X448_ML_KEM_768:
-            return "X448_ML_KEM_768";
+        case WOLFSSL_X448MLKEM768:
+            return "X448MLKEM768";
     #endif
 #endif /* WOLFSSL_WC_MLKEM */
 #endif /* WOLFSSL_NO_ML_KEM */
@@ -16585,6 +16592,45 @@ void wolfSSL_set_dynlock_destroy_callback(
 int wolfSSL_i2d_PrivateKey(const WOLFSSL_EVP_PKEY* key, unsigned char** der)
 {
     return wolfSSL_EVP_PKEY_get_der(key, der);
+}
+
+int wolfSSL_i2d_PrivateKey_bio(WOLFSSL_BIO* bio, WOLFSSL_EVP_PKEY* key)
+{
+    int ret = WC_NO_ERR_TRACE(WOLFSSL_FAILURE);
+    int derSz = 0;
+    byte* der = NULL;
+
+    if (bio == NULL || key == NULL) {
+        return WOLFSSL_FAILURE;
+    }
+
+    derSz = wolfSSL_i2d_PrivateKey(key, NULL);
+    if (derSz <= 0) {
+        WOLFSSL_MSG("wolfSSL_i2d_PrivateKey (for getting size) failed");
+        return WOLFSSL_FAILURE;
+    }
+
+    der = (byte*)XMALLOC(derSz, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    if (!der) {
+        WOLFSSL_MSG("malloc failed");
+        return WOLFSSL_FAILURE;
+    }
+
+    derSz = wolfSSL_i2d_PrivateKey(key, &der);
+    if (derSz <= 0) {
+        WOLFSSL_MSG("wolfSSL_i2d_PrivateKey failed");
+        goto cleanup;
+    }
+
+    if (wolfSSL_BIO_write(bio, der, derSz) != derSz) {
+        goto cleanup;
+    }
+
+    ret = WOLFSSL_SUCCESS;
+
+cleanup:
+    XFREE(der, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    return ret;
 }
 
 int wolfSSL_i2d_PublicKey(const WOLFSSL_EVP_PKEY *key, unsigned char **der)
@@ -18456,9 +18502,8 @@ int wolfSSL_sk_SSL_COMP_num(WOLF_STACK_OF(WOLFSSL_COMP)* sk)
 
 #endif /* OPENSSL_EXTRA || WOLFSSL_WPAS_SMALL */
 
-#ifdef OPENSSL_EXTRA
-
-#if defined(HAVE_EX_DATA) && !defined(NO_FILESYSTEM)
+#if defined(OPENSSL_EXTRA) && defined(KEEP_PEER_CERT) && \
+    defined(HAVE_EX_DATA) && !defined(NO_FILESYSTEM)
 int wolfSSL_cmp_peer_cert_to_file(WOLFSSL* ssl, const char *fname)
 {
     int ret = WC_NO_ERR_TRACE(WOLFSSL_FATAL_ERROR);
@@ -18529,7 +18574,6 @@ int wolfSSL_cmp_peer_cert_to_file(WOLFSSL* ssl, const char *fname)
     return ret;
 }
 #endif
-#endif /* OPENSSL_EXTRA */
 
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
 const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
@@ -23267,22 +23311,22 @@ const WOLF_EC_NIST_NAME kNistCurves[] = {
     {CURVE_NAME("ML_KEM_768"), WOLFSSL_ML_KEM_768, WOLFSSL_ML_KEM_768},
     {CURVE_NAME("ML_KEM_1024"), WOLFSSL_ML_KEM_1024, WOLFSSL_ML_KEM_1024},
 #if (defined(WOLFSSL_WC_MLKEM) || defined(HAVE_LIBOQS)) && defined(HAVE_ECC)
-    {CURVE_NAME("P256_ML_KEM_512"), WOLFSSL_P256_ML_KEM_512,
-     WOLFSSL_P256_ML_KEM_512},
-    {CURVE_NAME("P384_ML_KEM_768"), WOLFSSL_P384_ML_KEM_768,
-     WOLFSSL_P384_ML_KEM_768},
-    {CURVE_NAME("P256_ML_KEM_768"), WOLFSSL_P256_ML_KEM_768,
-     WOLFSSL_P256_ML_KEM_768},
-    {CURVE_NAME("P521_ML_KEM_1024"), WOLFSSL_P521_ML_KEM_1024,
-     WOLFSSL_P521_ML_KEM_1024},
-    {CURVE_NAME("P384_ML_KEM_1024"), WOLFSSL_P384_ML_KEM_1024,
-     WOLFSSL_P384_ML_KEM_1024},
-    {CURVE_NAME("X25519_ML_KEM_512"), WOLFSSL_X25519_ML_KEM_512,
-     WOLFSSL_X25519_ML_KEM_512},
-    {CURVE_NAME("X448_ML_KEM_768"), WOLFSSL_X448_ML_KEM_768,
-     WOLFSSL_X448_ML_KEM_768},
-    {CURVE_NAME("X25519_ML_KEM_768"), WOLFSSL_X25519_ML_KEM_768,
-     WOLFSSL_X25519_ML_KEM_768},
+    {CURVE_NAME("SecP256r1MLKEM512"), WOLFSSL_SECP256R1MLKEM512,
+     WOLFSSL_SECP256R1MLKEM512},
+    {CURVE_NAME("SecP384r1MLKEM768"), WOLFSSL_SECP384R1MLKEM768,
+     WOLFSSL_SECP384R1MLKEM768},
+    {CURVE_NAME("SecP256r1MLKEM768"), WOLFSSL_SECP256R1MLKEM768,
+     WOLFSSL_SECP256R1MLKEM768},
+    {CURVE_NAME("SecP521r1MLKEM1024"), WOLFSSL_SECP521R1MLKEM1024,
+     WOLFSSL_SECP521R1MLKEM1024},
+    {CURVE_NAME("SecP384r1MLKEM1024"), WOLFSSL_SECP384R1MLKEM1024,
+     WOLFSSL_SECP384R1MLKEM1024},
+    {CURVE_NAME("X25519MLKEM512"), WOLFSSL_X25519MLKEM512,
+     WOLFSSL_X25519MLKEM512},
+    {CURVE_NAME("X448MLKEM768"), WOLFSSL_X448MLKEM768,
+     WOLFSSL_X448MLKEM768},
+    {CURVE_NAME("X25519MLKEM768"), WOLFSSL_X25519MLKEM768,
+     WOLFSSL_X25519MLKEM768},
 #endif
 #endif /* !WOLFSSL_NO_ML_KEM */
 #ifdef WOLFSSL_MLKEM_KYBER
@@ -23637,12 +23681,13 @@ int wolfSSL_CTX_set_alpn_protos(WOLFSSL_CTX *ctx, const unsigned char *p,
 int wolfSSL_set_alpn_protos(WOLFSSL* ssl,
         const unsigned char* p, unsigned int p_len)
 {
-    WOLFSSL_BIO* bio;
     char* pt = NULL;
-
+    unsigned int ptIdx;
     unsigned int sz;
     unsigned int idx = 0;
     int alpn_opt = WOLFSSL_ALPN_CONTINUE_ON_MISMATCH;
+    int ret;
+
     WOLFSSL_ENTER("wolfSSL_set_alpn_protos");
 
     if (ssl == NULL || p_len <= 1) {
@@ -23656,8 +23701,9 @@ int wolfSSL_set_alpn_protos(WOLFSSL* ssl,
 #endif
     }
 
-    bio = wolfSSL_BIO_new(wolfSSL_BIO_s_mem());
-    if (bio == NULL) {
+    /* Replacing leading number with trailing ',' and adding '\0'. */
+    pt = (char*)XMALLOC(p_len + 1, ssl->heap, DYNAMIC_TYPE_OPENSSL);
+    if (pt == NULL) {
 #if defined(WOLFSSL_ERROR_CODE_OPENSSL)
         /* 0 on success in OpenSSL, non-0 on failure in OpenSSL
          * the function reverses the return value convention.
@@ -23668,6 +23714,7 @@ int wolfSSL_set_alpn_protos(WOLFSSL* ssl,
 #endif
     }
 
+    ptIdx = 0;
     /* convert into comma separated list */
     while (idx < p_len - 1) {
         unsigned int i;
@@ -23675,7 +23722,7 @@ int wolfSSL_set_alpn_protos(WOLFSSL* ssl,
         sz = p[idx++];
         if (idx + sz > p_len) {
             WOLFSSL_MSG("Bad list format");
-            wolfSSL_BIO_free(bio);
+            XFREE(pt, ssl->heap, DYNAMIC_TYPE_OPENSSL);
     #if defined(WOLFSSL_ERROR_CODE_OPENSSL)
             /* 0 on success in OpenSSL, non-0 on failure in OpenSSL
              * the function reverses the return value convention.
@@ -23687,27 +23734,30 @@ int wolfSSL_set_alpn_protos(WOLFSSL* ssl,
         }
         if (sz > 0) {
             for (i = 0; i < sz; i++) {
-                wolfSSL_BIO_write(bio, &p[idx++], 1);
+                pt[ptIdx++] = p[idx++];
             }
-            if (idx < p_len - 1)
-                wolfSSL_BIO_write(bio, ",", 1);
+            if (idx < p_len - 1) {
+                pt[ptIdx++] = ',';
+            }
         }
     }
-    wolfSSL_BIO_write(bio, "\0", 1);
+    pt[ptIdx++] = '\0';
 
     /* clears out all current ALPN extensions set */
     TLSX_Remove(&ssl->extensions, TLSX_APPLICATION_LAYER_PROTOCOL, ssl->heap);
 
-    if ((sz = (unsigned int)wolfSSL_BIO_get_mem_data(bio, &pt)) > 0) {
-        wolfSSL_UseALPN(ssl, pt, sz, (byte) alpn_opt);
-    }
-    wolfSSL_BIO_free(bio);
+    ret = wolfSSL_UseALPN(ssl, pt, ptIdx, (byte)alpn_opt);
+    XFREE(pt, ssl->heap, DYNAMIC_TYPE_OPENSSL);
 #if defined(WOLFSSL_ERROR_CODE_OPENSSL)
     /* 0 on success in OpenSSL, non-0 on failure in OpenSSL
      * the function reverses the return value convention.
      */
+    if (ret != WOLFSSL_SUCCESS)
+        return 1;
     return 0;
 #else
+    if (ret != WOLFSSL_SUCCESS)
+        return WOLFSSL_FAILURE;
     return WOLFSSL_SUCCESS;
 #endif
 }

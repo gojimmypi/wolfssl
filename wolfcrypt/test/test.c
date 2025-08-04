@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -113,6 +113,8 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     heap_baselineAllocs = wolfCrypt_heap_peakAllocs_checkpoint();            \
     heap_baselineBytes = wolfCrypt_heap_peakBytes_checkpoint();              \
     }
+#define PRINT_HEAP_ADDRESS(p)                                        \
+    printf("Allocated address: %p", (void *)(p));
 #else
     #define PRINT_HEAP_CHECKPOINT(b, i) WC_DO_NOTHING;
     #define PRINT_HEAP_ADDRESS(p) WC_DO_NOTHING;
@@ -1157,6 +1159,15 @@ static WC_MAYBE_UNUSED int wc_DeleteRsaKey(RsaKey* key, RsaKey** key_p)
 #ifdef WOLFSSL_STATIC_MEMORY
     #if defined(WOLFSSL_STATIC_MEMORY_TEST_SZ)
         static byte gTestMemory[WOLFSSL_STATIC_MEMORY_TEST_SZ];
+    #elif defined(HAVE_DILITHIUM)
+        #if defined(WOLFSSL_DILITHIUM_VERIFY_SMALL_MEM) && \
+            defined(WOLFSSL_DILITHIUM_SIGN_SMALL_MEM) && \
+            defined(WOLFSSL_DILITHIUM_MAKE_KEY_SMALL_MEM) && \
+            defined(WOLFSSL_DILITHIUM_VERIFY_ONLY)
+            static byte gTestMemory[192*1024];  /* Dilithium low mem */
+        #else
+            static byte gTestMemory[576*1024];  /* Dilithium full mem */
+        #endif
     #elif defined(BENCH_EMBEDDED)
         static byte gTestMemory[14000];
     #elif defined(WOLFSSL_CERT_EXT)
@@ -15501,7 +15512,7 @@ static wc_test_ret_t aes_xts_sector_test(void)
         0x24, 0xe7, 0x3d, 0x6f
     };
 
-    word64 s3 = 0x000000ffffffffff;
+    word64 s3 = W64LIT(0x000000ffffffffff);
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
@@ -20682,7 +20693,8 @@ static wc_test_ret_t random_rng_test(void)
 
 #if defined(HAVE_HASHDRBG) && !defined(CUSTOM_RAND_GENERATE_BLOCK)
 
-#ifdef WC_RNG_SEED_CB
+#if defined(WC_RNG_SEED_CB) && \
+    !(defined(ENTROPY_SCALE_FACTOR) || defined(SEED_BLOCK_SZ))
 static int seed_cb(OS_Seed* os, byte* output, word32 sz)
 {
     word32 i;
@@ -20695,22 +20707,87 @@ static int seed_cb(OS_Seed* os, byte* output, word32 sz)
 
 static wc_test_ret_t rng_seed_test(void)
 {
-#ifndef HAVE_FIPS
+    /* The expected PRNG block depends on ENTROPY_SCALE_FACTOR and
+     * SEED_BLOCK_SZ, which depend on which seed back end is configured.
+     */
+#if defined(HAVE_ENTROPY_MEMUSE) && defined(HAVE_AMD_RDSEED)
+    #ifdef HAVE_FIPS
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
-        0x83, 0x46, 0x65, 0x2f, 0x5c, 0x44, 0x16, 0x5f,
-        0xb3, 0x89, 0x26, 0xde, 0x0b, 0x6b, 0xa2, 0x06,
-        0x7e, 0xa7, 0x9a, 0x55, 0x22, 0x01, 0xb0, 0x22,
-        0xf4, 0x7e, 0xa2, 0x66, 0xc4, 0x08, 0x6f, 0xba
+        0x35, 0x1e, 0xf9, 0xe8, 0x6b, 0x19, 0xe0, 0xe5,
+        0x32, 0xb3, 0x41, 0xe5, 0xc1, 0x35, 0x18, 0x35,
+        0x84, 0x2a, 0x3f, 0x84, 0x16, 0xc4, 0xf3, 0x50,
+        0xdd, 0x4b, 0xeb, 0xe4, 0xcd, 0xbe, 0x94, 0x84
     };
-#else
-    /* FIPS uses a longer seed, so different check value. */
+    #else
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0xb8, 0x3e, 0x23, 0xad, 0x34, 0xb6, 0x1e, 0xc7,
+        0x0f, 0xa6, 0x4a, 0x45, 0x12, 0x66, 0xfd, 0x4d,
+        0x97, 0xb2, 0x3d, 0xb3, 0xda, 0xcc, 0xed, 0x50,
+        0x2e, 0xe0, 0x51, 0x38, 0x1d, 0x0f, 0x81, 0x35
+    };
+    #endif
+#elif defined(HAVE_ENTROPY_MEMUSE) && \
+    (defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND))
+    #ifdef HAVE_FIPS
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0xba, 0xc3, 0x2f, 0xcf, 0xd2, 0x0e, 0xe1, 0x16,
+        0x45, 0xdc, 0xc2, 0x87, 0x0d, 0x70, 0xde, 0x5e,
+        0x2e, 0x2f, 0x0c, 0x7a, 0x1d, 0x04, 0x89, 0x0d,
+        0x0b, 0x9a, 0x51, 0x00, 0x4f, 0x7e, 0xce, 0xd6
+    };
+    #else
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0xa6, 0xfa, 0x3e, 0xb7, 0x66, 0x85, 0x96, 0x79,
+        0xef, 0x91, 0x26, 0xa1, 0xe8, 0x71, 0xa7, 0x13,
+        0x03, 0xea, 0xe5, 0x7b, 0x36, 0x52, 0x02, 0x39,
+        0x83, 0xbf, 0x41, 0xd1, 0x3e, 0x8f, 0xc0, 0x45
+    };
+    #endif
+#elif defined(HAVE_AMD_RDSEED)
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0x2c, 0xd4, 0x9b, 0x1e, 0x1e, 0xe7, 0xb0, 0xb0,
+        0xf9, 0xa0, 0xa9, 0xd5, 0x8d, 0xf9, 0x6d, 0x10,
+        0xf4, 0x77, 0xaf, 0xac, 0x3d, 0x2f, 0x6b, 0x1f,
+        0xa2, 0xe7, 0xe5, 0x90, 0x6d, 0x1f, 0x88, 0x98
+    };
+#elif defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)
+    #ifdef HAVE_FIPS
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0x27, 0xdd, 0xff, 0x5b, 0x21, 0x26, 0x0a, 0x48,
+        0xb3, 0x6b, 0xd8, 0x14, 0x00, 0x55, 0xe8, 0x39,
+        0x6d, 0x31, 0xf3, 0x6e, 0xe7, 0xbf, 0xce, 0x08,
+        0x1f, 0x61, 0x73, 0xe6, 0x3c, 0xb9, 0x12, 0xea
+    };
+    #else
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0x3b, 0x9d, 0x0d, 0xc8, 0x0e, 0xb4, 0x33, 0x0b,
+        0x50, 0x5f, 0x3a, 0xee, 0xc8, 0x68, 0x8d, 0x9f,
+        0xdf, 0x39, 0x06, 0x78, 0xf8, 0x6a, 0xd6, 0xc6,
+        0xd7, 0x63, 0x57, 0xe8, 0x6d, 0xf7, 0xc8, 0x6b
+    };
+    #endif
+#elif defined(HAVE_FIPS)
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
         0xaf, 0x31, 0xcc, 0xef, 0xa9, 0x29, 0x4c, 0x24,
         0xbd, 0xa5, 0xa3, 0x52, 0x69, 0xf3, 0xb9, 0xb2,
         0x1e, 0xd4, 0x52, 0x3b, 0x9a, 0x96, 0x06, 0x20,
         0xc0, 0x5f, 0x44, 0x06, 0x1f, 0x80, 0xdf, 0xe0
+    };
+#else
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0x83, 0x46, 0x65, 0x2f, 0x5c, 0x44, 0x16, 0x5f,
+        0xb3, 0x89, 0x26, 0xde, 0x0b, 0x6b, 0xa2, 0x06,
+        0x7e, 0xa7, 0x9a, 0x55, 0x22, 0x01, 0xb0, 0x22,
+        0xf4, 0x7e, 0xa2, 0x66, 0xc4, 0x08, 0x6f, 0xba
     };
 #endif
     byte output[WC_SHA256_DIGEST_SIZE];
@@ -20745,7 +20822,7 @@ static wc_test_ret_t rng_seed_test(void)
 out:
     return ret;
 }
-#endif
+#endif /* WC_RNG_SEED_CB) && !(ENTROPY_SCALE_FACTOR || SEED_BLOCK_SZ) */
 
 
 WOLFSSL_TEST_SUBROUTINE wc_test_ret_t random_test(void)
@@ -20856,7 +20933,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t random_test(void)
 #endif
 
     /* Test the seed callback. */
-#ifdef WC_RNG_SEED_CB
+#if defined(WC_RNG_SEED_CB) && \
+    !(defined(ENTROPY_SCALE_FACTOR) || defined(SEED_BLOCK_SZ))
     if ((ret = rng_seed_test()) != 0)
         return ret;
 #endif
@@ -26062,7 +26140,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dh_test(void)
     }
 #endif
 
-#if (!defined(HAVE_FIPS) || FIPS_VERSION_GE(7,0)) && \
+#if !defined(WC_NO_RNG) && (!defined(HAVE_FIPS) || FIPS_VERSION_GE(7,0)) && \
             !defined(HAVE_SELFTEST)
     agreeSz = DH_TEST_BUF_SIZE;
     agreeSz2 = DH_TEST_BUF_SIZE;
@@ -26088,7 +26166,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t dh_test(void)
     if (XMEMCMP(agree, agree2, agreeSz) != 0) {
         ERROR_OUT(WC_TEST_RET_ENC_NC, done);
     }
-#endif /* (!HAVE_FIPS || FIPS_VERSION_GE(7,0)) && !HAVE_SELFTEST */
+#endif /* !WC_NO_RNG && (!HAVE_FIPS || FIPS_VERSION_GE(7,0)) && !HAVE_SELFTEST */
 
     /* Test DH key import / export */
 #if defined(WOLFSSL_DH_EXTRA) && !defined(NO_FILESYSTEM) && \
@@ -37693,6 +37771,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t ecc_test_buffers(void)
     int verify = 0;
     word32 x;
     WOLFSSL_ENTER("ecc_test_buffers");
+
+    XMEMSET(&rng, 0, sizeof(WC_RNG));
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
     if ((cliKey == NULL) || (servKey == NULL) || (tmpKey == NULL))
@@ -49319,7 +49399,7 @@ static wc_test_ret_t test_dilithium_decode_level(const byte* rawKey,
                                                  int         isPublicOnlyKey)
 {
     int           ret = 0;
-#ifndef WOLFSSL_DILITHIUM_NO_ASN1
+#if !defined(WOLFSSL_DILITHIUM_NO_ASN1) && defined(WOLFSSL_ASN_TEMPLATE)
     /* Size the buffer to accommodate the largest encoded key size */
     const word32  maxDerSz = DILITHIUM_MAX_PRV_KEY_DER_SIZE;
     word32        derSz;
@@ -49369,7 +49449,7 @@ static wc_test_ret_t test_dilithium_decode_level(const byte* rawKey,
 #endif
     }
 
-#ifndef WOLFSSL_DILITHIUM_NO_ASN1
+#if !defined(WOLFSSL_DILITHIUM_NO_ASN1) && defined(WOLFSSL_ASN_TEMPLATE)
     /* Export raw key as DER */
     if (ret == 0) {
 #ifdef WOLFSSL_DILITHIUM_PUBLIC_KEY
@@ -49443,7 +49523,7 @@ static wc_test_ret_t test_dilithium_decode_level(const byte* rawKey,
         ret = WC_TEST_RET_ENC_NC;
     }
 #endif /* !WOLFSSL_DILITHIUM_FIPS204_DRAFT */
-#endif /* WOLFSSL_DILITHIUM_NO_ASN1 */
+#endif /* !WOLFSSL_DILITHIUM_NO_ASN1 && WOLFSSL_ASN_TEMPLATE */
 
     /* Cleanup */
     wc_dilithium_free(key);
@@ -54522,14 +54602,15 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
     };
 
 #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256) && \
-    defined(HAVE_ECC) && defined(WOLFSSL_SHA512)
+    defined(HAVE_ECC) && defined(WOLFSSL_SHA512) && \
+    defined(HAVE_AES_KEYWRAP) && defined(HAVE_X963_KDF)
     byte optionalUkm[] = {
         0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07
     };
 #endif /* !NO_AES */
 
 #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128) && \
-    !defined(NO_SHA)
+    !defined(NO_SHA) && defined(HAVE_AES_KEYWRAP)
     /* encryption key for kekri recipient types */
     WOLFSSL_SMALL_STACK_STATIC const byte secretKey[] = {
         0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
@@ -54543,7 +54624,8 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
 #endif
 
 #if !defined(NO_PWDBASED) && !defined(NO_SHA) && \
-    !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
+    !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128) && \
+    defined(HAVE_AES_KEYWRAP)
 
     #ifndef HAVE_FIPS
     WOLFSSL_SMALL_STACK_STATIC const char password[] = "password"; /* NOTE: Password is too short for FIPS */
@@ -54590,7 +54672,7 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
          "pkcs7envelopedDataDES3.der");
     #endif
 
-    #if !defined(NO_AES) && defined(HAVE_AES_CBC)
+    #if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(HAVE_AES_KEYWRAP)
         #ifdef WOLFSSL_AES_128
         ADD_PKCS7ENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128CBCb, 0, 0, rsaCert, rsaCertSz,
@@ -54626,11 +54708,11 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
          NULL, 0, NULL, 0, NULL, NULL, 0, NULL, 0, 0, NULL, 0, NULL, 0, 0, 0,
          0, 0, 0, 0, "pkcs7envelopedDataAES256CBC_IANDS.der");
         #endif
-    #endif /* !NO_AES && HAVE_AES_CBC */
+    #endif /* !NO_AES && HAVE_AES_CBC && HAVE_AES_KEYWRAP */
 #endif
 
         /* key agreement key encryption technique*/
-#ifdef HAVE_ECC
+#if defined(HAVE_ECC) && defined(HAVE_AES_KEYWRAP) && defined(HAVE_X963_KDF)
     #if !defined(NO_AES) && defined(HAVE_AES_CBC)
         #if !defined(NO_SHA) && defined(WOLFSSL_AES_128)
         ADD_PKCS7ENVELOPEDVECTOR(
@@ -54670,7 +54752,7 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
 #endif
 
         /* kekri (KEKRecipientInfo) recipient types */
-#if !defined(NO_AES) && defined(HAVE_AES_CBC)
+#if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(HAVE_AES_KEYWRAP)
         #if !defined(NO_SHA) && defined(WOLFSSL_AES_128)
         ADD_PKCS7ENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128CBCb, AES128_WRAP, 0,
@@ -54679,11 +54761,12 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
          0, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0,
          "pkcs7envelopedDataAES128CBC_KEKRI.der");
         #endif
-#endif /* !NO_AES && HAVE_AES_CBC */
+#endif /* !NO_AES && HAVE_AES_CBC && HAVE_AES_KEYWRAP */
 
         /* pwri (PasswordRecipientInfo) recipient types */
 #if !defined(NO_PWDBASED) && !defined(NO_AES) && defined(HAVE_AES_CBC)
-        #if !defined(NO_SHA) && defined(WOLFSSL_AES_128)
+        #if !defined(NO_SHA) && defined(WOLFSSL_AES_128) && \
+        defined(HAVE_AES_KEYWRAP)
         ADD_PKCS7ENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128CBCb, 0, 0,
          NULL, 0, NULL, 0, NULL, 0, 0, 0, NULL, 0,
@@ -54693,7 +54776,8 @@ static wc_test_ret_t pkcs7enveloped_run_vectors(byte* rsaCert, word32 rsaCertSz,
         #endif
 #endif
 
-#if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
+#if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128) && \
+        defined(HAVE_AES_KEYWRAP)
         /* ori (OtherRecipientInfo) recipient types */
         ADD_PKCS7ENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128CBCb, 0, 0, NULL, 0, NULL, 0,
@@ -55139,7 +55223,8 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
     };
     byte senderNonce[PKCS7_NONCE_SZ + 2];
 #ifdef HAVE_ECC
-    #if !defined(NO_AES) && defined(HAVE_AESGCM)
+    #if !defined(NO_AES) && defined(HAVE_AESGCM) && \
+    defined(HAVE_AES_KEYWRAP) && defined(HAVE_X963_KDF)
     #if !defined(NO_SHA256) && defined(WOLFSSL_AES_256)
     WOLFSSL_SMALL_STACK_STATIC const byte senderNonceOid[] =
                { 0x06, 0x0a, 0x60, 0x86, 0x48, 0x01, 0x86, 0xF8, 0x45, 0x01,
@@ -55155,13 +55240,15 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
 #endif
 
 #if !defined(NO_AES) && defined(WOLFSSL_AES_256) && defined(HAVE_ECC) && \
-    defined(WOLFSSL_SHA512) && defined(HAVE_AESGCM)
+    defined(WOLFSSL_SHA512) && defined(HAVE_AESGCM) && \
+    defined(HAVE_AES_KEYWRAP) && defined(HAVE_X963_KDF)
     WOLFSSL_SMALL_STACK_STATIC const byte optionalUkm[] = {
         0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07
     };
 #endif /* !NO_AES */
 
-#if !defined(NO_AES) && !defined(NO_SHA) && defined(WOLFSSL_AES_128)
+#if !defined(NO_AES) && !defined(NO_SHA) && defined(WOLFSSL_AES_128) && \
+    defined(HAVE_AES_KEYWRAP)
     /* encryption key for kekri recipient types */
     WOLFSSL_SMALL_STACK_STATIC const byte secretKey[] = {
         0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
@@ -55175,7 +55262,8 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
 #endif
 
 #if !defined(NO_PWDBASED) && !defined(NO_AES) && defined(HAVE_AESGCM) && \
-    !defined(NO_SHA) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
+    !defined(NO_SHA) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128) && \
+    defined(HAVE_AES_KEYWRAP)
 
     #ifndef HAVE_FIPS
     WOLFSSL_SMALL_STACK_STATIC const char password[] = "password";
@@ -55213,7 +55301,7 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
     {
         /* key transport key encryption technique */
 #ifndef NO_RSA
-    #if !defined(NO_AES) && defined(HAVE_AESGCM)
+    #if !defined(NO_AES) && defined(HAVE_AESGCM) && defined(HAVE_AES_KEYWRAP)
         #ifdef WOLFSSL_AES_128
         ADD_PKCS7AUTHENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128GCMb, 0, 0, rsaCert, rsaCertSz,
@@ -55263,12 +55351,13 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
         (void)rsaCertSz;
         (void)rsaPrivKey;
         (void)rsaPrivKeySz;
-    #endif /* !NO_AES && !HAVE_AESGCM */
+    #endif /* !NO_AES && !HAVE_AESGCM && HAVE_AES_KEYWRAP */
 #endif
 
         /* key agreement key encryption technique*/
 #ifdef HAVE_ECC
-    #if !defined(NO_AES) && defined(HAVE_AESGCM)
+    #if !defined(NO_AES) && defined(HAVE_AESGCM) && \
+    defined(HAVE_AES_KEYWRAP) && defined(HAVE_X963_KDF)
         #if !defined(NO_SHA) && defined(WOLFSSL_AES_128)
         ADD_PKCS7AUTHENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128GCMb, AES128_WRAP,
@@ -55345,11 +55434,11 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
          0, 0, 0, 0, 0, 0,
          "pkcs7authEnvelopedDataAES256GCM_ECDH_SHA512KDF_ukm.der");
         #endif /* WOLFSSL_SHA512 && WOLFSSL_AES_256 */
-    #endif /* !NO_AES && HAVE_AESGCM */
+    #endif /* !NO_AES && HAVE_AESGCM && HAVE_AES_KEYWRAP */
 #endif
 
         /* kekri (KEKRecipientInfo) recipient types */
-#if !defined(NO_AES) && defined(HAVE_AESGCM)
+#if !defined(NO_AES) && defined(HAVE_AESGCM) && defined(HAVE_AES_KEYWRAP)
         #if !defined(NO_SHA) && defined(WOLFSSL_AES_128)
         ADD_PKCS7AUTHENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128GCMb, AES128_WRAP, 0,
@@ -55361,7 +55450,8 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
 #endif
 
         /* pwri (PasswordRecipientInfo) recipient types */
-#if !defined(NO_PWDBASED) && !defined(NO_AES) && defined(HAVE_AESGCM)
+#if !defined(NO_PWDBASED) && !defined(NO_AES) && defined(HAVE_AESGCM) && \
+        defined(HAVE_AES_KEYWRAP)
         #if !defined(NO_SHA) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
         ADD_PKCS7AUTHENVELOPEDVECTOR(
          data, (word32)sizeof(data), DATA, AES128GCMb, 0, 0,
@@ -55372,7 +55462,7 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
         #endif
 #endif
 
-#if !defined(NO_AES) && defined(HAVE_AESGCM)
+#if !defined(NO_AES) && defined(HAVE_AESGCM) && defined(HAVE_AES_KEYWRAP)
         #ifdef WOLFSSL_AES_128
         /* ori (OtherRecipientInfo) recipient types */
         ADD_PKCS7AUTHENVELOPEDVECTOR(
@@ -55658,7 +55748,8 @@ static wc_test_ret_t pkcs7authenveloped_run_vectors(byte* rsaCert, word32 rsaCer
     (void)eccCertSz;
     (void)eccPrivKey;
     (void)eccPrivKeySz;
-#if !defined(NO_AES) && !defined(NO_SHA) && defined(WOLFSSL_AES_128)
+#if !defined(NO_AES) && !defined(NO_SHA) && defined(WOLFSSL_AES_128) && \
+    defined(HAVE_AES_KEYWRAP)
     (void)secretKey;
     (void)secretKeyId;
 #endif
@@ -55768,7 +55859,8 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7authenveloped_test(void)
 
 #endif /* HAVE_AESGCM || HAVE_AESCCM */
 
-#if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256)
+#if !defined(NO_AES) && defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256) && \
+    defined(HAVE_AES_KEYWRAP)
 static const byte p7DefKey[] = {
     0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,
     0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,
@@ -56200,7 +56292,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7callback_test(byte* cert, word32 cert
 
     return ret;
 }
-#endif /* !NO_AES && HAVE_AES_CBC && WOLFSSL_AES_256 */
+#endif /* !NO_AES && HAVE_AES_CBC && WOLFSSL_AES_256 && HAVE_AES_KEYWRAP */
 
 #ifndef NO_PKCS7_ENCRYPTED_DATA
 
@@ -57804,7 +57896,7 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t pkcs7signed_test(void)
                             eccClientPrivKeyBuf, (word32)eccClientPrivKeyBufSz);
 
 #if !defined(NO_RSA) && !defined(NO_AES) && defined(HAVE_AES_CBC) && \
-    defined(WOLFSSL_AES_256)
+    defined(WOLFSSL_AES_256) && defined(HAVE_AES_KEYWRAP)
     if (ret >= 0)
         ret = pkcs7callback_test(
                             rsaClientCertBuf, (word32)rsaClientCertBufSz,

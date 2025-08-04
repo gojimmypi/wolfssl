@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -67,6 +67,9 @@
 #elif defined(WOLFSSL_STM32WBA)
 #include <stm32wbaxx_hal_conf.h>
 #include <stm32wbaxx_hal_pka.h>
+#elif defined(WOLFSSL_STM32N6)
+#include <stm32n6xx_hal_conf.h>
+#include <stm32n6xx_hal_pka.h>
 #else
 #error Please add the hal_pk.h include
 #endif

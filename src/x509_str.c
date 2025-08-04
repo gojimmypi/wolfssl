@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -1584,7 +1584,7 @@ static int X509StoreLoadFile(WOLFSSL_X509_STORE *str,
  * a file or directory.
  * Returns WOLFSSL_SUCCESS on success or WOLFSSL_FAILURE if an error occurs.
  */
-WOLFSSL_API int wolfSSL_X509_STORE_load_locations(WOLFSSL_X509_STORE *str,
+int wolfSSL_X509_STORE_load_locations(WOLFSSL_X509_STORE *str,
                                             const char *file, const char *dir)
 {
     WOLFSSL_CTX* ctx;

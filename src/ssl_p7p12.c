@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -317,6 +317,10 @@ PKCS7* wolfSSL_d2i_PKCS7_bio(WOLFSSL_BIO* bio, PKCS7** p7)
         return NULL;
 
     pkcs7->len = wolfSSL_BIO_get_len(bio);
+    if (pkcs7->len < 0){
+        wolfSSL_PKCS7_free((PKCS7*)pkcs7);
+        return NULL;
+    }
     pkcs7->data = (byte*)XMALLOC(pkcs7->len, NULL, DYNAMIC_TYPE_PKCS7);
     if (pkcs7->data == NULL) {
         wolfSSL_PKCS7_free((PKCS7*)pkcs7);

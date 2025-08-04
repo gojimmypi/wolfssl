@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -1577,27 +1577,53 @@ extern void uITRON4_free(void *p) ;
     #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY) && \
         !defined(WOLFSSL_STATIC_MEMORY) && !defined(WOLFSSL_TRACK_MEMORY)
 
-        /* XMALLOC */
-        #if defined(WOLFSSL_ESPIDF) && \
-           (defined(DEBUG_WOLFSSL) || defined(DEBUG_WOLFSSL_MALLOC))
+        #if defined(WOLFSSL_ESPIDF)
             #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
-            #define XMALLOC(s, h, type)  \
-                           ((void)(h), (void)(type), wc_debug_pvPortMalloc( \
-                           (s), (__FILE__), (__LINE__), (__FUNCTION__) ))
+        #endif
+
+        /* XMALLOC */
+        #if defined(WOLFSSL_ESPIDF)
+            #if (defined(DEBUG_WOLFSSL) || defined(DEBUG_WOLFSSL_MALLOC))
+                #define XMALLOC(s, h, type)  \
+                              ((void)(h), (void)(type), wc_debug_pvPortMalloc( \
+                               (s), (__FILE__), (__LINE__), (__FUNCTION__) ))
+            #else
+                #define XMALLOC(s, h, type)  \
+                        ((void)(h), (void)(type), wc_pvPortMalloc((s))) /* native heap */
+            #endif
         #else
             #define XMALLOC(s, h, type)  \
                            ((void)(h), (void)(type), pvPortMalloc((s))) /* native heap */
         #endif
 
         /* XFREE */
-        #define XFREE(p, h, type)    ((void)(h), (void)(type), vPortFree((p))) /* native heap */
+        #if defined(WOLFSSL_ESPIDF)
+            #if (defined(DEBUG_WOLFSSL) || defined(DEBUG_WOLFSSL_MALLOC))
+                #define XFREE(p, h, type)   \
+                        ((void)(h), (void)(type), wc_debug_pvPortFree( \
+                                 (p), (__FILE__), (__LINE__), (__FUNCTION__) ))
+            #else
+                #define XFREE(p, h, type)   \
+                        ((void)(h), (void)(type), wc_pvPortFree((p)))
+            #endif
+        #else
+            #define XFREE(p, h, type)   \
+                     ((void)(h), (void)(type), vPortFree((p))) /* native heap */
+        #endif
 
         /* XREALLOC */
         #if defined(WOLFSSL_ESPIDF)
-            /* In the Espressif EDP-IDF, realloc(p, n) is equivalent to
-             *     heap_caps_realloc(p, s, MALLOC_CAP_8BIT)
-             * There's no pvPortRealloc available:  */
-            #define XREALLOC(p, n, h, t) ((void)(h), (void)(t), realloc((p), (n))) /* native heap */
+            #if (defined(DEBUG_WOLFSSL) || defined(DEBUG_WOLFSSL_MALLOC))
+                #define XREALLOC(p, n, h, t) \
+                        ((void)(h), (void)(t), wc_debug_pvPortRealloc( \
+                        (p), (n),(__FILE__), (__LINE__), (__FUNCTION__) ))
+            #else
+                /* In the Espressif EDP-IDF, realloc(p, n) is equivalent to
+                 *     heap_caps_realloc(p, s, MALLOC_CAP_8BIT)
+                 * There's no pvPortRealloc available, use native heap:  */
+                #define XREALLOC(p, n, h, t) \
+                       ((void)(h), (void)(t), wc_pvPortRealloc((p), (n)))
+            #endif
         #elif defined(USE_INTEGER_HEAP_MATH) || defined(OPENSSL_EXTRA) || \
               defined(OPENSSL_ALL)
             /* FreeRTOS pvPortRealloc() implementation can be found here:
@@ -1981,21 +2007,6 @@ extern void uITRON4_free(void *p) ;
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
 
-    #undef  HAVE_ECC
-    #ifndef WOLFCRYPT_FIPS_RAND
-    #define HAVE_ECC
-    #endif
-    #ifndef NO_AES
-        #undef  HAVE_AESCCM
-        #define HAVE_AESCCM
-        #undef  HAVE_AESGCM
-        #define HAVE_AESGCM
-        #undef  WOLFSSL_AES_COUNTER
-        #define WOLFSSL_AES_COUNTER
-        #undef  WOLFSSL_AES_DIRECT
-        #define WOLFSSL_AES_DIRECT
-    #endif
-
     #ifdef FREESCALE_KSDK_1_3
         #include "fsl_device_registers.h"
     #elif !defined(FREESCALE_MQX)
@@ -2190,7 +2201,8 @@ extern void uITRON4_free(void *p) ;
     defined(WOLFSSL_STM32G0)  || defined(WOLFSSL_STM32U5)   || \
     defined(WOLFSSL_STM32H5)  || defined(WOLFSSL_STM32WL)   || \
     defined(WOLFSSL_STM32G4)  || defined(WOLFSSL_STM32MP13) || \
-    defined(WOLFSSL_STM32H7S) || defined(WOLFSSL_STM32WBA)
+    defined(WOLFSSL_STM32H7S) || defined(WOLFSSL_STM32WBA)  || \
+    defined(WOLFSSL_STM32N6)
 
     #define SIZEOF_LONG_LONG 8
     #ifndef CHAR_BIT
@@ -2254,6 +2266,8 @@ extern void uITRON4_free(void *p) ;
             #include "stm32u5xx_hal.h"
         #elif defined(WOLFSSL_STM32H5)
             #include "stm32h5xx_hal.h"
+        #elif defined(WOLFSSL_STM32N6)
+            #include "stm32n6xx_hal.h"
         #elif defined(WOLFSSL_STM32MP13)
             /* HAL headers error on our ASM files */
             #ifndef __ASSEMBLER__
@@ -3482,12 +3496,6 @@ extern void uITRON4_free(void *p) ;
     #if defined(NO_AES) && defined(NO_DES3)
         #error PKCS7 needs either AES or 3DES enabled, please enable one
     #endif
-    #ifndef HAVE_AES_KEYWRAP
-        #error PKCS7 requires AES key wrap please define HAVE_AES_KEYWRAP
-    #endif
-    #if defined(HAVE_ECC) && !defined(HAVE_X963_KDF)
-        #error PKCS7 requires X963 KDF please define HAVE_X963_KDF
-    #endif
 #endif
 
 #ifndef NO_PKCS12
@@ -3702,9 +3710,6 @@ extern void uITRON4_free(void *p) ;
 
 /* Linux Kernel Module */
 #ifdef WOLFSSL_LINUXKM
-    #ifndef WOLFSSL_NO_GETPID
-        #define WOLFSSL_NO_GETPID
-    #endif /* WOLFSSL_NO_GETPID */
     #ifdef HAVE_CONFIG_H
         #include <config.h>
         #undef HAVE_CONFIG_H
@@ -3758,6 +3763,9 @@ extern void uITRON4_free(void *p) ;
     #undef WOLFSSL_HAVE_MAX
     #undef WOLFSSL_HAVE_ASSERT_H
     #define WOLFSSL_NO_ASSERT_H
+    #ifndef WOLFSSL_NO_GETPID
+        #define WOLFSSL_NO_GETPID
+    #endif /* WOLFSSL_NO_GETPID */
     #ifndef SIZEOF_LONG
         #define SIZEOF_LONG         8
     #endif
@@ -3771,8 +3779,13 @@ extern void uITRON4_free(void *p) ;
     #ifndef WOLFSSL_SP_DIV_WORD_HALF
         #define WOLFSSL_SP_DIV_WORD_HALF
     #endif
-    #ifdef __PIE__
+
+    #ifdef HAVE_LINUXKM_PIE_SUPPORT
         #define WC_NO_INTERNAL_FUNCTION_POINTERS
+        #define WOLFSSL_ECC_CURVE_STATIC
+        #define WOLFSSL_NAMES_STATIC
+        #define WOLFSSL_NO_PUBLIC_FFDHE
+        #undef HAVE_PUBLIC_FFDHE
     #endif
 
     #ifndef NO_OLD_WC_NAMES
@@ -3807,6 +3820,14 @@ extern void uITRON4_free(void *p) ;
         #ifndef WC_SANITIZE_ENABLE
             #define WC_SANITIZE_ENABLE() kasan_enable_current()
         #endif
+    #endif
+
+    #if !defined(WC_RESEED_INTERVAL) && defined(LINUXKM_LKCAPI_REGISTER)
+        /* If installing handlers, use the maximum reseed interval allowed by
+         * NIST SP 800-90A Rev. 1, to avoid unnecessary delays in DRBG
+         * generation.
+         */
+        #define WC_RESEED_INTERVAL (((word64)1UL)<<48UL)
     #endif
 #endif
 
@@ -3993,7 +4014,7 @@ extern void uITRON4_free(void *p) ;
 /* Parts of the openssl compatibility layer require peer certs */
 #if (defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL) || \
      defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
-     defined(HAVE_LIGHTY)) && !defined(NO_CERTS)
+     defined(HAVE_LIGHTY)) && !defined(NO_CERTS) && !defined(NO_KEEP_PEER_CERT)
     #undef  KEEP_PEER_CERT
     #define KEEP_PEER_CERT
 #endif
@@ -4064,12 +4085,6 @@ extern void uITRON4_free(void *p) ;
 #if defined(HAVE_XCHACHA) && !defined(HAVE_CHACHA)
     /* XChacha requires ChaCha */
     #undef HAVE_XCHACHA
-#endif
-
-#if !defined(WOLFSSL_SHA384) && !defined(WOLFSSL_SHA512) && defined(NO_AES) && \
-                                                          !defined(WOLFSSL_SHA3)
-    #undef  WOLFSSL_NO_WORD64_OPS
-    #define WOLFSSL_NO_WORD64_OPS
 #endif
 
 #if !defined(WOLFCRYPT_ONLY) && \
@@ -4164,7 +4179,6 @@ extern void uITRON4_free(void *p) ;
 #if defined(__IAR_SYSTEMS_ICC__) && defined(__ROPI__)
     #define WOLFSSL_ECC_CURVE_STATIC
     #define WOLFSSL_NAMES_STATIC
-    #define WOLFSSL_NO_CONSTCHARCONST
 #endif
 
 /* FIPS v1 does not support TLS v1.3 (requires RSA PSS and HKDF) */

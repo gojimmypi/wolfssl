@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -511,6 +511,54 @@ const char *wc_GetMathInfo(void)
             " no-malloc"
         #endif
     #endif
+
+    /* ARM Assembly speedups */
+    #if defined(WOLFSSL_ARMASM) || defined(USE_INTEL_SPEEDUP)
+        "\n\tAssembly Speedups:"
+
+        #ifdef WOLFSSL_ARMASM
+            " ARMASM"
+            #ifdef WOLFSSL_ARMASM_THUMB2
+                " THUMB2"
+            #endif
+            #ifdef WOLFSSL_ARMASM_INLINE
+                " INLINE"
+            #endif
+            #ifdef WOLFSSL_ARMASM_NO_HW_CRYPTO
+                " NO_HW_CRYPTO"
+            #endif
+            #ifdef WOLFSSL_ARMASM_NO_NEON
+                " NO_NEON"
+            #endif
+            #ifdef WOLFSSL_ARM_ARCH
+                " ARM ARCH=" WC_STRINGIFY(WOLFSSL_ARM_ARCH)
+            #endif
+        #endif
+
+        #ifdef USE_INTEL_SPEEDUP
+            " INTELASM"
+            #ifdef USE_INTEL_SPEEDUP_FOR_AES
+                " AES"
+            #endif
+        #endif
+
+        #ifdef WOLFSSL_USE_ALIGN
+            " ALIGN"
+        #endif
+        #ifdef HAVE_INTEL_RDRAND
+            " INTEL_RDRAND"
+        #endif
+        #ifdef HAVE_AMD_RDSEED
+            " AMD_RDSEED"
+        #endif
+        #ifdef WOLFSSL_X86_64_BUILD
+            " X86_64_BUILD"
+        #endif
+        #ifdef WOLFSSL_X86_BUILD
+            " X86_BUILD"
+        #endif
+    #endif
+
     ;
 }
 #endif /* HAVE_WC_INTROSPECTION */

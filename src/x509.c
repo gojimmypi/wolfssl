@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -1659,6 +1659,65 @@ int wolfSSL_X509V3_EXT_add_nconf(WOLFSSL_CONF *conf, WOLFSSL_X509V3_CTX *ctx,
     return WOLFSSL_SUCCESS;
 }
 #endif
+
+/* Find extension by NID in a stack of extensions.
+ *
+ * @param sk Stack of extensions
+ * @param nid ID to search for
+ * @param lastpos Start search from this position (not inclusive, -1 means start from beginning)
+ * @return Index of matching extension or -1 on error/not found
+ */
+int wolfSSL_X509v3_get_ext_by_NID(const WOLF_STACK_OF(WOLFSSL_X509_EXTENSION)* sk,
+                                 int nid, int lastpos)
+{
+    int i;
+    WOLFSSL_ENTER("wolfSSL_X509v3_get_ext_by_NID");
+
+    if (sk == NULL) {
+        WOLFSSL_MSG("Stack pointer is NULL");
+        return WOLFSSL_FATAL_ERROR;
+    }
+
+    if (lastpos < -1 || lastpos >= wolfSSL_sk_num(sk)) {
+        WOLFSSL_MSG("Invalid position argument");
+        return WOLFSSL_FATAL_ERROR;
+    }
+
+    for (i = lastpos + 1; i < wolfSSL_sk_num(sk); i++) {
+        WOLFSSL_X509_EXTENSION* ext = wolfSSL_sk_X509_EXTENSION_value(sk, i);
+        if (ext && ext->obj) {
+            if (wolfSSL_OBJ_obj2nid(ext->obj) == nid)
+                return i;
+        }
+    }
+
+    /* Not found */
+    return -1;
+}
+
+/* Get extension from a stack of extensions by location.
+ *
+ * @param sk Stack of extensions
+ * @param loc Index of extension to retrieve
+ * @return Pointer to extension or NULL on error
+ */
+WOLFSSL_X509_EXTENSION* wolfSSL_X509v3_get_ext(
+    const WOLF_STACK_OF(WOLFSSL_X509_EXTENSION)* sk, int loc)
+{
+    WOLFSSL_ENTER("wolfSSL_X509v3_get_ext");
+
+    if (sk == NULL) {
+        WOLFSSL_MSG("Stack pointer is NULL");
+        return NULL;
+    }
+
+    if (loc < 0 || loc >= wolfSSL_sk_num(sk)) {
+        WOLFSSL_MSG("Invalid location argument");
+        return NULL;
+    }
+
+    return wolfSSL_sk_X509_EXTENSION_value(sk, loc);
+}
 
 /* Returns crit flag in X509_EXTENSION object */
 int wolfSSL_X509_EXTENSION_get_critical(const WOLFSSL_X509_EXTENSION* ex)
@@ -8327,7 +8386,7 @@ WOLFSSL_X509 *wolfSSL_d2i_X509_fp(XFILE fp, WOLFSSL_X509 **x509)
 /* @param file   file name to load                                 */
 /* @param type   WOLFSSL_FILETYPE_PEM or WOLFSSL_FILETYPE_ASN1     */
 /* @return a number of loading CRL or certificate, otherwise zero  */
-WOLFSSL_API int wolfSSL_X509_load_cert_crl_file(WOLFSSL_X509_LOOKUP *ctx,
+int wolfSSL_X509_load_cert_crl_file(WOLFSSL_X509_LOOKUP *ctx,
     const char *file, int type)
 {
     WOLFSSL_X509 *x509 = NULL;
@@ -8464,7 +8523,7 @@ WOLFSSL_API int wolfSSL_X509_load_cert_crl_file(WOLFSSL_X509_LOOKUP *ctx,
 #ifdef HAVE_CRL
 
 #ifndef NO_BIO
-WOLFSSL_API WOLFSSL_X509_CRL *wolfSSL_d2i_X509_CRL_bio(WOLFSSL_BIO *bp,
+WOLFSSL_X509_CRL *wolfSSL_d2i_X509_CRL_bio(WOLFSSL_BIO *bp,
                                                     WOLFSSL_X509_CRL **x)
 {
     int derSz;
@@ -8502,7 +8561,7 @@ WOLFSSL_X509_CRL *wolfSSL_d2i_X509_CRL_fp(XFILE fp, WOLFSSL_X509_CRL **crl)
 /* @param file  a file to read                                           */
 /* @param type  WOLFSSL_FILETYPE_PEM or WOLFSSL_FILETYPE_ASN1            */
 /* @return WOLFSSL_SUCCESS(1) on successful, otherwise WOLFSSL_FAILURE(0)*/
-WOLFSSL_API int wolfSSL_X509_load_crl_file(WOLFSSL_X509_LOOKUP *ctx,
+int wolfSSL_X509_load_crl_file(WOLFSSL_X509_LOOKUP *ctx,
                                              const char *file, int type)
 {
 #ifndef NO_BIO
@@ -10737,6 +10796,26 @@ static int CertFromX509(Cert* cert, WOLFSSL_X509* x509)
     cert->altSigValLen = x509->altSigValLen;
     cert->altSigValCrit = x509->altSigValCrit;
 #endif /* WOLFSSL_DUAL_ALG_CERTS */
+
+#if defined(WOLFSSL_ASN_TEMPLATE) && defined(WOLFSSL_CUSTOM_OID) && \
+    defined(HAVE_OID_ENCODING)
+
+    if ((x509->customExtCount < 0) ||
+            (x509->customExtCount >= NUM_CUSTOM_EXT)) {
+        WOLFSSL_MSG("Bad value for customExtCount.");
+        return WOLFSSL_FAILURE;
+    }
+
+    for (i = 0; i < x509->customExtCount; i++) {
+        if (wc_SetCustomExtension(cert, x509->custom_exts[i].crit,
+                x509->custom_exts[i].oid, x509->custom_exts[i].val,
+                x509->custom_exts[i].valSz))
+        {
+            return WOLFSSL_FAILURE;
+        }
+    }
+#endif /* WOLFSSL_ASN_TEMPLATE && WOLFSSL_CUSTOM_OID && HAVE_OID_ENCODING */
+
 #endif /* WOLFSSL_CERT_EXT */
 
 #ifdef WOLFSSL_CERT_REQ
@@ -12319,7 +12398,7 @@ err_exit:
     return NULL;
 }
 
-WOLFSSL_API WOLFSSL_X509* wolfSSL_PEM_read_X509(XFILE fp, WOLFSSL_X509 **x,
+WOLFSSL_X509* wolfSSL_PEM_read_X509(XFILE fp, WOLFSSL_X509 **x,
                                                 wc_pem_password_cb *cb, void *u)
 {
     return (WOLFSSL_X509* )wolfSSL_PEM_read_X509_ex(fp, (void **)x, cb, u,
@@ -12327,7 +12406,7 @@ WOLFSSL_API WOLFSSL_X509* wolfSSL_PEM_read_X509(XFILE fp, WOLFSSL_X509 **x,
 }
 
 #if defined(HAVE_CRL)
-WOLFSSL_API WOLFSSL_X509_CRL* wolfSSL_PEM_read_X509_CRL(XFILE fp,
+WOLFSSL_X509_CRL* wolfSSL_PEM_read_X509_CRL(XFILE fp,
                         WOLFSSL_X509_CRL **crl, wc_pem_password_cb *cb, void *u)
 {
     return (WOLFSSL_X509_CRL* )wolfSSL_PEM_read_X509_ex(fp, (void **)crl, cb, u,
@@ -15584,7 +15663,7 @@ int wolfSSL_X509_ACERT_get_serial_number(WOLFSSL_X509_ACERT* x509,
  * Returns WOLFSSL_SUCCESS on success.
  * Returns BAD_FUNC_ARG if input pointers are null.
  * */
-WOLFSSL_API int wolfSSL_X509_ACERT_get_attr_buf(const WOLFSSL_X509_ACERT* x509,
+int wolfSSL_X509_ACERT_get_attr_buf(const WOLFSSL_X509_ACERT* x509,
                                                 const byte ** rawAttr,
                                                 word32 * rawAttrLen)
 {
@@ -15599,7 +15678,7 @@ WOLFSSL_API int wolfSSL_X509_ACERT_get_attr_buf(const WOLFSSL_X509_ACERT* x509,
 }
 
 #ifndef NO_WOLFSSL_STUB
-WOLFSSL_API int wolfSSL_X509_ACERT_sign(WOLFSSL_X509_ACERT * x509,
+int wolfSSL_X509_ACERT_sign(WOLFSSL_X509_ACERT * x509,
                                         WOLFSSL_EVP_PKEY * pkey,
                                         const WOLFSSL_EVP_MD * md)
 {

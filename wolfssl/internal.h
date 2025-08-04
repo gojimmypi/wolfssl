@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -291,7 +291,7 @@
 #endif
 
 #if defined(WOLFSSL_RENESAS_TSIP_TLS)
-    #include <wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h>
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas_tsip_internal.h>
 #endif
 
 #include <wolfssl/wolfcrypt/hpke.h>
@@ -299,6 +299,10 @@
 #if defined(WOLFSSL_SNIFFER) && defined(WOLFSSL_SNIFFER_KEYLOGFILE)
 #include <wolfssl/sniffer.h>
 #endif /* WOLFSSL_SNIFFER && WOLFSSL_SNIFFER_KEYLOGFILE */
+
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+    #include <CoreFoundation/CoreFoundation.h>
+#endif /* WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
 
 #ifdef __cplusplus
     extern "C" {
@@ -4242,6 +4246,10 @@ struct WOLFSSL_CTX {
 #if defined(WOLFSSL_SYS_CRYPTO_POLICY)
     int secLevel; /* The security level of system-wide crypto policy. */
 #endif /* WOLFSSL_SYS_CRYPTO_POLICY */
+
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+    CFMutableArrayRef testTrustedCAs;
+#endif /* WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
 };
 
 WOLFSSL_LOCAL
@@ -4277,6 +4285,13 @@ int ProcessOldClientHello(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
     int AlreadyTrustedPeer(WOLFSSL_CERT_MANAGER* cm, DecodedCert* cert);
 #endif
 #endif
+
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+    WOLFSSL_API
+    int wolfSSL_TestAppleNativeCertValidation_AppendCA(WOLFSSL_CTX* ctx,
+                                                    const byte* derCert,
+                                                    int derLen);
+#endif /* WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
 
 /* All cipher suite related info
  * Keep as a constant size (no ifdefs) for session export */
@@ -6791,7 +6806,8 @@ WOLFSSL_LOCAL word32 MacSize(const WOLFSSL* ssl);
     WOLFSSL_LOCAL int DoClientHelloStateless(WOLFSSL* ssl,
             const byte* input, word32 helloSz, byte isFirstCHFrag, byte* tls13);
 #endif /* !defined(NO_WOLFSSL_SERVER) */
-#if !defined(WOLFCRYPT_ONLY) && defined(USE_WOLFSSL_IO)
+#if !defined(WOLFCRYPT_ONLY) && !defined(WOLFSSL_NO_SOCK) && \
+    (defined(USE_WOLFSSL_IO) || defined(WOLFSSL_USER_IO))
     WOLFSSL_LOCAL int sockAddrEqual(SOCKADDR_S *a, XSOCKLENT aLen,
                                     SOCKADDR_S *b, XSOCKLENT bLen);
 #endif
@@ -7134,8 +7150,9 @@ WOLFSSL_LOCAL WC_RNG* wolfssl_make_global_rng(void);
 
 #if !defined(WOLFCRYPT_ONLY) && defined(OPENSSL_EXTRA)
 #if defined(WOLFSSL_KEY_GEN) && defined(WOLFSSL_PEM_TO_DER)
-WOLFSSL_LOCAL int EncryptDerKey(byte *der, int *derSz, const WOLFSSL_EVP_CIPHER* cipher,
-    unsigned char* passwd, int passwdSz, byte **cipherInfo, int maxDerSz);
+WOLFSSL_LOCAL int EncryptDerKey(byte *der, int *derSz,
+    const WOLFSSL_EVP_CIPHER* cipher, unsigned char* passwd, int passwdSz,
+    byte **cipherInfo, int maxDerSz, int hashType);
 #endif
 #endif
 

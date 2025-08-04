@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -164,7 +164,11 @@ struct OS_Seed {
 
 #ifdef HAVE_HASHDRBG
 struct DRBG_internal {
+    #ifdef WORD64_AVAILABLE
+    word64 reseedCtr;
+    #else
     word32 reseedCtr;
+    #endif
     byte V[DRBG_SEED_LEN];
     byte C[DRBG_SEED_LEN];
     void* heap;

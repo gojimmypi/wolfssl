@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -42,9 +42,14 @@
     #endif
 #endif
 
-#if defined(__APPLE__) && defined(HAVE_SECURITY_SECTRUSTSETTINGS_H)
+#if defined(__APPLE__)
+#if defined(HAVE_SECURITY_SECTRUSTSETTINGS_H)
 #include <Security/SecTrustSettings.h>
-#endif
+#endif /* HAVE_SECURITY_SECTRUSTSETTINGS_H */
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+#include <CoreFoundation/CoreFoundation.h>
+#endif /* WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
+#endif /* __APPLE__ */
 
 #endif /* WOLFSSL_SYS_CA_CERTS */
 
@@ -950,8 +955,8 @@ static int ProcessBufferTryDecodeDilithium(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     word32 idx;
     dilithium_key* key;
     int keyFormatTemp = 0;
-    int keyTypeTemp;
-    int keySizeTemp;
+    int keyTypeTemp = 0;
+    int keySizeTemp = 0;
 
     /* Allocate a Dilithium key to parse into. */
     key = (dilithium_key*)XMALLOC(sizeof(dilithium_key), heap,
@@ -2156,8 +2161,50 @@ static int ProcessBufferCertHandleDer(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
 
     /* CA certificate to verify with. */
     if (type == CA_TYPE) {
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+        /* TEST ONLY CODE:
+         * Store the DER encoding of the CA certificate so we can append it to
+         * the list of trusted CA certificates if the subsequent call to AddCA
+         * is successful */
+        word32 derLen;
+        byte* derBuf;
+        if (ctx->doAppleNativeCertValidationFlag == 1) {
+            WOLFSSL_MSG("ANCV Test: copy DER CA cert");
+            derLen = der->length;
+            derBuf = (byte*)XMALLOC(derLen, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            if (derBuf == NULL) {
+                return MEMORY_E;
+            }
+            XMEMCPY(derBuf, der->buffer, derLen);
+        }
+        else {
+            (void)derLen;
+            (void)derBuf;
+        }
+#endif
         /* verify CA unless user set to no verify */
         ret = AddCA(ctx->cm, &der, WOLFSSL_USER_CA, verify);
+
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+        /* TEST ONLY CODE:
+         * Append the DER encoded CA certificate to the list of trusted CA
+         * certificates so we can inject them at verification time */
+        if (ret == 1 && ctx->doAppleNativeCertValidationFlag == 1) {
+            WOLFSSL_MSG("ANCV Test: Appending CA to cert list");
+            ret = wolfSSL_TestAppleNativeCertValidation_AppendCA(ctx, derBuf, (int)derLen);
+            if (ret == WOLFSSL_SUCCESS) {
+                WOLFSSL_MSG("ANCV Test: Clearing CA table");
+                /* Clear the CA table so we can ensure they won't be used for
+                 * verification */
+                ret = wolfSSL_CertManagerUnloadCAs(ctx->cm);
+                if (ret == WOLFSSL_SUCCESS) {
+                    ret = 0;
+                }
+            }
+            XFREE(derBuf, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+        }
+#endif /* !WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
+
         if (ret == 1) {
             ret = 0;
         }
@@ -2963,6 +3010,14 @@ int wolfSSL_CTX_load_verify_locations_ex(WOLFSSL_CTX* ctx, const char* file,
         ret = 0;
     }
 
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+    if (ret == 1) {
+    /* TEST ONLY CODE: force native cert validation on */
+        WOLFSSL_MSG("ANCV Test: Loading system CA certs");
+        wolfSSL_CTX_load_system_CA_certs(ctx);
+    }
+#endif
+
     if (ret == 1) {
         /* Get setting on how to verify certificates. */
         verify = GET_VERIFY_SETTING_CTX(ctx);
@@ -2975,19 +3030,19 @@ int wolfSSL_CTX_load_verify_locations_ex(WOLFSSL_CTX* ctx, const char* file,
             /* Load the PEM formatted CA file */
             ret = ProcessFile(ctx, file, WOLFSSL_FILETYPE_PEM, CA_TYPE, NULL, 0,
                 NULL, verify);
-    #ifndef NO_WOLFSSL_DIR
+#ifndef NO_WOLFSSL_DIR
             if (ret == 1) {
                 /* Include success in overall count. */
                 successCount++;
             }
-    #endif
-    #if defined(WOLFSSL_TRUST_PEER_CERT) && defined(OPENSSL_COMPATIBLE_DEFAULTS)
+#endif
+#if defined(WOLFSSL_TRUST_PEER_CERT) && defined(OPENSSL_COMPATIBLE_DEFAULTS)
             /* Load CA as a trusted peer certificate. */
             ret = wolfSSL_CTX_trust_peer_cert(ctx, file, WOLFSSL_FILETYPE_PEM);
             if (ret != 1) {
                 WOLFSSL_MSG("wolfSSL_CTX_trust_peer_cert error");
             }
-    #endif
+#endif
         }
     }
 
@@ -3440,6 +3495,11 @@ int wolfSSL_CTX_der_load_verify_locations(WOLFSSL_CTX* ctx, const char* file,
         ret = 0;
     }
     else {
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+        /* TEST ONLY CODE: force native cert validation on */
+        WOLFSSL_MSG("ANCV Test: loading system CA certs");
+        wolfSSL_CTX_load_system_CA_certs(ctx);
+#endif
         ret = ProcessFile(ctx, file, format, CA_TYPE, NULL, 0, NULL,
             GET_VERIFY_SETTING_CTX(ctx));
     }
@@ -3947,6 +4007,14 @@ int wolfSSL_CTX_load_verify_buffer_ex(WOLFSSL_CTX* ctx, const unsigned char* in,
     int verify;
 
     WOLFSSL_ENTER("wolfSSL_CTX_load_verify_buffer_ex");
+
+#ifdef WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION
+    /* TEST ONLY CODE: force native cert validation on */
+    if (ctx != NULL) {
+        WOLFSSL_MSG("ANCV Test: loading system CA certs");
+        wolfSSL_CTX_load_system_CA_certs(ctx);
+    }
+#endif
 
     /* Get setting on how to verify certificates. */
     verify = GET_VERIFY_SETTING_CTX(ctx);
@@ -5130,11 +5198,6 @@ int wolfSSL_add0_chain_cert(WOLFSSL* ssl, WOLFSSL_X509* x509)
             /* Push X509 object onto stack to be freed. */
             ret = wolfSSL_sk_X509_push(ssl->ourCertChain, x509) > 0
                     ? WOLFSSL_SUCCESS : WOLFSSL_FAILURE;
-            if (ret != 1) {
-                /* Free it now on error. */
-                wolfSSL_X509_free(x509);
-                x509 = NULL;
-            }
         }
     }
     return WS_RC(ret);

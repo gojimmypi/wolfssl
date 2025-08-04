@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -1323,7 +1323,8 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
         }
     }
 
-#ifdef ESP_MONITOR_HW_TASK_LOCK
+#if defined(ESP_MONITOR_HW_TASK_LOCK) || \
+   (defined(WOLFSSL_DEBUG_MUTEX) && WOLFSSL_DEBUG_MUTEX)
     /* Nothing happening here other than messages based on mutex states */
     if (mutex_ctx_task == 0 || mutex_ctx_owner == 0) {
         /* no known stray mutex task owner */
@@ -1359,13 +1360,15 @@ int esp_sha_try_hw_lock(WC_ESP32SHA* ctx)
             } /* mutex owner ESP32_SHA_FREED check */
         } /* mutex_ctx_task is current task */
         else {
+#ifdef WOLFSSL_ESP32_HW_LOCK_DEBUG
             ESP_LOGW(TAG, "Warning: sha mutex unlock from unexpected task.");
             ESP_LOGW(TAG, "Locking task: 0x%x", (word32)mutex_ctx_task);
             ESP_LOGW(TAG, "This xTaskGetCurrentTaskHandle: 0x%x",
                           (word32)xTaskGetCurrentTaskHandle());
+#endif
         }
     }
-#endif /* ESP_MONITOR_HW_TASK_LOCK */
+#endif /* ESP_MONITOR_HW_TASK_LOCK || WOLFSSL_DEBUG_MUTEX */
 
     /* check if this SHA has been operated as SW or HW, or not yet init */
     if (ctx->mode == ESP32_SHA_INIT) {

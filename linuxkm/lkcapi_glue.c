@@ -7,7 +7,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -43,14 +43,12 @@
     #include <linux/fips.h>
 #endif
 
-#if defined(HAVE_FIPS) && FIPS_VERSION3_LT(6,0,0)
-    /* need misc.c for ForceZero(). */
-    #ifdef NO_INLINE
-        #include <wolfssl/wolfcrypt/misc.h>
-    #else
-        #define WOLFSSL_MISC_INCLUDED
-        #include <wolfcrypt/src/misc.c>
-    #endif
+/* need misc.c for ForceZero(). */
+#ifdef NO_INLINE
+    #include <wolfssl/wolfcrypt/misc.h>
+#else
+    #define WOLFSSL_MISC_INCLUDED
+    #include <wolfcrypt/src/misc.c>
 #endif
 
 #ifndef WOLFSSL_LINUXKM_LKCAPI_PRIORITY
@@ -66,7 +64,8 @@
     #define WOLFSSL_LINUXKM_LKCAPI_PRIORITY 100000
 #endif
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#if defined(CONFIG_CRYPTO_MANAGER_EXTRA_TESTS) || \
+    defined(CONFIG_CRYPTO_SELFTESTS_FULL)
     static int disable_setkey_warnings = 0;
 #else
     #define disable_setkey_warnings 0
@@ -311,6 +310,7 @@ static int linuxkm_lkcapi_sysfs_deinstall(void) {
     return 0;
 }
 
+static volatile int linuxkm_lkcapi_registering_now = 0;
 static int linuxkm_lkcapi_registered = 0;
 static int linuxkm_lkcapi_n_registered = 0;
 
@@ -319,11 +319,14 @@ static int linuxkm_lkcapi_register(void)
     int ret = -1;
     int seen_err = 0;
 
+    linuxkm_lkcapi_registering_now = 1;
+
     ret = linuxkm_lkcapi_sysfs_install();
     if (ret)
-        return ret;
+        goto out;
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#if defined(CONFIG_CRYPTO_MANAGER_EXTRA_TESTS) || \
+    defined(CONFIG_CRYPTO_SELFTESTS_FULL)
     /* temporarily disable warnings around setkey failures, which are expected
      * from the crypto fuzzer in FIPS configs, and potentially in others.
      * unexpected setkey failures are fatal errors returned by the fuzzer.
@@ -593,7 +596,7 @@ static int linuxkm_lkcapi_register(void)
     * on here is for ECDH loading to be optional when fips and fips tests are
     * enabled. Failures because of !fips_allowed are skipped over.
     */
-    #if defined(CONFIG_CRYPTO_FIPS) &&                \
+    #if defined(HAVE_FIPS) && defined(CONFIG_CRYPTO_FIPS) && \
         defined(CONFIG_CRYPTO_MANAGER) &&             \
         !defined(CONFIG_CRYPTO_MANAGER_DISABLE_TESTS)
         #if defined(LINUXKM_ECC192)
@@ -694,7 +697,8 @@ static int linuxkm_lkcapi_register(void)
 #undef REGISTER_ALG
 #undef REGISTER_ALG_OPTIONAL
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#if defined(CONFIG_CRYPTO_MANAGER_EXTRA_TESTS) || \
+    defined(CONFIG_CRYPTO_SELFTESTS_FULL)
     disable_setkey_warnings = 0;
 #endif
 
@@ -703,11 +707,14 @@ static int linuxkm_lkcapi_register(void)
 
     if (ret == -1) {
         /* no installations occurred */
-        if (linuxkm_lkcapi_registered)
-            return -EEXIST;
+        if (linuxkm_lkcapi_registered) {
+            ret = -EEXIST;
+            goto out;
+        }
         else {
             linuxkm_lkcapi_registered = 1;
-            return 0;
+            ret = 0;
+            goto out;
         }
     }
     else {
@@ -715,8 +722,15 @@ static int linuxkm_lkcapi_register(void)
          * occurred.
          */
         linuxkm_lkcapi_registered = 1;
-        return seen_err;
+        ret = seen_err;
+        goto out;
     }
+
+out:
+
+    linuxkm_lkcapi_registering_now = 0;
+
+    return ret;
 }
 
 static int linuxkm_lkcapi_unregister(void)

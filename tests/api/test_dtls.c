@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -898,6 +898,7 @@ int test_dtls13_longer_length(void)
     struct test_memio_ctx test_ctx;
     unsigned char readBuf[50];
     int seq16bit = 0;
+    int ret;
 
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
 
@@ -930,7 +931,8 @@ int test_dtls13_longer_length(void)
     ExpectIntEQ(test_ctx.s_len, 0);
 
     ExpectIntEQ(test_dtls_communication(ssl_s, ssl_c), TEST_SUCCESS);
-    ExpectIntEQ(test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s), TEST_SUCCESS);
+    ret = test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s);
+    ExpectIntEQ(ret, TEST_SUCCESS);
 
     return EXPECT_RESULT();
 }
@@ -950,6 +952,7 @@ int test_dtls13_short_read(void)
     struct test_memio_ctx test_ctx;
     unsigned char readBuf[50];
     int i;
+    int ret;
 
     /* we setup two test, in the first one the server reads just two bytes of
      * the header, in the second one it reads just the header (5) */
@@ -980,8 +983,8 @@ int test_dtls13_short_read(void)
         ExpectIntEQ(test_ctx.s_len, 0);
 
         ExpectIntEQ(test_dtls_communication(ssl_s, ssl_c), TEST_SUCCESS);
-        ExpectIntEQ(test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s),
-            TEST_SUCCESS);
+        ret = test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s);
+        ExpectIntEQ(ret, TEST_SUCCESS);
         ssl_c = ssl_s = NULL;
         ctx_c = ctx_s = NULL;
     }
@@ -1004,6 +1007,7 @@ int test_dtls12_short_read(void)
     struct test_memio_ctx test_ctx;
     unsigned char readBuf[50];
     int i;
+    int ret;
 
     for (i = 0; i < 3; i++) {
         XMEMSET(&test_ctx, 0, sizeof(test_ctx));
@@ -1041,8 +1045,8 @@ int test_dtls12_short_read(void)
         ExpectIntEQ(test_ctx.s_len, 0);
 
         ExpectIntEQ(test_dtls_communication(ssl_s, ssl_c), TEST_SUCCESS);
-        ExpectIntEQ(test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s),
-            TEST_SUCCESS);
+        ret = test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s);
+        ExpectIntEQ(ret, TEST_SUCCESS);
         ssl_c = ssl_s = NULL;
         ctx_c = ctx_s = NULL;
     }
@@ -1064,6 +1068,7 @@ int test_dtls12_record_length_mismatch(void)
     WOLFSSL *ssl_c = NULL, *ssl_s = NULL;
     struct test_memio_ctx test_ctx;
     unsigned char readBuf[50];
+    int ret;
 
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
 
@@ -1090,7 +1095,8 @@ int test_dtls12_record_length_mismatch(void)
     ExpectIntEQ(test_ctx.s_len, 0);
 
     ExpectIntEQ(test_dtls_communication(ssl_s, ssl_c), TEST_SUCCESS);
-    ExpectIntEQ(test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s), TEST_SUCCESS);
+    ret = test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s);
+    ExpectIntEQ(ret, TEST_SUCCESS);
 
     return EXPECT_RESULT();
 }
@@ -1101,7 +1107,7 @@ int test_dtls_record_cross_boundaries(void)
     WOLFSSL_CTX *ctx_c = NULL, *ctx_s = NULL;
     WOLFSSL *ssl_c = NULL, *ssl_s = NULL;
     struct test_memio_ctx test_ctx;
-    unsigned char readBuf[100];
+    unsigned char readBuf[256];
     int rec0_len, rec1_len;
 
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
@@ -1124,7 +1130,8 @@ int test_dtls_record_cross_boundaries(void)
     rec1_len = test_ctx.s_msg_sizes[1];
 
     ExpectIntLE(rec0_len + rec1_len, sizeof(readBuf));
-    XMEMCPY(readBuf, test_ctx.s_buff, rec0_len + rec1_len);
+    if (EXPECT_SUCCESS())
+        XMEMCPY(readBuf, test_ctx.s_buff, rec0_len + rec1_len);
 
     /* clear buffer */
     test_memio_clear_buffer(&test_ctx, 0);
@@ -1175,6 +1182,7 @@ int test_dtls_short_ciphertext(void)
     WOLFSSL *ssl_c = NULL, *ssl_s = NULL;
     struct test_memio_ctx test_ctx;
     unsigned char readBuf[50];
+    int ret;
 
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
 
@@ -1207,7 +1215,8 @@ int test_dtls_short_ciphertext(void)
 
     ExpectIntEQ(test_dtls_communication(ssl_s, ssl_c), TEST_SUCCESS);
 
-    ExpectIntEQ(test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s), TEST_SUCCESS);
+    ret = test_dtls_shutdown(ssl_s, ssl_c, ctx_c, ctx_s);
+    ExpectIntEQ(ret, TEST_SUCCESS);
 
     return EXPECT_RESULT();
 }
@@ -1247,7 +1256,7 @@ int test_records_span_network_boundaries(void)
     WOLFSSL_CTX *ctx_c = NULL, *ctx_s = NULL;
     WOLFSSL *ssl_c = NULL, *ssl_s = NULL;
     struct test_memio_ctx test_ctx;
-    unsigned char readBuf[50];
+    unsigned char readBuf[256];
     int record_len;
 
     XMEMSET(&test_ctx, 0, sizeof(test_ctx));
@@ -1263,10 +1272,11 @@ int test_records_span_network_boundaries(void)
     /* create a good record in the buffer */
     wolfSSL_SetLoggingPrefix("client");
     ExpectIntEQ(wolfSSL_write(ssl_c, "test", 4), 4);
-    ExpectIntLE(test_ctx.s_len, 50);
+    ExpectIntLE(test_ctx.s_len, sizeof(readBuf));
     ExpectIntGT(test_ctx.s_len, 10);
     record_len = test_ctx.s_len;
-    XMEMCPY(readBuf, test_ctx.s_buff, record_len);
+    if (EXPECT_SUCCESS())
+        XMEMCPY(readBuf, test_ctx.s_buff, record_len);
 
     /* drop record and simulate a split write */
     ExpectIntEQ(test_memio_drop_message(&test_ctx, 0, 0), 0);

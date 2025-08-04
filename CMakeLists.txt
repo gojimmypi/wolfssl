@@ -34,7 +34,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
      You must delete them, or cmake will refuse to work.")
 endif()
 
-project(wolfssl VERSION 5.8.0 LANGUAGES C ASM)
+project(wolfssl VERSION 5.8.2 LANGUAGES C ASM)
 
 # Set WOLFSSL_ROOT if not already defined
 if ("${WOLFSSL_ROOT}" STREQUAL "")
@@ -49,11 +49,11 @@ endif()
 
 # shared library versioning
 # increment if interfaces have been removed or changed
-set(WOLFSSL_LIBRARY_VERSION_FIRST 43)
+set(WOLFSSL_LIBRARY_VERSION_FIRST 44)
 
 # increment if interfaces have been added
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented
-set(WOLFSSL_LIBRARY_VERSION_SECOND 1)
+set(WOLFSSL_LIBRARY_VERSION_SECOND 0)
 
 # increment if source code has changed
 # set to zero if WOLFSSL_LIBRARY_VERSION_FIRST is incremented or
@@ -435,6 +435,7 @@ if(WOLFSSL_CURL)
     set(WOLFSSL_MD4 "yes")
     set(WOLFSSL_DES3 "yes")
     set(WOLFSSL_ALPN "yes")
+    set(WOLFSSL_EX_DATA "yes")
     set(WOLFSSL_WOLFSSH "yes")
     set(WOLFSSL_OPENSSLEXTRA "yes")
     set(WOLFSSL_CRL "yes")
@@ -1156,8 +1157,8 @@ endif()
 
 # Old TLS
 add_option("WOLFSSL_OLD_TLS"
-    "Enable old TLS versions < 1.2 (default: enabled)"
-    "yes" "yes;no")
+    "Enable old TLS versions < 1.2 (default: disabled)"
+    "no" "yes;no")
 
 if(NOT WOLFSSL_OLD_TLS)
     list(APPEND WOLFSSL_DEFINITIONS "-DNO_OLD_TLS")
@@ -1408,17 +1409,25 @@ if(WOLFSSL_OPENSSH OR WOLFSSL_WPAS)
 endif()
 
 # MD5
-set(WOLFSSL_MD5_HELP_STRING "Enable MD5 (default: enabled)")
-add_option("WOLFSSL_MD5" ${WOLFSSL_MD5_HELP_STRING} "yes" "yes;no")
+set(WOLFSSL_MD5_HELP_STRING "Enable MD5 (default: disabled)")
+add_option("WOLFSSL_MD5" ${WOLFSSL_MD5_HELP_STRING} "no" "yes;no")
+
+if(WOLFSSL_WPAS OR
+   WOLFSSL_HAPROXY OR
+   WOLFSSL_NGINX OR
+   WOLFSSL_OPENSSH OR
+   WOLFSSL_OPENSSLEXTRA OR
+   WOLFSSL_OPENVPN OR
+   WOLFSSL_OLD_TLS OR
+   WOLFSSL_FORTRESS OR
+   WOLFSSL_LIGHTY OR
+   WOLFSSL_DES3 OR
+   WOLFSSL_OPENSSLALL)
+    override_cache(WOLFSSL_MD5 "yes")
+endif()
 
 if(NOT WOLFSSL_MD5)
     list(APPEND WOLFSSL_DEFINITIONS "-DNO_MD5" "-DNO_OLD_TLS")
-else()
-    # turn off MD5 if leanpsk or leantls on
-    if(WOLFSSL_LEAN_PSK OR WOLFSSL_LEAN_TLS)
-        list(APPEND WOLFSSL_DEFINITIONS "-DNO_MD5" "-DNO_OLD_TLS")
-        override_cache(WOLFSSL_MD5 "no")
-    endif()
 endif()
 
 # SHA

@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -634,7 +634,8 @@ WC_MISC_STATIC WC_INLINE int ConstantCompare(const byte* a, const byte* b,
 #endif
 
 
-#if defined(WOLFSSL_NO_CT_OPS) && (!defined(NO_RSA) || !defined(WOLFCRYPT_ONLY))
+#if defined(WOLFSSL_NO_CT_OPS) && (!defined(NO_RSA) || !defined(WOLFCRYPT_ONLY)) \
+    && (!defined(WOLFSSL_RSA_VERIFY_ONLY))
 /* constant time operations with mask are required for RSA and TLS operations */
 #warning constant time operations required unless using NO_RSA & WOLFCRYPT_ONLY
 #endif
@@ -1009,9 +1010,12 @@ WC_MISC_STATIC WC_INLINE void ato64(const byte *in, w64wrapper *w64)
 #ifdef BIG_ENDIAN_ORDER
     XMEMCPY(&w64->n, in, sizeof(w64->n));
 #else
-    word64 _in;
-    XMEMCPY(&_in, in, sizeof(_in));
-    w64->n = ByteReverseWord64(_in);
+    union {
+        word64 w;
+        byte b[sizeof(word64)];
+    } _in;
+    XMEMCPY(_in.b, in, sizeof(_in));
+    w64->n = ByteReverseWord64(_in.w);
 #endif /* BIG_ENDIAN_ORDER */
 }
 

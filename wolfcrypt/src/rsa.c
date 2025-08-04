@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -60,9 +60,9 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #if defined(WOLFSSL_LINUXKM) && !defined(WOLFSSL_SP_ASM)
     /* force off unneeded vector register save/restore. */
     #undef SAVE_VECTOR_REGISTERS
-    #define SAVE_VECTOR_REGISTERS(fail_clause) WC_DO_NOTHING
+    #define SAVE_VECTOR_REGISTERS(fail_clause) SAVE_NO_VECTOR_REGISTERS(fail_clause)
     #undef RESTORE_VECTOR_REGISTERS
-    #define RESTORE_VECTOR_REGISTERS() WC_DO_NOTHING
+    #define RESTORE_VECTOR_REGISTERS() RESTORE_NO_VECTOR_REGISTERS()
 #endif
 
 /*
@@ -2594,7 +2594,7 @@ static int RsaFunctionPrivate(mp_int* tmp, RsaKey* key, WC_RNG* rng)
     }
 #else
     if (ret == 0 && (mp_iszero(&key->p) || mp_iszero(&key->q) ||
-            mp_iszero(&key->dP) || mp_iszero(&key->dQ))) {
+            mp_iszero(&key->dP) || mp_iszero(&key->dQ) || mp_iszero(&key->u))) {
         if (mp_exptmod(tmp, &key->d, &key->n, tmp) != MP_OKAY) {
             ret = MP_EXPTMOD_E;
         }
@@ -2925,7 +2925,8 @@ static int wc_RsaFunctionAsync(const byte* in, word32 inLen, byte* out,
 }
 #endif /* WOLFSSL_ASYNC_CRYPT && WC_ASYNC_ENABLE_RSA */
 
-#if defined(WC_RSA_DIRECT) || defined(WC_RSA_NO_PADDING) || defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
+#if defined(WC_RSA_DIRECT) || defined(WC_RSA_NO_PADDING) || \
+    defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
 /* Performs direct RSA computation without padding. The input and output must
  * match the key size (ex: 2048-bits = 256 bytes). Returns the size of the
  * output on success or negative value on failure. */
@@ -3011,7 +3012,8 @@ int wc_RsaDirect(byte* in, word32 inLen, byte* out, word32* outSz,
 
     return ret;
 }
-#endif /* WC_RSA_DIRECT || WC_RSA_NO_PADDING || OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
+#endif /* WC_RSA_DIRECT || WC_RSA_NO_PADDING || OPENSSL_EXTRA || \
+        * OPENSSL_EXTRA_X509_SMALL */
 
 #if defined(WOLFSSL_CRYPTOCELL)
 static int cc310_RsaPublicEncrypt(const byte* in, word32 inLen, byte* out,
@@ -3600,6 +3602,9 @@ static int RsaPrivateDecryptEx(const byte* in, word32 inLen, byte* out,
         ret = wc_CryptoCb_RsaPad(in, inLen, out,
                             &outLen, rsa_type, key, rng, &padding);
         if (ret != WC_NO_ERR_TRACE(CRYPTOCB_UNAVAILABLE)) {
+            if (outPtr != NULL) {
+                *outPtr = out;
+            }
             if (ret == 0) {
                 ret = (int)outLen;
             }

@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -26,6 +26,9 @@
 #endif
 
 #include <wolfssl/wolfcrypt/cpuid.h>
+#ifdef HAVE_ENTROPY_MEMUSE
+    #include <wolfssl/wolfcrypt/random.h>
+#endif
 #ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>
 #endif
@@ -57,10 +60,10 @@
     #include <wolfssl/wolfcrypt/port/atmel/atmel.h>
 #endif
 #if defined(WOLFSSL_RENESAS_TSIP)
-    #include <wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h>
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas_tsip_internal.h>
 #endif
 #if defined(WOLFSSL_RENESAS_FSPSM)
-    #include <wolfssl/wolfcrypt/port/Renesas/renesas-fspsm-crypt.h>
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas_fspsm_internal.h>
 #endif
 #if defined(WOLFSSL_RENESAS_RX64_HASH)
     #include <wolfssl/wolfcrypt/port/Renesas/renesas-rx64-hw-crypt.h>
@@ -2210,32 +2213,7 @@ int wolfSSL_HwPkMutexUnLock(void)
     }
 #elif defined(WOLFSSL_LINUXKM)
 
-    /* Linux kernel mutex routines are voids, alas. */
-
-    int wc_InitMutex(wolfSSL_Mutex* m)
-    {
-        mutex_init(m);
-        return 0;
-    }
-
-    int wc_FreeMutex(wolfSSL_Mutex* m)
-    {
-        mutex_destroy(m);
-        return 0;
-    }
-
-    int wc_LockMutex(wolfSSL_Mutex* m)
-    {
-        mutex_lock(m);
-        return 0;
-    }
-
-
-    int wc_UnLockMutex(wolfSSL_Mutex* m)
-    {
-        mutex_unlock(m);
-        return 0;
-    }
+    /* defined as inlines in linuxkm/linuxkm_wc_port.h */
 
 #elif defined(WOLFSSL_VXWORKS)
 
@@ -4650,7 +4628,13 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
 noinstr void my__alt_cb_patch_nops(struct alt_instr *alt, __le32 *origptr,
                                    __le32 *updptr, int nr_inst)
 {
-    return (wolfssl_linuxkm_get_pie_redirect_table()->
-            alt_cb_patch_nops)(alt, origptr, updptr, nr_inst);
+    return WC_LKM_INDIRECT_SYM(alt_cb_patch_nops)
+        (alt, origptr, updptr, nr_inst);
+}
+
+void my__queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
+{
+    return WC_LKM_INDIRECT_SYM(queued_spin_lock_slowpath)
+        (lock, val);
 }
 #endif

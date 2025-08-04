@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -1386,8 +1386,8 @@ static void dilithium_encode_gamma1_19_bits(const sword32* z, byte* s)
                    ((word64)z2 << 40) | ((word64)z3 << 60);
     #else
         word32* s32p = (word32*)s;
-        s32p[0] = (word16)( z0        | (z1 << 20)             );
-        s32p[1] = (word16)((z1 >> 12) | (z2 <<  8) | (z3 << 28));
+        s32p[0] = (word32)( z0        | (z1 << 20)             );
+        s32p[1] = (word32)((z1 >> 12) | (z2 <<  8) | (z3 << 28));
     #endif
         s16p[4] = (word16)((z3 >>  4)                          );
 #else
@@ -2307,7 +2307,7 @@ static int dilithium_expand_a(wc_Shake* shake128, const byte* pub_seed, byte k,
 #define DILITHIUM_COEFF_S_VALID_ETA2(b) \
     ((b) < DILITHIUM_ETA_2_MOD)
 
-static const char dilithium_coeff_eta2[] = {
+static const signed char dilithium_coeff_eta2[] = {
     2, 1, 0, -1, -2,
     2, 1, 0, -1, -2,
     2, 1, 0, -1, -2
@@ -6682,7 +6682,6 @@ static int dilithium_sign_with_seed_mu(dilithium_key* key,
                             ze += DILITHIUM_GAMMA1_17_ENC_BITS / 2 *
                                   DILITHIUM_N / 4;
                         }
-                        else
                     #endif
                     #if !defined(WOLFSSL_NO_ML_DSA_65) || \
                         !defined(WOLFSSL_NO_ML_DSA_87)
@@ -9684,11 +9683,14 @@ int wc_Dilithium_PrivateKeyDecode(const byte* input, word32* inOutIdx,
     dilithium_key* key, word32 inSz)
 {
     int ret = 0;
+    const byte* seed = NULL;
     const byte* privKey = NULL;
     const byte* pubKey = NULL;
+    word32 seedLen = 0;
     word32 privKeyLen = 0;
     word32 pubKeyLen = 0;
     int keyType = 0;
+    int autoKeyType = ANONk;
 
     /* Validate parameters. */
     if ((input == NULL) || (inOutIdx == NULL) || (key == NULL) || (inSz == 0)) {
@@ -9732,21 +9734,45 @@ int wc_Dilithium_PrivateKeyDecode(const byte* input, word32* inOutIdx,
 
     if (ret == 0) {
         /* Decode the asymmetric key and get out private and public key data. */
+#ifndef WOLFSSL_ASN_TEMPLATE
         ret = DecodeAsymKey_Assign(input, inOutIdx, inSz,
+                                   NULL, NULL,
                                    &privKey, &privKeyLen,
-                                   &pubKey, &pubKeyLen, &keyType);
-        if (ret == 0
-#ifdef WOLFSSL_WC_DILITHIUM
-            && key->params == NULL
-#endif
-        ) {
+                                   &pubKey, &pubKeyLen, &autoKeyType);
+#else
+        ret = DecodeAsymKey_Assign(input, inOutIdx, inSz,
+                                   &seed, &seedLen,
+                                   &privKey, &privKeyLen,
+                                   &pubKey, &pubKeyLen, &autoKeyType);
+#endif /* WOLFSSL_ASN_TEMPLATE */
+    }
+
+    if (ret == 0) {
+        if (keyType == ANONk && autoKeyType != ANONk) {
             /* Set the security level based on the decoded key. */
-            ret = mapOidToSecLevel(keyType);
+            ret = mapOidToSecLevel(autoKeyType);
             if (ret > 0) {
                 ret = wc_dilithium_set_level(key, (byte)ret);
             }
         }
+        else if (keyType != ANONk && autoKeyType != ANONk) {
+            if (keyType == autoKeyType)
+                ret = 0;
+            else
+                ret = ASN_PARSE_E;
+        }
+        else if (keyType != ANONk && autoKeyType == ANONk) {
+            ret = 0;
+        }
+        else { /* keyType == ANONk && autoKeyType == ANONk */
+            /*
+             * When decoding traditional format with not specifying a level will
+             * cause this error.
+             */
+            ret = ASN_PARSE_E;
+        }
     }
+
     if ((ret == 0) && (pubKey == NULL) && (pubKeyLen == 0)) {
         /* Check if the public key is included in the private key. */
     #if defined(WOLFSSL_DILITHIUM_FIPS204_DRAFT)
@@ -9794,21 +9820,36 @@ int wc_Dilithium_PrivateKeyDecode(const byte* input, word32* inOutIdx,
     }
 
     if (ret == 0) {
-        /* Check whether public key data was found. */
-#if defined(WOLFSSL_DILITHIUM_PUBLIC_KEY)
-        if (pubKeyLen == 0)
+        /* Generate a key pair if seed exists and decoded key pair is ignored */
+        if (seedLen != 0) {
+#if defined(WOLFSSL_WC_DILITHIUM)
+            if (seedLen == DILITHIUM_SEED_SZ) {
+                ret = wc_dilithium_make_key_from_seed(key, seed);
+            }
+            else {
+                ret = ASN_PARSE_E;
+            }
+#else
+            ret = NOT_COMPILED_IN;
 #endif
-        {
-            /* No public key data, only import private key data. */
-            ret = wc_dilithium_import_private(privKey, privKeyLen, key);
         }
 #if defined(WOLFSSL_DILITHIUM_PUBLIC_KEY)
-        else {
+        /* Check whether public key data was found. */
+        else if (pubKeyLen != 0 && privKeyLen != 0) {
             /* Import private and public key data. */
             ret = wc_dilithium_import_key(privKey, privKeyLen, pubKey,
                 pubKeyLen, key);
         }
 #endif
+        else if (pubKeyLen == 0 && privKeyLen != 0)
+        {
+            /* No public key data, only import private key data. */
+            ret = wc_dilithium_import_private(privKey, privKeyLen, key);
+        }
+        else {
+            /* Not a problem of ASN.1 structure, but the contents is invalid */
+            ret = ASN_PARSE_E;
+        }
     }
 
     (void)pubKey;
