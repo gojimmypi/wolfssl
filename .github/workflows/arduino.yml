@@ -7,7 +7,7 @@ name: Arduino CI Build
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ '*', 'master', 'main', 'release/**' ]
+    branches: [ 'disabled', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
 
