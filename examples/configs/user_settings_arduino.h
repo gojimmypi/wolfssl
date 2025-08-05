@@ -61,6 +61,8 @@
 
 #if defined (__AVR__)
     /* Do not enable TLS on platforms without networking */
+#elif (defined(__SAMD21__) || defined(__SAMD51__)) && defined(ARDUINO_SAMD_ZERO)
+    /* No networking on ARDUINO_SAMD_ZERO */
 #else
     /* TLS 1.3                                 */
     #define WOLFSSL_TLS13
