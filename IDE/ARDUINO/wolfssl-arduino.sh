@@ -26,6 +26,9 @@
 # The Arduino library include file is "wolfssl.h" (all lower case)
 # The Published wolfSSL Arduino Registry is at https://github.com/wolfSSL/Arduino-wolfSSL.git
 # See https://downloads.arduino.cc/libraries/logs/github.com/wolfSSL/Arduino-wolfSSL/
+#
+echo "wolfssl-arduino.sh v5.8.1 rev A"
+
 ROOT_DIR="/wolfssl"
 
 # The Arduino Version will initially have a suffix appended during fine tuning stage.
@@ -70,18 +73,24 @@ if [ "$ROOT_DIR" = "" ]; then
     exit 1
 fi
 
+if [ "$ARDUINO_ROOT" = "" ]; then
+    echo "No ARDUINO_ROOT export... detecting..."
+    ARDUINO_ROOT="$HOME/Arduino/libraries"
 
-ARDUINO_ROOT="$HOME/Arduino/libraries"
-
-# Check environment
-if [ -n "$WSL_DISTRO_NAME" ]; then
-    # we found a non-blank WSL environment distro name
-    current_path="$(pwd)"
-    pattern="/mnt/?"
-    if echo "$current_path" | grep -Eq "^$pattern"; then
-        # if we are in WSL and shared Windows file system, 'ln' does not work.
-        ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
+    # Check environment
+    if [ -n "$WSL_DISTRO_NAME" ]; then
+        # we found a non-blank WSL environment distro name
+        echo "Found WSL: $WSL_DISTRO_NAME"
+        current_path="$(pwd)"
+        pattern="/mnt/?"
+        if echo "$current_path" | grep -Eq "^$pattern"; then
+            # if we are in WSL and shared Windows file system, 'ln' does not work.
+            ARDUINO_ROOT="/mnt/c/Users/$USER/Documents/Arduino/libraries"
+            echo "ARDUINO_ROOT set to $ARDUINO_ROOT"
+        fi
     fi
+else
+    echo "Using export ARDUINO_ROOT"
 fi
 echo "The Arduino library root is: $ARDUINO_ROOT"
 
@@ -173,7 +182,7 @@ THIS_DIR=${PWD##*/}
 if [ "$THIS_DIR" = "ARDUINO" ]; then
     # mkdir ./wolfssl
     if [ -d ".${ROOT_DIR}" ]; then
-        echo "ERROR: $(realpath ".${ROOT_DIR}") is not empty"
+        echo "ERROR: $(realpath ".${ROOT_DIR}") is not empty; failed prior install? Please remove."
         exit 1
     else
         echo "Step 01: mkdir .${ROOT_DIR}"
@@ -378,8 +387,15 @@ if [ "$THIS_OPERATION" = "INSTALL" ]; then
         echo "Installing to local directory:"
         if [ "$THIS_INSTALL_DIR" = "" ]; then
             echo "mv .$ROOT_DIR $ARDUINO_ROOT"
-            mv  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
-
+            if [ -n "$WSL_DISTRO_NAME" ]; then
+                echo "Set system.wsl_case_sensitive .$ROOT_DIR"
+                setfattr -x system.wsl_case_sensitive .$ROOT_DIR
+                # use copy instead of move to avoid possible system.wsl_case_sensitive warnings
+                cp -r  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
+                rm -rf ."$ROOT_DIR"
+            else
+                mv  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
+            fi
             echo "Arduino wolfSSL Version: $WOLFSSL_VERSION$WOLFSSL_VERSION_ARUINO_SUFFIX"
         else
             echo "cp -r .\"$ROOT_DIR\"/* \"$THIS_INSTALL_DIR\""
