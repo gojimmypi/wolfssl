@@ -319,6 +319,9 @@
         #define WOLFSSL_USER_IO
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
+
+        /* boards less than 32 bit int get tripped up on long OID values */
+        #define WOLFSSL_OLD_OID_SUM
     #elif defined(__arm__)
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
