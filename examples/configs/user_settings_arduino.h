@@ -63,7 +63,12 @@
     /* Do not enable TLS on platforms without networking */
 #elif (defined(__SAMD21__) || defined(__SAMD51__)) && defined(ARDUINO_SAMD_ZERO)
     /* No networking on ARDUINO_SAMD_ZERO */
-#else
+#elif defined(ARDUINO_TEENSY40)
+    /* No networking on TEENSY boards */
+#elif defined(ESP8266) || defined(ESP32) || \
+    defined(WIFI_101) || defined(WIFI_NINA) || defined(WIFIESPAT) || \
+    defined(ETHERNET_H) || defined(ARDUINO_TEENSY41) || \
+    defined(ARDUINO_SAMD_MKR1000)
     /* TLS 1.3                                 */
     #define WOLFSSL_TLS13
     #if defined(WOLFSSL_TLS13)
@@ -86,6 +91,8 @@
         /* WOLFSSL_SEND_HRR_COOKIE is needed to use DTLS 1.3 server */
         #define WOLFSSL_SEND_HRR_COOKIE
     #endif
+#else
+    /* unknown board / assume no networking */
 #endif
 
 
