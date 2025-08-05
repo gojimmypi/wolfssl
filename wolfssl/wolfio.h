@@ -262,6 +262,12 @@
         #define SOCKET_ECONNREFUSED ECONNREFUSED
         #define SOCKET_ECONNABORTED ECONNABORTED
     #endif
+#elif defined(ARDUINO)
+    #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
+        #define SOCKADDR_S        struct sockaddr_storage
+        #define SOCKADDR          struct sockaddr
+        #define SOCKADDR_IN       struct sockaddr_in
+    #endif
 #elif defined(USE_WINDOWS_API)
     /* no epipe yet */
     #ifndef WSAEPIPE

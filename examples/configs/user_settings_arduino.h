@@ -58,13 +58,28 @@
 #define RSA_LOW_MEM
 
 #define NO_OLD_TLS
+
 /* TLS 1.3                                 */
-/* #define WOLFSSL_TLS13 */
+#define WOLFSSL_TLS13
 #if defined(WOLFSSL_TLS13)
     #define HAVE_TLS_EXTENSIONS
     #define WC_RSA_PSS
     #define HAVE_HKDF
     #define HAVE_AEAD
+#endif
+
+/* Enable DTLS */
+#define WOLFSSL_DTLS 1
+#if defined(WOLFSSL_DTLS)
+    #define WOLFSSL_DTLS13
+
+    /* WOLFSSL_DTLS13 requires WOLFSSL_TLS13 */
+    #undef  WOLFSSL_TLS13
+    #define WOLFSSL_TLS13
+    #define USE_WOLFSSL_IO
+
+    /* WOLFSSL_SEND_HRR_COOKIE is needed to use DTLS 1.3 server */
+    #define WOLFSSL_SEND_HRR_COOKIE
 #endif
 
 /*  #define HAVE_SUPPORTED_CURVES  */
