@@ -69,6 +69,9 @@
     defined(WIFI_101) || defined(WIFI_NINA) || defined(WIFIESPAT) || \
     defined(ETHERNET_H) || defined(ARDUINO_TEENSY41) || \
     defined(ARDUINO_SAMD_MKR1000)
+
+    /* Only boards known to have networking will have TLS / DTLS enabled * /
+    *
     /* TLS 1.3                                 */
     #define WOLFSSL_TLS13
     #if defined(WOLFSSL_TLS13)

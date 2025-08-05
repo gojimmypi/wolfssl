@@ -430,15 +430,7 @@
     #define SOCKET_EPIPE       EPIPE
     #define SOCKET_ECONNREFUSED ECONNREFUSED
     #define SOCKET_ECONNABORTED ECONNABORTED
-#endif /* __WATCOMC__ || ARDUINO || USE_WINDOWS_API || __PPU */
-
-// TODO remove:
-    #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
-        #define SOCKADDR_S        struct sockaddr_storage
-        #define SOCKADDR          struct sockaddr
-        #define SOCKADDR_IN       struct sockaddr_in
-    #endif
-// end TODO
+#endif /* __WATCOMC__ || ARDUINO || USE_WINDOWS_API || __PPU || .. etc */
 
 #ifdef DEVKITPRO
     /* from network.h */
