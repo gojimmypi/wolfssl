@@ -93,6 +93,11 @@
             #define LWIP_PROVIDE_ERRNO 1
         #endif
     #elif defined(ARDUINO)
+        #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
+            #include <sys/socket.h>
+            #include <netinet/in.h>
+            #include <arpa/inet.h>
+        #endif
         /* TODO Add specific boards */
     #elif defined(FREESCALE_MQX)
         #include <posix.h>
