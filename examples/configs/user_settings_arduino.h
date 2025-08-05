@@ -70,9 +70,12 @@
     defined(ETHERNET_H) || defined(ARDUINO_TEENSY41) || \
     defined(ARDUINO_SAMD_MKR1000)
 
-    /* Only boards known to have networking will have TLS / DTLS enabled * /
-    *
-    /* TLS 1.3                                 */
+    /* Only boards known to have networking will have TLS / DTLS enabled */
+
+    #define HAVE_TLS_EXTENSIONS
+    #define HAVE_SUPPORTED_CURVES
+
+    /* Enable TLS 1.3                                 */
     #define WOLFSSL_TLS13
     #if defined(WOLFSSL_TLS13)
         #define HAVE_TLS_EXTENSIONS
@@ -103,9 +106,6 @@
 
 /* Cannot use WOLFSSL_NO_MALLOC with small stack */
 /* #define WOLFSSL_NO_MALLOC */
-
-#define HAVE_TLS_EXTENSIONS
-#define HAVE_SUPPORTED_CURVES
 
 /* To further reduce size, client or server functionality can be disabled.
  * Here, we check if the example code gave us a hint.
