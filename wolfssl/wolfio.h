@@ -282,6 +282,14 @@
         #define SOCKADDR          struct sockaddr
         #define SOCKADDR_IN       struct sockaddr_in
     #endif
+    #define SOCKET_EWOULDBLOCK EWOULDBLOCK
+    #define SOCKET_EAGAIN      EAGAIN
+    #define SOCKET_ETIMEDOUT   ETIMEDOUT
+    #define SOCKET_ECONNRESET  ECONNRESET
+    #define SOCKET_EINTR       EINTR
+    #define SOCKET_EPIPE       EPIPE
+    #define SOCKET_ECONNREFUSED ECONNREFUSED
+    #define SOCKET_ECONNABORTED ECONNABORTED
 #elif defined(USE_WINDOWS_API)
     /* no epipe yet */
     #ifndef WSAEPIPE
@@ -422,7 +430,15 @@
     #define SOCKET_EPIPE       EPIPE
     #define SOCKET_ECONNREFUSED ECONNREFUSED
     #define SOCKET_ECONNABORTED ECONNABORTED
-#endif /* USE_WINDOWS_API */
+#endif /* __WATCOMC__ || ARDUINO || USE_WINDOWS_API || __PPU */
+
+// TODO remove:
+    #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
+        #define SOCKADDR_S        struct sockaddr_storage
+        #define SOCKADDR          struct sockaddr
+        #define SOCKADDR_IN       struct sockaddr_in
+    #endif
+// end TODO
 
 #ifdef DEVKITPRO
     /* from network.h */
