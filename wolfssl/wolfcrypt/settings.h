@@ -321,12 +321,17 @@
         #define NO_WRITEV
 
         /* boards less than 32 bit int get tripped up on long OID values */
-        #define WOLFSSL_OLD_OID_SUM
+        /* demo #define WOLFSSL_OLD_OID_SUM */
     #elif defined(__arm__)
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV
-    #elif defined(ESP32) || defined(ESP8266)
+    #elif defined(ESP32)
         /* assume sockets available */
+    #elif defined(ESP8266)
+//        #define NO_TLS
+        #define WOLFSSL_NO_SOCK
+        #define WOLFSSL_USER_IO
+        #define NO_WRITEV
     #else
         #define WOLFSSL_NO_SOCK
     #endif
