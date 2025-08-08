@@ -17,12 +17,14 @@ on:
   push:
     branches: [ '**', 'master', 'main', 'release/**' ]
     paths:
+      - 'IDE/ARDUINO/**'
       - 'src/**'
       - 'wolfcrypt/**'
       - 'wolfssl/**'
   pull_request:
     branches: [ '**' ]
     paths:
+      - 'IDE/ARDUINO/**'
       - 'src/**'
       - 'wolfcrypt/**'
       - 'wolfssl/**'
