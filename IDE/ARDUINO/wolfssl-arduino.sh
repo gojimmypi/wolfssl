@@ -373,15 +373,15 @@ if [ "$THIS_OPERATION" = "INSTALL" ]; then
     # Nearly an ordinary copy, but we remove any lines with ">>" (typically edit with caution warning in comments)
     grep -v '>>' ../../examples/configs/user_settings_arduino.h > ".${ROOT_SRC_DIR}"/user_settings.h || exit 1
 
-    # Show the user_settings.h revision string:
+    echo "This user_settings.h revision string:"
     grep "WOLFSSL_USER_SETTINGS_ID" ."${ROOT_SRC_DIR}/user_settings.h"
     echo ""
 
     if [ "$THIS_INSTALL_IS_GITHUB" = "true" ]; then
         echo "Installing to GitHub directory: $THIS_INSTALL_DIR"
-        cp -r ."$ROOT_DIR"/* "$THIS_INSTALL_DIR" || exit 1
+        cp -r ."$ROOT_DIR"/* "$THIS_INSTALL_DIR"                || exit 1
         echo "Removing workspace library directory: .$ROOT_DIR"
-        rm -rf ".$ROOT_DIR"
+        rm -rf ".$ROOT_DIR"                                     || exit 1
     else
 
         echo "Installing to local directory:"
@@ -393,19 +393,19 @@ if [ "$THIS_OPERATION" = "INSTALL" ]; then
                 #
                 # use copy instead of move to avoid possible system.wsl_case_sensitive warnings
                 echo "cp -r  .\"$ROOT_DIR\" \"$ARDUINO_ROOT\""
-                      cp -r   ."$ROOT_DIR"   "$ARDUINO_ROOT" || exit 1
+                      cp -r   ."$ROOT_DIR"   "$ARDUINO_ROOT"    || exit 1
 
                 echo "rm -rf .\"$ROOT_DIR\""
-                      rm -rf  ."$ROOT_DIR"                   || exit 1
+                      rm -rf  ."$ROOT_DIR"                      || exit 1
             else
-                echo "mv .$ROOT_DIR   $ARDUINO_ROOT"
-                      mv."$ROOT_DIR" "$ARDUINO_ROOT"         || exit 1
+                echo "mv  .$ROOT_DIR   $ARDUINO_ROOT"
+                      mv ."$ROOT_DIR" "$ARDUINO_ROOT"           || exit 1
             fi
             echo "Arduino wolfSSL Version: $WOLFSSL_VERSION$WOLFSSL_VERSION_ARUINO_SUFFIX"
         else
             echo "cp -r .\"$ROOT_DIR\"/* \"$THIS_INSTALL_DIR\""
-            mkdir -p "$THIS_INSTALL_DIR" || exit 1
-            cp -r ."$ROOT_DIR"/* "$THIS_INSTALL_DIR" || exit 1
+            mkdir -p "$THIS_INSTALL_DIR"                        || exit 1
+            cp -r ."$ROOT_DIR"/* "$THIS_INSTALL_DIR"            || exit 1
         fi
     fi
 fi
