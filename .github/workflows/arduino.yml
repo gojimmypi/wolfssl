@@ -17,11 +17,15 @@ on:
   push:
     branches: [ '**', 'master', 'main', 'release/**' ]
     paths:
-      - 'Arduino/**'
+      - 'src/**'
+      - 'wolfcrypt/**'
+      - 'wolfssl/**'
   pull_request:
     branches: [ '**' ]
     paths:
-      - 'Arduino/**'
+      - 'src/**'
+      - 'wolfcrypt/**'
+      - 'wolfssl/**'
   workflow_dispatch:
 
 concurrency:
