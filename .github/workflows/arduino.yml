@@ -75,13 +75,17 @@ jobs:
         run: |
           echo "Start pwd:"
           pwd
-          # we're typically in /home/runner/work/wolfssl/wolfssl
+          # we're typically in $GITHUB_WORKSPACE=/home/runner/work/wolfssl/wolfssl
           # goto /home/runner/work to fetch wolfssl-examples
-          # $GITHUB_WORKSPACE typically /home/runner/work for repos
 
           echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
-          echo "$GITHUB_WORKSPACE=GITHUB_WORKSPACE"
-          pushd "$GITHUB_WORKSPACE"
+          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+          # Typically /home/runner/work
+          echo "GITHUB_WORK=$GITHUB_WORK"
+
+          pushd "$GITHUB_WORK"
           echo "Updated pwd for wolfssl-examples clone fetch: $(pwd)"
 
           git clone --depth 1 https://github.com/wolfSSL/wolfssl-examples.git wolfssl-examples-publish
@@ -100,12 +104,18 @@ jobs:
 
       - name: Install wolfSSL Arduino library
         run: |
+          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+          # Typically /home/runner/work
+          echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
           pushd ./IDE/ARDUINO
 
           # Set default ARDUINO_ROOT. TODO: once script is updated, this should be removed.
           export ARDUINO_ROOT="$HOME/Arduino/libraries"
-          export WOLFSSL_EXAMPLES_ROOT="$GITHUB_WORKSPACE/wolfssl-examples-publish"
+          export WOLFSSL_EXAMPLES_ROOT="$GITHUB_WORK/wolfssl-examples-publish"
 
           echo "ARDUINO_ROOT=$WOLFSSL_EXAMPLES_ROOT"
           echo "WOLFSSL_EXAMPLES_ROOT=$WOLFSSL_EXAMPLES_ROOT"
@@ -126,7 +136,7 @@ jobs:
           ls ../../../
 
           echo "Current pwd: $(pwd)"
-          export WOLFSSL_EXAMPLES_ROOT="$GITHUB_WORKSPACE/wolfssl-examples-publish"
+          export WOLFSSL_EXAMPLES_ROOT="$GITHUB_WORK/wolfssl-examples-publish"
           echo "WOLFSSL_EXAMPLES_ROOT=$WOLFSSL_EXAMPLES_ROOT"
 
           pushd $WOLFSSL_EXAMPLES_ROOT/Arduino
