@@ -104,7 +104,11 @@ jobs:
       - name: Compile Arduino Sketches for various boards
         run: |
           pwd
-          pushd ../../wolfssl-examples/Arduino
+          ls ../
+          ls ../../
+          ls ../../../
+
+          pushd ../wolfssl-examples/Arduino
           cd Arduino
           ./compile-all-examples.sh
           popd
