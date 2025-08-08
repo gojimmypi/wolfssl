@@ -81,7 +81,7 @@ jobs:
           echo "Current pwd for wolfssl-examples clone fetch:"
           pwd
           git clone --depth 1 https://github.com/wolfSSL/wolfssl-examples.git wolfssl-examples-publish
-          cd ./wolfssl-examples
+          cd ./wolfssl-examples-publish
           echo "WOLFSSL_EXAMPLES_ROOT=$(pwd)"
 
           # fetch open PR changes
