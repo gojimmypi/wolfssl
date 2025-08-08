@@ -55,12 +55,12 @@ jobs:
           arduino-cli config init
           arduino-cli core update-index
           arduino-cli core install arduino:avr      # Arduino Uno, Mega, Nano
-          # arduino-cli config add board_manager.additional_urls https://www.pjrc.com/teensy/package_teensy_index.json
-          # arduino-cli core update-index
+          arduino-cli config add board_manager.additional_urls https://www.pjrc.com/teensy/package_teensy_index.json
+          arduino-cli core update-index
           # arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
           # arduino-cli core update-index
           # arduino-cli core install esp32:esp32      # ESP32
-          # arduino-cli core install arduino:sam      # Arduino Due
+          arduino-cli core install arduino:sam      # Arduino Due
           # arduino-cli core install arduino:samd     # Arduino Zero
           # arduino-cli core install teensy:avr       # PJRC Teensy
           # arduino-cli core install esp8266:esp8266  # ESP8266
