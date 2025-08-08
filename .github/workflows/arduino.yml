@@ -2,9 +2,24 @@ name: Arduino CI Build (1 of 3) wolfssl
 
 # These 3 workflows are interdependent for the current $REPO_OWNER:
 # Arduino CI Build 1: https://github.com/$REPO_OWNER/wolfssl          #  /.github/workflows/arduino.yml
+#   - Builds Arduino library from local wolfssl and fetches wolfssl-examples
+#
 # Arduino CI Build 2: https://github.com/$REPO_OWNER/wolfssl-examples #  /.github/workflows/arduino.yml
+#   - Fetches current wolfSSL from other repo
+#   - Creates an updated Arduino library
+#   - Compiles local examples
+#
 # Arduino CI Build 3: https://github.com/$REPO_OWNER/Arduino-wolfssl  #  /.github/workflows/arduino.yml
-
+#    - Assembles and installs an updated Arduino wolfssl library
+#    - Copies only compile script copied from wolfssl-examples
+#    - Builds local examples
+#    - No other repos used
+#
+# ** NOTE TO MAINTAINERS **
+#
+# Suggest using winmerge or similar tool to keep the 3 arduino.yml files in relative sync.
+# Although there are some specific differences, most of the contents are otherwise identical.
+#
 # See https://github.com/wolfSSL/Arduino-wolfSSL
 #
 # To test locally:
@@ -55,10 +70,14 @@ jobs:
       - name: Install Arduino CLI
         run: |
           # Script to fetch and run install.sh from arduino/arduino-cli
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
 
-      - name: Add Arduino CLI to PATH
-        run: echo "${PWD}/bin" >> $GITHUB_PATH
+          # The install script will test to see if the recently installed apps in in the path
+          # So set it up in advance:
+          mkdir -p "${PWD}/bin"
+          echo "${PWD}/bin" >> $GITHUB_PATH
+
+          # Run install script:
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
 
       - name: Confirm Arduino CLI install
         run: arduino-cli version
@@ -132,11 +151,11 @@ jobs:
           echo "Path for wolfssl-examples-publish: $(pwd)"
           popd
 
-          echo "Checking Arduino library directories..."
 
 
       - name: Install wolfSSL Arduino library
         run: |
+          echo "Run the local wolfssl-arduino.sh install script to install wolfssl Arduino library.
           echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
           GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
@@ -161,27 +180,13 @@ jobs:
       #
       - name: Compile Arduino Sketches for various boards
         run: |
-          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
-          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-
-          # Typically /home/runner/work
-          echo "GITHUB_WORK=$GITHUB_WORK"
-
-          pwd
-          echo "Parent 1"
-          ls ../
-          echo "Parent 2"
-          ls ../../
-          echo "Parent 3"
-          ls ../../../
+          # Run the compile-all-examples.sh script for the cloned wolfssl-example
 
           echo "Current pwd: $(pwd)"
-          export WOLFSSL_EXAMPLES_ROOT="$GITHUB_WORK/wolfssl-examples-publish"
           echo "WOLFSSL_EXAMPLES_ROOT=$WOLFSSL_EXAMPLES_ROOT"
 
           pushd $WOLFSSL_EXAMPLES_ROOT/Arduino
-          #./compile-all-examples.sh
+          ./compile-all-examples.sh
           popd
 
       - name: Upload Compilation Artifacts
