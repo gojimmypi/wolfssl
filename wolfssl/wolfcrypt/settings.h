@@ -321,7 +321,13 @@
         #define NO_WRITEV
 
         /* boards less than 32 bit int get tripped up on long OID values */
-        /* demo #define WOLFSSL_OLD_OID_SUM */
+        #define WC_16BIT_CPU
+        #define WOLFSSL_OLD_OID_SUM
+    #elif defined(__SAM3X8E__)
+        #define WOLFSSL_NO_ATOMIC
+        #define WOLFSSL_NO_SOCK
+        #define WOLFSSL_USER_IO
+        #define NO_WRITEV
     #elif defined(__arm__)
         #define WOLFSSL_NO_SOCK
         #define NO_WRITEV

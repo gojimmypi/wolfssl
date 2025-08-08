@@ -386,15 +386,20 @@ if [ "$THIS_OPERATION" = "INSTALL" ]; then
 
         echo "Installing to local directory:"
         if [ "$THIS_INSTALL_DIR" = "" ]; then
-            echo "mv .$ROOT_DIR $ARDUINO_ROOT"
             if [ -n "$WSL_DISTRO_NAME" ]; then
-                echo "Set system.wsl_case_sensitive .$ROOT_DIR"
-                setfattr -x system.wsl_case_sensitive .$ROOT_DIR
+                # setfattr not installed by default
+                # echo "Set system.wsl_case_sensitive .$ROOT_DIR"
+                # setfattr -x system.wsl_case_sensitive .$ROOT_DIR
+                #
                 # use copy instead of move to avoid possible system.wsl_case_sensitive warnings
-                cp -r  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
-                rm -rf ."$ROOT_DIR"
+                echo "cp -r  .\"$ROOT_DIR\" \"$ARDUINO_ROOT\""
+                      cp -r   ."$ROOT_DIR"   "$ARDUINO_ROOT" || exit 1
+
+                echo "rm -rf .\"$ROOT_DIR\""
+                      rm -rf  ."$ROOT_DIR"                   || exit 1
             else
-                mv  ."$ROOT_DIR" "$ARDUINO_ROOT" || exit 1
+                echo "mv .$ROOT_DIR   $ARDUINO_ROOT"
+                      mv."$ROOT_DIR" "$ARDUINO_ROOT"         || exit 1
             fi
             echo "Arduino wolfSSL Version: $WOLFSSL_VERSION$WOLFSSL_VERSION_ARUINO_SUFFIX"
         else

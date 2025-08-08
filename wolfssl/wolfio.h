@@ -98,7 +98,12 @@
             /* TODO */
         #elif defined(__arm__)
             /* TODO */
-        #elif defined(ESP32) || defined(ESP8266)
+        #elif defined(ESP8266)
+            #define WOLFSSL_NO_SOCK
+            #define WOLFSSL_USER_IO
+            #define NO_WRITEV
+            /* No Sockets on ESP8266, thus no DTLS */
+        #elif defined(ESP32)
             #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
                 #include <sys/socket.h>
                 #include <netinet/in.h>
