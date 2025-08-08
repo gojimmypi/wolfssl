@@ -81,7 +81,8 @@ jobs:
 
           echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
           echo "$GITHUB_WORKSPACE=GITHUB_WORKSPACE"
-          pushd $GITHUB_WORKSPACE
+          pushd "$GITHUB_WORKSPACE"
+          echo "Updated pwd for wolfssl-examples clone fetch: $(pwd)"
 
           git clone --depth 1 https://github.com/wolfSSL/wolfssl-examples.git wolfssl-examples-publish
           cd ./wolfssl-examples-publish
