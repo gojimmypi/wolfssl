@@ -127,6 +127,13 @@ jobs:
       # See https://github.com/wolfSSL/wolfssl/pull/8514
       - name: Compile Arduino Sketches for various boards
         run: |
+          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+          # Typically /home/runner/work
+          echo "GITHUB_WORK=$GITHUB_WORK"
+
           pwd
           echo "Parent 1"
           ls ../
