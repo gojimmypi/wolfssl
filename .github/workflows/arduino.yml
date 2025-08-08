@@ -78,7 +78,7 @@ jobs:
           # goto /home/runner/work to fetch wolfssl-examples
           pushd ../../
           git clone --depth 1 https://github.com/wolfSSL/wolfssl-examples.git
-
+          cd ./wolfssl-examples
           # fetch open PR changes
           git remote add gojimmypi https://github.com/gojimmypi/wolfssl-examples.git
           git fetch --depth 1 gojimmypi examples_dev
