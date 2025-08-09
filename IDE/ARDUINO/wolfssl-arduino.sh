@@ -299,8 +299,8 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
 
         echo "Copy wolfssl_client_dtls example...."
         mkdir -p ".${EXAMPLES_DIR}"/wolfssl_client_dtls
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/wolfssl_client_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_client/wolfssl_client_dtls.ino                 || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_client/README.md                          || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/wolfssl_client_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_client_dtls/wolfssl_client_dtls.ino       || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_client_dtls/README.md                     || exit 1
 
         echo "Copy wolfssl_server example...."
         mkdir -p .${EXAMPLES_DIR}/wolfssl_server
@@ -309,8 +309,8 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
 
         echo "Copy wolfssl_server_dtls example...."
         mkdir -p .${EXAMPLES_DIR}/wolfssl_server_dtls
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/wolfssl_server_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_server/wolfssl_server_dtls.ino            || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_server/README.md                          || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/wolfssl_server_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_server_dtls/wolfssl_server_dtls.ino       || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_server_dtls/README.md                     || exit 1
 
         echo "Copy wolfssl_version example...."
         mkdir -p .${EXAMPLES_DIR}/wolfssl_version
