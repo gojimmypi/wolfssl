@@ -27,7 +27,7 @@
 # The Published wolfSSL Arduino Registry is at https://github.com/wolfSSL/Arduino-wolfSSL.git
 # See https://downloads.arduino.cc/libraries/logs/github.com/wolfSSL/Arduino-wolfSSL/
 #
-echo "wolfssl-arduino.sh v5.8.1 rev A"
+echo "wolfssl-arduino.sh v5.8.2 rev B"
 
 ROOT_DIR="/wolfssl"
 
@@ -276,6 +276,7 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
     echo "Destination EXAMPLES_DIR=.${EXAMPLES_DIR}"
     echo "EXAMPLES_DIR_REAL_PATH=${EXAMPLES_DIR_REAL_PATH}"
 
+    # Only explicit source code is copied to the Arduino library. Edit with caution, no automation:
     if [ -n "$WOLFSSL_EXAMPLES_ROOT" ]; then
         echo "Copy template example...."
         mkdir -p ".${EXAMPLES_DIR}"/template/wolfssl_library/src
@@ -288,23 +289,33 @@ if [ "$THIS_DIR" = "ARDUINO" ]; then
 
         echo "Copy wolfssl_AES_CTR example...."
         mkdir -p ".${EXAMPLES_DIR}"/wolfssl_AES_CTR
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_AES_CTR/wolfssl_AES_CTR.ino ".${EXAMPLES_DIR}"/wolfssl_AES_CTR/wolfssl_AES_CTR.ino || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_AES_CTR/README.md           ".${EXAMPLES_DIR}"/wolfssl_AES_CTR/README.md           || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_AES_CTR/wolfssl_AES_CTR.ino               ".${EXAMPLES_DIR}"/wolfssl_AES_CTR/wolfssl_AES_CTR.ino               || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_AES_CTR/README.md                         ".${EXAMPLES_DIR}"/wolfssl_AES_CTR/README.md                         || exit 1
 
         echo "Copy wolfssl_client example...."
         mkdir -p ".${EXAMPLES_DIR}"/wolfssl_client
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client/wolfssl_client.ino   ".${EXAMPLES_DIR}"/wolfssl_client/wolfssl_client.ino   || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client/README.md            ".${EXAMPLES_DIR}"/wolfssl_client/README.md            || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client/wolfssl_client.ino                 ".${EXAMPLES_DIR}"/wolfssl_client/wolfssl_client.ino                 || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client/README.md                          ".${EXAMPLES_DIR}"/wolfssl_client/README.md                          || exit 1
+
+        echo "Copy wolfssl_client_dtls example...."
+        mkdir -p ".${EXAMPLES_DIR}"/wolfssl_client_dtls
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/wolfssl_client_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_client/wolfssl_client_dtls.ino                 || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_client_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_client/README.md                          || exit 1
 
         echo "Copy wolfssl_server example...."
         mkdir -p .${EXAMPLES_DIR}/wolfssl_server
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server/wolfssl_server.ino   ".${EXAMPLES_DIR}"/wolfssl_server/wolfssl_server.ino   || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server/README.md            ".${EXAMPLES_DIR}"/wolfssl_server/README.md            || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server/wolfssl_server.ino                 ".${EXAMPLES_DIR}"/wolfssl_server/wolfssl_server.ino                 || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server/README.md                          ".${EXAMPLES_DIR}"/wolfssl_server/README.md                          || exit 1
+
+        echo "Copy wolfssl_server_dtls example...."
+        mkdir -p .${EXAMPLES_DIR}/wolfssl_server_dtls
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/wolfssl_server_dtls.ino       ".${EXAMPLES_DIR}"/wolfssl_server/wolfssl_server_dtls.ino            || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_server_dtls/README.md                     ".${EXAMPLES_DIR}"/wolfssl_server/README.md                          || exit 1
 
         echo "Copy wolfssl_version example...."
         mkdir -p .${EXAMPLES_DIR}/wolfssl_version
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_version/wolfssl_version.ino ".${EXAMPLES_DIR}"/wolfssl_version/wolfssl_version.ino || exit 1
-        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_version/README.md           ".${EXAMPLES_DIR}"/wolfssl_version/README.md           || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_version/wolfssl_version.ino               ".${EXAMPLES_DIR}"/wolfssl_version/wolfssl_version.ino               || exit 1
+        $CP_CMD "$WOLFSSL_EXAMPLES_ROOT"/Arduino/sketches/wolfssl_version/README.md                         ".${EXAMPLES_DIR}"/wolfssl_version/README.md                         || exit 1
     else
         NO_ARDUINO_EXAMPLES=1
     fi
