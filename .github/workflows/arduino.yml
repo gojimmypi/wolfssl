@@ -253,6 +253,7 @@ jobs:
             ls
             # Install wolfSSL as Arduino library in ARDUINO_ROOT
             echo "Calling ./compile-all-examples.sh"
+            cat  ./compile-all-examples.sh
             bash ./compile-all-examples.sh
           popd
           # End Compile Arduino Sketches for Various Boards
