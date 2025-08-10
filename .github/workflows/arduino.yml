@@ -124,9 +124,6 @@ jobs:
           echo "GITHUB_WORK=$(realpath           "$GITHUB_WORKSPACE/../..")"  >> "$GITHUB_ENV"
           echo "ARDUINO_ROOT=$(realpath          "$HOME/Arduino/libraries")"  >> "$GITHUB_ENV"
 
-          # Show repo-specific location of examples:
-          echo "WOLFSSL_EXAMPLES_ROOT=$(realpath "./Arduino/sketches")"       >> "$GITHUB_ENV"
-
           # Show predefined summary:
           echo "GITHUB_WORKSPACE      = $GITHUB_WORKSPACE"
 
@@ -144,7 +141,7 @@ jobs:
           # TODO
 
           # end Show wolfssl-examples
-          
+
     # - name: Shallow clone wolfssl
           # (not used, as wolfssl source is already here in wolfssl repo)
           #
@@ -172,12 +169,12 @@ jobs:
             cd ./wolfssl-examples-publish
             echo "WOLFSSL_EXAMPLES_ROOT=$(pwd)"
 
-          # fetch open PR changes
-          git remote add gojimmypi https://github.com/$REPO_OWNER/wolfssl-examples.git
-          git fetch --depth 1 gojimmypi examples_dev
-          git checkout examples_dev
-          echo "Path for wolfssl-examples-publish: $(pwd)"
-          popd
+            # fetch open PR changes
+            git remote add gojimmypi https://github.com/$REPO_OWNER/wolfssl-examples.git
+            git fetch --depth 1 gojimmypi examples_dev
+            git checkout examples_dev
+            echo "Path for wolfssl-examples-publish: $(pwd)"
+          popd # GITHUB_WORK
 
 
 
@@ -220,10 +217,17 @@ jobs:
           curl -L https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/examples_dev/Arduino/board_list.txt          -o "$WOLFSSL_EXAMPLES_DIRECTORY/board_list.txt"
           curl -L https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/examples_dev/Arduino/compile-all-examples.sh -o "$WOLFSSL_EXAMPLES_DIRECTORY/compile-all-examples.sh"
 
-          pushd $WOLFSSL_EXAMPLES_DIRECTORY
-            # ensure we can execute the script here (permissions lost during curl fetch)
+          pwd
+          cat ./compile-all-examples.sh
+          cat ./board_list.txt"
+
+          pushd "$WOLFSSL_EXAMPLES_DIRECTORY"
+
             echo "Current directory $PWD"
             ls
+            find ./examples -type f | sort
+
+            # ensure we can execute the script here (permissions lost during curl fetch)
             chmod +x ./compile-all-examples.sh
             echo "Found compile script: $(ls -al ./compile-all-examples.sh)"
           popd
@@ -244,7 +248,10 @@ jobs:
           pushd "$WOLFSSL_EXAMPLES_DIRECTORY"
             echo "Current directory $PWD"
             ls
-            ./compile-all-examples.sh
+            cat ./compile-all-examples.sh
+
+            chmod +x ./wolfssl-arduino.sh
+            bash     ./wolfssl-arduino.sh INSTALL  # Install wolfSSL as Arduino library in ARDUINO_ROOT
           popd
           # End Compile Arduino Sketches for Various Boards
 
