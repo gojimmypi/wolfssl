@@ -99,20 +99,20 @@ jobs:
         run: |
           arduino-cli config init
           arduino-cli core update-index
-          # arduino-cli config add board_manager.additional_urls https://www.pjrc.com/teensy/package_teensy_index.json
-          # arduino-cli core update-index
-          # arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          # arduino-cli core update-index
-          # arduino-cli core install esp32:esp32      # ESP32
-          arduino-cli core install arduino:avr      # Arduino Uno, Mega, Nano
-          # arduino-cli core install arduino:sam      # Arduino Due
-          # arduino-cli core install arduino:samd     # Arduino Zero
-          # arduino-cli core install teensy:avr       # PJRC Teensy
-          # arduino-cli core install esp8266:esp8266  # ESP8266
-          # arduino-cli lib install "ArduinoJson"     # Example dependency
-          # arduino-cli lib install "WiFiNINA"        # ARDUINO_SAMD_NANO_33_IOT
-          arduino-cli lib install "Ethernet"        # Install Ethernet library
-          # arduino-cli lib install "Bridge"          # Pseudo-network for things like arduino:samd:tian
+          arduino-cli config add board_manager.additional_urls https://www.pjrc.com/teensy/package_teensy_index.json
+          arduino-cli core update-index
+          arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32      # ESP32
+          arduino-cli core install arduino:avr      Arduino Uno, Mega, Nano
+          arduino-cli core install arduino:sam      # Arduino Due
+          arduino-cli core install arduino:samd     # Arduino Zero
+          arduino-cli core install teensy:avr       # PJRC Teensy
+          arduino-cli core install esp8266:esp8266  # ESP8266
+          arduino-cli lib install "ArduinoJson"     # Example dependency
+          arduino-cli lib install "WiFiNINA"        # ARDUINO_SAMD_NANO_33_IOT
+          arduino-cli lib install "Ethernet"        Install Ethernet library
+          arduino-cli lib install "Bridge"          # Pseudo-network for things like arduino:samd:tian
 
       - name: Set job environment variables
         run: |
@@ -232,7 +232,6 @@ jobs:
             # ensure we can execute the script here (permissions lost during curl fetch)
             chmod +x ./compile-all-examples.sh
             echo "Found compile script: $(ls -al ./compile-all-examples.sh)"
-            cat ./compile-all-examples.sh
           popd
 
           # End Get compile-all-examples.sh
@@ -252,10 +251,7 @@ jobs:
           echo "Change directory to Arduino examples..."
           pushd "$WOLFSSL_EXAMPLES_DIRECTORY"
             echo "Current directory:           $PWD"
-            ls -al
-            # Install wolfSSL as Arduino library in ARDUINO_ROOT
             echo "Calling ./compile-all-examples.sh"
-            cat  ./compile-all-examples.sh
             bash ./compile-all-examples.sh
           popd
           # End Compile Arduino Sketches for Various Boards
