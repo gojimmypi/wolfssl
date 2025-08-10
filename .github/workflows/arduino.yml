@@ -248,8 +248,8 @@ jobs:
           pushd "$WOLFSSL_EXAMPLES_DIRECTORY"
             echo "Current directory:           $PWD"
             # Install wolfSSL as Arduino library in ARDUINO_ROOT
-            echo "Calling ./wolfssl-arduino.sh INSTALL"
-            bash ./wolfssl-arduino.sh INSTALL
+            echo "Calling ./compile-all-examples.sh"
+            bash ./compile-all-examples.sh
           popd
           # End Compile Arduino Sketches for Various Boards
 
