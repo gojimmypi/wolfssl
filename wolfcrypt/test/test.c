@@ -263,7 +263,7 @@ const byte const_byte_array[] = "A+Gd\0\0\0";
     #include <printx.h>
     #undef printf
     #define printf printx
-#elif defined(WOLFSSL_RENESAS_RSIP)
+#elif defined(WOLFSSL_RENESAS_RSIP) || defined(WOLFSSL_RENESAS_RZN2L)
     #ifndef TEST_SLEEP
         #define TEST_SLEEP() vTaskDelay(50)
     #endif
@@ -2567,6 +2567,9 @@ options: [-s max_relative_stack_bytes] [-m max_relative_heap_memory_bytes]\n\
 #endif
 #ifdef HAVE_CAVIUM_OCTEON_SYNC
     wc_CryptoCb_CleanupOcteon(&devId);
+#endif
+#ifdef HAVE_RENESAS_SYNC
+    wc_CryptoCb_CleanupRenesasCmn(&devId);
 #endif
 #endif
 
@@ -18663,7 +18666,7 @@ static wc_test_ret_t const_byte_ptr_test(const byte* in, word32 *outJ)
     j = *outJ; /* Found index to use in const array. */
 
     if (j == 0) {
-#ifdef WOLFSSL_DEBUG
+#ifdef DEBUG_WOLFSSL
         printf("Testing const byte ptr reference...\n");
 #endif
         /* although j is zero, in[0] does not detect the Illegal instruction */
@@ -60740,6 +60743,10 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t cryptocb_test(void)
 #ifndef NO_SHA
     if (ret == 0)
         ret = sha_test();
+#endif
+#ifdef WOLFSSL_SHA224
+    if (ret == 0)
+        ret = sha224_test();
 #endif
 #ifndef NO_SHA256
     if (ret == 0)

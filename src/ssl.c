@@ -5869,7 +5869,7 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
 #endif
     DerBuffer*   der = *pDer;
 
-    WOLFSSL_MSG("Adding a CA");
+    WOLFSSL_MSG_CERT_LOG("Adding a CA");
 
     if (cm == NULL) {
         FreeDer(pDer);
@@ -5893,8 +5893,34 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
     }
 #endif
 
+    WOLFSSL_MSG_CERT("\tParsing new CA");
     ret = ParseCert(cert, CA_TYPE, verify, cm);
+
     WOLFSSL_MSG("\tParsed new CA");
+#ifdef WOLFSSL_DEBUG_CERTS
+    #ifdef WOLFSSL_SMALL_STACK
+    if (cert == NULL) {
+        WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT "Failed; cert is NULL");
+    }
+    else
+    #endif
+    {
+        const char*  err_msg;
+        if (ret == 0) {
+            WOLFSSL_MSG_CERT_EX(WOLFSSL_MSG_CERT_INDENT "issuer:  '%s'",
+                cert->issuer);
+            WOLFSSL_MSG_CERT_EX(WOLFSSL_MSG_CERT_INDENT "subject: '%s'",
+                cert->subject);
+        }
+        else {
+            WOLFSSL_MSG_CERT(
+                WOLFSSL_MSG_CERT_INDENT "Failed during parse of new CA");
+            err_msg = wc_GetErrorString(ret);
+            WOLFSSL_MSG_CERT_EX(WOLFSSL_MSG_CERT_INDENT "error ret: %d; %s",
+                ret, err_msg);
+        }
+    }
+#endif /* WOLFSSL_DEBUG_CERTS */
 
 #ifndef NO_SKID
     subjectHash = cert->extSubjKeyId;
@@ -5903,7 +5929,7 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
 #endif
 
     /* check CA key size */
-    if (verify) {
+    if (verify && (ret == 0 )) {
         switch (cert->keyOID) {
         #ifndef NO_RSA
             #ifdef WC_RSA_PSS
@@ -5913,7 +5939,10 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                 if (cm->minRsaKeySz < 0 ||
                                    cert->pubKeySize < (word16)cm->minRsaKeySz) {
                     ret = RSA_KEY_SIZE_E;
-                    WOLFSSL_MSG("\tCA RSA key size error");
+                    WOLFSSL_MSG_CERT_LOG("\tCA RSA key size error");
+                    WOLFSSL_MSG_CERT_EX("\tCA RSA pubKeySize = %d; "
+                                                "minRsaKeySz = %d",
+                                   cert->pubKeySize, cm->minRsaKeySz);
                 }
                 break;
         #endif /* !NO_RSA */
@@ -5922,7 +5951,10 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
                 if (cm->minEccKeySz < 0 ||
                                    cert->pubKeySize < (word16)cm->minEccKeySz) {
                     ret = ECC_KEY_SIZE_E;
-                    WOLFSSL_MSG("\tCA ECC key size error");
+                    WOLFSSL_MSG_CERT_LOG("\tCA ECC key size error");
+                    WOLFSSL_MSG_CERT_EX("\tCA ECC pubKeySize = %d; "
+                                                 "minEccKeySz = %d",
+                                   cert->pubKeySize, cm->minEccKeySz);
                 }
                 break;
             #endif /* HAVE_ECC */
@@ -6041,11 +6073,13 @@ int AddCA(WOLFSSL_CERT_MANAGER* cm, DerBuffer** pDer, int type, int verify)
     if (ret == 0 && signer != NULL) {
         ret = FillSigner(signer, cert, type, der);
 
-    #ifndef NO_SKID
-        row = HashSigner(signer->subjectKeyIdHash);
-    #else
-        row = HashSigner(signer->subjectNameHash);
-    #endif
+        if (ret == 0){
+        #ifndef NO_SKID
+            row = HashSigner(signer->subjectKeyIdHash);
+        #else
+            row = HashSigner(signer->subjectNameHash);
+        #endif
+        }
 
     #if defined(WOLFSSL_RENESAS_TSIP_TLS) || defined(WOLFSSL_RENESAS_FSPSM_TLS)
         /* Verify CA by TSIP so that generated tsip key is going to          */
@@ -9025,7 +9059,7 @@ static SetVerifyOptions ModeToVerifyOptions(int mode)
 }
 
 WOLFSSL_ABI
-void wolfSSL_CTX_set_verify(WOLFSSL_CTX* ctx, int mode, VerifyCallback vc)
+void wolfSSL_CTX_set_verify(WOLFSSL_CTX* ctx, int mode, VerifyCallback verify_callback)
 {
     SetVerifyOptions opts;
 
@@ -9043,7 +9077,7 @@ void wolfSSL_CTX_set_verify(WOLFSSL_CTX* ctx, int mode, VerifyCallback vc)
     ctx->verifyPostHandshake = opts.verifyPostHandshake;
 #endif
 
-    ctx->verifyCallback = vc;
+    ctx->verifyCallback = verify_callback;
 }
 
 #ifdef OPENSSL_ALL
@@ -9060,7 +9094,7 @@ void wolfSSL_CTX_set_cert_verify_callback(WOLFSSL_CTX* ctx,
 #endif
 
 
-void wolfSSL_set_verify(WOLFSSL* ssl, int mode, VerifyCallback vc)
+void wolfSSL_set_verify(WOLFSSL* ssl, int mode, VerifyCallback verify_callback)
 {
     SetVerifyOptions opts;
 
@@ -9078,7 +9112,7 @@ void wolfSSL_set_verify(WOLFSSL* ssl, int mode, VerifyCallback vc)
     ssl->options.verifyPostHandshake = opts.verifyPostHandshake;
 #endif
 
-    ssl->verifyCallback = vc;
+    ssl->verifyCallback = verify_callback;
 }
 
 void wolfSSL_set_verify_result(WOLFSSL *ssl, long v)
@@ -16653,7 +16687,7 @@ int wolfSSL_i2d_PublicKey(const WOLFSSL_EVP_PKEY *key, unsigned char **der)
     }
 
     if (ret == 0) {
-        pub_derSz = (word32)wc_EccPublicKeyDerSize(eccKey, 0);
+        pub_derSz = (word32)wc_EccPublicKeyDerSize(eccKey, 1);
         if ((int)pub_derSz <= 0) {
             ret = WOLFSSL_FAILURE;
         }
@@ -16669,7 +16703,7 @@ int wolfSSL_i2d_PublicKey(const WOLFSSL_EVP_PKEY *key, unsigned char **der)
     }
 
     if (ret == 0) {
-        pub_derSz = (word32)wc_EccPublicKeyToDer(eccKey, pub_der, pub_derSz, 0);
+        pub_derSz = (word32)wc_EccPublicKeyToDer(eccKey, pub_der, pub_derSz, 1);
         if ((int)pub_derSz <= 0) {
             ret = WOLFSSL_FATAL_ERROR;
         }

@@ -604,6 +604,9 @@ int IsAtLeastTLSv1_3(const ProtocolVersion pv)
 
 int IsEncryptionOn(const WOLFSSL* ssl, int isSend)
 {
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_DTLS
     /* For DTLS, epoch 0 is always not encrypted. */
     if (ssl->options.dtls && !isSend) {
@@ -8025,7 +8028,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->secLevel = ctx->secLevel;
 #endif /* WOLFSSL_SYS_CRYPTO_POLICY */
     /* Returns 0 on success, not WOLFSSL_SUCCESS (1) */
-    WOLFSSL_MSG_EX("InitSSL done. return 0 (success)");
+    WOLFSSL_MSG("InitSSL done. return 0 (success)");
     return 0;
 }
 
@@ -10847,12 +10850,16 @@ static int SendHandshakeMsg(WOLFSSL* ssl, byte* input, word32 inputSz,
 #endif /* !WOLFSSL_NO_TLS12 */
 
 
-/* return bytes received, -1 on error */
+/* return bytes received, WOLFSSL_FATAL_ERROR on error,
+ * or BAD_FUNC_ARG if ssl is null */
 static int wolfSSLReceive(WOLFSSL* ssl, byte* buf, word32 sz)
 {
     int recvd;
     int retryLimit = WOLFSSL_MODE_AUTO_RETRY_ATTEMPTS;
 
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_QUIC
     if (WOLFSSL_IS_QUIC(ssl)) {
         /* QUIC only "reads" from data provided by the application
@@ -11011,6 +11018,11 @@ void ShrinkInputBuffer(WOLFSSL* ssl, int forcedFree)
 int SendBuffered(WOLFSSL* ssl)
 {
     int retryLimit = WOLFSSL_MODE_AUTO_RETRY_ATTEMPTS;
+
+    if (ssl == NULL) {
+        WOLFSSL_MSG("ssl is null");
+        return BAD_FUNC_ARG;
+    }
 
     if (ssl->CBIOSend == NULL && !WOLFSSL_IS_QUIC(ssl)) {
         WOLFSSL_MSG("Your IO Send callback is null, please set");
@@ -11382,6 +11394,10 @@ int CheckAvailableSize(WOLFSSL *ssl, int size)
 
 int MsgCheckEncryption(WOLFSSL* ssl, byte type, byte encrypted)
 {
+    if (ssl == NULL) {
+        WOLFSSL_MSG("ssl is null");
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_QUIC
     /* QUIC protects messages outside of the TLS scope */
     if (WOLFSSL_IS_QUIC(ssl) && IsAtLeastTLSv1_3(ssl->version))
@@ -15776,7 +15792,8 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E) ||
                             ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
                             if (!ssl->options.usingAltCertChain) {
-                                WOLFSSL_MSG("Trying alternate cert chain");
+                                WOLFSSL_MSG_CERT_LOG(
+                                                 "Trying alternate cert chain");
                                 ssl->options.usingAltCertChain = 1;
                             }
 
@@ -15788,8 +15805,25 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
 
                             /* do not add to certificate manager */
                             skipAddCA = 1;
+                        } /* ASN_NO_SIGNER_E || ASN_SELF_SIGNED_E */
+                    } /* ret != 0 && isCA */
+                #else
+                    /* Not defined: WOLFSSL_ALT_CERT_CHAINS
+                     * When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
+                    #ifdef WOLFSSL_DEBUG_CERTS
+                    if (ret != 0 && args->dCert->isCA) {
+                        if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E)) {
+                            WOLFSSL_MSG_CERT(
+                                  "Consider enabling WOLFSSL_ALT_CERT_CHAINS"
+                                  " to resolve ASN_NO_SIGNER_E");
                         }
-                    }
+                        if (ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
+                            WOLFSSL_MSG_CERT(
+                                  "Consider enabling WOLFSSL_ALT_CERT_CHAINS"
+                                  " to resolve ASN_SELF_SIGNED_E");
+                        }
+                    } /* check alt-cert possible fixable error codes */
+                    #endif
                 #endif /* WOLFSSL_ALT_CERT_CHAINS */
 
                 #if defined(__APPLE__) && defined(WOLFSSL_SYS_CA_CERTS)
@@ -23582,6 +23616,10 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
     BuildMsgArgs  lcl_args;
 #endif
 
+#ifdef WOLFSSL_DTLS_CID
+    byte cidSz = 0;
+#endif
+
     WOLFSSL_ENTER("BuildMessage");
 
     if (ssl == NULL) {
@@ -23714,14 +23752,11 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
                 args->idx      += DTLS_RECORD_EXTRA;
                 args->headerSz += DTLS_RECORD_EXTRA;
         #ifdef WOLFSSL_DTLS_CID
-                if (ssl->options.dtls) {
-                    byte cidSz = 0;
-                    if ((cidSz = DtlsGetCidTxSize(ssl)) > 0) {
-                        args->sz       += cidSz;
-                        args->idx      += cidSz;
-                        args->headerSz += cidSz;
-                        args->sz++; /* real_type. no padding. */
-                    }
+                if ((cidSz = DtlsGetCidTxSize(ssl)) > 0) {
+                    args->sz       += cidSz;
+                    args->idx      += cidSz;
+                    args->headerSz += cidSz;
+                    args->sz++; /* real_type. no padding. */
                 }
         #endif
             }
