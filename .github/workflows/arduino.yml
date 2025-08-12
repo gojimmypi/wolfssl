@@ -227,11 +227,12 @@ jobs:
           echo "Current directory: $PWD"
           echo "Current pwd for wolfssl-examples clone fetch: $PWD"
           WOLFSSL_EXAMPLES_DIRECTORY="$ARDUINO_ROOT/wolfssl/examples"
+          THIS_BOARD_LIST="board_list.txt"
           echo "WOLFSSL_EXAMPLES_DIRECTORY=$WOLFSSL_EXAMPLES_DIRECTORY"
 
           # Fetch script and board list into WOLFSSL_EXAMPLES_DIRECTORY
           # TODO edit PR branch path:
-          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/examples_dev/Arduino/sketches/board_list.txt"          -o "$WOLFSSL_EXAMPLES_DIRECTORY/board_list.txt"
+          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/examples_dev/Arduino/sketches/board_list.txt"          -o "$WOLFSSL_EXAMPLES_DIRECTORY/$THIS_BOARD_LIST"
 
           # Check if the first line is "404: Not Found" - which would indicate the curl path above is bad.
           FILE="$WOLFSSL_EXAMPLES_DIRECTORY/board_list.txt"
@@ -275,7 +276,7 @@ jobs:
 
             # ensure we can execute the script here (permissions lost during curl fetch)
             chmod +x ./compile-all-examples.sh
-            echo "Found compile script: $(ls -al ./compile-all-examples.sh)"
+            echo "Found compile script: $(ls -al ./compile-all-examples.sh ./$THIS_BOARD_LIST)"
           popd
 
           # ** END ** Get compile-all-examples.sh
