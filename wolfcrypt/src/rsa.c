@@ -2749,7 +2749,7 @@ static int RsaFunctionSync(const byte* in, word32 inLen, byte* out,
         case RSA_PUBLIC_ENCRYPT:
         case RSA_PUBLIC_DECRYPT:
             if (mp_exptmod_nct(tmp, &key->e, &key->n, tmp) != MP_OKAY) {
-                WOLFSSL_MSG_CERT("mp_exptmod_nct failed");
+                WOLFSSL_MSG_CERT_LOG("mp_exptmod_nct failed");
                 ret = MP_EXPTMOD_E;
             }
             break;
@@ -4763,12 +4763,11 @@ int wc_CheckProbablePrime_ex(const byte* pRaw, word32 pRawSz,
     if (ret == MP_OKAY)
         ret = mp_read_unsigned_bin(e, eRaw, eRawSz);
 
-    if (ret == MP_OKAY) {
+    if (ret == MP_OKAY)
         SAVE_VECTOR_REGISTERS(ret = _svr_ret;);
 
-        if (ret == MP_OKAY)
-            ret = _CheckProbablePrime(p, Q, e, nlen, isPrime, rng);
-
+    if (ret == 0) {
+        ret = _CheckProbablePrime(p, Q, e, nlen, isPrime, rng);
         RESTORE_VECTOR_REGISTERS();
     }
 
@@ -5173,7 +5172,8 @@ int wc_MakeRsaKey(RsaKey* key, int size, long e, WC_RNG* rng)
     }
 #endif
 
-    RESTORE_VECTOR_REGISTERS();
+    if (err != WC_NO_ERR_TRACE(WC_ACCEL_INHIBIT_E))
+        RESTORE_VECTOR_REGISTERS();
 
     /* Last value p - 1. */
     mp_forcezero(tmp1);

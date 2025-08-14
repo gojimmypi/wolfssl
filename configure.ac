@@ -1676,6 +1676,7 @@ then
 
     if test "$ENABLED_LIBOQS" = "no"; then
         AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_WC_DILITHIUM"
+        AM_CCASFLAGS="$AM_CCASFLAGS -DWOLFSSL_WC_DILITHIUM"
         test "$enable_sha3" = "" && enable_sha3=yes
         test "$enable_shake128" = "" && enable_shake128=yes
         test "$enable_shake256" = "" && enable_shake256=yes
@@ -5655,7 +5656,8 @@ AC_ARG_ENABLE([pwdbased],
 # MemUse Entropy
 # wolfEntropy Software Jitter SP800-90B certifiable entropy source
 
-if test "$ENABLED_LINUXKM_DEFAULTS" = "yes"
+if test "$ENABLED_LINUXKM_DEFAULTS" = "yes" && \
+   (test "$ENABLED_FIPS" = "no" || test "$HAVE_FIPS_VERSION" -ge 6)
 then
     ENABLED_ENTROPY_MEMUSE_DEFAULT=yes
 else
@@ -9804,6 +9806,20 @@ then
         CPPFLAGS=$(printf "%s" "$CPPFLAGS" | sed 's/-DOPENSSL_COMPATIBLE_DEFAULTS//g')
         AM_CFLAGS=$(printf "%s" "$AM_CFLAGS" | sed 's/-DOPENSSL_COMPATIBLE_DEFAULTS//g')
     fi
+fi
+
+# Make function 'wolfSSL_X509_EXTENSION_get_data' return different type of
+# data for each type of extension, as it used to do in the past, instead of
+# always returning the full OCTET STRING of the extension. Use only if you
+# need to keep compatibility with older versions.
+AC_ARG_ENABLE([old-extdata-fmt],
+    [AS_HELP_STRING([--enable-old-extdata-fmt],[Enable old format for extracting extension data (default: disabled)])],
+    [ ENABLED_OLD_EXTDATA_FMT=$enableval ],
+    [ ENABLED_OLD_EXTDATA_FMT=no ]
+    )
+
+if test "x$ENABLED_OLD_EXTDATA_FMT" = "xyes"; then
+  AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_OLD_EXTDATA_FMT"
 fi
 
 # determine if we have key validation mechanism

@@ -4115,7 +4115,7 @@ char* wolfSSL_ERR_error_string(unsigned long errNumber, char* data);
     \sa wolfSSL_load_error_strings
 */
 void  wolfSSL_ERR_error_string_n(unsigned long e, char* buf,
-                                           unsigned long sz);
+                                           unsigned long len);
 
 /*!
     \ingroup TLS
@@ -7659,20 +7659,20 @@ int wolfSSL_SetMinEccKey_Sz(WOLFSSL* ssl, short keySz);
     \return MEMORY_E returned if there is an error with memory allocation.
 
     \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
-    \param msk a void pointer variable that will hold the result
+    \param key a void pointer variable that will hold the result
     of the p_hash function.
     \param len an unsigned integer that represents the length of
-    the msk variable.
+    the key variable.
     \param label a constant char pointer that is copied from in wc_PRF().
 
     _Example_
     \code
     WOLFSSL* ssl = wolfSSL_new(ctx);;
-    void* msk;
+    void* key;
     unsigned int len;
     const char* label;
     …
-    return wolfSSL_make_eap_keys(ssl, msk, len, label);
+    return wolfSSL_make_eap_keys(ssl, key, len, label);
     \endcode
 
     \sa wc_PRF
@@ -9916,7 +9916,8 @@ int wolfSSL_CertManagerVerifyBuffer(WOLFSSL_CERT_MANAGER* cm,
 
     \param cm a pointer to a WOLFSSL_CERT_MANAGER structure, created using
     wolfSSL_CertManagerNew().
-    \param vc a VerifyCallback function pointer to the callback routine
+    \param verify_callback a VerifyCallback function pointer to the callback
+    routine
 
     _Example_
     \code
@@ -9935,7 +9936,7 @@ int wolfSSL_CertManagerVerifyBuffer(WOLFSSL_CERT_MANAGER* cm,
     \sa wolfSSL_CertManagerVerify
 */
 void wolfSSL_CertManagerSetVerify(WOLFSSL_CERT_MANAGER* cm,
-                                                             VerifyCallback vc);
+        VerifyCallback verify_callback);
 
 /*!
     \brief Check CRL if the option is enabled and compares the cert to the
@@ -11970,11 +11971,13 @@ int wolfSSL_CTX_UseSessionTicket(WOLFSSL_CTX* ctx);
     \ingroup IO
 
     \brief This function copies the ticket member of the Session structure to
-    the buffer.
+    the buffer. If buf is NULL and bufSz is non-NULL, bufSz will be set to the
+    ticket length.
 
     \return SSL_SUCCESS returned if the function executed without error.
-    \return BAD_FUNC_ARG returned if one of the arguments was NULL or if the
-    bufSz argument was 0.
+    \return BAD_FUNC_ARG returned if ssl or bufSz is NULL, or if bufSz
+    is non-NULL and buf is NULL
+
 
     \param ssl a pointer to a WOLFSSL structure, created using wolfSSL_new().
     \param buf a byte pointer representing the memory buffer.

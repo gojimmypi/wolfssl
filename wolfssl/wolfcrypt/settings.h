@@ -356,8 +356,8 @@
     #warning "No configuration for wolfSSL detected, check header order"
 #endif
 
-/* Ensure WOLFSSL_DEBUG_CERTS is always set when WOLFSSL_DEBUG is enabled */
-#ifdef WOLFSSL_DEBUG
+/* Ensure WOLFSSL_DEBUG_CERTS is always set when DEBUG_WOLFSSL is enabled */
+#ifdef DEBUG_WOLFSSL
     #undef  WOLFSSL_DEBUG_CERTS
     #define WOLFSSL_DEBUG_CERTS
 #endif
@@ -562,10 +562,6 @@
 #endif
 
 #if defined(WOLFSSL_ESPIDF)
-    #ifdef NO_ESP32_CRYPT
-        #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #endif
-
     #define SIZEOF_LONG_LONG 8
 
     #ifndef WOLFSSL_MAX_ERROR_SZ
@@ -573,13 +569,8 @@
         #define WOLFSSL_MAX_ERROR_SZ 200
     #endif
 
-    /* Debug messaged do not need an additional LF for ESP_LOG */
+    /* Debug message do not need an additional LF for ESP_LOG */
     #define WOLFSSL_DEBUG_LINE_ENDING ""
-
-    /* NO_ESP32_CRYPT disables ALL hardware acceleration */
-    #ifdef NO_ESP32_CRYPT
-        #define NO_WOLFSSL_ESP32_CRYPT_HASH
-    #endif
 
     /* Parse any Kconfig / menuconfig items into wolfSSL macro equivalents.
      * Macros may or may not be defined. If defined, they may have a value of
@@ -625,13 +616,6 @@
         (defined(CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL) && \
                  CONFIG_ESP_WOLFSSL_DEBUG_WOLFSSL  )
         #define                     DEBUG_WOLFSSL
-    #endif
-
-    #if defined(CONFIG_ESP_WOLFSSL_DEBUG_CERTS) && \
-                CONFIG_ESP_WOLFSSL_DEBUG_CERTS
-        #define            WOLFSSL_DEBUG_CERTS
-        /* There's also some programmatic debugging - so enable that, too: */
-        #define WOLFSSL_DEBUG_CERTIFICATE_LOADS
     #endif
     #if defined(CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH) && \
                 CONFIG_ESP_WOLFSSL_ENABLE_WOLFSSH
@@ -679,16 +663,10 @@
     #endif
 
     #if defined(CONFIG_TLS_STACK_WOLFSSL)
-        #if defined(CONFIG_ESP_WOLFSSL_OPENSSL_EXTRA)
-            /* When using ESP-TLS, some old algorithms such as SHA1 and Base64
-             * are no longer enabled in wolfSSL, except for the OpenSSL
-             * compatibility. So enable that here: */
-            #define OPENSSL_EXTRA
-        #else
-            /* We know that at least the Base64_Encode is needed in ESP-TLS.
-             * See [idf]/components/esp-tls/esp-tls-crypto/esp_tls_crypto.c */
-            #define WOLFSSL_BASE64_ENCODE
-        #endif
+        /* When using ESP-TLS, some old algorithms such as SHA1 are no longer
+         * enabled in wolfSSL, except for the OpenSSL compatibility. So enable
+         * that here: */
+        #define OPENSSL_EXTRA
     #endif
 
     /* Optional Apple HomeKit support. See below for related sanity checks. */
@@ -891,21 +869,9 @@
         /* Kyber typically needs a minimum 10K stack */
         #define WOLFSSL_HAVE_MLKEM
         #define WOLFSSL_WC_MLKEM
-        #define WOLFSSL_SHAKE128
-        #define WOLFSSL_SHAKE256
         #define WOLFSSL_SHA3
-
-        /* Old code points to keep compatibility with Kyber Round 3. */
-        /*   ./configure --enable-kyber=all --enable-experimental    */
-        #if defined(CONFIG_WOLFSSL_ENABLE_KYBER)
-            #define WOLFSSL_MLKEM_KYBER
-            #define WOLFSSL_EXPERIMENTAL_SETTINGS
-        #endif
-
         #if defined(CONFIG_IDF_TARGET_ESP8266)
             /* With limited RAM, we'll disable some of the Kyber sizes: */
-            #define WOLFSSL_NO_KYBER1024
-            #define WOLFSSL_NO_KYBER768
             #define WOLFSSL_NO_ML_KEM_1024
             #define WOLFSSL_NO_ML_KEM_768
             #define NO_SESSION_CACHE
@@ -986,9 +952,8 @@
     #if defined(WOLFSSL_SP_RISCV32)
         #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
             defined(CONFIG_IDF_TARGET_ESP32C3) || \
-            defined(CONFIG_IDF_TARGET_ESP32C6) || \
-            defined(CONFIG_IDF_TARGET_ESP32C61)
-            /* ok, only the known C2, C3, C6[1] chips allowed */
+            defined(CONFIG_IDF_TARGET_ESP32C6)
+            /* ok, only the known C2, C3, C6 chips allowed */
         #else
             #error "WOLFSSL_SP_RISCV32 can only be used on RISC-V architecture"
         #endif
@@ -1051,8 +1016,7 @@
             /* Observed: 0x2624B2 @ 80MHz */
             #define ESP_RSA_TIMEOUT_CNT      0x280000
         #endif
-    #elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
-          defined(CONFIG_IDF_TARGET_ESP32C61)
+    #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         #ifndef ESP_RSA_TIMEOUT_CNT
             /* Observed: 144323 @ 80MHz */
             #define ESP_RSA_TIMEOUT_CNT      0x160000
@@ -1074,41 +1038,6 @@
         #ifndef ESP_RSA_TIMEOUT_CNT
             #define ESP_RSA_TIMEOUT_CNT      0x349F00
         #endif
-    #endif
-
-    /* Regardless of prior settings, if RSA is disabled, also disable RSA HW */
-    #ifdef NO_RSA
-        #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-    #endif
-
-    #ifdef CONFIG_IDF_TARGET_ESP32C61
-        #ifndef     NO_WOLFSSL_ESP32_CRYPT_AES
-            #define NO_WOLFSSL_ESP32_CRYPT_AES
-            #warning "Disabling AES on ESP32-C61, implementation incomplete"
-        #endif
-        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-            #warning "Disabling RSA on ESP32-C61, implementation incomplete"
-        #endif
-        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-            #warning "Disabling RSA MP on ESP32-C61, implementation incomplete"
-        #endif
-        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
-            #warning "Disabling RSA MM on ESP32-C61, implementation incomplete"
-        #endif
-        #ifndef     NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-            #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-            #warning "Disabling RSA EX on ESP32-C61, implementation incomplete"
-        #endif
-    #endif
-
-    /* If RSA HW is disabled, explicitly disable each of the HW items */
-    #ifdef NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
-        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
-        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
-        #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #endif
 #endif /* WOLFSSL_ESPIDF */
 
@@ -3827,7 +3756,11 @@ extern void uITRON4_free(void *p) ;
          * NIST SP 800-90A Rev. 1, to avoid unnecessary delays in DRBG
          * generation.
          */
-        #define WC_RESEED_INTERVAL (((word64)1UL)<<48UL)
+        #if defined(HAVE_FIPS) && FIPS_VERSION_LT(6,0)
+            #define WC_RESEED_INTERVAL UINT_MAX
+        #else
+            #define WC_RESEED_INTERVAL (((word64)1UL)<<48UL)
+        #endif
     #endif
 #endif
 
@@ -4118,7 +4051,8 @@ extern void uITRON4_free(void *p) ;
 #if defined(WOLFCRYPT_ONLY) && defined(NO_AES) && !defined(WOLFSSL_SHA384) && \
     !defined(WOLFSSL_SHA512) && defined(WC_NO_RNG) && \
     !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL) \
-    && !defined(USE_FAST_MATH) && defined(NO_SHA256)
+    && !defined(USE_FAST_MATH) && defined(NO_SHA256) && \
+    !defined(WOLFSSL_USE_FORCE_ZERO)
     #undef  WOLFSSL_NO_FORCE_ZERO
     #define WOLFSSL_NO_FORCE_ZERO
 #endif
@@ -4469,6 +4403,15 @@ extern void uITRON4_free(void *p) ;
     #undef XREALLOC
 #endif
 
+/* There's currently no 100% reliable "smaller than 32 bit" detection.
+ * The user can specify: WC_16BIT_CPU
+ * Lower 16 bits of new OID values may collide on some 16 bit platforms.
+ *   e.g  Arduino Mega, fqbn=arduino:avr:mega  */
+#if defined(WC_16BIT_CPU)
+    /* Force the old, 16 bit OIDs to be used in wolfcrypt/oid_sum.h */
+    #undef  WOLFSSL_OLD_OID_SUM
+    #define WOLFSSL_OLD_OID_SUM
+#endif
 
 /* ---------------------------------------------------------------------------
  * Deprecated Algorithm Handling
@@ -4505,6 +4448,12 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif /* WOLFSSL_SYS_CA_CERTS */
 
+#ifdef NO_WOLFSSL_DEBUG_CERTS
+    /* Simplify certificate debugging gate check with only WOLFSSL_DEBUG_CERTS.
+     * NO_WOLFSSL_DEBUG_CERTS prioritized over WOLFSSL_DEBUG_CERTS; disable: */
+    #undef WOLFSSL_DEBUG_CERTS
+#endif
+
 #if defined(SESSION_CACHE_DYNAMIC_MEM) && defined(PERSIST_SESSION_CACHE)
 #error "Dynamic session cache currently does not support persistent session cache."
 #endif
@@ -4528,14 +4477,6 @@ extern void uITRON4_free(void *p) ;
     #endif
     /* Ciphersuite check done in internal.h */
 #endif
-
-/*
- * TODO this fails from
- *  ./configure --enable-all && make clean && make
-#if defined(HAVE_FFDHE) && !defined(HAVE_DH)
-    #error "HAVE_FFDHE requires HAVE_DH"
-#endif
-*/
 
 /* Some final sanity checks. See esp32-crypt.h for Apple HomeKit config. */
 #if defined(WOLFSSL_APPLE_HOMEKIT) || defined(CONFIG_WOLFSSL_APPLE_HOMEKIT)

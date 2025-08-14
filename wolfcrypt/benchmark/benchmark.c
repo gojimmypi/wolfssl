@@ -621,8 +621,7 @@
 
 /* optional macro to add sleep between tests */
 #ifndef TEST_SLEEP
-    /* stub the sleep macro */
-    #define TEST_SLEEP() WC_DO_NOTHING
+    #define TEST_SLEEP() WC_RELAX_LONG_LOOP()
 #endif
 
 #define TEST_STRING    "Everyone gets Friday off."
@@ -2350,8 +2349,16 @@ static WC_INLINE void bench_stats_start(int* count, double* start)
 #ifdef WOLFSSL_LINUXKM_USE_SAVE_VECTOR_REGISTERS
     #define bench_stats_start(count, start) do {                               \
         SAVE_VECTOR_REGISTERS(pr_err(                                          \
-            "SAVE_VECTOR_REGISTERS failed for benchmark run.");                \
+            "ERROR: SAVE_VECTOR_REGISTERS failed for benchmark run.");         \
                               return; );                                       \
+        bench_stats_start(count, start);                                       \
+    } while (0)
+#elif defined(WOLFSSL_LINUXKM)
+    /* we're using floating point to figure the statistics, so we need to
+     * FPU save+lock even without SIMD.
+     */
+    #define bench_stats_start(count, start) do {                               \
+        kernel_fpu_begin();                                                    \
         bench_stats_start(count, start);                                       \
     } while (0)
 #endif
@@ -2544,8 +2551,6 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
 #endif
 
     total = current_time(0) - start;
-
-    WC_RELAX_LONG_LOOP();
 
 #if defined(WOLFSSL_ESPIDF) && defined(DEBUG_WOLFSSL_BENCHMARK_TIMING)
     ESP_LOGI(TAG, "%s total_cycles = %llu", desc, total_cycles);
@@ -2745,6 +2750,8 @@ static void bench_stats_sym_finish(const char* desc, int useDeviceID,
 
 #ifdef WOLFSSL_LINUXKM_USE_SAVE_VECTOR_REGISTERS
     RESTORE_VECTOR_REGISTERS();
+#elif defined(WOLFSSL_LINUXKM)
+    kernel_fpu_end();
 #endif
 
     TEST_SLEEP();
@@ -2776,8 +2783,6 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
     XMEMSET(msg, 0, sizeof(msg));
 
     total = current_time(0) - start;
-
-    WC_RELAX_LONG_LOOP();
 
 #ifdef LINUX_RUSAGE_UTIME
     check_for_excessive_stime(algo, strength, desc, desc_extra);
@@ -3008,6 +3013,8 @@ static void bench_stats_asym_finish_ex(const char* algo, int strength,
 
 #ifdef WOLFSSL_LINUXKM_USE_SAVE_VECTOR_REGISTERS
     RESTORE_VECTOR_REGISTERS();
+#elif defined(WOLFSSL_LINUXKM)
+    kernel_fpu_end();
 #endif
 
     TEST_SLEEP();
@@ -14280,13 +14287,15 @@ void bench_dilithiumKeySign(byte level)
 #define DILITHIUM_BENCH_MSG_SIZE 512
 #ifdef WOLFSSL_SMALL_STACK
     dilithium_key *key = NULL;
-    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
+    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || \
+        !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
     byte   *sig = NULL;
     byte   *msg = NULL;
     #endif
 #else
     dilithium_key key[1];
-    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
+    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || \
+        !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
     byte   sig[DILITHIUM_MAX_SIG_SIZE];
     byte   msg[DILITHIUM_BENCH_MSG_SIZE];
     #endif
@@ -14297,17 +14306,38 @@ void bench_dilithiumKeySign(byte level)
     byte params = 0;
 
 #ifdef WOLFSSL_SMALL_STACK
-    key = (dilithium_key *)XMALLOC(sizeof(*key), HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
-    sig = (byte *)XMALLOC(DILITHIUM_MAX_SIG_SIZE, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-    msg = (byte *)XMALLOC(DILITHIUM_BENCH_MSG_SIZE, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+    key = (dilithium_key *)XMALLOC(sizeof(*key), HEAP_HINT,
+        DYNAMIC_TYPE_TMP_BUFFER);
+    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || \
+        !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
+    sig = (byte *)XMALLOC(DILITHIUM_MAX_SIG_SIZE, HEAP_HINT,
+        DYNAMIC_TYPE_TMP_BUFFER);
+    msg = (byte *)XMALLOC(DILITHIUM_BENCH_MSG_SIZE, HEAP_HINT,
+        DYNAMIC_TYPE_TMP_BUFFER);
     #endif
 
-    if ((key == NULL) || (sig == NULL) || (msg == NULL)) {
-        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
-        key = NULL;
+    if (key == NULL) {
+    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || \
+        !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
+        XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        sig = NULL;
+        XFREE(msg, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        msg = NULL;
+    #endif
         goto out;
     }
+    #if !defined(WOLFSSL_DILITHIUM_NO_SIGN) || \
+        !defined(WOLFSSL_DILITHIUM_NO_VERIFY)
+    if ((sig == NULL) || (msg == NULL)) {
+        XFREE(key, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        key = NULL;
+        XFREE(sig, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        sig = NULL;
+        XFREE(msg, HEAP_HINT, DYNAMIC_TYPE_TMP_BUFFER);
+        msg = NULL;
+        goto out;
+    }
+    #endif
 #endif /* WOLFSSL_SMALL_STACK */
 
     if (level == 2) {

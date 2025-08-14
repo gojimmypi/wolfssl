@@ -54,14 +54,13 @@
 #if defined(WOLFSSL_ESP32_CRYPT_RSA_PRI)
     static const char* TAG = "TFM"; /* esp log breadcrumb */
     #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI)
-        /* Each individual math HW can be turned on or off. On by default.
+        /* Each individual math HW can be turned on or off.
          * Listed in order of complexity and historical difficulty. */
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
         #define WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
     #endif
 
-    /* Explicit disable takes precedence: */
     #if defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL)
         #undef WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
     #endif
@@ -77,6 +76,7 @@
     /* Note with HW there's a ESP_RSA_EXPT_XBITS setting
      * as for some small numbers, SW may be faster.
      * See ESP_LOGV messages for ESP_RSA_EXPT_XBITS values. */
+
 #endif /* WOLFSSL_ESP32_CRYPT_RSA_PRI */
 
 #if defined(FREESCALE_LTC_TFM)
@@ -719,7 +719,7 @@ int fp_div(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   }
 
   /* if a < b then q=0, r = a */
-  if (fp_cmp_mag (a, b) == FP_LT) /* TODO incorrect when zero padding, e.g. rinv*/
+  if (fp_cmp_mag (a, b) == FP_LT)
   {
     if (d != NULL) {
       fp_copy (a, d);
@@ -3303,11 +3303,13 @@ int fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
    }
    if (P->used > (FP_SIZE/2)) {
       /* FP_MAX_BITS too small is a common cert failure cause */
-      WOLFSSL_MSG_CERT("TFM fp_exptmod_nct failed: P.used (%d) > (FP_SIZE/2);"
-                       " FP_SIZE: %d; FP_MAX_SIZE: %d",
-                       P->used, FP_SIZE, FP_MAX_SIZE);
-      WOLFSSL_MSG_CERT("Consider adjusting current FP_MAX_BITS: %d",
+#ifdef WOLFSSL_DEBUG_CERTS
+      WOLFSSL_MSG_CERT_EX("TFM fp_exptmod_nct failed: P.used (%d) > (FP_SIZE/2)"
+                       "; FP_SIZE: %d; FP_MAX_SIZE: %d",
+                       P->used, FP_SIZE, FP_MAX_BITS, FP_MAX_SIZE);
+      WOLFSSL_MSG_CERT_EX("Consider adjusting current FP_MAX_BITS: %d",
                        FP_MAX_BITS);
+#endif
       return FP_VAL;
    }
    if (fp_isone(P)) {

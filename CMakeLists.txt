@@ -281,7 +281,28 @@ add_option("WOLFSSL_DEBUG"
     "no" "yes;no")
 
 if(WOLFSSL_DEBUG)
-    set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
+    # Optional variable inspection
+    if (0)
+        get_cmake_property(_variableNames VARIABLES)
+        list (SORT _variableNames)
+        message(STATUS "")
+        message(STATUS "ALL VARIABLES BEGIN")
+        message(STATUS "")
+        foreach (_variableName ${_variableNames})
+            message(STATUS "${_variableName}=${${_variableName}}")
+        endforeach()
+        message(STATUS "")
+        message(STATUS "ALL VARIABLES END")
+        message(STATUS "")
+    endif()
+
+    if (CMAKE_C_COMPILER_ID STREQUAL "Watcom" OR CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom" OR CMAKE_GENERATOR STREQUAL "Watcom WMake")
+        # Open Watcom v2 does not support -g debugging
+        message(STATUS "Detected Watcom compiler, using CMAKE_C_FLAGS_DEBUG -d2")
+        set(CMAKE_C_FLAGS_DEBUG "-d2 ${CMAKE_C_FLAGS_DEBUG}")
+    else()
+        set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
+    endif()
     list(APPEND WOLFSSL_DEFINITIONS
         "-DDEBUG_WOLFSSL"
         "-DDEBUG")
@@ -2647,6 +2668,19 @@ if(WOLFSSL_EXAMPLES)
         tests/api/test_tls.c
         tests/api/test_x509.c
         tests/api/test_asn.c
+        tests/api/test_pkcs7.c
+        tests/api/test_pkcs12.c
+        tests/api/test_ossl_asn1.c
+        tests/api/test_ossl_bn.c
+        tests/api/test_ossl_bio.c
+        tests/api/test_ossl_dgst.c
+        tests/api/test_ossl_mac.c
+        tests/api/test_ossl_cipher.c
+        tests/api/test_ossl_rsa.c
+        tests/api/test_ossl_dh.c
+        tests/api/test_ossl_ec.c
+        tests/api/test_ossl_ecx.c
+        tests/api/test_ossl_dsa.c
         tests/srp.c
         tests/suites.c
         tests/w64wrapper.c

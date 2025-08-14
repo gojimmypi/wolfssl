@@ -746,9 +746,9 @@ enum {
     #define WC_FREE_VAR(VAR_NAME, HEAP) WC_DO_NOTHING \
         /* nothing to free, its stack */
     #define WC_DECLARE_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
-        VAR_TYPE VAR_NAME[VAR_ITEMS][(VAR_SIZE) / sizeof(VAR_TYPE)] /* // NOLINT(bugprone-sizeof-expression) */
+        VAR_TYPE VAR_NAME[VAR_ITEMS][(VAR_SIZE) / sizeof(VAR_TYPE)] /* NOLINT(bugprone-sizeof-expression) */
     #define WC_ARRAY_ARG(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE) \
-        VAR_TYPE VAR_NAME[VAR_ITEMS][(VAR_SIZE) / sizeof(VAR_TYPE)] /* // NOLINT(bugprone-sizeof-expression) */
+        VAR_TYPE VAR_NAME[VAR_ITEMS][(VAR_SIZE) / sizeof(VAR_TYPE)] /* NOLINT(bugprone-sizeof-expression) */
     #define WC_ALLOC_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
         WC_DO_NOTHING
     #define WC_CALLOC_ARRAY(VAR_NAME, VAR_TYPE, VAR_ITEMS, VAR_SIZE, HEAP) \
@@ -1482,6 +1482,9 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
         #define XALIGNED(x) __attribute__ ( (aligned (x)))
     #elif defined(__KEIL__)
         #define XALIGNED(x) __align(x)
+    #elif defined(__WATCOMC__) /* && (_MSC_VER or !_MSC_VER) */
+        /* No align available for Open Watcom V2, expansion comment needed: */
+        #define XALIGNED(x) /* null expansion */
     #elif defined(_MSC_VER)
         /* disable align warning, we want alignment ! */
         #pragma warning(disable: 4324)
@@ -1943,6 +1946,9 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
     #ifndef SAVE_NO_VECTOR_REGISTERS
         #define SAVE_NO_VECTOR_REGISTERS(fail_clause) WC_RELAX_LONG_LOOP()
     #endif
+    #ifndef SAVE_NO_VECTOR_REGISTERS2
+        #define SAVE_NO_VECTOR_REGISTERS2() 0
+    #endif
 #else
     #ifndef SAVE_NO_VECTOR_REGISTERS
         #define SAVE_NO_VECTOR_REGISTERS(fail_clause) {     \
@@ -1951,9 +1957,9 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
                 WC_RELAX_LONG_LOOP();                       \
             }
     #endif
-#endif
-#ifndef SAVE_NO_VECTOR_REGISTERS2
-    #define SAVE_NO_VECTOR_REGISTERS2() 0
+    #ifndef SAVE_NO_VECTOR_REGISTERS2
+        #define SAVE_NO_VECTOR_REGISTERS2() WC_CHECK_FOR_INTR_SIGNALS()
+    #endif
 #endif
 #ifndef RESTORE_NO_VECTOR_REGISTERS
     #define RESTORE_NO_VECTOR_REGISTERS() WC_RELAX_LONG_LOOP()
@@ -1963,8 +1969,10 @@ WOLFSSL_API word32 CheckRunTimeSettings(void);
     #define SAVE_VECTOR_REGISTERS(fail_clause) SAVE_NO_VECTOR_REGISTERS(fail_clause)
 #endif
 #ifndef SAVE_VECTOR_REGISTERS2
-    #define SAVE_VECTOR_REGISTERS2() 0
-    #define SAVE_VECTOR_REGISTERS2_DOES_NOTHING
+    #define SAVE_VECTOR_REGISTERS2() SAVE_NO_VECTOR_REGISTERS2()
+    #define SAVE_VECTOR_REGISTERS2_DOES_NOTHING /* VECTOR_REGISTERS_{PUSH,POP}
+                                                 * in aes.c depend on this.
+                                                 */
 #endif
 #ifndef CAN_SAVE_VECTOR_REGISTERS
     #define CAN_SAVE_VECTOR_REGISTERS() 1

@@ -90,8 +90,11 @@
             ((__GNUC__ == 4) && (__GNUC_MINOR__ > 5))))) ||  \
           defined(__clang__)
         #define WC_DEPRECATED(msg) __attribute__((deprecated(msg)))
+    #elif defined(__WATCOMC__)
+          /* Watcom macro needs to expand to something, here just a comment: */
+          #define WC_DEPRECATED(msg) /* null expansion */
     #elif defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__) || \
-          defined(_WIN32_WCE) || defined(__WATCOMC__)
+          defined(_WIN32_WCE)
         #define WC_DEPRECATED(msg) __declspec(deprecated(msg))
     #elif (defined(__GNUC__) && (__GNUC__ >= 4)) || \
           defined(__IAR_SYSTEMS_ICC__)
@@ -1535,8 +1538,12 @@ WOLFSSL_ABI WOLFSSL_API int wolfCrypt_Cleanup(void);
         /* use user-supplied XFENCE definition. */
     #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && \
           !defined(__STDC_NO_ATOMICS__)
-        #include <stdatomic.h>
-        #define XFENCE() atomic_thread_fence(memory_order_seq_cst)
+        #ifdef WOLFSSL_NO_ATOMIC
+            #define XFENCE() WC_DO_NOTHING
+        #else
+            #include <stdatomic.h>
+            #define XFENCE() atomic_thread_fence(memory_order_seq_cst)
+        #endif
     #elif defined(__GNUC__) && (__GNUC__ == 4) && \
           defined(__GNUC_MINOR__) && (__GNUC_MINOR__ >= 1)
         #define XFENCE() __sync_synchronize()

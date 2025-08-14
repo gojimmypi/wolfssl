@@ -604,6 +604,9 @@ int IsAtLeastTLSv1_3(const ProtocolVersion pv)
 
 int IsEncryptionOn(const WOLFSSL* ssl, int isSend)
 {
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_DTLS
     /* For DTLS, epoch 0 is always not encrypted. */
     if (ssl->options.dtls && !isSend) {
@@ -2588,28 +2591,6 @@ int InitSSL_Ctx(WOLFSSL_CTX* ctx, WOLFSSL_METHOD* method, void* heap)
             ctx->CBIOSendTo = uIPSendTo;
             ctx->CBIORecvFrom = uIPRecvFrom;
         }
-        #endif
-    #elif defined(ARDUINO)
-        #if !defined(ARDUINO_ARCH_ESP32) && !defined(ARDUINO_ARCH_ESP8266) && \
-            !defined(ARDUINO_ARCH_SAMD)  && !defined(ARDUINO_ARCH_NRF52)   && \
-            !defined(ARDUINO_ARCH_MBED)  && !defined(ARDUINO_ARCH_STM32)   && \
-            !defined(ARDUINO_SEEED_XIAO) && !defined(ARDUINO_TEENSY41)     && \
-            !defined(WIFI_AVAILABLE)     && !defined(ETHERNET_AVAILABLE)
-            /* Unless a known board is detected, assume there's no network */
-            #define WOLFSSL_NO_NETWORK
-        #else
-            ctx->CBIORecv = EmbedReceive;
-            ctx->CBIOSend = EmbedSend;
-            #ifdef WOLFSSL_SESSION_EXPORT
-                ctx->CBGetPeer = EmbedGetPeer;
-                ctx->CBSetPeer = EmbedSetPeer;
-            #endif
-            #ifdef WOLFSSL_DTLS
-                if (method->version.major == DTLS_MAJOR) {
-                    ctx->CBIORecv   = EmbedReceiveFrom;
-                    ctx->CBIOSend   = EmbedSendTo;
-                }
-            #endif
         #endif
     #else
         ctx->CBIORecv = EmbedReceive;
@@ -8047,7 +8028,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->secLevel = ctx->secLevel;
 #endif /* WOLFSSL_SYS_CRYPTO_POLICY */
     /* Returns 0 on success, not WOLFSSL_SUCCESS (1) */
-    WOLFSSL_MSG_EX("InitSSL done. return 0 (success)");
+    WOLFSSL_MSG("InitSSL done. return 0 (success)");
     return 0;
 }
 
@@ -10869,12 +10850,16 @@ static int SendHandshakeMsg(WOLFSSL* ssl, byte* input, word32 inputSz,
 #endif /* !WOLFSSL_NO_TLS12 */
 
 
-/* return bytes received, -1 on error */
+/* return bytes received, WOLFSSL_FATAL_ERROR on error,
+ * or BAD_FUNC_ARG if ssl is null */
 static int wolfSSLReceive(WOLFSSL* ssl, byte* buf, word32 sz)
 {
     int recvd;
     int retryLimit = WOLFSSL_MODE_AUTO_RETRY_ATTEMPTS;
 
+    if (ssl == NULL) {
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_QUIC
     if (WOLFSSL_IS_QUIC(ssl)) {
         /* QUIC only "reads" from data provided by the application
@@ -11033,6 +11018,11 @@ void ShrinkInputBuffer(WOLFSSL* ssl, int forcedFree)
 int SendBuffered(WOLFSSL* ssl)
 {
     int retryLimit = WOLFSSL_MODE_AUTO_RETRY_ATTEMPTS;
+
+    if (ssl == NULL) {
+        WOLFSSL_MSG("ssl is null");
+        return BAD_FUNC_ARG;
+    }
 
     if (ssl->CBIOSend == NULL && !WOLFSSL_IS_QUIC(ssl)) {
         WOLFSSL_MSG("Your IO Send callback is null, please set");
@@ -11404,6 +11394,10 @@ int CheckAvailableSize(WOLFSSL *ssl, int size)
 
 int MsgCheckEncryption(WOLFSSL* ssl, byte type, byte encrypted)
 {
+    if (ssl == NULL) {
+        WOLFSSL_MSG("ssl is null");
+        return BAD_FUNC_ARG;
+    }
 #ifdef WOLFSSL_QUIC
     /* QUIC protects messages outside of the TLS scope */
     if (WOLFSSL_IS_QUIC(ssl) && IsAtLeastTLSv1_3(ssl->version))
@@ -15798,7 +15792,8 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E) ||
                             ret == WC_NO_ERR_TRACE(ASN_SELF_SIGNED_E)) {
                             if (!ssl->options.usingAltCertChain) {
-                                WOLFSSL_MSG_CERT("Trying alternate cert chain");
+                                WOLFSSL_MSG_CERT_LOG(
+                                                 "Trying alternate cert chain");
                                 ssl->options.usingAltCertChain = 1;
                             }
 
@@ -15813,7 +15808,9 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                         } /* ASN_NO_SIGNER_E || ASN_SELF_SIGNED_E */
                     } /* ret != 0 && isCA */
                 #else
-                    /* When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
+                    /* Not defined: WOLFSSL_ALT_CERT_CHAINS
+                     * When WOLFSSL_DEBUG_CERTS enabled, suggest solution */
+                    #ifdef WOLFSSL_DEBUG_CERTS
                     if (ret != 0 && args->dCert->isCA) {
                         if (ret == WC_NO_ERR_TRACE(ASN_NO_SIGNER_E)) {
                             WOLFSSL_MSG_CERT(
@@ -15826,6 +15823,7 @@ int ProcessPeerCerts(WOLFSSL* ssl, byte* input, word32* inOutIdx,
                                   " to resolve ASN_SELF_SIGNED_E");
                         }
                     } /* check alt-cert possible fixable error codes */
+                    #endif
                 #endif /* WOLFSSL_ALT_CERT_CHAINS */
 
                 #if defined(__APPLE__) && defined(WOLFSSL_SYS_CA_CERTS)
@@ -21575,8 +21573,6 @@ static int DoAlert(WOLFSSL* ssl, byte* input, word32* inOutIdx, int* type)
     ssl->alert_history.last_rx.level = level;
     *type = code;
     if (level == alert_fatal) {
-        WOLFSSL_MSG_CERT("fatal alert level %d, code %d; set isClosed=1",
-                         level, code);
         ssl->options.isClosed = 1;  /* Don't send close_notify */
     }
 
@@ -22140,7 +22136,6 @@ static int DoProcessReplyEx(WOLFSSL* ssl, int allowSocketErr)
             ssl->error != WC_NO_ERR_TRACE(SOCKET_ERROR_E))
     ) {
         WOLFSSL_MSG("ProcessReply retry in error state, not allowed");
-        printf("ProcessReply retry in error state, not allowed");
         return ssl->error;
     }
 
@@ -23621,6 +23616,10 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
     BuildMsgArgs  lcl_args;
 #endif
 
+#ifdef WOLFSSL_DTLS_CID
+    byte cidSz = 0;
+#endif
+
     WOLFSSL_ENTER("BuildMessage");
 
     if (ssl == NULL) {
@@ -23753,14 +23752,11 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
                 args->idx      += DTLS_RECORD_EXTRA;
                 args->headerSz += DTLS_RECORD_EXTRA;
         #ifdef WOLFSSL_DTLS_CID
-                if (ssl->options.dtls) {
-                    byte cidSz = 0;
-                    if ((cidSz = DtlsGetCidTxSize(ssl)) > 0) {
-                        args->sz       += cidSz;
-                        args->idx      += cidSz;
-                        args->headerSz += cidSz;
-                        args->sz++; /* real_type. no padding. */
-                    }
+                if ((cidSz = DtlsGetCidTxSize(ssl)) > 0) {
+                    args->sz       += cidSz;
+                    args->idx      += cidSz;
+                    args->headerSz += cidSz;
+                    args->sz++; /* real_type. no padding. */
                 }
         #endif
             }
@@ -32756,7 +32752,6 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
-                    WOLFSSL_MSG_CERT("Failed: DoServerKeyExchange not compiled in");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     enum wc_HashType hashType;
@@ -32949,8 +32944,6 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
-                    WOLFSSL_MSG_CERT(
-                             "Failed: DoServerKeyExchange not compiled in (2)");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     if (ssl->options.usingAnon_cipher) {
@@ -33170,8 +33163,6 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                 {
             #if defined(NO_DH) && !defined(HAVE_ECC) && \
                             !defined(HAVE_CURVE25519) && !defined(HAVE_CURVE448)
-                    WOLFSSL_MSG_CERT(
-                             "Failed: DoServerKeyExchange not compiled in (3)");
                     ERROR_OUT(NOT_COMPILED_IN, exit_dske);
             #else
                     if (ssl->options.usingAnon_cipher) {

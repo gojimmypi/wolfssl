@@ -325,6 +325,9 @@ static int InitSha512(wc_Sha512* sha512)
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
+#if defined(WOLFSSL_SHA512_HASHTYPE)
+    sha512->hashType = WC_HASH_TYPE_SHA512;
+#endif /* WOLFSSL_SHA512_HASHTYPE */
     return 0;
 }
 
@@ -378,6 +381,9 @@ static int InitSha512_224(wc_Sha512* sha512)
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
+#if defined(WOLFSSL_SHA512_HASHTYPE)
+    sha512->hashType = WC_HASH_TYPE_SHA512_224;
+#endif /* WOLFSSL_SHA512_HASHTYPE */
     return 0;
 }
 #endif /* !WOLFSSL_NOSHA512_224 && !FIPS ... */
@@ -431,6 +437,9 @@ static int InitSha512_256(wc_Sha512* sha512)
 #ifdef WOLFSSL_HASH_FLAGS
     sha512->flags = 0;
 #endif
+#if defined(WOLFSSL_SHA512_HASHTYPE)
+    sha512->hashType = WC_HASH_TYPE_SHA512_256;
+#endif /* WOLFSSL_SHA512_HASHTYPE */
     return 0;
 }
 #endif /* !WOLFSSL_NOSHA512_256 && !FIPS... */
@@ -1501,7 +1510,8 @@ void wc_Sha512Free(wc_Sha512* sha512)
     KcapiHashFree(&sha512->kcapi);
 #endif
 
-#if defined(WOLFSSL_HASH_KEEP)
+#if defined(WOLFSSL_HASH_KEEP) ||\
+   (defined(WOLFSSL_RENESAS_RSIP) && (WOLFSSL_RENESAS_RZFSP_VER >= 220))
     if (sha512->msg != NULL) {
         ForceZero(sha512->msg, sha512->len);
         XFREE(sha512->msg, sha512->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -1932,7 +1942,8 @@ void wc_Sha384Free(wc_Sha384* sha384)
     KcapiHashFree(&sha384->kcapi);
 #endif
 
-#if defined(WOLFSSL_HASH_KEEP)
+#if defined(WOLFSSL_HASH_KEEP) || \
+   (defined(WOLFSSL_RENESAS_RSIP) && (WOLFSSL_RENESAS_RZFSP_VER >= 220))
     if (sha384->msg != NULL) {
         ForceZero(sha384->msg, sha384->len);
         XFREE(sha384->msg, sha384->heap, DYNAMIC_TYPE_TMP_BUFFER);
