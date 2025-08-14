@@ -2576,10 +2576,10 @@ int ProcessBuffer(WOLFSSL_CTX* ctx, const unsigned char* buff, long sz,
 
     /* Convert return code. */
     if (ret == 0) {
-        ret = 1;
+        ret = WOLFSSL_SUCCESS; /* 1 */
     }
     else if (ret == WC_NO_ERR_TRACE(WOLFSSL_FATAL_ERROR)) {
-        ret = 0;
+        ret = WOLFSSL_FAILURE; /* 0 */
     }
     WOLFSSL_LEAVE("ProcessBuffer", ret);
     return ret;
