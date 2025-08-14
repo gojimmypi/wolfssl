@@ -501,10 +501,11 @@ char msg[] =      "...................................                        ";
     /* Show Macro Status Disabled string Position: */
     #define ESP_SMS_DIS_POS (MAX_STATUS_NAME_LENGTH + 17)
 
+#ifndef CONFIG_IDF_TARGET_ESP8266
     /* the longest msg for disabled macros is 35 + 17 + 1 = 53 */
     ESP_STATIC_ASSERT((ESP_SMS_DIS_POS + 1) < sizeof(msg),
                   "ESP_SMS_DIS_POS exceeds msg buffer length");
-
+#endif
 
     /* save our string (s) into the space-padded message (msg) */
     while (s[i] != '\0' && msg[i] != '\0' && (i < MAX_STATUS_NAME_LENGTH)) {

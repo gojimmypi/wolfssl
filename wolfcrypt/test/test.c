@@ -969,7 +969,7 @@ static wc_test_ret_t debug_message_value(const char* msg, int val,
 #endif /* #if defined(DEBUG_WOLFSSL) */
     return ret;
 }
-static void render_error_message(const char* msg, wc_test_ret_t es)
+void wc_test_render_error_message(const char* msg, wc_test_ret_t es)
 {
     (void)msg;
     (void)es;

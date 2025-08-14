@@ -129,6 +129,7 @@ THREAD_LS_T void *StackSizeCheck_stackOffsetPointer = 0;
 
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERTS)
 
+#define OUTPUT_DIVIDER "-----------------------"
 /* Set these to default values initially. */
 static wolfSSL_Logging_cb log_function = NULL;
 #ifndef WOLFSSL_LOGGINGENABLED_DEFAULT
@@ -312,7 +313,7 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
 #include <stdarg.h> /* for var args */
 
 #ifndef WOLFSSL_MSG_EX_BUF_SZ
-#define WOLFSSL_MSG_EX_BUF_SZ 100
+#define WOLFSSL_MSG_EX_BUF_SZ 500
 #endif
 
 #ifndef WOLFSSL_MSG_EX
@@ -400,11 +401,16 @@ int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz)
     if (ret == 0) {
         if (sz > msg_sz) {
             sz = msg_sz;
+            /* Some files will have cert info already included.
+             * Add dividers to clarify which is preface and which is decoded. */
             wolfssl_log(CERT_LOG, NULL, 0,
-                                   "\tCertificate preface text (truncated):");
+                                     "\tCertificate preface text (truncated):\n"
+                                        OUTPUT_DIVIDER "START" OUTPUT_DIVIDER);
         }
         else {
-            wolfssl_log(CERT_LOG, NULL, 0, "\tCertificate preface text:");
+            wolfssl_log(CERT_LOG, NULL, 0,
+                                     "\tCertificate preface text:\n"
+                                        OUTPUT_DIVIDER "START" OUTPUT_DIVIDER);
         }
     }
 
@@ -413,6 +419,7 @@ int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz)
         memcpy(msg + 1, s, sz);
         msg[sz + 1] = '\0'; /* typically print from non-zero-terminated mem   */
         wolfssl_log(CERT_LOG, NULL, 0, msg);
+        wolfssl_log(CERT_LOG, NULL, 0, OUTPUT_DIVIDER "-END-" OUTPUT_DIVIDER);
     }
 #ifdef WOLFSSL_SMALL_STACK
     if (msg != NULL) {
@@ -458,8 +465,18 @@ int WOLFSSL_MSG_CERT(const char* fmt, ...)
             wolfssl_log(CERT_LOG, NULL, 0, msg);
         }
         else {
-            wolfssl_log(CERT_LOG, NULL, 0,
-                    "WOLFSSL_MSG_CERT Message formatting failed or truncated");
+            if (written < 0) {
+                wolfssl_log(CERT_LOG, NULL, 0,
+                   "Fail: WOLFSSL_MSG_CERT formatting failed (XVSNPRINTF < 0)");
+            }
+            else {
+                if (written >= WOLFSSL_MSG_EX_BUF_SZ) {
+                    wolfssl_log(CERT_LOG, NULL, 0,
+                     "WOLFSSL_MSG_CERT Message formatting failed or truncated. "
+                     "See WOLFSSL_MSG_EX_BUF_SZ");
+                }
+                /* else nothing written, we'll still consider this an error*/
+            }
             ret = WC_FAILURE;
         }
     }
@@ -470,7 +487,8 @@ int WOLFSSL_MSG_CERT(const char* fmt, ...)
     }
 #endif
 
-    (void)loggingEnabled; /* to avoid compiler complaining debug not enabled */
+    /* Suppress unused variable warning if logging is conditionally compiled */
+    (void)loggingEnabled; /* intentionally unused here */
     return ret;
 } /* WOLFSSL_MSG_CERT */
 #endif /* DEBUG_WOLFSSL || WOLFSSL_DEBUG_CERTS */
