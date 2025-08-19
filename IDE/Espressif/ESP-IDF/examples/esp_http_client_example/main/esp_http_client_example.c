@@ -1125,7 +1125,7 @@ void app_main(void)
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     // ret = set_time(); /* need to setup NTP before WiFi */
-    set_time_from_string("Fri Jul 13 12:41:45 2025 -0700");
+    set_time_from_string("Tue Aug 19 12:41:45 2025 -0700");
 #endif
 
     ESP_LOGI(TAG, "nvs flash init..");
