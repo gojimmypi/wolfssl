@@ -2089,7 +2089,6 @@ static int Transform_Sha256(wc_Sha256* sha256, const byte* data)
         sha224->devId = devId;
         sha224->devCtx = NULL;
     #endif
-    #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)
 
     #if defined(WOLFSSL_USE_ESP32_CRYPT_HASH_HW)  && \
            !defined(NO_WOLFSSL_ESP32_CRYPT_HASH_SHA256)
