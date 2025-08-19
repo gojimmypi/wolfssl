@@ -169,7 +169,7 @@
 #ifdef WOLFSSL_WC_DILITHIUM
 
 #if defined(USE_INTEL_SPEEDUP)
-static word32 cpuid_flags = 0;
+static cpuid_flags_t cpuid_flags = WC_CPUID_INITIALIZER;
 #endif
 
 #ifdef DEBUG_DILITHIUM
@@ -4020,30 +4020,37 @@ static int dilithium_expand_s(wc_Shake* shake256, byte* priv_seed, byte eta,
     int ret = 0;
 
 #if defined(USE_INTEL_SPEEDUP) && !defined(WC_SHA3_NO_ASM)
-    if (IS_INTEL_AVX2(cpuid_flags) && (SAVE_VECTOR_REGISTERS2() == 0)) {
-
     #ifndef WOLFSSL_NO_ML_DSA_44
-        if (s1Len == 4) {
-            sword32* s[2] = { s1, s2 };
-            ret = wc_mldsa_gen_s_4_4_avx2(s, priv_seed);
-        }
-    #endif
-    #ifndef WOLFSSL_NO_ML_DSA_65
-        if (s1Len == 5) {
-            sword32* s[2] = { s1, s2 };
-            ret = wc_mldsa_gen_s_5_6_avx2(s, priv_seed);
-        }
-    #endif
-    #ifndef WOLFSSL_NO_ML_DSA_87
-        if (s1Len == 7) {
-            sword32* s[2] = { s1, s2 };
-            ret = wc_mldsa_gen_s_7_8_avx2(s, priv_seed);
-        }
-    #endif
+    if ((s1Len == 4) && IS_INTEL_AVX2(cpuid_flags) &&
+        (SAVE_VECTOR_REGISTERS2() == 0))
+    {
+        sword32* s[2] = { s1, s2 };
+        ret = wc_mldsa_gen_s_4_4_avx2(s, priv_seed);
         RESTORE_VECTOR_REGISTERS();
     }
     else
-#endif
+    #endif
+    #ifndef WOLFSSL_NO_ML_DSA_65
+    if ((s1Len == 5) && IS_INTEL_AVX2(cpuid_flags) &&
+        (SAVE_VECTOR_REGISTERS2() == 0))
+    {
+        sword32* s[2] = { s1, s2 };
+        ret = wc_mldsa_gen_s_5_6_avx2(s, priv_seed);
+        RESTORE_VECTOR_REGISTERS();
+    }
+    else
+    #endif
+    #ifndef WOLFSSL_NO_ML_DSA_87
+    if ((s1Len == 7) && IS_INTEL_AVX2(cpuid_flags) &&
+        (SAVE_VECTOR_REGISTERS2() == 0))
+    {
+        sword32* s[2] = { s1, s2 };
+        ret = wc_mldsa_gen_s_7_8_avx2(s, priv_seed);
+        RESTORE_VECTOR_REGISTERS();
+    }
+    else
+    #endif
+#endif /* USE_INTEL_SPEEDUP && !WC_SHA3_NO_ASM */
     {
         ret = dilithium_expand_s_c(shake256, priv_seed, eta, s1, s1Len, s2,
             s2Len);
@@ -10623,7 +10630,7 @@ int wc_dilithium_init_ex(dilithium_key* key, void* heap, int devId)
     }
 
 #if defined(WOLFSSL_WC_DILITHIUM) && defined(USE_INTEL_SPEEDUP)
-    cpuid_flags = cpuid_get_flags();
+    cpuid_get_flags_ex(&cpuid_flags);
 #endif
 
     return ret;
