@@ -18,9 +18,9 @@
     <ToolchainID>
       <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
-        <GCC>14.2.0</GCC>
+        <GCC>13.2.0</GCC>
         <GDB>14.2</GDB>
-        <Revision>1</Revision>
+        <Revision>2</Revision>
       </Version>
     </ToolchainID>
     <RelativeSourceDirectory>..</RelativeSourceDirectory>
@@ -68,7 +68,7 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>master</Version>
-          <Subdirectory>esp-idf/master-pr</Subdirectory>
+          <Subdirectory>esp-idf/v5.3-my_531</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM68</COMPort>
@@ -92,6 +92,14 @@
     <PostDebugActions />
     <DebugStopActions />
     <BreakMode>Default</BreakMode>
+    <CustomBreakCommand>
+      <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>BuildMachine</HostName>
+        <Transport>BuiltinShortcut</Transport>
+      </RemoteHost>
+      <BackgroundMode xsi:nil="true" />
+    </CustomBreakCommand>
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
@@ -184,11 +192,7 @@
   </Configurations>
   <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
-    <AdditionalStartupCommands>
-      <GDBPreStartupCommands />
-      <GDBStartupCommands />
-      <GDBFinalizationCommands />
-    </AdditionalStartupCommands>
+    <AdditionalStartupCommands />
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>
@@ -228,7 +232,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 24000" -f target/esp32c6.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 20000" -f target/esp32c6.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
@@ -260,7 +264,7 @@
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
-    <SemihostingSupport>Auto</SemihostingSupport>
+    <SemihostingSupport>Disabled</SemihostingSupport>
     <SemihostingPollingDelay>0</SemihostingPollingDelay>
     <StepIntoEntryPoint>false</StepIntoEntryPoint>
     <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>
@@ -272,6 +276,29 @@
     <TimestampProviderTicksPerSecond>0</TimestampProviderTicksPerSecond>
     <KeepConsoleAfterExit>false</KeepConsoleAfterExit>
     <UnusedStackFillPattern xsi:nil="true" />
+    <SoftwareTracingSettings>
+      <TraceWhileDebugging>false</TraceWhileDebugging>
+      <AutoStart>false</AutoStart>
+      <StaticTracePrograms xsi:type="InsideWorkArea" />
+      <DynamicProgramAreaSize>0</DynamicProgramAreaSize>
+      <SkipInitiallyDisabledTracepoints>false</SkipInitiallyDisabledTracepoints>
+      <TraceProgramOptimization>Size</TraceProgramOptimization>
+      <OutputMode>NonBlocking</OutputMode>
+      <AssumeFramePointerIsValid>true</AssumeFramePointerIsValid>
+      <InstrumentWithNoFeasibleTracepoints>false</InstrumentWithNoFeasibleTracepoints>
+      <MaximumStringLength>255</MaximumStringLength>
+      <DeferVectorTablePatching>true</DeferVectorTablePatching>
+      <ShowAdvancedConfiguration>true</ShowAdvancedConfiguration>
+      <WorkAreaSize>4096</WorkAreaSize>
+      <DisableLiveCodePatching>false</DisableLiveCodePatching>
+    </SoftwareTracingSettings>
+    <RelatedExecutables>
+      <RelatedExecutable>
+        <Program>false</Program>
+        <LoadSymbols>false</LoadSymbols>
+        <ShowInLiveWatch>false</ShowInLiveWatch>
+      </RelatedExecutable>
+    </RelatedExecutables>
     <CheckInterfaceDrivers>true</CheckInterfaceDrivers>
   </Debug>
 </VisualGDBProjectSettings2>

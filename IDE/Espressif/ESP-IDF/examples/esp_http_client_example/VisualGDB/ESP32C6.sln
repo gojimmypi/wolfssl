@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfcrypt", "wolfcrypt", "{
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
 		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{55A31581-C3CC-4993-A462-674BD38D7CC5}"
@@ -64,7 +65,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\
 		SolutionGuid = {EDB79AEC-A2BB-477C-918F-2BEF458DCF55}
+		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32\esp-idf\v5.2-master\
 	EndGlobalSection
 EndGlobal

@@ -194,6 +194,14 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             esp_http_client_set_header(evt->client, "Accept", "text/html");
             esp_http_client_set_redirection(evt->client);
             break;
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION == ESP_IDF_VERSION_VAL(6, 0, 0))
+        case HTTP_EVENT_ON_HEADERS_COMPLETE:
+            ESP_LOGW(TAG, "New HTTP_EVENT_REDIRECT");
+            break;
+        case HTTP_EVENT_ON_STATUS_CODE:
+            ESP_LOGW(TAG, "New HTTP_EVENT_ON_STATUS_CODE");
+            break;
+#endif
     }
     return ESP_OK;
 }
@@ -734,7 +742,7 @@ static void https_async(void)
         .is_async = true,
         .timeout_ms = 5000,
     };
-    ESP_LOGI(TAG, "HTTPS async requests =>");
+    ESP_LOGI(TAG, "\n\n\nHTTPS async requests =>");
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err;
     const char *post_data = "Using a Palantír requires a person with great strength of will and wisdom. The Palantíri were meant to "
