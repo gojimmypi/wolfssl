@@ -1655,7 +1655,7 @@ wc_test_ret_t wolfcrypt_test(void* args)
 #endif
 
 #ifdef WC_RNG_SEED_CB
-        wc_SetSeed_Cb(wc_GenerateSeed);
+        wc_SetSeed_Cb(WC_GENERATE_SEED_DEFAULT);
 #endif
 
     printf("------------------------------------------------------------------------------\n");
@@ -20766,7 +20766,8 @@ static wc_test_ret_t rng_seed_test(void)
     /* The expected PRNG block depends on ENTROPY_SCALE_FACTOR and
      * SEED_BLOCK_SZ, which depend on which seed back end is configured.
      */
-#if defined(HAVE_ENTROPY_MEMUSE) && defined(HAVE_AMD_RDSEED)
+#if defined(HAVE_ENTROPY_MEMUSE) && defined(HAVE_AMD_RDSEED) && \
+    !(defined(HAVE_FIPS) && FIPS_VERSION_LT(6,0))
     #ifdef HAVE_FIPS
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
@@ -20803,7 +20804,8 @@ static wc_test_ret_t rng_seed_test(void)
         0x83, 0xbf, 0x41, 0xd1, 0x3e, 0x8f, 0xc0, 0x45
     };
     #endif
-#elif defined(HAVE_AMD_RDSEED)
+#elif defined(HAVE_AMD_RDSEED) && \
+    !(defined(HAVE_FIPS) && FIPS_VERSION_LT(6,0))
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
         0x2c, 0xd4, 0x9b, 0x1e, 0x1e, 0xe7, 0xb0, 0xb0,
@@ -20811,7 +20813,8 @@ static wc_test_ret_t rng_seed_test(void)
         0xf4, 0x77, 0xaf, 0xac, 0x3d, 0x2f, 0x6b, 0x1f,
         0xa2, 0xe7, 0xe5, 0x90, 0x6d, 0x1f, 0x88, 0x98
     };
-#elif defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)
+#elif (defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)) && \
+    !(defined(HAVE_FIPS) && FIPS_VERSION_LT(6,0))
     #ifdef HAVE_FIPS
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
@@ -20829,6 +20832,15 @@ static wc_test_ret_t rng_seed_test(void)
         0xd7, 0x63, 0x57, 0xe8, 0x6d, 0xf7, 0xc8, 0x6b
     };
     #endif
+#elif defined(HAVE_INTEL_RDSEED) && \
+    defined(HAVE_FIPS) && FIPS_VERSION_LT(6,0)
+    WOLFSSL_SMALL_STACK_STATIC const byte check[] =
+    {
+        0x27, 0xdd, 0xff, 0x5b, 0x21, 0x26, 0x0a, 0x48,
+        0xb3, 0x6b, 0xd8, 0x14, 0x00, 0x55, 0xe8, 0x39,
+        0x6d, 0x31, 0xf3, 0x6e, 0xe7, 0xbf, 0xce, 0x08,
+        0x1f, 0x61, 0x73, 0xe6, 0x3c, 0xb9, 0x12, 0xea
+    };
 #elif defined(HAVE_FIPS)
     WOLFSSL_SMALL_STACK_STATIC const byte check[] =
     {
@@ -20870,7 +20882,7 @@ static wc_test_ret_t rng_seed_test(void)
     if (ret != 0) {
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     }
-    ret = wc_SetSeed_Cb(wc_GenerateSeed);
+    ret = wc_SetSeed_Cb(WC_GENERATE_SEED_DEFAULT);
     if (ret != 0) {
         ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
     }
@@ -46090,6 +46102,9 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mlkem_test(void)
 #endif
 #endif
 #endif
+#ifdef WOLFSSL_WC_MLKEM
+    MlKemKey *tmpKey = NULL;
+#endif
     int key_inited = 0;
     static const int testData[][4] = {
 #ifndef WOLFSSL_NO_ML_KEM
@@ -46237,6 +46252,15 @@ WOLFSSL_TEST_SUBROUTINE wc_test_ret_t mlkem_test(void)
 
         if (XMEMCMP(priv, priv2, testData[i][2]) != 0)
             ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
+
+#ifdef WOLFSSL_WC_MLKEM
+        tmpKey = wc_MlKemKey_New(testData[i][0], HEAP_HINT, INVALID_DEVID);
+        if (tmpKey == NULL)
+            ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+        ret = wc_MlKemKey_Delete(tmpKey, &tmpKey);
+        if (ret != 0)
+            ERROR_OUT(WC_TEST_RET_ENC_I(i), out);
+#endif
 #endif
     }
 
@@ -49474,6 +49498,7 @@ static wc_test_ret_t dilithium_param_test(int param, WC_RNG* rng)
 #ifndef WOLFSSL_DILITHIUM_NO_VERIFY
     int res = 0;
 #endif
+    dilithium_key* tmpKey = NULL;
 #endif
 
 #if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
@@ -49518,6 +49543,14 @@ static wc_test_ret_t dilithium_param_test(int param, WC_RNG* rng)
         ERROR_OUT(WC_TEST_RET_ENC_EC(res), out);
 #endif
 #endif
+
+    tmpKey = wc_dilithium_new(HEAP_HINT, INVALID_DEVID);
+    if (tmpKey == NULL)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
+
+    ret = wc_dilithium_delete(tmpKey, &tmpKey);
+    if (ret != 0)
+        ERROR_OUT(WC_TEST_RET_ENC_EC(ret), out);
 
 out:
     wc_dilithium_free(key);
