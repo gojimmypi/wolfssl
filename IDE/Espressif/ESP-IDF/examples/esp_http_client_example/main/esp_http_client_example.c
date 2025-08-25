@@ -56,6 +56,9 @@
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
     CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+    #include <esp_task_wdt.h>
+#endif
 
 #include "esp_http_client.h"
 
@@ -733,7 +736,7 @@ static void https_async(void)
 {
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL) && !defined(WOLFSSL_ALT_CERT_CHAINS)
     #warning "The strict wolfSSL default certificate handling may cause failure without WOLFSSL_ALT_CERT_CHAINS"
-	ESP_LOGW(TAG, "The strict wolfSSL default certificate handling may cause failure without WOLFSSL_ALT_CERT_CHAINS");
+    ESP_LOGW(TAG, "The strict wolfSSL default certificate handling may cause failure without WOLFSSL_ALT_CERT_CHAINS");
 #endif
     esp_http_client_config_t config = {
         .url = "https://postman-echo.com/post",
@@ -774,7 +777,7 @@ static void https_async(void)
 #if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) || defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)
     config.crt_bundle_attach = esp_crt_bundle_attach;
 #else
-	ESP_LOGW(TAG, "Warning: setting crt_bundle_attach to NULL");
+    ESP_LOGW(TAG, "Warning: setting crt_bundle_attach to NULL");
     config.crt_bundle_attach = NULL;
 #endif
     config.is_async = true;
@@ -985,6 +988,9 @@ static esp_err_t heap_peek(int i) {
 
 static void http_test_task(void *pvParameters)
 {
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+#endif
 
 loop:
     ret = ESP_OK;
@@ -1125,7 +1131,7 @@ void app_main(void)
     /* Set time for cert validation.
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     // ret = set_time(); /* need to setup NTP before WiFi */
-    set_time_from_string("Tue Aug 19 12:41:45 2025 -0700");
+    set_time_from_string("Tue Aug 25 3:41:45 2025 -0700");
 #endif
 
     ESP_LOGI(TAG, "nvs flash init..");
@@ -1174,6 +1180,17 @@ void app_main(void)
     http_test_task(NULL);
 #else
 
+
+#if !defined(CONFIG_ESP_TASK_WDT_INIT) && \
+    defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+
+//    esp_task_wdt_config_t cfg = {
+//        .timeout_ms     = 5000,
+//        .idle_core_mask = 0,       // or (1<<0) | (1<<1) to watch idle tasks
+//        .trigger_panic  = true,
+//    };
+//    ESP_ERROR_CHECK(esp_task_wdt_init(&cfg));
+#endif
     /* Assume success in the test task unless proven otherwise. */
     ret = ESP_OK;
     do {

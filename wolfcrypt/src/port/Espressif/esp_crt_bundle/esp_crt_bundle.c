@@ -42,6 +42,10 @@
 /* Espressif */
 #include <esp_log.h>
 
+#if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+    #include <esp_task_wdt.h>
+#endif
+
 #if defined(CONFIG_ESP_TLS_USING_WOLFSSL)
 #include <wolfssl/wolfcrypt/logging.h>
 
@@ -937,6 +941,14 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                  * that caused the callback. See the Cerfiicate Manager for
                  * validation and possible overriding of preverify values. */
                 ESP_LOGCBI(TAG, "\n\nAdding Cert for Certificate Store!\n");
+            #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
+                ESP_LOGI(TAG, "Feed watchdog");
+                ret = esp_task_wdt_reset();
+                if (ret != ESP_OK) {
+                    ESP_LOGE("WDT", "reset failed (%s) in task %s",
+                                     esp_err_to_name(ret), pcTaskGetName(NULL));
+                }
+            #endif
                 ret = wolfSSL_X509_STORE_add_cert(store->store, bundle_cert);
                 if (ret == WOLFSSL_SUCCESS) {
                     ESP_LOGCBI(TAG, "Successfully added cert to wolfSSL "
