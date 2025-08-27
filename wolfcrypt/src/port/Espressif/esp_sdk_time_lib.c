@@ -54,20 +54,20 @@ esp_err_t esp_sdk_time_lib_init(void)
 #if defined(CONFIG_IDF_TARGET_ESP8266)
     #include <time.h>
 
-#elif defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION_MINOR)
-    #if (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR == 1)
+#elif defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION)
+    #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
         #define HAS_ESP_NETIF_SNTP 1
-        #include <lwip/apps/sntp.h>
-        #include <esp_netif_sntp.h>
-    #elif (ESP_IDF_VERSION_MAJOR == 5) && (ESP_IDF_VERSION_MINOR > 1)
+        #include <esp_sntp.h> /*  types, sync modes, helpers */
+        #include <esp_netif_sntp.h> /* ESP-NETIF SNTP service APIs */
+    #elif (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0))
         #define HAS_ESP_NETIF_SNTP 1
         #include <lwip/apps/sntp.h>
         #include <esp_netif_sntp.h>
     #else
+        #define HAS_ESP_NETIF_SNTP 1
         #include <string.h>
         #include <esp_sntp.h>
     #endif
-
 #else
     /* TODO Consider non ESP-IDF environments */
 #endif
@@ -388,14 +388,21 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
-        /* TODO Consider esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);  */
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+        esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+#else
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
+#endif
         if (NTP_SERVER_COUNT > CONFIG_LWIP_SNTP_MAX_SERVERS) {
             ESP_LOGW(TAG, "WARNING: %d NTP Servers defined, but "
                           "CONFIG_LWIP_SNTP_MAX_SERVERS = %d",
                            NTP_SERVER_COUNT,CONFIG_LWIP_SNTP_MAX_SERVERS);
         }
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+        ESP_LOGI(TAG, "esp_sntp_setservername:");
+#else
         ESP_LOGI(TAG, "sntp_setservername:");
+#endif
         for (i = 0; i < CONFIG_LWIP_SNTP_MAX_SERVERS; i++) {
             const char* thisServer = ntpServerList[i];
             if (strncmp(thisServer, "\x00", 1) == 0) {
@@ -403,27 +410,33 @@ int set_time(void)
                 break;
             }
             ESP_LOGI(TAG, "%s", thisServer);
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+            esp_sntp_setservername(i, thisServer);
+#else
             sntp_setservername(i, thisServer);
+#endif
             ret = ESP_OK;
         }
-    #ifdef HAS_ESP_NETIF_SNTP
+#ifdef HAS_ESP_NETIF_SNTP
+    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
         ret = esp_netif_sntp_init(&config);
     #else
+        sntp_init(&config)
+    #endif
+#else
         ESP_LOGW(TAG,"Warning: Consider upgrading ESP-IDF to take advantage "
                      "of updated SNTP libraries");
-    #endif
-        if (ret == ESP_OK) {
-            ESP_LOGV(TAG, "Successfully called esp_netif_sntp_init");
-        }
-        else {
-            ESP_LOGE(TAG, "ERROR: esp_netif_sntp_init return = %d", ret);
-        }
+#endif
 
-        sntp_init();
         switch (ret) {
+            case ESP_OK:
+                ESP_LOGV(TAG, "Successfully called esp_netif_sntp_init");
+                break;
             case ESP_ERR_INVALID_STATE:
+                ESP_LOGE(TAG, "ERROR: esp_netif_sntp_init invalid state");
                 break;
             default:
+                ESP_LOGE(TAG, "ERROR: esp_netif_sntp_init return = %d", ret);
                 break;
         }
         ESP_LOGI(TAG, "sntp_init done.");
