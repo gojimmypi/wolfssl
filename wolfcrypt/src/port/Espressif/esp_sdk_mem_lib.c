@@ -119,14 +119,11 @@ extern wc_ptr_t _heap_end[];
 #define IRAMF2_START      ((void*)(0x4010C000))
 #define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
 
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
-    /* Skipping for ESP-IDF v6.0 */
-#else
 enum sdk_memory_segment
 {
     /* Ensure this list exactly matches order in sdk_memory_segment_text */
     mem_map_io = 0,
-    thread_local,
+    thread_local_mem,
     data,
     user_data_ram,
     bss,
@@ -190,21 +187,17 @@ int sdk_log_meminfo(enum sdk_memory_segment m, void* start, void* end)
     }
     return ESP_OK;
 }
-#endif
 
 /* Show all known linker memory segment names, starting & ending addresses. */
 int sdk_init_meminfo(void)
 {
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
-    ESP_LOGI(TAG, "sdk_init_meminfo not available for ESP-IDF V6.0");
-#else
     void* sample_heap_var;
     int sample_stack_var = 0;
 
     sdk_log_meminfo(SDK_MEMORY_SEGMENT_COUNT, NULL, NULL); /* print header */
     sdk_log_meminfo(mem_map_io,    MEM_MAP_IO_START,    MEM_MAP_IO_END);
 #if defined(CONFIG_IDF_TARGET_ARCH_XTENSA) && CONFIG_IDF_TARGET_ARCH_XTENSA == 1
-    sdk_log_meminfo(thread_local,  _thread_local_start, _thread_local_end);
+    sdk_log_meminfo(thread_local_mem,  _thread_local_start, _thread_local_end);
 #endif
     sdk_log_meminfo(data,          _data_start,         _data_end);
     sdk_log_meminfo(user_data_ram, USER_DATA_START,     USER_DATA_END);
@@ -245,7 +238,6 @@ int sdk_init_meminfo(void)
         sdk_var_whereis("sample_heap_var", sample_heap_var);
         free(sample_heap_var);
     }
-#endif
     return ESP_OK;
 }
 
@@ -253,9 +245,6 @@ int sdk_init_meminfo(void)
 esp_err_t sdk_var_whereis(const char* v_name, void* v)
 {
     esp_err_t ret = ESP_FAIL;
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
-    ESP_LOGI(TAG, "sdk_var_whereis not available for ESP-IDF V6.0");
-#else
 
     for (enum sdk_memory_segment m = 0 ;m < SDK_MEMORY_SEGMENT_COUNT; m++) {
         if (v >= sdk_memory_segment_start[m] &&
@@ -268,7 +257,6 @@ esp_err_t sdk_var_whereis(const char* v_name, void* v)
                 }
             }
     }
-#endif
 
     if (ret == ESP_FAIL) {
         ESP_LOGW(TAG, "%s not found in known memory map: %p", v_name, v);

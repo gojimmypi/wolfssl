@@ -2,7 +2,7 @@ name: Espressif examples tests
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ 'master', 'main', 'release/**' ]
+    branches: [ '*', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
 
@@ -14,7 +14,7 @@ concurrency:
 jobs:
   espressif_latest:
     name: latest Docker container
-    if: github.repository_owner == 'wolfssl'
+    if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-22.04
     # This should be a safe limit for the tests to run.
     timeout-minutes: 12
