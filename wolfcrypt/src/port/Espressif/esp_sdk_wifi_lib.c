@@ -89,9 +89,11 @@ esp_err_t esp_sdk_wifi_lib_init(void)
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP8266)
+
 #ifndef CONFIG_ESP_MAX_STA_CONN
     #define CONFIG_ESP_MAX_STA_CONN 4
 #endif
+
 #define EXAMPLE_MAX_STA_CONN       CONFIG_ESP_MAX_STA_CONN
 
 #define WIFI_CONNECTED_BIT BIT0
@@ -160,6 +162,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 } /* event_handler */
 
 #endif
+
 esp_err_t esp_sdk_wifi_init_sta(void)
 {
     word32 this_heap;
@@ -308,7 +311,7 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 #endif
 
 #ifndef ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
-    #define CONFIG_ESP_WIFI_AUTH_WPA2_PSK 1
+    #define CONFIG_ESP_WIFI_AUTH_WPA2_PSK WIFI_AUTH_WPA2_PSK
     #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD CONFIG_ESP_WIFI_AUTH_WPA2_PSK
 #endif
 
@@ -355,8 +358,18 @@ static void event_handler(void* arg,
     }
 }
 
-esp_err_t wc_wifi_init_sta(void)
+esp_err_t esp_sdk_wifi_init_sta(void)
 {
+    wifi_country_t country = {
+        .cc     = "US",
+        .schan  = 1,
+        .nchan  = 11,
+        .max_tx_power = 0, /* optional */
+        .policy = WIFI_COUNTRY_POLICY_MANUAL,
+#if CONFIG_SOC_WIFI_SUPPORT_5G
+        .wifi_5g_channel_mask = 0,
+#endif
+    };
     esp_err_t ret = ESP_OK;
 
     s_wifi_event_group = xEventGroupCreate();
@@ -368,6 +381,7 @@ esp_err_t wc_wifi_init_sta(void)
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_country(&country));
 
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
@@ -412,7 +426,11 @@ esp_err_t wc_wifi_init_sta(void)
 #endif
 
     ESP_ERROR_CHECK(esp_wifi_start() );
-
+//    ret = esp_wifi_connect();
+//    if (ret != ESP_OK) {
+//        ESP_LOGE(TAG, "esp_wifi_connect() failed: %s", esp_err_to_name(ret));
+//        return ret;
+//    }
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
@@ -457,7 +475,7 @@ esp_err_t wc_wifi_init_sta(void)
     return ret;
 }
 
-esp_err_t wc_wifi_show_ip(void)
+esp_err_t esp_sdk_wifi_show_ip(void)
 {
     /* TODO Causes panic: ESP_LOGI(TAG, "got ip:" IPSTR,
      * IP2STR(&event->ip_info.ip)); */

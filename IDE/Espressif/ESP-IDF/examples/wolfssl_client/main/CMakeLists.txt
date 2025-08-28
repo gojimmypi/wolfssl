@@ -21,9 +21,6 @@ endif()
 if(CMAKE_HOST_UNIX)
     message(STATUS "Detected UNIX")
 endif()
-if(APPLE)
-    message(STATUS "Detected APPLE")
-endif()
 if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WSL")
@@ -62,8 +59,6 @@ endif()
 
 ## register_component()
 idf_component_register(SRCS main.c
-                            wifi_connect.c
-                            time_helper.c
                             client-tls.c
                        INCLUDE_DIRS "."
                             "./include"
@@ -134,3 +129,4 @@ endif()
 message(STATUS "")
 
 message(STATUS "End wolfSSL main CMakeLists.txt")
+set_source_files_properties(wifi_connect.c time_helper.c PROPERTIES HEADER_FILE_ONLY TRUE)

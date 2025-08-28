@@ -44,17 +44,17 @@
     #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
     CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
-
 /* this project */
 #include "client-tls.h"
-#include "time_helper.h"
-
 #ifdef CONFIG_IDF_TARGET_ESP32H2
     /* There's no WiFi on ESP32-H2.
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
 #else
-    #include "wifi_connect.h"
+    /* See CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT that defines
+     * USE_WOLFSSL_ESP_SDK_WIFI */
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
     /*
      * Note ModBus TCP cannot be disabled on ESP8266 tos-sdk/v3.4
      * See https://github.com/espressif/esp-modbus/issues/2
