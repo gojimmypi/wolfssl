@@ -147,6 +147,11 @@ void app_main(void)
         int stack_start = 0;
     #endif
 #endif
+#ifdef DEBUG_WOLFSSL
+    /* Turn debugging on or off: */
+    /* wolfSSL_Debugging_ON();   */
+    /* wolfSSL_Debugging_OFF();  */
+#endif
 #if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
 #endif
@@ -203,9 +208,6 @@ void app_main(void)
     #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
 #endif /* SINGLE_THREADED */
 
-#ifdef DEBUG_WOLFSSL
-    wolfSSL_Debugging_OFF();
-#endif
 #ifdef CONFIG_IDF_TARGET_ESP32H2
     ESP_LOGE(TAG, "No WiFi on the ESP32-H2 and ethernet not yet supported");
     while (1) {
@@ -231,7 +233,7 @@ void app_main(void)
     #warning "nvs flash not initialized"
 #endif
 
-#ifdef FOUND_PROTOCOL_EXAMPLES_DIR
+#ifdef FOUND_PROTOCOL_EXAMPLES_DIRx
     ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         ESP_LOGE(TAG, "There's no WiFi on ESP32-H2.");
@@ -246,7 +248,7 @@ void app_main(void)
             #define CONFIG_EXAMPLE_WIFI_SSID "myssid"
             ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
         #endif
-        #if defined(USE_WOLFSSL_ESP_SDK_WIFI_disabled)
+        #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
             esp_log_level_set("wifi", ESP_LOG_VERBOSE);
             esp_log_level_set("wpa",  ESP_LOG_VERBOSE);
             esp_sdk_wifi_lib_init();
@@ -306,12 +308,12 @@ void app_main(void)
     #else
         /* Initialize WiFi */
         ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-        ret = wifi_init_sta();
+        ret = esp_sdk_wifi_init_sta();
         while (ret != 0) {
             ESP_LOGI(TAG, "Waiting...");
             vTaskDelay(60000 / portTICK_PERIOD_MS);
             ESP_LOGI(TAG, "Trying WiFi again...");
-            ret = wifi_init_sta();
+            ret = esp_sdk_wifi_init_sta();
         }
     #endif /* else not CONFIG_IDF_TARGET_ESP32H2 */
 #endif /* else FOUND_PROTOCOL_EXAMPLES_DIR not found */

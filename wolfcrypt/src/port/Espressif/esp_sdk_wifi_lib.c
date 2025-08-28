@@ -31,7 +31,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && ESP_IDF_VERSION_MAJOR > 4
+#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && (ESP_IDF_VERSION_MAJOR > 4 || defined(CONFIG_IDF_TARGET_ESP8266))
 
 /* Espressif */
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
@@ -60,6 +60,7 @@ esp_err_t esp_sdk_wifi_lib_init(void)
 #define WIFI_LOW_HEAP_WARNING 21132
 
 #if defined(CONFIG_IDF_TARGET_ESP8266)
+    /*  No special ESP83266 setting */
 #elif ESP_IDF_VERSION_MAJOR >= 5 && defined(FOUND_PROTOCOL_EXAMPLES_DIR)
     /* example path set in cmake file */
 #elif ESP_IDF_VERSION_MAJOR > 4
@@ -79,7 +80,7 @@ esp_err_t esp_sdk_wifi_lib_init(void)
         const static int CONNECTED_BIT = BIT0;
         static EventGroupHandle_t wifi_event_group;
     #endif
-    #if (ESP_IDF_VERSION_MAJOR == 5)
+    #if (ESP_IDF_VERSION_MAJOR >= 5)
         #define HAS_WPA3_FEATURES
     #else
         #undef HAS_WPA3_FEATURES
@@ -194,7 +195,10 @@ esp_err_t esp_sdk_wifi_init_sta(void)
      * can be enabled by commenting below line */
     if (strlen((char *)wifi_config.sta.password)) {
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+#if (0)
+        /* optional pmf_cfg */
         wifi_config.pmf_cfg = { .capable = true, .required = false };
+#endif
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
