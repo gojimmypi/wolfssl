@@ -52,6 +52,7 @@ esp_err_t esp_sdk_time_lib_init(void)
 }
 
 #if defined(CONFIG_IDF_TARGET_ESP8266)
+    #undef HAS_ESP_NETIF_SNTP
     #include <time.h>
 
 #elif defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION)

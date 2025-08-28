@@ -312,10 +312,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Initial stack used: %d\n",
              TLS_SMP_SERVER_TASK_BYTES  - uxTaskGetStackHighWaterMark(NULL) );
 #endif
-    ESP_LOGI(TAG, "accept clients...");
+    ESP_LOGI(TAG, "Beging connection loop...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        WOLFSSL_MSG("Waiting for a connection...");
+        ESP_LOGI(TAG, "Waiting for a connection...");
         /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
@@ -412,8 +412,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Stack used: %d\n",
                 TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
-        ESP_LOGI(TAG, "proceed if not shutdown..");
+        ESP_LOGI(TAG, "End connection loop.");
     } /* !shutdown */
+
+    ESP_LOGI(TAG, "Done! Cleanup and delete this task.");
     /* Cleanup and return */
     wolfSSL_free(ssl);      /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx);  /* Free the wolfSSL context object          */
