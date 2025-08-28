@@ -51,15 +51,14 @@
 /* this project */
 #include "client-tls.h"
 
-#include "protocol_examples_common.h" /* example connect */
-
 #ifdef CONFIG_IDF_TARGET_ESP32H2
-    /* There's no WiFi on ESP32-H2.
+    /* There's no WiFi on ESP32-H2, no esp_eth.h in protocol_examples_common.h
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
 #else
     /* See CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT that defines
      * USE_WOLFSSL_ESP_SDK_WIFI */
+    #include "protocol_examples_common.h" /* example connect */
     #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
     /*
