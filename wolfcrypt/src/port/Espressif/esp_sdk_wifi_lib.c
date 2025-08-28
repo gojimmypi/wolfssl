@@ -194,6 +194,7 @@ esp_err_t esp_sdk_wifi_init_sta(void)
      * can be enabled by commenting below line */
     if (strlen((char *)wifi_config.sta.password)) {
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+        wifi_config.pmf_cfg = { .capable = true, .required = false };
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );

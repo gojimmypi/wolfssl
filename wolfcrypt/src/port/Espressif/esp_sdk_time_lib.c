@@ -351,8 +351,11 @@ int set_time(void)
                                        ESP_SNTP_SERVER_LIST(ntpServerList[0])
                                    );
     #else
-        esp_sntp_config_t config =
-            ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+        #if defined(ESP_IDF_VERSION) && \
+                   (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+            esp_sntp_config_t config =
+               ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
+        #endif
     #endif /* CONFIG_LWIP_SNTP_MAX_SERVERS > 1 */
 #endif /* HAS_ESP_NETIF_SNTP */
 
@@ -421,7 +424,7 @@ int set_time(void)
     #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
         ret = esp_netif_sntp_init(&config);
     #else
-        sntp_init(&config)
+        sntp_init();
     #endif
 #else
         ESP_LOGW(TAG,"Warning: Consider upgrading ESP-IDF to take advantage "
