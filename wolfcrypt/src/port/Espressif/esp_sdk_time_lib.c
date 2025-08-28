@@ -103,12 +103,22 @@ esp_err_t esp_sdk_time_lib_init(void)
 #define NELEMS(x)  ( (int)(sizeof(x) / sizeof((x)[0])) )
 
 /* See also CONFIG_LWIP_SNTP_MAX_SERVERS in sdkconfig */
-#define NTP_SERVER_LIST ( (char*[]) {                        \
-                                     "pool.ntp.org",         \
-                                     "time.nist.gov",        \
-                                     "utcnist.colorado.edu"  \
-                                     }                       \
-                        )
+#if !defined(CONFIG_LWIP_SNTP_MAX_SERVERS) || \
+    (defined(CONFIG_LWIP_SNTP_MAX_SERVERS) && \
+            (CONFIG_LWIP_SNTP_MAX_SERVERS == 3))
+    #define NTP_SERVER_LIST ( (char*[]) {                       \
+                                        "pool.ntp.org",         \
+                                        "time.nist.gov",        \
+                                        "utcnist.colorado.edu"  \
+                                        }                       \
+                            )
+#else
+    #define NTP_SERVER_LIST ( (char*[]) {                       \
+                                        "pool.ntp.org",         \
+                                        }                       \
+                            )
+#endif
+
 /* #define NTP_SERVER_COUNT using NELEMS:
  *
  *  (int)(sizeof(NTP_SERVER_LIST) / sizeof(NTP_SERVER_LIST[0]))
