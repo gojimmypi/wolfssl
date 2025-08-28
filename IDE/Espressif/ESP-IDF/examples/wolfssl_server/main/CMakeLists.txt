@@ -62,8 +62,6 @@ endif()
 
 ## register_component()
 idf_component_register(SRCS main.c
-                            wifi_connect.c
-                            time_helper.c
                             server-tls.c
                        INCLUDE_DIRS "."
                             "./include"
@@ -134,3 +132,4 @@ endif()
 message(STATUS "")
 
 message(STATUS "End wolfSSL main CMakeLists.txt")
+set_source_files_properties(wifi_connect.c time_helper.c PROPERTIES HEADER_FILE_ONLY TRUE)

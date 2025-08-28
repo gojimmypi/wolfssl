@@ -28,6 +28,9 @@
     #include <freertos/event_groups.h>
 #endif
 
+/* Espressif */
+#include <esp_log.h>
+
 /* socket includes */
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
@@ -48,6 +51,7 @@
         #warning "Check components/wolfssl/include"
     #endif
     #include <wolfssl/ssl.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -150,7 +154,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Initialize wolfSSL */
     WOLFSSL_MSG("Start wolfSSL_Init()");
-    wolfSSL_Init();
+    ret_i = wolfSSL_Init();
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "Failed to initialize wolfSSL");
+    }
 
     /* Create a socket that uses an internet IPv4 address,
      * Sets the socket to be stream based (TCP),
@@ -172,7 +179,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #endif
@@ -314,10 +321,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
         WOLFSSL_MSG("Waiting for a connection...");
-#if ESP_IDF_VERSION_MAJOR >=4
-        /* TODO: IP Address is problematic in RTOS SDK 3.4 */
-        wifi_show_ip();
-#endif
         /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
@@ -406,12 +409,15 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
         ESP_LOGI(TAG, "Done! Cleanup...");
         /* Cleanup after this connection */
+        ESP_LOGI(TAG, "wolfSSL_free...");
         wolfSSL_free(ssl);      /* Free the wolfSSL object              */
+        ESP_LOGI(TAG, "close connection...");
         close(connd);           /* Close the connection to the client   */
 #ifdef WOLFSSL_EXAMPLE_VERBOSITY
         ESP_LOGI(TAG, "Stack used: %d\n",
                 TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
+        ESP_LOGI(TAG, "proceed if not shutdown..");
     } /* !shutdown */
     /* Cleanup and return */
     wolfSSL_free(ssl);      /* Free the wolfSSL object                  */

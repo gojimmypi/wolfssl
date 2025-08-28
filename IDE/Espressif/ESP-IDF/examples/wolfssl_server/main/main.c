@@ -36,6 +36,11 @@
         #warning "Check components/wolfssl/include"
     #endif
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+    #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \
+                CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
+        #include <wolfssl/wolfcrypt/port/Espressif/esp_crt_bundle.h>
+    #endif
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -45,14 +50,18 @@
 
 /* this project */
 #include "server-tls.h"
-#include "time_helper.h"
+
+#include "protocol_examples_common.h" /* example connect */
 
 #ifdef CONFIG_IDF_TARGET_ESP32H2
     /* There's no WiFi on ESP32-H2.
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
 #else
-    #include "wifi_connect.h"
+    /* See CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT that defines
+     * USE_WOLFSSL_ESP_SDK_WIFI */
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+
     /*
      * Note ModBus TCP cannot be disabled on ESP8266 tos-sdk/v3.4
      * See https://github.com/espressif/esp-modbus/issues/2
@@ -138,15 +147,25 @@ void app_main(void)
         int stack_start = 0;
     #endif
 #endif
+#if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
+    ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
+#endif
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Server Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
-#if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
-    ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
+#ifdef WOLFSSL_ESP_NO_WATCHDOG
+    ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
+    esp_DisableWatchdog();
 #endif
+#if defined(HAVE_VERSION_EXTENDED_INFO)
+    esp_ShowExtendedSystemInfo();
+#else
+    ESP_LOGW(TAG, "HAVE_VERSION_EXTENDED_INFO not defined");
+#endif
+
 #if defined(ESP_SDK_MEM_LIB_VERSION) && defined(DEBUG_WOLFSSL)
     sdk_init_meminfo();
 #endif
@@ -184,9 +203,6 @@ void app_main(void)
     #endif /* INCLUDE_uxTaskGetStackHighWaterMark */
 #endif /* SINGLE_THREADED */
 
-#ifdef HAVE_VERSION_EXTENDED_INFO
-    esp_ShowExtendedSystemInfo();
-#endif
 #ifdef DEBUG_WOLFSSL
     wolfSSL_Debugging_OFF();
 #endif
@@ -196,17 +212,27 @@ void app_main(void)
         vTaskDelay(60000);
     }
 #endif
-    /* Set time for cert validation.
-     * Some lwIP APIs, including SNTP functions, are not thread safe. */
-    ret = set_time(); /* need to setup NTP before WiFi */
+
+    ESP_LOGI(TAG, "nvs flash init..");
+    ret = nvs_flash_init();
 
     /* Optionally erase flash */
-    /* ESP_ERROR_CHECK(nvs_flash_erase()); */
+#if defined(ESP_ERR_NVS_NO_FREE_PAGES) && defined(ESP_ERR_NVS_NEW_VERSION_FOUND)
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_LOGI(TAG, "nvs flash erase..");
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_LOGI(TAG, "nvs flash erase..");
+        ret = nvs_flash_init();
+    }
+    else {
+        ESP_LOGW(TAG, "nvs flash NOT erased");
+    }
+#else
+    #warning "nvs flash not initialized"
+#endif
 
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
     ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
-    ESP_ERROR_CHECK(nvs_flash_init());
-
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         ESP_LOGE(TAG, "There's no WiFi on ESP32-H2.");
     #else
@@ -220,9 +246,36 @@ void app_main(void)
             #define CONFIG_EXAMPLE_WIFI_SSID "myssid"
             ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
         #endif
-        ESP_ERROR_CHECK(esp_netif_init());
-        ESP_ERROR_CHECK(esp_event_loop_create_default());
-        ESP_ERROR_CHECK(example_connect());
+        #if defined(USE_WOLFSSL_ESP_SDK_WIFI_disabled)
+            esp_log_level_set("wifi", ESP_LOG_VERBOSE);
+            esp_log_level_set("wpa",  ESP_LOG_VERBOSE);
+            esp_sdk_wifi_lib_init();
+            ret = esp_sdk_wifi_init_sta();
+            if (ret == ESP_OK) {
+                ESP_LOGI(TAG, "WiFi connect success!");
+            }
+            else {
+                ESP_LOGI(TAG, "ERROR: WiFi connect failed!");
+                while (1) {
+                    vTaskDelay(10000 / portTICK_PERIOD_MS);
+                }
+            }
+            esp_sdk_wifi_show_ip();
+        #else
+            ESP_LOGI(TAG, "esp netif init...");
+            ESP_ERROR_CHECK(esp_netif_init());
+            ESP_LOGI(TAG, "esp event loop create default...");
+            ESP_ERROR_CHECK(esp_event_loop_create_default());
+            #if defined(CONFIG_IDF_TARGET_ESP32H2)
+                ESP_LOGI(TAG, "There's no WiFi on the ESP32-H2");
+                while (1) {
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+                }
+            #else
+                ESP_LOGI(TAG, "example connect...");
+                ESP_ERROR_CHECK(example_connect());
+            #endif
+        #endif
     #endif
 #else
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -262,6 +315,11 @@ void app_main(void)
         }
     #endif /* else not CONFIG_IDF_TARGET_ESP32H2 */
 #endif /* else FOUND_PROTOCOL_EXAMPLES_DIR not found */
+
+    /* Set time for cert validation.
+     * Some lwIP APIs, including SNTP functions, are not thread safe. */
+    ret = set_time(); /* need to setup NTP before WiFi */
+
 
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
