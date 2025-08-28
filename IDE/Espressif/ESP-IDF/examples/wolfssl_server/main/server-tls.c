@@ -78,11 +78,6 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
-/* Project */
-#include "wifi_connect.h"
-#include "time_helper.h"
-
-
 static const char* const TAG = "server-tls";
 int stack_start = -1;
 
@@ -174,7 +169,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); for only TLS 1.3 */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
