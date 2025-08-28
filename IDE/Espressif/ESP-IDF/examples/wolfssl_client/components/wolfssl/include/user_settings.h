@@ -915,7 +915,7 @@
             #endif
         #endif
 
-        #if !defined(CONFIG_IDF_TARGET_ESP32)
+        #if defined(CONFIG_IDF_TARGET_ESP32)
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
