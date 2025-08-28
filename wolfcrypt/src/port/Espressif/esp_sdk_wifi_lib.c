@@ -31,7 +31,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && (ESP_IDF_VERSION_MAJOR > 4 || defined(CONFIG_IDF_TARGET_ESP8266))
+#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && (ESP_IDF_VERSION_MAJOR >= 4 || defined(CONFIG_IDF_TARGET_ESP8266))
 
 /* Espressif */
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
