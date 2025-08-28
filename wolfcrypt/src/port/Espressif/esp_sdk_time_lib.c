@@ -462,9 +462,15 @@ int set_time_wait_for_ntp(void)
     int ntp_retry = 0;
     const int ntp_retry_count = NTP_RETRY_COUNT;
 
-    ret = esp_netif_sntp_start();
+    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+        ret = esp_netif_sntp_start();
 
-    ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+        ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+    #else
+        ret = esp_sntp_start();
+
+        ret = esp_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+    #endif
 #else
     ESP_LOGE(TAG, "HAS_ESP_NETIF_SNTP not defined");
 #endif /* HAS_ESP_NETIF_SNTP */
