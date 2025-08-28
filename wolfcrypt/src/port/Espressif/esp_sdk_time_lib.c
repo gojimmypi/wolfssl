@@ -59,7 +59,7 @@ esp_err_t esp_sdk_time_lib_init(void)
         #define HAS_ESP_NETIF_SNTP 1
         #include <esp_sntp.h> /*  types, sync modes, helpers */
         #include <esp_netif_sntp.h> /* ESP-NETIF SNTP service APIs */
-    #elif (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0))
+    #elif (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         #define HAS_ESP_NETIF_SNTP 1
         #include <lwip/apps/sntp.h>
         #include <esp_netif_sntp.h>
@@ -462,7 +462,8 @@ int set_time_wait_for_ntp(void)
     int ntp_retry = 0;
     const int ntp_retry_count = NTP_RETRY_COUNT;
 
-    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+    #if defined(ESP_IDF_VERSION) && \
+        (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         ret = esp_netif_sntp_start();
 
         ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);

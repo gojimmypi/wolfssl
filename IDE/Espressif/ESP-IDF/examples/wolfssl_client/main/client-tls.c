@@ -355,7 +355,7 @@ TLS13-AES128-CCM8-SHA256
         ESP_LOGI(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
-        ret_i = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+        ret_i = wolfSSL_CTX_use_certificate_buffer(ctx,
                                          CTX_CLIENT_CERT,
                                          CTX_CLIENT_CERT_SIZE,
                                          CTX_CLIENT_CERT_TYPE);
