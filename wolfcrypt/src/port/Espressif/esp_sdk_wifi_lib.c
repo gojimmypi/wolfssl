@@ -66,8 +66,10 @@ esp_err_t esp_sdk_wifi_lib_init(void)
 #elif ESP_IDF_VERSION_MAJOR > 4
 /*    #include "protocol_examples_common.h" */
 #else
-    const static int CONNECTED_BIT = BIT0;
-    static EventGroupHandle_t wifi_event_group;
+    #if (0)
+        const static int CONNECTED_BIT = BIT0;
+        static EventGroupHandle_t wifi_event_group;
+    #endif
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP8266)
