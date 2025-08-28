@@ -6,6 +6,21 @@
 message(STATUS "Begin project ${CMAKE_PROJECT_NAME}")
 
 cmake_minimum_required(VERSION 3.16)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
+
+# Different ESP-IDF versions have different lock files.
+# Not starting fresh has unintuitive results.
+# So force a fresh dependencies.lock by deleting the current one:
+file(REMOVE "./dependencies.lock")
+
+# Force custom partition table regardless of IDE presets
+set(PARTITION_TABLE_CUSTOM ON CACHE BOOL "" FORCE)
+set(PARTITION_TABLE_FILENAME "${CMAKE_SOURCE_DIR}/partitions_singleapp_large.csv" CACHE STRING "" FORCE)
+
+if("${IDF_TARGET}" STREQUAL "linux")
+    set(COMPONENTS main)
+endif()
 
 # For the main project using ESP-IDF version 6 or greater.
 # Numerous "dangerous relocation: call8: call target out of range: memcpy" errors encountered
@@ -49,9 +64,6 @@ endif()
 if(CMAKE_HOST_UNIX)
     message(STATUS "Detected UNIX")
 endif()
-if(APPLE)
-    message(STATUS "Detected APPLE")
-endif()
 if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WSL")
@@ -63,7 +75,7 @@ if(CMAKE_HOST_UNIX AND (NOT APPLE) AND (NOT WIN32))
     message(STATUS "Detected Linux")
 endif()
 if(APPLE)
-    # Windows-specific configuration here
+    # Apple-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_APPLE")
     message(STATUS "Detected Apple")
 endif()

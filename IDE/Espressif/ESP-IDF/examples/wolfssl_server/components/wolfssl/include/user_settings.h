@@ -918,15 +918,15 @@
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
-            #ifdef ESP_RSA_EXPT_XBITS
-                #warning "Adjusting ESP_RSA_EXPT_XBITS"
+            #if defined(ESP_RSA_EXPT_XBITS) && (ESP_RSA_EXPT_XBITS < 32)
+                #warning "Adjusting ESP_RSA_EXPT_XBITS to 32"
                 #undef  ESP_RSA_EXPT_XBITS
             #endif
             #define ESP_RSA_EXPT_XBITS 32
 
             /* X and Y of X * Y mod P greater than                         */
-            #ifdef ESP_RSA_MULM_BITS
-                #warning "Adjusting ESP_RSA_MULM_BITS"
+            #if defined(ESP_RSA_MULM_BITS) && (ESP_RSA_MULM_BITS < 16)
+                #warning "Adjusting ESP_RSA_MULM_BITS to 16"
                 #undef  ESP_RSA_MULM_BITS
             #endif
             #define ESP_RSA_MULM_BITS  16
