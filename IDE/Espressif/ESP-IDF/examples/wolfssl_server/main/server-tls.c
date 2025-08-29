@@ -37,10 +37,6 @@
 #include <netinet/tcp.h> /* For TCP options */
 #include <sys/socket.h>
 
-#ifndef TCP_RTO_MIN
-    #define TCP_RTO_MIN 1500
-#endif
-
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
@@ -132,13 +128,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     int                ret_i; /* interim return values */
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
-#if 0
-    /* optionally set TCP RTO. See also below. */
-    int rto_min = 200; /* Minimum TCP RTO in milliseconds */
-#endif
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
+
+#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+    /* optionally set TCP re-use. See also below. */
+    int tcp_reuse = 1;
+#endif
 
     WOLFSSL_ENTER("tls_smp_server_task");
 
@@ -158,12 +155,17 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     WOLFSSL_MSG( "start socket())");
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to create the socket");
     }
 
-    /* Optionally set TCP RTO
-    setsockopt(sockfd, IPPROTO_TCP, TCP_RTO_MIN, &rto_min, sizeof(rto_min)); */
+    /* Optionally set TCP Socket Re-use. */
+#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
+#ifdef SO_REUSEPORT   /* not always available on lwIP */
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
+#endif /* SO_REUSEPORT        */
+#endif /* optional TCP re-use */
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");

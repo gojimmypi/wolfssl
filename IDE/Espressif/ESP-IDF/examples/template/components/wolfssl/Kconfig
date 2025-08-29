@@ -61,13 +61,13 @@
 #   menu "ESP-TLS"
 #       choice ESP_TLS_LIBRARY_CHOOSE
 #            bool "wolfSSL (License info in wolfSSL directory README)"
-#            select TLS_STACK_WOLFSSL    
+#            select TLS_STACK_WOLFSSL
 #
 # Selecting TLS_STACK_WOLFSSL in ESP-TLS will be linked to this Kconfig via the
 # invisible local keyword by the same name in this Kconfig, below.
-# 
+#
 # See setting here, just above this item:  menu "wolfSSL ESP-TLS"
-# 
+#
 # ---------------------------------------------------------------------------------------------------------------------
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                     Enables TEST_ESPIDF_ALL_WOLFSSL
         endmenu # wolfCrypt tests
     endmenu # Application Specific
-    
+
     menu "Hardening"
         config ESP_WOLFSSL_WC_NO_HARDEN
             bool "Disable wolfSSL hardening"
@@ -231,16 +231,22 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             help
                 Sets HAVE_OCSP
 
+        config ESP_WOLFSSL_TCP_REUSE
+            int "TCP Re-use"
+            default 0
+            help
+                Set to 1 to allow socket re-use.
+
     endmenu # Protocol Config
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
     config TLS_STACK_WOLFSSL
         # Invisible option that locks TLS_STACK_WOLFSSL to ESP_TLS_USING_WOLFSSL
-        # 
+        #
         # See setting in: esp-idf\[version]\components\esp-tls\Kconfig:
         #
-        # config ESP_TLS_USING_WOLFSSL 
+        # config ESP_TLS_USING_WOLFSSL
         #     bool "wolfSSL (License info in wolfSSL directory README)"
         #     select TLS_STACK_WOLFSSL
         #
@@ -254,7 +260,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
     menu "wolfSSL ESP-TLS"
         # Enabled only when Component config - ESP-TLS - Choose SSL/TLS Library for ESP-TLS has wolfSSL selected:
         depends on ESP_TLS_USING_WOLFSSL
-           
+
         menu "Certificate Bundle"
             depends on ESP_TLS_USING_WOLFSSL
 
