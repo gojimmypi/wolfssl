@@ -538,7 +538,7 @@ static const char* map_model_to_name(esp_chip_model_t m) {
 }
 
 
-esp_err_t esp_ShowDeviceInfo(void)
+esp_err_t esp_show_device_info(void)
 {
     esp_chip_info_t info;
     esp_err_t ret;
@@ -671,7 +671,7 @@ static esp_err_t ShowExtendedSystemInfo_config(void)
 #endif
     ESP_LOGI(TAG, WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
 
-    esp_ShowDeviceInfo();
+    esp_show_device_info();
     return ESP_OK;
 }
 /*
