@@ -480,17 +480,10 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
-    #define MY_USE_ECC 0
-    #define MY_USE_RSA 1
-#else
-    #define MY_USE_ECC 1
-    #define MY_USE_RSA 0
-#endif
-
-/* We can use either or both ECC and RSA, but must use at least one. */
-#if MY_USE_ECC || MY_USE_RSA
-    #if MY_USE_ECC
+/* We can use either or both ECC and RSA, but must use at least one for TLS */
+#if CONFIG_ESP_WOLFSSL_USE_ECC || CONFIG_ESP_WOLFSSL_USE_RSA
+    /* Some ECC checks */
+    #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
         #define HAVE_CURVE25519
@@ -507,7 +500,8 @@
         #define WOLFSSH_NO_ECDSA
     #endif
 
-    #if MY_USE_RSA
+    /* Some RSA Checks */
+    #if CONFIG_ESP_WOLFSSL_USE_RSA
         /* ---- RSA ----- */
         /* #define RSA_LOW_MEM */
 

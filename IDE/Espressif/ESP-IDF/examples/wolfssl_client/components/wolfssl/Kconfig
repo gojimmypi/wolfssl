@@ -80,6 +80,20 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             Enable this option to use cryptographic libraries but disable things like TLS communication. Normally not set. Enables WOLFCRYPT_ONLY
     # -----------------------------------------------------------------------------------------------------------------
 
+    menu "wolfSSL Algorithm Settings"
+        config ESP_WOLFSSL_USE_ECC
+            bool "Enable ECC (Elliptic Curve Cryptography) in wolfSSL"
+            default y
+            help
+                Enables ECC algorithm
+
+        config ESP_WOLFSSL_USE_RSA
+            bool "Enable RSA (Rivest-Shamir-Adlemanl) in wolfSSL"
+            default y
+            help
+                Enables RSA algorithm
+    endmenu # wolfSSL Algorithm Settings
+
     menu "wolfSSL Application Specific"
         # -----------------------------------------------------------------------------------------------------------------
         # Apple HomeKit Options
@@ -157,19 +171,6 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                 Sets TFM_TIMING_RESISTANT.
 
     endmenu # Hardening
-
-
-    config ESP_WOLFSSL_DISABLE_MY_ECC
-        bool "Disable ECC in my project"
-        default "n"
-        help
-            ECC is enabled by default. Select this option to disable.
-
-    config ESP_WOLFSSL_ENABLE_MY_USE_RSA
-        bool "Enable RSA in my project"
-        default "n"
-        help
-            RSA is disabled by default. Select this option to enable.
 
     config ESP_TLS_USING_WOLFSSL_SPECIFIED
         bool "Use the specified wolfssl for ESP-TLS"

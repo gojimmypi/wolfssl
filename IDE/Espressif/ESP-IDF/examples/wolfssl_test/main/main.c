@@ -20,8 +20,8 @@
  */
 
 /* ESP-IDF */
-#include <esp_log.h>
 #include "sdkconfig.h"
+#include <esp_log.h>
 
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
