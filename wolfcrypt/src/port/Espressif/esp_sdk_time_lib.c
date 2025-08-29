@@ -363,7 +363,7 @@ int set_time(void)
                                    );
     #else
         #if defined(ESP_IDF_VERSION) && \
-                   (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+                   (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
             esp_sntp_config_t config =
                ESP_NETIF_SNTP_DEFAULT_CONFIG(ntpServerList[0]);
         #endif
@@ -402,7 +402,7 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
         esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
 #else
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -412,10 +412,10 @@ int set_time(void)
                           "CONFIG_LWIP_SNTP_MAX_SERVERS = %d",
                            NTP_SERVER_COUNT,CONFIG_LWIP_SNTP_MAX_SERVERS);
         }
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         ESP_LOGI(TAG, "esp_sntp_setservername:");
 #else
-        ESP_LOGI(TAG, "sntp_setservername:");
+        ESP_LOGI(TAG, "Found sntp_setservername:");
 #endif
         for (i = 0; i < CONFIG_LWIP_SNTP_MAX_SERVERS; i++) {
             const char* thisServer = ntpServerList[i];
@@ -423,8 +423,8 @@ int set_time(void)
                 /* just in case we run out of NTP servers */
                 break;
             }
-            ESP_LOGI(TAG, "%s", thisServer);
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+            ESP_LOGI(TAG, "  %s", thisServer);
+#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
             esp_sntp_setservername(i, thisServer);
 #else
             sntp_setservername(i, thisServer);
@@ -432,7 +432,8 @@ int set_time(void)
             ret = ESP_OK;
         }
 #ifdef HAS_ESP_NETIF_SNTP
-    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
+    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+        ESP_LOGI(TAG, "SNTP init v6 init with esp_netif_sntp_init");
         ret = esp_netif_sntp_init(&config);
     #else
         sntp_init();
@@ -469,20 +470,30 @@ int set_time(void)
 int set_time_wait_for_ntp(void)
 {
     int ret = 0;
-#ifdef HAS_ESP_NETIF_SNTP
+#if defined(HAS_ESP_NETIF_SNTP) && defined(ESP_IDF_VERSION)
     int ntp_retry = 0;
     const int ntp_retry_count = NTP_RETRY_COUNT;
 
-    #if defined(ESP_IDF_VERSION) && \
-        (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+    #if  (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         ret = esp_netif_sntp_start();
-
-        ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
     #else
         ret = esp_sntp_start();
-
+    #endif
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "esp_netif_sntp_start ERROR %d",
+                              ret);
+        }
+        else {
+    #if  (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+            ret = esp_netif_sntp_sync_wait(500 / portTICK_PERIOD_MS);
+    #else
         ret = esp_sntp_sync_wait(500 / portTICK_PERIOD_MS);
     #endif
+            if ((ret != ESP_OK) && (ret != ESP_ERR_TIMEOUT)) {
+                ESP_LOGE(TAG, "esp_netif_sntp_sync_wait exited with error %d",
+                               ret);
+            }
+        }
 #else
     ESP_LOGE(TAG, "HAS_ESP_NETIF_SNTP not defined");
 #endif /* HAS_ESP_NETIF_SNTP */
@@ -501,6 +512,8 @@ int set_time_wait_for_ntp(void)
 #ifdef TIME_ZONE
     setenv("TZ", TIME_ZONE, 1);
     tzset();
+#else
+    ESP_LOGW(TAG, "Timezone not set");
 #endif
 
     if (ret == ESP_OK) {
