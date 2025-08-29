@@ -504,34 +504,45 @@ static int show_macro(char* s, char* not_defined)
     return ESP_OK;
 }
 
-static const char* map_model_to_name(esp_chip_model_t m) {
+static const char* map_model_to_name(esp_chip_model_t m)
+{
+    /* See ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h */
     switch (m) {
     #ifdef CONFIG_IDF_TARGET_ESP32
-        case CHIP_ESP32:   return "esp32";
+        case CHIP_ESP32:   return "esp32";     /*  1 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32S2
-        case CHIP_ESP32S2: return "esp32s2";
+        case CHIP_ESP32S2: return "esp32s2";   /*  2 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32S3
-        case CHIP_ESP32S3: return "esp32s3";
-    #endif
-    #ifdef CONFIG_IDF_TARGET_ESP32C2
-        case CHIP_ESP32C2: return "esp32c2";
+        case CHIP_ESP32S3: return "esp32s3";   /*  9 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32C3
-        case CHIP_ESP32C3: return "esp32c3";
+        case CHIP_ESP32C3: return "esp32c3";   /*  5 */
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C2
+        case CHIP_ESP32C2: return "esp32c2";   /* 12 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32C6
-        case CHIP_ESP32C6: return "esp32c6";
-    #endif
-    #ifdef CONFIG_IDF_TARGET_ESP32C5
-        case CHIP_ESP32C5: return "esp32c5";
+        case CHIP_ESP32C6: return "esp32c6";   /* 13 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32H2
-        case CHIP_ESP32H2: return "esp32h2";
+        case CHIP_ESP32H2: return "esp32h2";   /* 16 */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32P4
-        case CHIP_ESP32P4: return "esp32p4";
+        case CHIP_ESP32H2: return "esp32p4";   /* 18 */
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C61
+        case CHIP_ESP32C6: return "esp32c61";  /* 20 */
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C5
+        case CHIP_ESP32C5: return "esp32c5";   /* 23 */
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32H21
+        case CHIP_ESP32P4: return "esp32h21";  /* 25 */
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32H4
+        case CHIP_ESP32P4: return "esp32h4";   /* 28 */
     #endif
         default:           return "esp32-unknown";
     }
