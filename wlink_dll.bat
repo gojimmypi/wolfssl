@@ -41,7 +41,6 @@ wlink name wolfssl.dll system nt_dll debug all option implib=wolfssl.lib ^
     CMakeFiles\wolfssl.dir\src\tls13.c.obj ^
   } ^
   library ws2_32.lib ^
-  library crypt32.lib ^
   library clib3r.lib
 
 cd ..

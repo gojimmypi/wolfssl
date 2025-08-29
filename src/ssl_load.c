@@ -2399,7 +2399,7 @@ static int PrintBufferPreface(const unsigned char* buff, word32 sz) {
             break;
         }
     }
-    WOLFSSL_MSG_BUFFER_TEXT(buff, this_size);
+    //WOLFSSL_MSG_BUFFER_TEXT(buff, this_size);
     return WOLFSSL_SUCCESS;
 }
 #endif
@@ -2639,7 +2639,7 @@ static int ProcessChainBuffer(WOLFSSL_CTX* ctx, WOLFSSL* ssl,
     long used   = 0;
     int  gotOne = 0;
 
-    WOLFSSL_MSG_CERT("Processing CA PEM file: %lu bytes", sz);
+    WOLFSSL_MSG_CERT_EX("Processing CA PEM file: %lu bytes", sz);
     /* Keep processing file while no errors and data to parse. */
     while ((ret >= 0) && (used < sz)) {
         long consumed = used;

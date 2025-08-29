@@ -139,45 +139,32 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUTPUT THIS_VAR VAR_RESULT )
 
             message(STATUS "COMPONENT_LIB=${COMPONENT_LIB}")
             target_include_directories(${COMPONENT_LIB} PRIVATE "${CMAKE_BINARY_DIR}")
-        else()
+        else() # 1 or zero lines in THIS_VAR
             message(STATUS "Result line count=${LINE_COUNT}; Not setting HAS_LIBWOLFSSL_OUTPUT_HEADER")
             # We should not have any, but just to be sure:
             # Strip newline chars in THIS_VAR parameter and save in VAR_VALUE
             string(REPLACE "\n" ""  THIS_VAR   "${THIS_VAR}")
             string(REPLACE "\r" ""  VAR_VALUE  "${THIS_VAR}")
 
-        # Final empty line to close the macro
-        file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h" "\n")
+            # we could percolate the value to the parent for possible later use
+            # set(${VAR_OUTPUT} ${VAR_VALUE} PARENT_SCOPE)
 
-        message(STATUS "COMPONENT_LIB=${COMPONENT_LIB}")
-        target_include_directories(${COMPONENT_LIB} PRIVATE "${CMAKE_BINARY_DIR}")
-    else()
-        message(STATUS "No HAS_LIBWOLFSSL_OUTPUT_HEADER")
-        # We should not have any, but just to be sure:
-        # Strip newline chars in THIS_VAR parameter and save in VAR_VALUE
-        string(REPLACE "\n" ""  VAR_VALUE  "${THIS_VAR}")
+            # but we're only using it here in this function
+            set(${VAR_OUTPUT} ${VAR_VALUE})
 
-        # we'll could percolate the value to the parent for possible later use
-        # set(${VAR_OUTPUT} ${VAR_VALUE} PARENT_SCOPE)
+            # we'll print what we found to the console
+            message(STATUS "Found ${VAR_OUTPUT}=${VAR_VALUE}")
 
-        # but we're only using it here in this function
-        set(${VAR_OUTPUT} ${VAR_VALUE})
-
-        # we'll print what we found to the console
-        message(STATUS "Found ${VAR_OUTPUT}=${VAR_VALUE}")
-
-        # the interesting part is defining the VAR_OUTPUT name a value to use in the app
-        add_compile_definitions(${VAR_OUTPUT}=\"${VAR_VALUE}\")
+            # the interesting part is defining the VAR_OUTPUT name a value to use in the app
+            add_compile_definitions(${VAR_OUTPUT}=\"${VAR_VALUE}\")
 
         endif()
-    else()
+    else() # !IS_VALID_VALUE
         # if we get here, check the execute_process command and parameters.
         message(STATUS "LIBWOLFSSL_SAVE_INFO encountered a non-zero VAR_RESULT")
         set(${VAR_OUTPUT} "Unknown")
-    endif()
-
-
-endfunction() # LIBWOLFSSL_SAVE_INFO
+    endif()  # IS_VALID_VALUE
+endfunction()# LIBWOLFSSL_SAVE_INFO
 
 #
 # APPEND_LIBWOLFSSL_CMAKE_OUTPUT(THIS_MESSAGE OUTPUT_VALUE)
@@ -610,6 +597,15 @@ else()
 
     if(WOLFSSL_ROOT)
         message(STATUS "Confirmed wolfssl directory at: ${WOLFSSL_ROOT}")
+            # Once WOLFSSL_ROOT has been determined, see if there's a Espressif.cmake file to include
+
+        set(WOLFSSL_ROOT_ESPRESSIF_CMAKE "${WOLFSSL_ROOT}/cmake/modules/Espressif.cmake")
+        if( EXISTS "${WOLFSSL_ROOT_ESPRESSIF_CMAKE}")
+            message(STATUS "Found WOLFSSL_ROOT_ESPRESSIF_CMAKE: ${WOLFSSL_ROOT_ESPRESSIF_CMAKE}")
+            include("${WOLFSSL_ROOT_ESPRESSIF_CMAKE}")
+        else()
+            message(STATUS "Not found WOLFSSL_ROOT_ESPRESSIF_CMAKE: ${WOLFSSL_ROOT_ESPRESSIF_CMAKE}")
+        endif()
     else()
         # Try to allow a more intuitive error that the source code was not found in cmake:
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_WARNING_SOURCE_NOT_FOUND")
@@ -920,8 +916,7 @@ else()
 # function(WOLFSSL_INIT_CERT_BUNDLE)
 if( CONFIG_WOLFSSL_CERTIFICATE_BUNDLE
     AND NOT CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
-    AND NOT ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266")
-  )
+    AND NOT ("${CONFIG_TARGET_PLATFORM}" STREQUAL "esp8266") )
     APPEND_LIBWOLFSSL_CMAKE_OUTPUT("wolfSSL Certificate Bundles Enabled")
 
     if (CMAKE_BUILD_EARLY_EXPANSION)

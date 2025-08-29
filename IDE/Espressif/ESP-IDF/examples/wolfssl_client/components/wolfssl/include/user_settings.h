@@ -941,7 +941,6 @@
                 #warning "Adjusting ESP_RSA_MULM_BITS"
                 #undef  ESP_RSA_MULM_BITS
             #endif
-            #undef  ESP_RSA_MULM_BITS
             #define ESP_RSA_MULM_BITS  16
         #endif
     #endif
@@ -1303,3 +1302,4 @@ Turn on timer debugging (used when CPU cycles not available)
 
 #ifdef NO_DH
 #endif
+/* LONG LINE TEST LONG LINE TEST LONG LINE TEST LONG LINE TEST LONG LINE TEST LONG LINE TEST */

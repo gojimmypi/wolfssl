@@ -6,7 +6,7 @@
  *
  * wolfSSL is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * wolfSSL is distributed in the hope that it will be useful,
@@ -247,7 +247,7 @@ void wolfSSL_Debugging_OFF(void)
 #endif
 }
 
-WOLFSSL_API void wolfSSL_SetLoggingPrefix(const char* prefix)
+void wolfSSL_SetLoggingPrefix(const char* prefix)
 {
 #if defined(DEBUG_WOLFSSL) || \
    (defined(WOLFSSL_DEBUG_CERTS) && !defined(NO_WOLFSSL_DEBUG_CERTS))
@@ -447,7 +447,7 @@ static void wolfssl_log(const int logLevel, const char* const file_name,
 #include <stdarg.h> /* for var args */
 
 #ifndef WOLFSSL_MSG_EX_BUF_SZ
-#define WOLFSSL_MSG_EX_BUF_SZ 500
+#define WOLFSSL_MSG_EX_BUF_SZ 100
 #endif
 
 #if !defined(WOLFSSL_MSG_EX) && defined(DEBUG_WOLFSSL)
@@ -572,7 +572,7 @@ int WOLFSSL_MSG_BUFFER_TEXT(const unsigned char* s, word32 sz)
  *
  * Returns 0 if a message was printed, otherwise WC_FAILURE.
  */
-int WOLFSSL_MSG_CERT(const char* fmt, ...)
+int WOLFSSL_MSG_CERT_ALT(const char* fmt, ...)
 {
     /* Always show cert debug messages, even with loggingEnabled == 0 */
     int ret = 0;

@@ -19,6 +19,7 @@
 # Define ESPIDF_PUTTY_MONITOR to a non-blank value to call putty.
 # instead of using `idf.py monitor`
 #==============================================================================
+export ESPIDF_PUTTY_MONITOR="TRUE"
 
 # Run shell check to ensure this a good script.
 # Specify the executable shell checker you want to use:
@@ -108,7 +109,7 @@ echo "ORIGINAL_PATH=$PATH"
 
 #******************************************************************************
 # ESP8266 uses rtos-sdk/v3.4 toolchain. Test this first, as it is slowest.
-# WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
+WRK_IDF_PATH=/mnt/c/SysGCC/esp8266/rtos-sdk/v3.4
 #******************************************************************************
 
 # Clear ESP-IDF environment variables to ensure clean start for export.sh
@@ -121,6 +122,7 @@ unset IDF_TOOLS_EXPORT_CMD
 unset IDF_TOOLS_INSTALL_CMD
 unset OPENOCD_SCRIPTS
 
+echo "Run ESP8266 export.sh from ${WRK_IDF_PATH}"
 
 #******************************************************************************
 # Backup existing build and sdkconfig files

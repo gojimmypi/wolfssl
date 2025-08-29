@@ -25,6 +25,10 @@ THIS_HOME_DIR="$(pwd)"
 # the first parameter is expected to be a project name in the WOLFSSL_ESPIDF directory.
 if [ $# -lt 3 ]; then
     echo "Usage: $0 <example_name> <target> <keyword>"
+    echo ""
+    echo "Example:"
+    echo ""
+    echo "./testMonitor.sh wolfssl_benchmark esp32c6 HW"
     exit 1
 else
     THIS_EXAMPLE="$1"
@@ -37,6 +41,8 @@ fi
 
 echo "testMonitor current path:"
 pwd
+
+# See the device_list.sh to aid in identification when editing this list.
 
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
@@ -61,9 +67,9 @@ elif [[ "$TESTHOST" == "NOTEBOOK_HOST" ]]; then
     esp8684_PORT="/dev/ttyS49"
     # esp32c2_PORT="/dev/ttyS49" #8684
 elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
-    esp8684_PORT="/dev/ttyS10"
+    esp32c2_PORT="/dev/ttyS10"
     esp8266_PORT="/dev/ttyS11"
-    esp32c2_PORT="/dev/ttyS12"
+    esp32c2_PORT="/dev/ttyS15"
     esp32s3_PORT="/dev/ttyS4"
     esp32s2_PORT="/dev/ttyS5"
     esp32c3_PORT="/dev/ttyS6"
@@ -71,17 +77,21 @@ elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
     esp32c6_PORT="/dev/ttyS8"
     esp32h2_PORT="/dev/ttyS9"
 
+    esp8684_PORT="/dev/ttyS49"
+    # esp32c2_PORT="/dev/ttyS49" #8684
+
     # Load putty profiles. Note profiles names need to have been previously
     # defined and saved in putty! These are the saved sessions in putty:
-    esp8684_PUTTY="COM10-74880"
-    esp8266_PUTTY="COM11-74880"
-    esp32c2_PUTTY="COM12-74880"
-    esp32s3_PUTTY="COM4"
-    esp32s2_PUTTY="COM5"
-    esp32c3_PUTTY="COM6"
-    esp32_PUTTY="COM7"
-    esp32c6_PUTTY="COM8"
-    esp32h2_PUTTY="COM9"
+    # ESP32c3 on COM 6: "generic" ?
+    esp32_PUTTY="COM7"           # ok
+    esp32c2_PUTTY="COM10-74880" # didn't load?
+    esp32c3_PUTTY="COM6"         # ok "generic"
+    esp32c6_PUTTY="COM8"         # ok
+    esp32h2_PUTTY="COM9"         # ok
+    esp32s2_PUTTY="COM5"         # ok
+    esp32s3_PUTTY="COM4"         # ok
+    esp8684_PUTTY="COM15-74880"  # Reports as esp32c2
+    esp8266_PUTTY="COM11-74880"  # ok
 
 else
     echo "Error unknown TESTHOST=$TESTHOST"

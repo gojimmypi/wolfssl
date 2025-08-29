@@ -454,7 +454,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task_2(void *args)
             wc_ErrorString(err, msg_buf);
             msg = msg_buf;
         }
-        WOLFSSL_MSG_CERT(WOLFSSL_MSG_CERT_INDENT
+        WOLFSSL_MSG_CERT_EX(WOLFSSL_MSG_CERT_INDENT
                             "other.c wolfSSL_connect error ret: %d; %s;", err, msg);
     }
 

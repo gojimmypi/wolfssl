@@ -69,6 +69,12 @@ menu "wolfSSL"
 
     endmenu # Hardening
 
+    config ESP_WOLFSSL_WOLFCRYPT_ONLY
+        bool "Use wolfcrypt only"
+        default n
+        help
+            "Enable this option to use cryptographic libraries but disable things like TLS communication. Enables WOLFCRYPT_ONLY"
+
     config ESP_WOLFSSL_ENABLE_BENCHMARK
         bool "Enable wolfSSL Benchmark Library"
         default n
@@ -255,8 +261,8 @@ menu "wolfSSL"
                 depends on ESP_TLS_USING_WOLFSSL
                 help
                     Although not recommended, there may be certificates in the bundle that are missing
-                    a serial number. This option allows the missing value without having to fully
-                    disable strict ASN checking with WOLFSSL_NO_ASN_STRICT.
+                    a serial number. This option allows the missing value (a zero) without having to fully
+                    disable strict ASN checking with WOLFSSL_NO_ASN_STRICT. Note this is disallowed by RFC 5280
 
             choice WOLFSSL_DEFAULT_CERTIFICATE_BUNDLE
                 bool "Default certificate bundle options"
@@ -322,6 +328,19 @@ menu "wolfSSL"
                 int "Maximum no of certificates allowed in certificate bundle"
                 default 200
                 depends on WOLFSSL_CERTIFICATE_BUNDLE && ESP_TLS_USING_WOLFSSL
+
+            config ESP_WOLFSSL_DEBUG_CERT_BUNDLE
+                bool "Enable certificate bundle debug"
+                depends on WOLFSSL_CERTIFICATE_BUNDLE
+                default n
+                help
+                    View debug messages for cert bundle processing.
+
+            config ESP_WOLFSSL_OPENSSL_EXTRA
+                bool "Enable wolfSSL OpenSSL Extra support"
+                default n
+                help
+                    Enable OpenSSL support: old SHA functions only available with OpenSSLL (not recommended)
 
         endmenu
     endmenu # wolfSSL ESP-TLS
@@ -442,11 +461,23 @@ menu "wolfSSL"
 
     # -----------------------------------------------------------------------------------------------------------------
     menu "wolfSSL Debug Options"
+        config ESP_WOLFSSL_DEBUG_CERTS
+            bool "Enable wolfSSL Certificate Debugging"
+            default n
+            help
+                Enable debugging messages for wolfSSL certificate processing. See user_settings.h for additional debug options.
+
         config ESP_WOLFSSL_DEBUG_WOLFSSL
             bool "Enable wolfSSL Debugging"
             default n
             help
-                Enable debugging messages for wolfSSL. See user_settings.h for additional debug options.
+                Enable debugging messages for wolfSSL. Includes wolfSSL Certificate Debugging (WOLFSSL_DEBUG_CERTS) See user_settings.h for additional debug options.
+
+        config WOLFSSL_EXAMPLE_VERBOSITY
+            bool "Enable example verbosity"
+            default n
+            help
+                This is only intended to be used with examples. Excessive verbosity may have undesired effects on timing-critical code.
 
         config ESP_WOLFSSL_NO_STACK_SIZE_BUILD_WARNING
             bool "Suppress build-time warnings for main stack size"

@@ -84,6 +84,8 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+#define USE_WOLFSSL_ESP_SDK_TIME
+
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -102,6 +104,7 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #define WOLFSSL_MAX_ERROR_SZ 500
+#define WOLFSSL_MSG_EX_BUF_SZ 500
 
 /* wolfSSL Examples: set macros used in example applications.
  *
@@ -224,6 +227,7 @@
 /* See Kconfig / menuconfig ESP_WOLFSSL_ENABLE_MLKEM */
 #ifdef CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
     /* Kyber typically needs a minimum 10K stack */
+    #define WOLFSSL_MLKEM_KYBER
     #define WOLFSSL_HAVE_MLKEM
     #define WOLFSSL_WC_MLKEM
     #define WOLFSSL_SHAKE128
@@ -514,7 +518,11 @@
         #define WOLFSSH_NO_RSA
     #endif
 #else
-    #error "Either RSA or ECC must be enabled"
+	#ifdef WOLFCRYPT_ONLY
+		/* Communications such as (D)TLS not compiled in */
+    #else
+        #warning "Both RSA and ECC are disabled. Consider WOLFCRYPT_ONLY"
+    #endif
 #endif
 
 /* Optional OpenSSL compatibility */
@@ -788,6 +796,16 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+    #define WOLFSSL_ESP32
+
+    /*  There's no Hardware Acceleration available on ESP32-C5 */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32C5 *****/
+
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
@@ -806,6 +824,27 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD  */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD */
     /***** END CONFIG_IDF_TARGET_ESP32C6 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32C61)
+    #define WOLFSSL_ESP32
+    /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
+
+    /*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
+    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    /* no SHA384 HW on C61  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C61  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+
+    /* HW temporarily disabled on the ESP32-C61 pending additional development.
+     * See also settings.h that should also be disabling these after v5.8.0  */
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_EXPTMOD
+    /***** END CONFIG_IDF_TARGET_ESP32C61 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     #define WOLFSSL_ESP32
@@ -880,11 +919,17 @@
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
-            #undef  ESP_RSA_EXPT_XBITS
+            #ifdef ESP_RSA_EXPT_XBITS
+                #warning "Adjusting ESP_RSA_EXPT_XBITS"
+                #undef  ESP_RSA_EXPT_XBITS
+            #endif
             #define ESP_RSA_EXPT_XBITS 32
 
             /* X and Y of X * Y mod P greater than                         */
-            #undef  ESP_RSA_MULM_BITS
+            #ifdef ESP_RSA_MULM_BITS
+                #warning "Adjusting ESP_RSA_MULM_BITS"
+                #undef  ESP_RSA_MULM_BITS
+            #endif
             #define ESP_RSA_MULM_BITS  16
         #endif
     #endif

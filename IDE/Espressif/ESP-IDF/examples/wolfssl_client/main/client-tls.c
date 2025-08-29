@@ -92,7 +92,7 @@
  **/
 #define TAG "client-tls"
 
-#if !defined(DEBUG_WOLFSSL)
+#if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
@@ -228,7 +228,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     doPeerCheck = 1;
     sendGet = 0;
 
-#ifndef DEBUG_WOLFSSL
+#ifdef DEBUG_WOLFSSL
     WOLFSSL_MSG("Debug ON");
     ShowCiphers(NULL);
 #endif

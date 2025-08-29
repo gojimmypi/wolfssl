@@ -1,4 +1,8 @@
 @echo off
+
+set THIS_PORT=11111
+set THIS_HOST=192.168.142.146
+
 REM Set this to wherever you installed Open Watcom
 set WATCOM=C:\watcom
 set PATH=%WATCOM%\binnt;%WATCOM%\binw;%PATH%
@@ -6,8 +10,6 @@ set INCLUDE=%WATCOM%\h;%WATCOM%\h\nt
 set EDPATH=%WATCOM%\eddat
 set WIPFC=%WATCOM%\wipfc
 set LIB=%WATCOM%\lib386;%WATCOM%\lib386\nt
-
-:: goto test2:
 
 echo "Config #1"
 rmdir /s /q .\build-watcom
@@ -45,12 +47,14 @@ call wlink_dll.bat
 
 :test2
 
-echo ""
-echo "Config #2 building wolfssl DDL"
+echo Config #2 building wolfssl DDL
 rmdir /s /q .\build-watcom
+:: test with no -DWOLFSSL_USER_IO implementation
+:: test with -DWOLFSSL_DEBUG=ON ^
+::
+:: do not remove above blank comment due to continuation caret on prior line
 cmake -B build-watcom -G "Watcom WMake" ^
-  -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL -DWOLFSSL_DEBUG_CERTS" ^
-  -DWOLFSSL_DEBUG_CERTS=YES ^
+  -DCMAKE_C_FLAGS="-DWOLFSSL_DLL -DBUILDING_WOLFSSL" ^
   -DCMAKE_SYSTEM_NAME=Windows ^
   -DCMAKE_EXECUTABLE_SUFFIX=.exe ^
   -DCMAKE_SYSTEM_PROCESSOR=i386 ^
@@ -67,13 +71,16 @@ if errorlevel 1 (
     exit /b
 )
 cmake --build build-watcom --target client || (echo "Build 2 failed!" && exit /b)
-call wlink_lib.bat
+:: call wlink_lib.bat
 call wlink_dll.bat
 
+echo waiting 5 seconds...
 timeout /t 5 >nul
 
-build-watcom\examples\client\client.exe -v 4 -h localhost -p 12345
+echo trying %THIS_HOST% client on port %THIS_PORT%
+build-watcom\examples\client\client.exe -v 4 -h %THIS_HOST% -p %THIS_PORT% || (echo Connect 2 failed! && exit /b)
 
+:: exit /b
 
 :test2a
 ::   -DCMAKE_C_FLAGS="-DBUILDING_WOLFSSL -DWOLFSSL_DEBUG_CERTS" ^
@@ -100,7 +107,15 @@ if errorlevel 1 (
 cmake --build build-watcom || (echo "Build 2a failed!" && exit /b)
 call wlink_dll.bat
 
-build-watcom\examples\client\client.exe -v 4 -h localhost -p 12345
+echo waiting 10 seconds...
+timeout /t 10 >nul
+
+echo Connect 2a trying %THIS_HOST% client on port %THIS_PORT%
+build-watcom\examples\client\client.exe -v 4 -h %THIS_HOST% -p %THIS_PORT% || (echo Connect 2a Attempt 1 failed! Port=%THIS_PORT% )
+timeout /t 40 >nul
+build-watcom\examples\client\client.exe -v 4 -h %THIS_HOST% -p %THIS_PORT% || (echo Connect 2a Attempt 2 failed! Port=%THIS_PORT% )
+timeout /t 40 >nul
+build-watcom\examples\client\client.exe -v 4 -h %THIS_HOST% -p %THIS_PORT% || (echo Connect 2a Attempt 3 failed! Port=%THIS_PORT% && exit /b)
 
 echo ""
 echo "Config #3"

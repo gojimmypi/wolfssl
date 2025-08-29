@@ -68,7 +68,7 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>master</Version>
-          <Subdirectory>esp-idf/master-pr</Subdirectory>
+          <Subdirectory>esp-idf/master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM68</COMPort>
