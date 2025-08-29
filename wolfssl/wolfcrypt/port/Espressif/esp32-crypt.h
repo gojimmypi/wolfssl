@@ -671,6 +671,7 @@ extern "C"
 ** Some common esp utilities
 ******************************************************************************
 */
+    WOLFSSL_LOCAL esp_err_t esp_ShowDeviceInfo(void);
 
     WOLFSSL_LOCAL int esp_ShowExtendedSystemInfo(void);
 

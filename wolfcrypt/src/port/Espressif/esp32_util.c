@@ -37,6 +37,16 @@
 #endif
 
 /* Espressif */
+#if defined(ESP_PLATFORM) && !defined(ESP8266)
+    #if __has_include("esp_chip_info.h")
+        #include <esp_chip_info.h>   /* IDF v5 or newer */
+    #else
+        #include <esp_system.h> /* older IDF system AP provides esp_chip_info */
+    #endif
+#else
+    /* ESP8266 RTOS SDK */
+    #include "esp_system.h"
+#endif
 #include <esp_log.h>
 #include <esp_err.h>
 #if ESP_IDF_VERSION_MAJOR > 4
@@ -443,12 +453,12 @@ static int ShowExtendedSystemInfo_platform(void)
     return ESP_OK;
 }
 
-int esp_increment_boot_count(void)
+static int esp_increment_boot_count(void)
 {
     return ++_boot_count;
 }
 
-int esp_current_boot_count(void)
+static int esp_current_boot_count(void)
 {
     return _boot_count;
 }
@@ -494,8 +504,93 @@ static int show_macro(char* s, char* not_defined)
     return ESP_OK;
 }
 
+static const char* map_model_to_name(esp_chip_model_t m) {
+    switch (m) {
+    #ifdef CONFIG_IDF_TARGET_ESP32
+        case CHIP_ESP32:   return "esp32";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32S2
+        case CHIP_ESP32S2: return "esp32s2";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32S3
+        case CHIP_ESP32S3: return "esp32s3";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C2
+        case CHIP_ESP32C2: return "esp32c2";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C3
+        case CHIP_ESP32C3: return "esp32c3";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C6
+        case CHIP_ESP32C6: return "esp32c6";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32C5
+        case CHIP_ESP32C5: return "esp32c5";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32H2
+        case CHIP_ESP32H2: return "esp32h2";
+    #endif
+    #ifdef CONFIG_IDF_TARGET_ESP32P4
+        case CHIP_ESP32P4: return "esp32p4";
+    #endif
+        default:           return "esp32-unknown";
+    }
+}
+
+
+esp_err_t esp_ShowDeviceInfo(void)
+{
+    esp_chip_info_t info;
+    esp_err_t ret;
+    ret = ESP_OK;
+    memset(&info, 0, sizeof(info));
+    esp_chip_info(&info); // present since IDF v3.x
+
+    ESP_LOGI(TAG,"Device %s model=%d cores=%u rev=%u features=0x%08x",
+                     map_model_to_name(info.model),
+                     (int)info.model, (unsigned)info.cores,
+                     (unsigned)info.revision, (unsigned)info.features);
+
+#if DEBUG_WOLFSSL
+    /* OPTIONAL: print only the feature flags that exist in this SDK */
+    /* (no tables or name mapping; just #ifdef + bit test) */
+    ESP_LOGI(TAG,"feature_flags:");
+    #ifdef CHIP_FEATURE_EMB_FLASH
+    if (info.features & CHIP_FEATURE_EMB_FLASH) {
+        ESP_LOGI(TAG,"  EMB_FLASH");
+    }
+    #endif
+    #ifdef CHIP_FEATURE_WIFI_BGN
+    if (info.features & CHIP_FEATURE_WIFI_BGN) {
+        ESP_LOGI(TAG,"  WIFI_BGN");
+    }
+    #endif
+    #ifdef CHIP_FEATURE_BLE
+    if (info.features & CHIP_FEATURE_BLE) {
+        ESP_LOGI(TAG,"  BLE");
+    }
+    #endif
+    #ifdef CHIP_FEATURE_BT
+    if (info.features & CHIP_FEATURE_BT) {
+        ESP_LOGI(TAG,"  BT");
+    }
+    #endif
+    #ifdef CHIP_FEATURE_IEEE802154
+    if (info.features & CHIP_FEATURE_IEEE802154) {
+        ESP_LOGI(TAG,"  IEEE802154");
+    }
+    #endif
+    #ifdef CHIP_FEATURE_EMB_PSRAM
+    if (info.features & CHIP_FEATURE_EMB_PSRAM) {
+        ESP_LOGI(TAG,"  EMB_PSRAM");
+    }
+    #endif
+#endif
+    return ret;
+} /* esp_ShowDeviceInfo */
+
 /* Show some interesting settings */
-esp_err_t ShowExtendedSystemInfo_config(void)
+static esp_err_t ShowExtendedSystemInfo_config(void)
 {
     esp_ShowMacroStatus_need_header = 1;
 
@@ -576,6 +671,7 @@ esp_err_t ShowExtendedSystemInfo_config(void)
 #endif
     ESP_LOGI(TAG, WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
 
+    esp_ShowDeviceInfo();
     return ESP_OK;
 }
 /*
@@ -583,7 +679,7 @@ esp_err_t ShowExtendedSystemInfo_config(void)
 ** The internal, portable, but currently private ShowExtendedSystemInfo()
 *******************************************************************************
 */
-int ShowExtendedSystemInfo(void)
+static int ShowExtendedSystemInfo(void)
 {
 #if ESP_IDF_VERSION_MAJOR > 4
     unsigned chip_rev = -1;
@@ -743,7 +839,6 @@ esp_err_t esp_ShowExtendedSystemInfo(void)
 /*
  *  Disable the watchdog timer (use with caution)
  */
-
 esp_err_t esp_DisableWatchdog(void)
 {
     esp_err_t ret = ESP_OK;
@@ -794,7 +889,6 @@ esp_err_t esp_DisableWatchdog(void)
 /*
  *  Enable the watchdog timer.
  */
-
 esp_err_t esp_EnabledWatchdog(void)
 {
     esp_err_t ret = ESP_OK;

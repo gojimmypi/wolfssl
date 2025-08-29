@@ -296,7 +296,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Listen for a new connection, allow 5 pending connections */
     if (listen(sockfd, 5) == -1) {
-         ESP_LOGE(TAG, "ERROR: failed to listen");
+         ESP_LOGE(TAG, "ERROR: failed to listen on port %d",
+                        TLS_SMP_DEFAULT_PORT);
     }
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
@@ -315,7 +316,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Beging connection loop...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        ESP_LOGI(TAG, "Waiting for a connection...");
+        esp_ShowDeviceInfo();
+        esp_sdk_wifi_show_ip();
+        ESP_LOGI(TAG, "Waiting for a connection on port %d ...",
+                       TLS_SMP_DEFAULT_PORT);
         /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {

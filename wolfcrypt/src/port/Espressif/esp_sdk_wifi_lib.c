@@ -39,6 +39,19 @@
 #include <esp_err.h>
 #include <esp_wifi.h>
 
+/* Includes for showing IP address in esp_sdk_wifi_show_ip() */
+#if __has_include("esp_netif.h")
+    /* IDF v4.1+ (esp_netif), required on v5+ */
+    #include "esp_netif.h"
+    #include "lwip/ip4_addr.h"
+    #include "lwip/inet.h"
+#else
+    /* Older stacks including ESP8266 RTOS SDK 3.4 (tcpip_adapter) */
+    #include "tcpip_adapter.h"
+    #include "lwip/ip4_addr.h"
+    #include "lwip/inet.h"
+#endif
+
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/types.h>
@@ -484,10 +497,65 @@ esp_err_t esp_sdk_wifi_init_sta(void)
 
 esp_err_t esp_sdk_wifi_show_ip(void)
 {
-    /* TODO Causes panic: ESP_LOGI(TAG, "got ip:" IPSTR,
-     * IP2STR(&event->ip_info.ip)); */
-    return ESP_OK;
-}
+    int ret = ESP_OK;
+#if __has_include("esp_netif.h")
+    /* esp_netif path (modern IDF) */
+    esp_netif_t *nif = NULL;
+
+    if ((nif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF")) != NULL) {
+        /* found WIFI_STA_DEF */
+    }
+    else if ((nif = esp_netif_get_handle_from_ifkey("WIFI_STA")) != NULL) {
+        /* found WIFI_STA */
+    }
+    else if ((nif = esp_netif_get_handle_from_ifkey("ETH_DEF")) != NULL) {
+        /* found ETH_DEF */
+    }
+    else {
+        nif = esp_netif_get_handle_from_ifkey("PPP_DEF");
+    }
+
+    if (!nif) {
+        ESP_LOGW(TAG, "No esp_netif handle found");
+        ret = ESP_FAIL;
+    }
+
+    esp_netif_ip_info_t ipi;
+    if (esp_netif_get_ip_info(nif, &ipi) == ESP_OK) {
+        /* Convert esp_ip4_addr_t to lwIP ip4_addr_t for IPSTR/IP2STR */
+        ip4_addr_t ip = { .addr = ipi.ip.addr };
+        ip4_addr_t mask = { .addr = ipi.netmask.addr };
+        ip4_addr_t gw = { .addr = ipi.gw.addr };
+        ESP_LOGI(TAG,
+            "IPv4 " IPSTR "  mask " IPSTR "  gw " IPSTR,
+            IP2STR(&ip),
+            IP2STR(&mask),
+            IP2STR(&gw));
+    }
+    else {
+        ESP_LOGW(TAG, "esp_netif_get_ip_info failed");
+        ret = ESP_FAIL;
+    }
+#else
+    /* tcpip_adapter path (ESP8266 RTOS SDK 3.4 / old IDF) */
+    tcpip_adapter_ip_info_t ipi;
+    if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipi) == ESP_OK) {
+        ip4_addr_t ip = { .addr = ipi.ip.addr };
+        ip4_addr_t mask = { .addr = ipi.netmask.addr };
+        ip4_addr_t gw = { .addr = ipi.gw.addr };
+        ESP_LOGI(TAG,
+            "IPv4 " IPSTR "  mask " IPSTR "  gw " IPSTR,
+            IP2STR(&ip),
+            IP2STR(&mask),
+            IP2STR(&gw));
+    }
+    else {
+        ESP_LOGW(TAG, "tcpip_adapter_get_ip_info failed");
+        ret = ESP_FAIL;
+    }
+#endif /* Old SDK - ESP8266 */
+    return ret;
+} /* esp_sdk_wifi_show_ip */
 
 #endif
 
