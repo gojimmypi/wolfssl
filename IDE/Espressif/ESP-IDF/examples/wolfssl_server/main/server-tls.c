@@ -317,7 +317,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
         esp_sdk_device_show_info();
+#ifdef USE_WOLFSSL_ESP_SDK_WIFI
         esp_sdk_wifi_show_ip();
+#endif
         ESP_LOGI(TAG, "Waiting for a connection on port %d ...",
                        TLS_SMP_DEFAULT_PORT);
         /* Accept client socket connections */

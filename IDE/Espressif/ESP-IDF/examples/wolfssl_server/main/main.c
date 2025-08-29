@@ -232,7 +232,7 @@ void app_main(void)
     #warning "nvs flash not initialized"
 #endif
 
-#ifdef FOUND_PROTOCOL_EXAMPLES_DIRx
+#ifdef FOUND_PROTOCOL_EXAMPLES_DIR
     ESP_LOGI(TAG, "FOUND_PROTOCOL_EXAMPLES_DIR active, using example code.");
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         ESP_LOGE(TAG, "There's no WiFi on ESP32-H2.");

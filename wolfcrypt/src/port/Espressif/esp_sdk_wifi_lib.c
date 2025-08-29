@@ -275,6 +275,28 @@ esp_err_t esp_sdk_wifi_init_sta(void)
     return ESP_OK;
 }
 
+esp_err_t esp_sdk_wifi_show_ip(void)
+{
+    int ret = ESP_OK;
+    /* tcpip_adapter path (ESP8266 RTOS SDK 3.4 / old IDF) */
+    tcpip_adapter_ip_info_t ipi;
+    if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipi) == ESP_OK) {
+        ip4_addr_t ip = { .addr = ipi.ip.addr };
+        ip4_addr_t mask = { .addr = ipi.netmask.addr };
+        ip4_addr_t gw = { .addr = ipi.gw.addr };
+        ESP_LOGI(TAG,
+            "IPv4 " IPSTR "  mask " IPSTR "  gw " IPSTR,
+            IP2STR(&ip),
+            IP2STR(&mask),
+            IP2STR(&gw));
+    }
+    else {
+        ESP_LOGW(TAG, "tcpip_adapter_get_ip_info failed");
+        ret = ESP_FAIL;
+    }
+    return ret;
+} /* esp_sdk_wifi_show_ip */
+
 #elif ESP_IDF_VERSION_MAJOR < 4
 /* event handler for wifi events */
 static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
@@ -304,6 +326,7 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
     }
     return ESP_OK;
 }
+
 #else
 
 #ifdef CONFIG_ESP_MAXIMUM_RETRY
