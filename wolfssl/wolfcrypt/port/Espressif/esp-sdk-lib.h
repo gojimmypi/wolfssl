@@ -206,13 +206,13 @@ WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_init_sta(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_show_ip(void);
 
+WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
+
 #endif /* USE_WOLFSSL_ESP_SDK_WIFI */
 
 /******************************************************************************
 * Debug helpers
 ******************************************************************************/
-WOLFSSL_LOCAL esp_err_t esp_show_device_info(void);
-
 WOLFSSL_LOCAL esp_err_t sdk_init_meminfo(void);
 
 #if defined(DEBUG_WOLFSSL_MALLOC) || defined(DEBUG_WOLFSSL)

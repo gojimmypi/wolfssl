@@ -316,7 +316,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Beging connection loop...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        esp_show_device_info();
+        esp_sdk_device_show_info();
         esp_sdk_wifi_show_ip();
         ESP_LOGI(TAG, "Waiting for a connection on port %d ...",
                        TLS_SMP_DEFAULT_PORT);

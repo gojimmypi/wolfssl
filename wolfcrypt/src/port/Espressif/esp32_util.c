@@ -537,8 +537,7 @@ static const char* map_model_to_name(esp_chip_model_t m) {
     }
 }
 
-
-esp_err_t esp_show_device_info(void)
+esp_err_t esp_sdk_device_show_info(void)
 {
     esp_chip_info_t info;
     esp_err_t ret;
@@ -587,7 +586,7 @@ esp_err_t esp_show_device_info(void)
     #endif
 #endif
     return ret;
-} /* esp_ShowDeviceInfo */
+} /* esp_show_device_info */
 
 /* Show some interesting settings */
 static esp_err_t ShowExtendedSystemInfo_config(void)
@@ -671,7 +670,7 @@ static esp_err_t ShowExtendedSystemInfo_config(void)
 #endif
     ESP_LOGI(TAG, WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
 
-    esp_show_device_info();
+    esp_sdk_device_show_info();
     return ESP_OK;
 }
 /*
