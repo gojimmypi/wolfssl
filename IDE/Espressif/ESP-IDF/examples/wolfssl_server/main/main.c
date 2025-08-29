@@ -18,6 +18,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
+/*
+ *                      Attention maintainers:
+ *
+ *  This code is mostly mirrored between client and server examples.
+ *
+ *                  Please apply any updates to both.
+ */
 #include "sdkconfig.h"
 #include "main.h"
 
@@ -52,7 +60,7 @@
 #include "server-tls.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32H2
-    /* There's no WiFi on ESP32-H2.
+    /* There's no WiFi on ESP32-H2, no esp_eth.h in protocol_examples_common.h
      * For wired ethernet, see:
      * https://github.com/wolfSSL/wolfssl-examples/tree/master/ESP32/TLS13-ENC28J60-client */
 #else
@@ -140,11 +148,11 @@ void my_atmel_free(int slotId)
 void app_main(void)
 {
     esp_err_t ret = 0;
-#ifndef SINGLE_THREADED
+#if !defined(SINGLE_THREADED) && INCLUDE_uxTaskGetStackHighWaterMark
+    int stack_start = 0;
+#endif
+#if !defined(SINGLE_THREADED)
     int this_heap = 0;
-    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        int stack_start = 0;
-    #endif
 #endif
 #ifdef DEBUG_WOLFSSL
     /* Turn debugging on or off: */
@@ -247,9 +255,12 @@ void app_main(void)
             #define CONFIG_EXAMPLE_WIFI_SSID "myssid"
             ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
         #endif
-        #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
+        #ifdef DEBUG_WOLFSSL
+            /* Anytime we are debugging, also debug WiFi */
             esp_log_level_set("wifi", ESP_LOG_VERBOSE);
             esp_log_level_set("wpa",  ESP_LOG_VERBOSE);
+        #endif
+        #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
             esp_sdk_wifi_lib_init();
             ret = esp_sdk_wifi_init_sta();
             if (ret == ESP_OK) {
@@ -321,16 +332,20 @@ void app_main(void)
      * Some lwIP APIs, including SNTP functions, are not thread safe. */
     ret = set_time(); /* need to setup NTP before WiFi */
 
-
     /* Once we are connected to the network, start & wait for NTP time */
     ret = set_time_wait_for_ntp();
 
-    if (ret < -1) {
-        /* a value of -1 means there was no NTP server, so no need to wait */
-        ESP_LOGI(TAG, "Waiting 10 more seconds for NTP to complete." );
-        vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
-        esp_show_current_datetime();
-    }
+    switch (ret) {
+        case ESP_OK:
+            break;
+        case ESP_ERR_TIMEOUT:
+            ESP_LOGI(TAG, "Waiting 10 more seconds for NTP to complete." );
+            vTaskDelay(10000 / portTICK_PERIOD_MS); /* brute-force solution */
+            esp_show_current_datetime();
+            break;
+        default:
+            ESP_LOGE(TAG, "set_time_wait_for_ntp error %d", ret);
+    } /* switch ret values */
 
 #if defined(SINGLE_THREADED)
     /* just call the task */
