@@ -133,10 +133,17 @@
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_SERVER
+    /* Low memory, so disable TLS 1.3 */
+    #undef CONFIG_WOLFSSL_ALLOW_TLS13
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_CLIENT
+
+    /* Low memory, so disable TLS 1.3 */
+    #undef CONFIG_WOLFSSL_ALLOW_TLS13
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -272,11 +279,6 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* Pick a cert buffer size: */
-/* #define USE_CERT_BUFFERS_2048 */
-/* #define USE_CERT_BUFFERS_1024 */
-#define USE_CERT_BUFFERS_2048
-
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -394,7 +396,6 @@
 
 /* See test.c that sets cert buffers; we'll set them here: */
 #define USE_CERT_BUFFERS_256
-#define USE_CERT_BUFFERS_2048
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
@@ -471,6 +472,7 @@
     defined(CONFIG_IDF_TARGET_ESP32C2)
     /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
+    #warning "CONFIG_WOLFSSL_ALLOW_TLS13 is enabled on low memory device"
 #else
     /* when you want to use SHA512 */
     #define WOLFSSL_SHA512
@@ -502,13 +504,15 @@
         #define WOLFSSH_NO_ECDSA
     #endif
 
-    #if MY_USE_RSA
+    #if CONFIG_ESP_WOLFSSL_USE_RSA
         /* ---- RSA ----- */
         /* #define RSA_LOW_MEM */
 
         /* DH disabled by default, needed if ECDSA/ECC also turned off */
         #define HAVE_DH
+        #define HAVE_RSA
     #else
+        #undef HAVE_RSA
         #define WOLFSSH_NO_RSA
     #endif
 #else
@@ -692,8 +696,15 @@
     #define HAVE_AESGCM
 #else
     /* default settings */
-    #define USE_CERT_BUFFERS_2048
-#endif
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP8266)
+        /* Use smaller certs for low-memory devices */
+        #define USE_CERT_BUFFERS_1024
+    #else
+        #define USE_CERT_BUFFERS_2048
+    #endif
+#endif /* SM or regular certs */
 
 /* Chipset detection from sdkconfig.h
  *   See idf.py --list-targets
@@ -719,7 +730,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 16  
+    #define ESP_RSA_MULM_BITS 16
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -883,7 +894,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32P4 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP8266) || defined(ESP8266)
+#elif defined(CONFIG_IDF_TARGET_ESP8266)
     #define WOLFSSL_ESP8266
 
     /* There's no hardware encryption on the ESP8266 */
