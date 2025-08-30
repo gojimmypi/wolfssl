@@ -212,6 +212,10 @@ enum {
 **   Turns on development testing. Validates HW accelerated results to software
 **   - Automatically turns on WOLFSSL_HW_METRICS
 **
+** WOLFSSL_DEBUG_CERTS
+**   Enables Certificate Diagnostic messages. Provides intuitive descriptions of
+**   failures and suggestions for fixes. This is a subset of DEBUG_WOLFSSL
+**
 ** DEBUG_WOLFSSL_SHA_MUTEX
 **   Turns on diagnostic messages for SHA mutex. Note that given verbosity,
 **   there may be TLS timing issues encountered. Use with caution.
@@ -432,7 +436,8 @@ enum {
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
     /***** END CONFIG_IDF_TARGET_ESP32C3 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
+      defined(CONFIG_IDF_TARGET_ESP32C61)
     #include <soc/dport_access.h>
     #include <soc/hwcrypto_reg.h>
 
@@ -671,6 +676,7 @@ extern "C"
 ** Some common esp utilities
 ******************************************************************************
 */
+
     WOLFSSL_LOCAL int esp_ShowExtendedSystemInfo(void);
 
     WOLFSSL_LOCAL esp_err_t esp_DisableWatchdog(void);
@@ -788,6 +794,9 @@ extern "C"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32C6)
             #include "esp32c6/rom/sha.h"
+            #define WC_ESP_SHA_TYPE SHA_TYPE
+        #elif defined(CONFIG_IDF_TARGET_ESP32C61)
+            #include "esp32c61/rom/sha.h"
             #define WC_ESP_SHA_TYPE SHA_TYPE
         #elif defined(CONFIG_IDF_TARGET_ESP32H2)
             #include "esp32h2/rom/sha.h"

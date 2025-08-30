@@ -320,6 +320,8 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C3.");
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C6.");
+    #elif defined(CONFIG_IDF_TARGET_ESP32C61)
+        WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-C61.");
     #elif defined(CONFIG_IDF_TARGET_ESP32H2)
         WOLFSSL_VERSION_PRINTF("ESP32_CRYPT is enabled for ESP32-H2.");
     #else
@@ -388,37 +390,65 @@ static int ShowExtendedSystemInfo_git(void)
 #if defined(LIBWOLFSSL_VERSION_GIT_TAG)
     /* git config describe --tags --abbrev=0 */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_TAG = %s",
-                           LIBWOLFSSL_VERSION_GIT_TAG);
+                            LIBWOLFSSL_VERSION_GIT_TAG);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_TAG not defined");
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_ORIGIN)
     /* git config --get remote.origin.url */
-    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_ORIGIN = %s",
-                           LIBWOLFSSL_VERSION_GIT_ORIGIN);
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_ORIGIN     = %s",
+                            LIBWOLFSSL_VERSION_GIT_ORIGIN);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_BRANCH)
     /* git rev-parse --abbrev-ref HEAD */
-    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_BRANCH = %s",
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_BRANCH     = %s",
                            LIBWOLFSSL_VERSION_GIT_BRANCH);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_HASH)
     /* git rev-parse HEAD */
-    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH = %s",
-                           LIBWOLFSSL_VERSION_GIT_HASH);
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH       = %s",
+                            LIBWOLFSSL_VERSION_GIT_HASH);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_SHORT_HASH )
     /* git rev-parse --short HEAD */
     WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_SHORT_HASH = %s",
-                           LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
+                            LIBWOLFSSL_VERSION_GIT_SHORT_HASH);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
 #endif
 
 #if defined(LIBWOLFSSL_VERSION_GIT_HASH_DATE)
     /* git show --no-patch --no-notes --pretty=\'\%cd\' */
-    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE = %s",
-                           LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE  = %s",
+                            LIBWOLFSSL_VERSION_GIT_HASH_DATE);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
+#endif
+
+#if defined(LIBWOLFSSL_VERSION_WOLFSSL_ROOT)
+    /* saved in wolfssl cmake */
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_WOLFSSL_ROOT   = %s",
+                            LIBWOLFSSL_VERSION_WOLFSSL_ROOT);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_GIT_HASH_DATE not defined");
+#endif
+
+#if defined(LIBWOLFSSL_VERSION_IDF_PATH)
+    /* saved in wolfssl cmake */
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_IDF_PATH       = %s",
+                            LIBWOLFSSL_VERSION_IDF_PATH);
+#else
+    WOLFSSL_VERSION_PRINTF("LIBWOLFSSL_VERSION_IDF_PATH not defined");
 #endif
 
     return ESP_OK;
@@ -463,18 +493,29 @@ static int esp_current_boot_count(void)
     return _boot_count;
 }
 
+static const char hd1[] =
+                  "Macro Name                           Defined   Not Defined";
+static const char hd2[] =
+                  "----------------------------------- --------- ------------";
+
 /* See macro helpers above; not_defined is macro name when *not* defined */
 static int show_macro(char* s, char* not_defined)
 {
-    const char hd1[] = "Macro Name                 Defined   Not Defined";
-          char hd2[] = "------------------------- --------- -------------";
-          char msg[] = ".........................                        ";
-             /*        012345678901234567890123456789012345678901234567890 */
-             /*                  1         2         3         4         5 */
+char msg[] =      "...................................                        ";
+            /*    01234567890123456789012345678901234567890123456789012345678 */
+            /*              1         2         3         4         5         */
     size_t i = 0;
-    #define MAX_STATUS_NAME_LENGTH 25
-    #define ESP_SMS_ENA_POS 30
-    #define ESP_SMS_DIS_POS 42
+    #define MAX_STATUS_NAME_LENGTH 36
+    /* Show Macro Status Enabled string Position:  */
+    #define ESP_SMS_ENA_POS (MAX_STATUS_NAME_LENGTH +  5)
+    /* Show Macro Status Disabled string Position: */
+    #define ESP_SMS_DIS_POS (MAX_STATUS_NAME_LENGTH + 17)
+
+#ifndef CONFIG_IDF_TARGET_ESP8266
+    /* the longest msg for disabled macros is 35 + 17 + 1 = 53 */
+    ESP_STATIC_ASSERT((ESP_SMS_DIS_POS + 1) < sizeof(msg),
+                  "ESP_SMS_DIS_POS exceeds msg buffer length");
+#endif
 
     /* save our string (s) into the space-padded message (msg) */
     while (s[i] != '\0' && msg[i] != '\0' && (i < MAX_STATUS_NAME_LENGTH)) {
@@ -482,14 +523,20 @@ static int show_macro(char* s, char* not_defined)
         i++;
     }
 
-    /* Depending on if defined, put an "x" in the appropriate column */
-    if (not_defined == NULL || not_defined[0] == '\0') {
+    /* Depending on if defined, put an "X" in the appropriate column.
+     *
+     * Reminder the not_defined string expands to '1' only when the macro
+     * IS defined AND is assigned a value of 1, such as ESP-IDF menu config,
+     * meaning the feature IS enabled. So put X in enabled column, too: */
+    if (not_defined == NULL || not_defined[0] == '\0'
+                            || not_defined[0] == '1') {
         msg[ESP_SMS_ENA_POS] = 'X';
-        msg[ESP_SMS_ENA_POS+1] = 0; /* end of line to eliminate space pad */
+        msg[ESP_SMS_ENA_POS + 1] = 0; /* end of line to eliminate space pad */
     }
     else {
+        /* Put an X in the Show Macro Status "Disabled" Column: */
         msg[ESP_SMS_DIS_POS] = 'X';
-        msg[ESP_SMS_DIS_POS+1] = 0; /* end of line to eliminate space pad */
+        msg[ESP_SMS_DIS_POS + 1] = 0; /* end of line to eliminate space pad */
     }
 
     /* do we need a header? */
@@ -667,6 +714,40 @@ static esp_err_t ShowExtendedSystemInfo_config(void)
     show_macro("NO_WOLFSSL_DEBUG_CERTS",    STR_IFNDEF(NO_WOLFSSL_DEBUG_CERTS));
     show_macro("WOLFSSL_DEBUG_ERRORS_ONLY", STR_IFNDEF(WOLFSSL_DEBUG_ERRORS_ONLY));
 
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
+    show_macro("NO_DH",                     STR_IFNDEF(NO_DH));
+    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
+    show_macro("HAVE_RSA",                     STR_IFNDEF(HAVE_RSA));
+    show_macro("HAVE_CURVE25519",                     STR_IFNDEF(HAVE_CURVE25519));
+    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
+    show_macro("FP_MAX_BITS",                     STR_IFNDEF(FP_MAX_BITS));
+
+    /* esp-tls component related settings */
+    show_macro("NO_WOLFSSL_USE_ASM_CERT",
+     STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
+    show_macro("WOLFSSL_CMAKE_REQUIRED_ESP_TLS",
+     STR_IFNDEF(WOLFSSL_CMAKE_REQUIRED_ESP_TLS));
+    show_macro("CONFIG_ESP_TLS_USING_WOLFSSL",
+     STR_IFNDEF(CONFIG_ESP_TLS_USING_WOLFSSL));
+    show_macro("CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE",
+     STR_IFNDEF(CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE));
+    show_macro("CONFIG_WOLFSSL_NO_ASN_STRICT",
+     STR_IFNDEF(CONFIG_WOLFSSL_NO_ASN_STRICT));
+    show_macro("CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL",
+     STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
+    show_macro("CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE",
+     STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
+
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
+#ifdef CONFIG_ESP_TLS_USING_WOLFSSL
+    ESP_LOGI(TAG, "ESP-IDF is configured to use wolfSSL in esp-tls");
+#else
+    ESP_LOGW(TAG, "ESP-IDF is NOT configured to use wolfSSL in esp-tls");
+#endif
+
+    /* Compiler optimization details */
     ESP_LOGI(TAG, WOLFSSL_ESPIDF_BLANKLINE_MESSAGE);
 #if defined(CONFIG_COMPILER_OPTIMIZATION_DEFAULT)
     ESP_LOGI(TAG, "Compiler Optimization: Default");
@@ -772,6 +853,16 @@ static int ShowExtendedSystemInfo(void)
 #else
     ESP_LOGW(TAG, "LIBWOLFSSL_CMAKE_OUTPUT: No cmake messages detected");
 #endif
+    ESP_LOGI(TAG, "ESP-IDF SDK Config:");
+
+#if defined(CONFIG_IDF_INIT_VERSION)
+    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_INIT_VERSION = %s",
+                            CONFIG_IDF_INIT_VERSION);
+#endif
+#if defined(CONFIG_IDF_TARGET)
+    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET       = %s",
+                            CONFIG_IDF_TARGET);
+#endif
 
     /* some interesting settings are target specific (ESP32, -C3, -S3, etc */
 #if defined(CONFIG_IDF_TARGET_ESP32)
@@ -794,7 +885,8 @@ static int ShowExtendedSystemInfo(void)
                    CONFIG_ESP32C3_DEFAULT_CPU_FREQ_MHZ
             );
 
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+#elif defined(CONFIG_IDF_TARGET_ESP32C6) || \
+      defined(CONFIG_IDF_TARGET_ESP32C61)
     ESP_LOGI(TAG, "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ = %u MHz",
                    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
             );
@@ -849,6 +941,7 @@ esp_err_t esp_ShowExtendedSystemInfo(void)
 /*
  *  Disable the watchdog timer (use with caution)
  */
+
 esp_err_t esp_DisableWatchdog(void)
 {
     esp_err_t ret = ESP_OK;
@@ -863,10 +956,11 @@ esp_err_t esp_DisableWatchdog(void)
         #if defined(CONFIG_IDF_TARGET_ESP32)
             rtc_wdt_protect_off();
             rtc_wdt_disable();
-        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6) || \
-              defined(CONFIG_IDF_TARGET_ESP32H2) || \
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C6)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C61) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)  || \
               defined(CONFIG_IDF_TARGET_ESP32P4)
             #if ESP_IDF_VERSION_MINOR >= 3
                 #if CONFIG_ESP_TASK_WDT
@@ -879,8 +973,14 @@ esp_err_t esp_DisableWatchdog(void)
                     ESP_LOGW(TAG, "esp_task_wdt_deinit not implemented");
             #endif
         #else
-            rtc_wdt_protect_off();
-            rtc_wdt_disable();
+            #if ESP_IDF_VERSION_MINOR >= 4
+                ESP_LOGW(TAG,
+            "rtc_wdt_protect_off not implemented on ESP_IDF v%d.%d",
+                      ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR);
+            #else
+                rtc_wdt_protect_off();
+                rtc_wdt_disable();
+            #endif
         #endif
     }
     #else
@@ -913,10 +1013,11 @@ esp_err_t esp_EnabledWatchdog(void)
         #if defined(CONFIG_IDF_TARGET_ESP32)
             rtc_wdt_protect_on();
             rtc_wdt_enable();
-        #elif defined(CONFIG_IDF_TARGET_ESP32C2) || \
-              defined(CONFIG_IDF_TARGET_ESP32C3) || \
-              defined(CONFIG_IDF_TARGET_ESP32C6) || \
-              defined(CONFIG_IDF_TARGET_ESP32H2) || \
+        #elif defined(CONFIG_IDF_TARGET_ESP32C2)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C3)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C6)  || \
+              defined(CONFIG_IDF_TARGET_ESP32C61) || \
+              defined(CONFIG_IDF_TARGET_ESP32H2)  || \
               defined(CONFIG_IDF_TARGET_ESP32P4)
             ESP_LOGW(TAG, "No known rtc_wdt_protect_off for this platform.");
             esp_task_wdt_config_t twdt_config = {
@@ -928,8 +1029,14 @@ esp_err_t esp_EnabledWatchdog(void)
             esp_task_wdt_init(&twdt_config);
             esp_task_wdt_add(NULL);
         #else
-            rtc_wdt_protect_on();
-            rtc_wdt_enable();
+            #if ESP_IDF_VERSION_MINOR >= 4
+                ESP_LOGW(TAG,
+            "rtc_wdt_protect_on not implemented on ESP_IDF v%d.%d",
+                      ESP_IDF_VERSION_MAJOR, ESP_IDF_VERSION_MINOR);
+            #else
+                rtc_wdt_protect_on();
+                rtc_wdt_enable();
+            #endif
         #endif
     }
     #else

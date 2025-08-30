@@ -31,7 +31,8 @@
 #include <wolfssl/wolfcrypt/settings.h>
 
 #if defined(WOLFSSL_ESPIDF) /* Entire file is only for Espressif EDP-IDF */
-#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && (ESP_IDF_VERSION_MAJOR >= 4 || defined(CONFIG_IDF_TARGET_ESP8266))
+#if defined(USE_WOLFSSL_ESP_SDK_WIFI) && \
+    (ESP_IDF_VERSION_MAJOR >= 4 || defined(CONFIG_IDF_TARGET_ESP8266))
 
 /* Espressif */
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
@@ -469,11 +470,7 @@ esp_err_t esp_sdk_wifi_init_sta(void)
 #endif
 
     ESP_ERROR_CHECK(esp_wifi_start() );
-//    ret = esp_wifi_connect();
-//    if (ret != ESP_OK) {
-//        ESP_LOGE(TAG, "esp_wifi_connect() failed: %s", esp_err_to_name(ret));
-//        return ret;
-//    }
+
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)

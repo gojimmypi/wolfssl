@@ -119,6 +119,11 @@ extern wc_ptr_t _heap_end[];
 #define IRAMF2_START      ((void*)(0x4010C000))
 #define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
 
+#if 0
+    /* Optional Stack Debugging */
+    extern void *xPortSupervisorStackPointer;
+#endif
+
 enum sdk_memory_segment
 {
     /* Ensure this list exactly matches order in sdk_memory_segment_text */
