@@ -84,6 +84,8 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
+#define USE_WOLFSSL_ESP_SDK_TIME
+
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -480,17 +482,10 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
-    #define MY_USE_ECC 0
-    #define MY_USE_RSA 1
-#else
-    #define MY_USE_ECC 1
-    #define MY_USE_RSA 0
-#endif
-
-/* We can use either or both ECC and RSA, but must use at least one. */
-#if MY_USE_ECC || MY_USE_RSA
-    #if MY_USE_ECC
+/* We can use either or both ECC and RSA, but must use at least one for TLS */
+#if CONFIG_ESP_WOLFSSL_USE_ECC || CONFIG_ESP_WOLFSSL_USE_RSA
+    /* Some ECC checks */
+    #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
         #define HAVE_CURVE25519
@@ -701,11 +696,11 @@
 #endif
 
 /* Chipset detection from sdkconfig.h
+ *   See idf.py --list-targets
+ *   or ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h
+ *   Set target example: idf.py set-target esp32s3
  * Default is HW enabled unless turned off.
- * Uncomment lines to force SW instead of HW acceleration
- * See idf.py --list-targets
- * or ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h
- * Set target example: idf.py set-target esp32s3 */
+ * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
     #define WOLFSSL_ESP32
     /*  Alternatively, if there's an ECC Secure Element present: */
@@ -724,7 +719,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+    #define ESP_RSA_MULM_BITS 16  
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)

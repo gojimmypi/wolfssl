@@ -130,4 +130,3 @@ endif()
 message(STATUS "")
 
 message(STATUS "End wolfSSL main CMakeLists.txt")
-set_source_files_properties(wifi_connect.c time_helper.c PROPERTIES HEADER_FILE_ONLY TRUE)

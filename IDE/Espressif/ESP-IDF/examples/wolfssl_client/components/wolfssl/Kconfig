@@ -71,6 +71,8 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
+#   See ESP-IDF esp-tls component for config TLS_STACK_WOLFSSL
+
 menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
     # Warning: help token not supported here <<
     config ESP_WOLFSSL_WOLFCRYPT_ONLY
@@ -92,7 +94,23 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             default y
             help
                 Enables RSA algorithm
+
+        menu "Hardening"
+            config ESP_WOLFSSL_WC_NO_HARDEN
+                bool "Disable wolfSSL hardening"
+                default n
+                help
+                    Sets WC_NO_HARDEN
+
+            config ESP_WOLFSSL_TFM_TIMING_RESISTANT
+                bool "Enable TFM Timing Resistant Code"
+                default n
+                help
+                    Sets TFM_TIMING_RESISTANT.
+
+        endmenu # Hardening
     endmenu # wolfSSL Algorithm Settings
+
 
     menu "wolfSSL Application Specific"
         # -----------------------------------------------------------------------------------------------------------------
@@ -479,7 +497,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             bool "Enable ML-KEM (Kyber Post Quantum)"
             default n
             help
-                Enable wolfSSL ML-KEM
+                bool "Enable wolfSSL ML-KEM"
 
         config WOLFSSL_ENABLE_KYBER
             bool "Enable Kyber (Round 3)"
@@ -497,7 +515,6 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             default n
             help
                 Enable debugging messages for wolfSSL certificate processing. See user_settings.h for additional debug options.
-
 
         config ESP_WOLFSSL_DEBUG_WOLFSSL
             bool "Enable wolfSSL Debugging"

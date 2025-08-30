@@ -74,6 +74,27 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
+
+/*
+ * Optionally define explicit ciphers, for example these TLS 1.3 options.
+ *
+ * TLS13-AES128-GCM-SHA256
+ * TLS13-AES256-GCM-SHA384
+ * TLS13-AES128-CCM-SHA256
+ * TLS13-AES128-CCM-8-SHA256
+ * TLS13-AES128-CCM8-SHA256
+ *
+ * examples:
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
+ * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
+ */
+
+
+/* Project */
+#include "wifi_connect.h"
+#include "time_helper.h"
+
+
 static const char* const TAG = "server-tls";
 int stack_start = -1;
 
