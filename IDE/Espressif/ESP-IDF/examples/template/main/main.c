@@ -19,7 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* Espressif */
+/* ESP-IDF */
+#include "sdkconfig.h"
 #include <esp_log.h>
 
 /* wolfSSL */
@@ -27,11 +28,18 @@
 /* Reminder: settings.h pulls in user_settings.h; don't include it here. */
 #ifdef WOLFSSL_USER_SETTINGS
     #include <wolfssl/wolfcrypt/settings.h>
-    #ifndef WOLFSSL_ESPIDF
-        #warning "Problem with wolfSSL user_settings."
-        #warning "Check components/wolfssl/include"
+    #if defined(WOLFSSL_ESPIDF)
+        #include <wolfssl/version.h>
+        #include <wolfssl/wolfcrypt/types.h>
+
+        #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+        #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
+    #else
+        #error "Problem with wolfSSL user_settings. "           \
+               "Check components/wolfssl/include "              \
+               "and confirm WOLFSSL_USER_SETTINGS is defined, " \
+               "typically in the component CMakeLists.txt"
     #endif
-    #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
