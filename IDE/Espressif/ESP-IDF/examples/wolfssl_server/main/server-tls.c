@@ -90,15 +90,10 @@
  */
 
 
-/* Project */
-#include "wifi_connect.h"
-#include "time_helper.h"
-
-
 static const char* const TAG = "server-tls";
 int stack_start = -1;
 
-int ShowCiphers(WOLFSSL* ssl)
+static int ShowCiphers(WOLFSSL* ssl)
 {
     #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
     char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
