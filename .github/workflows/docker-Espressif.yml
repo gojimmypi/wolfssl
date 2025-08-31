@@ -23,7 +23,7 @@ jobs:
         - run: |
             cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
             # Validate all example wolfssl component Kconfig files
-            for dir in "./examples/*"; do
+            for dir in "./examples/*/"; do
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
               if [[ -f "$THIS_KCONFIG" ]]; then
                 echo "Validating $THIS_KCONFIG"
@@ -33,7 +33,8 @@ jobs:
                   FAIL=1
                 fi
               else
-                echo "No Kconfig found in $dir, skipping"
+                echo "No Kconfig found in $dir"
+                FAIL=1
               fi
             done # for dir
 
