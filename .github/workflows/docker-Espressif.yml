@@ -35,6 +35,7 @@ jobs:
 
             # Validate all example wolfssl component Kconfig files
             for dir in ./examples/*/; do
+              dir="${dir%/}" # remove trailing slash
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
               if [[ -f "$THIS_KCONFIG" ]]; then
                 echo "Validating $THIS_KCONFIG"
