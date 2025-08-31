@@ -12,6 +12,26 @@ concurrency:
 # END OF COMMON SECTION
 
 jobs:
+  check_kconfig:
+    name: Validate component Kconfig files
+    if: github.repository_owner == 'gojimmypi'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+        - name: Check each example Kconfig file
+          uses: actions/checkout@v4
+        - run: |
+            cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
+            # Validate all example wolfssl component Kconfig files
+            for dir in ./examples/*/; do
+              THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
+              if [[ -f "$THIS_KCONFIG" ]]; then
+                echo "Validating $THIS_KCONFIG"
+                ./validate_kconfig.py "$THIS_KCONFIG"
+              else
+                echo "No Kconfig found in $dir, skipping"
+              fi
+            done # for dir
   espressif_latest:
     name: latest Docker container
     if: github.repository_owner == 'gojimmypi'
@@ -27,18 +47,6 @@ jobs:
           cd /opt/esp/idf
           . ./export.sh &&
           cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
-
-          # Validate all example wolfssl component Kconfig files
-          for dir in ./examples/*/; do
-            THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
-            if [[ -f "$THIS_KCONFIG" ]]; then
-              echo "Validating $THIS_KCONFIG"
-              scripts/validate_kconfig.py "$THIS_KCONFIGg"
-            else
-              echo "No Kconfig found in $dir, skipping"
-            fi
-          done # for dir
-
           ./compileAllExamples.sh
   espressif_v4_4:
     name: v4.4 Docker container
