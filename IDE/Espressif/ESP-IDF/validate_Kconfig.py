@@ -2,7 +2,7 @@
 
 # Usage: validate_Kconfig.py <path/to/Kconfig
 #
-# Validates a gioven Kconfig file
+# Validates a given Kconfig file
 
 from kconfiglib import Kconfig
 import os
