@@ -290,8 +290,6 @@ void app_main(void)
         #endif
     #endif
 #else
-    ESP_ERROR_CHECK(nvs_flash_init());
-
     /* Initialize NVS */
     ret = nvs_flash_init();
     #if defined(CONFIG_IDF_TARGET_ESP8266)
