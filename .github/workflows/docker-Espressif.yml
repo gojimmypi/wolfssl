@@ -22,14 +22,13 @@ jobs:
           uses: actions/checkout@v4
         - run: |
             cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
-            pwd
-            ls
+            echo "Seaching for examples in $(PWD)/examples"
             # Validate all example wolfssl component Kconfig files
             for dir in ./examples/*/; do
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
               if [[ -f "$THIS_KCONFIG" ]]; then
                 echo "Validating $THIS_KCONFIG"
-                ./validate_kconfig.py "$THIS_KCONFIG"
+                ./validate_Kconfig.py "$THIS_KCONFIG"
                 if [[ $? -ne 0 ]]; then
                   echo "Validation failed for $THIS_KCONFIG"
                   FAIL=1
