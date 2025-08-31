@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   validate-kconfig:
+
     name: Validate component Kconfig files
     if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-latest
@@ -20,9 +21,18 @@ jobs:
     steps:
         - name: Check each example Kconfig file
           uses: actions/checkout@v4
+
+        - name: Install kconfiglib
+          run: python3 -m pip install kconfiglib
+
         - run: |
+            # assume success unless proven otherwise
+            FAIL=0
+
+            # Start from Espressif example root
             cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
             echo "Searching for examples in $(pwd)/examples"
+
             # Validate all example wolfssl component Kconfig files
             for dir in ./examples/*/; do
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
