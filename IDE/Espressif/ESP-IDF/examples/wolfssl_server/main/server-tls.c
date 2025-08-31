@@ -192,7 +192,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #endif
@@ -279,18 +279,20 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #else
     WOLFSSL_MSG("Loading certificate...");
     /* Load server certificates into WOLFSSL_CTX */
-
-    if ((ret = wolfSSL_CTX_use_certificate_buffer(ctx, server_cert_der_2048,
-                        sizeof_server_cert_der_2048,
-                        WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             CTX_SERVER_CERT,
+                                             CTX_SERVER_CERT_SIZE,
+                                             CTX_SERVER_CERT_TYPE);
+    if (ret != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load cert");
     }
     WOLFSSL_MSG("Loading key info...");
     /* Load server key into WOLFSSL_CTX */
-
-    if((ret=wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                            server_key_der_2048, sizeof_server_key_der_2048,
-                            WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            CTX_SERVER_KEY,
+                                            CTX_SERVER_KEY_SIZE,
+                                            CTX_SERVER_KEY_TYPE);
+    if (ret != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load privatekey");
     }
 
