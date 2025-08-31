@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
+# Usage: validate_Kconfig.py <path/to/Kconfig
+#
+# Validates a gioven Kconfig file
+
 from kconfiglib import Kconfig
 import os
 import sys
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: validate_kconfig.py <path/to/Kconfig>")
+        print("Usage: validate_Kconfig.py <path/to/Kconfig>")
         sys.exit(1)
 
     # Adjust this path if your top-level Kconfig is elsewhere
