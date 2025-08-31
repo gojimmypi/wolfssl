@@ -23,7 +23,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Initialize Espressif IDE and build examples
-        run: cd /opt/esp/idf && . ./export.sh && cd $GITHUB_WORKSPACE; IDE/Espressif/ESP-IDF/compileAllExamples.sh
+        run: |
+          cd /opt/esp/idf
+          . ./export.sh &&
+          cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
+
+          # Validate all example wolfssl component Kconfig files
+          for dir in ./examples/*/; do
+            THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
+            if [[ -f "$THIS_KCONFIG" ]]; then
+              echo "Validating $THIS_KCONFIG"
+              scripts/validate_kconfig.py "$THIS_KCONFIGg"
+            else
+              echo "No Kconfig found in $dir, skipping"
+            fi
+          done # for dir
+
+          ./compileAllExamples.sh
   espressif_v4_4:
     name: v4.4 Docker container
     if: github.repository_owner == 'gojimmypi'
