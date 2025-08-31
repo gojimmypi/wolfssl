@@ -12,7 +12,7 @@ concurrency:
 # END OF COMMON SECTION
 
 jobs:
-  check_kconfig:
+  validate-kconfig:
     name: Validate component Kconfig files
     if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-latest
@@ -23,16 +23,30 @@ jobs:
         - run: |
             cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
             # Validate all example wolfssl component Kconfig files
-            for dir in ./examples/*/; do
+            for dir in "./examples/*"; do
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
               if [[ -f "$THIS_KCONFIG" ]]; then
                 echo "Validating $THIS_KCONFIG"
                 ./validate_kconfig.py "$THIS_KCONFIG"
+                if [[ $? -ne 0 ]]; then
+                  echo "Validation failed for $THIS_KCONFIG"
+                  FAIL=1
+                fi
               else
                 echo "No Kconfig found in $dir, skipping"
               fi
             done # for dir
+
+            # Final check
+            if [[ $FAIL -ne 0 ]]; then
+              echo "❌ One or more Kconfig files failed validation."
+              exit 1
+            else
+              echo "✅ All Kconfig files passed validation."
+              exit 0
+            fi
   espressif_latest:
+    needs: validate-kconfig
     name: latest Docker container
     if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-22.04
@@ -49,6 +63,7 @@ jobs:
           cd $GITHUB_WORKSPACE/IDE/Espressif/ESP-IDF/
           ./compileAllExamples.sh
   espressif_v4_4:
+    needs: validate-kconfig
     name: v4.4 Docker container
     if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-22.04
@@ -59,6 +74,7 @@ jobs:
       - name: Initialize Espressif IDE and build examples
         run: cd /opt/esp/idf && . ./export.sh && cd $GITHUB_WORKSPACE; IDE/Espressif/ESP-IDF/compileAllExamples.sh
   espressif_v5_0:
+    needs: validate-kconfig
     name: v5.0 Docker container
     if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-22.04
