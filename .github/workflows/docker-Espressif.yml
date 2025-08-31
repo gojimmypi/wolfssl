@@ -25,7 +25,7 @@ jobs:
             pwd
             ls
             # Validate all example wolfssl component Kconfig files
-            for dir in "./examples/*/"; do
+            for dir in ./examples/*/; do
               THIS_KCONFIG="$dir/components/wolfssl/Kconfig"
               if [[ -f "$THIS_KCONFIG" ]]; then
                 echo "Validating $THIS_KCONFIG"
