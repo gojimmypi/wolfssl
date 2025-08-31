@@ -133,17 +133,10 @@
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
-    #define NO_WOLFSSL_SERVER
-    /* Low memory, so disable TLS 1.3 */
-    #undef CONFIG_WOLFSSL_ALLOW_TLS13
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
-    #define NO_WOLFSSL_CLIENT
-
-    /* Low memory, so disable TLS 1.3 */
-    #undef CONFIG_WOLFSSL_ALLOW_TLS13
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -472,7 +465,6 @@
     defined(CONFIG_IDF_TARGET_ESP32C2)
     /* Some known low-memory devices have features not enabled by default. */
     /* TODO determine low memory configuration for ECC. */
-    #warning "CONFIG_WOLFSSL_ALLOW_TLS13 is enabled on low memory device"
 #else
     /* when you want to use SHA512 */
     #define WOLFSSL_SHA512

@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 
-# Kconfig File Version 5.8.0.001 for esp-idf integration
+# Kconfig File Version 5.8.2.001 for esp-idf integration
 
 # See the VSCode extension: nRF Kconfig by Nordic Semiconductor:
 # https://marketplace.visualstudio.com/items?itemName=nordic-semiconductor.nrf-kconfig
@@ -497,7 +497,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             bool "Enable ML-KEM (Kyber Post Quantum)"
             default n
             help
-                bool "Enable wolfSSL ML-KEM"
+                Enable wolfSSL ML-KEM
 
         config WOLFSSL_ENABLE_KYBER
             bool "Enable Kyber (Round 3)"

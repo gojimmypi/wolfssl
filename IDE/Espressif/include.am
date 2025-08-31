@@ -40,6 +40,7 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/main/include/main.h
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/partitions_singleapp_large.csv
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/README.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/sdkconfig.defaults
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/sdkconfig.defaults.esp32c2
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/sdkconfig.defaults.esp8266
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/template/VisualGDB
 
@@ -67,6 +68,7 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/Makefile
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/partitions_singleapp_large.csv
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/README.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig.defaults
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig.defaults.esp32c2
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/sdkconfig.defaults.esp8266
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/VisualGDB
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_benchmark/VisualGDB/wolfssl_benchmark_IDF_v4.4_ESP32.sln
@@ -179,6 +181,7 @@ EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/Makefile
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/partitions_singleapp_large.csv
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/README.md
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults
+EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults.esp32c2
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults.esp8266
 EXTRA_DIST+= IDE/Espressif/ESP-IDF/examples/wolfssl_test/VisualGDB
 

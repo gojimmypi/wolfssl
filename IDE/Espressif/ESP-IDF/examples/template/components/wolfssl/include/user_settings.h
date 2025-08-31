@@ -272,11 +272,6 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* Pick a cert buffer size: */
-/* #define USE_CERT_BUFFERS_2048 */
-/* #define USE_CERT_BUFFERS_1024 */
-#define USE_CERT_BUFFERS_2048
-
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -394,7 +389,6 @@
 
 /* See test.c that sets cert buffers; we'll set them here: */
 #define USE_CERT_BUFFERS_256
-#define USE_CERT_BUFFERS_2048
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
@@ -502,13 +496,15 @@
         #define WOLFSSH_NO_ECDSA
     #endif
 
-    #if MY_USE_RSA
+    #if CONFIG_ESP_WOLFSSL_USE_RSA
         /* ---- RSA ----- */
         /* #define RSA_LOW_MEM */
 
         /* DH disabled by default, needed if ECDSA/ECC also turned off */
         #define HAVE_DH
+        #define HAVE_RSA
     #else
+        #undef HAVE_RSA
         #define WOLFSSH_NO_RSA
     #endif
 #else
@@ -692,10 +688,20 @@
     #define HAVE_AESGCM
 #else
     /* default settings */
-    #define USE_CERT_BUFFERS_2048
-#endif
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP8266)
+        /* Use smaller certs for low-memory devices */
+        #define USE_CERT_BUFFERS_1024
+    #else
+        #define USE_CERT_BUFFERS_2048
+    #endif
+#endif /* SM or regular certs */
 
 /* Chipset detection from sdkconfig.h
+ *   See idf.py --list-targets
+ *   or ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h
+ *   Set target example: idf.py set-target esp32s3
  * Default is HW enabled unless turned off.
  * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
@@ -716,7 +722,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+    #define ESP_RSA_MULM_BITS 16
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -760,8 +766,10 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -780,7 +788,9 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
@@ -849,6 +859,24 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP32H21)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H21 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32H4)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H4 *****/
+
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
     #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */
@@ -881,6 +909,14 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
+#elif defined(POSIX_LINUX)
+    /*  There's no Hardware Acceleration available on POSIX/Linux simulator */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_POSIX_LINUX *****/
 
 #else
     /* Anything else encountered, disable HW acceleration */
