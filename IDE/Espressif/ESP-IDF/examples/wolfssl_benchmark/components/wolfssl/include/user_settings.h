@@ -880,6 +880,9 @@
     /***** END CONFIG_IDF_TARGET_ESP32C61 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    /* There's no wifi on ESP32-H2 */
+    #undef USE_WOLFSSL_ESP_SDK_WIFI
+
     #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */
     #define NO_ESP32_CRYPT
