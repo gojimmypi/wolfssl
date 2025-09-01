@@ -148,6 +148,8 @@ WOLFSSL_LOCAL esp_err_t sdk_var_whereis(const char* v_name, void* v);
 
 WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 
+WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
+
 #if defined(USE_WOLFSSL_ESP_SDK_TIME)
 
 /******************************************************************************
@@ -205,8 +207,6 @@ WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_lib_init(void);
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_init_sta(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_show_ip(void);
-
-WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
 
 #endif /* USE_WOLFSSL_ESP_SDK_WIFI */
 
