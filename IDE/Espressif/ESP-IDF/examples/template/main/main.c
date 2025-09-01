@@ -83,7 +83,6 @@ static const char* const TAG = "My Project";
 /* entry point */
 void app_main(void)
 {
-#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
     uart_config_t uart_config = {
         .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
         .data_bits = UART_DATA_8_BITS,
