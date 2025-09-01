@@ -28,6 +28,17 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* Some mitigations are ESP-IDF version-speific. */
+#include "esp_idf_version.h"
+
+/* Optional mitigations for latest (unreleased) ESP-IDF v6 */
+#if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
+    #if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 6)
+        /* There's a known issue with SHA HW accerlator on RISC-V chips in V6 */
+        #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
+    #endif
+#endif
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
  * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.8.2-1
@@ -799,6 +810,10 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C2  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -821,6 +836,10 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -850,6 +869,10 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MITIGATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
