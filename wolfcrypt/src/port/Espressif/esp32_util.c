@@ -556,7 +556,7 @@ static const char* map_model_to_name(esp_chip_model_t m)
     /* See ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h */
     switch (m) {
     #ifdef CONFIG_IDF_TARGET_ESP8266
-        case 0             return "esp8266";   /* n/a */
+        case 0:            return "esp8266";   /* n/a */
     #endif
     #ifdef CONFIG_IDF_TARGET_ESP32
         case CHIP_ESP32:   return "esp32";     /*  1 */
