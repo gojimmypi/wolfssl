@@ -144,6 +144,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     int                ret_i; /* interim return values */
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
+    size_t             success_ct = 0; /* number of client connect successes */
+    size_t             failure_ct = 0; /* number of client connect failures */
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
@@ -192,9 +194,30 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
+        ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
+    #endif
+    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
+        ESP_LOGI(TAG, "Creating TLS 1.3 (only) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #elif defined(WOLFSSL_TLS13)
+        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #else
+        ESP_LOGI(TAG, "Creating TLS 1.2 (only) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #endif
+#endif
+
+#if (0)
+        /* Optionally disable CRL checks */
+        wolfSSL_CTX_DisableCRL(ctx);
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
@@ -333,7 +356,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Initial stack used: %d\n",
              TLS_SMP_SERVER_TASK_BYTES  - uxTaskGetStackHighWaterMark(NULL) );
 #endif
-    ESP_LOGI(TAG, "Beging connection loop...");
+    ESP_LOGI(TAG, "----------------------------------------------------------");
+    ESP_LOGI(TAG, "Begin connection loop...");
+    ESP_LOGI(TAG, "----------------------------------------------------------");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
         esp_sdk_device_show_info();
@@ -424,8 +449,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         memcpy(buff, msg, sizeof(msg));
         len = strnlen(buff, sizeof(buff));
         /* Reply back to the client */
-        if (wolfSSL_write(ssl, buff, len) != len) {
+        if (wolfSSL_write(ssl, buff, len) == len) {
+            success_ct++;
+        }
+        else {
             ESP_LOGE(TAG, "ERROR: failed to write");
+            failure_ct++;
         }
 
         ESP_LOGI(TAG, "Done! Cleanup...");
@@ -438,8 +467,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Stack used: %d\n",
                 TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
-        ESP_LOGI(TAG, "End connection loop.");
-    } /* !shutdown */
+        ESP_LOGI(TAG, "End connection loop: %d successes, %d failures",
+                                               success_ct,   failure_ct);
+    } /* -------------------------- !shutdown loop -------------------- */
 
     ESP_LOGI(TAG, "Done! Cleanup and delete this task.");
     /* Cleanup and return */

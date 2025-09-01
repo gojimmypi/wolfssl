@@ -18,11 +18,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 
+# File Version 5.8.2.001 for esp-idf integration
+
 # Limited memory
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=7500
 CONFIG_MAIN_TASK_STACK_SIZE=7500
 CONFIG_WOLFSSL_ALLOW_TLS12=y
-WOLFSSL_LOW_MEMORY_DISABLE_TLS13=y
+CONFIG_WOLFSSL_LOW_MEMORY_DISABLE_TLS13=y
 
 # ESP8266 WDT
 # CONFIG_ESP_PANIC_PRINT_REBOOT is not set
