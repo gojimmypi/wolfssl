@@ -276,8 +276,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); for only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
@@ -286,18 +286,18 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
     #endif
     #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
-        ESP_LOGW(TAG, "Creating TLS 1.3 (only) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
+        ESP_LOGW(TAG, "Creating TLS 1.3 (only) client context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method())) == NULL) {
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
         }
     #elif defined(WOLFSSL_TLS13)
-        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) client context...");
+        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
         }
     #else
-        ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+        ESP_LOGW(TAG, "Creating TLS 1.2 (only) clientr context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method())) == NULL) {
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
         }
     #endif
