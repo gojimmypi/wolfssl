@@ -30,7 +30,7 @@
 
 /* This user_settings.h is for Espressif ESP-IDF
  *
- * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
+ * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.8.2-1
  *
  * Do not include any wolfssl headers here.
  *
@@ -106,6 +106,12 @@
 #define WOLFSSL_MAX_ERROR_SZ 500
 #define WOLFSSL_MSG_EX_BUF_SZ 500
 
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+            defined(CONFIG_IDF_TARGET_ESP8684) || \
+            defined(CONFIG_IDF_TARGET_ESP8266)
+    /* WOLFSSL_LOW_MEMORY detected at runtime for low memory warning */
+    #define WOLFSSL_LOW_MEMORY
+#endif
 /* wolfSSL Examples: set macros used in example applications.
  *
  * These Settings NOT available in ESP-IDF (e.g. esp-tls)
@@ -133,10 +139,12 @@
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_SERVER
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_CLIENT
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -150,7 +158,6 @@
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-
 /* wolfMQTT Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
@@ -406,14 +413,36 @@
 
 #define BENCH_EMBEDDED
 
+/* Very low memory device notice:
+ *   TLS 1.2 typically enabled
+ *   TLS 1.3 typically disabled
+ *
+ * See runtime warning for limited-resource devices.
+ *
+ * Typical error codes at client, talking to low-memory server:
+ *   -125 MEMORY_E        out of memory error
+ *   -308 SOCKET_ERROR_E  error state on socket
+ *   -313 FATAL_ERROR     recvd alert fatal error
+ */
+#if defined(CONFIG_WOLFSSL_ALLOW_TLS12) && CONFIG_WOLFSSL_ALLOW_TLS12
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684)
+        /* low-memory devices with TLS 1.2 enabled */
+    #endif
+#else
+    #define WOLFSSL_NO_TLS12
+#endif
+
 /* TLS 1.3                                 */
-#ifdef CONFIG_WOLFSSL_ALLOW_TLS13
+#if (defined(CONFIG_WOLFSSL_ALLOW_TLS13) && CONFIG_WOLFSSL_ALLOW_TLS13) && \
+    !defined(CONFIG_WOLFSSL_LOW_MEMORY_DISABLE_TLS13)
     #define WOLFSSL_TLS13
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_HKDF
 
-    /* May be required */
+    /* AEAD May be required */
     #ifndef HAVE_AEAD
+        /* Syntax highlighting detction only */
     #endif
 
     /* Required for ECC */
