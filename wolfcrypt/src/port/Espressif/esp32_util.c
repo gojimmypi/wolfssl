@@ -611,7 +611,7 @@ esp_err_t esp_sdk_device_show_info(void)
                      (int)info.model, (unsigned)info.cores,
                      (unsigned)info.revision, (unsigned)info.features);
 
-#if DEBUG_WOLFSSL
+#if defined(DEBUG_WOLFSSL)
     /* OPTIONAL: print only the feature flags that exist in this SDK */
     /* (no tables or name mapping; just #ifdef + bit test) */
     ESP_LOGI(TAG,"feature_flags:");

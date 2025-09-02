@@ -567,6 +567,16 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                 Enable this option to disable SHA HW on only ESP32-C2, C3, C6.
                 Only implemented in user_settings.h
 
+        config WOLFSSL_USE_MY_PRIVATE_CONFIG
+            bool "Use a private include file for config"
+            default n
+            help
+                Sets WOLFSSL_USE_MY_PRIVATE_CONFIG for platform-specific default
+                config file outside of GitHub repository.
+                Handy for things like WiFi SSID and Passwords that are typically
+                not saved on GitHub.
+                Can also set CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG environment variable to 1
+
     endmenu # wolfSSL Debug Options
     # -----------------------------------------------------------------------------------------------------------------
 

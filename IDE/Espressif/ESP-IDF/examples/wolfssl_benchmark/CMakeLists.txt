@@ -1,13 +1,22 @@
 # wolfSSL Espressif Example Project CMakeLists.txt
-#   v1.3
+#   v5.8.2.001
 #
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
 message(STATUS "Begin project ${CMAKE_PROJECT_NAME}")
 
 cmake_minimum_required(VERSION 3.16)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
+
+# Optionally set flag for using a private include. See wolfcrypt/port/Espressif/esp-sdk-lib.h
+if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
+    message(STATUS "Setting CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG from environment variable")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
+else()
+    message(STATUS "CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG not set, not using private config.")
+endif()
 
 # Different ESP-IDF versions have different lock files.
 # Not starting fresh has unintuitive results.
@@ -49,6 +58,7 @@ endif()
 #
 # Optional WOLFSSL_CMAKE_SYSTEM_NAME detection to find
 # USE_MY_PRIVATE_CONFIG path for my_private_config.h
+#   See: wolfcrypt/port/Espressif/esp-sdk-lib.h
 #
 # Expected path varies:
 #
@@ -56,6 +66,8 @@ endif()
 #   Linux:  ~/workspace
 # Windows:  C:\workspace
 #
+
+
 if(WIN32)
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")

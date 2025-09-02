@@ -95,8 +95,6 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-/* USE_WOLFSSL_ESP_SDK_TIME not needed for wolfssl_benchmark */
-
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -123,6 +121,7 @@
     /* WOLFSSL_LOW_MEMORY detected at runtime for low memory warning */
     #define WOLFSSL_LOW_MEMORY
 #endif
+
 /* wolfSSL Examples: set macros used in example applications.
  *
  * These Settings NOT available in ESP-IDF (e.g. esp-tls)
@@ -903,8 +902,7 @@
     /***** END CONFIG_IDF_TARGET_ESP32C61 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    /* There's no wifi on ESP32-H2 */
-    #undef USE_WOLFSSL_ESP_SDK_WIFI
+    /* Reminder: There's no wifi on ESP32-H2 */
 
     #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */

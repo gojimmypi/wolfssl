@@ -58,6 +58,12 @@
  * file my_private_config.h should be excluded from git updates */
 /* #define  USE_MY_PRIVATE_CONFIG */
 
+/* USE_MY_PRIVATE_CONFIG may also be set via idf.py menuconfig*/
+#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) \
+         && CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    #define USE_MY_PRIVATE_CONFIG
+#endif
+
 /* Note that IntelliSense may not work properly in the next section for the
  * Espressif SDK 3.4 on the ESP8266. Macros should still be defined.
  * See the project-level Makefile. Example found in:
@@ -150,6 +156,12 @@ WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
 
+/* Check if USE_WOLFSSL_ESP_SDK_TIME set via idf.py menuconfig */
+#if defined(CONFIG_USE_WOLFSSL_ESP_SDK_TIME) && CONFIG_USE_WOLFSSL_ESP_SDK_TIME
+    #undef  USE_WOLFSSL_ESP_SDK_TIME
+    #define USE_WOLFSSL_ESP_SDK_TIME
+#endif
+
 #if defined(USE_WOLFSSL_ESP_SDK_TIME)
 
 /******************************************************************************
@@ -174,6 +186,18 @@ WOLFSSL_LOCAL esp_err_t set_time(void);
 
 /* wait NTP_RETRY_COUNT seconds before giving up on NTP time */
 WOLFSSL_LOCAL esp_err_t set_time_wait_for_ntp(void);
+#endif
+
+/* Check if USE_WOLFSSL_ESP_SDK_WIFI set via idf.py menuconfig */
+#if defined(CONFIG_USE_WOLFSSL_ESP_SDK_WIFI) && CONFIG_USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* With no WiFi build-in to standard H2, don't enable by default.*/
+        /* Can still be enabled via idf.py menuconfig                    */
+    #else
+        #warning "There is typically no WiFi on ESP32H2, disabling SDK_WIFI"
+        #undef  USE_WOLFSSL_ESP_SDK_WIFI
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
 #endif
 
 #if defined(USE_WOLFSSL_ESP_SDK_WIFI)

@@ -1,6 +1,3 @@
-# Set the known example app config to TLS Client (see user_settings.h)
-CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT=y
-
 # sdkconfig.defaults
 
 # Copyright (C) 2006-2025 wolfSSL Inc.
@@ -21,12 +18,19 @@ CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT=y
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 
+# Set the known example app config to TLS Client (see user_settings.h)
+CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT=y
+
+# ----- COMMON SECTION FOLLOWS -----
 
 # CONFIG_EXAMPLE_WIFI_SSID="myssid"
 # CONFIG_EXAMPLE_WIFI_PASSWORD="mypassword"
 
 CONFIG_EXAMPLE_CONNECT_IPV6=n
 CONFIG_LWIP_IPV6=n
+
+# Colorization disabled by default in IDF V6+
+CONFIG_LOG_COLORS=y
 
 # Some wolfSSL helpers
 CONFIG_USE_WOLFSSL_ESP_SDK_TIME=y
