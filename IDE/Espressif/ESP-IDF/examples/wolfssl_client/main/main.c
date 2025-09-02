@@ -56,7 +56,23 @@
     CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
-/* this project */
+/* Hardware; include after other libraries,
+ * particularly after freeRTOS from settings.h */
+#include <driver/uart.h>
+
+#define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
+
+#ifdef CONFIG_ESP8266_XTAL_FREQ_26
+    /* 26MHz crystal: 74880 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 74880
+#else
+    /* 40MHz crystal: 115200 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 115200
+#endif
+
+/* This project */
+#include "main.h"
+
 #include "client-tls.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32H2
@@ -147,6 +163,12 @@ void my_atmel_free(int slotId)
 /* Entry for FreeRTOS */
 void app_main(void)
 {
+    uart_config_t uart_config = {
+        .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+    };
     esp_err_t ret = 0;
 #if !defined(SINGLE_THREADED) && INCLUDE_uxTaskGetStackHighWaterMark
     int stack_start = 0;
@@ -162,6 +184,14 @@ void app_main(void)
 #if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
 #endif
+    /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
+     *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
+
+    /* Some targets may need to have UART speed set, such as ESP8266 */
+    ESP_LOGI(TAG, "UART init");
+    uart_param_config(UART_NUM_0, &uart_config);
+    uart_driver_install(UART_NUM_0,
+                        THIS_MONITOR_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Client Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");

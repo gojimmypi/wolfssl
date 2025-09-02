@@ -147,12 +147,22 @@
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
-    #define USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
+    #else
+        /* This example will alsways use the wolfSSL WiFi helper */
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
     #define NO_WOLFSSL_SERVER
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
-    #define USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
+    #else
+        /* This example will alsways use the wolfSSL WiFi helper */
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
     #define NO_WOLFSSL_CLIENT
 /* wolfSSH Examples */

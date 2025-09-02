@@ -22,6 +22,17 @@
 
 #define __ESP_SDK_LIB_H__
 
+/* When using a private config with plain text passwords,        */
+/* file my_private_config.h should be excluded from git updates: */
+/* #define  USE_MY_PRIVATE_CONFIG */
+
+/* USE_MY_PRIVATE_CONFIG may also be set via idf.py menuconfig*/
+#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) \
+         && CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    #define USE_MY_PRIVATE_CONFIG
+#endif
+
+
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -53,16 +64,6 @@
  ******************************************************************************
  ******************************************************************************
  **/
-
-/* when using a private config with plain text passwords,
- * file my_private_config.h should be excluded from git updates */
-/* #define  USE_MY_PRIVATE_CONFIG */
-
-/* USE_MY_PRIVATE_CONFIG may also be set via idf.py menuconfig*/
-#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) \
-         && CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    #define USE_MY_PRIVATE_CONFIG
-#endif
 
 /* Note that IntelliSense may not work properly in the next section for the
  * Espressif SDK 3.4 on the ESP8266. Macros should still be defined.
