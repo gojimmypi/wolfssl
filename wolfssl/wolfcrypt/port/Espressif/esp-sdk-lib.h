@@ -108,7 +108,7 @@
     #elif defined(OS_WINDOWS)
         #include "/workspace/my_private_config.h"
     #else
-        /* Edit as needed for your private config: */
+        /* Edit as needed for your private config, typically non-Cmake: */
         #warning "default private config using /workspace/my_private_config.h"
         #include "/workspace/my_private_config.h"
     #endif
