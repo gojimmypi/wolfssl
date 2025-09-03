@@ -24,8 +24,8 @@
 #include <esp_log.h>
 
 /* wolfSSL */
-/* The wolfSSL user_settings.h file is automatically included by the settings.h
- * file and should never be explicitly included in any other source files.
+/* The wolfSSL user_settings.h is automatically included by settings.h file.
+ * Never explicitly include wolfSSL user_settings.h in any source file.
  * The settings.h should also be listed above wolfssl library include files. */
 #if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>

@@ -21,7 +21,7 @@
 # Set the known example app config to TLS Server (see user_settings.h)
 CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER=y
 
-# ----- COMMON SECTION FOLLOWS -----
+# ------------- BEGIN COMMON SECTION -------------
 
 # CONFIG_EXAMPLE_WIFI_SSID="myssid"
 # CONFIG_EXAMPLE_WIFI_PASSWORD="mypassword"

@@ -67,7 +67,6 @@ fi
 
 if [[ "$CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG" == "1" ]]; then
     echo "Using CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG"
-    exit 1
 else
     echo "NOT using CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG"
     echo "Unless you have a SSID called myssid, examples will not connect with default password"

@@ -1,5 +1,3 @@
-
-
 # sdkconfig.defaults
 
 # Copyright (C) 2006-2025 wolfSSL Inc.
@@ -23,7 +21,7 @@
 # Set the known example app config to template example (see user_settings.h)
 CONFIG_WOLFSSL_EXAMPLE_NAME_TEMPLATE=y
 
-# ----- COMMON SECTION FOLLOWS -----
+# ------------- BEGIN COMMON SECTION -------------
 
 # CONFIG_EXAMPLE_WIFI_SSID="myssid"
 # CONFIG_EXAMPLE_WIFI_PASSWORD="mypassword"
@@ -40,6 +38,8 @@ CONFIG_LWIP_SNTP_MAX_SERVERS=3
 
 # sdkconfig.defaults for ESP8266 + ESP32
 # See separate sdkconfig.defaults.esp8266
+# Note that during the build process, settings from sdkconfig.defaults will not override those already in sdkconfig.
+CONFIG_BENCH_ARGV="-lng 0"
 # FreeRTOS ticks at 1ms interval
 CONFIG_FREERTOS_UNICORE=y
 CONFIG_FREERTOS_HZ=1000

@@ -1,6 +1,3 @@
-# Set the known example app config to template example (see user_settings.h)
-CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK=y
-
 # sdkconfig.defaults
 
 # Copyright (C) 2006-2025 wolfSSL Inc.
@@ -21,6 +18,10 @@ CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK=y
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 
+# Set the known example app config to template example (see user_settings.h)
+CONFIG_WOLFSSL_EXAMPLE_NAME_BENCHMARK=y
+
+# ------------- BEGIN COMMON SECTION -------------
 
 # CONFIG_EXAMPLE_WIFI_SSID="myssid"
 # CONFIG_EXAMPLE_WIFI_PASSWORD="mypassword"

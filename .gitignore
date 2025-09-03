@@ -493,3 +493,8 @@ wolfssl/debug-untrace-error-codes.h
 /IDE/ARDUINO/user_settings.wip
 /IDE/Espressif/ESP-IDF/examples/template/VisualGDB/master_template.sln
 /IDE/Espressif/ESP-IDF/examples/template/VisualGDB/master_template.vgdbproj
+/IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/time_helper.h.omit
+/IDE/Espressif/ESP-IDF/examples/wolfssl_server/main/include/wifi_connect.h.omit
+/IDE/Espressif/ESP-IDF/examples/wolfssl_test/sdkconfig.defaults.wip
+/IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/include/user_settings.h.wip
+/IDE/Espressif/ESP-IDF/examples/wolfssl_server/components/wolfssl/Kconfig.wip

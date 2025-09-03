@@ -73,9 +73,9 @@ elif [[ "$TESTHOST" == "DESKTOP_HOST" ]]; then
 
     # Load putty profiles. Note profiles names need to have been previously
     # defined and saved in putty! These are the saved sessions in putty:
-    esp8684_PUTTY="COM10"
+    esp8684_PUTTY="COM10-74880"
     esp8266_PUTTY="COM11-74880"
-    esp32c2_PUTTY="COM15"
+    esp32c2_PUTTY="COM15-74880"
     esp32s3_PUTTY="COM4"
     esp32s2_PUTTY="COM5"
     esp32c3_PUTTY="COM6"
