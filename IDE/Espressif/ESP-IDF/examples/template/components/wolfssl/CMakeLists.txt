@@ -19,7 +19,7 @@
 #
 # cmake for wolfssl Espressif projects
 #
-# Version 5.8.0 Espressif ESP-IDF + PlatformIO integration (2)
+# Version 5.8.2 Espressif ESP-IDF + PlatformIO integration (1)
 #
 # See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html
 #

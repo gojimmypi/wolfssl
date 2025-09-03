@@ -1154,7 +1154,8 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
 
         if (mph->Xs <= ESP_RSA_EXPT_XBITS) {
             /* hard floor 8 bits, problematic in some older ESP32 chips */
-            #ifdef WOLFSSL_HW_METRICS
+            #if defined(WOLFSSL_HW_METRICS) && \
+               !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
             {
                 /* track how many times we fall back */
                 esp_mp_mulmod_small_x_ct++;
@@ -1168,7 +1169,8 @@ int esp_mp_montgomery_init(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M,
         else {
             if (mph->Ys <= ESP_RSA_EXPT_YBITS) {
             /* hard floor 8 bits, problematic in some older ESP32 chips */
-            #ifdef WOLFSSL_HW_METRICS
+            #if defined(WOLFSSL_HW_METRICS) && \
+               !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD)
             {
                 /* track how many times we fall back */
                 esp_mp_mulmod_small_y_ct++;
@@ -2989,8 +2991,9 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
       defined(CONFIG_IDF_TARGET_ESP32C61)
     OperandBits = max(max(mph->Xs, mph->Ys), mph->Ms);
     if (OperandBits > ESP_HW_MOD_RSAMAX_BITS) {
-    #ifdef WOLFSSL_HW_METRICS
-        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max HW bit length %d",
+    #if !defined(NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MULMOD) && \
+         defined(WOLFSSL_HW_METRICS)
+        ESP_LOGW(TAG, "exptmod operand bits %d exceeds max bit length %d",
                        OperandBits, ESP_HW_MOD_RSAMAX_BITS);
         esp_mp_mulmod_max_exceeded_ct++;
     #endif
@@ -3002,6 +3005,7 @@ int esp_mp_exptmod(MATH_INT_T* X, MATH_INT_T* Y, MATH_INT_T* M, MATH_INT_T* Z)
         esp_mp_exptmod_depth_counter--;
    #endif
         ESP_LOGV(TAG, "Return esp_mp_exptmod fallback");
+
         /* HW not capable for this size, return error to fall back to SW: */
         return MP_HW_FALLBACK;
     }

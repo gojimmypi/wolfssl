@@ -132,10 +132,11 @@
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
+    #define USE_WOLFSSL_ESP_SDK_TIME
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-
+    #define USE_WOLFSSL_ESP_SDK_TIME
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -481,17 +482,10 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
-    #define MY_USE_ECC 0
-    #define MY_USE_RSA 1
-#else
-    #define MY_USE_ECC 1
-    #define MY_USE_RSA 0
-#endif
-
-/* We can use either or both ECC and RSA, but must use at least one. */
-#if MY_USE_ECC || MY_USE_RSA
-    #if MY_USE_ECC
+/* We can use either or both ECC and RSA, but must use at least one for TLS */
+#if CONFIG_ESP_WOLFSSL_USE_ECC || CONFIG_ESP_WOLFSSL_USE_RSA
+    /* Some ECC checks */
+    #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
         #define HAVE_CURVE25519
@@ -702,6 +696,9 @@
 #endif
 
 /* Chipset detection from sdkconfig.h
+ *   See idf.py --list-targets
+ *   or ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h
+ *   Set target example: idf.py set-target esp32s3
  * Default is HW enabled unless turned off.
  * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
@@ -722,7 +719,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+    #define ESP_RSA_MULM_BITS 16  
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -766,8 +763,10 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -786,7 +785,9 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
@@ -855,6 +856,24 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
 
+#elif defined(CONFIG_IDF_TARGET_ESP32H21)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H21 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32H4)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H4 *****/
+
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
     #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */
@@ -864,7 +883,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32P4 *****/
 
-#elif defined(CONFIG_IDF_TARGET_ESP8266)
+#elif defined(CONFIG_IDF_TARGET_ESP8266) || defined(ESP8266)
     #define WOLFSSL_ESP8266
 
     /* There's no hardware encryption on the ESP8266 */
@@ -887,6 +906,14 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
+#elif defined(POSIX_LINUX)
+    /*  There's no Hardware Acceleration available on POSIX/Linux simulator */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_POSIX_LINUX *****/
 
 #else
     /* Anything else encountered, disable HW acceleration */
@@ -919,15 +946,15 @@
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
-            #ifdef ESP_RSA_EXPT_XBITS
-                #warning "Adjusting ESP_RSA_EXPT_XBITS"
+            #if defined(ESP_RSA_EXPT_XBITS) && (ESP_RSA_EXPT_XBITS < 32)
+                #warning "Adjusting ESP_RSA_EXPT_XBITS to 32"
                 #undef  ESP_RSA_EXPT_XBITS
             #endif
             #define ESP_RSA_EXPT_XBITS 32
 
             /* X and Y of X * Y mod P greater than                         */
-            #ifdef ESP_RSA_MULM_BITS
-                #warning "Adjusting ESP_RSA_MULM_BITS"
+            #if defined(ESP_RSA_MULM_BITS) && (ESP_RSA_MULM_BITS < 16)
+                #warning "Adjusting ESP_RSA_MULM_BITS to 16"
                 #undef  ESP_RSA_MULM_BITS
             #endif
             #define ESP_RSA_MULM_BITS  16

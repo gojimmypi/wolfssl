@@ -206,6 +206,8 @@ WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_init_sta(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_show_ip(void);
 
+WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
+
 #endif /* USE_WOLFSSL_ESP_SDK_WIFI */
 
 /******************************************************************************

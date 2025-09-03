@@ -36,11 +36,22 @@
 #include <lwip/sockets.h>
 
 /* wolfSSL */
-#include <wolfssl/wolfcrypt/settings.h>
-/* This project not yet using the library */
-#undef USE_WOLFSSL_ESP_SDK_WIFI
-#include <wolfssl/ssl.h>
-
+/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
+/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+#ifdef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/wolfcrypt/settings.h>
+    #ifndef WOLFSSL_ESPIDF
+        #warning "Problem with wolfSSL user_settings."
+        #warning "Check components/wolfssl/include"
+    #endif
+    #include <wolfssl/ssl.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
+#else
+    /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
+    /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
+    #error "Missing WOLFSSL_USER_SETTINGS in CMakeLists or Makefile:\
+    CFLAGS +=-DWOLFSSL_USER_SETTINGS"
+#endif
 #if defined(WOLFSSL_WC_MLKEM)
     #include <wolfssl/wolfcrypt/mlkem.h>
     #include <wolfssl/wolfcrypt/wc_mlkem.h>
@@ -75,11 +86,6 @@
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
  */
-
-
-/* Project */
-#include "wifi_connect.h"
-#include "time_helper.h"
 
 /* working TLS 1.2 VS client app commandline param:
  *
@@ -254,10 +260,10 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     }
 
     /* Create and initialize WOLFSSL_CTX */
-    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); /* SSL 3.0 - TLS 1.3. */
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());   /*    only TLS 1.3 */
     /*   options:   */
-    /* ctx = wolfSSL_CTX_new(wolfSSLv1_2_client_method());      only TLS 1.2 */
-    /* ctx = wolfSSL_CTX_new(wolfSSLv1_3_client_method());      only TLS 1.3 */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());      only TLS 1.2 */
+    /* ctx = wolfSSL_CTX_new(wolfSSLv23_client_method()); SSL 3.0 - TLS 1.3. */
     /* wolfSSL_CTX_NoTicketTLSv12(); */
     /* wolfSSL_NoTicketTLSv12();     */
     if (ctx == NULL) {
@@ -349,7 +355,7 @@ TLS13-AES128-CCM8-SHA256
         ESP_LOGI(TAG, "doPeerCheck != 0");
         WOLFSSL_MSG("Loading... our cert");
         /* load our certificate */
-        ret_i = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+        ret_i = wolfSSL_CTX_use_certificate_buffer(ctx,
                                          CTX_CLIENT_CERT,
                                          CTX_CLIENT_CERT_SIZE,
                                          CTX_CLIENT_CERT_TYPE);

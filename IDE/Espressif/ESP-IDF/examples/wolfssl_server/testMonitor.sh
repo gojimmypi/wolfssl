@@ -3,6 +3,9 @@
 # Syntax:
 #   ./testMonitor.sh <example_name> <target> <keyword>
 #
+# When keyword is "CONNECT_ONLY" the build process will be skipped, and only fresh
+# serial connections established. Usful after Windows decides to reboot during testing.
+#
 # Example:
 #
 #   ./testMonitor.sh wolfssl_test esp32c6 WIP
@@ -38,8 +41,9 @@ pwd
 #ESP32c2 monitor is 78800
 # These are the WSL Serial Ports for each respective ESP32 SoC Device.
 # Unfortunately they are currently hard coded and computer-specific.
-
-
+#
+# See ./device_list.sh to help find and generate updated assignments.
+#
 if [[ "$TESTHOST" == "" ]]; then
     echo "Please set TESTHOST name: NOTEBOOK_HOST, DESKTOP_HOST, DESKTOP_VMHOST or add new host."
     exit 1

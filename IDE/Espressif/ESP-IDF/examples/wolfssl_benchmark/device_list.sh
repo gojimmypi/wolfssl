@@ -44,7 +44,7 @@ for dev in /dev/ttyS*; do
     [[ -e "$dev" ]] && DEVICES+=("$dev")
 done
 
-echo "Here we go! (a bit slow to query every device... please wait..."
+echo "Here we go! A bit slow to query every device... ensure none are in use... please wait..."
 # Iterate over the found devices
 for DEVICE in "${DEVICES[@]}"; do
     # echo "Looking at $DEVICE"

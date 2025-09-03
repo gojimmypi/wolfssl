@@ -28,15 +28,14 @@
     #include <freertos/event_groups.h>
 #endif
 
+/* Espressif */
+#include <esp_log.h>
+
 /* socket includes */
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 #include <netinet/tcp.h> /* For TCP options */
 #include <sys/socket.h>
-
-#ifndef TCP_RTO_MIN
-    #define TCP_RTO_MIN 1500
-#endif
 
 /* wolfSSL */
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
@@ -48,6 +47,7 @@
         #warning "Check components/wolfssl/include"
     #endif
     #include <wolfssl/ssl.h>
+    #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 #else
     /* Define WOLFSSL_USER_SETTINGS project wide for settings.h to include   */
     /* wolfSSL user settings in ./components/wolfssl/include/user_settings.h */
@@ -149,13 +149,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     int                ret_i; /* interim return values */
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
-#if 0
-    /* optionally set TCP RTO. See also below. */
-    int rto_min = 200; /* Minimum TCP RTO in milliseconds */
-#endif
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
+
+#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+    /* optionally set TCP re-use. See also below. */
+    int tcp_reuse = 1;
+#endif
 
     WOLFSSL_ENTER("tls_smp_server_task");
 
@@ -166,49 +167,53 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Initialize wolfSSL */
     WOLFSSL_MSG("Start wolfSSL_Init()");
-    wolfSSL_Init();
+    ret_i = wolfSSL_Init();
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "Failed to initialize wolfSSL");
+    }
 
     /* Create a socket that uses an internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     WOLFSSL_MSG( "start socket())");
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
         ESP_LOGE(TAG, "ERROR: failed to create the socket");
     }
 
-    /* Optionally set TCP RTO
-    setsockopt(sockfd, IPPROTO_TCP, TCP_RTO_MIN, &rto_min, sizeof(rto_min)); */
+    /* Optionally set TCP Socket Re-use. */
+#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
+#ifdef SO_REUSEPORT   /* not always available on lwIP */
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
+#endif /* SO_REUSEPORT        */
+#endif /* optional TCP re-use */
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); for only TLS 1.3 */
+    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
     if (ctx == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #endif
 
-#if defined(WOLFSSL_ESP32_CIPHER_SUITE)
-    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-    if (ret == WOLFSSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
-    }
-    else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
-            WOLFSSL_ESP32_CIPHER_SUITE);
-    }
-#endif /* WOLFSSL_ESP32_CIPHER_SUITE */
-
-
-
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ESP_LOGI(TAG, "Start SM3\n");
 
+    /* Optional set explicit ciphers
+    ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret == SSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    }
+    */
     ShowCiphers(NULL);
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
@@ -294,7 +299,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to load privatekey");
     }
 
-#endif /* SM */
+#endif
 
 
     /* TODO when using ECDSA,it loads the provisioned certificate and present it.
@@ -314,7 +319,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Listen for a new connection, allow 5 pending connections */
     if (listen(sockfd, 5) == -1) {
-         ESP_LOGE(TAG, "ERROR: failed to listen");
+         ESP_LOGE(TAG, "ERROR: failed to listen on port %d",
+                        TLS_SMP_DEFAULT_PORT);
     }
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
@@ -330,14 +336,15 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Initial stack used: %d\n",
              TLS_SMP_SERVER_TASK_BYTES  - uxTaskGetStackHighWaterMark(NULL) );
 #endif
-    ESP_LOGI(TAG, "accept clients...");
+    ESP_LOGI(TAG, "Beging connection loop...");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
-        WOLFSSL_MSG("Waiting for a connection...");
-#if ESP_IDF_VERSION_MAJOR >=4
-        /* TODO: IP Address is problematic in RTOS SDK 3.4 */
-        wifi_show_ip();
+        esp_sdk_device_show_info();
+#ifdef USE_WOLFSSL_ESP_SDK_WIFI
+        esp_sdk_wifi_show_ip();
 #endif
+        ESP_LOGI(TAG, "Waiting for a connection on port %d ...",
+                       TLS_SMP_DEFAULT_PORT);
         /* Accept client socket connections */
         if ((connd = accept(sockfd, (struct sockaddr*)&clientAddr, &size))
             == -1) {
@@ -426,13 +433,18 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
         ESP_LOGI(TAG, "Done! Cleanup...");
         /* Cleanup after this connection */
+        ESP_LOGI(TAG, "wolfSSL_free...");
         wolfSSL_free(ssl);      /* Free the wolfSSL object              */
+        ESP_LOGI(TAG, "close connection...");
         close(connd);           /* Close the connection to the client   */
 #ifdef WOLFSSL_EXAMPLE_VERBOSITY
         ESP_LOGI(TAG, "Stack used: %d\n",
                 TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
+        ESP_LOGI(TAG, "End connection loop.");
     } /* !shutdown */
+
+    ESP_LOGI(TAG, "Done! Cleanup and delete this task.");
     /* Cleanup and return */
     wolfSSL_free(ssl);      /* Free the wolfSSL object                  */
     wolfSSL_CTX_free(ctx);  /* Free the wolfSSL context object          */

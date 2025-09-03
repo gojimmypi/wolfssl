@@ -19,8 +19,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
 #
 
-# Kconfig File Version 5.7.2.001 for esp-idf integration
+# Kconfig File Version 5.8.0.001 for esp-idf integration
 
+# See the VSCode extension: nRF Kconfig by Nordic Semiconductor:
+# https://marketplace.visualstudio.com/items?itemName=nordic-semiconductor.nrf-kconfig
+#
 # Kconfig Format Rules
 #
 # See:
@@ -48,11 +51,128 @@
 # python -m kconfcheck <path_to_kconfig_file>
 #
 # ---------------------------------------------------------------------------------------------------------------------
+# See ESP-IDF esp-tls component for config TLS_STACK_WOLFSSL
+# ---------------------------------------------------------------------------------------------------------------------
+#
+# Note linking to ESP-IDF component:
+#
+# From: esp-idf\[version]\components\esp-tls\Kconfig
+#
+#   menu "ESP-TLS"
+#       choice ESP_TLS_LIBRARY_CHOOSE
+#            bool "wolfSSL (License info in wolfSSL directory README)"
+#            select TLS_STACK_WOLFSSL
+#
+# Selecting TLS_STACK_WOLFSSL in ESP-TLS will be linked to this Kconfig via the
+# invisible local keyword by the same name in this Kconfig, below.
+#
+# See setting here, just above this item:  menu "wolfSSL ESP-TLS"
+#
+# ---------------------------------------------------------------------------------------------------------------------
 # Begin main wolfSSL configuration menu
 # ---------------------------------------------------------------------------------------------------------------------
 #   See ESP-IDF esp-tls component for config TLS_STACK_WOLFSSL
 
-menu "wolfSSL"
+menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
+    # Warning: help token not supported here <<
+    config ESP_WOLFSSL_WOLFCRYPT_ONLY
+        bool "Use wolfcrypt only"
+        default n
+        help
+            Enable this option to use cryptographic libraries but disable things like TLS communication. Normally not set. Enables WOLFCRYPT_ONLY
+    # -----------------------------------------------------------------------------------------------------------------
+
+    menu "wolfSSL Algorithm Settings"
+        config ESP_WOLFSSL_USE_ECC
+            bool "Enable ECC (Elliptic Curve Cryptography) in wolfSSL"
+            default y
+            help
+                Enables ECC algorithm
+
+        config ESP_WOLFSSL_USE_RSA
+            bool "Enable RSA (Rivest-Shamir-Adlemanl) in wolfSSL"
+            default y
+            help
+                Enables RSA algorithm
+
+        menu "Hardening"
+            config ESP_WOLFSSL_WC_NO_HARDEN
+                bool "Disable wolfSSL hardening"
+                default n
+                help
+                    Sets WC_NO_HARDEN
+
+            config ESP_WOLFSSL_TFM_TIMING_RESISTANT
+                bool "Enable TFM Timing Resistant Code"
+                default n
+                help
+                    Sets TFM_TIMING_RESISTANT.
+
+        endmenu # Hardening
+    endmenu # wolfSSL Algorithm Settings
+
+    menu "wolfSSL Application Specific"
+        # -----------------------------------------------------------------------------------------------------------------
+        # Apple HomeKit Options
+        # -----------------------------------------------------------------------------------------------------------------
+        menu "Apple HomeKit"
+            config WOLFSSL_APPLE_HOMEKIT
+                bool "Enable Apple HomeKit options"
+                default n
+                help
+                    Enables FP_MAX_BITS (8192 * 2), SRP, ChaCha, Poly1305, Base64 encoding needed for Apple HomeKit.
+        endmenu # Apple HomeKit
+
+        # -----------------------------------------------------------------------------------------------------------------
+        # wolfCrypt Benchmark
+        # -----------------------------------------------------------------------------------------------------------------
+        menu "wolfCrypt Benchmark"
+            config ESP_WOLFSSL_ENABLE_BENCHMARK
+                bool "Enable wolfSSL Benchmark Library"
+                default n
+                help
+                    Enables wolfcrypt/benchmark/benchmark.c code for benchmark metrics. Disables NO_CRYPT_BENCHMARK.
+
+            config ESP_DEBUG_WOLFSSL_BENCHMARK_TIMING
+                bool "Enable benchmark timing debug"
+                depends on ESP_WOLFSSL_ENABLE_BENCHMARK
+                default n
+                help
+                    Enable wolfssl debug for benchmark metric timing (CPU Cycles, RTOS ticks, etc).
+
+            config ESP_WOLFSSL_BENCHMARK_TIMER_DEBUG
+                bool "Enable benchmark timer debug"
+                depends on ESP_WOLFSSL_ENABLE_BENCHMARK
+                default n
+                help
+                    Turn on timer debugging (used when CPU cycles not available)
+        endmenu # wolfCrypt Benchmark
+
+        # -----------------------------------------------------------------------------------------------------------------
+        # wolfCrypt Test
+        # -----------------------------------------------------------------------------------------------------------------
+        menu "wolfCrypt tests"
+            config ESP_WOLFSSL_ENABLE_TEST
+                bool "Enable wolfCrypt Test Library"
+                default n
+                help
+                    Enables wolfcrypt/test/test.c code for testing. Disables NO_CRYPT_TEST.
+
+            config WOLFSSL_HAVE_WOLFCRYPT_TEST_OPTIONS
+                bool "Enable wolfCrypt Test Options"
+                depends on ESP_WOLFSSL_ENABLE_TEST
+                default n
+                help
+                    Enables HAVE_WOLFCRYPT_TEST_OPTIONS
+
+            config TEST_ESPIDF_ALL_WOLFSSL
+                bool "Enable all features to use in tests"
+                depends on ESP_WOLFSSL_ENABLE_TEST
+                default n
+                help
+                    Enables TEST_ESPIDF_ALL_WOLFSSL
+        endmenu # wolfCrypt tests
+    endmenu # Application Specific
 
     menu "Hardening"
         config ESP_WOLFSSL_WC_NO_HARDEN
@@ -68,92 +188,6 @@ menu "wolfSSL"
                 Sets TFM_TIMING_RESISTANT.
 
     endmenu # Hardening
-
-    config ESP_WOLFSSL_WOLFCRYPT_ONLY
-        bool "Use wolfcrypt only"
-        default n
-        help
-            "Enable this option to use cryptographic libraries but disable things like TLS communication. Enables WOLFCRYPT_ONLY"
-
-    config ESP_WOLFSSL_ENABLE_BENCHMARK
-        bool "Enable wolfSSL Benchmark Library"
-        default n
-        help
-            Enables wolfcrypt/benchmark/benchmark.c code for benchmark metrics. Disables NO_CRYPT_BENCHMARK.
-
-
-    menu "Benchmark Debug"
-        config ESP_DEBUG_WOLFSSL_BENCHMARK_TIMING
-            bool "Enable benchmark timing debug"
-            depends on ESP_WOLFSSL_ENABLE_BENCHMARK
-            default n
-            help
-                Enable wolfssl debug for benchmark metric timing (CPU Cycles, RTOS ticks, etc).
-
-        config ESP_WOLFSSL_BENCHMARK_TIMER_DEBUG
-            bool "Enable benchmark timer debug"
-            depends on ESP_WOLFSSL_ENABLE_BENCHMARK
-            default n
-            help
-                Turn on timer debugging (used when CPU cycles not available)
-
-    endmenu # Benchmark Debug
-
-    # -----------------------------------------------------------------------------------------------------------------
-    # wolfCrypt Test
-    # -----------------------------------------------------------------------------------------------------------------
-    config ESP_WOLFSSL_ENABLE_TEST
-        bool "Enable wolfCrypt Test Library"
-        default n
-        help
-            Enables wolfcrypt/test/test.c code for testing. Disables NO_CRYPT_TEST.
-
-    menu "wolfCrypt tests"
-        config WOLFSSL_HAVE_WOLFCRYPT_TEST_OPTIONS
-            bool "Enable wolfCrypt Test Options"
-            depends on ESP_WOLFSSL_ENABLE_TEST
-            default n
-            help
-                Enables HAVE_WOLFCRYPT_TEST_OPTIONS
-
-        config TEST_ESPIDF_ALL_WOLFSSL
-            bool "Enable all features to use in tests"
-            depends on ESP_WOLFSSL_ENABLE_TEST
-            default n
-            help
-                Enables TEST_ESPIDF_ALL_WOLFSSL
-
-    endmenu # wolfCrypt tests
-
-    # -----------------------------------------------------------------------------------------------------------------
-    # Apple HomeKit Options
-    # -----------------------------------------------------------------------------------------------------------------
-    menu "Apple HomeKit"
-        config WOLFSSL_APPLE_HOMEKIT
-            bool "Enable Apple HomeKit options"
-            default n
-            help
-                Enables FP_MAX_BITS (8192 * 2), SRP, ChaCha, Poly1305, Base64 encoding needed for Apple HomeKit.
-    endmenu # Apple HomeKit
-    # -----------------------------------------------------------------------------------------------------------------
-
-    config ESP_WOLFSSL_DISABLE_MY_ECC
-        bool "Disable ECC in my project"
-        default "n"
-        help
-            ECC is enabled by default. Select this option to disable.
-
-    config ESP_WOLFSSL_ENABLE_MY_USE_RSA
-        bool "Enable RSA in my project"
-        default "n"
-        help
-            RSA is disabled by default. Select this option to enable.
-
-    config ESP_WOLFSSL_BENCHMARK
-        bool "Enable wolfSSL Benchmark"
-        default n
-        help
-            Enables user settings relevant to benchmark code
 
     config ESP_TLS_USING_WOLFSSL_SPECIFIED
         bool "Use the specified wolfssl for ESP-TLS"
@@ -215,13 +249,26 @@ menu "wolfSSL"
             help
                 Sets HAVE_OCSP
 
+        config ESP_WOLFSSL_TCP_REUSE
+            int "TCP Re-use"
+            default 0
+            help
+                Set to 1 to allow socket re-use.
+
     endmenu # Protocol Config
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
     config TLS_STACK_WOLFSSL
         # Invisible option that locks TLS_STACK_WOLFSSL to ESP_TLS_USING_WOLFSSL
-        bool
+        #
+        # See setting in: esp-idf\[version]\components\esp-tls\Kconfig:
+        #
+        # config ESP_TLS_USING_WOLFSSL
+        #     bool "wolfSSL (License info in wolfSSL directory README)"
+        #     select TLS_STACK_WOLFSSL
+        #
+        bool # No prompt, invisible here. Set in ESP-TLS component
         default n
         select FREERTOS_ENABLE_BACKWARD_COMPATIBILITY
         help
@@ -229,6 +276,7 @@ menu "wolfSSL"
             Enabled when wolfSSL is selected in ESP_TLS_LIBRARY_CHOOSE.
 
     menu "wolfSSL ESP-TLS"
+        # Enabled only when Component config - ESP-TLS - Choose SSL/TLS Library for ESP-TLS has wolfSSL selected:
         depends on ESP_TLS_USING_WOLFSSL
 
         menu "Certificate Bundle"
@@ -448,7 +496,7 @@ menu "wolfSSL"
             bool "Enable ML-KEM (Kyber Post Quantum)"
             default n
             help
-                bool "Enable wolfSSL ML-KEM"
+                Enable wolfSSL ML-KEM
 
         config WOLFSSL_ENABLE_KYBER
             bool "Enable Kyber (Round 3)"
@@ -484,6 +532,12 @@ menu "wolfSSL"
             default n
             help
                 Useful only when wolfSSL is running in main task. See FreeRTOS stack size for custom tasks.
+
+        config ESP_NO_DEFAULT_TASK_MONITOR
+            bool "Disable automatic enable of task monitoring."
+            default n
+            help
+                Unless disabled, ESP_MONITOR_HW_TASK_LOCK is automatically enabled in esp32-crypt.h
 
         config ESP_WOLFSSL_TEST_LOOP
             bool "Run test apps in a loop until failure"
@@ -554,12 +608,14 @@ menu "wolfSSH"
     config ESP_ENABLE_WOLFSSH
         bool "Enable wolfSSH options"
         default n
+        # See wolfssl settings.h
         help
             Enables WOLFSSH_TERM, WOLFSSL_KEY_GEN, WOLFSSL_PTHREADS, WOLFSSH_TEST_SERVER, WOLFSSH_TEST_THREADING
 
     config ESP_WOLFSSL_DEBUG_WOLFSSH
         bool "Enable wolfSSH debugging"
         default n
+        # See wolfssl settings.h
         help
             Enable wolfSSH debugging macro. See user_settings.h
 

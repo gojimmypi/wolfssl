@@ -140,10 +140,11 @@
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #define USE_WOLFSSL_ESP_SDK_WIFI
+    #define USE_WOLFSSL_ESP_SDK_TIME
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-
+    #define USE_WOLFSSL_ESP_SDK_TIME
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -233,7 +234,6 @@
 /* Optional MLKEM (Kyber Post Quantum)               */
 /*  ./configure --enable-mlkem                       */
 /* See Kconfig / menuconfig ESP_WOLFSSL_ENABLE_MLKEM */
-// #define CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
 #ifdef CONFIG_ESP_WOLFSSL_ENABLE_MLKEM
     /* Kyber typically needs a minimum 10K stack */
     #define WOLFSSL_MLKEM_KYBER
@@ -490,17 +490,10 @@
     #define HAVE_ED25519
 #endif
 
-#if defined(CONFIG_IDF_TARGET_ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C2)
-    #define MY_USE_ECC 0
-    #define MY_USE_RSA 1
-#else
-    #define MY_USE_ECC 0
-    #define MY_USE_RSA 1
-#endif
-
-/* We can use either or both ECC and RSA, but must use at least one. */
-#if MY_USE_ECC || MY_USE_RSA
-    #if MY_USE_ECC
+/* We can use either or both ECC and RSA, but must use at least one for TLS */
+#if CONFIG_ESP_WOLFSSL_USE_ECC || CONFIG_ESP_WOLFSSL_USE_RSA
+    /* Some ECC checks */
+    #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
         #define HAVE_CURVE25519
@@ -517,7 +510,8 @@
         #define WOLFSSH_NO_ECDSA
     #endif
 
-    #if MY_USE_RSA
+    /* Some RSA Checks */
+    #if CONFIG_ESP_WOLFSSL_USE_RSA
         /* ---- RSA ----- */
         /* #define RSA_LOW_MEM */
 
@@ -930,15 +924,15 @@
             /* NOTE HW unreliable for small values! */
             /* threshold for performance adjustment for HW primitive use   */
             /* X bits of G^X mod P greater than                            */
-            #ifdef ESP_RSA_EXPT_XBITS
-                #warning "Adjusting ESP_RSA_EXPT_XBITS"
+            #if defined(ESP_RSA_EXPT_XBITS) && (ESP_RSA_EXPT_XBITS < 32)
+                #warning "Adjusting ESP_RSA_EXPT_XBITS to 32"
                 #undef  ESP_RSA_EXPT_XBITS
             #endif
             #define ESP_RSA_EXPT_XBITS 32
 
             /* X and Y of X * Y mod P greater than                         */
-            #ifdef ESP_RSA_MULM_BITS
-                #warning "Adjusting ESP_RSA_MULM_BITS"
+            #if defined(ESP_RSA_MULM_BITS) && (ESP_RSA_MULM_BITS < 16)
+                #warning "Adjusting ESP_RSA_MULM_BITS to 16"
                 #undef  ESP_RSA_MULM_BITS
             #endif
             #define ESP_RSA_MULM_BITS  16
