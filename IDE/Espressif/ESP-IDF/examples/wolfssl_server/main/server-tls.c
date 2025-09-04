@@ -146,6 +146,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     size_t             len;
     size_t             success_ct = 0; /* number of client connect successes */
     size_t             failure_ct = 0; /* number of client connect failures */
+
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
@@ -393,6 +394,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "----------------------------------------------------------");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
+#ifdef HAVE_STACK_HEAP_INFO
+        ret_i = esp_sdk_stack_heap_info();
+        if (ret_i != ESP_OK) {
+            ESP_LOGE(TAG, "ERROR: stack and heap check");
+        }
+#endif
         esp_sdk_device_show_info();
 #ifdef USE_WOLFSSL_ESP_SDK_WIFI
         esp_sdk_wifi_show_ip();

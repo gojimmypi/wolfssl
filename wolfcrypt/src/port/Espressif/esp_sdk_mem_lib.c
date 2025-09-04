@@ -53,6 +53,12 @@
 #include "sdkconfig.h" /* programmatically generated from sdkconfig */
 #include <esp_log.h>
 #include <esp_err.h>
+#ifdef CONFIG_IDF_TARGET_ESP8266
+    #include <esp_system.h>
+#else
+    #include <freertos/FreeRTOS.h>
+    #include <freertos/task.h>
+#endif
 
 /* wolfSSL */
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
@@ -293,6 +299,38 @@ esp_err_t esp_sdk_mem_lib_init(void)
     int ret = ESP_OK;
     sdk_init_meminfo();
     ESP_LOGI(TAG, "esp_sdk_mem_lib_init Ver %d", ESP_SDK_MEM_LIB_VERSION);
+    return ret;
+}
+
+static size_t free_heap          = 0;
+static size_t min_free_heap      = 0;
+static size_t last_free_heap     = 0;
+static size_t last_min_heap = 0;
+
+esp_err_t esp_sdk_stack_heap_info(void)
+{
+    int ret = ESP_OK;
+#ifdef CONFIG_IDF_TARGET_ESP8266
+    free_heap = (unsigned)esp_get_free_heap_size();
+    min_free_heap = (unsigned)esp_get_minimum_free_heap_size();
+#else
+    free_heap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+    min_free_heap = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
+#endif
+    if ((last_free_heap > 0) && (last_free_heap != free_heap)) {
+        ESP_LOGW(TAG, "LAST free heap:               %u bytes", last_free_heap);
+    }
+    if ((last_min_heap > 0) && (last_min_heap != min_free_heap)) {
+        ESP_LOGW(TAG, "LAST minimum free heap:       %u bytes", last_min_heap);
+    }
+
+    ESP_LOGI(TAG, "Current free heap:            %u bytes", free_heap);
+    ESP_LOGI(TAG, "Minimum free heap since boot: %u bytes", min_free_heap);
+
+    /* Save current values for next query */
+    last_free_heap = free_heap;
+    last_min_heap = min_free_heap;
+
     return ret;
 }
 

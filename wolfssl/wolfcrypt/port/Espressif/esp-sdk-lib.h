@@ -157,6 +157,9 @@ WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
 
+#define HAVE_STACK_HEAP_INFO
+WOLFSSL_LOCAL esp_err_t esp_sdk_stack_heap_info(void);
+
 /* Check if USE_WOLFSSL_ESP_SDK_TIME set via idf.py menuconfig */
 #if defined(CONFIG_USE_WOLFSSL_ESP_SDK_TIME) && CONFIG_USE_WOLFSSL_ESP_SDK_TIME
     #undef  USE_WOLFSSL_ESP_SDK_TIME
