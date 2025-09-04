@@ -17,8 +17,8 @@
 #include "nvs_flash.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "protocol_examples_common.h"
-#include "protocol_examples_utils.h"
+#include "protocol_examples_common.h" /* example connect */
+#include "protocol_examples_utils.h" /* example uri encode */
 #include "esp_tls.h"
 
 #if defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE) && defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE)

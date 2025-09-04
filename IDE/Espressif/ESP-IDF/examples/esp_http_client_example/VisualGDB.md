@@ -1,5 +1,21 @@
 # VisualGDB ESP-IDF v6.0 notes
 
+To revert to prior versions, remove from Tools - Options - VisualGDB - General - Python Directory (ESP-IDF):
+
+```
+C:\Users\gojimmypi\AppData\Local\VisualGDB\Python-3.11.5
+```
+
+To run Visual Studio for ESP-IDF latest master, use this batch file:
+
+```dos
+set IDF_COMPONENT_STORAGE_URL=file:///C:/SysGCC/esp32-master/registry;default
+set IDF_PYTHON_ENV_PATH=C:\SysGCC\esp32-master\python_env\
+set IDF_TOOLS_PATH=C:\SysGCC\esp32-master
+set CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1
+"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.exe"
+```
+
 Manual install:
 
 ## Environment Variables:

@@ -61,6 +61,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp_http_server", "esp_http
 		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp_http_server\Kconfig = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp_http_server\Kconfig
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mbedTLS", "mbedTLS", "{FC0CD18C-E286-4B64-BF82-ECB3BB05651F}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\mbedtls\mbedtls\library\ssl_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\mbedtls\mbedtls\library\ssl_tls.c
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -88,6 +93,7 @@ Global
 		{9FDAF493-CC56-4FA3-92CC-842AC4622584} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{59734050-6768-4E05-96DA-78D69BFE38B1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{02CECD02-3553-46FC-B16C-AE0C79B9E2FD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{FC0CD18C-E286-4B64-BF82-ECB3BB05651F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16E3DE18-1F5A-46D0-AD22-504688B156DD}

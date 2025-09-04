@@ -20,12 +20,13 @@
  */
 
 /* ESP-IDF */
-#include <esp_log.h>
 #include "sdkconfig.h"
+#include <esp_log.h>
 
 /* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
+/* The wolfSSL user_settings.h is automatically included by settings.h file.
+ * Never explicitly include user_settings.h in any source file.
+ * The settings.h should also be listed above wolfssl library include files. */
 #if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
     #if defined(WOLFSSL_ESPIDF)
@@ -66,7 +67,7 @@
 #endif
 
 /*
-** the wolfssl component can be installed in either:
+** The wolfssl component can be installed in either:
 **
 **   - the ESP-IDF component directory
 **
@@ -78,15 +79,6 @@
 **
 */
 
-/*
-** although the wolfcrypt/test includes a default time setting,
-** see the enclosed optional time helper for adding NNTP.
-** be sure to add "time_helper.c" in main/CMakeLists.txt
-*/
-#undef WOLFSSL_USE_TIME_HELPER
-#if defined(WOLFSSL_USE_TIME_HELPER)
-    #include "time_helper.h"
-#endif
 
 /* see wolfssl/wolfcrypt/test/test.h */
 extern void wolf_crypt_task();
