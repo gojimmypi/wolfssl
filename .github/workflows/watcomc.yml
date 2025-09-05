@@ -52,7 +52,7 @@ jobs:
             cmake:    ''
             owcmake:  'DLL'
           - id:       'static'
-            cmake:    '-DBUILD_SHARED_LIBS=no -D"CMAKE_C_STANDARD_LIBRARIES=mtrdll.lib" -D"CMAKE_CXX_STANDARD_LIBRARIES=mtrdll.lib"'
+            cmake:    '-DBUILD_SHARED_LIBS=no -D"CMAKE_C_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib" -D"CMAKE_CXX_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib"'
             owcmake:  ''
         exclude:
           - { platform: { system: 'Linux' }, library: { id: 'dll' } }
