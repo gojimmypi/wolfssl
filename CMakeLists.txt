@@ -2553,6 +2553,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom")
         set(_ow_stub "${CMAKE_CURRENT_BINARY_DIR}/ow_ld80_stub.c")
         file(WRITE "${_ow_stub}" "void SetLD80bit(void){}\n")
         target_sources(wolfssl PRIVATE "${_ow_stub}")
+        target_sources(wolfssl PRIVATE ${CMAKE_CURRENT_LIST_DIR}/port/watcom/ow_ld80bit_stub.h)
     endif()
 elseif (WIN32 OR ${CMAKE_SYSTEM_NAME} MATCHES "^MSYS" OR ${CMAKE_SYSTEM_NAME} MATCHES "^MINGW")
     # For Windows link required libraries
