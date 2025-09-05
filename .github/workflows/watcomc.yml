@@ -3,7 +3,7 @@ name: Build Watcom C
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ 'master', 'main', 'release/**' ]
+    branches: [ '*', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
 
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   wolfssl_watcomc_windows:
-    if: github.repository_owner == 'wolfssl'
+    if: github.repository_owner == 'gojimmypi'
     strategy:
       fail-fast: false
       matrix:
