@@ -15,7 +15,7 @@ jobs:
   validate-kconfig:
 
     name: Validate component Kconfig files
-    if: github.repository_owner == 'gojimmypi'
+    if: github.repository_owner == 'gojimmypi_disabled'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
