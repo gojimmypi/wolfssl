@@ -2548,9 +2548,8 @@ target_link_libraries(wolfssl PUBLIC ${WOLFSSL_LINK_LIBS})
 
 if(CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom")
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        message(STATUS "OpenWatcom for Windows! CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
-        target_link_libraries(wolfssl PUBLIC ws2_32 crypt32 clbrdll plbrdll)
-        target_sources(wolfssl PRIVATE ${CMAKE_CURRENT_LIST_DIR}/wolfssl/wolfcrypt/port/watcom/ow_ld80bit_stub.c)
+        message(STATUS "OpenWatcom for Windows! Test tag CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
+        target_link_libraries(wolfssl PUBLIC ws2_32 crypt32)
     endif()
 elseif (WIN32 OR ${CMAKE_SYSTEM_NAME} MATCHES "^MSYS" OR ${CMAKE_SYSTEM_NAME} MATCHES "^MINGW")
     # For Windows link required libraries
