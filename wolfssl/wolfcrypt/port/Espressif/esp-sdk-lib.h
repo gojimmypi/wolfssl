@@ -158,7 +158,24 @@ WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
 
 #define HAVE_STACK_HEAP_INFO
-WOLFSSL_LOCAL esp_err_t esp_sdk_stack_heap_info(void);
+typedef enum {
+    HEAP_TRACK_RESET_NONE            = 0u,      /* No reset                    */
+    HEAP_TRACK_RESET_MANUAL          = 1u << 0, /* Explicit API call           */
+    HEAP_TRACK_RESET_TIME_INTERVAL   = 1u << 1, /* Periodic timer window roll  */
+    HEAP_TRACK_RESET_SAMPLE_INTERVAL = 1u << 2, /* After N samples             */
+    HEAP_TRACK_RESET_BOOT            = 1u << 3, /* Cold boot or soft reboot    */
+    HEAP_TRACK_RESET_SLEEP_WAKE      = 1u << 4, /* Deep sleep or suspend resume*/
+    HEAP_TRACK_RESET_HEAP_REINIT     = 1u << 5, /* Allocator reinit            */
+    HEAP_TRACK_RESET_REGION_CHANGE   = 1u << 6, /* Heap regions added or remove*/
+    HEAP_TRACK_RESET_DEFRAG          = 1u << 7, /* Compaction, defragment event*/
+    HEAP_TRACK_RESET_THRESHOLD       = 1u << 8, /* Policy min trigger          */
+    HEAP_TRACK_RESET_OVERFLOW        = 1u << 9, /* Counter or time wraparound  */
+    HEAP_TRACK_RESET_OOM_RECOVERY    = 1u << 10, /* Out of memory recovered    */
+    HEAP_TRACK_RESET_CONTEXT_SWITCH  = 1u << 11, /* Switched task              */
+    HEAP_TRACK_RESET_FIRMWARE_SWAP   = 1u << 12, /* OTA or partition swap      */
+    HEAP_TRACK_RESET_DIAG_CLEAR      = 1u << 13, /* Cleared by diagnostics     */
+} heap_track_reset_t;
+WOLFSSL_LOCAL esp_err_t esp_sdk_stack_heap_info(heap_track_reset_t reset);
 
 /* Check if USE_WOLFSSL_ESP_SDK_TIME set via idf.py menuconfig */
 #if defined(CONFIG_USE_WOLFSSL_ESP_SDK_TIME) && CONFIG_USE_WOLFSSL_ESP_SDK_TIME

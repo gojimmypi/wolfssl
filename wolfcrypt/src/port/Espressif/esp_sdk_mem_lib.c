@@ -302,30 +302,53 @@ esp_err_t esp_sdk_mem_lib_init(void)
     return ret;
 }
 
-static size_t free_heap          = 0;
-static size_t min_free_heap      = 0;
-static size_t last_free_heap     = 0;
-static size_t last_min_heap = 0;
+static size_t free_heap        = 0; /* current free heap */
+static size_t min_free_heap    = 0; /* current minumim heap size */
+static size_t min_x_free_heap  = 0; /* smallest seen free_heap  */
+static size_t max_x_free_heap  = 0; /* largest seen free_heap */
 
-esp_err_t esp_sdk_stack_heap_info(void)
+static size_t last_free_heap   = 0; /* prior         esp_get_free_heap_size */
+static size_t last_min_heap    = 0; /* prior esp_get_minimum_free_heap_size */
+static size_t heap_peek_ct     = 0;
+
+esp_err_t esp_sdk_stack_heap_info(heap_track_reset_t reset)
 {
     int ret = ESP_OK;
 #ifdef CONFIG_IDF_TARGET_ESP8266
-    free_heap = (unsigned)esp_get_free_heap_size();
+    free_heap     = (unsigned)esp_get_free_heap_size();
     min_free_heap = (unsigned)esp_get_minimum_free_heap_size();
 #else
-    free_heap = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+    free_heap     = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
     min_free_heap = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
 #endif
-    if ((last_free_heap > 0) && (last_free_heap != free_heap)) {
-        ESP_LOGW(TAG, "LAST free heap:               %u bytes", last_free_heap);
+    if (last_free_heap > 0) {
+
+        if (last_free_heap != free_heap) {
+            ESP_LOGW(TAG, "LAST free heap:          %u bytes, delta = %d",
+                           last_free_heap,    free_heap - last_free_heap);
+        }
+        if (free_heap < min_x_free_heap) {
+            min_x_free_heap = free_heap;
+            ESP_LOGW(TAG, "New min ever free heap   %u bytes", min_x_free_heap);
+        }
+        if (free_heap > max_x_free_heap) {
+            max_x_free_heap = free_heap;
+            ESP_LOGW(TAG, "New max ever free heap:  %u bytes", max_x_free_heap);
+        }
     }
-    if ((last_min_heap > 0) && (last_min_heap != min_free_heap)) {
-        ESP_LOGW(TAG, "LAST minimum free heap:       %u bytes", last_min_heap);
+    else {
+        min_x_free_heap = free_heap;
+        max_x_free_heap = free_heap;
     }
 
-    ESP_LOGI(TAG, "Current free heap:            %u bytes", free_heap);
-    ESP_LOGI(TAG, "Minimum free heap since boot: %u bytes", min_free_heap);
+    if ((last_min_heap > 0) && (last_min_heap != min_free_heap)) {
+        ESP_LOGW(TAG, "LAST minimum free heap:  %u bytes", last_min_heap);
+    }
+
+    ESP_LOGI(TAG, "Current free heap:       %u bytes", free_heap);
+    ESP_LOGI(TAG, "Minimum free heap:       %u bytes", min_free_heap);
+    ESP_LOGI(TAG, "Minimum ever free heap:  %u bytes", min_x_free_heap);
+    ESP_LOGI(TAG, "Maximum ever free heap:  %u bytes", max_x_free_heap);
 
     /* Save current values for next query */
     last_free_heap = free_heap;

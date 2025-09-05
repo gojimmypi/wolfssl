@@ -142,6 +142,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     int                shutdown = 0;
     int                ret;
     int                ret_i; /* interim return values */
+    int                reset_heap = 0;
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
     size_t             success_ct = 0; /* number of client connect successes */
@@ -395,7 +396,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
 #ifdef HAVE_STACK_HEAP_INFO
-        ret_i = esp_sdk_stack_heap_info();
+        ret_i = esp_sdk_stack_heap_info(reset_heap);
         if (ret_i != ESP_OK) {
             ESP_LOGE(TAG, "ERROR: stack and heap check");
         }
