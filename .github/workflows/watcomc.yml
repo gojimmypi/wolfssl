@@ -49,7 +49,7 @@ jobs:
             owcmake:  '-DCMAKE_POLICY_DEFAULT_CMP0136=NEW -DCMAKE_WATCOM_RUNTIME_LIBRARY=SingleThreaded'
         library:
           - id:       'dll'
-            cmake:    '-DCMAKE_C_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib;ws2_32.lib;crypt32.lib -DCMAKE_CXX_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib;ws2_32.lib;crypt32.lib'
+            cmake:    -D"CMAKE_SHARED_LINKER_FLAGS=library mtrdll.lib library clbrdll.lib"'
             owcmake:  'DLL'
           # - id:       'static'
           #   cmake:    '-DBUILD_SHARED_LIBS=no'
