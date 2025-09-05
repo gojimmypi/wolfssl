@@ -81,7 +81,7 @@ jobs:
         run: |
           # peek
           pwd
-          ls ./wolfcrypt/port/watcom/
+          ls .
           echo "-B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }}"
           cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }}
           cmake --build build
