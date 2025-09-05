@@ -2548,7 +2548,7 @@ target_link_libraries(wolfssl PUBLIC ${WOLFSSL_LINK_LIBS})
 
 if(CMAKE_C_COMPILER_ID STREQUAL "OpenWatcom")
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        message(STATUS "OpenWatcom for Windows!")
+        message(STATUS "OpenWatcom for Windows! CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
         target_link_libraries(wolfssl PUBLIC ws2_32 crypt32 clbrdll plbrdll)
         set(_ow_stub "${CMAKE_CURRENT_BINARY_DIR}/ow_ld80_stub.c")
         file(WRITE "${_ow_stub}" "void SetLD80bit(void){}\n")
