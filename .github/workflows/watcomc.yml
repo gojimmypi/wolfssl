@@ -80,8 +80,8 @@ jobs:
         working-directory: wolfssl
         shell: bash
         run: |
-          WIN_DLL_LIBS=""
-          OS2_DLL_LIBS=""
+          WIN_DLL_DEFS=""
+          OS2_DLL_DEFS=""
           if [[ "${{ matrix.platform.system }}" == "Windows" && "${{ matrix.library.id }}" == "dll" ]]; then
             # Add OW DLL import runtimes: math (mtrdll.lib) + C (clbrdll.lib)
             # Keep Windows SDK libs after them.
@@ -97,7 +97,7 @@ jobs:
                           -D"CMAKE_CXX_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib" \
                           -D"CMAKE_CXX_STANDARD_LIBRARIES_INIT=mtrdll.lib;clbrdll.lib"'
           fi
-          cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }} ${WIN_DLL_LIBS} ${OS2_DLL_LIBS}
+          cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }} ${WIN_DLL_DEFS} ${OS2_DLL_DEFS}
           cmake --build build
 
       - name: Upload build errors
