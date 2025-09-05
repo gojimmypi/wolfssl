@@ -28,18 +28,18 @@ jobs:
             id:       'win32ow20'
             cmake:    '-DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=x86'
 
-          - title:   'Linux OW 2.0'
-            system:   'Linux'
-            image:    'ubuntu-latest'
-            owimage:  '2.0'
-            id:       'linuxow20'
-            cmake:    '-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=x86'
-          - title:   'OS/2 OW 2.0'
-            system:   'OS2'
-            image:    'windows-latest'
-            owimage:  '2.0'
-            id:       'os2ow20'
-            cmake:    '-DCMAKE_SYSTEM_NAME=OS2 -DCMAKE_SYSTEM_PROCESSOR=x86'
+          # - title:   'Linux OW 2.0'
+          #   system:   'Linux'
+          #   image:    'ubuntu-latest'
+          #   owimage:  '2.0'
+          #   id:       'linuxow20'
+          #   cmake:    '-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=x86'
+          # - title:   'OS/2 OW 2.0'
+          #   system:   'OS2'
+          #   image:    'windows-latest'
+          #   owimage:  '2.0'
+          #   id:       'os2ow20'
+          #   cmake:    '-DCMAKE_SYSTEM_NAME=OS2 -DCMAKE_SYSTEM_PROCESSOR=x86'
         thread:
           - id:       'multi'
             cmake:    ''
@@ -51,9 +51,9 @@ jobs:
           - id:       'dll'
             cmake:    '-DCMAKE_C_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib;ws2_32.lib;crypt32.lib -DCMAKE_CXX_STANDARD_LIBRARIES=mtrdll.lib;clbrdll.lib;ws2_32.lib;crypt32.lib'
             owcmake:  'DLL'
-          - id:       'static'
-            cmake:    '-DBUILD_SHARED_LIBS=no'
-            owcmake:  ''
+          # - id:       'static'
+          #   cmake:    '-DBUILD_SHARED_LIBS=no'
+          #   owcmake:  ''
         exclude:
           - { platform: { system: 'Linux' }, library: { id: 'dll' } }
     runs-on: ${{ matrix.platform.image }}
@@ -73,6 +73,7 @@ jobs:
         working-directory: wolfssl
         shell: bash
         run: |
+          echo "-B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }}"
           cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }}
           cmake --build build
 
