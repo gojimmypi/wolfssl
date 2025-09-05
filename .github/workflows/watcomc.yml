@@ -73,19 +73,24 @@ jobs:
         if: matrix.platform.system == 'Windows'
         shell: bash
         run: |
-          echo "LIB=$WATCOM/lib386;$WATCOM/lib386/nt" >> $GITHUB_ENV
+          echo "LIB=$WATCOM/lib386;$WATCOM/lib386/nt;$WATCOM/lib386/os2" >> $GITHUB_ENV
 
       - name: Build wolfSSL
         working-directory: wolfssl
         shell: bash
         run: |
           WIN_DLL_LIBS=""
+          OS2_DLL_LIBS=""
           if [[ "${{ matrix.platform.system }}" == "Windows" && "${{ matrix.library.id }}" == "dll" ]]; then
             # Add OW DLL import runtimes: math (mtrdll.lib) + C (clbrdll.lib)
             # Keep Windows SDK libs after them.
             WIN_DLL_LIBS='-DCMAKE_C_STANDARD_LIBRARIES="mtrdll.lib clbrdll.lib ws2_32.lib crypt32.lib"'
           fi
-          cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }} ${WIN_DLL_LIBS}
+          if [[ "${{ matrix.platform.system }}" == "OS2" && "${{ matrix.library.id }}" == "dll" ]]; then
+            # OS/2 DLL needs OW math + C import libs, no Win SDK libs.
+            OS2_DLL_LIBS='-DCMAKE_C_STANDARD_LIBRARIES="mtrdll.lib clbrdll.lib"'
+          fi
+          cmake -B build ${{matrix.common.cmake}} ${{ matrix.platform.cmake }} ${{ matrix.thread.cmake }} ${{ matrix.library.cmake }} ${{ matrix.thread.owcmake }}${{ matrix.library.owcmake }} ${WIN_DLL_LIBS} ${OS2_DLL_LIBS}
           cmake --build build
 
       - name: Upload build errors
