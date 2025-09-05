@@ -310,10 +310,69 @@ static size_t max_x_free_heap  = 0; /* largest seen free_heap */
 static size_t last_free_heap   = 0; /* prior         esp_get_free_heap_size */
 static size_t last_min_heap    = 0; /* prior esp_get_minimum_free_heap_size */
 static size_t heap_peek_ct     = 0;
+static size_t stack_hwm        = 0;
+static size_t min_stack_hwm    = 0;
+static size_t max_stack_hwm    = 0;
 
-esp_err_t esp_sdk_stack_heap_info(heap_track_reset_t reset)
+static heap_track_reset_t heap_reset_reason = HEAP_TRACK_RESET_NONE;
+
+static esp_err_t esp_sdk_stack_info(heap_track_reset_t reset)
 {
     int ret = ESP_OK;
+    char* this_task;
+
+#ifdef CONFIG_IDF_TARGET_ESP8266
+    stack_hwm = uxTaskGetStackHighWaterMark(NULL);
+    if (min_stack_hwm == 0) {
+        min_stack_hwm = stack_hwm;
+    }
+    if (stack_hwm < min_stack_hwm) {
+        ESP_LOGW(TAG, "New min high watermark:   %u words, delta = %d",
+                                 min_stack_hwm, stack_hwm - min_stack_hwm);
+        min_stack_hwm = stack_hwm;
+    }
+    if (stack_hwm > max_stack_hwm) {
+        ESP_LOGW(TAG, "New max high watermark:   %u words, delta = %d",
+                                 max_stack_hwm, stack_hwm - max_stack_hwm);
+        max_stack_hwm = stack_hwm;
+    }
+    this_task = "ESP8266";
+#else
+    TaskStatus_t status;
+    vTaskGetInfo(NULL, &status, pdTRUE, eInvalid);
+    stack_hwm = (unsigned)status.usStackHighWaterMark;
+    if (status == NULL) {
+        this_task = "unknown";
+        ret = ESP_FAIL;
+    }
+    else {
+        this_task = status.pcTaskName
+    }
+#endif
+
+    ESP_LOGI(TAG, "Task: %s, High watermark: %u words", this_task, stack_hwm);
+    ESP_LOGI(TAG, "Min high watermark:      %u words", min_stack_hwm);
+    ESP_LOGI(TAG, "Max high watermark:      %u words", max_stack_hwm);
+    return ret;
+} /*  esp_sdk_stack_info */
+
+static esp_err_t esp_sdk_heap_info(heap_track_reset_t reset)
+{
+    int ret = ESP_OK;
+
+    if (reset != HEAP_TRACK_RESET_NONE) {
+        free_heap        = 0;
+        min_free_heap    = 0;
+        min_x_free_heap  = 0;
+        max_x_free_heap  = 0;
+
+        last_free_heap   = 0;
+        last_min_heap    = 0;
+        heap_peek_ct     = 0;
+        heap_reset_reason = reset;
+    } /* heap track metric reset */
+    heap_peek_ct++;
+
 #ifdef CONFIG_IDF_TARGET_ESP8266
     free_heap     = (unsigned)esp_get_free_heap_size();
     min_free_heap = (unsigned)esp_get_minimum_free_heap_size();
@@ -354,6 +413,17 @@ esp_err_t esp_sdk_stack_heap_info(heap_track_reset_t reset)
     last_free_heap = free_heap;
     last_min_heap = min_free_heap;
 
+    return ret;
+} /* esp_sdk_heap_info */
+
+esp_err_t esp_sdk_stack_heap_info(heap_track_reset_t reset)
+{
+    int ret = ESP_OK;
+    ret = esp_sdk_heap_info(reset) +
+          esp_sdk_stack_info(reset);
+    if (ret != ESP_OK) {
+        ret = ESP_FAIL;
+    }
     return ret;
 }
 
