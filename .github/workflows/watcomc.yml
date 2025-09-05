@@ -49,7 +49,7 @@ jobs:
             owcmake:  '-DCMAKE_POLICY_DEFAULT_CMP0136=NEW -DCMAKE_WATCOM_RUNTIME_LIBRARY=SingleThreaded'
         library:
           - id:       'dll'
-            cmake:    -D"CMAKE_SHARED_LINKER_FLAGS=library mtrdll.lib library clbrdll.lib"
+            cmake:    -D"CMAKE_SHARED_LINKER_FLAGS=library plbrdll.lib library clbrdll.lib"
             owcmake:  'DLL'
           # - id:       'static'
           #   cmake:    '-DBUILD_SHARED_LIBS=no'
@@ -60,7 +60,7 @@ jobs:
     name: ${{ matrix.platform.title }} (${{ matrix.thread.id }} ${{ matrix.library.id }})
     steps:
       - name: Setup Open Watcom ${{ matrix.platform.owimage }}
-        uses: open-watcom/setup-watcom@v2
+        uses: open-watcom/setup-watcom@v0
         with:
           version: ${{ matrix.platform.owimage }}
 
