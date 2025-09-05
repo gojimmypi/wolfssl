@@ -63,7 +63,7 @@ jobs:
         uses: open-watcom/setup-watcom@v0
         with:
           version: ${{ matrix.platform.owimage }}
-          tag: 2025-09-01%20Build
+          tag: 2025-09-01-Build
 
       - name: Checkout wolfSSL
         uses: actions/checkout@v4
