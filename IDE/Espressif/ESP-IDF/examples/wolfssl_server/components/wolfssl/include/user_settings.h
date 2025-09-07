@@ -414,9 +414,6 @@
 /* #define DEBUG_WOLFSSL */
 #define DEBUG_WOLFSSL_MALLOC
 
-/* See test.c that sets cert buffers; we'll set them here: */
-#define USE_CERT_BUFFERS_256
-
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
 
@@ -735,16 +732,6 @@
 
     #undef  HAVE_AESGCM
     #define HAVE_AESGCM
-#else
-    /* default settings */
-    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-        defined(CONFIG_IDF_TARGET_ESP8684) || \
-        defined(CONFIG_IDF_TARGET_ESP8266)
-        /* Use smaller certs for low-memory devices */
-        #define USE_CERT_BUFFERS_1024
-    #else
-        #define USE_CERT_BUFFERS_2048
-    #endif
 #endif /* SM or regular certs */
 
 /* Chipset detection from sdkconfig.h
@@ -1211,7 +1198,6 @@ Turn on timer debugging (used when CPU cycles not available)
         /* Be sure to include in app when using example certs: */
         #include <wolfssl/certs_test.h>
 
-        #define USE_CERT_BUFFERS_256
         #define CTX_CA_CERT          ca_cert_der_2048
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
@@ -1238,7 +1224,6 @@ Turn on timer debugging (used when CPU cycles not available)
         /* Be sure to include in app when using example certs: */
         #include <wolfssl/certs_test.h>
 
-        #define USE_CERT_BUFFERS_256
         #define CTX_CA_CERT          ca_cert_der_1024
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
@@ -1256,9 +1241,6 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY       server_key_der_1024
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #else
-        /* Optionally define custom cert arrays, sizes, and types here */
-        #error "Must define USE_CERT_BUFFERS_2048 or USE_CERT_BUFFERS_1024"
     #endif
 #endif /* Conditional key and cert constant names */
 
