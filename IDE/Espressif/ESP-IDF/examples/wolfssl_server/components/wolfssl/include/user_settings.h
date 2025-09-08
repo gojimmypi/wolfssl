@@ -20,6 +20,12 @@
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
+/* When manually editing user settings, the private config is limited to wolfssl
+ * and thus can be set here: */
+#define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
+#define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
+#define DEBUG_WOLFSSL
+
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
@@ -406,6 +412,10 @@
  * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
  * When really desperate or no TLS used, try NO_SESSION_CACHE.  */
 #define NO_SESSION_CACHE
+#ifndef NO_SESSION_CACHE
+    #define  HAVE_SESSION_TICKET
+#endif
+
 
 #if 0
 /* Small Stack uses more heap. */
@@ -418,6 +428,17 @@
     #define WOLFSSL_STATIC_MEMORY
     #define USE_FAST_MATH
     #define WOLFSSL_NO_MALLOC
+    #ifdef WOLFSSL_SMALL_STACK
+        #error "Cannot use WOLFSSL_SMALL_STACK with WOLFSSL_NO_MALLOC"
+    #endif
+    #if 1
+        #define WOLFSSL_MALLOC_CHECK /* trap malloc failure */
+    #endif
+    #define HAVE_MAX_FRAGMENT
+    #define HAVE_TLS_EXTENSIONS
+    #define WOLFMEM_IO_SZ 660
+
+//    #define FP_ECC
 #endif
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
@@ -645,10 +666,6 @@
 
 #define HAVE_VERSION_EXTENDED_INFO
 /* #define HAVE_WC_INTROSPECTION */
-
-#ifndef NO_SESSION_CACHE
-    #define  HAVE_SESSION_TICKET
-#endif
 
 /* #define HAVE_HASHDRBG */
 
