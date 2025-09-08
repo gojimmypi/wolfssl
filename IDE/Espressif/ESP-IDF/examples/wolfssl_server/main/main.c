@@ -267,7 +267,7 @@ void app_main(void)
         ESP_LOGW(TAG, "nvs flash NOT erased");
     }
 #else
-    #warning "nvs flash not initialized"
+    ESP_LOGW(TAG, "nvs flash not initialized");
 #endif
 
 #ifdef FOUND_PROTOCOL_EXAMPLES_DIR
