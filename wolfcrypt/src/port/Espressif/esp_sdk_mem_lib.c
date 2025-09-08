@@ -316,43 +316,121 @@ static size_t max_stack_hwm    = 0;
 
 static heap_track_reset_t heap_reset_reason = HEAP_TRACK_RESET_NONE;
 
+static size_t largest_allocable(size_t limit) {
+    size_t lo = 0, hi = limit, best = 0;
+    while (lo <= hi) {
+        size_t mid = (lo + hi) / 2;
+        void *p = malloc(mid);
+        if (p) {
+            free(p);
+            best = mid;
+            lo = mid + 1;
+        }
+        else {
+            hi = (mid == 0 ? 0 : mid - 1);
+        }
+    }
+    return best;
+}
+
+static size_t largest_allocable_wolf(size_t limit)
+{
+    size_t best = 0;
+#ifdef WOLFSSL_NO_MALLOC
+    #ifdef DEBUG_WOLFSSL
+        ESP_LOGE(TAG, "Error: largest_allocable_wolf called with no malloc");
+    #endif
+#else
+    size_t lo;
+    size_t hi;
+    void* (*mc)(size_t);
+    void  (*fc)(void*);
+    void* (*rc)(void*, size_t);
+
+    mc = NULL;
+    fc = NULL;
+    rc = NULL;
+    wolfSSL_GetAllocators(&mc, &fc, &rc);
+
+    // Fallback: if no custom allocators are set, use system malloc/free.
+    if (mc == NULL) {
+        mc = malloc;
+    }
+    if (fc == NULL) {
+        fc = free;
+    }
+
+    lo = 0;
+    hi = limit;
+    best = 0;
+
+    while (lo <= hi) {
+        size_t mid = (lo + hi) / 2;
+        void* p = mc(mid);
+        if (p != NULL) {
+            fc(p);
+            best = mid;
+            lo = mid + 1;
+        }
+        else {
+            hi = (mid == 0 ? 0 : mid - 1);
+        }
+    }
+#endif
+    return best;
+}
+
 static esp_err_t esp_sdk_stack_info(heap_track_reset_t reset)
 {
     int ret = ESP_OK;
     char* this_task;
+    size_t max_alloc = 0;
 
+    max_alloc = largest_allocable(10 * 1024);
+    ESP_LOGI(TAG, "max_alloc = %d", max_alloc);
+
+    max_alloc = largest_allocable_wolf(12 * 1024);
+    ESP_LOGI(TAG, "max_alloc wolf = %d", max_alloc);
 #ifdef CONFIG_IDF_TARGET_ESP8266
-    stack_hwm = uxTaskGetStackHighWaterMark(NULL);
+     /* words not bytes! */
+    stack_hwm = uxTaskGetStackHighWaterMark(NULL) * sizeof(StackType_t);
+//    if (stack_hwm > 6000) {
+//        stack_hwm = 0;
+//    }
     if (min_stack_hwm == 0) {
         min_stack_hwm = stack_hwm;
     }
     if (stack_hwm < min_stack_hwm) {
-        ESP_LOGW(TAG, "New min high watermark:   %u words, delta = %d",
+        ESP_LOGW(TAG, "New min high watermark:   %u bytes, delta = %d",
                                  min_stack_hwm, stack_hwm - min_stack_hwm);
         min_stack_hwm = stack_hwm;
     }
     if (stack_hwm > max_stack_hwm) {
-        ESP_LOGW(TAG, "New max high watermark:   %u words, delta = %d",
+        ESP_LOGW(TAG, "New max high watermark:   %u bytes, delta = %d",
                                  max_stack_hwm, stack_hwm - max_stack_hwm);
         max_stack_hwm = stack_hwm;
     }
     this_task = "ESP8266";
-#else
+#elif defined(CONFIG_FREERTOS_USE_TRACE_FACILITY)
     TaskStatus_t status;
     vTaskGetInfo(NULL, &status, pdTRUE, eInvalid);
     stack_hwm = (unsigned)status.usStackHighWaterMark;
-    if (status == NULL) {
+    if (status.pcTaskName == NULL || status.pcTaskName[0] == '\0') {
         this_task = "unknown";
         ret = ESP_FAIL;
     }
     else {
-        this_task = status.pcTaskName
+        this_task = status.pcTaskName;
     }
+#else
+    this_task = "unknown";
+    ESP_LOGW(TAG, "vTaskGetInfo not available");
+    ret = ESP_FAIL;
 #endif
 
-    ESP_LOGI(TAG, "Task: %s, High watermark: %u words", this_task, stack_hwm);
-    ESP_LOGI(TAG, "Min high watermark:      %u words", min_stack_hwm);
-    ESP_LOGI(TAG, "Max high watermark:      %u words", max_stack_hwm);
+    ESP_LOGI(TAG, "Task: %s, High watermark: %u bytes", this_task, stack_hwm);
+    ESP_LOGI(TAG, "Min high watermark:      %u bytes", min_stack_hwm);
+    ESP_LOGI(TAG, "Max high watermark:      %u bytes", max_stack_hwm);
     return ret;
 } /*  esp_sdk_stack_info */
 
@@ -435,6 +513,11 @@ void* wc_pvPortMalloc(size_t size)
 #endif
 {
     void* ret = NULL;
+#ifdef WOLFSSL_NO_MALLOC
+    #ifdef DEBUG_WOLFSSL
+        ESP_LOGE(TAG, "Error: wc_pvPortMalloc called with no malloc");
+    #endif
+#else
     wolfSSL_Malloc_cb  mc;
     wolfSSL_Free_cb    fc;
     wolfSSL_Realloc_cb rc;
@@ -450,7 +533,7 @@ void* wc_pvPortMalloc(size_t size)
         ret = pvPortMalloc(size);
 #endif
     }
-
+#endif
 #if defined(DEBUG_WOLFSSL_MALLOC) || defined(DEBUG_WOLFSSL)
     if (ret == NULL) {
         ESP_LOGE("malloc", "%s:%d (%s)", file, line, fname);
@@ -467,6 +550,11 @@ void wc_debug_pvPortFree(void *ptr,
 void wc_pvPortFree(void *ptr)
 #endif
 {
+#ifdef WOLFSSL_NO_MALLOC
+    #ifdef DEBUG_WOLFSSL
+        ESP_LOGE(TAG, "Error: wc_pvPortFree called with no malloc");
+    #endif
+#else
     wolfSSL_Malloc_cb  mc;
     wolfSSL_Free_cb    fc;
     wolfSSL_Realloc_cb rc;
@@ -489,6 +577,7 @@ void wc_pvPortFree(void *ptr)
 #endif
         }
     }
+#endif /* WOLFSSL_NO_MALLOC check */
 } /* wc_debug_pvPortFree */
 
 #ifndef WOLFSSL_NO_REALLOC
@@ -501,6 +590,11 @@ void* wc_pvPortRealloc(void* ptr, size_t size)
 #endif
 {
     void* ret = NULL;
+#ifdef WOLFSSL_NO_MALLOC
+    #ifdef DEBUG_WOLFSSL
+        ESP_LOGE(TAG, "Error: wc_pvPortRealloc called with no malloc");
+    #endif
+#else
     wolfSSL_Malloc_cb  mc;
     wolfSSL_Free_cb    fc;
     wolfSSL_Realloc_cb rc;
@@ -528,7 +622,8 @@ void* wc_pvPortRealloc(void* ptr, size_t size)
         ESP_LOGE("realloc", "Failed Re-allocating memory of size: %d bytes",
                                                                   size);
     }
-#endif
+#endif /* debug */*/
+#endif /* WOLFSSL_NO_MALLOC check */
     return ret;
 } /* wc_debug_pvPortRealloc */
 #endif /* WOLFSSL_NO_REALLOC */

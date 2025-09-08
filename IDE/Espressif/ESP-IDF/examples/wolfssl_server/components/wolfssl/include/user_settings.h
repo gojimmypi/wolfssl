@@ -407,12 +407,18 @@
  * When really desperate or no TLS used, try NO_SESSION_CACHE.  */
 #define NO_SESSION_CACHE
 
+#if 0
 /* Small Stack uses more heap. */
-#define WOLFSSL_SMALL_STACK
+    #define WOLFSSL_SMALL_STACK
 
-/* Full debugging turned off, but show malloc failure detail */
-/* #define DEBUG_WOLFSSL */
-#define DEBUG_WOLFSSL_MALLOC
+    /* Full debugging turned off, but show malloc failure detail */
+    /* #define DEBUG_WOLFSSL */
+    #define DEBUG_WOLFSSL_MALLOC
+#else
+    #define WOLFSSL_STATIC_MEMORY
+    #define USE_FAST_MATH
+    #define WOLFSSL_NO_MALLOC
+#endif
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
