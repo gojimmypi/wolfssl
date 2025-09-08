@@ -281,11 +281,11 @@ int set_time_wait_for_ntp(void)
     sntp_setservername(0, "pool.ntp.org");     // or your local NTP server
     sntp_init();
 
-    // Optional: set your local time zone *before* using localtime_r()
+    /* Optional: set your local time zone *before* using localtime_r() */
     setenv("TZ", "PST8PDT,M3.2.0/2,M11.1.0/2", 1);  // example for US Pacific
     tzset();
 
-    // Wait for first sync
+    /* Wait for first sync */
     for (int i = 0; i < 10 && sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET; ++i) {
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
@@ -426,7 +426,8 @@ int set_time(void)
          *
          * WARNING: do not set operating mode while SNTP client is running!
          */
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
+#if defined(ESP_IDF_VERSION) && \
+    (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
         esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
 #else
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -436,7 +437,8 @@ int set_time(void)
                           "CONFIG_LWIP_SNTP_MAX_SERVERS = %d",
                            NTP_SERVER_COUNT,CONFIG_LWIP_SNTP_MAX_SERVERS);
         }
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+#if defined(ESP_IDF_VERSION) && \
+    (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         ESP_LOGI(TAG, "esp_sntp_setservername:");
 #else
         ESP_LOGI(TAG, "Found sntp_setservername:");
@@ -448,7 +450,8 @@ int set_time(void)
                 break;
             }
             ESP_LOGI(TAG, "  %s", thisServer);
-#if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
+#if defined(ESP_IDF_VERSION) && \
+    (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0))
             esp_sntp_setservername(i, thisServer);
 #else
             sntp_setservername(i, thisServer);
@@ -456,7 +459,8 @@ int set_time(void)
             ret = ESP_OK;
         }
 #ifdef HAS_ESP_NETIF_SNTP
-    #if defined(ESP_IDF_VERSION) && (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
+    #if defined(ESP_IDF_VERSION) && \
+        (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0))
         ESP_LOGI(TAG, "SNTP init v6 init with esp_netif_sntp_init");
         ret = esp_netif_sntp_init(&config);
     #else
