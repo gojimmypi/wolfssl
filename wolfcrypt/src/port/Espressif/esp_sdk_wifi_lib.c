@@ -224,6 +224,7 @@ esp_err_t esp_sdk_wifi_init_sta(void)
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "this heap = %d", this_heap);
     if (this_heap < WIFI_LOW_HEAP_WARNING) {
+        ESP_LOGW(TAG, "esp_get_free_heap_size: %d", this_heap);
         ESP_LOGW(TAG, "Warning: WiFi low heap: %d", WIFI_LOW_HEAP_WARNING);
     }
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
