@@ -22,9 +22,11 @@
 
 /* When manually editing user settings, the private config is limited to wolfssl
  * and thus can be set here: */
-#define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-#define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
-#define DEBUG_WOLFSSL
+#ifndef CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
+    #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
+#endif
+// #define DEBUG_WOLFSSL
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
@@ -405,7 +407,7 @@
 /* See below for chipset detection from sdkconfig.h */
 
 /* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-#define SINGLE_THREADED
+// #define SINGLE_THREADED
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
@@ -442,7 +444,7 @@
 #endif
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
-#define RSA_LOW_MEM
+// #define RSA_LOW_MEM
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -508,12 +510,14 @@
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-    defined(CONFIG_IDF_TARGET_ESP8684)
+    defined(CONFIG_IDF_TARGET_ESP8684) || \
+    defined(CONFIG_IDF_TARGET_ESP8266)
     /* Optionally set smaller size here */
     #ifdef HAVE_FFDHE_4096
         /* this size may be problematic on the C2 */
     #endif
-    #define HAVE_FFDHE_2048
+    //#define HAVE_FFDHE_2048
+    #define NO_DH
 #else
     #define HAVE_FFDHE_4096
 #endif
@@ -528,10 +532,10 @@
 /* #define WOLFSSL_RIPEMD */
 
 /* when you want to use SHA224 */
-#define WOLFSSL_SHA224
+//#define WOLFSSL_SHA224
 
 /* when you want to use SHA384 */
-#define WOLFSSL_SHA384
+//#define WOLFSSL_SHA384
 
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
@@ -555,13 +559,14 @@
     #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
-        #define HAVE_CURVE25519
-        #define HAVE_ED25519
-        #define WOLFSSL_SHA512
+        //#define HAVE_CURVE25519
+        //#define HAVE_ED25519
+       // #define WOLFSSL_SHA512
         /*
         #define HAVE_ECC384
         #define CURVE25519_SMALL
         */
+        #define USE_CERT_BUFFERS_256
     #else
         #define WOLFSSH_NO_ECC
         /* WOLFSSH_NO_ECDSA is typically defined automatically,
@@ -578,13 +583,17 @@
         #define HAVE_RSA
     #else
         #undef HAVE_RSA
+        #define NO_RSA
+        /* Also disable RSA if wolfSSH used */
         #define WOLFSSH_NO_RSA
     #endif
 #else
-	#ifdef WOLFCRYPT_ONLY
+    #if defined(CONFIG_ESP_WOLFSSL_ENABLE_MLKEM)
+        /* See above for PQ-only config */
+    #elif defined(WOLFCRYPT_ONLY)
 		/* Communications such as (D)TLS not compiled in */
     #else
-        #warning "Both RSA and ECC are disabled. Consider WOLFCRYPT_ONLY"
+        #warning "PQ, RSA, and ECC are disabled. Consider WOLFCRYPT_ONLY"
     #endif
 #endif
 
@@ -1263,6 +1272,30 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
         #define CTX_SERVER_KEY       server_key_der_1024
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #elif defined(USE_CERT_BUFFERS_256)
+        /* Be sure to include in app when using example certs: */
+        #include <wolfssl/certs_test.h>
+
+        #define CTX_CA_CERT          ca_ecc_cert_der_256
+        #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+#if 0
+        #define CTX_CLIENT_CERT      cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_KEY       ecc_clikey_der_256
+        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+#endif
+        #define CTX_SERVER_CERT      serv_ecc_der_256
+        #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_SERVER_KEY       ecc_key_der_256
+        #define CTX_SERVER_KEY_SIZE  sizeof_ecc_key_der_256
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #endif
 #endif /* Conditional key and cert constant names */

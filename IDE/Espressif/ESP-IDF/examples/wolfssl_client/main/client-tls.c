@@ -103,7 +103,7 @@
 #if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
 
-static int ShowCiphers(WOLFSSL* ssl)
+int ShowCiphers(WOLFSSL* ssl)
 {
     #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
     char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];

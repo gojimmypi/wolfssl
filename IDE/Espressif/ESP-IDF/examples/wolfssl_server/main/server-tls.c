@@ -124,7 +124,7 @@ int ShowCiphers(WOLFSSL* ssl)
 }
 #include <wolfssl/wolfcrypt/memory.h>
         #define MAX_CONNS 1
-        #define GEN_POOL_SZ  (36*1024)     /* handshake, certs, math temps */
+        #define GEN_POOL_SZ  (40*1024)     /* handshake, certs, math temps */
         #define IO_POOL_SZ   (2 * 720)     /* if using MFL=512 -> ~2x ~660B; round up */
         #define MAX_CONCURRENT_HANDSHAKES 1
         static __attribute__((aligned(16))) uint8_t genPool[GEN_POOL_SZ];
@@ -262,18 +262,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             ESP_LOGE(TAG, "ERROR: failed to create static memory heap");
         }
 
-        if (ret == WOLFSSL_SUCCESS) {
-            WOLFSSL_MSG("wc_LoadStaticMemory success");
-        }
-        else {
-            ESP_LOGE(TAG, "ERROR: failed to create static memory heap");
-        }
     #endif
 #endif
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
-     * Smaller certs are typically used withj smaller RAM devices.(ESP8266)
+     * Smaller certs are typically used with smaller RAM devices.(ESP8266)
      * Example client will need explicit params:
      *   ./examples/client/client -h 192.168.1.48  -p 11111 -v 3  \
      *                            -A ./certs/1024/ca-cert.pem     \
@@ -599,6 +593,9 @@ WOLFSSL_ESP_TASK tls_smp_server_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
+#define TLS_SMP_SERVER_TASK_BYTES 4100
+#define TLS_SMP_SERVER_TASK_NAME "task"
+#define TLS_SMP_SERVER_TASK_PRIORITY 5
     /* Note that despite vanilla FreeRTOS using WORDS for a parameter,
      * Espressif uses BYTES for the task stack size here. */
     ESP_LOGI(TAG, "Creating tls_smp_server_task with stack size = %d",
