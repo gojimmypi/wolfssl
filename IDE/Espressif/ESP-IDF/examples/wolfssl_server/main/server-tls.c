@@ -122,13 +122,24 @@ int ShowCiphers(WOLFSSL* ssl)
 
     return ret;
 }
+
+
 #include <wolfssl/wolfcrypt/memory.h>
-        #define MAX_CONNS 1
-        #define GEN_POOL_SZ  (40*1024)     /* handshake, certs, math temps */
-        #define IO_POOL_SZ   (2 * 720)     /* if using MFL=512 -> ~2x ~660B; round up */
-        #define MAX_CONCURRENT_HANDSHAKES 1
-        static __attribute__((aligned(16))) uint8_t genPool[GEN_POOL_SZ];
-        static __attribute__((aligned(16))) uint8_t ioPool [IO_POOL_SZ];
+#define MAX_CONNS 1
+#define MAX_CONCURRENT_HANDSHAKES 1
+#if defined(WOLFSSL_LOW_MEMORY)
+    /* handshake, certs, math temps */
+    #define GEN_POOL_SZ  (40*1024)
+    /* if using MFL=512 -> ~2x ~660B; round up */
+    #define IO_POOL_SZ   (2 * 720)
+#else
+    /* handshake, certs, math temps */
+    #define GEN_POOL_SZ  (60*1024)
+    /* if using MFL=512 -> ~2x ~660B; round up */
+    #define IO_POOL_SZ   (2 * 720)
+#endif
+static __attribute__((aligned(16))) uint8_t genPool[GEN_POOL_SZ];
+static __attribute__((aligned(16))) uint8_t ioPool [IO_POOL_SZ];
 
 /* FreeRTOS */
 /* server task */
