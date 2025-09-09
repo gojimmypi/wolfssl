@@ -71,10 +71,11 @@
           <Subdirectory>esp-idf/master</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
-        <COMPort>COM68</COMPort>
+        <COMPort>COM20</COMPort>
+        <BaudRate>74880</BaudRate>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>true</UseCCache>
-        <DeviceID>ESP32C6</DeviceID>
+        <DeviceID>ESP32C2</DeviceID>
       </ESPIDFExtension>
       <DetectMissingSolutionConfigurations>false</DetectMissingSolutionConfigurations>
     </ProjectModeSettings>
@@ -103,7 +104,7 @@
   </CustomDebug>
   <DeviceTerminalSettings>
     <Connection xsi:type="com.sysprogs.terminal.connection.serial">
-      <ComPortName>COM17</ComPortName>
+      <ComPortName>COM20</ComPortName>
       <AdvancedSettings>
         <BaudRate>115200</BaudRate>
         <DataBits>8</DataBits>
@@ -159,8 +160,8 @@
     </HexSettings>
     <LineEnding>LF</LineEnding>
     <TreatLFAsCRLF>false</TreatLFAsCRLF>
-    <KeepOpenAfterExit>false</KeepOpenAfterExit>
-    <ShowAfterProgramming>false</ShowAfterProgramming>
+    <KeepOpenAfterExit>true</KeepOpenAfterExit>
+    <ShowAfterProgramming>true</ShowAfterProgramming>
   </DeviceTerminalSettings>
   <CustomShortcuts>
     <Shortcuts />
@@ -232,7 +233,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
-        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 20000" -f target/esp32s3.cfg</CommandLine>
+        <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 20000" -f target/esp32c2.cfg</CommandLine>
         <ExtraParameters>
           <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />

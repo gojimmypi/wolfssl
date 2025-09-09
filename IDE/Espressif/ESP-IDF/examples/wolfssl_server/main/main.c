@@ -388,33 +388,29 @@ void app_main(void)
                    CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - (uxTaskGetStackHighWaterMark(NULL))
             );
-    ESP_LOGI(TAG, "Starting TLS Server task...\n");
+    ESP_LOGI(TAG, "Starting TLS Server task...");
     ESP_LOGI(TAG, "main tls_smp_client_init heap @ %p = %d",
                   &this_heap, this_heap);
 
-
-
     tls_smp_server_init(args); /* NULL will use the DEFAULT_PORT value */
+#endif
+
+#ifdef INCLUDE_uxTaskGetStackHighWaterMark
+    ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
+
+    ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                                    - (uxTaskGetStackHighWaterMark(NULL) ));
 #endif
 
     /* Done */
 #ifdef SINGLE_THREADED
     ESP_LOGV(TAG, "\n\nDone!\n\n");
-    while (1);
-#else
-    ESP_LOGV(TAG, "\n\nvTaskDelete...\n\n");
-    vTaskDelete(NULL);
-    /* done */
     while (1) {
-        ESP_LOGV(TAG, "\n\nLoop...\n\n");
-    #ifdef INCLUDE_uxTaskGetStackHighWaterMark
-        ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
-
-        ESP_LOGI(TAG, "Stack used: %d", CONFIG_ESP_MAIN_TASK_STACK_SIZE
-                                        - (uxTaskGetStackHighWaterMark(NULL) ));
-    #endif
         vTaskDelay(60000);
-    } /* done while */
+    }
+#else
+    ESP_LOGI(TAG, "vTaskDelete main()");
+    vTaskDelete(NULL);
 #endif /* else not SINGLE_THREADED */
 
 } /* app_main */

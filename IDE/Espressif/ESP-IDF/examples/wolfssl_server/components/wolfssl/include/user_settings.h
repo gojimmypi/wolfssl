@@ -20,14 +20,6 @@
  */
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
-/* When manually editing user settings, the private config is limited to wolfssl
- * and thus can be set here: */
-#ifndef CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
-#endif
-// #define DEBUG_WOLFSSL
-
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
@@ -35,6 +27,20 @@
 
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
+
+/* When manually editing user settings, the private config is limited to wolfssl
+ * and thus can be set here: */
+#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
+            CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    /* menuconfig selected private config */
+#else
+    // optionally force private config from here:
+    #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
+    #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
+#endif
+// TODO comment out above for release */
+
+#define DEBUG_WOLFSSL
 
 /* Some mitigations are ESP-IDF version-speific. */
 #include "esp_idf_version.h"
@@ -119,15 +125,21 @@
     #define        WOLFSSL_ALT_CERT_CHAINS
 #endif
 
-/* Paths can be long, ensure the entire value printed during debug */
-#define WOLFSSL_MAX_ERROR_SZ 500
-#define WOLFSSL_MSG_EX_BUF_SZ 500
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
             defined(CONFIG_IDF_TARGET_ESP8684) || \
             defined(CONFIG_IDF_TARGET_ESP8266)
     /* WOLFSSL_LOW_MEMORY detected at runtime for low memory warning */
     #define WOLFSSL_LOW_MEMORY
+#endif
+
+/* Paths can be long, ensure the entire value printed during debug */
+#ifdef WOLFSSL_LOW_MEMORY
+    #define WOLFSSL_MAX_ERROR_SZ 50
+    #define WOLFSSL_MSG_EX_BUF_SZ 50
+#else
+    #define WOLFSSL_MAX_ERROR_SZ 500
+    #define WOLFSSL_MSG_EX_BUF_SZ 500
 #endif
 
 /* wolfSSL Examples: set macros used in example applications.
@@ -165,14 +177,16 @@
     #define NO_WOLFSSL_SERVER
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
+    #define NO_WOLFSSL_CLIENT
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
     #else
-        /* This example will alsways use the wolfSSL WiFi helper */
+        /* This example will always use the wolfSSL WiFi helper */
         #define USE_WOLFSSL_ESP_SDK_WIFI
     #endif
+    /* Even without WiFi, the wolfSSL helper has some static time settings */
     #define USE_WOLFSSL_ESP_SDK_TIME
-    #define NO_WOLFSSL_CLIENT
+
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -186,6 +200,7 @@
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
+
 /* wolfMQTT Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
@@ -418,7 +433,7 @@
     #define  HAVE_SESSION_TICKET
 #endif
 
-
+// TODO: add to Kconfig: CONFIG_WOLFSSL_ESP_STATIC_MEMORY
 #if 0
 /* Small Stack uses more heap. */
     #define WOLFSSL_SMALL_STACK
@@ -428,6 +443,7 @@
     #define DEBUG_WOLFSSL_MALLOC
 #else
     #define WOLFSSL_STATIC_MEMORY
+    // #define WOLFSSL_STATIC_MEMORY_LEAN
     #define USE_FAST_MATH
     #define WOLFSSL_NO_MALLOC
     #ifdef WOLFSSL_SMALL_STACK
@@ -438,7 +454,9 @@
     #endif
     #define HAVE_MAX_FRAGMENT
     #define HAVE_TLS_EXTENSIONS
-    #define WOLFMEM_IO_SZ 660
+
+    /* multiple of 16 & 32 */
+    #define WOLFMEM_IO_SZ 672
 
 //    #define FP_ECC
 #endif
@@ -554,7 +572,8 @@
 #endif
 
 /* We can use either or both ECC and RSA, but must use at least one for TLS */
-#if CONFIG_ESP_WOLFSSL_USE_ECC || CONFIG_ESP_WOLFSSL_USE_RSA
+#if (defined(CONFIG_ESP_WOLFSSL_USE_ECC) && CONFIG_ESP_WOLFSSL_USE_ECC) || \
+    (defined(CONFIG_ESP_WOLFSSL_USE_RSA) && CONFIG_ESP_WOLFSSL_USE_RSA)
     /* Some ECC checks */
     #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
@@ -1020,7 +1039,7 @@
             /* See idf.py menuconfig for stack warning settings */
             #if !defined(CONFIG_ESP_WOLFSSL_NO_STACK_SIZE_BUILD_WARNING)
                 #if CONFIG_ESP_MAIN_TASK_STACK_SIZE < 10500
-                    #warning "RSA may be difficult with less than 10KB Stack"
+                    /* RSA may be difficult with less than 10KB Stack */
                 #endif
             #else
                 /* Implement your own stack warning here */
