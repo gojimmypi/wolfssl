@@ -165,6 +165,7 @@
     /* We don't use WiFi, so don't compile in the esp-sdk-lib WiFi helpers: */
     /* #define USE_WOLFSSL_ESP_SDK_WIFI */
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
+    #define BENCH_EMBEDDED
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
@@ -443,20 +444,29 @@
     #define DEBUG_WOLFSSL_MALLOC
 #else
     #define WOLFSSL_STATIC_MEMORY
-    // #define WOLFSSL_STATIC_MEMORY_LEAN
+    #define WOLFSSL_STATIC_MEMORY_LEAN
     #define USE_FAST_MATH
     #define WOLFSSL_NO_MALLOC
     #ifdef WOLFSSL_SMALL_STACK
         #error "Cannot use WOLFSSL_SMALL_STACK with WOLFSSL_NO_MALLOC"
     #endif
     #if 1
-        #define WOLFSSL_MALLOC_CHECK /* trap malloc failure */
+        /* trap malloc failure */
+        #define WOLFSSL_MALLOC_CHECK
     #endif
     #define HAVE_MAX_FRAGMENT
     #define HAVE_TLS_EXTENSIONS
 
     /* multiple of 16 & 32 */
-    #define WOLFMEM_IO_SZ 672
+    #define WOLFMEM_IO_SZ 2048
+
+    #define WOLFSSL_CUSTOM_CURVES
+    #define HAVE_ECC_KOBLITZ
+    #define HAVE_ECC256
+    #define NO_ECC192
+    #define NO_ECC224
+    #define NO_ECC384
+    #define NO_ECC521
 
 //    #define FP_ECC
 #endif
@@ -474,8 +484,6 @@
 /* When you don't want to use the old SHA */
 /* #define NO_SHA */
 /* #define NO_OLD_TLS */
-
-#define BENCH_EMBEDDED
 
 /* Very low memory device notice:
  *   TLS 1.2 typically enabled

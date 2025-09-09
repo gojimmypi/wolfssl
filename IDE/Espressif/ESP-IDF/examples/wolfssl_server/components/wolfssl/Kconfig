@@ -95,6 +95,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             help
                 Enables RSA algorithm
 
+
         menu "Hardening"
             config ESP_WOLFSSL_WC_NO_HARDEN
                 bool "Disable wolfSSL hardening"
@@ -173,6 +174,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                     Enables TEST_ESPIDF_ALL_WOLFSSL
         endmenu # wolfCrypt tests
     endmenu # Application Specific
+
 
     menu "Hardening"
         config ESP_WOLFSSL_WC_NO_HARDEN
