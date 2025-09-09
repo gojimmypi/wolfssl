@@ -350,7 +350,7 @@ void app_main(void)
         /* Initialize WiFi */
         ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
         ret = esp_sdk_wifi_init_sta();
-        while (ret != 0) {
+        while (ret != ESP_OK) {
             ESP_LOGI(TAG, "Waiting...");
             vTaskDelay(60000 / portTICK_PERIOD_MS);
             ESP_LOGI(TAG, "Trying WiFi again...");

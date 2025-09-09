@@ -467,7 +467,7 @@ static esp_err_t esp_sdk_stack_info(heap_track_reset_t reset)
 #else
     this_task = "unknown";
     ESP_LOGW(TAG, "vTaskGetInfo not available");
-    ret = ESP_FAIL;
+    // ret = ESP_FAIL;
 #endif
 
     ESP_LOGI(TAG, "Task: %s, High watermark: %u bytes", this_task, stack_hwm);

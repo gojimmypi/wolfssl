@@ -1310,6 +1310,7 @@ WOLFSSL* wolfSSL_new(WOLFSSL_CTX* ctx)
     WOLFSSL* ssl = NULL;
     int ret = 0;
 
+
     WOLFSSL_ENTER("wolfSSL_new");
 
     if (ctx == NULL) {

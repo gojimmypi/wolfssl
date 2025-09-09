@@ -43,7 +43,7 @@
     // TODO comment out above as example only for release */
 #endif
 
-#define DEBUG_WOLFSSL
+// #define DEBUG_WOLFSSL
 
 /* Some mitigations are ESP-IDF version-speific. */
 #include "esp_idf_version.h"
