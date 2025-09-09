@@ -1285,6 +1285,18 @@ file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h"
             "\n"
             "#endif\n" )
 
+# Memory peek helper
+# message(STATUS " CMAKE_CURRENT_LIST_DIR= ${CMAKE_CURRENT_LIST_DIR}")
+# target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+
+if (COMMAND target_linker_scripts)
+  target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+else()
+  # Fallback if target_linker_scripts isn't available
+  target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+  set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+endif()
+
 message(STATUS "************************************************************************************************")
 message(STATUS "wolfSSL component config complete!")
 message(STATUS "************************************************************************************************")
