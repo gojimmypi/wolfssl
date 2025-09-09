@@ -72,7 +72,7 @@
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM20</COMPort>
-        <BaudRate>74880</BaudRate>
+        <BaudRate>57600</BaudRate>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>true</UseCCache>
         <DeviceID>ESP32C2</DeviceID>
