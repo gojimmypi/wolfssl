@@ -58,8 +58,11 @@
     #include <wolfssl/wolfcrypt/mlkem.h>
     #include <wolfssl/wolfcrypt/wc_mlkem.h>
 #endif
-#if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024)
+#if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024) || \
+    defined(USE_CERT_BUFFERS_256)
     #include <wolfssl/certs_test.h>
+#elif defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
 #endif
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
