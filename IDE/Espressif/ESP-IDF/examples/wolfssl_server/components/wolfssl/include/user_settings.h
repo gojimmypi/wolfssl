@@ -34,11 +34,14 @@
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
     /* menuconfig selected private config */
 #else
-    // optionally force private config from here:
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
+    #ifdef _WIN32
+        #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
+    #else
+        #define WOLFSSL_CMAKE_SYSTEM_NAME_WSL
+    #endif
+    // TODO comment out above as example only for release */
 #endif
-// TODO comment out above for release */
 
 #define DEBUG_WOLFSSL
 
