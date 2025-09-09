@@ -473,14 +473,21 @@ static int ShowExtendedSystemInfo_thread(void)
 */
 static int ShowExtendedSystemInfo_platform(void)
 {
+    int ret = ESP_OK;
 #if defined(WOLFSSL_ESPIDF)
-#if defined(CONFIG_IDF_TARGET)
-    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET = %s",
-                           CONFIG_IDF_TARGET);
-    ShowExtendedSystemInfo_platform_espressif();
+    #if defined(CONFIG_IDF_TARGET)
+        WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET = %s",
+                               CONFIG_IDF_TARGET);
+        ret = ShowExtendedSystemInfo_platform_espressif();
+    #else
+        ESP_LOGW(TAG, "CONFIG_IDF_TARGET expected, not defined");
+        ret = ESP_FAIL;
+    #endif
+#else
+    ESP_LOGW(TAG, "WOLFSSL_ESPIDF expected, not defined");
+    ret = ESP_FAIL;
 #endif
-#endif
-    return ESP_OK;
+    return ret;
 }
 
 static int esp_increment_boot_count(void)
@@ -501,7 +508,7 @@ static const char hd2[] =
 /* See macro helpers above; not_defined is macro name when *not* defined */
 static int show_macro(char* s, char* not_defined)
 {
-char msg[] =      "...................................                        ";
+    char msg[] =  "...................................                        ";
             /*    01234567890123456789012345678901234567890123456789012345678 */
             /*              1         2         3         4         5         */
     size_t i = 0;
@@ -715,34 +722,54 @@ static esp_err_t ShowExtendedSystemInfo_config(void)
     show_macro("DEBUG_WOLFSSL",             STR_IFNDEF(DEBUG_WOLFSSL));
     show_macro("WOLFSSL_DEBUG_CERTS",       STR_IFNDEF(WOLFSSL_DEBUG_CERTS));
     show_macro("NO_WOLFSSL_DEBUG_CERTS",    STR_IFNDEF(NO_WOLFSSL_DEBUG_CERTS));
-    show_macro("WOLFSSL_DEBUG_ERRORS_ONLY", STR_IFNDEF(WOLFSSL_DEBUG_ERRORS_ONLY));
+    show_macro("WOLFSSL_DEBUG_ERRORS_ONLY",
+                                         STR_IFNDEF(WOLFSSL_DEBUG_ERRORS_ONLY));
 
     ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
 
     show_macro("NO_DH",                     STR_IFNDEF(NO_DH));
-    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
-    show_macro("HAVE_RSA",                     STR_IFNDEF(HAVE_RSA));
-    show_macro("HAVE_CURVE25519",                     STR_IFNDEF(HAVE_CURVE25519));
-    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
-    show_macro("FP_MAX_BITS",                     STR_IFNDEF(FP_MAX_BITS));
+    show_macro("NO_RSA",                    STR_IFNDEF(NO_RSA));
+    show_macro("HAVE_RSA",                  STR_IFNDEF(HAVE_RSA));
+    show_macro("HAVE_CURVE25519",           STR_IFNDEF(HAVE_CURVE25519));
+    show_macro("NO_RSA",                    STR_IFNDEF(NO_RSA));
+    show_macro("FP_MAX_BITS",               STR_IFNDEF(FP_MAX_BITS));
 
     /* esp-tls component related settings */
     show_macro("NO_WOLFSSL_USE_ASM_CERT",
-     STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
+                                           STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
     show_macro("WOLFSSL_CMAKE_REQUIRED_ESP_TLS",
-     STR_IFNDEF(WOLFSSL_CMAKE_REQUIRED_ESP_TLS));
+                                    STR_IFNDEF(WOLFSSL_CMAKE_REQUIRED_ESP_TLS));
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
     show_macro("CONFIG_ESP_TLS_USING_WOLFSSL",
-     STR_IFNDEF(CONFIG_ESP_TLS_USING_WOLFSSL));
+                                      STR_IFNDEF(CONFIG_ESP_TLS_USING_WOLFSSL));
     show_macro("CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE",
-     STR_IFNDEF(CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE));
+                              STR_IFNDEF(CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE));
     show_macro("CONFIG_WOLFSSL_NO_ASN_STRICT",
-     STR_IFNDEF(CONFIG_WOLFSSL_NO_ASN_STRICT));
+                                      STR_IFNDEF(CONFIG_WOLFSSL_NO_ASN_STRICT));
     show_macro("CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL",
-     STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
+                                 STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
     show_macro("CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE",
-     STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
+                    STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
 
     ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
+    /* Low memory checks & warnings */
+#ifdef WOLFSSL_LOW_MEMORY
+    #if (defined(CONFIG_ESP_WOLFSSL_USE_RSA) && CONFIG_ESP_WOLFSSL_USE_RSA)
+        ESP_LOGW(TAG, "RSA config enabled in very low memory environment");
+        #if defined(NO_RSA)
+            ESP_LOGW(TAG, "NO_RSA not found with CONFIG_ESP_WOLFSSL_USE_RSA");
+        #else
+            /* RSA enable on low-memory devices */
+        #endif
+        #if defined(HAVE_RSA)
+            /* RSA enable on low-memory devices */
+        #else
+            ESP_LOGW(TAG, "HAVE_RSA not found with CONFIG_ESP_WOLFSSL_USE_RSA");
+        #endif
+    #endif
+#endif
 
 #ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     ESP_LOGI(TAG, "ESP-IDF is configured to use wolfSSL in esp-tls");
