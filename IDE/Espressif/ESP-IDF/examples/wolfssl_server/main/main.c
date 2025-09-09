@@ -192,6 +192,9 @@ void app_main(void)
     uart_param_config(UART_NUM_0, &uart_config);
     uart_driver_install(UART_NUM_0,
                         THIS_MONITOR_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
+    /* Startup delay only for pretty align of startup config: I (nnnn) items */
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Server Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
