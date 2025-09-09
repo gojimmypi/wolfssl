@@ -1286,15 +1286,21 @@ file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h"
             "#endif\n" )
 
 # Memory peek helper
-# message(STATUS " CMAKE_CURRENT_LIST_DIR= ${CMAKE_CURRENT_LIST_DIR}")
-# target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+set(LINKER_REGION_PEEK "${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld")
+if( EXISTS "${LINKER_REGION_PEEK}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
 
-if (COMMAND target_linker_scripts)
-  target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    message(STATUS "Found linker region peek helper: ${LINKER_REGION_PEEK}")
+    if (COMMAND target_linker_scripts)
+      target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    else()
+      # Fallback if target_linker_scripts isn't available
+      target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+      set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    endif()
 else()
-  # Fallback if target_linker_scripts isn't available
-  target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
-  set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    message(STATUS "Found linker region peek helper NOT FOUND: ${LINKER_REGION_PEEK}")
 endif()
 
 message(STATUS "************************************************************************************************")

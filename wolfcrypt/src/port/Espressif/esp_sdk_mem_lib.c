@@ -111,20 +111,44 @@ extern wc_ptr_t _heap_end[];
     extern void* _thread_local_end;
 #endif
 
-/* See https://github.com/esp8266/esp8266-wiki/wiki/Memory-Map */
-#define MEM_MAP_IO_START  ((void*)(0x3FF00000))
-#define MEM_MAP_IO_END    ((void*)(0x3FF0FFFF))
-#define USER_DATA_START   ((void*)(0x3FFE8000))
-#define USER_DATA_END     ((void*)(0x3FFE8000 + 0x14000))
-#define ETS_SYS_START     ((void*)(0x3FFFC000))
-#define ETS_SYS_END       ((void*)(0x3FFFC000 + 0x4000))
-#define IRAM1_START       ((void*)(0x40100000))
-#define IRAM1_END         ((void*)(0x40100000 + 0x8000))
-#define IRAMF1_START      ((void*)(0x40108000))
-#define IRAMF1_END        ((void*)(0x40108000 + 0x4000))
-#define IRAMF2_START      ((void*)(0x4010C000))
-#define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
+#ifdef WOLFSSL_HAVE_LINKER_REGION_PEEK
+    /* cmake may have found a ld/region_peek.ld helper file */
+    extern wc_ptr_t __dram0_start[]   __attribute__((weak));
+    extern wc_ptr_t __dram0_end[]     __attribute__((weak));
+    extern wc_ptr_t __drom0_start[]   __attribute__((weak));
+    extern wc_ptr_t __drom0_end[]     __attribute__((weak));
 
+    #define MEM_MAP_IO_START  ((void*)(0x3FF00000))
+    #define MEM_MAP_IO_END    ((void*)(0x3FF0FFFF))
+    #define USER_DATA_START   ((void*)(0x3FFE8000))
+    #define USER_DATA_END     ((void*)(0x3FFE8000 + 0x14000))
+    #define ETS_SYS_START     ((void*)(0x3FFFC000))
+    #define ETS_SYS_END       ((void*)(0x3FFFC000 + 0x4000))
+    #define IRAM1_START       ((void*)(0x40100000))
+    #define IRAM1_END         ((void*)(0x40100000 + 0x8000))
+    #define IRAMF1_START      ((void*)(0x40108000))
+    #define IRAMF1_END        ((void*)(0x40108000 + 0x4000))
+    #define IRAMF2_START      ((void*)(0x4010C000))
+    #define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
+    #define DRAM0_START        __dram0_start
+    #define DRAM0_END          __dram0_end
+    #define DROM0_START        __drom0_start
+    #define DROM0_END          __drom0_end
+#else
+    /* See https://github.com/esp8266/esp8266-wiki/wiki/Memory-Map */
+    #define MEM_MAP_IO_START  ((void*)(0x3FF00000))
+    #define MEM_MAP_IO_END    ((void*)(0x3FF0FFFF))
+    #define USER_DATA_START   ((void*)(0x3FFE8000))
+    #define USER_DATA_END     ((void*)(0x3FFE8000 + 0x14000))
+    #define ETS_SYS_START     ((void*)(0x3FFFC000))
+    #define ETS_SYS_END       ((void*)(0x3FFFC000 + 0x4000))
+    #define IRAM1_START       ((void*)(0x40100000))
+    #define IRAM1_END         ((void*)(0x40100000 + 0x8000))
+    #define IRAMF1_START      ((void*)(0x40108000))
+    #define IRAMF1_END        ((void*)(0x40108000 + 0x4000))
+    #define IRAMF2_START      ((void*)(0x4010C000))
+    #define IRAMF2_END        ((void*)(0x4010C000 + 0x4000))
+#endif
 #if 0
     /* Optional Stack Debugging */
     extern void *xPortSupervisorStackPointer;
@@ -150,6 +174,8 @@ enum sdk_memory_segment
     text,
     rodata,
     rtc_data,
+    dram_org,
+    drom_org,
     SDK_MEMORY_SEGMENT_COUNT
 };
 
@@ -173,6 +199,8 @@ static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT + 1] = {
     "* text          ",
     "* rodata        ",
     "* rtc data      ",
+    "C dram_org      ",
+    "C drom_org      ",
     "last item",
 };
 
@@ -196,6 +224,7 @@ int sdk_log_meminfo(enum sdk_memory_segment m, void* start, void* end)
         len = (word32)end - (word32)start;
         ESP_LOGI(TAG, "%s: %p ~ %p : 0x%05x (%d)", str, start, end, len, len );
     }
+
     return ESP_OK;
 }
 
@@ -216,6 +245,10 @@ int sdk_init_meminfo(void)
     /* TODO: Find ESP32-S2 equivalent of bss */
 #else
     sdk_log_meminfo(bss,           _bss_start,          _bss_end);
+#endif
+#if defined(WOLFSSL_HAVE_LINKER_REGION_PEEK)
+    sdk_log_meminfo(dram_org,      DRAM0_START,         DRAM0_END);
+    sdk_log_meminfo(drom_org,      DROM0_START,         DROM0_END);
 #endif
     sdk_log_meminfo(noinit,        _noinit_start,       _noinit_end);
     sdk_log_meminfo(ets_system,    ETS_SYS_START,       ETS_SYS_END);
@@ -239,6 +272,7 @@ int sdk_init_meminfo(void)
 #else
     sdk_log_meminfo(rtc_data,      _rtc_data_start,     _rtc_data_end);
 #endif
+
     ESP_LOGI(TAG, "-----------------------------------------------------");
     sample_heap_var = malloc(1);
     if (sample_heap_var == NULL) {
@@ -622,7 +656,7 @@ void* wc_pvPortRealloc(void* ptr, size_t size)
         ESP_LOGE("realloc", "Failed Re-allocating memory of size: %d bytes",
                                                                   size);
     }
-#endif /* debug */*/
+#endif /* debug */
 #endif /* WOLFSSL_NO_MALLOC check */
     return ret;
 } /* wc_debug_pvPortRealloc */
