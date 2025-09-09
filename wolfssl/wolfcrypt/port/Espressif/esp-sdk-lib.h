@@ -55,7 +55,7 @@
 #include <esp_idf_version.h>
 #include <esp_log.h>
 
-#define ESP_SDK_MEM_LIB_VERSION 1
+#define ESP_SDK_MEM_LIB_VERSION 2
 
 /**
  ******************************************************************************

@@ -209,7 +209,7 @@ static const char* sdk_memory_segment_text[SDK_MEMORY_SEGMENT_COUNT + 1] = {
 int sdk_log_meminfo(enum sdk_memory_segment m, void* start, void* end)
 {
     const char* str;
-    word32 len = 0;
+    size_t len = 0;
     str = sdk_memory_segment_text[m];
     sdk_memory_segment_start[m] = start;
     sdk_memory_segment_end[m] = end;
@@ -221,8 +221,16 @@ int sdk_log_meminfo(enum sdk_memory_segment m, void* start, void* end)
         ESP_LOGI(TAG, "                  Start         End          Length");
     }
     else {
-        len = (word32)end - (word32)start;
-        ESP_LOGI(TAG, "%s: %p ~ %p : 0x%05x (%d)", str, start, end, len, len );
+        if (end == NULL) {
+            /* The weak attribute: linker probably didn't find a value */
+            len = 0;
+            ESP_LOGV(TAG, "Value not found for: %s", str);
+        }
+        else {
+            len = (size_t)end - (size_t)start;
+            ESP_LOGI(TAG, "%s: %p ~ %p : 0x%05x (%d)",
+                          str, start, end, len, len );
+        }
     }
 
     return ESP_OK;
