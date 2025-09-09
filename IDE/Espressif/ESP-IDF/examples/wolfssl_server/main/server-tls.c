@@ -131,15 +131,19 @@ static void halt_for_reboot(const char* s)
     }
 }
 
+#if defined(WOLFSSL_STATIC_MEMORY)
 #include <wolfssl/wolfcrypt/memory.h>
 #define MAX_CONNS 1
 #define MAX_CONCURRENT_HANDSHAKES 1
+/* multiple of 16 & 32 */
+// #define WOLFMEM_IO_SZ 2048
+
 
 /* 2 fixed + 2 spare */
 #define IO_BLOCKS_PER_CONN 4
 #if defined(WOLFSSL_LOW_MEMORY)
     /* handshake, certs, math temps */
-    #define GEN_POOL_SZ  (64 * 1024)
+    #define GEN_POOL_SZ  (72 * 1024)
     /* if using MFL=512 -> ~2x ~660B; round up */
     #define IO_POOL_SZ (WOLFMEM_IO_SZ * IO_BLOCKS_PER_CONN * MAX_CONNS)
     // #define IO_POOL_SZ   ((2 * WOLFMEM_IO_SZ * MAX_CONNS) * 4)
@@ -157,6 +161,7 @@ static void halt_for_reboot(const char* s)
 #endif
 static __attribute__((aligned(32))) uint8_t genPool[GEN_POOL_SZ];
 static __attribute__((aligned(32))) uint8_t ioPool [IO_POOL_SZ];
+#endif
 
 /* FreeRTOS */
 /* server task */
@@ -181,11 +186,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
     size_t             success_ct = 0; /* number of client connect successes */
-    size_t             failure_ct = 0; /* number of client connect failures */
+    size_t             failure_ct = 0; /* number of client connect failures  */
 
     /* declare wolfSSL objects */
-    WOLFSSL_CTX* ctx;
-    WOLFSSL*     ssl;
+    WOLFSSL_CTX*      ctx;
+    WOLFSSL*          ssl;
+#if defined(DEBUG_WOLFSSL) && !defined(WOLFSSL_NO_MALLOC)
+    size_t            this_heap = 0;
+#endif
 
 #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
     /* optionally set TCP re-use. See also below. */
@@ -252,15 +260,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
         }
     #else
-//        ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
-//        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
-//            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-//        }
-
         //WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex();
         //ctx = wolfSSL_CTX_new_ex(method, heap);
 
-#ifndef NO_WOLFSSL_CLIENT
+    #ifndef NO_WOLFSSL_CLIENT
         ret = wolfSSL_CTX_UseMaxFragment(ctx, WOLFSSL_MFL_2_9);
         if (ret == WOLFSSL_SUCCESS) {
             WOLFSSL_MSG("wolfSSL_CTX_UseMaxFragment success");
@@ -268,8 +271,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         else {
             halt_for_reboot("ERROR: failed wolfSSL_CTX_UseMaxFragment");
         }
-#endif
-#if 0
+    #endif
+    #if 0
         WOLFSSL_MSG("memory success, create gen pool");
         ret = wolfSSL_CTX_load_static_memory(&ctx,
             wolfTLSv1_2_server_method_ex,
@@ -282,9 +285,13 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         else {
             WOLFSSL_MSG("wolfSSL_CTX_load_static_memory success");
         }
-#endif
+    #endif
+    #ifdef USE_FAST_MATH
+    #endif
 
-    WOLFSSL_HEAP_HINT* heap = NULL;
+
+    #if defined(WOLFSSL_STATIC_MEMORY)
+        WOLFSSL_HEAP_HINT* heap = NULL;
         ret = wc_LoadStaticMemory(&heap, genPool, sizeof(genPool),
                               WOLFMEM_GENERAL, MAX_CONNS);
         if (ret == 0) {
@@ -312,7 +319,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
         ret = wolfSSL_CTX_load_static_memory(&ctx, NULL,
                                                 ioPool, IO_POOL_SZ,
-          /* or WOLFMEM_IO_POOL */ WOLFMEM_IO_POOL | WOLFMEM_TRACK_STATS,
+                               WOLFMEM_IO_POOL_FIXED | WOLFMEM_TRACK_STATS,
                                                 MAX_CONNS);
         if (ret == WOLFSSL_SUCCESS) {
             WOLFSSL_MSG("wolfSSL_CTX_load_static_memory IO Pool success");
@@ -320,15 +327,20 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         else {
             halt_for_reboot("ERROR: failed to create static memory heap");
         }
-/*
-    #define WOLFMEM_GENERAL       0x01
-    #define WOLFMEM_IO_POOL       0x02
-    #define WOLFMEM_IO_POOL_FIXED 0x04
-    #define WOLFMEM_TRACK_STATS   0x08
- **/
-
-    #endif
-#endif
+        /*
+            #define WOLFMEM_GENERAL       0x01
+            #define WOLFMEM_IO_POOL       0x02
+            #define WOLFMEM_IO_POOL_FIXED 0x04
+            #define WOLFMEM_TRACK_STATS   0x08
+         **/
+    #else
+        ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #endif /* ctx via heap or WOLFSSL_STATIC_MEMORY */
+    #endif /* TLS 1.2 or TLS 1.3 */
+#endif /* SM or not */
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
@@ -645,7 +657,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #else
 
 // TODO: these should always be available
-#define TLS_SMP_SERVER_TASK_BYTES 10100
+#define TLS_SMP_SERVER_TASK_BYTES  (16 * 1024)
 #define TLS_SMP_SERVER_TASK_NAME "task"
 #define TLS_SMP_SERVER_TASK_PRIORITY 5
 

@@ -429,23 +429,16 @@
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
  * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
  * When really desperate or no TLS used, try NO_SESSION_CACHE.  */
+// TODO add session cache to Kconfig
 #define NO_SESSION_CACHE
 #ifndef NO_SESSION_CACHE
     #define  HAVE_SESSION_TICKET
 #endif
 
 // TODO: add to Kconfig: CONFIG_WOLFSSL_ESP_STATIC_MEMORY
-#if 0
-/* Small Stack uses more heap. */
-    #define WOLFSSL_SMALL_STACK
-
-    /* Full debugging turned off, but show malloc failure detail */
-    /* #define DEBUG_WOLFSSL */
-    #define DEBUG_WOLFSSL_MALLOC
-#else
+#if defined(WOLFSSL_STATIC_MEMORY)
     #define WOLFSSL_STATIC_MEMORY
     #define WOLFSSL_STATIC_MEMORY_LEAN
-    #define USE_FAST_MATH
     #define WOLFSSL_NO_MALLOC
     #ifdef WOLFSSL_SMALL_STACK
         #error "Cannot use WOLFSSL_SMALL_STACK with WOLFSSL_NO_MALLOC"
@@ -457,9 +450,6 @@
     #define HAVE_MAX_FRAGMENT
     #define HAVE_TLS_EXTENSIONS
 
-    /* multiple of 16 & 32 */
-    #define WOLFMEM_IO_SZ 2048
-
     #define WOLFSSL_CUSTOM_CURVES
     #define HAVE_ECC_KOBLITZ
     #define HAVE_ECC256
@@ -468,7 +458,26 @@
     #define NO_ECC384
     #define NO_ECC521
 
-//    #define FP_ECC
+    #ifdef HAVE_ED25519
+        #undef HAVE_ED25519
+    #endif
+    #ifdef WOLFSSL_SHA512
+        #undef WOLFSSL_SHA512
+    #endif
+
+    /* multiple of 16 & 32 */
+    #define WOLFMEM_IO_SZ 2048
+
+    // #define USE_FAST_MATH
+    #define SP_MATH
+    // #define FP_ECC
+#else
+    /* Small Stack uses more heap. */
+    #define WOLFSSL_SMALL_STACK
+
+    /* Full debugging turned off, but show malloc failure detail */
+    /* #define DEBUG_WOLFSSL */
+    #define DEBUG_WOLFSSL_MALLOC
 #endif
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
@@ -678,7 +687,7 @@
 #define HASH_SIZE_LIMIT
 
 /* USE_FAST_MATH is default */
-#define USE_FAST_MATH
+// #define USE_FAST_MATH
 
 /*****      Use SP_MATH      *****/
 /* #undef  USE_FAST_MATH         */
@@ -692,7 +701,6 @@
 
 /* Just syntax highlighting to check math libraries: */
 #if defined(SP_MATH)               || \
-    defined(USE_INTEGER_HEAP_MATH) || \
     defined(USE_INTEGER_HEAP_MATH) || \
     defined(USE_FAST_MATH)         || \
     defined(WOLFSSL_SP_MATH_ALL)   || \
@@ -1235,7 +1243,9 @@ Turn on timer debugging (used when CPU cycles not available)
 
 /* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    #include <wolfssl/certs_test_sm.h>
+    /* Be sure to include in app, not here, when using example certs: */
+    /* #include <wolfssl/certs_test_sm.h> */
+
     #define CTX_CA_CERT          root_sm2
     #define CTX_CA_CERT_SIZE     sizeof_root_sm2
     #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
@@ -1253,9 +1263,12 @@ Turn on timer debugging (used when CPU cycles not available)
         #ifdef USE_CERT_BUFFERS_1024
             #error "USE_CERT_BUFFERS_1024 is already defined. Pick one."
         #endif
+        #ifdef USE_CERT_BUFFERS_256
+            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+        #endif
 
-        /* Be sure to include in app when using example certs: */
-        #include <wolfssl/certs_test.h>
+        /* Be sure to include in app, not here, when using example certs: */
+        /* #include <wolfssl/certs_test.h> */
 
         #define CTX_CA_CERT          ca_cert_der_2048
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
@@ -1279,9 +1292,12 @@ Turn on timer debugging (used when CPU cycles not available)
         #ifdef USE_CERT_BUFFERS_2048
             #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
         #endif
+        #ifdef USE_CERT_BUFFERS_256
+            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+        #endif
 
-        /* Be sure to include in app when using example certs: */
-        #include <wolfssl/certs_test.h>
+        /* Be sure to include in app, not here, when using example certs: */
+        /* #include <wolfssl/certs_test.h> */
 
         #define CTX_CA_CERT          ca_cert_der_1024
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
@@ -1301,8 +1317,23 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #elif defined(USE_CERT_BUFFERS_256)
-        /* Be sure to include in app when using example certs: */
-        #include <wolfssl/certs_test.h>
+        /*
+         * To connect to ESP32 server with a client from commandline:
+         *
+         * ./examples/client/client -h 192.168.1.80  -p 11111 -v 3 -d        \
+         *                          -A ./certs/ecc/ca-secp256k1-cert.pem     \
+         *                          -c ./certs/ecc/client-secp256k1-cert.pem \
+         *                          -k ./certs/ecc/secp256k1-key.pem
+         */
+        #ifdef USE_CERT_BUFFERS_2048
+            #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
+        #endif
+        #ifdef USE_CERT_BUFFERS_1024
+            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+        #endif
+
+        /* Be sure to include in app, not here, when using example certs: */
+        /* #include <wolfssl/certs_test.h> */
 
         #define CTX_CA_CERT          ca_ecc_cert_der_256
         #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
