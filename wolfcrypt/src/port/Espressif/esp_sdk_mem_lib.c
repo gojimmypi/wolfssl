@@ -383,7 +383,7 @@ static size_t largest_allocable_wolf(size_t limit)
 static esp_err_t esp_sdk_stack_info(heap_track_reset_t reset)
 {
     int ret = ESP_OK;
-    char* this_task;
+    const char* this_task;
     size_t max_alloc = 0;
 
     max_alloc = largest_allocable(10 * 1024);
