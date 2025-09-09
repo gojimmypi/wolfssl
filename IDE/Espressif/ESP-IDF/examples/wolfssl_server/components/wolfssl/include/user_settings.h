@@ -1289,6 +1289,14 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     #elif defined(USE_CERT_BUFFERS_1024)
+        /*
+         * To connect to ESP32 server with a client from commandline:
+         *
+         * ../examples/client/client -h 192.168.1.47  -p 11111 -v 3 -d
+         *                           -A ./certs/1024/ca-cert.pem
+         *                           -c ./certs/1024/client-cert.pem
+         *                           -k ./certs/1024/client-key.pem
+         */
         #ifdef USE_CERT_BUFFERS_2048
             #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
         #endif
@@ -1316,6 +1324,8 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY       server_key_der_1024
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+        /* end USE_CERT_BUFFERS_1024 */
+
     #elif defined(USE_CERT_BUFFERS_256)
         /*
          * To connect to ESP32 server with a client from commandline:
@@ -1339,7 +1349,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
-#if 0
+    #ifndef NO_WOLFSSL_CLIENT
         #define CTX_CLIENT_CERT      cliecc_cert_der_256
         #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
@@ -1347,7 +1357,9 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY       ecc_clikey_der_256
         #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-#endif
+    #endif
+
+    #ifndef NO_WOLFSSL_SERVER
         #define CTX_SERVER_CERT      serv_ecc_der_256
         #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
@@ -1356,6 +1368,9 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_ecc_key_der_256
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #endif
+        /* end USE_CERT_BUFFERS_256 */
+
+    #endif /* USE_CERT_BUFFERS_[n] */
 #endif /* Conditional key and cert constant names */
 
 /******************************************************************************
