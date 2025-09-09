@@ -128,7 +128,7 @@ int ShowCiphers(WOLFSSL* ssl)
 
 static void halt_for_reboot(const char* s)
 {
-    ESP_LOGE(TAG, "Halt. %s");
+    ESP_LOGE(TAG, "Halt. %s", s);
     while (1) {
         vTaskDelay(60000);
     }
