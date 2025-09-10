@@ -18,6 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
@@ -605,7 +606,6 @@
         #define HAVE_ECC384
         #define CURVE25519_SMALL
         */
-        #define USE_CERT_BUFFERS_256
     #else
         #define WOLFSSH_NO_ECC
         /* WOLFSSH_NO_ECDSA is typically defined automatically,
@@ -761,7 +761,14 @@
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
-
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+#define WOLFSSL_TLS13
+#define HAVE_TLS_EXTENSIONS
+#define HAVE_HKDF
+#define HAVE_ECC
+#define HAVE_DH
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* SM settings, possible cipher suites:
 
@@ -1243,12 +1250,34 @@ Turn on timer debugging (used when CPU cycles not available)
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
-
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
+#define WOLFSSL_TLS13
+#define HAVE_TLS_EXTENSIONS
+#define HAVE_HKDF
 /* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* Be sure to include in app, not here, when using example certs: */
-    /* #include <wolfssl/certs_test_sm.h> */
+    #include <wolfssl/certs_test_sm.h>
+    #ifndef WOLFSSL_TLS13
+        #error "SM Ciphers require TLS 1.3; enable with WOLFSSL_TLS13"
+    #endif
+    #ifndef HAVE_TLS_EXTENSIONS
+        #error "SM Ciphers require HAVE_TLS_EXTENSIONS"
+    #endif
+    #ifndef HAVE_HKDF
+        #error "SM Ciphers require HAVE_HKDF"
+    #endif
+    #ifndef HAVE_ECC
+        #error "SM Ciphers require HAVE_ECC"
+    #endif
+    #ifndef HAVE_DH
+        // ? #error "SM Ciphers require HAVE_DH"
+    #endif
 
+#if 1
+    /* PEM */
     #define CTX_CA_CERT          root_sm2
     #define CTX_CA_CERT_SIZE     sizeof_root_sm2
     #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
@@ -1258,7 +1287,31 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_SERVER_KEY       server_sm2_priv
     #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+#else
+    /* DER */
+    #define CTX_CA_CERT          root_sm2
+    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
+    #ifndef NO_WOLFSSL_CLIENT
+        #define CTX_CLIENT_CERT      cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_KEY       ecc_clikey_der_256
+        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
+        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #endif
+
+    #ifndef NO_WOLFSSL_SERVER
+        #define CTX_SERVER_CERT      server_sm2
+        #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_SERVER_KEY       server_sm2_priv
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #endif
+#endif
     #undef  WOLFSSL_BASE16
     #define WOLFSSL_BASE16
 #else
