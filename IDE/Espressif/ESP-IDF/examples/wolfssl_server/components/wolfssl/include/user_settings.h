@@ -1276,7 +1276,7 @@ Turn on timer debugging (used when CPU cycles not available)
         // ? #error "SM Ciphers require HAVE_DH"
     #endif
 
-#if 1
+#if 0
     /* PEM */
     #define CTX_CA_CERT          root_sm2
     #define CTX_CA_CERT_SIZE     sizeof_root_sm2
@@ -1287,6 +1287,14 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_SERVER_KEY       server_sm2_priv
     #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+#elif 1
+    #define CTX_SERVER_CERT      server_sm2_der
+    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2_der
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
+    #define CTX_SERVER_KEY       server_sm2_priv_der
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #else
     /* DER */
     #define CTX_CA_CERT          root_sm2

@@ -400,7 +400,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     WOLFSSL_MSG("Loading certificate...");
     /* -c Load server certificates into WOLFSSL_CTX */
-    ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
                                                           CTX_SERVER_CERT,
                                                           CTX_SERVER_CERT_SIZE,
                                                           CTX_SERVER_CERT_TYPE
@@ -450,10 +450,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Stack used: %d\n", CONFIG_ESP_MAIN_TASK_STACK_SIZE
                                       - uxTaskGetStackHighWaterMark(NULL));
     /* -A load authority */
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         client_sm2,
-                                         sizeof_client_sm2,
-                                         WOLFSSL_FILETYPE_PEM);
+//    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+//                                         client_sm2,
+//                                         sizeof_client_sm2,
+//                                         WOLFSSL_FILETYPE_PEM);
     if (ret == SSL_SUCCESS) {
         ESP_LOGI(TAG, "Success: load verify buffer\n");
     }
