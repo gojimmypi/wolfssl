@@ -1288,6 +1288,13 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
 #elif 1
+    /* ./examples/client/client -h 192.168.1.107 -v 3   \
+     *                          -l ECDHE-ECDSA-SM4-CBC-SM3
+     *                          -c ./certs/sm2/client-sm2.pem
+     *                          -k ./certs/sm2/client-sm2-priv.pem
+     *                          -A ./certs/sm2/ca-sm2.pem -C
+     **/
+    #if 0
     #define CTX_SERVER_CERT      server_sm2_der
     #define CTX_SERVER_CERT_SIZE sizeof_server_sm2_der
     #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
@@ -1295,6 +1302,15 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_SERVER_KEY       server_sm2_priv_der
     #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #else
+    #define CTX_SERVER_CERT      server_sm2
+    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+
+    #define CTX_SERVER_KEY       server_sm2_priv
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+    #endif
 #else
     /* DER */
     #define CTX_CA_CERT          root_sm2
