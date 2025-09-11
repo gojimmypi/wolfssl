@@ -67,6 +67,17 @@
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
 #endif
+/* Some older versions don't have cert name strings, so set to blanks: */
+#ifndef CTX_CLIENT_CERT_NAME
+    #define CTX_CLIENT_CERT_NAME ""
+#endif
+#ifndef CTX_SERVER_KEY_NAME
+    #define CTX_SERVER_KEY_NAME ""
+#endif
+#ifndef CTX_SERVER_CERT_NAME
+    #define CTX_SERVER_CERT_NAME ""
+#endif
+
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
@@ -79,7 +90,6 @@
     #undef  DEFAULT_MAX_DHKEY_BITS
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
-
 
 /*
  * Optionally define explicit ciphers, for example these TLS 1.3 options.
@@ -216,7 +226,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #if defined(SINGLE_THREADED)
     /* No startup delay */
 #else
-    /* Allow a brief delay to allow the main task to be deletd and free memory */
+    /* Brief delay to allow the main task to be deleted and free memory. */
     vTaskDelay(100);
 #endif
 
@@ -243,8 +253,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif /* SO_REUSEPORT        */
 #endif /* optional TCP re-use */
 
-/* Create and initialize WOLFSSL_CTX */
-WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
+    /* Create and initialize WOLFSSL_CTX */
+    WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
     ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
 #endif
@@ -259,9 +269,10 @@ WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    //WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex();
-    //ctx = wolfSSL_CTX_new_ex(method, heap);
+    /* TLS 1.2 only */
 
+    // TODO Begin fix or remove
+    /* There's some temporary, non-working static memory */
 #ifndef NO_WOLFSSL_CLIENT
     ret = wolfSSL_CTX_UseMaxFragment(ctx, WOLFSSL_MFL_2_9);
     if (ret == WOLFSSL_SUCCESS) {
@@ -288,6 +299,7 @@ WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
 #endif
 #ifdef USE_FAST_MATH
 #endif
+    // TODO End fix or remove
 
 #if defined(WOLFSSL_STATIC_MEMORY)
     WOLFSSL_HEAP_HINT* heap = NULL;
@@ -392,7 +404,7 @@ WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
     #endif
 #endif
 
-    WOLFSSL_MSG("Loading certificate...");
+    ESP_LOGI(TAG, "Loading server certificate %s", CTX_SERVER_CERT_NAME);
     /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                                           CTX_SERVER_CERT,
@@ -402,7 +414,7 @@ WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
         halt_for_reboot("ERROR: failed to load cert");
     }
 
-    WOLFSSL_MSG("Loading key info...");
+    ESP_LOGI(TAG, "Loading server key %s",  CTX_SERVER_KEY_NAME);
     /* Load server key into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                             CTX_SERVER_KEY,
@@ -412,12 +424,14 @@ WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
         halt_for_reboot("ERROR: failed to load privatekey");
     }
 
+    ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
     wolfSSL_CTX_set_verify(ctx,
                                 (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
                                  WOLFSSL_VERIFY_PEER),
                                 NULL);
 
     /* -A */
+    ESP_LOGI(TAG, "Load verify cert %s", CTX_CLIENT_CERT_NAME);
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
                                          CTX_CLIENT_CERT,
                                          CTX_CLIENT_CERT_SIZE,
