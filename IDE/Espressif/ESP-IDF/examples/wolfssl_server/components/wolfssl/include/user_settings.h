@@ -46,9 +46,9 @@
 // BEGIN TODO comment out below as example only for release */
 #if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    #pragma message "menuconfig selected private config"
+    // #pragma message "menuconfig selected private config"
 #else
-    #pragma message "maually selected private config"
+    // #pragma message "maually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
     #ifdef _WIN32
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS

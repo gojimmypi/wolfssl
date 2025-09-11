@@ -58,10 +58,13 @@
     #include <wolfssl/wolfcrypt/mlkem.h>
     #include <wolfssl/wolfcrypt/wc_mlkem.h>
 #endif
+
+/* The default user_settings.h includes macros that reference sample certs: */
 #if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024) || \
     defined(USE_CERT_BUFFERS_256)
     #include <wolfssl/certs_test.h>
-#elif defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+#endif
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
 #endif
 #ifdef WOLFSSL_TRACK_MEMORY
@@ -242,13 +245,13 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
-#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
-    if (ctx == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
-#else
+//#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+//    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
+//    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
+//    if (ctx == NULL) {
+//        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+//    }
+//#else
     #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
         ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
     #endif
@@ -343,7 +346,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         }
     #endif /* ctx via heap or WOLFSSL_STATIC_MEMORY */
     #endif /* TLS 1.2 or TLS 1.3 */
-#endif /* SM or not */
+//#endif /* SM or not */
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
@@ -400,14 +403,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_MSG("Loading certificate...");
     /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
-                                             CTX_SERVER_CERT,
-                                             CTX_SERVER_CERT_SIZE,
-                                             CTX_SERVER_CERT_TYPE);
+                                                          CTX_SERVER_CERT,
+                                                          CTX_SERVER_CERT_SIZE,
+                                                          CTX_SERVER_CERT_TYPE);
     if (ret != SSL_SUCCESS) {
         halt_for_reboot("ERROR: failed to load cert");
     }
-    WOLFSSL_MSG("Loading key info...");
 
+    WOLFSSL_MSG("Loading key info...");
     /* Load server key into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                             CTX_SERVER_KEY,
