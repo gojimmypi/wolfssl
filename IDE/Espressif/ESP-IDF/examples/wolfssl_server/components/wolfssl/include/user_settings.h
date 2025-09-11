@@ -1261,9 +1261,6 @@ Turn on timer debugging (used when CPU cycles not available)
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* Be sure to include in app, not here, when using example certs: */
     #include <wolfssl/certs_test_sm.h>
-    #ifndef WOLFSSL_TLS13
-        #error "SM Ciphers require TLS 1.3; enable with WOLFSSL_TLS13"
-    #endif
     #ifndef HAVE_TLS_EXTENSIONS
         #error "SM Ciphers require HAVE_TLS_EXTENSIONS"
     #endif
