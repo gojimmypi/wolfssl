@@ -110,7 +110,7 @@ my @fileList_4096 = (
         [ "./certs/dh4096.der", "dh_key_der_4096" ],
         );
 
-# SM ciphers in certs/sm2
+# SM ciphers PRM format in certs/sm2
 my @fileList_sm2 = (
         [ "./certs/sm2/ca-sm2.pem",          "ca_sm2"          ],
         [ "./certs/sm2/ca-sm2-key.pem",      "ca_sm2_key"      ],
@@ -121,7 +121,11 @@ my @fileList_sm2 = (
         [ "./certs/sm2/root-sm2.pem",        "root_sm2"        ],
         [ "./certs/sm2/root-sm2-key.pem",    "root_sm2_key"    ],
         [ "./certs/sm2/root-sm2-priv.pem",   "root_sm2_priv"   ],
+        [ "./certs/sm2/self-sm2-cert.pem",   "self_sm2_cert"   ],
+        [ "./certs/sm2/self-sm2-key.pem",    "self_sm2_key"    ],
+        [ "./certs/sm2/self-sm2-priv.pem",   "self_sm2_priv"   ],
         [ "./certs/sm2/server-sm2.pem",      "server_sm2"      ],
+        [ "./certs/sm2/server-sm2-cert.pem", "server_sm2_cert" ],
         [ "./certs/sm2/server-sm2-key.pem",  "server_sm2_key"  ],
         [ "./certs/sm2/server-sm2-priv.pem", "server_sm2_priv" ],
         );
@@ -162,17 +166,17 @@ my @fileList_sphincs = (
 
 # ----------------------------------------------------------------------------
 
-my $num_ecc = @fileList_ecc;
-my $num_ed = @fileList_ed;
-my $num_x = @fileList_x;
-my $num_1024 = @fileList_1024;
-my $num_2048 = @fileList_2048;
-my $num_3072 = @fileList_3072;
-my $num_4096 = @fileList_4096;
-my $num_sm2  = @fileList_sm2;
-my $num_sm2_der  = @fileList_sm2;
-my $num_falcon = @fileList_falcon;
-my $num_sphincs = @fileList_sphincs;
+my $num_ecc      = @fileList_ecc;
+my $num_ed       = @fileList_ed;
+my $num_x        = @fileList_x;
+my $num_1024     = @fileList_1024;
+my $num_2048     = @fileList_2048;
+my $num_3072     = @fileList_3072;
+my $num_4096     = @fileList_4096;
+my $num_sm2      = @fileList_sm2;
+my $num_sm2_der  = @fileList_sm2_der;
+my $num_falcon   = @fileList_falcon;
+my $num_sphincs  = @fileList_sphincs;
 
 # open our output file, "+>" creates and/or truncates
 open OUT_FILE, "+>", $outputFile  or die $!;
@@ -2245,9 +2249,10 @@ print OUT_FILE_SM "/* This file was generated using: ./gencertbuf.pl */\n\n";
 print OUT_FILE_SM "#ifndef WOLFSSL_CERTS_TEST_SM_H\n";
 print OUT_FILE_SM "#define WOLFSSL_CERTS_TEST_SM_H\n\n";
 print OUT_FILE_SM "#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)\n\n";
+print OUT_FILE_SM "    /* DER Certs Begin */\n\n";
 
 # convert and print SM2 DER format certs/keys
-for (my $i = 0; $i < $num_sm2; $i++) {
+for (my $i = 0; $i < $num_sm2_der; $i++) {
 
     my $fname = $fileList_sm2_der[$i][0];
     my $sname = $fileList_sm2_der[$i][1];
@@ -2262,8 +2267,14 @@ for (my $i = 0; $i < $num_sm2; $i++) {
     # So don't use `static const int sizeof_` here:
     print OUT_FILE_SM "#define sizeof_$sname (sizeof($sname))\n\n";
 }
+print OUT_FILE_SM "    /* DER Certs End */\n\n";
+
 
 # convert and print SM2 PEM format certs/keys
+print OUT_FILE_SM "#ifdef WOLFSSL_NO_PEM\n\n";
+print OUT_FILE_SM "    /* SM PEM Certs disabled */\n\n";
+print OUT_FILE_SM "#else\n\n";
+
 for (my $i = 0; $i < $num_sm2; $i++) {
 
     my $fname = $fileList_sm2[$i][0];
@@ -2280,6 +2291,7 @@ for (my $i = 0; $i < $num_sm2; $i++) {
     print OUT_FILE_SM "#define sizeof_$sname (sizeof($sname))\n\n";
 }
 
+print OUT_FILE_SM "#endif /* WOLFSSL_NO_PEM */\n\n";
 print OUT_FILE_SM "#endif /* WOLFSSL_SM2 || WOLFSSL_SM3 || WOLFSSL_SM4 */\n";
 print OUT_FILE_SM "#endif /* WOLFSSL_CERTS_TEST_SM_H */\n";
 
