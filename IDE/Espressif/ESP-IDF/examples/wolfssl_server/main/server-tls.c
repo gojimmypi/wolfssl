@@ -243,110 +243,102 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif /* SO_REUSEPORT        */
 #endif /* optional TCP re-use */
 
-    /* Create and initialize WOLFSSL_CTX */
-    WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
-//#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-//    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
-//    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method()); for only TLS 1.3 */
-//    if (ctx == NULL) {
-//        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-//    }
-//#else
-    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
-        ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
-    #endif
-    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
-        ESP_LOGW(TAG, "Creating TLS 1.3 (only) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #elif defined(WOLFSSL_TLS13)
-        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #else
-        //WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex();
-        //ctx = wolfSSL_CTX_new_ex(method, heap);
+/* Create and initialize WOLFSSL_CTX */
+WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
+    ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
+#endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
+    ESP_LOGW(TAG, "Creating TLS 1.3 (only) server context...");
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#elif defined(WOLFSSL_TLS13)
+    ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
+    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#else
+    //WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex();
+    //ctx = wolfSSL_CTX_new_ex(method, heap);
 
-    #ifndef NO_WOLFSSL_CLIENT
-        ret = wolfSSL_CTX_UseMaxFragment(ctx, WOLFSSL_MFL_2_9);
-        if (ret == WOLFSSL_SUCCESS) {
-            WOLFSSL_MSG("wolfSSL_CTX_UseMaxFragment success");
-        }
-        else {
-            halt_for_reboot("ERROR: failed wolfSSL_CTX_UseMaxFragment");
-        }
-    #endif
-    #if 0
-        WOLFSSL_MSG("memory success, create gen pool");
-        ret = wolfSSL_CTX_load_static_memory(&ctx,
-            wolfTLSv1_2_server_method_ex,
-            genPool, GEN_POOL_SZ,
-            WOLFMEM_GENERAL,                  /* general pool */
-            MAX_CONNS);
-        if (ret != WOLFSSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to create static memory WOLFSSL_CTX");
-        }
-        else {
-            WOLFSSL_MSG("wolfSSL_CTX_load_static_memory success");
-        }
-    #endif
-    #ifdef USE_FAST_MATH
-    #endif
+#ifndef NO_WOLFSSL_CLIENT
+    ret = wolfSSL_CTX_UseMaxFragment(ctx, WOLFSSL_MFL_2_9);
+    if (ret == WOLFSSL_SUCCESS) {
+        WOLFSSL_MSG("wolfSSL_CTX_UseMaxFragment success");
+    }
+    else {
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_UseMaxFragment");
+    }
+#endif
 
+#if 0
+    WOLFSSL_MSG("memory success, create gen pool");
+    ret = wolfSSL_CTX_load_static_memory(&ctx,
+        wolfTLSv1_2_server_method_ex,
+        genPool, GEN_POOL_SZ,
+        WOLFMEM_GENERAL,                  /* general pool */
+        MAX_CONNS);
+    if (ret != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to create static memory WOLFSSL_CTX");
+    }
+    else {
+        WOLFSSL_MSG("wolfSSL_CTX_load_static_memory success");
+    }
+#endif
+#ifdef USE_FAST_MATH
+#endif
 
-    #if defined(WOLFSSL_STATIC_MEMORY)
-        WOLFSSL_HEAP_HINT* heap = NULL;
-        ret = wc_LoadStaticMemory(&heap, genPool, sizeof(genPool),
-                              WOLFMEM_GENERAL, MAX_CONNS);
-        if (ret == 0) {
-            WOLFSSL_MSG("wc_LoadStaticMemory success");
-            /* default heap for any NULL-heap calls */
-            wolfSSL_SetGlobalHeapHint(heap);
-        }
-        else {
-            ESP_LOGE(TAG, "ERROR: failed to create static memory heap");
-        }
+#if defined(WOLFSSL_STATIC_MEMORY)
+    WOLFSSL_HEAP_HINT* heap = NULL;
+    ret = wc_LoadStaticMemory(&heap, genPool, sizeof(genPool),
+                            WOLFMEM_GENERAL, MAX_CONNS);
+    if (ret == 0) {
+        WOLFSSL_MSG("wc_LoadStaticMemory success");
+        /* default heap for any NULL-heap calls */
+        wolfSSL_SetGlobalHeapHint(heap);
+    }
+    else {
+        ESP_LOGE(TAG, "ERROR: failed to create static memory heap");
+    }
 
-        const WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex(heap);
-        ctx = wolfSSL_CTX_new_ex((WOLFSSL_METHOD*)method, heap);
-        if (ctx == NULL) {
-            halt_for_reboot("ERROR: failed to create ctx on static heap");
-        }
+    const WOLFSSL_METHOD* method = wolfTLSv1_2_server_method_ex(heap);
+    ctx = wolfSSL_CTX_new_ex((WOLFSSL_METHOD*)method, heap);
+    if (ctx == NULL) {
+        halt_for_reboot("ERROR: failed to create ctx on static heap");
+    }
 
-        ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-AES128-GCM-SHA256");
-        if (ret == WOLFSSL_SUCCESS) {
-            WOLFSSL_MSG("wolfSSL_CTX_set_cipher_list  success");
-        }
-        else {
-            halt_for_reboot("ERROR: failed wolfSSL_CTX_set_cipher_list");
-        }
+    ret = wolfSSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-AES128-GCM-SHA256");
+    if (ret == WOLFSSL_SUCCESS) {
+        WOLFSSL_MSG("wolfSSL_CTX_set_cipher_list  success");
+    }
+    else {
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_set_cipher_list");
+    }
 
-        ret = wolfSSL_CTX_load_static_memory(&ctx, NULL,
-                                                ioPool, IO_POOL_SZ,
-                               WOLFMEM_IO_POOL_FIXED | WOLFMEM_TRACK_STATS,
-                                                MAX_CONNS);
-        if (ret == WOLFSSL_SUCCESS) {
-            WOLFSSL_MSG("wolfSSL_CTX_load_static_memory IO Pool success");
-        }
-        else {
-            halt_for_reboot("ERROR: failed to create static memory heap");
-        }
-        /*
-            #define WOLFMEM_GENERAL       0x01
-            #define WOLFMEM_IO_POOL       0x02
-            #define WOLFMEM_IO_POOL_FIXED 0x04
-            #define WOLFMEM_TRACK_STATS   0x08
-         **/
-    #else
-        ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #endif /* ctx via heap or WOLFSSL_STATIC_MEMORY */
-    #endif /* TLS 1.2 or TLS 1.3 */
-//#endif /* SM or not */
+    ret = wolfSSL_CTX_load_static_memory(&ctx, NULL,
+                                            ioPool, IO_POOL_SZ,
+                            WOLFMEM_IO_POOL_FIXED | WOLFMEM_TRACK_STATS,
+                                            MAX_CONNS);
+    if (ret == WOLFSSL_SUCCESS) {
+        WOLFSSL_MSG("wolfSSL_CTX_load_static_memory IO Pool success");
+    }
+    else {
+        halt_for_reboot("ERROR: failed to create static memory heap");
+    }
+    /*
+        #define WOLFMEM_GENERAL       0x01
+        #define WOLFMEM_IO_POOL       0x02
+        #define WOLFMEM_IO_POOL_FIXED 0x04
+        #define WOLFMEM_TRACK_STATS   0x08
+        **/
+#else
+    ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#endif /* ctx via heap or WOLFSSL_STATIC_MEMORY */
+#endif /* TLS 1.2 or TLS 1.3 */
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
