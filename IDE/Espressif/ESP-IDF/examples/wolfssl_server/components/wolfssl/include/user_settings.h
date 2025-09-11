@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#if 0
+#if 1
     #define USE_CERT_BUFFERS_2048
 #else
     #define WOLFSSL_SM2
