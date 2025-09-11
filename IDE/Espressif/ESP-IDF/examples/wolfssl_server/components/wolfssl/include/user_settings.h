@@ -18,6 +18,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+//#define USE_CERT_BUFFERS_2048
+#define WOLFSSL_SM2
+#define WOLFSSL_SM3
+#define WOLFSSL_SM4
 
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
@@ -761,9 +765,13 @@
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
 */
+
+/*
 #define WOLFSSL_SM2
 #define WOLFSSL_SM3
 #define WOLFSSL_SM4
+*/
+
 #define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
 #define HAVE_HKDF
@@ -1245,17 +1253,6 @@ Turn on timer debugging (used when CPU cycles not available)
  * Uncomment these 3 macros to enable the SM Ciphers and use the macros below.
  */
 
-/*
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
-*/
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
-#define WOLFSSL_TLS13
-#define HAVE_TLS_EXTENSIONS
-#define HAVE_HKDF
 /* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* Be sure to include in app, not here, when using example certs: */
