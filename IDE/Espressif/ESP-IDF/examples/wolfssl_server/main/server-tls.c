@@ -399,7 +399,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     WOLFSSL_MSG("Loading certificate...");
     /* Load server certificates into WOLFSSL_CTX */
-    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+    ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                              CTX_SERVER_CERT,
                                              CTX_SERVER_CERT_SIZE,
                                              CTX_SERVER_CERT_TYPE);
@@ -407,6 +407,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to load cert");
     }
     WOLFSSL_MSG("Loading key info...");
+
     /* Load server key into WOLFSSL_CTX */
     ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
                                             CTX_SERVER_KEY,
@@ -415,6 +416,18 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     if (ret != SSL_SUCCESS) {
         halt_for_reboot("ERROR: failed to load privatekey");
     }
+
+    wolfSSL_CTX_set_verify(ctx,
+                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+
+    /* -A */
+    wolfSSL_CTX_load_verify_buffer(ctx,
+        client_sm2_der, sizeof_client_sm2_der, WOLFSSL_FILETYPE_ASN1);
+
+    if (ret != SSL_SUCCESS) {
+        halt_for_reboot("ERROR: failed to load wolfSSL_CTX_load_verify_buffer");
+    }
+
 
     /* TODO when using ECDSA,it loads the provisioned certificate and present it.
        TODO when using ECDSA,it uses the generated key instead of loading key  */
