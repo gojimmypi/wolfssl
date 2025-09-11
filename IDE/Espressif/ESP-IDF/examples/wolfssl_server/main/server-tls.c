@@ -425,7 +425,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     /* -A */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
-        client_sm2_der, sizeof_client_sm2_der, WOLFSSL_FILETYPE_ASN1);
+//        client_sm2_der, sizeof_client_sm2_der, WOLFSSL_FILETYPE_ASN1);
+        CTX_CLIENT_CERT, CTX_CLIENT_CERT_SIZE, CTX_CLIENT_CERT_TYPE);
 #else
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
         CTX_CLIENT_CERT, CTX_CLIENT_CERT_SIZE, CTX_CLIENT_CERT_TYPE);
