@@ -1361,23 +1361,28 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 #if 0
-        #define CTX_SERVER_CERT      server_cert_der_2048
-        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+        /* No PEM certs available ? */
+        #define CTX_SERVER_CERT      server_cert_2048
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_2048
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
-        #define CTX_SERVER_KEY       server_key_der_2048
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+        #define CTX_SERVER_KEY       server_key_2048
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_2048
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
 #else
         #define CTX_SERVER_CERT      server_cert_der_2048
         #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
         #define CTX_SERVER_KEY       server_key_der_2048
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
+
+        /* -A Client Verify at the server */
         #define CTX_CLIENT_CERT      client_cert_der_2048
         #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
         #define CTX_CLIENT_KEY       client_key_der_2048
         #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1

@@ -426,7 +426,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         client_sm2_der, sizeof_client_sm2_der, WOLFSSL_FILETYPE_ASN1);
 #else
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
-        client_cert_der_2048, sizeof_client_cert_der_2048, WOLFSSL_FILETYPE_ASN1);
+        CTX_CLIENT_CERT, CTX_CLIENT_CERT_SIZE, CTX_CLIENT_CERT_TYPE);
 #endif
     if (ret != SSL_SUCCESS) {
         halt_for_reboot("ERROR: failed to load wolfSSL_CTX_load_verify_buffer");
