@@ -18,10 +18,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-//#define USE_CERT_BUFFERS_2048
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
+
+#if 1
+    #define USE_CERT_BUFFERS_2048
+#else
+    #define WOLFSSL_SM2
+    #define WOLFSSL_SM3
+    #define WOLFSSL_SM4
+#endif
 
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
@@ -1292,6 +1296,8 @@ Turn on timer debugging (used when CPU cycles not available)
      *                          -A ./certs/sm2/ca-sm2.pem -C
      **/
     #if 0
+    /* DER failing with -313 at server,
+     * -188, ASN no signer error to confirm failure at client */
     #define CTX_SERVER_CERT      server_sm2_der
     #define CTX_SERVER_CERT_SIZE sizeof_server_sm2_der
     #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
@@ -1354,14 +1360,21 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CA_CERT          ca_cert_der_2048
         #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
+#if 0
+        #define CTX_SERVER_CERT      server_cert_der_2048
+        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+        #define CTX_SERVER_KEY       server_key_der_2048
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+#else
         #define CTX_SERVER_CERT      server_cert_der_2048
         #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
         #define CTX_SERVER_KEY       server_key_der_2048
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-
+#endif
         #define CTX_CLIENT_CERT      client_cert_der_2048
         #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1

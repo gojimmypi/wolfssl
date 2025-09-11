@@ -422,11 +422,11 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* -A */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    wolfSSL_CTX_load_verify_buffer(ctx,
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
         client_sm2_der, sizeof_client_sm2_der, WOLFSSL_FILETYPE_ASN1);
 #else
-    wolfSSL_CTX_load_verify_buffer(ctx,
-        client_key_der_2048, sizeof_client_key_der_2048, WOLFSSL_FILETYPE_ASN1);
+    ret = wolfSSL_CTX_load_verify_buffer(ctx,
+        client_cert_der_2048, sizeof_client_cert_der_2048, WOLFSSL_FILETYPE_ASN1);
 #endif
     if (ret != SSL_SUCCESS) {
         halt_for_reboot("ERROR: failed to load wolfSSL_CTX_load_verify_buffer");
