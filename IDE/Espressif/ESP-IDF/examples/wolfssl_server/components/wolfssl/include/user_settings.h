@@ -37,25 +37,31 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* Some mitigations are ESP-IDF version-speific. */
+#include "esp_idf_version.h"
+
 /* When manually editing user settings, the private config is limited to wolfssl
  * and thus can be set here: */
+
+// BEGIN TODO comment out below as example only for release */
 #if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    /* menuconfig selected private config */
+    #pragma message "menuconfig selected private config"
 #else
+    #pragma message "maually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
     #ifdef _WIN32
+        #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
     #else
+        #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WSL
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WSL
     #endif
-    // TODO comment out above as example only for release */
 #endif
+// END TODO
 
 // #define DEBUG_WOLFSSL
 
-/* Some mitigations are ESP-IDF version-speific. */
-#include "esp_idf_version.h"
 
 /* Optional mitigations for latest (unreleased) ESP-IDF v6 */
 #if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
@@ -638,7 +644,7 @@
     #if defined(CONFIG_ESP_WOLFSSL_ENABLE_MLKEM)
         /* See above for PQ-only config */
     #elif defined(WOLFCRYPT_ONLY)
-		/* Communications such as (D)TLS not compiled in */
+        /* Communications such as (D)TLS not compiled in */
     #else
         #warning "PQ, RSA, and ECC are disabled. Consider WOLFCRYPT_ONLY"
     #endif
@@ -776,7 +782,7 @@
 #define WOLFSSL_SM4
 */
 
-#define WOLFSSL_TLS13
+//#define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
 #define HAVE_HKDF
 #define HAVE_ECC
@@ -1261,6 +1267,7 @@ Turn on timer debugging (used when CPU cycles not available)
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* Be sure to include in app, not here, when using example certs: */
     #include <wolfssl/certs_test_sm.h>
+
     #ifndef HAVE_TLS_EXTENSIONS
         #error "SM Ciphers require HAVE_TLS_EXTENSIONS"
     #endif
