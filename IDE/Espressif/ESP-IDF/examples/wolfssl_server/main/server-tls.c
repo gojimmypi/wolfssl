@@ -398,7 +398,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
     WOLFSSL_MSG("Loading certificate...");
-    /* Load server certificates into WOLFSSL_CTX */
+    /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
                                              CTX_SERVER_CERT,
                                              CTX_SERVER_CERT_SIZE,
@@ -418,7 +418,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     }
 
     wolfSSL_CTX_set_verify(ctx,
-                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+                            (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
+                             WOLFSSL_VERIFY_PEER),
+                           NULL);
 
     /* -A */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)

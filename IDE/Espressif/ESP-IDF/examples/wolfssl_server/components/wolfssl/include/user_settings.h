@@ -1378,11 +1378,18 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 #endif
 
-        /* -A Client Verify at the server */
+#if 0
+        /* -A CA Cert Verify at the server, client fails */
+        #define CTX_CLIENT_CERT      ca_cert_der_2048
+        #define CTX_CLIENT_CERT_SIZE sizeof_ca_cert_der_2048
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+#else
+        /* -A Client Verify at the server, WORKING!
+         * defaults: ./examples/client/client -v 3 -h 192.168.1.107 */
         #define CTX_CLIENT_CERT      client_cert_der_2048
         #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-
+#endif
         #define CTX_CLIENT_KEY       client_key_der_2048
         #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
