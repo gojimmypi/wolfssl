@@ -20,6 +20,7 @@
  */
 
 #include "server-tls.h"
+#define MY_PEER_VERIFY 1
 
 /* Espressif FreeRTOS */
 #ifndef SINGLE_THREADED
@@ -404,6 +405,11 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     #endif
 #endif
 
+#if (0)
+    wolfSSL_CTX_SetMinVersion(ctx, WOLFSSL_TLSV1_3);
+    wolfSSL_CTX_set_cipher_list(ctx, "TLS13-SM4-GCM-SM3");
+#endif
+
     ESP_LOGI(TAG, "Loading server certificate %s", CTX_SERVER_CERT_NAME);
     /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
@@ -424,6 +430,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to load privatekey");
     }
 
+#if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
     ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
     wolfSSL_CTX_set_verify(ctx,
                                 (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
@@ -439,6 +446,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     if (ret != SSL_SUCCESS) {
         halt_for_reboot("ERROR: failed to load wolfSSL_CTX_load_verify_buffer");
     }
+#else
+    ESP_LOGI("CTX SSL_VERIFY_NONE");
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+#endif
 
 
     /* TODO when using ECDSA,it loads the provisioned certificate and present it.
@@ -510,7 +521,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         else {
 #if defined(DEBUG_WOLFSSL) && !defined(WOLFSSL_NO_MALLOC)
         ESP_LOGI(TAG, "\nCreated WOLFSSL object:");
-        ShowCiphers(ssl);
         this_heap = esp_get_free_heap_size();
         ESP_LOGI(TAG, "tls_smp_client_task heap @ %p = %d",
                       &this_heap, this_heap);
@@ -541,6 +551,14 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is not enabled, not using PQ.");
 #endif
         }
+
+#if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
+        /* SSL verify peer enabled by default */
+#else
+        wolfSSL_set_verify(ssl, SSL_VERIFY_NONE, NULL);
+        ESP_LOGI(TAG, "ssl SSL_VERIFY_NONE");
+#endif
+
         /* show what cipher connected for this WOLFSSL* object */
         ShowCiphers(ssl);
 
