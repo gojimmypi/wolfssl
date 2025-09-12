@@ -160,9 +160,13 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Parameterized cases
           cases=(
             "-v 3 -l ECDHE-ECDSA-SM4-CBC-SM3"
+            "-v 3 -l ECDHE-ECDSA-SM4-GCM-SM3"
+            "-v 3 -l ECDHE-ECDSA-SM4-CCM-SM3"
             "-v 4 -l TLS13-SM4-GCM-SM3"
+            "-v 4 -l TLS13-SM4-CCM-SM3 "
           )
 
           srv_bin=./examples/server/server
@@ -195,7 +199,7 @@ jobs:
             if command -v ss >/dev/null 2>&1; then
               for _ in {1..40}; do
                 ss -ltn | grep -q ":${port} " && break
-                echo "Sleep..."
+                echo "Waiting for server on port ${port} ..."
                 sleep 0.25
               done
             else
