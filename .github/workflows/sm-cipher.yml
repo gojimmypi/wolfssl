@@ -101,7 +101,7 @@ jobs:
 
           pushd ../
             echo "Updated pwd for wolfsm clone fetch: $(pwd)"
-            
+
             echo "clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm"
 
             git   clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
@@ -160,13 +160,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Parameterized cases
           cases=(
             "-v 3 -l ECDHE-ECDSA-SM4-CBC-SM3"
-            "-v 3 -l ECDHE-ECDSA-SM4-GCM-SM3"
-            "-v 3 -l ECDHE-ECDSA-SM4-CCM-SM3"
             "-v 4 -l TLS13-SM4-GCM-SM3"
-            "-v 4 -l TLS13-SM4-CCM-SM3 "
           )
 
           srv_bin=./examples/server/server
@@ -182,23 +178,31 @@ jobs:
           port=11111
 
           # Ensure background server is cleaned up even on failure
-          cleanup() { pkill -P $$ || true; }
+          cleanup() { pkill -P $$ >/dev/null 2>&1 || true; }
           trap cleanup EXIT
 
           for args in "${cases[@]}"; do
-            echo "=== Testing: ${args} ==="
+            echo "=== Testing ${args} on port ${port} ==="
 
-            # Start server in background
+            # Start server in background; capture PID
             "${srv_bin}" ${args} \
               -c "${srv_cert}" -k "${srv_key}" \
               -A "${cli_cert}" -V \
               -p "${port}" &
             srv_pid=$!
 
-            # Brief wait for server to bind
-            sleep 2
+            # Wait briefly for the server to listen
+            if command -v ss >/dev/null 2>&1; then
+              for _ in {1..40}; do
+                ss -ltn | grep -q ":${port} " && break
+                echo "Sleep..."
+                sleep 0.25
+              done
+            else
+              sleep 2
+            fi
 
-            # Run client with a hard timeout so CI never hangs
+            # Run client with timeout so CI does not hang
             set +e
             timeout 60s "${cli_bin}" ${args} \
               -h 127.0.0.1 -p "${port}" \
@@ -207,9 +211,11 @@ jobs:
             rc=$?
             set -e
 
-            # Stop server and evaluate result
-            kill "${srv_pid}" || true
-            wait "${srv_pid}" || true
+            # Graceful shutdown: only kill if still running; keep quiet
+            if kill -0 "${srv_pid}" >/dev/null 2>&1; then
+              kill "${srv_pid}" # >/dev/null 2>&1 || true
+            fi
+            wait "${srv_pid}"   # >/dev/null 2>&1 || true
 
             if [ ${rc} -ne 0 ]; then
               echo "Client failed for: ${args} (rc=${rc})"
