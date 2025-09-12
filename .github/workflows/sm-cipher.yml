@@ -1,4 +1,21 @@
 name: SM Cipher Test (1 of 2)
+#
+# Test fetches wolfssl-examples/Arduino and uses local, latest github master branch wolfssl
+#
+# These 4 workflows across 3 repos are interdependent for the current $REPO_OWNER:
+#
+# THIS sm-cipher CI Build 1: https://github.com/$REPO_OWNER/wolfssl  #  /.github/workflows/sm-cipher.yml
+#   - Builds SM-enabled library from local clone of wolfssl master branch
+#   - Fetches examples from https://github.com/$REPO_OWNER/wolfsm
+#
+# sm-cipher CI Build 2: https://github.com/$REPO_OWNER/wolfsm        #  /.github/workflows/sm-cipher.yml
+#   - Builds SM-enabled library from fresh clone of wolfssl master branch here
+#
+#                                   ** NOTE TO MAINTAINERS **
+#
+#           Consider using winmerge or similar tool to keep the 2 sm-cipher.yml files in relative sync.
+#           Although there are some specific differences, most of the contents are otherwise identical.
+#
 
 # START OF COMMON SECTION
 on:
@@ -131,7 +148,10 @@ jobs:
           # Parameterized cases
           cases=(
             "-v 3 -l ECDHE-ECDSA-SM4-CBC-SM3"
+            "-v 3 -l ECDHE-ECDSA-SM4-GCM-SM3"
+            "-v 3 -l ECDHE-ECDSA-SM4-CCM-SM3"
             "-v 4 -l TLS13-SM4-GCM-SM3"
+            "-v 4 -l TLS13-SM4-CCM-SM3 "
           )
 
           srv_bin=./examples/server/server
