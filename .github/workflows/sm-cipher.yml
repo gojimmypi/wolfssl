@@ -52,15 +52,16 @@ jobs:
 
           echo "GITHUB_ENV=$GITHUB_ENV"
 
+      - name: Get wolfsm
+        run: |
+          # Fetch SM code from the wolfsm repo
+
           # Show our custom values:
           echo "GITHUB_WORK            = $GITHUB_WORK"
 
           # WOLFSM_ROOT is the repo root for wolfsm clone
           echo "WOLFSM_ROOT            = $WOLFSM_ROOT"
 
-      - name: Get wolfsm
-        run: |
-          # Fetch SM code from the wolfsm repo
           echo "Start pwd:"
           pwd
           # we're typically in $GITHUB_WORKSPACE=/home/runner/work/wolfssl/wolfssl
@@ -79,9 +80,8 @@ jobs:
             git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
 
             cd ./wolfsm
-            echo "WOLFSM_ROOT=$(pwd)"
-
-            echo "Path for wolfsm: $(pwd)"
+            echo "Contents of this path for wolfsm = $(pwd)"
+            ls
           popd # GITHUB_WORK
 
 
@@ -98,8 +98,10 @@ jobs:
           # Typically /home/runner/work
           echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
-          echo "pushd $GITHUB_WORK/$WOLFSM_ROOT"
+          echo "pushd $WOLFSM_ROOT"
           pushd "$WOLFSM_ROOT"
+            pwd
+            ls
 
             # Install wolfsm code into wolfssl
             bash ./install.sh
