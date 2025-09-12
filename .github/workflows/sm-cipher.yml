@@ -109,7 +109,7 @@ jobs:
             ls ../wolfssl
 
             echo "Call `install.sh` to install wolfsm code into wolfssl"
-            ./install.sh
+            ./install.sh "$GITHUB_WORKSPACE"
           popd
 
       #
