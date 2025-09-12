@@ -105,8 +105,11 @@ jobs:
             pwd
             ls
 
-            # Install wolfsm code into wolfssl
-            bash ./install.sh
+            echo "wolfssl check"
+            ls ../wolfssl
+
+            echo "Call `install.sh` to install wolfsm code into wolfssl
+            ./install.sh
           popd
 
       #
