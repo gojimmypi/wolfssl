@@ -73,7 +73,19 @@ jobs:
 
           echo "GITHUB_ENV=$GITHUB_ENV"
 
-      - name: Get wolfsm
+          echo "contents..."
+          pwd
+          ls
+
+          echo "next..."
+          pwd
+          ls
+
+          echo "next..."
+          pwd
+          ls
+
+      - name: Get wolfssl
         run: |
           # Fetch SM code from the wolfsm repo
 
