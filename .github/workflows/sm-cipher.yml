@@ -78,10 +78,12 @@ jobs:
           ls
 
           echo "next..."
+          cd ..
           pwd
           ls
 
           echo "next..."
+          cd ..
           pwd
           ls
 
@@ -142,6 +144,21 @@ jobs:
             echo "Call `install.sh` to install wolfsm code into wolfssl"
             ./install.sh "$GITHUB_WORKSPACE"
           popd
+
+          echo "contents..."
+          pwd
+          ls
+
+          echo "next..."
+          cd ..
+          pwd
+          ls
+
+          echo "next..."
+          cd ..
+          pwd
+          ls
+
 
       - name: Compile wolfssl
         run: |
