@@ -42,8 +42,8 @@ jobs:
           ICON_OK=$(printf "\xE2\x9C\x85")
           ICON_FAIL=$(printf "\xE2\x9D\x8C")
 
-          echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"  >> "$GITHUB_ENV"
-
+          echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"   >> "$GITHUB_ENV"
+          echo "WOLFSM_ROOT=$(realpath "$GITHUB_WORKSPACE/wolfsm")"  >> "$GITHUB_ENV"
           # Show predefined summary:
           echo "GITHUB_WORKSPACE       = $GITHUB_WORKSPACE"
 
@@ -98,7 +98,9 @@ jobs:
           # Typically /home/runner/work
           echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
+          echo ""pushd $GITHUB_WORK/$WOLFSM_ROOT"
           pushd "$GITHUB_WORK"/"$WOLFSM_ROOT"
+
             # Install wolfsm code into wolfssl
             bash ./install.sh
           popd
