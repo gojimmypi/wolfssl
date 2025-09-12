@@ -69,11 +69,12 @@ jobs:
 
           # Update environment variables, not available here in this step yet
           echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"         >> "$GITHUB_ENV"
-          echo "WOLFSM_ROOT=$(realpath "$GITHUB_WORKSPACE/../../wolfsm")"  >> "$GITHUB_ENV"
+          echo "WOLFSM_ROOT=$(realpath "$GITHUB_WORKSPACE/../wolfsm")"  >> "$GITHUB_ENV"
 
           echo "GITHUB_ENV=$GITHUB_ENV"
 
           echo "contents..."
+          # typically "/home/runner/work/wolfssl/wolfssl" contains wolfssl source
           pwd
           ls
 
@@ -87,7 +88,7 @@ jobs:
           pwd
           ls
 
-      - name: Get wolfssl
+      - name: Get wolfsm
         run: |
           # Fetch SM code from the wolfsm repo
 
@@ -144,7 +145,7 @@ jobs:
             echo "wolfssl check"
             ls ../wolfssl
 
-            echo "Call `install.sh` to install wolfsm code into $GITHUB_WORKSPACE"
+            echo "Call wolfsm/install.sh to install wolfsm code into $GITHUB_WORKSPACE"
             ./install.sh "$GITHUB_WORKSPACE"
           popd
 
