@@ -18,8 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
+#define DEBUG_WOLFSSL
 
-#if 0
+#if 1
     #define USE_CERT_BUFFERS_2048
 #else
     #define WOLFSSL_SM2
@@ -59,9 +60,6 @@
     #endif
 #endif
 // END TODO
-
-// #define DEBUG_WOLFSSL
-
 
 /* Optional mitigations for latest (unreleased) ESP-IDF v6 */
 #if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
@@ -1266,7 +1264,8 @@ Turn on timer debugging (used when CPU cycles not available)
 /* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* Be sure to include in app, not here, when using example certs: */
-    #include <wolfssl/certs_test_sm.h>
+    /* #include <wolfssl/certs_test_sm.h> */
+    #define CTX_CERT_SET_NAME "wolfSSL Test Certs (SM)"
 
     #ifndef HAVE_TLS_EXTENSIONS
         #error "SM Ciphers require HAVE_TLS_EXTENSIONS"
@@ -1368,6 +1367,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_BASE16
 #else
     #if defined(USE_CERT_BUFFERS_2048)
+        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_2048)"
         #ifdef USE_CERT_BUFFERS_1024
             #error "USE_CERT_BUFFERS_1024 is already defined. Pick one."
         #endif
@@ -1423,6 +1423,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     #elif defined(USE_CERT_BUFFERS_1024)
+        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_1024)"
         /*
          * To connect to ESP32 server with a client from commandline:
          *
@@ -1466,6 +1467,7 @@ Turn on timer debugging (used when CPU cycles not available)
         /* end USE_CERT_BUFFERS_1024 */
 
     #elif defined(USE_CERT_BUFFERS_256)
+        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_256)"
         /*
          * To connect to ESP32 server with a client from commandline:
          *

@@ -410,6 +410,13 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     wolfSSL_CTX_set_cipher_list(ctx, "TLS13-SM4-GCM-SM3");
 #endif
 
+    /* Identify certificates used, typically in wolfssl/certs_test[_sm].h */
+#ifdef CTX_CERT_SET_NAME
+    ESP_LOGI(TAG, "Certificates in use: %s", CTX_CERT_SET_NAME);
+#else
+    ESP_LOGW(TAG, "Unknown Certificates in use!");
+#endif
+
     ESP_LOGI(TAG, "Loading server certificate %s", CTX_SERVER_CERT_NAME);
     /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
