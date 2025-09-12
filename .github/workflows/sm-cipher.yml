@@ -155,9 +155,38 @@ jobs:
           make
           # Done with compile wolfssl
 
+      - name: Test SM wolfcrypt
+        shell: bash
+        run: |
+          # Run client / server tests from cloned wolfssl directory
+
+          cd "$WOLFSSL_ROOT"
+          echo "Current directory:           $PWD"
+
+          set -euo pipefail
+
+          ./wolfcrypt/test/testwolfcrypt
+
+      - name: Run SM benchmark
+        shell: bash
+        run: |
+          # Run client / server tests from cloned wolfssl directory
+
+          cd "$WOLFSSL_ROOT"
+          echo "Current directory:           $PWD"
+
+          set -euo pipefail
+
+          ./wolfcrypt/benchmark/benchmark
+
       - name: Test SM client/server (TLS 1.2 and 1.3)
         shell: bash
         run: |
+          # Run client / server tests from cloned wolfssl directory
+
+          cd "$WOLFSSL_ROOT"
+          echo "Current directory:           $PWD"
+
           set -euo pipefail
 
           # Parameterized cases
