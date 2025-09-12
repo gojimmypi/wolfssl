@@ -1,0 +1,114 @@
+name: SM Cipher Test (1 of 2)
+
+# START OF COMMON SECTION
+on:
+  push:
+    branches: [ '**', 'master', 'main', 'release/**' ]
+    paths:
+      - '.github/workflows/sm-cipher.yml'
+      - 'src/**'
+      - 'wolfcrypt/**'
+      - 'wolfssl/**'
+  pull_request:
+    # Run after merge on protected branches
+    branches: [ "main", "master", "release/**" ]
+    paths:
+      - '.github/workflows/sm-cipher.yml'
+      - 'src/**'
+      - 'wolfcrypt/**'
+      - 'wolfssl/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+# END OF COMMON SECTION
+
+jobs:
+  build:
+    # TODO:
+    # if: github.repository_owner == 'wolfssl'
+    runs-on: ubuntu-latest
+    env:
+      REPO_OWNER: ${{ github.repository_owner }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set job environment variables
+        run: |
+          # Script to assign some common environment variables after everything is installed
+
+          ICON_OK=$(printf "\xE2\x9C\x85")
+          ICON_FAIL=$(printf "\xE2\x9D\x8C")
+
+          echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"  >> "$GITHUB_ENV"
+
+          # Show predefined summary:
+          echo "GITHUB_WORKSPACE       = $GITHUB_WORKSPACE"
+
+          # Show assigned build:env values (e.g. "wolfssl", "gojimmpi" or other owners):
+          echo "REPO_OWNER             = $REPO_OWNER"
+
+          echo "GITHUB_ENV=$GITHUB_ENV"
+
+          # Show our custom values:
+          echo "GITHUB_WORK            = $GITHUB_WORK"
+
+          # WOLFSM_ROOT is the repo root for wolfsm clone
+          echo "WOLFSM_ROOT            = $WOLFSM_ROOT"
+
+      - name: Get wolfsm
+        run: |
+          # Fetch SM code from the wolfsm repo
+          echo "Start pwd:"
+          pwd
+          # we're typically in $GITHUB_WORKSPACE=/home/runner/work/wolfssl/wolfssl
+          # goto /home/runner/work to fetch wolfsm
+
+          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+          # Typically /home/runner/work
+          echo "GITHUB_WORK=$GITHUB_WORK"
+
+          pushd "$GITHUB_WORK"
+            echo "Updated pwd for wolfssl-examples clone fetch: $(pwd)"
+
+            git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm-publish
+
+            cd ./wolfsm-publish
+            echo "WOLFSM_ROOT=$(pwd)"
+
+            echo "Path for wolfsm: $(pwd)"
+          popd # GITHUB_WORK
+
+
+          # ** END ** Get wolfsm
+
+      - name: Install wolfsm
+        run: |
+          # Run the local install.sh install script to install wolfsm code
+
+          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+          # Typically /home/runner/work
+          echo "GITHUB_WORK=$GITHUB_WORK"
+          pwd
+          pushd "$GITHUB_WORK"/wolfsm
+            # Install wolfsm code into wolfssl
+            bash ./install.sh
+          popd
+
+      #
+      - name: Compile wolfssl
+        run: |
+          # Compile fresh wolfSSL with wolfsm code
+          echo "Current directory:           $PWD"
+          ./autogen.sh
+          ./configure --enable-sm3 --enable-sm4-ecb --enable-sm4-cbc --enable-sm4-ctr --enable-sm4-gcm --enable-sm4-ccm --enable-sm2
+          make
+          #
