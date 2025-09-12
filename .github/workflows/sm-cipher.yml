@@ -66,7 +66,7 @@ jobs:
           # we're typically in $GITHUB_WORKSPACE=/home/runner/work/wolfssl/wolfssl
           # goto /home/runner/work to fetch wolfsm
 
-          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          echo "Current pwd for wolfsm clone fetch: $(pwd)"
           GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
@@ -74,11 +74,11 @@ jobs:
           echo "GITHUB_WORK=$GITHUB_WORK"
 
           pushd "$GITHUB_WORK"
-            echo "Updated pwd for wolfssl-examples clone fetch: $(pwd)"
+            echo "Updated pwd for wolfsm clone fetch: $(pwd)"
 
-            git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm-publish
+            git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
 
-            cd ./wolfsm-publish
+            cd ./wolfsm
             echo "WOLFSM_ROOT=$(pwd)"
 
             echo "Path for wolfsm: $(pwd)"
@@ -91,14 +91,14 @@ jobs:
         run: |
           # Run the local install.sh install script to install wolfsm code
 
-          echo "Current pwd for wolfssl-examples clone fetch: $(pwd)"
+          echo "Current pwd for wolfsm clone fetch: $(pwd)"
           GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
           # Typically /home/runner/work
           echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
-          pushd "$GITHUB_WORK"/wolfsm
+          pushd "$GITHUB_WORK"/"$WOLFSM_ROOT"
             # Install wolfsm code into wolfssl
             bash ./install.sh
           popd
