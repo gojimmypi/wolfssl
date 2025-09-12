@@ -79,19 +79,9 @@ jobs:
           pwd
           ls
 
-          echo "next..."
-          cd ..
-          pwd
-          ls
-
-          echo "next..."
-          cd ..
-          pwd
-          ls
-
       - name: Get wolfsm
         run: |
-          # Fetch SM code from the wolfsm repo
+          # We are in wolfssl repo, fetch SM code from the wolfsm repo
 
           # Show our custom values:
           echo "GITHUB_WORK            = $GITHUB_WORK"
@@ -111,14 +101,15 @@ jobs:
 
           pushd ../
             echo "Updated pwd for wolfsm clone fetch: $(pwd)"
+            
+            echo "clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm"
 
-            git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
+            git   clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
 
             cd ./wolfsm
             echo "Contents of this path for wolfsm = $(pwd)"
             ls
           popd
-
 
           # ** END ** Get wolfsm
 
@@ -141,7 +132,7 @@ jobs:
             echo "wolfssl check"
             ls ../wolfssl
 
-            echo "Call wolfsm/install.sh to install wolfsm code into $GITHUB_WORKSPACE"
+            echo "Call wolfsm/install.sh to install wolfsm code into $WOLFSSL_ROOT"
             ./install.sh "$WOLFSSL_ROOT"
           popd
 
@@ -149,15 +140,6 @@ jobs:
           pwd
           ls
 
-          echo "next..."
-          cd ..
-          pwd
-          ls
-
-          echo "next..."
-          cd ..
-          pwd
-          ls
           # Done with install wolfsm
 
       - name: Compile wolfssl
