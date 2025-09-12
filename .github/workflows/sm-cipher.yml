@@ -42,13 +42,14 @@ jobs:
           ICON_OK=$(printf "\xE2\x9C\x85")
           ICON_FAIL=$(printf "\xE2\x9D\x8C")
 
-          echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"   >> "$GITHUB_ENV"
-          echo "WOLFSM_ROOT=$(realpath "$GITHUB_WORKSPACE/wolfsm")"  >> "$GITHUB_ENV"
           # Show predefined summary:
           echo "GITHUB_WORKSPACE       = $GITHUB_WORKSPACE"
 
           # Show assigned build:env values (e.g. "wolfssl", "gojimmpi" or other owners):
           echo "REPO_OWNER             = $REPO_OWNER"
+
+          echo "GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")"   >> "$GITHUB_ENV"
+          echo "WOLFSM_ROOT=$(realpath "$GITHUB_WORK/wolfsm")"       >> "$GITHUB_ENV"
 
           echo "GITHUB_ENV=$GITHUB_ENV"
 
