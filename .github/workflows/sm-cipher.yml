@@ -98,7 +98,7 @@ jobs:
           # Typically /home/runner/work
           echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
-          echo ""pushd $GITHUB_WORK/$WOLFSM_ROOT"
+          echo "pushd $GITHUB_WORK/$WOLFSM_ROOT"
           pushd "$GITHUB_WORK"/"$WOLFSM_ROOT"
 
             # Install wolfsm code into wolfssl
