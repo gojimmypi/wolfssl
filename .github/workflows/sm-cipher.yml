@@ -108,7 +108,7 @@ jobs:
             echo "wolfssl check"
             ls ../wolfssl
 
-            echo "Call `install.sh` to install wolfsm code into wolfssl
+            echo "Call `install.sh` to install wolfsm code into wolfssl"
             ./install.sh
           popd
 
