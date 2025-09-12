@@ -20,7 +20,7 @@
  */
 #define DEBUG_WOLFSSL
 
-#if 1
+#if 0
     #define USE_CERT_BUFFERS_2048
 #else
     #define WOLFSSL_SM2
@@ -774,12 +774,6 @@
 #define WOLFSSL_SM4
 */
 
-/*
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
-*/
-
 //#define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
 #define HAVE_HKDF
@@ -1315,14 +1309,14 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #else
-        /* Certificate file `-c`; default: ./certs/server-cert.pem
+        /* Certificate file `-c`; client command default: certs/server-cert.pem
          * wolfSSL_CTX_use_certificate_buffer */
         #define CTX_SERVER_CERT      server_sm2
         #define CTX_SERVER_CERT_NAME "server_sm2"
         #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
 
-        /* Key file `-k`; default ./certs/server-key.pem
+        /* Key file `-k`; client command default: ./certs/server-key.pem
          * wolfSSL_CTX_use_certificate_buffer */
         #define CTX_SERVER_KEY       server_sm2_priv
         #define CTX_SERVER_KEY_NAME  "server_sm2_priv"
