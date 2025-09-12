@@ -237,10 +237,11 @@ jobs:
 
             # Run client with timeout so CI does not hang
             set +e
-            timeout 60s "${cli_bin}" ${args} \
-              -h 127.0.0.1 -p "${port}" \
-              -c "${cli_cert}" -k "${cli_key}" \
-              -A "${ca_root}" -C
+            timeout 60s "${cli_bin}" ${args}       \
+                        -h 127.0.0.1 -p "${port}"  \
+                        -c "${cli_cert}"           \
+                        -k "${cli_key}"            \
+                        -A "${ca_root}" -C
             rc=$?
             set -e
 
