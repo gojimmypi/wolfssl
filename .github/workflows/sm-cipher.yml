@@ -107,10 +107,8 @@ jobs:
           GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
-          # Typically /home/runner/work
-          echo "GITHUB_WORK=$GITHUB_WORK"
 
-          pushd "$GITHUB_WORK"
+          pushd ../
             echo "Updated pwd for wolfsm clone fetch: $(pwd)"
 
             git clone --depth 1 https://github.com/$REPO_OWNER/wolfsm.git wolfsm
@@ -118,7 +116,7 @@ jobs:
             cd ./wolfsm
             echo "Contents of this path for wolfsm = $(pwd)"
             ls
-          popd # GITHUB_WORK
+          popd
 
 
           # ** END ** Get wolfsm
