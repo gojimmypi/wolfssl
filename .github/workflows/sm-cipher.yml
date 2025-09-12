@@ -99,7 +99,7 @@ jobs:
           echo "GITHUB_WORK=$GITHUB_WORK"
           pwd
           echo "pushd $GITHUB_WORK/$WOLFSM_ROOT"
-          pushd "$GITHUB_WORK"/"$WOLFSM_ROOT"
+          pushd "$WOLFSM_ROOT"
 
             # Install wolfsm code into wolfssl
             bash ./install.sh
