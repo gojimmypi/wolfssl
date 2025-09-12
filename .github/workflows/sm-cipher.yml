@@ -125,6 +125,9 @@ jobs:
       - name: Install wolfsm
         run: |
           # Run the local install.sh install script to install wolfsm code
+          # we start at the wolfssl repo in the $REPO_OWNER user directory
+
+          cd ..
 
           echo "Current pwd for wolfsm clone fetch: $(pwd)"
           GITHUB_WORK=$(realpath "$GITHUB_WORKSPACE/../..")
@@ -141,7 +144,7 @@ jobs:
             echo "wolfssl check"
             ls ../wolfssl
 
-            echo "Call `install.sh` to install wolfsm code into wolfssl"
+            echo "Call `install.sh` to install wolfsm code into $GITHUB_WORKSPACE"
             ./install.sh "$GITHUB_WORKSPACE"
           popd
 
