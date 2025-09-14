@@ -18,15 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#define DEBUG_WOLFSSL
-
-#if 0
-    #define USE_CERT_BUFFERS_2048
-#else
-    #define WOLFSSL_SM2
-    #define WOLFSSL_SM3
-    #define WOLFSSL_SM4
-#endif
 
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
@@ -41,6 +32,40 @@
 /* Some mitigations are ESP-IDF version-speific. */
 #include "esp_idf_version.h"
 
+// TODO remove this section
+#if (1)
+    // my SM test section
+    #if (0)
+        #define USE_CERT_BUFFERS_2048
+    #else
+        #define WOLFSSL_SM2
+        #define WOLFSSL_SM3
+        #define WOLFSSL_SM4
+    #endif
+
+    // #define DEBUG_WOLFSSL
+    // my debugging section
+    #if (0)
+        #undef  CONFIG_WOLFSSL_ALLOW_TLS12
+        #define CONFIG_WOLFSSL_ALLOW_TLS12 1
+
+        #undef  CONFIG_WOLFSSL_ALLOW_TLS13
+        #define CONFIG_WOLFSSL_ALLOW_TLS13 0
+        /* RSA can consume a lot of memory */
+        #undef  CONFIG_ESP_WOLFSSL_USE_RSA
+    #else
+        #undef  CONFIG_WOLFSSL_ALLOW_TLS12
+        #define CONFIG_WOLFSSL_ALLOW_TLS12 1
+
+        #undef  CONFIG_WOLFSSL_ALLOW_TLS13
+        #define CONFIG_WOLFSSL_ALLOW_TLS13 1
+        /* RSA can consume a lot of memory, not needed for SM */
+        #undef  CONFIG_ESP_WOLFSSL_USE_RSA
+    #endif
+#endif
+// TODO End section
+
+
 /* When manually editing user settings, the private config is limited to wolfssl
  * and thus can be set here: */
 
@@ -49,9 +74,9 @@
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
     // #pragma message "menuconfig selected private config"
 #else
-    // #pragma message "maually selected private config"
+    // #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #ifdef _WIN32
+    #if defined(_WIN32) || defined(_MSC_VER) || (0)
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
     #else
@@ -539,7 +564,7 @@
 
     /* AEAD May be required */
     #ifndef HAVE_AEAD
-        /* Syntax highlighting detction only */
+        /* Syntax highlighting detection only */
     #endif
 
     /* Required for ECC */
@@ -819,6 +844,10 @@
 
     #undef  HAVE_AESGCM
     #define HAVE_AESGCM
+
+    /* ByteReverseWords is known to need alignment */
+    #undef  WOLFSSL_USE_ALIGN
+    #define WOLFSSL_USE_ALIGN
 #endif /* SM or regular certs */
 
 /* Chipset detection from sdkconfig.h
@@ -1299,6 +1328,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #if 0
         /* DER failing with -313 at server,
          * -188, ASN no signer error to confirm failure at client */
+        // #define DEBUG_WOLFSSL
         #define CTX_SERVER_CERT      server_sm2_der
         #define CTX_SERVER_CERT_NAME "server_sm2_der"
         #define CTX_SERVER_CERT_SIZE sizeof_server_sm2_der
@@ -1308,7 +1338,13 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_NAME  "server_sm2_priv_der"
         #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        #define CTX_CLIENT_CERT      client_sm2_der
+        #define CTX_CLIENT_CERT_NAME "client_sm2_der"
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
     #else
+        // #define WOLFSSL_SM3_SMALL
         /* Certificate file `-c`; client command default: certs/server-cert.pem
          * wolfSSL_CTX_use_certificate_buffer */
         #define CTX_SERVER_CERT      server_sm2

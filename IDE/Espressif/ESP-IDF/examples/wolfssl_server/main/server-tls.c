@@ -20,6 +20,7 @@
  */
 
 #include "server-tls.h"
+
 #define MY_PEER_VERIFY 1
 
 /* Espressif FreeRTOS */
@@ -133,6 +134,7 @@ int ShowCiphers(WOLFSSL* ssl)
         }
     }
     else {
+        ESP_LOGI(TAG, "checking  %p", ssl);
         cipher_used = wolfSSL_get_cipher_name(ssl);
         ESP_LOGI(TAG, "WOLFSSL* ssl using %s", cipher_used);
     }
@@ -220,7 +222,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     WOLFSSL_ENTER("tls_smp_server_task");
 
 #ifdef DEBUG_WOLFSSL
+    /* Turn debugging off as needed: */
     wolfSSL_Debugging_OFF();
+    wolfSSL_Debugging_ON();
     ShowCiphers(NULL);
 #endif
 
@@ -527,7 +531,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
 #endif
         /* Create a WOLFSSL object */
-        wolfSSL_Debugging_ON();
+        wolfSSL_Debugging_ON(); // todo remove
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
             halt_for_reboot("ERROR: failed to create (WOLFSSL*) ssl object");
         }

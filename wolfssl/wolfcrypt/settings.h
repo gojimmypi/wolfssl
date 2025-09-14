@@ -577,6 +577,9 @@
 #if defined(WOLFSSL_ESPIDF)
     #define SIZEOF_LONG_LONG 8
 
+    /* Avoid any "load/store address misaligned" for all Espressif devices  */
+    #define WOLFSSL_USE_ALIGN
+
     #ifndef WOLFSSL_MAX_ERROR_SZ
         /* Espressif paths can be quite long. Ensure error prints full path. */
         #define WOLFSSL_MAX_ERROR_SZ 200

@@ -388,7 +388,7 @@ void app_main(void)
      * not words (unlike vanilla freeRTOS). */
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "Initial Stack Used (before wolfSSL Server): %d bytes",
-                   (20 * 1024) // CONFIG_ESP_MAIN_TASK_STACK_SIZE
+                   CONFIG_ESP_MAIN_TASK_STACK_SIZE
                    - (uxTaskGetStackHighWaterMark(NULL))
             );
     ESP_LOGI(TAG, "Starting TLS Server task...");
