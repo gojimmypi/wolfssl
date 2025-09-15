@@ -32,6 +32,7 @@
     #if defined(WOLFSSL_ESPIDF)
         #include <wolfssl/version.h>
         #include <wolfssl/wolfcrypt/types.h>
+        #include <wolfssl/wolfcrypt/logging.h>
         #include <wolfcrypt/test/test.h>
         #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
         #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
@@ -188,7 +189,11 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
-
+#ifdef DEBUG_WOLFSSL
+    /* Turn debugging off as needed: */
+    wolfSSL_Debugging_OFF();
+    wolfSSL_Debugging_ON();
+#endif
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
     esp_DisableWatchdog();
