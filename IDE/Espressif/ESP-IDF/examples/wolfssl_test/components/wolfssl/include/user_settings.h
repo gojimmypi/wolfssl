@@ -43,8 +43,11 @@
         #define WOLFSSL_SM4
     #endif
 
-    #define DEBUG_WOLFSSL
-    #define DEBUG_WOLFSSL_SHA_MUTEX
+//   #define DEBUG_WOLFSSL
+//    #define DEBUG_WOLFSSL_SHA_MUTEX
+//    #define WOLFSSL_STACK_CHECK
+//    #define WOLFSSL_DEBUG_MUTEX 1
+//    #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 
     // my debugging section
     #if (0)
@@ -75,6 +78,11 @@
 #if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
     // #pragma message "menuconfig selected private config"
+    // Note private config environment variasble setting also sets std=gnu1
+    // in cmake for ESP-IDF v6 to fix syntax highlighting:
+    // target_compile_options(${COMPONENT_LIB}
+    //                          PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu17>)
+    //
 #else
     // #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1

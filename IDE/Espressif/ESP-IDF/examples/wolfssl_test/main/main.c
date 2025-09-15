@@ -192,7 +192,7 @@ void app_main(void)
 #ifdef DEBUG_WOLFSSL
     /* Turn debugging off as needed: */
     wolfSSL_Debugging_OFF();
-    wolfSSL_Debugging_ON();
+    // wolfSSL_Debugging_ON();
 #endif
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
