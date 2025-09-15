@@ -568,7 +568,7 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
                                           "${THIS_INCLUDE_TIMER}"
                                           "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
-
+    # Do not set compile options during early expansion
 else()
     # not CMAKE_BUILD_EARLY_EXPANSION
     message(STATUS "************************************************************************************************")
@@ -915,6 +915,14 @@ else()
                                   "${THIS_INCLUDE_TIMER}"
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
+
+        # This is a workaround for ESP-IDF v6 Syntax highlighting only:
+        if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
+            if(DEFINED IDF_VERSION_MAJOR AND IDF_VERSION_MAJOR GREATER_EQUAL 6)
+                message(STATUS "Setting -std=gnu17 with target_compile_options $<$<COMPILE_LANGUAGE:C>:-std=gnu17>")
+                target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu17>)
+            endif()
+        endif()
     else()
         # Register the component simply to allow CMake to complete, but there's no wolfSSL source.
         # Expect many other errors, but the project should at least be loadable and UI can edit Kconfig settings.
@@ -1285,6 +1293,24 @@ LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_CMAKE_OUTPUT "${LIBWOLFSSL_CMAKE_OUTPUT}" "0")
 file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h"
             "\n"
             "#endif\n" )
+
+# Memory peek helper
+set(LINKER_REGION_PEEK "${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld")
+if( EXISTS "${LINKER_REGION_PEEK}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
+
+    message(STATUS "Found linker region peek helper: ${LINKER_REGION_PEEK}")
+    if (COMMAND target_linker_scripts)
+      target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    else()
+      # Fallback if target_linker_scripts isn't available
+      target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+      set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    endif()
+else()
+    message(STATUS "Found linker region peek helper NOT FOUND: ${LINKER_REGION_PEEK}")
+endif()
 
 message(STATUS "************************************************************************************************")
 message(STATUS "wolfSSL component config complete!")
