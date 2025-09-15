@@ -55,6 +55,9 @@
 
     #include <hal/sha_ll.h>
     #include <hal/clk_gate_ll.h>
+    #if ESP_IDF_VERSION_MAJOR >= 6
+        #include "sha/sha_core.h"
+    #endif
 #elif defined(CONFIG_IDF_TARGET_ESP32C61)
     #include <hal/sha_hal.h>
     #include <hal/sha_ll.h>
@@ -1945,6 +1948,24 @@ static int wc_esp_process_block(WC_ESP32SHA* ctx, /* see ctx->sha_type */
     }
     if (ctx->isfirstblock) {
         ets_sha_enable(); /* will clear initial digest     */
+#if ESP_IDF_VERSION_MAJOR >= 6
+        /* Beginning ESP-IDF v6, the mode needs to be eximplictly set. */
+        sha_hal_wait_idle();
+        switch (ctx->sha_type) {
+            case SHA1:
+                sha_hal_set_mode(SHA1);
+                break;
+            case SHA2_224:
+                esp_sha_set_mode(SHA2_224);
+                break;
+            case SHA2_256:
+                esp_sha_set_mode(SHA2_256);
+                break;
+            default:
+                /* Unsupported SHA mode. */
+                ESP_LOGW(TAG, "Unexpected sha_type", ctx->sha_type);
+        }
+#endif
         #if defined(DEBUG_WOLFSSL)
         {
             this_block_num = 1; /* one-based counter, just for debug info */
@@ -2252,6 +2273,7 @@ int esp_sha_digest_process(struct wc_Sha* sha, byte blockprocess)
     if (blockprocess) {
         ESP_LOGV(TAG, "esp_sha_digest_process NEW UNLOCK");
         esp_sha_hw_unlock(&sha->ctx); /* also unlocks mutex */
+
         ESP_LOGV(TAG, "sha blockprocess mutex_ctx_owner = NULLPTR");
         mutex_ctx_owner = NULLPTR;
     }
