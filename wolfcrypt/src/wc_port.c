@@ -136,23 +136,22 @@
     #include <wolfssl/wolfcrypt/port/liboqs/liboqs.h>
 #endif
 
-#if  defined(WOLFSSL_ESPIDF)
-    #include <esp_log.h>
-    #define TAG "wc_port"
-#if defined(FREERTOS)
+#if defined(FREERTOS) && defined(WOLFSSL_ESPIDF)
     #include <freertos/FreeRTOS.h>
     #include <freertos/task.h>
     /* The Espressif-specific platform include: */
     #include <pthread.h>
-#endif /* FREERTOS       */
-#endif /* WOLFSSL_ESPIDF */
-
+#endif
 
 #if defined(WOLFSSL_ZEPHYR)
 #if defined(CONFIG_BOARD_NATIVE_POSIX)
 #include "native_rtc.h"
 #define CONFIG_RTC
 #endif
+#endif
+
+#if !defined(NO_AES) && !defined(WC_NO_AES)
+    #include <wolfssl/wolfcrypt/aes.h>
 #endif
 
 /* prevent multiple mutex initializations */
@@ -169,8 +168,70 @@ WOLFSSL_ABI
 int wolfCrypt_Init(void)
 {
     int ret = 0;
+
+#ifndef NO_WOLFSSL_WARMUP
+    WC_RNG rng;
+    byte dummy;
+#if !defined(NO_AES) && !defined(WC_NO_AES) && defined(HAVE_AESGCM)
+    Aes aes;
+    unsigned char key16[16];
+    unsigned char iv[12];
+    unsigned char in[16];
+    unsigned char out[16];
+    unsigned char tag[16];
+    int devId;
+#endif
+#endif /* NO_WOLFSSL_WARMUP*/
+
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Init");
+
+#ifndef NO_WOLFSSL_WARMUP
+    /* Warm up the hardware to allocate any heap & semaphore early */
+    #if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+        WOLFSSL_MSG("Warming up RNG");
+    #endif
+        ret = wc_InitRng(&rng);
+        if (ret == 0) {
+            /* forces Hash_DRBG/SHA */
+            ret = wc_RNG_GenerateBlock(&rng, &dummy, 1);
+            if (ret != 0) {
+                WOLFSSL_MSG("wolfCrypt_Init wc_RNG_GenerateBlock failed");
+            }
+        }
+        if (ret != 0) {
+            WOLFSSL_MSG("wolfCrypt_Init RNG warmup failed");
+        }
+        ret = wc_FreeRng(&rng);
+        if (ret != 0) {
+            WOLFSSL_MSG("wolfCrypt_Init wc_FreeRng failed");
+        }
+
+    #if !defined(NO_AES) && !defined(WC_NO_AES) && defined(HAVE_AESGCM)
+    #if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+        WOLFSSL_MSG("Warming up AES");
+    #endif
+        memset(key16, 0, sizeof(key16));
+        memset(iv, 0, sizeof(iv));
+        memset(in, 0, sizeof(in));
+        devId = INVALID_DEVID;
+
+        ret = wc_AesInit(&aes, NULL, devId);
+        if (ret == 0) {
+            ret = wc_AesGcmSetKey(&aes, key16, sizeof(key16));
+        }
+        if (ret == 0) {
+            ret = wc_AesGcmEncrypt(&aes, out, in, (word32)sizeof(in),
+                                   iv, (word32)sizeof(iv),
+                                   tag, (word32)sizeof(tag),
+                                   NULL, 0);
+        }
+        if (ret != 0) {
+            WOLFSSL_MSG("AES warmup failed during wolfCrypt_Init");
+        }
+        wc_AesFree(&aes);
+    #endif /* !NO_AES && !WC_NO_AES && HAVE_AESGCM */
+    #endif /* NO_WOLFSSL_WARMUP */
 
     #if defined(__aarch64__) && defined(WOLFSSL_ARMASM_BARRIER_DETECT)
         aarch64_use_sb = IS_AARCH64_SB(cpuid_get_flags());
@@ -450,23 +511,12 @@ int wolfCrypt_Init(void)
         }
 #endif
 
-#if defined(WOLFSSL_ESPIDF)
-    /* Warm up the Espressif hardware to allocate any heap semaphore early */
-    WC_RNG rng;
-    byte dummy;
-#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
-    ESP_LOGI(TAG, "Warming up RNG");
-#endif
-    if (wc_InitRng(&rng) == 0) {
-        (void)wc_RNG_GenerateBlock(&rng, &dummy, 1);  /* forces Hash_DRBG/SHA */
-        wc_FreeRng(&rng);
-    }
-#endif
-    }
+    } /* (initRefCount == 0) */
+
     initRefCount++;
 
     return ret;
-}
+} /* wolfCrypt_Init */
 
 #if defined(WOLFSSL_TRACK_MEMORY_VERBOSE) && !defined(WOLFSSL_STATIC_MEMORY)
 long wolfCrypt_heap_peakAllocs_checkpoint(void) {

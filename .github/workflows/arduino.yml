@@ -72,7 +72,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository_owner == 'wolfssl'
+    if: github.repository_owner == 'gojimmypi'
     runs-on: ubuntu-latest
     env:
       REPO_OWNER: ${{ github.repository_owner }}

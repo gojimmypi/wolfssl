@@ -48,6 +48,9 @@
 //    #define WOLFSSL_STACK_CHECK
 //    #define WOLFSSL_DEBUG_MUTEX 1
 //    #define WOLFSSL_ESP32_HW_LOCK_DEBUG
+#define  DEBUG_WOLFSSL_MALLOC
+// #define  DEBUG_WOLFSSL_MALLOC_VERBOSE
+// #define NO_WOLFSSL_WARMUP
 
     // my debugging section
     #if (0)
@@ -688,6 +691,9 @@
 
 /* #Optional HAVE_PKCS7 */
 /* #define HAVE_PKCS7 */
+
+/* PKCS12 can take up a lot of memory, so disabled: */
+#define NO_PKCS12
 
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
