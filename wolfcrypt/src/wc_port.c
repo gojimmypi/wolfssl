@@ -176,10 +176,9 @@ int wolfCrypt_Init(void)
 #if !defined(NO_AES) && !defined(WC_NO_AES) && defined(HAVE_AESGCM)
     Aes aes;
     unsigned char key16[16];
-    unsigned char iv[12];
-    unsigned char in[16];
     unsigned char out[16];
-    unsigned char tag[16];
+    unsigned char in[16];
+    unsigned char iv[12];
     int devId;
 #endif
 #endif /* NO_WOLFSSL_WARMUP*/
@@ -219,13 +218,13 @@ int wolfCrypt_Init(void)
 
         ret = wc_AesInit(&aes, NULL, devId);
         if (ret == 0) {
-            ret = wc_AesGcmSetKey(&aes, key16, sizeof(key16));
+            /* Set an ECB key (no IV). This avoids pulling in GCM/GHASH. */
+            ret = wc_AesSetKey(&aes, key16, (word32)sizeof(key16), NULL,
+                               AES_ENCRYPTION);
         }
         if (ret == 0) {
-            ret = wc_AesGcmEncrypt(&aes, out, in, (word32)sizeof(in),
-                                   iv, (word32)sizeof(iv),
-                                   tag, (word32)sizeof(tag),
-                                   NULL, 0);
+            /* Single direct block encrypt to exercise the core/driver. */
+            ret = wc_AesEncryptDirect(&aes, out, in);
         }
         if (ret != 0) {
             WOLFSSL_MSG("AES warmup failed during wolfCrypt_Init");
