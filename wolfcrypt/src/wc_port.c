@@ -139,7 +139,7 @@
 #if  defined(WOLFSSL_ESPIDF)
     #include <esp_log.h>
     #define TAG "wc_port"
-#if defined(FREERTOS) &&
+#if defined(FREERTOS)
     #include <freertos/FreeRTOS.h>
     #include <freertos/task.h>
     /* The Espressif-specific platform include: */
