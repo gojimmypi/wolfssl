@@ -581,6 +581,12 @@ void* wc_pvPortMalloc(size_t size)
         ESP_LOGE("malloc", "%s:%d (%s)", file, line, fname);
         ESP_LOGE("malloc", "Failed Allocating memory of size: %d bytes", size);
     }
+#ifdef DEBUG_WOLFSSL_MALLOC_VERBOSE
+    else {
+        ESP_LOGI("malloc", "%s:%d (%s)", file, line, fname);
+        ESP_LOGI("malloc", "Allocate memory at %p of size: %d bytes", ret, size);
+    }
+#endif /* DEBUG_WOLFSSL_MALLOC_VERBOSE */
 #endif
     return ret;
 } /* wc_debug_pvPortMalloc */
@@ -606,6 +612,9 @@ void wc_pvPortFree(void *ptr)
 #endif
     }
     else {
+#ifdef DEBUG_WOLFSSL_MALLOC_VERBOSE
+        ESP_LOGI("malloc", "free %p %s:%d (%s)", ptr, file, line, fname);
+#endif
         wolfSSL_GetAllocators(&mc, &fc, &rc);
 
         if (fc == NULL) {
