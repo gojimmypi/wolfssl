@@ -168,6 +168,7 @@ WOLFSSL_ABI
 int wolfCrypt_Init(void)
 {
     int ret = 0;
+/* tickle arduino workflow */
 
 #ifndef NO_WOLFSSL_WARMUP
     WC_RNG rng;
