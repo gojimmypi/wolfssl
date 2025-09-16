@@ -223,8 +223,25 @@ int wolfCrypt_Init(void)
                                AES_ENCRYPTION);
         }
         if (ret == 0) {
+    #ifdef WOLFSSL_AES_DIRECT
             /* Single direct block encrypt to exercise the core/driver. */
             ret = wc_AesEncryptDirect(&aes, out, in);
+    #elif !defined(NO_AES_CBC)
+        /* One-block CBC (tiny; no padding; does not pull GCM). */
+        ret = wc_AesSetIV(&aes, iv);
+        if (ret == 0) {
+            ret = wc_AesCbcEncrypt(&aes, out, in, (word32)sizeof(in));
+        }
+    #elif defined(HAVE_AES_CTR) || defined(WOLFSSL_AES_COUNTER)
+        /* As another lightweight option, CTR one-block. */
+        ret = wc_AesSetIV(&aes, iv);
+        if (ret == 0) {
+            ret = wc_AesCtrEncrypt(&aes, out, in, (word32)sizeof(in));
+        }
+    #else
+        /* No small mode available; setting the key already did most of the warmup. */
+        ret = 0;
+    #endif
         }
         if (ret != 0) {
             WOLFSSL_MSG("AES warmup failed during wolfCrypt_Init");
