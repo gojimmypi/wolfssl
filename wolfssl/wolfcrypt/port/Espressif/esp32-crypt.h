@@ -223,6 +223,12 @@ enum {
 ** DEBUG_WOLFSSL_ESP32_HEAP
 **   Prints heap memory usage
 **
+** DEBUG_WOLFSSL_MALLOC
+**   Basic malloc debug warnings and errors
+**
+** DEBUG_WOLFSSL_MALLOC_VERBOSE
+**   Prints memory pointer values and size allocated and freed
+**
 ** DEBUG_WOLFSSL_ESP32_UNFINISHED_HW
 **   This may be interesting in that HW may have been unnecessarily locked
 **   for hash that was never completed. (typically encountered at `free1` time)
