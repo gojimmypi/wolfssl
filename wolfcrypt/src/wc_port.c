@@ -136,12 +136,17 @@
     #include <wolfssl/wolfcrypt/port/liboqs/liboqs.h>
 #endif
 
-#if defined(FREERTOS) && defined(WOLFSSL_ESPIDF)
+#if  defined(WOLFSSL_ESPIDF)
+    #include <esp_log.h>
+    #define TAG "wc_port"
+#if defined(FREERTOS) &&
     #include <freertos/FreeRTOS.h>
     #include <freertos/task.h>
     /* The Espressif-specific platform include: */
     #include <pthread.h>
-#endif
+#endif /* FREERTOS       */
+#endif /* WOLFSSL_ESPIDF */
+
 
 #if defined(WOLFSSL_ZEPHYR)
 #if defined(CONFIG_BOARD_NATIVE_POSIX)
@@ -443,6 +448,19 @@ int wolfCrypt_Init(void)
         if ((ret = wolfSSL_liboqsInit()) != 0) {
             return ret;
         }
+#endif
+
+#if defined(WOLFSSL_ESPIDF)
+    /* Warm up the Espressif hardware to allocate any heap semaphore early */
+    WC_RNG rng;
+    byte dummy;
+#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+    ESP_LOGI(TAG, "Warming up RNG");
+#endif
+    if (wc_InitRng(&rng) == 0) {
+        (void)wc_RNG_GenerateBlock(&rng, &dummy, 1);  /* forces Hash_DRBG/SHA */
+        wc_FreeRng(&rng);
+    }
 #endif
     }
     initRefCount++;
