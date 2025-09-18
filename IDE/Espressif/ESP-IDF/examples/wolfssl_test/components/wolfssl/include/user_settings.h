@@ -50,7 +50,7 @@
 //    #define WOLFSSL_ESP32_HW_LOCK_DEBUG
 #define  DEBUG_WOLFSSL_MALLOC
 // #define  DEBUG_WOLFSSL_MALLOC_VERBOSE
-// #define NO_WOLFSSL_WARMUP
+#define WOLFCRYPT_WARMUP
 
     // my debugging section
     #if (0)
