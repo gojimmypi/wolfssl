@@ -43,6 +43,7 @@
         #warning "Problem with wolfSSL user_settings."
         #warning "Check components/wolfssl/include"
     #endif
+    #include <wolfssl/wolfcrypt/logging.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
     #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
     #if defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE) && \

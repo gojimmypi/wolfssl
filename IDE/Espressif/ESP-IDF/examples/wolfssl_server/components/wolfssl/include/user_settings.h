@@ -41,6 +41,7 @@
         #define WOLFSSL_SM2
         #define WOLFSSL_SM3
         #define WOLFSSL_SM4
+        // #define WOLFSSL_NO_PEM
     #endif
 
     // #define DEBUG_WOLFSSL
@@ -65,7 +66,6 @@
 #endif
 // TODO End section
 
-
 /* When manually editing user settings, the private config is limited to wolfssl
  * and thus can be set here: */
 
@@ -76,7 +76,7 @@
 #else
     // #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #if defined(_WIN32) || defined(_MSC_VER) || (0)
+    #if defined(_WIN32) || defined(_MSC_VER) || (1)
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
     #else
@@ -90,7 +90,7 @@
 #if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
     #if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 6)
         /* There's a known issue with SHA HW accerlator on RISC-V chips in V6 */
-        #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
+        // #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
     #endif
 #endif
 
@@ -1069,7 +1069,8 @@
     /***** END CONFIG_IDF_TARGET_ESP266 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP8684)
-    /*  There's no Hardware Acceleration available on ESP8684 */
+    /*  There's no Hardware Acceleration available on ESP8684
+     *  Note that it usually presents as ESP32C2 */
     #define NO_ESP32_CRYPT
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
     #define NO_WOLFSSL_ESP32_CRYPT_AES
@@ -1302,30 +1303,27 @@ Turn on timer debugging (used when CPU cycles not available)
     #ifndef HAVE_DH
         // ? #error "SM Ciphers require HAVE_DH"
     #endif
+    #ifndef WOLFSSL_USE_ALIGN
+        #warning "Define WOLFSSL_USE_ALIGN to avoid LoadStoreAlignment panic"
+    #endif
+    #undef  WOLFSSL_BASE16
+    #define WOLFSSL_BASE16
 
-#if 0
-    /* PEM */
-    #define CTX_CA_CERT          root_sm2
-    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_PEM
+    #define WOLFSSL_ALT_CERT_CHAINS
+    #ifdef WOLFSSL_ALT_CERT_CHAINS
+        /* When on, wolfSSL will accept the peer if the leaf sent matches
+         * the one loaded, even without a CA in the path */
+    #endif
 
-    #define CTX_SERVER_CERT      server_sm2
-    #define CTX_SERVER_CERT_NAME "server_sm2"
-    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
-    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+//  ./examples/client/client -h 192.168.1.107 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3 -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem  -A ./certs/sm2/ca-sm2.pem -C
 
-    #define CTX_SERVER_KEY       server_sm2_priv
-    #define CTX_SERVER_KEY_NAME  "server_sm2_priv"
-    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
-    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
-#elif 1
     /* ./examples/client/client -h 192.168.1.107 -v 3   \
      *                          -l ECDHE-ECDSA-SM4-CBC-SM3
      *                          -c ./certs/sm2/client-sm2.pem
      *                          -k ./certs/sm2/client-sm2-priv.pem
      *                          -A ./certs/sm2/ca-sm2.pem -C
      **/
-    #if 0
+    #if 0 // defined (WOLFSSL_NO_PEM)
         /* DER failing with -313 at server,
          * -188, ASN no signer error to confirm failure at client */
         // #define DEBUG_WOLFSSL
@@ -1339,79 +1337,72 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_CLIENT_CERT      client_sm2_der
-        #define CTX_CLIENT_CERT_NAME "client_sm2_der"
-        #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
+        #define CTX_CLIENT_CERT      ca_sm2_der
+        #define CTX_CLIENT_CERT_NAME "ca_sm2_der"
+        #define CTX_CLIENT_CERT_SIZE sizeof_ca_sm2_der
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
     #else
-        // #define WOLFSSL_SM3_SMALL
+        /* PEM */
+
         /* Certificate file `-c`; client command default: certs/server-cert.pem
          * wolfSSL_CTX_use_certificate_buffer */
+#if 0
+        #define CTX_SERVER_CERT      server_sm2_der
+        #define CTX_SERVER_CERT_NAME "server_sm2_der"
+        #define CTX_SERVER_CERT_SIZE sizeof_server_sm2_der
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+#else
         #define CTX_SERVER_CERT      server_sm2
         #define CTX_SERVER_CERT_NAME "server_sm2"
         #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+#endif
 
         /* Key file `-k`; client command default: ./certs/server-key.pem
          * wolfSSL_CTX_use_certificate_buffer */
-        #define CTX_SERVER_KEY       server_sm2_priv
-        #define CTX_SERVER_KEY_NAME  "server_sm2_priv"
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
-        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
-
-        #define CTX_CLIENT_CERT      client_sm2_der
-        #define CTX_CLIENT_CERT_NAME "client_sm2_der"
-        #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-    #endif
-#else
-    /* DER */
-    #define CTX_CA_CERT          root_sm2
-    #define CTX_CA_CERT_SIZE     sizeof_root_sm2
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
-    #ifndef NO_WOLFSSL_CLIENT
-        #define CTX_CLIENT_CERT      cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_NAME "cliecc_cert_der_256"
-        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_CLIENT_KEY       ecc_clikey_der_256
-        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #endif
-
-    #ifndef NO_WOLFSSL_SERVER
-        #define CTX_SERVER_CERT      server_sm2
-        #define CTX_SERVER_CERT_NAME "server_sm2"
-        #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
-        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-
-        #define CTX_SERVER_KEY       server_sm2_priv
-        #define CTX_SERVER_KEY_NAME  "server_sm2_priv"
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
+        #define CTX_SERVER_KEY       server_sm2_priv_der
+        #define CTX_SERVER_KEY_NAME  "server_sm2_priv_der"
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+
+        /* This is the optional peer verify certificate */
+        #define CTX_CLIENT_CERT      client_sm2
+        #define CTX_CLIENT_CERT_NAME "client_sm2"
+        #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_PEM
+
+        /* Client */
+        #ifndef NO_WOLFSSL_CLIENT
+            #define CTX_CA_CERT          root_sm2
+            #define CTX_CA_CERT_SIZE     sizeof_root_sm2
+            #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+
+            #define CTX_CLIENT_KEY       ecc_clikey_der_256
+            #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
+            #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+        #else
+            /* server TODO */
+        #endif
+
     #endif
-#endif
-    #undef  WOLFSSL_BASE16
-    #define WOLFSSL_BASE16
-#else
-    #if defined(USE_CERT_BUFFERS_2048)
-        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_2048)"
-        #ifdef USE_CERT_BUFFERS_1024
-            #error "USE_CERT_BUFFERS_1024 is already defined. Pick one."
-        #endif
-        #ifdef USE_CERT_BUFFERS_256
-            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
-        #endif
+    /* END SM */
 
-        /* Be sure to include in app, not here, when using example certs: */
-        /* #include <wolfssl/certs_test.h> */
+#elif defined(USE_CERT_BUFFERS_2048)
+    #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_2048)"
+    #ifdef USE_CERT_BUFFERS_1024
+        #error "USE_CERT_BUFFERS_1024 is already defined. Pick one."
+    #endif
+    #ifdef USE_CERT_BUFFERS_256
+        #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+    #endif
 
-        #define CTX_CA_CERT          ca_cert_der_2048
-        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-#if 0
+    /* Be sure to include in app, not here, when using example certs: */
+    /* #include <wolfssl/certs_test.h> */
+
+    #define CTX_CA_CERT          ca_cert_der_2048
+    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_2048
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #if 0
         /* No PEM certs available ? */
         #define CTX_SERVER_CERT      server_cert_2048
         #define CTX_SERVER_CERT_NAME "server_cert_2048"
@@ -1422,7 +1413,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_NAME  "server_key_2048"
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_2048
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
-#else
+    #else
         #define CTX_SERVER_CERT      server_cert_der_2048
         #define CTX_SERVER_CERT_NAME "server_cert_der_2048"
         #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_2048
@@ -1432,93 +1423,94 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_NAME  "server_key_der_2048"
         #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_2048
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-#endif
+    #endif
 
-#if 0
+    #if 0
         /* -A CA Cert Verify at the server, client fails */
         #define CTX_CLIENT_CERT      ca_cert_der_2048
         #define CTX_CLIENT_CERT_NAME "ca_cert_der_2048"
         #define CTX_CLIENT_CERT_SIZE sizeof_ca_cert_der_2048
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-#else
+    #else
         /* -A Client Verify at the server, WORKING!
-         * defaults: ./examples/client/client -v 3 -h 192.168.1.107 */
+            * defaults: ./examples/client/client -v 3 -h 192.168.1.107 */
         #define CTX_CLIENT_CERT      client_cert_der_2048
         #define CTX_CLIENT_CERT_NAME "client_cert_der_2048"
         #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_2048
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-#endif
-        #define CTX_CLIENT_KEY       client_key_der_2048
-        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #endif
+    #define CTX_CLIENT_KEY       client_key_der_2048
+    #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_2048
+    #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    /* END USE_CERT_BUFFERS_2048 */
 
-    #elif defined(USE_CERT_BUFFERS_1024)
-        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_1024)"
-        /*
-         * To connect to ESP32 server with a client from commandline:
-         *
-         * ../examples/client/client -h 192.168.1.47  -p 11111 -v 3 -d
-         *                           -A ./certs/1024/ca-cert.pem
-         *                           -c ./certs/1024/client-cert.pem
-         *                           -k ./certs/1024/client-key.pem
-         */
-        #ifdef USE_CERT_BUFFERS_2048
-            #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
-        #endif
-        #ifdef USE_CERT_BUFFERS_256
-            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
-        #endif
+#elif defined(USE_CERT_BUFFERS_1024)
+    #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_1024)"
+    /*
+        * To connect to ESP32 server with a client from commandline:
+        *
+        * ../examples/client/client -h 192.168.1.47  -p 11111 -v 3 -d
+        *                           -A ./certs/1024/ca-cert.pem
+        *                           -c ./certs/1024/client-cert.pem
+        *                           -k ./certs/1024/client-key.pem
+        */
+    #ifdef USE_CERT_BUFFERS_2048
+        #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
+    #endif
+    #ifdef USE_CERT_BUFFERS_256
+        #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+    #endif
 
-        /* Be sure to include in app, not here, when using example certs: */
-        /* #include <wolfssl/certs_test.h> */
+    /* Be sure to include in app, not here, when using example certs: */
+    /* #include <wolfssl/certs_test.h> */
 
-        #define CTX_CA_CERT          ca_cert_der_1024
-        #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #define CTX_CA_CERT          ca_cert_der_1024
+    #define CTX_CA_CERT_SIZE     sizeof_ca_cert_der_1024
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_CLIENT_CERT      client_cert_der_1024
-        #define CTX_CLIENT_CERT_NAME "client_cert_der_1024"
-        #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_1024
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #define CTX_CLIENT_CERT      client_cert_der_1024
+    #define CTX_CLIENT_CERT_NAME "client_cert_der_1024"
+    #define CTX_CLIENT_CERT_SIZE sizeof_client_cert_der_1024
+    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_CLIENT_KEY       client_key_der_1024
-        #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_1024
-        #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #define CTX_CLIENT_KEY       client_key_der_1024
+    #define CTX_CLIENT_KEY_SIZE  sizeof_client_key_der_1024
+    #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_SERVER_CERT      server_cert_der_1024
-        #define CTX_SERVER_CERT_NAME "server_cert_der_1024"
-        #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_1024
-        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #define CTX_SERVER_CERT      server_cert_der_1024
+    #define CTX_SERVER_CERT_NAME "server_cert_der_1024"
+    #define CTX_SERVER_CERT_SIZE sizeof_server_cert_der_1024
+    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_SERVER_KEY       server_key_der_1024
-        #define CTX_SERVER_KEY_NAME  "server_key_der_1024"
-        #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
-        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-        /* end USE_CERT_BUFFERS_1024 */
+    #define CTX_SERVER_KEY       server_key_der_1024
+    #define CTX_SERVER_KEY_NAME  "server_key_der_1024"
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_key_der_1024
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    /* end USE_CERT_BUFFERS_1024 */
 
-    #elif defined(USE_CERT_BUFFERS_256)
-        #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_256)"
-        /*
-         * To connect to ESP32 server with a client from commandline:
-         *
-         * ./examples/client/client -h 192.168.1.80  -p 11111 -v 3 -d        \
-         *                          -A ./certs/ecc/ca-secp256k1-cert.pem     \
-         *                          -c ./certs/ecc/client-secp256k1-cert.pem \
-         *                          -k ./certs/ecc/secp256k1-key.pem
-         */
-        #ifdef USE_CERT_BUFFERS_2048
-            #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
-        #endif
-        #ifdef USE_CERT_BUFFERS_1024
-            #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
-        #endif
+#elif defined(USE_CERT_BUFFERS_256)
+    #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_256)"
+    /*
+        * To connect to ESP32 server with a client from commandline:
+        *
+        * ./examples/client/client -h 192.168.1.80  -p 11111 -v 3 -d        \
+        *                          -A ./certs/ecc/ca-secp256k1-cert.pem     \
+        *                          -c ./certs/ecc/client-secp256k1-cert.pem \
+        *                          -k ./certs/ecc/secp256k1-key.pem
+        */
+    #ifdef USE_CERT_BUFFERS_2048
+        #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
+    #endif
+    #ifdef USE_CERT_BUFFERS_1024
+        #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+    #endif
 
-        /* Be sure to include in app, not here, when using example certs: */
-        /* #include <wolfssl/certs_test.h> */
+    /* Be sure to include in app, not here, when using example certs: */
+    /* #include <wolfssl/certs_test.h> */
 
-        #define CTX_CA_CERT          ca_ecc_cert_der_256
-        #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
-        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
+    #define CTX_CA_CERT          ca_ecc_cert_der_256
+    #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
+    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
     #ifndef NO_WOLFSSL_CLIENT
         #define CTX_CLIENT_CERT      cliecc_cert_der_256
@@ -1542,10 +1534,10 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_ecc_key_der_256
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #endif
-        /* end USE_CERT_BUFFERS_256 */
+    /* end USE_CERT_BUFFERS_256 */
 
-    #endif /* USE_CERT_BUFFERS_[n] */
-#endif /* Conditional key and cert constant names */
+#endif /* USE_CERT_BUFFERS_[n] */
+
 
 /******************************************************************************
 ** Sanity Checks
