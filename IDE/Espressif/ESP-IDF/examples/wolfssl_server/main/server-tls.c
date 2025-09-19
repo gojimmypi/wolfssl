@@ -452,23 +452,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to load privatekey");
     }
 
-
-    /* Verify */
-    ESP_LOGI(TAG, "Load verify cert %s", "server_sm2_cert_der");
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         server_sm2_cert_der,
-                                         sizeof_server_sm2_cert_der,
-                                         WOLFSSL_FILETYPE_ASN1);
-    if (ret != SSL_SUCCESS) {
-        wolfSSL_CTX_free(ctx);
-        ctx = NULL;
-        halt_for_reboot("ERROR: failed to load wolfSSL_CTX_load_verify_buffer");
-    }
-
-    ret = wolfSSL_CTX_load_verify_buffer(ctx,
-                                        ca_sm2_der, sizeof_ca_sm2_der,
-                                        WOLFSSL_FILETYPE_ASN1);
-
 #if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
     ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
     wolfSSL_CTX_set_verify(ctx,
@@ -491,6 +474,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "CTX SSL_VERIFY_NONE");
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
 #endif
+
 /*
  * ./examples/client/client -h 192.168.1.107 -v 3   -l ECDHE-ECDSA-SM4-CBC-SM3   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/ca-sm2.pem -C
    ./examples/client/client -v 3 -l  ECDHE-ECDSA-SM4-CBC-SM3  -h 192.168.1.107   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/root-sm2.pem -C
