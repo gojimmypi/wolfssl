@@ -995,11 +995,14 @@
 
 #elif defined(CONFIG_IDF_TARGET_ESP32C61)
     #define WOLFSSL_ESP32
-    /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
+    /* wolfSSL HW Acceleration not yet supported on ESP32-C61. */
 
-    /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
-    /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
+    /* define NO_ESP32_CRYPT */
+
+    /* TODO latest WIP ESP-IDF v6 needs esp_sha_set_mode, disable for now: */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+
+    /* These are defined automatically in esp32-crypt.h, here for clarity:  */
     /* no SHA384 HW on C61  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C61  */
