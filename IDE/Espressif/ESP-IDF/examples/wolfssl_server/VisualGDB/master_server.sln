@@ -5,6 +5,21 @@ VisualStudioVersion = 17.14.36408.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "master_server", "master_server.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp-sdk-lib.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp-sdk-lib.h
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_util.c
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_time_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_time_lib.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_wifi_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_wifi_lib.c
+		..\..\..\..\..\..\wolfcrypt\src\wc_port.c = ..\..\..\..\..\..\wolfcrypt\src\wc_port.c
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB

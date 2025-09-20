@@ -75,7 +75,7 @@
         <BaudRate>57600</BaudRate>
         <SuppressTestPrerequisiteChecks>false</SuppressTestPrerequisiteChecks>
         <UseCCache>true</UseCCache>
-        <DeviceID>ESP32C61</DeviceID>
+        <DeviceID>ESP32C6</DeviceID>
       </ESPIDFExtension>
       <DetectMissingSolutionConfigurations>false</DetectMissingSolutionConfigurations>
     </ProjectModeSettings>
