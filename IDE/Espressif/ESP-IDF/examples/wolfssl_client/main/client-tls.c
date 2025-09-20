@@ -238,7 +238,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     int ret_i; /* interim return values */
     int err; /* interim return values */
     int sockfd;
-    int doPeerCheck;
     int sendGet;
 #ifdef DEBUG_WOLFSSL
     int this_heap = 0;
@@ -255,7 +254,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
-    doPeerCheck = 1;
     sendGet = 0;
 
 #ifdef DEBUG_WOLFSSL
@@ -447,10 +445,19 @@ TLS13-AES128-CCM8-SHA256
 #else
     ESP_LOGW(TAG, "Unknown Certificates in use!");
 #endif
-
+/* Some older versions don't have cert name strings, so set to blanks: */
+#ifndef CTX_CA_CERT_NAME
+    #define CTX_CA_CERT_NAME ""
+#endif
+#ifndef CTX_CLIENT_CERT_NAME
+    #define CTX_CLIENT_CERT_NAME ""
+#endif
+#ifndef CTX_CLIENT_KEY_NAME
+    #define CTX_CLIENT_KEY_NAME ""
+#endif
 
     /* Load client certificates into WOLFSSL_CTX */
- //   ESP_LOGI(TAG, "Loading CA cert %s",    CTX_CA_CERT_NAME);
+    ESP_LOGI(TAG, "Loading CA cert %s",    CTX_CA_CERT_NAME);
     ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
                                            CTX_CA_CERT,
                                            CTX_CA_CERT_SIZE,
@@ -458,11 +465,9 @@ TLS13-AES128-CCM8-SHA256
     if (ret_i != WOLFSSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load CA cert %d, "
                         "please check the file.\n", ret_i) ;
-    }
-
-    if (ret_i != WOLFSSL_SUCCESS) {
-        ESP_LOGE(TAG, "ERROR: failed to load key %d, "
-                        "please check the file.\n", ret_i) ;
+        wolfSSL_CTX_free(ctx);
+        ctx = NULL;
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_load_verify_buffer");
     }
 
 #if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
@@ -478,27 +483,36 @@ TLS13-AES128-CCM8-SHA256
 
     WOLFSSL_MSG("Loading... our cert");
     /* load our certificate */
+    ESP_LOGI(TAG, "Load our client cert %s",   CTX_CLIENT_CERT_NAME);
     ret_i = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                           CTX_CLIENT_CERT,
-                                           CTX_CLIENT_CERT_SIZE,
-                                           CTX_CLIENT_CERT_TYPE);
+                                               CTX_CLIENT_CERT,
+                                               CTX_CLIENT_CERT_SIZE,
+                                               CTX_CLIENT_CERT_TYPE);
     if (ret_i != WOLFSSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load our cert chain %d, "
                         "please check the file.", ret_i);
+        wolfSSL_CTX_free(ctx);
+        ctx = NULL;
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_use_certificate_buffer");
     }
 
 
-    WOLFSSL_MSG("Loading... our key");
- //   ESP_LOGI(TAG, "Load Client Key %s",    CTX_CLIENT_KEY_NAME);
+    ESP_LOGI(TAG, "Load Client Key %s",       CTX_CLIENT_KEY_NAME);
     ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                           CTX_CLIENT_KEY,
-                                           CTX_CLIENT_KEY_SIZE,
-                                           CTX_CLIENT_KEY_TYPE);
+                                              CTX_CLIENT_KEY,
+                                              CTX_CLIENT_KEY_SIZE,
+                                              CTX_CLIENT_KEY_TYPE);
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to load key %d, "
+                        "please check the file.\n", ret_i) ;
+        wolfSSL_CTX_free(ctx);
+        ctx = NULL;
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_use_PrivateKey_buffer");
+    }
 
-    /* Initialize the client address struct with zeros */
+
+    /* Setup server port and address */
     memset(&servAddr, 0, sizeof(servAddr));
-
-    /* Fill in the server address */
     servAddr.sin_family = AF_INET; /* using IPv4      */
     servAddr.sin_port = htons(TLS_SMP_DEFAULT_PORT); /* on DEFAULT_PORT */
 
@@ -529,7 +543,7 @@ TLS13-AES128-CCM8-SHA256
     }
 
 #if defined(WOLFSSL_EXPERIMENTAL_SETTINGS)
-        ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
+    ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
 #endif
 
     WOLFSSL_MSG("Create a WOLFSSL object");
@@ -651,10 +665,7 @@ TLS13-AES128-CCM8-SHA256
         ShowCiphers(ssl);
 #endif
         ESP_LOGI(TAG, "Connect success! Sending message...");
-        /* Get a message for the server from stdin */
-        WOLFSSL_MSG("Message for server: ");
         memset(buff, 0, sizeof(buff));
-
         if (sendGet) {
             len = XSTRLEN(sndMsg);
             strncpy(buff, sndMsg, len);

@@ -1341,10 +1341,12 @@ Turn on timer debugging (used when CPU cycles not available)
     #else
     #ifndef NO_WOLFSSL_CLIENT
         #define CTX_CA_CERT          root_sm2_der
+        #define CTX_CA_CERT_NAME     "root_sm2_der"
         #define CTX_CA_CERT_SIZE     sizeof_root_sm2_der
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
         #define CTX_CLIENT_KEY       client_sm2_priv_der
+        #define CTX_CLIENT_KEY_NAME  "client_sm2_priv_der"
         #define CTX_CLIENT_KEY_SIZE  sizeof_client_sm2_priv_der
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #else
