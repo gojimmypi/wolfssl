@@ -149,6 +149,8 @@
 extern "C" {
 #endif
 
+WOLFSSL_LOCAL esp_err_t esp_sdk_wolfssl_warmup(void);
+
 WOLFSSL_LOCAL esp_err_t esp_sdk_time_mem_init(void);
 
 WOLFSSL_LOCAL esp_err_t sdk_var_whereis(const char* v_name, void* v);
@@ -156,6 +158,7 @@ WOLFSSL_LOCAL esp_err_t sdk_var_whereis(const char* v_name, void* v);
 WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
+
 
 #define HAVE_STACK_HEAP_INFO
 typedef enum {

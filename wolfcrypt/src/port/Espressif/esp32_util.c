@@ -60,6 +60,11 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/version.h>
 
+#ifndef NO_WOLFCRYPT_WARMUP
+    #if !defined(NO_AES) && defined(HAVE_AESGCM)
+        #include <wolfssl/wolfcrypt/aes.h>
+    #endif
+#endif
 /*
 ** Version / Platform info.
 **
@@ -376,6 +381,95 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 ** All Platforms
 *******************************************************************************
 */
+
+/*
+** All platforms: Warmup wolfssl
+*/
+esp_err_t esp_sdk_wolfssl_warmup(void)
+{
+    esp_err_t ret = ESP_OK;
+#ifdef NO_WOLFCRYPT_WARMUP
+    ESP_LOGW(TAG, "esp_sdk_wolfssl_warmup called with NO_WOLFCRYPT_WARMUP");
+#else
+    /* Even though some [name]_NO_MALLOC may defined, there's always the host
+     * freeRTOS heap. So here, we'll initialize things early on to attempt
+     * having the heap allocate long term items near the endge of free memory,
+     * rather than in the middle. */
+    WC_RNG rng;
+    byte dummy;
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
+    Aes aes;
+    unsigned char key16[16];
+    unsigned char out[16];
+    unsigned char in[16];
+    unsigned char iv[12];
+    int devId;
+#endif
+
+#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+    WOLFSSL_MSG("Warming up RNG");
+#endif
+    ret = wc_InitRng(&rng);
+    if (ret == 0) {
+        /* forces Hash_DRBG/SHA */
+        ret = wc_RNG_GenerateBlock(&rng, &dummy, 1);
+        if (ret != 0) {
+            WOLFSSL_MSG("wolfCrypt_Init wc_RNG_GenerateBlock failed");
+        }
+    }
+    if (ret != 0) {
+        WOLFSSL_MSG("wolfCrypt_Init RNG warmup failed");
+    }
+    ret = wc_FreeRng(&rng);
+    if (ret != 0) {
+        WOLFSSL_MSG("wolfCrypt_Init wc_FreeRng failed");
+    }
+
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
+#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+    WOLFSSL_MSG("Warming up AES");
+#endif
+    memset(key16, 0, sizeof(key16));
+    memset(iv, 0, sizeof(iv));
+    memset(in, 0, sizeof(in));
+    devId = INVALID_DEVID;
+
+    ret = wc_AesInit(&aes, NULL, devId);
+    if (ret == 0) {
+        /* Set an ECB key (no IV). This avoids pulling in GCM/GHASH. */
+        ret = wc_AesSetKey(&aes, key16, (word32)sizeof(key16), NULL,
+                            AES_ENCRYPTION);
+    }
+    if (ret == 0) {
+#ifdef WOLFSSL_AES_DIRECT
+        /* Single direct block encrypt to exercise the core/driver. */
+        ret = wc_AesEncryptDirect(&aes, out, in);
+#elif !defined(NO_AES_CBC)
+    /* One-block CBC (tiny; no padding; does not pull GCM). */
+    ret = wc_AesSetIV(&aes, iv);
+    if (ret == 0) {
+        ret = wc_AesCbcEncrypt(&aes, out, in, (word32)sizeof(in));
+    }
+#elif defined(HAVE_AES_CTR) || defined(WOLFSSL_AES_COUNTER)
+    /* As another lightweight option, CTR one-block. */
+    ret = wc_AesSetIV(&aes, iv);
+    if (ret == 0) {
+        ret = wc_AesCtrEncrypt(&aes, out, in, (word32)sizeof(in));
+    }
+#else
+    /* No small mode available; setting the key already did most of the warmup. */
+    ret = 0;
+#endif
+    }
+    if (ret != 0) {
+        WOLFSSL_MSG("AES warmup failed during wolfCrypt_Init");
+    }
+    wc_AesFree(&aes);
+#endif /* !NO_AES && HAVE_AESGCM */
+#endif /* !NO_WOLFCRYPT_WARMUP */
+
+    return ret;
+}
 
 /*
 ** All platforms: git details
