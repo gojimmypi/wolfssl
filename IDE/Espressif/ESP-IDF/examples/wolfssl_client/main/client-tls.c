@@ -292,7 +292,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
 #endif /* SO_REUSEPORT        */
 #endif /* optional TCP re-use */
-    ESP_LOGI(TAG, "get target IP address");
+    ESP_LOGI(TAG, "Get target IP address: %s", TLS_SMP_TARGET_HOST);
 
     hp = gethostbyname(TLS_SMP_TARGET_HOST);
     if (!hp) {
@@ -441,49 +441,59 @@ TLS13-AES128-CCM8-SHA256
     }
 #endif
 
-    /* no peer check */
-    if (doPeerCheck == 0) {
-        ESP_LOGW(TAG, "doPeerCheck == 0; WOLFSSL_VERIFY_NONE");
-        wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_NONE, 0);
+    /* Identify certificates used, typically in wolfssl/certs_test[_sm].h */
+#ifdef CTX_CERT_SET_NAME
+    ESP_LOGI(TAG, "Certificates in use: %s", CTX_CERT_SET_NAME);
+#else
+    ESP_LOGW(TAG, "Unknown Certificates in use!");
+#endif
+
+
+    /* Load client certificates into WOLFSSL_CTX */
+ //   ESP_LOGI(TAG, "Loading CA cert %s",    CTX_CA_CERT_NAME);
+    ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
+                                           CTX_CA_CERT,
+                                           CTX_CA_CERT_SIZE,
+                                           CTX_CA_CERT_TYPE);
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to load CA cert %d, "
+                        "please check the file.\n", ret_i) ;
     }
-    else {
-        ESP_LOGI(TAG, "doPeerCheck != 0");
-        WOLFSSL_MSG("Loading... our cert");
-        /* load our certificate */
-        ret_i = wolfSSL_CTX_use_certificate_buffer(ctx,
-                                         CTX_CLIENT_CERT,
-                                         CTX_CLIENT_CERT_SIZE,
-                                         CTX_CLIENT_CERT_TYPE);
-        if (ret_i != WOLFSSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to load our cert chain %d, "
-                          "please check the file.", ret_i);
-        }
 
-        /* Load client certificates into WOLFSSL_CTX */
-        WOLFSSL_MSG("Loading... CA cert");
-        ret_i = wolfSSL_CTX_load_verify_buffer(ctx,
-                                         CTX_CA_CERT,
-                                         CTX_CA_CERT_SIZE,
-                                         CTX_CA_CERT_TYPE);
-        if (ret_i != WOLFSSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to load CA cert %d, "
-                          "please check the file.\n", ret_i) ;
-        }
-
-        WOLFSSL_MSG("Loading... our key");
-        ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                                         CTX_CLIENT_KEY,
-                                         CTX_CLIENT_KEY_SIZE,
-                                         CTX_CLIENT_KEY_TYPE);
-        if (ret_i != WOLFSSL_SUCCESS) {
-            ESP_LOGE(TAG, "ERROR: failed to load key %d, "
-                          "please check the file.\n", ret_i) ;
-        }
-
-        wolfSSL_CTX_set_verify(ctx,
-                              WOLFSSL_VERIFY_PEER |
-                              WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to load key %d, "
+                        "please check the file.\n", ret_i) ;
     }
+
+#if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
+    ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
+    wolfSSL_CTX_set_verify(ctx,
+                                (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
+                                 WOLFSSL_VERIFY_PEER),
+                                NULL);
+#else
+    ESP_LOGI(TAG, "CTX SSL_VERIFY_NONE");
+    wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+#endif
+
+    WOLFSSL_MSG("Loading... our cert");
+    /* load our certificate */
+    ret_i = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                           CTX_CLIENT_CERT,
+                                           CTX_CLIENT_CERT_SIZE,
+                                           CTX_CLIENT_CERT_TYPE);
+    if (ret_i != WOLFSSL_SUCCESS) {
+        ESP_LOGE(TAG, "ERROR: failed to load our cert chain %d, "
+                        "please check the file.", ret_i);
+    }
+
+
+    WOLFSSL_MSG("Loading... our key");
+ //   ESP_LOGI(TAG, "Load Client Key %s",    CTX_CLIENT_KEY_NAME);
+    ret_i = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                           CTX_CLIENT_KEY,
+                                           CTX_CLIENT_KEY_SIZE,
+                                           CTX_CLIENT_KEY_TYPE);
 
     /* Initialize the client address struct with zeros */
     memset(&servAddr, 0, sizeof(servAddr));
@@ -740,6 +750,8 @@ WOLFSSL_ESP_TASK tls_smp_client_init(void* args)
 #else
     xTaskHandle _handle;
 #endif
+    ESP_LOGI(TAG, "Creating task: tls_smp_client_init. Stack size = %d",
+                   TLS_SMP_CLIENT_TASK_BYTES);
     /* See Espressif api-reference/system/freertos_idf.html#functions  */
     if (TLS_SMP_CLIENT_TASK_BYTES < (6 * 1024)) {
         /* Observed approximately 6KB limit for the RTOS task stack size.
