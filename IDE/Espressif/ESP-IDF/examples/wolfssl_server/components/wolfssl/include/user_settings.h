@@ -997,8 +997,9 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration not yet supported on ESP32-C61. */
 
-    /* define NO_ESP32_CRYPT */
-
+    #define NO_ESP32_CRYPT                 
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH   
+     
     /* TODO latest WIP ESP-IDF v6 needs esp_sha_set_mode, disable for now: */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 
@@ -1329,6 +1330,7 @@ Turn on timer debugging (used when CPU cycles not available)
      *
      * Note that the PEM file of server_sm2 contains both leaf and CA
      * The DER file contains only the server cert. */
+
     #define CTX_SERVER_CERT      server_sm2
     #define CTX_SERVER_CERT_NAME "server_sm2"
     #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
@@ -1347,7 +1349,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2
     #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_PEM
 
-    /* Client */
+
     #ifndef NO_WOLFSSL_CLIENT
         #define CTX_CA_CERT          root_sm2
         #define CTX_CA_CERT_SIZE     sizeof_root_sm2
