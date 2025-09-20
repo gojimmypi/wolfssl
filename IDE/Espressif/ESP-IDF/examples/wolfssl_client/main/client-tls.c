@@ -480,7 +480,9 @@ TLS13-AES128-CCM8-SHA256
                           "please check the file.\n", ret_i) ;
         }
 
-        wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
+        wolfSSL_CTX_set_verify(ctx,
+                              WOLFSSL_VERIFY_PEER |
+                              WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
     }
 
     /* Initialize the client address struct with zeros */
