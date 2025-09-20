@@ -180,6 +180,9 @@ if(0)
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+#if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  #string(REPLACE "-std=gnu2b" "-std=gnu2x" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+#endif()
 
 # Once the project is loaded, next check for ESP-IDF version 6 or greater.
 # Numerous "dangerous relocation: call8: call target out of range: memcpy" errors encountered

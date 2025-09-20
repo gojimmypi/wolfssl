@@ -189,10 +189,15 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+#ifdef HAVE_WOLFCRYPT_WARMUP
+    /* Unless disabled, we'll try to allocate known, long-term heap items early
+     * in an attempt to avoid later allocations that may cause fragmentation. */
+    ESP_ERROR_CHECK(esp_sdk_wolfssl_warmup());
+#endif
 #ifdef DEBUG_WOLFSSL
-    /* Turn debugging off as needed: */
+    /* Turn debugging on and off as needed: */
+    wolfSSL_Debugging_ON();
     wolfSSL_Debugging_OFF();
-    // wolfSSL_Debugging_ON();
 #endif
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
