@@ -150,7 +150,7 @@
 #endif
 #endif
 
-#if !defined(NO_AES) && !defined(WC_NO_AES)
+#if !defined(NO_AES)
     #include <wolfssl/wolfcrypt/aes.h>
 #endif
 
@@ -167,7 +167,7 @@ static int wolfCrypt_Warmup(void)
     int ret = 0;
     WC_RNG rng;
     byte dummy;
-#if !defined(NO_AES) && !defined(WC_NO_AES) && defined(HAVE_AESGCM)
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
     Aes aes;
     unsigned char key16[16];
     unsigned char out[16];
@@ -195,7 +195,7 @@ static int wolfCrypt_Warmup(void)
         WOLFSSL_MSG("wolfCrypt_Init wc_FreeRng failed");
     }
 
-#if !defined(NO_AES) && !defined(WC_NO_AES) && defined(HAVE_AESGCM)
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
 #if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
     WOLFSSL_MSG("Warming up AES");
 #endif
@@ -235,7 +235,7 @@ static int wolfCrypt_Warmup(void)
         WOLFSSL_MSG("AES warmup failed during wolfCrypt_Init");
     }
     wc_AesFree(&aes);
-#endif /* !NO_AES && !WC_NO_AES && HAVE_AESGCM */
+#endif /* !NO_AES && HAVE_AESGCM */
 
     return ret;
 }
@@ -252,10 +252,10 @@ int wolfCrypt_Init(void)
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Init");
 
-    #ifdef WOLFCRYPT_WARMUP
-        /* Warm up the hardware to allocate any heap & semaphore early */
-        ret = wolfCrypt_Warmup();
-    #endif
+//    #ifdef WOLFCRYPT_WARMUP
+//        /* Warm up the hardware to allocate any heap & semaphore early */
+//        ret = wolfCrypt_Warmup();
+//    #endif
 
     #if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
         WOLFSSL_MSG("Warming up RNG");
