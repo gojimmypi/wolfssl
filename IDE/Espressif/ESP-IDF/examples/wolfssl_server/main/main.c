@@ -202,6 +202,11 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+#ifdef HAVE_WOLFCRYPT_WARMUP
+    /* Unless disabled, we'll try to allocate known, long-term heap early
+     * in an attempt to avoid later fragmentation */
+    ESP_ERROR_CHECK(esp_sdk_wolfssl_warmup());
+#endif
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
     ESP_LOGW(TAG, "Found WOLFSSL_ESP_NO_WATCHDOG, disabling...");
     esp_DisableWatchdog();
