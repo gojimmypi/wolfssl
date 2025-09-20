@@ -997,9 +997,9 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration not yet supported on ESP32-C61. */
 
-    #define NO_ESP32_CRYPT                 
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH   
-     
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+
     /* TODO latest WIP ESP-IDF v6 needs esp_sha_set_mode, disable for now: */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 
@@ -1344,19 +1344,21 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     /* This is the optional peer verify certificate */
-    #define CTX_CLIENT_CERT      client_sm2
-    #define CTX_CLIENT_CERT_NAME "client_sm2"
-    #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2
-    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_PEM
+    #define CTX_CLIENT_CERT      client_sm2_der
+    #define CTX_CLIENT_CERT_NAME "client_sm2_der"
+    #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
+    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
-
+    /* Client */
     #ifndef NO_WOLFSSL_CLIENT
-        #define CTX_CA_CERT          root_sm2
-        #define CTX_CA_CERT_SIZE     sizeof_root_sm2
+        #define CTX_CA_CERT          root_sm2_der
+        #define CTX_CA_CERT_NAME     "root_sm2_der"
+        #define CTX_CA_CERT_SIZE     sizeof_root_sm2_der
         #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
-        #define CTX_CLIENT_KEY       ecc_clikey_der_256
-        #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
+        #define CTX_CLIENT_KEY       client_sm2_priv_der
+        #define CTX_CLIENT_KEY_NAME  "client_sm2_priv_der"
+        #define CTX_CLIENT_KEY_SIZE  sizeof_client_sm2_priv_der
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #else
         /* server TODO */

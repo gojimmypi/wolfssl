@@ -1338,10 +1338,10 @@ Turn on timer debugging (used when CPU cycles not available)
 
     /* Key file `-k`; client command default: ./certs/server-key.pem
         * wolfSSL_CTX_use_certificate_buffer */
-    #define CTX_SERVER_KEY       server_sm2_priv
-    #define CTX_SERVER_KEY_NAME  "server_sm2_priv"
-    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv
-    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_PEM
+    #define CTX_SERVER_KEY       server_sm2_priv_der
+    #define CTX_SERVER_KEY_NAME  "server_sm2_priv_der"
+    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
+    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
     /* This is the optional peer verify certificate */
     #define CTX_CLIENT_CERT      client_sm2_der
@@ -1349,6 +1349,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
     #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
+    /* Client */
     #ifndef NO_WOLFSSL_CLIENT
         #define CTX_CA_CERT          root_sm2_der
         #define CTX_CA_CERT_NAME     "root_sm2_der"
