@@ -20,6 +20,7 @@
  */
 
 #include "client-tls.h"
+#define MY_PEER_VERIFY 1
 
 /* Espressif FreeRTOS */
 #ifndef SINGLE_THREADED
@@ -58,9 +59,26 @@
     #include <wolfssl/wolfcrypt/mlkem.h>
     #include <wolfssl/wolfcrypt/wc_mlkem.h>
 #endif
-#if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024)
+
+/* The default user_settings.h includes macros that reference sample certs: */
+#if defined(USE_CERT_BUFFERS_2048) || defined(USE_CERT_BUFFERS_1024) || \
+    defined(USE_CERT_BUFFERS_256)
     #include <wolfssl/certs_test.h>
 #endif
+#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
+    #include <wolfssl/certs_test_sm.h>
+#endif
+/* Some older versions don't have cert name strings, so set to blanks: */
+#ifndef CTX_CLIENT_CERT_NAME
+    #define CTX_CLIENT_CERT_NAME ""
+#endif
+#ifndef CTX_SERVER_KEY_NAME
+    #define CTX_SERVER_KEY_NAME ""
+#endif
+#ifndef CTX_SERVER_CERT_NAME
+    #define CTX_SERVER_CERT_NAME ""
+#endif
+
 #ifdef WOLFSSL_TRACK_MEMORY
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
@@ -73,7 +91,6 @@
     #undef  DEFAULT_MAX_DHKEY_BITS
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
-
 
 /*
  * Optionally define explicit ciphers, for example these TLS 1.3 options.
@@ -100,7 +117,6 @@
  **/
 #define TAG "client-tls"
 
-#if defined(DEBUG_WOLFSSL)
 int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
@@ -133,7 +149,13 @@ int ShowCiphers(WOLFSSL* ssl)
     return ret;
 }
 
-#endif
+static void halt_for_reboot(const char* s)
+{
+    ESP_LOGE(TAG, "Halt. %s", s);
+    while (1) {
+        vTaskDelay(60000);
+    }
+}
 
 #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
                                   && defined(WOLFSSL_ATECC508A)
@@ -201,7 +223,6 @@ void my_atmel_free(int slotId)
 WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 {
 #if defined(SINGLE_THREADED)
-    int ret = ESP_OK;
     #define TLS_SMP_CLIENT_TASK_RET ret
 #else
     #define TLS_SMP_CLIENT_TASK_RET
@@ -210,6 +231,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     const char sndMsg[] = "GET /index.html HTTP/1.0\r\n\r\n";
     const char* ch = TLS_SMP_TARGET_HOST; /* see wifi_connect.h */
     struct sockaddr_in servAddr;
+    int ret = ESP_OK;
 
     struct hostent *hp;
     struct ip4_addr *ip4_addr;
@@ -237,9 +259,17 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     sendGet = 0;
 
 #ifdef DEBUG_WOLFSSL
-    WOLFSSL_MSG("Debug ON");
+    wolfSSL_Debugging_OFF();
     ShowCiphers(NULL);
 #endif
+
+#if defined(SINGLE_THREADED)
+    /* No startup delay */
+#else
+    /* Brief delay to allow the main task to be deleted and free memory. */
+    vTaskDelay(100);
+#endif
+
     /* Initialize wolfSSL */
     ESP_LOGI(TAG, "Start wolfSSL_Init()");
     ret_i = wolfSSL_Init();
@@ -252,7 +282,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
      * 0 means choose the default protocol. */
     WOLFSSL_MSG( "start socket())");
     if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
-        ESP_LOGE(TAG, "ERROR: failed to create the socket");
+        halt_for_reboot("ERROR: failed to create the socket");
     }
 
     /* Optionally set TCP Socket Re-use. */
@@ -275,37 +305,31 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
-#if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
-    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
-    /* ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()); for only TLS 1.3 */
-    if (ctx == NULL) {
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
+    ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
+#endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
+    ESP_LOGW(TAG, "Creating TLS 1.3 (only) client context...");
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#elif defined(WOLFSSL_TLS13)
+    ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) client context...");
+    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
-        ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
-    #endif
-    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
-        ESP_LOGW(TAG, "Creating TLS 1.3 (only) client context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #elif defined(WOLFSSL_TLS13)
-        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) client context...");
-        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #else
-        ESP_LOGW(TAG, "Creating TLS 1.2 (only) clientr context...");
-        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method())) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-        }
-    #endif
-#endif
+
+    ESP_LOGW(TAG, "Creating TLS 1.2 (only) client context...");
+    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method())) == NULL) {
+        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+    }
+#endif /* TLS 1.2 or TLS 1.3 */
+
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
-     * Smaller certs are typically used withj smaller RAM devices.(ESP8266)
+     * Smaller certs are typically used with smaller RAM devices.(ESP8266)
      * Example client will need explicit params:
      *   ./examples/client/client -h 192.168.1.48  -p 11111 -v 3  \
      *                            -A ./certs/1024/ca-cert.pem     \
@@ -459,7 +483,7 @@ TLS13-AES128-CCM8-SHA256
         wolfSSL_CTX_set_verify(ctx, WOLFSSL_VERIFY_PEER, 0);
     }
 
-    /* Initialize the server address struct with zeros */
+    /* Initialize the client address struct with zeros */
     memset(&servAddr, 0, sizeof(servAddr));
 
     /* Fill in the server address */
