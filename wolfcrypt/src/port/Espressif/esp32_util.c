@@ -61,6 +61,7 @@
 #include <wolfssl/version.h>
 
 #ifndef NO_WOLFCRYPT_WARMUP
+    #define HAVE_WOLFCRYPT_WARMUP
     #if !defined(NO_AES) && defined(HAVE_AESGCM)
         #include <wolfssl/wolfcrypt/aes.h>
     #endif
