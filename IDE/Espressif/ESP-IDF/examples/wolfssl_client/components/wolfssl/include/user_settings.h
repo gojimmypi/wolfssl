@@ -1331,23 +1331,20 @@ Turn on timer debugging (used when CPU cycles not available)
      * Note that the PEM file of server_sm2 contains both leaf and CA
      * The DER file contains only the server cert. */
 
-    #define CTX_SERVER_CERT      server_sm2
-    #define CTX_SERVER_CERT_NAME "server_sm2"
-    #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
-    #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+    /* Server */
+    #ifndef NO_WOLFSSL_SERVER
+        #define CTX_SERVER_CERT      server_sm2
+        #define CTX_SERVER_CERT_NAME "server_sm2"
+        #define CTX_SERVER_CERT_SIZE sizeof_server_sm2
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
 
-    /* Key file `-k`; client command default: ./certs/server-key.pem
-        * wolfSSL_CTX_use_certificate_buffer */
-    #define CTX_SERVER_KEY       server_sm2_priv_der
-    #define CTX_SERVER_KEY_NAME  "server_sm2_priv_der"
-    #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
-    #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-
-    /* This is the optional peer verify certificate */
-    #define CTX_CLIENT_CERT      client_sm2_der
-    #define CTX_CLIENT_CERT_NAME "client_sm2_der"
-    #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
-    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        /* Key file `-k`; client command default: ./certs/server-key.pem
+            * wolfSSL_CTX_use_certificate_buffer */
+        #define CTX_SERVER_KEY       server_sm2_priv_der
+        #define CTX_SERVER_KEY_NAME  "server_sm2_priv_der"
+        #define CTX_SERVER_KEY_SIZE  sizeof_server_sm2_priv_der
+        #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
+    #endif
 
     /* Client */
     #ifndef NO_WOLFSSL_CLIENT
@@ -1360,9 +1357,14 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_NAME  "client_sm2_priv_der"
         #define CTX_CLIENT_KEY_SIZE  sizeof_client_sm2_priv_der
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #else
-        /* server TODO */
     #endif
+
+    /* Client Cert.
+     * This is also the optional peer verify certificate at server */
+    #define CTX_CLIENT_CERT      client_sm2_der
+    #define CTX_CLIENT_CERT_NAME "client_sm2_der"
+    #define CTX_CLIENT_CERT_SIZE sizeof_client_sm2_der
+    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
     /* END SM */
 
