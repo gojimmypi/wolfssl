@@ -184,7 +184,7 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 message(STATUS "Checking Project CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}")
 # Optionally force syntax higlighting fix in Visual Studio 2022 for ESP-IDF v6
 # See https://sysprogs.com/w/forums/topic/espressif-esp-idf-v6-0-intellisense-error-invalid-value-gnu2b-in-stdgnu2b/
-# To resolve, enter the text in VisualGDB Project Properties – Intellisense Settings Tab, “Additional flags for C files”:
+# To resolve, enter the text in VisualGDB Project Properties ï¿½ Intellisense Settings Tab, ï¿½Additional flags for C filesï¿½:
 #   -std=gnu17
 # And set here:
 if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )

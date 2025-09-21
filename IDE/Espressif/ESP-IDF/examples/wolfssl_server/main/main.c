@@ -204,7 +204,7 @@ void app_main(void)
     ESP_LOGI(TAG, "--------------------------------------------------------");
 #ifdef HAVE_WOLFCRYPT_WARMUP
     /* Unless disabled, we'll try to allocate known, long-term heap early
-     * in an attempt to avoid later fragmentation */
+     * in an attempt to minimize later fragmentation */
     ESP_ERROR_CHECK(esp_sdk_wolfssl_warmup());
 #endif
 #ifdef WOLFSSL_ESP_NO_WATCHDOG
