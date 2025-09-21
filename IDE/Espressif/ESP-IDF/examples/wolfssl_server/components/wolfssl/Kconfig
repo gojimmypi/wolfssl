@@ -95,6 +95,41 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             help
                 Enables RSA algorithm
 
+        config ESP_WOLFSSL_SHA224
+            bool "Enable SHA-224"
+            default n
+            help
+              Enables SHA224 algoritm by defining macro: WOLFSSL_SHA224
+
+        config ESP_WOLFSSL_SHA384
+            bool "Enable SHA-384"
+            default n
+            help
+              Enables SHA384 algoritm by defining macro: WOLFSSL_SHA384
+
+        choice
+            prompt "Select math library to use"
+
+            config ESP_WOLFSSL_USE_FAST_MATH
+                bool "Use Fast Math (default)"
+                default y
+
+            config ESP_WOLFSSL_SP_MATH
+                bool "Use SP Math"
+                default n
+
+            config ESP_WOLFSSL_SP_MATH_ALL
+                bool "Use SP Math All"
+                default n
+
+            config ESP_WOLFSSL_USE_INTEGER_HEAP_MATH
+                bool "Use Integer Heap Math"
+                default n
+
+            config ESP_WOLFSSL_SP_RISCV32
+                bool "Use SP Match for RISC-V Devices"
+                default n
+        endchoice
 
         menu "Hardening"
             config ESP_WOLFSSL_WC_NO_HARDEN
@@ -112,7 +147,28 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
         endmenu # Hardening
     endmenu # wolfSSL Algorithm Settings
 
-    menu "wolfSSL Application Specific"
+    menu "wolfSSL Application Specific Tuning"
+        config ESP_WOLFSSL_MULTI_THREAD
+            bool "Set wolfSSL SINGLE_THREAD mode"
+            default n
+            help
+              Enable to use semaphores for multi-task applications. Requires a small about of additional long term RAM.
+              When not selected, defines wolfSSL SINGLE_THREADED macro. The ESP32 ESP-IDF uses FreeRTOS regardless of this setting.
+
+        config ESP_WOLFSSL_STATIC_MEMORY
+            bool "Set wolfSSL Static Memory mode"
+            default n
+            help
+              Enable to use experimental static memory, no malloc. May be problematic on devices with low RAM.
+              When disabled, sets WOLFSSL_SMALL_STACK. The DEBUG_WOLFSSL_MALLOC is also enabled by default to
+              show malloc failures which may occur on low RAM devices.
+
+        config ESP_WOLFSSL_RSA_LOW_MEM
+            bool "RSA Low Memory Mode"
+            default n
+            help
+              When enabled, use have as much memory, but RSA is twice as slow.
+
         # -----------------------------------------------------------------------------------------------------------------
         # Apple HomeKit Options
         # -----------------------------------------------------------------------------------------------------------------
@@ -152,7 +208,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
         # -----------------------------------------------------------------------------------------------------------------
         # wolfCrypt Test
         # -----------------------------------------------------------------------------------------------------------------
-        menu "wolfCrypt tests"
+        menu "wolfCrypt Test"
             config ESP_WOLFSSL_ENABLE_TEST
                 bool "Enable wolfCrypt Test Library"
                 default n
@@ -173,6 +229,50 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                 help
                     Enables TEST_ESPIDF_ALL_WOLFSSL
         endmenu # wolfCrypt tests
+
+        # -----------------------------------------------------------------------------------------------------------------
+        # TLS Client/Server
+        # -----------------------------------------------------------------------------------------------------------------
+        menu "TLS Client/Server"
+            choice WOLFSSL_USE_TLS_CERT_EXAMPLE # TODO
+                bool "Use example certificates (see user_settings.h)"
+                default y
+                help
+                    Use definitions in user_settings.h
+
+                config WOLFSSL_USE_CERT_BUFFERS_2048
+                    bool "Use 2048 bit cert buffers (default)"
+                    default y
+                    help
+                        Uses example cert buffers ca_cert_der_2048, client_cert_der_2048 etc.
+                        Include header: wolfssl/certs_test.h
+
+                config WOLFSSL_USE_CERT_BUFFERS_1024
+                    bool "Use 1024 bit cert buffers"
+                    help
+                        Uses example cert buffers ca_cert_der_1024, client_cert_der_1024, etc.
+                        Include header: wolfssl/certs_test.h
+
+                config WOLFSSL_USE_CERT_BUFFERS_256
+                    bool "Use 256 bit cert buffers"
+                    help
+                        Uses example cert buffers ca_ecc_cert_der_256, cliecc_cert_der_256, etc.
+                        Include header: wolfssl/certs_test.h
+
+                config WOLFSSL_USE_CERT_BUFFERS_SM
+                    bool "Use SM (Shang Mi) cert buffers"
+                    help
+                        Use the SM (Shang Mi) Cipher Examples
+                        Include header: wolfssl/certs_test_sm.h
+
+                config WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
+                    bool "Do not use the default certificate examples"
+                    help
+                        Define your own macro values for the examples.
+            endchoice
+        endmenu # TLS Client/Server
+
+
     endmenu # Application Specific
 
 
@@ -212,7 +312,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             disabling TFM fast math provides faster wolfSSL software algorithms in an
             even smaller flash memory footprint.
 
-    menu "Protocol Config"
+    menu "wolfSSF Protocol Config"
         config WOLFSSL_HAVE_ALPN
             bool "Enable ALPN (Application Layer Protocol Negotiation) in wolfSSL"
             default y
@@ -257,6 +357,49 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             default n
             help
                 Sets HAVE_OCSP
+
+        choice
+            prompt "Select session cache size"
+
+            config ESP_WOLFSSL_TITAN_SESSION_CACHE
+                bool "Micro Session Cache"
+                default n
+                help
+                  Allows for over 2 million sessions. Unrealistic for most ESP32 devices.
+
+            config ESP_WOLFSSL_BIG_SESSION_CACHE
+                bool "Big Session Cache"
+                default n
+                help
+                  Allows for over 20,000 sessions. Unrealistic for most ESP32 devices.
+
+            config ESP_WOLFSSL_MEDIUM_SESSION_CACHE
+                bool "Medium Session Cache"
+                default n
+                help
+                  Allows for over 1,000 sessions. Consider using external memory.
+
+            config ESP_WOLFSSL_SMALL_SESSION_CACHE
+                bool "Small Session Cache"
+                default n
+                help
+                  Allows storing 6 sessions.
+                  SessionCache takes about 2K, ClientCache takes about 3K bytes.
+
+            config ESP_WOLFSSL_MICRO_SESSION_CACHE
+                bool "Micro Session Cache"
+                default n
+                help
+                  Uses less than 1K. Stored only 1 session for cache.
+                  SessionCache takes about 400 bytes, ClientCache takes 576 bytes.
+
+            config ESP_WOLFSSL_NO_SESSION_CACHE
+                bool "No session cache is used"
+                default y
+                help
+                  No memory is reserved for session cache.
+
+        endchoice
 
         config ESP_WOLFSSL_TCP_REUSE
             int "TCP Re-use"

@@ -21,6 +21,25 @@
 
 #define WOLFSSL_ESPIDF_COMPONENT_VERSION 0x01
 
+/* This user_settings.h is for Espressif ESP-IDF
+ *
+ * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.8.2-1
+ *
+ * Do not include any wolfssl headers here.
+ *
+ *               Note to maintainers:
+ *
+ * When editing this file ensure all examples match.
+ * The template example is the reference.
+ * Consider Kconfig. Managed Components do not allow editing of user_settings.h
+ */
+#undef  WOLFSSL_ESPIDF
+#define WOLFSSL_ESPIDF
+
+#define NO_FILESYSTEM
+#define NO_OLD_TLS
+
+
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
  * CFLAGS += -DWOLFSSL_ESP_NO_WATCHDOG=1 */
@@ -30,20 +49,10 @@
 #include "sdkconfig.h"
 
 /* Some mitigations are ESP-IDF version-specific. */
-#include "esp_idf_version.h"
+#include <esp_idf_version.h>
 
 // TODO remove this section
 #if (1)
-    // my SM test section
-    #if (0)
-        #define USE_CERT_BUFFERS_2048
-    #else
-        #define WOLFSSL_SM2
-        #define WOLFSSL_SM3
-        #define WOLFSSL_SM4
-        // #define WOLFSSL_NO_PEM
-    #endif
-
     // #define DEBUG_WOLFSSL
     // my debugging section
     #if (0)
@@ -89,20 +98,11 @@
 /* Optional mitigations for latest (unreleased) ESP-IDF v6 */
 #if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
     #if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 6)
-        /* There's a known issue with SHA HW accerlator on RISC-V chips in V6 */
-        // #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
+        /* There's a known issue with SHA HW accerlator on RISC-V chips in V6
+         * Fixed in https://github.com/wolfSSL/wolfssl/pull/9225 */
+        #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
     #endif
 #endif
-
-/* This user_settings.h is for Espressif ESP-IDF
- *
- * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.8.2-1
- *
- * Do not include any wolfssl headers here.
- *
- * When editing this file:
- * ensure all examples match. The template example is the reference.
- */
 
 /* Naming convention: (see also esp32-crypt.h for the reference source).
  *
@@ -146,9 +146,6 @@
 **   CONFIG_IDF_TARGET_ESP32C3
 **   CONFIG_IDF_TARGET_ESP32C6
 */
-
-#undef  WOLFSSL_ESPIDF
-#define WOLFSSL_ESPIDF
 
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
@@ -463,20 +460,46 @@
 #endif
 /* See below for chipset detection from sdkconfig.h */
 
-/* when you want to use SINGLE THREAD. Note Default ESP-IDF is FreeRTOS */
-// #define SINGLE_THREADED
+/* See Kconfig: Check if Multi Thread selected in idf.py menuconfig
+ * Single Thread avoids RAM-consuming semaphores.
+ * Note Default ESP-IDF is FreeRTOS rergardless of this setting */
+#if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD)
+    #undef SINGLE_THREADED
+#else
+    #define SINGLE_THREADED
+#endif
 
 /* Small session cache saves a lot of RAM for ClientCache and SessionCache.
  * Memory requirement is about 5KB, otherwise 20K is needed when not specified.
  * If extra small footprint is needed, try MICRO_SESSION_CACHE (< 1K)
  * When really desperate or no TLS used, try NO_SESSION_CACHE.  */
-// TODO add session cache to Kconfig
-#define NO_SESSION_CACHE
+#if defined(CONFIG_ESP_WOLFSSL_TITAN_SESSION_CACHE)
+    /* Consider RAM requirements. Unrealistic for most ESP32 devices */
+    #define TITAN_SESSION_CACHE
+#elif defined(CONFIG_ESP_WOLFSSL_BIG_SESSION_CACHE)
+    /* Consider RAM requirements. Unrealistic for most ESP32 devices */
+    #define BIG_SESSION_CACHE
+#elif defined(CONFIG_ESP_WOLFSSL_MEDIUM_SESSION_CACHE)
+    /* Consider RAM requirements. */
+    #define MEDIUM_SESSION_CACHE
+#elif defined(CONFIG_ESP_WOLFSSL_SMALL_SESSION_CACHE)
+    #define SMALL_SESSION_CACHE
+#elif defined(CONFIG_ESP_WOLFSSL_MICRO_SESSION_CACHE)
+    #define MICRO_SESSION_CACHE
+#else
+    #define NO_SESSION_CACHE
+#endif
+
 #ifndef NO_SESSION_CACHE
     #define  HAVE_SESSION_TICKET
 #endif
 
-// TODO: add to Kconfig: CONFIG_WOLFSSL_ESP_STATIC_MEMORY
+/* See Kconfig: Check if Static Memory selected in idf.py menuconfig */
+#if defined(CONFIG_ESP_WOLFSSL_STATIC_MEMORY) && \
+            CONFIG_ESP_WOLFSSL_STATIC_MEMORY
+    #define WOLFSSL_STATIC_MEMORY
+#endif
+
 #if defined(WOLFSSL_STATIC_MEMORY)
     #define WOLFSSL_STATIC_MEMORY
     #define WOLFSSL_STATIC_MEMORY_LEAN
@@ -509,10 +532,15 @@
     /* multiple of 16 & 32 */
     #define WOLFMEM_IO_SZ 2048
 
-    // #define USE_FAST_MATH
-    #define SP_MATH
-    // #define FP_ECC
+    #if (1)
+        #define USE_FAST_MATH
+    #else
+        #define SP_MATH
+        #define FP_ECC
+    #endif
 #else
+    /* Not using static memory */
+
     /* Small Stack uses more heap. */
     #define WOLFSSL_SMALL_STACK
 
@@ -522,7 +550,10 @@
 #endif
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
-// #define RSA_LOW_MEM
+#if defined(CONFIG_ESP_WOLFSSL_RSA_LOW_MEM) && \
+            CONFIG_ESP_WOLFSSL_RSA_LOW_MEM
+    #define RSA_LOW_MEM
+#endif
 
 /* optionally turn off SHA512/224 SHA512/256 */
 /* #define WOLFSSL_NOSHA512_224 */
@@ -592,15 +623,11 @@
     #ifdef HAVE_FFDHE_4096
         /* this size may be problematic on the C2 */
     #endif
-    //#define HAVE_FFDHE_2048
+    #define HAVE_FFDHE_2048
     #define NO_DH
 #else
     #define HAVE_FFDHE_4096
 #endif
-
-#define NO_FILESYSTEM
-
-#define NO_OLD_TLS
 
 #define HAVE_AESGCM
 
@@ -608,10 +635,16 @@
 /* #define WOLFSSL_RIPEMD */
 
 /* when you want to use SHA224 */
-//#define WOLFSSL_SHA224
+#if defined(CONFIG_ESP_WOLFSSL_SHA224) && \
+            CONFIG_ESP_WOLFSSL_SHA224
+    #define WOLFSSL_SHA224
+#endif
 
 /* when you want to use SHA384 */
-//#define WOLFSSL_SHA384
+#if defined(CONFIG_ESP_WOLFSSL_SHA384) && \
+            CONFIG_ESP_WOLFSSL_SHA384
+    #define WOLFSSL_SHA384
+#endif
 
 /* Some features not enabled for ESP8266: */
 #if defined(CONFIG_IDF_TARGET_ESP8266) || \
@@ -636,9 +669,9 @@
     #if CONFIG_ESP_WOLFSSL_USE_ECC
         /* ---- ECDSA / ECC ---- */
         #define HAVE_ECC
-        //#define HAVE_CURVE25519
-        //#define HAVE_ED25519
-       // #define WOLFSSL_SHA512
+        // #define HAVE_CURVE25519
+        // #define HAVE_ED25519
+        // #define WOLFSSL_SHA512
         /*
         #define HAVE_ECC384
         #define CURVE25519_SMALL
@@ -727,20 +760,33 @@
 #define HASH_SIZE_LIMIT
 
 /* USE_FAST_MATH is default */
-// #define USE_FAST_MATH
-
-/*****      Use SP_MATH      *****/
-/* #undef  USE_FAST_MATH         */
-/* #define SP_MATH               */
-/* #define WOLFSSL_SP_MATH_ALL   */
-/* #define WOLFSSL_SP_RISCV32    */
+#if defined(CONFIG_ESP_WOLFSSL_USE_FAST_MATH) && \
+            ESP_WOLFSSL_USE_FAST_MATH
+    #define USE_FAST_MATH
+#elif defined(CONFIG_ESP_WOLFSSL_SP_MATH) && \
+              CONFIG_ESP_WOLFSSL_SP_MATH
+    /*****      Use SP_MATH      *****/
+    #undef  USE_FAST_MATH
+    #undef  USE_INTEGER_HEAP_MATH
+    #define WOLFSSL_SP_MATH
+    #define WOLFSSL_SP_MATH_ALL
+#elif defined(CONFIG_ESP_WOLFSSL_USE_INTEGER_HEAP_MATH) && \
+              CONFIG_ESP_WOLFSSL_USE_INTEGER_HEAP_MATH
+    /*****      Use Integer Heap Math *****/
+    #undef  USE_FAST_MATH
+    #undef  WOLFSSL_SP_MATH
+    #undef  WOLFSSL_SP_MATH_ALL
+    #define USE_INTEGER_HEAP_MATH
+#else
+    #define USE_FAST_MATH
+#endif
 
 /***** Use Integer Heap Math *****/
 /* #undef USE_FAST_MATH          */
 /* #define USE_INTEGER_HEAP_MATH */
 
 /* Just syntax highlighting to check math libraries: */
-#if defined(SP_MATH)               || \
+#if defined(WOLFSSL_SP_MATH)       || \
     defined(USE_INTEGER_HEAP_MATH) || \
     defined(USE_FAST_MATH)         || \
     defined(WOLFSSL_SP_MATH_ALL)   || \
@@ -793,11 +839,6 @@
 */
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
-/*
-#define WOLFSSL_SM2
-#define WOLFSSL_SM3
-#define WOLFSSL_SM4
-*/
 
 //#define WOLFSSL_TLS13
 #define HAVE_TLS_EXTENSIONS
@@ -974,8 +1015,6 @@
     #define WOLFSSL_ESP32
     /* wolfSSL HW Acceleration supported on ESP32-C6. Uncomment to disable: */
 
-    /*  #define NO_ESP32_CRYPT                 */
-    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  These are defined automatically in esp32-crypt.h, here for clarity:  */
     /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
@@ -986,6 +1025,8 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 #endif
 
+    /*  #define NO_ESP32_CRYPT                 */
+    /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI_MP_MUL  */
@@ -1286,8 +1327,35 @@ Turn on timer debugging (used when CPU cycles not available)
  *   https://github.com/wolfSSL/wolfssl/pull/6825
  *   https://github.com/wolfSSL/wolfsm
  *
- * Uncomment these 3 macros to enable the SM Ciphers and use the macros below.
+ * Check to see if idf.py menuconfig selected example certs, otheruse use 2048:
  */
+#if defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_2048)
+    #define USE_CERT_BUFFERS_2048
+    #undef USE_CERT_BUFFERS_1024
+    #undef USE_CERT_BUFFERS_256
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_1024)
+    #undef USE_CERT_BUFFERS_2048
+    #define USE_CERT_BUFFERS_1024
+    #define USE_CERT_BUFFERS_256
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_256)
+    #undef USE_CERT_BUFFERS_2048
+    #undef USE_CERT_BUFFERS_1024
+    #define USE_CERT_BUFFERS_256
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_SM)
+    #define WOLFSSL_SM2
+    #define WOLFSSL_SM3
+    #define WOLFSSL_SM4
+#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
+    #undef USE_CERT_BUFFERS_2048
+    #undef USE_CERT_BUFFERS_1024
+    #undef USE_CERT_BUFFERS_256
+    #undef USE_CERT_BUFFERS_SM
+    #undef WOLFSSL_SM2
+    #undef WOLFSSL_SM3
+    #undef WOLFSSL_SM4
+#else
+    #define USE_CERT_BUFFERS_2048
+#endif
 
 /* Conditional macros used in wolfSSL TLS client and server examples */
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
