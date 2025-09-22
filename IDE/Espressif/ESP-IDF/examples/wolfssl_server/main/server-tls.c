@@ -452,10 +452,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to load privatekey");
     }
 
-#if defined(USE_CERT_BUFFERS_256)
-    wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256K1);
-#endif
-
 #if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
     #if defined(USE_CERT_BUFFERS_256) && !defined(sizeof_server_ecc_cert)
         /* Currently there are only DER format ECC examples in certs_test.h so
