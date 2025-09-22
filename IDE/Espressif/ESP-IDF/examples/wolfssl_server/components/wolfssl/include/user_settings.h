@@ -1615,13 +1615,13 @@ Turn on timer debugging (used when CPU cycles not available)
     #ifndef NO_WOLFSSL_SERVER
         /* wolfSSL_CTX_use_certificate_chain_buffer_format */
     #if (0)
-        /* working leaf */
+        /* serv_ecc_der_256 leaf only */
         #define CTX_SERVER_CERT      serv_ecc_der_256
         #define CTX_SERVER_CERT_NAME "serv_ecc_der_256"
         #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
     #else
-        /* new experimental */
+        /* new leaf + ca, needs PR */
         #define CTX_SERVER_CERT      server_ecc_cert
         #define CTX_SERVER_CERT_NAME "server_ecc_cert"
         #define CTX_SERVER_CERT_SIZE sizeof_server_ecc_cert
@@ -1634,10 +1634,11 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
         /* wolfSSL_CTX_load_verify_buffer */
-        #define CTX_CLIENT_CERT      ca_ecc_cert_der_256
-        #define CTX_CLIENT_CERT_NAME "ca_ecc_cert_der_256"
-        #define CTX_CLIENT_CERT_SIZE sizeof_ca_ecc_cert_der_256
+        #define CTX_CLIENT_CERT      cliecc_cert_der_256
+        #define CTX_CLIENT_CERT_NAME "cliecc_cert_der_256"
+        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
         #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+
     #endif /* server */
     /* End USE_CERT_BUFFERS_256 */
 

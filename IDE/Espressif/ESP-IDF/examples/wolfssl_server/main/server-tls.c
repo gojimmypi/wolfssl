@@ -452,18 +452,26 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to load privatekey");
     }
 
+#if defined(USE_CERT_BUFFERS_256)
+    wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256K1);
+#endif
+
 #if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
+    #if defined(USE_CERT_BUFFERS_256) && !defined(sizeof_server_ecc_cert)
+        /* Currently there are only DER format ECC examples in certs_test.h so
+         * only a leaf cert is available.
+         *
+         * Use a PEM for leaf + CA
+         * or disable peer verification */
+        #error "Peer verify not available for ECC USE_CERT_BUFFERS_256"
+    #endif
+
     ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
-#if (0)
+
     wolfSSL_CTX_set_verify(ctx,
                                 (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
                                  WOLFSSL_VERIFY_PEER),
                                 NULL);
-#else
-    wolfSSL_CTX_set_verify(ctx,
-                                (WOLFSSL_VERIFY_NONE),
-                                NULL);
-#endif
     /* -A */
     ESP_LOGI(TAG, "Load verify cert %s", CTX_CLIENT_CERT_NAME);
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
@@ -480,11 +488,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
 #endif
 
-/*
-#if defined(USE_CERT_BUFFERS_256)
-    wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256K1);
-#endif
-*/
+
 /*
  * ./examples/client/client -h 192.168.1.107 -v 3   -l ECDHE-ECDSA-SM4-CBC-SM3   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/ca-sm2.pem -C
    ./examples/client/client -v 3 -l  ECDHE-ECDSA-SM4-CBC-SM3  -h 192.168.1.107   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/root-sm2.pem -C
