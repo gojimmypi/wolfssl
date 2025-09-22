@@ -33,7 +33,7 @@
 /* Espressif */
 #include <esp_log.h>
 #if defined(ESP_PLATFORM)          // ESP-IDF (ESP32/ESP32-Cx/Sx)
-  #include "esp_timer.h"
+ //  #include "esp_timer.h"
 #elif defined(ESP8266)             // ESP8266 Non-OS/RTOS SDK
   #include "user_interface.h"      // declares system_get_time()
 #endif
@@ -454,11 +454,16 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
 #if defined(MY_PEER_VERIFY) && MY_PEER_VERIFY
     ESP_LOGI(TAG, "Set verify: verify peer, fail if no peer...");
+#if (0)
     wolfSSL_CTX_set_verify(ctx,
                                 (WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT |
                                  WOLFSSL_VERIFY_PEER),
                                 NULL);
-
+#else
+    wolfSSL_CTX_set_verify(ctx,
+                                (WOLFSSL_VERIFY_NONE),
+                                NULL);
+#endif
     /* -A */
     ESP_LOGI(TAG, "Load verify cert %s", CTX_CLIENT_CERT_NAME);
     ret = wolfSSL_CTX_load_verify_buffer(ctx,
@@ -475,6 +480,11 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     wolfSSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
 #endif
 
+/*
+#if defined(USE_CERT_BUFFERS_256)
+    wolfSSL_CTX_UseSupportedCurve(ctx, WOLFSSL_ECC_SECP256K1);
+#endif
+*/
 /*
  * ./examples/client/client -h 192.168.1.107 -v 3   -l ECDHE-ECDSA-SM4-CBC-SM3   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/ca-sm2.pem -C
    ./examples/client/client -v 3 -l  ECDHE-ECDSA-SM4-CBC-SM3  -h 192.168.1.107   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/root-sm2.pem -C
@@ -603,7 +613,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ret = wolfSSL_accept(ssl);
         if (ret == SSL_SUCCESS) {
             ESP_LOGI(TAG, "Client connected successfully");
-            t0_us = esp_timer_get_time();
+           // t0_us = esp_timer_get_time();
             // ShowCiphers(ssl);
             // const char* curve = wolfSSL_get_curve_name(ssl);
             //ESP_LOGI(TAG, "Server negotiated key share group: %s", curve);
@@ -638,7 +648,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
                            wolfSSL_get_error(ssl, ret));
         }
 
-        t1_us = esp_timer_get_time();
+      //  t1_us = esp_timer_get_time();
   dt_us = t1_us - t0_us;
   dt_ms = dt_us / 1000.0f;
         ESP_LOGI(TAG, "Done! Cleanup... %f", dt_ms);

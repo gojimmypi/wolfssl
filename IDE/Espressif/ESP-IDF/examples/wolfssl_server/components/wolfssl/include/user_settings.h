@@ -1367,29 +1367,17 @@ Turn on timer debugging (used when CPU cycles not available)
  * Check to see if idf.py menuconfig selected example certs, otheruse use 2048:
  */
 #if defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_2048)
-    #define USE_CERT_BUFFERS_2048
-    #undef USE_CERT_BUFFERS_1024
-    #undef USE_CERT_BUFFERS_256
+    #undef  USE_CERT_BUFFERS_1024
 #elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_1024)
-    #undef USE_CERT_BUFFERS_2048
     #define USE_CERT_BUFFERS_1024
-    #define USE_CERT_BUFFERS_256
 #elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_256)
-    #undef USE_CERT_BUFFERS_2048
-    #undef USE_CERT_BUFFERS_1024
     #define USE_CERT_BUFFERS_256
 #elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_SM)
     #define WOLFSSL_SM2
     #define WOLFSSL_SM3
     #define WOLFSSL_SM4
 #elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_NONE)
-    #undef USE_CERT_BUFFERS_2048
-    #undef USE_CERT_BUFFERS_1024
-    #undef USE_CERT_BUFFERS_256
-    #undef USE_CERT_BUFFERS_SM
-    #undef WOLFSSL_SM2
-    #undef WOLFSSL_SM3
-    #undef WOLFSSL_SM4
+    /* See user_settings.h for referenbce on defining your own cert */
 #else
     #define USE_CERT_BUFFERS_2048
 #endif
@@ -1539,10 +1527,10 @@ Turn on timer debugging (used when CPU cycles not available)
     /*
         * To connect to ESP32 server with a client from commandline:
         *
-        * ../examples/client/client -h 192.168.1.47  -p 11111 -v 3 -d
-        *                           -A ./certs/1024/ca-cert.pem
-        *                           -c ./certs/1024/client-cert.pem
-        *                           -k ./certs/1024/client-key.pem
+        * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d \
+                                   -A ./certs/1024/ca-cert.pem        \
+                                   -c ./certs/1024/client-cert.pem    \
+                                   -k ./certs/1024/client-key.pem
         */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
@@ -1586,10 +1574,16 @@ Turn on timer debugging (used when CPU cycles not available)
     /*
     * To connect to ESP32 server with a client from commandline:
     *
-    * ./examples/client/client -h 192.168.1.80  -p 11111 -v 3 -d        \
-    *                          -A ./certs/ecc/ca-secp256k1-cert.pem     \
-    *                          -c ./certs/ecc/client-secp256k1-cert.pem \
-    *                          -k ./certs/ecc/secp256k1-key.pem
+    * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d        \
+                               -A ./certs/ecc/ca-secp256k1-cert.pem     \
+                               -c ./certs/ecc/client-secp256k1-cert.pem \
+                               -k ./certs/ecc/secp256k1-key.pem
+
+      ./examples/client/client -h 192.168.1.107 -p 11111 -v 4 -d  \
+                               -A ./certs/ca-ecc-cert.pem         \
+                               -c ./certs/client-ecc-cert.pem     \
+                               -k ./certs/ecc-client-key.pem
+
     */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
@@ -1598,15 +1592,10 @@ Turn on timer debugging (used when CPU cycles not available)
         #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
     #endif
 
-    #define CTX_CA_CERT          ca_ecc_cert_der_256
-    #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
-    #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
-
     #ifndef NO_WOLFSSL_CLIENT
-        #define CTX_CLIENT_CERT      cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_NAME "cliecc_cert_der_256"
-        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+        #define CTX_CA_CERT          ca_ecc_cert_der_256
+        #define CTX_CA_CERT_SIZE     sizeof_ca_ecc_cert_der_256
+        #define CTX_CA_CERT_TYPE     WOLFSSL_FILETYPE_ASN1
 
         #define CTX_CLIENT_KEY       ecc_clikey_der_256
         #define CTX_CLIENT_KEY_SIZE  sizeof_ecc_clikey_der_256
@@ -1614,22 +1603,34 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
 
     #ifndef NO_WOLFSSL_SERVER
+        /* wolfSSL_CTX_use_certificate_chain_buffer_format */
         #define CTX_SERVER_CERT      serv_ecc_der_256
         #define CTX_SERVER_CERT_NAME "serv_ecc_der_256"
         #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
+        /* wolfSSL_CTX_use_PrivateKey_buffer */
         #define CTX_SERVER_KEY       ecc_key_der_256
         #define CTX_SERVER_KEY_NAME  "ecc_key_der_256"
         #define CTX_SERVER_KEY_SIZE  sizeof_ecc_key_der_256
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
-    #endif
 
+        /* wolfSSL_CTX_load_verify_buffer */
+        #define CTX_CLIENT_CERT      ca_ecc_cert_der_256
+        #define CTX_CLIENT_CERT_NAME "ca_ecc_cert_der_256"
+        #define CTX_CLIENT_CERT_SIZE sizeof_ca_ecc_cert_der_256
+        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
+    #endif /* server */
     /* End USE_CERT_BUFFERS_256 */
 
 #endif /* USE_CERT_BUFFERS_[n] */
 
-
+/*
+./examples/client/client -h 192.168.1.107 -p 11111 -v 3 -d \
+  -A ./certs/ca-ecc-cert.pem            \
+  -c ./certs/ecc/client-ecc-cert.pem    \
+  -k ./certs/ecc/ecc-key.pem
+*/
 /******************************************************************************
 ** Sanity Checks
 ******************************************************************************/

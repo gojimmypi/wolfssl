@@ -1,5 +1,14 @@
 #!/bin/sh
 
+check_result(){
+    if [ $1 -ne 0 ]; then
+        echo "Failed at \"$2\", Abort"
+        exit 1
+    else
+        echo "Step Succeeded!"
+    fi
+}
+
 # run from wolfssl root
 
 rm ./certs/ecc/*.old
@@ -123,6 +132,10 @@ openssl req -config ./certs/ecc/wolfssl.cnf -sha256 -new -key ./certs/ecc/secp25
 openssl x509 -req -in ./certs/ecc/client-secp256k1-req.pem -days 3650 -extfile ./certs/ecc/wolfssl.cnf -extensions usr_cert -signkey ./certs/ecc/secp256k1-key.pem -text -out ./certs/ecc/client-secp256k1-cert.pem
 openssl x509 -inform pem -in ./certs/ecc/client-secp256k1-cert.pem -outform der -out ./certs/ecc/client-secp256k1-cert.der
 rm ./certs/ecc/client-secp256k1-req.pem
+
+# Generate ECC CA + Leaf PEM: ca-secp256k1-key.pem + server-secp256k1-cert.pem
+cat ./certs/ecc/server-secp256k1-cert.pem ./certs/ecc/ca-secp256k1-cert.pem > ./certs/server-ecc-cert.pem
+check_result $? "Add CA into ECC server cert"
 
 # Generate ECC Brainpool Keys
 if [ -f ./certs/ecc/bp256r1-key.pem ]; then

@@ -261,19 +261,19 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                     Select which bundled example certificate set to compile in.
 
                 config WOLFSSL_USE_CERT_BUFFERS_2048
-                    bool "Use 2048 bit cert buffers (default)"
+                    bool "Use 2048 bit RSA cert buffers example (default)"
                     help
                         Uses example cert buffers ca_cert_der_2048, client_cert_der_2048 etc.
                         Include header: wolfssl/certs_test.h
 
                 config WOLFSSL_USE_CERT_BUFFERS_1024
-                    bool "Use 1024 bit cert buffers"
+                    bool "Use 1024 bit RSA cert buffers"
                     help
                         Uses example cert buffers ca_cert_der_1024, client_cert_der_1024, etc.
                         Include header: wolfssl/certs_test.h
 
                 config WOLFSSL_USE_CERT_BUFFERS_256
-                    bool "Use 256 bit cert buffers"
+                    bool "Use 256 bit ECC cert buffers"
                     help
                         Uses example cert buffers ca_ecc_cert_der_256, cliecc_cert_der_256, etc.
                         Include header: wolfssl/certs_test.h
