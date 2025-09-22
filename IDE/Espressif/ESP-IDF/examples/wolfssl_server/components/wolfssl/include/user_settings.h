@@ -1571,10 +1571,20 @@ Turn on timer debugging (used when CPU cycles not available)
     /* #include <wolfssl/certs_test.h> */
     #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_256)"
 
+    #define HAVE_ECC
+    #define HAVE_ECC_SECP256K1
+    #define HAVE_ECC_KOBLITZ
+    #define WOLFSSL_CUSTOM_CURVES
     /*
-    * To connect to ESP32 server with a client from commandline:
+    * To connect to this ESP32 server with a client from commandline:
     *
-    * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d        \
+    * TLS 1.3, disable peer cert:
+    * ./examples/client/client -h 192.168.1.107 -p 11111 -v 4 -d
+    *
+    * TLS 1.2, disable peer cert:
+    * ./examples/client/client -h 192.168.1.107 -p 11111 -v 3 -d
+    *
+    * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d       \
                                -A ./certs/ecc/ca-secp256k1-cert.pem     \
                                -c ./certs/ecc/client-secp256k1-cert.pem \
                                -k ./certs/ecc/secp256k1-key.pem
@@ -1583,7 +1593,6 @@ Turn on timer debugging (used when CPU cycles not available)
                                -A ./certs/ca-ecc-cert.pem         \
                                -c ./certs/client-ecc-cert.pem     \
                                -k ./certs/ecc-client-key.pem
-
     */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
@@ -1602,13 +1611,22 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_CLIENT_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
     #endif
 
+    /* Server */
     #ifndef NO_WOLFSSL_SERVER
         /* wolfSSL_CTX_use_certificate_chain_buffer_format */
+    #if (0)
+        /* working leaf */
         #define CTX_SERVER_CERT      serv_ecc_der_256
         #define CTX_SERVER_CERT_NAME "serv_ecc_der_256"
         #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-
+    #else
+        /* new experimental */
+        #define CTX_SERVER_CERT      server_ecc_cert
+        #define CTX_SERVER_CERT_NAME "server_ecc_cert"
+        #define CTX_SERVER_CERT_SIZE sizeof_server_ecc_cert
+        #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_PEM
+    #endif
         /* wolfSSL_CTX_use_PrivateKey_buffer */
         #define CTX_SERVER_KEY       ecc_key_der_256
         #define CTX_SERVER_KEY_NAME  "ecc_key_der_256"
