@@ -254,15 +254,14 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
         # TLS Client/Server
         # -----------------------------------------------------------------------------------------------------------------
         menu "TLS Client/Server"
-            choice WOLFSSL_USE_TLS_CERT_EXAMPLE # TODO
-                bool "Use example certificates (see user_settings.h)"
-                default y
+            choice WOLFSSL_USE_TLS_CERT_EXAMPLE
+                prompt "Use example certificates (see user_settings.h)"
+                default WOLFSSL_USE_CERT_BUFFERS_2048
                 help
-                    Use definitions in user_settings.h
+                    Select which bundled example certificate set to compile in.
 
                 config WOLFSSL_USE_CERT_BUFFERS_2048
                     bool "Use 2048 bit cert buffers (default)"
-                    default y
                     help
                         Uses example cert buffers ca_cert_der_2048, client_cert_der_2048 etc.
                         Include header: wolfssl/certs_test.h
@@ -285,8 +284,8 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                         Use the SM (Shang Mi) Cipher Examples
                         Include header: wolfssl/certs_test_sm.h
 
-                config WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE
-                    bool "Do not use the default certificate examples"
+                config WOLFSSL_USE_CERT_BUFFERS_NONE
+                    bool "Do not use the default wolfSSL certificate examples"
                     help
                         Define your own macro values for the examples.
             endchoice
@@ -380,42 +379,37 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
 
         choice
             prompt "Select session cache size"
+            default ESP_WOLFSSL_NO_SESSION_CACHE
 
             config ESP_WOLFSSL_TITAN_SESSION_CACHE
                 bool "Micro Session Cache"
-                default n
                 help
                   Allows for over 2 million sessions. Unrealistic for most ESP32 devices.
 
             config ESP_WOLFSSL_BIG_SESSION_CACHE
                 bool "Big Session Cache"
-                default n
                 help
                   Allows for over 20,000 sessions. Unrealistic for most ESP32 devices.
 
             config ESP_WOLFSSL_MEDIUM_SESSION_CACHE
                 bool "Medium Session Cache"
-                default n
                 help
                   Allows for over 1,000 sessions. Consider using external memory.
 
             config ESP_WOLFSSL_SMALL_SESSION_CACHE
                 bool "Small Session Cache"
-                default n
                 help
                   Allows storing 6 sessions.
                   SessionCache takes about 2K, ClientCache takes about 3K bytes.
 
             config ESP_WOLFSSL_MICRO_SESSION_CACHE
                 bool "Micro Session Cache"
-                default n
                 help
                   Uses less than 1K. Stored only 1 session for cache.
                   SessionCache takes about 400 bytes, ClientCache takes 576 bytes.
 
             config ESP_WOLFSSL_NO_SESSION_CACHE
                 bool "No session cache is used"
-                default y
                 help
                   No memory is reserved for session cache.
 
