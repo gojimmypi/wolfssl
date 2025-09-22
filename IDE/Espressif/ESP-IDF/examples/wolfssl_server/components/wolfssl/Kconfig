@@ -95,17 +95,37 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             help
                 Enables RSA algorithm
 
+        config ESP_WOLFSSL_USE_SM
+            bool "Enable SM (Shang Mi) in wolfSSL"
+            default n
+            help
+                Enabled SM Cipher Suite: Macros WOLFSSL_SM2, WOLFSSL_SM3, WOLFSSL_SM4
+
+        config ESP_WOLFSSL_DISABLE_ECC
+            bool "Disable ECC in wolfSSL"
+            default n
+            help
+                Enabled by default, ECC is required if you want ECDHE key exchange (and/or ECDSA).
+                Select this option to disable ECC.
+
+        config ESP_WOLFSSL_DISABLE_DH
+            bool "Disable DH in wolfSSL"
+            default n
+            help
+                Enabled by default, DH is required if you want DHE/FFDHE groups.
+                Select this option to disable DH.
+
         config ESP_WOLFSSL_SHA224
             bool "Enable SHA-224"
             default n
             help
-              Enables SHA224 algoritm by defining macro: WOLFSSL_SHA224
+              Enables SHA224 algorithm by defining macro: WOLFSSL_SHA224
 
         config ESP_WOLFSSL_SHA384
             bool "Enable SHA-384"
             default n
             help
-              Enables SHA384 algoritm by defining macro: WOLFSSL_SHA384
+              Enables SHA384 algorithm by defining macro: WOLFSSL_SHA384
 
         choice
             prompt "Select math library to use"

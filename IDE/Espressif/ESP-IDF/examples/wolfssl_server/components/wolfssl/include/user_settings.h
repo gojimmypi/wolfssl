@@ -577,14 +577,21 @@
  *   -308 SOCKET_ERROR_E  error state on socket
  *   -313 FATAL_ERROR     recvd alert fatal error
  */
+
 #if defined(CONFIG_WOLFSSL_ALLOW_TLS12) && CONFIG_WOLFSSL_ALLOW_TLS12
     #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
         defined(CONFIG_IDF_TARGET_ESP8684)
         /* low-memory devices with TLS 1.2 enabled */
     #endif
+
+    /* TLS 1.2 uses extensions by default */
+    #define HAVE_TLS_EXTENSIONS
+
 #else
+    /* Unless explicitly enabled, only TLS 1.3 is configured */
     #define WOLFSSL_NO_TLS12
 #endif
+
 
 /* TLS 1.3                                 */
 #if (defined(CONFIG_WOLFSSL_ALLOW_TLS13) && CONFIG_WOLFSSL_ALLOW_TLS13) && \
@@ -615,6 +622,29 @@
         /* #error "TLS 1.3 requires HAVE_FFDHE_[nnnn]" */
     #endif
 #endif
+
+/* Things common to both TLS 1.2 and TLS 1.3 */
+#if (defined(CONFIG_WOLFSSL_ALLOW_TLS12) && CONFIG_WOLFSSL_ALLOW_TLS12) || \
+    (defined(CONFIG_WOLFSSL_ALLOW_TLS13) && CONFIG_WOLFSSL_ALLOW_TLS13)
+
+    /* ECC can optionally be disabled, but is normally enabled */
+    #if defined(ESP_WOLFSSL_DISABLE_ECC) && \
+                ESP_WOLFSSL_DISABLE_ECC
+        #undef  HAVE_ECC
+    #else
+        #define HAVE_ECC
+    #endif
+
+    /* DH can optionally be disabled, but is normally enabled */
+    #if defined(ESP_WOLFSSL_DISABLE_DH) && \
+                ESP_WOLFSSL_DISABLE_DH
+        #undef  HAVE_DH
+    #else
+        #define HAVE_DH
+    #endif
+
+#endif
+
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
     defined(CONFIG_IDF_TARGET_ESP8684) || \
@@ -762,10 +792,14 @@
 /* USE_FAST_MATH is default */
 #if defined(CONFIG_ESP_WOLFSSL_USE_FAST_MATH) && \
             ESP_WOLFSSL_USE_FAST_MATH
+    /*****       Use Fast Math        *****/
     #define USE_FAST_MATH
+    #undef  WOLFSSL_SP_MATH
+    #undef  WOLFSSL_SP_MATH_ALL
+    #define USE_INTEGER_HEAP_MATH
 #elif defined(CONFIG_ESP_WOLFSSL_SP_MATH) && \
               CONFIG_ESP_WOLFSSL_SP_MATH
-    /*****      Use SP_MATH      *****/
+    /*****        Use SP_MATH         *****/
     #undef  USE_FAST_MATH
     #undef  USE_INTEGER_HEAP_MATH
     #define WOLFSSL_SP_MATH
@@ -840,11 +874,13 @@
 
 /* optional SM4 Ciphers. See https://github.com/wolfSSL/wolfsm */
 
-//#define WOLFSSL_TLS13
-#define HAVE_TLS_EXTENSIONS
-#define HAVE_HKDF
-#define HAVE_ECC
-#define HAVE_DH
+#if defined(ESP_WOLFSSL_USE_SM) && \
+            ESP_WOLFSSL_USE_SM
+    #define WOLFSSL_SM2
+    #define WOLFSSL_SM3
+    #define WOLFSSL_SM4
+#endif
+
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     /* SM settings, possible cipher suites:
 
