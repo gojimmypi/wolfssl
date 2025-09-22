@@ -1381,7 +1381,7 @@ Turn on timer debugging (used when CPU cycles not available)
     #define WOLFSSL_SM2
     #define WOLFSSL_SM3
     #define WOLFSSL_SM4
-#elif defined(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE)
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_NONE)
     #undef USE_CERT_BUFFERS_2048
     #undef USE_CERT_BUFFERS_1024
     #undef USE_CERT_BUFFERS_256
