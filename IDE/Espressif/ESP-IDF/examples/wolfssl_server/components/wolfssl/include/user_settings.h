@@ -39,6 +39,7 @@
 #define NO_FILESYSTEM
 #define NO_OLD_TLS
 
+#define DEBUG_WOLFSSL
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
@@ -52,7 +53,7 @@
 #include <esp_idf_version.h>
 
 // TODO remove this section
-#if (1)
+#if (0)
     // #define DEBUG_WOLFSSL
     // my debugging section
     #if (0)
@@ -1482,6 +1483,9 @@ Turn on timer debugging (used when CPU cycles not available)
     #endif
     #ifdef USE_CERT_BUFFERS_256
         #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
+    #endif
+    #if defined(NO_RSA)
+        #error "RSA is needed to use CERT_BUFFERS_2048 examnple"
     #endif
 
     #define CTX_CA_CERT          ca_cert_der_2048
