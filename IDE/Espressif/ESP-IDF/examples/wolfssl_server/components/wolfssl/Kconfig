@@ -381,26 +381,10 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             prompt "Select session cache size"
             default ESP_WOLFSSL_NO_SESSION_CACHE
 
-            config ESP_WOLFSSL_TITAN_SESSION_CACHE
-                bool "Micro Session Cache"
+            config ESP_WOLFSSL_NO_SESSION_CACHE
+                bool "No session cache is used"
                 help
-                  Allows for over 2 million sessions. Unrealistic for most ESP32 devices.
-
-            config ESP_WOLFSSL_BIG_SESSION_CACHE
-                bool "Big Session Cache"
-                help
-                  Allows for over 20,000 sessions. Unrealistic for most ESP32 devices.
-
-            config ESP_WOLFSSL_MEDIUM_SESSION_CACHE
-                bool "Medium Session Cache"
-                help
-                  Allows for over 1,000 sessions. Consider using external memory.
-
-            config ESP_WOLFSSL_SMALL_SESSION_CACHE
-                bool "Small Session Cache"
-                help
-                  Allows storing 6 sessions.
-                  SessionCache takes about 2K, ClientCache takes about 3K bytes.
+                  No memory is reserved for session cache.
 
             config ESP_WOLFSSL_MICRO_SESSION_CACHE
                 bool "Micro Session Cache"
@@ -408,11 +392,26 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                   Uses less than 1K. Stored only 1 session for cache.
                   SessionCache takes about 400 bytes, ClientCache takes 576 bytes.
 
-            config ESP_WOLFSSL_NO_SESSION_CACHE
-                bool "No session cache is used"
+            config ESP_WOLFSSL_SMALL_SESSION_CACHE
+                bool "Small Session Cache"
                 help
-                  No memory is reserved for session cache.
+                  Allows storing 6 sessions.
+                  SessionCache takes about 2K, ClientCache takes about 3K bytes.
 
+            config ESP_WOLFSSL_MEDIUM_SESSION_CACHE
+                bool "Medium Session Cache"
+                help
+                  Allows for over 1,000 sessions. Consider using external memory.
+
+            config ESP_WOLFSSL_BIG_SESSION_CACHE
+                bool "Big Session Cache"
+                help
+                  Allows for over 20,000 sessions. Unrealistic for most ESP32 devices.
+
+            config ESP_WOLFSSL_TITAN_SESSION_CACHE
+                bool "Tital Session Cache"
+                help
+                  Allows for over 2 million sessions. Unrealistic for most ESP32 devices.
         endchoice
 
         config ESP_WOLFSSL_TCP_REUSE
