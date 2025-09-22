@@ -134,7 +134,11 @@ openssl x509 -inform pem -in ./certs/ecc/client-secp256k1-cert.pem -outform der 
 rm ./certs/ecc/client-secp256k1-req.pem
 
 # Generate ECC CA + Leaf PEM: ca-secp256k1-key.pem + server-secp256k1-cert.pem
-cat ./certs/ecc/server-secp256k1-cert.pem ./certs/ecc/ca-secp256k1-cert.pem > ./certs/server-ecc-cert.pem
+cat ./certs/ecc/server-secp256k1-cert.pem ./certs/ecc/ca-secp256k1-cert.pem > ./certs/server-secp256k1-cert.pem
+
+# Generate ECC CA + Leaf PEM: server-ecc.pem + ca-ecc-cert.pem
+cat ./certs/server-ecc.pem ./certs/ca-ecc-cert.pem > ./certs/server-ecc-cert.pem
+
 check_result $? "Add CA into ECC server cert"
 
 # Generate ECC Brainpool Keys
