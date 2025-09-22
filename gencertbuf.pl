@@ -30,7 +30,6 @@ my @fileList_ecc = (
         [ "./certs/server-ecc-rsa.der",              "serv_ecc_rsa_der_256" ],
         [ "./certs/server-ecc.der",                  "serv_ecc_der_256" ],
         [ "./certs/server-ecc-cert.pem",             "server_ecc_cert" ],
-        [ "./certs/server-secp256k1-cert.pem",       "server_secp256k1_cert" ],
         [ "./certs/ca-ecc-key.der",                  "ca_ecc_key_der_256" ],
         [ "./certs/ca-ecc-cert.der",                 "ca_ecc_cert_der_256" ],
         [ "./certs/ca-ecc384-key.der",               "ca_ecc_key_der_384" ],

@@ -133,22 +133,16 @@ openssl x509 -req -in ./certs/ecc/client-secp256k1-req.pem -days 3650 -extfile .
 openssl x509 -inform pem -in ./certs/ecc/client-secp256k1-cert.pem -outform der -out ./certs/ecc/client-secp256k1-cert.der
 rm ./certs/ecc/client-secp256k1-req.pem
 
-# Generate ECC CA + Leaf PEM: ca-secp256k1-key.pem + server-secp256k1-cert.pem
-sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-    ./certs/ecc/server-secp256k1-cert.pem \
-    ./certs/ecc/ca-secp256k1-cert.pem     \
-  > ./certs/server-secp256k1-cert.pem
-openssl verify -CAfile ./certs/ca-secp256k1-cert.pem ./certs/server-secp256k1-cert.pem
-
 # Generate ECC CA + Leaf PEM: server-ecc.pem + ca-ecc-cert.pem
+openssl verify -CAfile ./certs/ca-ecc-cert.pem ./certs/server-ecc-cert.pem
+check_result $? "Verify CA + ECC server cert"
+
 sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
     ./certs/server-ecc.pem      \
     ./certs/ca-ecc-cert.pem     \
   > ./certs/server-ecc-cert.pem
-
-openssl verify -CAfile ./certs/ca-ecc-cert.pem ./certs/server-ecc-cert.pem
 check_result $? "Add CA into ECC server cert"
-openssl verify -CAfile ./certs/server-ecc-cert.pem
+
 
 # Generate ECC Brainpool Keys
 if [ -f ./certs/ecc/bp256r1-key.pem ]; then
