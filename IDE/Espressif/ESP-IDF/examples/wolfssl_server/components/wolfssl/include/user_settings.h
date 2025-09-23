@@ -39,7 +39,7 @@
 #define NO_FILESYSTEM
 #define NO_OLD_TLS
 
-#define DEBUG_WOLFSSL
+// #define DEBUG_WOLFSSL
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
@@ -489,6 +489,7 @@
     #define MICRO_SESSION_CACHE
 #else
     #define NO_SESSION_CACHE
+    #define WOLFSSL_NO_TICKET
 #endif
 
 #ifndef NO_SESSION_CACHE
