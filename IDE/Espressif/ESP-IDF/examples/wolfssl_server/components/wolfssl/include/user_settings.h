@@ -1625,7 +1625,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_CERT_SIZE sizeof_serv_ecc_der_256
         #define CTX_SERVER_CERT_TYPE WOLFSSL_FILETYPE_ASN1
     #else
-        /* new leaf + ca, needs PR */
+        /* new leaf + ca, needs https://github.com/wolfSSL/wolfssl/pull/9231 */
         #define CTX_SERVER_CERT      server_ecc_cert
         #define CTX_SERVER_CERT_NAME "server_ecc_cert"
         #define CTX_SERVER_CERT_SIZE sizeof_server_ecc_cert
