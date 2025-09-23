@@ -30,6 +30,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
+message(STATUS "Peek CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG = $ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}")
 if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
     message(STATUS "Setting CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG from environment variable")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
@@ -75,6 +76,19 @@ else()
                "#define _LIBWOLFSSL_OUTPUT_H_\n\n")
 endif()
 
+# CMakeLists.txt (project or component)
+# Known RISC-V families in ESP-IDF: esp32c2, esp32c3, esp32c6, esp32h2, esp32p4
+set(_riscv_targets esp32c2 esp32c3 esp32c6 esp32h2 esp32p4)
+
+list(FIND _riscv_targets "${IDF_TARGET}" _idx)
+if(_idx GREATER -1)
+  set(IS_RISCV TRUE)
+else()
+  set(IS_RISCV FALSE)
+endif()
+
+message(STATUS "IDF target: ${IDF_TARGET}  (RISC-V: ${IS_RISCV})")
+
 # Append messages with:
 # LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_CMAKE_OUTPUT "${LIBWOLFSSL_CMAKE_OUTPUT}\n"message" "0")
 # See function: APPEND_LIBWOLFSSL_CMAKE_OUTPUT
@@ -82,8 +96,7 @@ endif()
 # function: IS_ESP_IDF_COMPONENT
 #  output:    RESULT = 1 (true) if this component is located in the ESP-IDF components
 #             otherwise 0 (false)
-function( IS_ESP_IDF_COMPONENT
-          RESULT)
+function( IS_ESP_IDF_COMPONENT  RESULT )
     # NOTE: Component location is based on the location of the CMakeList.txt
     # and *not* the location of the wolfSSL source code. (which may be anywhere)
 
@@ -169,7 +182,7 @@ function ( LIBWOLFSSL_SAVE_INFO VAR_OUTPUT THIS_VAR VAR_RESULT )
         endif()
     else() # !IS_VALID_VALUE
         # if we get here, check the execute_process command and parameters.
-        message(STATUS "LIBWOLFSSL_SAVE_INFO encountered a non-zero VAR_RESULT")
+        message(STATUS "LIBWOLFSSL_SAVE_INFO encountered a non-zero VAR_RESULT=${VAR_RESULT} for THIS_VAR=${THIS_VAR}")
         set(${VAR_OUTPUT} "Unknown")
     endif()  # IS_VALID_VALUE
 endfunction()# LIBWOLFSSL_SAVE_INFO
@@ -567,7 +580,7 @@ if(CMAKE_BUILD_EARLY_EXPANSION)
                                           "${THIS_INCLUDE_TIMER}"
                                           "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                            )
-
+    # Do not set compile options during early expansion
 else()
     # not CMAKE_BUILD_EARLY_EXPANSION
     message(STATUS "************************************************************************************************")
@@ -914,6 +927,24 @@ else()
                                   "${THIS_INCLUDE_TIMER}"
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
+
+        message(STATUS "Checking wolfSSL Component CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}")
+        # Optionally force syntax higlighting fix in Visual Studio 2022 for ESP-IDF v6
+        # See https://sysprogs.com/w/forums/topic/espressif-esp-idf-v6-0-intellisense-error-invalid-value-gnu2b-in-stdgnu2b/
+        # To resolve, enter the text in VisualGDB Project Properties – Intellisense Settings Tab, “Additional flags for C files”:
+        #   -std=gnu17
+        # And set here:
+        if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )
+            if(DEFINED IDF_VERSION_MAJOR AND IDF_VERSION_MAJOR GREATER_EQUAL 6)
+                message(STATUS "-- Setting -std=gnu17 with target_compile_options $<$<COMPILE_LANGUAGE:C>:-std=gnu17>")
+                target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu17>)
+            else()
+                message(STATUS "-- Visual Studio Intellisense Fix not needed for this ESP-IDF version=${IDF_VERSION_MAJOR}")
+            endif()
+        else()
+            message(STATUS "-- Not setting -std=gnu17 with target_compile_options for Visual Studio Intellisense Fix")
+            message(STATUS "-- To enable, define environment variable: CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=1")
+        endif()
     else()
         # Register the component simply to allow CMake to complete, but there's no wolfSSL source.
         # Expect many other errors, but the project should at least be loadable and UI can edit Kconfig settings.
@@ -1188,7 +1219,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION AND WOLFSSL_ROOT AND (IS_GIT_REPO STREQUAL "t
     message(STATUS "Adding macro definitions:")
 
     # LIBWOLFSSL_VERSION_GIT_TAG: git config describe --tags --abbrev=0
-    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "config" "describe" "--tags" "--abbrev=0"
+    execute_process(WORKING_DIRECTORY ${WOLFSSL_ROOT} COMMAND ${git_cmd} "describe" "--tags" "--abbrev=0"
                     OUTPUT_VARIABLE TMP_OUT RESULT_VARIABLE TMP_RES ERROR_QUIET  )
     string(REPLACE "\r" "" TMP_OUT "${TMP_OUT}")
     string(REPLACE "\n" "" TMP_OUT "${TMP_OUT}")
@@ -1284,6 +1315,23 @@ LIBWOLFSSL_SAVE_INFO(LIBWOLFSSL_CMAKE_OUTPUT "${LIBWOLFSSL_CMAKE_OUTPUT}" "0")
 file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h"
             "\n"
             "#endif\n" )
+
+set(LINKER_REGION_PEEK "${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld")
+if( EXISTS "${LINKER_REGION_PEEK}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
+
+    message(STATUS "Found linker region peek helper: ${LINKER_REGION_PEEK}")
+    if (COMMAND target_linker_scripts)
+        target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    else()
+        # Fallback if target_linker_scripts isn't available
+        target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+        set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+    endif()
+else()
+    message(STATUS "Found linker region peek helper NOT FOUND: ${LINKER_REGION_PEEK}")
+endif()
 
 message(STATUS "************************************************************************************************")
 message(STATUS "wolfSSL component config complete!")
