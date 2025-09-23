@@ -420,12 +420,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
     /* Identify certificates used, typically in wolfssl/certs_test[_sm].h */
-#ifdef CTX_CERT_SET_NAME
-    ESP_LOGI(TAG, "Certificates in use: %s", CTX_CERT_SET_NAME);
-#else
-    ESP_LOGW(TAG, "Unknown Certificates in use!");
-#endif
-
     ESP_LOGI(TAG, "Loading server certificate %s", CTX_SERVER_CERT_NAME);
     /* Load server certificates into WOLFSSL_CTX, to send to client */
     ret = wolfSSL_CTX_use_certificate_chain_buffer_format(ctx,
@@ -543,6 +537,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         esp_sdk_device_show_info();
 #ifdef USE_WOLFSSL_ESP_SDK_WIFI
         esp_sdk_wifi_show_ip();
+#endif
+#ifdef CTX_CERT_SET_NAME
+        ESP_LOGI(TAG, "Certificate set in use: %s", CTX_CERT_SET_NAME);
+#else
+        /* Check user_settings.h and wolfssl version. */
+        ESP_LOGW(TAG, "Unknown Certificates in use!");
 #endif
         ESP_LOGI(TAG, "Waiting for a connection on port %d ...",
                        TLS_SMP_DEFAULT_PORT);
