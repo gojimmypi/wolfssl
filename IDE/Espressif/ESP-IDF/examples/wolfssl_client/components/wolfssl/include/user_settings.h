@@ -95,7 +95,7 @@
 #else
     // #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #if defined(_WIN32) || defined(_MSC_VER) || (1)
+    #if (1)
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
     #else

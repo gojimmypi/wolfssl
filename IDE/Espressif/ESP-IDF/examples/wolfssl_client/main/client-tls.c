@@ -20,6 +20,8 @@
  */
 
 #include "client-tls.h"
+
+/* Optional peer verify, see wolfSSL_CTX_set_verify() */
 #define MY_PEER_VERIFY 1
 
 /* Espressif FreeRTOS */
@@ -104,20 +106,20 @@
  * examples:
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
+ *
+ * TLS 1.2 VS client app commandline param:
+ *
+ *  -h 192.168.1.128 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3
+                          -c ./certs/sm2/client-sm2.pem
+                          -k ./certs/sm2/client-sm2-priv.pem
+                          -A ./certs/sm2/root-sm2.pem -C
+
+ *  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3
+                          -c ./certs/sm2/client-sm2.pem
+                          -k ./certs/sm2/client-sm2-priv.pem
+                          -A ./certs/sm2/root-sm2.pem -C
  */
-
-/* working TLS 1.2 VS client app commandline param:
- *
- *  -h 192.168.1.128 -v 3 -l ECDHE-ECDSA-SM4-CBC-SM3  -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
- *
- * working Linux, non-working VS c app
- *
- *  -h 192.168.1.128 -v 4 -l TLS13-SM4-CCM-SM3        -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem -A ./certs/sm2/root-sm2.pem -C
- *
- **/
 #define TAG "client-tls"
-
-int stack_start = -1;
 
 int ShowCiphers(WOLFSSL* ssl)
 {

@@ -82,8 +82,8 @@ extern wc_ptr_t _rtc_bss_end[];
 extern wc_ptr_t _iram_start[];
 extern wc_ptr_t _iram_end[];
 #if defined(CONFIG_IDF_TARGET_ESP8266)
-extern wc_ptr_t _init_start[];
-extern wc_ptr_t _init_end[];
+    extern wc_ptr_t _init_start[];
+    extern wc_ptr_t _init_end[];
 #endif
 extern wc_ptr_t _iram_text_start[];
 extern wc_ptr_t _iram_text_end[];

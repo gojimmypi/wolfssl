@@ -730,7 +730,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
-    menu "Component Config"
+    menu "wolfSSL Component Config"
         config IGNORE_ESP_IDF_WOLFSSL_COMPONENT
             bool "Ignore the ESP-IDF component of wolfSSL (if present)"
             default n
@@ -748,7 +748,7 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
     # -----------------------------------------------------------------------------------------------------------------
 
     # -----------------------------------------------------------------------------------------------------------------
-    menu "Utility Config"
+    menu "wolfSSL Utility Config"
         config USE_WOLFSSL_ESP_SDK_TIME
             bool "Enable wolfSSL time helper functions"
             default n

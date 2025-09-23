@@ -30,6 +30,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
+message(STATUS "Peek CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG = $ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}")
 if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
     message(STATUS "Setting CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG from environment variable")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
@@ -927,12 +928,23 @@ else()
                                   "${THIS_INCLUDE_DRIVER}" # this will typically only be needed for wolfSSL benchmark
                                )
 
-        # This is a workaround for ESP-IDF v6 Syntax highlighting only:
-        if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
+        message(STATUS "Checking wolfSSL Component CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}")
+        # Optionally force syntax higlighting fix in Visual Studio 2022 for ESP-IDF v6
+        # See https://sysprogs.com/w/forums/topic/espressif-esp-idf-v6-0-intellisense-error-invalid-value-gnu2b-in-stdgnu2b/
+        # To resolve, enter the text in VisualGDB Project Properties – Intellisense Settings Tab, “Additional flags for C files”:
+        #   -std=gnu17
+        # And set here:
+        if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )
+            set(PREFERRED_DIALECT "gnu17")
             if(DEFINED IDF_VERSION_MAJOR AND IDF_VERSION_MAJOR GREATER_EQUAL 6)
-                message(STATUS "Setting -std=gnu17 with target_compile_options $<$<COMPILE_LANGUAGE:C>:-std=gnu17>")
-                target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu17>)
+                message(STATUS "-- Setting -std=${PREFERRED_DIALECT} with target_compile_options $<$<COMPILE_LANGUAGE:C>:-std=${PREFERRED_DIALECT}>")
+                target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=${PREFERRED_DIALECT}>)
+            else()
+                message(STATUS "-- Visual Studio Intellisense Fix not needed for this ESP-IDF version=${IDF_VERSION_MAJOR}")
             endif()
+        else()
+            message(STATUS "-- Not setting -std=${PREFERRED_DIALECT} with target_compile_options for Visual Studio Intellisense Fix")
+            message(STATUS "-- To enable, define environment variable: CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=1")
         endif()
     else()
         # Register the component simply to allow CMake to complete, but there's no wolfSSL source.
@@ -1307,15 +1319,17 @@ file(APPEND "${CMAKE_BINARY_DIR}/libwolfssl_output.h"
 
 # Memory peek helper
 set(LINKER_REGION_PEEK "${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld")
-if( EXISTS "${LINKER_REGION_PEEK}")
+if( CMAKE_BUILD_EARLY_EXPANSION AND EXISTS "${LINKER_REGION_PEEK}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_HAVE_LINKER_REGION_PEEK")
 
-    message(STATUS "Found linker region peek helper: ${LINKER_REGION_PEEK}")
+    message(STATUS "Found linker region peek helper file: ${LINKER_REGION_PEEK}")
     if (COMMAND target_linker_scripts)
-        target_linker_scripts(${COMPONENT_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
+        message(STATUS "target_linker_scripts(${COMPONENT_LIB} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)")
+        target_linker_scripts(${COMPONENT_LIB} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
     else()
         # Fallback if target_linker_scripts isn't available
+        message(STATUS "target_linker_scripts not available, using target_link_options")
         target_link_options(${COMPONENT_LIB} INTERFACE -T${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
         set_property(TARGET ${COMPONENT_LIB} APPEND PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/ld/region_peek.ld)
     endif()

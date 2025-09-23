@@ -32,11 +32,6 @@
 
 /* Espressif */
 #include <esp_log.h>
-#if defined(ESP_PLATFORM)          // ESP-IDF (ESP32/ESP32-Cx/Sx)
- //  #include "esp_timer.h"
-#elif defined(ESP8266)             // ESP8266 Non-OS/RTOS SDK
-  #include "user_interface.h"      // declares system_get_time()
-#endif
 
 /* socket includes */
 #include <lwip/netdb.h>
@@ -98,6 +93,39 @@
     #define DEFAULT_MAX_DHKEY_BITS 2048
 #endif
 
+/* Optional experimental static memory to consider. See docs. */
+#if defined(WOLFSSL_STATIC_MEMORY)
+    #include <wolfssl/wolfcrypt/memory.h>
+    #define MAX_CONNS 1
+    #define MAX_CONCURRENT_HANDSHAKES 1
+    /* multiple of 16 & 32 */
+    /* #define WOLFMEM_IO_SZ 2048 */
+
+
+    /* 2 fixed + 2 spare */
+    #define IO_BLOCKS_PER_CONN 4
+    #if defined(WOLFSSL_LOW_MEMORY)
+        /* handshake, certs, math temps */
+        #define GEN_POOL_SZ  (72 * 1024)
+        /* if using MFL=512 -> ~2x ~660B; round up */
+        #define IO_POOL_SZ (WOLFMEM_IO_SZ * IO_BLOCKS_PER_CONN * MAX_CONNS)
+        /* #define IO_POOL_SZ   ((2 * WOLFMEM_IO_SZ * MAX_CONNS) * 4) */
+    #else
+        /* handshake, certs, math temps */
+        #define GEN_POOL_SZ  (60 * 1024)
+        /* if using MFL=512 -> ~2x ~660B; round up */
+        #define IO_POOL_SZ   (2 * 720)
+    #endif
+    #if (GEN_POOL_SZ % 32) != 0
+        #error "GEN_POOL_SZ must be 32-byte aligned with WOLFMEM_IO_POOL_FIXED"
+    #endif
+    #if (WOLFMEM_IO_SZ % 32) != 0
+        #error "WOLFMEM_IO_SZ must be 32-byte aligned with WOLFMEM_IO_POOL_FIXED"
+    #endif
+    static __attribute__((aligned(32))) uint8_t genPool[GEN_POOL_SZ];
+    static __attribute__((aligned(32))) uint8_t ioPool [IO_POOL_SZ];
+#endif
+
 /*
  * Optionally define explicit ciphers, for example these TLS 1.3 options.
  *
@@ -154,38 +182,6 @@ static void halt_for_reboot(const char* s)
         vTaskDelay(60000);
     }
 }
-
-#if defined(WOLFSSL_STATIC_MEMORY)
-#include <wolfssl/wolfcrypt/memory.h>
-#define MAX_CONNS 1
-#define MAX_CONCURRENT_HANDSHAKES 1
-/* multiple of 16 & 32 */
-// #define WOLFMEM_IO_SZ 2048
-
-
-/* 2 fixed + 2 spare */
-#define IO_BLOCKS_PER_CONN 4
-#if defined(WOLFSSL_LOW_MEMORY)
-    /* handshake, certs, math temps */
-    #define GEN_POOL_SZ  (72 * 1024)
-    /* if using MFL=512 -> ~2x ~660B; round up */
-    #define IO_POOL_SZ (WOLFMEM_IO_SZ * IO_BLOCKS_PER_CONN * MAX_CONNS)
-    // #define IO_POOL_SZ   ((2 * WOLFMEM_IO_SZ * MAX_CONNS) * 4)
-#else
-    /* handshake, certs, math temps */
-    #define GEN_POOL_SZ  (60 * 1024)
-    /* if using MFL=512 -> ~2x ~660B; round up */
-    #define IO_POOL_SZ   (2 * 720)
-#endif
-#if (GEN_POOL_SZ % 32) != 0
-    #error "GEN_POOL_SZ must be 32-byte aligned with WOLFMEM_IO_POOL_FIXED"
-#endif
-#if (WOLFMEM_IO_SZ % 32) != 0
-    #error "WOLFMEM_IO_SZ must be 32-byte aligned with WOLFMEM_IO_POOL_FIXED"
-#endif
-static __attribute__((aligned(32))) uint8_t genPool[GEN_POOL_SZ];
-static __attribute__((aligned(32))) uint8_t ioPool [IO_POOL_SZ];
-#endif
 
 /* FreeRTOS */
 /* server task */
@@ -353,7 +349,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         #define WOLFMEM_IO_POOL       0x02
         #define WOLFMEM_IO_POOL_FIXED 0x04
         #define WOLFMEM_TRACK_STATS   0x08
-        **/
+      **/
 #else
     ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
     if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
@@ -479,7 +475,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 
-/*
+/* TODO cleanup:
  * ./examples/client/client -h 192.168.1.107 -v 3   -l ECDHE-ECDSA-SM4-CBC-SM3   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/ca-sm2.pem -C
    ./examples/client/client -v 3 -l  ECDHE-ECDSA-SM4-CBC-SM3  -h 192.168.1.107   -c ./certs/sm2/client-sm2.pem -k ./certs/sm2/client-sm2-priv.pem   -A ./certs/sm2/root-sm2.pem -C
 
@@ -539,7 +535,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         esp_sdk_wifi_show_ip();
 #endif
 #ifdef CTX_CERT_SET_NAME
-        ESP_LOGI(TAG, "Certificate set in use: %s", CTX_CERT_SET_NAME);
+        ESP_LOGI(TAG, "Certificate set in use:");
+        ESP_LOGI(TAG, "-- %s", CTX_CERT_SET_NAME);
 #else
         /* Check user_settings.h and wolfssl version. */
         ESP_LOGW(TAG, "Unknown Certificates in use!");
@@ -555,7 +552,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
 #endif
         /* Create a WOLFSSL object */
-        wolfSSL_Debugging_ON(); // todo remove
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
             halt_for_reboot("ERROR: failed to create (WOLFSSL*) ssl object");
         }
@@ -605,18 +601,11 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
         /* Attach wolfSSL to the socket */
         wolfSSL_set_fd(ssl, connd);
-        int t0_us = 0;
-        int t1_us = 0;
-        int dt_us = 0;
-        float dt_ms = 0;
+
         /* Establish TLS connection */
         ret = wolfSSL_accept(ssl);
         if (ret == SSL_SUCCESS) {
             ESP_LOGI(TAG, "Client connected successfully");
-           // t0_us = esp_timer_get_time();
-            // ShowCiphers(ssl);
-            // const char* curve = wolfSSL_get_curve_name(ssl);
-            //ESP_LOGI(TAG, "Server negotiated key share group: %s", curve);
 
             /* Read the client data into our buff array */
             memset(buff, 0, sizeof(buff));
@@ -624,7 +613,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
                 ESP_LOGE(TAG, "ERROR: failed to read");
             }
 
-            //ESP_LOGI(TAG, "Client sends: %s", buff);
+            ESP_LOGI(TAG, "Client sends: %s", buff);
+
             /* Check for server shutdown command */
             if (strncmp(buff, "shutdown", 8) == 0) {
                 ESP_LOGI(TAG, "Shutdown command issued!");
@@ -648,10 +638,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
                            wolfSSL_get_error(ssl, ret));
         }
 
-      //  t1_us = esp_timer_get_time();
-  dt_us = t1_us - t0_us;
-  dt_ms = dt_us / 1000.0f;
-        ESP_LOGI(TAG, "Done! Cleanup... %f", dt_ms);
+        ESP_LOGI(TAG, "Done! Cleanup... ");
         /* Cleanup after this connection */
         ESP_LOGI(TAG, "wolfSSL_free...");
         wolfSSL_free(ssl);      /* Free the wolfSSL object              */

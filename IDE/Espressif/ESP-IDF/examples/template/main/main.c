@@ -19,9 +19,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-/* ESP-IDF */
+/*
+ *                      Attention maintainers:
+ *
+ *  This code is mostly mirrored between client and server examples.
+ *
+ *                  Please apply any updates to both.
+ */
 #include "sdkconfig.h"
+#include "main.h"
+
+/* ESP specific */
+#include <nvs_flash.h>
 #include <esp_log.h>
+#include <esp_event.h>
 
 /* wolfSSL */
 /* The wolfSSL user_settings.h is automatically included by settings.h file.

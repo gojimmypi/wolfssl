@@ -35,9 +35,10 @@
 #include <esp_event.h>
 
 /* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
+/* The wolfSSL user_settings.h is automatically included by settings.h file.
+ * Never explicitly include wolfSSL user_settings.h in any source file.
+ * The settings.h should also be listed above wolfssl library include files. */
+#if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
     #ifndef WOLFSSL_ESPIDF
         #warning "Problem with wolfSSL user_settings."
@@ -286,9 +287,9 @@ void app_main(void)
             ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
         #endif
         #ifdef DEBUG_WOLFSSL
-            /* Anytime we are debugging, also debug WiFi */
-            esp_log_level_set("wifi", ESP_LOG_VERBOSE);
-            esp_log_level_set("wpa",  ESP_LOG_VERBOSE);
+            /* Anytime we are debugging, can also debug WiFi: */
+            /* esp_log_level_set("wifi", ESP_LOG_VERBOSE);    */
+            /* esp_log_level_set("wpa",  ESP_LOG_VERBOSE);    */
         #endif
         #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
             esp_sdk_wifi_lib_init();
