@@ -1000,7 +1000,9 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C2  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+
 #if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    /* TODO not needed after https://github.com/wolfSSL/wolfssl/pull/9225 */
     #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 #endif
@@ -1025,8 +1027,10 @@
     /* no SHA384 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C6  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+
 #if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    /* TODO not needed after https://github.com/wolfSSL/wolfssl/pull/9225 */
     #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 #endif
@@ -1057,7 +1061,9 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+
 #if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    /* TODO not needed after https://github.com/wolfSSL/wolfssl/pull/9225 */
     #define WOLFSSL_IDF_PRERELEASE_MITIGATION_ACTIVE
     #define NO_WOLFSSL_ESP32_CRYPT_HASH
 #endif
