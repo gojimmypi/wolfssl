@@ -499,6 +499,7 @@
     #define MICRO_SESSION_CACHE
 #else
     #define NO_SESSION_CACHE
+    #define WOLFSSL_NO_TICKET
 #endif
 
 #ifndef NO_SESSION_CACHE
