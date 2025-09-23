@@ -1570,11 +1570,15 @@ Turn on timer debugging (used when CPU cycles not available)
     /* Be sure to include in app, not here, when using example certs: */
     /* #include <wolfssl/certs_test.h> */
     #define CTX_CERT_SET_NAME "wolfSSL Test Certs (USE_CERT_BUFFERS_256)"
+    #ifndef HAVE_ECC
+        #error "USE_CERT_BUFFERS_256 requires HAVE_ECC"
+    #endif
 
-    #define HAVE_ECC
-    #define HAVE_ECC_SECP256K1
-    #define HAVE_ECC_KOBLITZ
-    #define WOLFSSL_CUSTOM_CURVES
+    #if (0) /* Optional SECP256K1 */
+        #define HAVE_ECC_SECP256K1
+        #define HAVE_ECC_KOBLITZ
+        #define WOLFSSL_CUSTOM_CURVES
+    #endif
     /*
     * To connect to this ESP32 server with a client from commandline:
     *
