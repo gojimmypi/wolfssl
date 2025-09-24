@@ -30,9 +30,9 @@
 #include "main.h"
 
 /* ESP specific */
-#include <nvs_flash.h>
 #include <esp_log.h>
 #include <esp_event.h>
+#include <nvs_flash.h>
 
 /* wolfSSL */
 /* The wolfSSL user_settings.h is automatically included by settings.h file.
