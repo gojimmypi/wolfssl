@@ -192,8 +192,8 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #ifdef WOLFSSL_LOW_MEMORY
-    #define WOLFSSL_MAX_ERROR_SZ 50
-    #define WOLFSSL_MSG_EX_BUF_SZ 50
+    #define WOLFSSL_MAX_ERROR_SZ 65
+    #define WOLFSSL_MSG_EX_BUF_SZ 65
 #else
     #define WOLFSSL_MAX_ERROR_SZ 500
     #define WOLFSSL_MSG_EX_BUF_SZ 500
