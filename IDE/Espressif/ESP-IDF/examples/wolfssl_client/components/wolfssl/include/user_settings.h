@@ -484,7 +484,8 @@
  * Single Thread avoids RAM-consuming semaphores.
  * Note Default ESP-IDF is FreeRTOS rergardless of this setting */
 #if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD)
-    #undef SINGLE_THREADED
+    /* Unless SINGLE_THREADED defined, wolfssl assume multi-thread. */
+    /* #undef SINGLE_THREADED */
 #else
     #define SINGLE_THREADED
 #endif

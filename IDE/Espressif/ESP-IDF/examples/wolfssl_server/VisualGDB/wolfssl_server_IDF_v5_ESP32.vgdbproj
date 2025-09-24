@@ -18,9 +18,9 @@
     <ToolchainID>
       <ID>com.visualgdb.xtensa-esp32-elf</ID>
       <Version>
-        <GCC>13.2.0</GCC>
-        <GDB>12.1</GDB>
-        <Revision>1</Revision>
+        <GCC>11.2.0</GCC>
+        <GDB>9.2.90</GDB>
+        <Revision>2</Revision>
       </Version>
     </ToolchainID>
     <RelativeSourceDirectory>..</RelativeSourceDirectory>
@@ -68,7 +68,7 @@
       <ESPIDFExtension>
         <IDFCheckout>
           <Version>release/v5.2</Version>
-          <Subdirectory>esp-idf/v5.2</Subdirectory>
+          <Subdirectory>/c/SysGCC/esp32/esp-idf/v5.2</Subdirectory>
           <Type>ESPIDF</Type>
         </IDFCheckout>
         <COMPort>COM19</COMPort>
@@ -76,7 +76,9 @@
         <UseCCache>false</UseCCache>
         <DeviceID>ESP32</DeviceID>
       </ESPIDFExtension>
+      <DetectMissingSolutionConfigurations>false</DetectMissingSolutionConfigurations>
     </ProjectModeSettings>
+    <LoadCMakePresets>false</LoadCMakePresets>
   </Build>
   <CustomBuild>
     <PreSyncActions />
@@ -212,10 +214,12 @@
       <EnableAsyncExecutionMode>false</EnableAsyncExecutionMode>
       <AsyncModeSupportsBreakpoints>true</AsyncModeSupportsBreakpoints>
       <TemporaryBreakConsolidationTimeout>0</TemporaryBreakConsolidationTimeout>
+      <BacktraceFrameLimit>0</BacktraceFrameLimit>
       <EnableNonStopMode>false</EnableNonStopMode>
       <MaxBreakpointLimit>0</MaxBreakpointLimit>
       <EnableVerboseMode>true</EnableVerboseMode>
       <EnablePrettyPrinters>false</EnablePrettyPrinters>
+      <EnableAbsolutePathReporting>true</EnableAbsolutePathReporting>
     </AdditionalGDBSettings>
     <DebugMethod>
       <ID>openocd</ID>

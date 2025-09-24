@@ -224,16 +224,10 @@ void my_atmel_free(int slotId)
 /* client task */
 WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 {
-#if defined(SINGLE_THREADED)
-    #define TLS_SMP_CLIENT_TASK_RET ret
-#else
-    #define TLS_SMP_CLIENT_TASK_RET
-#endif
     char buff[256];
     const char sndMsg[] = "GET /index.html HTTP/1.0\r\n\r\n";
     const char* ch = TLS_SMP_TARGET_HOST; /* see wifi_connect.h */
     struct sockaddr_in servAddr;
-    int ret = ESP_OK;
 
     struct hostent *hp;
     struct ip4_addr *ip4_addr;
@@ -241,6 +235,12 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     int err; /* interim return values */
     int sockfd;
     int sendGet;
+#if defined(SINGLE_THREADED)
+    #define TLS_SMP_CLIENT_TASK_RET ret
+    int ret = ESP_OK;
+#else
+    #define TLS_SMP_CLIENT_TASK_RET
+#endif
 #ifdef DEBUG_WOLFSSL
     int this_heap = 0;
 #endif

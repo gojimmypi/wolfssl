@@ -931,7 +931,7 @@ else()
         message(STATUS "Checking wolfSSL Component CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}")
         # Optionally force syntax higlighting fix in Visual Studio 2022 for ESP-IDF v6
         # See https://sysprogs.com/w/forums/topic/espressif-esp-idf-v6-0-intellisense-error-invalid-value-gnu2b-in-stdgnu2b/
-        # To resolve, enter the text in VisualGDB Project Properties ‚Äì Intellisense Settings Tab, ‚ÄúAdditional flags for C files‚Äù:
+        # To resolve, enter the text in VisualGDB Project Properties ñ Intellisense Settings Tab, ìAdditional flags for C filesî:
         #   -std=gnu17
         # And set here:
         if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )

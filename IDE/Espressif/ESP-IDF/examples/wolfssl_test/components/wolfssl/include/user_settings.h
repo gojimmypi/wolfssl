@@ -51,6 +51,16 @@
 /* Some mitigations are ESP-IDF version-speific. */
 #include "esp_idf_version.h"
 
+/* Optional OpenSSL compatibility */
+/* #define OPENSSL_ALL            */
+/* #define OPENSSL_EXTRA          */
+
+/* Optional PKCS7                 */
+/* #define HAVE_PKCS7             */
+
+/* PKCS12 can take up a lot of memory, so disabled: */
+#define NO_PKCS12
+
 // TODO remove this section
 #if (1)
     // my SM test section
@@ -108,7 +118,7 @@
 #else
     // #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #if defined(_WIN32) || defined(_MSC_VER) || (0)
+    #if defined(_WIN32) || defined(_MSC_VER) || (1)
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
         #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
     #else
@@ -205,8 +215,9 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #ifdef WOLFSSL_LOW_MEMORY
-    #define WOLFSSL_MAX_ERROR_SZ 50
-    #define WOLFSSL_MSG_EX_BUF_SZ 50
+    /* If too small, the error_test() will fail. */
+    #define WOLFSSL_MAX_ERROR_SZ  70
+    #define WOLFSSL_MSG_EX_BUF_SZ 70
 #else
     #define WOLFSSL_MAX_ERROR_SZ 500
     #define WOLFSSL_MSG_EX_BUF_SZ 500
@@ -688,7 +699,6 @@
         /* this size may be problematic on the C2 */
     #endif
     #define HAVE_FFDHE_2048
-    #define NO_DH
 #else
     #define HAVE_FFDHE_4096
 #endif
@@ -766,15 +776,6 @@
         #warning "PQ, RSA, and ECC are disabled. Consider WOLFCRYPT_ONLY"
     #endif
 #endif
-
-/* Optional OpenSSL compatibility */
-/* #define OPENSSL_EXTRA */
-
-/* #Optional HAVE_PKCS7 */
-/* #define HAVE_PKCS7 */
-
-/* PKCS12 can take up a lot of memory, so disabled: */
-// TODO ? #define NO_PKCS12
 
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
