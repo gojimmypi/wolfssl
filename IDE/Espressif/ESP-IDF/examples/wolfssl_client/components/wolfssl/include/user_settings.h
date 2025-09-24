@@ -38,7 +38,7 @@
 
 #define NO_FILESYSTEM
 #define NO_OLD_TLS
-
+#define WOLFSSL_ASN_TEMPLATE
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
@@ -91,9 +91,9 @@
 // BEGIN TODO comment out below as example only for release */
 #if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
             CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    // #pragma message "menuconfig selected private config"
+    #pragma message "menuconfig selected private config"
 #else
-    // #pragma message "manually selected private config"
+    #pragma message "manually selected private config"
     #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
     #if (1)
         #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
@@ -483,8 +483,9 @@
 /* See Kconfig: Check if Multi Thread selected in idf.py menuconfig
  * Single Thread avoids RAM-consuming semaphores.
  * Note Default ESP-IDF is FreeRTOS rergardless of this setting */
-#if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD)
-    /* Unless SINGLE_THREADED defined, wolfssl assume multi-thread. */
+#if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD) && \
+            CONFIG_ESP_WOLFSSL_MULTI_THREAD
+    /* Unless SINGLE_THREADED defined, wolfssl assumes multi-thread. */
     /* #undef SINGLE_THREADED */
 #else
     #define SINGLE_THREADED
@@ -872,8 +873,6 @@
     */
 
 #endif
-
-#define WOLFSSL_ASN_TEMPLATE
 
 /*
 #undef  WOLFSSL_KEY_GEN
