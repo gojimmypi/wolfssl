@@ -1561,7 +1561,7 @@ Turn on timer debugging (used when CPU cycles not available)
      * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d \
                                 -A ./certs/1024/ca-cert.pem        \
                                 -c ./certs/1024/client-cert.pem    \
-                                -k ./certs/1024/client-key.pem
+                                -k ./certs/1024/client-key.pem -C
      */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
