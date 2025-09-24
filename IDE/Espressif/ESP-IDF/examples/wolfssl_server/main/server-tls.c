@@ -266,19 +266,22 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
     ESP_LOGW(TAG, "Creating TLS 1.3 (only) server context...");
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method());
 #elif defined(WOLFSSL_TLS13)
     ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    ctx = wolfSSL_CTX_new(wolfSSLv23_server_method());
 #else
-    /* TLS 1.2 only */
+    ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
+    ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method());
+#endif /* TLS 1.2 or TLS 1.3 */
+    if (ctx == NULL) {
+        halt_for_reboot("ERROR: failed to create wolfSSL ctx");
+    }
+
 
     // TODO Begin fix or remove
     /* There's some temporary, non-working static memory */
+
 #ifndef NO_WOLFSSL_CLIENT
     ret = wolfSSL_CTX_UseMaxFragment(ctx, WOLFSSL_MFL_2_9);
     if (ret == WOLFSSL_SUCCESS) {
@@ -303,9 +306,6 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         WOLFSSL_MSG("wolfSSL_CTX_load_static_memory success");
     }
 #endif
-#ifdef USE_FAST_MATH
-#endif
-    // TODO End fix or remove
 
 #if defined(WOLFSSL_STATIC_MEMORY)
     WOLFSSL_HEAP_HINT* heap = NULL;
@@ -351,12 +351,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         #define WOLFMEM_TRACK_STATS   0x08
       **/
 #else
-    ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+
 #endif /* ctx via heap or WOLFSSL_STATIC_MEMORY */
-#endif /* TLS 1.2 or TLS 1.3 */
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.

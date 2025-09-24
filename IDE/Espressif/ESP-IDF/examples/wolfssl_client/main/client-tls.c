@@ -310,21 +310,17 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 #endif
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
     ESP_LOGW(TAG, "Creating TLS 1.3 (only) client context...");
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method());
 #elif defined(WOLFSSL_TLS13)
     ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) client context...");
-    if ((ctx = wolfSSL_CTX_new(wolfSSLv23_client_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
 #else
-
     ESP_LOGW(TAG, "Creating TLS 1.2 (only) client context...");
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
 #endif /* TLS 1.2 or TLS 1.3 */
+    if (ctx == NULL) {
+        halt_for_reboot("ERROR: failed to create wolfSSL ctx");
+    }
 
 
 #if defined(USE_CERT_BUFFERS_1024)
@@ -354,13 +350,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     ESP_LOGE(TAG, "Example certificates USE_CERT_BUFFERS_3072 (not default)");
 #endif
 #if defined(USE_CERT_BUFFERS_4096)
-    /* The x3072 test certs are not in current user_settings.h */
+    /* The x4096 test certs are not in current user_settings.h */
     ESP_LOGE(TAG, "Example certificates USE_CERT_BUFFERS_4096 (not default)");
 #endif
 
 #if (0)
-        /* Optionally disable CRL checks */
-        wolfSSL_CTX_DisableCRL(ctx);
+    /* Optionally disable CRL checks */
+    wolfSSL_CTX_DisableCRL(ctx);
 #endif
 
 #if defined(WOLFSSL_ESP32_CIPHER_SUITE)
