@@ -60,6 +60,12 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/version.h>
 
+#ifndef NO_WOLFCRYPT_WARMUP
+    #define HAVE_WOLFCRYPT_WARMUP
+    #if !defined(NO_AES) && defined(HAVE_AESGCM)
+        #include <wolfssl/wolfcrypt/aes.h>
+    #endif
+#endif
 /*
 ** Version / Platform info.
 **
@@ -378,6 +384,113 @@ static int ShowExtendedSystemInfo_platform_espressif(void)
 */
 
 /*
+** All platforms: Warmup wolfssl
+*/
+esp_err_t esp_sdk_wolfssl_warmup(void)
+{
+    esp_err_t ret = ESP_OK;
+    int ret_i = 0; /* intermediate wolfssl results*/
+#ifdef NO_WOLFCRYPT_WARMUP
+    ESP_LOGW(TAG, "esp_sdk_wolfssl_warmup called with NO_WOLFCRYPT_WARMUP");
+#else
+    /* Even though some [name]_NO_MALLOC may defined, there's always the host
+     * freeRTOS heap. So here, we'll initialize things early on to attempt
+     * having the heap allocate long term items near the edge of free memory,
+     * rather than in the middle. */
+    WC_RNG rng;
+    int rng_inited = 0;
+    unsigned char dummy;
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
+    Aes aes;
+    unsigned char key16[WC_AES_BLOCK_SIZE];
+    unsigned char out[WC_AES_BLOCK_SIZE];
+    unsigned char in[WC_AES_BLOCK_SIZE];
+    unsigned char iv[WC_AES_BLOCK_SIZE];
+    int devId;
+    int aes_inited = 0;
+#endif /* NO_AES && HAVE_AESGCM declarations */
+
+#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+    ESP_LOGI(TAG, "Warming up RNG");
+#endif
+
+    ret_i = wc_InitRng(&rng);
+    if (ret_i == 0) {
+        rng_inited = 1;
+        /* forces Hash_DRBG/SHA */
+        ret_i = wc_RNG_GenerateBlock(&rng, &dummy, sizeof(dummy));
+        if (ret_i != 0) {
+            ESP_LOGE(TAG, "esp_sdk_wolfssl_warmup wc_RNG_GenerateBlock failed");
+        }
+    }
+    if (ret_i != 0) {
+        ret = ESP_FAIL;
+        ESP_LOGE(TAG, "esp_sdk_wolfssl_warmup RNG warmup failed");
+    }
+    if (rng_inited == 1) {
+        ret_i = wc_FreeRng(&rng);
+        if (ret_i != 0) {
+            ret = ESP_FAIL;
+            ESP_LOGE(TAG, "esp_sdk_wolfssl_warmup wc_FreeRng failed");
+        }
+    }
+
+#if !defined(NO_AES) && defined(HAVE_AESGCM)
+#if defined(DEBUG_WOLFSSL_MALLOC_VERBOSE)
+    ESP_LOGI(TAG, "Warming up AES");
+#endif
+    XMEMSET(key16, 0, (word32)sizeof(key16));
+    XMEMSET(iv, 0, (word32)sizeof(iv));
+    XMEMSET(in, 0, (word32)sizeof(in));
+#ifdef INVALID_DEVID
+    devId = INVALID_DEVID; /* software by default */
+#else
+    devId = 0;
+#endif
+
+    ret_i = wc_AesInit(&aes, NULL, devId);
+    if (ret_i == 0) {
+        aes_inited = 1;
+        /* Set an ECB key (no IV). This avoids pulling in GCM/GHASH. */
+        ret_i = wc_AesSetKey(&aes, key16, (word32)sizeof(key16), NULL,
+                            AES_ENCRYPTION);
+    }
+    if (ret_i == 0) {
+#ifdef WOLFSSL_AES_DIRECT
+        /* Single direct block encrypt to exercise the core/driver. */
+        ret_i = wc_AesEncryptDirect(&aes, out, in);
+#elif !defined(NO_AES_CBC)
+    /* One-block CBC (tiny; no padding; does not pull GCM). */
+    ret_i = wc_AesSetIV(&aes, iv);
+    if (ret_i == 0) {
+        ret_i = wc_AesCbcEncrypt(&aes, out, in, (word32)sizeof(in));
+    }
+#elif defined(WOLFSSL_AES_COUNTER)
+    /* As another lightweight option, CTR one-block. */
+    ret_i = wc_AesSetIV(&aes, iv);
+    if (ret_i == 0) {
+        ret_i = wc_AesCtrEncrypt(&aes, out, in, (word32)sizeof(in));
+    }
+#else
+    /* No small mode available; setting key already did most of the warmup. */
+    ret_i = 0;
+#endif /* WOLFSSL_AES_DIRECT, NO_AES_CBC, HAVE_AES_CTR, etc*/
+    }
+    if (ret_i != 0) {
+        ret = ESP_FAIL;
+        ESP_LOGE(TAG, "AES warmup failed during esp_sdk_wolfssl_warmup");
+    }
+    if (aes_inited == 1) {
+        wc_AesFree(&aes);
+    }
+
+#endif /* !NO_AES && HAVE_AESGCM */
+#endif /* !NO_WOLFCRYPT_WARMUP */
+
+    return ret;
+}
+
+/*
 ** All platforms: git details
 */
 static int ShowExtendedSystemInfo_git(void)
@@ -473,14 +586,21 @@ static int ShowExtendedSystemInfo_thread(void)
 */
 static int ShowExtendedSystemInfo_platform(void)
 {
+    int ret = ESP_OK;
 #if defined(WOLFSSL_ESPIDF)
-#if defined(CONFIG_IDF_TARGET)
-    WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET = %s",
-                           CONFIG_IDF_TARGET);
-    ShowExtendedSystemInfo_platform_espressif();
+    #if defined(CONFIG_IDF_TARGET)
+        WOLFSSL_VERSION_PRINTF("CONFIG_IDF_TARGET = %s",
+                               CONFIG_IDF_TARGET);
+        ret = ShowExtendedSystemInfo_platform_espressif();
+    #else
+        ESP_LOGW(TAG, "CONFIG_IDF_TARGET expected, not defined");
+        ret = ESP_FAIL;
+    #endif
+#else
+    ESP_LOGW(TAG, "WOLFSSL_ESPIDF expected, not defined");
+    ret = ESP_FAIL;
 #endif
-#endif
-    return ESP_OK;
+    return ret;
 }
 
 static int esp_increment_boot_count(void)
@@ -501,7 +621,7 @@ static const char hd2[] =
 /* See macro helpers above; not_defined is macro name when *not* defined */
 static int show_macro(char* s, char* not_defined)
 {
-char msg[] =      "...................................                        ";
+    char msg[] =  "...................................                        ";
             /*    01234567890123456789012345678901234567890123456789012345678 */
             /*              1         2         3         4         5         */
     size_t i = 0;
@@ -715,34 +835,54 @@ static esp_err_t ShowExtendedSystemInfo_config(void)
     show_macro("DEBUG_WOLFSSL",             STR_IFNDEF(DEBUG_WOLFSSL));
     show_macro("WOLFSSL_DEBUG_CERTS",       STR_IFNDEF(WOLFSSL_DEBUG_CERTS));
     show_macro("NO_WOLFSSL_DEBUG_CERTS",    STR_IFNDEF(NO_WOLFSSL_DEBUG_CERTS));
-    show_macro("WOLFSSL_DEBUG_ERRORS_ONLY", STR_IFNDEF(WOLFSSL_DEBUG_ERRORS_ONLY));
+    show_macro("WOLFSSL_DEBUG_ERRORS_ONLY",
+                                         STR_IFNDEF(WOLFSSL_DEBUG_ERRORS_ONLY));
 
     ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
 
     show_macro("NO_DH",                     STR_IFNDEF(NO_DH));
-    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
-    show_macro("HAVE_RSA",                     STR_IFNDEF(HAVE_RSA));
-    show_macro("HAVE_CURVE25519",                     STR_IFNDEF(HAVE_CURVE25519));
-    show_macro("NO_RSA",                     STR_IFNDEF(NO_RSA));
-    show_macro("FP_MAX_BITS",                     STR_IFNDEF(FP_MAX_BITS));
+    show_macro("NO_RSA",                    STR_IFNDEF(NO_RSA));
+    show_macro("HAVE_RSA",                  STR_IFNDEF(HAVE_RSA));
+    show_macro("HAVE_CURVE25519",           STR_IFNDEF(HAVE_CURVE25519));
+    show_macro("NO_RSA",                    STR_IFNDEF(NO_RSA));
+    show_macro("FP_MAX_BITS",               STR_IFNDEF(FP_MAX_BITS));
 
     /* esp-tls component related settings */
     show_macro("NO_WOLFSSL_USE_ASM_CERT",
-     STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
+                                           STR_IFNDEF(NO_WOLFSSL_USE_ASM_CERT));
     show_macro("WOLFSSL_CMAKE_REQUIRED_ESP_TLS",
-     STR_IFNDEF(WOLFSSL_CMAKE_REQUIRED_ESP_TLS));
+                                    STR_IFNDEF(WOLFSSL_CMAKE_REQUIRED_ESP_TLS));
+    ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
     show_macro("CONFIG_ESP_TLS_USING_WOLFSSL",
-     STR_IFNDEF(CONFIG_ESP_TLS_USING_WOLFSSL));
+                                      STR_IFNDEF(CONFIG_ESP_TLS_USING_WOLFSSL));
     show_macro("CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE",
-     STR_IFNDEF(CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE));
+                              STR_IFNDEF(CONFIG_ESP_WOLFSSL_DEBUG_CERT_BUNDLE));
     show_macro("CONFIG_WOLFSSL_NO_ASN_STRICT",
-     STR_IFNDEF(CONFIG_WOLFSSL_NO_ASN_STRICT));
+                                      STR_IFNDEF(CONFIG_WOLFSSL_NO_ASN_STRICT));
     show_macro("CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL",
-     STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
+                                 STR_IFNDEF(CONFIG_WOLFSSL_ASN_ALLOW_0_SERIAL));
     show_macro("CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE",
-     STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
+                    STR_IFNDEF(CONFIG_WOLFSSL_CERTIFICATE_BUNDLE_DEFAULT_NONE));
 
     ESP_LOGI(TAG, "%s", hd2); /* ------------------------------------------- */
+
+    /* Low memory checks & warnings */
+#ifdef WOLFSSL_LOW_MEMORY
+    #if (defined(CONFIG_ESP_WOLFSSL_USE_RSA) && CONFIG_ESP_WOLFSSL_USE_RSA)
+        ESP_LOGW(TAG, "RSA config enabled in very low memory environment");
+        #if defined(NO_RSA)
+            ESP_LOGW(TAG, "NO_RSA not found with CONFIG_ESP_WOLFSSL_USE_RSA");
+        #else
+            /* RSA enable on low-memory devices */
+        #endif
+        #if defined(HAVE_RSA)
+            /* RSA enable on low-memory devices */
+        #else
+            ESP_LOGW(TAG, "HAVE_RSA not found with CONFIG_ESP_WOLFSSL_USE_RSA");
+        #endif
+    #endif
+#endif
 
 #ifdef CONFIG_ESP_TLS_USING_WOLFSSL
     ESP_LOGI(TAG, "ESP-IDF is configured to use wolfSSL in esp-tls");

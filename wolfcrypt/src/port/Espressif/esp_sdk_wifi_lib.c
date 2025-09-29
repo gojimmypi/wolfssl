@@ -225,6 +225,7 @@ esp_err_t esp_sdk_wifi_init_sta(void)
     this_heap = esp_get_free_heap_size();
     ESP_LOGI(TAG, "this heap = %d", this_heap);
     if (this_heap < WIFI_LOW_HEAP_WARNING) {
+        ESP_LOGW(TAG, "esp_get_free_heap_size: %d", this_heap);
         ESP_LOGW(TAG, "Warning: WiFi low heap: %d", WIFI_LOW_HEAP_WARNING);
     }
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT)
@@ -460,7 +461,11 @@ esp_err_t esp_sdk_wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
 
-#ifdef CONFIG_EXAMPLE_WIFI_SSID
+#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
+            CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    /* Using local private config file, ignore myssid default warning */
+#else
+#if defined(CONFIG_EXAMPLE_WIFI_SSID)
     if (XSTRCMP(CONFIG_EXAMPLE_WIFI_SSID, "myssid") == 0) {
         ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID is \"myssid\".");
         ESP_LOGW(TAG, "  Do you have a WiFi AP called \"myssid\", ");
@@ -469,6 +474,7 @@ esp_err_t esp_sdk_wifi_init_sta(void)
 #else
     ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
 #endif
+#endif /* CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG */
 
     ESP_ERROR_CHECK(esp_wifi_start() );
 

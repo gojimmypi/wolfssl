@@ -278,15 +278,16 @@ int set_time_wait_for_ntp(void)
 {
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_set_time_sync_notification_cb(time_sync_cb);
-    sntp_setservername(0, "pool.ntp.org");     // or your local NTP server
+    sntp_setservername(0, "pool.ntp.org");     /* or your local NTP server */
     sntp_init();
 
     /* Optional: set your local time zone *before* using localtime_r() */
-    setenv("TZ", "PST8PDT,M3.2.0/2,M11.1.0/2", 1);  // example for US Pacific
+    setenv("TZ", "PST8PDT,M3.2.0/2,M11.1.0/2", 1);  /* example for US Pacific */
     tzset();
 
     /* Wait for first sync */
-    for (int i = 0; i < 10 && sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET; ++i) {
+    for (int i = 0; (i < 10) &&
+                    (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET); ++i) {
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
