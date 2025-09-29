@@ -1,0 +1,92 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "ESP32C6.v5.3", "ESP32C6.v5.3.vgdbproj", "{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfssl", "wolfssl", "{D0CDDB67-9C19-464B-9BB0-7A7B0F49BF50}"
+	ProjectSection(SolutionItems) = preProject
+		..\components\wolfssl\CMakeLists.txt = ..\components\wolfssl\CMakeLists.txt
+		..\components\wolfssl\idf_component.yml = ..\components\wolfssl\idf_component.yml
+		..\components\wolfssl\Kconfig = ..\components\wolfssl\Kconfig
+		..\README.md = ..\README.md
+		..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\settings.h
+		..\components\wolfssl\include\user_settings.h = ..\components\wolfssl\include\user_settings.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "espressif", "espressif", "{ED1D36E5-D346-49F1-B235-F7163452A1A7}"
+	ProjectSection(SolutionItems) = preProject
+		..\sdkconfig = ..\sdkconfig
+		..\sdkconfig.ci = ..\sdkconfig.ci
+		..\sdkconfig.ci.ssldyn = ..\sdkconfig.ci.ssldyn
+		..\sdkconfig.ci.wifi = ..\sdkconfig.ci.wifi
+		..\sdkconfig.defaults = ..\sdkconfig.defaults
+		..\sdkconfig.esp32dev = ..\sdkconfig.esp32dev
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{1333E615-11BE-40A7-A3A1-95D7F0A6B121}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.3-master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.3-master\components\esp-tls\esp_tls.c
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wolfcrypt", "wolfcrypt", "{CA8956F8-C5E5-44BD-A06D-AF3F7D318B9C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_aes.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_mp.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp32_sha.c
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_sdk_mem_lib.c
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{55A31581-C3CC-4993-A462-674BD38D7CC5}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\.github\workflows\self-hosted-test.yml = ..\..\..\..\..\..\.github\workflows\self-hosted-test.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cert_bundle", "cert_bundle", "{DB324D68-702C-448F-8D2A-979B9FC40725}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_all.pem
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_deprecated.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_deprecated.pem
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\cacrt_local.pem
+		..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log = ..\build\VisualGDB\Debug\esp-idf\wolfssl\cert_bundle.log
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\esp_crt_bundle.c = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\esp_crt_bundle.c
+		..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h = ..\..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp_crt_bundle.h
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\gen_crt_bundle.py
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\pio_install_cryptography.py
+		..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md = ..\..\..\..\..\..\wolfcrypt\src\port\Espressif\esp_crt_bundle\README.md
+		..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl = ..\build\VisualGDB\Debug\esp-idf\wolfssl\x509_crt_bundle_wolfssl
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "platformio", "platformio", "{90311C7E-9C0F-4B82-B686-F35EAC615F6F}"
+	ProjectSection(SolutionItems) = preProject
+		..\platformio.ini = ..\platformio.ini
+		..\README.md = ..\README.md
+		..\sdkconfig.esp32dev = ..\sdkconfig.esp32dev
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|VisualGDB = Debug|VisualGDB
+		Release|VisualGDB = Release|VisualGDB
+		Tests (Debug)|VisualGDB = Tests (Debug)|VisualGDB
+		Tests (Release)|VisualGDB = Tests (Release)|VisualGDB
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Debug|VisualGDB.ActiveCfg = Debug|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Debug|VisualGDB.Build.0 = Debug|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Release|VisualGDB.ActiveCfg = Release|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Release|VisualGDB.Build.0 = Release|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Tests (Debug)|VisualGDB.ActiveCfg = Tests (Debug)|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Tests (Debug)|VisualGDB.Build.0 = Tests (Debug)|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Tests (Release)|VisualGDB.ActiveCfg = Tests (Release)|VisualGDB
+		{EADCC9AB-72B3-4B51-A838-593E5D80DDF7}.Tests (Release)|VisualGDB.Build.0 = Tests (Release)|VisualGDB
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		FileExplorer = ..\..\..\..\..\..\|..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\v5.3-master\
+		SolutionGuid = {EDB79AEC-A2BB-477C-918F-2BEF458DCF55}
+	EndGlobalSection
+EndGlobal
