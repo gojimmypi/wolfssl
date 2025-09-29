@@ -292,8 +292,15 @@ void app_main(void)
             /* esp_log_level_set("wpa",  ESP_LOG_VERBOSE);    */
         #endif
         #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
-            esp_sdk_wifi_lib_init();
-            ret = esp_sdk_wifi_init_sta();
+            #if defined(ESP_SDK_WIFI_LIB_VERSION) && \
+                       (ESP_SDK_WIFI_LIB_VERSION > 1)
+                esp_sdk_wifi_lib_init();
+                ret = esp_sdk_wifi_init_sta();
+            #else
+                ESP_LOGE(TAG, "A newer version of wolfSSL is needed");
+                ret = ESP_FAIL;
+            #endif
+
             if (ret == ESP_OK) {
                 ESP_LOGI(TAG, "WiFi connect success!");
             }

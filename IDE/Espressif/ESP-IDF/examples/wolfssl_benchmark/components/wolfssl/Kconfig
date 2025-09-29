@@ -393,10 +393,10 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
         endchoice
 
         config ESP_WOLFSSL_TCP_REUSE
-            int "TCP Re-use"
+            int "TCP Reuse"
             default 0
             help
-                Set to 1 to allow socket re-use.
+                Set to 1 to allow socket reuse.
 
     endmenu # Protocol Config
     # -----------------------------------------------------------------------------------------------------------------

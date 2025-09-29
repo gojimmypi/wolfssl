@@ -56,6 +56,8 @@
 #include <esp_log.h>
 
 #define ESP_SDK_MEM_LIB_VERSION 2
+#define ESP_SDK_WIFI_LIB_VERSION 2
+#define ESP_SDK_UTIL_LIB_VERSION 2
 
 /**
  ******************************************************************************
@@ -216,7 +218,7 @@ WOLFSSL_LOCAL esp_err_t set_time_wait_for_ntp(void);
 /* Check if USE_WOLFSSL_ESP_SDK_WIFI set via idf.py menuconfig */
 #if defined(CONFIG_USE_WOLFSSL_ESP_SDK_WIFI) && CONFIG_USE_WOLFSSL_ESP_SDK_WIFI
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
-        /* With no WiFi build-in to standard H2, don't enable by default.*/
+        /* With no WiFi built-in to standard H2, don't enable by default.*/
         /* Can still be enabled via idf.py menuconfig                    */
     #else
         #warning "There is typically no WiFi on ESP32H2, disabling SDK_WIFI"

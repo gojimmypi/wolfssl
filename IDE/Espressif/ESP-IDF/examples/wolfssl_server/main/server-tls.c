@@ -216,7 +216,7 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
 #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
-    /* optionally set TCP re-use. See also below. */
+    /* optionally set TCP reuse. See also below. */
     int tcp_reuse = 1;
 #endif
 
@@ -251,13 +251,13 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         halt_for_reboot("ERROR: failed to create the socket");
     }
 
-    /* Optionally set TCP Socket Re-use. */
+    /* Optionally set TCP Socket Reuse. */
 #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
 #ifdef SO_REUSEPORT   /* not always available on lwIP */
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
 #endif /* SO_REUSEPORT        */
-#endif /* optional TCP re-use */
+#endif /* optional TCP reuse */
 
     /* Create and initialize WOLFSSL_CTX */
     WOLFSSL_MSG("Create and initialize WOLFSSL_CTX");
@@ -526,7 +526,10 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
             ESP_LOGE(TAG, "ERROR: stack and heap check");
         }
 #endif
+#if defined(ESP_SDK_UTIL_LIB_VERSION) && \
+           (ESP_SDK_UTIL_LIB_VERSION > 1)
         esp_sdk_device_show_info();
+#endif
 #ifdef USE_WOLFSSL_ESP_SDK_WIFI
         esp_sdk_wifi_show_ip();
 #endif

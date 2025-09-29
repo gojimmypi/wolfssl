@@ -38,7 +38,7 @@
 
 #define NO_FILESYSTEM
 #define NO_OLD_TLS
-
+#define WOLFSSL_ASN_TEMPLATE
 
 /* Examples such as test and benchmark are known to cause watchdog timeouts.
  * Note this is often set in project Makefile:
@@ -48,7 +48,7 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
-/* Some mitigations are ESP-IDF version-speific. */
+/* Some mitigations are ESP-IDF version-specific. */
 #include "esp_idf_version.h"
 
 /* Optional OpenSSL compatibility */
@@ -215,9 +215,9 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #ifdef WOLFSSL_LOW_MEMORY
-    /* If too small, the error_test() will fail. */
-    #define WOLFSSL_MAX_ERROR_SZ  70
-    #define WOLFSSL_MSG_EX_BUF_SZ 70
+	/* If too small, the error_test() will fail. */
+    #define WOLFSSL_MAX_ERROR_SZ 65
+    #define WOLFSSL_MSG_EX_BUF_SZ 65
 #else
     #define WOLFSSL_MAX_ERROR_SZ 500
     #define WOLFSSL_MSG_EX_BUF_SZ 500
@@ -252,7 +252,7 @@
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
     #else
-        /* This example will alsways use the wolfSSL WiFi helper */
+        /* This example will always use the wolfSSL WiFi helper */
         #define USE_WOLFSSL_ESP_SDK_WIFI
     #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
@@ -507,8 +507,10 @@
 /* See Kconfig: Check if Multi Thread selected in idf.py menuconfig
  * Single Thread avoids RAM-consuming semaphores.
  * Note Default ESP-IDF is FreeRTOS rergardless of this setting */
-#if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD)
-    #undef SINGLE_THREADED
+#if defined(CONFIG_ESP_WOLFSSL_MULTI_THREAD) && \
+            CONFIG_ESP_WOLFSSL_MULTI_THREAD
+    /* Unless SINGLE_THREADED defined, wolfssl assumes multi-thread. */
+    /* #undef SINGLE_THREADED */
 #else
     #define SINGLE_THREADED
 #endif
@@ -777,6 +779,12 @@
     #endif
 #endif
 
+/* Optional OpenSSL compatibility */
+/* #define OPENSSL_EXTRA */
+
+/* #Optional HAVE_PKCS7 */
+/* #define HAVE_PKCS7 */
+
 #if defined(HAVE_PKCS7)
     /* HAVE_PKCS7 may enable HAVE_PBKDF2 see settings.h */
     #define NO_PBKDF2
@@ -888,8 +896,6 @@
     */
 
 #endif
-
-#define WOLFSSL_ASN_TEMPLATE
 
 /*
 #undef  WOLFSSL_KEY_GEN
@@ -1520,7 +1526,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
     #endif
     #if defined(NO_RSA)
-        #error "RSA is needed to use CERT_BUFFERS_2048 examnple"
+        #error "RSA is needed to use CERT_BUFFERS_2048 example"
     #endif
 
     /* Client */
@@ -1577,7 +1583,7 @@ Turn on timer debugging (used when CPU cycles not available)
      * ./examples/client/client -h 192.168.1.107  -p 11111 -v 3 -d \
                                 -A ./certs/1024/ca-cert.pem        \
                                 -c ./certs/1024/client-cert.pem    \
-                                -k ./certs/1024/client-key.pem
+                                -k ./certs/1024/client-key.pem -C
      */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."

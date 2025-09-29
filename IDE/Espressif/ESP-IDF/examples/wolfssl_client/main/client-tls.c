@@ -285,13 +285,13 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         halt_for_reboot("ERROR: failed to create the socket");
     }
 
-    /* Optionally set TCP Socket Re-use. */
+    /* Optionally set TCP Socket Reuse. */
 #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
 #ifdef SO_REUSEPORT   /* not always available on lwIP */
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
 #endif /* SO_REUSEPORT        */
-#endif /* optional TCP re-use */
+#endif /* optional TCP reuse */
     ESP_LOGI(TAG, "Get target IP address: %s", TLS_SMP_TARGET_HOST);
 
     hp = gethostbyname(TLS_SMP_TARGET_HOST);

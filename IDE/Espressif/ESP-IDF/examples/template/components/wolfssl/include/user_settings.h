@@ -174,7 +174,7 @@
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
     #else
-        /* This example will alsways use the wolfSSL WiFi helper */
+        /* This example will always use the wolfSSL WiFi helper */
         #define USE_WOLFSSL_ESP_SDK_WIFI
     #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
@@ -1449,7 +1449,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
     #endif
     #if defined(NO_RSA)
-        #error "RSA is needed to use CERT_BUFFERS_2048 examnple"
+        #error "RSA is needed to use CERT_BUFFERS_2048 example"
     #endif
 
     /* Client */

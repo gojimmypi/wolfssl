@@ -51,60 +51,6 @@
 /* Some mitigations are ESP-IDF version-specific. */
 #include "esp_idf_version.h"
 
-// TODO remove this section
-#if (0)
-    // my SM test section
-    #if (0)
-        #define USE_CERT_BUFFERS_2048
-    #else
-        #define WOLFSSL_SM2
-        #define WOLFSSL_SM3
-        #define WOLFSSL_SM4
-        // #define WOLFSSL_NO_PEM
-    #endif
-
-    // #define DEBUG_WOLFSSL
-    // my debugging section
-    #if (0)
-        #undef  CONFIG_WOLFSSL_ALLOW_TLS12
-        #define CONFIG_WOLFSSL_ALLOW_TLS12 1
-
-        #undef  CONFIG_WOLFSSL_ALLOW_TLS13
-        #define CONFIG_WOLFSSL_ALLOW_TLS13 0
-        /* RSA can consume a lot of memory */
-        #undef  CONFIG_ESP_WOLFSSL_USE_RSA
-    #else
-        #undef  CONFIG_WOLFSSL_ALLOW_TLS12
-        #define CONFIG_WOLFSSL_ALLOW_TLS12 1
-
-        #undef  CONFIG_WOLFSSL_ALLOW_TLS13
-        #define CONFIG_WOLFSSL_ALLOW_TLS13 1
-        /* RSA can consume a lot of memory, not needed for SM */
-        #undef  CONFIG_ESP_WOLFSSL_USE_RSA
-    #endif
-#endif
-// TODO End section
-
-/* When manually editing user settings, the private config is limited to wolfssl
- * and thus can be set here: */
-
-// BEGIN TODO comment out below as example only for release */
-#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) && \
-            CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
-    #pragma message "menuconfig selected private config"
-#else
-    #pragma message "manually selected private config"
-    #define CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG 1
-    #if (1)
-        #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
-        #define WOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS
-    #else
-        #undef  WOLFSSL_CMAKE_SYSTEM_NAME_WSL
-        #define WOLFSSL_CMAKE_SYSTEM_NAME_WSL
-    #endif
-#endif
-// END TODO
-
 /* Optional mitigations for latest (unreleased) ESP-IDF v6 */
 #if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
     #if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 6)
@@ -192,6 +138,7 @@
 
 /* Paths can be long, ensure the entire value printed during debug */
 #ifdef WOLFSSL_LOW_MEMORY
+	/* If too small, the error_test() will fail. */
     #define WOLFSSL_MAX_ERROR_SZ 65
     #define WOLFSSL_MSG_EX_BUF_SZ 65
 #else
@@ -228,7 +175,7 @@
     #if defined(CONFIG_IDF_TARGET_ESP32H2)
         /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
     #else
-        /* This example will alsways use the wolfSSL WiFi helper */
+        /* This example will always use the wolfSSL WiFi helper */
         #define USE_WOLFSSL_ESP_SDK_WIFI
     #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
@@ -677,7 +624,6 @@
         /* this size may be problematic on the C2 */
     #endif
     #define HAVE_FFDHE_2048
-    #define NO_DH
 #else
     #define HAVE_FFDHE_4096
 #endif
@@ -1389,18 +1335,22 @@ Turn on timer debugging (used when CPU cycles not available)
  *
  * Check to see if idf.py menuconfig selected example certs, otheruse use 2048:
  */
-#if defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_2048)
+#if defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_2048) && \
+            CONFIG_WOLFSSL_USE_CERT_BUFFERS_2048
     #define USE_CERT_BUFFERS_2048
-#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_1024)
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_1024) && \
+              CONFIG_WOLFSSL_USE_CERT_BUFFERS_1024
     #define USE_CERT_BUFFERS_1024
-#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_256)
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_256) && \
+              CONFIG_WOLFSSL_USE_CERT_BUFFERS_256
     #define USE_CERT_BUFFERS_256
-#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_SM)
+#elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_SM) && \
+              CONFIG_WOLFSSL_USE_CERT_BUFFERS_SM
     #define WOLFSSL_SM2
     #define WOLFSSL_SM3
     #define WOLFSSL_SM4
 #elif defined(CONFIG_WOLFSSL_USE_CERT_BUFFERS_NONE)
-    /* See user_settings.h for referenbce on defining your own cert */
+    /* See user_settings.h for reference on defining your own cert */
 #else
     #define USE_CERT_BUFFERS_2048
 #endif
@@ -1503,7 +1453,7 @@ Turn on timer debugging (used when CPU cycles not available)
         #error "USE_CERT_BUFFERS_256 is already defined. Pick one."
     #endif
     #if defined(NO_RSA)
-        #error "RSA is needed to use CERT_BUFFERS_2048 examnple"
+        #error "RSA is needed to use CERT_BUFFERS_2048 example"
     #endif
 
     /* Client */
