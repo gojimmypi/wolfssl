@@ -1,38 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.8.34330.188
+VisualStudioVersion = 17.12.35728.132 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "wolfssl_client_ESP8266", "wolfssl_client_ESP8266.vgdbproj", "{C9687472-A434-43A7-9026-7914F425B9B4}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CD92F3A4-C5BA-4FA9-A0F7-4A415ABD4927}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h = ..\..\..\..\..\wolfssl\wolfcrypt\error-crypt.h
-		..\..\..\..\..\wolfssl\error-ssl.h = ..\..\..\..\..\wolfssl\error-ssl.h
-		..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp-sdk-lib.h = ..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp-sdk-lib.h
-		..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h = ..\..\..\..\..\wolfssl\wolfcrypt\port\Espressif\esp32-crypt.h
-		build\Debug\esp8266\esp8266.project.ld = build\Debug\esp8266\esp8266.project.ld
-		build\Debug\esp8266\esp8266_out.ld = build\Debug\esp8266\esp8266_out.ld
-		..\..\..\include.am = ..\..\..\include.am
-		memory_map_notes.txt = memory_map_notes.txt
-		README.md = README.md
-		sdkconfig.defaults = sdkconfig.defaults
-		components\wolfssl\include\user_settings.h = components\wolfssl\include\user_settings.h
-		build\Debug\wolfssl_client.map = build\Debug\wolfssl_client.map
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP8266", "ESP8266", "{AE44B1B2-A063-4740-8C7C-7F208BFD10E1}"
-	ProjectSection(SolutionItems) = preProject
-		build\Debug\include\somfile.h = build\Debug\include\somfile.h
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Header Files", "Header Files", "{77C4818A-5B3E-45B3-9D9D-C10A39EC5A70}"
-	ProjectSection(SolutionItems) = preProject
-		main\include\client-tls.h = main\include\client-tls.h
-		main\include\main.h = main\include\main.h
-		main\include\time_helper.h = main\include\time_helper.h
-		main\include\wifi_connect.h = main\include\wifi_connect.h
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,12 +18,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{AE44B1B2-A063-4740-8C7C-7F208BFD10E1} = {CD92F3A4-C5BA-4FA9-A0F7-4A415ABD4927}
-		{77C4818A-5B3E-45B3-9D9D-C10A39EC5A70} = {CD92F3A4-C5BA-4FA9-A0F7-4A415ABD4927}
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {AECC5442-55F3-4AC6-A5AB-81FBFDE0DAEB}
 	EndGlobalSection
 EndGlobal

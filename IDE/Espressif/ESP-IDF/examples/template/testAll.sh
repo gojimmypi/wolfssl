@@ -41,7 +41,8 @@ fi
 # ESP32 Path for ESP-IDF: fixed value or param #2
 WRK_IDF_PATH_ESP32=$2
 if [[ "$WRK_IDF_PATH_ESP32" == "" ]]; then
-    WRK_IDF_PATH_ESP32=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
+    #WRK_IDF_PATH_ESP32=/mnt/c/SysGCC/esp32/esp-idf/v5.2-master
+    WRK_IDF_PATH_ESP32=/mnt/c/SysGCC/esp32-master/esp-idf/master
 fi
 
 if [[ -d "$WRK_IDF_PATH_ESP32" ]]; then
@@ -61,6 +62,15 @@ if [[ -d "$WRK_IDF_PATH_ESP8266" ]]; then
     echo "Using IDF Path for ESP8266: $WRK_IDF_PATH_ESP8266"
 else
     echo "Path not found for ESP8266: $WRK_IDF_PATH_ESP8266"
+    exit 1
+fi
+
+if [[ "$CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG" == "1" ]]; then
+    echo "Using CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG"
+else
+    echo "NOT using CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG"
+    echo "Unless you have a SSID called myssid, examples will not connect with default password"
+    echo "export CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1 to use private config file"
     exit 1
 fi
 
@@ -175,10 +185,12 @@ unset OPENOCD_SCRIPTS
 
 echo "Run ESP32 export.sh from ${WRK_IDF_PATH_ESP32}"
 
+pushd "$WRK_IDF_PATH_ESP32"
 # shell check should not follow into the ESP-IDF export.sh
 # shellcheck disable=SC1090
 # shellcheck disable=SC1091
-. "$WRK_IDF_PATH_ESP32"/export.sh
+. ./export.sh
+popd
 
 # Comment numeric values are recently observed runtime durations.
 # Different tests may be enabled for each device.

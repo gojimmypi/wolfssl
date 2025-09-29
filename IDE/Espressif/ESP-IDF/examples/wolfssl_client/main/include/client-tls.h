@@ -21,24 +21,6 @@
 #ifndef _CLIENT_TLS_H_
 #define _CLIENT_TLS_H_
 
-/* This example uses wolfssl test certificates */
-#if 1
-    /* See wolfssl/certs_test.h */
-    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
-        defined(CONFIG_IDF_TARGET_ESP8684) || \
-        defined(CONFIG_IDF_TARGET_ESP8266)
-        /* Use smaller certs for low-memory devices */
-        #define USE_CERT_BUFFERS_1024
-    #else
-        #define USE_CERT_BUFFERS_2048
-    #endif
-
-    /* always include smallest testing 32 byte RSA/ECC keys */
-    #define USE_CERT_BUFFERS_256
-#else
-    /* define your own certificate macros; see user_settings.h */
-#endif
-
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 
@@ -99,7 +81,6 @@ typedef struct {
 
 /* This is the TLS Client function, possibly in an RTOS thread. */
 WOLFSSL_ESP_TASK tls_smp_client_task(void* args);
-WOLFSSL_ESP_TASK tls_smp_client_task_2(void* args);
 
 /* init will create an RTOS task, otherwise server is simply function call. */
 #if defined(SINGLE_THREADED)

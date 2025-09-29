@@ -30,14 +30,15 @@
 #include "main.h"
 
 /* ESP specific */
-#include <nvs_flash.h>
 #include <esp_log.h>
 #include <esp_event.h>
+#include <nvs_flash.h>
 
 /* wolfSSL */
-/* Always include wolfcrypt/settings.h before any other wolfSSL file.    */
-/* Reminder: settings.h pulls in user_settings.h; don't include it here. */
-#ifdef WOLFSSL_USER_SETTINGS
+/* The wolfSSL user_settings.h is automatically included by settings.h file.
+ * Never explicitly include wolfSSL user_settings.h in any source file.
+ * The settings.h should also be listed above wolfssl library include files. */
+#if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
     #ifndef WOLFSSL_ESPIDF
         #warning "Problem with wolfSSL user_settings."
@@ -56,7 +57,23 @@
     CFLAGS +=-DWOLFSSL_USER_SETTINGS"
 #endif
 
-/* this project */
+/* Hardware; include after other libraries,
+ * particularly after freeRTOS from settings.h */
+#include <driver/uart.h>
+
+#define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
+
+#ifdef CONFIG_ESP8266_XTAL_FREQ_26
+    /* 26MHz crystal: 74880 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 74880
+#else
+    /* 40MHz crystal: 115200 bps */
+    #define THIS_MONITOR_UART_BAUD_DATE 115200
+#endif
+
+/* This project */
+#include "main.h"
+
 #include "client-tls.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32H2
@@ -147,6 +164,12 @@ void my_atmel_free(int slotId)
 /* Entry for FreeRTOS */
 void app_main(void)
 {
+    uart_config_t uart_config = {
+        .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+    };
     esp_err_t ret = 0;
 #if !defined(SINGLE_THREADED) && INCLUDE_uxTaskGetStackHighWaterMark
     int stack_start = 0;
@@ -162,6 +185,14 @@ void app_main(void)
 #if !defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     ESP_LOGW(TAG, "Warning: Example wolfSSL misconfigured? Check menuconfig.");
 #endif
+    /* uart_set_pin(UART_NUM_0, TX_PIN, RX_PIN,
+     *              UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE); */
+
+    /* Some targets may need to have UART speed set, such as ESP8266 */
+    ESP_LOGI(TAG, "UART init");
+    uart_param_config(UART_NUM_0, &uart_config);
+    uart_driver_install(UART_NUM_0,
+                        THIS_MONITOR_UART_RX_BUFFER_SIZE, 0, 0, NULL, 0);
     ESP_LOGI(TAG, "---------------- wolfSSL TLS Client Example ------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
@@ -256,13 +287,20 @@ void app_main(void)
             ESP_LOGW(TAG, "WARNING: CONFIG_EXAMPLE_WIFI_SSID not defined.");
         #endif
         #ifdef DEBUG_WOLFSSL
-            /* Anytime we are debugging, also debug WiFi */
-            esp_log_level_set("wifi", ESP_LOG_VERBOSE);
-            esp_log_level_set("wpa",  ESP_LOG_VERBOSE);
+            /* Anytime we are debugging, can also debug WiFi: */
+            /* esp_log_level_set("wifi", ESP_LOG_VERBOSE);    */
+            /* esp_log_level_set("wpa",  ESP_LOG_VERBOSE);    */
         #endif
         #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
-            esp_sdk_wifi_lib_init();
-            ret = esp_sdk_wifi_init_sta();
+            #if defined(ESP_SDK_WIFI_LIB_VERSION) && \
+                       (ESP_SDK_WIFI_LIB_VERSION > 1)
+                esp_sdk_wifi_lib_init();
+                ret = esp_sdk_wifi_init_sta();
+            #else
+                ESP_LOGE(TAG, "A newer version of wolfSSL is needed");
+                ret = ESP_FAIL;
+            #endif
+
             if (ret == ESP_OK) {
                 ESP_LOGI(TAG, "WiFi connect success!");
             }

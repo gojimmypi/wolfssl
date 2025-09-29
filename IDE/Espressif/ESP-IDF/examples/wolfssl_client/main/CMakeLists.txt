@@ -4,7 +4,7 @@
 # wolfssl client test
 #
 message(STATUS "Begin wolfSSL main CMakeLists.txt")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_USER_SETTINGS")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DWOLFSSL_USER_SETTINGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
 
 if (idf_target STREQUAL "esp8266" OR IDF_TARGET STREQUAL "esp8266" OR IDF_VERSION_MAJOR VERSION_LESS "5.0")
@@ -59,17 +59,14 @@ else()
 endif()
 
 ## register_component()
-idf_component_register(
-                            SRCS other.c main.c client-tls.c other.c
-                            INCLUDE_DIRS "." "./include"
-                            PRIV_REQUIRES
-                            	"${MAIN_WOLFSSL_COMPONENT_NAME}"
-                            	"${THIS_PRIV_REQUIRES_DRIVER}"
-                            	nvs_flash
-                            	protocol_examples_common
-                            EMBED_TXTFILES
-                                mozillarootcerts.pem
-                       )
+idf_component_register(SRCS main.c
+                            client-tls.c
+                       INCLUDE_DIRS "."
+                            "./include"
+                       PRIV_REQUIRES "${MAIN_WOLFSSL_COMPONENT_NAME}"
+                                     "${THIS_PRIV_REQUIRES_DRIVER}"
+                                     nvs_flash
+                                     protocol_examples_common)
 
 #
 # LIBWOLFSSL_SAVE_INFO(VAR_OUPUT THIS_VAR VAR_RESULT)
