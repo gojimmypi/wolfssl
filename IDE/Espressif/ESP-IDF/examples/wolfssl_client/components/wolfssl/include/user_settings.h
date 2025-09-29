@@ -36,9 +36,20 @@
 /* The Espressif project config file. See also sdkconfig.defaults */
 #include "sdkconfig.h"
 
+/* Some mitigations are ESP-IDF version-speific. */
+#include "esp_idf_version.h"
+
+/* Optional mitigations for latest (unreleased) ESP-IDF v6 */
+#if defined(CONFIG_ESP_LATEST_MITIGATIONS) && CONFIG_ESP_LATEST_MITIGATIONS
+    #if defined(ESP_IDF_VERSION_MAJOR) && (ESP_IDF_VERSION_MAJOR >= 6)
+        /* There's a known issue with SHA HW accerlator on RISC-V chips in V6 */
+        #define WOLFSSL_RISCV_SHA_HW_MITIGATION 1
+    #endif
+#endif
+
 /* This user_settings.h is for Espressif ESP-IDF
  *
- * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.7.0-1
+ * Standardized wolfSSL Espressif ESP32 + ESP8266 user_settings.h V5.8.2-1
  *
  * Do not include any wolfssl headers here.
  *
@@ -92,8 +103,6 @@
 #undef  WOLFSSL_ESPIDF
 #define WOLFSSL_ESPIDF
 
-#define USE_WOLFSSL_ESP_SDK_TIME
-
 /* Test various user_settings between applications by selecting example apps
  * in `idf.py menuconfig` for Example wolfSSL Configuration settings: */
 
@@ -113,6 +122,13 @@
 /* Paths can be long, ensure the entire value printed during debug */
 #define WOLFSSL_MAX_ERROR_SZ 500
 #define WOLFSSL_MSG_EX_BUF_SZ 500
+
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+            defined(CONFIG_IDF_TARGET_ESP8684) || \
+            defined(CONFIG_IDF_TARGET_ESP8266)
+    /* WOLFSSL_LOW_MEMORY detected at runtime for low memory warning */
+    #define WOLFSSL_LOW_MEMORY
+#endif
 
 /* wolfSSL Examples: set macros used in example applications.
  *
@@ -139,12 +155,24 @@
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_CLIENT)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_client */
-    #define USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
+    #else
+        /* This example will alsways use the wolfSSL WiFi helper */
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_SERVER
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_TLS_SERVER)
     /* See https://github.com/wolfSSL/wolfssl/tree/master/IDE/Espressif/ESP-IDF/examples/wolfssl_server */
-    #define USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* There's no WiFi on the ESP32 H2, use idf.menuconfig to enable */
+    #else
+        /* This example will alsways use the wolfSSL WiFi helper */
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
     #define USE_WOLFSSL_ESP_SDK_TIME
+    #define NO_WOLFSSL_CLIENT
 /* wolfSSH Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFSSH_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfssh/tree/master/ide/Espressif/ESP-IDF/examples/wolfssh_template */
@@ -158,7 +186,6 @@
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_ESP8266_SSH_SERVER)
     /* See https://github.com/wolfSSL/wolfssh-examples/tree/main/Espressif/ESP8266/ESP8266-SSH-Server */
     #define USE_WOLFSSL_ESP_SDK_WIFI
-
 /* wolfMQTT Examples */
 #elif defined(CONFIG_WOLFSSL_EXAMPLE_NAME_WOLFMQTT_TEMPLATE)
     /* See https://github.com/wolfSSL/wolfMQTT/tree/master/IDE/Espressif/ESP-IDF/examples/wolfmqtt_template */
@@ -280,11 +307,6 @@
     #define WOLFSSL_AES_DIRECT
 #endif
 
-/* Pick a cert buffer size: */
-/* #define USE_CERT_BUFFERS_2048 */
-/* #define USE_CERT_BUFFERS_1024 */
-#define USE_CERT_BUFFERS_2048
-
 /* The Espressif sdkconfig will have chipset info.
 **
 ** Some possible values:
@@ -402,7 +424,6 @@
 
 /* See test.c that sets cert buffers; we'll set them here: */
 #define USE_CERT_BUFFERS_256
-#define USE_CERT_BUFFERS_2048
 
 /* RSA_LOW_MEM: Half as much memory but twice as slow. */
 #define RSA_LOW_MEM
@@ -420,14 +441,36 @@
 
 #define BENCH_EMBEDDED
 
+/* Very low memory device notice:
+ *   TLS 1.2 typically enabled
+ *   TLS 1.3 typically disabled
+ *
+ * See runtime warning for limited-resource devices.
+ *
+ * Typical error codes at client, talking to low-memory server:
+ *   -125 MEMORY_E        out of memory error
+ *   -308 SOCKET_ERROR_E  error state on socket
+ *   -313 FATAL_ERROR     recvd alert fatal error
+ */
+#if defined(CONFIG_WOLFSSL_ALLOW_TLS12) && CONFIG_WOLFSSL_ALLOW_TLS12
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684)
+        /* low-memory devices with TLS 1.2 enabled */
+    #endif
+#else
+    #define WOLFSSL_NO_TLS12
+#endif
+
 /* TLS 1.3                                 */
-#ifdef CONFIG_WOLFSSL_ALLOW_TLS13
+#if (defined(CONFIG_WOLFSSL_ALLOW_TLS13) && CONFIG_WOLFSSL_ALLOW_TLS13) && \
+    !defined(CONFIG_WOLFSSL_LOW_MEMORY_DISABLE_TLS13)
     #define WOLFSSL_TLS13
     #define HAVE_TLS_EXTENSIONS
     #define HAVE_HKDF
 
-    /* May be required */
+    /* AEAD May be required */
     #ifndef HAVE_AEAD
+        /* Syntax highlighting detction only */
     #endif
 
     /* Required for ECC */
@@ -510,14 +553,15 @@
         #define WOLFSSH_NO_ECDSA
     #endif
 
-    /* Some RSA Checks */
     #if CONFIG_ESP_WOLFSSL_USE_RSA
         /* ---- RSA ----- */
         /* #define RSA_LOW_MEM */
 
         /* DH disabled by default, needed if ECDSA/ECC also turned off */
         #define HAVE_DH
+        #define HAVE_RSA
     #else
+        #undef HAVE_RSA
         #define WOLFSSH_NO_RSA
     #endif
 #else
@@ -703,10 +747,20 @@
     #define HAVE_AESGCM
 #else
     /* default settings */
-    #define USE_CERT_BUFFERS_2048
-#endif
+    #if defined(CONFIG_IDF_TARGET_ESP32C2) || \
+        defined(CONFIG_IDF_TARGET_ESP8684) || \
+        defined(CONFIG_IDF_TARGET_ESP8266)
+        /* Use smaller certs for low-memory devices */
+        #define USE_CERT_BUFFERS_1024
+    #else
+        #define USE_CERT_BUFFERS_2048
+    #endif
+#endif /* SM or regular certs */
 
 /* Chipset detection from sdkconfig.h
+ *   See idf.py --list-targets
+ *   or ESP-IDF ./components/esp_hw_support/include/esp_chip_info.h
+ *   Set target example: idf.py set-target esp32s3
  * Default is HW enabled unless turned off.
  * Uncomment lines to force SW instead of HW acceleration */
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(WOLFSSL_ESPWROOM32SE)
@@ -727,7 +781,7 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA224 /* no SHA224 HW on ESP32  */
 
     #undef  ESP_RSA_MULM_BITS
-    #define ESP_RSA_MULM_BITS 16 /* TODO add compile-time warning */
+    #define ESP_RSA_MULM_BITS 16
     /***** END CONFIG_IDF_TARGET_ESP32 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -771,8 +825,14 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity    */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C2  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C2  */
+    /* no SHA384 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C2  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /* There's no AES or RSA/Math accelerator on the ESP32-C2
      * Auto defined with NO_WOLFSSL_ESP32_CRYPT_RSA_PRI, for clarity: */
@@ -791,8 +851,14 @@
     /*  #define NO_WOLFSSL_ESP32_CRYPT_HASH    */ /* to disable all SHA HW   */
 
     /* These are defined automatically in esp32-crypt.h, here for clarity:  */
-    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384    /* no SHA384 HW on C6  */
+    /* no SHA384 HW on C6  */
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
+    /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512    /* no SHA512 HW on C6  */
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MIGIATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -822,6 +888,10 @@
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA384
     /* no SHA512 HW on C6  */
     #define NO_WOLFSSL_ESP32_CRYPT_HASH_SHA512
+#if defined(WOLFSSL_RISCV_SHA_HW_MITIGATION)
+    #define WOLFSSL_IDF_PRERELEASE_MITIGATION_ACTIVE
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+#endif
 
     /*  #define NO_WOLFSSL_ESP32_CRYPT_AES             */
     /*  #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI         */
@@ -852,6 +922,8 @@
     /***** END CONFIG_IDF_TARGET_ESP32C61 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    /* Reminder: There's no wifi on ESP32-H2 */
+
     #define WOLFSSL_ESP32
     /*  wolfSSL Hardware Acceleration not yet implemented */
     #define NO_ESP32_CRYPT
@@ -859,6 +931,24 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP32H2 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32H21)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H21 *****/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32H4)
+    #define WOLFSSL_ESP32
+    /*  wolfSSL Hardware Acceleration not yet implemented */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_ESP32H4 *****/
 
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
     #define WOLFSSL_ESP32
@@ -892,6 +982,14 @@
     #define NO_WOLFSSL_ESP32_CRYPT_AES
     #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
     /***** END CONFIG_IDF_TARGET_ESP8684 *****/
+
+#elif defined(POSIX_LINUX)
+    /*  There's no Hardware Acceleration available on POSIX/Linux simulator */
+    #define NO_ESP32_CRYPT
+    #define NO_WOLFSSL_ESP32_CRYPT_HASH
+    #define NO_WOLFSSL_ESP32_CRYPT_AES
+    #define NO_WOLFSSL_ESP32_CRYPT_RSA_PRI
+    /***** END CONFIG_IDF_TARGET_POSIX_LINUX *****/
 
 #else
     /* Anything else encountered, disable HW acceleration */

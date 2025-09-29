@@ -943,7 +943,7 @@ static CB_INLINE int wolfssl_ssl_conf_verify_cb_no_signer(int preverify,
                 ESP_LOGCBI(TAG, "\n\nAdding Cert for Certificate Store!\n");
             #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
                 ESP_LOGI(TAG, "Feed watchdog");
-                ret = esp_task_wdt_reset();
+                // ret = esp_task_wdt_reset();
                 if (ret != ESP_OK) {
                     ESP_LOGE("WDT", "reset failed (%s) in task %s",
                                      esp_err_to_name(ret), pcTaskGetName(NULL));

@@ -7,7 +7,7 @@ Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "masterESP32C6", "masterESP3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ESP-IDF", "ESP-IDF", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls", "esp-tls", "{9C56C23A-B198-44D9-97BF-F070E967B321}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-master", "esp-tls-master", "{9C56C23A-B198-44D9-97BF-F070E967B321}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp-tls\CMakeLists.txt
 		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\esp-tls\esp_tls.c
@@ -66,6 +66,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mbedTLS", "mbedTLS", "{FC0C
 		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\mbedtls\mbedtls\library\ssl_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master\components\mbedtls\mbedtls\library\ssl_tls.c
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "esp-tls-master-pr", "esp-tls-master-pr", "{B53A86EC-0238-483F-B4F0-42F668F5EDAE}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\CMakeLists.txt = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\CMakeLists.txt
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls.h = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls.h
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_mbedtls.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_mbedtls.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_platform_port.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_platform_port.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_wolfssl.c = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\esp_tls_wolfssl.c
+		..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\Kconfig = ..\..\..\..\..\..\..\..\SysGCC\esp32-master\esp-idf\master-pr\components\esp-tls\Kconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|VisualGDB = Debug|VisualGDB
@@ -94,6 +105,7 @@ Global
 		{59734050-6768-4E05-96DA-78D69BFE38B1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{02CECD02-3553-46FC-B16C-AE0C79B9E2FD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{FC0CD18C-E286-4B64-BF82-ECB3BB05651F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{B53A86EC-0238-483F-B4F0-42F668F5EDAE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16E3DE18-1F5A-46D0-AD22-504688B156DD}

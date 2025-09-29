@@ -25,7 +25,7 @@
 
 /* wolfSSL */
 /* The wolfSSL user_settings.h is automatically included by settings.h file.
- * Never explicitly include user_settings.h in any source file.
+ * Never explicitly include wolfSSL user_settings.h in any source file.
  * The settings.h should also be listed above wolfssl library include files. */
 #if defined(WOLFSSL_USER_SETTINGS)
     #include <wolfssl/wolfcrypt/settings.h>
@@ -66,8 +66,14 @@
     #define THIS_MONITOR_UART_BAUD_DATE 115200
 #endif
 
+/* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
+#ifdef CONFIG_BENCH_ARGV
+    #define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
+    #define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
+#endif
+
 /*
-** The wolfssl component can be installed in either:
+** the wolfssl component can be installed in either:
 **
 **   - the ESP-IDF component directory
 **
@@ -149,7 +155,7 @@ void my_atmel_free(int slotId)
 /* check BENCH_ARGV in sdkconfig to determine need to set WOLFSSL_BENCH_ARGV */
 #ifdef CONFIG_BENCH_ARGV
     #define WOLFSSL_BENCH_ARGV CONFIG_BENCH_ARGV
-    #define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number of max args */
+    #define WOLFSSL_BENCH_ARGV_MAX_ARGUMENTS 22 /* arbitrary number max args */
 #endif
 
 /* the following are needed by benchmark.c with args */
@@ -249,6 +255,7 @@ void app_main(void)
     ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
     ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "app_main CONFIG_BENCH_ARGV = %s", WOLFSSL_BENCH_ARGV);
     ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
 
 #ifdef WOLFSSL_ESP_NO_WATCHDOG

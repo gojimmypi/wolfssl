@@ -52,7 +52,6 @@
  * particularly after freeRTOS from settings.h */
 #include <driver/uart.h>
 
-
 #define THIS_MONITOR_UART_RX_BUFFER_SIZE 200
 
 #ifdef CONFIG_ESP8266_XTAL_FREQ_26
@@ -63,7 +62,7 @@
     #define THIS_MONITOR_UART_BAUD_DATE 115200
 #endif
 
-/* project */
+/* This project */
 #include "main.h"
 /*
 ** The wolfssl component can be installed in either:
@@ -83,7 +82,6 @@ static const char* const TAG = "My Project";
 /* entry point */
 void app_main(void)
 {
-#ifdef WOLFSSL_ESPIDF_VERBOSE_EXIT_MESSAGE
     uart_config_t uart_config = {
         .baud_rate = THIS_MONITOR_UART_BAUD_DATE,
         .data_bits = UART_DATA_8_BITS,

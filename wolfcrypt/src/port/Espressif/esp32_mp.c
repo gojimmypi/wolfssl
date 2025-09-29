@@ -812,7 +812,8 @@ static int wait_until_done(uint32_t reg)
 
     /* wait until done && not timeout */
     ESP_EM__MP_HW_WAIT_DONE;
-    while (!ESP_TIMEOUT(++timeout) && DPORT_REG_READ((volatile uint32_t)(uintptr_t)reg) != 1) {
+    while (!ESP_TIMEOUT(++timeout) && 
+            DPORT_REG_READ((volatile uint32_t)(uintptr_t)reg) != 1) {
         asm volatile("nop"); /* wait */
     }
     ESP_EM__DPORT_FIFO_READ;

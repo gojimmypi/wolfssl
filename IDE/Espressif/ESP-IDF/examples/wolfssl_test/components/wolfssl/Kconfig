@@ -111,7 +111,6 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
         endmenu # Hardening
     endmenu # wolfSSL Algorithm Settings
 
-
     menu "wolfSSL Application Specific"
         # -----------------------------------------------------------------------------------------------------------------
         # Apple HomeKit Options
@@ -223,9 +222,16 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
                 Allow TLS to fallback to TLS1.2. Memory footprint will likely be larger for TLS1.2.
                 When disabled HTTPS and MQTT over TLS connections will fail if TLS1.3 not accepted.
 
+        config WOLFSSL_LOW_MEMORY_DISABLE_TLS13
+            bool "Disable TLS 1.3 on known low-memory devices"
+            default n
+            help
+                Overrides other settings allowing TLS 1.3. Typically used for ESP8266 and ESP32C2
+                devices with known memory limitations.
+
         config WOLFSSL_ALLOW_TLS12
             bool "Allow TLS 1.2"
-            default n
+            default y
             help
                 Allow TLS to fallback to TLS1.2. Memory footprint will likely be larger for TLS1.2.
                 When disabled HTTPS and MQTT over TLS connections will fail if TLS1.3 not accepted.
@@ -551,6 +557,16 @@ menu "wolfSSL Embedded Cryptography, SSL/TLS; FIPS 140-3"
             default n
             help
                 Enables experimental settings for wolfSSL. See documentation.
+
+        config ESP_LATEST_MITIGATIONS
+            bool "Enable mitigation for latest ESP-IDF"
+            default y
+            help
+                Address any issues in latest (unreleased) ESP-IDF. Currently v6.
+                Known problems include SHA HW acceleration on RISC-V devices failing.
+                Enable this option to disable SHA HW on only ESP32-C2, C3, C6.
+                Only implemented in user_settings.h
+
     endmenu # wolfSSL Debug Options
     # -----------------------------------------------------------------------------------------------------------------
 

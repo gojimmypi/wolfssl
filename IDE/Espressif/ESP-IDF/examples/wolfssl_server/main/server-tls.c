@@ -90,15 +90,10 @@
  */
 
 
-/* Project */
-#include "wifi_connect.h"
-#include "time_helper.h"
-
-
 static const char* const TAG = "server-tls";
 int stack_start = -1;
 
-int ShowCiphers(WOLFSSL* ssl)
+static int ShowCiphers(WOLFSSL* ssl)
 {
     #define CLIENT_TLS_MAX_CIPHER_LENGTH 4096
     char ciphers[CLIENT_TLS_MAX_CIPHER_LENGTH];
@@ -149,6 +144,8 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     int                ret_i; /* interim return values */
     socklen_t          size = sizeof(clientAddr);
     size_t             len;
+    size_t             success_ct = 0; /* number of client connect successes */
+    size_t             failure_ct = 0; /* number of client connect failures */
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
@@ -166,13 +163,13 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #endif
 
     /* Initialize wolfSSL */
-    WOLFSSL_MSG("Start wolfSSL_Init()");
+    ESP_LOGI(TAG, "Start wolfSSL_Init()");
     ret_i = wolfSSL_Init();
     if (ret_i != WOLFSSL_SUCCESS) {
         ESP_LOGE(TAG, "Failed to initialize wolfSSL");
     }
 
-    /* Create a socket that uses an internet IPv4 address,
+    /* Create a socket that uses an Internet IPv4 address,
      * Sets the socket to be stream based (TCP),
      * 0 means choose the default protocol. */
     WOLFSSL_MSG( "start socket())");
@@ -197,9 +194,61 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
     }
 #else
-    if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
-    }
+    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_LOW_MEMORY)
+        ESP_LOGW(TAG, "Warning: TLS 1.3 enabled on low-memory device.");
+    #endif
+    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)
+        ESP_LOGW(TAG, "Creating TLS 1.3 (only) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_3_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #elif defined(WOLFSSL_TLS13)
+        ESP_LOGI(TAG, "Creating TLS (1.2 or 1.3) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfSSLv23_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #else
+        ESP_LOGW(TAG, "Creating TLS 1.2 (only) server context...");
+        if ((ctx = wolfSSL_CTX_new(wolfTLSv1_2_server_method())) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL_CTX");
+        }
+    #endif
+#endif
+
+#if defined(USE_CERT_BUFFERS_1024)
+    /* The x1024 test certs are in current user_settings.h, but not default.
+     * Smaller certs are typically used withj smaller RAM devices.(ESP8266)
+     * Example client will need explicit params:
+     *   ./examples/client/client -h 192.168.1.48  -p 11111 -v 3  \
+     *                            -A ./certs/1024/ca-cert.pem     \
+     *                            -c ./certs/1024/client-cert.pem \
+     *                            -k ./certs/1024/client-key.pem -d
+     */
+    ESP_LOGW(TAG, "Example certificates USE_CERT_BUFFERS_1024 (not default)");
+#endif
+#if defined(USE_CERT_BUFFERS_2048)
+    /* Anything other than this x2048 default is a warning or error.
+     *
+     * Example TLS 1.2 client with default build does not need explicit cert:
+     *   ./examples/client/client -h 192.168.1.47  -p 11111 -v 3
+     *
+     * Example TLS 1.3 client:
+     *   ./examples/client/client -h 192.168.1.47  -p 11111 -v 4
+     */
+    ESP_LOGI(TAG, "Example certificates USE_CERT_BUFFERS_2048");
+#endif
+#if defined(USE_CERT_BUFFERS_3072)
+    /* The x3072 test certs are not in current user_settings.h */
+    ESP_LOGE(TAG, "Example certificates USE_CERT_BUFFERS_3072 (not default)");
+#endif
+#if defined(USE_CERT_BUFFERS_4096)
+    /* The x3072 test certs are not in current user_settings.h */
+    ESP_LOGE(TAG, "Example certificates USE_CERT_BUFFERS_4096 (not default)");
+#endif
+
+#if (0)
+        /* Optionally disable CRL checks */
+        wolfSSL_CTX_DisableCRL(ctx);
 #endif
 
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
@@ -207,11 +256,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 
     /* Optional set explicit ciphers
     ret = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
-    if (ret == SSL_SUCCESS) {
-        ESP_LOGI(TAG, "Set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+    if (ret == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "Set cipher list: %s\n", WOLFSSL_ESP32_CIPHER_SUITE);
     }
     else {
-        ESP_LOGE(TAG, "ERROR: failed to set cipher list: "WOLFSSL_ESP32_CIPHER_SUITE"\n");
+        ESP_LOGE(TAG, "ERROR: failed to set cipher list: %s\n",
+                       WOLFSSL_ESP32_CIPHER_SUITE);
     }
     */
     ShowCiphers(NULL);
@@ -284,18 +334,20 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
 #else
     WOLFSSL_MSG("Loading certificate...");
     /* Load server certificates into WOLFSSL_CTX */
-
-    if ((ret = wolfSSL_CTX_use_certificate_buffer(ctx, server_cert_der_2048,
-                        sizeof_server_cert_der_2048,
-                        WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+    ret = wolfSSL_CTX_use_certificate_buffer(ctx,
+                                             CTX_SERVER_CERT,
+                                             CTX_SERVER_CERT_SIZE,
+                                             CTX_SERVER_CERT_TYPE);
+    if (ret != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load cert");
     }
     WOLFSSL_MSG("Loading key info...");
     /* Load server key into WOLFSSL_CTX */
-
-    if((ret=wolfSSL_CTX_use_PrivateKey_buffer(ctx,
-                            server_key_der_2048, sizeof_server_key_der_2048,
-                            WOLFSSL_FILETYPE_ASN1)) != SSL_SUCCESS) {
+    ret = wolfSSL_CTX_use_PrivateKey_buffer(ctx,
+                                            CTX_SERVER_KEY,
+                                            CTX_SERVER_KEY_SIZE,
+                                            CTX_SERVER_KEY_TYPE);
+    if (ret != SSL_SUCCESS) {
         ESP_LOGE(TAG, "ERROR: failed to load privatekey");
     }
 
@@ -336,7 +388,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
     ESP_LOGI(TAG, "Initial stack used: %d\n",
              TLS_SMP_SERVER_TASK_BYTES  - uxTaskGetStackHighWaterMark(NULL) );
 #endif
-    ESP_LOGI(TAG, "Beging connection loop...");
+    ESP_LOGI(TAG, "----------------------------------------------------------");
+    ESP_LOGI(TAG, "Begin connection loop...");
+    ESP_LOGI(TAG, "----------------------------------------------------------");
     /* Continue to accept clients until shutdown is issued */
     while (!shutdown) {
         esp_sdk_device_show_info();
@@ -427,8 +481,12 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         memcpy(buff, msg, sizeof(msg));
         len = strnlen(buff, sizeof(buff));
         /* Reply back to the client */
-        if (wolfSSL_write(ssl, buff, len) != len) {
+        if (wolfSSL_write(ssl, buff, len) == len) {
+            success_ct++;
+        }
+        else {
             ESP_LOGE(TAG, "ERROR: failed to write");
+            failure_ct++;
         }
 
         ESP_LOGI(TAG, "Done! Cleanup...");
@@ -441,8 +499,9 @@ WOLFSSL_ESP_TASK tls_smp_server_task(void *args)
         ESP_LOGI(TAG, "Stack used: %d\n",
                 TLS_SMP_SERVER_TASK_BYTES - uxTaskGetStackHighWaterMark(NULL));
 #endif
-        ESP_LOGI(TAG, "End connection loop.");
-    } /* !shutdown */
+        ESP_LOGI(TAG, "End connection loop: %d successes, %d failures",
+                                               success_ct,   failure_ct);
+    } /* -------------------------- !shutdown loop -------------------- */
 
     ESP_LOGI(TAG, "Done! Cleanup and delete this task.");
     /* Cleanup and return */

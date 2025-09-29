@@ -230,6 +230,7 @@ static void http_rest_with_url(void)
         .disable_auto_redirect = true,
     };
     ESP_LOGI(TAG, "HTTP request with url =>");
+    //esp_task_wdt_reset();
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     // GET
@@ -516,6 +517,7 @@ static void https_with_url(void)
         .crt_bundle_attach = esp_crt_bundle_attach,
     };
     ESP_LOGI(TAG, "HTTPS request with url =>");
+    //esp_task_wdt_reset();
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err = esp_http_client_perform(client);
 
@@ -748,9 +750,9 @@ static void https_async(void)
     ESP_LOGI(TAG, "\n\n\nHTTPS async requests =>");
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_err_t err;
-    const char *post_data = "Using a Palantír requires a person with great strength of will and wisdom. The Palantíri were meant to "
-                            "be used by the Dúnedain to communicate throughout the Realms in Exile. During the War of the Ring, "
-                            "the Palantíri were used by many individuals. Sauron used the Ithil-stone to take advantage of the users "
+    const char *post_data = "Using a PalantÃ­r requires a person with great strength of will and wisdom. The PalantÃ­ri were meant to "
+                            "be used by the DÃºnedain to communicate throughout the Realms in Exile. During the War of the Ring, "
+                            "the PalantÃ­ri were used by many individuals. Sauron used the Ithil-stone to take advantage of the users "
                             "of the other two stones, the Orthanc-stone and Anor-stone, but was also susceptible to deception himself.";
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
@@ -989,7 +991,7 @@ static esp_err_t heap_peek(int i) {
 static void http_test_task(void *pvParameters)
 {
 #if defined(DEBUG_WOLFSSL) || defined(WOLFSSL_DEBUG_CERT_BUNDLE)
-    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+   // ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 #endif
 
 loop:

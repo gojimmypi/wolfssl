@@ -54,6 +54,8 @@ esp_err_t esp_sdk_time_lib_init(void)
 #if defined(CONFIG_IDF_TARGET_ESP8266)
     #undef HAS_ESP_NETIF_SNTP
     #include <time.h>
+    #include <sys/time.h>
+    #include <lwip/apps/sntp.h>
 
 #elif defined(ESP_IDF_VERSION_MAJOR) && defined(ESP_IDF_VERSION)
     #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0))
@@ -268,10 +270,32 @@ int set_time(void)
     return ESP_FAIL;
 }
 
+static void time_sync_cb(struct timeval* tv) {
+    ESP_LOGI(TAG, "Time synchronized, epoch=%ld", (long)tv->tv_sec);
+}
+
 int set_time_wait_for_ntp(void)
 {
-    ESP_LOGE(TAG, "set_time_wait_for_ntp not implemented for ESP8266");
-    return ESP_FAIL;
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_set_time_sync_notification_cb(time_sync_cb);
+    sntp_setservername(0, "pool.ntp.org");     // or your local NTP server
+    sntp_init();
+
+    /* Optional: set your local time zone *before* using localtime_r() */
+    setenv("TZ", "PST8PDT,M3.2.0/2,M11.1.0/2", 1);  // example for US Pacific
+    tzset();
+
+    /* Wait for first sync */
+    for (int i = 0; i < 10 && sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET; ++i) {
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+
+    time_t now; struct tm tm_info; char buf[64];
+    time(&now);
+    localtime_r(&now, &tm_info);
+    strftime(buf, sizeof(buf), "%c", &tm_info);
+    ESP_LOGI(TAG, "Local time: %s", buf);
+    return ESP_OK;
 }
 
 #else

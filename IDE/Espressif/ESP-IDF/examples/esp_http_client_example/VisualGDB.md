@@ -77,3 +77,11 @@ Version 14.2.0/14.2/r1
 
 update to:
 Version 15.1.0/15.1/r1  (did not fix startup error)
+
+Next:
+
+```
+IDF_COMPONENT_STORAGE_URL=file:///C:/SysGCC/esp32-13.2.0_20240530/registry;default
+IDF_PYTHON_ENV_PATH=C:\SysGCC\esp32-13.2.0_20240530\python_env\
+IDF_TOOLS_PATH=C:\SysGCC\esp32-13.2.0_20240530
+```

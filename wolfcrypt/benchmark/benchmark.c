@@ -247,7 +247,7 @@
 #define MILLION_VALUE 1000000.0
 
 #ifdef BENCH_MICROSECOND
-    #define WOLFSSL_FIXED_TIME_UNIT "μs"
+    #define WOLFSSL_FIXED_TIME_UNIT "Î¼s"
     #define WOLFSSL_BENCHMARK_FIXED_UNITS_KB
 #else
     #define WOLFSSL_FIXED_TIME_UNIT "s"
@@ -1238,34 +1238,34 @@ static const char* bench_Usage_msg1[][27] = {
     },
 #ifndef NO_MULTIBYTE_PRINT
     /* 1 Japanese */
-    {   "-? <num>    ヘルプ, 使い方を表示します。\n",
-        "            0: 英語、 1: 日本語\n",
-        "-csv        csv 形式で端末に出力します。\n",
-        "-base10     バイトを10のべき乗で表示します。(例 1 kB = 1000 Bytes)\n",
-        "-no_aad     追加の認証データを使用しません.\n",
+    {   "-? <num>    ãƒ˜ãƒ«ãƒ—, ä½¿ã„æ–¹ã‚’è¡¨ç¤ºã—ã¾ã™ã€‚\n",
+        "            0: è‹±èªžã€ 1: æ—¥æœ¬èªž\n",
+        "-csv        csv å½¢å¼ã§ç«¯æœ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚\n",
+        "-base10     ãƒã‚¤ãƒˆã‚’10ã®ã¹ãä¹—ã§è¡¨ç¤ºã—ã¾ã™ã€‚(ä¾‹ 1 kB = 1000 Bytes)\n",
+        "-no_aad     è¿½åŠ ã®èªè¨¼ãƒ‡ãƒ¼ã‚¿ã‚’ä½¿ç”¨ã—ã¾ã›ã‚“.\n",
         "-aad_size <num>  TBD.\n",
         "-all_aad    TBD.\n",
-        "-dgst_full  フルの digest 暗号操作を実施します。\n",
+        "-dgst_full  ãƒ•ãƒ«ã® digest æš—å·æ“ä½œã‚’å®Ÿæ–½ã—ã¾ã™ã€‚\n",
         "-mac_final  MAC update and final operation timed.\n",
         "-aead_set_key   Set the key as part of the timing of AEAD ciphers.\n",
-        "-rsa_sign   暗号/復号化の代わりに RSA の署名/検証を測定します。\n",
-        "<keySz> -rsa-sz\n            RSA <key size> の性能を測定します。\n",
+        "-rsa_sign   æš—å·/å¾©å·åŒ–ã®ä»£ã‚ã‚Šã« RSA ã®ç½²å/æ¤œè¨¼ã‚’æ¸¬å®šã—ã¾ã™ã€‚\n",
+        "<keySz> -rsa-sz\n            RSA <key size> ã®æ€§èƒ½ã‚’æ¸¬å®šã—ã¾ã™ã€‚\n",
         "-ffhdhe2048 Measure DH using FFDHE 2048-bit parameters.\n",
         "-ffhdhe3072 Measure DH using FFDHE 3072-bit parameters.\n",
         "-p256       Measure ECC using P-256 curve.\n",
         "-p384       Measure ECC using P-384 curve.\n",
         "-p521       Measure ECC using P-521 curve.\n",
         "-ecc-all    Bench all enabled ECC curves.\n",
-       ("-<alg>      アルゴリズムのベンチマークを実施します。\n"
-        "            利用可能なアルゴリズムは下記を含みます:\n"
+       ("-<alg>      ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã®ãƒ™ãƒ³ãƒãƒžãƒ¼ã‚¯ã‚’å®Ÿæ–½ã—ã¾ã™ã€‚\n"
+        "            åˆ©ç”¨å¯èƒ½ãªã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã¯ä¸‹è¨˜ã‚’å«ã¿ã¾ã™:\n"
        ),
-       ("-lng <num>  指定された言語でベンチマーク結果を表示します。\n"
-        "            0: 英語、 1: 日本語\n"
+       ("-lng <num>  æŒ‡å®šã•ã‚ŒãŸè¨€èªžã§ãƒ™ãƒ³ãƒãƒžãƒ¼ã‚¯çµæžœã‚’è¡¨ç¤ºã—ã¾ã™ã€‚\n"
+        "            0: è‹±èªžã€ 1: æ—¥æœ¬èªž\n"
        ),
-        "<num>       ブロックサイズをバイト単位で指定します。\n",
+        "<num>       ãƒ–ãƒ­ãƒƒã‚¯ã‚µã‚¤ã‚ºã‚’ãƒã‚¤ãƒˆå˜ä½ã§æŒ‡å®šã—ã¾ã™ã€‚\n",
         "-blocks <num>  TBD.\n",
-        "-threads <num> 実行するスレッド数\n",
-        "-print      ベンチマーク統計の要約を表示する\n",
+        "-threads <num> å®Ÿè¡Œã™ã‚‹ã‚¹ãƒ¬ãƒƒãƒ‰æ•°\n",
+        "-print      ãƒ™ãƒ³ãƒãƒžãƒ¼ã‚¯çµ±è¨ˆã®è¦ç´„ã‚’è¡¨ç¤ºã™ã‚‹\n",
         /* TODO: translate below */
         "-hash_input   <file>   Input data to use for hash benchmarking\n",
         "-cipher_input <file>   Input data to use for cipher benchmarking\n",
@@ -1285,7 +1285,7 @@ static const char* bench_result_words1[][4] = {
 #endif
     , "Cycles per byte", NULL }, /* 0 English */
 #ifndef NO_MULTIBYTE_PRINT
-    { "を"   , "秒で処理", "1バイトあたりのサイクル数", NULL },     /* 1 Japanese */
+    { "ã‚’"   , "ç§’ã§å‡¦ç†", "1ãƒã‚¤ãƒˆã‚ãŸã‚Šã®ã‚µã‚¤ã‚¯ãƒ«æ•°", NULL },     /* 1 Japanese */
 #endif
 };
 
@@ -1300,7 +1300,7 @@ static const char* bench_desc_words[][15] = {
     /* 0           1          2         3        4        5         6            7            8          9        10        11       12          13       14 */
     {"public", "private", "key gen", "agree" , "sign", "verify", "encrypt", "decrypt", "rsk gen", "encap", "derive", "valid", "pair gen", "decap", NULL}, /* 0 English */
 #ifndef NO_MULTIBYTE_PRINT
-    {"公開鍵", "秘密鍵" ,"鍵生成" , "鍵共有" , "署名", "検証"  , "暗号化"    , "復号化"    , "rsk gen", "encap", "derive", "valid", "pair gen", "decap", NULL}, /* 1 Japanese */
+    {"å…¬é–‹éµ", "ç§˜å¯†éµ" ,"éµç”Ÿæˆ" , "éµå…±æœ‰" , "ç½²å", "æ¤œè¨¼"  , "æš—å·åŒ–"    , "å¾©å·åŒ–"    , "rsk gen", "encap", "derive", "valid", "pair gen", "decap", NULL}, /* 1 Japanese */
 #endif
 };
 
@@ -1784,13 +1784,13 @@ static const char* bench_result_words3[][5] = {
     defined(WOLFSSL_HAVE_LMS)
 static const char* bench_result_words2[][5] = {
 #ifdef BENCH_MICROSECOND
-    { "ops took", "μsec"     , "avg" , "ops/μsec", NULL },   /* 0 English
-                                                                for μsec */
+    { "ops took", "Î¼sec"     , "avg" , "ops/Î¼sec", NULL },   /* 0 English
+                                                                for Î¼sec */
 #else
     { "ops took", "sec"     , "avg" , "ops/sec", NULL },   /* 0 English  */
 #endif
 #ifndef NO_MULTIBYTE_PRINT
-    { "回処理を", "秒で実施", "平均", "処理/秒", NULL },     /* 1 Japanese */
+    { "å›žå‡¦ç†ã‚’", "ç§’ã§å®Ÿæ–½", "å¹³å‡", "å‡¦ç†/ç§’", NULL },     /* 1 Japanese */
 #endif
 };
 #endif
@@ -2368,6 +2368,7 @@ static WC_INLINE int bench_stats_check(double start)
     int ret = 0;
     double this_current_time = 0.0;
     this_current_time = current_time(0); /* get the timestamp, no reset */
+
 #if defined(DEBUG_WOLFSSL_BENCHMARK_TIMING) && defined(WOLFSSL_ESPIDF)
     #if defined(WOLFSSL_ESPIDF)
         ESP_LOGI(TAG, "bench_stats_check Current time = %f, start = %f",
@@ -14875,6 +14876,7 @@ void bench_sphincsKeySign(byte level, byte optim)
                         "assuming 1000 Hz.");
         ret = (double)(tickCount / 1000.0);
     #endif /* configTICK_RATE_HZ */
+
         return ret;
 
     } /* current_time */

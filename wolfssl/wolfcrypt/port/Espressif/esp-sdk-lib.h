@@ -22,6 +22,17 @@
 
 #define __ESP_SDK_LIB_H__
 
+/* When using a private config with plain text passwords,        */
+/* file my_private_config.h should be excluded from git updates: */
+/* #define  USE_MY_PRIVATE_CONFIG */
+
+/* USE_MY_PRIVATE_CONFIG may also be set via idf.py menuconfig*/
+#if defined(CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG) \
+         && CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG
+    #define USE_MY_PRIVATE_CONFIG
+#endif
+
+
 /* Always include wolfcrypt/settings.h before any other wolfSSL file.      */
 /* Reminder: settings.h pulls in user_settings.h; don't include it here.   */
 #include <wolfssl/wolfcrypt/settings.h>
@@ -53,10 +64,6 @@
  ******************************************************************************
  ******************************************************************************
  **/
-
-/* when using a private config with plain text passwords,
- * file my_private_config.h should be excluded from git updates */
-/* #define  USE_MY_PRIVATE_CONFIG */
 
 /* Note that IntelliSense may not work properly in the next section for the
  * Espressif SDK 3.4 on the ESP8266. Macros should still be defined.
@@ -102,7 +109,7 @@
     #elif defined(OS_WINDOWS)
         #include "/workspace/my_private_config.h"
     #else
-        /* Edit as needed for your private config: */
+        /* Edit as needed for your private config, typically non-Cmake: */
         #warning "default private config using /workspace/my_private_config.h"
         #include "/workspace/my_private_config.h"
     #endif
@@ -148,6 +155,14 @@ WOLFSSL_LOCAL esp_err_t sdk_var_whereis(const char* v_name, void* v);
 
 WOLFSSL_LOCAL intptr_t esp_sdk_stack_pointer(void);
 
+WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
+
+/* Check if USE_WOLFSSL_ESP_SDK_TIME set via idf.py menuconfig */
+#if defined(CONFIG_USE_WOLFSSL_ESP_SDK_TIME) && CONFIG_USE_WOLFSSL_ESP_SDK_TIME
+    #undef  USE_WOLFSSL_ESP_SDK_TIME
+    #define USE_WOLFSSL_ESP_SDK_TIME
+#endif
+
 #if defined(USE_WOLFSSL_ESP_SDK_TIME)
 
 /******************************************************************************
@@ -172,6 +187,18 @@ WOLFSSL_LOCAL esp_err_t set_time(void);
 
 /* wait NTP_RETRY_COUNT seconds before giving up on NTP time */
 WOLFSSL_LOCAL esp_err_t set_time_wait_for_ntp(void);
+#endif
+
+/* Check if USE_WOLFSSL_ESP_SDK_WIFI set via idf.py menuconfig */
+#if defined(CONFIG_USE_WOLFSSL_ESP_SDK_WIFI) && CONFIG_USE_WOLFSSL_ESP_SDK_WIFI
+    #if defined(CONFIG_IDF_TARGET_ESP32H2)
+        /* With no WiFi build-in to standard H2, don't enable by default.*/
+        /* Can still be enabled via idf.py menuconfig                    */
+    #else
+        #warning "There is typically no WiFi on ESP32H2, disabling SDK_WIFI"
+        #undef  USE_WOLFSSL_ESP_SDK_WIFI
+        #define USE_WOLFSSL_ESP_SDK_WIFI
+    #endif
 #endif
 
 #if defined(USE_WOLFSSL_ESP_SDK_WIFI)
@@ -205,8 +232,6 @@ WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_lib_init(void);
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_init_sta(void);
 
 WOLFSSL_LOCAL esp_err_t esp_sdk_wifi_show_ip(void);
-
-WOLFSSL_LOCAL esp_err_t esp_sdk_device_show_info(void);
 
 #endif /* USE_WOLFSSL_ESP_SDK_WIFI */
 

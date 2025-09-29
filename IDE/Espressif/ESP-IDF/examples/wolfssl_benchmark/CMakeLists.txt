@@ -1,11 +1,35 @@
 # wolfSSL Espressif Example Project CMakeLists.txt
-#   v1.3
+#   v5.8.2.001
 #
 # The following lines of boilerplate have to be in your project's
 # CMakeLists in this exact order for cmake to work correctly
 message(STATUS "Begin project ${CMAKE_PROJECT_NAME}")
 
 cmake_minimum_required(VERSION 3.16)
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DWOLFSSL_USER_SETTINGS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWOLFSSL_USER_SETTINGS")
+
+# Optionally set flag for using a private include. See wolfcrypt/port/Espressif/esp-sdk-lib.h
+if(  "$ENV{CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG}" STREQUAL "1" )
+    message(STATUS "Setting CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG from environment variable")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG=1")
+else()
+    message(STATUS "CONFIG_WOLFSSL_USE_MY_PRIVATE_CONFIG not set, not using private config.")
+endif()
+
+# Different ESP-IDF versions have different lock files.
+# Not starting fresh has unintuitive results.
+# So force a fresh dependencies.lock by deleting the current one:
+file(REMOVE "./dependencies.lock")
+
+# Force custom partition table regardless of IDE presets
+set(PARTITION_TABLE_CUSTOM ON CACHE BOOL "" FORCE)
+set(PARTITION_TABLE_FILENAME "${CMAKE_SOURCE_DIR}/partitions_singleapp_large.csv" CACHE STRING "" FORCE)
+
+if("${IDF_TARGET}" STREQUAL "linux")
+    set(COMPONENTS main)
+endif()
 
 # For the main project using ESP-IDF version 6 or greater.
 # Numerous "dangerous relocation: call8: call target out of range: memcpy" errors encountered
@@ -34,6 +58,7 @@ endif()
 #
 # Optional WOLFSSL_CMAKE_SYSTEM_NAME detection to find
 # USE_MY_PRIVATE_CONFIG path for my_private_config.h
+#   See: wolfcrypt/port/Espressif/esp-sdk-lib.h
 #
 # Expected path varies:
 #
@@ -41,6 +66,8 @@ endif()
 #   Linux:  ~/workspace
 # Windows:  C:\workspace
 #
+
+
 if(WIN32)
     # Windows-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_WINDOWS")
@@ -48,9 +75,6 @@ if(WIN32)
 endif()
 if(CMAKE_HOST_UNIX)
     message(STATUS "Detected UNIX")
-endif()
-if(APPLE)
-    message(STATUS "Detected APPLE")
 endif()
 if(CMAKE_HOST_UNIX AND (NOT APPLE) AND EXISTS "/proc/sys/fs/binfmt_misc/WSLInterop")
     # Windows-specific configuration here
@@ -63,7 +87,7 @@ if(CMAKE_HOST_UNIX AND (NOT APPLE) AND (NOT WIN32))
     message(STATUS "Detected Linux")
 endif()
 if(APPLE)
-    # Windows-specific configuration here
+    # Apple-specific configuration here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWOLFSSL_CMAKE_SYSTEM_NAME_APPLE")
     message(STATUS "Detected Apple")
 endif()
