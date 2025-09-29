@@ -97,7 +97,7 @@ extern const unsigned int wolfCrypt_PIE_rodata_end[];
 /* cheap portable ad-hoc hash function to confirm bitwise stability of the PIE
  * binary image.
  */
-static unsigned int hash_span(char *start, char *end) {
+static unsigned int hash_span(const u8 *start, const u8 *end) {
     unsigned int sum = 1;
     while (start < end) {
         unsigned int rotate_by;
@@ -419,24 +419,18 @@ static int wolfssl_init(void)
 #endif
 
     {
-        char *pie_text_start = (char *)wolfCrypt_PIE_first_function;
-        char *pie_text_end = (char *)wolfCrypt_PIE_last_function;
-        char *pie_rodata_start = (char *)wolfCrypt_PIE_rodata_start;
-        char *pie_rodata_end = (char *)wolfCrypt_PIE_rodata_end;
-        unsigned int text_hash, rodata_hash;
-
-        text_hash = hash_span(pie_text_start, pie_text_end);
-        rodata_hash = hash_span(pie_rodata_start, pie_rodata_end);
+        unsigned int text_hash = hash_span(__wc_text_start, __wc_text_end);
+        unsigned int rodata_hash = hash_span(__wc_rodata_start, __wc_rodata_end);
 
         /* note, "%pK" conceals the actual layout information.  "%px" exposes
          * the true module start address, which is potentially useful to an
          * attacker.
          */
         pr_info("wolfCrypt section hashes (spans): text 0x%x (%lu), rodata 0x%x (%lu), offset %c0x%lx\n",
-                text_hash, pie_text_end-pie_text_start,
-                rodata_hash, pie_rodata_end-pie_rodata_start,
-                pie_text_start < pie_rodata_start ? '+' : '-',
-                pie_text_start < pie_rodata_start ? pie_rodata_start - pie_text_start : pie_text_start - pie_rodata_start);
+                text_hash, __wc_text_end - __wc_text_start,
+                rodata_hash, __wc_rodata_end - __wc_rodata_start,
+                &__wc_text_start[0] < &__wc_rodata_start[0] ? '+' : '-',
+                &__wc_text_start[0] < &__wc_rodata_start[0] ? &__wc_rodata_start[0] - &__wc_text_start[0] : &__wc_text_start[0] - &__wc_rodata_start[0]);
         pr_info("wolfCrypt segments: text=%x-%x, rodata=%x-%x, "
                 "rwdata=%x-%x, bss=%x-%x\n",
                 (unsigned)(uintptr_t)__wc_text_start,
@@ -719,6 +713,7 @@ ssize_t wc_linuxkm_normalize_relocations(
 {
     ssize_t i = -1;
     size_t text_in_offset;
+    size_t last_reloc; /* for error-checking order in wc_linuxkm_pie_reloc_tab[] */
 #ifdef DEBUG_LINUXKM_PIE_SUPPORT
     int n_text_r = 0, n_rodata_r = 0, n_rwdata_r = 0, n_bss_r = 0, n_other_r = 0;
 #endif
@@ -746,13 +741,20 @@ ssize_t wc_linuxkm_normalize_relocations(
     memcpy(text_out, text_in, text_in_len);
     WC_SANITIZE_ENABLE();
 
-    for (;
+    for (last_reloc = wc_linuxkm_pie_reloc_tab[i > 0 ? i-1 : 0];
          (size_t)i < wc_linuxkm_pie_reloc_tab_length - 1;
          ++i)
     {
         size_t next_reloc = wc_linuxkm_pie_reloc_tab[i];
         int reloc_buf;
         uintptr_t abs_ptr;
+
+        if (last_reloc > next_reloc) {
+            pr_err("BUG: out-of-order offset found at wc_linuxkm_pie_reloc_tab[%zd]: %zu > %zu\n",
+                   i, last_reloc, next_reloc);
+            return -1;
+        }
+        last_reloc = next_reloc;
 
         next_reloc -= text_in_offset;
 
