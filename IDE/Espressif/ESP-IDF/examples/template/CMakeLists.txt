@@ -184,7 +184,7 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 message(STATUS "Checking Project CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX=$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}")
 # Optionally force syntax highlighting fix in Visual Studio 2022 for ESP-IDF v6
 # See https://sysprogs.com/w/forums/topic/espressif-esp-idf-v6-0-intellisense-error-invalid-value-gnu2b-in-stdgnu2b/
-# To resolve, enter the text in VisualGDB Project Properties ñ Intellisense Settings Tab, ìAdditional flags for C filesî:
+# To resolve, enter the text in VisualGDB Project Properties ‚Äì Intellisense Settings Tab, ‚ÄúAdditional flags for C files‚Äù:
 #   -std=gnu17
 # And set here:
 if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )
@@ -192,7 +192,10 @@ if(  "$ENV{CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX}" STREQUAL "1" )
     if(DEFINED IDF_VERSION_MAJOR AND IDF_VERSION_MAJOR GREATER_EQUAL 6)
         message(STATUS "-- Found CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX, replacing -std=gnu2b with -std=${PREFERRED_DIALECT}")
         if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-          string(REPLACE "-std=gnu2b" "-std=${PREFERRED_DIALECT}" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+            message(STATUS "-- Found CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX, replacing -std=gnu2b with -std=${PREFERRED_DIALECT}")
+            string(REPLACE "-std=gnu2b"   "-std=${PREFERRED_DIALECT}" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+            message(STATUS "-- Found CONFIG_WOLFSSL_FORCE_V6_INTELLISENSE_FIX, replacing -std=gnu++26 with -std=${PREFERRED_DIALECT}")
+            string(REPLACE "-std=gnu++26" "-std=${PREFERRED_DIALECT}" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
         endif()
     else()
         message(STATUS "-- Visual Studio Intellisense Fix not needed for this ESP-IDF version=${IDF_VERSION_MAJOR}")
