@@ -58,8 +58,6 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/wolfcrypt/port/Espressif/esp-sdk-lib.h>
 
-#define ESP_SDK_WIFI_LIB_VERSION 1
-
 static const char* TAG = "wifi lib";
 
 esp_err_t esp_sdk_wifi_lib_init(void)
