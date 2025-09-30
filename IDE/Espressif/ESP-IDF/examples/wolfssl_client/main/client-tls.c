@@ -70,15 +70,16 @@
 #if defined(WOLFSSL_SM2) || defined(WOLFSSL_SM3) || defined(WOLFSSL_SM4)
     #include <wolfssl/certs_test_sm.h>
 #endif
+
 /* Some older versions don't have cert name strings, so set to blanks: */
+#ifndef CTX_CA_CERT_NAME
+    #define CTX_CA_CERT_NAME ""
+#endif
 #ifndef CTX_CLIENT_CERT_NAME
     #define CTX_CLIENT_CERT_NAME ""
 #endif
-#ifndef CTX_SERVER_KEY_NAME
-    #define CTX_SERVER_KEY_NAME ""
-#endif
-#ifndef CTX_SERVER_CERT_NAME
-    #define CTX_SERVER_CERT_NAME ""
+#ifndef CTX_CLIENT_KEY_NAME
+    #define CTX_CLIENT_KEY_NAME ""
 #endif
 
 #ifdef WOLFSSL_TRACK_MEMORY
@@ -104,6 +105,7 @@
  * TLS13-AES128-CCM8-SHA256
  *
  * examples:
+ *
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-GCM-SHA256:PSK-AES128-GCM-SHA256"
  * #define WOLFSSL_ESP32_CIPHER_SUITE "TLS13-AES128-CCM-8-SHA256"
  *
@@ -155,7 +157,7 @@ static void halt_for_reboot(const char* s)
 {
     ESP_LOGE(TAG, "Halt. %s", s);
     while (1) {
-        vTaskDelay(60000);
+        vTaskDelay(RETRY_DELAY_MS);
     }
 }
 
@@ -259,6 +261,8 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     size_t len;
     int connected = 0;
     word32 loops = 0;
+    word32 success_ct = 0;
+    word32 failure_ct = 0;
 
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
@@ -273,7 +277,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     /* No startup delay */
 #else
     /* Brief delay to allow the main task to be deleted and free memory. */
-    vTaskDelay(100);
+    vTaskDelay(STARTUP_DELAY_MS);
 #endif
 
     /* Initialize wolfSSL */
@@ -312,7 +316,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     if (ctx == NULL) {
         halt_for_reboot("ERROR: failed to create wolfSSL ctx");
     }
-
 
 #if defined(USE_CERT_BUFFERS_1024)
     /* The x1024 test certs are in current user_settings.h, but not default.
@@ -434,16 +437,6 @@ TLS13-AES128-CCM8-SHA256
 #else
     ESP_LOGW(TAG, "Unknown Certificates in use!");
 #endif
-/* Some older versions don't have cert name strings, so set to blanks: */
-#ifndef CTX_CA_CERT_NAME
-    #define CTX_CA_CERT_NAME ""
-#endif
-#ifndef CTX_CLIENT_CERT_NAME
-    #define CTX_CLIENT_CERT_NAME ""
-#endif
-#ifndef CTX_CLIENT_KEY_NAME
-    #define CTX_CLIENT_KEY_NAME ""
-#endif
 
     /* Load client certificates into WOLFSSL_CTX */
     ESP_LOGI(TAG, "Loading CA cert %s",    CTX_CA_CERT_NAME);
@@ -517,6 +510,20 @@ TLS13-AES128-CCM8-SHA256
     else {
         servAddr.sin_addr.s_addr = ip4_addr->addr;
     }
+
+    /* optionall set explicit ciphers, ':'-delimited names in : */
+#ifdef WOLFSSL_ESP32_CIPHER_SUITE
+    ret_i = wolfSSL_CTX_set_cipher_list(ctx, WOLFSSL_ESP32_CIPHER_SUITE);
+    if (ret_i == WOLFSSL_SUCCESS) {
+        ESP_LOGI(TAG, "wolfSSL_CTX_set_cipher_list success");
+    }
+    else {
+        halt_for_reboot("ERROR: failed wolfSSL_CTX_set_cipher_list");
+    }
+#else
+    ESP_LOGI(TAG, "WOLFSSL_ESP32_CIPHER_SUITE not set; No cipher list used.");
+#endif
+
     /*
      * Loop
      */
@@ -529,7 +536,7 @@ TLS13-AES128-CCM8-SHA256
             WOLFSSL_MSG( "start socket())");
             if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0) {
                 ESP_LOGE(TAG, "socket() failed, errno=%d", errno);
-                vTaskDelay(pdMS_TO_TICKS(200));
+                vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY_MS));
                 continue; /* try again */
             }
 
@@ -557,6 +564,7 @@ TLS13-AES128-CCM8-SHA256
                 shutdown(sockfd, SHUT_RDWR);
                 close(sockfd);
                 sockfd = -1;
+                vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY_MS));
             }
             else {
                 connected = 1;
@@ -570,7 +578,7 @@ TLS13-AES128-CCM8-SHA256
         WOLFSSL_MSG("Create a WOLFSSL object");
         /* Create a WOLFSSL object */
         if ((ssl = wolfSSL_new(ctx)) == NULL) {
-            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
+            halt_for_reboot("ERROR: failed to create WOLFSSL object\n");
         }
         else {
     #ifdef DEBUG_WOLFSSL
@@ -666,21 +674,22 @@ TLS13-AES128-CCM8-SHA256
         ret_i = wolfSSL_set_fd(ssl, sockfd);
         if (ret_i == WOLFSSL_SUCCESS) {
             ESP_LOGI(TAG, "wolfSSL_set_fd success");
+        #ifdef DEBUG_WOLFSSL
+            wolfSSL_Debugging_ON();
+        #endif
+            ret_i = wolfSSL_connect(ssl);
+        #ifdef DEBUG_WOLFSSL
+            this_heap = esp_get_free_heap_size();
+            ESP_LOGI(TAG, "tls_smp_client_task heap(3) @ %p = %d",
+                            &this_heap, this_heap);
+        #endif
         }
         else {
             ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
         }
 
         ESP_LOGI(TAG, "Connect to wolfSSL server...");
-    #ifdef DEBUG_WOLFSSL
-        wolfSSL_Debugging_ON();
-    #endif
-        ret_i = wolfSSL_connect(ssl);
-    #ifdef DEBUG_WOLFSSL
-        this_heap = esp_get_free_heap_size();
-        ESP_LOGI(TAG, "tls_smp_client_task heap(3) @ %p = %d",
-                        &this_heap, this_heap);
-    #endif
+
         if (ret_i == WOLFSSL_SUCCESS) {
     #ifdef DEBUG_WOLFSSL
             ShowCiphers(ssl);
@@ -763,13 +772,18 @@ TLS13-AES128-CCM8-SHA256
         ShowCiphers(ssl);
         if (ret_i == WOLFSSL_SUCCESS) {
             ESP_LOGI(TAG, "Connection Success!");
-            loops++;
+            success_ct++;
         }
-        ESP_LOGI(TAG, "End connection loop: %d successes", loops);
+        else {
+            failure_ct++;
+        }
+        loops++;
+        ESP_LOGI(TAG, "End connection loop #%d: %d successes, %d failures",
+                                      loops,       success_ct,   failure_ct);
         shutdown(sockfd, SHUT_RDWR);
         close(sockfd);
         wolfSSL_free(ssl); /* Release the wolfSSL object memory        */
-    } while (TEST_LOOP && (ret_i == WOLFSSL_SUCCESS));
+    } while (TEST_LOOP && ((ret_i == WOLFSSL_SUCCESS) || LOOP_ON_FAIL));
 
     ESP_LOGI(TAG, "Cleanup and exit");
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */

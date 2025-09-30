@@ -72,6 +72,9 @@
 /* set to 0 for one test,
 ** set to 1 for continuous test loop */
 #define TEST_LOOP 1
+#define LOOP_ON_FAIL 1
+#define RETRY_DELAY_MS 5000
+#define STARTUP_DELAY_MS 100
 
 typedef struct {
     int port;

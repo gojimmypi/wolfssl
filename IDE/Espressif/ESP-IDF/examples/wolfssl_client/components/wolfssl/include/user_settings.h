@@ -1586,6 +1586,13 @@ Turn on timer debugging (used when CPU cycles not available)
                                -A ./certs/ca-ecc-cert.pem         \
                                -c ./certs/client-ecc-cert.pem     \
                                -k ./certs/ecc-client-key.pem
+    # TLS 1.2, -b Bind to any interface instead of localhost only
+    #          -i Loop indefinitely
+    #          -d Disable client cert check
+    # ./examples/server/server   -v 3 -b -i -d
+                                 -l "ECDHE-ECDSA-AES128-GCM-SHA256"
+                                 -c ./certs/server-ecc.pem
+                                 -k ./certs/ecc-key.pem
     */
     #ifdef USE_CERT_BUFFERS_2048
         #error "USE_CERT_BUFFERS_2048 is already defined. Pick one."
@@ -1626,13 +1633,13 @@ Turn on timer debugging (used when CPU cycles not available)
         #define CTX_SERVER_KEY_SIZE  sizeof_ecc_key_der_256
         #define CTX_SERVER_KEY_TYPE  WOLFSSL_FILETYPE_ASN1
 
-        /* wolfSSL_CTX_load_verify_buffer */
-        #define CTX_CLIENT_CERT      cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_NAME "cliecc_cert_der_256"
-        #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
-        #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
-
     #endif /* Server */
+
+    /* wolfSSL_CTX_load_verify_buffer */
+    #define CTX_CLIENT_CERT      cliecc_cert_der_256
+    #define CTX_CLIENT_CERT_NAME "cliecc_cert_der_256"
+    #define CTX_CLIENT_CERT_SIZE sizeof_cliecc_cert_der_256
+    #define CTX_CLIENT_CERT_TYPE WOLFSSL_FILETYPE_ASN1
 
     /* END USE_CERT_BUFFERS_256 */
 
