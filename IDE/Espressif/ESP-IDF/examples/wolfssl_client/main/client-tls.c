@@ -247,12 +247,17 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
 #ifndef NO_DH
     int minDhKeyBits = DEFAULT_MIN_DHKEY_BITS;
 #endif
+#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+    /* optionally set TCP reuse. See also below. */
+    int tcp_reuse = 1;
+#endif
 
     /* declare wolfSSL objects */
     WOLFSSL_CTX* ctx;
     WOLFSSL*     ssl;
 
     size_t len;
+    word32 loops = 0;
 
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
 
@@ -277,21 +282,6 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
         ESP_LOGE(TAG, "Failed to initialize wolfSSL");
     }
 
-    /* Create a socket that uses an Internet IPv4 address,
-     * Sets the socket to be stream based (TCP),
-     * 0 means choose the default protocol. */
-    WOLFSSL_MSG( "start socket())");
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
-        halt_for_reboot("ERROR: failed to create the socket");
-    }
-
-    /* Optionally set TCP Socket Reuse. */
-#if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
-#ifdef SO_REUSEPORT   /* not always available on lwIP */
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
-#endif /* SO_REUSEPORT        */
-#endif /* optional TCP reuse */
     ESP_LOGI(TAG, "Get target IP address: %s", TLS_SMP_TARGET_HOST);
 
     hp = gethostbyname(TLS_SMP_TARGET_HOST);
@@ -526,218 +516,243 @@ TLS13-AES128-CCM8-SHA256
     else {
         servAddr.sin_addr.s_addr = ip4_addr->addr;
     }
+    /*
+     * Loop
+     */
+    do {
+        /* Create a socket that uses an Internet IPv4 address,
+         * Sets the socket to be stream based (TCP),
+         * 0 means choose the default protocol. */
+        WOLFSSL_MSG( "start socket())");
+        if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
+            halt_for_reboot("ERROR: failed to create the socket");
+        }
 
-    /* Connect to the server */
-    sprintf(buff,
-            "Connecting to server....%s (port:%d)",
-            TLS_SMP_TARGET_HOST,
-            TLS_SMP_DEFAULT_PORT);
-    ESP_LOGI(TAG, "%s\n", buff);
+        /* Optionally set TCP Socket Reuse. */
+    #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
+    #ifdef SO_REUSEPORT   /* not always available on lwIP */
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
+    #endif /* SO_REUSEPORT        */
+    #endif /* optional TCP reuse */
 
-    if ((ret_i = connect(sockfd,
-                       (struct sockaddr *)&servAddr,
-                       sizeof(servAddr))) == -1) {
-        ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
-    }
+        /* Connect to the server */
+        sprintf(buff,
+                "Connecting to server....%s (port:%d)",
+                TLS_SMP_TARGET_HOST,
+                TLS_SMP_DEFAULT_PORT);
+        ESP_LOGI(TAG, "%s\n", buff);
 
-#if defined(WOLFSSL_EXPERIMENTAL_SETTINGS)
-    ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
-#endif
+        if ((ret_i = connect(sockfd,
+                           (struct sockaddr *)&servAddr,
+                           sizeof(servAddr))) == -1) {
+            ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
+        }
 
-    WOLFSSL_MSG("Create a WOLFSSL object");
-    /* Create a WOLFSSL object */
-    if ((ssl = wolfSSL_new(ctx)) == NULL) {
-        ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
-    }
-    else {
-#ifdef DEBUG_WOLFSSL
-        ESP_LOGI(TAG, "\nCreated WOLFSSL object:");
-        ShowCiphers(ssl);
-        this_heap = esp_get_free_heap_size();
-        ESP_LOGI(TAG, "tls_smp_client_task heap @ %p = %d",
-                      &this_heap, this_heap);
-#endif
-
-#if defined(CONFIG_ESP_WOLFSSL_ENABLE_MLKEM)
-    /* Kconfig ESP_WOLFSSL_ENABLE_MLKEM triggers settings in user_setting.h */
-    ESP_LOGI(TAG, "Espressif CONFIG_ESP_WOLFSSL_ENABLE_MLKEM is defined");
-#endif
-#if defined(WOLFSSL_HAVE_MLKEM)
-    ESP_LOGI(TAG, "WOLFSSL_MLKEM_KYBER is defined");
-    #if defined(WOLFSSL_KYBER1024) || !defined(WOLFSSL_NO_ML_KEM_1024)
-        #if defined(WOLFSSL_MLKEM_KYBER)
-            ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
-                                        "WOLFSSL_P521_KYBER_LEVEL5");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P521_KYBER_LEVEL5);
-        #else
-            ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
-                                        "WOLFSSL_ML_KEM_1024");
-            ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_1024);
-        #endif
-    #elif defined(WOLFSSL_KYBER768) || !defined(WOLFSSL_NO_ML_KEM_768)
-        #if defined(WOLFSSL_MLKEM_KYBER)
-            ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
-                                        "WOLFSSL_P256_KYBER_LEVEL3");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P256_KYBER_LEVEL3);
-        #else
-            ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
-                                        "WOLFSSL_ML_KEM_768");
-            ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_768);
-        #endif
-    #elif defined(WOLFSSL_KYBER512) || !defined(WOLFSSL_NO_ML_KEM_512)
-        /* This will typically be a low memory situation, such as ESP8266 */
-        #if defined(WOLFSSL_MLKEM_KYBER)
-            ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
-                                        "WOLFSSL_P256_KYBER_LEVEL1");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P256_KYBER_LEVEL1);
-        #else
-            ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
-                                        "WOLFSSL_ML_KEM_512");
-            ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
-            ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_512);
-        #endif
-    #else
-        ESP_LOGW(TAG, "WOLFSSL_HAVE_MLKEM enabled but no key size available.");
-        ret_i = ESP_FAIL;
+    #if defined(WOLFSSL_EXPERIMENTAL_SETTINGS)
+        ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
     #endif
-        if (ret_i == WOLFSSL_SUCCESS) {
-            ESP_LOGI(TAG, "UseKeyShare Kyber success");
+
+        WOLFSSL_MSG("Create a WOLFSSL object");
+        /* Create a WOLFSSL object */
+        if ((ssl = wolfSSL_new(ctx)) == NULL) {
+            ESP_LOGE(TAG, "ERROR: failed to create WOLFSSL object\n");
         }
         else {
-            ESP_LOGE(TAG, "UseKeyShare Kyber failed");
-        }
-#else
-    ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is not enabled");
-#endif
-    }
-
-#if defined(WOLFSSL_SM2)
-    /* SM TLS1.3 Cipher needs to have key share explicitly set. */
-    ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
-    if (ret == WOLFSSL_SUCCESS) {
-        ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
-    }
-    else {
-        ESP_LOGE(TAG, "FAILED to set WOLFSSL_ECC_SM2P256V1");
-    }
-#endif
-        /* when using atecc608a on esp32-wroom-32se */
-
-#if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
-                                  && defined(WOLFSSL_ATECC508A)
-    atcatls_set_callbacks(ctx);
-    /* when using custom slot-allocation */
-    #if defined(CUSTOM_SLOT_ALLOCATION)
-    my_atmel_slotInit();
-    atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
+    #ifdef DEBUG_WOLFSSL
+            ESP_LOGI(TAG, "\nCreated WOLFSSL object:");
+            ShowCiphers(ssl);
+            this_heap = esp_get_free_heap_size();
+            ESP_LOGI(TAG, "tls_smp_client_task heap @ %p = %d",
+                          &this_heap, this_heap);
     #endif
-#endif
-#ifdef DEBUG_WOLFSSL
-        this_heap = esp_get_free_heap_size();
-        ESP_LOGI(TAG, "tls_smp_client_task heap(2) @ %p = %d",
-                      &this_heap, this_heap);
-#endif
-    /* Attach wolfSSL to the socket */
-    ret_i = wolfSSL_set_fd(ssl, sockfd);
-    if (ret_i == WOLFSSL_SUCCESS) {
-        ESP_LOGI(TAG, "wolfSSL_set_fd success");
-    }
-    else {
-        ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
-    }
 
-    ESP_LOGI(TAG, "Connect to wolfSSL server...");
+    #if defined(CONFIG_ESP_WOLFSSL_ENABLE_MLKEM)
+        /* Kconfig ESP_WOLFSSL_ENABLE_MLKEM triggers settings in user_setting.h */
+        ESP_LOGI(TAG, "Espressif CONFIG_ESP_WOLFSSL_ENABLE_MLKEM is defined");
+    #endif
+    #if defined(WOLFSSL_HAVE_MLKEM)
+        ESP_LOGI(TAG, "WOLFSSL_MLKEM_KYBER is defined");
+        #if defined(WOLFSSL_KYBER1024) || !defined(WOLFSSL_NO_ML_KEM_1024)
+            #if defined(WOLFSSL_MLKEM_KYBER)
+                ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
+                                            "WOLFSSL_P521_KYBER_LEVEL5");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P521_KYBER_LEVEL5);
+            #else
+                ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
+                                            "WOLFSSL_ML_KEM_1024");
+                ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_1024);
+            #endif
+        #elif defined(WOLFSSL_KYBER768) || !defined(WOLFSSL_NO_ML_KEM_768)
+            #if defined(WOLFSSL_MLKEM_KYBER)
+                ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
+                                            "WOLFSSL_P256_KYBER_LEVEL3");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P256_KYBER_LEVEL3);
+            #else
+                ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
+                                            "WOLFSSL_ML_KEM_768");
+                ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_768);
+            #endif
+        #elif defined(WOLFSSL_KYBER512) || !defined(WOLFSSL_NO_ML_KEM_512)
+            /* This will typically be a low memory situation, such as ESP8266 */
+            #if defined(WOLFSSL_MLKEM_KYBER)
+                ESP_LOGW(TAG, "WOLFSSL_MLKEM_KYBER is enabled, setting key share: "
+                                            "WOLFSSL_P256_KYBER_LEVEL1");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_P256_KYBER_LEVEL1);
+            #else
+                ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is enabled, setting key share: "
+                                            "WOLFSSL_ML_KEM_512");
+                ESP_LOGW(TAG, "Note: Wireshark as of 4.4.6 reports as frodo976aes");
+                ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ML_KEM_512);
+            #endif
+        #else
+            ESP_LOGW(TAG, "WOLFSSL_HAVE_MLKEM enabled but no key size available.");
+            ret_i = ESP_FAIL;
+        #endif
+            if (ret_i == WOLFSSL_SUCCESS) {
+                ESP_LOGI(TAG, "UseKeyShare Kyber success");
+            }
+            else {
+                ESP_LOGE(TAG, "UseKeyShare Kyber failed");
+            }
+    #else
+        ESP_LOGI(TAG, "WOLFSSL_HAVE_MLKEM is not enabled");
+    #endif
+        }
+
+    #if defined(WOLFSSL_SM2)
+        /* SM TLS1.3 Cipher needs to have key share explicitly set. */
+        ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+        if (ret == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
+        }
+        else {
+            ESP_LOGE(TAG, "FAILED to set WOLFSSL_ECC_SM2P256V1");
+        }
+    #endif
+            /* when using atecc608a on esp32-wroom-32se */
+
+    #if defined(WOLFSSL_ESPWROOM32SE) && defined(HAVE_PK_CALLBACKS) \
+                                      && defined(WOLFSSL_ATECC508A)
+        atcatls_set_callbacks(ctx);
+        /* when using custom slot-allocation */
+        #if defined(CUSTOM_SLOT_ALLOCATION)
+        my_atmel_slotInit();
+        atmel_set_slot_allocator(my_atmel_alloc, my_atmel_free);
+        #endif
+    #endif
+    #ifdef DEBUG_WOLFSSL
+            this_heap = esp_get_free_heap_size();
+            ESP_LOGI(TAG, "tls_smp_client_task heap(2) @ %p = %d",
+                          &this_heap, this_heap);
+    #endif
+        /* Attach wolfSSL to the socket */
+        ret_i = wolfSSL_set_fd(ssl, sockfd);
+        if (ret_i == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "wolfSSL_set_fd success");
+        }
+        else {
+            ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
+        }
+
+        ESP_LOGI(TAG, "Connect to wolfSSL server...");
     #ifdef DEBUG_WOLFSSL
         wolfSSL_Debugging_ON();
     #endif
-    ret_i = wolfSSL_connect(ssl);
-#ifdef DEBUG_WOLFSSL
-    this_heap = esp_get_free_heap_size();
-    ESP_LOGI(TAG, "tls_smp_client_task heap(3) @ %p = %d",
-                    &this_heap, this_heap);
-#endif
-    if (ret_i == WOLFSSL_SUCCESS) {
-#ifdef DEBUG_WOLFSSL
-        ShowCiphers(ssl);
-#endif
-        ESP_LOGI(TAG, "Connect success! Sending message...");
-        memset(buff, 0, sizeof(buff));
-        if (sendGet) {
-            len = XSTRLEN(sndMsg);
-            strncpy(buff, sndMsg, len);
-        }
-        else {
-            sprintf(buff, "Hello from Espressif wolfSSL TLS client!\n");
-            len = strnlen(buff, sizeof(buff));
-        }
-        buff[len] = '\0';
-        ESP_LOGI(TAG, "SSL connect ok, sending message:\n\n%s\n", buff);
-
-        /* Send the message to the server */
-        do {
-            err = 0; /* reset error */
-            ret_i = wolfSSL_write(ssl, buff, len);
-            if (ret_i <= 0) {
-                err = wolfSSL_get_error(ssl, 0);
+        ret_i = wolfSSL_connect(ssl);
+    #ifdef DEBUG_WOLFSSL
+        this_heap = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "tls_smp_client_task heap(3) @ %p = %d",
+                        &this_heap, this_heap);
+    #endif
+        if (ret_i == WOLFSSL_SUCCESS) {
+    #ifdef DEBUG_WOLFSSL
+            ShowCiphers(ssl);
+    #endif
+            ESP_LOGI(TAG, "Connect success! Sending message...");
+            memset(buff, 0, sizeof(buff));
+            if (sendGet) {
+                len = XSTRLEN(sndMsg);
+                strncpy(buff, sndMsg, len);
             }
-        } while (err == WOLFSSL_ERROR_WANT_WRITE ||
-                 err == WOLFSSL_ERROR_WANT_READ);
-
-        if (ret_i != len) {
-            ESP_LOGE(TAG, "ERROR: failed to write\n");
-        }
-        else {
-            ESP_LOGI(TAG, "Message sent! Awaiting response...");
-        }
-
-        /* Read the server data into our buff array */
-        memset(buff, 0, sizeof(buff));
-
-        do {
-            err = 0; /* reset error */
-            ret_i =wolfSSL_read(ssl, buff, sizeof(buff));
-            if (ret_i <= 0) {
-                err = wolfSSL_get_error(ssl, 0);
+            else {
+                sprintf(buff, "Hello from Espressif wolfSSL TLS client!\n");
+                len = strnlen(buff, sizeof(buff));
             }
-        } while ((err == WOLFSSL_ERROR_WANT_READ) ||
-                 (err == WOLFSSL_ERROR_WANT_WRITE) );
+            buff[len] = '\0';
+            ESP_LOGI(TAG, "SSL connect ok, sending message:\n\n%s\n", buff);
 
-        if (ret_i < 0) {
-            ESP_LOGE(TAG, "ERROR: failed to read\n");
-        }
+            /* Send the message to the server */
+            do {
+                err = 0; /* reset error */
+                ret_i = wolfSSL_write(ssl, buff, len);
+                if (ret_i <= 0) {
+                    err = wolfSSL_get_error(ssl, 0);
+                }
+            } while (err == WOLFSSL_ERROR_WANT_WRITE ||
+                     err == WOLFSSL_ERROR_WANT_READ);
 
-        /* Show any data the server sends */
-        ESP_LOGI(TAG, "Server response: \n\n%s\n", buff);
-
-        ret_i = wolfSSL_shutdown(ssl);
-        while (ret_i == WOLFSSL_SHUTDOWN_NOT_DONE) {
-            ret_i = wolfSSL_shutdown(ssl); /* bidirectional shutdown */
-            if (ret_i == WOLFSSL_SUCCESS) {
-                ESP_LOGI(TAG, "Bidirectional shutdown complete\n");
-                break;
+            if (ret_i != len) {
+                ESP_LOGE(TAG, "ERROR: failed to write\n");
             }
-            else if (ret_i != WOLFSSL_SHUTDOWN_NOT_DONE) {
+            else {
+                ESP_LOGI(TAG, "Message sent! Awaiting response...");
+            }
+
+            /* Read the server data into our buff array */
+            memset(buff, 0, sizeof(buff));
+
+            do {
+                err = 0; /* reset error */
+                ret_i =wolfSSL_read(ssl, buff, sizeof(buff));
+                if (ret_i <= 0) {
+                    err = wolfSSL_get_error(ssl, 0);
+                }
+            } while ((err == WOLFSSL_ERROR_WANT_READ) ||
+                     (err == WOLFSSL_ERROR_WANT_WRITE) );
+
+            if (ret_i < 0) {
+                ESP_LOGE(TAG, "ERROR: failed to read\n");
+            }
+
+            /* Show any data the server sends */
+            ESP_LOGI(TAG, "Server response: \n\n%s\n", buff);
+
+            ret_i = wolfSSL_shutdown(ssl);
+            while (ret_i == WOLFSSL_SHUTDOWN_NOT_DONE) {
+                ret_i = wolfSSL_shutdown(ssl); /* bidirectional shutdown */
+                if (ret_i == WOLFSSL_SUCCESS) {
+                    ESP_LOGI(TAG, "Bidirectional shutdown complete\n");
+                    break;
+                }
+                else if (ret_i != WOLFSSL_SHUTDOWN_NOT_DONE) {
+                    ESP_LOGE(TAG, "Bidirectional shutdown failed\n");
+                    break;
+                }
+            }
+            if (ret_i != WOLFSSL_SUCCESS) {
                 ESP_LOGE(TAG, "Bidirectional shutdown failed\n");
-                break;
             }
-        }
-        if (ret_i != WOLFSSL_SUCCESS) {
-            ESP_LOGE(TAG, "Bidirectional shutdown failed\n");
-        }
 
-    } /* wolfSSL_connect(ssl) == WOLFSSL_SUCCESS) */
-    else {
-        ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL. "
-                      "Error: %d\n", ret_i);
-    }
-#ifdef DEBUG_WOLFSSL
-    ShowCiphers(ssl);
-#endif
+        } /* wolfSSL_connect(ssl) == WOLFSSL_SUCCESS) */
+        else {
+            ESP_LOGE(TAG, "ERROR: failed to connect to wolfSSL. "
+                          "Error: %d\n", ret_i);
+        }
+        ShowCiphers(ssl);
+        if (ret_i == WOLFSSL_SUCCESS) {
+            ESP_LOGI(TAG, "Connection Success!");
+            loops++;
+        }
+        ESP_LOGI(TAG, "End connection loop: %d successes", loops);
+        shutdown(sockfd, SHUT_RDWR);
+        close(sockfd);
+        wolfSSL_free(ssl);     /* Release the wolfSSL object memory        */
+    } while (TEST_LOOP && (ret_i == WOLFSSL_SUCCESS));
 
     ESP_LOGI(TAG, "Cleanup and exit");
-    wolfSSL_free(ssl);     /* Release the wolfSSL object memory        */
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */
     wolfSSL_Cleanup();     /* Cleanup the wolfSSL environment          */
     close(sockfd);         /* Close the connection to the server       */

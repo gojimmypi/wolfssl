@@ -69,6 +69,10 @@
     #define WOLFSSL_ESP_TASK void
 #endif
 
+/* set to 0 for one test,
+** set to 1 for continuous test loop */
+#define TEST_LOOP 1
+
 typedef struct {
     int port;
     int loops;
