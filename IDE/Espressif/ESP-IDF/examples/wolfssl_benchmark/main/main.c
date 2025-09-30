@@ -233,8 +233,6 @@ void app_main(void)
         .stop_bits = UART_STOP_BITS_1,
     };
     int stack_start = 0;
-    int heap_start = 0;
-    int heap_current = 0;
     int loops = 0;
     esp_err_t ret = 0;
 
