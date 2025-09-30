@@ -33,6 +33,7 @@
 
 /* Espressif */
 #include <esp_log.h>
+#include <errno.h>
 
 /* socket includes */
 #include <lwip/netdb.h>
@@ -524,10 +525,11 @@ TLS13-AES128-CCM8-SHA256
     ESP_LOGI(TAG, "WOLFSSL_ESP32_CIPHER_SUITE not set; No cipher list used.");
 #endif
 
-    /*
+    /**************************************************************************
      * Loop
-     */
+     **************************************************************************/
     do {
+        connected = 0;
         /* A brute force TCP reconnect, keep trying until successful: */
         do {
             /* Create a socket that uses an Internet IPv4 address,
@@ -646,8 +648,8 @@ TLS13-AES128-CCM8-SHA256
 
     #if defined(WOLFSSL_SM2)
         /* SM TLS1.3 Cipher needs to have key share explicitly set. */
-        ret = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
-        if (ret == WOLFSSL_SUCCESS) {
+        ret_i = wolfSSL_UseKeyShare(ssl, WOLFSSL_ECC_SM2P256V1);
+        if (ret_i == WOLFSSL_SUCCESS) {
             ESP_LOGI(TAG, "Successfully set WOLFSSL_ECC_SM2P256V1");
         }
         else {
@@ -782,13 +784,13 @@ TLS13-AES128-CCM8-SHA256
                                       loops,       success_ct,   failure_ct);
         shutdown(sockfd, SHUT_RDWR);
         close(sockfd);
+        sockfd = -1;
         wolfSSL_free(ssl); /* Release the wolfSSL object memory        */
     } while (TEST_LOOP && ((ret_i == WOLFSSL_SUCCESS) || LOOP_ON_FAIL));
 
     ESP_LOGI(TAG, "Cleanup and exit");
     wolfSSL_CTX_free(ctx); /* Free the wolfSSL context object          */
     wolfSSL_Cleanup();     /* Cleanup the wolfSSL environment          */
-    close(sockfd);         /* Close the connection to the server       */
 
     vTaskDelete(NULL);
 
