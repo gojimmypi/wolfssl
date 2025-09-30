@@ -257,6 +257,7 @@ WOLFSSL_ESP_TASK tls_smp_client_task(void* args)
     WOLFSSL*     ssl;
 
     size_t len;
+    int connected = 0;
     word32 loops = 0;
 
     WOLFSSL_ENTER(TLS_SMP_CLIENT_TASK_NAME);
@@ -520,34 +521,47 @@ TLS13-AES128-CCM8-SHA256
      * Loop
      */
     do {
-        /* Create a socket that uses an Internet IPv4 address,
-         * Sets the socket to be stream based (TCP),
-         * 0 means choose the default protocol. */
-        WOLFSSL_MSG( "start socket())");
-        if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) == -1) {
-            halt_for_reboot("ERROR: failed to create the socket");
-        }
+        /* A brute force TCP reconnect, keep trying until successful: */
+        do {
+            /* Create a socket that uses an Internet IPv4 address,
+             * Sets the socket to be stream based (TCP),
+             * 0 means choose the default protocol. */
+            WOLFSSL_MSG( "start socket())");
+            if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0) {
+                ESP_LOGE(TAG, "socket() failed, errno=%d", errno);
+                vTaskDelay(pdMS_TO_TICKS(200));
+                continue; /* try again */
+            }
 
-        /* Optionally set TCP Socket Reuse. */
+            /* Optionally set TCP Socket Reuse. */
     #if defined(CONFIG_ESP_WOLFSSL_TCP_REUSE) && (CONFIG_ESP_WOLFSSL_TCP_REUSE > 0)
-        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &tcp_reuse, sizeof(tcp_reuse));
+            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+                       &tcp_reuse, sizeof(tcp_reuse));
     #ifdef SO_REUSEPORT   /* not always available on lwIP */
-        setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &tcp_reuse, sizeof(tcp_reuse));
+            setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
+                       &tcp_reuse, sizeof(tcp_reuse));
     #endif /* SO_REUSEPORT        */
     #endif /* optional TCP reuse */
 
-        /* Connect to the server */
-        sprintf(buff,
-                "Connecting to server....%s (port:%d)",
-                TLS_SMP_TARGET_HOST,
-                TLS_SMP_DEFAULT_PORT);
-        ESP_LOGI(TAG, "%s\n", buff);
+            /* Connect to the server */
+            sprintf(buff,
+                    "Connecting to server....%s (port:%d)",
+                    TLS_SMP_TARGET_HOST,
+                    TLS_SMP_DEFAULT_PORT);
+            ESP_LOGI(TAG, "%s\n", buff);
 
-        if ((ret_i = connect(sockfd,
-                           (struct sockaddr *)&servAddr,
-                           sizeof(servAddr))) == -1) {
-            ESP_LOGE(TAG, "ERROR: failed to connect ret=%d\n", ret_i);
-        }
+            ret_i = connect(sockfd, (struct sockaddr *)&servAddr,
+                                     sizeof(servAddr));
+            if (ret_i == -1) {
+                ESP_LOGE(TAG, "ERROR: socket failed to connect; ret=%d\n", ret_i);
+                shutdown(sockfd, SHUT_RDWR);
+                close(sockfd);
+                sockfd = -1;
+            }
+            else {
+                connected = 1;
+            }
+        } while (connected == 0);
 
     #if defined(WOLFSSL_EXPERIMENTAL_SETTINGS)
         ESP_LOGW(TAG, "WOLFSSL_EXPERIMENTAL_SETTINGS is enabled");
@@ -678,7 +692,12 @@ TLS13-AES128-CCM8-SHA256
                 strncpy(buff, sndMsg, len);
             }
             else {
+    #ifdef CONFIG_IDF_TARGET
+                sprintf(buff, "Hello from %s wolfSSL TLS client!\n",
+                              CONFIG_IDF_TARGET);
+    #else
                 sprintf(buff, "Hello from Espressif wolfSSL TLS client!\n");
+    #endif
                 len = strnlen(buff, sizeof(buff));
             }
             buff[len] = '\0';
@@ -731,7 +750,7 @@ TLS13-AES128-CCM8-SHA256
                     ESP_LOGE(TAG, "Bidirectional shutdown failed\n");
                     break;
                 }
-            }
+            } /* ret_i == WOLFSSL_SHUTDOWN_NOT_DONE */
             if (ret_i != WOLFSSL_SUCCESS) {
                 ESP_LOGE(TAG, "Bidirectional shutdown failed\n");
             }
@@ -749,7 +768,7 @@ TLS13-AES128-CCM8-SHA256
         ESP_LOGI(TAG, "End connection loop: %d successes", loops);
         shutdown(sockfd, SHUT_RDWR);
         close(sockfd);
-        wolfSSL_free(ssl);     /* Release the wolfSSL object memory        */
+        wolfSSL_free(ssl); /* Release the wolfSSL object memory        */
     } while (TEST_LOOP && (ret_i == WOLFSSL_SUCCESS));
 
     ESP_LOGI(TAG, "Cleanup and exit");
@@ -760,7 +779,7 @@ TLS13-AES128-CCM8-SHA256
     vTaskDelete(NULL);
 
     return TLS_SMP_CLIENT_TASK_RET;
-}
+} /* tls_smp_client_task */
 
 #if defined(SINGLE_THREADED)
     /* we don't initialize a single thread, so no init function here */
