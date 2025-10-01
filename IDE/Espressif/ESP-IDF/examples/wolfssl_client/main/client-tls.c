@@ -562,10 +562,11 @@ TLS13-AES128-CCM8-SHA256
             ret_i = connect(sockfd, (struct sockaddr *)&servAddr,
                                      sizeof(servAddr));
             if (ret_i == -1) {
-                ESP_LOGE(TAG, "ERROR: socket failed to connect; ret=%d\n", ret_i);
+                ESP_LOGE(TAG, "ERROR: socket failed to connect; ret=%d", ret_i);
                 shutdown(sockfd, SHUT_RDWR);
                 close(sockfd);
                 sockfd = -1;
+                ESP_LOGI(TAG, "Waiting %d ms to retry...", RETRY_DELAY_MS);
                 vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY_MS));
             }
             else {
@@ -679,6 +680,7 @@ TLS13-AES128-CCM8-SHA256
         #ifdef DEBUG_WOLFSSL
             wolfSSL_Debugging_ON();
         #endif
+            ESP_LOGI(TAG, "Connect to wolfSSL server...");
             ret_i = wolfSSL_connect(ssl);
         #ifdef DEBUG_WOLFSSL
             this_heap = esp_get_free_heap_size();
@@ -690,7 +692,6 @@ TLS13-AES128-CCM8-SHA256
             ESP_LOGE(TAG, "ERROR: failed wolfSSL_set_fd. Error: %d\n", ret_i);
         }
 
-        ESP_LOGI(TAG, "Connect to wolfSSL server...");
 
         if (ret_i == WOLFSSL_SUCCESS) {
     #ifdef DEBUG_WOLFSSL
