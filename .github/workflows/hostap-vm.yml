@@ -274,10 +274,10 @@ jobs:
             {
               printf '# Added by CI to silence Git safe.directory warnings\n'
               printf 'git config --global --add safe.directory "*"\n'
-            } >> hostap/tests/hwsim/vm/inside.sh
+            } >> ./tests/hwsim/vm/inside.sh
 
             # Ensure it stays executable
-            chmod +x hostap/tests/hwsim/vm/inside.sh || true
+            chmod +x ./tests/hwsim/vm/inside.sh || true
 
 
       - name: Update certs
