@@ -262,7 +262,10 @@ jobs:
             git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
             git reset --hard
             git clean -fdx
-            git checkout ${{ matrix.config.hostap_ref }}
+            git c advice.detachedHead=false checkout ${{ matrix.config.hostap_ref }}
+
+            # peek at inside.sh
+            cat hostap/tests/hwsim/vm/inside.sh || true
 
             # see "inside.sh"
             # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
