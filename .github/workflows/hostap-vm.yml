@@ -87,8 +87,8 @@ jobs:
             set -Eeuo pipefail
 
             cloned=0
-            REMOTE1="https://w1.fi/cgit/hostap.git"   # try HTTPS first
-            REMOTE2="git://w1.fi/hostap.git"          # fallback (9418 often blocked)
+            REMOTE1="https://w1.fi/cgit/hostap"   # try HTTPS first
+            REMOTE2="git://w1.fi/hostap.git"      # fallback (9418 often blocked)
 
             for remote in "$REMOTE1" "$REMOTE2"; do
               echo "Trying $remote"
