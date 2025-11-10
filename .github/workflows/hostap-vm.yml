@@ -6,7 +6,7 @@ on:
     branches: [ '**', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
-  workflow_dispatch: # add a Run workflow button
+  workflow_dispatch:  # add a Run workflow button
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
