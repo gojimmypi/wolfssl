@@ -262,7 +262,7 @@ jobs:
             git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
             git reset --hard
             git clean -fdx
-            git c advice.detachedHead=false checkout ${{ matrix.config.hostap_ref }}
+            git -c advice.detachedHead=false checkout ${{ matrix.config.hostap_ref }}
 
             # peek at inside.sh
             cat hostap/tests/hwsim/vm/inside.sh || true
@@ -271,6 +271,16 @@ jobs:
             # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
             # And make every UML guest do the same at boot:
             # (inside.sh runs inside each VM before tests)
+            target="tests/hwsim/vm/inside.sh"
+
+            # Just in case the inside.sh is moved, we won't fail here.
+            if [ ! -f "$target" ]; then
+              echo "::Warning:: $target not found at this ref, skipping Git safe.directory step"
+              ls -la tests/hwsim/vm || true
+              exit 0
+            fi
+
+            echo "marking safe.directory during inside.h"
             {
               printf '# Added by CI to silence Git safe.directory warnings\n'
               printf 'git config --global --add safe.directory "*"\n'
