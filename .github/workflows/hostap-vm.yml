@@ -277,8 +277,8 @@ jobs:
               exit 0
             fi
 
-            echo "marking safe.directory during inside.h"
             # PREPEND the lines so they run before anything else inside the guest
+            echo "marking safe.directory during inside.sh"
             tmp="$(mktemp)"
             {
               printf '#!/bin/sh\n'
