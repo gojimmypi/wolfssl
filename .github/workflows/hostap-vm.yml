@@ -3,14 +3,16 @@ name: hostap and wpa-supplicant Tests
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ '*', 'master', 'main', 'release/**' ]
+    branches: [ '**', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
+  workflow_dispatch: # add a Run workflow button
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 # END OF COMMON SECTION
+
 
 env:
   LINUX_REF: v6.12
