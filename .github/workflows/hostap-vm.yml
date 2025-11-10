@@ -94,7 +94,7 @@ jobs:
               echo "Trying $remote"
               for i in 1 2 3 4 5; do
                 rm -rf hostap
-                if git clone --depth=1 --filter=blob:none "$remote" hostap; then
+                if git clone --filter=blob:none "$remote" hostap; then
                   echo "Cloned from $remote"
                   cloned=1
                   break 2          # success, break both loops, DO NOT exit the step
