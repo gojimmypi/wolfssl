@@ -264,9 +264,6 @@ jobs:
             git clean -fdx
             git -c advice.detachedHead=false checkout ${{ matrix.config.hostap_ref }}
 
-            # peek at inside.sh
-            cat hostap/tests/hwsim/vm/inside.sh || true
-
             # see "inside.sh"
             # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
             # And make every UML guest do the same at boot:
@@ -281,14 +278,22 @@ jobs:
             fi
 
             echo "marking safe.directory during inside.h"
+            # PREPEND the lines so they run before anything else inside the guest
+            tmp="$(mktemp)"
             {
+              printf '#!/bin/sh\n'
               printf '# Added by CI to silence Git safe.directory warnings\n'
               printf 'git config --global --add safe.directory "*"\n'
-            } >> ./tests/hwsim/vm/inside.sh
+              printf 'git config --global --add safe.directory "/home/runner/work/wolfssl/wolfssl/hostap"\n'
+              cat "$target"
+            } > "$tmp"
+            mv "$tmp" "$target"
 
             # Ensure it stays executable
-            chmod +x ./tests/hwsim/vm/inside.sh || true
+            chmod +x $target || true
 
+            # peek at inside.sh
+            cat $target || true
 
       - name: Update certs
         working-directory: hostap/tests/hwsim/auth_serv
