@@ -3,7 +3,7 @@ name: hostap and wpa-supplicant Tests
 # START OF COMMON SECTION
 on:
   push:
-    branches: [ 'master', 'main', 'release/**' ]
+    branches: [ '*', 'master', 'main', 'release/**' ]
   pull_request:
     branches: [ '*' ]
 
@@ -27,7 +27,7 @@ jobs:
               --enable-wpas-dpp --enable-brainpool --with-eccminsz=192
               --enable-tlsv10 --enable-oldtls
     name: Build wolfSSL
-    if: github.repository_owner == 'wolfssl'
+    # if: github.repository_owner == 'wolfssl'
     runs-on: ubuntu-22.04
     # This should be a safe limit for the tests to run.
     timeout-minutes: 10
@@ -80,7 +80,24 @@ jobs:
 
       - name: Checkout hostap
         if: steps.cache.outputs.cache-hit != 'true'
-        run: git clone git://w1.fi/hostap.git hostap
+        run: |
+            # Fetch the host AP source
+            git clone git://w1.fi/hostap.git hostap
+
+            # Silence Git “dubious ownership” on the host (runner):
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
+
+            # see "inside.sh"
+            # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
+            # And make every UML guest do the same at boot:
+            # (inside.sh runs inside each VM before tests)
+            {
+              printf '# Added by CI to silence Git safe.directory warnings\n'
+              printf 'git config --global --add safe.directory "*"\n'
+            } >> hostap/tests/hwsim/vm/inside.sh
+
+            # Ensure it stays executable
+            chmod +x hostap/tests/hwsim/vm/inside.sh || true
 
   build_uml_linux:
     name: Build UML (UserMode Linux)
@@ -316,7 +333,7 @@ jobs:
             KERNELDIR=$GITHUB_WORKSPACE/linux
             KVMARGS="-cpu host"
           EOF
-          git config --global --add safe.directory $GITHUB_WORKSPACE/hostap
+
           # Run tests in increments of 200 to not stall out the parallel-vm script
           while mapfile -t -n 200 ary && ((${#ary[@]})); do
             TESTS=$(printf '%s\n' "${ary[@]}" | tr '\n' ' ')
