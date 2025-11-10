@@ -84,9 +84,33 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
             # Fetch the host AP source
-            git clone git://w1.fi/hostap.git hostap
+            set -Eeuo pipefail
 
-            # Silence Git “dubious ownership” on the host (runner):
+            cloned=0
+            REMOTE1="https://w1.fi/cgit/hostap.git"   # try HTTPS first
+            REMOTE2="git://w1.fi/hostap.git"          # fallback (9418 often blocked)
+
+            for remote in "$REMOTE1" "$REMOTE2"; do
+              echo "Trying $remote"
+              for i in 1 2 3 4 5; do
+                rm -rf hostap
+                if git clone --depth=1 --filter=blob:none "$remote" hostap; then
+                  echo "Cloned from $remote"
+                  cloned=1
+                  break 2          # success, break both loops, DO NOT exit the step
+                fi
+                sleep_secs=$(( i * 30 ))
+                echo "Clone failed (attempt $i). Sleeping ${sleep_secs}s..."
+                sleep "$sleep_secs"
+              done
+            done
+
+            if [ "$cloned" -ne 1 ]; then
+              echo "::warning:: hostap clone failed after retries; abort"
+              exit 1
+            fi
+
+            # Silence Git "dubious ownership" on the host (runner):
             git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
 
             # see "inside.sh"
