@@ -65,7 +65,7 @@ jobs:
 
   checkout_hostap:
     name: Checkout hostap repo
-    if: github.repository_owner == 'wolfssl'
+    # if: github.repository_owner == 'wolfssl'
     runs-on: ubuntu-22.04
     # This should be a safe limit for the tests to run.
     timeout-minutes: 10
@@ -101,7 +101,7 @@ jobs:
 
   build_uml_linux:
     name: Build UML (UserMode Linux)
-    if: github.repository_owner == 'wolfssl'
+    # if: github.repository_owner == 'wolfssl'
     runs-on: ubuntu-22.04
     # This should be a safe limit for the tests to run.
     timeout-minutes: 10
@@ -180,7 +180,7 @@ jobs:
               build_id: hostap-vm-build2
             }
     name: hwsim test
-    if: github.repository_owner == 'wolfssl'
+    # if: github.repository_owner == 'wolfssl'
     runs-on: ubuntu-22.04
     # This should be a safe limit for the tests to run.
     timeout-minutes: 45
