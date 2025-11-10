@@ -258,6 +258,10 @@ jobs:
       - name: Checkout correct ref
         working-directory: hostap
         run: |
+            # Ensure a clean hostap before each checkout in matrix
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
+            git reset --hard
+            git clean -fdx
             git checkout ${{ matrix.config.hostap_ref }}
 
             # see "inside.sh"
