@@ -113,18 +113,6 @@ jobs:
             # Silence Git "dubious ownership" on the host (runner):
             git config --global --add safe.directory "$GITHUB_WORKSPACE/hostap" || true
 
-            # see "inside.sh"
-            # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
-            # And make every UML guest do the same at boot:
-            # (inside.sh runs inside each VM before tests)
-            {
-              printf '# Added by CI to silence Git safe.directory warnings\n'
-              printf 'git config --global --add safe.directory "*"\n'
-            } >> hostap/tests/hwsim/vm/inside.sh
-
-            # Ensure it stays executable
-            chmod +x hostap/tests/hwsim/vm/inside.sh || true
-
   build_uml_linux:
     name: Build UML (UserMode Linux)
     # if: github.repository_owner == 'wolfssl'
@@ -269,7 +257,21 @@ jobs:
 
       - name: Checkout correct ref
         working-directory: hostap
-        run: git checkout ${{ matrix.config.hostap_ref }}
+        run: |
+            git checkout ${{ matrix.config.hostap_ref }}
+
+            # see "inside.sh"
+            # https://git.w1.fi/cgit/hostap/tree/tests/hwsim/vm/inside.sh
+            # And make every UML guest do the same at boot:
+            # (inside.sh runs inside each VM before tests)
+            {
+              printf '# Added by CI to silence Git safe.directory warnings\n'
+              printf 'git config --global --add safe.directory "*"\n'
+            } >> hostap/tests/hwsim/vm/inside.sh
+
+            # Ensure it stays executable
+            chmod +x hostap/tests/hwsim/vm/inside.sh || true
+
 
       - name: Update certs
         working-directory: hostap/tests/hwsim/auth_serv
