@@ -297,6 +297,9 @@ jobs:
         run: |
           # Run the local wolfssl-arduino.sh install script to install wolfssl Arduino library.
 
+          echo "Installing wolfSSL Arduino library (no cache hit)."
+          rm -rf "$ARDUINO_ROOT/wolfssl"
+
           # Methods of installing Arduino library:
           #   1) arduino-cli lib install "wolfSSL"
           #   2) manual copy of files (typical of the Arduino-wolfssl repo)
