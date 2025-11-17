@@ -342,7 +342,8 @@ jobs:
 
           # Fetch script and board list into WOLFSSL_EXAMPLES_DIRECTORY
           echo "Fetching board_list.txt from REPO_OWNER=$REPO_OWNER"
-          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/master/Arduino/sketches/board_list.txt"          -o "$WOLFSSL_EXAMPLES_DIRECTORY/$THIS_BOARD_LIST"
+          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/master/Arduino/sketches/board_list.txt"  \
+               -o "$WOLFSSL_EXAMPLES_DIRECTORY/$THIS_BOARD_LIST"
 
           # Check if the first line is "404: Not Found" - which would indicate the curl path above is bad.
           FILE="$WOLFSSL_EXAMPLES_DIRECTORY/board_list.txt"
@@ -361,10 +362,8 @@ jobs:
 
           # Fetch the compile script from repo: https://github.com/[$USER]/wolfssl-examples/
           echo "Fetching compile-all-examples.sh from REPO_OWNER=$REPO_OWNER"
-          # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          # TODO edit pr-arduino-examples branch:
-          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/pr-arduino-examples/Arduino/sketches/compile-all-examples.sh" -o "$WOLFSSL_EXAMPLES_DIRECTORY/compile-all-examples.sh"
-          # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/master/Arduino/sketches/compile-all-examples.sh"
+               -o "$WOLFSSL_EXAMPLES_DIRECTORY/compile-all-examples.sh"
 
           # Check if the first line is "404: Not Found" - which would indicate the curl path above is bad.
           FILE="$WOLFSSL_EXAMPLES_DIRECTORY/compile-all-examples.sh"
