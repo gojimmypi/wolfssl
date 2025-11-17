@@ -362,7 +362,7 @@ jobs:
 
           # Fetch the compile script from repo: https://github.com/[$USER]/wolfssl-examples/
           echo "Fetching compile-all-examples.sh from REPO_OWNER=$REPO_OWNER"
-          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/master/Arduino/sketches/compile-all-examples.sh"
+          curl -L "https://raw.githubusercontent.com/$REPO_OWNER/wolfssl-examples/master/Arduino/sketches/compile-all-examples.sh"  \
                -o "$WOLFSSL_EXAMPLES_DIRECTORY/compile-all-examples.sh"
 
           # Check if the first line is "404: Not Found" - which would indicate the curl path above is bad.
